@@ -469,6 +469,7 @@ class PoolService(CRUDService):
         'pool_create',
         Str('name', required=True),
         Bool('encryption', default=False),
+        Bool('snapshot_task', default=False),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
         Dict(
             'topology',
@@ -502,6 +503,9 @@ class PoolService(CRUDService):
     async def do_create(self, job, data):
         """
         Create a new ZFS Pool.
+
+        `snapshot_task` if set, creates a periodic snapshot task which takes snapshots of the created pool every day
+        at 09:15 am with a lifetime of 1 week.
 
         `topology` is a object which requires at least one `data` entry.
         All of `data` entries (vdevs) require to be of the same type.
@@ -659,6 +663,29 @@ class PoolService(CRUDService):
         asyncio.ensure_future(restart_services())
 
         pool = await self._get_instance(pool_id)
+
+        # Pool has been created
+        if data.get('snapshot_task'):
+            await self.middleware.call(
+                'pool.snapshottask.create', {
+                    'dataset': pool['name'],
+                    'recursive': True,
+                    'lifetime_value': 1,
+                    'lifetime_unit': 'WEEK',
+                    'naming_schema': 'auto_%Y-%m-%d_%H-%M',
+                    'allow_empty': False,
+                    'schedule': {
+                        'minute': '15',
+                        'hour': '09',
+                        'dom': '*',
+                        'month': '*',
+                        'dow': '*',
+                        'begin': '09:00',
+                        'end': '18:00'
+                    }
+                }
+            )
+
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
