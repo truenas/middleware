@@ -458,18 +458,6 @@ class JailService(CRUDService):
         if options["name"] is not None:
             pool = IOCJson().json_get_value('pool')
             iocroot = IOCJson(pool).json_get_value('iocroot')
-            plugin_index = pathlib.Path(
-                f'{iocroot}/.plugin_index'
-            )
-
-            if not plugin_index.is_dir():
-                # WORKAROUND until rewritten for #39653
-                # We want the plugins to not prompt interactively
-                try:
-                    iocage.fetch(plugin_file=True, _list=True, **options)
-                except Exception:
-                    # Expected, this is to avoid it later
-                    pass
 
             options["plugin_file"] = True
             start_msg = 'Starting plugin install'
