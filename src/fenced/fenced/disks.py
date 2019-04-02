@@ -14,7 +14,6 @@ class Disks(dict):
 
     def __init__(self, fence):
         self.fence = fence
-        self._threadpool = ThreadPoolExecutor(max_workers=40)
         self._set_disks = set()
 
     def add(self, disk):
@@ -53,11 +52,15 @@ class Disks(dict):
         """
         args = args or []
         disks = disks or self.values()
-        fs = {
-            self._threadpool.submit(getattr(disk, method), *args): disk
-            for disk in disks
-        }
-        done_notdone = fut_wait(fs.keys(), timeout=30)
+        executor = ThreadPoolExecutor(max_workers=40)
+        try:
+            fs = {
+                executor.submit(getattr(disk, method), *args): disk
+                for disk in disks
+            }
+            done_notdone = fut_wait(fs.keys(), timeout=30)
+        finally:
+            executor.shutdown(wait=False)
         failed = set([fs[i] for i in done_notdone.not_done])
         for i in done_notdone.done:
             if done_callback:
