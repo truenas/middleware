@@ -128,6 +128,9 @@ class VMWareService(CRUDService):
         Str('password', required=True),
     ))
     def get_datastores(self, data):
+        """
+        Get datastores from VMWare.
+        """
         return sorted(list(self.__get_datastores(data).keys()))
 
     @accepts(Dict(
@@ -256,9 +259,6 @@ class VMWareService(CRUDService):
         }
 
     def __get_datastores(self, data):
-        """
-        Get datastores from VMWare.
-        """
         try:
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             ssl_context.verify_mode = ssl.CERT_NONE
@@ -367,7 +367,7 @@ class VMWareService(CRUDService):
                     ["filesystem", "^", dataset + "/"],
                 ],
             ]
-        return self.middleware.call_sync("vmware.query", f)
+        return self.middleware.call_sync("vmware.query", [f])
 
     @private
     def snapshot_begin(self, dataset, recursive):
@@ -418,7 +418,7 @@ class VMWareService(CRUDService):
                 if vm.summary.runtime.powerState != "poweredOn":
                     continue
 
-                if self._doesVMDependOnDataStore(vm, vmsnapobj.datastore):
+                if self._doesVMDependOnDataStore(vm, vmsnapobj["datastore"]):
                     try:
                         if self._canSnapshotVM(vm):
                             if not self._doesVMSnapshotByNameExists(vm, vmsnapname):
@@ -443,7 +443,7 @@ class VMWareService(CRUDService):
                             self.logger.info("Can't snapshot VM %s that depends on "
                                              "datastore %s and filesystem %s. "
                                              "Possibly using PT devices. Skipping.",
-                                             vm.name, vmsnapobj.datastore, dataset)
+                                             vm.name, vmsnapobj["datastore"], dataset)
                             snapvmskips.append(vm.config.uuid)
                     except Exception as e:
                         self.logger.warning("Snapshot of VM %s failed", vm.name, exc_info=True)
@@ -479,7 +479,7 @@ class VMWareService(CRUDService):
         }
 
     @private
-    async def snapshot_end(self, context):
+    def snapshot_end(self, context):
         vmsnapname = context["vmsnapname"]
 
         for elem in context["vmsnapobjs"]:
