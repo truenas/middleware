@@ -117,7 +117,7 @@ class Disk(object):
     def get_keys(self):
         host_key = None
         remote_keys = set()
-        for key in self.cam.read_keys()['keys']:
+        for key in self.cam.read_keys(retries=CAM_RETRIES)['keys']:
             # First 4 bytes are the host id
             if key >> 32 == self.fence.hostid:
                 host_key = key
