@@ -398,7 +398,8 @@ class KeychainCredentialService(CRUDService):
         "keychain_remote_ssh_semiautomatic_setup",
         Str("name", required=True),
         Str("url", required=True, validators=[URL()]),
-        Str("token", required=True),
+        Str("token"),
+        Str("password"),
         Str("username", default="root"),
         Int("private_key", required=True),
         Str("cipher", enum=["STANDARD", "FAST", "DISABLED"], default="STANDARD"),
@@ -438,8 +439,14 @@ class KeychainCredentialService(CRUDService):
             raise CallError(f"Unable to connect to remote system: {e}")
 
         with client as c:
-            if not c.call("auth.token", data["token"]):
-                raise CallError("Invalid token")
+            if data.get("token"):
+                if not c.call("auth.token", data["token"]):
+                    raise CallError("Invalid token")
+            elif data.get("password"):
+                if not c.call("auth.login", "root", data["password"]):
+                    raise CallError("Invalid password")
+            else:
+                raise CallError("You should specify either remote system password or temporary authentication token")
 
             try:
                 response = c.call("replication.pair", {
