@@ -888,6 +888,10 @@ class Task(Model):
         verbose_name=_("End"),
         help_text=_("Do not snapshot after"),
     )
+    task_allow_empty = models.BooleanField(
+        default=True,
+        verbose_name=_("Allow taking empty snapshots"),
+    )
     task_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
