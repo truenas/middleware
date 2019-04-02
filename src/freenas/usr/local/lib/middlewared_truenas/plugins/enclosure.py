@@ -274,7 +274,7 @@ class EnclosureService(CRUDService):
         self.logger.debug("Disk %r not found in enclosure, trying from disk cache table", disk)
 
         try:
-            disk = self.middleware.call("disk.query", [["devname", "=", disk]],
+            disk = self.middleware.call_sync("disk.query", [["devname", "=", disk]],
                                         {"get": True, "order_by": ["expiretime"]})
             if disk["enclosure_slot"]:
                 return divmod(disk["enclosure_slot"], 1000)
