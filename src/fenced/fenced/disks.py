@@ -52,7 +52,7 @@ class Disks(dict):
         """
         args = args or []
         disks = disks or self.values()
-        executor = ThreadPoolExecutor(max_workers=40)
+        executor = ThreadPoolExecutor(max_workers=SET_DISKS_CAP)
         try:
             fs = {
                 executor.submit(getattr(disk, method), *args): disk
