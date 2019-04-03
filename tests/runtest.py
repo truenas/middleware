@@ -38,7 +38,6 @@ Mandatory option
 
 Optional option
     --test <test name>         - Test name (Network, ALL)
-    --api <version number>     - API version number (1.0, 2.0)
     --vm-name <VM_NAME>        - Name the the Bhyve VM
     """ % argv[0]
 
@@ -47,7 +46,7 @@ if len(argv) == 1:
     print(error_msg)
     exit()
 
-option_list = ["api=", "ip=", "password=", "interface=", 'test=', "vm-name="]
+option_list = ["ip=", "password=", "interface=", 'test=', "vm-name="]
 
 # look if all the argument are there.
 try:
@@ -58,7 +57,6 @@ except getopt.GetoptError as e:
     exit()
 
 testName = None
-api = "1.0"
 testexpr = None
 
 for output, arg in myopts:
@@ -70,8 +68,6 @@ for output, arg in myopts:
         interface = arg
     elif output in ('-t', '--test'):
         testName = arg
-    elif output in ('-a', '--api'):
-        api = arg
     elif output == '-k':
         testexpr = arg
     elif output in ('--vm-name'):
@@ -108,9 +104,7 @@ ip = "{ip}"
 vm_name = {vm_name}
 hostname = "{hostname}"
 domain = "{domain}"
-default_api_url = 'http://' + ip + '/api/v{api}'
-api1_url = 'http://' + ip + '/api/v1.0'
-api2_url = 'http://' + ip + '/api/v2.0'
+api_url = 'http://{ip}/api/v2.0'
 interface = "{interface}"
 ntpServer = "10.20.20.122"
 localHome = "{localHome}"
@@ -144,46 +138,29 @@ cfg_file.close()
 def get_tests():
     rv = []
     ev = []
-    skip_tests = []
-
-    if api == '1.0':
-        skip_tests = ['bootenv', 'alerts', 'smarttest']
-        apidir = 'api1/'
-        rv = ['network', 'ssh', 'storage']
-    elif api == '2.0':
-        skip_tests = ['volume']
-        apidir = 'api2/'
-        rv = ['interfaces', 'network', 'ssh', 'pool']
-        ev = ['update', 'delete_interfaces']
+    skip_tests = ['volume']
+    apidir = 'api/'
+    rv = ['interfaces', 'network', 'ssh', 'pool']
+    ev = ['update', 'delete_interfaces']
     for filename in listdir(apidir):
-        if filename.endswith('.py') and \
-                not filename.startswith('__init__'):
+        if filename.endswith('.py') and not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
-            if (filename not in skip_tests and filename not in rv and
-                    filename not in ev):
+            if filename not in skip_tests and filename not in rv and \
+                    filename not in ev:
                 rv.append(filename)
     return rv + ev
 
 
-if api == "1.0":
-    for i in get_tests():
-        if testName is not None and testName != i:
-            continue
-        call(["py.test-3.6", "-v", "--junitxml",
-              f"{results_xml}{i}_tests_result.xml"] + (
-                  ["-k", testexpr] if testexpr else []
-        ) + [f"api1/{i}.py"])
-elif api == "2.0":
-    for i in get_tests():
-        if testName is not None and testName != i:
-            continue
-        call(["py.test-3.6", "-v", "--junitxml",
-              f"{results_xml}{i}_tests_result.xml"] + (
-                  ["-k", testexpr] if testexpr else []
-        ) + [f"api2/{i}.py"])
+for i in get_tests():
+    if testName is not None and testName != i:
+        continue
+    call(["py.test-3.6", "-v", "--junitxml",
+          f"{results_xml}{i}_tests_result.xml"] + (
+              ["-k", testexpr] if testexpr else []
+    ) + [f"api/{i}.py"])
 
 # get useful logs
-artifacts = f"{workdir}/artifacts/{api}"
+artifacts = f"{workdir}/artifacts/"
 logs_list = [
     "/var/log/middlewared.log",
     "/var/log/messages",
