@@ -608,11 +608,11 @@ class ActiveDirectoryService(ConfigService):
         if not new["bindname"] and not new["kerberos_principal"]:
             verrors.add(f"{schema}.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
 
-        if data['bindpw'] and data['enable'] and not old['enable']: 
+        if data['bindpw'] and data['enable'] and not old['enable']:
             try:
                 await self.validate_credentials()
-            except:
-                verrors.add(f"{schema}.bindpw", "Failed to validate bind credentials")
+            except Exception as e:
+                verrors.add(f"{schema}.bindpw", f"Failed to validate bind credentials: {e}")
             await self.validate_domain()
 
         if verrors:
@@ -689,7 +689,7 @@ class ActiveDirectoryService(ConfigService):
         if not ad['kerberos_realm']:
             realms = await self.middleware.call('kerberos.realm.query', [('realm', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
 
-            if realm:
+            if realms:
                 await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_kerberos_realm': realms[0]['id']})
             else:
                 await self.middleware.call('datastore.insert', 'directoryservice.kerberosrealm', {'krb_realm': ad['domainname'].upper()})
@@ -712,13 +712,13 @@ class ActiveDirectoryService(ConfigService):
                 except asyncio.TimeoutError:
                     self.logger.debug('Operation to query kerberos servers for AD site timed out')
                     site_indexed_kerberos_data = None
- 
+
                 if site_indexed_kerberos_data:
                     await self.middleware.call(
-                        'datastore.update', 
-                        'directoryservice.kerberosrealm', 
+                        'datastore.update',
+                        'directoryservice.kerberosrealm',
                         ad['kerberos_realm']['id'],
-                        kerberos_data
+                        site_indexed_kerberos_data
                     )
                     await self.middleware.call('etc.generate', 'kerberos')
 
@@ -731,7 +731,7 @@ class ActiveDirectoryService(ConfigService):
         Check response of 'net ads testjoin' to determine whether the server needs to be joined to Active Directory.
         Only perform the domain join if we receive the exact error code indicating that the server is not joined to
         Active Directory. 'testjoin' will fail if the NAS boots before the domain controllers in the environment.
-        In this case, samba should be started, but the directory service reported in a FAULTED state. 
+        In this case, samba should be started, but the directory service reported in a FAULTED state.
         """
 
         ret = await self._net_ads_testjoin(smb['workgroup'])
@@ -772,14 +772,14 @@ class ActiveDirectoryService(ConfigService):
     async def validate_credentials(self):
         ret = False
         ad = await self.config()
-        with ActiveDirectory_DNS(conf = ad, logger = self.logger) as AD_DNS:
+        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
             dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
-        with ActiveDirectory_LDAP(ad_conf = ad, logger = self.logger, hosts = dcs) as AD_LDAP:
+        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs) as AD_LDAP:
             ret = AD_LDAP.validate_credentials()
-        
+
         return ret
 
     @accepts()
@@ -794,14 +794,14 @@ class ActiveDirectoryService(ConfigService):
         permitted_clockskew = datetime.timedelta(minutes=3)
         nas_time = datetime.datetime.now()
         ad = await self.config()
-        with ActiveDirectory_DNS(conf = ad, logger = self.logger) as AD_DNS:
-            pdc = AD_DNS.get_n_working_servers(SRV['PDC'], 1) 
+        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
+            pdc = AD_DNS.get_n_working_servers(SRV['PDC'], 1)
         c = ntplib.NTPClient()
         response = c.request(pdc[0]['host'])
         ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
         clockskew = abs(ntp_time - nas_time)
         if clockskew > permitted_clockskew:
-            raise CallError(f'Clockskew between {pdc[0]["host"]} and NAS exceeds 3 minutes') 
+            raise CallError(f'Clockskew between {pdc[0]["host"]} and NAS exceeds 3 minutes')
         return {'pdc': str(pdc[0]['host']), 'timestamp': str(ntp_time), 'clockskew': str(clockskew)}
 
     @private
@@ -845,7 +845,6 @@ class ActiveDirectoryService(ConfigService):
         Default winbind request timeout is 60 seconds, and can be adjusted by the smb4.conf parameter
         'winbind request timeout ='
         """
-        ad = await self.config()
         netlogon_ping = await run(['wbinfo', '-P'], check=False)
         if netlogon_ping.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
@@ -858,13 +857,13 @@ class ActiveDirectoryService(ConfigService):
         ad = await self.config()
         if ad['createcomputer']:
             netads = await run([
-                'net', '-k', '-U', ad['bindname'], '-d', '5', 
+                'net', '-k', '-U', ad['bindname'], '-d', '5',
                 'ads', 'join', f'createcomputer={ad["createcomputer"]}', 
-                ad['domainname'],], check = False) 
+                ad['domainname'],], check=False)
         else:
             netads = await run([
                 'net', '-k', '-U', ad['bindname'], '-d', '5',
-                'ads', 'join', ad['domainname'],], check = False) 
+                'ads', 'join', ad['domainname'],], check=False)
 
         if netads.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
@@ -877,15 +876,15 @@ class ActiveDirectoryService(ConfigService):
             'net', '-k', '-w', workgroup,
             '-d', '5', 'ads', 'testjoin', ad['domainname'],
             ],
-            check = False
+            check=False
         )
         if netads.returncode != 0:
-             errout = netads.stderr.decode().strip()
-             self.logger.debug(f'net ads testjoin failed with error: [{errout}]')
-             if '0xfffffff6' in errout: 
-                 return neterr.NOTJOINED
-             else:
-                 return neterr.FAULT
+            errout = netads.stderr.decode().strip()
+            self.logger.debug(f'net ads testjoin failed with error: [{errout}]')
+            if '0xfffffff6' in errout: 
+                return neterr.NOTJOINED
+            else:
+                return neterr.FAULT
 
         return neterr.JOINED
 
@@ -902,12 +901,12 @@ class ActiveDirectoryService(ConfigService):
         ret = False
         ad = await self.middleware.call('activedirectory.config')
         smb = await self.middleware.call('smb.config')
-        with ActiveDirectory_DNS(conf = ad, logger=self.logger) as AD_DNS:
-            dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
+        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
+            dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
-        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts = dcs) as AD_LDAP:
+        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs) as AD_LDAP:
             ret = AD_LDAP.get_netbios_name()
 
         if ret and smb['workgroup'] != ret:
@@ -922,16 +921,16 @@ class ActiveDirectoryService(ConfigService):
         This returns at most 3 kerberos servers located in our AD site. This is to optimize
         kerberos configuration for locations where kerberos servers may span the globe and
         have equal DNS weighting. Since a single kerberos server may represent an unacceptable
-        single point of failure, fall back to relying on normal DNS queries in this case. 
+        single point of failure, fall back to relying on normal DNS queries in this case.
         """
         ad = await self.config()
-        with ActiveDirectory_DNS(conf = ad, logger = self.logger) as AD_DNS:
-            krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3) 
-            krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3) 
-            krb_kpasswd_server = AD_DNS.get_n_working_servers(SRV['KPASSWD'], 3) 
+        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
+            krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3)
+            krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3)
+            krb_kpasswd_server = AD_DNS.get_n_working_servers(SRV['KPASSWD'], 3)
         kdc = [i['host'] for i in krb_kdc]
         admin_server = [i['host'] for i in krb_admin_server]
-        kpasswd = [i['host'] for i in krb_kpasswd_server] 
+        kpasswd = [i['host'] for i in krb_kpasswd_server]
         for servers in [kdc, admin_server, kpasswd]:
             if len(servers) == 1:
                 return None
@@ -952,7 +951,7 @@ class ActiveDirectoryService(ConfigService):
         set_new_cache = True if not dcs else False
 
         if not dcs:
-            with ActiveDirectory_DNS(conf = ad, logger=self.logger) as AD_DNS:
+            with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
                 dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
@@ -960,19 +959,19 @@ class ActiveDirectoryService(ConfigService):
         if set_new_cache:
             await self._set_cached_srv_records(SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
 
-        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts = dcs, interfaces = i) as AD_LDAP:
+        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs, interfaces=i) as AD_LDAP:
             site = AD_LDAP.locate_site()
 
         if not site:
-            site = 'Default-First-Site-Name' 
+            site = 'Default-First-Site-Name'
 
         if not ad['site']:
             await self.middleware.call(
                 'datastore.update',
                 'directoryservice.activedirectory',
                 ad['id'], 
-                {'ad_site': site} 
-        )
+                {'ad_site': site}
+            )
 
         return site 
 
@@ -1000,7 +999,7 @@ class ActiveDirectoryService(ConfigService):
         known_domains = []
         local_users = await self.middleware.call('user.query')
         local_groups = await self.middleware.call('group.query')
-        cache_data = {} 
+        cache_data = {}
         configured_domains = await self.middleware.call('idmap.get_configured_idmap_domains')
         for d in configured_domains:
             if d['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
@@ -1016,7 +1015,7 @@ class ActiveDirectoryService(ConfigService):
                     'low_id': d['backend_data']['range_low'], 
                     'high_id': d['backend_data']['range_high'],
                 })
-                cache_data.update({d['domain']['idmap_domain_name']: {'users':[], 'groups':[]}})
+                cache_data.update({d['domain']['idmap_domain_name']: {'users': [], 'groups': []}})
 
         for line in netlist.stdout.decode().splitlines():
             if 'UID2SID' in line:
@@ -1042,7 +1041,7 @@ class ActiveDirectoryService(ConfigService):
                         except Exception:
                             break
 
-            if 'GID2SID' in line: 
+            if 'GID2SID' in line:
                 cached_gid = ((line.split())[1].split('/'))[2]
                 is_local_group = any(filter(lambda x: x['gid'] == int(cached_gid), local_groups))
                 if is_local_group:
@@ -1052,7 +1051,7 @@ class ActiveDirectoryService(ConfigService):
                     if int(cached_gid) in range(d['low_id'], d['high_id']):
                         """
                         Samba will generate UID and GID cache entries when idmap backend
-                        supports id_type_both. 
+                        supports id_type_both.
                         """
                         try:
                             group_data = grp.getgrgid(int(cached_gid))
@@ -1063,14 +1062,13 @@ class ActiveDirectoryService(ConfigService):
 
         await self.middleware.call('cache.put', 'ad_cache', cache_data, 86400)
 
-
     @accepts()
     async def get_ad_cache(self):
         """
         Returns cached AD user and group information. If proactive caching is enabled
         then this will contain all AD users and groups, otherwise it contains the
         users and groups that were present in the winbindd cache when the cache was
-        last filled. The cache expires and is refilled every 24 hours, or can be 
+        last filled. The cache expires and is refilled every 24 hours, or can be
         manually refreshed by calling fill_ad_cache(True).
         """
         if not await self.middleware.call('cache.has_key', 'ad_cache'):

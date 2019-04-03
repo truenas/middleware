@@ -309,7 +309,7 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
                 data.pop(key) 
 
         if data['kerberos_principal'] == '----------':
-            data['kerberos_principal'] = '' 
+            data['kerberos_principal'] = ''
         if data['enable'] and not old['enable']:
             with client as c:
                 try:
@@ -414,7 +414,7 @@ class LDAPForm(ModelForm):
             else:
                 del self.fields['ldap_netbiosname_b']
         else:
-                del self.fields['ldap_netbiosname_b']
+            del self.fields['ldap_netbiosname_b']
 
     def check_for_samba_schema(self):
         self.clean_bindpw()
@@ -584,7 +584,6 @@ class LDAPForm(ModelForm):
         super(LDAPForm, self).done(request, events)
 
 
-
 class KerberosRealmForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = 'krb_'
@@ -602,7 +601,7 @@ class KerberosRealmForm(MiddlewareModelForm, ModelForm):
     def middleware_clean(self, data):
         for i in ['kdc', 'admin_server', 'kpasswd_server']:
             data[i] = data[i].split()
-        return data 
+        return data
 
 
 class KerberosKeytabCreateForm(ModelForm):
@@ -674,7 +673,7 @@ class KerberosSettingsForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'ks_'
     middleware_attr_schema = 'kerberos_settings'
     middleware_plugin = 'kerberos'
-    is_singletone = True 
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -684,4 +683,4 @@ class KerberosSettingsForm(MiddlewareModelForm, ModelForm):
         super(KerberosSettingsForm, self).__init__(*args, **kwargs)
 
     def middleware_clean(self, data):
-        return data 
+        return data
