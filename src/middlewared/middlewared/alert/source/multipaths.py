@@ -5,7 +5,7 @@ class MultipathIsNotOptimalAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "Multipath Is Not Optimal"
-    text = "Multipath %s is not optimal. Please check your disks cabling."
+    text = "Multipath %s is not optimal. Please check disk cables."
 
     hardware = True
 
