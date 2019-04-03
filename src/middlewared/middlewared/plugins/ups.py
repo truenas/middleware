@@ -206,7 +206,7 @@ class UPSService(SystemServiceService):
                     f'{config["identifier"]} is ONLINE (OL).'
                 )
             else:
-                syslog.syslog(syslog.LOG_INFO, 'upssched-cmd "issuing shutdown"')
+                syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown"')
                 await run('/usr/local/sbin/upsmon', '-c', 'fsd', check=False)
         elif notify_type.lower() in ('email', 'commbad', 'commok'):
             if config['emailnotify']:
