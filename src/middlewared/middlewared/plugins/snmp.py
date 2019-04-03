@@ -27,6 +27,14 @@ class SNMPService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update SNMP Service Configuration.
+
+        `v3` when set enables SNMP version 3.
+
+        `v3_username`, `v3_authtype`, `v3_password`, `v3_privproto` and `v3_privpassphrase` are only used when `v3`
+        is enabled.
+        """
         old = await self.config()
 
         new = old.copy()
@@ -57,4 +65,4 @@ class SNMPService(SystemServiceService):
 
         await self._update_service(old, new)
 
-        return new
+        return await self.config()

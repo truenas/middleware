@@ -1,5 +1,4 @@
 import logging
-import os
 
 from middlewared.utils import run
 
@@ -82,19 +81,5 @@ async def render(service, middleware):
 
     with open("/etc/exports", "w") as f:
         f.write(await get_exports(config, shares, kerberos_keytabs))
-
-    try:
-        os.unlink("/etc/nfsd.virtualhost")
-    except Exception:
-        pass
-
-    if config["v4_krb"] or kerberos_keytabs:
-        gc = await middleware.call("datastore.config", "network.globalconfiguration")
-        if gc["gc_hostname_virtual"] and gc["gc_domain"]:
-            with open("/etc/nfsd.virtualhost", "w") as f:
-                f.write(f'{gc["gc_hostname_virtual"]}.{gc["gc_domain"]}')
-
-            await run("service", "nfsd", "restart", check=False)
-            await run("service", "gssd", "restart", check=False)
 
     await run("service", "mountd", "quietreload", check=False)

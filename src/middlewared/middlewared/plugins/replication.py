@@ -105,6 +105,7 @@ class ReplicationService(CRUDService):
     @accepts(
         Dict(
             "replication_create",
+            Str("name", required=True),
             Str("direction", enum=["PUSH", "PULL"], required=True),
             Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
             Int("ssh_credentials", null=True, default=None),
@@ -151,6 +152,7 @@ class ReplicationService(CRUDService):
 
         Create a Replication Task that will push or pull ZFS snapshots to or from remote host..
 
+        * `name` specifies a name for replication task
         * `direction` specifies whether task will `PUSH` or `PULL` snapshots
         * `transport` is a method of snapshots transfer:
           * `SSH` transfers snapshots via SSH connection. This method is supported everywhere but does not achieve
@@ -197,6 +199,7 @@ class ReplicationService(CRUDService):
                 "msg": "method",
                 "method": "replication.create",
                 "params": [{
+                    "name": "Work Backup",
                     "direction": "PUSH",
                     "transport": "SSH",
                     "ssh_credentials": [12],
@@ -266,6 +269,7 @@ class ReplicationService(CRUDService):
                 "params": [
                     7,
                     {
+                        "name": "Work Backup",
                         "direction": "PUSH",
                         "transport": "SSH",
                         "ssh_credentials": [12],
@@ -352,11 +356,17 @@ class ReplicationService(CRUDService):
             id
         )
 
+        await self.middleware.call("service.restart", "cron")
+        await self.middleware.call("zettarepl.update_tasks")
+
         return response
 
     @item_method
     @accepts(Int("id"))
     async def run(self, id):
+        """
+        Run Replication Task of `id`.
+        """
         task = await self._get_instance(id)
 
         if not task["enabled"]:

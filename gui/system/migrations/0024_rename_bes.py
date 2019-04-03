@@ -24,7 +24,7 @@ def rename_bes(apps, schema_editor):
         if 'N' in columns[1]:
             continue
 
-        subprocess.run(['/sbin/zfs', 'rename', f'freenas-boot/ROOT/{columns[0]}', f'freenas-boot/ROOT/{columns[0].replace(":", "-")}'])
+        subprocess.run(['zfs', 'rename', f'freenas-boot/ROOT/{columns[0]}', f'freenas-boot/ROOT/{columns[0].replace(":", "-")}'])
 
 
 class Migration(migrations.Migration):

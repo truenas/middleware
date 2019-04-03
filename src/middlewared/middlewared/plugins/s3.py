@@ -34,6 +34,18 @@ class S3Service(SystemServiceService):
         update=True,
     ))
     async def do_update(self, data):
+        """
+        Update S3 Service Configuration.
+
+        `access_key` must only contain alphanumeric characters and should be between 5 and 20 characters.
+
+        `secret_key` must only contain alphanumeric characters and should be between 8 and 40 characters.
+
+        `browser` when set, enables the web user interface for the S3 Service.
+
+        `certificate` is a valid certificate id which exists in the system. This is used to enable secure
+        S3 connections.
+        """
         old = await self.config()
 
         new = old.copy()

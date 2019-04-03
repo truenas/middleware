@@ -50,6 +50,9 @@ class JailService(CRUDService):
         Dict('query-options', additional_attrs=True),
     )
     def query(self, filters=None, options=None):
+        """
+        Query all jails with `query-filters` and `query-options`.
+        """
         options = options or {}
         jail_identifier = None
         jails = []
@@ -375,19 +378,20 @@ class JailService(CRUDService):
 
     @accepts(
         Dict(
-            "options",
-            Str("release"),
-            Str("server", default="download.freebsd.org"),
-            Str("user", default="anonymous"),
-            Str("password", default="anonymous@"),
-            Str("name", default=None, null=True),
-            Bool("accept", default=True),
-            List("props", default=[]),
+            'options',
+            Str('release'),
+            Str('server', default='download.freebsd.org'),
+            Str('user', default='anonymous'),
+            Str('password', default='anonymous@'),
+            Str('name', default=None, null=True),
+            Bool('accept', default=True),
+            Bool('https', default=True),
+            List('props', default=[]),
             List(
-                "files",
-                default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"]
+                'files',
+                default=['MANIFEST', 'base.txz', 'lib32.txz', 'doc.txz']
             ),
-            Str("branch", default=None, null=True)
+            Str('branch', default=None, null=True)
         )
     )
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
@@ -395,6 +399,7 @@ class JailService(CRUDService):
         """Fetches a release or plugin."""
         fetch_output = {'install_notes': []}
         release = options.get('release', None)
+        https = options.pop('https', False)
 
         post_install = False
 
@@ -432,20 +437,20 @@ class JailService(CRUDService):
                 else:
                     job.set_progress(None, msg)
             else:
+                if post_install:
+                    for split_msg in msg.split('\n'):
+                        fetch_output['install_notes'].append(split_msg)
+
                 if '  These pkgs will be installed:' in msg:
                     job.set_progress(50, msg)
                 elif 'Installing plugin packages:' in msg:
                     job.set_progress(75, msg)
-                elif 'Command output:' in msg:
+                elif 'Running post_install.sh' in msg:
                     job.set_progress(90, msg)
                     # Sets each message going forward as important to the user
                     post_install = True
                 else:
                     job.set_progress(None, msg)
-
-                if post_install:
-                    for split_msg in msg.split('\n'):
-                        fetch_output['install_notes'].append(split_msg)
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = f'{release} being fetched'
@@ -456,22 +461,13 @@ class JailService(CRUDService):
         if options["name"] is not None:
             pool = IOCJson().json_get_value('pool')
             iocroot = IOCJson(pool).json_get_value('iocroot')
-            plugin_index = pathlib.Path(
-                f'{iocroot}/.plugin_index'
-            )
-
-            if not plugin_index.is_dir():
-                # WORKAROUND until rewritten for #39653
-                # We want the plugins to not prompt interactively
-                try:
-                    iocage.fetch(plugin_file=True, _list=True, **options)
-                except Exception:
-                    # Expected, this is to avoid it later
-                    pass
 
             options["plugin_file"] = True
             start_msg = 'Starting plugin install'
             final_msg = f"Plugin: {options['name']} installed"
+        elif options['name'] is None and https:
+            if 'https' not in options['server']:
+                options['server'] = f'https://{options["server"]}'
 
         options["accept"] = True
 

@@ -14,6 +14,7 @@ from itertools import chain
 from functools import wraps
 from threading import Lock
 
+from middlewared.schema import Schemas
 
 # For freenasOS
 if '/usr/local/lib' not in sys.path:
@@ -260,6 +261,26 @@ def filter_list(_list, filters=None, options=None):
     return rv
 
 
+def filter_getattrs(filters):
+    """
+    Get a set of attributes in a filter list.
+    """
+    attrs = set()
+    if not filters:
+        return attrs
+
+    f = filters.copy()
+    while f:
+        filter_ = f.pop()
+        if len(filter_) == 2:
+            f.append(filter_[1])
+        elif len(filter_) == 3:
+            attrs.add(filter_[0])
+        else:
+            raise ValueError('Invalid filter.')
+    return attrs
+
+
 def sw_buildtime():
     # Lazy import to avoid freenasOS configure logging for us
     from freenasOS import Configuration
@@ -381,3 +402,65 @@ def load_classes(module, base, blacklist):
                     classes.append(attr)
 
     return classes
+
+
+class LoadPluginsMixin(object):
+
+    def __init__(self, overlay_dirs):
+        self.overlay_dirs = overlay_dirs or []
+        self._schemas = Schemas()
+        self._services = {}
+        self._services_aliases = {}
+
+    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None):
+        from middlewared.service import Service, CRUDService, ConfigService, SystemServiceService
+
+        main_plugins_dir = os.path.realpath(os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            '..',
+            'plugins',
+        ))
+        plugins_dirs = [os.path.join(overlay_dir, 'plugins') for overlay_dir in self.overlay_dirs]
+        plugins_dirs.insert(0, main_plugins_dir)
+        for plugins_dir in plugins_dirs:
+
+            if not os.path.exists(plugins_dir):
+                raise ValueError(f'plugins dir not found: {plugins_dir}')
+
+            for mod in load_modules(plugins_dir):
+                if on_module_begin:
+                    on_module_begin(mod)
+
+                for cls in load_classes(mod, Service, (
+                    ConfigService, CRUDService, SystemServiceService)
+                ):
+                    self.add_service(cls(self))
+
+                if on_module_end:
+                    on_module_end(mod)
+
+        if on_modules_loaded:
+            on_modules_loaded()
+
+        # Now that all plugins have been loaded we can resolve all method params
+        # to make sure every schema is patched and references match
+        from middlewared.schema import resolve_methods  # Lazy import so namespace match
+        to_resolve = []
+        for service in list(self._services.values()):
+            for attr in dir(service):
+                to_resolve.append(getattr(service, attr))
+        resolve_methods(self._schemas, to_resolve)
+
+    def add_service(self, service):
+        self._services[service._config.namespace] = service
+        if service._config.namespace_alias:
+            self._services_aliases[service._config.namespace_alias] = service
+
+    def get_service(self, name):
+        service = self._services.get(name)
+        if service:
+            return service
+        return self._services_aliases[name]
+
+    def get_services(self):
+        return self._services

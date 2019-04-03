@@ -16,6 +16,7 @@ class CronJobService(CRUDService):
         Cron.convert_db_format_to_schedule(data)
         return data
 
+    @private
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
 
@@ -56,6 +57,38 @@ class CronJobService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        Create a new cron job.
+
+        `stderr` and `stdout` are boolean values which if `true`, represent that we would like to suppress
+        standard error / standard output respectively.
+
+        .. examples(websocket)::
+
+          Create a cron job which executes `touch /tmp/testfile` after every 5 minutes.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "cronjob.create",
+                "params": [{
+                    "enabled": true,
+                    "schedule": {
+                        "minute": "5",
+                        "hour": "*",
+                        "dom": "*",
+                        "month": "*",
+                        "dow": "*"
+                    },
+                    "command": "touch /tmp/testfile",
+                    "description": "Test command",
+                    "user": "root",
+                    "stderr": true,
+                    "stdout": true
+                }]
+            }
+        """
         verrors, data = await self.validate_data(data, 'cron_job_create')
         if verrors:
             raise verrors
@@ -78,6 +111,9 @@ class CronJobService(CRUDService):
         Patch('cron_job_create', 'cron_job_update', ('attr', {'update': True}))
     )
     async def do_update(self, id, data):
+        """
+        Update cronjob of `id`.
+        """
         task_data = await self.query(filters=[('id', '=', id)], options={'get': True})
         original_data = task_data.copy()
         task_data.update(data)
@@ -107,6 +143,9 @@ class CronJobService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+        """
+        Delete cronjob of `id`.
+        """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,

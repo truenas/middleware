@@ -103,6 +103,7 @@ class SMARTTestService(CRUDService):
         datastore_prefix = 'smarttest_'
         namespace = 'smart.test'
 
+    @private
     async def smart_test_extend(self, data):
         disks = data.pop('disks')
         data['disks'] = [disk['disk_identifier'] for disk in disks]
@@ -159,6 +160,38 @@ class SMARTTestService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        Create a SMART Test Task.
+
+        `disks` is a list of valid disks which should be monitored in this task.
+
+        `type` is specified to represent the type of SMART test to be executed.
+
+        `all_disks` when enabled sets the task to cover all disks in which case `disks` is not required.
+
+        .. examples(websocket)::
+
+          Create a SMART Test Task which executes after every 30 minutes.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "smart.test.create",
+                "params": [{
+                    "schedule": {
+                        "minute": "30",
+                        "hour": "*",
+                        "dom": "*",
+                        "month": "*",
+                        "dow": "*"
+                    },
+                    "all_disks": true,
+                    "type": "OFFLINE",
+                    "disks": []
+                }]
+            }
+        """
         data['type'] = data.pop('type')[0]
         verrors = await self.validate_data(data, 'smart_test_create')
 
@@ -196,6 +229,9 @@ class SMARTTestService(CRUDService):
         Patch('smart_task_create', 'smart_task_update', ('attr', {'update': True}))
     )
     async def do_update(self, id, data):
+        """
+        Update SMART Test Task of `id`.
+        """
         old = await self.query(filters=[('id', '=', id)], options={'get': True})
         new = old.copy()
         new.update(data)
@@ -244,6 +280,9 @@ class SMARTTestService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+        """
+        Delete SMART Test Task of `id`.
+        """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
@@ -382,6 +421,24 @@ class SmartService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update SMART Service Configuration.
+
+        `interval` is an integer value in minutes which defines how often smartd activates to check if any tests
+        are configured to run.
+
+        `critical`, `informational` and `difference` are integer values on which alerts for SMART are configured if
+        the disks temperature crosses the assigned threshold for each respective attribute. They default to 0 which
+        indicates they are disabled.
+
+        Email of log level LOG_CRIT is issued when disk temperature crosses `critical`.
+
+        Email of log level LOG_INFO is issued when disk temperature crosses `informational`.
+
+        If temperature of a disk changes by `difference` degree Celsius since the last report, SMART reports this.
+
+        `email` is a list of valid emails to receive SMART alerts.
+        """
         old = await self.config()
 
         new = old.copy()

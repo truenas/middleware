@@ -146,6 +146,28 @@ class SMBService(SystemServiceService):
         update=True,
     ))
     async def do_update(self, data):
+        """
+        Update SMB Service Configuration.
+
+        `netbiosname` defaults to the original hostname of the system.
+
+        `workgroup` and `netbiosname` should have different values.
+
+        `enable_smb1` allows legacy SMB clients to connect to the server when enabled.
+
+        `localmaster` when set, determines if the system participates in a browser election.
+
+        `domain_logons` is used to provide netlogin service for older Windows clients if enabled.
+
+        `guest` attribute is specified to select the account to be used for guest access. It defaults to "nobody".
+
+        `nullpw` when enabled allows the users to authorize access without a password.
+
+        `zeroconf` should be enabled if macOS Clients will be connecting to the SMB share.
+
+        `hostlookup` when enabled, allows using hostnames rather then IP addresses in "hostsallow"/"hostsdeny" fields
+        of SMB Shares.
+        """
         old = await self.config()
 
         new = old.copy()
@@ -234,6 +256,28 @@ class SharingSMBService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create a SMB Share.
+
+        `timemachine` when set, enables Time Machine backups for this share.
+
+        `default_permissions` when set makes ACLs grant read and write for owner or group and read-only for others. It
+        is advised to be disabled when creating shares on a sytem with custom ACLs.
+
+        `ro` when enabled, prohibits write access to the share.
+
+        `guestok` when enabled, allows access to this share without a password.
+
+        `hostsallow` is a list of hostnames / IP addresses which have access to this share.
+
+        `hostsdeny` is a list of hostnames / IP addresses which are not allowed access to this share. If a handful
+        of hostnames are to be only allowed access, `hostsdeny` can be passed "ALL" which means that it will deny
+        access to ALL hostnames except for the ones which have been listed in `hostsallow`.
+
+        `vfsobjects` is a list of keywords which aim to provide virtual file system modules to enhance functionality.
+
+        `auxsmbconf` is a string of additional smb4.conf parameters not covered by the system's API.
+        """
         verrors = ValidationErrors()
         path = data['path']
 
@@ -273,6 +317,9 @@ class SharingSMBService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update SMB Share of `id`.
+        """
         verrors = ValidationErrors()
         path = data.get('path')
         default_perms = data.pop('default_permissions', False)
@@ -312,6 +359,9 @@ class SharingSMBService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete SMB Share of `id`.
+        """
         share = await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self.middleware.call('notifier.sharesec_delete', share['name'])
@@ -430,6 +480,10 @@ class SharingSMBService(CRUDService):
 
     @accepts()
     def vfsobjects_choices(self):
+        """
+        Returns a list of valid virtual file system module choices which can be used with SMB Shares to enable virtual
+        file system modules.
+        """
         vfs_modules_path = '/usr/local/lib/shared-modules/vfs'
         vfs_modules = []
         vfs_exclude = {

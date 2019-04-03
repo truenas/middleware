@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime, date
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
+from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version
@@ -49,7 +50,7 @@ class SytemAdvancedService(ConfigService):
     @accepts()
     async def serial_port_choices(self):
         """
-        Get available choices for `serialport` attribute in `system.advanced.update`.
+        Get available choices for `serialport`.
         """
         if(
             not await self.middleware.call('system.is_freenas') and
@@ -143,6 +144,17 @@ class SytemAdvancedService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        Update System Advanced Service Configuration.
+
+        `consolemenu` should be disabled if the menu at console is not desired. It will default to standard login
+        in the console if disabled.
+
+        `periodic_notifyuser` is the user which will receive all security output emails.
+
+        `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
+        hardware.
+        """
         config_data = await self.config()
         original_data = config_data.copy()
         config_data.update(data)
@@ -248,6 +260,9 @@ class SystemService(Service):
 
     @accepts()
     def version(self):
+        """
+        Returns software version of the system.
+        """
         return sw_version()
 
     @accepts()
@@ -543,10 +558,18 @@ class SystemGeneralService(ConfigService):
                 [['id', '=', data['ui_certificate']['id']]],
                 {'get': True}
             )
+
+        data['crash_reporting_is_set'] = data['crash_reporting'] is not None
+        if data['crash_reporting'] is None:
+            data['crash_reporting'] = await self.middleware.call("system.is_freenas")
+
         return data
 
     @accepts()
     def language_choices(self):
+        """
+        Returns language choices.
+        """
         return self._language_choices
 
     @private
@@ -657,12 +680,18 @@ class SystemGeneralService(ConfigService):
 
     @accepts()
     async def timezone_choices(self):
+        """
+        Returns time zone choices.
+        """
         if not self._timezone_choices:
             await self._initialize_timezone_choices()
         return self._timezone_choices
 
     @accepts()
     async def country_choices(self):
+        """
+        Returns country choices.
+        """
         if not self._country_choices:
             await self._initialize_country_choices()
         return self._country_choices
@@ -715,6 +744,9 @@ class SystemGeneralService(ConfigService):
 
     @accepts()
     async def kbdmap_choices(self):
+        """
+        Returns kbdmap choices.
+        """
         if not self._kbdmap_choices:
             await self._initialize_kbdmap_choices()
         return self._kbdmap_choices
@@ -824,7 +856,7 @@ class SystemGeneralService(ConfigService):
     @accepts()
     async def ui_certificate_choices(self):
         """
-        Return choices of `ui_certificate` attribute for `system.general.update`.
+        Return choices of certificates which can be used for `ui_certificate`.
         """
         return {
             i['id']: i['name']
@@ -848,12 +880,29 @@ class SystemGeneralService(ConfigService):
                                      'F_INFO', 'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
             Str('timezone'),
+            Bool('crash_reporting', null=True),
             update=True,
         )
     )
     async def do_update(self, data):
+        """
+        Update System General Service Configuration.
+
+        `ui_certificate` is used to enable HTTPS access to the system. If `ui_certificate` is not configured on boot,
+        it is automatically created by the system.
+
+        `ui_httpsredirect` when set, makes sure that all HTTP requests are converted to HTTPS requests to better
+        enhance security.
+
+        `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
+        listen on.
+
+        When `syslogserver` is defined, `sysloglevel` makes sure that logs matching the specified level are sent.
+        """
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
+        if not config.pop('crash_reporting_is_set'):
+            config['crash_reporting'] = None
         new_config = config.copy()
         new_config.update(data)
 
@@ -894,12 +943,18 @@ class SystemGeneralService(ConfigService):
         if config['language'] != new_config['language']:
             await self.middleware.call('system.general.set_language')
 
+        if config['crash_reporting'] != new_config['crash_reporting']:
+            await self.middleware.call('system.general.set_crash_reporting')
+
         await self.middleware.call('service.start', 'ssl')
 
         return await self.config()
 
     @accepts()
     async def local_url(self):
+        """
+        Returns configured local url in the format of protocol://host:port
+        """
         config = await self.middleware.call('system.general.config')
 
         if config['ui_certificate']:
@@ -934,6 +989,10 @@ class SystemGeneralService(ConfigService):
     def set_language(self):
         language = self.middleware.call_sync('system.general.config')['language']
         set_language(language)
+
+    @private
+    def set_crash_reporting(self):
+        CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
 async def _event_system_ready(middleware, event_type, args):
@@ -1089,6 +1148,7 @@ async def setup(middleware):
     middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
 
     await middleware.call('system.general.set_language')
+    await middleware.call('system.general.set_crash_reporting')
 
     asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
 

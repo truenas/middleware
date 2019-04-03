@@ -148,6 +148,22 @@ class NetworkConfigurationService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        Update Network Configuration Service configuration.
+
+        `ipv4gateway` if set is used instead of the default gateway provided by DHCP.
+
+        `nameserver1` is primary DNS server.
+
+        `nameserver2` is secondary DNS server.
+
+        `nameserver3` is tertiary DNS server.
+
+        `httpproxy` attribute must be provided if a proxy is to be used for network operations.
+
+        `netwait_enabled` is a boolean attribute which when set indicates that network services will not start at
+        boot unless they are able to ping the addresses listed in `netwait_ip` list.
+        """
         config = await self.config()
         new_config = config.copy()
 
@@ -206,32 +222,20 @@ class NetworkConfigurationService(ConfigService):
                 services_to_reload.append('networkgeneral')
                 await self.middleware.call('route.sync')
 
+            restart_nfs = False
             if (
                     'hostname_virtual' in new_config.keys() and
-                    new_config['hostname_virtual'] != config['hostname_virtual']
+                    (
+                        new_config['hostname_virtual'] != config['hostname_virtual'] or
+                        new_config['domain'] != config['domain']
+                    )
             ):
-                srv_service_obj = await self.middleware.call(
-                    'datastore.query',
-                    'service.service',
-                    [('srv_service', '=', 'nfs')]
-                )
-                nfs_object = await self.middleware.call(
-                    'datastore.query',
-                    'services.nfs',
-                )
-                if len(srv_service_obj) > 0 and len(nfs_object) > 0:
-                    srv_service_obj = srv_service_obj[0]
-                    nfs_object = nfs_object[0]
-
-                    if (
-                            (srv_service_obj and srv_service_obj.srv_enable) and
-                            (nfs_object and (nfs_object.nfs_srv_v4 and nfs_object.nfs_srv_v4_krb))
-                    ):
-                        await self.middleware.call("etc.generate", "nfsd")
-                        services_to_reload.append('mountd')
+                restart_nfs = True
 
             for service_to_reload in services_to_reload:
                 await self.middleware.call('service.reload', service_to_reload, {'onetime': False})
+            if restart_nfs:
+                await self._service_change('nfs', 'restart')
 
             if new_config['httpproxy'] != config['httpproxy']:
                 await self.middleware.call(
@@ -302,6 +306,9 @@ class InterfaceService(CRUDService):
 
     @filterable
     def query(self, filters, options):
+        """
+        Query Interfaces with `query-filters` and `query-options`
+        """
         data = {}
         configs = {
             i['int_interface']: i
@@ -326,6 +333,17 @@ class InterfaceService(CRUDService):
                 'link_address': '',
                 'cloned': True,
                 'mtu': 1500,
+                'flags': [],
+                'nd6_flags': [],
+                'capabilities': [],
+                'link_state': '',
+                'media_type': '',
+                'media_subtype': '',
+                'active_media_type': '',
+                'active_media_subtype': '',
+                'supported_media': [],
+                'media_options': [],
+                'carp_config': [],
             }, configs, is_freenas, fake=True)
         return filter_list(list(data.values()), filters, options)
 
@@ -399,6 +417,8 @@ class InterfaceService(CRUDService):
             if bridge:
                 bridge = bridge[0]
                 iface.update({'bridge_members': bridge['members']})
+            else:
+                iface.update({'bridge_members': []})
         elif iface['name'].startswith('lagg'):
             lag = self.middleware.call_sync(
                 'datastore.query',
@@ -416,6 +436,8 @@ class InterfaceService(CRUDService):
                     {'prefix': 'lagg_'}
                 ):
                     iface['lag_ports'].append(port['physnic'])
+            else:
+                iface['lag_ports'] = []
         if iface['name'].startswith('vlan'):
             vlan = self.middleware.call_sync(
                 'datastore.query',
@@ -429,6 +451,12 @@ class InterfaceService(CRUDService):
                     'vlan_parent_interface': vlan['pint'],
                     'vlan_tag': vlan['tag'],
                     'vlan_pcp': vlan['pcp'],
+                })
+            else:
+                iface.update({
+                    'vlan_parent_interface': None,
+                    'vlan_tag': None,
+                    'vlan_pcp': None,
                 })
 
         if not config['int_dhcp']:
@@ -702,54 +730,7 @@ class InterfaceService(CRUDService):
                     'network.lagginterface',
                     {'lagg_interface': interface_id, 'lagg_protocol': data['lag_protocol'].lower()},
                 )
-                for idx, i in enumerate(data['lag_ports']):
-                    lagports_ids.append(
-                        await self.middleware.call(
-                            'datastore.insert',
-                            'network.lagginterfacemembers',
-                            {'interfacegroup': lag_id, 'ordernum': idx, 'physnic': i},
-                            {'prefix': 'lagg_'},
-                        )
-                    )
-
-                    """
-                    If the link aggregation member was configured we need to reset it,
-                    including removing all its IP addresses.
-                    """
-                    portinterface = await self.middleware.call(
-                        'datastore.query',
-                        'network.interfaces',
-                        [('interface', '=', i)],
-                        {'prefix': 'int_'},
-                    )
-                    if portinterface:
-                        portinterface = portinterface[0]
-                        portinterface.update({
-                            'dhcp': False,
-                            'ipv4address': '',
-                            'ipv4address_b': '',
-                            'v4netmaskbit': '',
-                            'ipv6auto': False,
-                            'ipv6address': '',
-                            'v6netmaskbit': '',
-                            'vip': '',
-                            'vhid': None,
-                            'critical': False,
-                            'group': None,
-                            'mtu': None,
-                        })
-                        await self.middleware.call(
-                            'datastore.update',
-                            'network.interfaces',
-                            portinterface['id'],
-                            portinterface,
-                            {'prefix': 'int_'},
-                        )
-                        await self.middleware.call(
-                            'datastore.delete',
-                            'network.alias',
-                            [('alias_interface', '=', portinterface['id'])],
-                        )
+                lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
             except Exception:
                 for lagport_id in lagports_ids:
                     with contextlib.suppress(Exception):
@@ -1110,6 +1091,58 @@ class InterfaceService(CRUDService):
                     aliases[cidr][netfield] = ipaddr.network.prefixlen
         return iface, aliases
 
+    async def __set_lag_ports(self, lag_id, lag_ports):
+        lagports_ids = []
+        for idx, i in enumerate(lag_ports):
+            lagports_ids.append(
+                await self.middleware.call(
+                    'datastore.insert',
+                    'network.lagginterfacemembers',
+                    {'interfacegroup': lag_id, 'ordernum': idx, 'physnic': i},
+                    {'prefix': 'lagg_'},
+                )
+            )
+
+            """
+            If the link aggregation member was configured we need to reset it,
+            including removing all its IP addresses.
+            """
+            portinterface = await self.middleware.call(
+                'datastore.query',
+                'network.interfaces',
+                [('interface', '=', i)],
+                {'prefix': 'int_'},
+            )
+            if portinterface:
+                portinterface = portinterface[0]
+                portinterface.update({
+                    'dhcp': False,
+                    'ipv4address': '',
+                    'ipv4address_b': '',
+                    'v4netmaskbit': '',
+                    'ipv6auto': False,
+                    'ipv6address': '',
+                    'v6netmaskbit': '',
+                    'vip': '',
+                    'vhid': None,
+                    'critical': False,
+                    'group': None,
+                    'mtu': None,
+                })
+                await self.middleware.call(
+                    'datastore.update',
+                    'network.interfaces',
+                    portinterface['id'],
+                    portinterface,
+                    {'prefix': 'int_'},
+                )
+                await self.middleware.call(
+                    'datastore.delete',
+                    'network.alias',
+                    [('alias_interface', '=', portinterface['id'])],
+                )
+        return lagports_ids
+
     @accepts(
         Str('id'),
         Patch(
@@ -1120,6 +1153,9 @@ class InterfaceService(CRUDService):
         )
     )
     async def do_update(self, oid, data):
+        """
+        Update Interface of `id`.
+        """
         iface = await self._get_instance(oid)
 
         new = iface.copy()
@@ -1144,9 +1180,57 @@ class InterfaceService(CRUDService):
                     'interface': iface['name'],
                 }):
                     interface_id = i
+                config = (await self.middleware.call(
+                    'datastore.query', 'network.interfaces', [('id', '=', interface_id)]
+                ))[0]
             else:
                 interface_attrs, aliases = self.__convert_aliases_to_datastore(new)
                 config = config[0]
+                if config['int_interface'] != new['name']:
+                    await self.middleware.call(
+                        'datastore.update',
+                        'network.interfaces',
+                        config['id'],
+                        {'int_interface': new['name']},
+                    )
+
+            if iface['type'] == 'BRIDGE':
+                if 'bridge_members' in data:
+                    await self.middleware.call(
+                        'datastore.update',
+                        'network.bridge',
+                        [('interface', '=', config['id'])],
+                        {'members': data['bridge_members']},
+                    )
+            elif iface['type'] == 'LINK_AGGREGATION':
+                lag_id = await self.middleware.call(
+                    'datastore.update',
+                    'network.lagginterface',
+                    [('lagg_interface', '=', config['id'])],
+                    {'lagg_protocol': new['lag_protocol'].lower()},
+                )
+                if 'lag_ports' in data:
+                    await self.middleware.call(
+                        'datastore.delete',
+                        'network.lagginterfacemembers',
+                        [('lagg_interfacegroup', '=', lag_id)],
+                    )
+                    await self.__set_lag_ports(lag_id, data['lag_ports'])
+            elif iface['type'] == 'VLAN':
+                await self.middleware.call(
+                    'datastore.update',
+                    'network.vlan',
+                    [('vlan_vint', '=', iface['name'])],
+                    {
+                        'vint': new['name'],
+                        'pint': new['vlan_parent_interface'],
+                        'tag': new['vlan_tag'],
+                        'pcp': new['vlan_pcp'],
+                    },
+                    {'prefix': 'vlan_'},
+                )
+
+            if not interface_id:
                 await self.middleware.call(
                     'datastore.update', 'network.interfaces', config['id'], dict(
                         **(await self.__convert_interface_datastore(new)), **interface_attrs
@@ -1196,10 +1280,15 @@ class InterfaceService(CRUDService):
                     )
             raise
 
-        return await self._get_instance(oid)
+        return await self._get_instance(new['name'])
 
     @accepts(Str('id'))
     async def do_delete(self, oid):
+        """
+        Delete Interface of `id`.
+
+        It should be noted that only virtual interfaces can be deleted.
+        """
         iface = await self._get_instance(oid)
 
         if iface['type'] == 'PHYSICAL':
@@ -1230,7 +1319,7 @@ class InterfaceService(CRUDService):
     @pass_app
     async def websocket_local_ip(self, app):
         """
-        Returns the interface this websocket is connected to.
+        Returns the ip this websocket is connected to.
         """
         if app is None:
             return
@@ -1260,6 +1349,9 @@ class InterfaceService(CRUDService):
     @accepts()
     @pass_app
     async def websocket_interface(self, app):
+        """
+        Returns the interface this websocket is connected to.
+        """
         local_ip = await self.middleware.call('interface.websocket_local_ip', app=app)
         for iface in await self.middleware.call('interface.query'):
             for alias in iface['aliases']:
@@ -1923,6 +2015,13 @@ class StaticRouteService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create a Static Route.
+
+        Address families of `gateway` and `destination` should match when creating a static route.
+
+        `description` is an optional attribute for any notes regarding the static route.
+        """
         self._validate('staticroute_create', data)
 
         await self.lower(data)
@@ -1944,6 +2043,9 @@ class StaticRouteService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update Static Route of `id`.
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -1961,6 +2063,9 @@ class StaticRouteService(CRUDService):
 
     @accepts(Int('id'))
     def do_delete(self, id):
+        """
+        Delete Static Route of `id`.
+        """
         staticroute = self.middleware.call_sync('staticroute._get_instance', id)
         rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
         try:
@@ -2000,6 +2105,9 @@ class DNSService(Service):
 
     @filterable
     async def query(self, filters, options):
+        """
+        Query Name Servers with `query-filters` and `query-options`.
+        """
         data = []
         resolvconf = (await run('resolvconf', '-l')).stdout.decode()
         for nameserver in RE_NAMESERVER.findall(resolvconf):
@@ -2046,6 +2154,30 @@ class NetworkGeneralService(Service):
 
     @accepts()
     async def summary(self):
+        """
+        Retrieve general information for current Network.
+
+        Returns a dictionary. For example:
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "ips": {
+                    "vtnet0": {
+                        "IPV4": [
+                            "192.168.0.15/24"
+                        ]
+                    }
+                },
+                "default_routes": [
+                    "192.168.0.1"
+                ],
+                "nameservers": [
+                    "192.168.0.1"
+                ]
+            }
+        """
         ips = defaultdict(lambda: defaultdict(list))
         for iface in await self.middleware.call('interface.query'):
             for alias in iface['state']['aliases']:

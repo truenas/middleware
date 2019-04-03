@@ -463,6 +463,9 @@ class UpdateService(Service):
     @accepts()
     @job(lock='updatedownload')
     def download(self, job):
+        """
+        Download updates using selected train.
+        """
         train = self.middleware.call_sync('update.get_trains')['selected']
         location = self.middleware.call_sync('update.get_update_location')
 

@@ -10,6 +10,7 @@ sys.path.append(apifolder)
 from functions import GET, PUT, POST, DELETE
 
 BASE_REPLICATION = {
+    "name": "Backup",
     "direction": "PUSH",
     "transport": "LOCAL",
     "source_datasets": ["data"],

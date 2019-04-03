@@ -29,10 +29,7 @@ import errno
 import json
 import logging
 import os
-import re
-import subprocess
 import urllib.parse
-import sysctl
 
 from collections import OrderedDict
 from croniter import croniter
@@ -83,7 +80,7 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
     iSCSITargetGlobalConfiguration,
-    iSCSITargetPortal, iSCSITargetPortalIP, FibreChannelToTarget
+    iSCSITargetPortal, iSCSITargetPortalIP,
 )
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
@@ -3876,99 +3873,11 @@ class FCPortsResource(DojoResource):
         max_limit = 0
 
     def get_list(self, request, **kwargs):
-        from lxml import etree
-
-        _n = notifier()
-        node = None
-        if not _n.is_freenas() and _n.failover_licensed():
-            node = _n.failover_node()
-
-        fcportmap = {}
-        for fbtt in FibreChannelToTarget.objects.all():
-            fcportmap[fbtt.fc_port] = fbtt.fc_target
-
-        proc = subprocess.Popen([
-            "/usr/sbin/ctladm",
-            "portlist",
-            "-x",
-        ], stdout=subprocess.PIPE, encoding='utf8')
-        data = proc.communicate()[0]
-        doc = etree.fromstring(data)
         results = []
-        for e in doc.xpath("//frontend_type[text()='camtgt']"):
-            tag_port = e.getparent()
-            name = tag_port.xpath('./port_name')[0].text
-            reg = re.search('\d+', name)
-            if reg:
-                port = reg.group(0)
-            else:
-                port = '0'
-            vport = tag_port.xpath('./physical_port')[0].text
-            if vport != '0':
-                name += '/%s' % vport
-            state = 'NO_LINK'
-            speed = None
-            wwpn = None
-            if vport == '0':
-                mibname = port
-            else:
-                mibname = '%s.chan%s' % (port, vport)
-            mib = 'dev.isp.%s.loopstate' % mibname
-            loopstate = sysctl.filter(mib)
-            if loopstate:
-                loopstate = loopstate[0].value
-                if loopstate > 0 and loopstate < 10:
-                    state = 'SCANNING'
-                elif loopstate == 10:
-                    state = 'READY'
-                if loopstate > 0:
-                    speedres = sysctl.filter('dev.isp.%s.speed' % mibname)
-                    if speedres:
-                        speed = speedres[0].value
-            mib = 'dev.isp.%s.wwpn' % mibname
-            _filter = sysctl.filter(mib)
-            if _filter:
-                wwpn = 'naa.%x' % _filter[0].value
-            if name in fcportmap:
-                targetobj = fcportmap[name]
-                if targetobj is not None:
-                    mode = 'TARGET'
-                    target = fcportmap[name].id
-                else:
-                    mode = 'INITIATOR'
-                    target = None
-            else:
-                mode = 'DISABLED'
-                target = None
-            initiators = []
-            for i in tag_port.xpath('./initiator'):
-                initiators.append(i.text)
-
-            if node:
-                for e in doc.xpath("//frontend_type[text()='ha']"):
-                    parent = e.getparent()
-                    port_name = parent.xpath('./port_name')[0].text
-                    if ':' in port_name:
-                        port_name = port_name.split(':', 1)[1]
-                    physical_port = parent.xpath('./physical_port')[0].text
-                    if physical_port != '0':
-                        port_name += '/%s' % physical_port
-                    if port_name != name:
-                        continue
-                    for i in parent.xpath('./initiator'):
-                        initiators.append("%s (Node %s)" % (i.text, ('B' if node == 'A' else 'A')))
-
-            results.append(FCPort(
-                port=port,
-                vport=vport,
-                name=name,
-                wwpn=wwpn,
-                mode=mode,
-                target=target,
-                state=state,
-                speed=speed,
-                initiators=initiators,
-            ))
+        with client as c:
+            for port in c.call("fcport.query"):
+                port.pop("id")
+                results.append(FCPort(**port))
 
         limit = self._meta.limit
         if 'HTTP_X_RANGE' in request.META:

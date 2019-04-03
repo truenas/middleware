@@ -60,6 +60,11 @@ class RsyncdService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update Rsyncd Service Configuration.
+
+        `auxiliary` attribute can be used to pass on any additional parameters from rsyncd.conf(5).
+        """
         old = await self.config()
 
         new = old.copy()
@@ -124,6 +129,22 @@ class RsyncModService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create a Rsyncmod module.
+
+        `path` represents the path to pool/dataset.
+
+        `maxconn` is an integer value representing the maximum number of simultaneous connections. Zero represents
+        unlimited.
+
+        `hostsallow` is a list of patterns to match hostname/ip address of a connecting client. If list is empty,
+        all hosts are allowed.
+
+        `hostsdeny` is a list of patterns to match hostname/ip address of a connecting client. If the pattern is
+        matched, access is denied to the client. If no client should be denied, this should be left empty.
+
+        `auxiliary` attribute can be used to pass on any additional parameters from rsyncd.conf(5).
+        """
 
         data = await self.common_validation(data, 'rsyncmod_create')
 
@@ -140,6 +161,9 @@ class RsyncModService(CRUDService):
 
     @accepts(Int('id'), Patch('rsyncmod_create', 'rsyncmod_update', ('attr', {'update': True})))
     async def do_update(self, id, data):
+        """
+        Update Rsyncmod module of `id`.
+        """
         module = await self._get_instance(id)
         module.update(data)
 
@@ -159,6 +183,9 @@ class RsyncModService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete Rsyncmod module of `id`.
+        """
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
 
@@ -199,6 +226,8 @@ class RsyncTaskService(CRUDService):
     @private
     async def rsync_task_extend(self, data):
         data['extra'] = list(filter(None, re.split(r"\s+", data["extra"])))
+        for field in ('mode', 'direction'):
+            data[field] = data[field].upper()
         Cron.convert_db_format_to_schedule(data)
         return data
 
@@ -236,10 +265,10 @@ class RsyncTaskService(CRUDService):
             verrors.add(f'{schema}.mode', 'This field is required')
 
         remote_module = data.get('remotemodule')
-        if mode == 'module' and not remote_module:
+        if mode == 'MODULE' and not remote_module:
             verrors.add(f'{schema}.remotemodule', 'This field is required')
 
-        if mode == 'ssh':
+        if mode == 'SSH':
             remote_port = data.get('remoteport')
             if not remote_port:
                 verrors.add(f'{schema}.remoteport', 'This field is required')
@@ -352,19 +381,23 @@ class RsyncTaskService(CRUDService):
 
         data.pop('validate_rpath', None)
 
+        # Keeping compatibility with legacy UI
+        for field in ('mode', 'direction'):
+            data[field] = data[field].lower()
+
         return verrors, data
 
     @accepts(Dict(
         'rsync_task_create',
-        Str('path'),
+        Str('path', required=True),
         Str('user', required=True),
         Str('remotehost'),
         Int('remoteport'),
-        Str('mode'),
+        Str('mode', enum=['MODULE', 'SSH'], default='MODULE'),
         Str('remotemodule'),
         Str('remotepath'),
         Bool('validate_rpath'),
-        Str('direction'),
+        Str('direction', enum=['PULL', 'PUSH'], default='PUSH'),
         Str('desc'),
         Cron('schedule'),
         Bool('recursive'),
@@ -381,6 +414,63 @@ class RsyncTaskService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create a Rsync Task.
+
+        `path` represents the path to pool/dataset.
+
+        `remotehost` is ip address or hostname of the remote system. If username differs on the remote host,
+        "username@remote_host" format should be used.
+
+        `mode` represents different operating mechanisms for Rsync i.e Rsync Module mode / Rsync SSH mode.
+
+        `remotemodule` is the name of remote module, this attribute should be specified when `mode` is set to MODULE.
+
+        `remotepath` specifies the path on the remote system.
+
+        `validate_rpath` is a boolean which when sets validates the existence of the remote path.
+
+        `direction` specifies if data should be PULLED or PUSHED from the remote system.
+
+        `compress` when set reduces the size of the data which is to be transmitted.
+
+        `archive` when set makes rsync run recursively, preserving symlinks, permissions, modification times, group,
+        and special files.
+
+        `delete` when set deletes files in the destination directory which do not exist in the source directory.
+
+        `preserveperm` when set preserves original file permissions.
+
+        .. examples(websocket)::
+
+          Create a Rsync Task which pulls data from a remote system every 5 minutes.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "rsynctask.create",
+                "params": [{
+                    "enabled": true,
+                    "schedule": {
+                        "minute": "5",
+                        "hour": "*",
+                        "dom": "*",
+                        "month": "*",
+                        "dow": "*"
+                    },
+                    "desc": "Test rsync task",
+                    "user": "root",
+                    "mode": "MODULE",
+                    "remotehost": "root@192.168.0.10",
+                    "compress": true,
+                    "archive": true,
+                    "direction": "PULL",
+                    "path": "/mnt/vol1/rsync_dataset",
+                    "remotemodule": "remote_module1"
+                }]
+            }
+        """
         verrors, data = await self.validate_rsync_task(data, 'rsync_task_create')
         if verrors:
             raise verrors
@@ -395,13 +485,16 @@ class RsyncTaskService(CRUDService):
         )
         await self.middleware.call('service.restart', 'cron')
 
-        return data
+        return await self._get_instance(data['id'])
 
     @accepts(
         Int('id', validators=[Range(min=1)]),
         Patch('rsync_task_create', 'rsync_task_update', ('attr', {'update': True}))
     )
     async def do_update(self, id, data):
+        """
+        Update Rsync Task of `id`.
+        """
         old = await self.query(filters=[('id', '=', id)], options={'get': True})
 
         new = old.copy()
@@ -426,6 +519,9 @@ class RsyncTaskService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete Rsync Task of `id`.
+        """
         res = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self.middleware.call('service.restart', 'cron')
         return res
@@ -463,9 +559,9 @@ class RsyncTaskService(CRUDService):
         else:
             remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
 
-        if rsync['mode'] == 'module':
+        if rsync['mode'] == 'MODULE':
             module_args = [path, f'{remote}::"{rsync["remotemodule"]}"']
-            if rsync['direction'] != 'push':
+            if rsync['direction'] != 'PUSH':
                 module_args.reverse()
             line += module_args
         else:
@@ -474,7 +570,7 @@ class RsyncTaskService(CRUDService):
                 f'ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes'
             ]
             path_args = [path, f'{remote}:"{shlex.quote(rsync["remotepath"])}"']
-            if rsync['direction'] != 'push':
+            if rsync['direction'] != 'PUSH':
                 path_args.reverse()
             line += path_args
 

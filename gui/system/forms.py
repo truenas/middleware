@@ -994,6 +994,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             'stg_kbdmap': forms.widgets.FilteringSelect(),
             'stg_guiport': forms.widgets.TextInput(),
             'stg_guihttpsport': forms.widgets.TextInput(),
+            'stg_crash_reporting': forms.widgets.CheckboxInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1029,6 +1030,9 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         for key in ('ui_address', 'ui_v6address'):
             if not update.get(key):
                 update.pop(key, None)
+
+        update['crash_reporting'] = update['crash_reporting'] == 'True'
+
         return update
 
     def done(self, request, events):
@@ -3611,7 +3615,12 @@ class BackupForm(Form):
         return pwd2
 
 
-class SupportForm(ModelForm):
+class SupportForm(ModelForm, MiddlewareModelForm):
+
+    middleware_attr_prefix = ""
+    middleware_attr_schema = "support"
+    middleware_plugin = "support"
+    is_singletone = True
 
     class Meta:
         model = models.Support
