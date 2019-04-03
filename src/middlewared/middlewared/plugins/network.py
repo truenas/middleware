@@ -314,6 +314,17 @@ class InterfaceService(CRUDService):
                 'link_address': '',
                 'cloned': True,
                 'mtu': 1500,
+                'flags': [],
+                'nd6_flags': [],
+                'capabilities': [],
+                'link_state': '',
+                'media_type': '',
+                'media_subtype': '',
+                'active_media_type': '',
+                'active_media_subtype': '',
+                'supported_media': [],
+                'media_options': [],
+                'carp_config': [],
             }, configs, is_freenas, fake=True)
         return filter_list(list(data.values()), filters, options)
 
