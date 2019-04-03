@@ -104,7 +104,11 @@ def main():
     try:
         fence.loop(newkey)
     except PanicExit as e:
+        logger.info('Panic %s', e)
         panic(e)
+    except Exception:
+        logger.error('Unexpected exception', exc_info=True)
+        sys.exit(ExitCode.UNKNOWN.value)
 
 
 if __name__ == '__main__':
