@@ -392,6 +392,8 @@ class NICChoices(object):
                         self._NIClist.remove(iface)
         except (ConnectionRefusedError, FileNotFoundError):
             pass
+        except Exception:
+            log.error('Failed to get failover internal interfaces', exc_info=True)
 
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
@@ -543,6 +545,8 @@ class IPChoices(NICChoices):
                     carp = True
             except (sqlite3.OperationalError, ConnectionRefusedError, FileNotFoundError):
                 pass
+            except Exception:
+                log.error('Failed to get failover status', exc_info=True)
 
         self._IPlist = []
         for iface in self._NIClist:
