@@ -253,6 +253,9 @@ class PeriodicSnapshotTaskService(CRUDService):
     @item_method
     @accepts(Int("id"))
     async def run(self, id):
+        """
+        Execute a Periodic Snapshot Task of `id`.
+        """
         task = await self._get_instance(id)
 
         if not task["enabled"]:

@@ -320,6 +320,9 @@ class CredentialsService(CRUDService):
         Dict("attributes", additional_attrs=True, required=True),
     ))
     async def verify(self, data):
+        """
+        Verify if `attributes` provided for `provider` are authorized by the `provider`.
+        """
         data = dict(data, name="")
         await self._validate("cloud_sync_credentials_create", data)
 
@@ -339,6 +342,11 @@ class CredentialsService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create Cloud Sync Credentials.
+
+        `attributes` is a dictionary of valid values which will be used to authorize with the `provider`.
+        """
         await self._validate("cloud_sync_credentials_create", data)
 
         data["id"] = await self.middleware.call(
@@ -357,6 +365,9 @@ class CredentialsService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update Cloud Sync Credentials of `id`.
+        """
         old = await self._get_instance(id)
 
         new = old.copy()
@@ -377,6 +388,9 @@ class CredentialsService(CRUDService):
 
     @accepts(Int("id"))
     async def do_delete(self, id):
+        """
+        Delete Cloud Sync Credentials of `id`.
+        """
         await self.middleware.call(
             "datastore.delete",
             "system.cloudcredentials",
@@ -408,6 +422,9 @@ class CloudSyncService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
+        """
+        Query all Cloud Sync Tasks with `query-filters` and `query-options`.
+        """
         tasks_or_task = await super().query(filters, options)
 
         jobs = {}
@@ -696,6 +713,24 @@ class CloudSyncService(CRUDService):
         Str("args", default=""),
     ))
     async def list_directory(self, cloud_sync):
+        """
+        List contents of a remote bucket / directory.
+
+        If remote supports buckets, path is constructed by two keys "bucket"/"folder" in `attributes`.
+        If remote does not support buckets, path is constructed using "folder" key only in `attributes`.
+        "folder" is directory name and "bucket" is bucket name for remote.
+
+        Path examples:
+
+        S3 Service
+        `bucketname/directory/name`
+
+        Dropbox Service
+        `directory/name`
+
+
+        `credentials` is a valid id of a Cloud Sync Credential which will be used to connect to the provider.
+        """
         verrors = ValidationErrors()
 
         await self._basic_validate(verrors, "cloud_sync", dict(cloud_sync))
@@ -736,6 +771,46 @@ class CloudSyncService(CRUDService):
 
     @accepts()
     async def providers(self):
+        """
+        Returns a list of dictionaries of supported providers for Cloud Sync Tasks.
+
+        `credentials_schema` is JSON schema for credentials attributes.
+
+        `task_schema` is JSON schema for task attributes.
+
+        `buckets` is a boolean value which is set to "true" if provider supports buckets.
+
+        Example of a single provider:
+
+        [
+            {
+                "name": "AMAZON_CLOUD_DRIVE",
+                "title": "Amazon Cloud Drive",
+                "credentials_schema": [
+                    {
+                        "property": "client_id",
+                        "schema": {
+                            "title": "Amazon Application Client ID",
+                            "_required_": true,
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "property": "client_secret",
+                        "schema": {
+                            "title": "Application Key",
+                            "_required_": true,
+                            "type": "string"
+                        }
+                    }
+                ],
+                "credentials_oauth": null,
+                "buckets": false,
+                "bucket_title": "Bucket",
+                "task_schema": []
+            }
+        ]
+        """
         return sorted(
             [
                 {

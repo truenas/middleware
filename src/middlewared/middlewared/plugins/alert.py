@@ -17,7 +17,7 @@ from middlewared.alert.base import (
     DismissableAlertSource,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch
+from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch, Ref
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -118,10 +118,16 @@ class AlertService(Service):
 
     @accepts()
     async def list_policies(self):
+        """
+        List all alert policies which indicate the frequency of the alerts.
+        """
         return POLICIES
 
     @accepts()
     async def list_sources(self):
+        """
+        List all types of alert sources which the system can issue.
+        """
         return [
             {
                 "name": source.name,
@@ -132,6 +138,9 @@ class AlertService(Service):
 
     @accepts()
     def list(self):
+        """
+        List all types of alerts including active/dismissed currently in the system.
+        """
         return [
             dict(alert.__dict__,
                  id=f"{alert.node};{alert.source};{alert.key}",
@@ -143,6 +152,9 @@ class AlertService(Service):
 
     @accepts(Str("id"))
     async def dismiss(self, id):
+        """
+        Dismiss `id` alert.
+        """
         node, source, key = id.split(";", 2)
         try:
             alert = self.alerts[node][source][key]
@@ -162,6 +174,9 @@ class AlertService(Service):
 
     @accepts(Str("id"))
     def restore(self, id):
+        """
+        Restore `id` alert which had been dismissed.
+        """
         node, source, key = id.split(";", 2)
         try:
             alert = self.alerts[node][source][key]
@@ -170,6 +185,7 @@ class AlertService(Service):
         alert.dismissed = False
 
     @periodic(60)
+    @private
     @job(lock="process_alerts", transient=True)
     async def process_alerts(self, job):
         if not await self.middleware.call("system.ready"):
@@ -379,6 +395,7 @@ class AlertService(Service):
         return alerts
 
     @periodic(3600)
+    @private
     async def flush_alerts(self):
         if (
             not await self.middleware.call('system.is_freenas') and
@@ -459,6 +476,9 @@ class AlertServiceService(CRUDService):
 
     @accepts()
     async def list_types(self):
+        """
+        List all types of supported Alert services which can be configured with the system.
+        """
         return [
             {
                 "name": name,
@@ -490,11 +510,11 @@ class AlertServiceService(CRUDService):
             raise verrors
 
         try:
-            factory.validate(service["attributes"])
+            factory.validate(service.get('attributes', {}))
         except ValidationErrors as e:
             verrors.add_child(f"{schema_name}.attributes", e)
 
-        validate_settings(verrors, f"{schema_name}.settings", service["settings"])
+        validate_settings(verrors, f"{schema_name}.settings", service.get('settings', {}))
 
         if verrors:
             raise verrors
@@ -502,13 +522,40 @@ class AlertServiceService(CRUDService):
     @accepts(Dict(
         "alert_service_create",
         Str("name"),
-        Str("type"),
+        Str("type", required=True),
         Dict("attributes", additional_attrs=True),
         Bool("enabled"),
         Dict("settings", additional_attrs=True),
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create an Alert Service of specified `type`.
+
+        If `enabled`, it sends alerts to the configured `type` of Alert Service.
+
+        .. examples(websocket)::
+
+          Create an Alert Service of Mail `type`
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "alertservice.create",
+                "params": [{
+                    "name": "Test Email Alert",
+                    "enabled": true,
+                    "type": "Mail",
+                    "attributes": {
+                        "email": "dev@ixsystems.com"
+                    },
+                    "settings": {
+                        "VolumeVersion": "HOURLY"
+                    }
+                }]
+            }
+        """
         await self._validate(data, "alert_service_create")
 
         data["id"] = await self.middleware.call("datastore.insert", self._config.datastore, data)
@@ -523,6 +570,9 @@ class AlertServiceService(CRUDService):
         ("attr", {"update": True}),
     ))
     async def do_update(self, id, data):
+        """
+        Update Alert Service of `id`.
+        """
         old = await self.middleware.call("datastore.query", self._config.datastore, [("id", "=", id)],
                                          {"extend": self._config.datastore_extend,
                                           "get": True})
@@ -542,14 +592,38 @@ class AlertServiceService(CRUDService):
 
     @accepts(Int("id"))
     async def do_delete(self, id):
+        """
+        Delete Alert Service of `id`.
+        """
         return await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Patch(
-        "alert_service_create",
-        "alert_service_test",
-        ("attr", {"update": True}),
-    ))
+    @accepts(
+        Ref('alert_service_create')
+    )
     async def test(self, data):
+        """
+        Send a test alert using `type` of Alert Service.
+
+        .. examples(websocket)::
+
+          Send a test alert using Alert Service of Mail `type`.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "alertservice.test",
+                "params": [{
+                    "name": "Test Email Alert",
+                    "enabled": true,
+                    "type": "Mail",
+                    "attributes": {
+                        "email": "dev@ixsystems.com"
+                    },
+                    "settings": {}
+                }]
+            }
+        """
         await self._validate(data, "alert_service_test")
 
         factory = ALERT_SERVICES_FACTORIES.get(data["type"])
@@ -598,6 +672,9 @@ class AlertDefaultSettingsService(ConfigService):
         Dict("settings", additional_attrs=True),
     ))
     async def do_update(self, data):
+        """
+        Update default Alert settings.
+        """
         old = await self.config()
 
         new = old.copy()

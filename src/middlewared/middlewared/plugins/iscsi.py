@@ -375,6 +375,16 @@ class iSCSITargetAuthCredentialService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create an iSCSI Authorized Access.
+
+        `tag` should be unique among all configured iSCSI Authorized Accesses.
+
+        `secret` and `peersecret` should have length between 12-16 letters inclusive.
+
+        `peeruser` and `peersecret` are provided only when configuring mutual CHAP. `peersecret` should not be
+        similar to `secret`.
+        """
         verrors = ValidationErrors()
         await self.validate(data, 'iscsi_auth_create', verrors)
 
@@ -399,6 +409,9 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update iSCSI Authorized Access of `id`.
+        """
         old = await self._get_instance(id)
 
         new = old.copy()
@@ -421,6 +434,9 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete iSCSI Authorized Access of `id`.
+        """
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -500,6 +516,22 @@ class iSCSITargetExtentService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create an iSCSI Extent.
+
+        When `type` is set to FILE, attribute `filesize` is used and it represents number of bytes. `filesize` if
+        not zero should be a multiple of `blocksize`. `path` is a required attribute with `type` set as FILE and it
+        should be ensured that it does not come under a jail root.
+
+        With `type` being set to DISK, a valid ZVOL or DISK should be provided.
+
+        `insecure_tpc` when enabled allows an initiator to bypass normal access control and access any scannable
+        target. This allows xcopy operations otherwise blocked by access control.
+
+        `xen` is a boolean value which is set to true if Xen is being used as the iSCSI initiator.
+
+        `ro` when set to true prevents the initiator from writing to this LUN.
+        """
         verrors = ValidationErrors()
         await self.compress(data)
         await self.validate(data)
@@ -526,6 +558,9 @@ class iSCSITargetExtentService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update iSCSI Extent of `id`.
+        """
         verrors = ValidationErrors()
         old = await self._get_instance(id)
 
@@ -558,6 +593,11 @@ class iSCSITargetExtentService(CRUDService):
         Bool('remove', default=False),
     )
     async def do_delete(self, id, remove):
+        """
+        Delete iSCSI Extent of `id`.
+
+        If `id` iSCSI Extent's `type` was configured to FILE, `remove` can be set to remove the configured file.
+        """
         data = await self._get_instance(id)
 
         if remove:
@@ -897,6 +937,15 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create an iSCSI Initiator.
+
+        `initiators` is a list of initiator hostnames which are authorized to access an iSCSI Target. To allow all
+        possible initiators, `initiators` can be left empty.
+
+        `auth_network` is a list of IP/CIDR addresses which are allowed to use this initiator. If all networks are
+        to be allowed, this field should be left empty.
+        """
         if data['tag'] == 0:
             i = len((await self.query())) + 1
             while True:
@@ -925,6 +974,9 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update iSCSI initiator of `id`.
+        """
         old = await self._get_instance(id)
 
         new = old.copy()
@@ -941,6 +993,9 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete iSCSI initiator of `id`.
+        """
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -1030,6 +1085,13 @@ class iSCSITargetService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create an iSCSI Target.
+
+        `groups` is a list of group dictionaries which provide information related to using a `portal`, `initiator`,
+        `authmethod` and `auth` with this target. `auth` represents a valid iSCSI Authorized Access and defaults to
+        null.
+        """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'iscsi_target_create')
         if verrors:
@@ -1186,6 +1248,9 @@ class iSCSITargetService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update iSCSI Target of `id`.
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -1215,6 +1280,11 @@ class iSCSITargetService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete iSCSI Target of `id`.
+
+        Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
+        """
         for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id]]):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
 
@@ -1246,6 +1316,11 @@ class iSCSITargetToExtentService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create an Associated Target.
+
+        `lunid` will be automatically assigned if it is not provided based on the `target`.
+        """
         verrors = ValidationErrors()
 
         await self.validate(data, 'iscsi_targetextent_create', verrors)
@@ -1271,6 +1346,9 @@ class iSCSITargetToExtentService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update Associated Target of `id`.
+        """
         verrors = ValidationErrors()
         old = await self._get_instance(id)
 
@@ -1292,6 +1370,9 @@ class iSCSITargetToExtentService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete Associated Target of `id`.
+        """
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )

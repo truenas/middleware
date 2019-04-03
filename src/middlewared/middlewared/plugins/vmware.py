@@ -73,6 +73,16 @@ class VMWareService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        Create VMWare snapshot.
+
+        `hostname` is a valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for
+        the cluster.
+
+        `username` and `password` are the credentials used to authorize access to the VMWare host.
+
+        `datastore` is a valid datastore name which exists on the VMWare host.
+        """
         await self.validate_data(data, 'vmware_create')
 
         data['password'] = await self.middleware.call('pwenc.encrypt', data['password'])
@@ -90,6 +100,9 @@ class VMWareService(CRUDService):
         Patch('vmware_create', 'vmware_update', ('attr', {'update': True}))
     )
     async def do_update(self, id, data):
+        """
+        Update VMWare snapshot of `id`.
+        """
         old = await self._get_instance(id)
         new = old.copy()
 
@@ -112,7 +125,9 @@ class VMWareService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
-
+        """
+        Delete VMWare snapshot of `id`.
+        """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
@@ -327,6 +342,9 @@ class VMWareService(CRUDService):
 
     @accepts(Int('pk'))
     async def get_virtual_machines(self, pk):
+        """
+        Returns Virtual Machines on the VMWare host identified by `pk`.
+        """
 
         item = await self.query([('id', '=', pk)], {'get': True})
 
@@ -356,6 +374,9 @@ class VMWareService(CRUDService):
 
     @accepts(Str('dataset'), Bool('recursive'))
     def dataset_has_vms(self, dataset, recursive):
+        """
+        Returns "true" if `dataset` is configured with a VMWare snapshot
+        """
         return len(self._dataset_get_vms(dataset, recursive)) > 0
 
     def _dataset_get_vms(self, dataset, recursive):

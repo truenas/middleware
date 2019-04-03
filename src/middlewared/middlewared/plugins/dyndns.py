@@ -71,6 +71,14 @@ class DynDNSService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update dynamic dns service configuration.
+
+        `period` indicates how often the IP is checked in seconds.
+
+        `ssl` if set to true, makes sure that HTTPS is used for the connection to the server which updates the
+        DNS record.
+        """
         old = await self.config()
 
         new = old.copy()

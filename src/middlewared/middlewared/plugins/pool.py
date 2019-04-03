@@ -506,6 +506,12 @@ class PoolService(CRUDService):
         `topology` is a object which requires at least one `data` entry.
         All of `data` entries (vdevs) require to be of the same type.
 
+        `encryption` when set to true means that the pool is encrypted.
+
+        `deduplication` when set to ON or VERIFY makes sure that no block of data is duplicated in the pool. When
+        VERIFY is specified, if two blocks have similar signatures, byte to byte comparison is performed to ensure that
+        the blocks are identical. This should be used in special circumstances as it carries a significant overhead.
+
         Example of `topology`:
 
             {
@@ -2429,6 +2435,9 @@ class PoolDatasetService(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
+        """
+        Query Pool Datasets with `query-filters` and `query-options`.
+        """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
         for f in filters or []:

@@ -53,6 +53,20 @@ class NISService(ConfigService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update NIS Service Configuration.
+
+        `domain` is the name of NIS domain.
+
+        `servers` is a list of hostnames/IP addresses.
+
+        `secure_mode` when enabled sets ypbind(8) to refuse binding to any NIS server not running as root on a
+        TCP port over 1024.
+
+        `manycast` when enabled sets ypbind(8) to bind to the server that responds the fastest.
+
+        `enable` when true disables the configuration of the NIS service.
+        """
         must_reload = False
         old = await self.config()
         new = old.copy()

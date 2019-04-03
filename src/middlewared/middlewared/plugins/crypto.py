@@ -1074,10 +1074,16 @@ class CertificateService(CRUDService):
 
     @accepts()
     async def ec_curve_choices(self):
+        """
+        Dictionary of supported EC curves.
+        """
         return {k: k for k in CryptoKeyService.ec_curves}
 
     @accepts()
     async def key_type_choices(self):
+        """
+        Dictionary of supported key types for certificates.
+        """
         return {k: k for k in ['RSA', 'EC']}
 
     # CREATE METHODS FOR CREATING CERTIFICATES

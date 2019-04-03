@@ -15,6 +15,13 @@ class LLDPService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update LLDP Service Configuration.
+
+        `country` is a two letter ISO 3166 country code required for LLDP location support.
+
+        `location` is an optional attribute specifying the physical location of the host.
+        """
         old = await self.config()
 
         new = old.copy()

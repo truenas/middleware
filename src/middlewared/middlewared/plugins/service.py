@@ -109,6 +109,9 @@ class ServiceService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
+        """
+        Query all system services with `query-filters` and `query-options`.
+        """
         if options is None:
             options = {}
         options['prefix'] = 'srv_'
