@@ -9,6 +9,7 @@ import time
 from middlewared.schema import accepts, Any, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import CallError, ConfigService, CRUDService, Service, item_method, private, ValidationErrors
 from middlewared.utils import run, Popen
+from middlewared.validators import Range
 
 class dstype(enum.Enum):
     DS_TYPE_ACTIVEDIRECTORY = 1
@@ -19,6 +20,21 @@ class dstype(enum.Enum):
 
 
 class IdmapService(Service):
+    """
+    :get_or_create_idmap_by_domain: - accepts pre-windows 2000 domain name and its idmap configuration details.
+    if a backend configuration does not exist for the domain, then generate a safe default one.
+
+    :get_configured_idmap_domains: - returns list of all configured idmap domains. A configured domain is one
+    that exists in the domaintobackend table and has a corresponding backend configured in the respective
+    idmap_{backend} table. List is sorted based in ascending order based on the id range. 
+
+    :clear_idmap_cache: - removes samba's idmap cache. This may be required if idmap settings are changed
+    after the server has entered production. This will cause a service disruption.
+
+    There are default system domains 'DS_TYPE_ACTIVEDIRECTORY', 'DS_TYPE_LDAP', 'DS_TYPE_DEFAULT_DOMAIN',
+    which exist for compatibility reasons and correspond with the idmap backend that is configured
+    under 'Active Directory', 'LDAP', and 'SMB' respectively.
+    """
     class Config:
         private = False
         namespace = 'idmap'
@@ -26,37 +42,49 @@ class IdmapService(Service):
     @accepts(
         Str('domain')
     )
-    async def get_idmap_by_domain(self, domain): 
+    async def get_or_create_idmap_by_domain(self, domain):
         """
         Returns idmap settings based on pre-windows 2000 domain name (workgroup)
         If mapping exists, but there's no corresponding entry in the specified idmap
         table, then we generate a new one and return it.
         """
-        domains = await self.middleware.call('idmap.domaintobackend.query')
-        my_domain = list(filter(lambda x: x['domain']['idmap_domain_name'] == domain.upper(), domains))
+        my_domain = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', domain)])
         if not my_domain:
             raise CallError(f'No domain to idmap backend exists for domain [{domain}]', errno.ENOENT)
 
-        backend_entries = await self.middleware.call(f'idmap.{my_domain[0]["idmap_backend"]}.query')
-        for backend_entry in backend_entries:
-            if not backend_entry['domain']:
-                continue
-            if backend_entry['domain']['idmap_domain_name'] == domain:
-                return backend_entry
+        backend_entry = await self.middleware.call(
+            f'idmap.{my_domain[0]["idmap_backend"]}.query',
+            [('domain', '=', domain)]
+        )
+        if backend_entry:
+            return backend_entry[0]
 
         next_idmap_range = await self.get_next_idmap_range()
         new_idmap = await self.middleware.call(f'idmap.{idmap_type}.create', {
             'domain': {'idmap_domain_name': domain},
             'range_low': next_idmap_range[0],
-            'range_high': next_idmap_range[1] 
+            'range_high': next_idmap_range[1]
         })
         return new_idmap
+
+    @private
+    async def idmap_domain_choices(self):
+        choices = []
+        domains = await self.middleware.call('idmap.domain.query')
+        for domain in domains:
+            choices.append(domain['name'])
+
+        return choices 
 
     @private
     async def get_idmap_legacy(self, obj_type, idmap_type):
         """
         This is compatibility shim for legacy idmap code
         utils.get_idmap()
+        obj_type is dstype.
+        idmap_type is the idmap backend
+        If the we don't have a corresponding entry in the idmap backend table,
+        automatically generate one.
         """
         if idmap_type in ['adex', 'hash']:
             raise CallError(f'idmap backend {idmap_type} has been deprecated')
@@ -66,58 +94,81 @@ class IdmapService(Service):
         if ds_type not in ['DS_TYPE_ACTIVEDIRECTORY', 'DS_TYPE_LDAP', 'DS_TYPE_DEFAULT_DOMAIN']:
             raise CallError(f'idmap backends are not supported for {ds_type}')
 
-        idmap_results = await self.middleware.call(f'idmap.{idmap_type}.query')
-        for entry in idmap_results:
-            if entry['domain'] and entry['domain']['idmap_domain_name'] == ds_type:
-                return {
-                    'idmap_id': entry['id'],
-                    'idmap_type': idmap_type,
-                    'idmap_name': idmap_type 
-                }
-
+        res = await self.middleware.call(f'idmap.{idmap_type}.query', [('domain', '=', ds_type)])
+        if res:
+            return {
+                'idmap_id': res[0]['id'],
+                'idmap_type': idmap_type,
+                'idmap_name': idmap_type 
+            }
         next_idmap_range = await self.get_next_idmap_range()
         new_idmap = await self.middleware.call(f'idmap.{idmap_type}.create', {
             'domain': {'id': obj_type},
             'range_low': next_idmap_range[0],
-            'range_high': next_idmap_range[1] 
+            'range_high': next_idmap_range[1]
         })
-
-        return {'idmap_id': new_idmap['id'], 'idmap_type': idmap_type, 'idmap_name': idmap_type} 
+        return {'idmap_id': new_idmap['id'], 'idmap_type': idmap_type, 'idmap_name': idmap_type}
 
     @private
     async def common_backend_compress(self, data):
-        domain_info = await self.middleware.call('idmap.domain.query')
         if data['domain']['id']:
             data['domain'] = data['domain']['id']
         elif data['domain']['idmap_domain_name']:
-            d = list(filter(lambda x: x['name'] == data['domain']['idmap_domain_name'].upper(), domain_info))
-            data['domain'] = d['id']
+            domain_info = await self.middleware.call(
+                'idmap.domain.query', [('domain', '=', data['domain']['idmap_domain'])]
+            )
+            data['domain'] = domain_info[0]['id']
         else:
-            d = list(filter(lambda x: x['name'] == data['domain']['idmap_domain__dns_domain_name'].upper(), domain_info))
-            data['domain'] = d['id']
+            domain_info = await self.middleware.call(
+                'idmap.domain.query', [('domain', '=', data['domain']['idmap_domain__dns_domain_name'].upper())]
+            )
+            data['domain'] = domain_info[0]['id']
 
-        return data 
-
+        return data
 
     @private
+    async def _common_validate(self, data):
+        """
+        Common validation checks for all idmap backends.
+        """
+        verrors = ValidationErrors()
+        if data['range_high'] < data['range_low']:
+            verrors.add(f'idmap_{idmap_type}.update', 'Idmap high range must be greater than idmap low range')
+            return verrors
+            
+        configured_domains = await self.get_configured_idmap_domains()
+        new_range = range(data['range_low'], data['range_high'])
+        for i in configured_domains:
+            if i['domain']['idmap_domain_name'] == data['domain']['idmap_domain_name']:
+                continue
+            existing_range = range(i['backend_data']['range_low'], i['backend_data']['range_high'])
+            if range(max(existing_range[0], new_range[0]), min(existing_range[-1], new_range[-1])+1):
+                verrors.add(
+                    f'idmap_range', 
+                    f'new idmap range conflicts with existing range for domain [{i["domain"]["idmap_domain_name"]}]'
+                )
+
+        return verrors
+        
+
+    @accepts()
     async def get_configured_idmap_domains(self):
         """
         Inner join domain-to-backend table with its corresponding idmap backend
-        table on the configured short-form domain name. Sorted by idmap high range. 
+        table on the configured short-form domain name. Sorted by idmap high range.
         """
         domains =  await self.middleware.call('idmap.domaintobackend.query')
         configured_domains = []
         for domain in domains:
-            b = await self.middleware.call(f'idmap.{domain["idmap_backend"]}.query')
+            b = await self.middleware.call(
+                f'idmap.{domain["idmap_backend"]}.query',
+                [('domain', '=', domain['domain']['idmap_domain_name'])]
+            )
             for entry in b:
-                if not entry['domain']:
-                    continue 
-                if entry['domain']['idmap_domain_name'] == domain['domain']['idmap_domain_name']:
-                    entry.pop('domain')
-                    entry.pop('id')
-                    domain.update({'backend_data': entry})
-                    configured_domains.append(domain)
-                    break
+                entry.pop('domain')
+                entry.pop('id')
+                domain.update({'backend_data': entry})
+                configured_domains.append(domain)
 
         return sorted(configured_domains, key=lambda domain: domain['backend_data']['range_high'])
 
@@ -126,13 +177,14 @@ class IdmapService(Service):
         """
         Increment next high range by 100,000,000 ids. This number has
         to accomodate the highest available rid value for a domain.
+        Configured idmap ranges _must_ not overlap.
         """
         sorted_idmaps = await self.get_configured_idmap_domains()
         low_range = sorted_idmaps[-1]['backend_data']['range_high'] + 1
         high_range = sorted_idmaps[-1]['backend_data']['range_high'] + 100000000
         return (low_range, high_range)
 
-    @private
+    @accepts()
     async def clear_idmap_cache(self):
         await self.middleware.call('service.stop', 'smb')
         os.remove('/var/db/samba4/winbindd_cache.tdb')
@@ -141,6 +193,17 @@ class IdmapService(Service):
         if gencache_flush.returncode != 0:
             raise CallError(f'Attempt to flush gencache failed with error: {gencache_flush.stderr.decode().strip()}')
 
+    @private
+    async def autodiscover_trusted_domains(self):
+        smb = await self.middleware.call('smb.config')
+        wbinfo = await run(['/usr/local/bin/wbinfo', '-m', '--verbose'], check=False)
+        if wbinfo.returncode != 0:
+            raise CallError(f'wbinfo -m failed with error: {wbinfo.stderr.decode().strip()}')
+
+        for entry in wbinfo.stdout.decode().splitlines():
+            c = entry.split()
+            if len(c) == 6 and c[0] != smb['workgroup']:
+                await self.idmap.domain.create({'name': c[0], 'dns_domain_name': c[1]})
 
 class IdmapDomainService(CRUDService):
     class Config:
@@ -202,7 +265,7 @@ class IdmapDomainService(CRUDService):
     async def do_delete(self, id):
         if id <= 5:
             entry = await self._get_instance(id)
-            raise CallError(f'Deletion of system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM) 
+            raise CallError(f'Deletion of system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
     @accepts(Int("id"))
@@ -213,7 +276,7 @@ class IdmapDomainService(CRUDService):
     async def _validate(self, data):
         verrors = ValidationErrors()
         if data['id'] <= dstype['DS_TYPE_DEFAULT_DOMAIN'].value:
-            verrors.append(f'Modification of system idmap domain [{data["name"]}] is not permitted.') 
+            verrors.append(f'Modification of system idmap domain [{data["name"]}] is not permitted.')
         return verrors
 
 
@@ -263,7 +326,7 @@ class IdmapDomainBackendService(CRUDService):
             new_idmap = await self.middleware.call(f'idmap.{data["idmap_backend"]}.create', {
                 'domain': {'id': data['domain']['id']},
                 'range_low': next_idmap_range[0],
-                'range_high': next_idmap_range[1] 
+                'range_high': next_idmap_range[1]
             })
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
@@ -304,7 +367,7 @@ class IdmapDomainBackendService(CRUDService):
     async def do_delete(self, id):
         entry = await self._get_instance(id)
         if entry['domain']['id'] <= dstype['DS_TYPE_DEFAULT_DOMAIN'].value: 
-            raise CallError(f'Deletion of mapping for [{entry["domain"]["idmap_domain_name"]}] is not permitted.', errno.EPERM) 
+            raise CallError(f'Deletion of mapping for [{entry["domain"]["idmap_domain_name"]}] is not permitted.', errno.EPERM)
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
     @accepts(Int("id"))
@@ -332,8 +395,8 @@ class IdmapADService(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
             Str('schema_mode'),
             Bool('unix_primary_group'),
             Bool('unix_nss_info'),
@@ -342,11 +405,11 @@ class IdmapADService(CRUDService):
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_ad_create', await self._validate(data))
+        verrors.add_child('idmap_ad_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -368,8 +431,7 @@ class IdmapADService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-
-        verrors.add_child('idmap_ad_update', await self._validate(new))
+        verrors.add_child('idmap_ad_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors
@@ -413,8 +475,8 @@ class IdmapAutoridService(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
             Int('rangesize'),
             Bool('readonly'),
             Bool('ignore_builtin'),
@@ -423,11 +485,11 @@ class IdmapAutoridService(CRUDService):
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_autorid_create', await self._validate(data))
+        verrors.add_child('idmap_autorid_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -449,7 +511,7 @@ class IdmapAutoridService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rid_update', await self._validate(new))
+        verrors.add_child('idmap_autorid_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors
@@ -493,17 +555,22 @@ class IdmapLDAPService(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Str('base_dn', required=True),
+            Str('user_dn', required=True),
+            Str('url', required=True),
+            Str('ssl', default='off', enum=['off', 'on', 'start_tls']),
+            Str('certificate'),
             register=True
         )
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_ldap_create', await self._validate(data))
+        verrors.add_child('idmap_ldap_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -525,7 +592,7 @@ class IdmapLDAPService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_ldap_update', await self._validate(new))
+        verrors.add_child('idmap_ldap_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors
@@ -569,18 +636,18 @@ class IdmapNSSService(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
+            Int('range_low', required=True),
+            Int('range_high', required=True),
             register=True
         )
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_ldap_create', await self._validate(data))
+        verrors.add_child('idmap_nss_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -602,7 +669,7 @@ class IdmapNSSService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_nss_update', await self._validate(new))
+        verrors.add_child('idmap_nss_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors
@@ -631,6 +698,11 @@ class IdmapNSSService(CRUDService):
 
 
 class IdmapRFC2307Service(CRUDService):
+    """
+    In the rfc2307 backend range acts as a filter. Anything falling outside of it is ignored.
+    If no user_dn is specified, then an anonymous bind is performed.
+    ldap_url is only required when using a standalone server.
+    """
     class Config:
         datastore = 'directoryservice.idmap_rfc2307'
         datastore_prefix = 'idmap_rfc2307_'
@@ -646,9 +718,9 @@ class IdmapRFC2307Service(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
-            Str('ldap_server'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Str('ldap_server', required=True, enum=['ad', 'stand-alone']),
             Str('bind_path_user'),
             Str('bind_path_group'),
             Str('user_cn'),
@@ -658,18 +730,18 @@ class IdmapRFC2307Service(CRUDService):
             Str('ldap_user_dn'),
             Str('ldap_user_dn_password'),
             Str('ldap_realm'),
-            Any('ssl'),
-            Any('certificate'),
+            Str('ssl', default='off', enum=['off', 'on', 'start_tls']),
+            Str('certificate'),
             register=True
         )
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rfc2307_create', await self._validate(data))
+        verrors.add_child('idmap_rfc2307_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -691,7 +763,7 @@ class IdmapRFC2307Service(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rfc2307_update', await self._validate(new))
+        verrors.add_child('idmap_rfc2307_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors
@@ -735,18 +807,18 @@ class IdmapRIDService(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
             register=True
         )
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_ldap_create', await self._validate(data))
+        verrors.add_child('idmap_rid_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -768,7 +840,7 @@ class IdmapRIDService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rid_update', await self._validate(new))
+        verrors.add_child('idmap_rid_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors
@@ -812,18 +884,18 @@ class IdmapScriptService(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
             register=True
         )
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb_create', await self._validate(data))
+        verrors.add_child('idmap_script_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -845,7 +917,7 @@ class IdmapScriptService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_script_update', await self._validate(new))
+        verrors.add_child('idmap_script_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors
@@ -889,18 +961,18 @@ class IdmapTDBService(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
             register=True
         )
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb_create', await self._validate(data))
+        verrors.add_child('idmap_tdb_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -922,7 +994,7 @@ class IdmapTDBService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb_update', await self._validate(new))
+        verrors.add_child('idmap_tdb_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors
@@ -966,18 +1038,18 @@ class IdmapTDB2Service(CRUDService):
                  Str('idmap_domain_name'),
                  Str('idmap_domain_dns_domain_name'),
             ),
-            Int('range_low'),
-            Int('range_high'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
             register=True
         )
     )
     async def do_create(self, data):
         verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb2_create', await self._validate(data))
+        verrors.add_child('idmap_tdb2_create', await self.middleware.call('idmap._common_validate', data))
         if verrors:
             raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data) 
+        data = await self.middleware.call('idmap.common_backend_compress', data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -999,7 +1071,7 @@ class IdmapTDB2Service(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb2_update', await self._validate(new))
+        verrors.add_child('idmap_tdb2_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors

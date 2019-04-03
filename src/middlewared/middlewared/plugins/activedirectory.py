@@ -1,16 +1,20 @@
 import asyncio
+import datetime
 import enum
 import errno
+import grp
 import ipaddr
 import ldap
 import ldap.sasl
+import ntplib
+import pwd
 import socket
 import subprocess
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService
+from middlewared.service import job, private, ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 
@@ -34,8 +38,8 @@ class DSStatus(enum.Enum):
 
 class neterr(enum.Enum):
     JOINED = 1 
-    NOTJOINED = 2    
-    FAULT = 3 
+    NOTJOINED = 2
+    FAULT = 3
 
 
 class SRV(enum.Enum):
@@ -77,7 +81,7 @@ class ActiveDirectory_DNS(object):
     def _get_SRV_records(self, host, dns_timeout):
         """
         Set resolver timeout to 1/3 of the lifetime. The timeout defines
-        how long to wait before moving on to the next nameserver in resolv.conf 
+        how long to wait before moving on to the next nameserver in resolv.conf
         """
         srv_records = []
 
@@ -85,7 +89,7 @@ class ActiveDirectory_DNS(object):
             return srv_records
 
         r = resolver.Resolver()
-        r.lifetime = dns_timeout 
+        r.lifetime = dns_timeout
         r.timeout = r.lifetime / 3
 
         try:
@@ -130,7 +134,7 @@ class ActiveDirectory_DNS(object):
         if not self.ad['domainname']:
             return servers 
 
-        if self.ad['site']:
+        if self.ad['site'] and self.ad['site'] != 'Default-First-Site-Name':
             if 'msdcs' in srv_prefix.value: 
                 parts = srv_prefix.value.split('.')
                 srv = '.'.join([parts[0],parts[1]])
@@ -234,13 +238,15 @@ class ActiveDirectory_LDAP(object):
             return True
 
         if self.hosts:
+            saved_simple_error = None
+            saved_gssapi_error = None
             for server in self.hosts:
                 proto = 'ldaps' if SSL(self.ad['ssl']) == SSL.USESSL else 'ldap' 
-                uri = f"{proto}://{server['host']}:{server['port']}" 
+                uri = f"{proto}://{server['host']}:{server['port']}"
                 try:
                     self._handle = ldap.initialize(uri)
                 except Exception as e:
-                    self.logger.debug(f'Failed to initialize ldap connection to [{uri}]. Moving to next server.') 
+                    self.logger.debug(f'Failed to initialize ldap connection to [{uri}]. Moving to next server.')
                     continue
 
                 if self.ad['verbose_logging']:
@@ -273,11 +279,13 @@ class ActiveDirectory_LDAP(object):
 
                 if self.ad['kerberos_principal']:
                     try:
-                        res = self._handle.sasl_gssapi_bind_s()
+                        self._handle.sasl_gssapi_bind_s()
                         if self.ad['verbose_logging']:
-                            self.logger.debug(f'Successfully bound to [{uri}] using SASL GSSAPI.') 
+                            self.logger.debug(f'Successfully bound to [{uri}] using SASL GSSAPI.')
+                        res = True
                         break
                     except Exception as e:
+                        saved_gssapi_error = e
                         self.logger.debug(f'SASL GSSAPI bind failed: {e}. Attempting simple bind')
 
                 bindname = f"{self.ad['bindname']}@{self.ad['domainname']}"
@@ -285,14 +293,20 @@ class ActiveDirectory_LDAP(object):
                     res = self._handle.simple_bind_s(bindname, self.ad['bindpw'])
                     if self.ad['verbose_logging']:
                         self.logger.debug(f'Successfully bound to [{uri}] using [{bindname}]')
-                    break 
+                    break
                 except Exception as e:
                     self.logger.debug(f'Failed to bind to [{uri}] using [{bindname}]')
+                    saved_simple_error = e
                     continue
 
 
+            self.logger.debug(res)
             if res:
                 self._isopen = True
+            elif saved_gssapi_error:
+                raise CallError(saved_gssapi_error)
+            elif saved_simple_error:
+                raise CallError(saved_simple_error)
 
         return (self._isopen is True)
 
@@ -548,23 +562,33 @@ class ActiveDirectoryService(ConfigService):
 
     @accepts(Dict(
         'activedirectory_update',
-        Str('domainname'),
+        Str('domainname', required=True),
         Str('bindname'),
         Str('bindpw'),
-        Str('ssl'),
+        Str('ssl', default='off', enum=['off', 'on', 'start_tls']),
         Dict('certificate'),
         Bool('verbose_logging'),
         Bool('unix_extensions'),
         Bool('use_default_domain'),
+        Bool('allow_trusted_doms'),
+        Bool('allow_dns_updates'),
         Bool('disable_freenas_cache'),
         Str('site'),
-        Any('kerberos_realm'),
+        Dict(
+            'kerberos_realm',
+            Int('id'),
+            Str('krb_realm'),
+            List('krb_kdc'),
+            List('krb_admin_server'),
+            List('krb_kpasswd_server'),
+        ),
         Str('kerberos_principal'),
         Int('timeout'),
         Int('dns_timeout'),
-        Str('idmap_backend'),
-        Str('nss_info'),
-        Str('ldap_sasl_wrapping'),
+        Str('idmap_backend', default='rid', enum=['ad', 'autorid', 'fruit', 'ldap', 'nss', 'rfc2307', 'rid', 'script']),
+        Str('nss_info', default='', enum=['sfu', 'sfu20', 'rfc2307']),
+        Str('ldap_sasl_wrapping', default='plain', enum=['plain', 'sign', 'seal']),
+        Str('createcomputer'),
         Bool('enable'),
         update=True
     ))
@@ -580,6 +604,37 @@ class ActiveDirectoryService(ConfigService):
             new,
             {'prefix': 'ad_'}
         )
+        verrors = ValidationErrors()
+        if not new["bindname"] and not new["kerberos_principal"]:
+            verrors.add(f"{schema}.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
+
+        if data['bindpw'] and data['enable'] and not old['enable']: 
+            try:
+                await self.validate_credentials()
+            except:
+                verrors.add(f"{schema}.bindpw", "Failed to validate bind credentials")
+            await self.validate_domain()
+
+        if verrors:
+            raise verrors
+
+        start = False
+        stop = False
+
+        if not old['enable']:
+            if new['enable']:
+                start = True
+        else:
+            if not new['enable']:
+                stop = True
+
+        if stop:
+            await self.stop()
+        if start:
+            await self.start()
+
+        if not stop and not start and new['enable']:
+            await self.middleware.call('service.restart', 'cifs')
 
         return await self.config()
 
@@ -627,25 +682,41 @@ class ActiveDirectoryService(ConfigService):
         """
 
         if not ad['kerberos_realm']:
-            krb_realms = await self.middleware.call('kerberos.realm.query')
-            realm = list(filter(lambda x: x['realm'] == ad['domainname'].upper(), krb_realms))
+            realms = await self.middleware.call('kerberos.realm.query', [('realm', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
 
             if realm:
-                await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_kerberos_realm': realm[0]['id']})
+                await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_kerberos_realm': realms[0]['id']})
             else:
-                await self.middleware.call( 'datastore.insert', 'directoryservice.kerberosrealm', {'krb_realm': ad['domainname'].upper()}, )
+                await self.middleware.call('datastore.insert', 'directoryservice.kerberosrealm', {'krb_realm': ad['domainname'].upper()})
 
         await self.middleware.call('kerberos.start')
 
         """
         'workgroup' is the 'pre-Windows 2000 domain name'. It must be set to the nETBIOSName value in Active Directory.
         This must be properly configured in order for Samba to work correctly as an AD member server.
-        'site' is the ad site of which the NAS is a member. This is not required, and in many cases will not be populated
-        because the domain administrator has not conifgured Sites and Subnets in the AD environment. 
+        'site' is the ad site of which the NAS is a member. If sites and subnets are unconfigured this will
+        default to 'Default-First-Site-Name'.
         """
 
         if not ad['site']:
-            await asyncio.wait_for(self.get_site(), 10)
+            new_site = await asyncio.wait_for(self.get_site(), 10)
+            if new_site != 'Default-First-Site-Name':
+                ad = await self.config()
+                try:
+                    site_indexed_kerberos_data = await asyncio.wait_for(self.get_kerberos_servers(), 10)
+                except asyncio.TimeoutError:
+                    self.logger.debug('Operation to query kerberos servers for AD site timed out')
+                    site_indexed_kerberos_data = None
+ 
+                if site_indexed_kerberos_data:
+                    await self.middleware.call(
+                        'datastore.update', 
+                        'directoryservice.kerberosrealm', 
+                        ad['kerberos_realm']['id'],
+                        kerberos_data
+                    )
+                    await self.middleware.call('etc.generate', 'kerberos')
+
         if smb['workgroup'] == 'WORKGROUP':
             smb['workgroup'] = await asyncio.wait_for(self.get_netbios_domain_name(), 10)
 
@@ -667,12 +738,15 @@ class ActiveDirectoryService(ConfigService):
                 self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
                 await self.update({'bindpw': '', 'kerberos_principal': f'{smb["netbiosname"]}$@{ad["domainname"]}'})
             ret = neterr.JOINED
+            if ad['allow_trusted_doms']:
+                await self.middleware.call('idmap.autodiscover_trusted_domains')
 
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
             await self._set_state(DSStatus['HEALTHY'])
+            await self.get_ad_cache()
         else:
             await self._set_state(DSStatus['FAULTED'])
 
@@ -687,21 +761,47 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
-        await self.middleware.call('cache.pop', 'AD_State') 
+        await self.middleware.call('cache.pop', 'AD_State')
 
     @private
-    def validate_credentials(self):
+    async def validate_credentials(self):
         ret = False
-        ad = self.middleware.call_sync('activedirectory.config')
+        ad = await self.config()
         with ActiveDirectory_DNS(conf = ad, logger = self.logger) as AD_DNS:
             dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
         with ActiveDirectory_LDAP(ad_conf = ad, logger = self.logger, hosts = dcs) as AD_LDAP:
-            ret = AD_LDAP.validate_credentials() 
+            ret = AD_LDAP.validate_credentials()
         
         return ret
+
+    @accepts()
+    async def check_clockskew(self):
+        """
+        Uses DNS srv records to determine server with PDC emulator FSMO role and
+        perform NTP query to determine current clockskew. Raises exception if
+        clockskew exceeds 3 minutes, otherwise returns dict with hostname of
+        PDC emulator, time as reported from PDC emulator, and time difference
+        between the PDC emulator and the NAS.
+        """
+        permitted_clockskew = datetime.timedelta(minutes=3)
+        nas_time = datetime.datetime.now()
+        ad = await self.config()
+        with ActiveDirectory_DNS(conf = ad, logger = self.logger) as AD_DNS:
+            pdc = AD_DNS.get_n_working_servers(SRV['PDC'], 1) 
+        c = ntplib.NTPClient()
+        response = c.request(pdc[0]['host'])
+        ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
+        clockskew = abs(ntp_time - nas_time)
+        if clockskew > permitted_clockskew:
+            raise CallError(f'Clockskew between {pdc[0]["host"]} and NAS exceeds 3 minutes') 
+        return {'pdc': str(pdc[0]['host']), 'timestamp': str(ntp_time), 'clockskew': str(clockskew)}
+
+    @private
+    async def validate_domain(self):
+        await asyncio.wait_for(self.check_clockskew(), 10)
 
     @private
     async def _get_cached_srv_records(self, srv=SRV['DOMAINCONTROLLER']):
@@ -711,10 +811,10 @@ class ActiveDirectoryService(ConfigService):
         """
         servers = []
         if await self.middleware.call('cache.has_key', f'SRVCACHE_{srv.name}_SITE'):
-            servers = await self.middleware.call('cache.get', f'SRVCACHE_{srv.name}_SITE') 
+            servers = await self.middleware.call('cache.get', f'SRVCACHE_{srv.name}_SITE')
 
         if not servers and await self.middleware.call('cache.has_key', f'SRVCACHE_{srv.name}'):
-            servers = await self.middleware.call('cache.get', f'SRVCACHE_{srv.name}') 
+            servers = await self.middleware.call('cache.get', f'SRVCACHE_{srv.name}')
 
         return servers
 
@@ -725,15 +825,21 @@ class ActiveDirectoryService(ConfigService):
         """
         if not srv:
             raise CallError('srv record type not specified', errno.EINVAL)
-        
+
         if site:
-            await self.middleware.call('cache.put', f'SRVCACHE_{srv.name}_SITE', results, 86400) 
+            await self.middleware.call('cache.put', f'SRVCACHE_{srv.name}_SITE', results, 86400)
         else:
-            await self.middleware.call('cache.put', f'SRVCACHE_{srv.name}', results, 86400) 
+            await self.middleware.call('cache.put', f'SRVCACHE_{srv.name}', results, 86400)
         return True
 
-    @private
+    @accepts()
     async def started(self):
+        """
+        Issue a no-effect command to our DC. This checks if our secure channel connection to our
+        domain controller is still alive. It has much less impact than wbinfo -t.
+        Default winbind request timeout is 60 seconds, and can be adjusted by the smb4.conf parameter
+        'winbind request timeout ='
+        """
         ad = await self.config()
         netlogon_ping = await run(['wbinfo', '-P'], check=False)
         if netlogon_ping.returncode != 0:
@@ -747,7 +853,7 @@ class ActiveDirectoryService(ConfigService):
         ad = await self.config()
         netads = await run([
             'net', '-k', '-U', ad['bindname'],
-            '-d', '5', 'ads', 'join', ad['domainname'], 
+            '-d', '5', 'ads', 'join', ad['domainname'],
             ],
             check = False
         ) 
@@ -759,23 +865,15 @@ class ActiveDirectoryService(ConfigService):
     @private
     async def _net_ads_testjoin(self, workgroup):
         ad = await self.config()
-        if ad['kerberos_principal']:
-            netads = await run([
-                'net', '-k', '-w', workgroup,
-                '-d', '5', 'ads', 'testjoin', ad['domainname'], 
-                ],
-                check = False
-            )
-        else:
-            netads = await run([
-                'net', '-k', '-w', workgroup,
-                '-d', '5', 'ads', 'testjoin', ad['domainname'], 
-                ],
-                check = False
-            ) 
+        netads = await run([
+            'net', '-k', '-w', workgroup,
+            '-d', '5', 'ads', 'testjoin', ad['domainname'],
+            ],
+            check = False
+        )
         if netads.returncode != 0:
              errout = netads.stderr.decode().strip()
-             self.logger.debug(f'net ads testjoin failed with error: [{errout}]') 
+             self.logger.debug(f'net ads testjoin failed with error: [{errout}]')
              if '0xfffffff6' in errout: 
                  return neterr.NOTJOINED
              else:
@@ -807,15 +905,37 @@ class ActiveDirectoryService(ConfigService):
         if ret and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the short form of the AD domain [{ret}]')
             await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
-            
-        return ret 
+
+        return ret
+
+    @private
+    async def get_kerberos_servers(self):
+        """
+        This returns at most 3 kerberos servers located in our AD site. This is to optimize
+        kerberos configuration for locations where kerberos servers may span the globe and
+        have equal DNS weighting. Since a single kerberos server may represent an unacceptable
+        single point of failure, fall back to relying on normal DNS queries in this case. 
+        """
+        ad = await self.config()
+        with ActiveDirectory_DNS(conf = ad, logger = self.logger) as AD_DNS:
+            krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3) 
+            krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3) 
+            krb_kpasswd_server = AD_DNS.get_n_working_servers(SRV['KPASSWD'], 3) 
+        kdc = [i['host'] for i in krb_kdc]
+        admin_server = [i['host'] for i in krb_admin_server]
+        kpasswd = [i['host'] for i in krb_kpasswd_server] 
+        for servers in [kdc, admin_server, kpasswd]:
+            if len(servers) == 1:
+                return None
+
+        return {'krb_kdc': kdc, 'krb_admin_server': admin_server, 'krb_kpasswd_server': kpasswd}
 
     @private
     async def get_site(self):
         """
         First, use DNS to identify domain controllers
         Then, find a domain controller that is listening for LDAP connection if this information is not cached.
-        Then, perform an LDAP query to determine our AD site 
+        Then, perform an LDAP query to determine our AD site
         """
         ad = await self.middleware.call('activedirectory.config')
         i = await self.middleware.call('interfaces.query')
@@ -825,22 +945,197 @@ class ActiveDirectoryService(ConfigService):
 
         if not dcs:
             with ActiveDirectory_DNS(conf = ad, logger=self.logger) as AD_DNS:
-                dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3) 
+                dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
         if set_new_cache:
-            await self._set_cached_srv_records(SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs) 
+            await self._set_cached_srv_records(SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
 
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts = dcs, interfaces = i) as AD_LDAP:
-            ret = AD_LDAP.locate_site()
+            site = AD_LDAP.locate_site()
 
-        if ret and not ad['site']:
+        if not site:
+            site = 'Default-First-Site-Name' 
+
+        if not ad['site']:
             await self.middleware.call(
                 'datastore.update',
-                'directoryservice.activedirectory', 
+                'directoryservice.activedirectory',
                 ad['id'], 
-                {'ad_site': ret}
+                {'ad_site': site} 
         )
 
-        return ret 
+        return site 
+
+    @private
+    @job(lock='fill_ad_cache')
+    async def fill_ad_cache(self, force=False):
+        """
+        Fill the FreeNAS/TrueNAS AD user and group cache from the winbindd cache.
+        Refuse to fill cache if it has been filled within the last 24 hours unless
+        'force' flag is set.
+        """
+        if await self.middleware.call('cache.has_key', 'ad_cache') and not force:
+            raise CallError('AD cache already exists. Refusing to generate cache.')
+        ad = await self.config()
+        smb = await self.middleware.call('smb.config')
+        if not ad['disable_freenas_cache']:
+            """
+            These calls populate the winbindd cache
+            """
+            pwd.getpwall()
+            grp.getgrall()
+        netlist = await run(['net', 'cache', 'list'], check=False)
+        if netlist.returncode != 0:
+            raise CallError(f'Winbind cache dump failed with error: {netlist.stderr.decode().strip()}')
+        known_domains = []
+        local_users = await self.middleware.call('user.query')
+        local_groups = await self.middleware.call('group.query')
+        cache_data = {} 
+        configured_domains = await self.middleware.call('idmap.get_configured_idmap_domains')
+        for d in configured_domains:
+            if d['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
+                known_domains.append({
+                    'domain': smb['workgroup'],
+                    'low_id': d['backend_data']['range_low'],
+                    'high_id': d['backend_data']['range_high'],
+                })
+                cache_data.update({smb['workgroup']: {'users': [], 'groups': []}})
+            elif d['domain']['idmap_domain_name'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
+                known_domains.append({
+                    'domain': d['domain']['idmap_domain_name'],
+                    'low_id': d['backend_data']['range_low'], 
+                    'high_id': d['backend_data']['range_high'],
+                })
+                cache_data.update({d['domain']['idmap_domain_name']: {'users':[], 'groups':[]}})
+
+        for line in netlist.stdout.decode().splitlines():
+            if 'UID2SID' in line:
+                cached_uid = ((line.split())[1].split('/'))[2]
+                """
+                Do not cache local users. This is to avoid problems where a local user
+                may enter into the id range allotted to AD users.
+                """
+                is_local_user = any(filter(lambda x: x['uid'] == int(cached_uid), local_users))
+                if is_local_user:
+                    continue
+
+                for d in known_domains:
+                    if int(cached_uid) in range(d['low_id'], d['high_id']):
+                        """
+                        Samba will generate UID and GID cache entries when idmap backend
+                        supports id_type_both.
+                        """
+                        try:
+                            user_data = pwd.getpwuid(int(cached_uid))
+                            cache_data[d['domain']]['users'].append(user_data)
+                            break
+                        except Exception:
+                            break
+
+            if 'GID2SID' in line: 
+                cached_gid = ((line.split())[1].split('/'))[2]
+                is_local_group = any(filter(lambda x: x['gid'] == int(cached_gid), local_groups))
+                if is_local_group:
+                    continue
+
+                for d in known_domains:
+                    if int(cached_gid) in range(d['low_id'], d['high_id']):
+                        """
+                        Samba will generate UID and GID cache entries when idmap backend
+                        supports id_type_both. 
+                        """
+                        try:
+                            group_data = grp.getgrgid(int(cached_gid))
+                            cache_data[d['domain']]['groups'].append(group_data)
+                            break
+                        except Exception:
+                            break
+
+        await self.middleware.call('cache.put', 'ad_cache', cache_data, 86400)
+
+
+    @accepts()
+    async def get_ad_cache(self):
+        """
+        Returns cached AD user and group information. If proactive caching is enabled
+        then this will contain all AD users and groups, otherwise it contains the
+        users and groups that were present in the winbindd cache when the cache was
+        last filled. The cache expires and is refilled every 24 hours, or can be 
+        manually refreshed by calling fill_ad_cache(True).
+        """
+        if not await self.middleware.call('cache.has_key', 'ad_cache'):
+            await self.fill_ad_cache()
+            self.logger.debug('cache fill is in progress.')
+            return []
+        return await self.middleware.call('cache.get', 'ad_cache')
+
+    @private
+    async def get_ad_usersorgroups_legacy(self, entry_type='users'):
+        """
+        Compatibility shim for old django user cache Returns list of pwd.struct_passwd
+        for users (or corresponding grp structure for groups in the AD domain.
+        """
+        ad_cache = await self.get_ad_cache()
+        if not ad_cache:
+            return []
+
+        ret = []
+        for key, val in ad_cache.items():
+            ret.extend(val[entry_type])
+
+        return ret
+
+    @private
+    async def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
+        try:
+            if entry_type == 'users':
+                return pwd.getpwnam(obj)
+            elif entry_type == 'groups':
+                return grp.getgrnam(obj)
+
+        except Exception:
+            return False
+
+    @private
+    async def get_ad_userorgroup_legacy(self, entry_type='users', obj=None):
+        """
+        Compatibility shim for old django user cache
+        Returns cached pwd.struct_passwd or grp.struct_group for user or group specified.
+        This is called in gui/common/freenasusers.py
+        """
+        self.logger.debug(f'init: entry_type: {entry_type}, obj: {obj}')
+        if entry_type == 'users':
+            if await self.middleware.call('user.query', [('username', '=', obj)]):
+                return None
+        else:
+            if await self.middleware.call('group.query', [('group', '=', obj)]):
+                return None
+
+        ad_cache = await self.get_ad_cache()
+        if not ad_cache:
+            await self.get_uncached_userorgroup_legacy(entry_type, obj)
+
+        ad = await self.config()
+        smb = await self.middleware.call('smb.config')
+
+        if ad['use_default_domain']:
+            if entry_type == 'users':
+                ret = list(filter(lambda x: x.pw_name == obj, ad_cache[smb['workgroup']][entry_type]))
+            elif entry_type == 'groups':
+                ret = list(filter(lambda x: x.gr_name == obj, ad_cache[smb['workgroup']][entry_type]))
+
+        else:
+            domain_obj = None
+            if '\\' not in obj:
+                await self.get_uncached_userorgroup_legacy(entry_type=entry_type, obj=obj)
+            else:
+                domain_obj = obj.split('\\')
+
+            if entry_type == 'users':
+                ret = list(filter(lambda x: x.pw_name == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
+            elif entry_type == 'groups':
+                ret = list(filter(lambda x: x.gr_name == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
+
+        return ret[0]

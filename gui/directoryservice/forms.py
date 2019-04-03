@@ -40,7 +40,6 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
     FreeNAS_LDAP,
 )
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
@@ -199,7 +198,11 @@ class idmap_script_Form(ModelForm):
         ]
 
 
-class ActiveDirectoryForm(ModelForm):
+class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = 'ad_'
+    middleware_attr_schema = 'ad'
+    middleware_plugin = 'activedirectory'
+    is_singletone = True
 
     ad_netbiosname_a = forms.CharField(
         max_length=120,
@@ -217,6 +220,16 @@ class ActiveDirectoryForm(ModelForm):
     ad_kerberos_principal = forms.ChoiceField(
         label=models.ActiveDirectory._meta.get_field('ad_kerberos_principal').verbose_name,
         required=False,
+        choices=choices.KERBEROS_PRINCIPAL_CHOICES(),
+        help_text=_(
+            "Kerberos principal to use for AD-related UI and middleware operations "
+            "Field is populated with principals present in the system keytab. "
+            "During the domain join process a keytab entry is generated for the "
+            "AD Machine Account associated with the NAS. The name for this account "
+            "is the netbios name of the server with a '$' appended to it. Once "
+            "the NAS is joined to active directory, the bind credentials will be "
+            "automatically cleared and all future operations carried out by the AD "
+            "machine account, which has a restricted set of privileges in the AD domain."),
         initial=''
     )
 
@@ -252,70 +265,16 @@ class ActiveDirectoryForm(ModelForm):
             'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
         }
 
-    def __original_save(self):
-        for name in (
-            'ad_domainname',
-            'ad_allow_trusted_doms',
-            'ad_use_default_domain',
-            'ad_unix_extensions',
-            'ad_verbose_logging',
-            'ad_bindname',
-            'ad_bindpw'
-        ):
-            setattr(
-                self.instance,
-                "_original_%s" % name,
-                getattr(self.instance, name)
-            )
-        for name in (
-            'cifs_srv_netbiosname',
-            'cifs_srv_netbiosname_b',
-            'cifs_srv_netbiosalias',
-        ):
-            setattr(
-                self.cifs,
-                "_original_%s" % name,
-                getattr(self.cifs, name),
-            )
-
-    def __original_changed(self):
-        if (
-            self.instance._original_ad_domainname != self.instance.ad_domainname or
-            self.cifs._original_cifs_srv_netbiosname != self.cifs.cifs_srv_netbiosname or
-            self.cifs._original_cifs_srv_netbiosname_b != self.cifs.cifs_srv_netbiosname_b or
-            self.cifs._original_cifs_srv_netbiosalias != self.cifs.cifs_srv_netbiosalias or
-            self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms or
-            self.instance._original_ad_use_default_domain != self.instance.ad_use_default_domain or
-            self.instance._original_ad_unix_extensions != self.instance.ad_unix_extensions or
-            self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging or
-            self.instance._original_ad_bindname != self.instance.ad_bindname or
-            self.instance._original_ad_bindpw != self.instance.ad_bindpw
-        ):
-            return True
-        return False
-
     def __init__(self, *args, **kwargs):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
-        if self.instance.ad_bindpw:
-            self.fields['ad_bindpw'].required = False
-        self.cifs = CIFS.objects.latest('id')
-        self.__original_save()
+        with client as c:
+            smb = c.call('smb.config')
 
-        self.fields["ad_idmap_backend"].widget.attrs["onChange"] = (
-            "activedirectory_idmap_check();"
-        )
+            self.fields['ad_netbiosname_a'].initial = smb['netbiosname']
+            self.fields['ad_netbiosname_b'].initial = smb['netbiosname_b']
+            self.fields['ad_netbiosalias'].initial = ' '.join(smb['netbiosalias'])
 
-        self.fields["ad_enable"].widget.attrs["onChange"] = (
-            "activedirectory_mutex_toggle();"
-        )
-        self.fields['ad_kerberos_principal'].choices = choices.KERBEROS_PRINCIPAL_CHOICES()
-        if self.cifs:
-            self.fields['ad_netbiosname_a'].initial = self.cifs.cifs_srv_netbiosname
-            self.fields['ad_netbiosname_b'].initial = self.cifs.cifs_srv_netbiosname_b
-            self.fields['ad_netbiosalias'].initial = self.cifs.cifs_srv_netbiosalias
-        _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_licensed():
+            if not c.call('system.is_freenas') and c.call('failover.licensed'):
                 from freenasUI.failover.utils import node_label_field
                 node_label_field(
                     _n.failover_node(),
@@ -324,163 +283,41 @@ class ActiveDirectoryForm(ModelForm):
                 )
             else:
                 del self.fields['ad_netbiosname_b']
-        else:
-                del self.fields['ad_netbiosname_b']
 
+    def middleware_clean(self, data):
+        smb_update = {}
+        with client as c:
+            smb = c.call('smb.config')
+            old = c.call('activedirectory.config')
+            if smb['netbiosname'] != data['netbiosname_a']:
+                smb_update.update({'netbiosname': data['netbiosname_a']})
+            if 'netbiosname_b' in data and smb['nebiosname_b'] != data['netbiosname_b']:
+                smb_update.update({'netbiosname_b': data['netbiosname_b']})
+            if smb['netbiosalias'] != data['netbiosalias'].split():
+                smb_update.update({'netbiosalias': data['netbiosalias']})
 
-    def clean_ad_netbiosname_a(self):
-        netbiosname = self.cleaned_data.get("ad_netbiosname_a")
-        try:
-            validate_netbios_name(netbiosname)
-        except Exception as e:
-            raise forms.ValidationError(e)
-        return netbiosname
-
-    def clean_ad_netbiosname_b(self):
-        netbiosname_a = self.cleaned_data.get("ad_netbiosname_a")
-        netbiosname = self.cleaned_data.get("ad_netbiosname_b")
-        if not netbiosname:
-            return netbiosname
-        if netbiosname_a and netbiosname_a == netbiosname:
+        if smb_update:
             with client as c:
-                system_dataset = c.call('systemdataset.config')
-            if system_dataset['path'] == "freenas-boot":
-                raise forms.ValidationError(_(
-                    'When the system dataset is located on the boot device, the same NetBIOS name cannot be used on both controllers.'
-                ))
-        try:
-            validate_netbios_name(netbiosname)
-        except Exception as e:
-            raise forms.ValidationError(e)
-        return netbiosname
+                c.call('datastore.update', 'services.smb', smb['id'], smb_update)
 
-    def clean_ad_netbiosalias(self):
-        netbiosalias = self.cleaned_data.get("ad_netbiosalias")
-        if netbiosalias:
-            try:
-                validate_netbios_name(netbiosalias)
-            except Exception as e:
-                raise forms.ValidationError(e)
-        return netbiosalias
+        for key in ['netbiosname_a', 'netbiosname_b', 'netbiosalias']:
+            if key in data:
+                data.pop(key)
 
-    def clean(self):
-        cdata = self.cleaned_data
-        domain = cdata.get("ad_domainname")
-        bindname = cdata.get("ad_bindname")
-        binddn = "%s@%s" % (bindname, domain)
-        bindpw = cdata.get("ad_bindpw")
-        site = cdata.get("ad_site")
-        netbiosname = cdata.get("ad_netbiosname_a")
-        netbiosname_b = cdata.get("ad_netbiosname_b")
-        ssl = cdata.get("ad_ssl")
-        certificate = cdata["ad_certificate"]
-        ad_kerberos_principal = cdata["ad_kerberos_principal"]
-        if '---' in ad_kerberos_principal:
-            cdata['ad_kerberos_principal'] = '' 
-            ad_kerberos_principal = '' 
+        for key in ['certificate', 'nss_info']:
+            if not data[key]:
+                data.pop(key) 
 
-        workgroup = None
-
-        if certificate:
+        if data['enable'] and not old['enable']:
             with client as c:
-                certificate = c.call(
-                    'certificate.query',
-                    [['id', '=', certificate.id]],
-                    {'get': True}
-                )
-            certificate = certificate['certificate_path']
-
-        args = {
-            'domain': domain,
-            'site': site,
-            'ssl': ssl,
-            'certfile': certificate
-        }
-
-        if not cdata.get("ad_bindpw"):
-            bindpw = self.instance.ad_bindpw
-            cdata['ad_bindpw'] = bindpw
-
-        if cdata.get("ad_enable") is False:
-            return cdata
-
-        if not ad_kerberos_principal:
-            if not bindname:
-                raise forms.ValidationError("No domain account name specified")
-            if not bindpw:
-                raise forms.ValidationError("No domain account password specified")
-
-            with client as c:
-                ret = c.call('activedirectory.validate_credentials')
-                if not ret:
-                    raise forms.ValidationError("Failed to validate credentials")
-
-            args['binddn'] = binddn
-            args['bindpw'] = bindpw
-
-        else:
-            args['keytab_principal'] = ad_kerberos_principal
-            args['keytab_file'] = '/etc/krb5.keytab'
-
-        if ssl in ("off", None):
-            return cdata
-
-        if not certificate:
-            raise forms.ValidationError(
-                "SSL/TLS specified without certificate")
-
-        return cdata
-
-    def save(self):
-        enable = self.cleaned_data.get("ad_enable")
-        fqdn = self.cleaned_data.get("ad_domainname")
-
-        started = notifier().started(
-            "activedirectory",
-            timeout=_fs().directoryservice.activedirectory.timeout.started
-        )
-        obj = super(ActiveDirectoryForm, self).save()
-
-        self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ad_netbiosname_a")
-        self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ad_netbiosname_b")
-        self.cifs.cifs_srv_netbiosalias = self.cleaned_data.get("ad_netbiosalias")
-        self.cifs.save()
-
-        if enable:
-            if started is True:
-                timeout = _fs().directoryservice.activedirectory.timeout.restart
                 try:
-                    started = notifier().restart("activedirectory", timeout=timeout)
+                    c.call('activedirectory.validate_credentials')
+                    c.call('activedirectory.validate_domain')
                 except Exception as e:
-                    raise MiddlewareError(
-                        _("Active Directory restart timed out after %d seconds." % timeout),
-                    )
+                    raise MiddlewareError(e)
 
-            if started is False:
-                timeout = _fs().directoryservice.activedirectory.timeout.start
-                try:
-                    started = notifier().start("activedirectory", timeout=timeout)
-                except Exception as e:
-                    raise MiddlewareError(
-                        _("Active Directory start timed out after %d seconds." % timeout),
-                    )
-            if started is False:
-                self.instance.ad_enable = False
-                super(ActiveDirectoryForm, self).save()
-                raise MiddlewareError(
-                    _("Active Directory failed to reload."),
-                )
-        else:
-            if started is True:
-                timeout = _fs().directoryservice.activedirectory.timeout.stop
-                try:
-                    started = notifier().stop("activedirectory", timeout=timeout)
-                except Exception as e:
-                    raise MiddlewareError(
-                        _("Active Directory stop timed out after %d seconds." % timeout),
-                    )
-
-        return obj
+        data['kerberos_realm'] = {'id': data['kerberos_realm']}
+        return data
 
 
 class NISForm(MiddlewareModelForm, ModelForm):

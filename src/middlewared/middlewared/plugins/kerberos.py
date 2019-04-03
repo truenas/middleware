@@ -19,7 +19,7 @@ class KerberosService(ConfigService):
     :stop:   - performs kdestroy and clears cached klist output
     :status: - returns false if there is no kerberos tgt or if it is expired 'klist -t'
     :renew:  - compares current time with expiration timestamp in tgt. Issues 'kinit -R' if needed.
-               uses cached klist output if available. 
+               uses cached klist output if available.
     :update: - this modifies the krb5.conf. There is a rudamentary parser for the auxiliary
                parameters.
     """
@@ -112,6 +112,7 @@ class KerberosService(ConfigService):
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
         ad_TGT = []
         ldap_TGT = []
+        krb_tickets = []
 
         if not ad['enable'] and not ldap['ldap_enable']:
             return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT} 
@@ -123,29 +124,57 @@ class KerberosService(ConfigService):
 
         try:
             klist = await asyncio.wait_for(
-                run(['/usr/bin/klist'], check = False, stdout=subprocess.PIPE), 
+                run(['/usr/bin/klist', '-v'], check = False, stdout=subprocess.PIPE),
                 timeout=10.0
             )
             if klist.returncode != 0:
-                raise CallError(f'klist failed with error: {klist.stderr.decode()}') 
+                raise CallError(f'klist failed with error: {klist.stderr.decode()}')
         except asyncio.TimeoutError:
             self.logger.debug('klist attempt failed after 10 seconds.')
             await self._kdestroy
         klist_output = klist.stdout.decode()
-        if klist:
-            for line in klist_output.splitlines():
-                if ad['enable'] and ad['kerberos_realm']:
-                    fields = line.split('  ')
-                    if len(fields) == 3 and ad['kerberos_realm']['krb_realm'] in fields[2]:
-                        ad_TGT.append({
-                            'issued': time.strptime(fields[0], '%b %d %H:%M:%S %Y'),
-                            'expires': time.strptime(fields[1], '%b %d %H:%M:%S %Y'),
-                            'spn': fields[2]
+        tkts = klist_output.split('\n\n')
+        for tkt in tkts:
+            s = tkt.splitlines()
+            if len(s) > 4:
+                for entry in s:
+                    if "Auth time" in entry:
+                        issued = time.strptime((entry.split('Auth time: '))[1].lstrip().replace('  ', ' '), '%b %d %H:%M:%S %Y')
+                    elif "End time" in entry:
+                        expires = time.strptime((entry.split('End time: '))[1].lstrip().replace('  ', ' '), '%b %d %H:%M:%S %Y')
+                    elif "Server" in entry:
+                        server = (entry.split('Server: '))[1]
+                    elif "Client" in entry:
+                        client = (entry.split('Client: '))[1]
+                    elif 'Ticket etype' in entry:
+                        etype = (entry.split('Ticket etype: '))[1]
+                    elif 'Ticket flags' in entry:
+                        flags = (entry.split('Ticket flags: '))[1].split(',')
+
+                if ad['enable'] and ad['kerberos_realm'] and ad['domainname'] in client:
+                    ad_TGT.append({
+                       'issued': issued,
+                       'expires': expires,
+                       'client': client,
+                       'server': server,
+                       'etype': etype,
+                       'flags': flags,
+                    })
+
+                elif ldap['enable'] and ldap['kerberos_realm']:
+                    if ldap['kerberos_realm']['krb_realm'] in client:
+                        ldap_TGT.append({
+                           'issued': issued,
+                           'expires': expires,
+                           'client': client,
+                           'server': server,
+                           'etype': etype,
+                           'flags': flags,
                         })
 
         if ad_TGT or ldap_TGT:
             await self.middleware.call('cache.put', 'KRB_TGT_INFO', {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT})
-        return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT} 
+        return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
         
     @private
     async def renew(self):
@@ -153,11 +182,16 @@ class KerberosService(ConfigService):
         Compare timestamp of cached TGT info with current timestamp. If we're within 5 minutes
         of expire time, renew the TGT via 'kinit -R'.
         """
+        self.logger.debug('entered kinit renew')
         tgt_info = await self._get_cached_klist()
+        self.logger.debug(f'tgt_info: {tgt_info}')
         ret = True
 
         must_renew = False
         must_reinit = False
+        if not tgt_info['ad_TGT'] and not tgt_info['ldap_TGT']:
+            must_reinit = True
+
         if tgt_info['ad_TGT']:
             permitted_buffer = datetime.timedelta(minutes=5)
             current_time = datetime.datetime.now() 
@@ -195,7 +229,7 @@ class KerberosService(ConfigService):
                 self.logger.debug('Attempt to renew kerberos TGT failed after 15 seconds.')
             
         if must_reinit:
-            ret = self.start()
+            ret = await self.start()
             await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
 
         return ret
@@ -463,7 +497,7 @@ class KerberosKeytabService(CRUDService):
         try:
             base64.b64decode(data['file']) 
         except Exception as e:
-            verrors.add("kerberos.keytab_create", f"Keytab is a not a properly base64-encoded string: [{e}]") 
+            verrors.add("kerberos.keytab_create", f"Keytab is a not a properly base64-encoded string: [{e}]")
         return verrors
 
     @private
@@ -481,7 +515,7 @@ class KerberosKeytabService(CRUDService):
                         'kvno': fields[0],
                         'type': fields[1], 
                         'principal': fields[2],
-                        'date': time.strptime(fields[3], '%Y-%m-%d'), 
+                        'date': time.strptime(fields[3], '%Y-%m-%d'),
                         'aliases': fields[4].split() if len(fields)==5 else []
                     })
 
@@ -505,9 +539,9 @@ class KerberosKeytabService(CRUDService):
          if os.path.exists(keytab['SAMBA'].value):
              os.remove(keytab['SAMBA'].value)
          kt_copy = await run([
-             '/usr/sbin/ktutil', 'copy', 
-             keytab['SYSTEM'].value, 
-             keytab['SAMBA'].value], 
+             '/usr/sbin/ktutil', 'copy',
+             keytab['SYSTEM'].value,
+             keytab['SAMBA'].value],
              check=False
          ) 
          if kt_copy.stderr.decode():
@@ -521,7 +555,7 @@ class KerberosKeytabService(CRUDService):
                  '/usr/sbin/ktutil', 
                  '-k', keytab['SAMBA'].value,
                  'remove',
-                 '-p', i['principal'], 
+                 '-p', i['principal'],
                  '-e', i['type']
                  ], check=False
             )
@@ -557,17 +591,22 @@ class KerberosKeytabService(CRUDService):
         with open(keytab['SAMBA'].value, 'rb') as f:
             encoded_keytab = base64.b64encode(f.read())
 
+        self.logger.debug(encoded_keytab.decode())
         if not encoded_keytab:
             self.logger.debug(f"Failed to generate b64encoded version of {keytab['SAMBA'].name}") 
             return False
 
-        keytabs = await self.query()
-        entry = list(filter(lambda x: x['name'] == 'AD_MACHINE_ACCOUNT', keytabs))
+        encrypted_keytab = await self.middleware.call('pwenc.encrypt', encoded_keytab.decode())
+        entry = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
         if not entry:
-            await self.create({'name': 'AD_MACHINE_ACCOUNT', 'file': encoded_keytab})
+            await self.middleware.call(
+                'datastore.insert',
+                'directoryservice.kerberoskeytab',
+                {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': encrypted_keytab}
+            )
         else:
             id = entry[0]['id']
-            updated_entry = {'name': 'AD_MACHINE_ACCOUNT', 'file': encoded_keytab}
-            await self.update(id, updated_entry)
+            updated_entry = {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': encrypted_keytab}
+            await self.middleware.call('datastore.update', 'directoryservice.kerberoskeytab', id, updated_entry)
 
         return True

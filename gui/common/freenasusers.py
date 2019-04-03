@@ -27,6 +27,8 @@ import grp
 import logging
 import pwd
 
+from freenasUI.middleware.client import client
+
 from freenasUI.common.system import (
     activedirectory_enabled,
     ldap_enabled,
@@ -34,10 +36,6 @@ from freenasUI.common.system import (
 )
 
 from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory_Group,
-    FreeNAS_ActiveDirectory_User,
-    FreeNAS_ActiveDirectory_Groups,
-    FreeNAS_ActiveDirectory_Users,
     FreeNAS_LDAP_Group,
     FreeNAS_LDAP_User,
     FreeNAS_LDAP_Groups,
@@ -189,7 +187,11 @@ class FreeNAS_Groups(object):
         dir = None
         dflags = _get_dflags()
         if dflags & U_AD_ENABLED:
-            dir = FreeNAS_ActiveDirectory_Groups
+            with client as c:
+                grouplist = c.call('activedirectory.get_ad_usersorgroups_legacy','groups') 
+                self.__groups = []
+                for group in grouplist:
+                    self.__groups.append(FreeNAS_ActiveDirectory_Group(group, **kwargs))
         elif dflags & U_NIS_ENABLED:
             dir = FreeNAS_NIS_Groups
         elif dflags & U_LDAP_ENABLED:
@@ -256,6 +258,60 @@ class FreeNAS_Local_User(object):
             self._pw = None
 
 
+class FreeNAS_ActiveDirectory_User(object):
+    def __new__(cls, user, **kwargs):
+        obj = None
+        if user is not None:
+            obj = super(FreeNAS_ActiveDirectory_User, cls).__new__(cls)
+
+        return obj
+
+    def __init__(self, user, **kwargs):
+        super(FreeNAS_ActiveDirectory_User, self).__init__()
+
+        self._pw = None
+        if type(user) is not list:
+            self.__get_user(user)
+        else:
+            self.pw_name = user[0]
+            self.pw_passwd = user[1]
+            self.pw_uid = user[2]
+            self.pw_gid = user[3]
+            self.pw_gecos = user[4]
+            self.pw_dir = user[5]
+            self.pw_shell = user[6] 
+
+    def __get_user(self, user):
+        with client as c:
+            self._pw = c.call('activedirectory.get_ad_userorgroup_legacy', 'users', user) 
+
+
+class FreeNAS_ActiveDirectory_Group(object):
+    def __new__(cls, group, **kwargs):
+        obj = None
+        if group is not None:
+            obj = super(FreeNAS_ActiveDirectory_Group, cls).__new__(cls)
+
+        return obj
+
+    def __init__(self, group, **kwargs):
+        super(FreeNAS_ActiveDirectory_Group, self).__init__()
+
+        self._grp = None
+        if type(group) is not list:
+            self.__get_group(group)
+        else:
+            self.gr_name = group[0]
+            self.gr_passwd = group[1]
+            self.gr_gid = group[2]
+            self.gr_mem = group[3]
+
+    def __get_group(self, group):
+        log.debug(f'Trying to get group {group}')
+        with client as c:
+            self._gr = c.call('activedirectory.get_ad_userorgroup_legacy', 'groups', group) 
+
+
 class FreeNAS_User(object):
     def __new__(cls, user, **kwargs):
 
@@ -303,7 +359,12 @@ class FreeNAS_Users(object):
         dir = None
         dflags = _get_dflags()
         if dflags & U_AD_ENABLED:
-            dir = FreeNAS_ActiveDirectory_Users
+            with client as c:
+                userlist = c.call('activedirectory.get_ad_usersorgroups_legacy','users') 
+                self.__users = []
+                for user in userlist:
+                    self.__users.append(FreeNAS_ActiveDirectory_User(user, **kwargs))
+
         elif dflags & U_NIS_ENABLED:
             dir = FreeNAS_NIS_Users
         elif dflags & U_LDAP_ENABLED:
@@ -311,7 +372,8 @@ class FreeNAS_Users(object):
 
         if dir is not None:
             try:
-                self.__users = dir(**kwargs)
+                self.__users = dir
+
 
             except Exception as e:
                 log.error("Directory Users could not be retrieved: {0}".format(str(e)), exc_info=True)

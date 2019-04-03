@@ -52,7 +52,6 @@ from freenasUI.common.freenascache import (
 )
 
 from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
     FLAGS_DBINIT,
     FLAGS_CACHE_READ_USER,
     FLAGS_CACHE_WRITE_USER,
@@ -132,33 +131,7 @@ def cache_dump(**kwargs):
 
 
 def _cache_keys_ActiveDirectory(**kwargs):
-    ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-    domains = ad.get_domains()
-    for d in domains:
-        workgroup = d['nETBIOSName']
-
-        print("w: %s" % workgroup)
-
-        ucache = FreeNAS_UserCache(dir=workgroup)
-        if ucache:
-            for key in list(ucache.keys()):
-                print("u key: %s" % key)
-
-        gcache = FreeNAS_GroupCache(dir=workgroup)
-        if gcache:
-            for key in list(gcache.keys()):
-                print("g key: %s" % key)
-
-        ducache = FreeNAS_Directory_UserCache(dir=workgroup)
-        if ducache:
-            for key in list(ducache.keys()):
-                print("du key: %s" % key)
-
-        dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
-        if dgcache:
-            for key in list(dgcache.keys()):
-                print("dg key: %s" % key)
-
+    return
 
 def _cache_keys_NIS(**kwargs):
     nis = FreeNAS_NIS(flags=FLAGS_DBINIT)
@@ -506,17 +479,7 @@ def cache_check(**kwargs):
 
 
 def _cache_count_ActiveDirectory(**kwargs):
-    ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-    domains = ad.get_domains()
-    for d in domains:
-        workgroup = d['nETBIOSName']
-
-        print("w:  %s" % workgroup)
-        print("u:  %ld" % _cachelen(FreeNAS_UserCache(dir=workgroup)))
-        print("g:  %ld" % _cachelen(FreeNAS_GroupCache(dir=workgroup)))
-        print("du: %ld" % _cachelen(FreeNAS_Directory_UserCache(dir=workgroup)))
-        print("dg: %ld" % _cachelen(FreeNAS_Directory_GroupCache(dir=workgroup)))
-        print("\n")
+    return
 
 
 def _cache_count_NIS(**kwargs):

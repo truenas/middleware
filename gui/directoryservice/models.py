@@ -880,7 +880,11 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_site = models.CharField(
         verbose_name=_("Site Name"),
         max_length=120,
-        help_text=_("Name of site to use."),
+        help_text=_(
+            "Name of Active Directory Site. This field will be automatically populated "
+            "during the domain join process. If an AD site is not configured for the "
+            "subnet where the NAS is located, the site name will be populated as "
+            "'Default-First-Site-Name'"),
         blank=True,
         null=True
     )
@@ -894,6 +898,15 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_kerberos_principal = models.CharField(
         verbose_name=_("Kerberos Princpal"),
         max_length=255,
+        help_text=_(
+            "Kerberos principal to use for AD-related UI and middleware operations "
+            "Field is populated with principals present in the system keytab. "
+            "During the domain join process a keytab entry is generated for the "
+            "AD Machine Account associated with the NAS. The name for this account "
+            "is the netbios name of the server with a '$' appended to it. Once "
+            "the NAS is joined to active directory, the bind credentials will be "
+            "automatically cleared and all future operations carried out by the AD "
+            "machine account, which has a restricted set of privileges in the AD domain."),
         blank=True
     )
     ad_createcomputer = models.CharField(

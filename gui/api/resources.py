@@ -62,9 +62,7 @@ from freenasUI.common.freenascache import (
 )
 from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
-    FreeNAS_ActiveDirectory_Users,
     FreeNAS_LDAP_Users,
-    FreeNAS_ActiveDirectory_Groups,
     FreeNAS_LDAP_Groups
 )
 from freenasUI.common.freenasnis import FreeNAS_NIS_Users, FreeNAS_NIS_Groups
@@ -2916,13 +2914,6 @@ class KerberosKeytabResourceMixin(object):
         return bundle
 
 
-class KerberosPrincipalResourceMixin(object):
-
-    def dehydrate(self, bundle):
-        bundle = super(KerberosPrincipalResourceMixin, self).dehydrate(bundle)
-        return bundle
-
-
 class KerberosSettingsResourceMixin(object):
 
     def dehydrate(self, bundle):
@@ -4157,12 +4148,7 @@ class JsonUserResource(DojoResource):
         wizard_ds = request.session.get('wizard_ds')
         if request.GET.get('wizard') == '1' and wizard_ds:
             if wizard_ds.get('ds_type') == 'ad':
-                wizard_users = FreeNAS_ActiveDirectory_Users(
-                    domainname=wizard_ds.get('ds_ad_domainname'),
-                    bindname=wizard_ds.get('ds_ad_bindname'),
-                    bindpw=wizard_ds.get('ds_ad_bindpw'),
-                    flags=FLAGS_DBINIT,
-                )
+                wizard_users = None 
             elif wizard_ds.get('ds_type') == 'ldap':
                 wizard_users = FreeNAS_LDAP_Users(
                     host=wizard_ds.get('ds_ldap_hostname'),
@@ -4285,12 +4271,7 @@ class JsonGroupResource(DojoResource):
         wizard_ds = request.session.get('wizard_ds')
         if request.GET.get('wizard') == '1' and wizard_ds:
             if wizard_ds.get('ds_type') == 'ad':
-                wizard_groups = FreeNAS_ActiveDirectory_Groups(
-                    domainname=wizard_ds.get('ds_ad_domainname'),
-                    bindname=wizard_ds.get('ds_ad_bindname'),
-                    bindpw=wizard_ds.get('ds_ad_bindpw'),
-                    flags=FLAGS_DBINIT,
-                )
+                wizard_groups = None 
             elif wizard_ds.get('ds_type') == 'ldap':
                 wizard_groups = FreeNAS_LDAP_Groups(
                     host=wizard_ds.get('ds_ldap_hostname'),
