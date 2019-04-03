@@ -307,7 +307,6 @@ class FreeNAS_ActiveDirectory_Group(object):
             self.gr_mem = group[3]
 
     def __get_group(self, group):
-        log.debug(f'Trying to get group {group}')
         with client as c:
             self._gr = c.call('activedirectory.get_ad_userorgroup_legacy', 'groups', group) 
 
@@ -373,7 +372,6 @@ class FreeNAS_Users(object):
         if dir is not None:
             try:
                 self.__users = dir
-
 
             except Exception as e:
                 log.error("Directory Users could not be retrieved: {0}".format(str(e)), exc_info=True)
