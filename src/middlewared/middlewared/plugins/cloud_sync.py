@@ -7,6 +7,7 @@ from middlewared.utils import load_modules, load_classes, Popen, run
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_attributes
 
+import aiorwlock
 import asyncio
 import base64
 import codecs
@@ -16,6 +17,7 @@ from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 from datetime import datetime
+import enum
 import json
 import logging
 import os
@@ -65,9 +67,7 @@ class RcloneConfig:
         if "attributes" in self.cloud_sync:
             config.update(dict(self.cloud_sync["attributes"], **self.provider.get_task_extra(self.cloud_sync)))
 
-            remote_path = self.cloud_sync["attributes"]["folder"].rstrip()
-            if self.provider.buckets:
-                remote_path = f"{self.cloud_sync['attributes']['bucket']}/{remote_path}"
+            remote_path = get_remote_path(self.provider, self.cloud_sync["attributes"])
             remote_path = f"remote:{remote_path}"
 
             if self.cloud_sync["encryption"]:
@@ -103,6 +103,13 @@ class RcloneConfig:
             self.tmp_file.close()
         if self.tmp_file_exclude:
             self.tmp_file_exclude.close()
+
+
+def get_remote_path(provider, attributes):
+    remote_path = attributes["folder"].rstrip()
+    if provider.buckets:
+        remote_path = f"{attributes['bucket']}/{remote_path}"
+    return remote_path
 
 
 async def rclone(middleware, job, cloud_sync):
@@ -307,6 +314,51 @@ def flatten_datasets(datasets):
     return sum([[ds] + flatten_datasets(ds["children"]) for ds in datasets], [])
 
 
+class _FsLockCore(aiorwlock._RWLockCore):
+    def _release(self, lock_type):
+        if self._r_state == 0 and self._w_state == 0:
+            self._fs_manager._remove_lock(self._fs_path)
+
+        return super()._release(lock_type)
+
+
+class _FsLock(aiorwlock.RWLock):
+    core = _FsLockCore
+
+
+class FsLockDirection(enum.Enum):
+    READ = 0
+    WRITE = 1
+
+
+class FsLockManager:
+    _lock = _FsLock
+
+    def __init__(self):
+        self.locks = {}
+
+    def lock(self, path, direction):
+        path = os.path.normpath(path)
+        for k in self.locks:
+            if os.path.commonpath([k, path]) in [k, path]:
+                return self._choose_lock(self.locks[k], direction)
+
+        self.locks[path] = self._lock()
+        self.locks[path]._reader_lock._lock._fs_manager = self
+        self.locks[path]._reader_lock._lock._fs_path = path
+        return self._choose_lock(self.locks[path], direction)
+
+    def _choose_lock(self, lock, direction):
+        if direction == FsLockDirection.READ:
+            return lock.reader_lock
+        if direction == FsLockDirection.WRITE:
+            return lock.writer_lock
+        raise ValueError(direction)
+
+    def _remove_lock(self, path):
+        self.locks.pop(path)
+
+
 class CredentialsService(CRUDService):
 
     class Config:
@@ -415,6 +467,9 @@ class CredentialsService(CRUDService):
 
 
 class CloudSyncService(CRUDService):
+
+    local_fs_lock_manager = FsLockManager()
+    remote_fs_lock_manager = FsLockManager()
 
     class Config:
         datastore = "tasks.cloudsync"
@@ -740,10 +795,7 @@ class CloudSyncService(CRUDService):
 
         credentials = await self._get_credentials(cloud_sync["credentials"])
 
-        if REMOTES[credentials["provider"]].buckets:
-            path = f"{cloud_sync['attributes']['bucket']}/{cloud_sync['attributes']['folder']}"
-        else:
-            path = cloud_sync["attributes"]["folder"]
+        path = get_remote_path(REMOTES[credentials["provider"]], cloud_sync["attributes"])
 
         return await self.ls(dict(cloud_sync, credentials=credentials), path)
 
@@ -767,7 +819,25 @@ class CloudSyncService(CRUDService):
 
         cloud_sync = await self._get_instance(id)
 
-        return await rclone(self.middleware, job, cloud_sync)
+        credentials = cloud_sync["credentials"]
+
+        local_path = cloud_sync["path"]
+        local_direction = FsLockDirection.READ if cloud_sync["direction"] == "PUSH" else FsLockDirection.WRITE
+
+        remote_path = get_remote_path(REMOTES[credentials["provider"]], cloud_sync["attributes"])
+        remote_direction = FsLockDirection.READ if cloud_sync["direction"] == "PULL" else FsLockDirection.WRITE
+
+        directions = {
+            FsLockDirection.READ: "reading",
+            FsLockDirection.WRITE: "writing",
+        }
+
+        job.set_progress(0, f"Locking local path {local_path!r} for {directions[local_direction]}")
+        async with self.local_fs_lock_manager.lock(local_path, local_direction):
+            job.set_progress(0, f"Locking remote path {remote_path!r} for {directions[remote_direction]}")
+            async with self.remote_fs_lock_manager.lock(f"{credentials['id']}/{remote_path}", remote_direction):
+                job.set_progress(0, "Starting")
+                return await rclone(self.middleware, job, cloud_sync)
 
     @accepts()
     async def providers(self):
