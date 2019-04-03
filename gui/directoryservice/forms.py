@@ -308,6 +308,8 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
             if not data[key]:
                 data.pop(key) 
 
+        if data['kerberos_principal'] == '----------':
+            data['kerberos_principal'] = '' 
         if data['enable'] and not old['enable']:
             with client as c:
                 try:

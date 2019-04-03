@@ -582,7 +582,7 @@ class ActiveDirectoryService(ConfigService):
             List('krb_admin_server'),
             List('krb_kpasswd_server'),
         ),
-        Str('kerberos_principal'),
+        Str('kerberos_principal', null=True),
         Int('timeout'),
         Int('dns_timeout'),
         Str('idmap_backend', default='rid', enum=['ad', 'autorid', 'fruit', 'ldap', 'nss', 'rfc2307', 'rid', 'script']),
@@ -620,6 +620,11 @@ class ActiveDirectoryService(ConfigService):
 
         start = False
         stop = False
+
+        if old['idmap_backend'] != new['idmap_backend']:
+            idmap = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
+            self.logger.debug(idmap[0]['id'])
+            await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend']})
 
         if not old['enable']:
             if new['enable']:
@@ -732,7 +737,7 @@ class ActiveDirectoryService(ConfigService):
         ret = await self._net_ads_testjoin(smb['workgroup'])
         if ret == neterr.NOTJOINED:
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
-            await self._net_ads_join(smb['workgroup'])
+            await self._net_ads_join()
             kt_set = await self.middleware.call('kerberos.keytab.store_samba_keytab')
             if kt_set:
                 self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
@@ -849,14 +854,17 @@ class ActiveDirectoryService(ConfigService):
         return True
 
     @private
-    async def _net_ads_join(self, workgroup):
+    async def _net_ads_join(self):
         ad = await self.config()
-        netads = await run([
-            'net', '-k', '-U', ad['bindname'],
-            '-d', '5', 'ads', 'join', ad['domainname'],
-            ],
-            check = False
-        ) 
+        if ad['createcomputer']:
+            netads = await run([
+                'net', '-k', '-U', ad['bindname'], '-d', '5', 
+                'ads', 'join', f'createcomputer={ad["createcomputer"]}', 
+                ad['domainname'],], check = False) 
+        else:
+            netads = await run([
+                'net', '-k', '-U', ad['bindname'], '-d', '5',
+                'ads', 'join', ad['domainname'],], check = False) 
 
         if netads.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
