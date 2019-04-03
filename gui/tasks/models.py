@@ -284,14 +284,6 @@ class CronJob(Model):
             line += ' 2>&1'
         return line
 
-    def run(self):
-        proc = subprocess.Popen([
-            "/usr/local/www/freenasUI/tools/runnow.py",
-            "-t", "cronjob",
-            "-i", str(self.id),
-        ])
-        proc.communicate()
-
 
 class InitShutdown(Model):
     ini_type = models.CharField(
