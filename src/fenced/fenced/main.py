@@ -10,7 +10,7 @@ import sys
 import time
 
 from fenced.exceptions import PanicExit
-from fenced.fence import Fence
+from fenced.fence import Fence, ExitCode
 from fenced.logging import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ def main():
 
     if is_running():
         logger.error('fenced already running.')
-        sys.exit(1)
+        sys.exit(ExitCode.ALREADY_RUNNING.value)
 
     fence = Fence(args.interval)
     newkey = fence.init(args.force)

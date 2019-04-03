@@ -18,6 +18,7 @@ class ExitCode(enum.IntEnum):
     REMOTE_RUNNING = 2
     RESERVE_ERROR = 3
     UNKNOWN = 5
+    ALREADY_RUNNING = 6
 
 
 class Fence(object):
