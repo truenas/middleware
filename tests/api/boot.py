@@ -3,6 +3,7 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import pytest
 import sys
 import os
 from time import time, sleep
@@ -28,6 +29,7 @@ def test_02_get_boot_state():
     boot_state = results.json()
 
 
+@pytest.mark.skip('Skip to test all API since it is causing kernel panic')
 def test_03_get_boot_scrub():
     global JOB_ID
     results = GET('/boot/scrub/')
@@ -36,6 +38,7 @@ def test_03_get_boot_scrub():
     JOB_ID = results.json()
 
 
+@pytest.mark.skip('Skip becuase of test 03 is causing kernel panic')
 def test_04_verify_boot_scrub_job():
     stop_time = time() + 600
     while True:
