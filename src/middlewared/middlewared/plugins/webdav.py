@@ -57,6 +57,14 @@ class WebDAVSharingService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        Create a Webdav Share.
+
+        `ro` when enabled prohibits users from writing to this share.
+
+        `perm` when enabled automatically recursively changes the ownership of this share to
+        webdav ( user and group both ).
+        """
 
         await self.validate_data(data, 'webdav_share_create')
 
@@ -76,6 +84,9 @@ class WebDAVSharingService(CRUDService):
         Patch('webdav_share_create', 'webdav_share_update', ('attr', {'update': True}))
     )
     async def do_update(self, id, data):
+        """
+        Update Webdav Share of `id`.
+        """
 
         old = await self.query(filters=[('id', '=', id)], options={'get': True})
         new = old.copy()
@@ -102,6 +113,9 @@ class WebDAVSharingService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
+        """
+        Update Webdav Share of `id`.
+        """
 
         response = await self.middleware.call(
             'datastore.delete',
@@ -131,6 +145,22 @@ class WebDAVService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update Webdav Service Configuration.
+
+        `protocol` specifies which protocol should be used for connecting to Webdav Serivce. Value of "HTTPHTTPS"
+        allows both HTTP and HTTPS connections to the share.
+
+        `certssl` is a valid id of a certificate configured in the system. This is required if HTTPS connection is
+        desired with Webdave Service.
+
+        There are 3 types of Authentication supported with Webdav:
+        1) NONE      -   No authentication is required
+        2) BASIC     -   Password is sent over the network as plaintext
+        3) DIGEST    -   Hash of the password is sent over the network
+
+        `htauth` should be one of the valid types described above.
+        """
         old = await self.config()
 
         new = old.copy()

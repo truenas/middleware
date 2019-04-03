@@ -224,41 +224,19 @@ AUTHGROUP_CHOICES = (
     ('None', _('None')),
 )
 
-DYNDNSPROVIDER_CHOICES = (
-    ('dyndns@3322.org', '3322.org'),
-    ('default@changeip.com', 'changeip.com'),
-    ('default@cloudxns.net', 'cloudxns.net'),
-    ('default@ddnss.de', 'ddnss.de'),
-    ('default@dhis.org', 'dhis.org'),
-    ('default@dnsexit.com', 'dnsexit.com'),
-    ('default@dnsomatic.com', 'dnsomatic.com'),
-    ('default@dnspod.cn', 'dnspod.cn'),
-    ('default@domains.google.com', 'domains.google.com'),
-    ('default@dtdns.com', 'dtdns.com'),
-    ('default@duckdns.org', 'duckdns.org'),
-    ('default@duiadns.net', 'duiadns.net'),
-    ('default@dyndns.org', 'dyndns.org'),
-    ('default@dynsip.org', 'dynsip.org'),
-    ('default@dynv6.com', 'dynv6.com'),
-    ('default@easydns.com', 'easydns.com'),
-    ('default@freedns.afraid.org', 'freedns.afraid.org'),
-    ('default@freemyip.com', 'freemyip.com'),
-    ('default@gira.de', 'gira.de'),
-    ('ipv6tb@he.net', 'he.net'),
-    ('default@ipv4.dynv6.com', 'ipv4.dynv6.com'),
-    ('default@loopia.com', 'loopia.com'),
-    ('default@no-ip.com', 'no-ip.com'),
-    ('ipv4@nsupdate.info', 'nsupdate.info'),
-    ('default@ovh.com', 'ovh.com'),
-    ('default@sitelutions.com', 'sitelutions.com'),
-    ('default@spdyn.de', 'spdyn.de'),
-    ('default@strato.com', 'strato.com'),
-    ('default@tunnelbroker.net', 'tunnelbroker.net'),
-    ('default@tzo.com', 'tzo.com'),
-    ('default@zerigo.com', 'zerigo.com'),
-    ('default@zoneedit.com', 'zoneedit.com'),
-    ('custom', 'Custom Provider')
-)
+
+class DYNDNSPROVIDER_CHOICES(object):
+
+    def __iter__(self):
+        try:
+            with client as c:
+                for k, v in c.call('dyndns.provider_choices').items():
+                    yield (k, v)
+
+            yield ('custom', 'Custom Provider')
+        except Exception:
+            yield (None, None)
+
 
 SNMP_CHOICES = (
     ('mibll', 'Mibll'),
@@ -405,6 +383,7 @@ class NICChoices(object):
         # Remove internal interfaces for failover
         try:
             if (
+                os.environ.get('MIDDLEWARED_LOADING') != 'True' and
                 hasattr(notifier, 'failover_status') and
                 notifier().failover_licensed()
             ):
@@ -413,6 +392,8 @@ class NICChoices(object):
                         self._NIClist.remove(iface)
         except (ConnectionRefusedError, FileNotFoundError):
             pass
+        except Exception:
+            log.error('Failed to get failover internal interfaces', exc_info=True)
 
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
@@ -557,10 +538,15 @@ class IPChoices(NICChoices):
         carp = False
         if not _n.is_freenas():
             try:
-                if _n.failover_status() not in ('SINGLE', 'ERROR'):
+                if (
+                    os.environ.get('MIDDLEWARED_LOADING') != 'True' and
+                    _n.failover_status() not in ('SINGLE', 'ERROR')
+                ):
                     carp = True
             except (sqlite3.OperationalError, ConnectionRefusedError, FileNotFoundError):
                 pass
+            except Exception:
+                log.error('Failed to get failover status', exc_info=True)
 
         self._IPlist = []
         for iface in self._NIClist:

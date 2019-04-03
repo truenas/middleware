@@ -5,9 +5,6 @@ import os
 import traceback
 import uuid
 
-from freenasUI.support.utils import get_license
-from licenselib.license import ContractType
-
 from middlewared.alert.base import (
     AlertCategory,
     alert_category_names,
@@ -23,7 +20,7 @@ from middlewared.alert.base import (
     ProThreadedAlertService,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch
+from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch, Ref
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -150,10 +147,17 @@ class AlertService(Service):
 
     @accepts()
     async def list_policies(self):
+        """
+        List all alert policies which indicate the frequency of the alerts.
+        """
         return POLICIES
 
     @accepts()
     async def list_categories(self):
+        """
+        List all types of alert sources which the system can issue.
+        """
+
         return [
             {
                 "id": alert_category.name,
@@ -176,6 +180,7 @@ class AlertService(Service):
     @private
     async def list_sources(self):
         # TODO: this is a deprecated method for backward compatibility
+
         return [
             {
                 "name": klass["id"],
@@ -186,6 +191,10 @@ class AlertService(Service):
 
     @accepts()
     async def list(self):
+        """
+        List all types of alerts including active/dismissed currently in the system.
+        """
+
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         return [
@@ -206,6 +215,10 @@ class AlertService(Service):
 
     @accepts(Str("uuid"))
     async def dismiss(self, uuid):
+        """
+        Dismiss `id` alert.
+        """
+
         alert = self.__alert_by_uuid(uuid)
         if alert is None:
             return
@@ -224,6 +237,10 @@ class AlertService(Service):
 
     @accepts(Str("uuid"))
     def restore(self, uuid):
+        """
+        Restore `id` alert which had been dismissed.
+        """
+
         alert = self.__alert_by_uuid(uuid)
         if alert is None:
             return
@@ -231,6 +248,7 @@ class AlertService(Service):
         alert.dismissed = False
 
     @periodic(60)
+    @private
     @job(lock="process_alerts", transient=True)
     async def process_alerts(self, job):
         if not await self.middleware.call("system.ready"):
@@ -305,50 +323,31 @@ class AlertService(Service):
                 if not await self.middleware.call("system.is_freenas"):
                     new_hardware_alerts = [alert for alert in new_alerts if alert.klass.hardware]
                     if new_hardware_alerts:
-                        license = get_license()
-                        if license and license.contract_type in [ContractType.silver.value, ContractType.gold.value]:
+                        if await self.middleware.call("support.is_available_and_enabled"):
+                            support = await self.middleware.call("support.config")
+                            msg = [f"* {alert.formatted}" for alert in new_hardware_alerts]
+
+                            serial = (await self.middleware.call("system.info"))["system_serial"]
+
+                            for name, verbose_name in await self.middleware.call("support.fields"):
+                                value = support[name]
+                                if value:
+                                    msg += ["", "{}: {}".format(verbose_name, value)]
+
                             try:
-                                support = await self.middleware.call("datastore.query", "system.support", None,
-                                                                     {"get": True})
-                            except IndexError:
-                                await self.middleware.call("datastore.insert", "system.support", {})
-
-                                support = await self.middleware.call("datastore.query", "system.support", None,
-                                                                     {"get": True})
-
-                            if support["enabled"]:
-                                msg = [f"* {alert.formatted}" for alert in new_hardware_alerts]
-
-                                serial = (await self.middleware.call("system.info"))["system_serial"]
-
-                                for name, verbose_name in (
-                                    ("name", "Contact Name"),
-                                    ("title", "Contact Title"),
-                                    ("email", "Contact E-mail"),
-                                    ("phone", "Contact Phone"),
-                                    ("secondary_name", "Secondary Contact Name"),
-                                    ("secondary_title", "Secondary Contact Title"),
-                                    ("secondary_email", "Secondary Contact E-mail"),
-                                    ("secondary_phone", "Secondary Contact Phone"),
-                                ):
-                                    value = getattr(support, name)
-                                    if value:
-                                        msg += ["", "{}: {}".format(verbose_name, value)]
-
-                                try:
-                                    await self.middleware.call("support.new_ticket", {
-                                        "title": "Automatic alert (%s)" % serial,
-                                        "body": "\n".join(msg),
-                                        "attach_debug": False,
-                                        "category": "Hardware",
-                                        "criticality": "Loss of Functionality",
-                                        "environment": "Production",
-                                        "name": "Automatic Alert",
-                                        "email": "auto-support@ixsystems.com",
-                                        "phone": "-",
-                                    })
-                                except Exception:
-                                    self.logger.error(f"Failed to create a support ticket", exc_info=True)
+                                await self.middleware.call("support.new_ticket", {
+                                    "title": "Automatic alert (%s)" % serial,
+                                    "body": "\n".join(msg),
+                                    "attach_debug": False,
+                                    "category": "Hardware",
+                                    "criticality": "Loss of Functionality",
+                                    "environment": "Production",
+                                    "name": "Automatic Alert",
+                                    "email": "auto-support@ixsystems.com",
+                                    "phone": "-",
+                                })
+                            except Exception:
+                                self.logger.error(f"Failed to create a support ticket", exc_info=True)
 
     def __uuid(self):
         return str(uuid.uuid4())
@@ -486,6 +485,7 @@ class AlertService(Service):
         return alerts
 
     @periodic(3600)
+    @private
     async def flush_alerts(self):
         if (
             not await self.middleware.call('system.is_freenas') and
@@ -567,6 +567,9 @@ class AlertServiceService(CRUDService):
 
     @accepts()
     async def list_types(self):
+        """
+        List all types of supported Alert services which can be configured with the system.
+        """
         return [
             {
                 "name": name,
@@ -598,7 +601,7 @@ class AlertServiceService(CRUDService):
             raise verrors
 
         try:
-            factory.validate(service["attributes"])
+            factory.validate(service.get('attributes', {}))
         except ValidationErrors as e:
             verrors.add_child(f"{schema_name}.attributes", e)
 
@@ -608,13 +611,40 @@ class AlertServiceService(CRUDService):
     @accepts(Dict(
         "alert_service_create",
         Str("name"),
-        Str("type"),
+        Str("type", required=True),
         Dict("attributes", additional_attrs=True),
         Str("level", enum=list(AlertLevel.__members__)),
         Bool("enabled"),
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create an Alert Service of specified `type`.
+
+        If `enabled`, it sends alerts to the configured `type` of Alert Service.
+
+        .. examples(websocket)::
+
+          Create an Alert Service of Mail `type`
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "alertservice.create",
+                "params": [{
+                    "name": "Test Email Alert",
+                    "enabled": true,
+                    "type": "Mail",
+                    "attributes": {
+                        "email": "dev@ixsystems.com"
+                    },
+                    "settings": {
+                        "VolumeVersion": "HOURLY"
+                    }
+                }]
+            }
+        """
         await self._validate(data, "alert_service_create")
 
         data["id"] = await self.middleware.call("datastore.insert", self._config.datastore, data)
@@ -629,6 +659,9 @@ class AlertServiceService(CRUDService):
         ("attr", {"update": True}),
     ))
     async def do_update(self, id, data):
+        """
+        Update Alert Service of `id`.
+        """
         old = await self.middleware.call("datastore.query", self._config.datastore, [("id", "=", id)],
                                          {"extend": self._config.datastore_extend,
                                           "get": True})
@@ -648,14 +681,38 @@ class AlertServiceService(CRUDService):
 
     @accepts(Int("id"))
     async def do_delete(self, id):
+        """
+        Delete Alert Service of `id`.
+        """
         return await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Patch(
-        "alert_service_create",
-        "alert_service_test",
-        ("attr", {"update": True}),
-    ))
+    @accepts(
+        Ref('alert_service_create')
+    )
     async def test(self, data):
+        """
+        Send a test alert using `type` of Alert Service.
+
+        .. examples(websocket)::
+
+          Send a test alert using Alert Service of Mail `type`.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "alertservice.test",
+                "params": [{
+                    "name": "Test Email Alert",
+                    "enabled": true,
+                    "type": "Mail",
+                    "attributes": {
+                        "email": "dev@ixsystems.com"
+                    },
+                    "settings": {}
+                }]
+            }
+        """
         await self._validate(data, "alert_service_test")
 
         factory = ALERT_SERVICES_FACTORIES.get(data["type"])
@@ -694,6 +751,9 @@ class AlertClassesService(ConfigService):
         Dict("classes", additional_attrs=True),
     ))
     async def do_update(self, data):
+        """
+        Update default Alert settings.
+        """
         old = await self.config()
 
         new = old.copy()

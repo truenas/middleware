@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 import errno
 import socket
@@ -72,6 +73,16 @@ class VMWareService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        Create VMWare snapshot.
+
+        `hostname` is a valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for
+        the cluster.
+
+        `username` and `password` are the credentials used to authorize access to the VMWare host.
+
+        `datastore` is a valid datastore name which exists on the VMWare host.
+        """
         await self.validate_data(data, 'vmware_create')
 
         data['password'] = await self.middleware.call('pwenc.encrypt', data['password'])
@@ -89,6 +100,9 @@ class VMWareService(CRUDService):
         Patch('vmware_create', 'vmware_update', ('attr', {'update': True}))
     )
     async def do_update(self, id, data):
+        """
+        Update VMWare snapshot of `id`.
+        """
         old = await self._get_instance(id)
         new = old.copy()
 
@@ -111,7 +125,9 @@ class VMWareService(CRUDService):
         Int('id')
     )
     async def do_delete(self, id):
-
+        """
+        Delete VMWare snapshot of `id`.
+        """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
@@ -122,14 +138,142 @@ class VMWareService(CRUDService):
 
     @accepts(Dict(
         'vmware-creds',
-        Str('hostname'),
-        Str('username'),
-        Str('password'),
+        Str('hostname', required=True),
+        Str('username', required=True),
+        Str('password', required=True),
     ))
     def get_datastores(self, data):
         """
         Get datastores from VMWare.
         """
+        return sorted(list(self.__get_datastores(data).keys()))
+
+    @accepts(Dict(
+        'vmware-creds',
+        Str('hostname', required=True),
+        Str('username', required=True),
+        Str('password', required=True),
+    ))
+    def match_datastores_with_datasets(self, data):
+        """
+        Requests datastores from vCenter server and tries to match them with local filesystems.
+
+        Returns a list of datastores, a list of local filesystems and guessed relationship between them.
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+              "id": "d51da71b-bb48-4b8b-a8f7-6046fcc892b4",
+              "msg": "method",
+              "method": "vmware.match_datastores_with_datasets",
+              "params": [{"hostname": "10.215.7.104", "username": "root", "password": "password"}]
+            }
+
+            returns
+
+            {
+              "datastores": [
+                {
+                  "name": "10.215.7.102",
+                  "description": "NFS mount '/mnt/tank' on 10.215.7.102",
+                  "filesystems": ["tank"]
+                },
+                {
+                  "name": "datastore1",
+                  "description": "mpx.vmhba0:C0:T0:L0",
+                  "filesystems": []
+                },
+                {
+                  "name": "zvol",
+                  "description": "iSCSI extent naa.6589cfc000000b3f0a891a2c4e187594",
+                  "filesystems": ["tank/vol"]
+                }
+              ],
+              "filesystems": [
+                {
+                  "type": "FILESYSTEM",
+                  "name": "tank",
+                  "description": "NFS mount '/mnt/tank' on 10.215.7.102"
+                },
+                {
+                  "type": "VOLUME",
+                  "name": "tank/vol",
+                  "description": "iSCSI extent naa.6589cfc000000b3f0a891a2c4e187594"
+                }
+              ]
+            }
+        """
+
+        datastores = []
+        for k, v in self.__get_datastores(data).items():
+            if v["type"] == "NFS":
+                description = f"NFS mount {v['remote_path']!r} on {' or '.join(v['remote_hostnames'])}"
+                matches = [f"{hostname}:{v['remote_path']}" for hostname in v["remote_hostnames"]]
+            elif v["type"] == "VMFS":
+                description = (
+                    f"iSCSI extent {', '.join(v['extent'])}"
+                    if any(extent.startswith("naa.") for extent in v["extent"])
+                    else ", ".join(v["extent"])
+                )
+                matches = v["extent"]
+            else:
+                continue
+
+            datastores.append({
+                "name": k,
+                "description": description,
+                "matches": matches,
+            })
+
+        ip_addresses = sum([
+            [alias["address"] for alias in interface["state"]["aliases"] if alias["type"] in ["INET", "INET6"]]
+            for interface in self.middleware.call_sync("interface.query")
+        ], [])
+        iscsi_extents = defaultdict(list)
+        for extent in self.middleware.call_sync("iscsi.extent.query"):
+            if extent["path"].startswith("zvol/"):
+                zvol = extent["path"][len("zvol/"):]
+                iscsi_extents[zvol].append(f"naa.{extent['naa'][2:]}")
+        filesystems = []
+        for fs in self.middleware.call_sync("pool.dataset.query", [
+            ("pool", "in", [vol["name"] for vol in self.middleware.call_sync("pool.query")]),
+            ("name", "rnin", ".system")
+        ]):
+            if fs["type"] == "FILESYSTEM":
+                filesystems.append({
+                    "type": "FILESYSTEM",
+                    "name": fs["name"],
+                    "description": f"NFS mount {fs['mountpoint']!r} on {' or '.join(ip_addresses)}",
+                    "matches": [f"{ip_address}:{fs['mountpoint']}" for ip_address in ip_addresses],
+                })
+
+            if fs["type"] == "VOLUME":
+                filesystems.append({
+                    "type": "VOLUME",
+                    "name": fs["name"],
+                    "description": (
+                        f"iSCSI extent {', '.join(iscsi_extents[fs['name']])}"
+                        if iscsi_extents[fs["name"]]
+                        else "Not shared via iSCSI"
+                    ),
+                    "matches": iscsi_extents[fs["name"]],
+                })
+
+        for datastore in datastores:
+            datastore["filesystems"] = [filesystem["name"] for filesystem in filesystems
+                                        if set(filesystem["matches"]) & set(datastore["matches"])]
+            datastore.pop("matches")
+
+        for filesystem in filesystems:
+            filesystem.pop("matches")
+
+        return {
+            "datastores": sorted(datastores, key=lambda datastore: datastore["name"]),
+            "filesystems": sorted(filesystems, key=lambda filesystem: filesystem["name"]),
+        }
+
+    def __get_datastores(self, data):
         try:
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             ssl_context.verify_mode = ssl.CERT_NONE
@@ -157,23 +301,26 @@ class VMWareService(CRUDService):
         datastores = {}
         for esxi_host in esxi_hosts:
             storage_system = esxi_host.configManager.storageSystem
-            datastores_host = {}
 
             if storage_system.fileSystemVolumeInfo is None:
                 continue
 
             for host_mount_info in storage_system.fileSystemVolumeInfo.mountInfo:
                 if host_mount_info.volume.type == 'VMFS':
-                    datastores_host[host_mount_info.volume.name] = {
+                    datastores[host_mount_info.volume.name] = {
                         'type': host_mount_info.volume.type,
                         'uuid': host_mount_info.volume.uuid,
                         'capacity': host_mount_info.volume.capacity,
                         'vmfs_version': host_mount_info.volume.version,
+                        'extent': [
+                            partition.diskName
+                            for partition in host_mount_info.volume.extent
+                        ],
                         'local': host_mount_info.volume.local,
                         'ssd': host_mount_info.volume.ssd
                     }
                 elif host_mount_info.volume.type == 'NFS':
-                    datastores_host[host_mount_info.volume.name] = {
+                    datastores[host_mount_info.volume.name] = {
                         'type': host_mount_info.volume.type,
                         'capacity': host_mount_info.volume.capacity,
                         'remote_host': host_mount_info.volume.remoteHost,
@@ -188,20 +335,16 @@ class VMWareService(CRUDService):
                 else:
                     self.logger.debug(f'Unknown volume type "{host_mount_info.volume.type}": {host_mount_info.volume}')
                     continue
-            datastores[esxi_host.name] = datastores_host
 
         connect.Disconnect(server_instance)
 
-        # Datastore names are unique among different esxi host under a single vcenter server. As we only require
-        # datastore names and additional information is not needed for datastore choices, we refine the datastores
-        # dict and send back only the datastore names
-
-        return sorted({
-            name for host in datastores.values() for name in host
-        })
+        return datastores
 
     @accepts(Int('pk'))
     async def get_virtual_machines(self, pk):
+        """
+        Returns Virtual Machines on the VMWare host identified by `pk`.
+        """
 
         item = await self.query([('id', '=', pk)], {'get': True})
 
@@ -231,6 +374,9 @@ class VMWareService(CRUDService):
 
     @accepts(Str('dataset'), Bool('recursive'))
     def dataset_has_vms(self, dataset, recursive):
+        """
+        Returns "true" if `dataset` is configured with a VMWare snapshot
+        """
         return len(self._dataset_get_vms(dataset, recursive)) > 0
 
     def _dataset_get_vms(self, dataset, recursive):
@@ -242,7 +388,7 @@ class VMWareService(CRUDService):
                     ["filesystem", "^", dataset + "/"],
                 ],
             ]
-        return self.middleware.call_sync("vmware.query", f)
+        return self.middleware.call_sync("vmware.query", [f])
 
     @private
     def snapshot_begin(self, dataset, recursive):
@@ -293,7 +439,7 @@ class VMWareService(CRUDService):
                 if vm.summary.runtime.powerState != "poweredOn":
                     continue
 
-                if self._doesVMDependOnDataStore(vm, vmsnapobj.datastore):
+                if self._doesVMDependOnDataStore(vm, vmsnapobj["datastore"]):
                     try:
                         if self._canSnapshotVM(vm):
                             if not self._doesVMSnapshotByNameExists(vm, vmsnapname):
@@ -318,7 +464,7 @@ class VMWareService(CRUDService):
                             self.logger.info("Can't snapshot VM %s that depends on "
                                              "datastore %s and filesystem %s. "
                                              "Possibly using PT devices. Skipping.",
-                                             vm.name, vmsnapobj.datastore, dataset)
+                                             vm.name, vmsnapobj["datastore"], dataset)
                             snapvmskips.append(vm.config.uuid)
                     except Exception as e:
                         self.logger.warning("Snapshot of VM %s failed", vm.name, exc_info=True)
@@ -354,7 +500,7 @@ class VMWareService(CRUDService):
         }
 
     @private
-    async def snapshot_end(self, context):
+    def snapshot_end(self, context):
         vmsnapname = context["vmsnapname"]
 
         for elem in context["vmsnapobjs"]:

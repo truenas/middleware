@@ -253,6 +253,9 @@ class UserService(CRUDService):
         ),
     )
     async def do_update(self, pk, data):
+        """
+        Update attributes of an existing user.
+        """
 
         user = await self._get_instance(pk)
 
@@ -710,6 +713,9 @@ class GroupService(CRUDService):
         ),
     )
     async def do_update(self, pk, data):
+        """
+        Update attributes of an existing group.
+        """
 
         group = await self._get_instance(pk)
 

@@ -282,6 +282,8 @@ class ZettareplService(Service):
                 "naming-schema": periodic_snapshot_task["naming_schema"],
 
                 "schedule": zettarepl_schedule(periodic_snapshot_task["schedule"]),
+
+                "allow-empty": periodic_snapshot_task["allow_empty"],
             }
 
         replication_tasks = {}

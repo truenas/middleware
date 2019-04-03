@@ -44,6 +44,43 @@ class NFSService(SystemServiceService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update NFS Service Configuration.
+
+        `servers` represents number of servers to create.
+
+        When `allow_nonroot` is set, it allows non-root mount requests to be served.
+
+        `bindip` is a list of IP's on which NFS will listen for requests. When it is unset/empty, NFS listens on
+        all available addresses.
+
+        `v4` when set means that we switch from NFSv3 to NFSv4.
+
+        `v4_v3owner` when set means that system will use NFSv3 ownership model for NFSv4.
+
+        `mountd_port` specifies the port mountd(8) binds to.
+
+        `rpcstatd_port` specifies the port rpc.statd(8) binds to.
+
+        `rpclockd_port` specifies the port rpclockd_port(8) binds to.
+
+        .. examples(websocket)::
+
+          Update NFS Service Configuration to listen on 192.168.0.10 and use NFSv4
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.resilver.update",
+                "params": [{
+                    "bindip": [
+                        "192.168.0.10"
+                    ],
+                    "v4": true
+                }]
+            }
+        """
         if data.get("v4") is False:
             data.setdefault("v4_v3owner", False)
 
@@ -53,6 +90,16 @@ class NFSService(SystemServiceService):
         new.update(data)
 
         verrors = ValidationErrors()
+
+        if new["v4"] and new["v4_krb"] and not await self.middleware.call("system.is_freenas"):
+            if await self.middleware.call("failover.licensed"):
+                gc = await self.middleware.call("datastore.config", "network.globalconfiguration")
+                if not gc["gc_hostname_virtual"] or gc["gc_domain"]:
+                    verrors.add(
+                        "nfs_update.v4",
+                        "Enabling kerberos authentication on TrueNAS HA requires setting the virtual hostname and "
+                        "domain"
+                    )
 
         if not new["v4"] and new["v4_v3owner"]:
             verrors.add("nfs_update.v4_v3owner", "This option requires enabling NFSv4")
@@ -101,6 +148,20 @@ class SharingNFSService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Create a NFS Share.
+
+        `paths` is a list of valid paths which are configured to be shared on this share.
+
+        `networks` is a list of authorized networks that are allowed to access the share having format
+        "network/mask" CIDR notation. If empty, all networks are allowed.
+
+        `hosts` is a list of IP's/hostnames which are allowed to access the share. If empty, all IP's/hostnames are
+        allowed.
+
+        `alldirs` is a boolean value which when set indicates that the client can mount any subdirectories of the
+        selected pool or dataset.
+        """
         verrors = ValidationErrors()
 
         await self.validate(data, "sharingnfs_create", verrors)
@@ -139,6 +200,9 @@ class SharingNFSService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update NFS Share of `id`.
+        """
         verrors = ValidationErrors()
         old = await self._get_instance(id)
 
@@ -177,6 +241,9 @@ class SharingNFSService(CRUDService):
 
     @accepts(Int("id"))
     async def do_delete(self, id):
+        """
+        Delete NFS Share of `id`.
+        """
         await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
         await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self._service_change("nfs", "reload")

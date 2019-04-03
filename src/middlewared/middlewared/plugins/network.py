@@ -148,6 +148,22 @@ class NetworkConfigurationService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        Update Network Configuration Service configuration.
+
+        `ipv4gateway` if set is used instead of the default gateway provided by DHCP.
+
+        `nameserver1` is primary DNS server.
+
+        `nameserver2` is secondary DNS server.
+
+        `nameserver3` is tertiary DNS server.
+
+        `httpproxy` attribute must be provided if a proxy is to be used for network operations.
+
+        `netwait_enabled` is a boolean attribute which when set indicates that network services will not start at
+        boot unless they are able to ping the addresses listed in `netwait_ip` list.
+        """
         config = await self.config()
         new_config = config.copy()
 
@@ -206,32 +222,20 @@ class NetworkConfigurationService(ConfigService):
                 services_to_reload.append('networkgeneral')
                 await self.middleware.call('route.sync')
 
+            restart_nfs = False
             if (
                     'hostname_virtual' in new_config.keys() and
-                    new_config['hostname_virtual'] != config['hostname_virtual']
+                    (
+                        new_config['hostname_virtual'] != config['hostname_virtual'] or
+                        new_config['domain'] != config['domain']
+                    )
             ):
-                srv_service_obj = await self.middleware.call(
-                    'datastore.query',
-                    'service.service',
-                    [('srv_service', '=', 'nfs')]
-                )
-                nfs_object = await self.middleware.call(
-                    'datastore.query',
-                    'services.nfs',
-                )
-                if len(srv_service_obj) > 0 and len(nfs_object) > 0:
-                    srv_service_obj = srv_service_obj[0]
-                    nfs_object = nfs_object[0]
-
-                    if (
-                            (srv_service_obj and srv_service_obj.srv_enable) and
-                            (nfs_object and (nfs_object.nfs_srv_v4 and nfs_object.nfs_srv_v4_krb))
-                    ):
-                        await self.middleware.call("etc.generate", "nfsd")
-                        services_to_reload.append('mountd')
+                restart_nfs = True
 
             for service_to_reload in services_to_reload:
                 await self.middleware.call('service.reload', service_to_reload, {'onetime': False})
+            if restart_nfs:
+                await self._service_change('nfs', 'restart')
 
             if new_config['httpproxy'] != config['httpproxy']:
                 await self.middleware.call(
@@ -302,6 +306,9 @@ class InterfaceService(CRUDService):
 
     @filterable
     def query(self, filters, options):
+        """
+        Query Interfaces with `query-filters` and `query-options`
+        """
         data = {}
         configs = {
             i['int_interface']: i
@@ -326,6 +333,17 @@ class InterfaceService(CRUDService):
                 'link_address': '',
                 'cloned': True,
                 'mtu': 1500,
+                'flags': [],
+                'nd6_flags': [],
+                'capabilities': [],
+                'link_state': '',
+                'media_type': '',
+                'media_subtype': '',
+                'active_media_type': '',
+                'active_media_subtype': '',
+                'supported_media': [],
+                'media_options': [],
+                'carp_config': [],
             }, configs, is_freenas, fake=True)
         return filter_list(list(data.values()), filters, options)
 
@@ -1135,6 +1153,9 @@ class InterfaceService(CRUDService):
         )
     )
     async def do_update(self, oid, data):
+        """
+        Update Interface of `id`.
+        """
         iface = await self._get_instance(oid)
 
         new = iface.copy()
@@ -1263,6 +1284,11 @@ class InterfaceService(CRUDService):
 
     @accepts(Str('id'))
     async def do_delete(self, oid):
+        """
+        Delete Interface of `id`.
+
+        It should be noted that only virtual interfaces can be deleted.
+        """
         iface = await self._get_instance(oid)
 
         if iface['type'] == 'PHYSICAL':
@@ -1293,7 +1319,7 @@ class InterfaceService(CRUDService):
     @pass_app
     async def websocket_local_ip(self, app):
         """
-        Returns the interface this websocket is connected to.
+        Returns the ip this websocket is connected to.
         """
         if app is None:
             return
@@ -1323,6 +1349,9 @@ class InterfaceService(CRUDService):
     @accepts()
     @pass_app
     async def websocket_interface(self, app):
+        """
+        Returns the interface this websocket is connected to.
+        """
         local_ip = await self.middleware.call('interface.websocket_local_ip', app=app)
         for iface in await self.middleware.call('interface.query'):
             for alias in iface['aliases']:
@@ -1986,6 +2015,13 @@ class StaticRouteService(CRUDService):
         register=True
     ))
     async def do_create(self, data):
+        """
+        Create a Static Route.
+
+        Address families of `gateway` and `destination` should match when creating a static route.
+
+        `description` is an optional attribute for any notes regarding the static route.
+        """
         self._validate('staticroute_create', data)
 
         await self.lower(data)
@@ -2007,6 +2043,9 @@ class StaticRouteService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update Static Route of `id`.
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -2024,6 +2063,9 @@ class StaticRouteService(CRUDService):
 
     @accepts(Int('id'))
     def do_delete(self, id):
+        """
+        Delete Static Route of `id`.
+        """
         staticroute = self.middleware.call_sync('staticroute._get_instance', id)
         rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
         try:
@@ -2063,6 +2105,9 @@ class DNSService(Service):
 
     @filterable
     async def query(self, filters, options):
+        """
+        Query Name Servers with `query-filters` and `query-options`.
+        """
         data = []
         resolvconf = (await run('resolvconf', '-l')).stdout.decode()
         for nameserver in RE_NAMESERVER.findall(resolvconf):
@@ -2109,6 +2154,30 @@ class NetworkGeneralService(Service):
 
     @accepts()
     async def summary(self):
+        """
+        Retrieve general information for current Network.
+
+        Returns a dictionary. For example:
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "ips": {
+                    "vtnet0": {
+                        "IPV4": [
+                            "192.168.0.15/24"
+                        ]
+                    }
+                },
+                "default_routes": [
+                    "192.168.0.1"
+                ],
+                "nameservers": [
+                    "192.168.0.1"
+                ]
+            }
+        """
         ips = defaultdict(lambda: defaultdict(list))
         for iface in await self.middleware.call('interface.query'):
             for alias in iface['state']['aliases']:

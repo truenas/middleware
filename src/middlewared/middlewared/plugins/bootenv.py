@@ -18,6 +18,9 @@ class BootEnvService(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
+        """
+        Query all Boot Environments with `query-filters` and `query-options`.
+        """
         results = []
         for clone in Update.ListClones():
             clone['id'] = clone['name']
@@ -55,7 +58,14 @@ class BootEnvService(CRUDService):
         Str('source'),
     ))
     def do_create(self, data):
+        """
+        Create a new boot environment using `name`.
 
+        If a new boot environment is desired which is a clone of another boot environment, `source` can be passed.
+        Then, a new boot environment of `name` is created using boot environment `source` by cloning it.
+
+        Ensure that `name` and `source` are valid boot environment names.
+        """
         verrors = ValidationErrors()
         self._clean_be_name(verrors, 'bootenv_create', data['name'])
         if verrors:
@@ -75,6 +85,9 @@ class BootEnvService(CRUDService):
         Str('name', required=True, validators=[Match(RE_BE_NAME)]),
     ))
     def do_update(self, oid, data):
+        """
+        Update `id` boot environment name with a new provided valid `name`.
+        """
 
         verrors = ValidationErrors()
         self._clean_be_name(verrors, 'bootenv_update', data['name'])
@@ -99,4 +112,7 @@ class BootEnvService(CRUDService):
     @accepts(Str('id'))
     @job(lock=lambda args: f'bootenv_delete_{args[0]}')
     def do_delete(self, job, oid):
+        """
+        Delete `id` boot environment. This removes the clone from the system.
+        """
         return Update.DeleteClone(oid)

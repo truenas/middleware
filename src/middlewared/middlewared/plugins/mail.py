@@ -104,6 +104,18 @@ class MailService(ConfigService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update Mail Service Configuration.
+
+        `fromemail` is used as a sending address which the mail server will use for sending emails.
+
+        `outgoingserver` is the hostname or IP address of SMTP server used for sending an email.
+
+        `security` is type of encryption desired.
+
+        `smtp` is a boolean value which when set indicates that SMTP authentication has been enabled and `user`/`pass`
+        are required attributes now.
+        """
         config = await self.config()
 
         new = config.copy()

@@ -11,6 +11,7 @@ from bsd import geom
 
 class BootService(Service):
 
+    @accepts()
     async def get_state(self):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.

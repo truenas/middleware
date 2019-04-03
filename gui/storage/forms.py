@@ -1555,7 +1555,7 @@ class ZVol_CreateForm(CommonZVol):
         self.parentds = kwargs.pop('parentds')
         with client as c:
             self.parentdata = c.call('pool.dataset.query', [['name', '=', self.parentds]], {'get': True})
-            size = c.call('pool.dataset.recommended_zvol_blocksize', self.parentds)
+            size = c.call('pool.dataset.recommended_zvol_blocksize', self.parentdata['pool'])
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
         key_order(self, 0, 'zvol_name', instance=True)
 

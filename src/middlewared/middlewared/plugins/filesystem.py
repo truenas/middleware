@@ -103,7 +103,7 @@ class FilesystemService(Service):
 
         if os.path.exists(os.path.join(path, ".windows")):
             stat["acl"] = "windows"
-        elif os.path.exists(os.path.join(path, ".mac")):
+        elif os.path.exists(os.path.join(path, ".apple")):
             stat["acl"] = "mac"
         else:
             stat["acl"] = "unix"

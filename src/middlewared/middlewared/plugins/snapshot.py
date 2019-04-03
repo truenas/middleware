@@ -51,6 +51,7 @@ class PeriodicSnapshotTaskService(CRUDService):
             Str('lifetime_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
             Str('naming_schema', required=True, validators=[ReplicationSnapshotNamingSchema()]),
             Cron('schedule', required=True, begin_end=True),
+            Bool('allow_empty', default=True),
             Bool('enabled', default=True),
             register=True
         )
@@ -245,12 +246,16 @@ class PeriodicSnapshotTaskService(CRUDService):
         )
 
         await self.middleware.call('service.restart', 'cron')
+        await self.middleware.call('zettarepl.update_tasks')
 
         return response
 
     @item_method
     @accepts(Int("id"))
     async def run(self, id):
+        """
+        Execute a Periodic Snapshot Task of `id`.
+        """
         task = await self._get_instance(id)
 
         if not task["enabled"]:
@@ -289,6 +294,13 @@ class PeriodicSnapshotTaskService(CRUDService):
             verrors.add(
                 'exclude',
                 ('Excluding child datasets is not available because this snapshot task is being used in '
+                 'legacy replication task. Please upgrade your replication tasks to edit this field.'),
+            )
+
+        if not data['allow_empty']:
+            verrors.add(
+                'allow_empty',
+                ('Disallowing empty snapshots is not available because this snapshot task is being used in '
                  'legacy replication task. Please upgrade your replication tasks to edit this field.'),
             )
 

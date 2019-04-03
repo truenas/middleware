@@ -128,6 +128,10 @@ class Settings(Model):
                     "or ip:port, if :port is not specified it will default to "
                     "port 514 (this field currently only takes IPv4 addresses)"),
     )
+    stg_crash_reporting = models.NullBooleanField(
+        verbose_name=_("Crash reporting"),
+        help_text=_("Enable sending anonymous crash reports to iXsystems"),
+    )
     stg_wizardshown = models.BooleanField(
         editable=False,
         default=False,

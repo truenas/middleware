@@ -362,7 +362,7 @@ class Job(object):
         and return the result as a json
         """
         if self.options.get('process'):
-            rv = await self.middleware._call_worker(self.serviceobj, self.method_name, *self.args, job={'id': self.id})
+            rv = await self.middleware._call_worker(self.method_name, *self.args, job={'id': self.id})
         else:
             # Make sure args are not altered during job run
             args = copy.deepcopy(self.args)
