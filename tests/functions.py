@@ -4,7 +4,7 @@
 # License: BSD
 
 import requests
-from auto_config import default_api_url, api1_url, api2_url, user, password
+from auto_config import api_url, user, password
 import json
 import os
 from subprocess import run, Popen, PIPE
@@ -17,16 +17,6 @@ authentification = (user, password)
 
 
 def GET(testpath, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
-        else:
-            raise ValueError('api parameter should be "1" or "2"')
-    else:
-        api_url = default_api_url
     if optional.pop("anonymous", False):
         auth = None
     else:
@@ -46,16 +36,6 @@ def GET_USER(username):
 
 
 def POST(testpath, payload=None, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
-        else:
-            raise ValueError('api parameter should be "1" or "2"')
-    else:
-        api_url = default_api_url
     if optional.pop("anonymous", False):
         auth = None
     else:
@@ -69,17 +49,7 @@ def POST(testpath, payload=None, **optional):
     return postit
 
 
-def POST_TIMEOUT(testpath, payload, timeOut, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
-        else:
-            raise ValueError('api parameter should be "1" or "2"')
-    else:
-        api_url = default_api_url
+def POST_TIMEOUT(testpath, payload, timeOut):
     if payload is None:
         postit = requests.post(api_url + testpath, headers=header,
                                auth=authentification, timeout=timeOut)
@@ -91,48 +61,22 @@ def POST_TIMEOUT(testpath, payload, timeOut, **optional):
 
 
 def POSTNOJSON(testpath, payload, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
-        else:
-            raise ValueError('api parameter should be "1" or "2"')
-    else:
-        api_url = default_api_url
     postit = requests.post(api_url + testpath, headers=header,
                            auth=authentification, data=payload)
     return postit
 
 
 def PUT(testpath, payload, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
-        else:
-            raise ValueError('api parameter should be "1" or "2"')
+    if optional.pop("anonymous", False):
+        auth = None
     else:
-        api_url = default_api_url
+        auth = authentification
     putit = requests.put(api_url + testpath, headers=header,
-                         auth=authentification, data=json.dumps(payload))
+                         auth=auth, data=json.dumps(payload))
     return putit
 
 
 def PUT_TIMEOUT(testpath, payload, timeOut, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
-        else:
-            raise ValueError('api parameter should be "1" or "2"')
-    else:
-        api_url = default_api_url
     putit = requests.put(api_url + testpath, headers=header,
                          auth=authentification, data=json.dumps(payload),
                          timeout=timeOut)
@@ -140,18 +84,12 @@ def PUT_TIMEOUT(testpath, payload, timeOut, **optional):
 
 
 def DELETE(testpath, payload=None, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
-        else:
-            raise ValueError('api parameter should be "1" or "2"')
+    if optional.pop("anonymous", False):
+        auth = None
     else:
-        api_url = default_api_url
+        auth = authentification
     deleteit = requests.delete(api_url + testpath, headers=header,
-                               auth=authentification,
+                               auth=auth,
                                data=json.dumps(payload) if payload else None)
     return deleteit
 
