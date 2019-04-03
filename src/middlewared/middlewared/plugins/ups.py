@@ -178,11 +178,37 @@ class UPSService(SystemServiceService):
         Str('notify_type')
     )
     async def upssched_event(self, notify_type):
+        config = await self.config()
+
+        if config['mode'] == 'MASTER':
+            upsc_identifier = f'{config["identifier"]}@localhost:{config["remoteport"]}'
+        else:
+            upsc_identifier = f'{config["identifier"]}@{config["remotehost"]}:{config["remoteport"]}'
+
         if notify_type.lower() == 'shutdown':
-            syslog.syslog(syslog.LOG_INFO, 'upssched-cmd "issuing shutdown"')
-            await run('/usr/local/sbin/upsmon', '-c', 'fsd', check=False)
+            # Before we start FSD with upsmon, lets ensure that ups is not ONLINE (OL).
+            # There are cases where battery/charger issues can result in ups.status being "OL LB" at the
+            # same time. This will ensure that we don't initiate a shutdown if ups is OL.
+            stats_output = (
+                await run(
+                    '/usr/local/bin/upsc', upsc_identifier,
+                    check=False
+                )
+            ).stdout
+
+            ups_status = re.findall(
+                fr'ups.status: (.*)',
+                '' if not stats_output else stats_output.decode()
+            )
+            if ups_status and 'ol' in ups_status[0].lower():
+                self.middleware.logger.debug(
+                    f'Shutdown not initiated as ups.status ({ups_status[0]}) indicates '
+                    f'{config["identifier"]} is ONLINE (OL).'
+                )
+            else:
+                syslog.syslog(syslog.LOG_INFO, 'upssched-cmd "issuing shutdown"')
+                await run('/usr/local/sbin/upsmon', '-c', 'fsd', check=False)
         elif notify_type.lower() in ('email', 'commbad', 'commok'):
-            config = await self.config()
             if config['emailnotify']:
                 # Email user with the notification event and details
                 # We send the email in the following format ( inclusive line breaks )
@@ -221,7 +247,7 @@ class UPSService(SystemServiceService):
                 }
 
                 stats_output = (
-                    await run('/usr/local/bin/upsc', f'{ups_name}@localhost:{config["remoteport"]}', check=False)
+                    await run('/usr/local/bin/upsc', upsc_identifier, check=False)
                 ).stdout
                 recovered_stats = re.findall(
                     fr'({"|".join(data_points)}): (.*)',
