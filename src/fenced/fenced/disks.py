@@ -62,6 +62,8 @@ class Disks(dict):
         finally:
             executor.shutdown(wait=False)
         failed = set([fs[i] for i in done_notdone.not_done])
+        if failed:
+            logger.info('%s:%r timed out for %d disk(s)', method, args, len(failed))
         for i in done_notdone.done:
             if done_callback:
                 done_callback(i, fs, failed)
@@ -84,7 +86,7 @@ class Disks(dict):
                 if host_key is None:
                     failed += 1
                     return
-                keys.add(key)
+                keys.add(host_key)
                 remote_keys.union(remote_keys)
             except Exception:
                 failed.add(fs[i])
