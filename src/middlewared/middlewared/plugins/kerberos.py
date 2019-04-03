@@ -579,6 +579,8 @@ class KerberosKeytabService(CRUDService):
         (netbios name with '$' appended), and maintain them through machine account password changes.
         Copy the system keytab, parse it, and update the corresponding keytab entry in the freenas configuration
         database.
+        The current system kerberos keytab and compare with a cached copy before overwriting it when a new
+        keytab is generated through middleware 'etc.generate kerberos'. 
         """
         if not os.path.exists(keytab['SYSTEM'].value):
             return False
@@ -591,7 +593,6 @@ class KerberosKeytabService(CRUDService):
         with open(keytab['SAMBA'].value, 'rb') as f:
             encoded_keytab = base64.b64encode(f.read())
 
-        self.logger.debug(encoded_keytab.decode())
         if not encoded_keytab:
             self.logger.debug(f"Failed to generate b64encoded version of {keytab['SAMBA'].name}") 
             return False

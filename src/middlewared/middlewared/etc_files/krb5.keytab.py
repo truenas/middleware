@@ -18,6 +18,8 @@ async def shasum_system_keytab():
 
 
 async def must_update_samba_keytab(middleware):
+    if not os.path.exists(keytabfile):
+        return False 
     if not await middleware.call('cache.has_key', 'keytab_shasum'):
         await middleware.call('cache.put', 'keytab_shasum', await shasum_system_keytab())
         return True
