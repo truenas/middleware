@@ -275,7 +275,7 @@ def filter_getattrs(filters):
         if len(filter_) == 2:
             f.append(filter_[1])
         elif len(filter_) == 3:
-            attrs.add(filter_[2])
+            attrs.add(filter_[0])
         else:
             raise ValueError('Invalid filter.')
     return attrs
