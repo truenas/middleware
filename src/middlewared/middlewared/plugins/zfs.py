@@ -420,7 +420,7 @@ class ZFSSnapshot(CRUDService):
         Int('vmsnaps_count'),
         Dict('properties', additional_attrs=True)
     ))
-    async def do_create(self, data):
+    def do_create(self, data):
         """
         Take a snapshot from a given dataset.
 
@@ -457,7 +457,7 @@ class ZFSSnapshot(CRUDService):
         Str('name', required=True),
         Bool('defer_delete')
     ))
-    async def remove(self, data):
+    def remove(self, data):
         """
         Remove a snapshot from a given dataset.
 
@@ -483,7 +483,7 @@ class ZFSSnapshot(CRUDService):
         Str('snapshot'),
         Str('dataset_dst'),
     ))
-    async def clone(self, data):
+    def clone(self, data):
         """
         Clone a given snapshot to a new dataset.
 
