@@ -89,7 +89,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
 
 def get_aliases():
-    with open('/etc/aliases', 'r') as f:
+    with open('/etc/mail/aliases', 'r') as f:
         aliases = {}
 
         for line in f.readlines():

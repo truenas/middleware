@@ -3,7 +3,7 @@
 
 	users = middleware.call_sync('user.query', [['email', '!=', '']])
 
-	with open('/conf/base/etc/aliases', 'r') as f:
+	with open('/conf/base/etc/mail/aliases', 'r') as f:
 		base_data = f.read()
 
 	write_users = []
