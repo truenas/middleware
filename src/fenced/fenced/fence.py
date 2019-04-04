@@ -62,7 +62,7 @@ class Fence(object):
             self._disks.add(disk)
 
         if unsupported:
-            logger.info('Disks does not support SCSI-3 PR: %s.', ' '.join(unsupported))
+            logger.info('Disks without support for SCSI-3 PR: %s.', ' '.join(unsupported))
 
         return remote_keys
 
@@ -94,7 +94,7 @@ class Fence(object):
         if failed_disks:
             rate = int((len(failed_disks) / len(self._disks)) * 100)
             if rate > 10:
-                logger.error('%d% of the disks failed to reset SCSI reservations, exiting.', rate)
+                logger.error('%d%% of the disks failed to reset SCSI reservations, exiting.', rate)
                 sys.exit(ExitCode.RESERVE_ERROR.value)
             for disk in failed_disks:
                 self._disks.remove(disk)
