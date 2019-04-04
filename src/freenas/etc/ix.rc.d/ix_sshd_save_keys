@@ -10,7 +10,7 @@
 # Save any generated keys by /usr/local/etc/rc.d/sshd into the config db.
 #
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 save_keys()
 {
