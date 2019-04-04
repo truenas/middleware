@@ -26,12 +26,10 @@
 import base64
 import logging
 import os
-import re
 import tempfile
 
 from ldap import LDAPError
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
@@ -43,10 +41,8 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
 )
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.pipesubr import run
 from freenasUI.common.system import (
     validate_netbios_name,
-    compare_netbios_names
 )
 from freenasUI.directoryservice import models
 from freenasUI.middleware.client import client
@@ -275,9 +271,11 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
             self.fields['ad_netbiosalias'].initial = ' '.join(smb['netbiosalias'])
 
             if not c.call('system.is_freenas') and c.call('failover.licensed'):
+                with client as c:
+                    failover_node = c.call('failover.node')
                 from freenasUI.failover.utils import node_label_field
                 node_label_field(
-                    _n.failover_node(),
+                    failover_node,
                     self.fields['ad_netbiosname_a'],
                     self.fields['ad_netbiosname_b'],
                 )
@@ -306,7 +304,7 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
 
         for key in ['certificate', 'nss_info']:
             if not data[key]:
-                data.pop(key) 
+                data.pop(key)
 
         if data['kerberos_principal'] == '----------':
             data['kerberos_principal'] = ''

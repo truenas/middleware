@@ -29,24 +29,19 @@ import ldap.sasl
 import logging
 import os
 import pwd
-import socket
 import tempfile
 import time
 
 from ldap.controls import SimplePagedResultsControl
-from .log import log_traceback
 
 from freenasUI.common.pipesubr import (
     pipeopen,
     run
 )
 
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.system import (
     get_freenas_var,
-    get_freenas_var_by_file,
     ldap_objects,
-    get_hostname
 )
 from freenasUI.common.freenascache import (
     FreeNAS_UserCache,

@@ -24,22 +24,7 @@ from freenasUI.common.freenasldap import (
 )
 from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.middleware import zfs
-from freenasUI.middleware.notifier import notifier
-from freenasUI.directoryservice.models import (
-    IDMAP_TYPE_AD,
-    IDMAP_TYPE_ADEX,
-    IDMAP_TYPE_AUTORID,
-    IDMAP_TYPE_FRUIT,
-    IDMAP_TYPE_HASH,
-    IDMAP_TYPE_LDAP,
-    IDMAP_TYPE_NSS,
-    IDMAP_TYPE_RFC2307,
-    IDMAP_TYPE_RID,
-    IDMAP_TYPE_TDB,
-    IDMAP_TYPE_TDB2,
-    IDMAP_TYPE_SCRIPT,
-)
-from middlewared.utils import Popen, django_modelobj_serialize
+from middlewared.utils import Popen
 
 
 logger = logging.getLogger('plugins.notifier')
@@ -106,7 +91,7 @@ class NotifierService(Service):
                 'ad_idmap_backend': ad['idmap_backend'],
                 'ds_type': 1,
                 'krb_realm': ad['kerberos_realm']['krb_realm'],
-                'workgroups': smb['workgroup'], 
+                'workgroups': smb['workgroup'],
             }
             return data
         elif name == 'LDAP':

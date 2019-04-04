@@ -4180,7 +4180,7 @@ class JsonGroupResource(DojoResource):
         wizard_ds = request.session.get('wizard_ds')
         if request.GET.get('wizard') == '1' and wizard_ds:
             if wizard_ds.get('ds_type') == 'ad':
-                wizard_groups = None 
+                wizard_groups = None
             elif wizard_ds.get('ds_type') == 'ldap':
                 wizard_groups = FreeNAS_LDAP_Groups(
                     host=wizard_ds.get('ds_ldap_hostname'),

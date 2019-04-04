@@ -12,10 +12,17 @@ from middlewared.utils import run, Popen
 from middlewared.validators import Range
 
 class dstype(enum.Enum):
+    """
+    The below DS_TYPES are defined for use as system domains for idmap backends.
+    DS_TYPE_NT4 is defined, but has been deprecated. DS_TYPE_DEFAULT_DOMAIN corresponds
+    with the idmap settings under services->SMB, and is represented by 'idmap domain = *'
+    in the smb4.conf. The only instance where the idmap backend for the default domain will
+    not be 'tdb' is when the server is (1) joined to active directory and (2) autorid is enabled.
+    """
     DS_TYPE_ACTIVEDIRECTORY = 1
     DS_TYPE_LDAP = 2
     DS_TYPE_NIS = 3
-    DS_TYPE_NT4 = 4 #deprecated
+    DS_TYPE_NT4 = 4
     DS_TYPE_DEFAULT_DOMAIN = 5
 
 
@@ -26,7 +33,7 @@ class IdmapService(Service):
 
     :get_configured_idmap_domains: - returns list of all configured idmap domains. A configured domain is one
     that exists in the domaintobackend table and has a corresponding backend configured in the respective
-    idmap_{backend} table. List is sorted based in ascending order based on the id range. 
+    idmap_{backend} table. List is sorted based in ascending order based on the id range.
 
     :clear_idmap_cache: - removes samba's idmap cache. This may be required if idmap settings are changed
     after the server has entered production. This will cause a service disruption.
@@ -74,7 +81,7 @@ class IdmapService(Service):
         for domain in domains:
             choices.append(domain['name'])
 
-        return choices 
+        return choices
 
     @private
     async def get_idmap_legacy(self, obj_type, idmap_type):
@@ -88,7 +95,7 @@ class IdmapService(Service):
         """
         if idmap_type in ['adex', 'hash']:
             raise CallError(f'idmap backend {idmap_type} has been deprecated')
-    
+
         ds_type = dstype(int(obj_type)).name
 
         if ds_type not in ['DS_TYPE_ACTIVEDIRECTORY', 'DS_TYPE_LDAP', 'DS_TYPE_DEFAULT_DOMAIN']:
@@ -99,7 +106,7 @@ class IdmapService(Service):
             return {
                 'idmap_id': res[0]['id'],
                 'idmap_type': idmap_type,
-                'idmap_name': idmap_type 
+                'idmap_name': idmap_type
             }
         next_idmap_range = await self.get_next_idmap_range()
         new_idmap = await self.middleware.call(f'idmap.{idmap_type}.create', {
@@ -133,23 +140,22 @@ class IdmapService(Service):
         """
         verrors = ValidationErrors()
         if data['range_high'] < data['range_low']:
-            verrors.add(f'idmap_{idmap_type}.update', 'Idmap high range must be greater than idmap low range')
+            verrors.add(f'idmap_range', 'Idmap high range must be greater than idmap low range')
             return verrors
-            
+
         configured_domains = await self.get_configured_idmap_domains()
         new_range = range(data['range_low'], data['range_high'])
         for i in configured_domains:
             if i['domain']['idmap_domain_name'] == data['domain']['idmap_domain_name']:
                 continue
             existing_range = range(i['backend_data']['range_low'], i['backend_data']['range_high'])
-            if range(max(existing_range[0], new_range[0]), min(existing_range[-1], new_range[-1])+1):
+            if range(max(existing_range[0], new_range[0]), min(existing_range[-1], new_range[-1]) + 1):
                 verrors.add(
-                    f'idmap_range', 
+                    f'idmap_range',
                     f'new idmap range conflicts with existing range for domain [{i["domain"]["idmap_domain_name"]}]'
                 )
 
         return verrors
-        
 
     @accepts()
     async def get_configured_idmap_domains(self):
@@ -157,7 +163,7 @@ class IdmapService(Service):
         Inner join domain-to-backend table with its corresponding idmap backend
         table on the configured short-form domain name. Sorted by idmap high range.
         """
-        domains =  await self.middleware.call('idmap.domaintobackend.query')
+        domains = await self.middleware.call('idmap.domaintobackend.query')
         configured_domains = []
         for domain in domains:
             b = await self.middleware.call(
@@ -205,12 +211,12 @@ class IdmapService(Service):
             if len(c) == 6 and c[0] != smb['workgroup']:
                 await self.idmap.domain.create({'name': c[0], 'dns_domain_name': c[1]})
 
+
 class IdmapDomainService(CRUDService):
     class Config:
         datastore = 'directoryservice.idmap_domain'
         datastore_prefix = 'idmap_domain_'
         namespace = 'idmap.domain'
-
 
     @accepts(
         Dict(
@@ -285,7 +291,6 @@ class IdmapDomainBackendService(CRUDService):
         datastore = 'directoryservice.idmap_domaintobackend'
         datastore_prefix = 'idmap_dtb_'
         namespace = 'idmap.domaintobackend'
-
 
     @accepts(
         Dict(
@@ -369,17 +374,12 @@ class IdmapDomainBackendService(CRUDService):
             raise CallError(f'Deletion of mapping for [{entry["domain"]["idmap_domain_name"]}] is not permitted.', errno.EPERM)
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
-
 
 class IdmapADService(CRUDService):
     class Config:
         datastore = 'directoryservice.idmap_ad'
         datastore_prefix = 'idmap_ad_'
         namespace = 'idmap.ad'
-
 
     @accepts(
         Dict(
@@ -443,10 +443,6 @@ class IdmapADService(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
 
     @private
     async def _validate(self, data):
@@ -524,10 +520,6 @@ class IdmapAutoridService(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
-
     @private
     async def _validate(self, data):
         verrors = ValidationErrors()
@@ -539,7 +531,6 @@ class IdmapLDAPService(CRUDService):
         datastore = 'directoryservice.idmap_ldap'
         datastore_prefix = 'idmap_ldap_'
         namespace = 'idmap.ldap'
-
 
     @accepts(
         Dict(
@@ -608,10 +599,6 @@ class IdmapLDAPService(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
-
     @private
     async def _validate(self, data):
         verrors = ValidationErrors()
@@ -623,7 +610,6 @@ class IdmapNSSService(CRUDService):
         datastore = 'directoryservice.idmap_nss'
         datastore_prefix = 'idmap_nss_'
         namespace = 'idmap.nss'
-
 
     @accepts(
         Dict(
@@ -686,10 +672,6 @@ class IdmapNSSService(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
-
     @private
     async def _validate(self, data):
         verrors = ValidationErrors()
@@ -706,7 +688,6 @@ class IdmapRFC2307Service(CRUDService):
         datastore = 'directoryservice.idmap_rfc2307'
         datastore_prefix = 'idmap_rfc2307_'
         namespace = 'idmap.rfc2307'
-
 
     @accepts(
         Dict(
@@ -781,10 +762,6 @@ class IdmapRFC2307Service(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
-
     @private
     async def _validate(self, data):
         verrors = ValidationErrors()
@@ -796,7 +773,6 @@ class IdmapRIDService(CRUDService):
         datastore = 'directoryservice.idmap_rid'
         datastore_prefix = 'idmap_rid_'
         namespace = 'idmap.rid'
-
 
     @accepts(
         Dict(
@@ -859,10 +835,6 @@ class IdmapRIDService(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
-
     @private
     async def _validate(self, data):
         verrors = ValidationErrors()
@@ -874,7 +846,6 @@ class IdmapScriptService(CRUDService):
         datastore = 'directoryservice.idmap_script'
         datastore_prefix = 'idmap_script_'
         namespace = 'idmap.script'
-
 
     @accepts(
         Dict(
@@ -937,10 +908,6 @@ class IdmapScriptService(CRUDService):
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
-
     @private
     async def _validate(self, data):
         verrors = ValidationErrors()
@@ -952,7 +919,6 @@ class IdmapTDBService(CRUDService):
         datastore = 'directoryservice.idmap_tdb'
         datastore_prefix = 'idmap_tdb_'
         namespace = 'idmap.tdb'
-
 
     @accepts(
         Dict(
@@ -1031,7 +997,6 @@ class IdmapTDB2Service(CRUDService):
         datastore_prefix = 'idmap_tdb2_'
         namespace = 'idmap.tdb2'
 
-
     @accepts(
         Dict(
             'idmap_tdb2_create',
@@ -1092,10 +1057,6 @@ class IdmapTDB2Service(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-    @accepts(Int("id"))
-    async def run(self, id):
-        data = await self._get_instance(id)
 
     @private
     async def _validate(self, data):

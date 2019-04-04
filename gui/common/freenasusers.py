@@ -157,7 +157,7 @@ class FreeNAS_Group(object):
                 obj = FreeNAS_NIS_Group(group, **kwargs)
             elif dflags & U_LDAP_ENABLED:
                 obj = FreeNAS_LDAP_Group(group, **kwargs)
-        except:
+        except Exception:
             log.debug('Failed to get group from directory service, falling back to local', exc_info=True)
 
         if obj is None:
@@ -188,7 +188,7 @@ class FreeNAS_Groups(object):
         dflags = _get_dflags()
         if dflags & U_AD_ENABLED:
             with client as c:
-                grouplist = c.call('activedirectory.get_ad_usersorgroups_legacy','groups') 
+                grouplist = c.call('activedirectory.get_ad_usersorgroups_legacy', 'groups')
                 self.__groups = []
                 for group in grouplist:
                     self.__groups.append(FreeNAS_ActiveDirectory_Group(group, **kwargs))
@@ -279,11 +279,11 @@ class FreeNAS_ActiveDirectory_User(object):
             self.pw_gid = user[3]
             self.pw_gecos = user[4]
             self.pw_dir = user[5]
-            self.pw_shell = user[6] 
+            self.pw_shell = user[6]
 
     def __get_user(self, user):
         with client as c:
-            self._pw = c.call('activedirectory.get_ad_userorgroup_legacy', 'users', user) 
+            self._pw = c.call('activedirectory.get_ad_userorgroup_legacy', 'users', user)
 
 
 class FreeNAS_ActiveDirectory_Group(object):
@@ -308,7 +308,7 @@ class FreeNAS_ActiveDirectory_Group(object):
 
     def __get_group(self, group):
         with client as c:
-            self._gr = c.call('activedirectory.get_ad_userorgroup_legacy', 'groups', group) 
+            self._gr = c.call('activedirectory.get_ad_userorgroup_legacy', 'groups', group)
 
 
 class FreeNAS_User(object):
@@ -329,7 +329,7 @@ class FreeNAS_User(object):
                 obj = FreeNAS_NIS_User(user, **kwargs)
             elif dflags & U_LDAP_ENABLED:
                 obj = FreeNAS_LDAP_User(user, **kwargs)
-        except:
+        except Exception:
             log.debug('Failed to get user from directory service, falling back to local', exc_info=True)
 
         if not obj:
@@ -359,7 +359,7 @@ class FreeNAS_Users(object):
         dflags = _get_dflags()
         if dflags & U_AD_ENABLED:
             with client as c:
-                userlist = c.call('activedirectory.get_ad_usersorgroups_legacy','users') 
+                userlist = c.call('activedirectory.get_ad_usersorgroups_legacy','users')
                 self.__users = []
                 for user in userlist:
                     self.__users.append(FreeNAS_ActiveDirectory_User(user, **kwargs))

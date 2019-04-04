@@ -404,7 +404,7 @@ def directoryservice_idmap_script(request, id):
 
 def directoryservice_idmap_backend(request, obj_type, obj_id, idmap_type):
     with client as c:
-       data = c.call('idmap.get_idmap_legacy', obj_type, idmap_type) 
+        data = c.call('idmap.get_idmap_legacy', obj_type, idmap_type)
     content = json.dumps(data)
     return HttpResponse(content, content_type="application/json")
 

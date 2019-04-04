@@ -133,6 +133,7 @@ def cache_dump(**kwargs):
 def _cache_keys_ActiveDirectory(**kwargs):
     return
 
+
 def _cache_keys_NIS(**kwargs):
     nis = FreeNAS_NIS(flags=FLAGS_DBINIT)
     domains = nis.get_domains()
@@ -261,6 +262,7 @@ def cache_rawdump(**kwargs):
 
 def _cache_check_ActiveDirectory(**kwargs):
     return
+
 
 def _cache_check_NIS(**kwargs):
     if 'args' not in kwargs and kwargs['args']:

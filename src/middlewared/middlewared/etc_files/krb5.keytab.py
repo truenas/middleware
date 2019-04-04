@@ -10,6 +10,7 @@ kdir = "/etc/kerberos"
 keytabfile = "/etc/krb5.keytab"
 ktutil_cmd = "/usr/sbin/ktutil"
 
+
 async def shasum_system_keytab():
     with open(keytabfile, 'rb') as f:
         system_keytab = f.read()
@@ -19,7 +20,7 @@ async def shasum_system_keytab():
 
 async def must_update_samba_keytab(middleware):
     if not os.path.exists(keytabfile):
-        return False 
+        return False
     if not await middleware.call('cache.has_key', 'keytab_shasum'):
         await middleware.call('cache.put', 'keytab_shasum', await shasum_system_keytab())
         return True
@@ -27,10 +28,10 @@ async def must_update_samba_keytab(middleware):
         cached_shasum = await middleware.call('cache.get', 'keytab_shasum')
         kt_shasum = await shasum_system_keytab()
         if cached_shasum != kt_shasum:
-            await middleware.call('cache.put', 'keytab_shasum', kt_sum)
+            await middleware.call('cache.put', 'keytab_shasum', kt_shasum)
             return True
 
-    return False 
+    return False
 
 
 async def write_keytab(db_keytabname, db_keytabfile):
@@ -56,7 +57,7 @@ async def render(service, middleware):
     Samba may end up changing the keytab associated with the AD machine account
     behind the scenes. These changes should not be overwritten, and so if the
     system keytab has changed since the last time we generated it, assume samba
-    has done something and save the current samba keytab in the database. 
+    has done something and save the current samba keytab in the database.
     """
     if await must_update_samba_keytab(middleware):
         await middleware.call('kerberos.keytab.store_samba_keytab')
