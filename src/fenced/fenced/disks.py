@@ -27,7 +27,7 @@ class Disks(dict):
         """
         There is no reason set keys on every disk, especially for systems with
         hundreds of them.
-        For better performance lets cap the number of disks we set the new key
+        For better performance let's cap the number of disks we set the new key
         per round to `SET_DISKS_CAP`.
         """
         if len(self) <= SET_DISKS_CAP:
@@ -61,7 +61,7 @@ class Disks(dict):
             done_notdone = fut_wait(fs.keys(), timeout=30)
         finally:
             executor.shutdown(wait=False)
-        failed = set([fs[i] for i in done_notdone.not_done])
+        failed = {fs[i] for i in done_notdone.not_done}
         if failed:
             logger.info('%s:%r timed out for %d disk(s)', method, args, len(failed))
         for i in done_notdone.done:
@@ -84,7 +84,7 @@ class Disks(dict):
             try:
                 host_key, remote_keys = i.result()
                 if host_key is None:
-                    failed += 1
+                    failed.add(fs[i])
                     return
                 keys.add(host_key)
                 remote_keys.union(remote_keys)
@@ -128,7 +128,7 @@ class Disk(object):
                 host_key = key
             else:
                 remote_keys.add(key)
-        return [host_key, remote_keys]
+        return (host_key, remote_keys)
 
     def set_key(self, newkey):
         newkey = self.fence.hostid << 32 | (newkey & 0xffffffff)
