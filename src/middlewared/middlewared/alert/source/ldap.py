@@ -1,8 +1,12 @@
-from middlewared.alert.base import AlertLevel, FilePresenceAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, FilePresenceAlertSource
+
+
+class LDAPAlertClass(AlertClass):
+    category = AlertCategory.DIRECTORY_SERVICE
+    level = AlertLevel.WARNING
+    title = "LDAP Did Not Bind to the Domain"
 
 
 class LDAPAlertSource(FilePresenceAlertSource):
-    level = AlertLevel.WARNING
-    title = "LDAP did not bind to the domain"
-
     path = "/tmp/.ldap_status_alert"
+    klass = LDAPAlertClass

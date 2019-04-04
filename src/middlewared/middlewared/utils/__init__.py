@@ -24,6 +24,18 @@ BUILDTIME = None
 VERSION = None
 
 
+def bisect(condition, iterable):
+    a = []
+    b = []
+    for val in iterable:
+        if condition(val):
+            a.append(val)
+        else:
+            b.append(val)
+
+    return a, b
+
+
 def django_modelobj_serialize(middleware, obj, extend=None, extend_context=None, extend_context_value=None,
                               field_prefix=None, select=None):
     from django.db.models.fields.related import ForeignKey, ManyToManyField
@@ -143,7 +155,7 @@ def get(obj, path):
         obj = {'foo': {'bar': '1'}, 'foo.bar': '2', 'foobar': ['first', 'second', 'third']}
 
         path = 'foo.bar' returns '1'
-        path = 'foo\.bar' returns '2'
+        path = 'foo\\.bar' returns '2'
         path = 'foobar.0' returns 'first'
     """
     right = path

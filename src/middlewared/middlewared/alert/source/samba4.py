@@ -1,12 +1,28 @@
 import os
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+
+
+class NoSystemPoolConfiguredAlertClass(AlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.WARNING
+    title = "No System Dataset Pool Configured"
+    text = "The system dataset has not been configured. Please set it in Settings -> System Dataset -> Pool."
+
+
+class SambaDatasetAutoMigrationCantBeDoneAlertClass(AlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.WARNING
+    title = "Samba Auto-Bigration to System Dataset Failed"
+    text = (
+        "Multiple legacy Samba4 datasets detected. Auto-migration "
+        "to /mnt/%s/.system/samba4 cannot be done. Please perform "
+        "this step manually and then delete the now-obsolete "
+        "Samba4 datasets and the file /var/db/samba4/.alert_cant_migrate."
+    )
 
 
 class Samba4AlertSource(AlertSource):
-    level = AlertLevel.WARNING
-    title = "Samba error"
-
     async def check(self):
         if not await self.middleware.call("datastore.query", "storage.volume"):
             return
@@ -19,16 +35,7 @@ class Samba4AlertSource(AlertSource):
 
         systemdataset = await self.middleware.call("systemdataset.config")
         if not systemdataset["pool"]:
-            return Alert(
-                "No system pool configured, please configure one in "
-                "Settings -> System Dataset -> Pool"
-            )
+            return Alert(NoSystemPoolConfiguredAlertClass)
 
         if os.path.exists("/var/db/samba4/.alert_cant_migrate"):
-            return Alert(
-                "Multiple legacy samba4 datasets detected. Auto-migration "
-                "to /mnt/%s/.system/samba4 cannot be done. Please perform "
-                "this step manually and then delete the now-obsolete "
-                "samba4 datasets and /var/db/samba4/.alert_cant_migrate",
-                systemdataset["pool"]
-            )
+            return Alert(SambaDatasetAutoMigrationCantBeDoneAlertClass, systemdataset["pool"])

@@ -7,9 +7,10 @@ import os
 
 from middlewared.alert.schedule import IntervalSchedule
 
-__all__ = ["AlertLevel", "UnavailableException",
-           "Alert", "AlertSource", "DismissableAlertSource", "FilePresenceAlertSource",
-           "ThreadedAlertSource", "OneShotAlertSource",
+__all__ = ["UnavailableException",
+           "AlertClass", "OneShotAlertClass", "DismissableAlertClass",
+           "AlertCategory", "AlertLevel", "Alert",
+           "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
            "format_alerts", "ellipsis"]
 
@@ -18,31 +19,116 @@ logger = logging.getLogger(__name__)
 undefined = object()
 
 
-class AlertLevel(enum.Enum):
-    INFO = 20
-    WARNING = 30
-    CRITICAL = 50
-
-
 class UnavailableException(Exception):
     pass
 
 
+class AlertClassMeta(type):
+    def __init__(cls, name, bases, dct):
+        super().__init__(name, bases, dct)
+
+        if cls.__name__ != "AlertClass":
+            if not cls.__name__.endswith("AlertClass"):
+                raise NameError(f"Invalid alert class name {cls.__name__}")
+
+            cls.name = cls.__name__.replace("AlertClass", "")
+
+            if not cls.exclude_from_list:
+                AlertClass.classes.append(cls)
+                AlertClass.class_by_name[cls.name] = cls
+
+
+class AlertClass(metaclass=AlertClassMeta):
+    classes = []
+    class_by_name = {}
+
+    category = NotImplemented
+    level = NotImplemented
+    title = NotImplemented
+    text = None
+
+    exclude_from_list = False
+    hardware = False
+
+    def __init__(self, middleware):
+        self.middleware = middleware
+
+    @classmethod
+    def format(cls, args):
+        if cls.text is None:
+            return cls.title
+
+        return cls.text % args
+
+
+class OneShotAlertClass:
+    async def create(self, args):
+        raise NotImplementedError
+
+    async def delete(self, alerts, query):
+        raise NotImplementedError
+
+
+class DismissableAlertClass:
+    async def dismiss(self, alerts, alert):
+        raise NotImplementedError
+
+
+class AlertCategory(enum.Enum):
+    CERTIFICATES = "CERTIFICATES"
+    DIRECTORY_SERVICE = "DIRECTORY_SERVICE"
+    HARDWARE = "HARDWARE"
+    NETWORK = "NETWORK"
+    REPORTING = "REPORTING"
+    SHARING = "SHARING"
+    STORAGE = "STORAGE"
+    SYSTEM = "SYSTEM"
+    TASKS = "TASKS"
+
+
+alert_category_names = {
+    AlertCategory.CERTIFICATES: "Certificates",
+    AlertCategory.DIRECTORY_SERVICE: "Directory Service",
+    AlertCategory.HARDWARE: "Hardware",
+    AlertCategory.NETWORK: "Network",
+    AlertCategory.REPORTING: "Reporting",
+    AlertCategory.SHARING: "Sharing",
+    AlertCategory.STORAGE: "Storage",
+    AlertCategory.SYSTEM: "System",
+    AlertCategory.TASKS: "Tasks",
+}
+
+
+class AlertLevel(enum.Enum):
+    INFO = 1
+    NOTICE = 2
+    WARNING = 3
+    ERROR = 4
+    CRITICAL = 5
+    ALERT = 6
+    EMERGENCY = 7
+
+
 class Alert:
-    def __init__(self, title=None, args=None, node=None, source=None, key=undefined, datetime=None, level=None,
-                 dismissed=None, mail=None):
-        self.title = title
+    def __init__(self, klass, args=None, key=undefined, datetime=None, node=None, dismissed=None, mail=None,
+                 _uuid=None, _source=None, _key=None, _text=None):
+        self.uuid = _uuid
+        self.source = _source
+        self.klass = klass
         self.args = args
 
-        self.source = source
         self.node = node
-        if key is undefined:
-            key = [title, args]
-        self.key = key if isinstance(key, str) else json.dumps(key, sort_keys=True)
+        if _key is None:
+            if key is undefined:
+                key = args
+            self.key = json.dumps(key, sort_keys=True)
+        else:
+            self.key = _key
         self.datetime = datetime
-        self.level = level
         self.dismissed = dismissed
         self.mail = mail
+
+        self.text = _text or self.klass.text or self.klass.title
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -51,26 +137,23 @@ class Alert:
         return repr(self.__dict__)
 
     @property
-    def level_name(self):
-        return AlertLevel(self.level).name
-
-    @property
     def formatted(self):
-        if self.args:
-            try:
-                return self.title % (tuple(self.args) if isinstance(self.args, list) else self.args)
-            except Exception:
-                logger.error("Error formatting alert: %r, %r", self.title, self.args, exc_info=True)
+        try:
+            return self.klass.format(self.args)
+        except Exception:
+            logger.debug("Alert class %r was unable to format args %r, falling back to default formatter",
+                         self.klass, self.args, exc_info=True)
 
-        return self.title
+            if self.args:
+                try:
+                    return self.text % (tuple(self.args) if isinstance(self.args, list) else self.args)
+                except Exception:
+                    logger.error("Error formatting alert: %r, %r", self.text, self.args, exc_info=True)
+
+            return self.text
 
 
 class AlertSource:
-    level = NotImplemented
-    title = NotImplemented
-
-    hardware = False
-
     schedule = IntervalSchedule(timedelta())
 
     run_on_backup_node = True
@@ -87,11 +170,12 @@ class AlertSource:
 
 
 class FilePresenceAlertSource(AlertSource):
-    path = NotImplementedError
+    path = NotImplemented
+    klass = NotImplemented
 
     async def check(self):
         if os.path.exists(self.path):
-            return Alert()
+            return Alert(self.klass)
 
 
 class ThreadedAlertSource(AlertSource):
@@ -99,22 +183,6 @@ class ThreadedAlertSource(AlertSource):
         return await self.middleware.run_in_thread(self.check_sync)
 
     def check_sync(self):
-        raise NotImplementedError
-
-
-class DismissableAlertSource:
-    async def dismiss(self, alerts, key):
-        raise NotImplementedError
-
-
-class OneShotAlertSource(AlertSource):
-    async def check(self):
-        raise RuntimeError("check() called on one-shot alert source")
-
-    async def create(self, args):
-        raise NotImplementedError
-
-    async def delete(self, alerts, query):
         raise NotImplementedError
 
 

@@ -1,7 +1,9 @@
-from middlewared.plugins.cloud_sync import get_dataset_recursive
+from unittest.mock import Mock
+
+from middlewared.plugins.cloud_sync import get_dataset_recursive, FsLockManager
 
 
-def test__1():
+def test__get_dataset_recursive_1():
     dataset, recursive = get_dataset_recursive(
         [
             {
@@ -21,7 +23,7 @@ def test__1():
     assert recursive is True
 
 
-def test__2():
+def test__get_dataset_recursive_2():
     dataset, recursive = get_dataset_recursive(
         [
             {
@@ -41,7 +43,7 @@ def test__2():
     assert recursive is False
 
 
-def test__3():
+def test__get_dataset_recursive_3():
     dataset, recursive = get_dataset_recursive(
         [
             {
@@ -61,7 +63,7 @@ def test__3():
     assert recursive is False
 
 
-def test__4():
+def test__get_dataset_recursive_4():
     dataset, recursive = get_dataset_recursive(
         [
             {
@@ -86,7 +88,7 @@ def test__4():
     assert recursive is True
 
 
-def test__5():
+def test__get_dataset_recursive_5():
     dataset, recursive = get_dataset_recursive(
         [
             {
@@ -109,3 +111,33 @@ def test__5():
 
     assert dataset["mountpoint"] == "/mnt/data/backup"
     assert recursive is False
+
+
+def test__fs_lock_manager_1():
+    flm = FsLockManager()
+    flm._lock = Mock
+    flm._choose_lock = lambda lock, direction: lock
+
+    lock = flm.lock("/mnt/tank/work", Mock())
+
+    assert flm.lock("/mnt/tank", Mock()) == lock
+
+
+def test__fs_lock_manager_2():
+    flm = FsLockManager()
+    flm._lock = Mock
+    flm._choose_lock = lambda lock, direction: lock
+
+    lock = flm.lock("/mnt/tank/work", Mock())
+
+    assert flm.lock("/mnt/tank/work/temp", Mock()) == lock
+
+
+def test__fs_lock_manager_3():
+    flm = FsLockManager()
+    flm._lock = Mock
+    flm._choose_lock = lambda lock, direction: lock
+
+    lock = flm.lock("/mnt/tank/work", Mock())
+
+    assert flm.lock("/mnt/tank/temp", Mock()) != lock

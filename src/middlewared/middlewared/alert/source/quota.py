@@ -7,16 +7,27 @@ from bsd import getmntinfo
 import humanfriendly
 import libzfs
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 logger = logging.getLogger(__name__)
 
 
-class QuotaAlertSource(ThreadedAlertSource):
+class QuotaWarningAlertClass(AlertClass):
+    category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "Quota exceed on dataset"
+    title = "Quota Exceed on Dataset"
+    text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
 
+
+class CriticalQuotaAlertClass(AlertClass):
+    category = AlertCategory.STORAGE
+    level = AlertLevel.CRITICAL
+    title = "Critical Quota Exceeded on Dataset"
+    text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
+
+
+class QuotaAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
     def check_sync(self):
@@ -68,18 +79,15 @@ class QuotaAlertSource(ThreadedAlertSource):
                 critical_threshold = dataset[f"org.freenas:{quota_property}_critical"]
                 warning_threshold = dataset[f"org.freenas:{quota_property}_warning"]
                 if critical_threshold != 0 and used_fraction >= critical_threshold:
-                    level = AlertLevel.CRITICAL
+                    klass = CriticalQuotaAlertClass
                 elif warning_threshold != 0 and used_fraction >= warning_threshold:
-                    level = AlertLevel.WARNING
+                    klass = QuotaAlertSource
                 else:
                     continue
 
                 quota_name = quota_property[0].upper() + quota_property[1:]
 
                 hostname = socket.gethostname()
-
-                title = ("%(name)s exceed on dataset %(dataset)s. "
-                         "Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)")
                 args = {
                     "name": quota_name,
                     "dataset": dataset["name"],
@@ -106,15 +114,14 @@ class QuotaAlertSource(ThreadedAlertSource):
                     if to is not None:
                         mail = {
                             "to": [to],
-                            "subject": f"{hostname}: {quota_name} exceed on dataset {dataset['name']}",
-                            "text": title % args
+                            "subject": f"{hostname}: {quota_name} exceeded on dataset {dataset['name']}",
+                            "text": klass.text % args
                         }
 
                 alerts.append(Alert(
-                    title=title,
+                    klass,
                     args=args,
-                    key=[dataset["name"], quota_property, level.name],
-                    level=level,
+                    key=[dataset["name"], quota_property],
                     mail=mail,
                 ))
 

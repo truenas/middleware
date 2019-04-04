@@ -2,13 +2,24 @@ from collections import defaultdict
 
 import netif
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+
+
+class LAGGInactivePortsAlertClass(AlertClass):
+    category = AlertCategory.NETWORK
+    level = AlertLevel.CRITICAL
+    title = "Ports are Not ACTIVE on LAGG Interface"
+    text = "These ports are not ACTIVE on LAGG interface %(name)s: %(ports)s. Please check cabling and switch."
+
+
+class LAGGNoActivePortsAlertClass(AlertClass):
+    category = AlertCategory.NETWORK
+    level = AlertLevel.CRITICAL
+    title = "There are No ACTIVE Ports on LAGG Interface"
+    text = "There are no ACTIVE ports on LAGG interface %(name)s. Please check cabling and switch."
 
 
 class LAGGStatus(ThreadedAlertSource):
-    level = AlertLevel.CRITICAL
-    title = "LAGG interface error"
-
     count = defaultdict(int)
 
     def check_sync(self):
@@ -30,8 +41,7 @@ class LAGGStatus(ThreadedAlertSource):
                 self.count[iface.name] += 1
                 if self.count[iface.name] > 2:
                     alerts.append(Alert(
-                        "These ports are not ACTIVE on LAGG interface %(name)s: %(ports)s. "
-                        "Please check cabling and switch.",
+                        LAGGInactivePortsAlertClass,
                         {"name": iface.name, "ports": ", ".join(inactive)},
                     ))
             # For FAILOVER protocol we should have one ACTIVE port
@@ -40,7 +50,7 @@ class LAGGStatus(ThreadedAlertSource):
                 self.count[iface.name] += 1
                 if self.count[iface.name] > 2:
                     alerts.append(Alert(
-                        "There are no ACTIVE ports on LAGG interface %(name)s. Please check cabling and switch.",
+                        LAGGNoActivePortsAlertClass,
                         {"name": iface.name},
                     ))
             else:

@@ -6,7 +6,7 @@ import logging
 from freenasOS.Update import PendingUpdates
 from freenasUI.system.utils import is_update_applied
 
-from middlewared.alert.base import Alert, AlertLevel, FilePresenceAlertSource, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, FilePresenceAlertSource, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 UPDATE_APPLIED_SENTINEL = "/tmp/.updateapplied"
@@ -14,10 +14,14 @@ UPDATE_APPLIED_SENTINEL = "/tmp/.updateapplied"
 log = logging.getLogger("update_check_alertmod")
 
 
-class HasUpdateAlertSource(ThreadedAlertSource):
+class HasUpdateAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
     level = AlertLevel.INFO
-    title = "There is a new update available"
+    title = "New Update Available"
+    text = "A new update is available. Apply it with System -> Update."
 
+
+class HasUpdateAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
 
     def check_sync(self):
@@ -39,13 +43,17 @@ class HasUpdateAlertSource(ThreadedAlertSource):
             updates = None
 
         if updates:
-            return Alert("There is a new update available! Apply it in System -> Update tab.")
+            return Alert(HasUpdateAlertClass)
 
 
-class UpdateAppliedAlertSource(ThreadedAlertSource):
+class UpdateNotAppliedAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "Update not applied"
+    title = "Update Not Applied"
+    text = "%s"
 
+
+class UpdateNotAppliedAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
 
     def check_sync(self):
@@ -53,7 +61,7 @@ class UpdateAppliedAlertSource(ThreadedAlertSource):
             try:
                 with open(UPDATE_APPLIED_SENTINEL, "rb") as f:
                     data = json.loads(f.read().decode("utf8"))
-            except:
+            except Exception:
                 log.error(
                     "Could not load UPDATE APPLIED SENTINEL located at {0}".format(
                         UPDATE_APPLIED_SENTINEL
@@ -64,13 +72,16 @@ class UpdateAppliedAlertSource(ThreadedAlertSource):
 
             update_applied, msg = is_update_applied(data["update_version"], create_alert=False)
             if update_applied:
-                return Alert(msg)
+                return Alert(UpdateNotAppliedAlertClass, msg)
+
+
+class UpdateFailedAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.CRITICAL
+    title = "Update Failed"
+    text = "Update failed. See /data/update.failed for details."
 
 
 class UpdateFailedAlertSource(FilePresenceAlertSource):
-    level = AlertLevel.CRITICAL
-    title = "Update failed. Check /data/update.failed for further details"
-
-    schedule = IntervalSchedule(timedelta(hours=1))
-
     path = "/data/update.failed"
+    klass = UpdateFailedAlertClass

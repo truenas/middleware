@@ -1,8 +1,13 @@
-from middlewared.alert.base import AlertLevel, FilePresenceAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, FilePresenceAlertSource
+
+
+class NFSBindAlertClass(AlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.WARNING
+    title = "NFS Services Could Not Bind to Specific IP Addresses, Using 0.0.0.0"
+    text = "NFS services could not bind to specific IP addresses, using 0.0.0.0."
 
 
 class NFSBindAlertSource(FilePresenceAlertSource):
-    level = AlertLevel.WARNING
-    title = "NFS services could not bind specific IPs, using wildcard"
-
     path = "/tmp/.nfsbindip_notfound"
+    klass = NFSBindAlertClass
