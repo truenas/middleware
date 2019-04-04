@@ -1,8 +1,39 @@
-from middlewared.alert.base import AlertLevel, FilePresenceAlertSource
+from datetime import timedelta
+import os
+import logging
 
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.schedule import IntervalSchedule
 
-class ActiveDirectoryDomainBindAlertSource(FilePresenceAlertSource):
+log = logging.getLogger("activedirectory_check_alertmod")
+
+class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "ActiveDirectory did not bind to the domain"
+    title = "Problem detected in Active Directory Domain"
 
-    path = "/tmp/.adalert"
+    schedule = IntervalSchedule(timedelta(hours=24))
+
+    def check_sync(self):
+        ad = self.midleware.call_sync("activedirectory.config")
+        if not ad['enable']:
+            return
+
+        try:
+            self.middleware.call_sync("activedirectory.validate_domain")
+        except Exception as e:
+            return Alert(f"AD domain validation failed with error: {e}")
+
+
+class ActiveDirectoryDomainBindAlertSource(ThreadedAlertSource):
+    level = AlertLevel.WARNING
+    title = "Active Directory Status Check Failed"
+
+    schedule = IntervalSchedule(timedelta(minutes=10))
+
+    def check_sync(self):
+        ad = self.midleware.call_sync("activedirectory.config")
+        if not ad['enable']:
+            return
+
+        if not self.middleware.call_sync("activedirectory.startred"):
+            return Alert("Attempt to connect to netlogon share for domain failed")
