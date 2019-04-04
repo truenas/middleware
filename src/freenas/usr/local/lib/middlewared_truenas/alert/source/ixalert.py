@@ -11,6 +11,8 @@ class IxAlertSource(AlertSource):
     level = AlertLevel.WARNING
     title = 'The Proactive Support feature is not enabled.'
 
+    run_on_backup_node = False
+
     async def check(self):
         support = await self.middleware.call('support.config')
         available = await self.middleware.call('support.is_available')
