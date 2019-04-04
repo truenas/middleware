@@ -1372,12 +1372,7 @@ class TunableForm(MiddlewareModelForm, ModelForm):
         return data
 
 
-class AlertServiceSettingsWidget(forms.Widget):
-    def __init__(self, allow_inherit):
-        self.allow_inherit = allow_inherit
-
-        super().__init__()
-
+class AlertClassesWidget(forms.Widget):
     def render(self, name, value, attrs=None, renderer=None):
         value = value or {}
 
@@ -1397,11 +1392,9 @@ class AlertServiceSettingsWidget(forms.Widget):
             html.append(f'<select dojoType="dijit.form.Select" id="id_{name}_{source["name"]}" '
                         f'name="{name}[{source["name"]}]">')
             options = [(policy, policy.title()) for policy in policies]
-            if self.allow_inherit:
-                options = [("", "Inherit")] + options
             for k, v in options:
                 selected = ""
-                if value.get(source["name"], "") == k:
+                if value.get(source["name"], {}).get("policy", "") == k:
                     selected = "selected=\"selected\""
                 html.append(f'<option value="{k}" {selected}>{v}</option>')
             html.append('</select>')
@@ -1421,23 +1414,23 @@ class AlertServiceSettingsWidget(forms.Widget):
         of this widget or None if it's not provided.
         """
         r = fr"{name}\[(.+)\]"
-        return json.dumps({re.match(r, k).group(1): v for k, v in data.items() if re.match(r, k) and v})
+        return json.dumps({re.match(r, k).group(1): {"policy": v} for k, v in data.items() if re.match(r, k) and v})
 
 
-class AlertDefaultSettingsForm(MiddlewareModelForm, ModelForm):
+class AlertClassesForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = ""
-    middleware_attr_schema = "alert_default_settings"
-    middleware_plugin = "alertdefaultsettings"
+    middleware_attr_schema = "alert_classes"
+    middleware_plugin = "alertclasses"
     is_singletone = True
 
-    settings = forms.CharField(
-        widget=AlertServiceSettingsWidget(allow_inherit=False),
+    classes = forms.CharField(
+        widget=AlertClassesWidget(),
     )
 
     class Meta:
         fields = '__all__'
-        model = models.AlertDefaultSettings
+        model = models.AlertClasses
 
 
 class AlertServiceForm(MiddlewareModelForm, ModelForm):
@@ -1617,8 +1610,17 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         required=False,
     )
 
-    settings = forms.CharField(
-        widget=AlertServiceSettingsWidget(allow_inherit=True),
+    level = forms.ChoiceField(
+        choices=[
+            ('INFO', 'Info'),
+            ('NOTICE', 'Notice'),
+            ('WARNING', 'Warning'),
+            ('ERROR', 'Error'),
+            ('CRITICAL', 'Critical'),
+            ('ALERT', 'Alert'),
+            ('EMERGENCY', 'Emergency'),
+        ],
+        initial='WARNING',
     )
 
     send_test_alert = forms.CharField(
@@ -1650,8 +1652,8 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         self.fields['type'].widget.attrs['onChange'] = (
             "alertServiceTypeToggle();"
         )
-        key_order(self, len(self.fields) - 2, 'enabled', instance=True)
-        key_order(self, len(self.fields) - 1, 'settings', instance=True)
+        key_order(self, len(self.fields) - 2, 'level', instance=True)
+        key_order(self, len(self.fields) - 1, 'enabled', instance=True)
 
         if self.instance.id:
             for k in self.types_fields.get(self.instance.type, []):

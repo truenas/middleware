@@ -1,12 +1,16 @@
 import os
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+
+
+class ServiceMonitorAlertClass(AlertClass):
+    category = AlertCategory.DIRECTORY_SERVICE
+    level = AlertLevel.WARNING
+    title = "Domain Controller Service Is Not Running"
+    text = "%s."
 
 
 class ServiceMonitorAlertSource(AlertSource):
-    level = AlertLevel.WARNING
-    title = "Service is not running"
-
     async def check(self):
         alerts = []
         for file in os.listdir("/tmp/"):
@@ -14,6 +18,6 @@ class ServiceMonitorAlertSource(AlertSource):
                 full_path = "/tmp/" + file
                 with open(full_path, "r") as _file:
                     for alert_line in _file:
-                        alerts.append(Alert(alert_line))
+                        alerts.append(Alert(ServiceMonitorAlertClass, alert_line))
 
         return alerts

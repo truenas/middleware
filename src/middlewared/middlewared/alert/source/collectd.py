@@ -2,15 +2,30 @@ from lockfile import LockFile, LockTimeout
 import os
 import pickle
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 COLLECTD_FILE = "/tmp/.collectdalert"
 
 
-class CollectdAlertSource(ThreadedAlertSource):
+class CollectdWarningAlertClass(AlertClass):
+    category = AlertCategory.REPORTING
     level = AlertLevel.WARNING
-    title = "collectd error"
+    title = "Collectd Warning"
 
+    def format(cls, args):
+        return args
+
+
+class CollectdCriticalAlertClass(AlertClass):
+    category = AlertCategory.REPORTING
+    level = AlertLevel.CRITICAL
+    title = "Collectd Critical Alert"
+
+    def format(cls, args):
+        return args
+
+
+class CollectdAlertSource(ThreadedAlertSource):
     def check_sync(self):
         if not os.path.exists(COLLECTD_FILE):
             return
@@ -34,15 +49,18 @@ class CollectdAlertSource(ThreadedAlertSource):
         alerts = []
         for k, v in list(data.items()):
             if k == "ctl-ha/disk_octets":
-                title = "CTL HA link is actively used, check initiators connectivity"
+                text = (
+                    "CTL HA link is in use. Please check that all iSCSI and FC initiators support ALUA and "
+                    "are able to connect to the active node."
+                )
             else:
-                title = k
+                text = k
 
             if v["Severity"] == "WARNING":
-                level = AlertLevel.WARNING
+                klass = CollectdWarningAlertClass
             else:
-                level = AlertLevel.CRITICAL
+                klass = CollectdCriticalAlertClass
 
-            alerts.append(Alert(title, level=level))
+            alerts.append(Alert(klass, text))
 
         return alerts

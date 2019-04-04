@@ -1,9 +1,11 @@
-from middlewared.alert.base import Alert, AlertLevel, OneShotAlertSource
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert
 
 
-class SMARTAlertSource(OneShotAlertSource):
+class SMARTAlertClass(AlertClass, OneShotAlertClass):
+    category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = "SMART error"
+    title = "S.M.A.R.T. Error"
+    text = "%(message)s."
 
     hardware = True
 
@@ -11,7 +13,7 @@ class SMARTAlertSource(OneShotAlertSource):
         if not args["device"].startswith("/dev/"):
             args["device"] = f"/dev/{args['device']}"
 
-        return Alert("%(message)s", args)
+        return Alert(SMARTAlertClass, args)
 
     async def delete(self, alerts, query):
         device = query

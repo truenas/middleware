@@ -1,14 +1,34 @@
 from datetime import timedelta
 import subprocess
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class VolumeVersionAlertSource(ThreadedAlertSource):
+class VolumeVersionAlertClass(AlertClass):
+    category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "ZFS version is out of date"
+    title = "New Feature Flags Are Available for Pool."
+    text = (
+        "New feature flags are available for volume %s. Refer "
+        "to the \"Upgrading a ZFS Pool\" subsection in the "
+        "User Guide \"Installing and Upgrading\" chapter "
+        "and \"Upgrading\" section for more instructions."
+    )
 
+
+class ZfsVersionOutOfDateAlertClass(AlertClass):
+    category = AlertCategory.STORAGE
+    level = AlertLevel.WARNING
+    title = "ZFS Filesystem Version Is Out of Date"
+    text = (
+        "ZFS filesystem version is out of date. Please consider upgrading it. See <a href=\""
+        "https://www.ixsystems.com/documentation/freenas/11.2/install.html#upgrading-a-zfs-pool\">"
+        "Upgrading a ZFS Pool</a> for details."
+    )
+
+
+class VolumeVersionAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
     def check_sync(self):
@@ -16,10 +36,7 @@ class VolumeVersionAlertSource(ThreadedAlertSource):
         for pool in self.middleware.call_sync("pool.query"):
             if not self.middleware.call_sync('pool.is_upgraded', pool["id"]):
                 alerts.append(Alert(
-                    "New feature flags are available for volume %s. Refer "
-                    "to the \"Upgrading a ZFS Pool\" subsection in the "
-                    "User Guide \"Installing and Upgrading\" chapter "
-                    "and \"Upgrading\" section for more instructions.",
+                    VolumeVersionAlertClass,
                     pool["name"],
                 ))
 
@@ -32,9 +49,6 @@ class VolumeVersionAlertSource(ThreadedAlertSource):
         )
         output = proc.communicate()[0].strip(" ").strip("\n")
         if output:
-            alerts.append(Alert(
-                "ZFS filesystem version is out of date. Consider upgrading"
-                " using \"zfs upgrade\" command line."
-            ))
+            alerts.append(Alert(ZfsVersionOutOfDateAlertClass))
 
         return alerts

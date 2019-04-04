@@ -40,7 +40,7 @@ class SystemHook(AppHook):
             models.SystemDataset,
             models.Reporting,
             models.ACMEDNSAuthenticator,
-            models.AlertDefaultSettings,
+            models.AlertClasses,
             models.AlertService,
             models.CloudCredentials,
             models.SSHKeyPairKeychainCredential,

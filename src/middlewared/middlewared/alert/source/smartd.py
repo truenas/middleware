@@ -1,12 +1,16 @@
 import subprocess
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 
-class smartdAlertSource(ThreadedAlertSource):
+class SmartdAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
-    title = "smartd is not running"
+    title = "smartd Is Not Running"
+    text = "smartd is not running."
 
+
+class SmartdAlertSource(ThreadedAlertSource):
     def check_sync(self):
         if self.middleware.call_sync("datastore.query", "services.services", [("srv_service", "=", "smartd"),
                                                                               ("srv_enable", "=", True)]):
@@ -26,4 +30,4 @@ class smartdAlertSource(ThreadedAlertSource):
                     return
 
             if not self.middleware.call_sync("service.started", "smartd"):
-                return Alert("smartd is not running")
+                return Alert(SmartdAlertClass)

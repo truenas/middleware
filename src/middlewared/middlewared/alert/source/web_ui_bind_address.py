@@ -1,10 +1,14 @@
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
-class HTTPDBindAddressAlertSource(AlertSource):
+class WebUiBindAddressAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "The WebGUI could not bind to specified address"
+    title = "The Web UI Сould Not Bind to Configured Address"
+    text = "The Web UI could not bind to %s. Using 0.0.0.0 instead."
 
+
+class WebUiBindAddressAlertSource(AlertSource):
     async def check(self):
         settings = await self.middleware.call("datastore.query", "system.settings", None, {"get": True})
         addresses = settings["stg_guiaddress"]
@@ -17,10 +21,6 @@ class HTTPDBindAddressAlertSource(AlertSource):
                 if (data.find("0.0.0.0") != -1 and
                         address not in ("0.0.0.0", "")):
                     # XXX: IPv6
-                    alerts.append(
-                        Alert(
-                            f"The WebGUI Address could not bind to {address}; using wildcard",
-                        )
-                    )
+                    alerts.append(Alert(WebUiBindAddressAlertClass, address))
 
         return alerts

@@ -1,16 +1,19 @@
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
-class MultipathsAlertSource(AlertSource):
+class MultipathIsNotOptimalAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = "Multipath is not optimal"
+    title = "Multipath Is Not Optimal"
+    text = "Multipath %s is not optimal. Please check disk cables."
 
     hardware = True
 
+
+class MultipathsAlertSource(AlertSource):
     async def check(self):
         return [
-            Alert(title="Multipath %s is not optimal",
-                  args=[mp['name']])
+            Alert(MultipathIsNotOptimalAlertClass, mp['name'])
             for mp in await self.middleware.call("multipath.query")
             if mp['status'] != "OPTIMAL"
         ]
