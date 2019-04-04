@@ -14,7 +14,7 @@ class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
 
     def check_sync(self):
-        ad = self.midleware.call_sync("activedirectory.config")
+        ad = self.middleware.call_sync("activedirectory.config")
         if not ad['enable']:
             return
 
@@ -31,9 +31,9 @@ class ActiveDirectoryDomainBindAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
 
     def check_sync(self):
-        ad = self.midleware.call_sync("activedirectory.config")
+        ad = self.middleware.call_sync("activedirectory.config")
         if not ad['enable']:
             return
 
-        if not self.middleware.call_sync("activedirectory.startred"):
+        if not self.middleware.call_sync("activedirectory.started"):
             return Alert("Attempt to connect to netlogon share for domain failed")
