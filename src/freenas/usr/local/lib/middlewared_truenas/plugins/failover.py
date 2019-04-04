@@ -353,6 +353,14 @@ class FailoverService(ConfigService):
             # there is no reason to even try
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                 reasons.append('NO_SYSTEM_READY')
+
+            if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
+                reasons.append('NO_LICENSE')
+
+            remote_disks = set((await self.middleware.call("failover.call_remote", "device.get_info", ["DISK"])).keys())
+            local_disks = set((await self.middleware.call("device.get_info", "DISK")).keys())
+            if local_disks - remote_disks or remote_disks - local_disks:
+                reasons.append('MISMATCH_DISKS')
         except CallError as e:
             if e.errno not in (errno.ECONNREFUSED, errno.EHOSTDOWN, ClientException.ENOMETHOD):
                 reasons.append('NO_PONG')
@@ -365,14 +373,6 @@ class FailoverService(ConfigService):
             reasons.append('NO_PONG')
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.append('NO_FAILOVER')
-        if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
-            reasons.append('NO_LICENSE')
-
-        local_disks = set((await self.middleware.call("device.get_info", "DISK")).keys())
-        remote_disks = set((await self.middleware.call("failover.call_remote", "device.get_info", ["DISK"])).keys())
-        if local_disks - remote_disks or remote_disks - local_disks:
-            reasons.append('MISMATCH_DISKS')
-
         return reasons
 
     @accepts(Dict(
