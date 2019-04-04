@@ -37,6 +37,9 @@ class KerberosService(ConfigService):
         update=True
     ))
     async def do_update(self, data):
+        """
+        Update krb5.conf appdefaults and libdefaults in the krb5.conf file.
+        """
         old = await self.config()
         new = old.copy()
         new.update(data)
@@ -66,15 +69,15 @@ class KerberosService(ConfigService):
            to file or recieved via STDIN
         2) kerberos keytab.
 
-        For now we only check for kerberos realms explicitly configured in AD and LDAP. 
+        For now we only check for kerberos realms explicitly configured in AD and LDAP.
         """
         ad = await self.middleware.call('activedirectory.config')
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
         if ad['enable']:
             if ad['kerberos_principal']:
-                ad_kinit = await run([ '/usr/bin/kinit', '--renewable', '-k', ad['kerberos_principal']], check=False)
+                ad_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ad['kerberos_principal']], check=False)
                 if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for domain [{ad['domainname']}] with principal [{ad['kerberos_principal']}] failed: {ad_kinit.stderr.decode()}") 
+                    raise CallError(f"kinit for domain [{ad['domainname']}] with principal [{ad['kerberos_principal']}] failed: {ad_kinit.stderr.decode()}")
                 ret = True
             else:
                 principal = f'{ad["bindname"]}@{ad["domainname"]}'
@@ -89,7 +92,7 @@ class KerberosService(ConfigService):
             if ldap['kerberos_principal']:
                 ad_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
                 if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm {ldap['realm']} with keytab failed: {ad_kinit.stderr.decode()}"
+                    raise CallError(f"kinit for realm {ldap['realm']} with keytab failed: {ad_kinit.stderr.decode()}")
             else:
                 principal = f'{ldap["bindn"]}'
                 self.logger.debug(principal)
@@ -312,8 +315,9 @@ class KerberosRealmService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Duplicate kerberos realms should not be allowed (case insensitive), but
-        lower-case kerberos realms must be allowed.
+        Create a new kerberos realm. This will be automatically populated during the
+        domain join process in an Active Directory environment. Kerberos realm names
+        are case-sensitive, but convention is to only use upper-case.
         """
         verrors = ValidationErrors()
 
@@ -342,6 +346,11 @@ class KerberosRealmService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update a kerberos realm by id. This will be automatically populated during the
+        domain join process in an Active Directory environment. Kerberos realm names
+        are case-sensitive, but convention is to only use upper-case.
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -376,12 +385,11 @@ class KerberosRealmService(CRUDService):
 
     @private
     async def _validate(self, data):
-        """
-        For now validation is limited to checking if we can resolve the hostnames
-        configured for the kdc, admin_server, and kpasswd_server can be resolved
-        by DNS, and if the realm can be resolved by DNS.
-        """
         verrors = ValidationErrors()
+        realms = await self.query()
+        for realm in realms:
+            if realm['realm'].upper() == data['realm'].upper():
+                verrors.add(f'kerberos_realm', f'kerberos realm with name {realm["realm"]} already exists.')
         return verrors
 
 
@@ -405,14 +413,18 @@ class KerberosKeytabService(CRUDService):
     @accepts(
         Dict(
             'kerberos_keytab_create',
-            Any('file'),
+            Str('file'),
             Str('name'),
             register=True
         )
     )
     async def do_create(self, data):
         """
+        Create a kerberos keytab. Uploaded keytab files will be merged with the system
+        keytab under /etc/krb5.keytab.
+
         :file: b64encoded kerberos keytab
+        :name: name for kerberos keytab
         """
         verrors = ValidationErrors()
 
@@ -436,12 +448,15 @@ class KerberosKeytabService(CRUDService):
         Int('id', required=True),
         Dict(
             'kerberos_keytab_update',
-            Any('file'),
+            Str('file'),
             Str('name'),
             register=True
         )
     )
     async def do_update(self, id, data):
+        """
+        Update kerberos keytab by id.
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -529,7 +544,7 @@ class KerberosKeytabService(CRUDService):
             keytab['SYSTEM'].value,
             keytab['SAMBA'].value],
             check=False
-        ) 
+
         if kt_copy.stderr.decode():
             raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
 
