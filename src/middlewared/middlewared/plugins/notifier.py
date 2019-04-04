@@ -157,15 +157,10 @@ class NotifierService(Service):
         return ret
 
     def ad_status(self):
-        ret = False
-        try:
-            ret = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT).connected()
-        except Exception as e:
-            pass
-        return ret
+        return self.middleware.call_sync('activedirectory.started')
 
     def ds_get_idmap_object(self, ds_type, id, idmap_backend):
-        data = self.middleware.call_sync(self, ds_type, id, idmap_type)
+        data = self.middleware.call_sync('idmap.get_idmap_legacy', ds_type, idmap_backend)
         return data 
 
     async def ds_clearcache(self):
