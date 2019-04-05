@@ -220,8 +220,9 @@ class ZFSDatasetService(CRUDService):
         # If we are only filtering by name, pool and type we can use
         # zfs(8) which is much faster than py-libzfs
         if (
-            options and set(options['select']).issubset({'name', 'pool', 'type'}) and
-            filter_getattrs(filters).issubset({'name', 'pool', 'type'})
+            options and options['select'] and set(options['select']).issubset(
+                {'name', 'pool', 'type'}
+            ) and filter_getattrs(filters).issubset({'name', 'pool', 'type'})
         ):
             cp = subprocess.run([
                 'zfs', 'list', '-H', '-o', 'name,type', '-t', 'filesystem,volume',
