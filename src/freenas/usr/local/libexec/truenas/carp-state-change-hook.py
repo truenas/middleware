@@ -195,6 +195,9 @@ def main(subsystem, event):
                                     run("ifconfig %s vhid %s advskew 0" % (interface, vhid))
                         log.warn("Failover disabled.  Assuming active.")
                         run("touch %s" % FAILOVER_OVERRIDE)
+                        # interfaces advskew have been changed, switch event
+                        event = 'MASTER'
+                        break
                 if masterret is False:
                     # All pools are already imported
                     sys.exit()
