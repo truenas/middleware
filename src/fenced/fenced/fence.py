@@ -125,11 +125,7 @@ class Fence(object):
             else:
                 key += 1
 
-            logger.log(
-                logging.INFO if oldkey == firstkey or key % 10 == 0 else logging.DEBUG,
-                'Setting new key: 0x%x',
-                key,
-            )
+            logger.debug('Setting new key: 0x%x', key)
             failed_disks = self._disks.set_keys(key)
             if failed_disks:
                 if len(failed_disks) / len(self._disks) > 0.1:

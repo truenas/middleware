@@ -33,7 +33,7 @@ def setup_logging(foreground):
                 'class': 'fenced.logging.FaultSysLogHandler',
                 'address': '/var/run/log',
                 'formatter': 'simple',
-                'level': 'DEBUG',
+                'level': 'INFO',
                 'facility': 'daemon',
             },
             'console': {
