@@ -42,7 +42,7 @@ def test_04_fetch_bsd_release():
         'remote': True
     }).json()
 
-    RELEASE = '11.1-RELEASE' if '11.1-RELEASE' in releases else releases[0]
+    RELEASE = '11.2-RELEASE' if '11.2-RELEASE' in releases else releases[0]
     results = POST(
         '/jail/fetch/', {
             'release': RELEASE
@@ -100,7 +100,7 @@ def test_07_verify_creation_of_jail():
 
 
 def test_08_verify_iocage_list_with_ssh():
-    cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.1-RELEASE'
+    cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.2-RELEASE'
     results = SSH_TEST(cmd1, user, password, ip)
     cmd2 = 'iocage list'
     results2 = SSH_TEST(cmd2, user, password, ip)
@@ -146,41 +146,6 @@ def test_13_exec_call():
     )
     assert results.status_code == 200, results.text
     assert 'exec successful' in results.json().lower(), results.text
-
-
-def test_14_upgrade_jail():
-    global JOB_ID
-    results = POST(
-        '/jail/upgrade/', {
-            'jail': JAIL_NAME,
-            'release': '11.2-RELEASE'
-        }
-    )
-    assert results.status_code == 200, results.text
-    JOB_ID = results.json()
-
-
-def test_15_verify_bsd_release():
-    while True:
-        job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
-        if job_status['state'] in ('RUNNING', 'WAITING'):
-            time.sleep(3)
-        else:
-            time.sleep(3)
-            results = GET('/jail/')
-            assert results.status_code == 200, results.text
-            assert len(results.json()) > 0, job_status
-            release = results.json()[0]['release']
-            assert '11.2-release' in release.lower(), job_status
-            break
-
-
-def test_16_verify_iocage_list_with_ssh():
-    cmd1 = f'iocage list | grep "{JAIL_NAME}" | grep -q "11.2-RELEASE"'
-    results = SSH_TEST(cmd1, user, password, ip)
-    cmd2 = 'iocage list'
-    results2 = SSH_TEST(cmd2, user, password, ip)
-    assert results['result'] is True, results2['output']
 
 
 def test_17_stop_jail():
