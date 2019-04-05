@@ -5,7 +5,7 @@ import enum
 import os
 import subprocess
 import time
-from middlewared.schema import accepts, Any, Dict, Int, List, Path, Str
+from middlewared.schema import accepts, Any, Dict, Int, List, Path, Patch, Str
 from middlewared.service import CallError, ConfigService, CRUDService, private, ValidationErrors
 from middlewared.utils import run, Popen
 
@@ -544,7 +544,7 @@ class KerberosKeytabService(CRUDService):
             keytab['SYSTEM'].value,
             keytab['SAMBA'].value],
             check=False
-
+        )
         if kt_copy.stderr.decode():
             raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
 
@@ -557,8 +557,8 @@ class KerberosKeytabService(CRUDService):
                  '-k', keytab['SAMBA'].value,
                  'remove',
                  '-p', i['principal'],
-                 '-e', i['type']
-                 ], check=False
+                 '-e', i['type']],
+                 check=False
             )
             if ktutil_remove.stderr.decode():
                 raise CallError(f"ktutil_remove [{keytab['SAMBA'].value}]: {ktutil_remove.stderr.decode()}")
@@ -611,4 +611,6 @@ class KerberosKeytabService(CRUDService):
             updated_entry = {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': encrypted_keytab}
             await self.middleware.call('datastore.update', 'directoryservice.kerberoskeytab', id, updated_entry)
 
-        return True
+        sambakt = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
+        if sambakt:
+            return sambakt[0]['id']

@@ -24,6 +24,7 @@ from freenasUI.common.freenasldap import (
 )
 from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.middleware import zfs
+from freenasUI.middleware.notifier import notifier
 from middlewared.utils import Popen
 
 

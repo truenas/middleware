@@ -200,7 +200,7 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = 'activedirectory'
     is_singletone = True
 
-    ad_netbiosname_a = forms.CharField(
+    ad_netbiosname = forms.CharField(
         max_length=120,
         label=_("NetBIOS name"),
     )
@@ -230,7 +230,7 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
     )
 
     advanced_fields = [
-        'ad_netbiosname_a',
+        'ad_netbiosname',
         'ad_netbiosname_b',
         'ad_netbiosalias',
         'ad_ssl',
@@ -264,48 +264,23 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
         with client as c:
-            smb = c.call('smb.config')
+            ad = c.call('activedirectory.config')
 
-            self.fields['ad_netbiosname_a'].initial = smb['netbiosname']
-            self.fields['ad_netbiosname_b'].initial = smb['netbiosname_b']
-            self.fields['ad_netbiosalias'].initial = ' '.join(smb['netbiosalias'])
-
-            if not c.call('system.is_freenas') and c.call('failover.licensed'):
-                with client as c:
-                    failover_node = c.call('failover.node')
-                from freenasUI.failover.utils import node_label_field
-                node_label_field(
-                    failover_node,
-                    self.fields['ad_netbiosname_a'],
-                    self.fields['ad_netbiosname_b'],
-                )
+            self.fields['ad_netbiosname'].initial = ad['netbiosname']
+            if 'netbiosname_b' in ad:
+                self.fields['ad_netbiosname_b'].initial = ad['netbiosname_b']
             else:
                 del self.fields['ad_netbiosname_b']
 
     def middleware_clean(self, data):
-        smb_update = {}
         with client as c:
-            smb = c.call('smb.config')
             old = c.call('activedirectory.config')
-            if smb['netbiosname'] != data['netbiosname_a']:
-                smb_update.update({'netbiosname': data['netbiosname_a']})
-            if 'netbiosname_b' in data and smb['nebiosname_b'] != data['netbiosname_b']:
-                smb_update.update({'netbiosname_b': data['netbiosname_b']})
-            if smb['netbiosalias'] != data['netbiosalias'].split():
-                smb_update.update({'netbiosalias': data['netbiosalias']})
-
-        if smb_update:
-            with client as c:
-                c.call('datastore.update', 'services.smb', smb['id'], smb_update)
-
-        for key in ['netbiosname_a', 'netbiosname_b', 'netbiosalias']:
-            if key in data:
-                data.pop(key)
 
         for key in ['certificate', 'nss_info']:
             if not data[key]:
                 data.pop(key)
 
+        data['netbiosalias'] = data['netbiosalias'].split()
         if data['kerberos_principal'] == '----------':
             data['kerberos_principal'] = ''
         if data['enable'] and not old['enable']:
@@ -316,7 +291,12 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
                 except Exception as e:
                     raise MiddlewareError(e)
 
-        data['kerberos_realm'] = {'id': data['kerberos_realm']}
+        if data['kerberos_realm']:
+            data['kerberos_realm'] = {'id': data['kerberos_realm']}
+        else:
+            data.pop('kerberos_realm')
+
+        log.debug(data)
         return data
 
 

@@ -7,6 +7,7 @@ from middlewared.utils import Popen, run
 
 import asyncio
 import codecs
+import enum
 import os
 import re
 import subprocess
@@ -20,6 +21,17 @@ LOGLEVEL_MAP = {
     '10': 'DEBUG',
 }
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
+
+
+class smbhamode(enum.Enum):
+    """
+    'standalone' - Not an HA system.
+    'legacy' - Two samba instances simultaneously running on active and passive controllers with no shared state.
+    'unified' - Single set of state files migrating between controllers. Single netbios name.
+    """
+    STANDALONE = 0 
+    LEGACY = 1 
+    UNIFIED = 2 
 
 
 class SMBService(SystemServiceService):
@@ -116,6 +128,28 @@ class SMBService(SystemServiceService):
             return False
 
         return True
+
+    @private
+    async def get_smb_ha_mode(self):
+        if await self.middleware.call('cache.has_key', 'SMB_HA_MODE'):
+            return await self.middleware.call('cache.get', 'SMB_HA_MODE')
+        
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+            system_dataset = await self.middleware.call('systemdataset.config')
+            if system_dataset['pool'] is not 'freenas-boot':
+                hamode = smbhamode['UNIFIED'].name 
+            else:
+                hamode = smbhamode['LEGACY'].name
+        else:
+            hamode = smbhamode['STANDALONE'].name
+
+        await self.middleware.call('cache.put', 'SMB_HA_MODE', hamode)
+        return hamode
+
+    @private
+    async def reset_smb_ha_mode(self, hamode):
+        await self.middleware.call('cache.pop', 'SMB_HA_MODE')
+        return self.get_smb_ha_mode()
 
     @accepts(Dict(
         'smb_update',

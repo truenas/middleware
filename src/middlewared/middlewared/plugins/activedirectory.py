@@ -298,7 +298,6 @@ class ActiveDirectory_LDAP(object):
                     saved_simple_error = e
                     continue
 
-            self.logger.debug(res)
             if res:
                 self._isopen = True
             elif saved_gssapi_error:
@@ -549,12 +548,67 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def ad_extend(self, ad):
+        smb = await self.middleware.call('smb.config')
+        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if smb_ha_mode == 'STANDALONE': 
+            ad.update({
+                'netbiosname': smb['netbiosname'],
+                'netbiosalias': smb['netbiosalias']
+            })
+        elif smb_ha_mode == 'UNIFIED':
+            ngc = await self.middleware.call('network.configuration.config')
+            ad.update({
+                'netbiosname': ngc['hostname_virtual'],
+                'netbiosalias': smb['netbiosalias']
+            })
+        elif smb_ha_mode == 'LEGACY':
+            ngc = await self.middleware.call('network.configuration.config')
+            ad.update({
+                'netbiosname': data['hostname'],
+                'netbiosname_b': data['hostname_b'],
+                'netbiosalias': smb['netbiosalias']
+            })
+
         return ad
 
     @private
     async def ad_compress(self, ad):
+        """
+        Convert kerberos realm to id. Force domain to upper-case. Remove
+        foreign entries.
+        kinit will fail if domain name is lower-case.
+        """
         if ad['kerberos_realm']:
             ad['kerberos_realm'] = ad['kerberos_realm']['id']
+        ad['domainname'] = ad['domainname'].upper()
+
+        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if smb_ha_mode == 'STANDALONE':
+            await self.middleware.call(
+                'smb.update',
+                {
+                    'netbiosname': ad['netbiosname'],
+                    'netbiosalias': ad['netbiosalias']
+                }
+            )
+
+        elif smb_ha_mode == 'UNIFIED':
+            await self.middleware.call('smb.update', 1, {'netbiosalias': ad['netbiosalias']})
+            await self.middleware.call('network.configuration', 1, {'hostname_virtual': ad['netbiosname']})
+
+        elif smb_ha_mode == 'LEGACY':
+            await self.middleware.call('smb.update', 1, {'netbiosalias': ad['netbiosalias']})
+            await self.middleware.call(
+                'network.configuration',
+                {
+                    'hostname': ad['netbiosname'],
+                    'hostname_b': ad['netbiosname_b']
+                }
+            )
+
+        for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
+            if key in ad:
+                ad.pop(key)
 
         return ad
 
@@ -587,6 +641,9 @@ class ActiveDirectoryService(ConfigService):
         Str('nss_info', default='', enum=['sfu', 'sfu20', 'rfc2307']),
         Str('ldap_sasl_wrapping', default='sign', enum=['plain', 'sign', 'seal']),
         Str('createcomputer'),
+        Str('netbiosname'),
+        Str('netbiosname_b'),
+        List('netbiosalias'),
         Bool('enable'),
         update=True
     ))
@@ -725,14 +782,14 @@ class ActiveDirectoryService(ConfigService):
         Kerberos realm field must be populated so that we can perform a kinit
         and use the kerberos ticket to execute 'net ads' commands.
         """
-
         if not ad['kerberos_realm']:
-            realms = await self.middleware.call('kerberos.realm.query', [('realm', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
+            realms = await self.middleware.call('kerberos.realm.query', [('realm', '=', ad['domainname'])])
 
             if realms:
                 await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_kerberos_realm': realms[0]['id']})
             else:
                 await self.middleware.call('datastore.insert', 'directoryservice.kerberosrealm', {'krb_realm': ad['domainname'].upper()})
+            ad = await self.config()
 
         await self.middleware.call('kerberos.start')
 
@@ -762,7 +819,7 @@ class ActiveDirectoryService(ConfigService):
                     )
                     await self.middleware.call('etc.generate', 'kerberos')
 
-        if smb['workgroup'] == 'WORKGROUP':
+        if not smb['workgroup'] or smb['workgroup'] == 'WORKGROUP':
             smb['workgroup'] = await asyncio.wait_for(self.get_netbios_domain_name(), 10)
 
         await self.middleware.call('etc.generate', 'smb')
@@ -776,15 +833,24 @@ class ActiveDirectoryService(ConfigService):
 
         ret = await self._net_ads_testjoin(smb['workgroup'])
         if ret == neterr.NOTJOINED:
+            smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join()
-            kt_set = await self.middleware.call('kerberos.keytab.store_samba_keytab')
-            if kt_set:
-                self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
-                await self.update({'bindpw': '', 'kerberos_principal': f'{smb["netbiosname"]}$@{ad["domainname"]}'})
-            ret = neterr.JOINED
-            if ad['allow_trusted_doms']:
-                await self.middleware.call('idmap.autodiscover_trusted_domains')
+            if smb_ha_mode != 'LEGACY':
+                kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
+                if kt_id:
+                    self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
+                    await self.middleware.call(
+                        'datastore.update',
+                        'directoryservice.activedirectory',
+                        ad['id'],
+                        {'ad_bindpw': '', 'ad_kerberos_principal': f'{smb["netbiosname"]}$@{ad["domainname"]}'}
+                    )
+                    ad = await self.config()
+                    self.logger.debug(ad)
+                ret = neterr.JOINED
+                if ad['allow_trusted_doms']:
+                    await self.middleware.call('idmap.autodiscover_trusted_domains')
 
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')

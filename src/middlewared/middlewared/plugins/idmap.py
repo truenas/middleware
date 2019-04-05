@@ -337,7 +337,7 @@ class IdmapDomainBackendService(CRUDService):
             if data['idmap_backend'] not in ['ldap', 'tdb', 'tdb2']:
                 verrors.add(
                     'domaintobackend_create.idmap_backend',
-                    f'idmap backend [{data['idmap_backend']}] is not appropriate for the system domain type {dstype[data['domain']]}'
+                    f'idmap backend [{data["idmap_backend"]}] is not appropriate for the system domain type {dstype[data["domain"]]}'
                 )
         if verrors:
             raise verrors
@@ -385,10 +385,10 @@ class IdmapDomainBackendService(CRUDService):
         new = await self.middleware.call('idmap.common_backend_compress', new)
         verrors = ValidationErrors()
         if new['domain'] in [dstype.DS_TYPE_LDAP.value, dstype.DS_TYPE_DEFAULT_DOMAIN.value]:
-            if new['idmap_backend'] not in ['ldap', 'tdb', 'tdb'2']:
+            if new['idmap_backend'] not in ['ldap', 'tdb', 'tdb2']:
                 verrors.add(
                     'domaintobackend_create.idmap_backend',
-                    f'idmap backend [{new['idmap_backend']}] is not appropriate for the system domain type {dstype[new['domain']]}'
+                    f'idmap backend [{new["idmap_backend"]}] is not appropriate for the system domain type {dstype[new["domain"]]}'
                 )
         if verrors:
             raise verrors
