@@ -357,8 +357,8 @@ class FailoverService(ConfigService):
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.append('NO_LICENSE')
 
-            remote_disks = set((await self.middleware.call("failover.call_remote", "device.get_info", ["DISK"])).keys())
-            local_disks = set((await self.middleware.call("device.get_info", "DISK")).keys())
+            remote_disks = set(self.middleware.call_sync("failover.call_remote", "device.get_info", ["DISK"]).keys())
+            local_disks = set(self.middleware.call_sync("device.get_info", "DISK").keys())
             if local_disks - remote_disks or remote_disks - local_disks:
                 reasons.append('MISMATCH_DISKS')
         except CallError as e:
