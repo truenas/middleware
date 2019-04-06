@@ -10,13 +10,45 @@ import subprocess
 from freenasUI.network.models import Interfaces
 from freenasUI.failover.detect import ha_node
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+
+
+class CriticalFailoverInterfaceNotFoundAlertClass(AlertClass):
+    category = AlertCategory.HA
+    level = AlertLevel.CRITICAL
+    title = "Interface Is Critical for Failover but Was not Found In the System"
+    text = "Interface %r is critical for failover but was not found in the system."
+
+
+class CriticalFailoverInterfaceCARPNotConfiguredAlertClass(AlertClass):
+    category = AlertCategory.HA
+    level = AlertLevel.CRITICAL
+    title = "Interface Is Critical for Failover but CARP Is not Configured"
+    text = "Interface %r is critical for failover CARP is not configured."
+
+
+class CriticalFailoverInterfaceCARPInvalidStateAlertClass(AlertClass):
+    category = AlertCategory.HA
+    level = AlertLevel.CRITICAL
+    title = "Interface Is Critical for Failover but CARP Is not In a Valid State"
+    text = "Interface %r is critical for failover CARP is not in a valid state."
+
+
+class CriticalFailoverInterfaceInvalidVHIDAlertClass(AlertClass):
+    category = AlertCategory.HA
+    level = AlertLevel.CRITICAL
+    title = "Interface Is Configured With Mismatching VHID"
+    text = "Interface %(interface)r is configured with VHID %(vhid_real)d as opposed to %(vhid)d."
+
+
+class FailedToVerifyCriticalFailoverInterfaceAlertClass(AlertClass):
+    category = AlertCategory.HA
+    level = AlertLevel.CRITICAL
+    title = "Failed to Verify Interface by Contacting the Passive Node"
+    text = "Failed to verify interface %r by contacting the passive node."
 
 
 class FailoverCriticalAlertSource(ThreadedAlertSource):
-    level = AlertLevel.CRITICAL
-    title = "Failover network interface error"
-
     def check_sync(self):
         alerts = []
 
@@ -32,31 +64,23 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
             )
             output = proc.communicate()[0]
             if proc.returncode != 0:
-                alerts.append(Alert((
-                    'Interface "%s" is critical for failover but was not '
-                    'found in the system.'
-                ) % iface.int_interface))
+                alerts.append(Alert(CriticalFailoverInterfaceNotFoundAlertClass, iface.int_interface))
                 continue
 
             reg = re.search(r'carp: (\S+) .*vhid (\d+)', output, re.M)
             if not reg:
-                alerts.append(Alert((
-                    'Interface "%s" is critical for failover but CARP is '
-                    'not configured.'
-                ) % iface.int_interface))
+                alerts.append(Alert(CriticalFailoverInterfaceCARPNotConfiguredAlertClass, iface.int_interface))
             else:
                 carp = reg.group(1)
                 vhid = int(reg.group(2))
                 if carp not in ('MASTER', 'BACKUP'):
-                    alerts.append(Alert(Alert.CRIT, (
-                        'Interface "%s" is critical for failover but CARP '
-                        'is not in a valid state.'
-                    ) % iface.int_interface))
+                    alerts.append(Alert(CriticalFailoverInterfaceCARPInvalidStateAlertClass, iface.int_interface))
                 if vhid != iface.int_vhid:
-                    alerts.append(Alert(Alert.CRIT, (
-                        'Interface "%s" is configured with VHID %(vhid_real)d '
-                        'as opposed to %(vhid)d.'
-                    ) % {'vhid_real': vhid, 'vhid': iface.int_vhid}))
+                    alerts.append(Alert(CriticalFailoverInterfaceInvalidVHIDAlertClass, {
+                        'interface': iface.int_interface,
+                        'vhid_real': vhid,
+                        'vhid': iface.int_vhid
+                    }))
 
             if not iface.int_dhcp:
                 if ha_node() == 'B':
@@ -75,9 +99,6 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
                 ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 ping.communicate()
                 if ping.returncode != 0:
-                    alerts.append(Alert((
-                        'Failed to verify interface %s by contacting the '
-                        'passive node.'
-                    ) % iface.int_interface, level=AlertLevel.WARNING))
+                    alerts.append(Alert(FailedToVerifyCriticalFailoverInterfaceAlertClass, iface.int_interface))
 
         return alerts

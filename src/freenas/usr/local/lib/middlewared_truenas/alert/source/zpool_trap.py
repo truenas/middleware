@@ -6,19 +6,23 @@
 
 import os
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+
+
+class ZpoolTrapAlertClass(AlertClass):
+    category = AlertCategory.STORAGE
+    level = AlertLevel.CRITICAL
+    title = "ZFS Pool Device Removal Detected"
+    text = "%s"
 
 
 class ZpoolTrapAlertSource(AlertSource):
-    level = AlertLevel.CRITICAL
-    title = "zpool device removal detected"
-
     async def check(self):
         ZPOOL_TRAP_FILE = "/var/tmp/zpool_trap"
         if os.path.exists(ZPOOL_TRAP_FILE):
             msg = open(ZPOOL_TRAP_FILE).read()
 
             if msg == "":
-                return Alert()
-            else:
-                return Alert(msg)
+                msg = "zpool device removal detected."
+
+            return Alert(ZpoolTrapAlertClass, msg)

@@ -4,10 +4,31 @@ import re
 
 import sysctl
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 logger = logging.getLogger(__name__)
+
+
+class NVDIMMAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.WARNING
+    title = "There Is An Issue With NVDIMM"
+    text = "NVDIMM %(i)d %(k)s is %(value)s."
+
+
+class NVDIMMLifetimeWarningAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.WARNING
+    title = "NVDIMM Lifetime Is Less Than 20%"
+    text = "NVDIMM %(i)d %(name)s Lifetime is %(value)d%%."
+
+
+class NVDIMMLifetimeCriticalAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = "NVDIMM Lifetime Is Less Than 10%"
+    text = "NVDIMM %(i)d %(name)s Lifetime is %(value)d%%."
 
 
 def parse_sysctl(s):
@@ -29,33 +50,32 @@ def produce_nvdimm_alerts(i, critical_health, nvdimm_health, es_health):
     es_health = parse_sysctl(es_health)
 
     if int(critical_health["Critical Health Info"].split(":")[0], 16) & ~0x4:
-        alerts.append(Alert(title="NVDIMM %(i)d Critical Health Info is %(value)s",
-                            args={"i": i, "value": critical_health["Critical Health Info"]}))
+        alerts.append(Alert(
+            NVDIMMAlertClass, {
+                "i": i,
+                "k": "Critical Health Info",
+                "value": critical_health["Critical Health Info"]
+            }
+        ))
 
     for k in ["Module Health", "Error Threshold Status", "Warning Threshold Status"]:
         if nvdimm_health[k] != "0x0":
-            alerts.append(Alert(title="NVDIMM %(i)d %(k)s is %(value)s",
-                                args={"i": i, "k": k, "value": nvdimm_health[k]}))
+            alerts.append(Alert(NVDIMMAlertClass, {"i": i, "k": k, "value": nvdimm_health[k]}))
 
     nvm_lifetime = int(nvdimm_health["NVM Lifetime"].rstrip("%"))
     if nvm_lifetime < 20:
-        alerts.append(Alert(title="NVDIMM %(i)d NVM Lifetime is %(value)d%%",
-                            args={"i": i, "value": nvm_lifetime},
-                            level=AlertLevel.WARNING if nvm_lifetime > 10 else AlertLevel.CRITICAL))
+        klass = NVDIMMLifetimeWarningAlertClass if nvm_lifetime > 10 else NVDIMMLifetimeCriticalAlertClass
+        alerts.append(Alert(klass, {"i": i, "name": "NVM", "value": nvm_lifetime}))
 
     es_lifetime = int(es_health["ES Lifetime Percentage"].rstrip("%"))
     if es_lifetime < 20:
-        alerts.append(Alert(title="NVDIMM %(i)d ES Lifetime is %(value)d%%",
-                            args={"i": i, "value": es_lifetime},
-                            level=AlertLevel.WARNING if es_lifetime > 10 else AlertLevel.CRITICAL))
+        klass = NVDIMMLifetimeWarningAlertClass if es_lifetime > 10 else NVDIMMLifetimeCriticalAlertClass
+        alerts.append(Alert(klass, {"i": i, "name": "ES", "value": es_lifetime}))
 
     return alerts
 
 
 class NVDIMMAlertSource(ThreadedAlertSource):
-    level = AlertLevel.WARNING
-    title = "NVDIMM is not healthy"
-
     schedule = IntervalSchedule(timedelta(minutes=5))
 
     def check_sync(self):

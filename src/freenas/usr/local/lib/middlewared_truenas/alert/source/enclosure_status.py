@@ -6,15 +6,26 @@
 
 import logging
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 logger = logging.getLogger(__name__)
 
 
-class EnclosureStatusAlertSource(AlertSource):
+class EnclosureUnhealthyAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = "Enclosure status is critical"
+    title = "Enclosure Status Is Not Healthy"
+    text = "Enclosure %d (%s): %s is %s."
 
+
+class EnclosureHealthyAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.INFO
+    title = "Enclosure Status Is Healthy"
+    text = "Enclosure %d (%s): is healthy."
+
+
+class EnclosureStatusAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
@@ -54,9 +65,8 @@ class EnclosureStatusAlertSource(AlertSource):
 
                 healthy = False
                 alerts.append(Alert(
-                    'Enclosure %d (%s), %s is %s',
+                    EnclosureUnhealthyAlertClass,
                     args=[num, enc['name'], ele['name'], status],
-                    level=AlertLevel.CRITICAL,
                 ))
                 # Log the element, see #10187
                 logger.warning(
@@ -70,9 +80,8 @@ class EnclosureStatusAlertSource(AlertSource):
 
             if healthy:
                 alerts.append(Alert(
-                    'Enclosure %d (%s) is HEALTHY',
+                    EnclosureHealthyAlertClass,
                     args=[num, enc['name']],
-                    level=AlertLevel.INFO,
                 ))
 
         return alerts

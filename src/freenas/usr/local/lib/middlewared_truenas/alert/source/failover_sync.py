@@ -8,15 +8,19 @@ import os
 
 from freenasUI.freeadmin.sqlite3_ha.base import Journal
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 SYNC_FILE = '/var/tmp/sync_failed'
 
 
-class FailoverSyncAlert(ThreadedAlertSource):
+class FailoverSyncFailedAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = 'Automatic sync to peer failed, please run it manually'
+    title = "Automatic Sync to Peer Failed"
+    text = "Automatic sync to peer failed, please run it manually."
 
+
+class FailoverSyncAlert(ThreadedAlertSource):
     def check_sync(self):
         if os.path.exists(SYNC_FILE) or not Journal.is_empty():
-            return Alert()
+            return Alert(FailoverSyncFailedAlertClass)

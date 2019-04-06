@@ -6,21 +6,27 @@
 
 from freenasUI.failover.detect import ha_node
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
-class HaAddressAlertSource(AlertSource):
+class FailoverIpAlertClass(AlertClass):
+    category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Network interface is marked critical for failover, but is missing following required IP addresses"
+    title = "Network Interface Is Marked Critical for Failover, but Is Missing Required IP Address"
+    text = ("Network interface %(interface)s is marked critical for failover, but is missing following required "
+            "IP addresses: %(addresses)s")
 
+
+class FailoverIpAlertSource(AlertSource):
     async def check(self):
         interfaces = await self.middleware.call("datastore.query", "network.interfaces")
         alerts = []
-        missing_ip_fields = []
         node = ha_node()
 
         for interface in interfaces:
             if interface["int_critical"]:
+                missing_ip_fields = []
+
                 if not interface["int_ipv4address"] and not interface["int_dhcp"]:
                     if node == 'A':
                         missing_ip_fields.append('IPv4 Address (This Node)')
@@ -38,8 +44,11 @@ class HaAddressAlertSource(AlertSource):
 
                 if missing_ip_fields:
                     alerts.append(Alert(
-                        f"""Network interface {interface["int_name"]} is marked critical for failover,
-                         but is missing following required IP addresses: {' '.join(missing_ip_fields)}"""
+                        FailoverIpAlertClass,
+                        {
+                            "interface": interface["int_name"],
+                            "addresses": " ".join(missing_ip_fields),
+                        }
                     ))
 
         return alerts

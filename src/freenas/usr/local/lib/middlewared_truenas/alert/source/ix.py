@@ -4,20 +4,27 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-from middlewared.alert.base import Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+
+
+class IxAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.WARNING
+    title = "iXsystems alert"
+    text = "%s"
 
 
 class IxAlertSource(AlertSource):
-    level = AlertLevel.WARNING
-    title = 'The Proactive Support feature is not enabled.'
-
     run_on_backup_node = False
 
     async def check(self):
         support = await self.middleware.call('support.config')
         available = await self.middleware.call('support.is_available')
         if available and support['enabled'] is None:
-            return Alert('The Proactive Support feature is not enabled. Please see the System -> Proactive Support tab.')
+            return Alert(
+                IxAlertClass,
+                'The Proactive Support feature is not enabled. Please see the System -> Proactive Support tab.'
+            )
         if support['enabled']:
             # This is for people who had ix alert enabled before Proactive Support
             # feature and have not filled all the new fields.
@@ -26,5 +33,7 @@ class IxAlertSource(AlertSource):
                 if not support[name]:
                     unfilled.append(verbose_name)
             if unfilled:
-                return Alert('Please fill in these fields on the System -> Proactive Support tab: %s.',
-                             args=[', '.join(unfilled)])
+                return Alert(
+                    IxAlertClass,
+                    'Please fill in these fields on the System -> Proactive Support tab: %s.' % ', '.join(unfilled)
+                )

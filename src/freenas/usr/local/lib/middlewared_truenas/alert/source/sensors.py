@@ -12,7 +12,7 @@ import re
 import subprocess
 import time
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,20 @@ PS_FAILURES = [
 ]
 
 Sensor = namedtuple("Sensor", ["name", "value", "desc", "locrit", "lowarn", "hiwarn", "hicrit"])
+
+
+class SensorAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = "Sensor Value Is Outside of Working Range"
+    text = "Sensor %s is %s %s value: %d %s"
+
+
+class PowerSupplyAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = "Power Supply Failed"
+    text = "Power supply %s failed: %s."
 
 
 def sensor_list():
@@ -75,9 +89,6 @@ def sensor_list():
 
 
 class SensorsAlertSource(ThreadedAlertSource):
-    level = AlertLevel.CRITICAL
-    title = "Sensors has bad value"
-
     def check_sync(self):
         proc = subprocess.Popen([
             "/usr/local/sbin/dmidecode",
@@ -122,9 +133,8 @@ class SensorsAlertSource(ThreadedAlertSource):
                     continue
 
                 alerts.append(Alert(
-                    Alert.CRIT,
-                    'Sensor %s is %s %s value: %d %s',
-                    args=[
+                    SensorAlertClass,
+                    [
                         name,
                         relative,
                         level,
@@ -168,10 +178,9 @@ class SensorsAlertSource(ThreadedAlertSource):
                             errors.append(title)
                     if errors:
                         alerts.append(Alert(
-                            Alert.CRIT,
-                            "Power supply %s failed: %s",
-                            args=[
-                                ps_match.group(1),
+                            PowerSupplyAlertClass,
+                            [
+                                ps,
                                 ", ".join(errors),
                             ]
                         ))

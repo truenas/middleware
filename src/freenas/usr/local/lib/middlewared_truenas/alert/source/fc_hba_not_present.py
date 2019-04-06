@@ -8,13 +8,17 @@ import subprocess
 
 from lxml import etree
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+
+
+class FCHBANotPresentAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = "FC HBA Is not Present"
+    text = "HBA for FC port %(port)s configured for target %(target)r is not present."
 
 
 class FCHBANotPresentAlertSource(ThreadedAlertSource):
-    level = AlertLevel.CRITICAL
-    title = "FC HBA not present"
-
     def check_sync(self):
         ports = set()
         for e in (
@@ -36,10 +40,11 @@ class FCHBANotPresentAlertSource(ThreadedAlertSource):
             port_name, physical_port, virtual_port = fq_fc_port.split("/", 2)
             if (port_name, physical_port, virtual_port) not in ports:
                 alerts.append(Alert(
-                    title="HBA for FC port %(port)s configured for target %(target)r is not present",
-                    args={
+                    FCHBANotPresentAlertClass,
+                    {
                         "port": channeltotarget["fc_port"],
                         "target": channeltotarget["fc_target"]["iscsi_target_name"],
                     }
                 ))
+
         return alerts

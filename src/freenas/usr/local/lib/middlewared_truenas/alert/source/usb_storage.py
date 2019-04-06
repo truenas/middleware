@@ -1,12 +1,17 @@
 from subprocess import Popen, PIPE
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+
+
+class USBStorageAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = "A USB Storage Has Been Connected to This System"
+    text = ("A USB storage device named %s has been connected to this system. Please remove that USB device to "
+            "prevent problems with system boot or HA failover.")
 
 
 class USBStorageAlertSource(ThreadedAlertSource):
-    level = AlertLevel.CRITICAL
-    title = "A USB storage has been connected to this system"
-
     hardware = True
 
     def check_sync(self):
@@ -17,8 +22,6 @@ class USBStorageAlertSource(ThreadedAlertSource):
             usbdevname = usbdevname[usbdevname.find('<')+1:usbdevname.find('>')]
 
             return Alert(
-                'A USB storage device named %s has been '
-                'connected to this system. Please remove that USB device to '
-                'prevent problems with system boot or HA failover.',
-                title=[usbdevname],
+                USBStorageAlertClass,
+                usbdevname,
             )
