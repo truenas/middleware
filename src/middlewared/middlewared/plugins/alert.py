@@ -175,6 +175,7 @@ class AlertService(Service):
                 )
             }
             for alert_category in AlertCategory
+            if any(alert_class.category == alert_category for alert_class in AlertClass.classes)
         ]
 
     @private
