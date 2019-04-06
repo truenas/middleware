@@ -6,14 +6,14 @@ from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory,
 class CertificateIsExpiringAlertClass(AlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.NOTICE
-    title = "Certificate is Expiring"
+    title = "Certificate Is Expiring"
     text = "Certificate %(name)r is expiring within %(days)d days."
 
 
 class CertificateIsExpiringSoonAlertClass(AlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.WARNING
-    title = "Certificate is Expiring Soon"
+    title = "Certificate Is Expiring Soon"
     text = "Certificate %(name)r is expiring within %(days)d days."
 
 
