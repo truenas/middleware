@@ -130,10 +130,27 @@ class AlertService(Service):
         ]
 
     @accepts()
-    def list(self):
+    async def list(self):
+        nodes = {
+            "A": "Active Controller",
+            "B": "Standby Controller",
+        }
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.licensed') and
+            (
+                (await self.middleware.call('failover.node') == 'A' and
+                 await self.middleware.call('failover.status') == 'BACKUP') or
+                (await self.middleware.call('failover.node') == 'B' and
+                 await self.middleware.call('failover.status') == 'MASTER')
+            )
+        ):
+            nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
+
         return [
             dict(alert.__dict__,
                  id=f"{alert.node};{alert.source};{alert.key}",
+                 node=nodes[alert.node],
                  level=alert.level.name,
                  formatted=alert.formatted)
             for alert in sorted(self.__get_all_alerts(), key=lambda alert: alert.title)
