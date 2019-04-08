@@ -85,9 +85,8 @@ def test_06_create_jail():
         'release': RELEASE,
         'uuid': JAIL_NAME,
         'props': [
-            'bpf=yes',
-            'dhcp=on',
-            'vnet=on',
+            'nat=1',
+            'vnet=1',
             'vnet_default_interface=auto'
         ]
     }
