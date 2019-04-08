@@ -585,47 +585,65 @@ class JailService(CRUDService):
         """Does specified action on rc enabled (boot=on) jails"""
         iocage = ioc.IOCage(rc=True)
 
-        if action == "START":
-            iocage.start()
-        elif action == "STOP":
-            iocage.stop()
-        else:
-            iocage.restart()
+        try:
+            if action == "START":
+                iocage.start()
+            elif action == "STOP":
+                iocage.stop()
+            else:
+                iocage.restart()
+        except BaseException as e:
+            raise CallError(str(e))
 
         return True
 
-    @accepts(Str("jail"))
-    def start(self, jail):
+    @accepts(Str('jail'))
+    @job(lock=lambda args: f'jail_start:{args[-1]}')
+    def start(self, job, jail):
         """Takes a jail and starts it."""
         uuid, _, iocage = self.check_jail_existence(jail)
         status, _ = IOCList.list_get_jid(uuid)
 
         if not status:
-            iocage.start()
+            try:
+                iocage.start()
+            except BaseException as e:
+                raise CallError(str(e))
 
         return True
 
     @accepts(Str("jail"), Bool('force', default=False))
-    def stop(self, jail, force):
+    @job(lock=lambda args: f'jail_stop:{args[-1]}')
+    def stop(self, job, jail, force):
         """Takes a jail and stops it."""
         uuid, _, iocage = self.check_jail_existence(jail)
         status, _ = IOCList.list_get_jid(uuid)
 
         if status:
-            iocage.stop(force=force)
+            try:
+                iocage.stop(force=force)
+            except BaseException as e:
+                raise CallError(str(e))
 
-        return True
+            return True
 
     @accepts(Str('jail'))
-    def restart(self, jail):
+    @job(lock=lambda args: f"jail_restart:{args[-1]}")
+    def restart(self, job, jail):
         """Takes a jail and restarts it."""
         uuid, _, iocage = self.check_jail_existence(jail)
         status, _ = IOCList.list_get_jid(uuid)
 
         if status:
-            iocage.stop()
+            try:
+                iocage.stop()
+            except BaseException as e:
+                raise CallError(str(e))
 
-        iocage.start()
+        try:
+            iocage.start()
+        except BaseException as e:
+            raise CallError(str(e))
 
         return True
 
@@ -785,7 +803,8 @@ class JailService(CRUDService):
         Str("jail"),
         List("command", required=True),
         Dict("options", Str("host_user", default="root"), Str("jail_user")))
-    def exec(self, jail, command, options):
+    @job(lock=lambda args: f"jail_exec:{args[-1]}")
+    def exec(self, job, jail, command, options):
         """Issues a command inside a jail."""
         _, _, iocage = self.check_jail_existence(jail, skip=False)
 
@@ -806,7 +825,7 @@ class JailService(CRUDService):
             msg = iocage.exec(
                 command, host_user, jail_user, start_jail=True, msg_return=True
             )
-        except RuntimeError as e:
+        except BaseException as e:
             raise CallError(str(e))
 
         return '\n'.join(msg)
