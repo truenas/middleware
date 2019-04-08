@@ -42,6 +42,8 @@ def main(command, quiet):
             ret = client.call('failover.disabled_reasons')
             if 'MISMATCH_DISKS' in ret:
                 print("Failover status: Unavailable (the storage controllers do not have the same quantity of disks)")
+            elif 'DISAGREE_CARP' in ret:
+                print("Failover status: Unavailable (nodes CARP states do not agree)")
             elif 'NO_LICENSE' in ret:
                 print("Failover status: Unavailable (passive storage controller has no license)")
             elif 'NO_FAILOVER' in ret:
