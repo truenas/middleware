@@ -58,6 +58,9 @@ class AlertClass(metaclass=AlertClassMeta):
         if cls.text is None:
             return cls.title
 
+        if args is None:
+            return cls.text
+
         return cls.text % args
 
 

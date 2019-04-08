@@ -14,13 +14,13 @@
                 {% trans "WARNING" %}:
             {% else %}
                 <span style="color:red;font-weight:bold;">
-                {% trans "CRITICAL" %}:
+                {{ alert.level }}
             {% endif %}
         {% endif %}
         </span>
         {{ alert.datetime }} -
         {% if show_node %}
-            Node {{ alert.node }} -
+            {{ alert.node }} -
         {% endif %}
         {{ alert.formatted|safe }}
         {% if alert.one_shot %}
