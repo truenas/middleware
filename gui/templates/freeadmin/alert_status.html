@@ -17,7 +17,7 @@
         </span>
         {{ alert.datetime }} -
         {% if show_node %}
-            Node {{ alert.node }} -
+            {{ alert.node }} -
         {% endif %}
         {{ alert.formatted|safe }}
     </li>
