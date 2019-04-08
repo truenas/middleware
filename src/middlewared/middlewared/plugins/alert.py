@@ -196,11 +196,28 @@ class AlertService(Service):
         List all types of alerts including active/dismissed currently in the system.
         """
 
+        nodes = {
+            "A": "Active Controller",
+            "B": "Standby Controller",
+        }
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.licensed') and
+            (
+                (await self.middleware.call('failover.node') == 'A' and
+                 await self.middleware.call('failover.status') == 'BACKUP') or
+                (await self.middleware.call('failover.node') == 'B' and
+                 await self.middleware.call('failover.status') == 'MASTER')
+            )
+        ):
+            nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
+
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         return [
             dict(alert.__dict__,
                  id=alert.uuid,
+                 node=nodes[alert.node],
                  klass=alert.klass.name,
                  level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
                  formatted=alert.formatted,
