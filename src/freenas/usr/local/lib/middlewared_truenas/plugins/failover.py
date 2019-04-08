@@ -9,6 +9,7 @@ import sys
 
 from collections import defaultdict
 
+from middlewared.alert.source.failover import check_carp_states
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import (
@@ -338,6 +339,7 @@ class FailoverService(ConfigService):
         NO_PONG - Other storage controller is not communicable.
         NO_FAILOVER - Failover is administratively disabled.
         NO_LICENSE - Other storage controller has no license.
+        DISAGREE_CARP - Nodes CARP states do not agree.
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
         """
         reasons = []
@@ -356,6 +358,11 @@ class FailoverService(ConfigService):
 
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.append('NO_LICENSE')
+
+            local = self.middleware.call_sync('failover.get_carp_states')
+            remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
+            if check_carp_states(local, remote):
+                reasons.append('DISAGREE_CARP')
 
             remote_disks = set(self.middleware.call_sync("failover.call_remote", "device.get_info", ["DISK"]).keys())
             local_disks = set(self.middleware.call_sync("device.get_info", "DISK").keys())

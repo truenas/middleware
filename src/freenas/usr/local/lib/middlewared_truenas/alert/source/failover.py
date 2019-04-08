@@ -69,6 +69,13 @@ class InternalFailoverLinkStatusAlertClass(AlertClass):
     text = "Could not determine internal failover link status. Automatic failover disabled."
 
 
+class CARPStatesDoNotAgreeAlertClass(AlertClass):
+    category = AlertCategory.HA
+    level = AlertLevel.CRITICAL
+    title = "Nodes CARP States Do Not Agree"
+    text = "Nodes CARP states do not agree: %(error)s."
+
+
 class CTLHALinkAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
@@ -76,11 +83,36 @@ class CTLHALinkAlertClass(AlertClass):
     text = "CTL HA link is not connected."
 
 
+class CheckExternalFailoverLinksAlertClass(AlertClass):
+    category = AlertCategory.HA
+    level = AlertLevel.CRITICAL
+    title = "Check External Failover Links"
+    text = "Check external failover links."
+
+
 class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "No Escrowed Passphrase for Failover"
     text = "No escrowed passphrase for failover. Automatic failover disabled."
+
+
+def check_carp_states(local, remote):
+    errors = []
+    interfaces = set(local[0] + local[1] + remote[0] + remote[1])
+    if not interfaces:
+        errors.append(f"There are no failover interfaces")
+    for name in interfaces:
+        if name not in local[0] + local[1]:
+            errors.append(f"Interface {name} is not configured for failover on local system")
+        if name not in remote[0] + remote[1]:
+            errors.append(f"Interface {name} is not configured for failover on remote system")
+        if name in local[0] and name in remote[0]:
+            errors.append(f"Interface {name} is MASTER on both nodes")
+        if name in local[1] and name in remote[1]:
+            errors.append(f"Interface {name} is BACKUP on both nodes")
+
+    return errors
 
 
 class FailoverlertSource(ThreadedAlertSource):
@@ -153,10 +185,16 @@ class FailoverlertSource(ThreadedAlertSource):
             )
             stdout = p1.communicate()[0].strip()
             if status != "SINGLE" and stdout.count("\n") != 1:
-                alerts.append(Alert(
-                    'Could not determine internal failover link status, Automatic failover disabled.',
-                    level=AlertLevel.WARNING,
-                ))
+                alerts.append(Alert(InternalFailoverLinkStatusAlertClass))
+
+        local = self.middleware.call_sync('failover.status')
+        remote = self.middleware.call_sync('failover.call_remote', 'failover.status')
+        errors = check_carp_states(local, remote)
+        for error in errors:
+            alerts.append(Alert(
+                CARPStatesDoNotAgreeAlertClass,
+                {"error": error},
+            ))
 
         if status != "SINGLE":
             try:
@@ -168,10 +206,7 @@ class FailoverlertSource(ThreadedAlertSource):
         if status == 'MASTER':
             masters, backups = self.middleware.call_sync('failover.get_carp_states')
             if len(backups) > 0:
-                alerts.append(Alert(
-                    'Check external failover links.',
-                    level=AlertLevel.WARNING,
-                ))
+                alerts.append(Alert(CheckExternalFailoverLinksAlertClass))
 
         if status == 'BACKUP':
             try:
