@@ -1,3 +1,5 @@
+{% load tz %}
+
 <ul>
 {% for alert in alerts %}
     <li>
@@ -18,7 +20,7 @@
             {% endif %}
         {% endif %}
         </span>
-        {{ alert.datetime }} -
+        {{ alert.datetime|localtime }} -
         {% if show_node %}
             Node {{ alert.node }} -
         {% endif %}
