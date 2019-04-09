@@ -151,7 +151,10 @@ class SMARTTestService(CRUDService):
     @accepts(
         Dict(
             'smart_task_create',
-            Cron('schedule'),
+            Cron(
+                'schedule',
+                exclude=['minute']
+            ),
             Str('desc'),
             Bool('all_disks', default=False),
             List('disks', items=[Str('disk')], default=[]),
