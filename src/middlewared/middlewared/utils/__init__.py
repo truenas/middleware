@@ -24,6 +24,7 @@ if '/usr/local/lib' not in sys.path:
 
 BUILDTIME = None
 VERSION = None
+VERSION_FILE = '/etc/version'
 
 
 def bisect(condition, iterable):
@@ -358,26 +359,16 @@ def sw_buildtime():
 
 
 def sw_version():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
     global VERSION
     if VERSION is None:
-        conf = Configuration.Configuration()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            VERSION = sys_mani.Version()
+        with open(VERSION_FILE, 'r') as f:
+            version = f.read().strip()
+        VERSION = version.split(' ')[0]
     return VERSION
 
 
 def sw_version_is_stable():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
-    conf = Configuration.Configuration()
-    train = conf.CurrentTrain()
-    if train and 'stable' in train.lower():
-        return True
-    else:
-        return False
+    return '-STABLE' in sw_version()
 
 
 def is_empty(val):
