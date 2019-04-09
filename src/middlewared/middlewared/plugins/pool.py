@@ -90,9 +90,6 @@ async def mount(device, path, fs_type, fs_options, options):
     if isinstance(path, str):
         path = path.encode("utf-8")
 
-    if fs_type == "msdosfs":
-        options.append("large")
-
     executable = "/sbin/mount"
     arguments = []
 
