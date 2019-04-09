@@ -22,7 +22,7 @@ copy_templates()
 
 		# Special handling for login.conf file that needs cap_mkdb run
 		if [ "$nfile" = "/etc/login.conf" ] ; then
-			cap_mkdb -f /etc/login.conf.db /etc/login.conf
+			cap_mkdb /etc/login.conf
 		fi
 	done
 }
