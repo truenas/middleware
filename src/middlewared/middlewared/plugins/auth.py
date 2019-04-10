@@ -349,6 +349,10 @@ class TwoFactorAuthService(ConfigService):
     @private
     async def two_factor_extend(self, data):
         data['secret'] = await self.middleware.call('pwenc.decrypt', data['secret'])
+
+        for srv in ['ssh']:
+            data['services'].setdefault(srv, False)
+
         return data
 
     @accepts(
@@ -358,7 +362,10 @@ class TwoFactorAuthService(ConfigService):
             Int('otp_digits', validators=Range(min=6, max=8)),
             Int('window', validators=Range(min=0)),
             Int('interval', validators=Range(min=5)),
-            Dict('services'),
+            Dict(
+                'services',
+                Bool('ssh', default=False)
+            ),
             update=True
         )
     )
@@ -383,6 +390,8 @@ class TwoFactorAuthService(ConfigService):
             config['id'],
             config
         )
+
+        await self.middleware.call('service.reload', 'ssh')
 
         return await self.config()
 
