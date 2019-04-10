@@ -1,5 +1,6 @@
 import crypt
 from datetime import datetime, timedelta
+import pyotp
 import random
 import re
 import socket
@@ -8,7 +9,9 @@ import subprocess
 import time
 
 from middlewared.schema import Dict, Int, Str, accepts, Bool
-from middlewared.service import ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private
+from middlewared.service import (
+    ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private, CallError
+)
 from middlewared.utils import Popen
 from middlewared.validators import Range
 
@@ -333,6 +336,7 @@ class TwoFactorAuthService(ConfigService):
         datastore_extend = 'auth.twofactor.two_factor_extend'
         namespace = 'auth.twofactor'
 
+    @private
     async def two_factor_extend(self, data):
         data['secret'] = await self.middleware.call('pwenc.decrypt', data['secret'])
         return data
@@ -354,6 +358,13 @@ class TwoFactorAuthService(ConfigService):
 
         config.update(data)
 
+        if config['enabled'] and not config['secret']:
+            # Only generate a new secret on `enabled` when `secret` is not already set.
+            # This will aid users not setting secret up again on their mobiles.
+            config['secret'] = await self.middleware.run_in_thread(
+                self.generate_base32_secret
+            )
+
         config['secret'] = await self.middleware.call('pwenc.encrypt', config['secret'])
 
         await self.middleware.call(
@@ -365,10 +376,30 @@ class TwoFactorAuthService(ConfigService):
 
         return await self.config()
 
+    @accepts()
+    def renew_secret(self):
+        config = self.middleware.call_sync(f'{self._config.namespace}.config')
+        if not config['enabled']:
+            raise CallError('Please enable Two Factor Authentication first.')
+
+        self.middleware.call_sync(
+            'datastore.update',
+            self._config.datastore,
+            config['id'], {
+                'secret': self.middleware.call_sync('pwenc.encrypt', self.generate_base32_secret())
+            }
+        )
+
+        return True
+
+    @private
+    def generate_base32_secret(self):
+        return pyotp.random_base32()
+
 
 async def check_permission(middleware, app):
     """
-    Authenticates connections comming from loopback and from
+    Authenticates connections coming from loopback and from
     root user.
     """
     sock = app.request.transport.get_extra_info('socket')
