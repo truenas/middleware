@@ -72,6 +72,11 @@ def main():
         help='Run in foreground mode',
     )
     parser.add_argument(
+        '--no-panic', '-np',
+        action='store_true',
+        help='Do not panic in case of a fatal error',
+    )
+    parser.add_argument(
         '--interval', '-i',
         default=5,
         type=int,
@@ -104,8 +109,12 @@ def main():
     try:
         fence.loop(newkey)
     except PanicExit as e:
-        logger.info('Panic %s', e)
-        panic(e)
+        if args.no_panic:
+            logger.info('Fatal error: %s', e)
+            sys.exit(ExitCode.UNKNOWN.value)
+        else:
+            logger.info('Panic %s', e)
+            panic(e)
     except Exception:
         logger.error('Unexpected exception', exc_info=True)
         sys.exit(ExitCode.UNKNOWN.value)
