@@ -157,13 +157,6 @@ class FailoverlertSource(ThreadedAlertSource):
 
         status = self.middleware.call_sync('failover.status')
 
-        fobj = None
-        try:
-            with open(FAILOVER_JSON, 'r') as f:
-                fobj = json.loads(f.read())
-        except Exception:
-            pass
-
         if status == 'ERROR':
             errmsg = None
             if os.path.exists('/tmp/.failover_failed'):
@@ -198,6 +191,12 @@ class FailoverlertSource(ThreadedAlertSource):
                 pass
 
         if status == 'BACKUP':
+            fobj = None
+            try:
+                with open(FAILOVER_JSON, 'r') as f:
+                    fobj = json.loads(f.read())
+            except Exception:
+                pass
             try:
                 if len(fobj['phrasedvolumes']) > 0:
                     escrowctl = LocalEscrowCtl()
