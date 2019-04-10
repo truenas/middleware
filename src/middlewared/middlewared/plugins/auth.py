@@ -295,13 +295,23 @@ class AuthService(Service):
             return None
 
     @no_auth_required
-    @accepts(Str('username'), Str('password'))
+    @accepts(Str('username'), Str('password'), Str('otp_token', null=True, default=None))
     @pass_app
-    async def login(self, app, username, password):
+    async def login(self, app, username, password, otp_token=None):
         """Authenticate session using username and password.
         Currently only root user is allowed.
         """
         valid = await self.check_user(username, password)
+        twofactor_auth = await self.middleware.call('auth.twofactor.config')
+
+        if twofactor_auth['enabled']:
+            # We should run auth.twofactor.verify nevertheless of check_user result to prevent guessing
+            # passwords with a timing attack
+            valid &= await self.middleware.call(
+                'auth.twofactor.verify',
+                otp_token
+            )
+
         if valid:
             self.session_manager.login(app, LoginPasswordSessionManagerCredentials())
         return valid
@@ -375,6 +385,19 @@ class TwoFactorAuthService(ConfigService):
         )
 
         return await self.config()
+
+    @accepts(
+        Str('token', null=True)
+    )
+    def verify(self, token):
+        config = self.middleware.call_sync(f'{self._config.namespace}.config')
+        if not config['enabled']:
+            raise CallError('Please enable Two Factor Authentication first.')
+
+        totp = pyotp.totp.TOTP(
+            config['secret'], interval=config['interval'], digits=config['otp_digits']
+        )
+        return totp.verify(token, valid_window=config['window'])
 
     @accepts()
     def renew_secret(self):
