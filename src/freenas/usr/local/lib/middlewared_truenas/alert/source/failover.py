@@ -83,13 +83,6 @@ class CTLHALinkAlertClass(AlertClass):
     text = "CTL HA link is not connected."
 
 
-class CheckExternalFailoverLinksAlertClass(AlertClass):
-    category = AlertCategory.HA
-    level = AlertLevel.CRITICAL
-    title = "Check External Failover Links"
-    text = "Check external failover links."
-
-
 class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
@@ -127,6 +120,16 @@ class FailoverlertSource(ThreadedAlertSource):
 
         try:
             self.middleware.call_sync('failover.call_remote', 'core.ping')
+
+            local = self.middleware.call_sync('failover.get_carp_states')
+            remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
+
+            errors = check_carp_states(local, remote)
+            for error in errors:
+                alerts.append(Alert(
+                    CARPStatesDoNotAgreeAlertClass,
+                    {"error": error},
+                ))
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
@@ -187,26 +190,12 @@ class FailoverlertSource(ThreadedAlertSource):
             if status != "SINGLE" and stdout.count("\n") != 1:
                 alerts.append(Alert(InternalFailoverLinkStatusAlertClass))
 
-        local = self.middleware.call_sync('failover.status')
-        remote = self.middleware.call_sync('failover.call_remote', 'failover.status')
-        errors = check_carp_states(local, remote)
-        for error in errors:
-            alerts.append(Alert(
-                CARPStatesDoNotAgreeAlertClass,
-                {"error": error},
-            ))
-
         if status != "SINGLE":
             try:
                 if notifier().sysctl('kern.cam.ctl.ha_link') == 1:
                     alerts.append(Alert(CTLHALinkAlertClass))
             except Exception:
                 pass
-
-        if status == 'MASTER':
-            masters, backups = self.middleware.call_sync('failover.get_carp_states')
-            if len(backups) > 0:
-                alerts.append(Alert(CheckExternalFailoverLinksAlertClass))
 
         if status == 'BACKUP':
             try:
