@@ -1027,3 +1027,42 @@ class Reporting(Model):
 
 class Migration(Model):
     name = models.CharField(max_length=255, unique=True)
+
+
+class TwoFactorAuthentication(Model):
+    class Meta:
+        verbose_name = _('Two Factor Authentication')
+
+    class FreeAdmin:
+        deletable = False
+
+    otp_digits = models.IntegerField(
+        default=6,
+        verbose_name=_('OTP Digits')
+    )
+
+    secret = models.CharField(
+        max_length=16,
+        default=None,
+        null=True
+    )
+
+    window = models.IntegerField(
+        default=0,
+        verbose_name=_('Counter Value Window')
+    )
+
+    interval = models.IntegerField(
+        default=30,
+        verbose_name=_('TOTP Valid Interval')
+    )
+
+    services = DictField(
+        verbose_name=_('Services'),
+        default={}
+    )
+
+    enabled = models.BooleanField(
+        verbose_name=_('Enabled'),
+        default=False
+    )
