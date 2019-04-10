@@ -99,13 +99,6 @@ class Fence(object):
             for disk in failed_disks:
                 self._disks.remove(disk)
 
-        failed_disks = self._disks.reserve_key()
-        if failed_disks:
-            logger.error(
-                'Failed to set SCSI reservation on %s',
-                ' '.join([d.name for d in failed_disks]),
-            )
-            sys.exit(ExitCode.RESERVE_ERROR.value)
         logger.info('SCSI reservation set on %d disks.', len(self._disks))
 
         return newkey
@@ -126,10 +119,28 @@ class Fence(object):
                 key += 1
 
             logger.debug('Setting new key: 0x%x', key)
-            failed_disks = self._disks.set_keys(key)
+            failed_disks = self._disks.register_keys(key)
             if failed_disks:
-                if len(failed_disks) / len(self._disks) > 0.1:
-                    raise PanicExit(f'More than 10% of the disks failed to update reservation.')
+                for disk in list(failed_disks):
+                    try:
+                        reservation = disk.get_reservation()
+                        if reservation:
+                            reshostid = reservation['reservation'] >> 32
+                            if self.hostid != reshostid:
+                                raise PanicExit(f'Reservation for at least one disk ({disk.name}) was preempted.')
+
+                        logger.info('Trying to reset reservation for %s', disk.name)
+                        disk.reset_keys(key)
+                        failed_disks.remove(disk)
+                    except PanicExit:
+                        raise
+                    except Exception:
+                        pass
+                if failed_disks:
+                    logger.info(
+                        'Disks failed to set reservation and being removed: %s',
+                        ', '.join(d.name for d in failed_disks),
+                    )
                 for d in failed_disks:
                     self._disks.remove(d)
 

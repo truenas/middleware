@@ -94,14 +94,11 @@ class Disks(dict):
         failed = self._run_batch('get_keys', done_callback=callback)
         return keys, remote_keys, failed
 
-    def set_keys(self, newkey):
-        return self._run_batch('set_key', [newkey], disks=self._get_set_disks())
+    def register_keys(self, newkey):
+        return self._run_batch('register_key', [newkey], disks=self._get_set_disks())
 
     def reset_keys(self, newkey):
         return self._run_batch('reset_keys', [newkey])
-
-    def reserve_key(self):
-        return self._run_batch('reserve_key')
 
 
 class Disk(object):
@@ -130,38 +127,43 @@ class Disk(object):
                 remote_keys.add(key)
         return (host_key, remote_keys)
 
-    def set_key(self, newkey):
+    def get_reservation(self):
+        return self.cam.read_reservation(retries=CAM_RETRIES)
+
+    def register_key(self, newkey):
         newkey = self.fence.hostid << 32 | (newkey & 0xffffffff)
         self.cam.scsi_prout(
-            reskey=self.curkey, sa_reskey=newkey, mode=cam.SCSIPersistMode.REGISTER,
+            reskey=self.curkey, sa_reskey=newkey, action=cam.SCSIPersistOutAction.REGISTER,
             retries=CAM_RETRIES,
         )
         self.curkey = newkey
 
     def reset_keys(self, newkey):
+        reservation = self.get_reservation()
         newkey = self.fence.hostid << 32 | (newkey & 0xffffffff)
-        tempkey = self.fence.hostid << 32 | 0x55aa55aa
-        self.cam.scsi_prout(
-            sa_reskey=tempkey,
-            mode=cam.SCSIPersistMode.REG_IGNORE,
-            retries=CAM_RETRIES,
-        )
-        self.cam.scsi_prout(
-            reskey=tempkey,
-            mode=cam.SCSIPersistMode.CLEAR,
-            retries=CAM_RETRIES,
-        )
-        self.cam.scsi_prout(
-            sa_reskey=newkey,
-            mode=cam.SCSIPersistMode.REG_IGNORE,
-            retries=CAM_RETRIES,
-        )
+        if reservation and reservation['reservation'] >> 32 != self.fence.hostid:
+            self.cam.scsi_prout(
+                sa_reskey=newkey,
+                action=cam.SCSIPersistOutAction.REG_IGNORE,
+                retries=CAM_RETRIES,
+            )
+            self.cam.scsi_prout(
+                reskey=newkey,
+                sa_reskey=reservation['reservation'],
+                action=cam.SCSIPersistOutAction.PREEMPT,
+                restype=cam.SCSIPersistType.WRITE_EXCLUSIVE,
+                retries=CAM_RETRIES,
+            )
+        else:
+            self.cam.scsi_prout(
+                sa_reskey=newkey,
+                action=cam.SCSIPersistOutAction.REG_IGNORE,
+                retries=CAM_RETRIES,
+            )
+            self.cam.scsi_prout(
+                reskey=newkey,
+                action=cam.SCSIPersistOutAction.RESERVE,
+                restype=cam.SCSIPersistType.WRITE_EXCLUSIVE,
+                retries=CAM_RETRIES,
+            )
         self.curkey = newkey
-
-    def reserve_key(self):
-        self.cam.scsi_prout(
-            reskey=self.curkey,
-            mode=cam.SCSIPersistMode.RESERVE,
-            restype=cam.SCSIPersistType.WRITE_EXCLUSIVE,
-            retries=CAM_RETRIES,
-        )
