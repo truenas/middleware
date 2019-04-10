@@ -7,9 +7,10 @@ import string
 import subprocess
 import time
 
-from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import Service, filterable, filter_list, no_auth_required, pass_app, private
+from middlewared.schema import Dict, Int, Str, accepts, Bool
+from middlewared.service import ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private
 from middlewared.utils import Popen
+from middlewared.validators import Range
 
 
 class TokenManager:
@@ -323,6 +324,46 @@ class AuthService(Service):
 
         self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
         return True
+
+
+class TwoFactorAuthService(ConfigService):
+
+    class Config:
+        datastore = 'system.twofactorauthentication'
+        datastore_extend = 'auth.twofactor.two_factor_extend'
+        namespace = 'auth.twofactor'
+
+    async def two_factor_extend(self, data):
+        data['secret'] = await self.middleware.call('pwenc.decrypt', data['secret'])
+        return data
+
+    @accepts(
+        Dict(
+            'auth_twofactor_update',
+            Bool('enabled'),
+            Int('otp_digits', validators=Range(min=6, max=8)),
+            Int('window', validators=Range(min=0)),
+            Int('interval', validators=Range(min=5)),
+            Dict('services'),
+            update=True
+        )
+    )
+    async def do_update(self, data):
+        old_config = await self.config()
+        config = old_config.copy()
+
+        config.update(data)
+
+        config['secret'] = await self.middleware.call('pwenc.encrypt', config['secret'])
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            config['id'],
+            config
+        )
+
+        return await self.config()
 
 
 async def check_permission(middleware, app):
