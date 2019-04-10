@@ -196,6 +196,8 @@ class EtcService(Service):
         ],
         'ssh': [
             {'type': 'mako', 'path': 'local/ssh/sshd_config'},
+            {'type': 'mako', 'path': 'pam.d/sshd'},
+            {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
             {'type': 'py', 'path': 'local/ssh/config'}
         ],
         'ntpd': [
