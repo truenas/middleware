@@ -3,10 +3,12 @@
 #
 # PAM configuration for the "sshd" service
 #
-<%namespace name="pam" file="pam.inc" />
+<%namespace name="pam" file="pam.inc" />\
 <%
-    dsp = pam.getDirectoryServicePam(middleware=middleware, file='sshd')
-%>
+	dsp = pam.getDirectoryServicePam(middleware=middleware, file='sshd')
+	twofactor_auth = middleware.call_sync('auth.twofactor.config')
+	twofactor_enabled = twofactor_auth['enabled'] and twofactor_auth['services']['ssh']
+%>\
 # auth
 auth		sufficient	pam_opie.so		no_warn no_fake_prompts
 auth		requisite	pam_opieaccess.so	no_warn allow_local
@@ -16,6 +18,9 @@ ${dsp.pam_auth()}
 #auth		sufficient	pam_krb5.so		no_warn try_first_pass
 #auth		sufficient	pam_ssh.so		no_warn try_first_pass
 auth		required	pam_unix.so		no_warn try_first_pass
+% if twofactor_enabled:
+auth		required	/usr/local/lib/security/pam_oath.so	usersfile=/usr/local/etc/users.oath	window=${twofactor_auth['window']}
+% endif
 
 # account
 account		required	pam_nologin.so
