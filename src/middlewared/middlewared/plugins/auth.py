@@ -297,14 +297,19 @@ class AuthService(Service):
     @no_auth_required
     @accepts()
     async def two_factor_auth(self):
+        """
+        Returns true if two factor authorization is required for authorizing user's login.
+        """
         return (await self.middleware.call('auth.twofactor.config'))['enabled']
 
     @no_auth_required
     @accepts(Str('username'), Str('password'), Str('otp_token', null=True, default=None))
     @pass_app
     async def login(self, app, username, password, otp_token=None):
-        """Authenticate session using username and password.
+        """
+        Authenticate session using username and password.
         Currently only root user is allowed.
+        `otp_token` must be specified if two factor authentication is enabled.
         """
         valid = await self.check_user(username, password)
         twofactor_auth = await self.middleware.call('auth.twofactor.config')
@@ -375,6 +380,13 @@ class TwoFactorAuthService(ConfigService):
         )
     )
     async def do_update(self, data):
+        """
+        `otp_digits` represents number of allowed digits in the OTP.
+
+        `window` extends the validity to `window` many counter ticks before and after the current one.
+
+        `interval` is time duration in seconds specifying OTP expiration time from it's creation time.
+        """
         old_config = await self.config()
         config = old_config.copy()
 
@@ -404,6 +416,9 @@ class TwoFactorAuthService(ConfigService):
         Str('token', null=True)
     )
     def verify(self, token):
+        """
+        Returns boolean true if provided `token` is successfully authenticated.
+        """
         config = self.middleware.call_sync(f'{self._config.namespace}.config')
         if not config['enabled']:
             raise CallError('Please enable Two Factor Authentication first.')
@@ -415,6 +430,9 @@ class TwoFactorAuthService(ConfigService):
 
     @accepts()
     def renew_secret(self):
+        """
+        Generates a new secret for Two Factor Authentication. Returns boolean true on success.
+        """
         config = self.middleware.call_sync(f'{self._config.namespace}.config')
         if not config['enabled']:
             raise CallError('Please enable Two Factor Authentication first.')
@@ -434,6 +452,10 @@ class TwoFactorAuthService(ConfigService):
 
     @accepts()
     async def provisioning_uri(self):
+        """
+        Returns the provisioning URI for the OTP. This can then be encoded in a QR Code and used to
+        provision an OTP app like Google Authenticator.
+        """
         config = await self.middleware.call(f'{self._config.namespace}.config')
         return pyotp.totp.TOTP(
             config['secret'], interval=config['interval'], digits=config['otp_digits']
