@@ -5,8 +5,8 @@ import enum
 import os
 import subprocess
 import time
-from middlewared.schema import accepts, Any, Dict, Int, List, Path, Patch, Str
-from middlewared.service import CallError, ConfigService, CRUDService, private, ValidationErrors
+from middlewared.schema import accepts, Dict, Int, List, Patch, Str
+from middlewared.service import CallError, ConfigService, CRUDService, periodic, private, ValidationErrors
 from middlewared.utils import run, Popen
 
 
@@ -78,7 +78,6 @@ class KerberosService(ConfigService):
                 ad_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ad['kerberos_principal']], check=False)
                 if ad_kinit.returncode != 0:
                     raise CallError(f"kinit for domain [{ad['domainname']}] with principal [{ad['kerberos_principal']}] failed: {ad_kinit.stderr.decode()}")
-                ret = True
             else:
                 principal = f'{ad["bindname"]}@{ad["domainname"]}'
                 ad_kinit = await Popen(
@@ -155,23 +154,23 @@ class KerberosService(ConfigService):
 
                 if ad['enable'] and ad['kerberos_realm'] and ad['domainname'] in client:
                     ad_TGT.append({
-                       'issued': issued,
-                       'expires': expires,
-                       'client': client,
-                       'server': server,
-                       'etype': etype,
-                       'flags': flags,
+                        'issued': issued,
+                        'expires': expires,
+                        'client': client,
+                        'server': server,
+                        'etype': etype,
+                        'flags': flags,
                     })
 
                 elif ldap['enable'] and ldap['kerberos_realm']:
                     if ldap['kerberos_realm']['krb_realm'] in client:
                         ldap_TGT.append({
-                           'issued': issued,
-                           'expires': expires,
-                           'client': client,
-                           'server': server,
-                           'etype': etype,
-                           'flags': flags,
+                            'issued': issued,
+                            'expires': expires,
+                            'client': client,
+                            'server': server,
+                            'etype': etype,
+                            'flags': flags,
                         })
 
         if ad_TGT or ldap_TGT:
@@ -504,7 +503,9 @@ class KerberosKeytabService(CRUDService):
     @private
     async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
         keytab_entries = []
-        kt_list =  await run(['/usr/sbin/ktutil', '-k', keytab_file, '-v', 'list'], check=False)
+        kt_list =  await run(
+            ['/usr/sbin/ktutil', '-k', keytab_file, '-v', 'list'], check=False
+        )
         if kt_list.returncode != 0:
             raise CallError(f'ktutil list for keytab [{keytab_file}] failed with error: {kt_list.stderr.decode()}')
         kt_list_output = kt_list.stdout.decode()
@@ -553,12 +554,12 @@ class KerberosKeytabService(CRUDService):
         for i in to_delete:
             self.logger.debug(i)
             ktutil_remove = await run([
-                 '/usr/sbin/ktutil',
-                 '-k', keytab['SAMBA'].value,
-                 'remove',
-                 '-p', i['principal'],
-                 '-e', i['type']],
-                 check=False
+                '/usr/sbin/ktutil',
+                '-k', keytab['SAMBA'].value,
+                'remove',
+                '-p', i['principal'],
+                '-e', i['type']],
+                check=False
             )
             if ktutil_remove.stderr.decode():
                 raise CallError(f"ktutil_remove [{keytab['SAMBA'].value}]: {ktutil_remove.stderr.decode()}")
@@ -614,3 +615,30 @@ class KerberosKeytabService(CRUDService):
         sambakt = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
         if sambakt:
             return sambakt[0]['id']
+
+    @periodic(3600)
+    @private
+    async def check_updated_keytab(self):
+        """
+        Check mtime of current kerberos keytab. If it has changed since last check,
+        assume that samba has updated it behind the scenes and that the configuration
+        database needs to be updated to reflect the change.
+        """
+        old_mtime = 0
+        ad = await self.middleware.call('activedirectory.config')
+        if not ad['enable'] or not os.path.exists(keytab['SYSTEM'].value):
+            return
+        if await self.middleware.call('cache.has_key', 'KEYTAB_MTIME'):
+            old_mtime = await self.middleware.call('cache.get', 'KEYTAB_MTIME')
+
+        new_mtime = (os.stat(keytab['SYSTEM'].value)).st_mtime
+        if old_mtime == new_mtime:
+            return
+
+        await self.store_samba_keytab()
+        self.logger.debug('Updating stored AD machine account kerberos keytab')
+        await self.middleware.call(
+            'cache.put',
+            'KEYTAB_MTIME',
+            (os.stat(keytab['SYSTEM'].value)).st_mtime
+        )

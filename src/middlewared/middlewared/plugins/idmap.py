@@ -1,14 +1,10 @@
-import asyncio
-import base64
-import datetime
 import enum
 import errno
 import os
 import subprocess
-import time
 from middlewared.schema import accepts, Any, Bool, Cron, Dict, Int, List, Patch, Path, Str
-from middlewared.service import CallError, ConfigService, CRUDService, Service, item_method, private, ValidationErrors
-from middlewared.utils import run, Popen
+from middlewared.service import CallError, CRUDService, Service, private, ValidationErrors
+from middlewared.utils import run
 from middlewared.validators import Range
 
 
@@ -292,14 +288,14 @@ class IdmapDomainService(CRUDService):
         """
         if id <= 5:
             entry = await self._get_instance(id)
-            raise CallError(f'Deletion of system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
+            raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
     @private
     async def _validate(self, data):
         verrors = ValidationErrors()
         if data['id'] <= dstype['DS_TYPE_DEFAULT_DOMAIN'].value:
-            verrors.append(f'Modification of system idmap domain [{data["name"]}] is not permitted.')
+            verrors.append(f'Modifying system idmap domain [{data["name"]}] is not permitted.')
         return verrors
 
 
@@ -353,7 +349,7 @@ class IdmapDomainBackendService(CRUDService):
 
         if not backend_entry_is_present:
             next_idmap_range = await self.get_next_idmap_range()
-            new_idmap = await self.middleware.call(f'idmap.{data["idmap_backend"]}.create', {
+            await self.middleware.call(f'idmap.{data["idmap_backend"]}.create', {
                 'domain': {'id': data['domain']['id']},
                 'range_low': next_idmap_range[0],
                 'range_high': next_idmap_range[1]
@@ -408,7 +404,7 @@ class IdmapDomainBackendService(CRUDService):
         """
         entry = await self._get_instance(id)
         if entry['domain']['id'] <= dstype['DS_TYPE_DEFAULT_DOMAIN'].value:
-            raise CallError(f'Deletion of mapping for [{entry["domain"]["idmap_domain_name"]}] is not permitted.', errno.EPERM)
+            raise CallError(f'Deleting mapping for [{entry["domain"]["idmap_domain_name"]}] is not permitted.', errno.EPERM)
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
 
@@ -468,9 +464,8 @@ class IdmapADService(CRUDService):
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
-        verrors.add_child('idmap_ad_update', await self.middleware.call('idmap._common_validate', new))
         verrors = ValidationErrors()
-
+        verrors.add_child('idmap_ad_update', await self.middleware.call('idmap._common_validate', new))
         if verrors:
             raise verrors
 
@@ -1109,6 +1104,7 @@ class IdmapTDB2Service(CRUDService):
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
+        verrors = ValidationErrors()
         verrors.add_child('idmap_tdb2_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:

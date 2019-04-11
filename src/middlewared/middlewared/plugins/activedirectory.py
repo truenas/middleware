@@ -59,11 +59,6 @@ class SSL(enum.Enum):
 
 
 class ActiveDirectory_DNS(object):
-    """
-    :get_n_working_servers: often only a few working servers are needed and not the whole
-    list available on the domain. This takes the SRV record type and number of servers to get
-    as arguments.
-    """
     def __init__(self, **kwargs):
         super(ActiveDirectory_DNS, self).__init__()
         self.ad = kwargs.get('conf')
@@ -158,11 +153,16 @@ class ActiveDirectory_DNS(object):
         return servers
 
     def get_n_working_servers(self, srv=SRV['DOMAINCONTROLLER'], number=1):
+        """
+        :get_n_working_servers: often only a few working servers are needed and not the whole
+        list available on the domain. This takes the SRV record type and number of servers to get
+        as arguments.
+        """
         servers = self._get_servers(srv)
         found_servers = []
         for server in servers:
             if len(found_servers) == number:
-                continue
+                break
 
             host = server.target.to_text(True)
             port = int(server.port)
@@ -176,20 +176,6 @@ class ActiveDirectory_DNS(object):
 
 
 class ActiveDirectory_LDAP(object):
-    """
-    :validate_credentials: simple check to determine whether we can establish
-    an ldap session with the credentials that are in the configuration.
-
-    :get_netbios_domain_name: returns the short form of the AD domain name. Confusingly
-    titled 'nETBIOSName'. Must not be confused with the netbios hostname of the
-    server. For this reason, API calls it 'netbios_domain_name'.
-
-    :get_site: returns the AD site that the NAS is a member of. AD sites are used
-    to break up large domains into managable chunks typically based on physical location.
-    Although samba handles AD sites independent of the middleware. We need this
-    information to determine which kerberos servers to use in the krb5.conf file to
-    avoid communicating with a KDC on the other side of the world.
-    """
     def __init__(self, **kwargs):
         super(ActiveDirectory_LDAP, self).__init__()
         self.ad = kwargs.get('ad_conf')
@@ -204,8 +190,6 @@ class ActiveDirectory_LDAP(object):
         self._configurationNamingContext = None
         self._defaultNamingContext = None
 
-        return
-
     def __enter__(self):
         return self
 
@@ -215,7 +199,8 @@ class ActiveDirectory_LDAP(object):
 
     def validate_credentials(self):
         """
-        For credential validation we simply open an ldap connection
+        :validate_credentials: simple check to determine whether we can establish
+        an ldap session with the credentials that are in the configuration.
         """
         ret = self._open()
         if ret:
@@ -273,7 +258,7 @@ class ActiveDirectory_LDAP(object):
                         self._handle.start_tls_s()
 
                     except ldap.LDAPError as e:
-                        raise CallError(e)
+                        self.logger.debug('%s', e)
                         continue
 
                 if self.ad['kerberos_principal']:
@@ -473,6 +458,11 @@ class ActiveDirectory_LDAP(object):
             self.logger.debug(f'baseDN:[{self._defaultNamingContext}], config:[{self._configurationNamingContext}]')
 
     def get_netbios_name(self):
+        """
+        :get_netbios_domain_name: returns the short form of the AD domain name. Confusingly
+        titled 'nETBIOSName'. Must not be confused with the netbios hostname of the
+        server. For this reason, API calls it 'netbios_domain_name'.
+        """
         if not self._handle:
             self._open()
         self._initialize_naming_context()
@@ -493,6 +483,11 @@ class ActiveDirectory_LDAP(object):
 
     def locate_site(self):
         """
+        Returns the AD site that the NAS is a member of. AD sites are used
+        to break up large domains into managable chunks typically based on physical location.
+        Although samba handles AD sites independent of the middleware. We need this
+        information to determine which kerberos servers to use in the krb5.conf file to
+        avoid communicating with a KDC on the other side of the world.
         In Windows environment, this is discovered via CLDAP query for closest DC. We
         can't do this, and so we have to rely on comparing our network configuration with
         site and subnet information obtained through LDAP queries.
@@ -550,7 +545,7 @@ class ActiveDirectoryService(ConfigService):
     async def ad_extend(self, ad):
         smb = await self.middleware.call('smb.config')
         smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if smb_ha_mode == 'STANDALONE': 
+        if smb_ha_mode == 'STANDALONE':
             ad.update({
                 'netbiosname': smb['netbiosname'],
                 'netbiosalias': smb['netbiosalias']
@@ -564,8 +559,8 @@ class ActiveDirectoryService(ConfigService):
         elif smb_ha_mode == 'LEGACY':
             ngc = await self.middleware.call('network.configuration.config')
             ad.update({
-                'netbiosname': data['hostname'],
-                'netbiosname_b': data['hostname_b'],
+                'netbiosname': ada['hostname'],
+                'netbiosname_b': ad['hostname_b'],
                 'netbiosalias': smb['netbiosalias']
             })
 
@@ -616,9 +611,9 @@ class ActiveDirectoryService(ConfigService):
         'activedirectory_update',
         Str('domainname', required=True),
         Str('bindname'),
-        Str('bindpw'),
+        Str('bindpw', private=True),
         Str('ssl', default='off', enum=['off', 'on', 'start_tls']),
-        Dict('certificate'),
+        Int('certificate'),
         Bool('verbose_logging'),
         Bool('unix_extensions'),
         Bool('use_default_domain'),
@@ -707,10 +702,11 @@ class ActiveDirectoryService(ConfigService):
 
         if data['bindpw'] and data['enable'] and not old['enable']:
             try:
-                await self.validate_credentials()
+                await self.middleware.run_in_thread(self.validate_credentials)
             except Exception as e:
                 verrors.add(f"activedirectory_update.bindpw", f"Failed to validate bind credentials: {e}")
-            await self.validate_domain()
+
+            await self.middleware.run_in_thread(self.validate_domain)
 
         if verrors:
             raise verrors
@@ -760,16 +756,26 @@ class ActiveDirectoryService(ConfigService):
             try:
                 return (await self.middleware.call('cache.get', 'AD_State'))
             except KeyError:
-                await self.started()
-                return (await self.middleware.call('cache.get', 'AD_State'))
+                try:
+                    await self.started()
+                except Exception:
+                    pass
+
+            return (await self.middleware.call('cache.get', 'AD_State'))
 
     @private
     async def start(self):
         """
-        Start AD service.
+        Start AD service. In 'UNIFIED' HA configuration, only start AD service 
+        on active storage controller.
         """
         ad = await self.config()
         smb = await self.middleware.call('smb.config')
+        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        if smb_ha_mode == 'UNIFIED':
+            if  await self.middleware.call('failover.status') != 'MASTER':
+                return
+
         state = await self.get_state()
         if state in [DSStatus['JOINING'], DSStatus['LEAVING']]:
             raise CallError(f'Active Directory Service has status of [{state.value}]. Wait until operation completes.', errno.EBUSY)
@@ -801,7 +807,10 @@ class ActiveDirectoryService(ConfigService):
         """
 
         if not ad['site']:
-            new_site = await asyncio.wait_for(self.get_site(), 10)
+            try:
+                new_site = await asyncio.wait_for(self.get_site(), 10)
+            except asyncio.TimeoutError:
+                raise CallError('Attempt to query AD site timed out after 10 seconds')
             if new_site != 'Default-First-Site-Name':
                 ad = await self.config()
                 try:
@@ -820,7 +829,10 @@ class ActiveDirectoryService(ConfigService):
                     await self.middleware.call('etc.generate', 'kerberos')
 
         if not smb['workgroup'] or smb['workgroup'] == 'WORKGROUP':
-            smb['workgroup'] = await asyncio.wait_for(self.get_netbios_domain_name(), 10)
+            try:
+                smb['workgroup'] = await asyncio.wait_for(self.get_netbios_domain_name(), 10)
+            except asyncio.TimeoutError:
+                raise CallError('Attempt to auto-discover pre-Windows 2000 domain name timed out')
 
         await self.middleware.call('etc.generate', 'smb')
 
@@ -833,7 +845,6 @@ class ActiveDirectoryService(ConfigService):
 
         ret = await self._net_ads_testjoin(smb['workgroup'])
         if ret == neterr.NOTJOINED:
-            smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join()
             if smb_ha_mode != 'LEGACY':
@@ -844,13 +855,15 @@ class ActiveDirectoryService(ConfigService):
                         'datastore.update',
                         'directoryservice.activedirectory',
                         ad['id'],
-                        {'ad_bindpw': '', 'ad_kerberos_principal': f'{smb["netbiosname"]}$@{ad["domainname"]}'}
+                        {'ad_bindpw': '', 'ad_kerberos_principal': f'{smb["netbiosname"].upper()}$@{ad["domainname"]}'}
                     )
                     ad = await self.config()
-                    self.logger.debug(ad)
-                ret = neterr.JOINED
-                if ad['allow_trusted_doms']:
-                    await self.middleware.call('idmap.autodiscover_trusted_domains')
+
+            ret = neterr.JOINED
+            await self.middleware.call('service.update', 'cifs', {'enable': True})
+            await self.middleware.run_in_thread(self.set_ntp_servers)
+            if ad['allow_trusted_doms']:
+                await self.middleware.call('idmap.autodiscover_trusted_domains')
 
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
@@ -875,9 +888,9 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('cache.pop', 'AD_State')
 
     @private
-    async def validate_credentials(self):
+    def validate_credentials(self):
         ret = False
-        ad = await self.config()
+        ad = self.middleware.call_sync('activedirectory.config')
         with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
             dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:
@@ -889,7 +902,7 @@ class ActiveDirectoryService(ConfigService):
         return ret
 
     @accepts()
-    async def check_clockskew(self):
+    def check_clockskew(self):
         """
         Uses DNS srv records to determine server with PDC emulator FSMO role and
         perform NTP query to determine current clockskew. Raises exception if
@@ -899,7 +912,7 @@ class ActiveDirectoryService(ConfigService):
         """
         permitted_clockskew = datetime.timedelta(minutes=3)
         nas_time = datetime.datetime.now()
-        ad = await self.config()
+        ad = self.middleware.call_sync('activedirectory.config')
         with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
             pdc = AD_DNS.get_n_working_servers(SRV['PDC'], 1)
         c = ntplib.NTPClient()
@@ -911,8 +924,8 @@ class ActiveDirectoryService(ConfigService):
         return {'pdc': str(pdc[0]['host']), 'timestamp': str(ntp_time), 'clockskew': str(clockskew)}
 
     @private
-    async def validate_domain(self):
-        await asyncio.wait_for(self.check_clockskew(), 10)
+    def validate_domain(self):
+        self.middleware.call_sync('activedirectory.check_clockskew')
 
     @private
     async def _get_cached_srv_records(self, srv=SRV['DOMAINCONTROLLER']):
@@ -954,7 +967,7 @@ class ActiveDirectoryService(ConfigService):
         netlogon_ping = await run(['wbinfo', '-P'], check=False)
         if netlogon_ping.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
-            return False
+            raise CallError(netlogon_ping.stderr.decode().strip('\n'))
         await self._set_state(DSStatus['HEALTHY'])
         return True
 
@@ -1006,10 +1019,15 @@ class ActiveDirectoryService(ConfigService):
         ret = False
         ad = await self.middleware.call('activedirectory.config')
         smb = await self.middleware.call('smb.config')
-        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
-            dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
+        dcs = await self._get_cached_srv_records(SRV['DOMAINCONTROLLER'])
+        set_new_cache = True if not dcs else False
+                
         if not dcs:
-            raise CallError('Failed to open LDAP socket to any DC in domain.')
+            with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
+                dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
+
+        if set_new_cache:
+            await self._set_cached_srv_records(SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
 
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs) as AD_LDAP:
             ret = AD_LDAP.get_netbios_name()
@@ -1043,6 +1061,25 @@ class ActiveDirectoryService(ConfigService):
         return {'krb_kdc': kdc, 'krb_admin_server': admin_server, 'krb_kpasswd_server': kpasswd}
 
     @private
+    def set_ntp_servers(self):
+        """
+        Appropriate time sources are a requirement for an AD environment. By default kerberos authentication
+        fails if there is more than a 5 minute time difference between the AD domain and the member server.
+        If the NTP servers are the default that we ship the NAS with. If this is the case, then we will
+        discover the Domain Controller with the PDC emulator FSMO role and set it as the preferred NTP
+        server for the NAS.
+        """
+        ntp_servers = self.middleware.call_sync('system.ntpserver.query')
+        default_ntp_servers = List(filter(lambda x: 'freebsd.pool.ntp.org' in x['address'], ntp_servers)) 
+        if len(ntp_servers) != 3 and len(default_ntp_servers) != 3:
+            return
+
+        ad = self.middleware.call_sync('activedirectory.config')
+        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
+            pdc = AD_DNS.get_n_working_servers(SRV['PDC'], 1)
+        self.middleware.call_sync('system.ntpserver.create', {'address': pdc[0]['host'], 'prefer': True})
+
+    @private
     async def get_site(self):
         """
         First, use DNS to identify domain controllers
@@ -1052,7 +1089,6 @@ class ActiveDirectoryService(ConfigService):
         ad = await self.middleware.call('activedirectory.config')
         i = await self.middleware.call('interfaces.query')
         dcs = await self._get_cached_srv_records(SRV['DOMAINCONTROLLER'])
-        self.logger.debug(dcs)
         set_new_cache = True if not dcs else False
 
         if not dcs:
@@ -1090,6 +1126,8 @@ class ActiveDirectoryService(ConfigService):
         """
         if await self.middleware.call('cache.has_key', 'ad_cache') and not force:
             raise CallError('AD cache already exists. Refusing to generate cache.')
+
+        await self.middleware.call('cache.pop', 'ad_cache')
         ad = await self.config()
         smb = await self.middleware.call('smb.config')
         if not ad['disable_freenas_cache']:
@@ -1165,9 +1203,12 @@ class ActiveDirectoryService(ConfigService):
                         except Exception:
                             break
 
+        if not cache_data[smb['workgroup']].get('users'):
+            return
+
         await self.middleware.call('cache.put', 'ad_cache', cache_data, 86400)
 
-    @accepts()
+    @private
     async def get_ad_cache(self):
         """
         Returns cached AD user and group information. If proactive caching is enabled
@@ -1216,7 +1257,6 @@ class ActiveDirectoryService(ConfigService):
         Returns cached pwd.struct_passwd or grp.struct_group for user or group specified.
         This is called in gui/common/freenasusers.py
         """
-        self.logger.debug(f'init: entry_type: {entry_type}, obj: {obj}')
         if entry_type == 'users':
             if await self.middleware.call('user.query', [('username', '=', obj)]):
                 return None

@@ -325,6 +325,8 @@ class FreeNAS_User(object):
         try:
             if dflags & U_AD_ENABLED:
                 obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
+                if not obj._pw:
+                    obj = None
             elif dflags & U_NIS_ENABLED:
                 obj = FreeNAS_NIS_User(user, **kwargs)
             elif dflags & U_LDAP_ENABLED:
@@ -359,7 +361,7 @@ class FreeNAS_Users(object):
         dflags = _get_dflags()
         if dflags & U_AD_ENABLED:
             with client as c:
-                userlist = c.call('activedirectory.get_ad_usersorgroups_legacy','users')
+                userlist = c.call('activedirectory.get_ad_usersorgroups_legacy', 'users')
                 self.__users = []
                 for user in userlist:
                     self.__users.append(FreeNAS_ActiveDirectory_User(user, **kwargs))
@@ -371,7 +373,7 @@ class FreeNAS_Users(object):
 
         if dir is not None:
             try:
-                self.__users = dir
+                self.__users = dir(**kwargs)
 
             except Exception as e:
                 log.error("Directory Users could not be retrieved: {0}".format(str(e)), exc_info=True)

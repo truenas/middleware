@@ -46,12 +46,11 @@ class Migration(migrations.Migration):
                 max_length=255, 
                 verbose_name='Computer Account Organizational Unit',
                 help_text=(
-                    'If blank, then the default OU is used during computer account creation. '
+                    'When blank, the default Organizational Unit is used during computer account creation. '
                     'Precreate the computer account in a specific OU. The OU string '
                     'read from top to bottom without RDNs and delimited by a "/". '
-                    'E.g. "createcomputer=Computers/Servers/Unix NB: A backslash '
-                    '"\" is used as escape at multiple levels and may need to be '
-                    'doubled or even quadrupled. It is not used as a separator.'
+                    'For example, "createcomputer=Computers/Servers/Unix NB: Use a backslash '
+                    '"\" as escape at multiple levels. It is not used as a separator.'
                 )
             )
         ),

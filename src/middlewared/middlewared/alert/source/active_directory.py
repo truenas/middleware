@@ -1,15 +1,26 @@
 from datetime import timedelta
 import os
 import logging
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 log = logging.getLogger("activedirectory_check_alertmod")
 
-class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
+class ActiveDirectoryBindAlertClass(AlertClass):
+    category = AlertCategory.DIRECTORY_SERVICE
     level = AlertLevel.WARNING
-    title = "Problem detected in Active Directory Domain"
+    title = "ActiveDirectory Bind is Not Healthy"
+    text = "Attempt to connect to netlogon share failed with error: %(wberr)s"
 
+
+class ActiveDirectoryDomainHealthAlertClass(AlertClass):
+    category = AlertCategory.DIRECTORY_SERVICE
+    level = AlertLevel.WARNING
+    title = "ActiveDirectory Domain Validation Failed"
+    text = "Domain validation failed with error: %(verrs)s"
+
+
+class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
 
     def check_sync(self):
@@ -20,13 +31,13 @@ class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
         try:
             self.middleware.call_sync("activedirectory.validate_domain")
         except Exception as e:
-            return Alert(f"AD domain validation failed with error: {e}")
+            return Alert(
+                ActiveDirectoryDomainHealthAlertClass,
+                {'verrs': e}
+            )
 
 
 class ActiveDirectoryDomainBindAlertSource(ThreadedAlertSource):
-    level = AlertLevel.WARNING
-    title = "Active Directory Status Check Failed"
-
     schedule = IntervalSchedule(timedelta(minutes=10))
 
     def check_sync(self):
@@ -34,5 +45,10 @@ class ActiveDirectoryDomainBindAlertSource(ThreadedAlertSource):
         if not ad['enable']:
             return
 
-        if not self.middleware.call_sync("activedirectory.started"):
-            return Alert("Attempt to connect to netlogon share for domain failed")
+        try:
+            self.middleware.call_sync("activedirectory.started")
+        except Exception as e:
+            return Alert(
+                ActiveDirectoryBindAlertClass,
+                {'wberr': f'{e}'}
+            )

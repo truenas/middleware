@@ -272,10 +272,13 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
             else:
                 del self.fields['ad_netbiosname_b']
 
-    def middleware_clean(self, data):
-        with client as c:
-            old = c.call('activedirectory.config')
+    def save(self):
+        try:
+            super(ActiveDirectoryForm, self).save()
+        except Exception as e:
+            raise MiddlewareError(e)
 
+    def middleware_clean(self, data):
         for key in ['certificate', 'nss_info']:
             if not data[key]:
                 data.pop(key)
@@ -283,20 +286,12 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
         data['netbiosalias'] = data['netbiosalias'].split()
         if data['kerberos_principal'] == '----------':
             data['kerberos_principal'] = ''
-        if data['enable'] and not old['enable']:
-            with client as c:
-                try:
-                    c.call('activedirectory.validate_credentials')
-                    c.call('activedirectory.validate_domain')
-                except Exception as e:
-                    raise MiddlewareError(e)
 
         if data['kerberos_realm']:
             data['kerberos_realm'] = {'id': data['kerberos_realm']}
         else:
             data.pop('kerberos_realm')
 
-        log.debug(data)
         return data
 
 
@@ -623,10 +618,16 @@ class KerberosKeytabCreateForm(ModelForm):
 
     def save(self):
         obj = super(KerberosKeytabCreateForm, self).save()
-        notifier().start("ix-kerberos")
+        with client as c:
+            c.call('kerberos.start')
 
 
-class KerberosKeytabEditForm(ModelForm):
+class KerberosKeytabEditForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = 'keytab_'
+    middleware_attr_schema = 'kerberos_keytab'
+    middleware_plugin = 'kerberos.keytab'
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -641,10 +642,6 @@ class KerberosKeytabEditForm(ModelForm):
             'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         )
 
-    def save(self):
-        super(KerberosKeytabEditForm, self).save()
-        notifier().start("ix-kerberos")
-
 
 class KerberosSettingsForm(MiddlewareModelForm, ModelForm):
 
@@ -656,9 +653,3 @@ class KerberosSettingsForm(MiddlewareModelForm, ModelForm):
     class Meta:
         fields = '__all__'
         model = models.KerberosSettings
-
-    def __init__(self, *args, **kwargs):
-        super(KerberosSettingsForm, self).__init__(*args, **kwargs)
-
-    def middleware_clean(self, data):
-        return data

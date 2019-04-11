@@ -906,7 +906,8 @@ class ActiveDirectory(DirectoryServiceBase):
             "the NAS is joined to active directory, the bind credentials will be "
             "automatically cleared and all future operations carried out by the AD "
             "machine account, which has a restricted set of privileges in the AD domain."),
-        blank=True
+        blank=True,
+	null=True
     )
     ad_createcomputer = models.CharField(
         blank=True,

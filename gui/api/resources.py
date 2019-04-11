@@ -4062,7 +4062,6 @@ class JsonUserResource(DojoResource):
         wizard_ds = request.session.get('wizard_ds')
         if request.GET.get('wizard') == '1' and wizard_ds:
             if wizard_ds.get('ds_type') == 'ad':
-                wizard_users = None
                 with client as c:
                     userlist = c.call('activedirectory.get_ad_usersorgroups_legacy', 'users')
                     ad_users = []
@@ -4097,8 +4096,8 @@ class JsonUserResource(DojoResource):
                                     wizard_ds.get('ds_type'),
                                     user,
                                 ),
-                                name=user,
-                                label=user
+                                name=user.pw_name,
+                                label=user.pw_name
                             )
                         )
                 # FIXME: code duplication with the block above

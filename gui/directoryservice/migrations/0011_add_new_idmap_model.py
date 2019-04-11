@@ -64,9 +64,6 @@ def migrate_to_new_idmap(apps, schema_editor):
 
     idmap_domaintobackend.objects.create(idmap_dtb_domain_id='DS_TYPE_DEFAULT_DOMAIN', idmap_dtb_idmap_backend='tdb')
 
-def revert_idmap_changes(apps, schema_editor):
-    return
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -84,8 +81,8 @@ class Migration(migrations.Migration):
                     help_text=(
                         'Short form of domain name as represented by the nETBIOSName '
                         'LDAP entry in an Active Directory domain (commonly indicated as the '
-                        '"pre-Windows 2000" domain name). This must not be confused with the '
-                        'netbios host name of the server.'
+                        '"pre-Windows 2000" domain name). Do not confuse this with the netbios '
+                        'host name of the server.'
                     ),
                     verbose_name='pre-Windows 2000 Domain Name'
                 )),
@@ -235,7 +232,7 @@ class Migration(migrations.Migration):
                 null=True, verbose_name='pre-Windows 2000 Domain Name'
             ),
         ), 
-        migrations.RunPython(migrate_to_new_idmap, reverse_code=revert_idmap_changes),       
+        migrations.RunPython(migrate_to_new_idmap, reverse_code=migrations.RunPython.noop),       
         migrations.RemoveField(model_name='idmap_ad', name='idmap_ds_id'),
         migrations.RemoveField(model_name='idmap_ad', name='idmap_ds_type'),
         migrations.RemoveField(model_name='idmap_autorid', name='idmap_ds_id'),

@@ -360,7 +360,7 @@ async def fixsid(middleware, conf, groupmap):
     db_SID = str(conf['cifs']['cifs_SID'])
     group_SID = None
     groupmap_SID = None
-    domain_SID = None
+    domain_SID = await get_system_SID("getlocalsid")
     ret = True
     for group in groupmap:
         group_SID = str(group['SID'])

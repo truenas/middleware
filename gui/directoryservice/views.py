@@ -141,7 +141,8 @@ def directoryservice_kerberoskeytab_delete(request, id):
     if request.method == "POST":
         try:
             kt.delete()
-            notifier().start("ix-kerberos")
+            with client as c:
+                c.call('kerberos.start')
             return JsonResp(
                 request,
                 message="Kerberos Keytab successfully deleted."
@@ -413,6 +414,7 @@ def directoryservice_clearcache(request):
 
     with client as c:
         c.call('notifier.ds_clearcache')
+        c.call('activedirectory.fill_ad_cache', True)
 
     return HttpResponse(json.dumps({
         'error': False,
