@@ -83,6 +83,9 @@ class AlertService(Service):
     def __init__(self, middleware):
         super().__init__(middleware)
 
+        self.blocked_sources = defaultdict(set)
+        self.sources_locks = {}
+
     @private
     async def initialize(self):
         self.node = "A"
@@ -404,38 +407,43 @@ class AlertService(Service):
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
 
-            self.logger.trace("Running alert source: %r", alert_source.name)
+            alerts_a = [alert
+                        for alert in self.alerts
+                        if alert.node == master_node and alert.source == alert_source.name]
+            locked = False
+            if self.blocked_sources[alert_source.name]:
+                self.logger.debug("Not running alert source %r because it is blocked", alert_source.name)
+                locked = True
+            else:
+                self.logger.trace("Running alert source: %r", alert_source.name)
 
-            try:
-                alerts_a = await self.__run_source(alert_source.name)
-            except UnavailableException:
-                alerts_a = [alert
-                            for alert in self.alerts
-                            if alert.node == master_node and alert.source == alert_source.name]
+                try:
+                    alerts_a = await self.__run_source(alert_source.name)
+                except UnavailableException:
+                    pass
             for alert in alerts_a:
                 alert.node = master_node
 
             alerts_b = []
             if run_on_backup_node and alert_source.run_on_backup_node:
                 try:
+                    alerts_b = [alert
+                                for alert in self.alerts
+                                if alert.node == backup_node and alert.source == alert_source.name]
                     try:
-                        alerts_b = await self.middleware.call("failover.call_remote", "alert.run_source",
-                                                              [alert_source.name])
+                        if not locked:
+                            alerts_b = await self.middleware.call("failover.call_remote", "alert.run_source",
+                                                                  [alert_source.name])
+
+                            alerts_b = [Alert(**dict(alert,
+                                                     level=(AlertLevel(alert["level"]) if alert["level"] is not None
+                                                            else alert["level"])))
+                                        for alert in alerts_b]
                     except CallError as e:
                         if e.errno == CallError.EALERTCHECKERUNAVAILABLE:
-                            alerts_b = [alert
-                                        for alert in self.alerts
-                                        if alert.node == backup_node and alert.source == alert_source.name]
+                            pass
                         else:
                             raise
-                    else:
-                        alerts_b = [Alert(**dict(alert,
-                                                 klass=AlertClass.class_by_name[alert["klass"]],
-                                                 _uuid=alert.pop("id"),
-                                                 _source=alert.pop("source"),
-                                                 _key=alert.pop("key"),
-                                                 _text=alert.pop("text")))
-                                    for alert in alerts_b]
                 except Exception:
                     alerts_b = [
                         Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
@@ -486,6 +494,21 @@ class AlertService(Service):
                     for alert in await self.__run_source(source_name)]
         except UnavailableException:
             raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
+
+    @private
+    async def block_source(self, source_name):
+        if source_name not in ALERT_SOURCES:
+            raise CallError("Invalid alert source")
+
+        lock = str(uuid.uuid4())
+        self.blocked_sources[source_name].add(lock)
+        self.sources_locks[lock] = source_name
+        return lock
+
+    @private
+    async def unblock_source(self, lock):
+        source_name = self.sources_locks.pop(lock)
+        self.blocked_sources[source_name].remove(lock)
 
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
