@@ -125,8 +125,20 @@ class ReplicationService(CRUDService):
             List("also_include_naming_schema", items=[
                 Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])], default=[]),
             Bool("auto", required=True),
-            Cron("schedule", begin_end=True, null=True, default=None),
-            Cron("restrict_schedule", begin_end=True, null=True, default=None),
+            Cron(
+                "schedule",
+                defaults={"minute": "00"},
+                begin_end=True,
+                null=True,
+                default=None
+            ),
+            Cron(
+                "restrict_schedule",
+                defaults={"minute": "00"},
+                begin_end=True,
+                null=True,
+                default=None
+            ),
             Bool("only_matching_schedule", default=False),
             Bool("allow_from_scratch", default=False),
             Bool("hold_pending_snapshots", default=False),

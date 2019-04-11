@@ -86,7 +86,10 @@ class CronJobService(CRUDService):
             Bool('enabled'),
             Bool('stderr', default=False),
             Bool('stdout', default=True),
-            Cron('schedule'),
+            Cron(
+                'schedule',
+                defaults={'minute': '00'}
+            ),
             Str('command', required=True),
             Str('description'),
             Str('user', required=True),

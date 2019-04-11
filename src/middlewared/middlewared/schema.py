@@ -648,17 +648,19 @@ class Cron(Dict):
 
     def __init__(self, name, **kwargs):
         self.additional_attrs = kwargs.pop('additional_attrs', False)
+        exclude = kwargs.pop('exclude', [])
+        defaults = kwargs.pop('defaults', {})
         self.begin_end = kwargs.pop('begin_end', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
         self.update = kwargs.pop('update', False)
         super(Cron, self).__init__(name, **kwargs)
         self.attrs = {}
-        for i in Cron.FIELDS:
-            self.attrs[i] = Str(i)
+        for i in filter(lambda f: f not in exclude, Cron.FIELDS):
+            self.attrs[i] = Str(i, default=defaults.get(i, '*'))
         if self.begin_end:
-            self.attrs['begin'] = Time('begin')
-            self.attrs['end'] = Time('end')
+            self.attrs['begin'] = Time('begin', default=defaults.get('begin', '00:00'))
+            self.attrs['end'] = Time('end', default=defaults.get('end', '23:59'))
 
     @staticmethod
     def convert_schedule_to_db_format(data_dict, schedule_name='schedule', key_prefix='', begin_end=False):

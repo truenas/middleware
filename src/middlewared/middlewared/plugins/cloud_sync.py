@@ -638,7 +638,11 @@ class CloudSyncService(CRUDService):
         Bool("filename_encryption", default=False),
         Str("encryption_password", default=""),
         Str("encryption_salt", default=""),
-        Cron("schedule", required=True),
+        Cron(
+            "schedule",
+            defaults={"minute": "00"},
+            required=True
+        ),
         Bool("follow_symlinks", default=False),
         Int("transfers", null=True, default=None, validators=[Range(min=1)]),
         List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
