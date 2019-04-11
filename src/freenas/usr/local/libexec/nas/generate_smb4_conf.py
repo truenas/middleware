@@ -1020,6 +1020,7 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     confset1(smb4_conf, "encrypt passwords = yes")
     confset1(smb4_conf, "dns proxy = no")
     confset1(smb4_conf, "strict locking = no")
+    confset1(smb4_conf, "aio max threads = 2")
     confset1(smb4_conf, "oplocks = yes")
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
@@ -1207,6 +1208,8 @@ def generate_smb4_shares(client, smb4_shares, shares):
             confset2(smb4_shares, "path = %s", qw(share.cifs_path))
             confset2(smb4_shares, "comment = %s", share.cifs_comment)
         confset1(smb4_shares, "printable = no")
+        # disable samba AIO on writes due to observed overload situations.
+        confset1(smb4_shares, "aio write size = 0")
         confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
         confset2(smb4_shares, "writeable = %s",
                  "no" if share.cifs_ro else "yes")
