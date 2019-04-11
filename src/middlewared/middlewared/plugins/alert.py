@@ -63,9 +63,21 @@ class AlertService(Service):
     def __init__(self, middleware):
         super().__init__(middleware)
 
+    @private
+    async def initialize(self):
         self.node = "A"
+        if not await self.middleware.call("system.is_freenas"):
+            if await self.middleware.call("notifier.failover_node") == "B":
+                self.node = "B"
 
         self.alerts = defaultdict(lambda: defaultdict(dict))
+        for alert in await self.middleware.call("datastore.query", "system.alert"):
+            del alert["id"]
+            alert["level"] = AlertLevel(alert["level"])
+
+            alert = Alert(**alert)
+
+            self.alerts[alert.node][alert.source][alert.key] = alert
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
@@ -75,21 +87,6 @@ class AlertService(Service):
             "DAILY": AlertPolicy(lambda d: (d.date())),
             "NEVER": AlertPolicy(lambda d: None),
         }
-
-    @private
-    async def initialize(self):
-        if not await self.middleware.call("system.is_freenas"):
-            if await self.middleware.call("notifier.failover_node") == "B":
-                self.node = "B"
-
-        for alert in await self.middleware.call("datastore.query", "system.alert"):
-            del alert["id"]
-            alert["level"] = AlertLevel(alert["level"])
-
-            alert = Alert(**alert)
-
-            self.alerts[alert.node][alert.source][alert.key] = alert
-
         for policy in self.policies.values():
             policy.receive_alerts(datetime.utcnow(), self.alerts)
 
@@ -180,14 +177,13 @@ class AlertService(Service):
         if not await self.middleware.call("system.ready"):
             return
 
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_licensed') and
-            await self.middleware.call('notifier.failover_status') == 'BACKUP'
-        ):
+        if not await self.__should_run_or_send_alerts():
             return
 
         await self.__run_alerts()
+
+        if not await self.__should_run_or_send_alerts():
+            return
 
         default_settings = (await self.middleware.call("alertdefaultsettings.config"))["settings"]
 
@@ -278,6 +274,19 @@ class AlertService(Service):
                                     })
                                 except Exception:
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
+
+    async def __should_run_or_send_alerts(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            (
+                await self.middleware.call('notifier.failover_status') == 'BACKUP' or
+                await self.middleware.call('notifier.failover_in_progress')
+            )
+        ):
+            return False
+
+        return True
 
     async def __run_alerts(self):
         master_node = "A"
