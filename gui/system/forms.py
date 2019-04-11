@@ -404,22 +404,27 @@ class InitialWizard(CommonWizard):
                             'status for more details.'
                         ) % volume_name)
 
-                volume = Volume(vol_name=volume_name)
-                volume.save()
-                model_objs.append(volume)
+                with client as c:
+                    lock = c.call("alert.block_source", "VolumeStatus")
+                    try:
+                        volume = Volume(vol_name=volume_name)
+                        volume.save()
+                        model_objs.append(volume)
 
-                scrub = Scrub.objects.create(scrub_volume=volume)
-                model_objs.append(scrub)
+                        scrub = Scrub.objects.create(scrub_volume=volume)
+                        model_objs.append(scrub)
 
-                if volume_form:
-                    bysize = volume_form._get_unused_disks_by_size()
+                        if volume_form:
+                            bysize = volume_form._get_unused_disks_by_size()
 
-                    if volume_type == 'auto':
-                        groups = volume_form._grp_autoselect(bysize)
-                    else:
-                        groups = volume_form._grp_predefined(bysize, volume_type)
+                            if volume_type == 'auto':
+                                groups = volume_form._grp_autoselect(bysize)
+                            else:
+                                groups = volume_form._grp_predefined(bysize, volume_type)
 
-                    _n.create_volume(volume, groups=groups, init_rand=False)
+                            _n.create_volume(volume, groups=groups, init_rand=False)
+                    finally:
+                        c.call("alert.unblock_source", lock)
 
                 # Create SMART tests for every disk available
                 disks = []
