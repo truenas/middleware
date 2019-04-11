@@ -177,14 +177,13 @@ class AlertService(Service):
         if not await self.middleware.call("system.ready"):
             return
 
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('notifier.failover_licensed') and
-            await self.middleware.call('notifier.failover_status') == 'BACKUP'
-        ):
+        if not await self.__should_run_or_send_alerts():
             return
 
         await self.__run_alerts()
+
+        if not await self.__should_run_or_send_alerts():
+            return
 
         default_settings = (await self.middleware.call("alertdefaultsettings.config"))["settings"]
 
@@ -275,6 +274,19 @@ class AlertService(Service):
                                     })
                                 except Exception:
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
+
+    async def __should_run_or_send_alerts(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_licensed') and
+            (
+                await self.middleware.call('notifier.failover_status') == 'BACKUP' or
+                await self.middleware.call('notifier.failover_in_progress')
+            )
+        ):
+            return False
+
+        return True
 
     async def __run_alerts(self):
         master_node = "A"
