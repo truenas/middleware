@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import errno
+from lockfile import LockFile
 import netif
 import os
 import socket
@@ -231,6 +232,14 @@ class FailoverService(ConfigService):
             if not isinstance(e, CallError):
                 self.logger.warn('Failed checking failover status', exc_info=True)
             return 'UNKNOWN'
+
+    @accepts()
+    def in_progress(self):
+        """
+        Returns true if current node is still initializing after failover event
+        """
+        FAILOVER_EVENT = '/tmp/.failover_event'
+        return LockFile(FAILOVER_EVENT).is_locked()
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
