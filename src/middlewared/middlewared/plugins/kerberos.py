@@ -94,7 +94,6 @@ class KerberosService(ConfigService):
                     raise CallError(f"kinit for realm {ldap['realm']} with keytab failed: {ad_kinit.stderr.decode()}")
             else:
                 principal = f'{ldap["bindn"]}'
-                self.logger.debug(principal)
                 ad_kinit = await Popen(
                     ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
@@ -183,9 +182,7 @@ class KerberosService(ConfigService):
         Compare timestamp of cached TGT info with current timestamp. If we're within 5 minutes
         of expire time, renew the TGT via 'kinit -R'.
         """
-        self.logger.debug('entered kinit renew')
         tgt_info = await self._get_cached_klist()
-        self.logger.debug(f'tgt_info: {tgt_info}')
         ret = True
 
         must_renew = False
@@ -353,7 +350,6 @@ class KerberosRealmService(CRUDService):
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
-        self.logger.debug(f'old: {old}, new: {new}')
 
         verrors = ValidationErrors()
 
@@ -552,7 +548,6 @@ class KerberosKeytabService(CRUDService):
     @private
     async def _prune_keytab_principals(self, to_delete=[]):
         for i in to_delete:
-            self.logger.debug(i)
             ktutil_remove = await run([
                 '/usr/sbin/ktutil',
                 '-k', keytab['SAMBA'].value,
