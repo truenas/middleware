@@ -427,6 +427,17 @@ class TwoFactorAuthService(ConfigService):
 
         return True
 
+    @accepts()
+    async def provisioning_uri(self):
+        config = await self.middleware.call(f'{self._config.namespace}.config')
+        return pyotp.totp.TOTP(
+            config['secret'], interval=config['interval'], digits=config['otp_digits']
+        ).provisioning_uri(
+            f'{(await self.middleware.call("system.info"))["hostname"]}@'
+            f'{await self.middleware.call("system.product_name")}',
+            'iXsystems'
+        )
+
     @private
     def generate_base32_secret(self):
         return pyotp.random_base32()
