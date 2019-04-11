@@ -83,21 +83,9 @@ class AlertService(Service):
     def __init__(self, middleware):
         super().__init__(middleware)
 
-        self.node = "A"
-
-        self.alerts = []
-
-        self.alert_source_last_run = defaultdict(lambda: datetime.min)
-
-        self.policies = {
-            "IMMEDIATELY": AlertPolicy(),
-            "HOURLY": AlertPolicy(lambda d: (d.date(), d.hour)),
-            "DAILY": AlertPolicy(lambda d: (d.date())),
-            "NEVER": AlertPolicy(lambda d: None),
-        }
-
     @private
     async def initialize(self):
+        self.node = "A"
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("failover.node") == "B":
                 self.node = "B"
@@ -120,6 +108,7 @@ class AlertService(Service):
                 for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
                     ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
+        self.alerts = []
         for alert in await self.middleware.call("datastore.query", "system.alert"):
             del alert["id"]
 
@@ -138,6 +127,14 @@ class AlertService(Service):
 
             self.alerts.append(alert)
 
+        self.alert_source_last_run = defaultdict(lambda: datetime.min)
+
+        self.policies = {
+            "IMMEDIATELY": AlertPolicy(),
+            "HOURLY": AlertPolicy(lambda d: (d.date(), d.hour)),
+            "DAILY": AlertPolicy(lambda d: (d.date())),
+            "NEVER": AlertPolicy(lambda d: None),
+        }
         for policy in self.policies.values():
             policy.receive_alerts(datetime.utcnow(), self.alerts)
 
@@ -272,14 +269,13 @@ class AlertService(Service):
         if not await self.middleware.call("system.ready"):
             return
 
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP'
-        ):
+        if not await self.__should_run_or_send_alerts():
             return
 
         await self.__run_alerts()
+
+        if not await self.__should_run_or_send_alerts():
+            return
 
         await self.middleware.call("alert.send_alerts")
 
@@ -369,6 +365,19 @@ class AlertService(Service):
 
     def __uuid(self):
         return str(uuid.uuid4())
+
+    async def __should_run_or_send_alerts(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.licensed') and
+            (
+                await self.middleware.call('failover.status') == 'BACKUP' or
+                await self.middleware.call('failover.in_progress')
+            )
+        ):
+            return False
+
+        return True
 
     async def __run_alerts(self):
         master_node = "A"
