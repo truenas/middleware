@@ -555,6 +555,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             if ret and ret[0] == 1:
                 run_call(midclt, 'service.restart', 'asigra', {'sync': False})
 
+            run('/usr/local/bin/midclt call alert.initialize')
+
             conn.close()
 
             log.warn('Failover event complete.')
