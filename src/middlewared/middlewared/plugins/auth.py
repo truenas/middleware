@@ -295,6 +295,11 @@ class AuthService(Service):
             return None
 
     @no_auth_required
+    @accepts()
+    async def two_factor_auth(self):
+        return (await self.middleware.call('auth.twofactor.config'))['enabled']
+
+    @no_auth_required
     @accepts(Str('username'), Str('password'), Str('otp_token', null=True, default=None))
     @pass_app
     async def login(self, app, username, password, otp_token=None):
