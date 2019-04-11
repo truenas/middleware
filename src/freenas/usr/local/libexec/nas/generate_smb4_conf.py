@@ -1020,7 +1020,7 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     confset1(smb4_conf, "encrypt passwords = yes")
     confset1(smb4_conf, "dns proxy = no")
     confset1(smb4_conf, "strict locking = no")
-    confset1(smb4_conf, "aio max threads = 10")
+    confset1(smb4_conf, "aio max threads = 2")
     confset1(smb4_conf, "oplocks = yes")
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
