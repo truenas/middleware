@@ -422,6 +422,9 @@ class TwoFactorAuthService(ConfigService):
             }
         )
 
+        if config['services']['ssh']:
+            self.middleware.call_sync('service.reload', 'ssh')
+
         return True
 
     @private
