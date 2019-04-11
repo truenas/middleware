@@ -269,40 +269,45 @@ class VolumeManagerForm(VolumeMixin, Form):
 
         volume = scrub = None
         try:
-            vols = models.Volume.objects.filter(vol_name=volume_name)
-            if vols.count() > 0:
-                volume = vols[0]
-                add = True
-            else:
-                add = False
-                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
-                volume.save()
+            with client as c:
+                lock = c.call("alert.block_source", "VolumeStatus")
+                try:
+                    vols = models.Volume.objects.filter(vol_name=volume_name)
+                    if vols.count() > 0:
+                        volume = vols[0]
+                        add = True
+                    else:
+                        add = False
+                        volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
+                        volume.save()
 
-            self.volume = volume
+                    self.volume = volume
 
-            grouped = OrderedDict()
-            # FIXME: Make log as log mirror
-            for i, form in enumerate(formset):
-                if not form.cleaned_data.get('vdevtype'):
-                    continue
-                grouped[i] = {
-                    'type': form.cleaned_data.get("vdevtype"),
-                    'disks': form.cleaned_data.get("disks"),
-                }
+                    grouped = OrderedDict()
+                    # FIXME: Make log as log mirror
+                    for i, form in enumerate(formset):
+                        if not form.cleaned_data.get('vdevtype'):
+                            continue
+                        grouped[i] = {
+                            'type': form.cleaned_data.get("vdevtype"),
+                            'disks': form.cleaned_data.get("disks"),
+                        }
 
-            if add:
-                for gtype, group in list(grouped.items()):
-                    notifier().zfs_volume_attach_group(
-                        volume,
-                        group)
+                    if add:
+                        for gtype, group in list(grouped.items()):
+                            notifier().zfs_volume_attach_group(
+                                volume,
+                                group)
 
-            else:
-                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
+                    else:
+                        notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
 
-                if dedup:
-                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
+                        if dedup:
+                            notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
-                scrub = models.Scrub.objects.create(scrub_volume=volume)
+                        scrub = models.Scrub.objects.create(scrub_volume=volume)
+                finally:
+                    c.call("alert.unblock_source", lock)
         except Exception as e:
             if not add and volume:
                 volume.delete(destroy=False, cascade=False)
@@ -684,56 +689,61 @@ class ZFSVolumeWizardForm(Form):
 
         volume = scrub = None
         try:
-            vols = models.Volume.objects.filter(vol_name=volume_name)
-            if vols.count() == 1:
-                volume = vols[0]
-                add = True
-            else:
-                add = False
-                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
-                volume.save()
-
-            self.volume = volume
-
-            zpoolfields = re.compile(r'zpool_(.+)')
-            grouped = OrderedDict()
-            grouped['root'] = {'type': group_type, 'disks': disk_list}
-            for i, gtype in list(request.POST.items()):
-                if zpoolfields.match(i):
-                    if gtype == 'none':
-                        continue
-                    disk = zpoolfields.search(i).group(1)
-                    if gtype in grouped:
-                        # if this is a log vdev we need to mirror it for safety
-                        if gtype == 'log':
-                            grouped[gtype]['type'] = 'log mirror'
-                        grouped[gtype]['disks'].append(disk)
-                    else:
-                        grouped[gtype] = {'type': gtype, 'disks': [disk, ]}
-
-            if len(disk_list) > 0 and add:
-                notifier().zfs_volume_attach_group(volume, grouped['root'])
-
-            if add:
-                for grp_type in grouped:
-                    if grp_type in ('log', 'cache', 'spare'):
-                        notifier().zfs_volume_attach_group(
-                            volume,
-                            grouped.get(grp_type)
-                        )
-
-            else:
-                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
-
-                if dedup:
-                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
-
-                scrub = models.Scrub.objects.create(scrub_volume=volume)
-
+            with client as c:
+                lock = c.call("alert.block_source", "VolumeStatus")
                 try:
-                    notifier().zpool_enclosure_sync(volume.vol_name)
-                except Exception as e:
-                    log.error("Error syncing enclosure: %s", e)
+                    vols = models.Volume.objects.filter(vol_name=volume_name)
+                    if vols.count() == 1:
+                        volume = vols[0]
+                        add = True
+                    else:
+                        add = False
+                        volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
+                        volume.save()
+
+                    self.volume = volume
+
+                    zpoolfields = re.compile(r'zpool_(.+)')
+                    grouped = OrderedDict()
+                    grouped['root'] = {'type': group_type, 'disks': disk_list}
+                    for i, gtype in list(request.POST.items()):
+                        if zpoolfields.match(i):
+                            if gtype == 'none':
+                                continue
+                            disk = zpoolfields.search(i).group(1)
+                            if gtype in grouped:
+                                # if this is a log vdev we need to mirror it for safety
+                                if gtype == 'log':
+                                    grouped[gtype]['type'] = 'log mirror'
+                                grouped[gtype]['disks'].append(disk)
+                            else:
+                                grouped[gtype] = {'type': gtype, 'disks': [disk, ]}
+
+                    if len(disk_list) > 0 and add:
+                        notifier().zfs_volume_attach_group(volume, grouped['root'])
+
+                    if add:
+                        for grp_type in grouped:
+                            if grp_type in ('log', 'cache', 'spare'):
+                                notifier().zfs_volume_attach_group(
+                                    volume,
+                                    grouped.get(grp_type)
+                                )
+
+                    else:
+                        notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
+
+                        if dedup:
+                            notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
+
+                        scrub = models.Scrub.objects.create(scrub_volume=volume)
+
+                        try:
+                            notifier().zpool_enclosure_sync(volume.vol_name)
+                        except Exception as e:
+                            log.error("Error syncing enclosure: %s", e)
+                finally:
+                    c.call("alert.unblock_source", lock)
         except Exception:
             if volume:
                 volume.delete(destroy=False, cascade=False)
