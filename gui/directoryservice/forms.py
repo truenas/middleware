@@ -218,14 +218,13 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
         required=False,
         choices=choices.KERBEROS_PRINCIPAL_CHOICES(),
         help_text=_(
-            "Kerberos principal to use for AD-related UI and middleware operations "
-            "Field is populated with principals present in the system keytab. "
-            "During the domain join process a keytab entry is generated for the "
-            "AD Machine Account associated with the NAS. The name for this account "
-            "is the netbios name of the server with a '$' appended to it. Once "
-            "the NAS is joined to active directory, the bind credentials will be "
-            "automatically cleared and all future operations carried out by the AD "
-            "machine account, which has a restricted set of privileges in the AD domain."),
+            "Kerberos principal to use for AD-related UI and middleware operations. "
+            "Populated with exiting  principals from the system keytab. "
+            "A keytab entry is generated for the the Active Directory Machine Account "
+            "The account name for the server is the server netbios name appended with a '$' "
+            "Bind credentails are automatically cleared after the has is joined to Active "
+            "Directory. Later operations are perfomed by the AD machine account, which has "
+            "restricted privileges in the AD domain."),
         initial=''
     )
 
