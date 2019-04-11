@@ -1,7 +1,8 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import copy
 from datetime import datetime
 import os
+import time
 import traceback
 import uuid
 
@@ -31,6 +32,8 @@ DEFAULT_POLICY = "IMMEDIATELY"
 
 ALERT_SOURCES = {}
 ALERT_SERVICES_FACTORIES = {}
+
+AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
 
 class AlertPolicy:
@@ -311,6 +314,10 @@ class AlertService(Service):
                         if remote_failover_status == "BACKUP":
                             run_on_backup_node = True
 
+        for k, source_lock in list(self.sources_locks.items()):
+            if source_lock.expires_at <= time.monotonic():
+                await self.unblock_source(k)
+
         for alert_source in ALERT_SOURCES.values():
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
@@ -390,19 +397,19 @@ class AlertService(Service):
             raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
 
     @private
-    async def block_source(self, source_name):
+    async def block_source(self, source_name, timeout=3600):
         if source_name not in ALERT_SOURCES:
             raise CallError("Invalid alert source")
 
         lock = str(uuid.uuid4())
         self.blocked_sources[source_name].add(lock)
-        self.sources_locks[lock] = source_name
+        self.sources_locks[lock] = AlertSourceLock(source_name, time.monotonic() + timeout)
         return lock
 
     @private
     async def unblock_source(self, lock):
-        source_name = self.sources_locks.pop(lock)
-        self.blocked_sources[source_name].remove(lock)
+        source_lock = self.sources_locks.pop(lock)
+        self.blocked_sources[source_lock.source_name].remove(lock)
 
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
