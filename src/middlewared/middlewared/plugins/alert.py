@@ -205,9 +205,9 @@ class AlertService(Service):
             await self.middleware.call('failover.licensed') and
             (
                 (await self.middleware.call('failover.node') == 'A' and
-                 await self.middleware.call('failover.status') == 'BACKUP') or
+                 await self.middleware.call('notifier.failover_status') == 'BACKUP') or
                 (await self.middleware.call('failover.node') == 'B' and
-                 await self.middleware.call('failover.status') == 'MASTER')
+                 await self.middleware.call('notifier.failover_status') == 'MASTER')
             )
         ):
             nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
