@@ -269,14 +269,13 @@ class AlertService(Service):
         if not await self.middleware.call("system.ready"):
             return
 
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP'
-        ):
+        if not await self.__should_run_or_send_alerts():
             return
 
         await self.__run_alerts()
+
+        if not await self.__should_run_or_send_alerts():
+            return
 
         await self.middleware.call("alert.send_alerts")
 
@@ -366,6 +365,19 @@ class AlertService(Service):
 
     def __uuid(self):
         return str(uuid.uuid4())
+
+    async def __should_run_or_send_alerts(self):
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.licensed') and
+            (
+                await self.middleware.call('failover.status') == 'BACKUP' or
+                await self.middleware.call('failover.in_progress')
+            )
+        ):
+            return False
+
+        return True
 
     async def __run_alerts(self):
         master_node = "A"
