@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def _none(x):
-    if x is None:
+    if x in (0, None):
         return 'none'
     return x
 
