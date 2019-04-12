@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple
 import copy
 from datetime import datetime
+import errno
 import os
 import time
 import traceback
@@ -357,16 +358,26 @@ class AlertService(Service):
                             pass
                         else:
                             raise
-                except Exception:
-                    alerts_b = [
-                        Alert(title="Unable to run alert source %(source_name)r on backup node\n%(traceback)s",
-                              args={
-                                  "source_name": alert_source.name,
-                                  "traceback": traceback.format_exc(),
-                              },
-                              key="__remote_call_exception__",
-                              level=AlertLevel.CRITICAL)
-                    ]
+                except Exception as e:
+                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                        alerts_b = [
+                            Alert(title="Unable to run alert source %(source_name)r on backup node: %(error)s",
+                                  args={
+                                      "error": str(e),
+                                  },
+                                  key="__remote_call_error__",
+                                  level=AlertLevel.CRITICAL)
+                        ]
+                    else:
+                        alerts_b = [
+                            Alert(title="Unable to run alert source %(source_name)r on backup node\n%(traceback)s",
+                                  args={
+                                      "source_name": alert_source.name,
+                                      "traceback": traceback.format_exc(),
+                                  },
+                                  key="__remote_call_unhandled_exception__",
+                                  level=AlertLevel.CRITICAL)
+                        ]
             for alert in alerts_b:
                 alert.node = backup_node
 
@@ -418,16 +429,26 @@ class AlertService(Service):
             alerts = (await alert_source.check()) or []
         except UnavailableException:
             raise
-        except Exception:
-            alerts = [
-                Alert(title="Unable to run alert source %(source_name)r\n%(traceback)s",
-                      args={
-                          "source_name": alert_source.name,
-                          "traceback": traceback.format_exc(),
-                      },
-                      key="__unhandled_exception__",
-                      level=AlertLevel.CRITICAL)
-            ]
+        except Exception as e:
+            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                alerts = [
+                    Alert(title="Unable to run alert source %(source_name)r: %(error)s",
+                          args={
+                              "error": str(e),
+                          },
+                          key="__remote_call_error__",
+                          level=AlertLevel.CRITICAL)
+                ]
+            else:
+                alerts = [
+                    Alert(title="Unable to run alert source %(source_name)r\n%(traceback)s",
+                          args={
+                              "source_name": alert_source.name,
+                              "traceback": traceback.format_exc(),
+                          },
+                          key="__unhandled_exception__",
+                          level=AlertLevel.CRITICAL)
+                ]
         else:
             if not isinstance(alerts, list):
                 alerts = [alerts]
