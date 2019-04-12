@@ -40,7 +40,6 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
 )
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.system import (
     validate_netbios_name,
 )
@@ -529,16 +528,16 @@ class LDAPForm(ModelForm):
 
         if enable:
             if started is True:
-                started = notifier().restart("ldap", timeout=_fs().directoryservice.ldap.timeout.restart)
+                started = notifier().restart("ldap")
             if started is False:
-                started = notifier().start("ldap", timeout=_fs().directoryservice.ldap.timeout.start)
+                started = notifier().start("ldap")
             if started is False:
                 self.instance.ldap_enable = False
                 super(LDAPForm, self).save()
                 raise MiddlewareError(_("LDAP failed to reload."))
         else:
             if started is True:
-                started = notifier().stop("ldap", timeout=_fs().directoryservice.ldap.timeout.stop)
+                started = notifier().stop("ldap")
 
         return obj
 
