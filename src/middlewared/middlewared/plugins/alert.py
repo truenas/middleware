@@ -451,15 +451,25 @@ class AlertService(Service):
                             pass
                         else:
                             raise
-                except Exception:
-                    alerts_b = [
-                        Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
-                              args={
-                                  "source_name": alert_source.name,
-                                  "traceback": traceback.format_exc(),
-                              },
-                              _source=alert_source.name)
-                    ]
+                except Exception as e:
+                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                        alerts_b = [
+                            Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
+                                  args={
+                                      "source_name": alert_source.name,
+                                      "traceback": str(e),
+                                  },
+                                  _source=alert_source.name)
+                        ]
+                    else:
+                        alerts_b = [
+                            Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
+                                  args={
+                                      "source_name": alert_source.name,
+                                      "traceback": traceback.format_exc(),
+                                  },
+                                  _source=alert_source.name)
+                        ]
             for alert in alerts_b:
                 alert.node = backup_node
 
@@ -524,14 +534,23 @@ class AlertService(Service):
             alerts = (await alert_source.check()) or []
         except UnavailableException:
             raise
-        except Exception:
-            alerts = [
-                Alert(AlertSourceRunFailedAlertClass,
-                      args={
-                          "source_name": alert_source.name,
-                          "traceback": traceback.format_exc(),
-                      })
-            ]
+        except Exception as e:
+            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                alerts = [
+                    Alert(AlertSourceRunFailedAlertClass,
+                          args={
+                              "source_name": alert_source.name,
+                              "traceback": str(e),
+                          })
+                ]
+            else:
+                alerts = [
+                    Alert(AlertSourceRunFailedAlertClass,
+                          args={
+                              "source_name": alert_source.name,
+                              "traceback": traceback.format_exc(),
+                          })
+                ]
         else:
             if not isinstance(alerts, list):
                 alerts = [alerts]
