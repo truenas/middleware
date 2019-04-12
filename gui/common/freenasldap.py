@@ -44,7 +44,6 @@ from freenasUI.common.pipesubr import (
     run
 )
 
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.system import (
     get_freenas_var,
     get_freenas_var_by_file,
@@ -1149,7 +1148,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         )
 
         r = resolver.Resolver()
-        r.lifetime = _fs().directoryservice.activedirectory.dns.lifetime
+        r.lifetime = 5
         r.timeout = r.lifetime / 3
 
         try:
