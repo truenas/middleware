@@ -24,21 +24,6 @@ class dstype(enum.Enum):
 
 
 class IdmapService(Service):
-    """
-    :get_or_create_idmap_by_domain: - accepts pre-windows 2000 domain name and its idmap configuration details.
-    if a backend configuration does not exist for the domain, then generate a safe default one.
-
-    :get_configured_idmap_domains: - returns list of all configured idmap domains. A configured domain is one
-    that exists in the domaintobackend table and has a corresponding backend configured in the respective
-    idmap_{backend} table. List is sorted based in ascending order based on the id range.
-
-    :clear_idmap_cache: - removes samba's idmap cache. This may be required if idmap settings are changed
-    after the server has entered production. This will cause a service disruption.
-
-    There are default system domains 'DS_TYPE_ACTIVEDIRECTORY', 'DS_TYPE_LDAP', 'DS_TYPE_DEFAULT_DOMAIN',
-    which exist for compatibility reasons and correspond with the idmap backend that is configured
-    under 'Active Directory', 'LDAP', and 'SMB' respectively.
-    """
     class Config:
         private = False
         namespace = 'idmap'
@@ -157,8 +142,9 @@ class IdmapService(Service):
     @accepts()
     async def get_configured_idmap_domains(self):
         """
-        Inner join domain-to-backend table with its corresponding idmap backend
-        table on the configured short-form domain name. Sorted by idmap high range.
+        returns list of all configured idmap domains. A configured domain is one
+        that exists in the domaintobackend table and has a corresponding backend configured in the respective
+        idmap_{backend} table. List is sorted based in ascending order based on the id range.
         """
         domains = await self.middleware.call('idmap.domaintobackend.query')
         configured_domains = []
@@ -194,7 +180,7 @@ class IdmapService(Service):
         This should be performed after finalizing idmap changes.
         """
         await self.middleware.call('service.stop', 'smb')
-        os.remove('/var/db/samba4/winbindd_cache.tdb')
+        os.remove('/var/db/system/samba4/winbindd_cache.tdb')
         await self.middleware.call('service.start', 'smb')
         gencache_flush = await run(['net', 'cache', 'flush'], check=False)
         if gencache_flush.returncode != 0:
@@ -588,7 +574,7 @@ class IdmapLDAPService(CRUDService):
             Str('user_dn'),
             Str('url'),
             Str('ssl', default='off', enum=['off', 'on', 'start_tls']),
-            Str('certificate'),
+            Int('certificate'),
             register=True
         )
     )
@@ -759,7 +745,7 @@ class IdmapRFC2307Service(CRUDService):
             Str('ldap_user_dn_password'),
             Str('ldap_realm'),
             Str('ssl', default='off', enum=['off', 'on', 'start_tls']),
-            Str('certificate'),
+            Int('certificate'),
             register=True
         )
     )

@@ -9,6 +9,7 @@ import ldap.sasl
 import ntplib
 import pwd
 import socket
+import subprocess
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
@@ -111,10 +112,11 @@ class ActiveDirectory_DNS(object):
             ret = True
 
         except Exception as e:
-            s.close()
             raise CallError(e)
 
-        s.close()
+        finally:
+            s.close()
+
         return ret
 
     def _get_servers(self, srv_prefix):
@@ -300,7 +302,7 @@ class ActiveDirectory_LDAP(object):
 
     def _search(self, basedn='', scope=ldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
         if not self._handle:
-            self._open
+            self._open()
 
         result = []
         results = []
@@ -716,7 +718,6 @@ class ActiveDirectoryService(ConfigService):
 
         if old['idmap_backend'] != new['idmap_backend']:
             idmap = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
-            self.logger.debug(idmap[0]['id'])
             await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend']})
 
         if not old['enable']:
@@ -740,7 +741,7 @@ class ActiveDirectoryService(ConfigService):
     async def _set_state(self, state):
         await self.middleware.call('cache.put', 'AD_State', state.name)
 
-    @private
+    @accepts()
     async def get_state(self):
         """
         Check the state of the AD Directory Service.
@@ -807,19 +808,12 @@ class ActiveDirectoryService(ConfigService):
         """
 
         if not ad['site']:
-            try:
-                new_site = await asyncio.wait_for(self.get_site(), 10)
-            except asyncio.TimeoutError:
-                raise CallError('Attempt to query AD site timed out after 10 seconds')
+            new_site = await self.middleware.run_in_thread(self.get_site)
             if new_site != 'Default-First-Site-Name':
                 ad = await self.config()
-                try:
-                    site_indexed_kerberos_data = await asyncio.wait_for(self.get_kerberos_servers(), 10)
-                except asyncio.TimeoutError:
-                    self.logger.debug('Operation to query kerberos servers for AD site timed out')
-                    site_indexed_kerberos_data = None
+                site_indexed_kerberos_servers = await self.middleware.run_in_thread(self.get_kerberos_servers)
 
-                if site_indexed_kerberos_data:
+                if site_indexed_kerberos_servers:
                     await self.middleware.call(
                         'datastore.update',
                         'directoryservice.kerberosrealm',
@@ -829,10 +823,7 @@ class ActiveDirectoryService(ConfigService):
                     await self.middleware.call('etc.generate', 'kerberos')
 
         if not smb['workgroup'] or smb['workgroup'] == 'WORKGROUP':
-            try:
-                smb['workgroup'] = await asyncio.wait_for(self.get_netbios_domain_name(), 10)
-            except asyncio.TimeoutError:
-                raise CallError('Attempt to auto-discover pre-Windows 2000 domain name timed out')
+            await self.middleware.run_in_thread(self.get_netbios_domain_name)
 
         await self.middleware.call('etc.generate', 'smb')
 
@@ -1007,7 +998,7 @@ class ActiveDirectoryService(ConfigService):
         return neterr.JOINED
 
     @private
-    async def get_netbios_domain_name(self):
+    def get_netbios_domain_name(self):
         """
         The 'workgroup' parameter must be set correctly in order for AD join to
         succeed. This is based on the short form of the domain name, which was defined
@@ -1017,9 +1008,9 @@ class ActiveDirectoryService(ConfigService):
         """
 
         ret = False
-        ad = await self.middleware.call('activedirectory.config')
-        smb = await self.middleware.call('smb.config')
-        dcs = await self._get_cached_srv_records(SRV['DOMAINCONTROLLER'])
+        ad = self.middleware.call_sync('activedirectory.config')
+        smb = self.middleware.call_sync('smb.config')
+        dcs = selfmiddleware.call_sync('activedirectory._get_cached_srv_records', SRV['DOMAINCONTROLLER'])
         set_new_cache = True if not dcs else False
                 
         if not dcs:
@@ -1027,26 +1018,26 @@ class ActiveDirectoryService(ConfigService):
                 dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
 
         if set_new_cache:
-            await self._set_cached_srv_records(SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
+            self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
 
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs) as AD_LDAP:
             ret = AD_LDAP.get_netbios_name()
 
         if ret and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the short form of the AD domain [{ret}]')
-            await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
+            self.middleware.call_sync('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
 
         return ret
 
     @private
-    async def get_kerberos_servers(self):
+    def get_kerberos_servers(self):
         """
         This returns at most 3 kerberos servers located in our AD site. This is to optimize
         kerberos configuration for locations where kerberos servers may span the globe and
         have equal DNS weighting. Since a single kerberos server may represent an unacceptable
         single point of failure, fall back to relying on normal DNS queries in this case.
         """
-        ad = await self.config()
+        ad = self.middleware.call_sync('activedirectory.config')
         with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
             krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3)
             krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3)
@@ -1080,15 +1071,15 @@ class ActiveDirectoryService(ConfigService):
         self.middleware.call_sync('system.ntpserver.create', {'address': pdc[0]['host'], 'prefer': True})
 
     @private
-    async def get_site(self):
+    def get_site(self):
         """
         First, use DNS to identify domain controllers
         Then, find a domain controller that is listening for LDAP connection if this information is not cached.
         Then, perform an LDAP query to determine our AD site
         """
-        ad = await self.middleware.call('activedirectory.config')
-        i = await self.middleware.call('interfaces.query')
-        dcs = await self._get_cached_srv_records(SRV['DOMAINCONTROLLER'])
+        ad = self.middleware.call_sync('activedirectory.config')
+        i = self.middleware.call_sync('interfaces.query')
+        dcs = self.middleware.call_sync('activedirectory._get_cached_srv_records', SRV['DOMAINCONTROLLER'])
         set_new_cache = True if not dcs else False
 
         if not dcs:
@@ -1098,7 +1089,7 @@ class ActiveDirectoryService(ConfigService):
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
         if set_new_cache:
-            await self._set_cached_srv_records(SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
+            self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
 
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs, interfaces=i) as AD_LDAP:
             site = AD_LDAP.locate_site()
@@ -1107,7 +1098,7 @@ class ActiveDirectoryService(ConfigService):
             site = 'Default-First-Site-Name'
 
         if not ad['site']:
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'datastore.update',
                 'directoryservice.activedirectory',
                 ad['id'],
@@ -1118,32 +1109,37 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     @job(lock='fill_ad_cache')
-    async def fill_ad_cache(self, force=False):
+    def fill_ad_cache(self, force=False):
         """
         Fill the FreeNAS/TrueNAS AD user and group cache from the winbindd cache.
         Refuse to fill cache if it has been filled within the last 24 hours unless
         'force' flag is set.
         """
-        if await self.middleware.call('cache.has_key', 'ad_cache') and not force:
+        if self.middleware.call_sync('cache.has_key', 'ad_cache') and not force:
             raise CallError('AD cache already exists. Refusing to generate cache.')
 
-        await self.middleware.call('cache.pop', 'ad_cache')
-        ad = await self.config()
-        smb = await self.middleware.call('smb.config')
+        self.middleware.call_sync('cache.pop', 'ad_cache')
+        ad = self.middleware.call_sync('activedirectory.config')
+        smb = self.middleware.call_sync('smb.config')
         if not ad['disable_freenas_cache']:
             """
             These calls populate the winbindd cache
             """
             pwd.getpwall()
             grp.getgrall()
-        netlist = await run(['net', 'cache', 'list'], check=False)
+        netlist = subprocess.run(
+            ['net', 'cache', 'list'],
+            capture_output=True,
+            check=False
+        )
         if netlist.returncode != 0:
             raise CallError(f'Winbind cache dump failed with error: {netlist.stderr.decode().strip()}')
+
         known_domains = []
-        local_users = await self.middleware.call('user.query')
-        local_groups = await self.middleware.call('group.query')
+        local_users = self.middleware.call_sync('user.query')
+        local_groups = self.middleware.call_sync('group.query')
         cache_data = {}
-        configured_domains = await self.middleware.call('idmap.get_configured_idmap_domains')
+        configured_domains = self.middleware.call_sync('idmap.get_configured_idmap_domains')
         for d in configured_domains:
             if d['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
                 known_domains.append({
@@ -1206,7 +1202,7 @@ class ActiveDirectoryService(ConfigService):
         if not cache_data[smb['workgroup']].get('users'):
             return
 
-        await self.middleware.call('cache.put', 'ad_cache', cache_data, 86400)
+        self.middleware.call_sync('cache.put', 'ad_cache', cache_data, 86400)
 
     @private
     async def get_ad_cache(self):
@@ -1218,7 +1214,7 @@ class ActiveDirectoryService(ConfigService):
         manually refreshed by calling fill_ad_cache(True).
         """
         if not await self.middleware.call('cache.has_key', 'ad_cache'):
-            await self.fill_ad_cache()
+            await self.middleware.run_in_thread(self.fill_ad_cache)
             self.logger.debug('cache fill is in progress.')
             return []
         return await self.middleware.call('cache.get', 'ad_cache')

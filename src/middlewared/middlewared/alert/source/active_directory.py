@@ -24,8 +24,7 @@ class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
 
     def check_sync(self):
-        ad = self.middleware.call_sync("activedirectory.config")
-        if not ad['enable']:
+        if self.middleware.call_sync('activedirectory.get_state') == 'DISABLED':
             return
 
         try:
@@ -41,8 +40,7 @@ class ActiveDirectoryDomainBindAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
 
     def check_sync(self):
-        ad = self.middleware.call_sync("activedirectory.config")
-        if not ad['enable']:
+        if self.middleware.call_sync('activedirectory.get_state') == 'DISABLED':
             return
 
         try:
@@ -50,5 +48,6 @@ class ActiveDirectoryDomainBindAlertSource(ThreadedAlertSource):
         except Exception as e:
             return Alert(
                 ActiveDirectoryBindAlertClass,
-                {'wberr': f'{e}'}
+                {'wberr': e},
+                key=None
             )

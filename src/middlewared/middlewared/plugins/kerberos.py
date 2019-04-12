@@ -12,7 +12,7 @@ from middlewared.utils import run, Popen
 
 class keytab(enum.Enum):
     SYSTEM = '/etc/krb5.keytab'
-    SAMBA = '/var/db/samba4/private/samba.keytab'
+    SAMBA = '/var/db/system/samba4/private/samba.keytab'
 
 
 class KerberosService(ConfigService):
@@ -73,6 +73,7 @@ class KerberosService(ConfigService):
         """
         ad = await self.middleware.call('activedirectory.config')
         ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
+        await self.middleware.call('etc.generate', 'kerberos')
         if ad['enable']:
             if ad['kerberos_principal']:
                 ad_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ad['kerberos_principal']], check=False)
@@ -131,7 +132,7 @@ class KerberosService(ConfigService):
                 raise CallError(f'klist failed with error: {klist.stderr.decode()}')
         except asyncio.TimeoutError:
             self.logger.debug('klist attempt failed after 10 seconds.')
-            await self._kdestroy
+            await self.stop()
         klist_output = klist.stdout.decode()
         tkts = klist_output.split('\n\n')
         for tkt in tkts:
@@ -620,8 +621,8 @@ class KerberosKeytabService(CRUDService):
         database needs to be updated to reflect the change.
         """
         old_mtime = 0
-        ad = await self.middleware.call('activedirectory.config')
-        if not ad['enable'] or not os.path.exists(keytab['SYSTEM'].value):
+        ad_state = await self.middleware.call('activedirectory.get_state')
+        if ad_state == 'DISABLED' or not os.path.exists(keytab['SYSTEM'].value):
             return
         if await self.middleware.call('cache.has_key', 'KEYTAB_MTIME'):
             old_mtime = await self.middleware.call('cache.get', 'KEYTAB_MTIME')
@@ -637,3 +638,4 @@ class KerberosKeytabService(CRUDService):
             'KEYTAB_MTIME',
             (os.stat(keytab['SYSTEM'].value)).st_mtime
         )
+

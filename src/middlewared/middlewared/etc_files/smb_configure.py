@@ -217,10 +217,10 @@ async def count_passdb_users():
     pdb_list = await run([PDBCMD, '-d', '0', '-L'])
     if pdb_list.returncode != 0:
         logger.debug('pdbedit -L command failed. Could not obtain count of users in passdb.tdb')
-        return False, 0
+        return 0
 
     usercount = len(pdb_list.stdout.decode().splitlines())
-    return True, usercount
+    return usercount
 
 
 async def write_legacy_smbpasswd(middleware, conf):
@@ -252,7 +252,7 @@ async def disable_passdb_users(smb_users):
 async def import_local_users(middleware, conf):
     passdb_file = f"{conf['privatedir']}/passdb.tdb"
     passdb_usercount = await count_passdb_users()
-    if len(conf['smb_users']) == passdb_usercount[1]:
+    if len(conf['smb_users']) == passdb_usercount:
         logger.debug('User count in config file and passdb is identical. Bypassing import')
         return True
 

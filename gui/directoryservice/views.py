@@ -320,8 +320,6 @@ def directoryservice_idmap_rfc2307(request, id):
 
 def directoryservice_idmap_rid(request, id):
     idmap_rid = models.idmap_rid.objects.get(id=id)
-    log.debug('got here')
-
     if request.method == "POST":
         form = forms.idmap_rid_Form(request.POST, instance=idmap_rid)
         if form.is_valid():
