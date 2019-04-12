@@ -1,6 +1,7 @@
 from mako import exceptions
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
+from middlewared.utils.exceptions import FileShouldNotExist
 from middlewared.utils.io import write_if_changed
 
 import asyncio
@@ -30,7 +31,7 @@ class MakoRenderer(object):
                 tmpl = lookup.get_template(name)
 
                 # Render the template
-                return tmpl.render(middleware=self.service.middleware)
+                return tmpl.render(middleware=self.service.middleware, FileShouldNotExist=FileShouldNotExist)
 
             return await self.service.middleware.run_in_thread(do)
         except Exception:
@@ -242,8 +243,18 @@ class EtcService(Service):
                 raise ValueError(f'Unknown type: {entry["type"]}')
 
             path = os.path.join(self.files_dir, entry['path'])
+            outfile = f'/etc/{entry["path"]}'
             try:
                 rendered = await renderer.render(path)
+            except FileShouldNotExist:
+                self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
+
+                try:
+                    os.unlink(outfile)
+                except FileNotFoundError:
+                    pass
+
+                continue
             except Exception:
                 self.logger.error(f'Failed to render {entry["type"]}:{entry["path"]}', exc_info=True)
                 continue
@@ -251,7 +262,6 @@ class EtcService(Service):
             if rendered is None:
                 continue
 
-            outfile = '/etc/{0}'.format(entry['path'])
             changes = write_if_changed(outfile, rendered)
 
             # If ownership or permissions are specified, see if
