@@ -1323,10 +1323,12 @@ class DiskService(CRUDService):
 
         # Add non-mirror swap devices
         # e.g. when there is a single disk
-        swap_devices += [
-            i.devname.replace('.eli', '')
-            for i in getswapinfo() if not i.devname.startswith('mirror/')
-        ]
+        for i in getswapinfo():
+            if i.devname.startswith('mirror/'):
+                continue
+            devname = i.devname.replace('.eli', '')
+            swap_devices.append(devname)
+            used_partitions.add(devname)
 
         # Get all partitions of swap type, indexed by size
         swap_partitions_by_size = defaultdict(list)
