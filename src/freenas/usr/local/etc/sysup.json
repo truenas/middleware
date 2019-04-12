@@ -1,6 +1,6 @@
 {
   "bootstrap" : true,
   "bootstrapfatal" : false,
-  "trainspubkey" : "/usr/share/keys/freenas-trains.pub",
+  "trainspubkey" : "/usr/local/share/keys/freenas-trains.pub",
   "trainsurl" : "http://pkg.trueos.org/pkg/freenas/trains/freenas-trains.json"
 }
