@@ -12,7 +12,6 @@ from middlewared.service import Service, private
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
 
 
@@ -107,7 +106,7 @@ class ServiceMonitorThread(threading.Thread):
         """
         connected = False
         permitted_clockskew = datetime.timedelta(minutes=5)
-        sm_timeout = _fs().middlewared.plugins.service_monitor.socket_timeout
+        sm_timeout = 30
 
         host_list = FreeNAS_ActiveDirectory.get_ldap_servers(host, self.config['ad_site'])
 
