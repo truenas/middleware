@@ -515,7 +515,7 @@ class UpdateService(Service):
 
     @accepts(Dict(
         'updatefile',
-        Str('destination'),
+        Str('destination', null=True),
     ))
     @job(lock='updatemanual', pipes=['input'])
     async def file(self, job, options):
