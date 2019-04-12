@@ -56,7 +56,7 @@ class Inheritable(EnumMixin, Attribute):
 
 
 def _none(x):
-    if x is None:
+    if x in (0, None):
         return 'none'
     return x
 
