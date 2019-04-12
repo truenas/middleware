@@ -42,7 +42,6 @@ from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP,
 )
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.pipesubr import run
 from freenasUI.common.system import (
     validate_netbios_name,
@@ -592,10 +591,7 @@ class ActiveDirectoryForm(ModelForm):
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
-        started = notifier().started(
-            "activedirectory",
-            timeout=_fs().directoryservice.activedirectory.timeout.started
-        )
+        started = notifier().started("activedirectory")
         obj = super(ActiveDirectoryForm, self).save()
 
         try:
@@ -613,21 +609,19 @@ class ActiveDirectoryForm(ModelForm):
 
         if enable:
             if started is True:
-                timeout = _fs().directoryservice.activedirectory.timeout.restart
                 try:
-                    started = notifier().restart("activedirectory", timeout=timeout)
+                    started = notifier().restart("activedirectory")
                 except Exception as e:
                     raise MiddlewareError(
                         _("Active Directory restart timed out after %d seconds." % timeout),
                     )
 
             if started is False:
-                timeout = _fs().directoryservice.activedirectory.timeout.start
                 try:
-                    started = notifier().start("activedirectory", timeout=timeout)
+                    started = notifier().start("activedirectory")
                 except Exception as e:
                     raise MiddlewareError(
-                        _("Active Directory start timed out after %d seconds." % timeout),
+                        _("Active Directory start timed out."),
                     )
             if started is False:
                 self.instance.ad_enable = False
@@ -637,12 +631,11 @@ class ActiveDirectoryForm(ModelForm):
                 )
         else:
             if started is True:
-                timeout = _fs().directoryservice.activedirectory.timeout.stop
                 try:
-                    started = notifier().stop("activedirectory", timeout=timeout)
+                    started = notifier().stop("activedirectory")
                 except Exception as e:
                     raise MiddlewareError(
-                        _("Active Directory stop timed out after %d seconds." % timeout),
+                        _("Active Directory stop timed out."),
                     )
 
         sm_name = 'activedirectory'
@@ -957,16 +950,16 @@ class LDAPForm(ModelForm):
 
         if enable:
             if started is True:
-                started = notifier().restart("ldap", timeout=_fs().directoryservice.ldap.timeout.restart)
+                started = notifier().restart("ldap")
             if started is False:
-                started = notifier().start("ldap", timeout=_fs().directoryservice.ldap.timeout.start)
+                started = notifier().start("ldap")
             if started is False:
                 self.instance.ldap_enable = False
                 super(LDAPForm, self).save()
                 raise MiddlewareError(_("LDAP failed to reload."))
         else:
             if started is True:
-                started = notifier().stop("ldap", timeout=_fs().directoryservice.ldap.timeout.stop)
+                started = notifier().stop("ldap")
 
         return obj
 

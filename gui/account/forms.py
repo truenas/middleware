@@ -34,7 +34,6 @@ from django.http import QueryDict
 from dojango import forms
 from freenasUI.account import models
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.freeadmin.forms import SelectMultipleField
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.storage.widgets import UnixPermissionField
@@ -85,15 +84,8 @@ class NewPasswordForm(Form):
                     password=self.cleaned_data['password'],
                 )
 
-                #
-                # XXX hackity hackness XXX
-                # Catch call timeout exceptions. We should really return this to the user
-                # in the UI, but there is no easy way to currently do this. For now this
-                # prevents a stack trace in the UI, which is slightly better than nothing ;-)
-                # This same try/except structure is littered throughout this code.
-                #
                 try:
-                    notifier().reload("user", timeout=_fs().account.user.timeout.reload)
+                    notifier().reload("user")
                 except Exception as e:
                     log.debug("ERROR: failed to reload user: %s", e)
 
@@ -592,7 +584,7 @@ class bsdGroupToUserForm(Form):
                 bsdgrpmember_user=user)
             m.save()
         try:
-            notifier().reload("user", timeout=_fs().account.user.timeout.reload)
+            notifier().reload("user")
         except Exception as e:
             log.debug("ERROR: failed to reload user: %s", e)
 
@@ -640,7 +632,7 @@ class bsdUserToGroupForm(Form):
                 bsdgrpmember_user=user)
             m.save()
         try:
-            notifier().reload("user", timeout=_fs().account.user.timeout.reload)
+            notifier().reload("user")
         except Exception as e:
             log.debug("ERROR: failed to reload user: %s", e)
 
