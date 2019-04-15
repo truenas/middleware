@@ -128,11 +128,13 @@ class KerberosService(ConfigService):
                 run(['/usr/bin/klist', '-v'], check=False, stdout=subprocess.PIPE),
                 timeout=10.0
             )
-            if klist.returncode != 0:
-                raise CallError(f'klist failed with error: {klist.stderr.decode()}')
-        except asyncio.TimeoutError:
-            self.logger.debug('klist attempt failed after 10 seconds.')
+        except Exception as e:
             await self.stop()
+            raise CallError("Attempt to list kerberos tickets failed with error: %s", e)
+
+        if klist.returncode != 0:
+            raise CallError(f'klist failed with error: {klist.stderr.decode()}')
+
         klist_output = klist.stdout.decode()
         tkts = klist_output.split('\n\n')
         for tkt in tkts:
@@ -500,8 +502,8 @@ class KerberosKeytabService(CRUDService):
     @private
     async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
         keytab_entries = []
-        kt_list =  await run(
-            ['/usr/sbin/ktutil', '-k', keytab_file, '-v', 'list'], check=False
+        kt_list = await run(
+            ["/usr/sbin/ktutil", "-k", keytab_file, "-v", "list"], check=False
         )
         if kt_list.returncode != 0:
             raise CallError(f'ktutil list for keytab [{keytab_file}] failed with error: {kt_list.stderr.decode()}')
@@ -568,7 +570,7 @@ class KerberosKeytabService(CRUDService):
             if entry['principal'] not in kerberos_principals:
                 kerberos_principals.append(entry['principal'])
 
-        return kerberos_principals
+        return kerberos_principals.sort()
 
     @private
     async def store_samba_keytab(self):

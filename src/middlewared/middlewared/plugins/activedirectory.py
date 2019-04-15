@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import enum
 import errno
@@ -14,7 +13,7 @@ import subprocess
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService, ValidationErrors
+from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 
@@ -196,8 +195,8 @@ class ActiveDirectory_LDAP(object):
         return self
 
     def __exit__(self, typ, value, traceback):
-        if typ is not None:
-            raise
+        if self._isopen:
+            self._close()
 
     def validate_credentials(self):
         """
@@ -245,11 +244,10 @@ class ActiveDirectory_LDAP(object):
 
                 if SSL(self.ad['ssl']) != SSL.NOSSL:
                     ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
-                    if self.certfile:
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_CACERTFILE,
-                            self.certfile
-                        )
+                    ldap.set_option(
+                        ldap.OPT_X_TLS_CACERTFILE,
+                        f"/etc/certificates/{self.ad['certificate']['cert_name']}.crt"
+                    )
                     ldap.set_option(
                         ldap.OPT_X_TLS_REQUIRE_CERT,
                         ldap.OPT_X_TLS_ALLOW
@@ -261,7 +259,6 @@ class ActiveDirectory_LDAP(object):
 
                     except ldap.LDAPError as e:
                         self.logger.debug('%s', e)
-                        continue
 
                 if self.ad['kerberos_principal']:
                     try:
@@ -372,7 +369,7 @@ class ActiveDirectory_LDAP(object):
                     type, data = self._handle.result(id, 0)
 
                 except ldap.LDAPError as e:
-                    self._logex(e)
+                    self.logger.debug(e)
                     break
 
                 results.append(data)
@@ -561,8 +558,8 @@ class ActiveDirectoryService(ConfigService):
         elif smb_ha_mode == 'LEGACY':
             ngc = await self.middleware.call('network.configuration.config')
             ad.update({
-                'netbiosname': ada['hostname'],
-                'netbiosname_b': ad['hostname_b'],
+                'netbiosname': ngc['hostname'],
+                'netbiosname_b': ngc['hostname_b'],
                 'netbiosalias': smb['netbiosalias']
             })
 
@@ -579,35 +576,43 @@ class ActiveDirectoryService(ConfigService):
             ad['kerberos_realm'] = ad['kerberos_realm']['id']
         ad['domainname'] = ad['domainname'].upper()
 
-        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if smb_ha_mode == 'STANDALONE':
-            await self.middleware.call(
-                'smb.update',
-                {
-                    'netbiosname': ad['netbiosname'],
-                    'netbiosalias': ad['netbiosalias']
-                }
-            )
-
-        elif smb_ha_mode == 'UNIFIED':
-            await self.middleware.call('smb.update', 1, {'netbiosalias': ad['netbiosalias']})
-            await self.middleware.call('network.configuration', 1, {'hostname_virtual': ad['netbiosname']})
-
-        elif smb_ha_mode == 'LEGACY':
-            await self.middleware.call('smb.update', 1, {'netbiosalias': ad['netbiosalias']})
-            await self.middleware.call(
-                'network.configuration',
-                {
-                    'hostname': ad['netbiosname'],
-                    'hostname_b': ad['netbiosname_b']
-                }
-            )
-
         for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
             if key in ad:
                 ad.pop(key)
 
         return ad
+
+    @private
+    async def update_netbios_data(self, old, new):
+        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        must_update = False
+        for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
+            if key in new and old[key] != new[key]:
+                must_update = True
+
+        if smb_ha_mode == 'STANDALONE' and must_update:
+            await self.middleware.call(
+                'smb.update',
+                {
+                    'netbiosname': new['netbiosname'],
+                    'netbiosalias': new['netbiosalias']
+                }
+            )
+
+        elif smb_ha_mode == 'UNIFIED' and  must_update:
+            await self.middleware.call('smb.update', 1, {'netbiosalias': new['netbiosalias']})
+            await self.middleware.call('network.configuration', 1, {'hostname_virtual': new['netbiosname']})
+
+        elif smb_ha_mode == 'LEGACY' and must_update:
+            await self.middleware.call('smb.update', 1, {'netbiosalias': new['netbiosalias']})
+            await self.middleware.call(
+                'network.configuration',
+                {
+                    'hostname': new['netbiosname'],
+                    'hostname_b': new['netbiosname_b']
+                }
+            )
+        return
 
     @accepts(Dict(
         'activedirectory_update',
@@ -687,9 +692,15 @@ class ActiveDirectoryService(ConfigService):
         during an update. If the configuration is updated, but the initial :enable: state was True, then only a samba_server restart
         command will be issued.
         """
+        verrors = ValidationErrors()
         old = await self.config()
         new = old.copy()
         new.update(data)
+        try:
+            await self.update_netbios_data(old, new)
+        except Exception as e:
+            raise ValidationError('netbiosname', str(e))
+
         new = await self.ad_compress(new)
         await self.middleware.call(
             'datastore.update',
@@ -698,17 +709,18 @@ class ActiveDirectoryService(ConfigService):
             new,
             {'prefix': 'ad_'}
         )
-        verrors = ValidationErrors()
-        if not new["bindname"] and not new["kerberos_principal"]:
-            verrors.add(f"activedirectory_update.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
+        if not new["bindpw"] and not new["kerberos_principal"]:
+            raise ValidationError("activedirectory_update.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
 
         if data['bindpw'] and data['enable'] and not old['enable']:
             try:
                 await self.middleware.run_in_thread(self.validate_credentials)
             except Exception as e:
-                verrors.add(f"activedirectory_update.bindpw", f"Failed to validate bind credentials: {e}")
-
-            await self.middleware.run_in_thread(self.validate_domain)
+                verrors.add("activedirectory_update.bindpw", f"Failed to validate bind credentials: {e}")
+            try:
+                await self.middleware.run_in_thread(self.validate_domain, new)
+            except Exception as e:
+                verrors.add("activedirectory_update", f"Failed to validate domain configuration: {e}")
 
         if verrors:
             raise verrors
@@ -818,7 +830,7 @@ class ActiveDirectoryService(ConfigService):
                         'datastore.update',
                         'directoryservice.kerberosrealm',
                         ad['kerberos_realm']['id'],
-                        site_indexed_kerberos_data
+                        site_indexed_kerberos_servers
                     )
                     await self.middleware.call('etc.generate', 'kerberos')
 
@@ -851,6 +863,12 @@ class ActiveDirectoryService(ConfigService):
                     ad = await self.config()
 
             ret = neterr.JOINED
+            await self.middleware.call('idmap.get_or_create_idmap_domain', 'DS_TYPE_ACTIVEDIRECTORY')
+            await self.middleware.call('service.update', 'cifs', {'enable': True})
+            try:
+                await self.middleware.call('idmap.clear_idmap_cache')
+            except Exception as e:
+                self.logger.debug('Failed to clear idmap cache: %s', e)
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.middleware.run_in_thread(self.set_ntp_servers)
             if ad['allow_trusted_doms']:
@@ -892,8 +910,8 @@ class ActiveDirectoryService(ConfigService):
 
         return ret
 
-    @accepts()
-    def check_clockskew(self):
+    @private
+    def check_clockskew(self, ad=None):
         """
         Uses DNS srv records to determine server with PDC emulator FSMO role and
         perform NTP query to determine current clockskew. Raises exception if
@@ -903,7 +921,9 @@ class ActiveDirectoryService(ConfigService):
         """
         permitted_clockskew = datetime.timedelta(minutes=3)
         nas_time = datetime.datetime.now()
-        ad = self.middleware.call_sync('activedirectory.config')
+        if not ad:
+            ad = self.middleware.call_sync('activedirectory.config')
+
         with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
             pdc = AD_DNS.get_n_working_servers(SRV['PDC'], 1)
         c = ntplib.NTPClient()
@@ -915,8 +935,11 @@ class ActiveDirectoryService(ConfigService):
         return {'pdc': str(pdc[0]['host']), 'timestamp': str(ntp_time), 'clockskew': str(clockskew)}
 
     @private
-    def validate_domain(self):
-        self.middleware.call_sync('activedirectory.check_clockskew')
+    def validate_domain(self, data=None):
+        """
+        Methods used to determine AD domain health.
+        """
+        self.middleware.call_sync('activedirectory.check_clockskew', data)
 
     @private
     async def _get_cached_srv_records(self, srv=SRV['DOMAINCONTROLLER']):
@@ -934,7 +957,7 @@ class ActiveDirectoryService(ConfigService):
         return servers
 
     @private
-    async def _set_cached_srv_records(self, srv=None, site=None, results=[]):
+    async def _set_cached_srv_records(self, srv=None, site=None, results=None):
         """
         Cache srv record lookups for 24 hours
         """
@@ -1010,15 +1033,15 @@ class ActiveDirectoryService(ConfigService):
         ret = False
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
-        dcs = selfmiddleware.call_sync('activedirectory._get_cached_srv_records', SRV['DOMAINCONTROLLER'])
+        dcs = self.middleware.call_sync('activedirectory._get_cached_srv_records', SRV['DOMAINCONTROLLER'])
         set_new_cache = True if not dcs else False
-                
+
         if not dcs:
             with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
                 dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
 
         if set_new_cache:
-            self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
+            self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], ad['site'], dcs)
 
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs) as AD_LDAP:
             ret = AD_LDAP.get_netbios_name()
@@ -1061,7 +1084,7 @@ class ActiveDirectoryService(ConfigService):
         server for the NAS.
         """
         ntp_servers = self.middleware.call_sync('system.ntpserver.query')
-        default_ntp_servers = List(filter(lambda x: 'freebsd.pool.ntp.org' in x['address'], ntp_servers)) 
+        default_ntp_servers = list(filter(lambda x: 'freebsd.pool.ntp.org' in x['address'], ntp_servers))
         if len(ntp_servers) != 3 and len(default_ntp_servers) != 3:
             return
 
@@ -1089,7 +1112,7 @@ class ActiveDirectoryService(ConfigService):
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
         if set_new_cache:
-            self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], site=ad['site'], results=dcs)
+            self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], ad['site'], dcs)
 
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs, interfaces=i) as AD_LDAP:
             site = AD_LDAP.locate_site()
@@ -1159,6 +1182,7 @@ class ActiveDirectoryService(ConfigService):
         for line in netlist.stdout.decode().splitlines():
             if 'UID2SID' in line:
                 cached_uid = ((line.split())[1].split('/'))[2]
+                self.logger.debug(cached_uid)
                 """
                 Do not cache local users. This is to avoid problems where a local user
                 may enter into the id range allotted to AD users.
@@ -1216,7 +1240,7 @@ class ActiveDirectoryService(ConfigService):
         if not await self.middleware.call('cache.has_key', 'ad_cache'):
             await self.middleware.run_in_thread(self.fill_ad_cache)
             self.logger.debug('cache fill is in progress.')
-            return []
+            return {}
         return await self.middleware.call('cache.get', 'ad_cache')
 
     @private

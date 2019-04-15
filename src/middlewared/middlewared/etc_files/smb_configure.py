@@ -56,6 +56,11 @@ async def get_config(middleware):
     for parm in parm_to_test:
         conf[parm] = await get_smb4conf_parm(parm)
 
+    if not conf['privatedir']:
+        conf['privatedir'] = '/var/db/system/samba4/private'
+    if not conf['state directory']:
+        conf['state directory'] = '/var/db/system/samba4'
+    logger.debug(conf)
     return conf
 
 

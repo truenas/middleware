@@ -283,7 +283,7 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
                 data.pop(key)
 
         data['netbiosalias'] = data['netbiosalias'].split()
-        if data['kerberos_principal'] == '----------':
+        if data['kerberos_principal'] == '---------':
             data['kerberos_principal'] = ''
 
         if data['kerberos_realm']:
