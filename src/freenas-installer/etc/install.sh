@@ -405,7 +405,7 @@ install_loader()
     # Default to re-stamping what was already used on the current install
     _boottype="$BOOTMODE"
     if [ "${_upgrade_type}" = "inplace" ] ; then
-      if glabel list | grep -q 'efibsd' ; then
+      if gpart show ${_disks} | grep -qF 'efi' ; then
          _boottype="UEFI"
       else
          _boottype="BIOS"
