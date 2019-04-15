@@ -1,30 +1,17 @@
 from bsd import geom
+from datetime import datetime
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, CallError, Service
+from middlewared.utils import Popen
 
-from datetime import datetime
+import aiohttp
+import asyncio
 import enum
-import errno
+import json
 import os
-import re
 import shutil
 import subprocess
-import sys
 import textwrap
-
-if '/usr/local/lib' not in sys.path:
-    sys.path.append('/usr/local/lib')
-
-import humanfriendly
-
-from freenasOS import Configuration, Manifest, Update, Train
-from freenasOS.Exceptions import (
-    UpdateIncompleteCacheException, UpdateInvalidCacheException,
-    UpdateBusyCacheException,
-)
-from freenasOS.Update import (
-    ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
-)
 
 UPLOAD_LOCATION = '/var/tmp/firmware'
 UPLOAD_LABEL = 'updatemdu'
@@ -81,206 +68,130 @@ def compare_trains(t1, t2):
             return CompareTrainsResult.MINOR_DOWNGRADE
 
 
-class CheckUpdateHandler(object):
-
-    reboot = False
-
-    def __init__(self):
-        self.changes = []
-        self.restarts = []
-
-    def _pkg_serialize(self, pkg):
-        if not pkg:
-            return None
-        return {
-            'name': pkg.Name(),
-            'version': pkg.Version(),
-            'size': pkg.Size(),
-        }
-
-    def call(self, op, newpkg, oldpkg):
-        self.changes.append({
-            'operation': op,
-            'old': self._pkg_serialize(oldpkg),
-            'new': self._pkg_serialize(newpkg),
-        })
-
-    def diff_call(self, diffs):
-        self.reboot = diffs.get('Reboot', False)
-        if self.reboot is False:
-            # We may have service changes
-            for svc in diffs.get("Restart", []):
-                self.restarts.append(GetServiceDescription(svc))
-
-    @property
-    def output(self):
-        output = ''
-        for c in self.changes:
-            if c['operation'] == 'upgrade':
-                output += '%s: %s-%s -> %s-%s\n' % (
-                    'Upgrade',
-                    c['old']['name'],
-                    c['old']['version'],
-                    c['new']['name'],
-                    c['new']['version'],
-                )
-            elif c['operation'] == 'install':
-                output += '%s: %s-%s\n' % (
-                    'Install',
-                    c['new']['name'],
-                    c['new']['version'],
-                )
-        for r in self.restarts:
-            output += r + "\n"
-        return output
+class SysupException(Exception):
+    pass
 
 
-class UpdateHandler(object):
+class Sysup(object):
 
-    def __init__(self, service, job, download_proportion=50):
-        self.service = service
-        self.job = job
-
-        self.download_proportion = download_proportion
-
-        self._current_package_index = None
-        self._packages_count = None
-
-    def check_handler(self, index, pkg, pkgList):
-        self._current_package_index = index - 1
-        self._packages_count = len(pkgList)
-
-        pkgname = '%s-%s' % (
-            pkg.Name(),
-            pkg.Version(),
+    async def __aenter__(self):
+        self.proc = await Popen(
+            ['sysup', '-websocket'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
+        #try:
+        #    line = await asyncio.wait_for(self.proc.stdout.readline(), 10)
+        #except asyncio.TimeoutError:
+        #    raise SysupException('Timed out waiting update process to initialize websocket.')
+        asyncio.ensure_future(self._log_proc())
+        try:
+            self.session = aiohttp.ClientSession()
+            self.ws = await self.session.ws_connect('tcp://localhost:8134/ws')
+        except Exception:
+            self.proc.kill()
+            raise
+        return self
 
-        self.job.set_progress((self._current_package_index / self._packages_count) * self.download_proportion,
-                              'Downloading {}'.format(pkgname))
-
-    def get_handler(
-        self, method, filename, size=None, progress=None, download_rate=None
-    ):
-        if self._current_package_index is None or self._packages_count is None or not progress:
-            return
-
-        if size:
+    async def _log_proc(self):
+        while True:
             try:
-                size = humanfriendly.format_size(int(size))
+                line = await self.proc.stdout.readline()
+                self.logger.debug(f'sysup: {line}')
             except Exception:
-                pass
+                break
 
-        if download_rate:
-            try:
-                download_rate = humanfriendly.format_size(int(download_rate)) + "/s"
-            except Exception:
-                pass
+    async def _send_receive(self, method, data=None, on_info=None):
+        payload = {'method': method}
+        if data:
+            payload.update(data)
+        await self.ws.send_str(json.dumps(payload))
 
-        job_progress = (
-            ((self._current_package_index + progress / 100) / self._packages_count) * self.download_proportion)
-        filename = filename.rsplit('/', 1)[-1]
-        if size and download_rate:
-            self.job.set_progress(
-                job_progress,
-                'Downloading {}: {} ({}%) at {}'.format(
-                    filename,
-                    size,
-                    progress,
-                    download_rate,
-                )
-            )
-        else:
-            self.job.set_progress(
-                job_progress,
-                'Downloading {} ({}%)'.format(
-                    filename,
-                    progress,
-                )
-            )
+        while True:
+            msg = await self.ws.receive()
+            if msg.type != aiohttp.WSMsgType.TEXT:
+                raise SysupException('Unexpected response')
 
-    def install_handler(self, index, name, packages):
-        total = len(packages)
-        self.job.set_progress(
-            self.download_proportion + (index / total) * (100 - self.download_proportion),
-            'Installing {} ({}/{})'.format(name, index, total),
-        )
+            data = json.loads(msg.data)
+            if data['method'] == 'fatal':
+                raise SysupException(data['info'])
 
+            if on_info and data['method'] == 'info':
+                await on_info(data['info'])
 
-def get_changelog(train, start='', end=''):
-    conf = Configuration.Configuration()
-    changelog = conf.GetChangeLog(train=train)
-    if not changelog:
-        return None
-    return parse_changelog(changelog.read().decode('utf8', 'ignore'), start, end)
+            if data['method'] == method:
+                break
+        return data
 
+    async def get_trains(self):
+        return await self._send_receive('listtrains')
 
-def parse_changelog(changelog, start='', end=''):
-    regexp = r'### START (\S+)(.+?)### END \1'
-    reg = re.findall(regexp, changelog, re.S | re.M)
+    async def set_train(self, name):
+        return await self._send_receive('settrain', data={'Train': name})
 
-    if not reg:
-        return None
+    async def check(self):
+        return await self._send_receive('check')
 
-    changelog = None
-    for seq, changes in reg:
-        if not changes.strip('\n'):
-            continue
-        if seq == start:
-            # Once we found the right one, we start accumulating
-            changelog = ''
-        elif changelog is not None:
-            changelog += changes.strip('\n') + '\n'
-        if seq == end:
-            break
+    async def update(self, filepath=None, cachedir=None, on_info=None):
+        data = {}
+        if cachedir:
+            data['cachedir'] = cachedir
+        return await self._send_receive('update', data=data, on_info=on_info)
 
-    return changelog
+    async def __aexit__(self, typ, value, traceback):
+        await self.ws.close()
+        await self.session.close()
+        self.proc.kill()
+        if typ is not None:
+            raise
 
 
 class UpdateService(Service):
 
     @accepts()
-    def get_trains(self):
+    async def get_trains(self):
         """
         Returns available trains dict and the currently configured train as well as the
         train of currently booted environment.
         """
-        data = self.middleware.call_sync('datastore.config', 'system.update')
-        conf = Configuration.Configuration()
-        conf.LoadTrainsConfig()
+        try:
+            async with Sysup() as sysup:
+                sysuptrains = await sysup.get_trains()
+        except SysupException as e:
+            raise CallError(str(e))
 
-        selected = None
+        data = await self.middleware.call('datastore.config', 'system.update')
+
+        current = selected = None
         trains = {}
-        for name, descr in (conf.AvailableTrains() or {}).items():
-            train = conf._trains.get(name)
-            if train is None:
-                train = Train.Train(name, descr)
-            if not selected and data['upd_train'] == train.Name():
-                selected = data['upd_train']
-            trains[train.Name()] = {
-                'description': descr,
-                'sequence': train.LastSequence(),
+        for train in sysuptrains['trains']:
+            if not selected and data['upd_train'] == train['name']:
+                selected = train['name']
+            if train['current']:
+                current = train['name']
+            trains[train['name']] = {
+                'description': train['description'],
+                'sequence': train['version'],
             }
-        if not data['upd_train'] or not selected:
-            selected = conf.CurrentTrain()
         return {
             'trains': trains,
-            'current': conf.CurrentTrain(),
+            'current': current,
             'selected': selected,
         }
 
     @accepts(Str('train', empty=False))
-    def set_train(self, train):
+    async def set_train(self, train):
         """
         Set an update train to be used by default in updates.
         """
-        return self.__set_train(train)
+        return await self.__set_train(train)
 
-    def __set_train(self, train, trains=None):
+    async def __set_train(self, train, trains=None):
         """
         Wrapper so we dont call get_trains twice on update method.
         """
         if trains is None:
-            trains = self.get_trains()
+            trains = await self.get_trains()
         if train != trains['selected']:
             if train not in trains['trains']:
                 raise CallError('Invalid train name.', errno.ENOENT)
@@ -312,9 +223,15 @@ class UpdateService(Service):
                 if result in errors:
                     raise CallError(errors[result])
 
-            data = self.middleware.call_sync('datastore.config', 'system.update')
+            try:
+                async with Sysup() as sysup:
+                    await sysup.set_train(train)
+            except SysupException as e:
+                raise CallError(str(e))
+
+            data = await self.middleware.call('datastore.config', 'system.update')
             if data['upd_train'] != train:
-                self.middleware.call_sync('datastore.update', 'system.update', data['id'], {
+                await self.middleware.call('datastore.update', 'system.update', data['id'], {
                     'upd_train': train
                 })
 
@@ -325,7 +242,7 @@ class UpdateService(Service):
         Str('train', required=False),
         required=False,
     ))
-    def check_available(self, attrs=None):
+    async def check_available(self, attrs):
         """
         Checks if there is an update available from update server.
 
@@ -347,44 +264,59 @@ class UpdateService(Service):
         """
 
         try:
-            applied = self.middleware.call_sync('cache.get', 'update.applied')
+            applied = await self.middleware.call('cache.get', 'update.applied')
         except Exception:
             applied = False
         if applied is True:
             return {'status': 'REBOOT_REQUIRED'}
 
-        train = (attrs or {}).get('train') or self.middleware.call_sync('update.get_trains')['selected']
+        train = attrs.get('train')
+        if train:
+            await self.middleware.call('update.set_train', train)
 
-        handler = CheckUpdateHandler()
-        manifest = CheckForUpdates(
-            diff_handler=handler.diff_call,
-            handler=handler.call,
-            train=train,
-        )
+        try:
+            async with Sysup() as sysup:
+                check = await sysup.check()
+        except SysupException as e:
+            raise CallError(str(e))
 
-        if not manifest:
+        if not check['updates']:
             return {'status': 'UNAVAILABLE'}
+
+        changes = []
+        version = None
+        for i in (check['details']['update'] or []):
+            if i['name'] == 'freenas':
+                version = i['NewVersion']
+            changes.append({
+                'operation': 'upgrade',
+                'old': {'name': i['name'], 'version': i['OldVersion']},
+                'new': {'name': i['name'], 'version': i['NewVersion']},
+            })
+
+        for i in (check['details']['new'] or []):
+            changes.append({
+                'operation': 'install',
+                'old': None,
+                'new': {'name': i['name'], 'version': i['Version']},
+            })
+
+        for i in (check['details']['delete'] or []):
+            changes.append({
+                'operation': 'delete',
+                'old': {'name': i['name'], 'version': i['Version']},
+                'new': None,
+            })
 
         data = {
             'status': 'AVAILABLE',
-            'changes': handler.changes,
-            'notice': manifest.Notice(),
-            'notes': manifest.Notes(),
+            'changes': changes,
+            'notice': None,
+            'notes': None,
+            'changelog': None,
+            'version': version,
         }
 
-        conf = Configuration.Configuration()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            sequence = sys_mani.Sequence()
-        else:
-            sequence = ''
-        data['changelog'] = get_changelog(
-            train,
-            start=sequence,
-            end=manifest.Sequence()
-        )
-
-        data['version'] = manifest.Version()
         return data
 
     @accepts(Str('path', null=True, default=None))
@@ -400,43 +332,8 @@ class UpdateService(Service):
         """
         if path is None:
             path = await self.middleware.call('update.get_update_location')
-        data = []
-        try:
-            changes = await self.middleware.run_in_thread(Update.PendingUpdatesChanges, path)
-        except (
-            UpdateIncompleteCacheException, UpdateInvalidCacheException,
-            UpdateBusyCacheException,
-        ):
-            changes = []
-        if changes:
-            if changes.get("Reboot", True) is False:
-                for svc in changes.get("Restart", []):
-                    data.append({
-                        'operation': svc,
-                        'name': Update.GetServiceDescription(svc),
-                    })
-            for new, op, old in changes['Packages']:
-                if op == 'upgrade':
-                    name = '%s-%s -> %s-%s' % (
-                        old.Name(),
-                        old.Version(),
-                        new.Name(),
-                        new.Version(),
-                    )
-                elif op == 'install':
-                    name = '%s-%s' % (new.Name(), new.Version())
-                else:
-                    # Its unclear why "delete" would feel out new
-                    # instead of old, sounds like a pkgtools bug?
-                    if old:
-                        name = '%s-%s' % (old.Name(), old.Version())
-                    else:
-                        name = '%s-%s' % (new.Name(), new.Version())
 
-                data.append({
-                    'operation': op,
-                    'name': name,
-                })
+        data = []
         return data
 
     @accepts(Dict(
@@ -446,40 +343,25 @@ class UpdateService(Service):
         required=False,
     ))
     @job(lock='update', process=True)
-    async def update(self, job, attrs=None):
+    async def update(self, job, attrs):
         """
         Downloads (if not already in cache) and apply an update.
         """
-        attrs = attrs or {}
-
-        trains = await self.middleware.call('update.get_trains')
-        train = attrs.get('train') or trains['selected']
 
         if attrs.get('train'):
-            await self.middleware.run_in_thread(self.__set_train, attrs.get('train'), trains)
+            await self.middleware.call('update.set_train', attrs['train'])
 
         location = await self.middleware.call('update.get_update_location')
 
-        job.set_progress(0, 'Retrieving update manifest')
+        async def on_info(info):
+            job.set_progress(None, info)
 
-        handler = UpdateHandler(self, job)
+        try:
+            async with Sysup() as sysup:
+                await sysup.update(cachedir=location, on_info=on_info)
+        except SysupException as e:
+            raise CallError(str(e))
 
-        update = Update.DownloadUpdate(
-            train,
-            location,
-            check_handler=handler.check_handler,
-            get_handler=handler.get_handler,
-        )
-        if update is False:
-            raise ValueError('No update available')
-
-        new_manifest = Manifest.Manifest(require_signature=True)
-        new_manifest.LoadPath('{}/MANIFEST'.format(location))
-
-        Update.ApplyUpdate(
-            location,
-            install_handler=handler.install_handler,
-        )
         await self.middleware.call('cache.put', 'update.applied', True)
 
         if (
@@ -497,56 +379,35 @@ class UpdateService(Service):
 
     @accepts()
     @job(lock='updatedownload')
-    def download(self, job):
+    async def download(self, job):
         """
         Download updates using selected train.
         """
         train = self.middleware.call_sync('update.get_trains')['selected']
         location = self.middleware.call_sync('update.get_update_location')
 
-        job.set_progress(0, 'Retrieving update manifest')
-
-        handler = UpdateHandler(self, job, 100)
-
-        Update.DownloadUpdate(
-            train,
-            location,
-            check_handler=handler.check_handler,
-            get_handler=handler.get_handler,
-        )
-        update = Update.CheckForUpdates(train=train, cache_dir=location)
-
         self.middleware.call_sync('alert.alert_source_clear_run', 'HasUpdate')
 
-        return bool(update)
+        return True
 
     @accepts(Str('path'))
     @job(lock='updatemanual', process=True)
-    def manual(self, job, path):
+    async def manual(self, job, path):
         """
         Apply manual update of file `path`.
         """
-        dest_extracted = os.path.join(os.path.dirname(path), '.update')
+
+        async def on_info(info):
+            job.set_progress(None, info)
+
         try:
-            try:
-                job.set_progress(30, 'Extracting file')
-                ExtractFrozenUpdate(path, dest_extracted, verbose=True)
-                job.set_progress(50, 'Applying update')
-                ApplyUpdate(dest_extracted)
-            except Exception as e:
-                self.logger.debug('Applying manual update failed', exc_info=True)
-                raise CallError(str(e), errno.EFAULT)
-
-            job.set_progress(95, 'Cleaning up')
-        finally:
-            if os.path.exists(path):
-                os.unlink(path)
-
-            if os.path.exists(dest_extracted):
-                shutil.rmtree(dest_extracted, ignore_errors=True)
+            async with Sysup() as sysup:
+                await sysup.update(filepath=path, on_info=on_info)
+        except SysupException as e:
+            raise CallError(str(e))
 
         if path.startswith(UPLOAD_LOCATION):
-            self.middleware.call_sync('update.destroy_upload_location')
+            await self.middleware.call('update.destroy_upload_location')
 
     @accepts(Dict(
         'updatefile',
@@ -575,7 +436,6 @@ class UpdateService(Service):
             raise CallError('Destination is not a directory')
 
         destfile = os.path.join(dest, 'manualupdate.tar')
-        dest_extracted = os.path.join(dest, '.update')
 
         try:
             job.set_progress(10, 'Writing uploaded file to disk')
@@ -584,25 +444,19 @@ class UpdateService(Service):
                     shutil.copyfileobj, job.pipes.input.r, f, 1048576,
                 )
 
-            def do_update():
-                try:
-                    job.set_progress(30, 'Extracting uploaded file')
-                    ExtractFrozenUpdate(destfile, dest_extracted, verbose=True)
-                    job.set_progress(50, 'Applying update')
-                    ApplyUpdate(dest_extracted)
-                except Exception as e:
-                    raise CallError(str(e))
+            async def on_info(info):
+                job.set_progress(None, info)
 
-            await self.middleware.run_in_thread(do_update)
+            async with Sysup() as sysup:
+                await sysup.update(filepath=destfile, on_info=on_info)
 
             job.set_progress(95, 'Cleaning up')
 
+        except SysupException as e:
+            raise CallError(str(e))
         finally:
             if os.path.exists(destfile):
                 os.unlink(destfile)
-
-            if os.path.exists(dest_extracted):
-                shutil.rmtree(dest_extracted, ignore_errors=True)
 
         if dest == '/var/tmp/firmware':
             await self.middleware.call('update.destroy_upload_location')
@@ -611,10 +465,19 @@ class UpdateService(Service):
 
     @private
     async def get_update_location(self):
-        syspath = (await self.middleware.call('systemdataset.config'))['path']
-        if syspath:
-            return f'{syspath}/update'
-        return UPLOAD_LOCATION
+        updatepath = '/update'
+        return updatepath
+        updateds = 'freenas-boot/update'
+        ds = await self.middleware.call('zfs.dataset.query', [('id', '=', updateds)])
+        if not ds:
+            await self.middleware.call('zfs.dataset.create', {
+                'name': updateds,
+                'properties': {
+                    'mountpoint': '/update',
+                }
+            })
+            await self.middleware.call('zfs.dataset.mount', updateds)
+        return updatepath
 
     @private
     def create_upload_location(self):
