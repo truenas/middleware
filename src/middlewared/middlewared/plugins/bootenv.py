@@ -67,7 +67,12 @@ class BootEnvService(CRUDService):
         """
         Activates boot environment `id`.
         """
-        return Update.ActivateClone(oid)
+        try:
+            subprocess.run(['beadm', 'activate', oid], capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as cpe:
+            raise CallError(f'Failed to activate BE: {cpe.stdout.strip()}')
+        else:
+            return True
 
     @item_method
     @accepts(
