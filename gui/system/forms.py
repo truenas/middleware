@@ -37,7 +37,6 @@ import subprocess
 import threading
 import time
 from collections import OrderedDict, defaultdict
-from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
@@ -53,7 +52,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ugettext as __
 from dojango import forms
 from formtools.wizard.views import SessionWizardView
-from freenasOS import Configuration, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_number_si, humanize_size, humansize_to_bytes
@@ -854,10 +852,6 @@ class InitialWizard(CommonWizard):
 
         for service in services_restart:
             _n.restart(service)
-
-        Update.CreateClone('Wizard-%s' % (
-            datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        ))
 
         progress['percent'] = 100
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
@@ -2473,12 +2467,6 @@ class UpdateForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.Update
-
-    def __init__(self, *args, **kwargs):
-        super(UpdateForm, self).__init__(*args, **kwargs)
-        self._conf = Configuration.Configuration()
-        self._conf.LoadTrainsConfig()
-        self.fields['curtrain'].initial = self._conf.CurrentTrain()
 
 
 class CertificateAuthorityEditForm(MiddlewareModelForm, ModelForm):

@@ -600,24 +600,6 @@ class Update(Model):
     class Meta:
         verbose_name = _('Update')
 
-    def get_train(self):
-        # FIXME: lazy import, why?
-        from freenasOS import Configuration
-        conf = Configuration.Configuration()
-        conf.LoadTrainsConfig()
-        trains = conf.AvailableTrains() or []
-        if trains:
-            trains = list(trains.keys())
-        if not self.upd_train or self.upd_train not in trains:
-            return conf.CurrentTrain()
-        return self.upd_train
-
-    def get_system_train(self):
-        from freenasOS import Configuration
-        conf = Configuration.Configuration()
-        conf.LoadTrainsConfig()
-        return conf.CurrentTrain()
-
 
 class CertificateBase(Model):
 
