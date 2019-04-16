@@ -202,7 +202,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/inadyn.conf'}
         ],
         'aliases': [
-            {'type': 'mako', 'path': 'aliases'}
+            {'type': 'mako', 'path': 'mail/aliases'}
         ],
         'ttys': [
             {'type': 'mako', 'path': 'ttys'},
