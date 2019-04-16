@@ -5,6 +5,7 @@ from middlewared.service import (
 from middlewared.utils import filter_list
 from middlewared.validators import Match
 
+from datetime import datetime
 from freenasOS import Update
 
 import errno
@@ -22,9 +23,42 @@ class BootEnvService(CRUDService):
         Query all Boot Environments with `query-filters` and `query-options`.
         """
         results = []
-        for clone in Update.ListClones():
-            clone['id'] = clone['name']
-            results.append(clone)
+
+        cp = subprocess.run(['beadm', 'list', '-H'], capture_output=True, text=True)
+        for line in cp.stdout.strip().split('\n'):
+            fields = line.split('\t')
+            name = fields[0]
+            if len(fields) > 5 and fields[5] != '-':
+                name = fields[5]
+            be = {
+                'realname': fields[0],
+                'name': name,
+                'active': fields[1],
+                'mountpoint': fields[2],
+                'space': fields[3],
+                'created': datetime.strptime(fields[4], '%Y-%m-%d %H:%M'),
+                'keep': None,
+                'rawspace': None
+            }
+
+            ds = self.middleware.call_sync('zfs.dataset.query', [('id', '=', fields[0])])
+            if ds:
+                ds = ds[0]
+                rawspace = 0
+                for i in ('usedbydataset', 'usedbyrefreservation', 'usedbysnapshots'):
+                    rawspace += ds['properties'][i]['parsed']
+                origin = ds['properties']['origin']['parsed']
+                if '@' in origin:
+                    snap = self.middleware.call_sync('zfs.snapshot.query', [('id', '=', origin)])
+                    if snap:
+                        snap = snap[0]
+                        rawspace += snap['properties']['used']['parsed']
+                if 'beadm:keep' in ds['properties']:
+                    if ds['properties']['beadm:keep'] == 'True':
+                        be['keep'] = True
+                    elif ds['properties']['beadm:keep'] == 'False':
+                        be['keep'] = False
+            results.append(be)
         return filter_list(results, filters, options)
 
     @item_method
