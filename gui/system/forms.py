@@ -712,10 +712,13 @@ class InitialWizard(CommonWizard):
                 )
         except Exception:
             for obj in reversed(model_objs):
-                if isinstance(obj, Volume):
-                    obj.delete(destroy=False, cascade=False)
-                else:
-                    obj.delete()
+                try:
+                    if isinstance(obj, Volume):
+                        obj.delete(destroy=False, cascade=False)
+                    else:
+                        obj.delete()
+                except Exception:
+                    log.warn('Failed to delete %r', obj, exc_info=True)
             raise
 
         if ds_form:
