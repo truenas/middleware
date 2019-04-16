@@ -41,7 +41,9 @@ class BootEnvService(CRUDService):
                 'rawspace': None
             }
 
-            ds = self.middleware.call_sync('zfs.dataset.query', [('id', '=', fields[0])])
+            ds = self.middleware.call_sync('zfs.dataset.query', [
+                ('id', '=', f'freenas-boot/ROOT/{fields[0]}'),
+            ])
             if ds:
                 ds = ds[0]
                 rawspace = 0
@@ -54,9 +56,9 @@ class BootEnvService(CRUDService):
                         snap = snap[0]
                         rawspace += snap['properties']['used']['parsed']
                 if 'beadm:keep' in ds['properties']:
-                    if ds['properties']['beadm:keep'] == 'True':
+                    if ds['properties']['beadm:keep']['value'] == 'True':
                         be['keep'] = True
-                    elif ds['properties']['beadm:keep'] == 'False':
+                    elif ds['properties']['beadm:keep']['value'] == 'False':
                         be['keep'] = False
             results.append(be)
         return filter_list(results, filters, options)
@@ -88,8 +90,15 @@ class BootEnvService(CRUDService):
 
         Currently only `keep` attribute is allowed.
         """
-        clone = Update.FindClone(oid)
-        return Update.CloneSetAttr(clone, **attrs)
+        dsname = f'freenas-boot/ROOT/{oid}'
+        ds = self.middleware.call_sync('zfs.dataset.query', [('id', '=', dsname)])
+        if not ds:
+            raise CallError(f'BE {oid!r} does not exist.', errno.ENOENT)
+        ds = ds[0]
+        self.middleware.call_sync('zfs.dataset.update', dsname, {
+            'properties': {'beadm:keep': {'value': str(attrs['keep'])}},
+        })
+        return True
 
     @accepts(Dict(
         'bootenv_create',
