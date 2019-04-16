@@ -2,7 +2,7 @@ from middlewared.schema import Bool, Dict, Str, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job
 )
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, run
 from middlewared.validators import Match
 
 from datetime import datetime
@@ -31,6 +31,7 @@ class BootEnvService(CRUDService):
             if len(fields) > 5 and fields[5] != '-':
                 name = fields[5]
             be = {
+                'id': fields[0],
                 'realname': fields[0],
                 'name': name,
                 'active': fields[1],
@@ -132,18 +133,20 @@ class BootEnvService(CRUDService):
         'bootenv_update',
         Str('name', required=True, validators=[Match(RE_BE_NAME)]),
     ))
-    def do_update(self, oid, data):
+    async def do_update(self, oid, data):
         """
         Update `id` boot environment name with a new provided valid `name`.
         """
+        be = await self._get_instance(oid)
 
         verrors = ValidationErrors()
         self._clean_be_name(verrors, 'bootenv_update', data['name'])
-        if verrors:
-            raise verrors
+        verrors.check()
 
-        if not Update.RenameClone(oid, data['name']):
-            raise CallError('Failed to update boot environment')
+        try:
+            await run('beadm', 'rename', oid, data['name'], encoding='utf8', check=True)
+        except subprocess.CalledProcessError as cpe:
+            raise CallError(f'Failed to update boot environment: {cpe.stdout}')
         return data['name']
 
     def _clean_be_name(self, verrors, schema, name):
