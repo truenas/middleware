@@ -20,7 +20,7 @@ class QuotaWarningAlertClass(AlertClass):
     text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
 
 
-class CriticalQuotaAlertClass(AlertClass):
+class QuotaCriticalAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.CRITICAL
     title = "Critical Quota Exceeded on Dataset"
@@ -79,9 +79,9 @@ class QuotaAlertSource(ThreadedAlertSource):
                 critical_threshold = dataset[f"org.freenas:{quota_property}_critical"]
                 warning_threshold = dataset[f"org.freenas:{quota_property}_warning"]
                 if critical_threshold != 0 and used_fraction >= critical_threshold:
-                    klass = CriticalQuotaAlertClass
+                    klass = QuotaCriticalAlertClass
                 elif warning_threshold != 0 and used_fraction >= warning_threshold:
-                    klass = QuotaAlertSource
+                    klass = QuotaWarningAlertClass
                 else:
                     continue
 
