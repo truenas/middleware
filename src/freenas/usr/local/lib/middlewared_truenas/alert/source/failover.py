@@ -14,7 +14,7 @@ from freenasUI.failover.enc_helper import LocalEscrowCtl
 from freenasUI.failover.notifier import INTERNAL_IFACE_NF
 from freenasUI.middleware.notifier import notifier
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
 from middlewared.service_exception import CallError
 
 FAILOVER_JSON = '/tmp/failover.json'
@@ -121,6 +121,14 @@ class FailoverlertSource(ThreadedAlertSource):
         try:
             self.middleware.call_sync('failover.call_remote', 'core.ping')
 
+            local_version = self.middleware.call_sync('system.version')
+            remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
+            if local_version != remote_version:
+                return [Alert(TrueNASVersionsMismatchAlertClass)]
+
+            if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
+                raise UnavailableException()
+
             local = self.middleware.call_sync('failover.get_carp_states')
             remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
 
@@ -130,11 +138,6 @@ class FailoverlertSource(ThreadedAlertSource):
                     CARPStatesDoNotAgreeAlertClass,
                     {"error": error},
                 ))
-
-            local_version = self.middleware.call_sync('system.version')
-            remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
-            if local_version != remote_version:
-                return [Alert(TrueNASVersionsMismatchAlertClass)]
 
         except CallError as e:
             try:
