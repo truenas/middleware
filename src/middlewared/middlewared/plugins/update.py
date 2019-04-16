@@ -101,7 +101,7 @@ class Sysup(object):
             except Exception:
                 break
 
-    async def _send_receive(self, method, data=None, on_info=None):
+    async def _send_receive(self, method, data=None, end_method=None, on_info=None):
         payload = {'method': method}
         if data:
             payload.update(data)
@@ -119,7 +119,7 @@ class Sysup(object):
             if on_info and data['method'] == 'info':
                 await on_info(data['info'])
 
-            if data['method'] == method:
+            if data['method'] == (end_method or method):
                 break
         return data
 
@@ -136,7 +136,7 @@ class Sysup(object):
         data = {}
         if cachedir:
             data['cachedir'] = cachedir
-        return await self._send_receive('update', data=data, on_info=on_info)
+        return await self._send_receive('update', end_method='shutdown', data=data, on_info=on_info)
 
     async def __aexit__(self, typ, value, traceback):
         await self.ws.close()
@@ -302,7 +302,7 @@ class UpdateService(Service):
         Bool('reboot', default=False),
         required=False,
     ))
-    @job(lock='update', process=True)
+    @job(lock='update')
     async def update(self, job, attrs):
         """
         Downloads (if not already in cache) and apply an update.
