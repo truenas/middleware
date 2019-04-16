@@ -9,15 +9,15 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class DisksAreNotPresentOnBackupNodeAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Disks Are not Present on Backup Node"
-    text = "The following disks are not present on backup node: %(disks)s."
+    title = "Disks Missing on Passive Storage Controller"
+    text = "Disks %(disks)s present on active storage controller but missing on passive storage controller."
 
 
 class DisksAreNotPresentOnMasterNodeAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Disks Are not Present on Master Node"
-    text = "The following disks are not present on master node: %(disks)s."
+    title = "Disks Missing on Active Storage Controller"
+    text = "Disks %(disks)s present on passive storage controller but missing on active storage controller."
 
 
 class FailoverDisksAlertSource(AlertSource):
