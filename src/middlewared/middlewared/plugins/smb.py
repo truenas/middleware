@@ -251,7 +251,7 @@ class SMBService(SystemServiceService):
         Bool('domain_logons'),
         Bool('timeserver'),
         Str('guest'),
-        Str('admin_group'),
+        Str('admin_group', required=False, default=None, null=True),
         Str('filemask'),
         Str('dirmask'),
         Bool('nullpw'),
