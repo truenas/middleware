@@ -6,7 +6,6 @@ from middlewared.utils import filter_list, run
 from middlewared.validators import Match
 
 from datetime import datetime
-from freenasOS import Update
 
 import errno
 import subprocess
@@ -116,7 +115,7 @@ class BootEnvService(CRUDService):
         Ensure that `name` and `source` are valid boot environment names.
         """
         verrors = ValidationErrors()
-        self._clean_be_name(verrors, 'bootenv_create', data['name'])
+        await self._clean_be_name(verrors, 'bootenv_create', data['name'])
         verrors.check()
 
         args = ['beadm', 'create']
@@ -141,7 +140,7 @@ class BootEnvService(CRUDService):
         be = await self._get_instance(oid)
 
         verrors = ValidationErrors()
-        self._clean_be_name(verrors, 'bootenv_update', data['name'])
+        await self._clean_be_name(verrors, 'bootenv_update', data['name'])
         verrors.check()
 
         try:
@@ -150,21 +149,24 @@ class BootEnvService(CRUDService):
             raise CallError(f'Failed to update boot environment: {cpe.stdout}')
         return data['name']
 
-    def _clean_be_name(self, verrors, schema, name):
-        beadm_names = subprocess.Popen(
+    async def _clean_be_name(self, verrors, schema, name):
+        beadm_names = await run(
             "beadm list | awk '{print $7}'",
             shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             encoding='utf8',
-        ).communicate()[0].split('\n')
+        ).stdout.split('\n')
         if name in filter(None, beadm_names):
             verrors.add(f'{schema}.name', f'The name "{name}" already exists', errno.EEXIST)
 
     @accepts(Str('id'))
     @job(lock=lambda args: f'bootenv_delete_{args[0]}')
-    def do_delete(self, job, oid):
+    async def do_delete(self, job, oid):
         """
         Delete `id` boot environment. This removes the clone from the system.
         """
-        return Update.DeleteClone(oid)
+        be = await self._get_instance(oid)
+        try:
+            await run('beadm', 'destroy', '-F', be['id'], encoding='utf8', check=True)
+        except subprocess.CalledProcessError as cpe:
+            raise CallError(f'Failed to delete boot environment: {cpe.stdout}')
+        return True
