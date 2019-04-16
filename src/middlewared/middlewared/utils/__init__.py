@@ -298,7 +298,7 @@ def sw_buildtime():
         cp = subprocess.run([
             'pkg', 'info',
             '-R', '--raw-format', 'json',
-            'userland',
+            'freenas',
         ], capture_output=True, text=True)
         if cp.returncode == 0:
             try:
