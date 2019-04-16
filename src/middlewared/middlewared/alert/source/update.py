@@ -1,15 +1,8 @@
 from datetime import timedelta
-import os
-import json
 import logging
 
-from freenasOS.Update import PendingUpdates
-from freenasUI.system.utils import is_update_applied
-
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, FilePresenceAlertSource, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, FilePresenceAlertSource, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-
-UPDATE_APPLIED_SENTINEL = "/tmp/.updateapplied"
 
 log = logging.getLogger("update_check_alertmod")
 
@@ -33,46 +26,27 @@ class HasUpdateAlertSource(ThreadedAlertSource):
                 "upd_train": "",
             })
 
-        path = self.middleware.call_sync("update.get_update_location")
-        if not path:
-            return
-
-        try:
-            updates = PendingUpdates(path)
-        except Exception:
-            updates = None
-
-        if updates:
+        if self.middleware.call_sync("update.get_pending"):
             return Alert(HasUpdateAlertClass)
 
 
 class UpdateNotAppliedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "Update Not Applied"
-    text = "%s"
+    title = "Update Applied Pending Reboot"
+    text = "Update has been applied but is pending a reboot."
 
 
-class UpdateNotAppliedAlertSource(ThreadedAlertSource):
+class UpdateNotAppliedAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
 
-    def check_sync(self):
-        if os.path.exists(UPDATE_APPLIED_SENTINEL):
-            try:
-                with open(UPDATE_APPLIED_SENTINEL, "rb") as f:
-                    data = json.loads(f.read().decode("utf8"))
-            except Exception:
-                log.error(
-                    "Could not load UPDATE APPLIED SENTINEL located at {0}".format(
-                        UPDATE_APPLIED_SENTINEL
-                    ),
-                    exc_info=True
-                )
-                return
-
-            update_applied, msg = is_update_applied(data["update_version"], create_alert=False)
-            if update_applied:
-                return Alert(UpdateNotAppliedAlertClass, msg)
+    async def check(self):
+        try:
+            applied = await self.middleware.call('cache.get', 'update.applied')
+        except KeyError:
+            return
+        if applied is True:
+            return Alert(UpdateNotAppliedAlertClass)
 
 
 class UpdateFailedAlertClass(AlertClass):
