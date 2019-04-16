@@ -106,7 +106,7 @@ class BootEnvService(CRUDService):
         Str('name', required=True, validators=[Match(RE_BE_NAME)]),
         Str('source'),
     ))
-    def do_create(self, data):
+    async def do_create(self, data):
         """
         Create a new boot environment using `name`.
 
@@ -117,16 +117,17 @@ class BootEnvService(CRUDService):
         """
         verrors = ValidationErrors()
         self._clean_be_name(verrors, 'bootenv_create', data['name'])
-        if verrors:
-            raise verrors
+        verrors.check()
 
-        kwargs = {}
+        args = ['beadm', 'create']
         source = data.get('source')
         if source:
-            kwargs['bename'] = source
-        clone = Update.CreateClone(data['name'], **kwargs)
-        if clone is False:
-            raise CallError('Failed to create boot environment')
+            args += ['-e', source]
+        args.append(data['name'])
+        try:
+            await run(args, encoding='utf8', check=True)
+        except subprocess.CalledProcessError as cpe:
+            raise CallError(f'Failed to create boot environment: {cpe.stdout}')
         return data['name']
 
     @accepts(Str('id'), Dict(
