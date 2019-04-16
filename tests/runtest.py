@@ -139,7 +139,7 @@ def get_tests():
     rv = []
     ev = []
     skip_tests = ['volume']
-    apidir = 'api/'
+    apidir = 'api2/'
     rv = ['interfaces', 'network', 'ssh', 'pool']
     ev = ['update', 'delete_interfaces']
     for filename in listdir(apidir):
@@ -157,7 +157,7 @@ for i in get_tests():
     call(["py.test-3.6", "-v", "--junitxml",
           f"{results_xml}{i}_tests_result.xml"] + (
               ["-k", testexpr] if testexpr else []
-    ) + [f"api/{i}.py"])
+    ) + [f"api2/{i}.py"])
 
 # get useful logs
 artifacts = f"{workdir}/artifacts/"
