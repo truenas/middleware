@@ -30,10 +30,8 @@ import os
 import re
 import requests
 import sqlite3
-import subprocess
 import time
 from datetime import datetime, timedelta
-from django.utils.translation import ugettext_lazy as _
 from .log import log_traceback
 
 from freenasUI.middleware.client import client
@@ -48,23 +46,14 @@ log = logging.getLogger("common.system")
 
 def get_sw_version(strip_build_num=False):
     """Return the full version string, e.g. FreeNAS-8.1-r7794-amd64."""
-    try:
-        from freenasOS import Configuration
-    except ImportError:
-        Configuration = None
-
     global _VERSION
 
     if _VERSION is None:
-        # See #9113
-        if Configuration:
-            conf = Configuration.Configuration()
-            sys_mani = conf.SystemManifest()
-            if sys_mani:
-                _VERSION = sys_mani.Sequence()
-        if _VERSION is None:
-            with open(VERSION_FILE) as fd:
-                _VERSION = fd.read().strip()
+        try:
+            with client as c:
+                _VERSION = c.call('system.version')
+        except Exception:
+            pass
     if strip_build_num:
         return _VERSION.split(' ')[0]
     return _VERSION

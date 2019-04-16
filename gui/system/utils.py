@@ -33,7 +33,6 @@ from django.contrib.auth import login, get_backends
 from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
-from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.middleware.client import client
 from freenasUI.middleware.util import run_alerts
@@ -41,31 +40,6 @@ from freenasUI.middleware.util import run_alerts
 log = logging.getLogger('system.utils')
 
 UPDATE_APPLIED_SENTINEL = '/tmp/.updateapplied'
-
-
-def is_update_applied(update_version, create_alert=True):
-    active_be_msg = 'Please reboot the system to activate this update.'
-    # TODO: The below boot env name should really be obtained from the update code
-    # for now we just duplicate that code here
-    if update_version.startswith(Update.Avatar() + "-"):
-        update_boot_env = update_version[len(Update.Avatar() + "-"):]
-    else:
-        update_boot_env = "%s-%s" % (Update.Avatar(), update_version)
-
-    found = False
-    msg = ''
-    for clone in Update.ListClones():
-        if clone['realname'] == update_boot_env:
-            if clone['active'] != 'R':
-                active_be_msg = 'Please activate {0} via'.format(update_boot_env) + \
-                                ' the Boot Environment Tab and Reboot to use this updated version.'
-            msg = 'Update: {0} has already been applied. {1}'.format(update_version, active_be_msg)
-            found = True
-            if create_alert:
-                create_update_alert(update_version)
-            break
-
-    return (found, msg)
 
 
 def create_update_alert(update_version):

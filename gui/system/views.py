@@ -53,7 +53,6 @@ from django.shortcuts import render, render_to_response
 from django.utils.translation import ugettext as _, ungettext
 from django.views.decorators.cache import never_cache
 
-from freenasOS import Configuration
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
@@ -69,7 +68,6 @@ from freenasUI.storage.models import Volume
 from freenasUI.system import forms, models
 from freenasUI.system.utils import (
     UpdateHandler,
-    VerifyHandler,
     factory_restore,
 )
 
@@ -1270,19 +1268,6 @@ def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
 
 
-def update_index(request):
-
-    try:
-        update = models.Update.objects.order_by('-id')[0]
-    except IndexError:
-        update = models.Update.objects.create()
-
-    return render(request, 'system/update_index.html', {
-        'update': update,
-        'updateserver': Configuration.Configuration().UpdateServerURL(),
-    })
-
-
 def update_save(request):
 
     assert request.method == 'POST'
@@ -1339,58 +1324,6 @@ def update_progress(request):
         load = UpdateHandler().load()
     return HttpResponse(
         json.dumps(load),
-        content_type='application/json',
-    )
-
-
-def update_verify(request):
-    if request.method == 'POST':
-        handler = VerifyHandler()
-        try:
-            log.debug("Starting VerifyUpdate")
-            error_flag, ed, warn_flag, wl = Configuration.do_verify(handler.verify_handler)
-        except Exception as e:
-            log.debug("VerifyUpdate Exception ApplyUpdate: %s" % e)
-            handler.error = str(e)
-        handler.finished = True
-        handler.dump()
-        log.debug("VerifyUpdate finished!")
-        if handler.error is not False:
-            handler.exit()
-            raise MiddlewareError(handler.error)
-        handler.exit()
-        if error_flag or warn_flag:
-            checksums = None
-            wrongtype = None
-            notfound = None
-            perms = None
-            if ed['checksum']:
-                checksums = ed['checksum']
-            if ed['notfound']:
-                notfound = ed['notfound']
-            if ed['wrongtype']:
-                wrongtype = ed['wrongtype']
-            if warn_flag:
-                perms = wl
-            return render(request, 'system/update_verify.html', {
-                'error': True,
-                'checksums': checksums,
-                'notfound': notfound,
-                'wrongtype': wrongtype,
-                'perms': perms,
-            })
-        else:
-            return render(request, 'system/update_verify.html', {
-                'success': True,
-            })
-    else:
-        return render(request, 'system/update_verify.html')
-
-
-def verify_progress(request):
-    handler = VerifyHandler()
-    return HttpResponse(
-        json.dumps(handler.load()),
         content_type='application/json',
     )
 
