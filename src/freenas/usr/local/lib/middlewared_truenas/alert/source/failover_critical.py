@@ -16,36 +16,36 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class CriticalFailoverInterfaceNotFoundAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Interface Is Critical for Failover but Was not Found In the System"
-    text = "Interface %r is critical for failover but was not found in the system."
+    title = "Interface Is Critical for Failover but Is Not Present"
+    text = "Interface %r is critical for failover but is not present in this system."
 
 
 class CriticalFailoverInterfaceCARPNotConfiguredAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Interface Is Critical for Failover but CARP Is not Configured"
-    text = "Interface %r is critical for failover CARP is not configured."
+    title = "Interface Is Critical for Failover but Does Not Have a CARP VHID"
+    text = "Interface %r is critical for failover but does not have a CARP virtual host ID (vhid)."
 
 
 class CriticalFailoverInterfaceCARPInvalidStateAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Interface Is Critical for Failover but CARP Is not In a Valid State"
-    text = "Interface %r is critical for failover CARP is not in a valid state."
+    title = "Interface Is Critical for Failover but CARP State Is Not Master or Backup"
+    text = "Interface %r is critical for failover but CARP is not in a master or backup state."
 
 
 class CriticalFailoverInterfaceInvalidVHIDAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Interface Is Configured With Mismatching VHID"
-    text = "Interface %(interface)r is configured with VHID %(vhid_real)d as opposed to %(vhid)d."
+    title = "Interface VHID Does Not Match Database"
+    text = "Interface %(interface)r is configured with VHID %(vhid_real)d but should be VHID %(vhid)d."
 
 
 class FailedToVerifyCriticalFailoverInterfaceAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Failed to Verify Interface by Contacting the Passive Node"
-    text = "Failed to verify interface %r by contacting the passive node."
+    title = "Cannot Ping the Passive Storage Controller from the Active Storage Controller"
+    text = "Failed to ping passive storage controller interface %r from the active storage controller."
 
 
 class FailoverCriticalAlertSource(ThreadedAlertSource):
