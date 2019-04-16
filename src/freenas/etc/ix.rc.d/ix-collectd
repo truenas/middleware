@@ -68,6 +68,9 @@ get_rrd_dataset()
 
 generate_collectd()
 {
+    cfg="/usr/local/etc/collectd.conf"
+    rm $cfg
+
     local datadir
     local rrdmnt
     local hostname
@@ -181,7 +184,6 @@ generate_collectd()
         aggregation_plugin_cpu_type="percent"
     fi
 
-    cfg="/usr/local/etc/collectd.conf"
     cat << EOF > $cfg
 Hostname "${hostname}"
 FQDNLookup true
