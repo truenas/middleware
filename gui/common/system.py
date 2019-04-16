@@ -53,7 +53,8 @@ def get_sw_version(strip_build_num=False):
             with client as c:
                 _VERSION = c.call('system.version')
         except Exception:
-            pass
+            from middlewared.utils import sw_version
+            _VERSION = sw_version()
     if strip_build_num:
         return _VERSION.split(' ')[0]
     return _VERSION
