@@ -2453,7 +2453,7 @@ class Dataset_Destroy(CommonDatasetDestroy, Form):
                 label=label)
 
 
-class ZvolDestroyForm(Form, CommonDatasetDestroy):
+class ZvolDestroyForm(CommonDatasetDestroy, Form):
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
         super(ZvolDestroyForm, self).__init__(*args, **kwargs)
