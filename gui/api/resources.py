@@ -41,7 +41,6 @@ from django.http import HttpResponse, QueryDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
-from freenasOS import Configuration, Update, Train
 from freenasUI import choices
 from freenasUI.account.forms import (
     bsdUsersForm,
@@ -110,7 +109,6 @@ from freenasUI.storage.forms import (
 )
 from freenasUI.storage.models import Disk
 from freenasUI.system.forms import (
-    BootEnvAddForm,
     BootEnvRenameForm,
     CertificateAuthorityCreateInternalForm,
     CertificateAuthorityCreateIntermediateForm,
@@ -124,7 +122,6 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import BootEnv, factory_restore
 from freenasUI.system.views import restart_httpd, restart_httpd_all
 from middlewared.client import ClientException
@@ -3531,111 +3528,6 @@ class BootEnvResource(NestedMixin, DojoResource):
             form.save()
         return HttpResponse('Boot Environment has been renamed.', status=202)
 
-    def get_list(self, request, **kwargs):
-        results = []
-        for clone in Update.ListClones():
-            results.append(BootEnv(**clone))
-
-        for sfield in self._apply_sorting(request.GET):
-            if sfield.startswith('-'):
-                field = sfield[1:]
-                reverse = True
-            else:
-                field = sfield
-                reverse = False
-            results.sort(
-                key=lambda item: getattr(item, field),
-                reverse=reverse)
-        paginator = self._meta.paginator_class(
-            request,
-            results,
-            resource_uri=self.get_resource_uri(),
-            limit=self._meta.limit,
-            max_limit=self._meta.max_limit,
-            collection_name=self._meta.collection_name,
-        )
-        to_be_serialized = paginator.page()
-        # Dehydrate the bundles in preparation for serialization.
-        bundles = []
-
-        for obj in to_be_serialized[self._meta.collection_name]:
-            bundle = self.build_bundle(obj=obj, request=request)
-            bundles.append(self.full_dehydrate(bundle))
-
-        length = len(bundles)
-        to_be_serialized[self._meta.collection_name] = bundles
-        to_be_serialized = self.alter_list_data_to_serialize(
-            request,
-            to_be_serialized
-        )
-        response = self.create_response(request, to_be_serialized)
-        response['Content-Range'] = 'items %d-%d/%d' % (
-            paginator.offset,
-            paginator.offset + length - 1,
-            len(results)
-        )
-        return response
-
-    def post_list(self, request, **kwargs):
-        deserialized = self.deserialize(
-            request,
-            request.body,
-            format=request.META.get('CONTENT_TYPE', 'application/json')
-        )
-
-        form = BootEnvAddForm(
-            data=deserialized,
-            source=deserialized.get('source'),
-        )
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, form.errors)
-            )
-        else:
-            form.save()
-
-        obj = None
-        for clone in Update.ListClones():
-            if clone['name'] == deserialized.get('name'):
-                obj = BootEnv(**clone)
-                break
-
-        if obj is None:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error_message': 'Boot Evionment not found!',
-                })
-            )
-        bundle = self.full_dehydrate(
-            self.build_bundle(obj=obj, request=request)
-        )
-        return self.create_response(
-            request,
-            bundle,
-            response_class=HttpCreated,
-        )
-
-    def obj_delete(self, bundle, **kwargs):
-        delete = Update.DeleteClone(kwargs.get('pk'))
-        if delete is False:
-            raise ImmediateHttpResponse(
-                response=self.error_response(
-                    bundle.request,
-                    'Failed to delete Boot Environment.',
-                )
-            )
-        return HttpResponse(status=204)
-
-    def obj_get(self, bundle, **kwargs):
-        obj = None
-        for clone in Update.ListClones():
-            if clone['name'] == kwargs.get('pk'):
-                obj = BootEnv(**clone)
-                break
-        if obj is None:
-            raise NotFound("Boot Environment not found")
-        return obj
-
     def dehydrate(self, bundle):
         if self.is_webclient(bundle.request):
             bundle.data['_add_url'] = reverse('system_bootenv_add', kwargs={
@@ -3758,79 +3650,6 @@ class UpdateResourceMixin(NestedMixin):
                     data = s.update_pending()
             else:
                 data = c.call('update.get_pending')
-
-        return self.create_response(
-            request,
-            data,
-        )
-
-    def update(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-        self.is_authenticated(request)
-
-        try:
-            updateobj = mUpdate.objects.order_by('-id')[0]
-        except IndexError:
-            updateobj = mUpdate.objects.create()
-
-        if request.body:
-            deserialized = self.deserialize(
-                request,
-                request.body,
-                format=request.META.get('CONTENT_TYPE', 'application/json'),
-            )
-        else:
-            deserialized = {}
-
-        train = deserialized.get('train') or updateobj.get_train()
-        cache = notifier().get_update_location()
-
-        download = None
-        updated = None
-
-        try:
-            download = Update.DownloadUpdate(train, cache)
-            updated = Update.ApplyUpdate(cache)
-        except Exception as e:
-            return self.error_response(request, str(e))
-
-        if not download:
-            return self.error_response(request, 'No update available.')
-
-        if updated is not None:
-            return self.create_response(request, 'Successfully updated.')
-        else:
-            return self.error_response(request, 'Update failed.')
-
-    def trains(self, request, **kwargs):
-        self.method_check(request, allowed=['get'])
-        self.is_authenticated(request)
-
-        try:
-            update = mUpdate.objects.order_by('-id')[0]
-        except IndexError:
-            update = mUpdate.objects.create()
-
-        conf = Configuration.Configuration()
-        conf.LoadTrainsConfig()
-        trains = conf.AvailableTrains() or []
-        if trains:
-            trains = list(filter(lambda x: not x.lower().startswith('freenas-corral'), trains.keys()))
-
-        seltrain = update.get_train()
-        if seltrain in conf._trains:
-            seltrain = conf._trains.get(seltrain)
-        else:
-            seltrain = Train.Train(seltrain)
-
-        data = {
-            'trains': trains,
-            'selected_train': {
-                'name': seltrain.Name(),
-                'descr': seltrain.Description(),
-                'sequence': seltrain.LastSequence(),
-            },
-        }
 
         return self.create_response(
             request,
