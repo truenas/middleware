@@ -3,11 +3,12 @@ import ctypes
 import ctypes.util
 import imp
 import inspect
+import json
+import logging
 import os
 import pwd
 import queue
 import re
-import sys
 import subprocess
 import threading
 from datetime import datetime, timedelta
@@ -18,10 +19,7 @@ from threading import Lock
 
 from middlewared.schema import Schemas
 
-# For freenasOS
-if '/usr/local/lib' not in sys.path:
-    sys.path.append('/usr/local/lib')
-
+logger = logging.getLogger('middlewared.utils')
 BUILDTIME = None
 VERSION = None
 VERSION_FILE = '/etc/version'
@@ -347,14 +345,22 @@ def filter_getattrs(filters):
 
 
 def sw_buildtime():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
     global BUILDTIME
     if BUILDTIME is None:
-        conf = Configuration.Configuration()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            BUILDTIME = sys_mani.TimeStamp()
+        cp = subprocess.run([
+            'pkg', 'info',
+            '-R', '--raw-format', 'json',
+            'userland',
+        ], capture_output=True, text=True)
+        if cp.returncode == 0:
+            try:
+                info = json.loads(cp.stdout)
+            except Exception:
+                logger.warn('Error loading pkg info json', exc_info=True)
+            else:
+                annotations = info.get('annotations')
+                if annotations and 'buildepochtime' in annotations:
+                    BUILDTIME = int(annotations['buildepochtime'])
     return BUILDTIME
 
 
