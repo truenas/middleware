@@ -579,7 +579,7 @@ class UpdateService(Service):
         syspath = (await self.middleware.call('systemdataset.config'))['path']
         if syspath:
             return f'{syspath}/update'
-        return '/var/tmp/update'
+        return UPLOAD_LOCATION
 
     @private
     def create_upload_location(self):
