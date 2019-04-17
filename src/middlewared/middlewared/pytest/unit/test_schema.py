@@ -459,7 +459,44 @@ def test__schema_cron_values(value, expected):
         with pytest.raises(ValidationErrors):
             cronv(self, value)
     else:
-        assert cronv(self, value) == expected
+        result = {k: v for k, v in cronv(self, value).items() if k in expected}
+        assert result == expected
+
+
+@pytest.mark.parametrize("data_dict,begin_end,result", [
+    (
+        {"cron_minute": "00", "cron_hour": "01", "cron_daymonth": "02", "cron_month": "03", "cron_dayweek": "04"},
+        False,
+        {"schedule": {"minute": "00", "hour": "01", "dom": "02", "month": "03", "dow": "04"}},
+    ),
+    (
+        {"cron_minute": "00", "cron_hour": None, "cron_daymonth": "02", "cron_month": "03", "cron_dayweek": "04"},
+        False,
+        {"schedule": None},
+    ),
+    (
+        {"cron_minute": "00", "cron_hour": "01", "cron_daymonth": "02", "cron_month": "03", "cron_dayweek": "04",
+         "cron_begin": "05:00:00", "cron_end": "06:00:00"},
+        True,
+        {"schedule": {"minute": "00", "hour": "01", "dom": "02", "month": "03", "dow": "04",
+                      "begin": "05:00", "end": "06:00"}},
+    ),
+    (
+        {"cron_minute": "00", "cron_hour": None, "cron_daymonth": "02", "cron_month": "03", "cron_dayweek": "04",
+         "cron_begin": "05:00:00", "cron_end": "06:00:00"},
+        True,
+        {"schedule": None},
+    ),
+    (
+        {"cron_minute": "00", "cron_hour": "01", "cron_daymonth": "02", "cron_month": "03", "cron_dayweek": "04",
+         "cron_begin": "05:00:00", "cron_end": None},
+        True,
+        {"schedule": None},
+    ),
+])
+def test__cron__convert_db_format_to_schedule(data_dict, begin_end, result):
+    Cron.convert_db_format_to_schedule(data_dict, "schedule", "cron_", begin_end)
+    assert data_dict == result
 
 
 @pytest.mark.parametrize("value,expected", [
