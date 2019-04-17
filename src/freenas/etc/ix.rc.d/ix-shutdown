@@ -34,10 +34,10 @@ do_shutdown()
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
+	/usr/local/bin/midclt call core.event_send system ADDED '{"id": "shutting-down"}' > /dev/null
+
 	execute_task "command"
 	execute_task "script"
-
-	/usr/local/bin/midclt call core.event_send system ADDED '{"id": "shutting-down"}' > /dev/null
 }
 
 name="ix-shutdown"
