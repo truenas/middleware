@@ -618,6 +618,7 @@ class UpdateService(Service):
 
         shutil.chown(UPLOAD_LOCATION, 'www', 'www')
         os.chmod(UPLOAD_LOCATION, 0o755)
+        return UPLOAD_LOCATION
 
     @private
     def destroy_upload_location(self):
