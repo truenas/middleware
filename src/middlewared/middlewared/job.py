@@ -213,7 +213,8 @@ class Job(object):
     Represents a long running call, methods marked with @job decorator
     """
 
-    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes):
+    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes,
+                 on_progress_cb=None):
         self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
@@ -230,6 +231,7 @@ class Job(object):
         self.exception = None
         self.exc_info = None
         self.state = State.WAITING
+        self.on_progress_cb = on_progress_cb
         self.progress = {
             'percent': None,
             'description': None,
@@ -294,7 +296,13 @@ class Job(object):
             self.progress['description'] = description
         if extra:
             self.progress['extra'] = extra
-        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+        encoded = self.__encode__()
+        if self.on_progress_cb:
+            try:
+                self.on_progress_cb(encoded)
+            except Exception:
+                logger.warn('Failed to run on progress callback', exc_info=True)
+        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=encoded)
 
     async def wait(self, timeout=None):
         if timeout is None:
