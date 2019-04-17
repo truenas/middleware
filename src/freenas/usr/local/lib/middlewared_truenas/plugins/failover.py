@@ -1,19 +1,25 @@
 import asyncio
 import base64
 import errno
+import json
 from lockfile import LockFile
 import netif
 import os
+import requests
+import shutil
 import socket
 import subprocess
 import sys
+import textwrap
+import time
 
 from collections import defaultdict
+from functools import partial
 
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import (
-    no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
+    job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.utils import run
@@ -43,6 +49,36 @@ def throttle_condition(middleware, app, *args, **kwargs):
     if app is None or (app and app.authenticated):
         return True, 'AUTHENTICATED'
     return False, None
+
+
+class RemoteClient(object):
+
+    def __init__(self, remote_ip):
+        self.remote_ip = remote_ip
+
+    def __enter__(self):
+        # 860 is the iSCSI port and blocked by the failover script
+        try:
+            self.client = Client(
+                f'ws://{self.remote_ip}:6000/websocket',
+                reserved_ports=True, reserved_ports_blacklist=[860],
+            )
+        except ConnectionRefusedError:
+            raise CallError('Connection refused', errno.ECONNREFUSED)
+        except OSError as e:
+            if e.errno in (
+                errno.EHOSTDOWN, errno.ENETUNREACH, errno.EHOSTUNREACH
+            ) or isinstance(e, socket.timeout):
+                raise CallError('Standby node is down', errno.EHOSTDOWN)
+            raise
+        return self.client
+
+    def __exit__(self, typ, value, traceback):
+        self.client.close()
+        if typ is None:
+            return
+        if typ is ClientException:
+            raise CallError(str(value), value.errno)
 
 
 class FailoverService(ConfigService):
@@ -451,18 +487,8 @@ class FailoverService(ConfigService):
     def call_remote(self, method, args, options=None):
         options = options or {}
         remote = self.remote_ip()
-        try:
-            # 860 is the iSCSI port and blocked by the failover script
-            with Client(f'ws://{remote}:6000/websocket', reserved_ports=True, reserved_ports_blacklist=[860]) as c:
-                return c.call(method, *args, **options)
-        except ConnectionRefusedError:
-            raise CallError('Connection refused', errno.ECONNREFUSED)
-        except OSError as e:
-            if e.errno in (errno.EHOSTDOWN, errno.ENETUNREACH, errno.EHOSTUNREACH) or isinstance(e, socket.timeout):
-                raise CallError('Standby node is down', errno.EHOSTDOWN)
-            raise
-        except ClientException as e:
-            raise CallError(str(e), e.errno)
+        with RemoteClient(remote) as c:
+            return c.call(method, *args, **options)
 
     @private
     @accepts()
@@ -532,6 +558,257 @@ class FailoverService(ConfigService):
             if restore:
                 j.queries = []
         return restore
+
+    @private
+    def upgrade_version(self):
+        return 1
+
+    @accepts()
+    @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
+    def upgrade(self, job):
+        """
+        Upgrades both controllers.
+
+        Files will be downloaded in the Active Controller and then transferred to the Standby
+        Controller.
+
+        Upgrade process will start concurrently on both nodes.
+
+        Once both upgrades are applied the Standby Controller will reboot and this job will wait for it
+        to complete the boot process, finalizing this job.
+        """
+
+        if self.middleware.call_sync('failover.status') != 'MASTER':
+            raise CallError('Upgrade can only run on Active Controller.')
+
+        try:
+            job.check_pipe('input')
+        except ValueError:
+            updatefile = False
+        else:
+            updatefile = True
+
+        local_path = self.middleware.call_sync('update.get_update_location')
+
+        if updatefile:
+            updatefile_name = 'updatefile.tar'
+            job.set_progress(None, 'Uploading update file')
+            updatefile_localpath = os.path.join(local_path, updatefile_name)
+            with open(updatefile_localpath, 'wb') as f:
+                shutil.copyfileobj(job.pipes.input.r, f, 1048576)
+        else:
+            def download_callback(j):
+                job.set_progress(None, j['progress']['description'] or 'Downloading upgrade files')
+
+            # Download update first so we can transfer it to the other node.
+            djob = self.middleware.call_sync('update.download', job_on_progress_cb=download_callback)
+            djob.wait_sync()
+            if djob.error:
+                raise CallError(f'Error downloading update: {djob.error}')
+            if not djob.result:
+                raise CallError('No updates available.')
+
+        remote_ip = self.remote_ip()
+        with RemoteClient(remote_ip) as remote:
+
+            if not remote.call('system.ready'):
+                raise CallError('Standby Controller is not ready, wait boot process.')
+
+            legacy_upgrade = False
+            try:
+                remote.call('failover.upgrade_version')
+            except ClientException as e:
+                if e.errno == ClientException.ENOMETHOD:
+                    legacy_upgrade = True
+
+            self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
+
+            job.set_progress(None, 'Sending files to Standby Controller')
+            remote.call('update.destroy_upload_location')
+            remote_path = remote.call('update.create_upload_location')
+            token = remote.call('auth.generate_token')
+
+            for f in os.listdir(local_path):
+                r = requests.post(
+                    f'http://{remote_ip}:6000/_upload/',
+                    files=[
+                        ('data', json.dumps({
+                            'method': 'filesystem.put',
+                            'params': [os.path.join(remote_path, f)],
+                        })),
+                        ('file', open(os.path.join(local_path, f), 'rb')),
+                    ],
+                    headers={
+                        'Authorization': f'Token {token}',
+                    },
+                )
+                job_id = r.json()['job_id']
+                while True:
+                    rjob = remote.call('core.get_jobs', [('id', '=', job_id)])
+                    if rjob:
+                        rjob = rjob[0]
+                        if rjob['state'] == 'FAILED':
+                            raise CallError(
+                                f'Failed to send {f} to Standby Controller: {job["error"]}.'
+                            )
+                        elif rjob['state'] == 'ABORTED':
+                            raise CallError(
+                                f'Failed to send {f} to Standby Controller, job aborted by user.'
+                            )
+                        elif rjob['state'] == 'SUCCESS':
+                            break
+                    time.sleep(0.5)
+
+            local_version = self.middleware.call_sync('system.version')
+            remote_version = remote.call('system.version')
+
+            update_remote_descr = update_local_descr = 'Starting upgrade'
+
+            def callback(j, controller):
+                nonlocal update_local_descr, update_remote_descr
+                if j['state'] != 'RUNNING':
+                    return
+                if controller == 'LOCAL':
+                    update_local_descr = f'{j["progress"]["percent"]}%: {j["progress"]["description"]}'
+                else:
+                    update_remote_descr = f'{j["progress"]["percent"]}%: {j["progress"]["description"]}'
+                job.set_progress(
+                    None, (
+                        f'Active Controller: {update_local_descr}\n' if not legacy_upgrade else ''
+                    ) + f'Standby Controller: {update_remote_descr}'
+                )
+
+            if updatefile:
+                update_method = 'update.manual'
+                update_remote_args = [os.path.join(remote_path, updatefile_name)]
+                update_local_args = [updatefile_localpath]
+            else:
+                update_method = 'update.update'
+                update_remote_args = []
+                update_local_args = []
+
+            # If they are the same we assume this is a clean upgade so we start by
+            # upgrading the standby controller.
+            if local_version == remote_version:
+                rjob = remote.call(update_method, *update_remote_args, job='RETURN', callback=partial(
+                    callback, controller='REMOTE',
+                ))
+            else:
+                rjob = None
+
+            if not legacy_upgrade:
+                ljob = self.middleware.call_sync(update_method, *update_local_args, job_on_progress_cb=partial(
+                    callback, controller='LOCAL',
+                ))
+                ljob.wait_sync()
+                if ljob.error:
+                    raise CallError(ljob.error)
+
+            if rjob:
+                rjob.result()
+
+            remote.call('system.reboot', {'delay': 5}, job=True)
+
+        if not legacy_upgrade:
+            # Update will activate the new boot environment.
+            # We want to reactivate the current boot environment so on reboot for failover
+            # the user has a chance to verify the new version is working as expected before
+            # move on and have both controllers on new version.
+            local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
+            if not local_bootenv:
+                raise CallError('Could not find current boot environment.')
+            self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
+
+        job.set_progress(None, 'Waiting Standby Controller to reboot.')
+
+        # Wait enough that standby controller has stopped receiving new connections and is
+        # rebooting.
+        time.sleep(30)
+
+        # We will wait up to 10 minutes for the Standby Controller to reboot
+        if not self.upgrade_waitstandby(remote_ip=remote_ip, seconds=600):
+            raise CallError('Timed out waiting Standby Controller after upgrade.')
+
+        return True
+
+    @private
+    def upgrade_waitstandby(self, remote_ip=None, seconds=600):
+        if remote_ip is None:
+            remote_ip = self.remote_ip()
+        retry_time = time.monotonic()
+        while time.monotonic() - retry_time < seconds:
+            try:
+                with RemoteClient(remote_ip) as c:
+                    if not c.call('system.ready'):
+                        time.sleep(5)
+                        continue
+                    return True
+            except CallError as e:
+                if e.errno in (errno.ECONNREFUSED, errno.EHOSTDOWN):
+                    time.sleep(5)
+                    continue
+                raise
+        return False
+
+    @accepts()
+    def upgrade_pending(self):
+        """
+        Verify if HA upgrade is pending.
+
+        `upgrade_finish` needs to be called to finish HA upgrade if this method returns true.
+        """
+
+        if self.middleware.call_sync('failover.status') != 'MASTER':
+            raise CallError('Upgrade can only run on Active Controller.')
+
+        if not self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False):
+            return False
+        try:
+            assert self.call_remote('system.ping') == 'pong'
+        except Exception:
+            return True
+        local_version = self.middleware.call_sync('system.version')
+        remote_version = self.call_remote('system.version')
+        if local_version == remote_version:
+            self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
+            return False
+
+        local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
+        if local_bootenv:
+            remote_bootenv = self.call_remote('bootenv.query', [[
+                ('active', 'rin', 'R'),
+                ('id', '=', local_bootenv[0]['id']),
+            ]])
+            if remote_bootenv:
+                return True
+        return False
+
+    @accepts()
+    @job(lock='failover_upgrade_finish')
+    def upgrade_finish(self, job):
+        """
+        Perform last stage of HA upgrade.
+
+        This will activate the new boot environment in Standby Controller and reboot it.
+        """
+
+        if self.middleware.call_sync('failover.status') != 'MASTER':
+            raise CallError('Upgrade can only run on Active Controller.')
+
+        job.set_progress(None, 'Waiting for Standby Controller to boot')
+        if not self.upgrade_waitstandby(seconds=600):
+            raise CallError('Timed out waiting Standby Controller to boot.')
+
+        job.set_progress(None, 'Activating new boot environment')
+        local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
+        if not local_bootenv:
+            raise CallError('Could not find current boot environment.')
+        self.call_remote('bootenv.activate', [local_bootenv[0]['id']])
+
+        job.set_progress(None, 'Rebooting Standby Controller')
+        self.call_remote('system.reboot', [{'delay': 10}])
+        self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
+        return True
 
 
 async def ha_permission(middleware, app):
@@ -833,7 +1110,26 @@ async def service_remote(middleware, service, verb, options):
             middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)
 
 
+async def _event_system_ready(middleware, event_type, args):
+    """
+    Method called when system is ready to issue an event in case
+    HA upgrade is pending.
+    """
+    if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+        return
+    if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
+        middleware.send_event('failover.upgrade_pending', 'ADDED', {
+            'id': 'BACKUP', 'fields': {'pending': True},
+        })
+
+
 def setup(middleware):
+    middleware.event_register('failover.upgrade_pending', textwrap.dedent('''\
+        Sent when system is ready and HA upgrade is pending.
+
+        It is expected the client will react by issuing `upgrade_finish` call
+        at user will.'''))
+    middleware.event_subscribe('system', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('disk.post_geli_passphrase', hook_geli_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
