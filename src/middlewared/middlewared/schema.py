@@ -693,7 +693,8 @@ class Cron(Dict):
                 if value is None:
                     data_dict[schedule_name] = None
                 else:
-                    data_dict[schedule_name][Cron.FIELDS[index]] = value
+                    if data_dict[schedule_name] is not None:
+                        data_dict[schedule_name][Cron.FIELDS[index]] = value
         if begin_end:
             for field in ['begin', 'end']:
                 key = key_prefix + field
@@ -702,7 +703,8 @@ class Cron(Dict):
                     if value is None:
                         data_dict[schedule_name] = None
                     else:
-                        data_dict[schedule_name][field] = str(value)[:5]
+                        if data_dict[schedule_name] is not None:
+                            data_dict[schedule_name][field] = str(value)[:5]
 
     def validate(self, value):
         if value is None:
