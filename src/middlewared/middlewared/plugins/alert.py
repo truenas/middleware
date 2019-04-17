@@ -1,4 +1,5 @@
 from collections import defaultdict, namedtuple
+import copy
 from datetime import datetime
 import errno
 import os
@@ -272,15 +273,14 @@ class AlertService(Service):
     @private
     @job(lock="process_alerts", transient=True)
     async def process_alerts(self, job):
-        if not await self.middleware.call("system.ready"):
-            return
-
         if not await self.__should_run_or_send_alerts():
             return
 
+        valid_alerts = copy.deepcopy(self.alerts)
         await self.__run_alerts()
 
         if not await self.__should_run_or_send_alerts():
+            self.alerts = valid_alerts
             return
 
         await self.middleware.call("alert.send_alerts")
@@ -373,6 +373,9 @@ class AlertService(Service):
         return str(uuid.uuid4())
 
     async def __should_run_or_send_alerts(self):
+        if await self.middleware.call('system.state') != 'READY':
+            return False
+
         if (
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('failover.licensed') and
