@@ -29,18 +29,18 @@ class FailoverIpAlertSource(AlertSource):
 
                 if not interface["int_ipv4address"] and not interface["int_dhcp"]:
                     if node == 'A':
-                        missing_ip_fields.append('IPv4 Address (This Node)')
+                        missing_ip_fields.append('IPv4 Address (This Storage Controller)')
                     else:
-                        missing_ip_fields.append('IPv4 Address (Node A)')
+                        missing_ip_fields.append('IPv4 Address (Storage Controller 1)')
 
                 if not interface["int_ipv4address_b"] and not interface["int_dhcp"]:
                     if node == 'B':
-                        missing_ip_fields.append('IPv4 Address (This Node)')
+                        missing_ip_fields.append('IPv4 Address (This Storage Controller)')
                     else:
-                        missing_ip_fields.append('IPv4 Address (Node B)')
+                        missing_ip_fields.append('IPv4 Address (Storage Controller 2)')
 
                 if not interface["int_vip"]:
-                    missing_ip_fields.append('Virtual IP')
+                    missing_ip_fields.append('Virtual IP Address')
 
                 if missing_ip_fields:
                     alerts.append(Alert(

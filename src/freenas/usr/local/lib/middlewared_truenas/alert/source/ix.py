@@ -23,7 +23,7 @@ class IxAlertSource(AlertSource):
         if available and support['enabled'] is None:
             return Alert(
                 IxAlertClass,
-                'The Proactive Support feature is not enabled. Please see the System -> Proactive Support tab.'
+                'Proactive Support is not enabled. Please see the System/Proactive Support page.'
             )
         if support['enabled']:
             # This is for people who had ix alert enabled before Proactive Support
@@ -35,5 +35,5 @@ class IxAlertSource(AlertSource):
             if unfilled:
                 return Alert(
                     IxAlertClass,
-                    'Please fill in these fields on the System -> Proactive Support tab: %s.' % ', '.join(unfilled)
+                    'Please complete these fields on the System/Proactive Support page: %s.' % ', '.join(unfilled)
                 )

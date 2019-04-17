@@ -6,7 +6,7 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class USBStorageAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = "A USB Storage Has Been Connected to This System"
+    title = "A USB Storage Device Has Been Connected to This System"
     text = ("A USB storage device named %s has been connected to this system. Please remove that USB device to "
             "prevent problems with system boot or HA failover.")
 
