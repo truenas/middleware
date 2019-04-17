@@ -27,6 +27,8 @@ from freenasUI.system.utils import debug_get_settings, debug_run
 
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
+# Flag telling whether the system is shutting down
+SYSTEM_SHUTTING_DOWN = False
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 
@@ -235,11 +237,25 @@ class SystemService(Service):
         return sw_version()
 
     @accepts()
-    def ready(self):
+    async def ready(self):
         """
         Returns whether the system completed boot and is ready to use
         """
-        return SYSTEM_READY
+        return await self.middleware.call("system.state") != "BOOTING"
+
+    @accepts()
+    async def state(self):
+        """
+        Returns system state:
+        "BOOTING" - System is booting
+        "READY" - System completed boot and is ready to use
+        "SHUTTING_DOWN" - System is shutting down
+        """
+        if SYSTEM_SHUTTING_DOWN:
+            return "SHUTTING_DOWN"
+        if SYSTEM_READY:
+            return "READY"
+        return "BOOTING"
 
     async def __get_license(self):
         licenseobj = get_license()[0]
@@ -754,14 +770,13 @@ class SystemGeneralService(ConfigService):
         return await self.config()
 
 
-async def _event_system_ready(middleware, event_type, args):
-    """
-    Method called when system is ready, supposed to enable the flag
-    telling the system has completed boot.
-    """
+async def _event_system(middleware, event_type, args):
     global SYSTEM_READY
+    global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
+    if args['id'] == 'shutting-down':
+        SYSTEM_SHUTTING_DOWN = True
 
 
 async def _event_zfs_status(middleware, event_type, args):
@@ -838,6 +853,6 @@ def setup(middleware):
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
 
-    middleware.event_subscribe('system', _event_system_ready)
+    middleware.event_subscribe('system', _event_system)
     middleware.event_subscribe('devd.zfs', _event_zfs_status)
     middleware.register_event_source('system.health', SystemHealthEventSource)

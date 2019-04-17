@@ -36,6 +36,8 @@ do_shutdown()
 
 	execute_task "command"
 	execute_task "script"
+
+	/usr/local/bin/midclt call core.event_send system ADDED '{"id": "shutting-down"}' > /dev/null
 }
 
 name="ix-shutdown"
