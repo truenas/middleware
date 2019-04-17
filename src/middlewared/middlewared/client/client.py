@@ -232,6 +232,39 @@ class Call(object):
         self.py_exception = None
 
 
+class Job(object):
+
+    def __init__(self, client, job_id, callback=None):
+        self.client = client
+        self.job_id = job_id
+        # If a job event has been received already then we must set an Event
+        # to wait for this job to finish.
+        # Otherwise we create a new stub for the job with the Event for when
+        # the job event arrives to use existing event.
+        with client._jobs_lock:
+            job = client._jobs.get(job_id)
+            self.event = None
+            if job:
+                self.event = job.get('__ready')
+            if self.event is None:
+                self.event = job['__ready'] = Event()
+            job['__callback'] = callback
+
+    def __repr__(self):
+        return f'<Job[{self.job_id}]>'
+
+    def result(self):
+        # Wait indefinitely for the job event with state SUCCESS/FAILED/ABORTED
+        self.event.wait()
+        job = self.client._jobs.pop(self.job_id, None)
+        if job is None:
+            raise ClientException('No job event was received.')
+        if job['state'] != 'SUCCESS':
+            if job['exc_info'] and job['exc_info']['type'] == 'VALIDATION':
+                raise ValidationErrors(job['exc_info']['extra'])
+            raise ClientException(job['error'], trace=job['exception'])
+
+
 class ErrnoMixin:
     ENOMETHOD = 201
     ESERVICESTARTFAILURE = 202
@@ -454,30 +487,10 @@ class Client(object):
             raise ClientException(c.error, c.errno, c.trace, c.extra)
 
         if job:
-            job_id = c.result
-            # If a job event has been received already then we must set an Event
-            # to wait for this job to finish.
-            # Otherwise we create a new stub for the job with the Event for when
-            # the job event arrives to use existing event.
-            with self._jobs_lock:
-                job = self._jobs.get(job_id)
-                event = None
-                if job:
-                    event = job.get('__ready')
-                if event is None:
-                    event = job['__ready'] = Event()
-                job['__callback'] = kwargs.pop('callback', None)
-
-            # Wait indefinitely for the job event with state SUCCESS/FAILED/ABORTED
-            event.wait()
-            job = self._jobs.pop(job_id, None)
-            if job is None:
-                raise ClientException('No job event was received.')
-            if job['state'] != 'SUCCESS':
-                if job['exc_info'] and job['exc_info']['type'] == 'VALIDATION':
-                    raise ValidationErrors(job['exc_info']['extra'])
-                raise ClientException(job['error'], trace=job['exception'])
-            return job['result']
+            jobobj = Job(self, c.result, callback=kwargs.get('callback'))
+            if job == 'RETURN':
+                return jobobj
+            return jobobj.result()
 
         return c.result
 
