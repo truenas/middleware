@@ -5,7 +5,6 @@ import socket
 
 from bsd import getmntinfo
 import humanfriendly
-import libzfs
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -33,17 +32,7 @@ class QuotaAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
 
-        with libzfs.ZFS() as zfs:
-            datasets = [
-                {
-                    k: v.__getstate__()
-                    for k, v in i.properties.items()
-                    if k in ["name", "quota", "used", "refquota", "usedbydataset", "mounted", "mountpoint",
-                             "org.freenas:quota_warning", "org.freenas:quota_critical",
-                             "org.freenas:refquota_warning", "org.freenas:refquota_critical"]
-                }
-                for i in zfs.datasets
-            ]
+        datasets = self.middleware.call_sync("zfs.dataset.query_for_quota_alert")
 
         for d in datasets:
             d["name"] = d["name"]["rawvalue"]
