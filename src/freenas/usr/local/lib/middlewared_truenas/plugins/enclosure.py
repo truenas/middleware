@@ -100,12 +100,15 @@ class EnclosureService(CRUDService):
         try:
             enclosures = self.__get_enclosures()
             element = enclosures.find_device_slot(disk['name'])
-            enclosure_slot = element.enclosure.num * 1000 + element.slot
+            enclosure = {
+                'number': element.enclosure.num,
+                'slot': element.slot
+            }
         except Exception:
-            enclosure_slot = None
+            enclosure = None
 
-        if enclosure_slot != disk['enclosure_slot']:
-            self.middleware.call_sync('disk.update', id, {'enclosure_slot': enclosure_slot})
+        if enclosure != disk['enclosure']:
+            self.middleware.call_sync('disk.update', id, {'enclosure': enclosure})
 
     @private
     @accepts(Str("pool", null=True, default=None))
@@ -276,8 +279,8 @@ class EnclosureService(CRUDService):
         try:
             disk = self.middleware.call_sync("disk.query", [["devname", "=", disk]],
                                         {"get": True, "order_by": ["expiretime"]})
-            if disk["enclosure_slot"]:
-                return divmod(disk["enclosure_slot"], 1000)
+            if disk["enclosure"]:
+                return disk["enclosure"]["number"], disk["enclosure"]["slot"]
         except IndexError:
             pass
 
