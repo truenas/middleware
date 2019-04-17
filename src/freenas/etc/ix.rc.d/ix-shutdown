@@ -11,6 +11,8 @@
 
 do_shutdown()
 {
+	/usr/local/bin/midclt call core.event_send system ADDED '{"id": "shutting-down"}' > /dev/null
+
 	/usr/local/bin/midclt call -job initshutdownscript.execute_init_tasks SHUTDOWN > /dev/null 2>&1
 }
 
