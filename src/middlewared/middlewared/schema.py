@@ -550,6 +550,9 @@ class Dict(Attribute):
         data = super().clean(data)
 
         if data is None:
+            if self.null:
+                return None
+
             return copy.deepcopy(self.default)
 
         self.errors = []
