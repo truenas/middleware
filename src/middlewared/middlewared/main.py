@@ -1041,7 +1041,10 @@ class Middleware(LoadPluginsMixin):
     def pipe(self):
         return Pipe(self)
 
-    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=True):
+    async def _call(
+        self, name, serviceobj, methodobj, params=None, app=None, pipes=None,
+        job_on_progress_cb=None, io_thread=True,
+    ):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -1058,7 +1061,10 @@ class Middleware(LoadPluginsMixin):
             if serviceobj._config.process_pool is True:
                 job_options['process'] = True
             # Create a job instance with required args
-            job = Job(self, name, serviceobj, methodobj, args, job_options, pipes)
+            job = Job(
+                self, name, serviceobj, methodobj, args, job_options, pipes,
+                on_progress_cb=job_on_progress_cb,
+            )
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             job = self.jobs.add(job)
@@ -1128,11 +1134,14 @@ class Middleware(LoadPluginsMixin):
 
         return await self._call(message['method'], serviceobj, methodobj, params, app=app, io_thread=False)
 
-    async def call(self, name, *params, pipes=None, app=None):
+    async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None):
         serviceobj, methodobj = self._method_lookup(name)
-        return await self._call(name, serviceobj, methodobj, params, app=app, pipes=pipes, io_thread=True)
+        return await self._call(
+            name, serviceobj, methodobj, params,
+            app=app, pipes=pipes, job_on_progress_cb=job_on_progress_cb, io_thread=True,
+        )
 
-    def call_sync(self, name, *params):
+    def call_sync(self, name, *params, job_on_progress_cb=None):
         """
         Synchronous method call to be used from another thread.
         """
@@ -1142,7 +1151,12 @@ class Middleware(LoadPluginsMixin):
         # thread pool or we may get in a deadlock situation if all threads in the default
         # pool are waiting.
         # Instead we launch a new thread just for that call (io_thread).
-        return self.run_coroutine(self._call(name, serviceobj, methodobj, params, io_thread=True))
+        return self.run_coroutine(
+            self._call(
+                name, serviceobj, methodobj, params,
+                io_thread=True, job_on_progress_cb=job_on_progress_cb,
+            )
+        )
 
     def run_coroutine(self, coro, wait=True):
         if threading.get_ident() == self.__thread_id:
