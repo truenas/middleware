@@ -182,15 +182,14 @@ class AlertService(Service):
     @periodic(60)
     @job(lock="process_alerts", transient=True)
     async def process_alerts(self, job):
-        if not await self.middleware.call("system.ready"):
-            return
-
         if not await self.__should_run_or_send_alerts():
             return
 
+        valid_alerts = copy.deepcopy(self.alerts)
         await self.__run_alerts()
 
         if not await self.__should_run_or_send_alerts():
+            self.alerts = valid_alerts
             return
 
         default_settings = (await self.middleware.call("alertdefaultsettings.config"))["settings"]
@@ -284,6 +283,9 @@ class AlertService(Service):
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
 
     async def __should_run_or_send_alerts(self):
+        if await self.middleware.call('system.state') != 'READY':
+            return False
+
         if (
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('notifier.failover_licensed') and
