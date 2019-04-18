@@ -221,7 +221,7 @@ class SMBService(SystemServiceService):
             check=False
         )
         if gm_add.returncode != 0:
-            raise CallError('Failed to generate groupmap for [%s]: (%s)', group, gm_add.stderr.decode())
+            raise CallError(f'Failed to generate groupmap for [{group}]: ({gm_add.stderr.decode})')
 
     @private
     def passdb_list(self, verbose=False):
@@ -356,7 +356,7 @@ class SMBService(SystemServiceService):
             res = param.LoadParm('usr/local/etc/smb4.conf').get(parm, section)
             return res
         except Exception as e:
-            raise CallError('Attempt to query smb4.conf parameter [%s] failed with error: %e', parm, e)
+            raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
 
     @private
     async def get_smb_ha_mode(self):
