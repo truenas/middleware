@@ -6,12 +6,15 @@ from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
 
 import asyncio
+import binascii
 import codecs
 import enum
 import os
 import re
 import subprocess
 import uuid
+from samba import samba3
+from samba import param
 
 LOGLEVEL_MAP = {
     '0': 'NONE',
@@ -32,6 +35,52 @@ class smbhamode(enum.Enum):
     STANDALONE = 0
     LEGACY = 1
     UNIFIED = 2
+
+
+class lsa_sidType(enum.Enum):
+    """
+    Defined in MS-SAMR (2.2.2.3) and lsa.idl
+    Samba's group mapping database will primarily contain SID_NAME_ALIAS entries (local groups)
+    """
+    SID_NAME_USE_NONE = 0
+    SID_NAME_USER = 1
+    SID_NAME_DOM_GRP = 2
+    SID_NAME_DOMAIN = 3
+    SID_NAME_ALIAS = 4
+    SID_NAME_WKN_GRP = 5
+    SID_NAME_DELETED = 6
+    SID_NAME_INVALID = 7
+    SID_NAME_UNKNOWN = 8
+    SID_NAME_COMPUTER = 9
+    SID_NAME_LABEL = 10
+
+
+class samr_AcctFlags(enum.IntFlag):
+    """
+    Defined in MS-SAMR (2.2.1.12) and samr.idl
+    """
+    DISABLED = 0x00000001
+    HOMEDIRREQ = 0x00000002
+    PWNOTREQ = 0x00000004
+    TEMPDUP = 0x00000008
+    NORMAL = 0x00000010
+    MNS = 0x00000020
+    DOMTRUST = 0x00000040
+    WSTRUST = 0x00000080
+    SVRTRUST = 0x00000100
+    PWNOEXP = 0x00000200
+    AUTOLOCK = 0x00000400
+    ENC_TXT_PWD_ALLOWED = 0x00000800
+    SMARTCARD_REQUIRED = 0x00001000
+    TRUSTED_FOR_DELEGATION = 0x00002000
+    NOT_DELEGATED = 0x00004000
+    USE_DES_KEY_ONLY = 0x00008000
+    DONT_REQUIRE_PREAUTH = 0x00010000
+    PW_EXPIRED = 0x00020000
+    TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION = 0x00040000
+    NO_AUTH_DATA_REQD = 0x00080000
+    PARTIAL_SECRETS_ACCOUNT = 0x00100000
+    USE_AES_KEYS = 0x00200000
 
 
 class SMBService(SystemServiceService):
@@ -128,6 +177,186 @@ class SMBService(SystemServiceService):
             return False
 
         return True
+
+    @private
+    def groupmap_list(self):
+        groupmap_list = []
+        statedir = self.getparm('state directory', 'global')
+        if not os.path.exists(f'{statedir}/group_mapping.tdb'):
+            return []
+
+        samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
+
+        groupmaps = samba3.passdb.PDB("tdbsam").enum_group_mapping()
+        for g in groupmaps:
+            groupmap_list.append({
+                'comment': g.comment,
+                'gid': g.gid,
+                'ntgroup': g.nt_name,
+                'SID': str(g.sid),
+                'sid_type': lsa_sidType(g.sid_name_use).name,
+            })
+        return groupmap_list
+
+    @private
+    async def groupmap_add(self, group):
+        """
+        Map Unix group to NT group. This is required for group members to be
+        able to access the SMB share. Name collisions with well-known and
+        builtin groups must be avoided. Mapping groups with the same
+        names as users should also be avoided.
+        """
+        disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
+        existing_groupmap = await self.middleware.run_in_thread(self.groupmap_list)
+        for user in (await self.middleware.call('user.query')):
+            disallowed_list.append(user['username'].upper())
+        for g in existing_groupmap:
+            disallowed_list.append(g['ntgroup'].upper())
+
+        if group.upper() in disallowed_list:
+            self.logger.debug('Setting group map for %s is not permitted', group)
+            return False
+        gm_add = await run(
+            ['net', '-d', '0', 'groupmap', 'add', 'type=local', f'unixgroup={group}', f'ntgroup={group}'],
+            check=False
+        )
+        if gm_add.returncode != 0:
+            raise CallError('Failed to generate groupmap for [%s]: (%s)', group, gm_add.stderr.decode())
+
+    @private
+    def passdb_list(self, verbose=False):
+        """
+        passdb entries for local SAM database. This will be populated with
+        local users in an AD environment, and with LDAP users in an LDAP
+        environment.
+        """
+        pdbentries = []
+        privatedir = self.getparm('privatedir', 'global')
+        if not os.path.exists(f'{privatedir}/passdb.tdb'):
+            return []
+
+        samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
+        pdb = samba3.passdb.PDB("tdbsam").search_users(samr_AcctFlags.NORMAL.value)
+        if not verbose:
+            for p in pdb:
+                acct_flags = []
+                for flag in samr_AcctFlags:
+                    if int(p['acct_flags']) & flag:
+                        acct_flags.append(flag.name)
+                pdbentries.append({
+                    'username': p['account_name'],
+                    'full_name': p['fullname'],
+                    'comment': p['description'],
+                    'rid': p['rid'],
+                    'acct_ctrl': acct_flags
+                })
+            return pdbentries
+
+        for p in pdb:
+            u = samba3.passdb.PDB("tdbsam").getsampwnam(p['account_name'])
+            acct_flags = []
+            for flag in samr_AcctFlags:
+                if int(u.acct_ctrl) & flag:
+                    acct_flags.append(flag.name)
+
+            pdbentries.append({
+                'username': u.username,
+                'full_name': u.full_name,
+                'user_sid': str(u.user_sid),
+                'profile_path': u.profile_path,
+                'home_dir': u.home_dir,
+                'domain': str(u.domain),
+                'comment': str(u.comment),
+                'logon_count': u.logon_count,
+                'acct_ctrl': acct_flags
+            })
+        return pdbentries
+
+    @private
+    def update_passdb_user(self, username):
+        """
+        Updates a user's passdb entry to reflect the current server configuration.
+        """
+        bsduser = self.middleware.call_sync('user.query', [('username', '=', username)])
+        if len(bsduser) == 0 or not bsduser[0]['smbhash']:
+            return
+        smbpasswd_string = bsduser[0]['smbhash'].split(':')
+        samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
+        try:
+            p = samba3.passdb.PDB('tdbsam').getsampwnam(username)
+        except Exception:
+            self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", username)
+            samba3.passdb.PDB('tdbsam').create_user(username)
+            p = samba3.passdb.PDB('tdbsam').getsampwnam(username)
+        pdb_entry_changed = False
+        if smbpasswd_string[3] != binascii.hexlify(p.nt_passwd).decode().upper():
+            p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
+            pdb_entry_changed = True
+        if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & samr_AcctFlags.DISABLED):
+            p.acct_ctrl |= samr_AcctFlags.DISABLED
+            pdb_entry_changed = True
+        elif 'D' not in smbpasswd_string[4] and (p.acct_ctrl & samr_AcctFlags.DISABLED):
+            p.acct_ctrl = samr_AcctFlags.NORMAL
+            pdb_entry_changed = True
+        if pdb_entry_changed:
+            samba3.passdb.PDB('tdbsam').update_sam_account(p)
+
+    @private
+    def synchronize_passdb_with_config_file(self):
+        """
+        Create any missing entries in the passdb.tdb.
+        Replace NT hashes of users if they do not match what is the the config file.
+        Synchronize the "disabled" state of users
+        Delete any entries in the passdb_tdb file that don't exist in the config file.
+        """
+        samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
+        conf_users = self.middleware.call_sync('user.query', [
+            ['OR', [
+                ('smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
+                ('smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
+            ]]
+        ])
+        for u in conf_users:
+            smbpasswd_string = u['smbhash'].split(':')
+            pdb_entry_changed = False
+            try:
+                p = samba3.passdb.PDB('tdbsam').getsampwnam(u['username'])
+            except Exception:
+                self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", u['username'])
+                samba3.passdb.PDB('tdbsam').create_user(u['username'])
+                p = samba3.passdb.PDB('tdbsam').getsampwnam(u['username'])
+            if smbpasswd_string[3] != binascii.hexlify(p.nt_passwd).decode().upper():
+                p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
+                pdb_entry_changed = True
+            if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & samr_AcctFlags.DISABLED):
+                p.acct_ctrl |= samr_AcctFlags.DISABLED
+                pdb_entry_changed = True
+            elif 'D' not in smbpasswd_string[4] and (p.acct_ctrl & samr_AcctFlags.DISABLED):
+                p.acct_ctrl = samr_AcctFlags.NORMAL
+                pdb_entry_changed = True
+            if pdb_entry_changed:
+                samba3.passdb.PDB('tdbsam').update_sam_account(p)
+
+        pdb_users = self.passdb_list()
+        if len(pdb_users) > len(conf_users):
+            for entry in pdb_users:
+                if not any(filter(lambda x: entry['username'] == x['username'], conf_users)):
+                    self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry['username'])
+                    user_to_delete = samba3.passdb.PDB('tdbsam').getsampwnam(entry['username'])
+                    samba3.passdb.PDB('tdbsam').delete_user(user_to_delete)
+
+    @private
+    def getparm(self, parm, section):
+        """
+        Get a parameter from the smb4.conf file. This is more reliable than
+        'testparm --parameter-name'. testparm will fail in a variety of
+        conditions without returning the parameter's value.
+        """
+        try:
+            res = param.LoadParm('usr/local/etc/smb4.conf').get(parm, section)
+            return res
+        except Exception as e:
+            raise CallError('Attempt to query smb4.conf parameter [%s] failed with error: %e', parm, e)
 
     @private
     async def get_smb_ha_mode(self):

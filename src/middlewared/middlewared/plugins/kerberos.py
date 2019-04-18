@@ -570,7 +570,7 @@ class KerberosKeytabService(CRUDService):
             if entry['principal'] not in kerberos_principals:
                 kerberos_principals.append(entry['principal'])
 
-        return kerberos_principals.sort()
+        return sorted(kerberos_principals)
 
     @private
     async def store_samba_keytab(self):

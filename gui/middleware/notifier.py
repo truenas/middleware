@@ -312,24 +312,6 @@ class notifier(metaclass=HookMetaclass):
         except Exception as e:
             raise MiddlewareError(f'Disk could not be removed: {str(e)}')
 
-    def groupmap_list(self):
-        command = "/usr/local/bin/net groupmap list"
-        groupmap = []
-
-        proc = self._pipeopen(command)
-        out = proc.communicate()
-        if proc.returncode != 0:
-            return None
-
-        out = out[0]
-        lines = out.splitlines()
-        for line in lines:
-            m = re.match('^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
-            if m:
-                groupmap.append(m.groupdict())
-
-        return groupmap
-
     def groupmap_add(self, unixgroup, ntgroup, type='local'):
         command = "/usr/local/bin/net groupmap add type=%s unixgroup='%s' ntgroup='%s'"
 

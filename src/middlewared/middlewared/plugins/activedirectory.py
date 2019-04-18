@@ -702,6 +702,10 @@ class ActiveDirectoryService(ConfigService):
             raise ValidationError('netbiosname', str(e))
 
         new = await self.ad_compress(new)
+
+        if not new["bindpw"] and not new["kerberos_principal"]:
+            raise ValidationError("activedirectory_update.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
+
         await self.middleware.call(
             'datastore.update',
             'directoryservice.activedirectory',
@@ -709,8 +713,6 @@ class ActiveDirectoryService(ConfigService):
             new,
             {'prefix': 'ad_'}
         )
-        if not new["bindpw"] and not new["kerberos_principal"]:
-            raise ValidationError("activedirectory_update.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
 
         if data['bindpw'] and data['enable'] and not old['enable']:
             try:
