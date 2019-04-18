@@ -1347,7 +1347,7 @@ class Middleware(LoadPluginsMixin):
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
                 try:
-                    await service.terminate()
+                    await asyncio.wait_for(service.terminate(), 10)
                 except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
