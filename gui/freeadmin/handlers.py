@@ -50,6 +50,7 @@ class SysLogHandler(logging.Handler):
     def __init__(self, facility=syslog.LOG_USER):
         self.facility = facility
         super(SysLogHandler, self).__init__()
+        self.lock = None
 
     def emit(self, record):
         syslog.openlog(facility=self.facility)
