@@ -9,6 +9,7 @@ import asyncio
 import binascii
 import codecs
 import enum
+import errno
 import os
 import re
 import subprocess
@@ -206,6 +207,10 @@ class SMBService(SystemServiceService):
         builtin groups must be avoided. Mapping groups with the same
         names as users should also be avoided.
         """
+        passdb_backend = await self.middleware.run_in_thread(self.getparm('passdb backend', 'global'))
+        if passdb_backend == 'ldapsam':
+            return
+
         disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
         existing_groupmap = await self.middleware.run_in_thread(self.groupmap_list)
         for user in (await self.middleware.call('user.query')):
@@ -227,12 +232,12 @@ class SMBService(SystemServiceService):
     def passdb_list(self, verbose=False):
         """
         passdb entries for local SAM database. This will be populated with
-        local users in an AD environment, and with LDAP users in an LDAP
-        environment.
+        local users in an AD environment. Immediately return in ldap enviornment.
         """
         pdbentries = []
         privatedir = self.getparm('privatedir', 'global')
-        if not os.path.exists(f'{privatedir}/passdb.tdb'):
+        passdb_backend = self.getparm('passdb backend', 'global')
+        if not os.path.exists(f'{privatedir}/passdb.tdb') or passdb_backend == 'ldapsam':
             return []
 
         samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
@@ -277,6 +282,14 @@ class SMBService(SystemServiceService):
         """
         Updates a user's passdb entry to reflect the current server configuration.
         """
+        privatedir = self.getparm('privatedir', 'global')
+        passdb_backend = self.getparm('passdb backend', 'global')
+        if passdb_backend == 'ldapsam':
+            return
+
+        if not os.path.exists(f'{privatedir}/passdb.tdb'):
+            raise CallError(f'Unable to add [{username}] to passdb.tdb. File does not exist.', errno.ENOENT)
+
         bsduser = self.middleware.call_sync('user.query', [('username', '=', username)])
         if len(bsduser) == 0 or not bsduser[0]['smbhash']:
             return
@@ -302,13 +315,23 @@ class SMBService(SystemServiceService):
             samba3.passdb.PDB('tdbsam').update_sam_account(p)
 
     @private
-    def synchronize_passdb_with_config_file(self):
+    def synchronize_passdb(self):
         """
         Create any missing entries in the passdb.tdb.
         Replace NT hashes of users if they do not match what is the the config file.
         Synchronize the "disabled" state of users
         Delete any entries in the passdb_tdb file that don't exist in the config file.
         """
+        privatedir = self.getparm('privatedir', 'global')
+        passdb_backend = self.getparm('passdb backend', 'global')
+        if not os.path.exists(f'{privatedir}/passdb.tdb'):
+            self.logger.debug('passdb.tdb file does not exist yet. Unable to synchronize.')
+            return
+
+        if passdb_backend == 'ldapsam':
+            self.logger.debug('Refusing to synchronize passdb.tdb while LDAP is enabled.')
+            return
+
         samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
         conf_users = self.middleware.call_sync('user.query', [
             ['OR', [

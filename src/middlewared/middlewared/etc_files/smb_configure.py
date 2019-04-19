@@ -305,6 +305,6 @@ def render(service, middleware):
 
     set_SID(middleware, conf)
     if conf['role'] == "file_server":
-        middleware.call_sync('smb.synchronize_passdb_with_config_file')
+        middleware.call_sync('smb.synchronize_passdb')
         validate_group_mappings(middleware, conf)
 
