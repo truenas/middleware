@@ -1194,6 +1194,12 @@ require([
                 var id = "id_attributes_" + property.property;
                 if (property.schema.type.indexOf("boolean") != -1) {
                     attributes[property.property] = document.getElementById(id).checked;
+                } else if (property.schema.type.indexOf("integer") != -1) {
+                    attributes[property.property] = parseInt(document.getElementById(id).value);
+                    if (isNaN(attributes[property.property]))
+                    {
+                        delete attributes[property.property];
+                    }
                 } else {
                     attributes[property.property] = document.getElementById(id).value;
                 }
@@ -1230,7 +1236,14 @@ require([
                     input = "<select id='" + id + "'>";
                     for (var j = 0; j < property.schema.enum.length; j++)
                     {
-                        input += '<option>' + property.schema.enum[j] + '</option>';
+                        if (typeof property.schema.enum[j] == 'string')
+                        {
+                            input += '<option>' + property.schema.enum[j] + '</option>';
+                        }
+                        else
+                        {
+                            input += '<option value="' + property.schema.enum[j][0] + '">' + property.schema.enum[j][1] + '</option>';
+                        }
                     }
                     input += '</select>';
                 }
@@ -1254,7 +1267,7 @@ require([
                 }
                 else
                 {
-                    document.getElementById(id).value = attributes[property.property];
+                    document.getElementById(id).value = attributes[property.property].toString();
                 }
             }
 
