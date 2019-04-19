@@ -512,7 +512,15 @@ class ZFSSnapshot(CRUDService):
             return False
 
 
-class ZFSQuoteService(Service):
+def get_quota_excesses__get_props():
+    with libzfs.ZFS() as zfs:
+        return [
+            {k: v.__getstate__() for k, v in i.properties.items()}
+            for i in zfs.datasets
+        ]
+
+
+class ZFSQuotaService(Service):
 
     class Config:
         namespace = 'zfs.quota'
@@ -596,16 +604,8 @@ class ZFSQuoteService(Service):
                     self.logger.warning('Failed to send email about quota excess', exc_info=True)
 
     async def __get_quota_excesses(self):
-
-        def get_props():
-            with libzfs.ZFS() as zfs:
-                return [
-                    {k: v.__getstate__() for k, v in i.properties.items()}
-                    for i in zfs.datasets
-                ]
-
         excesses = []
-        for properties in await self.middleware.run_in_thread(get_props):
+        for properties in await self.middleware.run_in_proc(get_quota_excesses__get_props):
             quota = await self.__get_quota_excess(properties, "quota", "quota", "used")
             if quota:
                 excesses.append(quota)
