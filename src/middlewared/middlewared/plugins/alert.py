@@ -225,7 +225,7 @@ class AlertService(Service):
                  klass=alert.klass.name,
                  level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
                  formatted=alert.formatted,
-                 one_shot=issubclass(alert.klass, OneShotAlertClass))
+                 one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
             for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
         ]
 
@@ -252,7 +252,7 @@ class AlertService(Service):
                 unrelated_alerts +
                 await alert.klass(self.middleware).dismiss(related_alerts, alert)
             )
-        elif issubclass(alert.klass, OneShotAlertClass):
+        elif issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically:
             self.alerts = [a for a in self.alerts if a.uuid != uuid]
         else:
             alert.dismissed = True
