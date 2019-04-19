@@ -1,21 +1,17 @@
-import libzfs
-
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 
 
-class ScrubPausedAlertSource(ThreadedAlertSource):
+class ScrubPausedAlertSource(AlertSource):
     level = AlertLevel.WARNING
     title = "Scrub is paused"
 
     schedule = CrontabSchedule(hour=3)
 
-    def check_sync(self):
+    async def check(self):
         alerts = []
-        with libzfs.ZFS() as zfs:
-            for pool in zfs.pools:
-                if pool.scrub.pause is not None:
-                    alerts.append(Alert(title="Scrub for pool %r is paused",
-                                        args=pool.name,
-                                        key=[pool.name]))
+        for pool in await self.middleware.call("zfs.pool.pools_with_paused_scrubs"):
+            alerts.append(Alert(title="Scrub for pool %r is paused",
+                                args=pool,
+                                key=[pool]))
         return alerts
