@@ -80,6 +80,9 @@ class SSHKeyPair(KeychainCredentialType):
         for ssh_credentials in await middleware.call("keychaincredential.query", [["type", "=", "SSH_CREDENTIALS"]]):
             if ssh_credentials["attributes"]["private_key"] == id:
                 used_by.append(f"SSH credentials {ssh_credentials['name']}")
+        for cloud_credentials in await middleware.call("cloudsync.credentials.query", [["provider", "=", "SFTP"]]):
+            if cloud_credentials["attributes"].get("private_key") == id:
+                used_by.append(f"Cloud credentials {cloud_credentials['name']}")
 
         return used_by
 
