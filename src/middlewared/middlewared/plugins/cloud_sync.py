@@ -45,19 +45,18 @@ class RcloneConfig:
 
         self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]]
 
+        self.config = None
         self.tmp_file = None
         self.tmp_file_exclude = None
 
-        self.path = None
-
-    def __enter__(self):
+    async def __aenter__(self):
         self.tmp_file = tempfile.NamedTemporaryFile(mode="w+")
 
         # Make sure only root can read it as there is sensitive data
         os.chmod(self.tmp_file.name, 0o600)
 
         config = dict(self.cloud_sync["credentials"]["attributes"], type=self.provider.rclone_type)
-        config = dict(config, **self.provider.get_credentials_extra(self.cloud_sync["credentials"]))
+        config = dict(config, **await self.provider.get_credentials_extra(self.cloud_sync["credentials"]))
         if "pass" in config:
             config["pass"] = rclone_encrypt_password(config["pass"])
 
@@ -65,7 +64,7 @@ class RcloneConfig:
         extra_args = []
 
         if "attributes" in self.cloud_sync:
-            config.update(dict(self.cloud_sync["attributes"], **self.provider.get_task_extra(self.cloud_sync)))
+            config.update(dict(self.cloud_sync["attributes"], **await self.provider.get_task_extra(self.cloud_sync)))
 
             remote_path = get_remote_path(self.provider, self.cloud_sync["attributes"])
             remote_path = f"remote:{remote_path}"
@@ -96,9 +95,13 @@ class RcloneConfig:
 
         self.tmp_file.flush()
 
+        self.config = config
+
         return RcloneConfigTuple(self.tmp_file.name, remote_path, extra_args)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.config is not None:
+            await self.provider.cleanup(self.cloud_sync, self.config)
         if self.tmp_file:
             self.tmp_file.close()
         if self.tmp_file_exclude:
@@ -120,7 +123,7 @@ async def rclone(middleware, job, cloud_sync):
         raise CallError(f"Directory {cloud_sync['path']!r} must reside within volume mount point")
 
     # Use a temporary file to store rclone file
-    with RcloneConfig(cloud_sync) as config:
+    async with RcloneConfig(cloud_sync) as config:
         args = [
             "/usr/local/bin/rclone",
             "--config", config.config_path,
@@ -378,7 +381,7 @@ class CredentialsService(CRUDService):
         data = dict(data, name="")
         await self._validate("cloud_sync_credentials_create", data)
 
-        with RcloneConfig({"credentials": data}) as config:
+        async with RcloneConfig({"credentials": data}) as config:
             proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:"],
                              check=False, encoding="utf8")
             if proc.returncode == 0:
@@ -464,6 +467,38 @@ class CredentialsService(CRUDService):
 
         if verrors:
             raise verrors
+
+    @private
+    def migrate_sftp_key_file(self):
+        for credential in self.middleware.call_sync("cloudsync.credentials.query", [["provider", "=", "SFTP"]]):
+            if "key_file" in credential["attributes"] and os.path.exists(credential["attributes"]["key_file"]):
+                self.logger.info(f"Migrating SFTP cloud credential {credential['id']} to keychain")
+
+                try:
+                    with open(credential["attributes"]["key_file"]) as f:
+                        private_key = f.read()
+
+                    for keypair in self.middleware.call_sync("keychaincredential.query",
+                                                             [["type", "=", "SSH_KEY_PAIR"]]):
+                        if keypair["attributes"]["private_key"].strip() == private_key.strip():
+                            break
+                    else:
+                        keypair = self.middleware.call_sync("keychaincredential.create", {
+                            "name": credential["name"],
+                            "type": "SSH_KEY_PAIR",
+                            "attributes": {
+                                "private_key": private_key,
+                            }
+                        })
+
+                    del credential["attributes"]["key_file"]
+                    credential["attributes"]["private_key"] = keypair["id"]
+
+                    self.middleware.call_sync("datastore.update", "system.cloudcredentials", credential["id"], {
+                        "attributes": credential["attributes"],
+                    })
+                except Exception as e:
+                    self.logger.warning(f"Error migrating SFTP cloud credential {credential['id']} to keychain: %r", e)
 
 
 class CloudSyncService(CRUDService):
@@ -805,7 +840,7 @@ class CloudSyncService(CRUDService):
 
     @private
     async def ls(self, config, path):
-        with RcloneConfig(config) as config:
+        async with RcloneConfig(config) as config:
             proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:" + path],
                              check=False, encoding="utf8")
             if proc.returncode == 0:
@@ -925,9 +960,22 @@ class CloudSyncService(CRUDService):
         return schema
 
 
+async def devd_zfs_hook(middleware, data):
+    if data.get('type') == 'misc.fs.zfs.pool_import':
+        asyncio.ensure_future(middleware.call('cloudsync.credentials.migrate_sftp_key_file'))
+
+
+async def system_event(middleware, event_type, args):
+    if args['id'] == 'ready':
+        asyncio.ensure_future(middleware.call('cloudsync.credentials.migrate_sftp_key_file'))
+
+
 async def setup(middleware):
     for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
                                             "rclone", "remote")):
         for cls in load_classes(module, BaseRcloneRemote, []):
             remote = cls(middleware)
             REMOTES[remote.name] = remote
+
+    middleware.register_hook('devd.zfs', devd_zfs_hook)
+    middleware.event_subscribe('system', system_event)

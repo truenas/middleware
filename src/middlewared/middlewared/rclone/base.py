@@ -23,8 +23,11 @@ class BaseRcloneRemote:
     async def pre_save_task(self, task, credentials, verrors):
         pass
 
-    def get_credentials_extra(self, credentials):
+    async def get_credentials_extra(self, credentials):
         return dict()
 
-    def get_task_extra(self, task):
+    async def get_task_extra(self, task):
         return dict()
+
+    async def cleanup(self, task, config):
+        pass

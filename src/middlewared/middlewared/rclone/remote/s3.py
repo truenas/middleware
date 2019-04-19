@@ -52,7 +52,7 @@ class S3RcloneRemote(BaseRcloneRemote):
             )
             task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
 
-    def get_task_extra(self, task):
+    async def get_task_extra(self, task):
         result = dict(encryption="", server_side_encryption=task["attributes"].get("encryption") or "")
 
         if not task["credentials"]["attributes"].get("skip_region", False):

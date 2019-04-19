@@ -31,5 +31,5 @@ class B2RcloneRemote(BaseRcloneRemote):
         """), default=96, validators=[Range(min=5)]),
     ]
 
-    def get_task_extra(self, task):
+    async def get_task_extra(self, task):
         return {"b2-chunk-size": str(task["attributes"].get("b2-chunk-size", 96)) + "M"}
