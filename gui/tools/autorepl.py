@@ -127,7 +127,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         os.close(writefd)
 
     compress, decompress = compress_pipecmds(compression)
-    replcmd = '%s%s/usr/local/bin/pipewatcher $$ | %s "%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
+    replcmd = '%s%s/usr/local/bin/pipewatcher $$ | %s \"%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded\"' % (compress, throttle, sshcmd, decompress, remotefs)
     log.debug('Sending zfs snapshot: %s | %s', ' '.join(cmd), replcmd)
     with open(templog, 'w+') as f:
         readobj = os.fdopen(readfd, 'rb', 0)
@@ -285,16 +285,16 @@ for replication in replication_tasks:
 
     sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
-    remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1], localfs.partition('/')[2])
+    remotefs_final = '%s%s%s' % (remotefs, localfs.partition('/')[1], localfs.partition('/')[2])
 
     # Examine local list of snapshots, then remote snapshots, and determine if there is any work to do.
     log.debug("Checking dataset %s" % (localfs))
 
     # Grab map from local system.
     if recursive:
-        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r "%s"' % (localfs), debug)
+        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r \"%s\"' % (localfs), debug)
     else:
-        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r -d 1 "%s"' % (localfs), debug)
+        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r -d 1 \"%s\"' % (localfs), debug)
 
     output, error = zfsproc.communicate()
     if zfsproc.returncode:
@@ -314,12 +314,13 @@ for replication in replication_tasks:
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
     output, error = sshproc.communicate()
     remote_zfslist = {}
-    for i in re.sub(r'[ \t]+', ' ', output, flags=re.M).splitlines():
-        data = i.split()
+    for i in re.sub(r'\t+', ' ', output, flags=re.M).splitlines():
+        readonly_value = i.split()[-1]
+        data = [i.split(readonly_value)[0].rstrip(), readonly_value]
         remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
-    rzfscmd = "zfs create -o readonly=on "
+    rzfscmd = "\'" + "zfs create -o readonly=on "
     ds = ''
     if "/" not in localfs:
         localfs_tmp = "%s/%s" % (localfs, localfs)
@@ -336,7 +337,7 @@ for replication in replication_tasks:
             if ds_full in remote_zfslist:
                 continue
             log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
-            sshproc = pipeopen('%s %s %s' % (sshcmd, rzfscmd, ds_full), quiet=True)
+            sshproc = pipeopen('%s %s \"%s\"' % (sshcmd, rzfscmd, ds_full) + "\'", quiet=True)
             output, error = sshproc.communicate()
             error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
             # Debugging code
@@ -354,7 +355,7 @@ for replication in replication_tasks:
         # We expect to see "on" in the output, or cannot open '%s': dataset does not exist
         # in the error.  To be safe, also check for children's readonly state.
         may_proceed = False
-        rzfscmd = '"zfs list -H -o readonly -t filesystem,volume -r %s"' % (remotefs_final)
+        rzfscmd = "'zfs list -H -o readonly -t filesystem,volume -r \"%s\"'" % (remotefs_final)
         sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
         output, error = sshproc.communicate()
         error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
@@ -412,9 +413,9 @@ Hello,
 
     # Grab map from remote system
     if recursive:
-        rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -r \'%s\'"' % (remotefs_final)
+        rzfscmd = "'zfs list -H -t snapshot -p -o name,creation -r \"%s\"'" % (remotefs_final)
     else:
-        rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -d 1 -r \'%s\'"' % (remotefs_final)
+        rzfscmd = "'zfs list -H -t snapshot -p -o name,creation -d 1 -r \"%s\"'" % (remotefs_final)
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
     output, error = sshproc.communicate()
     error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
