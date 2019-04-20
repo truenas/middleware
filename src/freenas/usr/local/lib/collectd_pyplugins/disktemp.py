@@ -67,7 +67,7 @@ if __name__ == '__main__' or hasattr(sys.modules['__main__'], '_SpoofOut'):
                 self.values = None
                 self.meta = None
 
-            def dispatch(self):
+            def dispatch(self, **kwargs):
                 print(f'{self.plugin}:{self.plugin_instance}:{self.type}:{self.type_instance}:{self.values}')
 
     collectd = CollectdDummy()
