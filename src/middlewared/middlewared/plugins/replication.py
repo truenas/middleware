@@ -400,6 +400,12 @@ class ReplicationService(CRUDService):
             if data["naming_schema"]:
                 verrors.add("naming_schema", "This field has no sense for push replication")
 
+            if not snapshot_tasks and not data["also_include_naming_schema"]:
+                verrors.add(
+                    "periodic_snapshot_tasks", "You must at least either bind a periodic snapshot task or provide "
+                                               "\"Also Include Naming Schema\" for push replication task"
+                )
+
             if data["schedule"]:
                 if data["periodic_snapshot_tasks"]:
                     verrors.add("schedule", "Push replication can't be bound to periodic snapshot task and have "
