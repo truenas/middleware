@@ -58,7 +58,7 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
-        if data["transport"] == 'LEGACY':
+        if data["transport"] == "LEGACY":
             if data["id"] in context["legacy_result"]:
                 legacy_result = context["legacy_result"][data["id"]]
 
