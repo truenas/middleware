@@ -11,14 +11,7 @@
 syncmultipaths()
 {
 	echo "Syncing multipaths..."
-	if [ "$(/usr/local/bin/midclt call disk.multipath_sync 2> /dev/null)" = "BAD_CABLING" ]; then
-		cat << __EOF__ | logger -s -t multipath
-* * * * * * * * * * * * *
-MULTIPATH IS NOT CURRENTLY CONFIGURED BUT MULTIPATH WAS DETECTED.
-CHECK SAS EXPANSION CABLE.
-* * * * * * * * * * * * *
-__EOF__
-	fi
+	/usr/local/bin/midclt call disk.multipath_sync > /dev/null
 	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
 		checkyesno failover_enable || /usr/local/bin/midclt call enclosure.sync_zpool > /dev/null
 	fi
