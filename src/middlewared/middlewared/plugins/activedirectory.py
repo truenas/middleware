@@ -301,7 +301,6 @@ class ActiveDirectory_LDAP(object):
             self._open()
 
         result = []
-        results = []
         serverctrls = None
         clientctrls = None
         paged = SimplePagedResultsControl(
@@ -311,45 +310,10 @@ class ActiveDirectory_LDAP(object):
         )
         paged_ctrls = {SimplePagedResultsControl.controlType: SimplePagedResultsControl}
 
-        if self.pagesize > 0:
-            page = 0
-            while True:
-                serverctrls = [paged]
+        page = 0
+        while True:
+            serverctrls = [paged]
 
-                id = self._handle.search_ext(
-                    basedn,
-                    scope,
-                    filterstr=filter,
-                    attrlist=None,
-                    attrsonly=0,
-                    serverctrls=serverctrls,
-                    clientctrls=clientctrls,
-                    timeout=timeout,
-                    sizelimit=sizelimit
-                )
-
-                (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
-                    id, resp_ctrl_classes=paged_ctrls
-                )
-
-                result.extend(rdata)
-
-                paged.size = 0
-                paged.cookie = cookie = None
-                for sc in serverctrls:
-                    if sc.controlType == SimplePagedResultsControl.controlType:
-                        cookie = sc.cookie
-                        if cookie:
-                            paged.cookie = cookie
-                            paged.size = self.pagesize
-
-                        break
-
-                if not cookie:
-                    break
-
-                page += 1
-        else:
             id = self._handle.search_ext(
                 basedn,
                 scope,
@@ -362,20 +326,27 @@ class ActiveDirectory_LDAP(object):
                 sizelimit=sizelimit
             )
 
-            type = ldap.RES_SEARCH_ENTRY
-            while type != ldap.RES_SEARCH_RESULT:
-                try:
-                    type, data = self._handle.result(id, 0)
+            (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
+                id, resp_ctrl_classes=paged_ctrls
+            )
 
-                except ldap.LDAPError as e:
-                    self.logger.debug(e)
-                    break
+            result.extend(rdata)
 
-                results.append(data)
+            paged.size = 0
+            paged.cookie = cookie = None
+            for sc in serverctrls:
+                if sc.controlType == SimplePagedResultsControl.controlType:
+                    cookie = sc.cookie
+                    if cookie:
+                        paged.cookie = cookie
+                        paged.size = self.pagesize
 
-            for i in range(len(results)):
-                for entry in results[i]:
-                    result.append(entry)
+                        break
+
+            if not cookie:
+                break
+
+            page += 1
 
         return result
 
@@ -598,7 +569,7 @@ class ActiveDirectoryService(ConfigService):
                 }
             )
 
-        elif smb_ha_mode == 'UNIFIED' and  must_update:
+        elif smb_ha_mode == 'UNIFIED' and must_update:
             await self.middleware.call('smb.update', 1, {'netbiosalias': new['netbiosalias']})
             await self.middleware.call('network.configuration', 1, {'hostname_virtual': new['netbiosname']})
 
