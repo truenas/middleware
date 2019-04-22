@@ -177,8 +177,6 @@ db_update()
 	# we need it for the ix-loader service call later on
 	touch ${FIRST_INSTALL_SENTINEL}
 
-	rm -f /data/sentinels/unscheduled-reboot
-
 	echo "Database upgrade complete.  Rebooting."
 	cd /
 	if [ "${precertman}" == 0 ]; then
