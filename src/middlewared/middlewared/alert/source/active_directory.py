@@ -1,6 +1,6 @@
 from datetime import timedelta
 import logging
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule, IntervalSchedule
 
 log = logging.getLogger("activedirectory_check_alertmod")
@@ -20,7 +20,7 @@ class ActiveDirectoryDomainHealthAlertClass(AlertClass):
     text = "Domain validation failed with error: %(verrs)s."
 
 
-class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
+class ActiveDirectoryDomainHealthAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)
 
     async def check(self):
@@ -32,11 +32,12 @@ class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
         except Exception as e:
             return Alert(
                 ActiveDirectoryDomainHealthAlertClass,
-                {'verrs': str(e)}
+                {'verrs': str(e)},
+                key=None
             )
 
 
-class ActiveDirectoryDomainBindAlertSource(ThreadedAlertSource):
+class ActiveDirectoryDomainBindAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
 
     async def check(self):
