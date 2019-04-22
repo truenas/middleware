@@ -355,7 +355,7 @@ for replication in replication_tasks:
         # We expect to see "on" in the output, or cannot open '%s': dataset does not exist
         # in the error.  To be safe, also check for children's readonly state.
         may_proceed = False
-        rzfscmd = "'zfs list -H -o readonly -t filesystem,volume -r \"%s\"'" % (remotefs_final)
+        rzfscmd = '"zfs list -H -o readonly -t filesystem,volume -r %s"' % (remotefs_final)
         sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
         output, error = sshproc.communicate()
         error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
@@ -413,9 +413,9 @@ Hello,
 
     # Grab map from remote system
     if recursive:
-        rzfscmd = "'zfs list -H -t snapshot -p -o name,creation -r \"%s\"'" % (remotefs_final)
+        rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -r \'%s\'"' % (remotefs_final)
     else:
-        rzfscmd = "'zfs list -H -t snapshot -p -o name,creation -d 1 -r \"%s\"'" % (remotefs_final)
+        rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -d 1 -r \'%s\'"' % (remotefs_final)
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
     output, error = sshproc.communicate()
     error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
