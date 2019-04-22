@@ -320,7 +320,7 @@ for replication in replication_tasks:
         remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
-    rzfscmd = "'zfs create -o readonly=on "
+    rzfscmd = "zfs create -o readonly=on "
     ds = ''
     if "/" not in localfs:
         localfs_tmp = "%s/%s" % (localfs, localfs)
@@ -337,7 +337,7 @@ for replication in replication_tasks:
             if ds_full in remote_zfslist:
                 continue
             log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
-            sshproc = pipeopen('%s %s \"%s\"' % (sshcmd, rzfscmd, ds_full) + "\'", quiet=True)
+            sshproc = pipeopen('%s %s \"%s\"' % (sshcmd, rzfscmd, ds_full), quiet=True)
             output, error = sshproc.communicate()
             error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
             # Debugging code
