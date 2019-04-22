@@ -314,9 +314,9 @@ for replication in replication_tasks:
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
     output, error = sshproc.communicate()
     remote_zfslist = {}
-    for i in re.sub(r'\t+', ' ', output, flags=re.M).splitlines():
+    for i in output.rstrip().split("\n"):
         readonly_value = i.split()[-1]
-        data = [i.split(readonly_value)[0].rstrip(), readonly_value]
+        data = [i.split("\t")[0].rstrip(), readonly_value]
         remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
