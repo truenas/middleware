@@ -1263,7 +1263,7 @@ class ActiveDirectoryService(ConfigService):
         return ret
 
     @private
-    async def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
+    def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
         try:
             if entry_type == 'users':
                 return pwd.getpwnam(obj)

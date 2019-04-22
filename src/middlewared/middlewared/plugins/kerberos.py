@@ -16,15 +16,6 @@ class keytab(enum.Enum):
 
 
 class KerberosService(ConfigService):
-    """
-    :start:  - configures kerberos and performs kinit if needed
-    :stop:   - performs kdestroy and clears cached klist output
-    :status: - returns false if there is no kerberos tgt or if it is expired 'klist -t'
-    :renew:  - compares current time with expiration timestamp in tgt. Issues 'kinit -R' if needed.
-               uses cached klist output if available.
-    :update: - this modifies the krb5.conf. There is a rudamentary parser for the auxiliary
-               parameters.
-    """
     class Config:
         service = "kerberos"
         datastore = 'directoryservice.kerberossettings'
@@ -38,7 +29,8 @@ class KerberosService(ConfigService):
     ))
     async def do_update(self, data):
         """
-        Update krb5.conf appdefaults and libdefaults in the krb5.conf file.
+        :appdefaults_aux: add parameters to "appdefaults" section of the krb5.conf file.
+        :libdefautls_aux: add parameters to "libdefaults" section of the krb5.conf file.
         """
         old = await self.config()
         new = old.copy()
@@ -56,6 +48,9 @@ class KerberosService(ConfigService):
 
     @private
     async def _klist_test(self):
+        """
+        Returns false if there is not a TGT or if the TGT has expired.
+        """
         klist = await run(['/usr/bin/klist', '-t'], check=False)
         if klist.returncode != 0:
             return False
@@ -274,15 +269,6 @@ class KerberosService(ConfigService):
 
 
 class KerberosRealmService(CRUDService):
-    """
-    Entries for kdc, admin_server, and kpasswd_server are not required.
-    If they are unpopulated, then kerberos will use DNS srv records to
-    discover the correct servers. The option to hard-code them is provided
-    due to AD site discovery. Kerberos has no concept of Active Directory
-    sites. This means that middleware performs the site discovery and
-    sets the kerberos configuration based on the AD site.
-    """
-
     class Config:
         datastore = 'directoryservice.kerberosrealm'
         datastore_prefix = 'krb_'
@@ -318,6 +304,13 @@ class KerberosRealmService(CRUDService):
         Create a new kerberos realm. This will be automatically populated during the
         domain join process in an Active Directory environment. Kerberos realm names
         are case-sensitive, but convention is to only use upper-case.
+
+        Entries for kdc, admin_server, and kpasswd_server are not required.
+        If they are unpopulated, then kerberos will use DNS srv records to
+        discover the correct servers. The option to hard-code them is provided
+        due to AD site discovery. Kerberos has no concept of Active Directory
+        sites. This means that middleware performs the site discovery and
+        sets the kerberos configuration based on the AD site.
         """
         verrors = ValidationErrors()
 
@@ -481,6 +474,9 @@ class KerberosKeytabService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        """
+        Delete kerberos keytab by id.
+        """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self.middleware.call('etc.generate', 'kerberos')
         await self.middleware.call('kerberos.stop')
@@ -502,6 +498,9 @@ class KerberosKeytabService(CRUDService):
 
     @private
     async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
+        """
+        Parse ktutil output.
+        """
         keytab_entries = []
         kt_list = await run(
             ["/usr/sbin/ktutil", "-k", keytab_file, "-v", "list"], check=False
@@ -525,6 +524,9 @@ class KerberosKeytabService(CRUDService):
 
     @private
     async def _get_nonsamba_principals(self, keytab_list):
+        """
+        Generate list of Kerberos principals that are not the AD machine account.
+        """
         smb = await self.middleware.call('smb.config')
         pruned_list = []
         for i in keytab_list:
@@ -536,6 +538,7 @@ class KerberosKeytabService(CRUDService):
     @private
     async def _generate_tmp_keytab(self):
         """
+        Generate a temporary keytab to separate out the machine account keytab principal.
         ktutil copy returns 1 even if copy succeeds.
         """
         if os.path.exists(keytab['SAMBA'].value):
@@ -551,6 +554,9 @@ class KerberosKeytabService(CRUDService):
 
     @private
     async def _prune_keytab_principals(self, to_delete=[]):
+        """
+        Delete all keytab entries from the tmp keytab that are not samba entries.
+        """
         for i in to_delete:
             ktutil_remove = await run([
                 '/usr/sbin/ktutil',
@@ -565,6 +571,10 @@ class KerberosKeytabService(CRUDService):
 
     @private
     async def kerberos_principal_choices(self):
+        """
+        Keytabs typically have multiple entries for same principal (differentiated by enc_type).
+        Since the enctype isn't relevant in this situation, only show unique principal names.
+        """
         keytab_list = await self._ktutil_list()
         kerberos_principals = []
         for entry in keytab_list:
