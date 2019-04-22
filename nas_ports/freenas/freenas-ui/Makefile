@@ -40,7 +40,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110@${PY_FLAVOR} \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd@${PY_FLAVOR} \
 	${PYTHON_PKGNAMEPREFIX}middlewared>0:freenas/py-middlewared@${PY_FLAVOR} \
 	${PYTHON_PKGNAMEPREFIX}ntplib>0:net/py-ntplib@${PY_FLAVOR} \
-	${PYTHON_PKGNAMEPREFIX}snmp4>0:net-mgmt/py-snmp4@${PY_FLAVOR} \
+	${PYTHON_PKGNAMEPREFIX}pysnmp>0:net-mgmt/py-pysnmp@${PY_FLAVOR} \
 	pyvmomi>0:net/py-pyvmomi \
 	dmidecode>0:sysutils/dmidecode \
 	freenas-pkgtools>0:freenas/freenas-pkgtools \
