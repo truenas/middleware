@@ -320,7 +320,7 @@ for replication in replication_tasks:
         remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
-    rzfscmd = "\'" + "zfs create -o readonly=on "
+    rzfscmd = "'zfs create -o readonly=on "
     ds = ''
     if "/" not in localfs:
         localfs_tmp = "%s/%s" % (localfs, localfs)
