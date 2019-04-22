@@ -179,7 +179,11 @@ class IdmapService(Service):
         This should be performed after finalizing idmap changes.
         """
         await self.middleware.call('service.stop', 'smb')
-        os.remove('/var/db/system/samba4/winbindd_cache.tdb')
+        try:
+            os.remove('/var/db/system/samba4/winbindd_cache.tdb')
+        except Exception as e:
+            self.logger.debug("Failed to remove winbindd_cache.tdb: %s" % e)
+
         await self.middleware.call('service.start', 'smb')
         gencache_flush = await run(['net', 'cache', 'flush'], check=False)
         if gencache_flush.returncode != 0:
