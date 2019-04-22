@@ -347,6 +347,14 @@ class ZFSPoolService(CRUDService):
             t.start()
             t.join()
 
+    def pools_with_paused_scrubs(self):
+        with libzfs.ZFS() as zfs:
+            return [
+                pool.name
+                for pool in zfs.pools
+                if pool.scrub.pause is not None
+            ]
+
     @accepts()
     def find_import(self):
         with libzfs.ZFS() as zfs:
