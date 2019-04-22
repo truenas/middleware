@@ -10,7 +10,6 @@ import sys
 
 from collections import defaultdict
 
-from middlewared.alert.source.failover import check_carp_states
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import (
@@ -176,6 +175,24 @@ class FailoverService(ConfigService):
             else:
                 backups.append(iface['name'])
         return masters, backups
+
+    @private
+    async def check_carp_states(self, local, remote):
+        errors = []
+        interfaces = set(local[0] + local[1] + remote[0] + remote[1])
+        if not interfaces:
+            errors.append(f"There are no failover interfaces")
+        for name in interfaces:
+            if name not in local[0] + local[1]:
+                errors.append(f"Interface {name} is not configured for failover on local system")
+            if name not in remote[0] + remote[1]:
+                errors.append(f"Interface {name} is not configured for failover on remote system")
+            if name in local[0] and name in remote[0]:
+                errors.append(f"Interface {name} is MASTER on both nodes")
+            if name in local[1] and name in remote[1]:
+                errors.append(f"Interface {name} is BACKUP on both nodes")
+
+        return errors
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
@@ -373,7 +390,7 @@ class FailoverService(ConfigService):
 
             local = self.middleware.call_sync('failover.get_carp_states')
             remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
-            if check_carp_states(local, remote):
+            if self.middleware.call_sync('failover.check_carp_states', local, remote):
                 reasons.append('DISAGREE_CARP')
 
             remote_disks = set(self.middleware.call_sync("failover.call_remote", "device.get_info", ["DISK"]).keys())

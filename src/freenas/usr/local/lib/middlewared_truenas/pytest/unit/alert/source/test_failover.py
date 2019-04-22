@@ -4,9 +4,11 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
+from unittest.mock import Mock
+
 import pytest
 
-from middlewared.alert.source.failover import check_carp_states
+from middlewared.plugins.failover import FailoverService
 
 
 @pytest.mark.parametrize("local_masters,local_backups,remote_masters,remote_backups,results", [
@@ -19,5 +21,7 @@ from middlewared.alert.source.failover import check_carp_states
     (["ntb0"], [], ["ntb1"], ["ntb0"], ["Interface ntb1 is not configured for failover on local system"]),
     (["ntb0"], [], [], ["ntb0", "ntb1"], ["Interface ntb1 is not configured for failover on local system"]),
 ])
-def test__check_carp_states(local_masters, local_backups, remote_masters, remote_backups, results):
-    assert check_carp_states((local_masters, local_backups), (remote_masters, remote_backups)) == results
+async def test__check_carp_states(local_masters, local_backups, remote_masters, remote_backups, results):
+    assert await FailoverService(Mock()).check_carp_states(
+        (local_masters, local_backups), (remote_masters, remote_backups)
+    ) == results

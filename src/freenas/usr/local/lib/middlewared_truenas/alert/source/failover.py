@@ -90,24 +90,6 @@ class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
     text = "No escrowed passphrase for failover. Automatic failover disabled."
 
 
-def check_carp_states(local, remote):
-    errors = []
-    interfaces = set(local[0] + local[1] + remote[0] + remote[1])
-    if not interfaces:
-        errors.append(f"There are no failover interfaces")
-    for name in interfaces:
-        if name not in local[0] + local[1]:
-            errors.append(f"Interface {name} is not configured for failover on local system")
-        if name not in remote[0] + remote[1]:
-            errors.append(f"Interface {name} is not configured for failover on remote system")
-        if name in local[0] and name in remote[0]:
-            errors.append(f"Interface {name} is MASTER on both nodes")
-        if name in local[1] and name in remote[1]:
-            errors.append(f"Interface {name} is BACKUP on both nodes")
-
-    return errors
-
-
 class FailoverlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
@@ -132,7 +114,7 @@ class FailoverlertSource(ThreadedAlertSource):
             local = self.middleware.call_sync('failover.get_carp_states')
             remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
 
-            errors = check_carp_states(local, remote)
+            errors = self.middleware.call_sync('failover.check_carp_states', local, remote)
             for error in errors:
                 alerts.append(Alert(
                     CARPStatesDoNotAgreeAlertClass,
