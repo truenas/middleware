@@ -208,9 +208,9 @@ define([
                 if (property.schema.enum)
                 {
                     input = "<select id='" + id + "'>";
-                    for (var i = 0; i < property.schema.enum.length; i++)
+                    for (var j = 0; j < property.schema.enum.length; j++)
                     {
-                        input += '<option>' + property.schema.enum[i] + '</option>';
+                        input += '<option>' + property.schema.enum[j] + '</option>';
                     }
                     input += '</select>';
                 }
