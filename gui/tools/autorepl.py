@@ -127,7 +127,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         os.close(writefd)
 
     compress, decompress = compress_pipecmds(compression)
-    replcmd = '%s%s/usr/local/bin/pipewatcher $$ | %s \"%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded\"' % (compress, throttle, sshcmd, decompress, remotefs)
+    replcmd = '%s%s/usr/local/bin/pipewatcher $$ | %s "%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
     log.debug('Sending zfs snapshot: %s | %s', ' '.join(cmd), replcmd)
     with open(templog, 'w+') as f:
         readobj = os.fdopen(readfd, 'rb', 0)
@@ -285,16 +285,16 @@ for replication in replication_tasks:
 
     sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
-    remotefs_final = '%s%s%s' % (remotefs, localfs.partition('/')[1], localfs.partition('/')[2])
+    remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1], localfs.partition('/')[2])
 
     # Examine local list of snapshots, then remote snapshots, and determine if there is any work to do.
     log.debug("Checking dataset %s" % (localfs))
 
     # Grab map from local system.
     if recursive:
-        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r \"%s\"' % (localfs), debug)
+        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r "%s"' % (localfs), debug)
     else:
-        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r -d 1 \"%s\"' % (localfs), debug)
+        zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r -d 1 "%s"' % (localfs), debug)
 
     output, error = zfsproc.communicate()
     if zfsproc.returncode:
