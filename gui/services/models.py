@@ -1224,6 +1224,11 @@ class SNMP(Model):
         blank=True,
         help_text=_("These parameters will be added to /etc/snmpd.config."),
     )
+    snmp_zilstat = models.BooleanField(
+        verbose_name=_("Expose zilstat via SNMP"),
+        default=False,
+        help_text=_("Enabling this option may have performance implications on your pools."),
+    )
 
     class Meta:
         verbose_name = _("SNMP")
