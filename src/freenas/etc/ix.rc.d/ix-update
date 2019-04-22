@@ -120,8 +120,6 @@ db_update()
 
 	midclt call etc.generate loader
 
-	rm -f /data/sentinels/unscheduled-reboot
-
 	echo "Database upgrade complete.  Rebooting."
 	cd /
 	sleep 2
