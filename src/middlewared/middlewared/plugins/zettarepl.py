@@ -13,15 +13,15 @@ from zettarepl.dataset.list import list_datasets
 from zettarepl.definition.definition import Definition
 from zettarepl.observer import (
     PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
-    ReplicationTaskStart, ReplicationTaskSnapshotProgress, ReplicationTaskSnapshotSuccess, ReplicationTaskSuccess,
-    ReplicationTaskError
+    ReplicationTaskScheduled, ReplicationTaskStart, ReplicationTaskSnapshotProgress, ReplicationTaskSnapshotSuccess,
+    ReplicationTaskSuccess, ReplicationTaskError
 )
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
-from zettarepl.utils.logging import LongStringsFilter
+from zettarepl.utils.logging import LongStringsFilter, ReplicationTaskLoggingLevelFilter
 from zettarepl.zettarepl import Zettarepl
 
 from middlewared.client import Client
@@ -93,6 +93,7 @@ class ZettareplProcess:
         setup_logging("", debug_level, self.log_handler)
         for handler in logging.getLogger().handlers:
             handler.addFilter(LongStringsFilter())
+            handler.addFilter(ReplicationTaskLoggingLevelFilter())
 
         definition = Definition.from_data(self.definition)
 
@@ -446,6 +447,11 @@ class ZettareplService(Service):
                         "datetime": datetime.utcnow(),
                         "error": message.error,
                     }
+                if isinstance(message, ReplicationTaskScheduled):
+                    self.state[f"replication_{message.task_id}"] = {
+                        "state": "WAITING",
+                        "datetime": datetime.utcnow(),
+                    }
                 if isinstance(message, ReplicationTaskStart):
                     self.state[f"replication_{message.task_id}"] = {
                         "state": "RUNNING",
@@ -476,7 +482,7 @@ class ZettareplService(Service):
                         "error": message.error,
                     }
             except Exception:
-                self.logger.warning("Unhandled exceptiom in observer_queue_reader", exc_info=True)
+                self.logger.warning("Unhandled exception in observer_queue_reader", exc_info=True)
 
     async def terminate(self):
         await self.middleware.run_in_thread(self.stop)
