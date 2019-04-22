@@ -24,6 +24,8 @@ class SNMPService(SystemServiceService):
         Str('v3_privpassphrase', default=None),
         Int('loglevel', validators=[Range(min=0, max=7)]),
         Str('options'),
+        Bool('zilstat'),
+        update=True
     ))
     async def do_update(self, data):
         old = await self.config()
