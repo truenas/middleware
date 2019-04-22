@@ -46,20 +46,25 @@ class CloudSyncFAdmin(BaseFreeAdmin):
     icon_view = "ViewcronJobIcon"
     exclude_fields = (
         'id',
-        'daymonth',
-        'dayweek',
-        'hour',
-        'minute',
-        'month',
-        'bwlimit',
-        'exclude',
-        'attributes',
         'transfer_mode',
+        'attributes',
+        'snapshot',
+        'pre_script',
+        'post_script',
         'encryption',
         'filename_encryption',
         'encryption_password',
         'encryption_salt',
         'args',
+        'daymonth',
+        'dayweek',
+        'hour',
+        'minute',
+        'month',
+        'follow_symlinks',
+        'transfers',
+        'bwlimit',
+        'exclude',
     )
     menu_child_of = 'tasks'
     refresh_time = 12000
