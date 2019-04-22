@@ -69,8 +69,7 @@ class ActiveDirectory_DNS(object):
         return self
 
     def __exit__(self, typ, value, traceback):
-        if typ is not None:
-            raise
+        return
 
     def _get_SRV_records(self, host, dns_timeout):
         """
@@ -706,17 +705,9 @@ class ActiveDirectoryService(ConfigService):
         if not new["bindpw"] and not new["kerberos_principal"]:
             raise ValidationError("activedirectory_update.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
 
-        await self.middleware.call(
-            'datastore.update',
-            'directoryservice.activedirectory',
-            old['id'],
-            new,
-            {'prefix': 'ad_'}
-        )
-
-        if data['bindpw'] and data['enable'] and not old['enable']:
+        if data['enable'] and not old['enable']:
             try:
-                await self.middleware.run_in_thread(self.validate_credentials)
+                await self.middleware.run_in_thread(self.validate_credentials, new)
             except Exception as e:
                 verrors.add("activedirectory_update.bindpw", f"Failed to validate bind credentials: {e}")
             try:
@@ -726,6 +717,14 @@ class ActiveDirectoryService(ConfigService):
 
         if verrors:
             raise verrors
+
+        await self.middleware.call(
+            'datastore.update',
+            'directoryservice.activedirectory',
+            old['id'],
+            new,
+            {'prefix': 'ad_'}
+        )
 
         start = False
         stop = False
@@ -781,14 +780,14 @@ class ActiveDirectoryService(ConfigService):
     @private
     async def start(self):
         """
-        Start AD service. In 'UNIFIED' HA configuration, only start AD service 
+        Start AD service. In 'UNIFIED' HA configuration, only start AD service
         on active storage controller.
         """
         ad = await self.config()
         smb = await self.middleware.call('smb.config')
         smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if smb_ha_mode == 'UNIFIED':
-            if  await self.middleware.call('failover.status') != 'MASTER':
+            if await self.middleware.call('failover.status') != 'MASTER':
                 return
 
         state = await self.get_state()
@@ -899,9 +898,11 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('cache.pop', 'AD_State')
 
     @private
-    def validate_credentials(self):
+    def validate_credentials(self, ad=None):
         ret = False
-        ad = self.middleware.call_sync('activedirectory.config')
+        if ad is None:
+            ad = self.middleware.call_sync('activedirectory.config')
+
         with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
             dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:

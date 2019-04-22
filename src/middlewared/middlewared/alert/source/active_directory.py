@@ -1,10 +1,10 @@
 from datetime import timedelta
-import os
 import logging
 from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, ThreadedAlertSource
-from middlewared.alert.schedule import IntervalSchedule
+from middlewared.alert.schedule import CrontabSchedule, IntervalSchedule
 
 log = logging.getLogger("activedirectory_check_alertmod")
+
 
 class ActiveDirectoryDomainBindAlertClass(AlertClass):
     category = AlertCategory.DIRECTORY_SERVICE
@@ -21,14 +21,14 @@ class ActiveDirectoryDomainHealthAlertClass(AlertClass):
 
 
 class ActiveDirectoryDomainHealthAlertSource(ThreadedAlertSource):
-    schedule = IntervalSchedule(timedelta(hours=24))
+    schedule = CrontabSchedule(hour=1)
 
-    def check_sync(self):
-        if self.middleware.call_sync('activedirectory.get_state') == 'DISABLED':
+    async def check(self):
+        if await self.middleware.call('activedirectory.get_state') == 'DISABLED':
             return
 
         try:
-            self.middleware.call_sync("activedirectory.validate_domain")
+            await self.middleware.call("activedirectory.validate_domain")
         except Exception as e:
             return Alert(
                 ActiveDirectoryDomainHealthAlertClass,

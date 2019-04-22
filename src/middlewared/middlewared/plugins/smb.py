@@ -207,7 +207,7 @@ class SMBService(SystemServiceService):
         builtin groups must be avoided. Mapping groups with the same
         names as users should also be avoided.
         """
-        passdb_backend = await self.middleware.run_in_thread(self.getparm('passdb backend', 'global'))
+        passdb_backend = await self.middleware.run_in_thread(self.getparm, 'passdb backend', 'global')
         if passdb_backend == 'ldapsam':
             return
 
@@ -283,8 +283,7 @@ class SMBService(SystemServiceService):
         Updates a user's passdb entry to reflect the current server configuration.
         """
         privatedir = self.getparm('privatedir', 'global')
-        passdb_backend = self.getparm('passdb backend', 'global')
-        if passdb_backend == 'ldapsam':
+        if self.getparm('passdb backend', 'global') == 'ldapsam':
             return
 
         if not os.path.exists(f'{privatedir}/passdb.tdb'):
@@ -299,10 +298,17 @@ class SMBService(SystemServiceService):
             p = samba3.passdb.PDB('tdbsam').getsampwnam(username)
         except Exception:
             self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", username)
-            samba3.passdb.PDB('tdbsam').create_user(username)
+            samba3.passdb.PDB('tdbsam').create_user(username, samr_AcctFlags.NORMAL)
             p = samba3.passdb.PDB('tdbsam').getsampwnam(username)
+
         pdb_entry_changed = False
-        if smbpasswd_string[3] != binascii.hexlify(p.nt_passwd).decode().upper():
+
+        try:
+            nt_passwd = binascii.hexlify(p.nt_passwd).decode().upper()
+        except Exception:
+            nt_passwd = ''
+
+        if smbpasswd_string[3] != nt_passwd:
             p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
             pdb_entry_changed = True
         if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & samr_AcctFlags.DISABLED):
@@ -346,9 +352,15 @@ class SMBService(SystemServiceService):
                 p = samba3.passdb.PDB('tdbsam').getsampwnam(u['username'])
             except Exception:
                 self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", u['username'])
-                samba3.passdb.PDB('tdbsam').create_user(u['username'])
+                samba3.passdb.PDB('tdbsam').create_user(u['username'], samr_AcctFlags.NORMAL)
                 p = samba3.passdb.PDB('tdbsam').getsampwnam(u['username'])
-            if smbpasswd_string[3] != binascii.hexlify(p.nt_passwd).decode().upper():
+
+            try:
+                nt_passwd = binascii.hexlify(p.nt_passwd).decode().upper()
+            except Exception:
+                nt_passwd = ''
+
+            if smbpasswd_string[3] != nt_passwd:
                 p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
                 pdb_entry_changed = True
             if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & samr_AcctFlags.DISABLED):

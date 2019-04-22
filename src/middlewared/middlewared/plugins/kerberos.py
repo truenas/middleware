@@ -133,6 +133,7 @@ class KerberosService(ConfigService):
             raise CallError("Attempt to list kerberos tickets failed with error: %s", e)
 
         if klist.returncode != 0:
+            await self.stop()
             raise CallError(f'klist failed with error: {klist.stderr.decode()}')
 
         klist_output = klist.stdout.decode()

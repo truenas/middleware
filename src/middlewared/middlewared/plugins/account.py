@@ -2,7 +2,7 @@ from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private
 )
-from middlewared.utils import run, Popen
+from middlewared.utils import run
 from middlewared.validators import Email
 
 import asyncio
@@ -222,7 +222,7 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        await self.middleware.run_in_thread(self.__set_smbpasswd, data['username'])
+        await self.__set_smbpasswd(data['username'])
 
         if os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -352,7 +352,7 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        await self.middleware.run_in_thread(self.__set_smbpasswd, user['username'])
+        await self.__set_smbpasswd(user['username'])
 
         return pk
 
@@ -579,7 +579,7 @@ class UserService(CRUDService):
             data['smbhash'] = '*'
         return password
 
-    def __set_smbpasswd(self, username):
+    async def __set_smbpasswd(self, username):
         """
         This method will update or create an entry in samba's passdb.tdb file.
         Update will only happen if the account's nt_password has changed or
@@ -587,7 +587,7 @@ class UserService(CRUDService):
         library will raise an exception if a corresponding Unix user does not
         exist. That is the reason we have two methods/steps to set password.
         """
-        self.middleware.call_sync('smb.update_passdb_user', username)
+        await self.middleware.call('smb.update_passdb_user', username)
 
     async def __set_groups(self, pk, groups):
 
