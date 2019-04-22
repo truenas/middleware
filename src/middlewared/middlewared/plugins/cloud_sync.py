@@ -977,5 +977,8 @@ async def setup(middleware):
             remote = cls(middleware)
             REMOTES[remote.name] = remote
 
-    middleware.register_hook('devd.zfs', devd_zfs_hook)
-    middleware.event_subscribe('system', system_event)
+    for credential in await middleware.call("cloudsync.credentials.query", [["provider", "=", "SFTP"]]):
+        if "key_file" in credential["attributes"]:
+            middleware.register_hook('devd.zfs', devd_zfs_hook)
+            middleware.event_subscribe('system', system_event)
+            break
