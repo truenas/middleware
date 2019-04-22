@@ -33,7 +33,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model, UserField
+from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
@@ -303,13 +303,6 @@ class Advanced(Model):
     )
     adv_boot_scrub = models.IntegerField(
         default=7,
-    )
-    adv_periodic_notifyuser = UserField(
-        default="root",
-        verbose_name=_("Periodic Notification User"),
-        help_text=_("If you wish periodic emails to be sent to a different email address than "
-                    "the alert emails are set to (root) set an email address for a user and "
-                    "select that user in the dropdown.")
     )
     adv_fqdn_syslog = models.BooleanField(
         verbose_name=_("Use FQDN for logging"),

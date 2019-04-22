@@ -301,7 +301,9 @@ class AlertService(Service):
                         AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
                         AlertLevel[alert_service_desc["level"]].value and
 
-                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
+                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name and
+
+                        not issubclass(alert.klass, OneShotAlertClass)
                     )
                 ]
                 service_new_alerts = [
@@ -588,10 +590,10 @@ class AlertService(Service):
         try:
             klass = AlertClass.class_by_name[klass]
         except KeyError:
-            raise CallError(f"Invalid alert source: {klass!r}")
+            raise CallError(f"Invalid alert class: {klass!r}")
 
         if not issubclass(klass, OneShotAlertClass):
-            raise CallError(f"Alert class {klass!r} is not a one-shot alert source")
+            raise CallError(f"Alert class {klass!r} is not a one-shot alert class")
 
         alert = await klass(self.middleware).create(args)
         if alert is None:

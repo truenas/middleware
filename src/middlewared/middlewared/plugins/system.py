@@ -83,19 +83,6 @@ class SytemAdvancedService(ConfigService):
     async def __validate_fields(self, schema, data):
         verrors = ValidationErrors()
 
-        user = data.get('periodic_notifyuser')
-        if user:
-            if not (
-                await self.middleware.call(
-                    'notifier.get_user_object',
-                    user
-                )
-            ):
-                verrors.add(
-                    f'{schema}.periodic_notifyuser',
-                    'Specified user does not exist'
-                )
-
         serial_choice = data.get('serialport')
         if data.get('serialconsole'):
 
@@ -127,7 +114,6 @@ class SytemAdvancedService(ConfigService):
             Bool('debugkernel'),
             Bool('fqdn_syslog'),
             Str('motd'),
-            Str('periodic_notifyuser'),
             Bool('powerdaemon'),
             Bool('serialconsole'),
             Str('serialport'),
@@ -147,8 +133,6 @@ class SytemAdvancedService(ConfigService):
 
         `consolemenu` should be disabled if the menu at console is not desired. It will default to standard login
         in the console if disabled.
-
-        `periodic_notifyuser` is the user which will receive all security output emails.
 
         `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
         hardware.
@@ -215,9 +199,6 @@ class SytemAdvancedService(ConfigService):
                 not loader_reloaded
             ):
                 await self.middleware.call('service.reload', 'loader', {'onetime': False})
-
-            if original_data['periodic_notifyuser'] != config_data['periodic_notifyuser']:
-                await self.middleware.call('service.start', 'ix-periodic', {'onetime': False})
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
