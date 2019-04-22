@@ -4,15 +4,11 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-from collections import namedtuple
-from decimal import Decimal
 import logging
-import random
 import re
-import subprocess
-import time
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
+from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
 
@@ -27,162 +23,80 @@ PS_FAILURES = [
     (0x20, "AC out-of-range, but present"),
 ]
 
-Sensor = namedtuple("Sensor", ["name", "value", "desc", "locrit", "lowarn", "hiwarn", "hicrit"])
-
 
 class SensorAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "Sensor Value Is Outside of Working Range"
-    text = "Sensor %s is %s %s value: %d %s"
+    text = "Sensor %(name)s is %(relative)s %(level)s value: %(value)d %(description)s"
 
 
 class PowerSupplyAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "Power Supply Failed"
-    text = "Power supply %s failed: %s."
+    text = "Power supply %(number)s failed: %(errors)s."
 
 
-def sensor_list():
-    proc = subprocess.Popen([
-        "/usr/local/bin/ipmitool",
-        "sensor",
-        "list",
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-
-    data = proc.communicate()[0].strip('\n')
-
-    sensors = []
-    for line in data.split('\n'):
-        fields = [field.strip(' ') for field in line.split('|')]
-        fields = [None if field == 'na' else field for field in fields]
-
-        for index in [1, 5, 6, 7, 8]:
-            if fields[index] is None:
-                continue
-
-            if fields[index].startswith("0x"):
-                try:
-                    fields[index] = int(fields[index], 16)
-                except Exception:
-                    fields[index] = None
-            else:
-                try:
-                    fields[index] = Decimal(fields[index])
-                except:
-                    fields[index] = None
-
-        name, value, desc, locrit, lowarn, hiwarn, hicrit = (
-            fields[0],
-            fields[1],
-            fields[2],
-            fields[5],
-            fields[6],
-            fields[7],
-            fields[8],
+class SensorsAlertSource(AlertSource):
+    async def check(self):
+        baseboard_manufacturer = (
+            (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).decode(errors="ignore")
         )
 
-        sensors.append(Sensor(name, value, desc, locrit, lowarn, hiwarn, hicrit))
-
-    return sensors
-
-
-class SensorsAlertSource(ThreadedAlertSource):
-    def check_sync(self):
-        proc = subprocess.Popen([
-            "/usr/local/sbin/dmidecode",
-            "-s",
-            "baseboard-manufacturer",
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        baseboard_manufacturer = proc.communicate()[0].split("\n", 1)[0].strip()
-
-        failover_hardware = self.middleware.call_sync("notifier.failover_hardware")
+        failover_hardware = await self.middleware.call("notifier.failover_hardware")
 
         is_gigabyte = baseboard_manufacturer == "GIGABYTE"
         is_m_series = baseboard_manufacturer == "Supermicro" and failover_hardware == "ECHOWARP"
 
-        if not (is_gigabyte or is_m_series):
-            return
-
         alerts = []
-        for sensor in sensor_list():
-            name, value, desc, locrit, lowarn, hiwarn, hicrit = sensor
-
+        for sensor in await self.middleware.call("sensor.query"):
             if is_gigabyte:
-                if value is None:
+                if sensor["value"] is None:
                     continue
 
-                if not(RE_CPUTEMP.match(name) or RE_SYSFAN.match(name)):
+                if not (RE_CPUTEMP.match(sensor["name"]) or RE_SYSFAN.match(sensor["name"])):
                     continue
 
-                if lowarn and value < lowarn:
-                    relative = 'below'
-                    if value < locrit:
-                        level = 'critical'
+                if sensor["lowarn"] and sensor["value"] < sensor["lowarn"]:
+                    relative = "below"
+                    if sensor["value"] < sensor["locrit"]:
+                        level = "critical"
                     else:
-                        level = 'recommended'
-
-                elif hiwarn and value > hiwarn:
-                    relative = 'above'
-                    if value > hicrit:
-                        level = 'critical'
+                        level = "recommended"
+                elif sensor["hiwarn"] and sensor["value"] > sensor["hiwarn"]:
+                    relative = "above"
+                    if sensor["value"] > sensor["hicrit"]:
+                        level = "critical"
                     else:
-                        level = 'recommended'
+                        level = "recommended"
                 else:
                     continue
 
                 alerts.append(Alert(
                     SensorAlertClass,
-                    [
-                        name,
-                        relative,
-                        level,
-                        value,
-                        desc,
-                    ]
+                    {
+                        "name": sensor["name"],
+                        "relative": relative,
+                        "level": level,
+                        "value": sensor["value"],
+                        "desc": sensor["desc"],
+                    },
+                    key=[sensor["name"], relative, level],
                 ))
 
             if is_m_series:
-                ps_match = re.match("(PS[0-9]+) Status", name)
+                ps_match = re.match("(PS[0-9]+) Status", sensor["name"])
                 if ps_match:
                     ps = ps_match.group(1)
 
-                    errors = []
-                    if sensor.value == 0:
-                        # PMBus (which controls the PSU's status) can not be probed at the same time because it's not a
-                        # shared bus.
-                        # HA systems show false positive "No presence detected" more often because both controllers are
-                        # randomly probing the status of the PSU's at the same time.
-                        for i in range(3):
-                            logger.info("%r Status = 0x0, rereading", ps)
-                            time.sleep(random.uniform(1, 3))
-
-                            found = False
-                            for sensor_2 in sensor_list():
-                                ps_match_2 = re.match("(PS[0-9]+) Status", sensor_2.name)
-                                if ps_match_2:
-                                    ps_2 = ps_match_2.group(1)
-                                    if ps == ps_2:
-                                        if sensor_2.value != 0:
-                                            sensor = sensor_2
-                                            found = True
-                                            break
-                            if found:
-                                break
-
-                    if not (sensor.value & 0x1):
-                        errors.append("No presence detected")
-                    for b, title in PS_FAILURES:
-                        if sensor.value & b:
-                            errors.append(title)
-                    if errors:
+                    if sensor["notes"]:
                         alerts.append(Alert(
                             PowerSupplyAlertClass,
-                            [
-                                ps,
-                                ", ".join(errors),
-                            ]
+                            {
+                                "number": ps,
+                                "errors": ", ".join(sensor["notes"]),
+                            }
                         ))
 
         return alerts
