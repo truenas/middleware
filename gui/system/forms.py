@@ -1853,9 +1853,21 @@ class InitialWizardDSForm(Form):
                 else:
                     cdata.pop('ds_type', None)
             else:
+                ad_config = {
+                   'domainname': domain,
+                   'bindname': bindname,
+                   'bindpw': bindpw,
+                   'ssl': 'off',
+                   'site': None,
+                   'dns_timeout': 20,
+                   'verbose_logging': True,
+                   'kerberos_principal': None,
+                }
                 with client as c:
-                    if not c.call('activedirectory.validate_credentials'):
-                        raise forms.ValidationError("Failed to validate AD bind credentials")
+                    try:
+                        c.call('activedirectory.validate_credentials', ad_config)
+                    except Exception as e:
+                        raise forms.ValidationError("Credential validation failed with error: %s" % e)
 
         elif cdata.get('ds_type') == 'ldap':
             hostname = cdata.get('ds_ldap_hostname')
