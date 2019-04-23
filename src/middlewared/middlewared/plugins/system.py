@@ -24,6 +24,7 @@ import syslog
 import tarfile
 import textwrap
 import time
+import uuid
 
 from licenselib.license import ContractType, Features
 
@@ -32,6 +33,7 @@ if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 from freenasUI.support.utils import get_license
 
+SYSTEM_BOOT_ID = None
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
 # Flag telling whether the system is shutting down
@@ -243,6 +245,15 @@ class SystemService(Service):
         Returns software version of the system.
         """
         return sw_version()
+
+    @accepts()
+    async def boot_id(self):
+        """
+        Returns an unique boot identifier.
+
+        It is supposed to be unique every system boot.
+        """
+        return SYSTEM_BOOT_ID
 
     @accepts()
     async def ready(self):
@@ -1112,7 +1123,9 @@ async def update_timeout_value(middleware, *args):
 
 
 async def setup(middleware):
-    global SYSTEM_READY
+    global SYSTEM_BOOT_ID, SYSTEM_READY
+
+    SYSTEM_BOOT_ID = str(uuid.uuid4())
 
     middleware.event_register('system', textwrap.dedent('''\
         Sent on system state changes.
