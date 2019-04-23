@@ -358,27 +358,6 @@ def directoryservice_idmap_tdb(request, id):
     })
 
 
-def directoryservice_idmap_tdb2(request, id):
-    idmap_tdb2 = models.idmap_tdb2.objects.get(id=id)
-
-    if request.method == "POST":
-        form = forms.idmap_tdb2_Form(request.POST, instance=idmap_tdb2)
-        if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message="Idmap tdb2 successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.idmap_tdb2_Form(instance=idmap_tdb2)
-
-    return render(request, 'directoryservice/idmap_tdb2.html', {
-        'form': form
-    })
-
-
 def directoryservice_idmap_script(request, id):
     idmap_script = models.idmap_script.objects.get(id=id)
 

@@ -176,15 +176,6 @@ class idmap_tdb_Form(ModelForm):
         ]
 
 
-class idmap_tdb2_Form(ModelForm):
-    class Meta:
-        fields = '__all__'
-        model = models.idmap_tdb2
-        exclude = [
-            'idmap_tdb2_domain',
-        ]
-
-
 class idmap_script_Form(ModelForm):
     class Meta:
         fields = '__all__'

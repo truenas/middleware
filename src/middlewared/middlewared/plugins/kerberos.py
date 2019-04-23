@@ -415,8 +415,8 @@ class KerberosKeytabService(CRUDService):
         Create a kerberos keytab. Uploaded keytab files will be merged with the system
         keytab under /etc/krb5.keytab.
 
-        :file: b64encoded kerberos keytab
-        :name: name for kerberos keytab
+        `file` b64encoded kerberos keytab
+        `name` name for kerberos keytab
         """
         verrors = ValidationErrors()
 
@@ -588,8 +588,10 @@ class KerberosKeytabService(CRUDService):
         """
         Samba will automatically generate system keytab entries for the AD machine account
         (netbios name with '$' appended), and maintain them through machine account password changes.
+
         Copy the system keytab, parse it, and update the corresponding keytab entry in the freenas configuration
         database.
+
         The current system kerberos keytab and compare with a cached copy before overwriting it when a new
         keytab is generated through middleware 'etc.generate kerberos'.
         """

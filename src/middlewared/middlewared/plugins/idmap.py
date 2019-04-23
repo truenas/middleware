@@ -224,8 +224,8 @@ class IdmapDomainService(CRUDService):
         There are three default system domains: DS_TYPE_ACTIVEDIRECTORY, DS_TYPE_LDAP, DS_TYPE_DEFAULT_DOMAIN.
         The system domains correspond with the idmap settings under Active Directory, LDAP, and SMB
         respectively.
-        :name: - the pre-windows 2000 domain name.
-        :DNS_domain_name: - DNS name of the domain.
+        `name` the pre-windows 2000 domain name.
+        `DNS_domain_name` DNS name of the domain.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_domain_create', await self._validate(data))
@@ -303,23 +303,22 @@ class IdmapDomainBackendService(CRUDService):
                 Str('idmap_domain_name'),
                 Str('idmap_domain_dns_domain_name'),
             ),
-            Str('idmap_backend', enum=['ad', 'autorid', 'fruit', 'ldap', 'nss', 'rfc2307', 'rid', 'script', 'tdb', 'tdb2']),
+            Str('idmap_backend', enum=['ad', 'autorid', 'fruit', 'ldap', 'nss', 'rfc2307', 'rid', 'script', 'tdb']),
             register=True
         )
     )
     async def do_create(self, data):
         """
         Set an idmap backend for a domain.
-        :domain: - dictionary containing domain information. Has one-to-one relationship with idmap_domain entries. id value
-        in dictionary is not required.
-        :idmap_backed: - type of idmap backend to use for the domain.
+        `domain` dictionary containing domain information. Has one-to-one relationship with idmap_domain entries.
+        `idmap_backed` type of idmap backend to use for the domain.
 
         Create entry for domain in the respective idmap backend table if one does not exist.
         """
         data = await self.middleware.call('idmap.common_backend_compress', data)
         verrors = ValidationErrors()
         if data['domain'] in [dstype.DS_TYPE_LDAP.value, dstype.DS_TYPE_DEFAULT_DOMAIN.value]:
-            if data['idmap_backend'] not in ['ldap', 'tdb', 'tdb2']:
+            if data['idmap_backend'] not in ['ldap', 'tdb']:
                 verrors.add(
                     'domaintobackend_create.idmap_backend',
                     f'idmap backend [{data["idmap_backend"]}] is not appropriate for the system domain type {dstype[data["domain"]]}'
@@ -370,7 +369,7 @@ class IdmapDomainBackendService(CRUDService):
         new = await self.middleware.call('idmap.common_backend_compress', new)
         verrors = ValidationErrors()
         if new['domain'] in [dstype.DS_TYPE_LDAP.value, dstype.DS_TYPE_DEFAULT_DOMAIN.value]:
-            if new['idmap_backend'] not in ['ldap', 'tdb', 'tdb2']:
+            if new['idmap_backend'] not in ['ldap', 'tdb']:
                 verrors.add(
                     'domaintobackend_create.idmap_backend',
                     f'idmap backend [{new["idmap_backend"]}] is not appropriate for the system domain type {dstype[new["domain"]]}'
@@ -430,6 +429,16 @@ class IdmapADService(CRUDService):
     async def do_create(self, data):
         """
         Create an entry in the idmap backend table.
+        `unix_primary_group` If True, the primary group membership is fetched from the LDAP attributes (gidNumber).
+        If False, the primary group membership is calculated via the "primaryGroupID" LDAP attribute.
+
+        `unix_nss_info` if True winbind will retrieve the login shell and home directory from the LDAP attributes.
+        If False or if the AD LDAP entry lacks the SFU attributes the smb4.conf parameters `template shell` and `template homedir` are used.
+
+        `schema_mode` Defines the schema that idmap_ad should use when querying Active Directory regarding user and group information.
+        This can be either the RFC2307 schema support included in Windows 2003 R2 or the Service for Unix (SFU) schema.
+        For SFU 3.0 or 3.5 please choose "SFU", for SFU 2.0 please choose "SFU20". The behavior of primary group membership is
+        controlled by the unix_primary_group option.
         """
         verrors = ValidationErrors()
         data = await self.middleware.call('idmap.common_backend_compress', data)
@@ -747,8 +756,8 @@ class IdmapRFC2307Service(CRUDService):
             Str('ldap_server', default='ad', enum=['ad', 'stand-alone']),
             Str('bind_path_user'),
             Str('bind_path_group'),
-            Str('user_cn'),
-            Str('cn_realm'),
+            Bool('user_cn', default=False),
+            Bool('cn_realm', default=False),
             Str('ldap_domain'),
             Str('ldap_url'),
             Str('ldap_user_dn'),
@@ -761,7 +770,30 @@ class IdmapRFC2307Service(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an entry in the idmap backend table.
+        Create an entry in the idmap_rfc2307 backend table.
+
+        `ldap_server` defines the type of LDAP server to use. This can either be an LDAP server provided
+        by the Active Directory Domain (ad) or a stand-alone LDAP server.
+
+        `bind_path_user` specfies the search base where user objects can be found in the LDAP server.
+
+        `bind_path_group` specifies the search base where group objects can be found in the LDAP server.
+
+        `user_cn` query cn attribute instead of uid attribute for the user name in LDAP.
+
+        `realm` append @realm to cn for groups (and users if user_cn is set) in LDAP queries.
+
+        `ldmap_domain` when using the LDAP server in the Active Directory server, this allows one to
+        specify the domain where to access the Active Directory server. This allows using trust relationships
+        while keeping all RFC 2307 records in one place. This parameter is optional, the default is to access
+        the AD server in the current domain to query LDAP records.
+
+        `ldap_url` when using a stand-alone LDAP server, this parameter specifies the LDAP URL for accessing the LDAP server.
+
+        `ldap_user_dn` defines the user DN to be used for authentication.
+
+        `realm` defines the realm to use in the user and group names. This is only required when using cn_realm together with
+         a stand-alone ldap server.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_rfc2307_create', await self.middleware.call('idmap._common_validate', data))
@@ -838,7 +870,7 @@ class IdmapRIDService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an entry in the idmap backend table.
+        Create an entry in the idmap_rid backend table.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_rid_create', await self.middleware.call('idmap._common_validate', data))
@@ -910,12 +942,14 @@ class IdmapScriptService(CRUDService):
             ),
             Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
             Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Str('script'),
             register=True
         )
     )
     async def do_create(self, data):
         """
         Create an entry in the idmap backend table.
+        `script` full path to the script or program that generates the mappings.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_script_create', await self.middleware.call('idmap._common_validate', data))
@@ -1025,83 +1059,6 @@ class IdmapTDBService(CRUDService):
         new.update(data)
         verrors = ValidationErrors()
         verrors.add_child('idmap_tdb_update', await self.middleware.call('idmap._common_validate', new))
-
-        if verrors:
-            raise verrors
-
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        return await self._get_instance(id)
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class IdmapTDB2Service(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_tdb2'
-        datastore_prefix = 'idmap_tdb2_'
-        namespace = 'idmap.tdb2'
-
-    @accepts(
-        Dict(
-            'idmap_tdb2_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        Create an entry in the idmap backend table.
-        """
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb2_create', await self.middleware.call('idmap._common_validate', data))
-        if verrors:
-            raise verrors
-
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_tdb_create",
-            "idmap_tdb_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb2_update', await self.middleware.call('idmap._common_validate', new))
 
         if verrors:
             raise verrors

@@ -85,7 +85,6 @@ def idmap_to_enum(idmap_type):
         'rfc2307': IDMAP_TYPE_RFC2307,
         'rid': IDMAP_TYPE_RID,
         'tdb': IDMAP_TYPE_TDB,
-        'tdb2': IDMAP_TYPE_TDB2,
         'script': IDMAP_TYPE_SCRIPT
     }
 
@@ -108,7 +107,6 @@ def enum_to_idmap(enum):
         IDMAP_TYPE_RFC2307: 'rfc2307',
         IDMAP_TYPE_RID: 'rid',
         IDMAP_TYPE_TDB: 'tdb',
-        IDMAP_TYPE_TDB2: 'tdb2',
         IDMAP_TYPE_SCRIPT: 'script'
     }
 
@@ -649,42 +647,6 @@ class idmap_tdb(Model):
     class FreeAdmin:
         deletable = False
         resource_name = 'directoryservice/idmap/tdb'
-
-
-class idmap_tdb2(Model):
-    idmap_tdb2_domain = models.OneToOneField(
-        Idmap_Domain,
-        on_delete=models.deletion.CASCADE,
-        to_field='idmap_domain_name',
-        unique=True, null=True,
-        verbose_name=_('pre-Windows 2000 Domain Name'),
-    )
-    idmap_tdb2_range_low = models.IntegerField(
-        verbose_name=_("Range Low"),
-        default=90000001
-    )
-    idmap_tdb2_range_high = models.IntegerField(
-        verbose_name=_("Range High"),
-        default=100000000
-    )
-    idmap_tdb2_script = PathField(
-        verbose_name=_("Script"),
-        help_text=_(
-            "This option can be used to configure an external program for "
-            "performing id mappings instead of using the tdb counter. The "
-            "mappings are then stored in the tdb2 idmap database."
-        )
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(idmap_tdb2, self).__init__(*args, **kwargs)
-
-    class Meta:
-        verbose_name = _("TDB2 Idmap")
-        verbose_name_plural = _("TDB2 Idmap")
-
-    class FreeAdmin:
-        resource_name = 'directoryservice/idmap/tdb2'
 
 
 class idmap_script(Model):

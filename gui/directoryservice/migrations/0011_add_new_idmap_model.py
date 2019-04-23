@@ -11,7 +11,7 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 def migrate_to_new_idmap(apps, schema_editor):
-    idmap_backends = ['ad', 'autorid', 'fruit', 'ldap', 'nss', 'rfc2307', 'rid', 'tdb', 'tdb2', 'script']
+    idmap_backends = ['ad', 'autorid', 'fruit', 'ldap', 'nss', 'rfc2307', 'rid', 'tdb', 'script']
     idmap_domain = apps.get_model('directoryservice.idmap_domain')
     idmap_domaintobackend = apps.get_model('directoryservice.idmap_domaintobackend')
     idmap_domain.objects.bulk_create([
@@ -49,8 +49,6 @@ def migrate_to_new_idmap(apps, schema_editor):
                         o.idmap_script_domain_id = domain_field
                     elif backend == 'tdb':
                         o.idmap_tdb_domain_id = domain_field
-                    elif backend == 'tdb2':
-                        o.idmap_tdb2_domain_id = domain_field
                     o.save()
 
     AD = apps.get_model(f'directoryservice.activedirectory')
@@ -122,6 +120,7 @@ class Migration(migrations.Migration):
         ),
         migrations.DeleteModel(name='idmap_adex'),
         migrations.DeleteModel(name='idmap_hash'),
+        migrations.DeleteModel(name='idmap_tdb2'),
         migrations.AddField(
             model_name='idmap_ad',
             name='idmap_ad_domain',
@@ -222,16 +221,6 @@ class Migration(migrations.Migration):
                 null=True, verbose_name='pre-Windows 2000 Domain Name'
             ),
         ), 
-        migrations.AddField(
-            model_name='idmap_tdb2',
-            name='idmap_tdb2_domain',
-            field=models.OneToOneField(
-                on_delete=django.db.models.deletion.CASCADE, 
-                to='directoryservice.idmap_domain', 
-                to_field='idmap_domain_name', 
-                null=True, verbose_name='pre-Windows 2000 Domain Name'
-            ),
-        ), 
         migrations.RunPython(migrate_to_new_idmap, reverse_code=migrations.RunPython.noop),       
         migrations.RemoveField(model_name='idmap_ad', name='idmap_ds_id'),
         migrations.RemoveField(model_name='idmap_ad', name='idmap_ds_type'),
@@ -251,6 +240,4 @@ class Migration(migrations.Migration):
         migrations.RemoveField(model_name='idmap_script', name='idmap_ds_type'),
         migrations.RemoveField(model_name='idmap_tdb', name='idmap_ds_id'),
         migrations.RemoveField(model_name='idmap_tdb', name='idmap_ds_type'),
-        migrations.RemoveField(model_name='idmap_tdb2', name='idmap_ds_id'),
-        migrations.RemoveField(model_name='idmap_tdb2', name='idmap_ds_type'),
     ]

@@ -618,41 +618,57 @@ class ActiveDirectoryService(ConfigService):
     ))
     async def do_update(self, data):
         """
-        Update active directory configuration. Takes the following parameters;
-        :domainname: - full DNS domain name of AD domain.
-        :bindname: - username used to perform the intial domain join
-        :bindpw: - password used to perform the initial domain join. This will be automatically cleared after successful
-        domain join.
-        :ssl: - encryption type for LDAP queries used in parameter autodetection during initial domain join, and
-        :certificate: - certificate to use for LDAPS.
-        :verbose_logging: - increase logging during the domain join process.
-        :use_default_domain: - controls whether domain users and groups will have the pre-windows 2000 domain name prepended
+        Update active directory configuration.
+        `domainname` full DNS domain name of the Active Directory domain.
+
+        `bindname` username used to perform the intial domain join.
+
+        `bindpw` password used to perform the initial domain join.
+
+        `ssl` encryption type for LDAP queries used in parameter autodetection during initial domain join.
+
+        `certificate` certificate to use for LDAPS.
+
+        `verbose_logging` increase logging during the domain join process.
+
+        `use_default_domain` controls whether domain users and groups will have the pre-windows 2000 domain name prepended
         to the user account. When enabled, the user will appear as "administrator" rather than "EXAMPLE\administrator"
-        :allow_trusted_doms: - enable support for trusted domains. If this parameter is enabled, then separate idmap backends _must_
+
+        `allow_trusted_doms` enable support for trusted domains. If this parameter is enabled, then separate idmap backends _must_
         be configured for each trusted domain, and the idmap cache should be cleared.
-        :allow_dns_updates: - during the domain join process, automatically generate DNS entries in the AD domain for the NAS. If
+
+        `allow_dns_updates` during the domain join process, automatically generate DNS entries in the AD domain for the NAS. If
         this is disabled, then a domain administrator must manually add appropriate DNS entries for the NAS.
-        :disable_freenas_cache: - disable active caching of AD users and groups. When disabled, only users cached in winbind's internal
+
+        `disable_freenas_cache` disable active caching of AD users and groups. When disabled, only users cached in winbind's internal
         cache will be visible in GUI dropdowns. Disabling active caching is recommended environments with a large amount of users.
-        :site: - AD site of which the NAS is a member. This parameter is auto-detected during the domain join process. If no AD site
+
+        `site` AD site of which the NAS is a member. This parameter is auto-detected during the domain join process. If no AD site
         is configured for the subnet in which the NAS is configured, then this parameter will appear as 'Default-First-Site-Name'.
         Auto-detection is only performed during the initial domain join.
-        :kerberos_realm: - kerberos realm in which the server is located. This parameter will be automatically populated during the
+
+        `kerberos_realm` in which the server is located. This parameter will be automatically populated during the
         initial domain join. If the NAS has an AD site configured and that site has multiple kerberos servers, then the kerberos realm
         will be automatically updated with a site-specific configuration. Auto-detection is only performed during initial domain join.
-        :kerberos_principal: - kerberos principal to use for AD-related operations outside of Samba. After intial domain join, this field
+
+        `kerberos_principal` kerberos principal to use for AD-related operations outside of Samba. After intial domain join, this field
         will be updated with the kerberos principal associated with the AD machine account for the NAS.
-        :nss_info: - controls how Winbind retrieves Name Service Information to construct a user's home directory and login shell. This parameter
+
+        `nss_info` controls how Winbind retrieves Name Service Information to construct a user's home directory and login shell. This parameter
         is only effective if the Active Directory Domain Controller supports the Microsoft Services for Unix (SFU) LDAP schema.
         :timeout: - timeout value for winbind-related operations. This value may need to be increased in  environments with high latencies
         for communications with domain controllers or a large number of domain controllers. Lowering the value may cause status checks to fail.
-        :dns_timeout: - timeout value for DNS queries during the initial domain join.
-        :ldap_sasl_wrapping: - The client ldap sasl wrapping defines whether ldap traffic will be signed or signed and encrypted (sealed).
-        :createcomputer: - Active Directory Organizational Unit in which to create the NAS computer object during domain join.
+
+        `dns_timeout` timeout value for DNS queries during the initial domain join.
+
+        `ldap_sasl_wrapping` defines whether ldap traffic will be signed or signed and encrypted (sealed).
+
+        `createcomputer` Active Directory Organizational Unit in which to create the NAS computer object during domain join.
         If blank, then the default OU is used during computer account creation. Precreate the computer account in a specific OU.
         The OU string read from top to bottom without RDNs and delimited by a "/". E.g. "createcomputer=Computers/Servers/Unix NB: A backslash
         "\" is used as escape at multiple levels and may need to be doubled or even quadrupled. It is not used as a separator.
-        :idmap_backend: - The idmap backend provides a plugin interface for Winbind to use varying backends to store SID/uid/gid mapping tables.
+
+        `idmap_backend` provides a plugin interface for Winbind to use varying backends to store SID/uid/gid mapping tables.
 
         The Active Directory service will be started after a configuration update if the service was initially disabled, and the updated
         configuration sets :enable: to True. Likewise, the Active Directory service will be stopped if :enable: is changed to False
