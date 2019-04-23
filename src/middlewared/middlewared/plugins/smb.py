@@ -96,8 +96,9 @@ class SMBService(SystemServiceService):
     @private
     async def smb_extend(self, smb):
         """Extend smb for netbios."""
+        smb['netbiosname_local'] = smb['netbiosname']
         if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
-            smb['netbiosname'] = smb['netbiosname_b']
+            smb['netbiosname_local'] = smb['netbiosname_b']
 
         for i in ('aio_enable', 'aio_rs', 'aio_ws'):
             smb.pop(i, None)
