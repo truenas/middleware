@@ -65,9 +65,6 @@ class ActiveDirectory_DNS(object):
         self.logger = kwargs.get('logger')
         return
 
-    def __enter__(self):
-        return self
-
     def _get_SRV_records(self, host, dns_timeout):
         """
         Set resolver timeout to 1/3 of the lifetime. The timeout defines
