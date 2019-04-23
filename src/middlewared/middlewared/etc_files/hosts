@@ -4,15 +4,8 @@
 	network_config = middleware.call_sync('network.configuration.config')
 	ad_config = middleware.call_sync('datastore.config', 'directoryservice.activedirectory')
 	nis_enabled = middleware.call_sync('datastore.config', 'directoryservice.nis')['nis_enable']
-	node = middleware.call_sync('failover.node') if not middleware.call_sync('system.is_freenas') else 'A'
 
-	if node.lower() == 'b':
-		hostname = network_config['hostname_b']
-		netbiosname = 'netbiosname_b'
-	else:
-		hostname = network_config['hostname']
-		netbiosname = 'netbiosname'
-
+	hostname = network_config['hostname_local']
 	domain_name = network_config['domain']
 
 	# Following is the hard coded value of NIS_HOSTSSTR which comes from rc.NIS
@@ -23,7 +16,7 @@
 		with open(host_conf, 'a') as f:
 			f.write('nis\n')
 	elif ad_config['ad_enable']:
-		hostname = middleware.call_sync('smb.config')[netbiosname].lower()
+		hostname = middleware.call_sync('smb.config')['netbiosname_local'].lower()
 		domain_name = ad_config['ad_domainname'].lower()
 	else:
 		if not os.path.isfile(host_conf):

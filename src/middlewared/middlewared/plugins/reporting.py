@@ -834,7 +834,7 @@ class ReportingService(ConfigService):
 
         hostname = self.middleware.call_sync('system.info')['hostname']
         if not hostname:
-            hostname = self.middleware.call_sync('network.configuration.config')['hostname']
+            hostname = self.middleware.call_sync('network.configuration.config')['hostname_local']
 
         # Migrate from old version, where `hostname` was a real directory and `localhost` was a symlink.
         # Skip the case where `hostname` is "localhost", so symlink was not (and is not) needed.
