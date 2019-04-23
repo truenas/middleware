@@ -314,8 +314,8 @@ for replication in replication_tasks:
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
     output, error = sshproc.communicate()
     remote_zfslist = {}
-    for i in re.sub(r'[ \t]+', ' ', output, flags=re.M).splitlines():
-        data = i.split()
+    for i in output.rstrip().split("\n"):
+        data = i.rsplit("\t", 1)
         remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
@@ -336,7 +336,7 @@ for replication in replication_tasks:
             if ds_full in remote_zfslist:
                 continue
             log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
-            sshproc = pipeopen('%s %s %s' % (sshcmd, rzfscmd, ds_full), quiet=True)
+            sshproc = pipeopen('%s %s \"%s\"' % (sshcmd, rzfscmd, ds_full), quiet=True)
             output, error = sshproc.communicate()
             error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
             # Debugging code
