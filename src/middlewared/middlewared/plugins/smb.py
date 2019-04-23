@@ -870,7 +870,7 @@ class SharingSMBService(CRUDService):
     async def compress(self, data):
         data['hostsallow'] = ' '.join(data['hostsallow'])
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
-
+        data.pop('netbiosname_local', None)
         return data
 
     @private
