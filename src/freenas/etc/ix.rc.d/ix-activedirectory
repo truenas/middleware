@@ -118,30 +118,6 @@ get_cifs_homedir()
 	"
 }
 
-has_unix_extensions()
-{
-	local ad_unix=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
-	SELECT
-		ad_unix_extensions
-
-	FROM
-		directoryservice_activedirectory
-
-	ORDER BY
-		-id
-
-	LIMIT 1;
-	")
-
-	if [ "${ad_unix}" = "1" ]
-	then
-		return 0
-	fi
-
-	return 1
-}
-
-
 setup_homedirs()
 {
 	local trusted=$(get_trusted)

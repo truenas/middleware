@@ -59,7 +59,6 @@ List resource
                 "ad_site": "",
                 "ad_ssl": "off",
                 "ad_timeout": 60,
-                "ad_unix_extensions": false,
                 "ad_use_default_domain": false,
                 "ad_userdn": "",
                 "ad_verbose_logging": false,
@@ -108,7 +107,6 @@ Update resource
                 "ad_dcname": "",
                 "ad_bindname": "admin",
                 "ad_bindpw": "mypw",
-                "ad_unix_extensions": false,
                 "ad_timeout": 10,
                 "ad_kerberos_principal": "",
                 "ad_kerberos_realm": "",
@@ -145,7 +143,6 @@ Update resource
    :json string ad_site: site name
    :json string ad_ssl: encryption mode (on/off/start_tls)
    :json integer ad_timeout: timeout for AD operations
-   :json boolean ad_unix_extensions: unix extensions
    :json boolean ad_use_default_domain: use default domain for users and groups
    :json string ad_userdn: DN of the user container in AD
    :json boolean ad_verbose_logging: verbose logging

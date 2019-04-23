@@ -846,7 +846,6 @@ AD_show_config()
 	printf "ad_basedn:             %s\n" $(AD_get ad_basedn)
 	printf "ad_binddn:             %s\n" $(AD_get ad_binddn)
 	printf "ad_bindpw:             %s\n" $(AD_get ad_bindpw)
-	printf "ad_unix:               %s\n" $(AD_get ad_unix_extensions)
 	printf "ad_trusted:            %s\n" $(AD_get ad_allow_trusted_doms)
 	printf "ad_default:            %s\n" $(AD_get ad_use_default_domain)
 	printf "ad_verbose:            %s\n" $(AD_get ad_verbose_logging)
@@ -979,16 +978,6 @@ AD_leave_domain()
 AD_disable_machine_account()
 {
 	${AD_TOOL} disable_machine_account
-}
-
-AD_has_unix_extensions()
-{
-	local ad_unix="$(AD_get ad_unix_extensions)"
-	if [ "${ad_unix}" = "1" ]
-	then
-		return 0
-	fi
-	return 1
 }
 
 AD_has_keytab()

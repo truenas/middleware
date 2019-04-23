@@ -221,7 +221,6 @@ Available options:
             "ad_certfile",
             "ad_ssl",
             "ad_verbose_logging",
-            "ad_unix_extensions"
         ]
 
         for k in keys:

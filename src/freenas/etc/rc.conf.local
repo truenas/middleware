@@ -524,21 +524,6 @@ _ldap_config()
 		sssd_enable="YES"
 	fi
 
-	# This needs to go away, winbind is perfectly fine for this use case nowdays
-	if dirsrv_enabled activedirectory; then
-		local ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-			SELECT
-				ad_unix_extensions
-			FROM
-				directoryservice_activedirectory
-			ORDER BY
-				-id
-			LIMIT 1
-		")
-		if [ "${ad_unix}" = "1" ]; then
-			sssd_enable="YES"
-		fi
-	fi
 	echo "sssd_enable=\"${sssd_enable}\""
 	echo "nslcd_enable=\"${nslcd_enable}\""
 }

@@ -251,7 +251,6 @@ class ActiveDirectoryForm(ModelForm):
         'ad_ssl',
         'ad_certificate',
         'ad_verbose_logging',
-        'ad_unix_extensions',
         'ad_allow_trusted_doms',
         'ad_use_default_domain',
         'ad_allow_dns_updates',
@@ -284,7 +283,6 @@ class ActiveDirectoryForm(ModelForm):
             'ad_domainname',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
-            'ad_unix_extensions',
             'ad_verbose_logging',
             'ad_bindname',
             'ad_bindpw'
@@ -313,7 +311,6 @@ class ActiveDirectoryForm(ModelForm):
             self.cifs._original_cifs_srv_netbiosalias != self.cifs.cifs_srv_netbiosalias or
             self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms or
             self.instance._original_ad_use_default_domain != self.instance.ad_use_default_domain or
-            self.instance._original_ad_unix_extensions != self.instance.ad_unix_extensions or
             self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging or
             self.instance._original_ad_bindname != self.instance.ad_bindname or
             self.instance._original_ad_bindpw != self.instance.ad_bindpw

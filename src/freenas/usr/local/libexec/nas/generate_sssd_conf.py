@@ -569,17 +569,6 @@ class SSSDConf(SSSDBase):
             os.chmod(path, 0o600)
 
 
-def activedirectory_has_unix_extensions(client):
-    ad_unix_extensions = False
-
-    try:
-        ad_unix_extensions = client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True})['ad_unix_extensions']
-    except:
-        pass
-
-    return ad_unix_extensions
-
-
 def sssd_mkdir(dir):
     try:
         os.makedirs(dir)
@@ -736,109 +725,6 @@ def add_ldap_section(client, sc):
         sc.merge_config(aux_sc)
 
 
-def add_activedirectory_section(client, sc):
-    activedirectory = Struct(client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True}))
-    ad = Struct(client.call('notifier.directoryservice', 'AD'))
-    use_ad_provider = False
-
-    ad_cookie = ad.netbiosname
-    ad_domain = 'domain/%s' % ad_cookie
-
-    ad_section = None
-    for key in list(sc.keys()):
-        if key == ad_domain:
-            ad_section = sc[key]
-            break
-
-    if not ad_section:
-        ad_section = SSSDSectionDomain(ad_domain)
-        ad_section.description = ad_cookie
-    if ad_section.description != ad_cookie:
-        return
-
-    ad_defaults = [
-        {'enumerate': 'true'},
-        {'id_provider': 'ldap'},
-        {'auth_provider': 'ldap'},
-        {'access_provider': 'ldap'},
-        {'chpass_provider': 'ldap'},
-        {'ldap_schema': 'rfc2307bis'},
-        {'ldap_user_object_class': 'person'},
-        {'ldap_user_name': 'msSFU30Name'},
-        {'ldap_user_uid_number': 'uidNumber'},
-        {'ldap_user_gid_number': 'gidNumber'},
-        {'ldap_user_home_directory': 'unixHomeDirectory'},
-        {'ldap_user_shell': 'loginShell'},
-        {'ldap_user_principal': 'userPrincipalName'},
-        {'ldap_group_object_class': 'group'},
-        {'ldap_group_name': 'msSFU30Name'},
-        {'ldap_group_gid_number': 'gidNumber'},
-        {'ldap_force_upper_case_realm': 'true'},
-        {'use_fully_qualified_names': 'true'}
-    ]
-
-    __, hostname, __ = os.uname()[0:3]
-
-    if ad.keytab_file and ad.keytab_principal:
-        use_ad_provider = True
-
-    if use_ad_provider:
-        for d in ad_defaults:
-            key = list(d.keys())[0]
-            if key.startswith("ldap_") and key in d:
-                del d[key]
-            elif key.endswith("_provider"):
-                d[key] = 'ad'
-
-        ad_section.ad_hostname = hostname
-        ad_section.ad_domain = ad.domainname
-        ad_section.ldap_id_mapping = False
-
-    for d in ad_defaults:
-        if not d:
-            continue
-        key = list(d.keys())[0]
-        if key not in ad_section:
-            setattr(ad_section, key, d[key])
-
-    if activedirectory.ad_use_default_domain:
-        ad_section.use_fully_qualified_names = 'false'
-
-    try:
-        for share in client.call('datastore.query', 'sharing.cifs_share'):
-            share = Struct(share)
-            if share.cifs_home and share.cifs_path:
-                homedir_path = "%s/%%d/%%u" % share.cifs_path
-                ad_section.override_homedir = homedir_path
-                break
-
-    except Exception:
-        pass
-
-    if use_ad_provider:
-        pass
-
-#        ad_section.auth_provider = 'krb5'
-#        ad_section.chpass_provider = 'krb5'
-#        ad_section.ldap_sasl_mech = 'GSSAPI'
-#        ad_section.ldap_sasl_authid = ad.keytab_principal
-#        ad_section.krb5_server = ad.krb_kdc
-#        ad_section.krb5_realm = ad.krb_realm
-#        ad_section.krb5_canonicalize = 'false'
-
-    else:
-        ad_section.ldap_uri = "ldap://%s" % ad.dchost
-        ad_section.ldap_search_base = ad.basedn
-
-        ad_section.ldap_default_bind_dn = ad.binddn
-        ad_section.ldap_default_authtok_type = 'password'
-        ad_section.ldap_default_authtok = ad.bindpw
-
-    sc[ad_domain] = ad_section
-    sc['sssd'].add_domain(ad_cookie)
-    sc['sssd'].add_newline()
-
-
 def get_activedirectory_cookie(client):
     cookie = ''
 
@@ -895,8 +781,6 @@ def main():
     sc.add_nss_section()
     sc.add_pam_section()
 
-    if client.call('notifier.common', 'system', 'activedirectory_enabled') and activedirectory_has_unix_extensions(client):
-        add_activedirectory_section(client, sc)
     if client.call('notifier.common', 'system', 'ldap_enabled'):
         add_ldap_section(client, sc)
 

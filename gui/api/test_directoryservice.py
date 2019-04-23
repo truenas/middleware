@@ -46,7 +46,6 @@ class ActiveDirectoryResourceTest(APITestCase):
             'ad_idmap_backend': 'rid',
             'ad_netbiosname': 'NAS',
             'ad_timeout': 10,
-            'ad_unix_extensions': False,
             'ad_use_default_domain': False,
             'ad_use_keytab': False,
             'ad_verbose_logging': False,
