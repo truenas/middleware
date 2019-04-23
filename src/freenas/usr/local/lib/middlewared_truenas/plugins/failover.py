@@ -652,6 +652,8 @@ class FailoverService(ConfigService):
             except ClientException as e:
                 if e.errno == ClientException.ENOMETHOD:
                     legacy_upgrade = True
+                else:
+                    raise
 
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
