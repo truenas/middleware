@@ -710,6 +710,8 @@ class FailoverService(ConfigService):
                 if ljob.error:
                     raise CallError(ljob.error)
 
+                remote_boot_id = remote.call('system.boot_id')
+
             if rjob:
                 rjob.result()
 
@@ -733,6 +735,9 @@ class FailoverService(ConfigService):
 
         if not self.upgrade_waitstandby(remote_ip=remote_ip):
             raise CallError('Timed out waiting Standby Controller after upgrade.')
+
+        if not legacy_upgrade and remote_boot_id == self.call_remote('system.boot_id'):
+            raise CallError('Standby Controller failed to reboot.')
 
         return True
 
