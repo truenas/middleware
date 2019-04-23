@@ -729,14 +729,17 @@ class FailoverService(ConfigService):
         # rebooting.
         time.sleep(30)
 
-        # We will wait up to 10 minutes for the Standby Controller to reboot
-        if not self.upgrade_waitstandby(remote_ip=remote_ip, seconds=600):
+        if not self.upgrade_waitstandby(remote_ip=remote_ip):
             raise CallError('Timed out waiting Standby Controller after upgrade.')
 
         return True
 
     @private
-    def upgrade_waitstandby(self, remote_ip=None, seconds=600):
+    def upgrade_waitstandby(self, remote_ip=None, seconds=900):
+        """
+        We will wait up to 15 minutes by default for the Standby Controller to reboot.
+        This values come from observation from support of how long a M-series can take.
+        """
         if remote_ip is None:
             remote_ip = self.remote_ip()
         retry_time = time.monotonic()
@@ -800,7 +803,7 @@ class FailoverService(ConfigService):
             raise CallError('Upgrade can only run on Active Controller.')
 
         job.set_progress(None, 'Waiting for Standby Controller to boot')
-        if not self.upgrade_waitstandby(seconds=600):
+        if not self.upgrade_waitstandby():
             raise CallError('Timed out waiting Standby Controller to boot.')
 
         job.set_progress(None, 'Activating new boot environment')
