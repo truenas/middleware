@@ -1053,7 +1053,7 @@ class ActiveDirectoryService(ConfigService):
         """
         ntp_servers = self.middleware.call_sync('system.ntpserver.query')
         default_ntp_servers = list(filter(lambda x: 'freebsd.pool.ntp.org' in x['address'], ntp_servers))
-        if len(ntp_servers) != 3 and len(default_ntp_servers) != 3:
+        if len(ntp_servers) != 3 or len(default_ntp_servers) != 3:
             return
 
         ad = self.middleware.call_sync('activedirectory.config')

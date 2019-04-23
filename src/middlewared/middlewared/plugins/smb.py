@@ -27,7 +27,7 @@ LOGLEVEL_MAP = {
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 
 
-class smbhamode(enum.Enum):
+class SMBHAMODE(enum.IntEnum):
     """
     'standalone' - Not an HA system.
     'legacy' - Two samba instances simultaneously running on active and passive controllers with no shared state.
@@ -38,7 +38,7 @@ class smbhamode(enum.Enum):
     UNIFIED = 2
 
 
-class lsa_sidType(enum.Enum):
+class LSA_sidType(enum.IntEnum):
     """
     Defined in MS-SAMR (2.2.2.3) and lsa.idl
     Samba's group mapping database will primarily contain SID_NAME_ALIAS entries (local groups)
@@ -56,7 +56,7 @@ class lsa_sidType(enum.Enum):
     SID_NAME_LABEL = 10
 
 
-class samr_AcctFlags(enum.IntFlag):
+class SAMR_AcctFlags(enum.IntFlag):
     """
     Defined in MS-SAMR (2.2.1.12) and samr.idl
     """
@@ -314,7 +314,7 @@ class SMBService(SystemServiceService):
                 'gid': g.gid,
                 'ntgroup': g.nt_name,
                 'SID': str(g.sid),
-                'sid_type': lsa_sidType(g.sid_name_use).name,
+                'sid_type': LSA_sidType(g.sid_name_use).name,
             })
         return groupmap_list
 
@@ -360,11 +360,11 @@ class SMBService(SystemServiceService):
             return []
 
         samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
-        pdb = samba3.passdb.PDB("tdbsam").search_users(samr_AcctFlags.NORMAL.value)
+        pdb = samba3.passdb.PDB("tdbsam").search_users(SAMR_AcctFlags.NORMAL.value)
         if not verbose:
             for p in pdb:
                 acct_flags = []
-                for flag in samr_AcctFlags:
+                for flag in SAMR_AcctFlags:
                     if int(p['acct_flags']) & flag:
                         acct_flags.append(flag.name)
                 pdbentries.append({
@@ -379,7 +379,7 @@ class SMBService(SystemServiceService):
         for p in pdb:
             u = samba3.passdb.PDB("tdbsam").getsampwnam(p['account_name'])
             acct_flags = []
-            for flag in samr_AcctFlags:
+            for flag in SAMR_AcctFlags:
                 if int(u.acct_ctrl) & flag:
                     acct_flags.append(flag.name)
 
@@ -417,7 +417,7 @@ class SMBService(SystemServiceService):
             p = samba3.passdb.PDB('tdbsam').getsampwnam(username)
         except Exception:
             self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", username)
-            samba3.passdb.PDB('tdbsam').create_user(username, samr_AcctFlags.NORMAL)
+            samba3.passdb.PDB('tdbsam').create_user(username, SAMR_AcctFlags.NORMAL)
             p = samba3.passdb.PDB('tdbsam').getsampwnam(username)
 
         pdb_entry_changed = False
@@ -430,11 +430,11 @@ class SMBService(SystemServiceService):
         if smbpasswd_string[3] != nt_passwd:
             p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
             pdb_entry_changed = True
-        if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & samr_AcctFlags.DISABLED):
-            p.acct_ctrl |= samr_AcctFlags.DISABLED
+        if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
+            p.acct_ctrl |= SAMR_AcctFlags.DISABLED
             pdb_entry_changed = True
-        elif 'D' not in smbpasswd_string[4] and (p.acct_ctrl & samr_AcctFlags.DISABLED):
-            p.acct_ctrl = samr_AcctFlags.NORMAL
+        elif 'D' not in smbpasswd_string[4] and (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
+            p.acct_ctrl = SAMR_AcctFlags.NORMAL
             pdb_entry_changed = True
         if pdb_entry_changed:
             samba3.passdb.PDB('tdbsam').update_sam_account(p)
@@ -471,7 +471,7 @@ class SMBService(SystemServiceService):
                 p = samba3.passdb.PDB('tdbsam').getsampwnam(u['username'])
             except Exception:
                 self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", u['username'])
-                samba3.passdb.PDB('tdbsam').create_user(u['username'], samr_AcctFlags.NORMAL)
+                samba3.passdb.PDB('tdbsam').create_user(u['username'], SAMR_AcctFlags.NORMAL)
                 p = samba3.passdb.PDB('tdbsam').getsampwnam(u['username'])
 
             try:
@@ -482,11 +482,11 @@ class SMBService(SystemServiceService):
             if smbpasswd_string[3] != nt_passwd:
                 p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
                 pdb_entry_changed = True
-            if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & samr_AcctFlags.DISABLED):
-                p.acct_ctrl |= samr_AcctFlags.DISABLED
+            if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
+                p.acct_ctrl |= SAMR_AcctFlags.DISABLED
                 pdb_entry_changed = True
-            elif 'D' not in smbpasswd_string[4] and (p.acct_ctrl & samr_AcctFlags.DISABLED):
-                p.acct_ctrl = samr_AcctFlags.NORMAL
+            elif 'D' not in smbpasswd_string[4] and (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
+                p.acct_ctrl = SAMR_AcctFlags.NORMAL
                 pdb_entry_changed = True
             if pdb_entry_changed:
                 samba3.passdb.PDB('tdbsam').update_sam_account(p)
@@ -520,11 +520,11 @@ class SMBService(SystemServiceService):
         if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
             system_dataset = await self.middleware.call('systemdataset.config')
             if system_dataset['pool'] != 'freenas-boot':
-                hamode = smbhamode['UNIFIED'].name
+                hamode = SMBHAMODE['UNIFIED'].name
             else:
-                hamode = smbhamode['LEGACY'].name
+                hamode = SMBHAMODE['LEGACY'].name
         else:
-            hamode = smbhamode['STANDALONE'].name
+            hamode = SMBHAMODE['STANDALONE'].name
 
         await self.middleware.call('cache.put', 'SMB_HA_MODE', hamode)
         return hamode
