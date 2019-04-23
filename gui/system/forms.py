@@ -1854,14 +1854,14 @@ class InitialWizardDSForm(Form):
                     cdata.pop('ds_type', None)
             else:
                 ad_config = {
-                   'domainname': domain,
-                   'bindname': bindname,
-                   'bindpw': bindpw,
-                   'ssl': 'off',
-                   'site': None,
-                   'dns_timeout': 20,
-                   'verbose_logging': True,
-                   'kerberos_principal': None,
+                    'domainname': domain,
+                    'bindname': bindname,
+                    'bindpw': bindpw,
+                    'ssl': 'off',
+                    'site': None,
+                    'dns_timeout': 20,
+                    'verbose_logging': True,
+                    'kerberos_principal': None,
                 }
                 with client as c:
                     try:
