@@ -206,7 +206,6 @@ def directoryservice_idmap_ad(request, id):
             return JsonResp(request, form=form)
     else:
         form = forms.idmap_ad_Form(instance=idmap_ad)
-        log.debug(form)
 
     return render(request, 'directoryservice/idmap_ad.html', {
         'form': form
