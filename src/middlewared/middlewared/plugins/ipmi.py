@@ -75,7 +75,7 @@ class IPMIService(CRUDService):
         IPAddr('gateway'),
         Str('password', private=True),
         Bool('dhcp'),
-        Int('vlan'),
+        Int('vlan', null=True),
     ))
     async def do_update(self, id, data):
         """
