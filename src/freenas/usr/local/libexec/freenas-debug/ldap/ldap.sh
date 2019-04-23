@@ -154,25 +154,4 @@ __EOF__
 	section_header "${LDAP_CONFIG_FILE}"
 	sc "${LDAP_CONFIG_FILE}"
 	section_footer
-
-	#
-	#	Try to generate an LDAP config file
-	#
-	section_header "ldaptool get config_file"
-	${LDAP_TOOL} get config_file
-	section_footer
-
-	#
-	#	Dump LDAP users and groups
-	#
-	section_header "LDAP Users - 'getent passwd'"
-	getent passwd | head -50
-	section_header "LDAP Groups - 'getent group'"
-	getent group | head -50
-	section_footer
-
-	#
-	#	Dump cache info
-	#
-	cache_func "LDAP"
 }

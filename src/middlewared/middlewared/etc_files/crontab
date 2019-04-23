@@ -7,40 +7,26 @@
     system_advanced = middleware.call_sync("system.advanced.config")
     resilver = middleware.call_sync("pool.resilver.config")
     legacy_replication = middleware.call_sync("replication.query", [["transport", "=", "LEGACY"], ["enabled", "=", True]])
-%>
-
-<%def name="entry(schedule, user, command, redirect_stdout=True, redirect_stderr=True)">
-    ${schedule["minute"]} ${schedule["hour"]} ${schedule["dom"]} ${schedule["month"]} ${schedule["dow"]} \
-    ${user} \
-    PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin" \
-    ${command.replace("\n", "").replace("%", "\\%")} \
-    % if redirect_stdout:
-        > /dev/null\
-    % endif
-    % if redirect_stderr:
-        2> /dev/null\
-    % endif
-</%def>
-
+%>\
 ${system_crontab}
 
 ## Don't run these on TrueNAS HA passive controllers
 ## Redmine 55908
 % if middleware.call_sync("system.is_freenas") or middleware.call_sync("failover.status") != "BACKUP":
     % for job in middleware.call_sync("cronjob.query", [["enabled", "=", True]]):
-        ${entry(job["schedule"], job["user"], job["command"], job["stdout"], job["stderr"])}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], job["user"], job["command"], job["stdout"], job["stderr"]))}
     % endfor
 
     % for job in middleware.call_sync("rsynctask.query", [["enabled", "=", True]]):
-        ${entry(job["schedule"], "root", f"midclt call rsynctask.run {job['id']}")}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call rsynctask.run {job['id']}"))}
     % endfor
 
     % for job in middleware.call_sync("cloudsync.query", [["enabled", "=", True]]):
-        ${entry(job["schedule"], "root", f"midclt call cloudsync.sync {job['id']}")}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call cloudsync.sync {job['id']}"))}
     % endfor
 
     % for job in middleware.call_sync("pool.scrub.query", [["enabled", "=", True]]):
-        ${entry(job["schedule"], "root", f"/usr/local/libexec/nas/scrub -t {job['threshold']} {job['pool_name']}")}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"/usr/local/libexec/nas/scrub -t {job['threshold']} {job['pool_name']}"))}
     % endfor
 
     % if resilver["enabled"]:
@@ -52,14 +38,14 @@ ${system_crontab}
     % endif
 
     % if legacy_replication:
-        * * * * * root /usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1
+* * * * * root /usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1
     % else:
-        15 4 * * * root /usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1
+15 4 * * * root /usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1
     % endif
 
-    ${random.randint(0, 59)} \
-    ${random.randint(1, 4)} \
-    * * * root /usr/local/bin/midclt call update.download > /dev/null 2>&1
+${random.randint(0, 59)} \
+${random.randint(1, 4)} \
+* * * root /usr/local/bin/midclt call update.download > /dev/null 2>&1
 
-    @weekly root /usr/local/sbin/update-smart-drivedb > /dev/null 2>&1
+@weekly root /usr/local/sbin/update-smart-drivedb > /dev/null 2>&1
 % endif

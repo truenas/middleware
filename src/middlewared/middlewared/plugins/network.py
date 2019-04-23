@@ -924,6 +924,11 @@ class InterfaceService(CRUDService):
                         f'{schema_name}.vlan_parent_interface',
                         f'Interface {parent} is currently in use by {lag_used[parent]}.',
                     )
+                elif parent.startswith('bridge'):
+                    verrors.add(
+                        f'{schema_name}.vlan_parent_interface',
+                        'Bridge interfaces are not allowed.',
+                    )
                 else:
                     parent_iface = ifaces[parent]
                     mtu = data.get('mtu')
@@ -1456,7 +1461,7 @@ class InterfaceService(CRUDService):
             'bridge_members': True,
             'lag_ports': True,
             'vlan_parent': True,
-            'exclude': ['epair', 'tap', 'vnet', 'vlan'],
+            'exclude': ['bridge', 'epair', 'tap', 'vnet', 'vlan'],
         })
 
     @private

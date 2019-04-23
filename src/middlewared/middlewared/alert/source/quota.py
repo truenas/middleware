@@ -5,7 +5,6 @@ import socket
 
 from bsd import getmntinfo
 import humanfriendly
-import libzfs
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -20,7 +19,7 @@ class QuotaWarningAlertClass(AlertClass):
     text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
 
 
-class CriticalQuotaAlertClass(AlertClass):
+class QuotaCriticalAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.CRITICAL
     title = "Critical Quota Exceeded on Dataset"
@@ -33,17 +32,7 @@ class QuotaAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
 
-        with libzfs.ZFS() as zfs:
-            datasets = [
-                {
-                    k: v.__getstate__()
-                    for k, v in i.properties.items()
-                    if k in ["name", "quota", "used", "refquota", "usedbydataset", "mounted", "mountpoint",
-                             "org.freenas:quota_warning", "org.freenas:quota_critical",
-                             "org.freenas:refquota_warning", "org.freenas:refquota_critical"]
-                }
-                for i in zfs.datasets
-            ]
+        datasets = self.middleware.call_sync("zfs.dataset.query_for_quota_alert")
 
         for d in datasets:
             d["name"] = d["name"]["rawvalue"]
@@ -79,9 +68,9 @@ class QuotaAlertSource(ThreadedAlertSource):
                 critical_threshold = dataset[f"org.freenas:{quota_property}_critical"]
                 warning_threshold = dataset[f"org.freenas:{quota_property}_warning"]
                 if critical_threshold != 0 and used_fraction >= critical_threshold:
-                    klass = CriticalQuotaAlertClass
+                    klass = QuotaCriticalAlertClass
                 elif warning_threshold != 0 and used_fraction >= warning_threshold:
-                    klass = QuotaAlertSource
+                    klass = QuotaWarningAlertClass
                 else:
                     continue
 

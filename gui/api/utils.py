@@ -310,6 +310,36 @@ class DojoModelResource(ResourceMixin, ModelResource):
             bundle.errors = form._errors
         return valid
 
+    def obj_get(self, bundle, **kwargs):
+        """
+        Method copied from parent class so we can handle the case where MultipleObjectsReturned
+        happens for Config (deletable) models.
+        """
+        # Use ignore_bad_filters=True. `obj_get_list` filters based on
+        # request.GET, but `obj_get` usually filters based on `detail_uri_name`
+        # or data from a related field, so we don't want to raise errors if
+        # something doesn't explicitly match a configured filter.
+        applicable_filters = self.build_filters(filters=kwargs, ignore_bad_filters=True)
+        if self._meta.detail_uri_name in kwargs:
+            applicable_filters[self._meta.detail_uri_name] = kwargs[self._meta.detail_uri_name]
+
+        try:
+            object_list = self.apply_filters(bundle.request, applicable_filters)
+            stringified_kwargs = ', '.join(["%s=%s" % (k, v) for k, v in applicable_filters.items()])
+
+            if len(object_list) <= 0:
+                raise self._meta.object_class.DoesNotExist("Couldn't find an instance of '%s' which matched '%s'." % (self._meta.object_class.__name__, stringified_kwargs))
+            elif len(object_list) > 1:
+                if self._meta.queryset.model._admin.deletable is False:
+                    object_list = object_list.order_by('-id')
+                else:
+                    raise MultipleObjectsReturned("More than '%s' matched '%s'." % (self._meta.object_class.__name__, stringified_kwargs))
+            bundle.obj = object_list[0]
+            self.authorized_read_detail(object_list, bundle)
+            return bundle.obj
+        except ValueError:
+            raise NotFound("Invalid resource lookup data provided (mismatched type).")
+
     def get_list(self, request, **kwargs):
         # Treat models that represent a single object as such
         if self._meta.queryset.model._admin.deletable is False:

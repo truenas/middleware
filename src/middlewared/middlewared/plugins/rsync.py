@@ -399,7 +399,10 @@ class RsyncTaskService(CRUDService):
         Bool('validate_rpath'),
         Str('direction', enum=['PULL', 'PUSH'], default='PUSH'),
         Str('desc'),
-        Cron('schedule'),
+        Cron(
+            'schedule',
+            defaults={'minute': '00'},
+        ),
         Bool('recursive'),
         Bool('times'),
         Bool('compress'),

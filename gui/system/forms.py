@@ -385,39 +385,44 @@ class InitialWizard(CommonWizard):
                 with open(WIZARD_PROGRESSFILE, 'wb') as f:
                     f.write(pickle.dumps(progress))
 
-                if volume_import:
-                    volume_name, guid = cleaned_data.get(
-                        'volume_id'
-                    ).split('|')
-                    if not _n.zfs_import(volume_name, guid):
-                        raise MiddlewareError(_(
-                            'Volume "%s" import failed! Check the pool '
-                            'status for more details.'
-                        ) % volume_name)
+                with client as c:
+                    lock = c.call("alert.block_source", "VolumeStatus")
+                    try:
+                        if volume_import:
+                            volume_name, guid = cleaned_data.get(
+                                'volume_id'
+                            ).split('|')
+                            if not _n.zfs_import(volume_name, guid):
+                                raise MiddlewareError(_(
+                                    'Volume "%s" import failed! Check the pool '
+                                    'status for more details.'
+                                ) % volume_name)
 
-                    volume = Volume(vol_name=volume_name)
-                    volume.save()
-                    model_objs.append(volume)
+                            volume = Volume(vol_name=volume_name)
+                            volume.save()
+                            model_objs.append(volume)
 
-                    scrub = Scrub.objects.create(scrub_volume=volume)
-                    model_objs.append(scrub)
+                            scrub = Scrub.objects.create(scrub_volume=volume)
+                            model_objs.append(scrub)
 
-                if volume_form:
-                    bysize = volume_form._get_unused_disks_by_size()
+                        if volume_form:
+                            bysize = volume_form._get_unused_disks_by_size()
 
-                    if volume_type == 'auto':
-                        groups = volume_form._grp_autoselect(bysize)
-                    else:
-                        groups = volume_form._grp_predefined(bysize, volume_type)
+                            if volume_type == 'auto':
+                                groups = volume_form._grp_autoselect(bysize)
+                            else:
+                                groups = volume_form._grp_predefined(bysize, volume_type)
 
-                    with client as c:
-                        c.call('pool.create', {
-                            'name': volume_name,
-                            'topology': groups,
-                        })
+                            with client as c:
+                                c.call('pool.create', {
+                                    'name': volume_name,
+                                    'topology': groups,
+                                })
 
-                    volume = Volume.objects.get(vol_name=volume_name)
-                    model_objs.append(volume)
+                            volume = Volume.objects.get(vol_name=volume_name)
+                            model_objs.append(volume)
+                    finally:
+                        c.call("alert.unblock_source", lock)
 
                 # Create SMART tests for every disk available
                 disks = []
@@ -707,10 +712,13 @@ class InitialWizard(CommonWizard):
                 )
         except Exception:
             for obj in reversed(model_objs):
-                if isinstance(obj, Volume):
-                    obj.delete(destroy=False, cascade=False)
-                else:
-                    obj.delete()
+                try:
+                    if isinstance(obj, Volume):
+                        obj.delete(destroy=False, cascade=False)
+                    else:
+                        obj.delete()
+                except Exception:
+                    log.warn('Failed to delete %r', obj, exc_info=True)
             raise
 
         if ds_form:

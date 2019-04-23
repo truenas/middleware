@@ -21,6 +21,9 @@ class SystemDatasetService(ConfigService):
     @private
     async def config_extend(self, config):
 
+        # Treat empty system dataset pool as freenas-boot
+        if not config['pool']:
+            config['pool'] = 'freenas-boot'
         # Add `is_decrypted` dynamic attribute
         if config['pool'] == 'freenas-boot':
             config['is_decrypted'] = True
@@ -109,7 +112,9 @@ class SystemDatasetService(ConfigService):
                 new['pool'] = pool['name']
                 break
             else:
-                new['pool'] = 'freenas-boot'
+                # If a data pool could not be found, reset it to blank
+                # Which will eventually mean its back to freenas-boot (temporarily)
+                new['pool'] = ''
         verrors.check()
 
         new['syslog_usedataset'] = new['syslog']
@@ -125,6 +130,8 @@ class SystemDatasetService(ConfigService):
             update_dict,
             {'prefix': 'sys_'}
         )
+
+        new = await self.config()
 
         if config['pool'] != new['pool']:
             await self.migrate(config['pool'], new['pool'])
@@ -143,35 +150,41 @@ class SystemDatasetService(ConfigService):
         await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
 
         config = await self.config()
+        dbconfig = await self.middleware.call(
+            'datastore.config', self._config.datastore, {'prefix': self._config.datastore_prefix}
+        )
 
-        if not await self.middleware.call('system.is_freenas'):
-            if await self.middleware.call('failover.status') == 'BACKUP' and \
-                    ('basename' in config and config['basename'] and config['basename'] != 'freenas-boot/.system'):
-                try:
-                    os.unlink(SYSDATASET_PATH)
-                except OSError:
-                    pass
-                return
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.status') == 'BACKUP' and
+            config.get('basename') and config['basename'] != 'freenas-boot/.system'
+        ):
+            try:
+                os.unlink(SYSDATASET_PATH)
+            except OSError:
+                pass
+            return
 
-        if config['pool'] and config['pool'] != 'freenas-boot':
-            if not await self.middleware.call('pool.query', [('name', '=', config['pool'])]):
-                job = await self.middleware.call('systemdataset.update', {
-                    'pool': None, 'pool_exclude': exclude_pool,
-                })
-                await job.wait()
-                if job.error:
-                    raise CallError(job.error)
-                config = await self.config()
-
-        if not config['pool'] and not await self.middleware.call('system.is_freenas'):
-            job = await self.middleware.call('systemdataset.update', {'pool': 'freenas-boot'})
+        # If the system dataset is configured in a data pool we need to make sure it exists.
+        # In case it does not we need to use another one.
+        if config['pool'] != 'freenas-boot' and not await self.middleware.call(
+            'pool.query', [('name', '=', config['pool'])]
+        ):
+            job = await self.middleware.call('systemdataset.update', {
+                'pool': None, 'pool_exclude': exclude_pool,
+            })
             await job.wait()
             if job.error:
                 raise CallError(job.error)
-            config = await self.config()
-        elif not config['pool']:
+            return
+
+        # If we dont have a pool configure in the database try to find the first data pool
+        # to put it on.
+        if not dbconfig['pool']:
             pool = None
-            for p in await self.middleware.call('pool.query', [], {'order_by': ['encrypt']}):
+            for p in await self.middleware.call(
+                'pool.query', [('encrypt', '!=', '2')], {'order_by': ['encrypt']}
+            ):
                 if exclude_pool and p['name'] == exclude_pool:
                     continue
                 if p['is_decrypted']:
@@ -182,7 +195,7 @@ class SystemDatasetService(ConfigService):
                 await job.wait()
                 if job.error:
                     raise CallError(job.error)
-                config = await self.config()
+                return
 
         if not config['basename']:
             if os.path.exists(SYSDATASET_PATH):

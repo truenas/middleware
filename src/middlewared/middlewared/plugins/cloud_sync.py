@@ -1,3 +1,4 @@
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
@@ -216,8 +217,6 @@ async def rclone(middleware, job, cloud_sync):
                     "attributes": credentials_attributes
                 })
 
-        return True
-
 
 async def run_script(job, env, hook, script_name):
     hook = hook.strip()
@@ -357,6 +356,13 @@ class FsLockManager:
 
     def _remove_lock(self, path):
         self.locks.pop(path)
+
+
+class CloudSyncTaskFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.TASKS
+    level = AlertLevel.ERROR
+    title = "Cloud Sync Task Failed"
+    text = "Cloud sync task %(name)s failed."
 
 
 class CredentialsService(CRUDService):
@@ -638,7 +644,11 @@ class CloudSyncService(CRUDService):
         Bool("filename_encryption", default=False),
         Str("encryption_password", default=""),
         Str("encryption_salt", default=""),
-        Cron("schedule", required=True),
+        Cron(
+            "schedule",
+            defaults={"minute": "00"},
+            required=True
+        ),
         Bool("follow_symlinks", default=False),
         Int("transfers", null=True, default=None, validators=[Range(min=1)]),
         List("bwlimit", default=[], items=[Dict("cloud_sync_bwlimit",
@@ -837,7 +847,13 @@ class CloudSyncService(CRUDService):
             job.set_progress(0, f"Locking remote path {remote_path!r} for {directions[remote_direction]}")
             async with self.remote_fs_lock_manager.lock(f"{credentials['id']}/{remote_path}", remote_direction):
                 job.set_progress(0, "Starting")
-                return await rclone(self.middleware, job, cloud_sync)
+                alert_args = {"name": cloud_sync["description"] or f"#{cloud_sync['id']}"}
+                try:
+                    await rclone(self.middleware, job, cloud_sync)
+                    await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", alert_args)
+                except Exception:
+                    await self.middleware.call("alert.oneshot_create", "CloudSyncTaskFailed", alert_args)
+                    raise
 
     @accepts()
     async def providers(self):

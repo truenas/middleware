@@ -98,18 +98,15 @@ def get_aliases():
                 _from, _to = search.groups()
                 aliases[_from] = _to
 
-        doround = True
         while True:
-            if not doround:
-                break
-            else:
-                doround = False
+            oldaliases = set(aliases.items())
             for key, val in aliases.items():
                 if key == val:
                     syslog.syslog(syslog.LOG_ERR, f'Found a recursive dependency for {key}')
                 elif val in aliases:
                     aliases[key] = aliases[val]
-                    doround = True
+            if set(aliases.items()) == oldaliases:
+                break
         return aliases
 
 

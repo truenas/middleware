@@ -56,7 +56,7 @@ class Inheritable(EnumMixin, Attribute):
 
 
 def _none(x):
-    if x is None:
+    if x in (0, None):
         return 'none'
     return x
 
@@ -2990,7 +2990,14 @@ class PoolScrubService(CRUDService):
             Int('pool', validators=[Range(min=1)], required=True),
             Int('threshold', validators=[Range(min=0)]),
             Str('description'),
-            Cron('schedule'),
+            Cron(
+                'schedule',
+                defaults={
+                    'minute': '00',
+                    'hour': '00',
+                    'dow': '7'
+                }
+            ),
             Bool('enabled', default=True),
             register=True
         )

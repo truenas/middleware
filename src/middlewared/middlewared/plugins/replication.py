@@ -58,7 +58,7 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
-        if data["transport"] == 'LEGACY':
+        if data["transport"] == "LEGACY":
             if data["id"] in context["legacy_result"]:
                 legacy_result = context["legacy_result"][data["id"]]
 
@@ -125,8 +125,20 @@ class ReplicationService(CRUDService):
             List("also_include_naming_schema", items=[
                 Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])], default=[]),
             Bool("auto", required=True),
-            Cron("schedule", begin_end=True, null=True, default=None),
-            Cron("restrict_schedule", begin_end=True, null=True, default=None),
+            Cron(
+                "schedule",
+                defaults={"minute": "00"},
+                begin_end=True,
+                null=True,
+                default=None
+            ),
+            Cron(
+                "restrict_schedule",
+                defaults={"minute": "00"},
+                begin_end=True,
+                null=True,
+                default=None
+            ),
             Bool("only_matching_schedule", default=False),
             Bool("allow_from_scratch", default=False),
             Bool("hold_pending_snapshots", default=False),
@@ -387,6 +399,12 @@ class ReplicationService(CRUDService):
 
             if data["naming_schema"]:
                 verrors.add("naming_schema", "This field has no sense for push replication")
+
+            if not snapshot_tasks and not data["also_include_naming_schema"]:
+                verrors.add(
+                    "periodic_snapshot_tasks", "You must at least either bind a periodic snapshot task or provide "
+                                               "\"Also Include Naming Schema\" for push replication task"
+                )
 
             if data["schedule"]:
                 if data["periodic_snapshot_tasks"]:

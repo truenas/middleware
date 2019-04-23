@@ -1,5 +1,3 @@
-import libzfs
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import CrontabSchedule
 
@@ -14,10 +12,8 @@ class ScrubPausedAlertClass(AlertClass):
 class ScrubPausedAlertSource(ThreadedAlertSource):
     schedule = CrontabSchedule(hour=3)
 
-    def check_sync(self):
+    async def check(self):
         alerts = []
-        with libzfs.ZFS() as zfs:
-            for pool in zfs.pools:
-                if pool.scrub.pause is not None:
-                    alerts.append(Alert(ScrubPausedAlertClass, pool.name))
+        for pool in await self.middleware.call("zfs.pool.pools_with_paused_scrubs"):
+            alerts.append(Alert(ScrubPausedAlertClass, pool.name))
         return alerts

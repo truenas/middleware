@@ -68,7 +68,25 @@ class DiskService(CRUDService):
             disk['devname'] = f'multipath/{disk["multipath_name"]}'
         else:
             disk['devname'] = disk['name']
+        self._expand_enclosure(disk)
         return disk
+
+    def _expand_enclosure(self, disk):
+        if disk['enclosure_slot'] is not None:
+            disk['enclosure'] = {
+                'number': disk['enclosure_slot'] // 1000,
+                'slot': disk['enclosure_slot'] % 1000
+            }
+        else:
+            disk['enclosure'] = None
+        del disk['enclosure_slot']
+
+    def _compress_enclosure(self, disk):
+        if disk['enclosure'] is not None:
+            disk['enclosure_slot'] = disk['enclosure']['number'] * 1000 + disk['enclosure']['slot']
+        else:
+            disk['enclosure_slot'] = None
+        del disk['enclosure']
 
     @accepts(
         Str('id'),
@@ -90,7 +108,12 @@ class DiskService(CRUDService):
             Int('critical', null=True),
             Int('difference', null=True),
             Int('informational', null=True),
-            Int('enclosure_slot', null=True),
+            Dict(
+                'enclosure',
+                Int('number'),
+                Int('slot'),
+                null=True,
+            ),
             update=True
         )
     )
@@ -119,6 +142,7 @@ class DiskService(CRUDService):
             {'prefix': self._config.datastore_prefix, 'get': True}
         )
         old.pop('enabled', None)
+        self._expand_enclosure(old)
         new = old.copy()
         new.update(data)
 
@@ -130,6 +154,8 @@ class DiskService(CRUDService):
 
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             new[key] = new[key].title()
+
+        self._compress_enclosure(new)
 
         await self.middleware.call(
             'datastore.update',
@@ -1222,12 +1248,6 @@ class DiskService(CRUDService):
         disks_pairs = [disks for disks in list(serials.values())]
         disks_pairs.sort(key=lambda x: int(x[0][2:]))
 
-        # If its TrueNAS, no multipath already exists but new multipath were detected
-        # we should not continue. Its likely there is wrong cabling in the system.
-        # See #42042 for details.
-        if not is_freenas and not mp_disks and any(map(lambda x: len(x) > 1, disks_pairs)):
-            return 'BAD_CABLING'
-
         # Mode is Active/Passive for FreeNAS
         mode = None if is_freenas else 'R'
         for disks in disks_pairs:
@@ -1323,10 +1343,12 @@ class DiskService(CRUDService):
 
         # Add non-mirror swap devices
         # e.g. when there is a single disk
-        swap_devices += [
-            i.devname.replace('.eli', '')
-            for i in getswapinfo() if not i.devname.startswith('mirror/')
-        ]
+        for i in getswapinfo():
+            if i.devname.startswith('mirror/'):
+                continue
+            devname = i.devname.replace('.eli', '')
+            swap_devices.append(devname)
+            used_partitions.add(devname)
 
         # Get all partitions of swap type, indexed by size
         swap_partitions_by_size = defaultdict(list)

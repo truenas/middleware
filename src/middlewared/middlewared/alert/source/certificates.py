@@ -1,19 +1,19 @@
 from datetime import datetime
 
-from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
 class CertificateIsExpiringAlertClass(AlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.NOTICE
-    title = "Certificate is Expiring"
+    title = "Certificate Is Expiring"
     text = "Certificate %(name)r is expiring within %(days)d days."
 
 
 class CertificateIsExpiringSoonAlertClass(AlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.WARNING
-    title = "Certificate is Expiring Soon"
+    title = "Certificate Is Expiring Soon"
     text = "Certificate %(name)r is expiring within %(days)d days."
 
 
@@ -71,14 +71,8 @@ class CertificateParsingFailedAlertSource(AlertSource):
         return alerts
 
 
-class WebUiCertificateSetupFailedAlertClass(AlertClass, OneShotAlertClass):
+class WebUiCertificateSetupFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.CRITICAL
     title = "Web UI HTTPS Certificate Setup Failed"
     text = "Web UI HTTPS certificate setup failed."
-
-    async def create(self, args):
-        return Alert(WebUiCertificateSetupFailedAlertClass)
-
-    async def delete(self, alerts, query):
-        return []

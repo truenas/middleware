@@ -50,7 +50,16 @@ class PeriodicSnapshotTaskService(CRUDService):
             Int('lifetime_value', required=True),
             Str('lifetime_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
             Str('naming_schema', required=True, validators=[ReplicationSnapshotNamingSchema()]),
-            Cron('schedule', required=True, begin_end=True),
+            Cron(
+                'schedule',
+                defaults={
+                    'minute': '00',
+                    'begin': '09:00',
+                    'end': '18:00'
+                },
+                required=True,
+                begin_end=True
+            ),
             Bool('allow_empty', default=True),
             Bool('enabled', default=True),
             register=True

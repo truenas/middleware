@@ -116,7 +116,7 @@ def main(middleware):
         node = middleware.call_sync('failover.node')
 
     if gconf.iscsi_isns_servers:
-        for server in gconf.iscsi_isns_servers.split(' '):
+        for server in gconf.iscsi_isns_servers.split():
             addline('isns-server "%s"\n\n' % server)
 
     # Generate the portal-group section

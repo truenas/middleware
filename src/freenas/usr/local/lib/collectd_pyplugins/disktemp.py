@@ -67,7 +67,7 @@ if __name__ == '__main__' or hasattr(sys.modules['__main__'], '_SpoofOut'):
                 self.values = None
                 self.meta = None
 
-            def dispatch(self):
+            def dispatch(self, **kwargs):
                 print(f'{self.plugin}:{self.plugin_instance}:{self.type}:{self.type_instance}:{self.values}')
 
     collectd = CollectdDummy()
@@ -87,6 +87,15 @@ def get_temperature(stdout):
     27
     >>> get_temperature("194 Temperature_Celsius     0x0022   049   067   ---    Old_age   Always       -       51 (Min/Max 24/67)")
     51
+    >>> get_temperature("190 Airflow_Temperature_Cel 0x0022   073   037   045    Old_age   Always   In_the_past 27 (3 44 30 26 0)\\n"\
+                        "194 Temperature_Celsius     0x0022   049   067   ---    Old_age   Always       -       51 (Min/Max 24/67)")
+    51
+    >>> get_temperature("194 Temperature_Internal    0x0022   100   100   000    Old_age   Always       -       26\\n"\
+                        "190 Temperature_Case        0x0022   100   100   000    Old_age   Always       -       27")
+    26
+    >>> get_temperature("  7 Seek_Error_Rate         0x000f   081   060   030    Pre-fail  Always       -       126511909\\n"\
+                        "190 Airflow_Temperature_Cel 0x0022   062   053   045    Old_age   Always       -       38 (Min/Max 27/40)")
+    38
 
     >>> get_temperature("Temperature:                        40 Celsius")
     40
@@ -99,9 +108,17 @@ def get_temperature(stdout):
 
     # ataprint.cpp
 
-    reg = re.search(r'190\s+Airflow_Temperature_Cel[^\n]*', stdout, re.M)
-    if reg:
-        return int(reg.group(0).split()[9])
+    data = {}
+    for s in re.findall(r'^((190|194) .+)', stdout, re.M):
+        s = s[0].split()
+        try:
+            data[s[1]] = int(s[9])
+        except (IndexError, ValueError):
+            pass
+    for k in ['Temperature_Celsius', 'Temperature_Internal', 'Drive_Temperature',
+              'Temperature_Case', 'Case_Temperature', 'Airflow_Temperature_Cel']:
+        if k in data:
+            return data[k]
 
     reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
     if reg:

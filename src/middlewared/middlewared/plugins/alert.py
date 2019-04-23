@@ -1,7 +1,9 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+import copy
 from datetime import datetime
 import errno
 import os
+import time
 import traceback
 import uuid
 
@@ -33,6 +35,8 @@ DEFAULT_POLICY = "IMMEDIATELY"
 
 ALERT_SOURCES = {}
 ALERT_SERVICES_FACTORIES = {}
+
+AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
 
 class AlertSourceRunFailedAlertClass(AlertClass):
@@ -83,21 +87,12 @@ class AlertService(Service):
     def __init__(self, middleware):
         super().__init__(middleware)
 
-        self.node = "A"
-
-        self.alerts = []
-
-        self.alert_source_last_run = defaultdict(lambda: datetime.min)
-
-        self.policies = {
-            "IMMEDIATELY": AlertPolicy(),
-            "HOURLY": AlertPolicy(lambda d: (d.date(), d.hour)),
-            "DAILY": AlertPolicy(lambda d: (d.date())),
-            "NEVER": AlertPolicy(lambda d: None),
-        }
+        self.blocked_sources = defaultdict(set)
+        self.sources_locks = {}
 
     @private
     async def initialize(self):
+        self.node = "A"
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("failover.node") == "B":
                 self.node = "B"
@@ -120,6 +115,7 @@ class AlertService(Service):
                 for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
                     ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
+        self.alerts = []
         for alert in await self.middleware.call("datastore.query", "system.alert"):
             del alert["id"]
 
@@ -138,6 +134,14 @@ class AlertService(Service):
 
             self.alerts.append(alert)
 
+        self.alert_source_last_run = defaultdict(lambda: datetime.min)
+
+        self.policies = {
+            "IMMEDIATELY": AlertPolicy(),
+            "HOURLY": AlertPolicy(lambda d: (d.date(), d.hour)),
+            "DAILY": AlertPolicy(lambda d: (d.date())),
+            "NEVER": AlertPolicy(lambda d: None),
+        }
         for policy in self.policies.values():
             policy.receive_alerts(datetime.utcnow(), self.alerts)
 
@@ -175,6 +179,7 @@ class AlertService(Service):
                 )
             }
             for alert_category in AlertCategory
+            if any(alert_class.category == alert_category for alert_class in AlertClass.classes)
         ]
 
     @private
@@ -195,15 +200,32 @@ class AlertService(Service):
         List all types of alerts including active/dismissed currently in the system.
         """
 
+        nodes = {
+            "A": "Active Controller",
+            "B": "Standby Controller",
+        }
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.licensed') and
+            (
+                (await self.middleware.call('failover.node') == 'A' and
+                 await self.middleware.call('failover.status') == 'BACKUP') or
+                (await self.middleware.call('failover.node') == 'B' and
+                 await self.middleware.call('failover.status') == 'MASTER')
+            )
+        ):
+            nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
+
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         return [
             dict(alert.__dict__,
                  id=alert.uuid,
+                 node=nodes[alert.node],
                  klass=alert.klass.name,
                  level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
                  formatted=alert.formatted,
-                 one_shot=issubclass(alert.klass, OneShotAlertClass))
+                 one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
             for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
         ]
 
@@ -230,7 +252,7 @@ class AlertService(Service):
                 unrelated_alerts +
                 await alert.klass(self.middleware).dismiss(related_alerts, alert)
             )
-        elif issubclass(alert.klass, OneShotAlertClass):
+        elif issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically:
             self.alerts = [a for a in self.alerts if a.uuid != uuid]
         else:
             alert.dismissed = True
@@ -251,17 +273,15 @@ class AlertService(Service):
     @private
     @job(lock="process_alerts", transient=True)
     async def process_alerts(self, job):
-        if not await self.middleware.call("system.ready"):
+        if not await self.__should_run_or_send_alerts():
             return
 
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP'
-        ):
-            return
-
+        valid_alerts = copy.deepcopy(self.alerts)
         await self.__run_alerts()
+
+        if not await self.__should_run_or_send_alerts():
+            self.alerts = valid_alerts
+            return
 
         await self.middleware.call("alert.send_alerts")
 
@@ -281,7 +301,9 @@ class AlertService(Service):
                         AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
                         AlertLevel[alert_service_desc["level"]].value and
 
-                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
+                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name and
+
+                        not issubclass(alert.klass, OneShotAlertClass)
                     )
                 ]
                 service_new_alerts = [
@@ -352,6 +374,22 @@ class AlertService(Service):
     def __uuid(self):
         return str(uuid.uuid4())
 
+    async def __should_run_or_send_alerts(self):
+        if await self.middleware.call('system.state') != 'READY':
+            return False
+
+        if (
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('failover.licensed') and
+            (
+                await self.middleware.call('failover.status') == 'BACKUP' or
+                await self.middleware.call('failover.in_progress')
+            )
+        ):
+            return False
+
+        return True
+
     async def __run_alerts(self):
         master_node = "A"
         backup_node = "B"
@@ -371,53 +409,72 @@ class AlertService(Service):
                         if remote_failover_status == "BACKUP":
                             run_on_backup_node = True
 
+        for k, source_lock in list(self.sources_locks.items()):
+            if source_lock.expires_at <= time.monotonic():
+                await self.unblock_source(k)
+
         for alert_source in ALERT_SOURCES.values():
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
 
-            self.logger.trace("Running alert source: %r", alert_source.name)
+            alerts_a = [alert
+                        for alert in self.alerts
+                        if alert.node == master_node and alert.source == alert_source.name]
+            locked = False
+            if self.blocked_sources[alert_source.name]:
+                self.logger.debug("Not running alert source %r because it is blocked", alert_source.name)
+                locked = True
+            else:
+                self.logger.trace("Running alert source: %r", alert_source.name)
 
-            try:
-                alerts_a = await self.__run_source(alert_source.name)
-            except UnavailableException:
-                alerts_a = [alert
-                            for alert in self.alerts
-                            if alert.node == master_node and alert.source == alert_source.name]
+                try:
+                    alerts_a = await self.__run_source(alert_source.name)
+                except UnavailableException:
+                    pass
             for alert in alerts_a:
                 alert.node = master_node
 
             alerts_b = []
             if run_on_backup_node and alert_source.run_on_backup_node:
                 try:
+                    alerts_b = [alert
+                                for alert in self.alerts
+                                if alert.node == backup_node and alert.source == alert_source.name]
                     try:
-                        alerts_b = await self.middleware.call("failover.call_remote", "alert.run_source",
-                                                              [alert_source.name])
+                        if not locked:
+                            alerts_b = await self.middleware.call("failover.call_remote", "alert.run_source",
+                                                                  [alert_source.name])
+
+                            alerts_b = [Alert(**dict(alert,
+                                                     level=(AlertLevel(alert["level"]) if alert["level"] is not None
+                                                            else alert["level"])))
+                                        for alert in alerts_b]
                     except CallError as e:
                         if e.errno == CallError.EALERTCHECKERUNAVAILABLE:
-                            alerts_b = [alert
-                                        for alert in self.alerts
-                                        if alert.node == backup_node and alert.source == alert_source.name]
+                            pass
                         else:
                             raise
+                except Exception as e:
+                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                        alerts_b = [
+                            Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
+                                  args={
+                                      "source_name": alert_source.name,
+                                      "traceback": str(e),
+                                  },
+                                  _source=alert_source.name)
+                        ]
                     else:
-                        alerts_b = [Alert(**dict(alert,
-                                                 klass=AlertClass.class_by_name[alert["klass"]],
-                                                 _uuid=alert.pop("id"),
-                                                 _source=alert.pop("source"),
-                                                 _key=alert.pop("key"),
-                                                 _text=alert.pop("text")))
-                                    for alert in alerts_b]
-                except Exception:
-                    alerts_b = [
-                        Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
-                              args={
-                                  "source_name": alert_source.name,
-                                  "traceback": traceback.format_exc(),
-                              },
-                              _source=alert_source.name)
-                    ]
+                        alerts_b = [
+                            Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
+                                  args={
+                                      "source_name": alert_source.name,
+                                      "traceback": traceback.format_exc(),
+                                  },
+                                  _source=alert_source.name)
+                        ]
             for alert in alerts_b:
                 alert.node = backup_node
 
@@ -460,6 +517,21 @@ class AlertService(Service):
         except UnavailableException:
             raise CallError("This alert checker is unavailable", CallError.EALERTCHECKERUNAVAILABLE)
 
+    @private
+    async def block_source(self, source_name, timeout=3600):
+        if source_name not in ALERT_SOURCES:
+            raise CallError("Invalid alert source")
+
+        lock = str(uuid.uuid4())
+        self.blocked_sources[source_name].add(lock)
+        self.sources_locks[lock] = AlertSourceLock(source_name, time.monotonic() + timeout)
+        return lock
+
+    @private
+    async def unblock_source(self, lock):
+        source_lock = self.sources_locks.pop(lock)
+        self.blocked_sources[source_lock.source_name].remove(lock)
+
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
 
@@ -467,14 +539,23 @@ class AlertService(Service):
             alerts = (await alert_source.check()) or []
         except UnavailableException:
             raise
-        except Exception:
-            alerts = [
-                Alert(AlertSourceRunFailedAlertClass,
-                      args={
-                          "source_name": alert_source.name,
-                          "traceback": traceback.format_exc(),
-                      })
-            ]
+        except Exception as e:
+            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                alerts = [
+                    Alert(AlertSourceRunFailedAlertClass,
+                          args={
+                              "source_name": alert_source.name,
+                              "traceback": str(e),
+                          })
+                ]
+            else:
+                alerts = [
+                    Alert(AlertSourceRunFailedAlertClass,
+                          args={
+                              "source_name": alert_source.name,
+                              "traceback": traceback.format_exc(),
+                          })
+                ]
         else:
             if not isinstance(alerts, list):
                 alerts = [alerts]
@@ -509,10 +590,10 @@ class AlertService(Service):
         try:
             klass = AlertClass.class_by_name[klass]
         except KeyError:
-            raise CallError(f"Invalid alert source: {klass!r}")
+            raise CallError(f"Invalid alert class: {klass!r}")
 
         if not issubclass(klass, OneShotAlertClass):
-            raise CallError(f"Alert class {klass!r} is not a one-shot alert source")
+            raise CallError(f"Alert class {klass!r} is not a one-shot alert class")
 
         alert = await klass(self.middleware).create(args)
         if alert is None:

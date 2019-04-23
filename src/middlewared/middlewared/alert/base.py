@@ -8,7 +8,7 @@ import os
 from middlewared.alert.schedule import IntervalSchedule
 
 __all__ = ["UnavailableException",
-           "AlertClass", "OneShotAlertClass", "DismissableAlertClass",
+           "AlertClass", "OneShotAlertClass", "SimpleOneShotAlertClass", "DismissableAlertClass",
            "AlertCategory", "AlertLevel", "Alert",
            "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
@@ -58,15 +58,31 @@ class AlertClass(metaclass=AlertClassMeta):
         if cls.text is None:
             return cls.title
 
+        if args is None:
+            return cls.text
+
         return cls.text % args
 
 
 class OneShotAlertClass:
+    deleted_automatically = True
+
     async def create(self, args):
         raise NotImplementedError
 
     async def delete(self, alerts, query):
         raise NotImplementedError
+
+
+class SimpleOneShotAlertClass(OneShotAlertClass):
+    async def create(self, args):
+        return Alert(self.__class__, args)
+
+    async def delete(self, alerts, query):
+        return list(filter(
+            lambda alert: alert.args != query,
+            alerts
+        ))
 
 
 class DismissableAlertClass:
@@ -77,6 +93,7 @@ class DismissableAlertClass:
 class AlertCategory(enum.Enum):
     CERTIFICATES = "CERTIFICATES"
     DIRECTORY_SERVICE = "DIRECTORY_SERVICE"
+    HA = "HA"
     HARDWARE = "HARDWARE"
     NETWORK = "NETWORK"
     REPORTING = "REPORTING"
@@ -89,6 +106,7 @@ class AlertCategory(enum.Enum):
 alert_category_names = {
     AlertCategory.CERTIFICATES: "Certificates",
     AlertCategory.DIRECTORY_SERVICE: "Directory Service",
+    AlertCategory.HA: "High-Availability",
     AlertCategory.HARDWARE: "Hardware",
     AlertCategory.NETWORK: "Network",
     AlertCategory.REPORTING: "Reporting",

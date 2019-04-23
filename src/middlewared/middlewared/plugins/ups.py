@@ -106,19 +106,21 @@ class UPSService(SystemServiceService):
                 )
 
         mode = data.get('mode')
-        if mode:
-            if mode == 'MASTER':
-                if not data.get('port'):
-                    verrors.add(
-                        f'{schema}.port',
-                        'This field is required'
-                    )
-            else:
-                if not data.get('remotehost'):
-                    verrors.add(
-                        f'{schema}.remotehost',
-                        'This field is required'
-                    )
+        if mode == 'MASTER':
+            for field in filter(
+                lambda f: not data[f],
+                ['port', 'driver']
+            ):
+                verrors.add(
+                    f'{schema}.{field}',
+                    'This field is required'
+                )
+        else:
+            if not data.get('remotehost'):
+                verrors.add(
+                    f'{schema}.remotehost',
+                    'This field is required'
+                )
 
         to_emails = data.get('toemail')
         if to_emails:
@@ -144,16 +146,16 @@ class UPSService(SystemServiceService):
             Str('description'),
             Str('driver'),
             Str('extrausers'),
-            Str('identifier'),
+            Str('identifier', empty=False),
             Str('mode', enum=['MASTER', 'SLAVE']),
-            Str('monpwd'),
-            Str('monuser'),
+            Str('monpwd', empty=False),
+            Str('monuser', empty=False),
             Str('options'),
             Str('optionsupsd'),
             Str('port'),
             Str('remotehost'),
             Str('shutdown', enum=['LOWBATT', 'BATT']),
-            Str('shutdowncmd'),
+            Str('shutdowncmd', empty=False),
             Str('subject'),
             List('toemail', items=[Str('email', validators=[Email()])]),
             update=True

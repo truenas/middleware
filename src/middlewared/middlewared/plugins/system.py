@@ -34,6 +34,8 @@ from freenasUI.support.utils import get_license
 
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
+# Flag telling whether the system is shutting down
+SYSTEM_SHUTTING_DOWN = False
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
@@ -81,19 +83,6 @@ class SytemAdvancedService(ConfigService):
     async def __validate_fields(self, schema, data):
         verrors = ValidationErrors()
 
-        user = data.get('periodic_notifyuser')
-        if user:
-            if not (
-                await self.middleware.call(
-                    'notifier.get_user_object',
-                    user
-                )
-            ):
-                verrors.add(
-                    f'{schema}.periodic_notifyuser',
-                    'Specified user does not exist'
-                )
-
         serial_choice = data.get('serialport')
         if data.get('serialconsole'):
 
@@ -102,19 +91,15 @@ class SytemAdvancedService(ConfigService):
                     f'{schema}.serialport',
                     'Please specify a serial port when serial console option is checked'
                 )
-            elif serial_choice not in await self.serial_port_choices():
-                verrors.add(
-                    f'{schema}.serialport',
-                    'Serial port specified has not been identified by the system'
-                )
-
-        elif not serial_choice:
-            # TODO: THIS CHECK CAN BE REMOVED WHEN WE DISALLOW NONE VALUES IN THE SCHEMA LAYER
-
-            verrors.add(
-                f'{schema}.serialport',
-                'Empty serial port is not allowed'
-            )
+            else:
+                data['serialport'] = serial_choice = hex(
+                    int(serial_choice)
+                ) if serial_choice.isdigit() else serial_choice
+                if serial_choice not in await self.serial_port_choices():
+                    verrors.add(
+                        f'{schema}.serialport',
+                        'Serial port specified has not been identified by the system'
+                    )
 
         return verrors, data
 
@@ -129,7 +114,6 @@ class SytemAdvancedService(ConfigService):
             Bool('debugkernel'),
             Bool('fqdn_syslog'),
             Str('motd'),
-            Str('periodic_notifyuser'),
             Bool('powerdaemon'),
             Bool('serialconsole'),
             Str('serialport'),
@@ -149,8 +133,6 @@ class SytemAdvancedService(ConfigService):
 
         `consolemenu` should be disabled if the menu at console is not desired. It will default to standard login
         in the console if disabled.
-
-        `periodic_notifyuser` is the user which will receive all security output emails.
 
         `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
         hardware.
@@ -218,9 +200,6 @@ class SytemAdvancedService(ConfigService):
             ):
                 await self.middleware.call('service.reload', 'loader', {'onetime': False})
 
-            if original_data['periodic_notifyuser'] != config_data['periodic_notifyuser']:
-                await self.middleware.call('service.start', 'ix-periodic', {'onetime': False})
-
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
@@ -266,11 +245,25 @@ class SystemService(Service):
         return sw_version()
 
     @accepts()
-    def ready(self):
+    async def ready(self):
         """
         Returns whether the system completed boot and is ready to use
         """
-        return SYSTEM_READY
+        return await self.middleware.call("system.state") != "BOOTING"
+
+    @accepts()
+    async def state(self):
+        """
+        Returns system state:
+        "BOOTING" - System is booting
+        "READY" - System completed boot and is ready to use
+        "SHUTTING_DOWN" - System is shutting down
+        """
+        if SYSTEM_SHUTTING_DOWN:
+            return "SHUTTING_DOWN"
+        if SYSTEM_READY:
+            return "READY"
+        return "BOOTING"
 
     async def __get_license(self):
         licenseobj = get_license()[0]
@@ -995,14 +988,13 @@ class SystemGeneralService(ConfigService):
         CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
-async def _event_system_ready(middleware, event_type, args):
-    """
-    Method called when system is ready, supposed to enable the flag
-    telling the system has completed boot.
-    """
+async def _event_system(middleware, event_type, args):
     global SYSTEM_READY
+    global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
+    if args['id'] == 'shutting-down':
+        SYSTEM_SHUTTING_DOWN = True
 
 
 async def devd_zfs_hook(middleware, data):
@@ -1161,7 +1153,7 @@ async def setup(middleware):
                 update_timeout_value
             )
 
-    middleware.event_subscribe('system', _event_system_ready)
+    middleware.event_subscribe('system', _event_system)
     middleware.register_hook('devd.zfs', devd_zfs_hook)
     middleware.register_event_source('system.health', SystemHealthEventSource)
 
