@@ -29,7 +29,7 @@ import logging
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from freenasUI.directoryservice import forms, models, utils
+from freenasUI.directoryservice import forms, models
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client
@@ -141,7 +141,8 @@ def directoryservice_kerberoskeytab_delete(request, id):
     if request.method == "POST":
         try:
             kt.delete()
-            notifier().start("ix-kerberos")
+            with client as c:
+                c.call('kerberos.start')
             return JsonResp(
                 request,
                 message="Kerberos Keytab successfully deleted."
@@ -211,27 +212,6 @@ def directoryservice_idmap_ad(request, id):
     })
 
 
-def directoryservice_idmap_adex(request, id):
-    idmap_ad = models.idmap_adex.objects.get(id=id)
-
-    if request.method == "POST":
-        form = forms.idmap_adex_Form(request.POST, instance=idmap_ad)
-        if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message="Idmap adex successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.idmap_adex_Form(instance=idmap_ad)
-
-    return render(request, 'directoryservice/idmap_adex.html', {
-        'form': form
-    })
-
-
 def directoryservice_idmap_autorid(request, id):
     idmap_autorid = models.idmap_autorid.objects.get(id=id)
 
@@ -270,27 +250,6 @@ def directoryservice_idmap_fruit(request, id):
         form = forms.idmap_fruit_Form(instance=idmap_fruit)
 
     return render(request, 'directoryservice/idmap_fruit.html', {
-        'form': form
-    })
-
-
-def directoryservice_idmap_hash(request, id):
-    idmap_hash = models.idmap_hash.objects.get(id=id)
-
-    if request.method == "POST":
-        form = forms.idmap_hash_Form(request.POST, instance=idmap_hash)
-        if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message="Idmap hash successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.idmap_hash_Form(instance=idmap_hash)
-
-    return render(request, 'directoryservice/idmap_hash.html', {
         'form': form
     })
 
@@ -360,7 +319,6 @@ def directoryservice_idmap_rfc2307(request, id):
 
 def directoryservice_idmap_rid(request, id):
     idmap_rid = models.idmap_rid.objects.get(id=id)
-
     if request.method == "POST":
         form = forms.idmap_rid_Form(request.POST, instance=idmap_rid)
         if form.is_valid():
@@ -400,27 +358,6 @@ def directoryservice_idmap_tdb(request, id):
     })
 
 
-def directoryservice_idmap_tdb2(request, id):
-    idmap_tdb2 = models.idmap_tdb2.objects.get(id=id)
-
-    if request.method == "POST":
-        form = forms.idmap_tdb2_Form(request.POST, instance=idmap_tdb2)
-        if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message="Idmap tdb2 successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.idmap_tdb2_Form(instance=idmap_tdb2)
-
-    return render(request, 'directoryservice/idmap_tdb2.html', {
-        'form': form
-    })
-
-
 def directoryservice_idmap_script(request, id):
     idmap_script = models.idmap_script.objects.get(id=id)
 
@@ -443,7 +380,8 @@ def directoryservice_idmap_script(request, id):
 
 
 def directoryservice_idmap_backend(request, obj_type, obj_id, idmap_type):
-    data = utils.get_idmap(obj_type, obj_id, idmap_type)
+    with client as c:
+        data = c.call('idmap.get_idmap_legacy', obj_type, idmap_type)
     content = json.dumps(data)
     return HttpResponse(content, content_type="application/json")
 
@@ -452,6 +390,7 @@ def directoryservice_clearcache(request):
 
     with client as c:
         c.call('notifier.ds_clearcache')
+        c.call('activedirectory.fill_ad_cache', True)
 
     return HttpResponse(json.dumps({
         'error': False,

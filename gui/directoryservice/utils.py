@@ -129,12 +129,6 @@ def get_idmap_object(obj_type, obj_id, idmap_type):
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "tdb2":
-        idmap = models.idmap_tdb2.objects.get(
-            idmap_ds_type=obj_type,
-            idmap_ds_id=obj_id
-        )
-
     elif idmap_type == "script":
         idmap = models.idmap_script.objects.get(
             idmap_ds_type=obj_type,
@@ -193,10 +187,6 @@ def get_idmap(obj_type, obj_id, idmap_type):
     elif idmap_type == "tdb":
         if not idmap:
             idmap = models.idmap_tdb()
-
-    elif idmap_type == "tdb2":
-        if not idmap:
-            idmap = models.idmap_tdb2()
 
     elif idmap_type == "script":
         if not idmap:

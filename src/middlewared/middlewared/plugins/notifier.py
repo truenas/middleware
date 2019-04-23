@@ -19,30 +19,13 @@ from django.conf import settings
 from freenasUI import choices
 from freenasUI import common as fcommon
 from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
     FreeNAS_LDAP,
     FLAGS_DBINIT,
 )
 from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
-from freenasUI.directoryservice.models import (
-    IDMAP_TYPE_AD,
-    IDMAP_TYPE_ADEX,
-    IDMAP_TYPE_AUTORID,
-    IDMAP_TYPE_FRUIT,
-    IDMAP_TYPE_HASH,
-    IDMAP_TYPE_LDAP,
-    IDMAP_TYPE_NSS,
-    IDMAP_TYPE_RFC2307,
-    IDMAP_TYPE_RID,
-    IDMAP_TYPE_TDB,
-    IDMAP_TYPE_TDB2,
-    IDMAP_TYPE_SCRIPT,
-)
-from freenasUI.directoryservice.utils import get_idmap_object
-
-from middlewared.utils import Popen, django_modelobj_serialize
+from middlewared.utils import Popen
 
 
 logger = logging.getLogger('plugins.notifier')
@@ -100,14 +83,18 @@ class NotifierService(Service):
     def directoryservice(self, name):
         """Temporary wrapper to serialize DS connectors"""
         if name == 'AD':
-            ds = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-            workgroups = []
-            domains = ds.get_domains()
-            for d in domains:
-                if 'nETBIOSName' in d:
-                    netbiosname = d['nETBIOSName']
-                    workgroups.append(netbiosname)
-            ds.workgroups = workgroups
+            smb = self.middleware.call_sync('smb.config')
+            ad = self.middleware.call_sync('activedirectory.config')
+            data = {
+                'netbiosname': smb['netbiosname'],
+                'domainname': ad['domainname'],
+                'use_default_domain': ad['use_default_domain'],
+                'ad_idmap_backend': ad['idmap_backend'],
+                'ds_type': 1,
+                'krb_realm': ad['kerberos_realm']['krb_realm'],
+                'workgroups': smb['workgroup'],
+            }
+            return data
         elif name == 'LDAP':
             ds = FreeNAS_LDAP(flags=FLAGS_DBINIT)
         else:
@@ -156,50 +143,11 @@ class NotifierService(Service):
         return ret
 
     def ad_status(self):
-        ret = False
-        try:
-            ret = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT).connected()
-        except Exception as e:
-            pass
-        return ret
+        return self.middleware.call_sync('activedirectory.started')
 
     def ds_get_idmap_object(self, ds_type, id, idmap_backend):
-        """Temporary wrapper to serialize IDMAP objects"""
-        obj = get_idmap_object(ds_type, id, idmap_backend)
-        data = django_modelobj_serialize(self.middleware, obj)
-        data['idmap_backend_name'] = obj.idmap_backend_name
-        data['idmap_backend_type'] = obj.idmap_backend_type
-        # Only these types have SSL
-        if data['idmap_backend_type'] not in (IDMAP_TYPE_LDAP, IDMAP_TYPE_RFC2307):
-            return data
-        cert = obj.get_certificate()
-        if cert:
-            data['certificate'] = django_modelobj_serialize(self.middleware, cert)
-        else:
-            data['certificate'] = None
-        data['ssl'] = obj.get_ssl()
-        data['url'] = obj.get_url()
-        return data
-
-    def ds_idmap_type_code_to_string(self, code):
-        """Temporary wrapper to convert idmap code to string"""
-        mapping = {
-            IDMAP_TYPE_AD: 'IDMAP_TYPE_AD',
-            IDMAP_TYPE_ADEX: 'IDMAP_TYPE_ADEX',
-            IDMAP_TYPE_AUTORID: 'IDMAP_TYPE_AUTORID',
-            IDMAP_TYPE_FRUIT: 'IDMAP_TYPE_FRUIT',
-            IDMAP_TYPE_HASH: 'IDMAP_TYPE_HASH',
-            IDMAP_TYPE_LDAP: 'IDMAP_TYPE_LDAP',
-            IDMAP_TYPE_NSS: 'IDMAP_TYPE_NSS',
-            IDMAP_TYPE_RFC2307: 'IDMAP_TYPE_RFC2307',
-            IDMAP_TYPE_RID: 'IDMAP_TYPE_RID',
-            IDMAP_TYPE_TDB: 'IDMAP_TYPE_TDB',
-            IDMAP_TYPE_TDB2: 'IDMAP_TYPE_TDB2',
-            IDMAP_TYPE_SCRIPT: 'IDMAP_TYPE_SCRIPT',
-        }
-        if code not in mapping:
-            raise ValueError('Unknown idmap code: {0}'.format(code))
-        return mapping[code]
+        data = self.middleware.call_sync('idmap.get_idmap_legacy', ds_type, idmap_backend)
+        return data 
 
     async def ds_clearcache(self):
         """Temporary call to rebuild DS cache"""

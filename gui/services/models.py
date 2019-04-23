@@ -37,9 +37,6 @@ from django.core.validators import (
 )
 
 from freenasUI import choices
-from freenasUI.directoryservice.models import (
-    KerberosRealm,
-)
 from freenasUI.freeadmin.models import (
     Model, UserField, GroupField, PathField, DictField, ListField
 )

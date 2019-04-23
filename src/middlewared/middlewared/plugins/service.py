@@ -718,41 +718,20 @@ class ServiceService(CRUDService):
         await self._service("ladvd", "stop", force=True, **kwargs)
         await self._service("ladvd", "restart", **kwargs)
 
-    async def _clear_activedirectory_config(self):
-        await self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
-
     async def _started_activedirectory(self, **kwargs):
-        # Perform a wbinfo -t because it's the most accurate single test we have to
-        # detect problems with AD join. The default winbind timeout is 60 seconds (as of Samba 4.7).
-        # This can be controlled by the smb4.conf parameter "winbind request timeout = "
-        if await self._system('/usr/local/bin/wbinfo -t') != 0:
-            self.logger.debug('AD status check: wbinfo -t failed')
-            return False, []
-        return True, []
+        return await self.middleware.call('activedirectory.started'), [] 
 
     async def _start_activedirectory(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/ActiveDirectory/ctl start"):
-            res = True
-        return res
+        return await self.middleware.call('activedirectory.start'), [] 
 
     async def _stop_activedirectory(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/ActiveDirectory/ctl stop"):
-            res = True
-        return res
+        return await self.middleware.call('activedirectory.stop'), [] 
 
     async def _restart_activedirectory(self, **kwargs):
-        res = False
-        if not await self._system("/etc/directoryservice/ActiveDirectory/ctl restart"):
-            res = True
-        return res
+        await self.middleware.call('kerberos.stop'), []
+        return await self.middleware.call('activedirectory.start'), [] 
 
     async def _reload_activedirectory(self, **kwargs):
-        # Steps required to force winbind to connect to new DC if DC it's connected to goes down
-        # We may need to expand the list of operations below to include fresh kinit. Some
-        # information about winbind connection is stored in samba's gencache. In test cases, flushing
-        # gencache (net cache flush) was not required to do this.
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("samba_server", "start", quiet=True, **kwargs)
 

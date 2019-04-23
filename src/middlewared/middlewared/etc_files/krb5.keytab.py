@@ -29,12 +29,12 @@ async def write_keytab(db_keytabname, db_keytabfile):
 
 
 async def render(service, middleware):
-    keytabs = await middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+    keytabs = await middleware.call('kerberos.keytab.query')
     if not keytabs:
         logger.debug(f'No keytabs in configuration database, skipping keytab generation')
         return
 
     for keytab in keytabs:
-        db_keytabfile = base64.b64decode(keytab['keytab_file'])
-        db_keytabname = keytab['keytab_name']
+        db_keytabfile = base64.b64decode(keytab['file'].encode())
+        db_keytabname = keytab['name']
         await write_keytab(db_keytabname, db_keytabfile)
