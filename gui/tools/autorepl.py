@@ -336,7 +336,7 @@ for replication in replication_tasks:
             if ds_full in remote_zfslist:
                 continue
             log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
-            sshproc = pipeopen('%s %s %s' % (sshcmd, rzfscmd, ds_full), quiet=True)
+            sshproc = pipeopen('%s %s \"%s\"' % (sshcmd, rzfscmd, ds_full), quiet=True)
             output, error = sshproc.communicate()
             error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
             # Debugging code
