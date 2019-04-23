@@ -125,14 +125,13 @@ active_directory_func()
 	#
 	local IFS="|"
 	read domainname bindname ssl \
-		unix_extensions allow_trusted_doms use_default_domain \
+		allow_trusted_doms use_default_domain \
 		dcname gcname timeout dns_timeout <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ad_domainname,
 		ad_bindname,
 		ad_ssl,
-		ad_unix_extensions,
 		ad_allow_trusted_doms,
 		ad_use_default_domain,
 		ad_dcname,
@@ -157,7 +156,6 @@ __AD__
 	cat<<-__EOF__
 	Domain:                 ${domainname}
 	Bind name:              ${bindname}
-	UNIX extensions:        ${unix_extensions}
 	Trusted domains:        ${allow_trusted_doms}
 	SSL:                    ${ssl}
 	Timeout:                ${timeout}

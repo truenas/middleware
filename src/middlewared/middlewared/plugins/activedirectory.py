@@ -597,7 +597,6 @@ class ActiveDirectoryService(ConfigService):
         Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
         Int('certificate', null=True),
         Bool('verbose_logging'),
-        Bool('unix_extensions'),
         Bool('use_default_domain'),
         Bool('allow_trusted_doms'),
         Bool('allow_dns_updates'),
