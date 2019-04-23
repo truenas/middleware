@@ -182,6 +182,7 @@ class NetworkConfigurationService(ConfigService):
 
         new_config['domains'] = ' '.join(new_config.get('domains', []))
         new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
+        new_config.pop('hostname_local', None)
 
         await self.middleware.call(
             'datastore.update',
