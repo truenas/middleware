@@ -38,15 +38,16 @@ class NetworkConfigurationService(ConfigService):
 
     @private
     def network_config_extend(self, data):
+        # hostname_local will be used when the hostname of the current machine
+        # needs to be used so it works with either FreeNAS or TrueNAS
+        data['hostname_local'] = data['hostname']
         if self.middleware.call_sync('system.is_freenas'):
             data.pop('hostname_b')
             data.pop('hostname_virtual')
         else:
             node = self.middleware.call_sync('failover.node')
-            data['hostname_a'] = data['hostname']
             if node == 'B':
-                data['hostname_a'] = data['hostname']
-                data['hostname'] = data['hostname_b']
+                data['hostname_local'] = data['hostname_b']
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
         return data
