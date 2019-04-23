@@ -68,9 +68,6 @@ class ActiveDirectory_DNS(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, typ, value, traceback):
-        return
-
     def _get_SRV_records(self, host, dns_timeout):
         """
         Set resolver timeout to 1/3 of the lifetime. The timeout defines
@@ -669,7 +666,7 @@ class ActiveDirectoryService(ConfigService):
         try:
             await self.update_netbios_data(old, new)
         except Exception as e:
-            raise ValidationError('netbiosname', str(e))
+            raise ValidationError('activedirectory_update.netbiosname', str(e))
 
         new = await self.ad_compress(new)
 
@@ -835,7 +832,7 @@ class ActiveDirectoryService(ConfigService):
                     ad = await self.config()
 
             ret = neterr.JOINED
-            await self.middleware.call('idmap.get_or_create_idmap_domain', 'DS_TYPE_ACTIVEDIRECTORY')
+            await self.middleware.call('idmap.get_or_create_idmap_by_domain', 'DS_TYPE_ACTIVEDIRECTORY')
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             try:
                 await self.middleware.call('idmap.clear_idmap_cache')
@@ -874,8 +871,7 @@ class ActiveDirectoryService(ConfigService):
         if ad is None:
             ad = self.middleware.call_sync('activedirectory.config')
 
-        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
-            dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
+        dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
@@ -898,8 +894,7 @@ class ActiveDirectoryService(ConfigService):
         if not ad:
             ad = self.middleware.call_sync('activedirectory.config')
 
-        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
-            pdc = AD_DNS.get_n_working_servers(SRV['PDC'], 1)
+        pdc = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['PDC'], 1)
         c = ntplib.NTPClient()
         response = c.request(pdc[0]['host'])
         ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
@@ -1011,8 +1006,7 @@ class ActiveDirectoryService(ConfigService):
         set_new_cache = True if not dcs else False
 
         if not dcs:
-            with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
-                dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
+            dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
 
         if set_new_cache:
             self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], ad['site'], dcs)
@@ -1035,10 +1029,10 @@ class ActiveDirectoryService(ConfigService):
         single point of failure, fall back to relying on normal DNS queries in this case.
         """
         ad = self.middleware.call_sync('activedirectory.config')
-        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
-            krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3)
-            krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3)
-            krb_kpasswd_server = AD_DNS.get_n_working_servers(SRV['KPASSWD'], 3)
+        AD_DNS = ActiveDirectory_DNS(conf=ad, logger=self.logger)
+        krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3)
+        krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3)
+        krb_kpasswd_server = AD_DNS.get_n_working_servers(SRV['KPASSWD'], 3)
         kdc = [i['host'] for i in krb_kdc]
         admin_server = [i['host'] for i in krb_admin_server]
         kpasswd = [i['host'] for i in krb_kpasswd_server]
@@ -1063,8 +1057,7 @@ class ActiveDirectoryService(ConfigService):
             return
 
         ad = self.middleware.call_sync('activedirectory.config')
-        with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
-            pdc = AD_DNS.get_n_working_servers(SRV['PDC'], 1)
+        pdc = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['PDC'], 1)
         self.middleware.call_sync('system.ntpserver.create', {'address': pdc[0]['host'], 'prefer': True})
 
     @private
@@ -1080,8 +1073,7 @@ class ActiveDirectoryService(ConfigService):
         set_new_cache = True if not dcs else False
 
         if not dcs:
-            with ActiveDirectory_DNS(conf=ad, logger=self.logger) as AD_DNS:
-                dcs = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
+            dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 

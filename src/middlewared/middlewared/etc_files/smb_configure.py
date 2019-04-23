@@ -297,7 +297,7 @@ def render(service, middleware):
         logger.debug("systemdataset.config returned 'None' as dataset path. Possible zpool import in progress. Exiting configure.")
         return
 
-    ret = middleware.run_in_thread(setup_samba_dirs, middleware, conf)
+    ret = setup_samba_dirs(middleware, conf)
 
     if not ret:
         logger.debug("Failed to configure samba directories")

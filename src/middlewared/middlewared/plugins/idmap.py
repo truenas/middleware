@@ -421,9 +421,9 @@ class IdmapADService(CRUDService):
             ),
             Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
             Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Str('schema_mode'),
-            Bool('unix_primary_group'),
-            Bool('unix_nss_info'),
+            Str('schema_mode', default='rfc2307', enum=['rfc2307', 'sfu', 'sfu20']),
+            Bool('unix_primary_group', default=False),
+            Bool('unix_nss_info', default=False),
             register=True
         )
     )
@@ -500,9 +500,9 @@ class IdmapAutoridService(CRUDService):
             ),
             Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
             Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('rangesize'),
-            Bool('readonly'),
-            Bool('ignore_builtin'),
+            Int('rangesize', default=100000),
+            Bool('readonly', default=False),
+            Bool('ignore_builtin', default=False),
             register=True
         )
     )
