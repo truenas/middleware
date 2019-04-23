@@ -22,6 +22,7 @@ from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
+from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
@@ -881,14 +882,18 @@ class PoolService(CRUDService):
         Format all disks, putting all freebsd-zfs partitions created
         into their respectives vdevs.
         """
-        enc_disks = []
 
-        # TODO: Make this work in parallel for speed, may take a long time with dozens of drives
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
-        for i, disk_items in enumerate(disks.items()):
-            disk, config = disk_items
-            job.set_progress(15, f'Formatting disks ({i + 1}/{len(disks)})')
-            await self.middleware.call('disk.format', disk, swapgb if config['create_swap'] else 0)
+
+        enc_disks = []
+        formatted = 0
+
+        async def format_disk(arg):
+            nonlocal enc_disks, formatted
+            disk, config = arg
+            await self.middleware.call(
+                'disk.format', disk, swapgb if config['create_swap'] else 0, False,
+            )
             devname = await self.middleware.call('disk.gptid_from_part_type', disk, 'freebsd-zfs')
             if enc_keypath:
                 enc_disks.append({
@@ -896,7 +901,15 @@ class PoolService(CRUDService):
                     'devname': devname,
                 })
                 devname = await self.middleware.call('disk.encrypt', devname, enc_keypath, passphrase)
+            formatted += 1
+            job.set_progress(15, f'Formatting disks ({formatted}/{len(disks)})')
             config['vdev'].append(f'/dev/{devname}')
+
+        job.set_progress(15, f'Formatting disks (0/{len(disks)})')
+        await asyncio_map(format_disk, disks.items(), limit=16)
+
+        await self.middleware.call('disk.sync_all')
+
         return enc_disks
 
     async def __save_encrypteddisks(self, pool_id, enc_disks, disks_cache):
@@ -2061,8 +2074,13 @@ class PoolService(CRUDService):
             await self.middleware.call('zfs.pool.delete', pool['name'])
 
             job.set_progress(80, 'Cleaning disks')
-            for disk in disks:
-                await self.middleware.call('disk.unlabel', disk)
+
+            async def unlabel(disk):
+                return await self.middleware.call('disk.unlabel', disk, False)
+            await asyncio_map(unlabel, disks, limit=16)
+
+            await self.middleware.call('disk.sync_all')
+
             await self.middleware.call('disk.geli_detach', pool, True)
             if pool['encrypt'] > 0:
                 try:

@@ -1490,9 +1490,13 @@ class DiskService(CRUDService):
             # This will fail when EOL is reached
             await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', f'oseek={int(size / 1024) - 32}', check=False)
 
-    @accepts(Str('dev'), Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM']))
+    @accepts(
+        Str('dev'),
+        Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM']),
+        Bool('synccache', default=True),
+    )
     @job(lock=lambda args: args[0])
-    async def wipe(self, job, dev, mode):
+    async def wipe(self, job, dev, mode, sync):
         """
         Performs a wipe of a disk `dev`.
         It can be of the following modes:
@@ -1570,10 +1574,11 @@ class DiskService(CRUDService):
                 if reg:
                     job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': int(reg.group(2))})
 
-        await self.sync(dev)
+        if sync:
+            await self.sync(dev)
 
     @private
-    def format(self, disk, swapgb):
+    def format(self, disk, swapgb, sync=True):
 
         geom.scan()
         g = geom.geom_by_name('DISK', disk)
@@ -1585,7 +1590,7 @@ class DiskService(CRUDService):
         else:
             self.logger.error(f'Unable to determine size of {disk}')
 
-        job = self.middleware.call_sync('disk.wipe', disk, 'QUICK')
+        job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)
         job.wait_sync()
         if job.error:
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
@@ -1615,8 +1620,9 @@ class DiskService(CRUDService):
             if cp.returncode != 0:
                 raise CallError(f'Unable to GPT format the disk "{disk}": {cp.stderr}')
 
-        # We might need to sync with reality (e.g. devname -> uuid)
-        self.middleware.call_sync('disk.sync', disk)
+        if sync:
+            # We might need to sync with reality (e.g. devname -> uuid)
+            self.middleware.call_sync('disk.sync', disk)
 
     @private
     def gptid_from_part_type(self, disk, part_type):
@@ -1634,7 +1640,7 @@ class DiskService(CRUDService):
             raise CallError(f'Failed to label {dev}: {cp.stderr.decode()}')
 
     @private
-    def unlabel(self, disk):
+    def unlabel(self, disk, sync=True):
         self.middleware.call_sync('disk.swaps_remove_disks', [disk])
 
         subprocess.run(
@@ -1655,8 +1661,9 @@ class DiskService(CRUDService):
             stderr=subprocess.PIPE,
         )
 
-        # We might need to sync with reality (e.g. uuid -> devname)
-        self.middleware.call_sync('disk.sync', disk)
+        if sync:
+            # We might need to sync with reality (e.g. uuid -> devname)
+            self.middleware.call_sync('disk.sync', disk)
 
     @private
     async def configure_power_management(self):
