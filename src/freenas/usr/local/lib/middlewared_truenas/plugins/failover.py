@@ -80,6 +80,38 @@ class RemoteClient(object):
         if typ is ClientException:
             raise CallError(str(value), value.errno)
 
+    def sendfile(self, token, local_path, remote_path):
+        r = requests.post(
+            f'http://{self.remote_ip}:6000/_upload/',
+            files=[
+                ('data', json.dumps({
+                    'method': 'filesystem.put',
+                    'params': [remote_path],
+                })),
+                ('file', open(local_path, 'rb')),
+            ],
+            headers={
+                'Authorization': f'Token {token}',
+            },
+        )
+        job_id = r.json()['job_id']
+        # TODO: use event subscription in the client instead of polling
+        while True:
+            rjob = self.client.call('core.get_jobs', [('id', '=', job_id)])
+            if rjob:
+                rjob = rjob[0]
+                if rjob['state'] == 'FAILED':
+                    raise CallError(
+                        f'Failed to send {local_path} to Standby Controller: {job["error"]}.'
+                    )
+                elif rjob['state'] == 'ABORTED':
+                    raise CallError(
+                        f'Failed to send {local_path} to Standby Controller, job aborted by user.'
+                    )
+                elif rjob['state'] == 'SUCCESS':
+                    break
+            time.sleep(0.5)
+
 
 class FailoverService(ConfigService):
 
@@ -629,35 +661,7 @@ class FailoverService(ConfigService):
             token = remote.call('auth.generate_token')
 
             for f in os.listdir(local_path):
-                r = requests.post(
-                    f'http://{remote_ip}:6000/_upload/',
-                    files=[
-                        ('data', json.dumps({
-                            'method': 'filesystem.put',
-                            'params': [os.path.join(remote_path, f)],
-                        })),
-                        ('file', open(os.path.join(local_path, f), 'rb')),
-                    ],
-                    headers={
-                        'Authorization': f'Token {token}',
-                    },
-                )
-                job_id = r.json()['job_id']
-                while True:
-                    rjob = remote.call('core.get_jobs', [('id', '=', job_id)])
-                    if rjob:
-                        rjob = rjob[0]
-                        if rjob['state'] == 'FAILED':
-                            raise CallError(
-                                f'Failed to send {f} to Standby Controller: {job["error"]}.'
-                            )
-                        elif rjob['state'] == 'ABORTED':
-                            raise CallError(
-                                f'Failed to send {f} to Standby Controller, job aborted by user.'
-                            )
-                        elif rjob['state'] == 'SUCCESS':
-                            break
-                    time.sleep(0.5)
+                remote.sendfile(token, os.path.join(local_path, f), os.path.join(remote_path, f))
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = remote.call('system.version')
