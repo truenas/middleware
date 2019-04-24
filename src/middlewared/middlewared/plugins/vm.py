@@ -1261,7 +1261,7 @@ class VMDeviceService(CRUDService):
         Create a new device for the VM of id `vm`.
         """
         if not data.get('vm'):
-            raise ValidationError('vm', '"vm" is required')
+            raise ValidationError('vmdevice_create.vm', '"vm" is required')
 
         data = await self.validate_device(data)
 
