@@ -428,8 +428,13 @@ class SMBService(SystemServiceService):
         except Exception:
             nt_passwd = ''
 
+        pass_last_set_time = int(smbpasswd_string[5].strip("LCT-"), 16)
+
         if smbpasswd_string[3] != nt_passwd:
             p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
+            pdb_entry_changed = True
+        if pass_last_set_time != p.pass_last_set_time:
+            p.pass_last_set_time = pass_last_set_time
             pdb_entry_changed = True
         if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
             p.acct_ctrl |= SAMR_AcctFlags.DISABLED
@@ -480,8 +485,13 @@ class SMBService(SystemServiceService):
             except Exception:
                 nt_passwd = ''
 
+            pass_last_set_time = int(smbpasswd_string[5].strip("LCT-"), 16)
+
             if smbpasswd_string[3] != nt_passwd:
                 p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
+                pdb_entry_changed = True
+            if pass_last_set_time != p.pass_last_set_time:
+                p.pass_last_set_time = pass_last_set_time
                 pdb_entry_changed = True
             if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
                 p.acct_ctrl |= SAMR_AcctFlags.DISABLED
