@@ -2,7 +2,7 @@ from middlewared.schema import Bool, Dict, Str, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job
 )
-from middlewared.utils import filter_list, run
+from middlewared.utils import Popen, filter_list, run
 from middlewared.validators import Match
 
 from datetime import datetime
@@ -150,11 +150,11 @@ class BootEnvService(CRUDService):
         return data['name']
 
     async def _clean_be_name(self, verrors, schema, name):
-        beadm_names = (await run(
+        beadm_names = (await (await Popen(
             "beadm list | awk '{print $7}'",
             shell=True,
             encoding='utf8',
-        )).stdout.split('\n')
+        )).communicate())[0].split('\n')
         if name in filter(None, beadm_names):
             verrors.add(f'{schema}.name', f'The name "{name}" already exists', errno.EEXIST)
 
