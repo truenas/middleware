@@ -2,7 +2,7 @@ from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private
 )
-from middlewared.utils import run, Popen
+from middlewared.utils import run
 from middlewared.validators import Email
 
 import asyncio
@@ -204,7 +204,7 @@ class UserService(CRUDService):
 
         pk = None  # Make sure pk exists to rollback in case of an error
         try:
-            password = await self.__set_password(data)
+            await self.__set_password(data)
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
 
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
@@ -222,7 +222,7 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        await self.__set_smbpasswd(data['username'], password)
+        await self.__set_smbpasswd(data['username'])
 
         if os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -342,7 +342,7 @@ class UserService(CRUDService):
             set_home_mode()
 
         user.pop('sshpubkey', None)
-        password = await self.__set_password(user)
+        await self.__set_password(user)
 
         if 'groups' in user:
             groups = user.pop('groups')
@@ -352,7 +352,7 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        await self.__set_smbpasswd(user['username'], password)
+        await self.__set_smbpasswd(user['username'])
 
         return pk
 
@@ -570,22 +570,24 @@ class UserService(CRUDService):
         if password:
             data['unixhash'] = crypted_password(password)
             # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
-            data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
+            if data['locked']:
+                data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[DU         ]:LCT-{int(time.time()):X}:'
+            else:
+                data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
         else:
             data['unixhash'] = '*'
             data['smbhash'] = '*'
         return password
 
-    async def __set_smbpasswd(self, username, password):
+    async def __set_smbpasswd(self, username):
         """
-        Currently the way we set samba passwords is using smbpasswd
-        and that can only happen after the user exists in master.passwd.
-        That is the reason we have two methods/steps to set password.
+        This method will update or create an entry in samba's passdb.tdb file.
+        Update will only happen if the account's nt_password has changed or
+        if the account's 'locked' state has changed. Samba's passdb python
+        library will raise an exception if a corresponding Unix user does not
+        exist. That is the reason we have two methods/steps to set password.
         """
-        if not password:
-            return
-        proc = await Popen(['smbpasswd', '-D', '0', '-s', '-a', username], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-        await proc.communicate(input=f'{password}\n{password}\n'.encode())
+        await self.middleware.call('smb.update_passdb_user', username)
 
     async def __set_groups(self, pk, groups):
 
@@ -698,9 +700,9 @@ class GroupService(CRUDService):
         for user in users:
             await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': user})
 
-        await self.middleware.call('notifier.groupmap_add', data['name'], data['name'])
-
         await self.middleware.call('service.reload', 'user')
+
+        await self.middleware.call('smb.groupmap_add', data['name'])
 
         return pk
 
@@ -748,9 +750,9 @@ class GroupService(CRUDService):
         if delete_groupmap:
             await self.middleware.call('notifier.groupmap_delete', delete_groupmap)
 
-        await self.middleware.call('notifier.groupmap_add', group['group'], group['group'])
-
         await self.middleware.call('service.reload', 'user')
+
+        await self.middleware.call('smb.groupmap_add', group['group'])
 
         return pk
 
@@ -763,6 +765,7 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
+        await self.middleware.call('notifier.groupmap_delete', group['group'])
 
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)

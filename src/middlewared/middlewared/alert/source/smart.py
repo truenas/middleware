@@ -9,6 +9,8 @@ class SMARTAlertClass(AlertClass, OneShotAlertClass):
 
     hardware = True
 
+    deleted_automatically = False
+
     async def create(self, args):
         if not args["device"].startswith("/dev/"):
             args["device"] = f"/dev/{args['device']}"

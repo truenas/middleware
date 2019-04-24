@@ -27,7 +27,6 @@ import logging
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.core.validators import MaxValueValidator, MinValueValidator
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, PathField
@@ -41,23 +40,6 @@ DS_TYPE_ACTIVEDIRECTORY = 1
 DS_TYPE_LDAP = 2
 DS_TYPE_NIS = 3
 DS_TYPE_CIFS = 5
-
-
-def directoryservice_to_enum(ds_type):
-    enum = DS_TYPE_NONE
-    ds_dict = {
-        'ActiveDirectory': DS_TYPE_ACTIVEDIRECTORY,
-        'LDAP': DS_TYPE_LDAP,
-        'NIS': DS_TYPE_NIS,
-        'CIFS': DS_TYPE_CIFS,
-    }
-
-    try:
-        enum = ds_dict[ds_type]
-    except Exception:
-        pass
-
-    return enum
 
 
 def enum_to_directoryservice(enum):
@@ -96,16 +78,13 @@ def idmap_to_enum(idmap_type):
     enum = IDMAP_TYPE_NONE
     idmap_dict = {
         'ad': IDMAP_TYPE_AD,
-        'adex': IDMAP_TYPE_ADEX,
         'autorid': IDMAP_TYPE_AUTORID,
         'fruit': IDMAP_TYPE_FRUIT,
-        'hash': IDMAP_TYPE_HASH,
         'ldap': IDMAP_TYPE_LDAP,
         'nss': IDMAP_TYPE_NSS,
         'rfc2307': IDMAP_TYPE_RFC2307,
         'rid': IDMAP_TYPE_RID,
         'tdb': IDMAP_TYPE_TDB,
-        'tdb2': IDMAP_TYPE_TDB2,
         'script': IDMAP_TYPE_SCRIPT
     }
 
@@ -121,16 +100,13 @@ def enum_to_idmap(enum):
     idmap = None
     idmap_dict = {
         IDMAP_TYPE_AD: 'ad',
-        IDMAP_TYPE_ADEX: 'adex',
         IDMAP_TYPE_AUTORID: 'autorid',
         IDMAP_TYPE_FRUIT: 'fruit',
-        IDMAP_TYPE_HASH: 'hash',
         IDMAP_TYPE_LDAP: 'ldap',
         IDMAP_TYPE_NSS: 'nss',
         IDMAP_TYPE_RFC2307: 'rfc2307',
         IDMAP_TYPE_RID: 'rid',
         IDMAP_TYPE_TDB: 'tdb',
-        IDMAP_TYPE_TDB2: 'tdb2',
         IDMAP_TYPE_SCRIPT: 'script'
     }
 
@@ -142,33 +118,51 @@ def enum_to_idmap(enum):
     return idmap
 
 
-class idmap_base(Model):
-    idmap_ds_type = models.IntegerField(
-        null=True
+class Idmap_Domain(Model):
+    idmap_domain_name = models.CharField(
+        max_length=120,
+        unique=True,
+        help_text=_(
+            'Short form of domain name as represented by the nETBIOSName '
+            'LDAP entry in an Active Directory domain (commonly indicated as the '
+            '"pre-Windows 2000" domain name). This must not be confused with the '
+            'netbios host name of the server.'
+        ),
+        verbose_name=_("pre-Windows 2000 Domain Name"),
     )
-    idmap_ds_id = models.PositiveIntegerField(
-        null=True
+    idmap_domain_dns_domain_name = models.CharField(
+        max_length=255,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name=_("DNS Domain Name"),
     )
 
-    def __init__(self, *args, **kwargs):
-        super(idmap_base, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_NONE
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+class Idmap_DomainToBackend(Model):
+    idmap_dtb_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
+    )
+    idmap_dtb_idmap_backend = models.CharField(
+        choices=choices.IDMAP_CHOICES(),
+        default='rid',
+        max_length=120,
+        verbose_name=_("idmap backend for domain"),
+    )
 
-        if 'idmap_ds_type' in kwargs:
-            self.idmap_ds_type = kwargs['idmap_ds_type']
-        if 'idmap_ds_id' in kwargs:
-            self.idmap_ds_id = kwargs['idmap_ds_id']
 
-    def __str__(self):
-        return self.idmap_backend_name
-
-    class Meta:
-        abstract = True
-
-
-class idmap_ad(idmap_base):
+class idmap_ad(Model):
+    idmap_ad_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
+    )
     idmap_ad_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -222,9 +216,6 @@ class idmap_ad(idmap_base):
     def __init__(self, *args, **kwargs):
         super(idmap_ad, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_AD
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
     class Meta:
         verbose_name = _("AD Idmap")
         verbose_name_plural = _("AD Idmap")
@@ -233,31 +224,14 @@ class idmap_ad(idmap_base):
         resource_name = 'directoryservice/idmap/ad'
 
 
-class idmap_adex(idmap_base):
-    idmap_adex_range_low = models.IntegerField(
-        verbose_name=_("Range Low"),
-        default=10000
+class idmap_autorid(Model):
+    idmap_autorid_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
     )
-    idmap_adex_range_high = models.IntegerField(
-        verbose_name=_("Range High"),
-        default=90000000
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(idmap_adex, self).__init__(*args, **kwargs)
-
-        self.idmap_backend_type = IDMAP_TYPE_ADEX
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
-    class Meta:
-        verbose_name = _("ADEX Idmap")
-        verbose_name_plural = _("ADEX Idmap")
-
-    class FreeAdmin:
-        resource_name = 'directoryservice/idmap/adex'
-
-
-class idmap_autorid(idmap_base):
     idmap_autorid_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -297,9 +271,6 @@ class idmap_autorid(idmap_base):
     def __init__(self, *args, **kwargs):
         super(idmap_autorid, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_AUTORID
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
     class Meta:
         verbose_name = _("AutoRID Idmap")
         verbose_name_plural = _("AutoRID Idmap")
@@ -308,7 +279,14 @@ class idmap_autorid(idmap_base):
         resource_name = 'directoryservice/idmap/autorid'
 
 
-class idmap_fruit(idmap_base):
+class idmap_fruit(Model):
+    idmap_fruit_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
+    )
     idmap_fruit_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
@@ -321,9 +299,6 @@ class idmap_fruit(idmap_base):
     def __init__(self, *args, **kwargs):
         super(idmap_fruit, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_FRUIT
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
     class Meta:
         verbose_name = _("Fruit Idmap")
         verbose_name_plural = _("Fruit Idmap")
@@ -332,40 +307,14 @@ class idmap_fruit(idmap_base):
         resource_name = 'directoryservice/idmap/fruit'
 
 
-class idmap_hash(idmap_base):
-    idmap_hash_range_low = models.IntegerField(
-        verbose_name=_("Range Low"),
-        default=90000001
+class idmap_ldap(Model):
+    idmap_ldap_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
     )
-    idmap_hash_range_high = models.IntegerField(
-        verbose_name=_("Range High"),
-        default=100000000
-    )
-    idmap_hash_range_name_map = PathField(
-        verbose_name=_("Name Map"),
-        help_text=_(
-            'Specifies the absolute path to the name mapping file '
-            'used by the nss_info API. Entries in the file are of '
-            'the form "unix name = qualified domain name". Mapping '
-            'of both user and group names is supported.'
-        )
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(idmap_hash, self).__init__(*args, **kwargs)
-
-        self.idmap_backend_type = IDMAP_TYPE_HASH
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
-    class Meta:
-        verbose_name = _("Hash Idmap")
-        verbose_name_plural = _("Hash Idmap")
-
-    class FreeAdmin:
-        resource_name = 'directoryservice/idmap/hash'
-
-
-class idmap_ldap(idmap_base):
     idmap_ldap_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -427,9 +376,6 @@ class idmap_ldap(idmap_base):
     def __init__(self, *args, **kwargs):
         super(idmap_ldap, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_LDAP
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
     def get_url(self):
         return self.idmap_ldap_ldap_url
 
@@ -447,7 +393,14 @@ class idmap_ldap(idmap_base):
         resource_name = 'directoryservice/idmap/ldap'
 
 
-class idmap_nss(idmap_base):
+class idmap_nss(Model):
+    idmap_nss_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
+    )
     idmap_nss_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -460,9 +413,6 @@ class idmap_nss(idmap_base):
     def __init__(self, *args, **kwargs):
         super(idmap_nss, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_NSS
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
     class Meta:
         verbose_name = _("NSS Idmap")
         verbose_name_plural = _("NSS Idmap")
@@ -471,7 +421,14 @@ class idmap_nss(idmap_base):
         resource_name = 'directoryservice/idmap/nss'
 
 
-class idmap_rfc2307(idmap_base):
+class idmap_rfc2307(Model):
+    idmap_rfc2307_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
+    )
     idmap_rfc2307_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -598,9 +555,6 @@ class idmap_rfc2307(idmap_base):
     def __init__(self, *args, **kwargs):
         super(idmap_rfc2307, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_RFC2307
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
         if self.idmap_rfc2307_ldap_user_dn_password:
             try:
                 self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_decrypt(
@@ -638,7 +592,14 @@ class idmap_rfc2307(idmap_base):
         resource_name = 'directoryservice/idmap/rfc2307'
 
 
-class idmap_rid(idmap_base):
+class idmap_rid(Model):
+    idmap_rid_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
+    )
     idmap_rid_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=20000
@@ -651,9 +612,6 @@ class idmap_rid(idmap_base):
     def __init__(self, *args, **kwargs):
         super(idmap_rid, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_RID
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
     class Meta:
         verbose_name = _("RID Idmap")
         verbose_name_plural = _("RID Idmap")
@@ -662,7 +620,14 @@ class idmap_rid(idmap_base):
         resource_name = 'directoryservice/idmap/rid'
 
 
-class idmap_tdb(idmap_base):
+class idmap_tdb(Model):
+    idmap_tdb_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
+    )
     idmap_tdb_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
@@ -675,9 +640,6 @@ class idmap_tdb(idmap_base):
     def __init__(self, *args, **kwargs):
         super(idmap_tdb, self).__init__(*args, **kwargs)
 
-        self.idmap_backend_type = IDMAP_TYPE_TDB
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
     class Meta:
         verbose_name = _("TDB Idmap")
         verbose_name_plural = _("TDB Idmap")
@@ -687,39 +649,14 @@ class idmap_tdb(idmap_base):
         resource_name = 'directoryservice/idmap/tdb'
 
 
-class idmap_tdb2(idmap_base):
-    idmap_tdb2_range_low = models.IntegerField(
-        verbose_name=_("Range Low"),
-        default=90000001
+class idmap_script(Model):
+    idmap_script_domain = models.OneToOneField(
+        Idmap_Domain,
+        on_delete=models.deletion.CASCADE,
+        to_field='idmap_domain_name',
+        unique=True, null=True,
+        verbose_name=_('pre-Windows 2000 Domain Name'),
     )
-    idmap_tdb2_range_high = models.IntegerField(
-        verbose_name=_("Range High"),
-        default=100000000
-    )
-    idmap_tdb2_script = PathField(
-        verbose_name=_("Script"),
-        help_text=_(
-            "This option can be used to configure an external program for "
-            "performing id mappings instead of using the tdb counter. The "
-            "mappings are then stored in the tdb2 idmap database."
-        )
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(idmap_tdb2, self).__init__(*args, **kwargs)
-
-        self.idmap_backend_type = IDMAP_TYPE_TDB2
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
-
-    class Meta:
-        verbose_name = _("TDB2 Idmap")
-        verbose_name_plural = _("TDB2 Idmap")
-
-    class FreeAdmin:
-        resource_name = 'directoryservice/idmap/tdb2'
-
-
-class idmap_script(idmap_base):
     idmap_script_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
@@ -739,9 +676,6 @@ class idmap_script(idmap_base):
 
     def __init__(self, *args, **kwargs):
         super(idmap_script, self).__init__(*args, **kwargs)
-
-        self.idmap_backend_type = IDMAP_TYPE_SCRIPT
-        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
 
     class Meta:
         verbose_name = _("Script Idmap")
@@ -801,41 +735,10 @@ class KerberosKeytab(Model):
     )
 
     def delete(self):
-        KerberosPrincipal.objects.filter(
-            principal_keytab=self
-        ).delete()
         super(KerberosKeytab, self).delete()
 
     def __str__(self):
         return self.keytab_name
-
-
-class KerberosPrincipal(Model):
-    principal_keytab = models.ForeignKey(
-        KerberosKeytab,
-        verbose_name=_("Keytab"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
-    )
-    principal_version = models.IntegerField(
-        verbose_name=_("Version number"),
-        default=-1
-    )
-    principal_encryption = models.CharField(
-        verbose_name=_("Encryption algorithm"),
-        max_length=120
-    )
-    principal_name = models.CharField(
-        verbose_name=_("Principal name"),
-        max_length=120
-    )
-    principal_timestamp = models.DateTimeField(
-        verbose_name=_("Date")
-    )
-
-    def __str__(self):
-        return self.principal_name
 
 
 class KerberosSettings(Model):
@@ -881,27 +784,6 @@ class ActiveDirectory(DirectoryServiceBase):
         max_length=120,
         help_text=_("Domain Account password."),
         blank=True
-    )
-    ad_monitor_frequency = models.IntegerField(
-        verbose_name=_("AD check connectivity frequency (seconds)"),
-        default=60,
-        validators=[MaxValueValidator(3600), MinValueValidator(30)],
-        help_text=_("How often to verify that AD servers are active."),
-        blank=False
-    )
-    ad_recover_retry = models.IntegerField(
-        verbose_name=_("How many recovery attempts"),
-        default=10,
-        validators=[MaxValueValidator(500), MinValueValidator(0)],
-        help_text=_(
-            "Number of times to attempt to recover the connection with AD "
-            "server. If the value is 0, try forever."),
-        blank=False
-    )
-    ad_enable_monitor = models.BooleanField(
-        verbose_name=_("Enable Monitoring"),
-        help_text=_("Restart AD automatically if the service is disconnected."),
-        default=False
     )
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
@@ -956,38 +838,14 @@ class ActiveDirectory(DirectoryServiceBase):
             "users and groups."),
         default=False
     )
-    ad_userdn = models.CharField(
-        verbose_name=_("User Base"),
-        max_length=1024,
-        help_text=_("DN of the user container in AD."),
-        blank=True,
-        null=True
-    )
-    ad_groupdn = models.CharField(
-        verbose_name=_("Group Base"),
-        max_length=1024,
-        help_text=_("DN of the group container in AD."),
-        blank=True,
-        null=True
-    )
     ad_site = models.CharField(
         verbose_name=_("Site Name"),
         max_length=120,
-        help_text=_("Name of site to use."),
-        blank=True,
-        null=True
-    )
-    ad_dcname = models.CharField(
-        verbose_name=_("Domain Controller"),
-        max_length=120,
-        help_text=_("FQDN of the domain controller to use."),
-        blank=True,
-        null=True
-    )
-    ad_gcname = models.CharField(
-        verbose_name=_("Global Catalog Server"),
-        max_length=120,
-        help_text=_("FQDN of the global catalog server to use."),
+        help_text=_(
+            "Name of Active Directory Site. This field will be automatically populated "
+            "during the domain join process. If an AD site is not configured for the "
+            "subnet where the NAS is located, the site name will be populated as "
+            "'Default-First-Site-Name'"),
         blank=True,
         null=True
     )
@@ -998,12 +856,33 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True,
         null=True
     )
-    ad_kerberos_principal = models.ForeignKey(
-        KerberosPrincipal,
-        verbose_name=_("Kerberos Principal"),
-        on_delete=models.SET_NULL,
+    ad_kerberos_principal = models.CharField(
+        verbose_name=_("Kerberos Princpal"),
+        max_length=255,
+        help_text=_(
+            "Kerberos principal to use for AD-related UI and middleware operations "
+            "Field is populated with principals present in the system keytab. "
+            "During the domain join process a keytab entry is generated for the "
+            "AD Machine Account associated with the NAS. The name for this account "
+            "is the netbios name of the server with a '$' appended to it. Once "
+            "the NAS is joined to active directory, the bind credentials will be "
+            "automatically cleared and all future operations carried out by the AD "
+            "machine account, which has a restricted set of privileges in the AD domain."),
         blank=True,
-        null=True
+	null=True
+    )
+    ad_createcomputer = models.CharField(
+        blank=True,
+        max_length=255,
+        verbose_name=_('Computer Account OU'),
+        help_text=(
+            'If blank, then the default OU is used during computer account creation. '
+            'Precreate the computer account in a specific OU. The OU string '
+            'read from top to bottom without RDNs and delimited by a "/". '
+            'E.g. "createcomputer=Computers/Servers/Unix NB: A backslash '
+            '"\" is used as escape at multiple levels and may need to be '
+            'doubled or even quadrupled. It is not used as a separator.'
+        )
     )
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
@@ -1073,34 +952,6 @@ class ActiveDirectory(DirectoryServiceBase):
             )
             self._ad_bindpw_encrypted = True
         super(ActiveDirectory, self).save(**kwargs)
-
-        if not self.ad_kerberos_realm:
-            from freenasUI.common.freenasldap import (
-                FreeNAS_ActiveDirectory,
-                FLAGS_DBINIT
-            )
-
-            try:
-                FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-
-                kr = KerberosRealm.objects.filter(
-                    krb_realm=self.ad_domainname.upper()
-                )
-                if kr:
-                    kr = kr[0]
-                else:
-                    kr = KerberosRealm()
-                    kr.krb_realm = self.ad_domainname.upper()
-                    kr.save()
-
-                self.ad_kerberos_realm = kr
-                super(ActiveDirectory, self).save()
-
-            except Exception as e:
-                log.debug(
-                    "ActiveDirectory: Unable to create kerberos realm: %s",
-                    e, exc_info=True
-                )
 
     class Meta:
         verbose_name = _("Active Directory")
@@ -1230,12 +1081,10 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         null=True
     )
-    ldap_kerberos_principal = models.ForeignKey(
-        KerberosPrincipal,
-        verbose_name=_("Kerberos Principal"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
+    ldap_kerberos_principal = models.CharField(
+        verbose_name=_("Kerberos Princpal"),
+        max_length=255,
+        blank=True
     )
     ldap_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),

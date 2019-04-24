@@ -3,6 +3,7 @@ import os
 import textwrap
 import struct
 
+from middlewared.alert.base import AlertCategory, AlertClass, SimpleOneShotAlertClass, AlertLevel
 from middlewared.service import Service
 
 SENTINEL_PATH = "/data/sentinels/unscheduled-reboot"
@@ -15,6 +16,13 @@ WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
 # This file is managed in TrueNAS HA code (.../sbin/fenced)
 # Ticket 39114
 FENCED_ALERT_FILE = "/data/sentinels/.fenced-alert"
+
+
+class UnscheduledRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.WARNING
+    title = "Unscheduled System Reboot"
+    text = "%s"
 
 
 class UnscheduledRebootAlertService(Service):
@@ -35,6 +43,8 @@ async def setup(middleware):
 
         watchdog_file = False
         fenced_file = False
+        watchdog_time = 0
+        fenced_time = 0
         if not await middleware.call('system.is_freenas') and await middleware.call('failover.licensed'):
             if os.path.exists(WATCHDOG_ALERT_FILE):
                 watchdog_file = True
@@ -53,37 +63,28 @@ async def setup(middleware):
         # then we can assume that carp-state-change-hook.py
         # panic'ed the box by design via a watchdog countdown.
         # Let's alert the end user why we did this
-        if (watchdog_file and (not fenced_file or watchdog_time > fenced_time)):
-            await middleware.call("mail.send", {
-                "subject": f"{hostname}: Failover event",
-                "text": textwrap.dedent(f"""\
-                    {hostname} had a failover event.
-                    The system was rebooted to ensure a proper failover occurred.
-                    The operating system successfully came back online at {now}.
-                """),
-            })
+        if watchdog_file and (not fenced_file or watchdog_time > fenced_time):
+            await middleware.call("alert.oneshot_create", "UnscheduledReboot", textwrap.dedent(f"""\
+                {hostname} had a failover event.
+                The system was rebooted to ensure a proper failover occurred.
+                The operating system successfully came back online at {now}.
+            """))
 
         # If the fenced alert file exists,
         # then we can assume that fenced panic'ed the box by design.
         # Let's alert the end user why we did this
         elif fenced_file:
-            await middleware.call("mail.send", {
-                "subject": f"{hostname}: Failover event",
-                "text": textwrap.dedent(f"""\
-                    {hostname} had a failover event.
-                    The system was rebooted because persistent SCSI reservations were lost and/or cleared.
-                    The operating system successfully came back online at {now}.
-                """),
-            })
+            await middleware.call("alert.oneshot_create", "UnscheduledReboot", textwrap.dedent(f"""\
+                {hostname} had a failover event.
+                The system was rebooted because persistent SCSI reservations were lost and/or cleared.
+                The operating system successfully came back online at {now}.
+            """))
 
         else:
-            await middleware.call("mail.send", {
-                "subject": f"{hostname}: Unscheduled system reboot",
-                "text": textwrap.dedent(f"""\
-                    {hostname} had an unscheduled system reboot.
-                    The operating system successfully came back online at {now}.
-                """),
-            })
+            await middleware.call("alert.oneshot_create", "UnscheduledReboot", textwrap.dedent(f"""\
+                {hostname} had an unscheduled system reboot.
+                The operating system successfully came back online at {now}.
+            """))
 
     # Clean up the files after we have alerted accordingly so we don't keep sending an email unnecessarily
     try:

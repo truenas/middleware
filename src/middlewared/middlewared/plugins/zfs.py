@@ -7,6 +7,7 @@ from collections import defaultdict
 from bsd import geom
 import libzfs
 
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.schema import Dict, List, Str, Bool, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
@@ -346,6 +347,14 @@ class ZFSPoolService(CRUDService):
             t = threading.Thread(target=watch, daemon=True)
             t.start()
             t.join()
+
+    def pools_with_paused_scrubs(self):
+        with libzfs.ZFS() as zfs:
+            return [
+                pool.name
+                for pool in zfs.pools
+                if pool.scrub.pause is not None
+            ]
 
     @accepts()
     def find_import(self):
@@ -826,6 +835,13 @@ class ScanWatch(object):
         self._cancel.set()
 
 
+class ScrubFinishedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.TASKS
+    level = AlertLevel.INFO
+    title = "Scrub Finished"
+    text = "Scrub of pool %r finished."
+
+
 async def devd_zfs_hook(middleware, data):
     if data.get('type') in ('misc.fs.zfs.resilver_start', 'misc.fs.zfs.scrub_start'):
         pool = data.get('pool_name')
@@ -852,10 +868,8 @@ async def devd_zfs_hook(middleware, data):
         await middleware.run_in_thread(scanwatch.send_scan)
 
     if data.get('type') == 'misc.fs.zfs.scrub_finish':
-        await middleware.call('mail.send', {
-            'subject': 'scrub finished',
-            'text': f"scrub of pool '{data.get('pool_name')}' finished",
-        })
+        await middleware.call('middleware.oneshot_delete', 'ScrubFinished', data.get('pool_name'))
+        await middleware.call('middleware.oneshot_create', 'ScrubFinished', data.get('pool_name'))
 
 
 def setup(middleware):

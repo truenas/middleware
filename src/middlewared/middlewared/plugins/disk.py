@@ -1248,12 +1248,6 @@ class DiskService(CRUDService):
         disks_pairs = [disks for disks in list(serials.values())]
         disks_pairs.sort(key=lambda x: int(x[0][2:]))
 
-        # If its TrueNAS, no multipath already exists but new multipath were detected
-        # we should not continue. Its likely there is wrong cabling in the system.
-        # See #42042 for details.
-        if not is_freenas and not mp_disks and any(map(lambda x: len(x) > 1, disks_pairs)):
-            return 'BAD_CABLING'
-
         # Mode is Active/Passive for FreeNAS
         mode = None if is_freenas else 'R'
         for disks in disks_pairs:

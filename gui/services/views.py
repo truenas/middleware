@@ -31,10 +31,8 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
 from freenasUI.directoryservice.forms import idmap_tdb_Form
-from freenasUI.directoryservice.models import (
-    idmap_tdb,
-    DS_TYPE_CIFS
-)
+from freenasUI.directoryservice.models import idmap_tdb
+from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client
@@ -194,8 +192,7 @@ def services_cifs(request):
 
     try:
         it = idmap_tdb.objects.get(
-            idmap_ds_type=DS_TYPE_CIFS,
-            idmap_ds_id=cifs.id
+            idmap_tdb_domain='DS_TYPE_DEFAULT_DOMAIN'
         )
 
     except Exception:

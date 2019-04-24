@@ -58,7 +58,7 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
-        if data["transport"] == 'LEGACY':
+        if data["transport"] == "LEGACY":
             if data["id"] in context["legacy_result"]:
                 legacy_result = context["legacy_result"][data["id"]]
 
@@ -399,6 +399,12 @@ class ReplicationService(CRUDService):
 
             if data["naming_schema"]:
                 verrors.add("naming_schema", "This field has no sense for push replication")
+
+            if not snapshot_tasks and not data["also_include_naming_schema"]:
+                verrors.add(
+                    "periodic_snapshot_tasks", "You must at least either bind a periodic snapshot task or provide "
+                                               "\"Also Include Naming Schema\" for push replication task"
+                )
 
             if data["schedule"]:
                 if data["periodic_snapshot_tasks"]:

@@ -73,7 +73,7 @@ def geli_config(middleware, context):
 
 def host_config(middleware, context):
     config = middleware.call_sync('network.configuration.config')
-    yield f'hostname="{config["hostname"]}.{config["domain"]}"'
+    yield f'hostname="{config["hostname_local"]}.{config["domain"]}"'
 
     if config['ipv4gateway']:
         yield f'defaultrouter="{config["ipv4gateway"]}"'

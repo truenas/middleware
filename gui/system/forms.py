@@ -58,7 +58,7 @@ from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_number_si, humanize_size, humansize_to_bytes
 from freenasUI.common.forms import Form, ModelForm
-from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, FreeNAS_LDAP
+from freenasUI.common.freenasldap import FreeNAS_LDAP
 from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
                                               NISForm)
 from freenasUI.directoryservice.models import LDAP, NIS, ActiveDirectory
@@ -1853,32 +1853,21 @@ class InitialWizardDSForm(Form):
                 else:
                     cdata.pop('ds_type', None)
             else:
-
-                try:
-                    FreeNAS_ActiveDirectory.validate_credentials(
-                        domain, binddn=binddn, bindpw=bindpw
-                    )
-                except LDAPError as e:
-                    # LDAPError is dumb, it returns a list with one element for goodness knows what reason
-                    if not hasattr(e, '__iter__'):
-                        raise forms.ValidationError("{0}".format(e))
-                    e = e[0]
-                    error = []
-                    desc = e.get('desc')
-                    info = e.get('info')
-                    if desc:
-                        error.append(desc)
-                    if info:
-                        error.append(info)
-
-                    if error:
-                        error = ', '.join(error)
-                    else:
-                        error = str(e)
-
-                    raise forms.ValidationError("{0}".format(error))
-                except Exception as e:
-                    raise forms.ValidationError("{0}".format(e))
+                ad_config = {
+                    'domainname': domain,
+                    'bindname': bindname,
+                    'bindpw': bindpw,
+                    'ssl': 'off',
+                    'site': None,
+                    'dns_timeout': 20,
+                    'verbose_logging': True,
+                    'kerberos_principal': None,
+                }
+                with client as c:
+                    try:
+                        c.call('activedirectory.validate_credentials', ad_config)
+                    except Exception as e:
+                        raise forms.ValidationError("Credential validation failed with error: %s" % e)
 
         elif cdata.get('ds_type') == 'ldap':
             hostname = cdata.get('ds_ldap_hostname')

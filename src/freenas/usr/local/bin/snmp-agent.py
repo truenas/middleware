@@ -15,6 +15,8 @@ import pysnmp.hlapi  # noqa
 import pysnmp.smi
 import sysctl
 
+from middlewared.client import Client
+
 sys.path.append("/usr/local/www")
 from freenasUI.tools.arc_summary import get_Kstat, get_arc_efficiency
 
@@ -258,19 +260,22 @@ class CpuTempThread(threading.Thread):
 
 
 if __name__ == "__main__":
+    with Client() as c:
+        config = c.call("snmp.config")
+
     zfs = libzfs.ZFS()
 
     zpool_io_thread = ZpoolIoThread()
     zpool_io_thread.start()
 
     zilstat_1_thread = ZilstatThread(1)
-    zilstat_1_thread.start()
-
     zilstat_5_thread = ZilstatThread(5)
-    zilstat_5_thread.start()
-
     zilstat_10_thread = ZilstatThread(10)
-    zilstat_10_thread.start()
+
+    if config["zilstat"]:
+        zilstat_1_thread.start()
+        zilstat_5_thread.start()
+        zilstat_10_thread.start()
 
     cpu_temp_thread = CpuTempThread(10)
     cpu_temp_thread.start()

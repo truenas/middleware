@@ -792,13 +792,7 @@ class Middleware(LoadPluginsMixin):
             if not hasattr(mod, 'setup'):
                 return
             setup_plugin = mod.__name__.rsplit('.', 1)[-1]
-            # TODO: Let's please remove this conditional when we have order defined for setup functions
-            # We need to run system plugin setup's function first because when system boots, the right
-            # timezone is not configured. See #72131
-            if setup_plugin == 'system':
-                setup_funcs.insert(0, (setup_plugin, mod.setup))
-            else:
-                setup_funcs.append((setup_plugin, mod.setup))
+            setup_funcs.append((setup_plugin, mod.setup))
 
         def on_modules_loaded():
             self._console_write(f'resolving plugins schemas')
@@ -808,6 +802,24 @@ class Middleware(LoadPluginsMixin):
             on_module_end=on_module_end,
             on_modules_loaded=on_modules_loaded,
         )
+
+        # TODO: Rework it when we have order defined for setup functions
+        def sort_key(plugin__function):
+            plugin, function = plugin__function
+
+            beginning = [
+                # We need to run system plugin setup's function first because when system boots, the right
+                # timezone is not configured. See #72131
+                'system',
+                # We also need to load alerts first because other plugins can issue one-shot alerts during their
+                # initialization
+                'alert',
+            ]
+            try:
+                return beginning.index(plugin)
+            except ValueError:
+                return len(beginning)
+        setup_funcs = sorted(setup_funcs, key=sort_key)
 
         # Only call setup after all schemas have been resolved because
         # they can call methods with schemas defined.
