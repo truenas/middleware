@@ -230,12 +230,34 @@ class UPSService(SystemServiceService):
             else:
                 syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown"')
                 await run('/usr/local/sbin/upsmon', '-c', 'fsd', check=False)
-        elif notify_type.lower() in ('email', 'commbad', 'commok'):
+        elif 'notify' in notify_type.lower():
+            # notify_type is expected to be of the following format
+            # NOTIFY-EVENT i.e NOTIFY-LOWBATT
+            notify_type = notify_type.split('-')[-1]
+
+            # We would like to send alerts for the following events
+            alert_mapping = {
+                'LOWBATT': 'UPSBatteryLow',
+                'COMMBAD': 'UPSCommbad',
+                'COMMOK': 'UPSCommok',
+                'ONBATT': 'UPSOnBattery',
+                'ONLINE': 'UPSOnline',
+                'REPLBATT': 'UPSReplbatt'
+            }
+
+            for alert in alert_mapping.values():
+                await self.middleware.call('alert.oneshot_delete', alert, {'ups': upsc_identifier})
+
+            if notify_type in alert_mapping:
+                await self.middleware.call(
+                    'alert.oneshot_create', alert_mapping[notify_type], {'ups': upsc_identifier}
+                )
+
             if config['emailnotify']:
                 # Email user with the notification event and details
                 # We send the email in the following format ( inclusive line breaks )
 
-                # NOTIFICATION: 'EMAIL'
+                # NOTIFICATION: 'LOWBATT'
                 # UPS: 'ups'
                 #
                 # Statistics recovered:
