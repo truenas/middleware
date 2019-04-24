@@ -101,6 +101,7 @@ class AlertCategory(enum.Enum):
     STORAGE = "STORAGE"
     SYSTEM = "SYSTEM"
     TASKS = "TASKS"
+    UPS = "UPS"
 
 
 alert_category_names = {
@@ -114,6 +115,7 @@ alert_category_names = {
     AlertCategory.STORAGE: "Storage",
     AlertCategory.SYSTEM: "System",
     AlertCategory.TASKS: "Tasks",
+    AlertCategory.UPS: "UPS",
 }
 
 

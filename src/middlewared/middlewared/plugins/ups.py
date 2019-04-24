@@ -191,9 +191,30 @@ class UPSService(SystemServiceService):
         old_config['toemail'] = ';'.join(old_config['toemail']) if old_config['toemail'] else ''
 
         if len(set(old_config.items()) ^ set(config.items())) > 0:
+            if config['identifier'] != old_config['identifier']:
+                await self.dismiss_alerts()
+
             await self._update_service(old_config, config)
 
         return await self.config()
+
+    @private
+    async def alerts_mapping(self):
+        return {
+            'LOWBATT': 'UPSBatteryLow',
+            'COMMBAD': 'UPSCommbad',
+            'COMMOK': 'UPSCommok',
+            'ONBATT': 'UPSOnBattery',
+            'ONLINE': 'UPSOnline',
+            'REPLBATT': 'UPSReplbatt'
+        }
+
+    @private
+    async def dismiss_alerts(self):
+        config = await self.config()
+
+        for alert in (await self.alerts_mapping()).values():
+            await self.middleware.call('alert.oneshot_delete', alert, {'ups': config['identifier']})
 
     @private
     @accepts(
@@ -230,12 +251,26 @@ class UPSService(SystemServiceService):
             else:
                 syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown"')
                 await run('/usr/local/sbin/upsmon', '-c', 'fsd', check=False)
-        elif notify_type.lower() in ('email', 'commbad', 'commok'):
+        elif 'notify' in notify_type.lower():
+            # notify_type is expected to be of the following format
+            # NOTIFY-EVENT i.e NOTIFY-LOWBATT
+            notify_type = notify_type.split('-')[-1]
+
+            # We would like to send alerts for the following events
+            alert_mapping = await self.alerts_mapping()
+
+            await self.dismiss_alerts()
+
+            if notify_type in alert_mapping:
+                await self.middleware.call(
+                    'alert.oneshot_create', alert_mapping[notify_type], {'ups': config['identifier']}
+                )
+
             if config['emailnotify']:
                 # Email user with the notification event and details
                 # We send the email in the following format ( inclusive line breaks )
 
-                # NOTIFICATION: 'EMAIL'
+                # NOTIFICATION: 'LOWBATT'
                 # UPS: 'ups'
                 #
                 # Statistics recovered:
@@ -301,3 +336,8 @@ class UPSService(SystemServiceService):
 
         else:
             self.middleware.logger.debug(f'Unrecognized UPS notification event: {notify_type}')
+
+
+async def setup(middleware):
+    # Let's delete all UPS related alerts when starting middlewared ensuring we don't have any leftovers
+    await middleware.call('ups.dismiss_alerts')
