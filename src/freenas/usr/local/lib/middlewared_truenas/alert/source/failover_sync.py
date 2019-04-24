@@ -17,9 +17,11 @@ class FailoverSyncFailedAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "Automatic Sync to Peer Failed"
-    text = "Failed to sync configuration information to passive storage "
-           "controller. Use Sync to Peer on the System/Failover page to "
-           "perform a manual sync."
+    text = (
+        "Failed to sync configuration information to passive storage "
+        "controller. Use Sync to Peer on the System/Failover page to "
+        "perform a manual sync."
+    )
 
 
 class FailoverSyncAlert(ThreadedAlertSource):
