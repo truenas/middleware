@@ -739,11 +739,10 @@ class FailoverService(ConfigService):
                 while time.monotonic() - retry_time < shutdown_timeout:
                     remote.call('core.ping')
                     time.sleep(5)
-                else:
-                    raise CallError('Standby Controller failed to reboot.', errno.ETIMEDOUT)
         except CallError as e:
-            if e.errno == errno.ETIMEDOUT:
-                raise
+            pass
+        else:
+            raise CallError('Standby Controller failed to reboot.', errno.ETIMEDOUT)
 
         if not self.upgrade_waitstandby(remote_ip=remote_ip):
             raise CallError('Timed out waiting Standby Controller after upgrade.')
