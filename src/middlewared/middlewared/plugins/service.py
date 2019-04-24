@@ -790,6 +790,7 @@ class ServiceService(CRUDService):
         await self._service("proftpd", "stop", force=True, **kwargs)
 
     async def _start_ups(self, **kwargs):
+        await self.middleware.call('ups.dismiss_alerts')
         await self.middleware.call('etc.generate', 'ups')
         await self._service("nut", "start", **kwargs)
         await self._service("nut_upsmon", "start", **kwargs)
@@ -798,6 +799,7 @@ class ServiceService(CRUDService):
             asyncio.ensure_future(self.restart('collectd'))
 
     async def _stop_ups(self, **kwargs):
+        await self.middleware.call('ups.dismiss_alerts')
         await self._service("nut_upslog", "stop", force=True, **kwargs)
         await self._service("nut_upsmon", "stop", force=True, **kwargs)
         await self._service("nut", "stop", force=True, **kwargs)
@@ -805,6 +807,7 @@ class ServiceService(CRUDService):
             asyncio.ensure_future(self.restart('collectd'))
 
     async def _restart_ups(self, **kwargs):
+        await self.middleware.call('ups.dismiss_alerts')
         await self.middleware.call('etc.generate', 'ups')
         await self._service("nut", "stop", force=True, **kwargs)
         await self._service("nut_upsmon", "stop", force=True, **kwargs)
