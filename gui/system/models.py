@@ -1014,3 +1014,7 @@ class Reporting(Model):
         help_text=_("Number of points for each hourly, daily, weekly, monthly, yearly graph. Set this to no less than "
                     "the width of your graphs in pixels."),
     )
+
+
+class Migration(Model):
+    name = models.CharField(max_length=255, unique=True)
