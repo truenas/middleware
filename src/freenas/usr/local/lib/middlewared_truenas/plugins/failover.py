@@ -10,6 +10,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import sysctl
 import textwrap
 import time
 
@@ -731,7 +732,18 @@ class FailoverService(ConfigService):
 
         # Wait enough that standby controller has stopped receiving new connections and is
         # rebooting.
-        time.sleep(30)
+        try:
+            with RemoteClient(remote_ip) as remote:
+                retry_time = time.monotonic()
+                shutdown_timeout = sysctl.filter('kern.init_shutdown_timeout')[0].value
+                while time.monotonic() - retry_time < shutdown_timeout:
+                    remote.call('core.ping')
+                    time.sleep(5)
+                else:
+                    raise CallError('Standby Controller failed to reboot.', errno.ETIMEDOUT)
+        except CallError as e:
+            if e.errno == errno.ETIMEDOUT:
+                raise
 
         if not self.upgrade_waitstandby(remote_ip=remote_ip):
             raise CallError('Timed out waiting Standby Controller after upgrade.')
