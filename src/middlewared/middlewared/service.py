@@ -415,6 +415,8 @@ class CoreService(Service):
 
     @private
     def notify_postinit(self):
+        self.middleware.call_sync('migration.run')
+
         # Sentinel file to tell we have gone far enough in the boot process.
         # See #17508
         open('/tmp/.bootready', 'w').close()

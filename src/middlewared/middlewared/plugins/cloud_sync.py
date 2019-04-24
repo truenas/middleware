@@ -46,19 +46,18 @@ class RcloneConfig:
 
         self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]]
 
+        self.config = None
         self.tmp_file = None
         self.tmp_file_exclude = None
 
-        self.path = None
-
-    def __enter__(self):
+    async def __aenter__(self):
         self.tmp_file = tempfile.NamedTemporaryFile(mode="w+")
 
         # Make sure only root can read it as there is sensitive data
         os.chmod(self.tmp_file.name, 0o600)
 
         config = dict(self.cloud_sync["credentials"]["attributes"], type=self.provider.rclone_type)
-        config = dict(config, **self.provider.get_credentials_extra(self.cloud_sync["credentials"]))
+        config = dict(config, **await self.provider.get_credentials_extra(self.cloud_sync["credentials"]))
         if "pass" in config:
             config["pass"] = rclone_encrypt_password(config["pass"])
 
@@ -66,7 +65,7 @@ class RcloneConfig:
         extra_args = []
 
         if "attributes" in self.cloud_sync:
-            config.update(dict(self.cloud_sync["attributes"], **self.provider.get_task_extra(self.cloud_sync)))
+            config.update(dict(self.cloud_sync["attributes"], **await self.provider.get_task_extra(self.cloud_sync)))
 
             remote_path = get_remote_path(self.provider, self.cloud_sync["attributes"])
             remote_path = f"remote:{remote_path}"
@@ -97,9 +96,13 @@ class RcloneConfig:
 
         self.tmp_file.flush()
 
+        self.config = config
+
         return RcloneConfigTuple(self.tmp_file.name, remote_path, extra_args)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.config is not None:
+            await self.provider.cleanup(self.cloud_sync, self.config)
         if self.tmp_file:
             self.tmp_file.close()
         if self.tmp_file_exclude:
@@ -114,14 +117,15 @@ def get_remote_path(provider, attributes):
 
 
 async def rclone(middleware, job, cloud_sync):
-    if not os.path.exists(cloud_sync["path"]):
+    if not await middleware.run_in_thread(os.path.exists, cloud_sync["path"]):
         raise CallError(f"Directory {cloud_sync['path']!r} does not exist")
 
-    if os.stat(cloud_sync["path"]).st_dev == os.stat("/mnt").st_dev:
+    if ((await middleware.run_in_thread(os.stat, cloud_sync["path"])).st_dev ==
+            (await middleware.run_in_thread(os.stat, "/mnt")).st_dev):
         raise CallError(f"Directory {cloud_sync['path']!r} must reside within volume mount point")
 
     # Use a temporary file to store rclone file
-    with RcloneConfig(cloud_sync) as config:
+    async with RcloneConfig(cloud_sync) as config:
         args = [
             "/usr/local/bin/rclone",
             "--config", config.config_path,
@@ -384,7 +388,7 @@ class CredentialsService(CRUDService):
         data = dict(data, name="")
         await self._validate("cloud_sync_credentials_create", data)
 
-        with RcloneConfig({"credentials": data}) as config:
+        async with RcloneConfig({"credentials": data}) as config:
             proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:"],
                              check=False, encoding="utf8")
             if proc.returncode == 0:
@@ -811,7 +815,7 @@ class CloudSyncService(CRUDService):
 
     @private
     async def ls(self, config, path):
-        with RcloneConfig(config) as config:
+        async with RcloneConfig(config) as config:
             proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:" + path],
                              check=False, encoding="utf8")
             if proc.returncode == 0:

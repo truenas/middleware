@@ -18,7 +18,7 @@ class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
         Str("service_account_credentials", title="Service Account", required=True),
     ]
 
-    def get_credentials_extra(self, credentials):
+    async def get_credentials_extra(self, credentials):
         return dict(
             service_account_credentials=(credentials["attributes"]["service_account_credentials"].
                                          replace("\r", "").

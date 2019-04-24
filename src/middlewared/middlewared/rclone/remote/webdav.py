@@ -16,5 +16,5 @@ class WebDavRcloneRemote(BaseRcloneRemote):
         Str("pass", title="Password", required=True),
     ]
 
-    def get_task_extra(self, task):
+    async def get_task_extra(self, task):
         return dict(vendor=task["credentials"]["attributes"]["vendor"].lower())

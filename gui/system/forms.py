@@ -3539,15 +3539,23 @@ class CloudCredentialsForm(ModelForm):
         )
         with client as c:
             providers = c.call("cloudsync.providers")
+            keypairs = c.call("keychaincredential.query", [["type", "=", "SSH_KEY_PAIR"]])
         self.fields["provider"].choices = [
             (provider["name"], provider["title"])
             for provider in providers
         ]
         self.fields["attributes"].initial = json.dumps(self.instance.attributes if self.instance else {})
-        self.fields["credentials_schemas"].initial = json.dumps({
+        providers_schemas = {
             provider["name"]: provider["credentials_schema"]
             for provider in providers
+        }
+        providers_schemas["SFTP"][
+            [i["property"] for i in providers_schemas["SFTP"]].index("private_key")
+        ]["schema"].update(**{
+            "type": "integer",
+            "enum": [["", "---"]] + [[keypair["id"], keypair["name"]] for keypair in keypairs],
         })
+        self.fields["credentials_schemas"].initial = json.dumps(providers_schemas)
         self.fields["credentials_oauths"].initial = json.dumps({
             provider["name"]: provider["credentials_oauth"]
             for provider in providers
