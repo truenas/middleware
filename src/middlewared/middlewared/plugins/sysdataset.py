@@ -136,7 +136,7 @@ class SystemDatasetService(ConfigService):
         if config['pool'] != new['pool']:
             await self.migrate(config['pool'], new['pool'])
 
-        await self.setup()
+        await self.setup(True, data.get('pool_exclude'))
 
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
