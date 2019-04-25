@@ -868,8 +868,8 @@ async def devd_zfs_hook(middleware, data):
         await middleware.run_in_thread(scanwatch.send_scan)
 
     if data.get('type') == 'misc.fs.zfs.scrub_finish':
-        await middleware.call('middleware.oneshot_delete', 'ScrubFinished', data.get('pool_name'))
-        await middleware.call('middleware.oneshot_create', 'ScrubFinished', data.get('pool_name'))
+        await middleware.call('alert.oneshot_delete', 'ScrubFinished', data.get('pool_name'))
+        await middleware.call('alert.oneshot_create', 'ScrubFinished', data.get('pool_name'))
 
 
 def setup(middleware):
