@@ -939,13 +939,13 @@ class JailService(CRUDService):
         started = False
 
         if status:
-            self.stop(jail)
+            self.middleware.call_sync('jail.stop', jail, job=True)
             started = True
 
         IOCImage().export_jail(uuid, path)
 
         if started:
-            self.start(jail)
+            self.middleware.call_sync('jail.start', jail, job=True)
 
         return True
 
