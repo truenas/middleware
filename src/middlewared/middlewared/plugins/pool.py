@@ -1351,8 +1351,8 @@ class PoolService(CRUDService):
             # Only allow removing passphrase for pools being used by system dataset service
             verrors.add(
                 'id',
-                'A passphrase on a pool containing the system dataset can only be removed. '
-                'It cannot be set or changed.'
+                f'Pool {pool["name"]} contains the system dataset. Passphrases are not allowed on the '
+                'system dataset pool.'
             )
 
         # For historical reasons (API v1.0 compatibility) we only require
@@ -1628,8 +1628,7 @@ class PoolService(CRUDService):
             if pool['name'] == (await self.middleware.call('systemdataset.config'))['pool']:
                 verrors.add(
                     'id',
-                    'Pool contains the system dataset and cannot be locked. Please select a different pool or '
-                    'configure the system dataset to be on a different pool.'
+                    f'Pool {pool["name"]} contains the system dataset. The system dataset pool cannot be locked.'
                 )
             else:
                 if not await self.middleware.call('disk.geli_testkey', pool, passphrase):
