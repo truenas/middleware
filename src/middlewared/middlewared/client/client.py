@@ -263,6 +263,7 @@ class Job(object):
             if job['exc_info'] and job['exc_info']['type'] == 'VALIDATION':
                 raise ValidationErrors(job['exc_info']['extra'])
             raise ClientException(job['error'], trace=job['exception'])
+        return job['result']
 
 
 class ErrnoMixin:
