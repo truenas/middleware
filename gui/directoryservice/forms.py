@@ -28,8 +28,6 @@ import logging
 import os
 import tempfile
 
-from ldap import LDAPError
-
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
@@ -37,9 +35,6 @@ from dojango import forms
 
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.freenasldap import (
-    FreeNAS_LDAP,
-)
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.system import (
     validate_netbios_name,
@@ -306,24 +301,20 @@ class NISForm(MiddlewareModelForm, ModelForm):
         data['servers'] = data['servers'].split(',')
         return data
 
+class LDAPForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = 'ldap_'
+    middleware_attr_schema = 'ldap'
+    middleware_plugin = 'ldap'
+    is_singletone = True
 
-class LDAPForm(ModelForm):
-
-    ldap_netbiosname_a = forms.CharField(
-        max_length=120,
-        label=_("NetBIOS name"),
-    )
-    ldap_netbiosname_b = forms.CharField(
-        max_length=120,
-        label=_("NetBIOS name"),
+    ldap_kerberos_principal = forms.ChoiceField(
+        label=models.LDAP._meta.get_field('ldap_kerberos_principal').verbose_name,
         required=False,
+        choices=choices.KERBEROS_PRINCIPAL_CHOICES(),
+        help_text=_("Kerberos principal to use for LDAP-related operations."),
+        initial=''
     )
-    ldap_netbiosalias = forms.CharField(
-        max_length=120,
-        label=_("NetBIOS alias"),
-        required=False,
-    )
-
+         
     advanced_fields = [
         'ldap_anonbind',
         'ldap_usersuffix',
@@ -345,11 +336,11 @@ class LDAPForm(ModelForm):
         'ldap_auxiliary_parameters',
         'ldap_schema'
     ]
-
+            
     class Meta:
         fields = '__all__'
         exclude = ['ldap_idmap_backend_type']
-
+            
         model = models.LDAP
         widgets = {
             'ldap_bindpw': forms.widgets.PasswordInput(render_value=False),
@@ -357,195 +348,29 @@ class LDAPForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(LDAPForm, self).__init__(*args, **kwargs)
-        self.fields["ldap_enable"].widget.attrs["onChange"] = (
-            "ldap_mutex_toggle();"
-        )
-        self.cifs = CIFS.objects.latest('id')
-        if self.cifs:
-            self.fields['ldap_netbiosname_a'].initial = self.cifs.cifs_srv_netbiosname
-            self.fields['ldap_netbiosname_b'].initial = self.cifs.cifs_srv_netbiosname_b
-            self.fields['ldap_netbiosalias'].initial = self.cifs.cifs_srv_netbiosalias
-        _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_licensed():
-                from freenasUI.failover.utils import node_label_field
-                node_label_field(
-                    _n.failover_node(),
-                    self.fields['ldap_netbiosname_a'],
-                    self.fields['ldap_netbiosname_b'],
-                )
-            else:
-                del self.fields['ldap_netbiosname_b']
-        else:
-            del self.fields['ldap_netbiosname_b']
-
-    def check_for_samba_schema(self):
-        self.clean_bindpw()
-
-        cdata = self.cleaned_data
-        binddn = cdata.get("ldap_binddn")
-        bindpw = cdata.get("ldap_bindpw")
-        basedn = cdata.get("ldap_basedn")
-        hostname = cdata.get("ldap_hostname")
-
-        # TODO: Usage of this function has been commented, should it be removed ?
-        certfile = None
-        ssl = cdata.get("ldap_ssl")
-        if ssl in ('start_tls', 'on'):
-            certificate = cdata["ldap_certificate"]
-            if certificate:
-                with client as c:
-                    certificate = c.call(
-                        'certificate.query',
-                        [['id', '=', certificate.id]],
-                        {'get': True}
-                    )
-            certfile = certificate['certificate_path'] if certificate else None
-
-        fl = FreeNAS_LDAP(
-            host=hostname,
-            binddn=binddn,
-            bindpw=bindpw,
-            basedn=basedn,
-            certfile=certfile,
-            ssl=ssl
-        )
-
-        if fl.has_samba_schema():
-            self.instance.ldap_has_samba_schema = True
-        else:
-            self.instance.ldap_has_samba_schema = False
-
-    def clean_ldap_netbiosname_a(self):
-        netbiosname = self.cleaned_data.get("ldap_netbiosname_a")
-        try:
-            validate_netbios_name(netbiosname)
-        except Exception as e:
-            raise forms.ValidationError(e)
-        return netbiosname
-
-    def clean_ldap_netbiosname_b(self):
-        netbiosname_a = self.cleaned_data.get("ldap_netbiosname_a")
-        netbiosname = self.cleaned_data.get("ldap_netbiosname_b")
-        if not netbiosname:
-            return netbiosname
-        if netbiosname_a and netbiosname_a == netbiosname:
-            raise forms.ValidationError(_(
-                'NetBIOS cannot be the same as the first.'
-            ))
-        try:
-            validate_netbios_name(netbiosname)
-        except Exception as e:
-            raise forms.ValidationError(e)
-        return netbiosname
-
-    def clean_ldap_netbiosalias(self):
-        netbiosalias = self.cleaned_data.get("ldap_netbiosalias")
-        if netbiosalias:
-            try:
-                validate_netbios_name(netbiosalias)
-            except Exception as e:
-                raise forms.ValidationError(e)
-        return netbiosalias
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("ldap_bindpw"):
-            cdata["ldap_bindpw"] = self.instance.ldap_bindpw
-
-        binddn = cdata.get("ldap_binddn")
-        bindpw = cdata.get("ldap_bindpw")
-        basedn = cdata.get("ldap_basedn")
-        hostname = cdata.get("ldap_hostname")
-        ssl = cdata.get("ldap_ssl")
-
-        certfile = None
-        if ssl in ('start_tls', 'on'):
-            certificate = cdata["ldap_certificate"]
-            if not certificate:
-                raise forms.ValidationError(
-                    "SSL/TLS specified without certificate")
-            else:
-                with client as c:
-                    certificate = c.call(
-                        'certificate.query',
-                        [['id', '=', certificate.id]],
-                        {'get': True}
-                    )
-                certfile = certificate['certificate_path']
-
-        port = 389
-        if ssl == "on":
-            port = 636
-        if hostname:
-            parts = hostname.split(':')
-            hostname = parts[0]
-            if len(parts) > 1:
-                port = int(parts[1])
-
-        if cdata.get("ldap_enable") is False:
-            return cdata
-
-        # self.check_for_samba_schema()
-        try:
-            FreeNAS_LDAP.validate_credentials(
-                hostname,
-                binddn=binddn,
-                bindpw=bindpw,
-                basedn=basedn,
-                port=port,
-                certfile=certfile,
-                ssl=ssl
-            )
-        except LDAPError as e:
-            log.debug("LDAPError: type = %s", type(e))
-
-            error = []
-            try:
-                error.append(e.args[0]['info'])
-                error.append(e.args[0]['desc'])
-                error = ', '.join(error)
-
-            except Exception as e:
-                error = str(e)
-
-            raise forms.ValidationError("{0}".format(error))
-
-        except Exception as e:
-            log.debug("LDAPError: type = %s", type(e))
-            raise forms.ValidationError("{0}".format(str(e)))
-
-        return cdata
 
     def save(self):
-        enable = self.cleaned_data.get("ldap_enable")
+        try:
+            super(LDAPForm, self).save()
+        except Exception as e:
+            raise MiddlewareError(e)
 
-        started = notifier().started("ldap")
-        obj = super(LDAPForm, self).save()
-        self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ldap_netbiosname_a")
-        self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ldap_netbiosname_b")
-        self.cifs.cifs_srv_netbiosalias = self.cleaned_data.get("ldap_netbiosalias")
-        self.cifs.save()
+    def middleware_clean(self, data):
+        for key in ['certificate']:
+            if not data[key]:
+                data.pop(key)
 
-        if enable:
-            if started is True:
-                started = notifier().restart("ldap", timeout=_fs().directoryservice.ldap.timeout.restart)
-            if started is False:
-                started = notifier().start("ldap", timeout=_fs().directoryservice.ldap.timeout.start)
-            if started is False:
-                self.instance.ldap_enable = False
-                super(LDAPForm, self).save()
-                raise MiddlewareError(_("LDAP failed to reload."))
+        if data['kerberos_principal'] == '---------':
+            data['kerberos_principal'] = ''
+
+        data['hostname'] = data['hostname'].split()
+
+        if data['kerberos_realm']:
+            data['kerberos_realm'] = {'id': data['kerberos_realm']}
         else:
-            if started is True:
-                started = notifier().stop("ldap", timeout=_fs().directoryservice.ldap.timeout.stop)
+            data.pop('kerberos_realm')
 
-        return obj
-
-    def done(self, request, events):
-        events.append("refreshById('tab_LDAP')")
-        super(LDAPForm, self).done(request, events)
-
+        return data
 
 class KerberosRealmForm(MiddlewareModelForm, ModelForm):
 

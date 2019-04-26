@@ -64,31 +64,39 @@ def render(service, middleware):
         map_acls_mode = True
 
     if map_acls_mode:
-        ad = Struct(middleware.call_sync('notifier.directoryservice', 'AD'))
+        ds_type = None
+        if middleware.call_sync('activedirectory.get_state') != 'DISABLED':
+            ad = Struct(middleware.call_sync('notifier.directoryservice', 'AD'))
+            ds_type = 'AD'
+        elif middleware.call_sync('ldap.get_state') != 'DISABLED:
+            ad = Struct(middleware.call_sync('notifier.directoryservice', 'LDAP'))
+            ds_type = 'LDAP'
 
-        cf_contents.append("\tldap auth method = %s\n" % "simple")
-        cf_contents.append("\tldap auth dn = %s\n" % ad.binddn)
-        cf_contents.append("\tldap auth pw = %s\n" % ad.bindpw)
-        cf_contents.append("\tldap server = %s\n" % ad.domainname)
+        if ds_type is not None:
+            cf_contents.append("\tldap auth method = %s\n" % "simple")
+            cf_contents.append("\tldap auth dn = %s\n" % ad.binddn)
+            cf_contents.append("\tldap auth pw = %s\n" % ad.bindpw)
+            cf_contents.append("\tldap server = %s\n" % ad.domainname)
 
-        # This should be configured when using this option
-        if ad.userdn:
-            cf_contents.append("\tldap userbase = %s\n" % ad.userdn)
+            # This should be configured when using this option
+            if ad.userdn:
+                cf_contents.append("\tldap userbase = %s\n" % ad.userdn)
 
-        cf_contents.append("\tldap userscope = %s\n" % "sub")
+            cf_contents.append("\tldap userscope = %s\n" % "sub")
 
-        # This should be configured when using this option
-        if ad.groupdn:
-            cf_contents.append("\tldap groupbase = %s\n" % ad.groupdn)
+            # This should be configured when using this option
+            if ad.groupdn:
+                cf_contents.append("\tldap groupbase = %s\n" % ad.groupdn)
 
-        cf_contents.append("\tldap groupscope = %s\n" % "sub")
+            cf_contents.append("\tldap groupscope = %s\n" % "sub")
 
-        cf_contents.append("\tldap user filter = %s\n" % "objectclass=user")
-        cf_contents.append("\tldap group filter = %s\n" % "objectclass=group")
-        cf_contents.append("\tldap uuid attr = %s\n" % "objectGUID")
-        cf_contents.append("\tldap uuid encoding = %s\n" % "ms-guid")
-        cf_contents.append("\tldap name attr = %s\n" % "sAMAccountName")
-        cf_contents.append("\tldap group attr = %s\n" % "sAMAccountName")
+            cf_contents.append("\tldap user filter = %s\n" % "objectclass=user")
+            cf_contents.append("\tldap group filter = %s\n" % "objectclass=group")
+            cf_contents.append("\tldap uuid attr = %s\n" % "objectGUID")
+            if ds_type == 'AD':
+                cf_contents.append("\tldap uuid encoding = %s\n" % "ms-guid")
+                cf_contents.append("\tldap name attr = %s\n" % "sAMAccountName")
+                cf_contents.append("\tldap group attr = %s\n" % "sAMAccountName")
 
     cf_contents.append("\tlog file = %s\n" % "/var/log/afp.log")
     cf_contents.append("\tlog level = %s\n" % "default:info")

@@ -19,7 +19,6 @@ from django.conf import settings
 from freenasUI import choices
 from freenasUI import common as fcommon
 from freenasUI.common.freenasldap import (
-    FreeNAS_LDAP,
     FLAGS_DBINIT,
 )
 from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
@@ -90,13 +89,31 @@ class NotifierService(Service):
                 'domainname': ad['domainname'],
                 'use_default_domain': ad['use_default_domain'],
                 'ad_idmap_backend': ad['idmap_backend'],
+                'basedn': None,
+                'userdn': None,
+                'groupdn': None,
                 'ds_type': 1,
                 'krb_realm': ad['kerberos_realm']['krb_realm'],
                 'workgroups': smb['workgroup'],
             }
             return data
         elif name == 'LDAP':
-            ds = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+            smb = self.middleware.call_sync('smb.config')
+            ldap = self.middleware.call_sync('activedirectory.config')
+            krb_realm = ldap['kerberos_realm']['krb_realm'] if ldap['kerberos_relam'] else None
+            data = {
+                'netbiosname': smb['netbiosname'],
+                'binddn': ldap['binddn'],
+                'bindpw': ldap['bindpw'],
+                'basedn': ldap['basedn'],
+                'userdn': ldap['basedn'],
+                'groupdn': ldap['basedn'],
+                'krb_realm': ldap['kerberos_realm'],
+                'use_default_domain': ad['use_default_domain'],
+                'ad_idmap_backend': ad['idmap_backend'],
+                'ds_type': 2,
+                'krb_realm': krb_realm,
+            }
         else:
             raise ValueError('Unknown ds name {0}'.format(name))
         data = {}

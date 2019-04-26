@@ -67,7 +67,7 @@ class KerberosService(ConfigService):
         For now we only check for kerberos realms explicitly configured in AD and LDAP.
         """
         ad = await self.middleware.call('activedirectory.config')
-        ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
+        ldap = await self.middleware.call('ldap.config')
         await self.middleware.call('etc.generate', 'kerberos')
         if ad['enable']:
             if ad['kerberos_principal']:
@@ -83,11 +83,11 @@ class KerberosService(ConfigService):
                 output = await ad_kinit.communicate(input=ad['bindpw'].encode())
                 if ad_kinit.returncode != 0:
                     raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {output[1].decode()}")
-        if ldap['ldap_enable'] and ldap['ldap_realm']:
+        if ldap['enable'] and ldap['kerberos_realm']:
             if ldap['kerberos_principal']:
-                ad_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
-                if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm {ldap['realm']} with keytab failed: {ad_kinit.stderr.decode()}")
+                ldap_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
+                if ldap_kinit.returncode != 0:
+                    raise CallError(f"kinit for realm {ldap['kerberos_realm']} with keytab failed: {ad_kinit.stderr.decode()}")
             else:
                 principal = f'{ldap["bindn"]}'
                 ad_kinit = await Popen(
@@ -96,7 +96,7 @@ class KerberosService(ConfigService):
                 )
                 output = await ad_kinit.communicate(input=ldap['bindpw'].encode())
                 if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm{ldap['realm']} with password failed: {output[1].decode()}")
+                    raise CallError(f"kinit for realm{ldap['kerberos_realm']} with password failed: {output[1].decode()}")
 
     @private
     async def _get_cached_klist(self):
@@ -107,12 +107,12 @@ class KerberosService(ConfigService):
         if await self.middleware.call('cache.has_key', 'KRB_TGT_INFO'):
             return (await self.middleware.call('cache.get', 'KRB_TGT_INFO'))
         ad = await self.middleware.call('activedirectory.config')
-        ldap = await self.middleware.call('datastore.config', 'directoryservice.ldap')
+        ldap = await self.middleware.call('ldap.config')
         ad_TGT = []
         ldap_TGT = []
-        if not ad['enable'] and not ldap['ldap_enable']:
+        if not ad['enable'] and not ldap['enable']:
             return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
-        if not ad['enable'] and not ldap['ldap_kerberos_realm']:
+        if not ad['enable'] and not ldap['kerberos_realm']:
             return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
 
         if not await self.status():
@@ -574,8 +574,15 @@ class KerberosKeytabService(CRUDService):
         """
         Keytabs typically have multiple entries for same principal (differentiated by enc_type).
         Since the enctype isn't relevant in this situation, only show unique principal names.
+        _ktutil_list() will raise exception if system keytab doesn't exist. In this case, return
+        empty list.
         """
-        keytab_list = await self._ktutil_list()
+        try:
+            keytab_list = await self._ktutil_list()
+        except Exception as e:
+            self.logger.debug('"ktutil list" failed. Generating empty list of kerberos principal choices. Error: %s' % e)
+            return []
+
         kerberos_principals = []
         for entry in keytab_list:
             if entry['principal'] not in kerberos_principals:

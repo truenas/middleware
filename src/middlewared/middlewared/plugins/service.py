@@ -683,30 +683,17 @@ class ServiceService(CRUDService):
         return (await self.middleware.call('nis.stop')), []
 
     async def _started_ldap(self, **kwargs):
-        if (await self._system('/usr/sbin/service ix-ldap status') != 0):
-            return False, []
-        return await self.middleware.call('notifier.ldap_status'), []
+        return await self.middleware.call('ldap.started'), [] 
 
     async def _start_ldap(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/LDAP/ctl start"):
-            res = True
-        return res
+        return await self.middleware.call('ldap.start'), [] 
 
     async def _stop_ldap(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/LDAP/ctl stop"):
-            res = True
-        return res
+        return await self.middleware.call('ldap.stop'), [] 
 
     async def _restart_ldap(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/LDAP/ctl restart"):
-            res = True
-        return res
+        await self.middleware.call('ldap.stop')
+        return await self.middleware.call('ldap.start'), [] 
 
     async def _start_lldp(self, **kwargs):
         await self._service("ladvd", "start", **kwargs)
