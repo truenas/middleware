@@ -206,14 +206,22 @@ class JailService(CRUDService):
         for item in options['props']:
             for f in ('ip4_addr', 'ip6_addr'):
                 # valid ip values can be
-                # "none" "interface|accept_rtadv" "interface|ip/subnet" "interface|ip"
+                # 1) none
+                # 2) interface|accept_rtadv
+                # 3) interface|ip/netmask
+                # 4) interface|ip
+                # 5) ip/netmask
+                # 6) ip
+                # 7) All the while making sure that the above can be mixed with each other using ","
                 # we explicitly check these
                 if f in item:
-                    for ip in [
-                        ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
-                        for ip in item.split('=')[1].split(',')
-                        if ip != 'none' and (ip.count('|') and ip.split('|')[1] != 'accept_rtadv')
-                    ]:
+                    for ip in map(
+                        lambda ip: ip.split('|', 1)[-1].split('/')[0],
+                        filter(
+                            lambda v: v != 'none' and v.split('|')[-1] != 'accept_rtadv',
+                            item.split('=')[1].split(',')
+                        )
+                    ):
                         try:
                             IpInUse(self.middleware, exclude)(
                                 ip
