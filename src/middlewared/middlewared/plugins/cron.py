@@ -64,22 +64,6 @@ class CronJobService(CRUDService):
                 f'{schema}.command',
                 'Please specify a command for cronjob task.'
             )
-        else:
-            crontab_cmd = (await self.construct_cron_command(
-                data['schedule'], user, command, data['stdout'], data['stderr']
-            ))[6:]
-            command = crontab_cmd.pop(1)
-
-            # When cron(8) reads an entry from a crontab, it keeps a buffer of 1000 characters and anything more then
-            # that is truncated. We validate that the user supplied command is not more than 1000 characters.
-            allowed_length = 1000 - len(' '.join(crontab_cmd))
-
-            if len(command) > allowed_length:
-                verrors.add(
-                    f'{schema}.command',
-                    f'Command must be less than or equal to {allowed_length} characters. '
-                    'Newline characters are automatically removed and "%" characters escaped with a backslash.'
-                )
 
         return verrors, data
 
@@ -226,6 +210,8 @@ class CronJobService(CRUDService):
 
         syslog.openlog('cron', facility=syslog.LOG_CRON)
 
+        syslog.syslog(syslog.LOG_INFO, f'({cron_task["user"]}) CMD ({cron_cmd})')
+
         cp = run_command_with_user_context(
             cron_cmd, cron_task['user'], __cron_log
         )
@@ -245,7 +231,7 @@ class CronJobService(CRUDService):
             if email:
                 mail_job = self.middleware.call_sync(
                     'mail.send', {
-                        'subject': 'CronTask Manual Run',
+                        'subject': 'CronTask Run',
                         'text': stdout,
                         'to': [email]
                     }
@@ -258,7 +244,7 @@ class CronJobService(CRUDService):
 
                 mail_job.wait_sync()
                 if mail_job.error:
-                    job.logs_fd.write(f'Failed to send email for CronTask manual run: {mail_job.error}'.encode())
+                    job.logs_fd.write(f'Failed to send email for CronTask run: {mail_job.error}'.encode())
             else:
                 job.set_progress(
                     95,
@@ -269,5 +255,5 @@ class CronJobService(CRUDService):
 
         job.set_progress(
             100,
-            'Manual run of Cron Task complete.'
+            'Execution of Cron Task complete.'
         )
