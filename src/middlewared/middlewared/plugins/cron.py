@@ -3,7 +3,7 @@ from middlewared.service import CRUDService, job, private, ValidationErrors
 from middlewared.validators import Range
 from middlewared.utils import run_command_with_user_context
 
-import subprocess
+import syslog
 
 
 class CronJobService(CRUDService):
@@ -207,6 +207,10 @@ class CronJobService(CRUDService):
         """
         Job to run cronjob task of `id`.
         """
+        def __cron_log(line):
+            job.logs_fd.write(line)
+            syslog.syslog(syslog.LOG_INFO, line.decode())
+
         cron_task = self.middleware.call_sync('cronjob._get_instance', id)
         cron_cmd = ' '.join(
             self.middleware.call_sync(
@@ -220,9 +224,13 @@ class CronJobService(CRUDService):
             'Executing Cron Task'
         )
 
+        syslog.openlog('cron', facility=syslog.LOG_CRON)
+
         cp = run_command_with_user_context(
-            cron_cmd, cron_task['user'], 'cron', lambda v: job.logs_fd.write(v)
+            cron_cmd, cron_task['user'], __cron_log
         )
+
+        syslog.closelog()
 
         job.set_progress(
             85,

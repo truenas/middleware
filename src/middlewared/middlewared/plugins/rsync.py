@@ -563,7 +563,7 @@ class RsyncTaskService(CRUDService):
         commandline = self.middleware.call_sync('rsynctask.commandline', id)
 
         cp = run_command_with_user_context(
-            commandline, rsync['user'], 'rsync', lambda v: job.logs_fd.write(v)
+            commandline, rsync['user'], lambda v: job.logs_fd.write(v)
         )
 
         if cp.returncode != 0:

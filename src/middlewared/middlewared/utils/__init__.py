@@ -8,7 +8,6 @@ import pwd
 import queue
 import re
 import sys
-import syslog
 import subprocess
 import threading
 from datetime import datetime, timedelta
@@ -137,7 +136,7 @@ def setusercontext(user):
         os.chdir('/')
 
 
-def _run_command(user, commandline, q, rv, log_ident):
+def _run_command(user, commandline, q, rv):
     setusercontext(user)
 
     os.environ['PATH'] = (
@@ -148,8 +147,6 @@ def _run_command(user, commandline, q, rv, log_ident):
         stderr=subprocess.STDOUT
     )
 
-    # logger(1) does not honor original exit value so we use syslog module instead
-    syslog.openlog(ident=log_ident)
     while True:
         line = proc.stdout.readline()
         if line == b'':
@@ -159,19 +156,17 @@ def _run_command(user, commandline, q, rv, log_ident):
             q.put(line, False)
         except queue.Full:
             pass
-        syslog.syslog(syslog.LOG_NOTICE, line.decode())
-    syslog.closelog()
     proc.communicate()
     rv.value = proc.returncode
     q.put(None)
 
 
-def run_command_with_user_context(commandline, user, log_ident, callback):
+def run_command_with_user_context(commandline, user, callback):
     q = Queue()
     rv = Value('i')
     stdout = b''
     p = Process(
-        target=_run_command, args=(user, commandline, q, rv, log_ident),
+        target=_run_command, args=(user, commandline, q, rv),
         daemon=True
     )
     p.start()
