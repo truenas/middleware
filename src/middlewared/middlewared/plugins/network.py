@@ -565,6 +565,14 @@ class InterfaceService(CRUDService):
         for i in self._original_datastores['laggmembers']:
             await self.middleware.call('datastore.insert', 'network.lagginterfacemembers', i)
 
+    async def __check_failover_disabled(self):
+        if await self.middleware.call('system.is_freenas'):
+            return
+        if not await self.middleware.call('failover.licensed'):
+            return
+        if not (await self.middleware.call('failover.config'))['disabled']:
+            raise CallError('Disable failover before performing interfaces changes.')
+
     @accepts()
     async def has_pending_changes(self):
         """
@@ -577,6 +585,7 @@ class InterfaceService(CRUDService):
         """
         Rollback pending interfaces changes.
         """
+        await self.__check_failover_disabled()
         await self.__restore_datastores()
         await self.sync()
 
@@ -615,6 +624,7 @@ class InterfaceService(CRUDService):
         the interfaces changes happened as planned from the user. If checkin does not happen
         within this period of time the changes will get reverted.
         """
+        await self.__check_failover_disabled()
         try:
             await self.sync()
         except Exception:
@@ -673,6 +683,8 @@ class InterfaceService(CRUDService):
         For VLAN `type` the following attributes are required: vlan_parent_interface,
         vlan_tag and vlan_pcp.
         """
+
+        await self.__check_failover_disabled()
 
         verrors = ValidationErrors()
         if data['type'] == 'BRIDGE':
@@ -1163,6 +1175,8 @@ class InterfaceService(CRUDService):
         """
         Update Interface of `id`.
         """
+        await self.__check_failover_disabled()
+
         iface = await self._get_instance(oid)
 
         new = iface.copy()
@@ -1296,6 +1310,8 @@ class InterfaceService(CRUDService):
 
         It should be noted that only virtual interfaces can be deleted.
         """
+        await self.__check_failover_disabled()
+
         iface = await self._get_instance(oid)
 
         if iface['type'] == 'PHYSICAL':
