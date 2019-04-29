@@ -1,6 +1,9 @@
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
-from middlewared.service import CRUDService, private, ValidationErrors
+from middlewared.service import CRUDService, job, private, ValidationErrors
 from middlewared.validators import Range
+from middlewared.utils import run_command_with_user_context
+
+import subprocess
 
 
 class CronJobService(CRUDService):
@@ -195,3 +198,68 @@ class CronJobService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
 
         return response
+
+    @accepts(
+        Int('id')
+    )
+    @job(lock=lambda args: args[-1], logs=True)
+    def run(self, job, id):
+        """
+        Job to run cronjob task of `id`.
+        """
+        cron_task = self.middleware.call_sync('cronjob._get_instance', id)
+        cron_cmd = ' '.join(
+            self.middleware.call_sync(
+                'cronjob.construct_cron_command', cron_task['schedule'], cron_task['user'],
+                cron_task['command'], cron_task['stdout'], cron_task['stderr']
+            )[7:]
+        )
+
+        job.set_progress(
+            10,
+            'Executing Cron Task'
+        )
+
+        cp = run_command_with_user_context(
+            cron_cmd, cron_task['user'], 'cron', lambda v: job.logs_fd.write(v)
+        )
+
+        job.set_progress(
+            85,
+            'Executed Cron Task'
+        )
+
+        if cp.stdout:
+            email = (
+                self.middleware.call_sync('user.query', [['username', '=', cron_task['user']]], {'get': True})
+            )['email']
+            stdout = cp.stdout.decode()
+            if email:
+                mail_job = self.middleware.call_sync(
+                    'mail.send', {
+                        'subject': 'CronTask Manual Run',
+                        'text': stdout,
+                        'to': [email]
+                    }
+                )
+
+                job.set_progress(
+                    95,
+                    'Sending mail for Cron Task output'
+                )
+
+                mail_job.wait_sync()
+                if mail_job.error:
+                    job.logs_fd.write(f'Failed to send email for CronTask manual run: {mail_job.error}'.encode())
+            else:
+                job.set_progress(
+                    95,
+                    'Email for root user not configured. Skipping sending mail.'
+                )
+
+            job.logs_fd.write(f'Executed CronTask - {cron_cmd}: {stdout}'.encode())
+
+        job.set_progress(
+            100,
+            'Manual run of Cron Task complete.'
+        )
