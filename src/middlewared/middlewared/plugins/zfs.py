@@ -619,7 +619,12 @@ class ZFSSnapshot(CRUDService):
         Query all ZFS Snapshots with `query-filters` and `query-options`.
         """
         # Special case for faster listing of snapshot names (#53149)
-        if options and options.get('select') == ['name']:
+        if (
+            options and options.get('select') == ['name'] and (
+                not filters or
+                filter_getattrs(filters).issubset({'name', 'pool'})
+            )
+        ):
             # Using zfs list -o name is dozens of times faster than py-libzfs
             cmd = ['zfs', 'list', '-H', '-o', 'name', '-t', 'snapshot']
             order_by = options.get('order_by')
@@ -634,7 +639,10 @@ class ZFSSnapshot(CRUDService):
             )
             if cp.returncode != 0:
                 raise CallError(f'Failed to retrieve snapshots: {cp.stderr}')
-            snaps = [{'name': i} for i in cp.stdout.strip().split('\n')]
+            snaps = [
+                {'name': i, 'pool': i.split('/', 1)[0]}
+                for i in cp.stdout.strip().split('\n')
+            ]
             if filters:
                 return filter_list(snaps, filters, options)
             return snaps
