@@ -276,7 +276,7 @@ _interface_config()
 		if [ -n "${vlan_pcp}" ]; then
 			echo -n " vlanpcp ${vlan_pcp}"
 		fi
-		echo \"
+		echo \ up\"
 	done
 }
 
