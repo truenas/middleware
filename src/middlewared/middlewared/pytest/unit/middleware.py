@@ -1,4 +1,4 @@
-from asynctest import Mock
+from asynctest import CoroutineMock, Mock
 from middlewared.utils import filter_list
 from middlewared.schema import Schemas, resolve_methods
 
@@ -9,6 +9,8 @@ class Middleware(dict):
         super().__init__(*args, **kwargs)
         self['system.is_freenas'] = Mock(return_value=True)
         self.__schemas = Schemas()
+
+        self.call_hook = CoroutineMock()
 
     async def _call(self, name, serviceobj, method, args):
         to_resolve = [getattr(serviceobj, attr) for attr in dir(serviceobj) if attr != 'query']
