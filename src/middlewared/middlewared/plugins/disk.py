@@ -828,12 +828,12 @@ class DiskService(CRUDService):
             try:
                 if g.provider.config['rotationrate'] == '0':
                     disk['disk_rotationrate'] = None
-                    disk['disk_type'] == 'SSD'
+                    disk['disk_type'] = 'SSD'
                 else:
                     disk['disk_rotationrate'] = int(g.provider.config['rotationrate'])
-                    disk['disk_type'] == 'HDD'
+                    disk['disk_type'] = 'HDD'
             except ValueError:
-                disk['disk_type'] == 'UNKNOWN'
+                disk['disk_type'] = 'UNKNOWN'
                 disk['disk_rotationrate'] = None
             disk['disk_model'] = g.provider.config['descr'] or None
 
