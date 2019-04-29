@@ -2113,7 +2113,8 @@ class CronJobResourceMixin(NestedMixin):
         self.method_check(request, allowed=['post'])
 
         bundle, obj = self._get_parent(request, kwargs)
-        obj.run()
+        with client as c:
+            c.call('cronjob.run', obj.id)
         return HttpResponse('Cron job started.', status=202)
 
     def dehydrate(self, bundle):
