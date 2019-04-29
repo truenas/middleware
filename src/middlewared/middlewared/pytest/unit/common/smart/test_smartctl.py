@@ -109,7 +109,7 @@ async def test_get_disk__unknown_usb_bridge():
         }) == ["/dev/ada0", "-d", "sat"]
 
         run.assert_called_once_with(["smartctl", "-i", "/dev/ada0"], stderr=subprocess.STDOUT, check=False,
-                                    encoding="utf8")
+                                    encoding="utf8", errors="ignore")
 
 
 @pytest.mark.asyncio
