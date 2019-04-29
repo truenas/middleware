@@ -640,15 +640,21 @@ class ZFSSnapshot(CRUDService):
             return snaps
         with libzfs.ZFS() as zfs:
             # Handle `id` filter to avoid getting all snapshots first
+            snapshots = []
             if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
                 try:
-                    snapshots = [zfs.get_snapshot(filters[0][2]).__getstate__()]
+                    snapshots.append(zfs.get_snapshot(filters[0][2]).__getstate__())
                 except libzfs.ZFSException as e:
                     if e.code != libzfs.Error.NOENT:
                         raise
-                    snapshots = []
             else:
-                snapshots = [i.__getstate__() for i in list(zfs.snapshots)]
+                for i in zfs.snapshots:
+                    try:
+                        snapshots.append(i.__getstate__())
+                    except libzfs.ZFSException as e:
+                        # snapshot may have been deleted while this is running
+                        if e.code != libzfs.Error.NOENT:
+                            raise
         # FIXME: awful performance with hundreds/thousands of snapshots
         return filter_list(snapshots, filters, options)
 
