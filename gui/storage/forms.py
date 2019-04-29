@@ -2732,8 +2732,8 @@ class ChangePassphraseForm(Form):
 
             if self.volume.vol_name == sys_dataset['pool']:
                 self._errors['__all__'] = self.error_class([
-                    _('An encrypted pool containing the system dataset must not have a passphrase. '
-                      'An existing passphrase on that pool can only be removed."')
+                    _(f'Pool {self.volume.vol_name} contains the system dataset. Passphrases are not allowed on the '
+                      'system dataset pool.')
                 ])
 
         return cdata
