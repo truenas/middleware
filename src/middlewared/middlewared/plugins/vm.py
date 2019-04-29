@@ -3,6 +3,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch, Ref
 from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors,
+    ValidationError
 )
 from middlewared.utils import Nid, Popen
 
@@ -1249,7 +1250,7 @@ class VMDeviceService(CRUDService):
         Dict(
             'vmdevice_create',
             Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'VNC', 'RAW'], required=True),
-            Int('vm', required=True),
+            Int('vm', required=False),
             Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None, null=True),
             register=True,
@@ -1259,8 +1260,14 @@ class VMDeviceService(CRUDService):
         """
         Create a new device for the VM of id `vm`.
         """
+        if not data.get('vm'):
+            raise ValidationError('vmdevice_create.vm', '"vm" is required')
+
         data = await self.validate_device(data)
-        id = await self.middleware.call('datastore.insert', self._config.datastore, data)
+
+        id = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data
+        )
         await self.__reorder_devices(id, data['vm'], data['order'])
 
         return await self._get_instance(id)
