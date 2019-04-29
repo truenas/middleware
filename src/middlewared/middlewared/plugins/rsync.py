@@ -28,13 +28,8 @@ import asyncio
 import asyncssh
 import glob
 import os
-import queue
 import re
 import shlex
-import subprocess
-import syslog
-
-from multiprocessing import Process, Queue, Value
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
@@ -43,7 +38,7 @@ from middlewared.service import (
     CallError, CRUDService, SystemServiceService, ValidationErrors,
     job, item_method, private,
 )
-from middlewared.utils import setusercontext
+from middlewared.utils import run_command_with_user_context
 
 
 class RsyncdService(SystemServiceService):
@@ -187,33 +182,6 @@ class RsyncModService(CRUDService):
         Delete Rsyncmod module of `id`.
         """
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
-
-
-def _run_command(user, commandline, q, rv):
-    setusercontext(user)
-
-    os.environ['PATH'] = (
-        '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin'
-    )
-    proc = subprocess.Popen(
-        commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    )
-
-    # logger(1) does not honor original exit value so we use syslog module instead
-    syslog.openlog(ident='rsync')
-    while True:
-        line = proc.stdout.readline()
-        if line == b'':
-            break
-        try:
-            q.put(line, False)
-        except queue.Full:
-            pass
-        syslog.syslog(syslog.LOG_NOTICE, line.decode())
-    syslog.closelog()
-    proc.communicate()
-    rv.value = proc.returncode
-    q.put(None)
 
 
 class RsyncTaskService(CRUDService):
@@ -593,20 +561,12 @@ class RsyncTaskService(CRUDService):
         """
         rsync = self.middleware.call_sync('rsynctask._get_instance', id)
         commandline = self.middleware.call_sync('rsynctask.commandline', id)
-        q = Queue()
-        rv = Value('i')
-        p = Process(target=_run_command, args=(rsync['user'], commandline, q, rv), daemon=True)
-        p.start()
-        while p.is_alive() or not q.empty():
-            try:
-                get = q.get(True, 2)
-                if get is None:
-                    break
-                job.logs_fd.write(get)
-            except queue.Empty:
-                pass
-        p.join()
-        if rv.value != 0:
+
+        cp = run_command_with_user_context(
+            commandline, rsync['user'], 'rsync', lambda v: job.logs_fd.write(v)
+        )
+
+        if cp.returncode != 0:
             raise CallError(
-                f'rsync command returned {rv.value}. Check logs for further information.'
+                f'rsync command returned {cp.returncode}. Check logs for further information.'
             )
