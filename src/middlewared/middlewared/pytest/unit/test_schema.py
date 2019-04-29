@@ -224,7 +224,7 @@ def test__schema_dict_null():
 
     self = Mock()
 
-    assert dictnull(self, None) == {}
+    assert dictnull(self, None) == None
 
 
 def test__schema_dict_not_null():

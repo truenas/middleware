@@ -2,11 +2,12 @@ import asyncio
 from datetime import datetime
 import textwrap
 
-from mock import Mock
+from mock import ANY, Mock
 import pytest
 
 from middlewared.alert.source.ipmi_sel import (
     IPMISELRecord, parse_ipmitool_output, parse_sel_information,
+    IPMISELAlertClass, IPMISELSpaceLeftAlertClass,
     IPMISELAlertSource, IPMISELSpaceLeftAlertSource,
     Alert
 )
@@ -77,13 +78,14 @@ async def test_ipmi_sel_alert_source__works():
         9,04/20/2017,06:03:07,Watchdog2 #0xca,Timer interrupt (),Asserted
     """)) == [
         Alert(
-            title="%(sensor)s %(direction)s %(event)s",
+            IPMISELAlertClass,
             args=dict(
                 sensor="Watchdog2 #0xca",
                 event="Timer interrupt ()",
                 direction="Asserted",
                 verbose=None
             ),
+            _key=ANY,
             datetime=datetime(2017, 4, 20, 6, 3, 7),
         )
     ]
@@ -108,13 +110,14 @@ async def test_ipmi_sel_alert_source__works_filters_dismissed_events():
         9,04/20/2017,06:03:08,Watchdog2 #0xca,Timer interrupt (),Asserted
     """)) == [
         Alert(
-            title="%(sensor)s %(direction)s %(event)s",
+            IPMISELAlertClass,
             args=dict(
                 sensor="Watchdog2 #0xca",
                 event="Timer interrupt ()",
                 direction="Asserted",
                 verbose=None
             ),
+            _key=ANY,
             datetime=datetime(2017, 4, 20, 6, 3, 8),
         )
     ]
@@ -178,7 +181,7 @@ def test_ipmi_sel_space_left_alert_source__emits():
         Largest Free Blk : 493
         Max Record Size  : 20
     """)) == Alert(
-        title="IPMI SEL Low Space Left: %(free)s (used %(used)s)",
+        IPMISELSpaceLeftAlertClass,
         args={
             "free": "260 bytes",
             "used": "98%",
