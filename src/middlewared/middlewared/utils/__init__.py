@@ -5,6 +5,7 @@ import imp
 import inspect
 import os
 import pwd
+import queue
 import re
 import sys
 import subprocess
@@ -12,6 +13,7 @@ import threading
 from datetime import datetime, timedelta
 from itertools import chain
 from functools import wraps
+from multiprocessing import Process, Queue, Value
 from threading import Lock
 
 from middlewared.schema import Schemas
@@ -132,6 +134,56 @@ def setusercontext(user):
         os.chdir(passwd.pw_dir)
     except Exception:
         os.chdir('/')
+
+
+def _run_command(user, commandline, q, rv):
+    setusercontext(user)
+
+    os.environ['PATH'] = (
+        '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin'
+    )
+    proc = subprocess.Popen(
+        commandline, shell=True, stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+
+    while True:
+        line = proc.stdout.readline()
+        if line == b'':
+            break
+
+        try:
+            q.put(line, False)
+        except queue.Full:
+            pass
+    proc.communicate()
+    rv.value = proc.returncode
+    q.put(None)
+
+
+def run_command_with_user_context(commandline, user, callback):
+    q = Queue()
+    rv = Value('i')
+    stdout = b''
+    p = Process(
+        target=_run_command, args=(user, commandline, q, rv),
+        daemon=True
+    )
+    p.start()
+    while p.is_alive() or not q.empty():
+        try:
+            get = q.get(True, 2)
+            if get is None:
+                break
+            stdout += get
+            callback(get)
+        except queue.Empty:
+            pass
+    p.join()
+
+    return subprocess.CompletedProcess(
+        commandline, stdout=stdout, returncode=rv.value
+    )
 
 
 def partition(s):

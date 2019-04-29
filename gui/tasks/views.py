@@ -61,7 +61,8 @@ def cloudsync_run(request, oid):
 def cron_run(request, oid):
     cron = models.CronJob.objects.get(pk=oid)
     if request.method == "POST":
-        cron.run()
+        with client as c:
+            c.call("cronjob.run", cron.id)
         return JsonResp(request, message=_("The cron process has started"))
 
     return render(request, 'tasks/cron_run.html', {
