@@ -274,16 +274,6 @@ class CronJob(Model):
             return self.cron_description
         return "%d (%s)" % (self.id, self.cron_user)
 
-    def commandline(self):
-        line = self.cron_command
-        if self.cron_stdout:
-            line += ' > /dev/null'
-        if self.cron_stderr:
-            line += ' 2> /dev/null'
-        else:
-            line += ' 2>&1'
-        return line
-
 
 class InitShutdown(Model):
     ini_type = models.CharField(
