@@ -1722,6 +1722,18 @@ class DiskService(CRUDService):
 
             asyncio.ensure_future(camcontrol_idle())
 
+    @private
+    async def sata_dom_lifetime_left(self, devname):
+        try:
+            smartctl = (await run('smartctl', '-A', devname, encoding="utf8", errors="ignore")).stdout
+        except subprocess.CalledProcessError:
+            return None
+
+        m = re.search(r'^164\s+.*\s+([0-9]+)$', smartctl, re.MULTILINE)
+        if m:
+            aec = int(m.group(1))
+            return max(1.0 - aec / 3000, 0)
+
 
 def new_swap_name():
     """
