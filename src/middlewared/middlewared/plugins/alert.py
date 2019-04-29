@@ -294,7 +294,8 @@ class AlertService(Service):
         for policy_name, policy in self.policies.items():
             gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
 
-            for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice"):
+            for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice",
+                                                                 [["enabled", "=", True]]):
                 service_gone_alerts = [
                     alert for alert in gone_alerts
                     if (
