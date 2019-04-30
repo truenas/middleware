@@ -153,8 +153,9 @@ class BootEnvService(CRUDService):
         beadm_names = (await (await Popen(
             "beadm list | awk '{print $7}'",
             shell=True,
-            encoding='utf8',
-        )).communicate())[0].split('\n')
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )).communicate())[0].decode().split('\n')
         if name in filter(None, beadm_names):
             verrors.add(f'{schema}.name', f'The name "{name}" already exists', errno.EEXIST)
 
