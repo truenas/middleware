@@ -4,6 +4,7 @@
 import pytest
 import os
 import sys
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT, POST
@@ -31,12 +32,27 @@ second_ups_list = [
 ]
 
 
-def test_01_Enabling_UPS_Service_at_boot():
+def test_01_get_ups_service_id():
+    global ups_id
+    results = GET('/service/?service=ups')
+    assert results.status_code == 200, results.text
+    assert results.json()[0]['state'] == 'STOPPED', results.text
+    assert results.json()[0]['enable'] is False, results.text
+    ups_id = results.json()[0]['id']
+
+
+def test_02_Enabling_UPS_Service_at_boot():
     results = PUT('/service/id/ups/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
-def test_02_Set_UPS_options():
+def test_03_look_if_UPS_service_is_enable():
+    results = GET(f'/service/id/{ups_id}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['enable'] is True, results.text
+
+
+def test_04_Set_UPS_options():
     global payload, results
     payload = {
         'rmonitor': True,
@@ -53,11 +69,11 @@ def test_02_Set_UPS_options():
 
 
 @pytest.mark.parametrize('data', first_ups_list)
-def test_03_look_at_UPS_options_output_of_(data):
+def test_05_look_at_UPS_options_output_of_(data):
     assert payload[data] == results.json()[data], results.text
 
 
-def test_04_starting_ups_service():
+def test_06_starting_ups_service():
     payload = {
         "service": "ups",
         "service-control": {
@@ -66,20 +82,27 @@ def test_04_starting_ups_service():
     }
     results = POST('/service/start/', payload)
     assert results.status_code == 200, results.text
+    sleep(2)
 
 
-def test_05_get_API_reports_UPS_configuration_as_saved():
+def test_07_look_UPS_service_status_is_running():
+    results = GET(f'/service/id/{ups_id}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['state'] == 'RUNNING', results.text
+
+
+def test_08_get_API_reports_UPS_configuration_as_saved():
     global results
     results = GET('/ups/')
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('data', first_ups_list)
-def test_06_look_API_reports_UPS_configuration_of_(data):
+def test_09_look_API_reports_UPS_configuration_of_(data):
     assert payload[data] == results.json()[data], results.text
 
 
-def test_07_stop_ups_service():
+def test_10_stop_ups_service():
     payload = {
         "service": "ups",
         "service-control": {
@@ -88,9 +111,16 @@ def test_07_stop_ups_service():
     }
     results = POST('/service/stop/', payload)
     assert results.status_code == 200, results.text
+    sleep(2)
 
 
-def test_08_Change_UPS_options():
+def test_11_look_UPS_service_status_is_stopped():
+    results = GET(f'/service/id/{ups_id}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['state'] == 'STOPPED', results.text
+
+
+def test_12_Change_UPS_options():
     global payload, results
     payload = {
         'rmonitor': False,
@@ -102,14 +132,15 @@ def test_08_Change_UPS_options():
     }
     results = PUT('/ups/', payload)
     assert results.status_code == 200, results.text
+    sleep(2)
 
 
 @pytest.mark.parametrize('data', second_ups_list)
-def test_09_look_at_change_UPS_options_output_of_(data):
+def test_13_look_at_change_UPS_options_output_of_(data):
     assert payload[data] == results.json()[data], results.text
 
 
-def test_10_starting_ups_service():
+def test_14_starting_ups_service():
     payload = {
         "service": "ups",
         "service-control": {
@@ -118,20 +149,27 @@ def test_10_starting_ups_service():
     }
     results = POST('/service/start/', payload)
     assert results.status_code == 200, results.text
+    sleep(2)
 
 
-def test_11_get_API_reports_UPS_configuration_as_changed():
+def test_15_look_UPS_service_status_is_running():
+    results = GET(f'/service/id/{ups_id}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['state'] == 'RUNNING', results.text
+
+
+def test_16_get_API_reports_UPS_configuration_as_changed():
     global results
     results = GET('/ups/')
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('data', second_ups_list)
-def test_12_look_API_reports_UPS_configuration_of_(data):
+def test_17_look_API_reports_UPS_configuration_of_(data):
     assert payload[data] == results.json()[data], results.text
 
 
-def test_13_get_ups_driver_choice():
+def test_18_get_ups_driver_choice():
     results = GET('/ups/driver_choices/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
@@ -140,25 +178,31 @@ def test_13_get_ups_driver_choice():
 
 
 @pytest.mark.parametrize('dkey', ups_dc_list)
-def test_14_check_ups_driver_choice_info_(dkey):
+def test_19_check_ups_driver_choice_info_(dkey):
     driver_choices = dkey.partition('$')[2]
     assert isinstance(ups_dc.json()[dkey], str) is True, ups_dc.text
     assert driver_choices in ups_dc.json()[dkey], ups_dc.text
 
 
-def test_15_get_ups_driver_choice():
+def test_20_get_ups_driver_choice():
     results = GET('/ups/port_choices/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     assert isinstance(results.json()[0], str) is True, results.text
 
 
-def test_16_Disabling_UPS_Service():
+def test_21_Disabling_UPS_Service():
     results = PUT('/service/id/ups/', {'enable': False})
     assert results.status_code == 200, results.text
 
 
-def test_17_stop_ups_service():
+def test_22_Disabling_UPS_Service_at_boot():
+    results = GET(f'/service/id/{ups_id}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['enable'] is False, results.text
+
+
+def test_23_stop_ups_service():
     payload = {
         "service": "ups",
         "service-control": {
@@ -167,3 +211,9 @@ def test_17_stop_ups_service():
     }
     results = POST('/service/stop/', payload)
     assert results.status_code == 200, results.text
+
+
+def test_24_look_UPS_service_status_is_stopped():
+    results = GET(f'/service/id/{ups_id}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['state'] == 'STOPPED', results.text
