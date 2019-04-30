@@ -34,6 +34,8 @@ class MakoRenderer(object):
                 return tmpl.render(middleware=self.service.middleware, FileShouldNotExist=FileShouldNotExist)
 
             return await self.service.middleware.run_in_thread(do)
+        except FileShouldNotExist:
+            raise
         except Exception:
             self.service.logger.debug('Failed to render mako template: {0}'.format(
                 exceptions.text_error_template().render()
