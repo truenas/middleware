@@ -134,9 +134,9 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
     # Auto with periodic snapshot task
     (dict(periodic_snapshot_tasks=["data-recursive"], auto=True), None),
     # Auto with schedule
-    (dict(schedule={"minute": "*/2"}, auto=True), None),
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-2m"], schedule={"minute": "*/2"}, auto=True), None),
     # Auto without periodic snapshot task or schedule
-    (dict(auto=True), "auto"),
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-2m"], auto=True), "auto"),
 
     # Pull + periodic snapshot tasks
     (dict(direction="PULL", periodic_snapshot_tasks=["data-recursive"]), "periodic_snapshot_tasks"),
@@ -150,7 +150,8 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
      "hold_pending_snapshots"),
 
     # SSH+Netcat
-    (dict(transport="SSH+NETCAT", ssh_credentials=True, netcat_active_side="LOCAL", netcat_active_side_port_min=1024,
+    (dict(periodic_snapshot_tasks=["data-recursive"],
+          transport="SSH+NETCAT", ssh_credentials=True, netcat_active_side="LOCAL", netcat_active_side_port_min=1024,
           netcat_active_side_port_max=50000),
      None),
     # Bad netcat_active_side_port_max
@@ -202,7 +203,8 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
      "exclude.0"),
 
     # Custom retention policy
-    (dict(retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK"), None),
+    (dict(periodic_snapshot_tasks=["data-recursive"],
+          retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK"), None),
 ])
 def test_create_replication(credentials, periodic_snapshot_tasks, req, error):
     if "ssh_credentials" in req:
