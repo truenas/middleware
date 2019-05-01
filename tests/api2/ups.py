@@ -82,7 +82,7 @@ def test_06_starting_ups_service():
     }
     results = POST('/service/start/', payload)
     assert results.status_code == 200, results.text
-    sleep(2)
+    sleep(1)
 
 
 def test_07_look_UPS_service_status_is_running():
@@ -111,13 +111,17 @@ def test_10_stop_ups_service():
     }
     results = POST('/service/stop/', payload)
     assert results.status_code == 200, results.text
-    sleep(2)
+    sleep(1)
 
 
 def test_11_look_UPS_service_status_is_stopped():
     results = GET(f'/service/id/{ups_id}/')
     assert results.status_code == 200, results.text
     assert results.json()['state'] == 'STOPPED', results.text
+
+
+def test_12_wait_30_second():
+    sleep(30)
 
 
 def test_12_Change_UPS_options():
@@ -132,7 +136,7 @@ def test_12_Change_UPS_options():
     }
     results = PUT('/ups/', payload)
     assert results.status_code == 200, results.text
-    sleep(2)
+    sleep(1)
 
 
 @pytest.mark.parametrize('data', second_ups_list)
@@ -149,7 +153,7 @@ def test_14_starting_ups_service():
     }
     results = POST('/service/start/', payload)
     assert results.status_code == 200, results.text
-    sleep(2)
+    sleep(1)
 
 
 def test_15_look_UPS_service_status_is_running():
