@@ -70,6 +70,7 @@ class AlertSource:
     onetime = False
     schedule = IntervalSchedule(timedelta())
 
+    failover_related = False
     run_on_backup_node = True
 
     def __init__(self, middleware):
