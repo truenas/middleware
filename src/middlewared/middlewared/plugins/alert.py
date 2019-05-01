@@ -321,13 +321,14 @@ class AlertService(Service):
                 try:
                     backup_node = await self.middleware.call("failover.call_remote", "failover.node")
                     remote_version = await self.middleware.call("failover.call_remote", "system.version")
+                    remote_system_state = await self.middleware.call("failover.call_remote", "system.state")
                     remote_failover_status = await self.middleware.call("failover.call_remote",
                                                                         "notifier.failover_status")
                 except Exception:
                     pass
                 else:
                     if remote_version == await self.middleware.call("system.version"):
-                        if remote_failover_status == "BACKUP":
+                        if remote_system_state == "READY" and remote_failover_status == "BACKUP":
                             run_on_backup_node = True
 
         for k, source_lock in list(self.sources_locks.items()):
