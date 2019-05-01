@@ -511,7 +511,7 @@ class JailService(CRUDService):
     @accepts(
         Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
         Bool("remote", default=False),
-        Bool('want_cache'), default=True
+        Bool('want_cache', default=True)
     )
     def list_resource(self, resource, remote, want_cache):
         """Returns a JSON list of the supplied resource on the host"""
