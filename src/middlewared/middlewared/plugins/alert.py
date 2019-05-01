@@ -200,6 +200,22 @@ class AlertService(Service):
         List all types of alerts including active/dismissed currently in the system.
         """
 
+        classes = (await self.middleware.call("alertclasses.config"))["classes"]
+        nodes = await self.middleware.call("alert.node_map")
+
+        return [
+            dict(alert.__dict__,
+                 id=alert.uuid,
+                 node=nodes[alert.node],
+                 klass=alert.klass.name,
+                 level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
+                 formatted=alert.formatted,
+                 one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
+            for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
+        ]
+
+    @private
+    async def node_map(self):
         nodes = {
             "A": "Active Controller",
             "B": "Standby Controller",
@@ -216,18 +232,7 @@ class AlertService(Service):
         ):
             nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
 
-        classes = (await self.middleware.call("alertclasses.config"))["classes"]
-
-        return [
-            dict(alert.__dict__,
-                 id=alert.uuid,
-                 node=nodes[alert.node],
-                 klass=alert.klass.name,
-                 level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
-                 formatted=alert.formatted,
-                 one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
-            for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
-        ]
+        return nodes
 
     def __alert_by_uuid(self, uuid):
         try:
@@ -458,7 +463,7 @@ class AlertService(Service):
                         else:
                             raise
                 except Exception as e:
-                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
                         alerts_b = [
                             Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
                                   args={
@@ -541,7 +546,7 @@ class AlertService(Service):
         except UnavailableException:
             raise
         except Exception as e:
-            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
                 alerts = [
                     Alert(AlertSourceRunFailedAlertClass,
                           args={
