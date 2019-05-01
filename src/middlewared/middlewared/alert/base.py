@@ -127,7 +127,11 @@ class AlertService:
     async def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = await self.middleware.call("system.product_name")
         hostname = (await self.middleware.call("system.info"))["hostname"]
-        return format_alerts(product_name, hostname, alerts, gone_alerts, new_alerts)
+        if not await self.middleware.call("system.is_freenas"):
+            node_map = await self.middleware.call("alert.node_map")
+        else:
+            node_map = None
+        return format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts)
 
 
 class ThreadedAlertService(AlertService):
@@ -171,23 +175,23 @@ class ProThreadedAlertService(ThreadedAlertService):
         raise NotImplementedError
 
 
-def format_alerts(product_name, hostname, alerts, gone_alerts, new_alerts):
+def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts):
     text = f"{product_name} @ {hostname}\n\n"
 
     if new_alerts:
-        text += "New alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in new_alerts]) + "\n"
+        text += "New alerts:\n" + "".join(["* %s\n" % format_alert(alert, node_map) for alert in new_alerts]) + "\n"
 
     if gone_alerts:
-        text += "Gone alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in gone_alerts]) + "\n"
+        text += "Gone alerts:\n" + "".join(["* %s\n" % format_alert(alert, node_map) for alert in gone_alerts]) + "\n"
 
     if alerts:
-        text += "Current alerts:\n" + "".join(["* %s\n" % format_alert(alert) for alert in alerts]) + "\n"
+        text += "Current alerts:\n" + "".join(["* %s\n" % format_alert(alert, node_map) for alert in alerts]) + "\n"
 
     return text
 
 
-def format_alert(alert):
-    return alert.formatted + (f" (on node {alert.node})" if alert.node != "A" else "")
+def format_alert(alert, node_map):
+    return (f"{node_map[alert.node]} - " if node_map else None) + alert.formatted
 
 
 def ellipsis(s, l):

@@ -136,6 +136,19 @@ class AlertService(Service):
 
     @accepts()
     async def list(self):
+        nodes = await self.middleware.call("alert.node_map")
+
+        return [
+            dict(alert.__dict__,
+                 id=f"{alert.node};{alert.source};{alert.key}",
+                 node=nodes[alert.node],
+                 level=alert.level.name,
+                 formatted=alert.formatted)
+            for alert in sorted(self.__get_all_alerts(), key=lambda alert: alert.title)
+        ]
+
+    @private
+    async def node_map(self):
         nodes = {
             "A": "Active Controller",
             "B": "Standby Controller",
@@ -152,14 +165,7 @@ class AlertService(Service):
         ):
             nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
 
-        return [
-            dict(alert.__dict__,
-                 id=f"{alert.node};{alert.source};{alert.key}",
-                 node=nodes[alert.node],
-                 level=alert.level.name,
-                 formatted=alert.formatted)
-            for alert in sorted(self.__get_all_alerts(), key=lambda alert: alert.title)
-        ]
+        return nodes
 
     @accepts(Str("id"))
     def dismiss(self, id):
@@ -361,10 +367,11 @@ class AlertService(Service):
                         else:
                             raise
                 except Exception as e:
-                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
                         alerts_b = [
                             Alert(title="Unable to run alert source %(source_name)r on backup node: %(error)s",
                                   args={
+                                      "source_name": alert_source.name,
                                       "error": str(e),
                                   },
                                   key="__remote_call_error__",
@@ -432,10 +439,11 @@ class AlertService(Service):
         except UnavailableException:
             raise
         except Exception as e:
-            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
                 alerts = [
                     Alert(title="Unable to run alert source %(source_name)r: %(error)s",
                           args={
+                              "source_name": alert_source.name,
                               "error": str(e),
                           },
                           key="__remote_call_error__",
