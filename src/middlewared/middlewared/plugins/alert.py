@@ -206,6 +206,13 @@ class AlertService(Service):
         for policy_name, policy in self.policies.items():
             gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
 
+            for gone_alert in list(gone_alerts):
+                for new_alert in new_alerts:
+                    if gone_alert.source == new_alert.source and gone_alert.key == new_alert.key:
+                        gone_alerts.remove(gone_alert)
+                        new_alerts.remove(new_alert)
+                        break
+
             for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice"):
                 service_settings = dict(default_settings, **alert_service_desc["settings"])
 
