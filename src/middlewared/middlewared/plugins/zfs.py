@@ -294,6 +294,13 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to create dataset', exc_info=True)
             raise CallError(f'Failed to create dataset: {e}')
 
+        if data['type'] == 'FILESYSTEM':
+            if subprocess.run(
+                'zfs list -H -o name -s name -t filesystem | grep -v freenas-boot | wc -l',
+                shell=True, stdout=subprocess.PIPE,
+            ).stdout.strip() == b"100":
+                self.middleware.call_sync('service.restart', 'collectd')
+
     @accepts(
         Str('id'),
         Dict(

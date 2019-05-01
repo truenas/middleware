@@ -859,6 +859,15 @@ class notifier(metaclass=HookMetaclass):
         zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
+
+        if not zfs_error:
+            if subprocess.run(
+                'zfs list -H -o name -s name -t filesystem | grep -v freenas-boot | wc -l',
+                    shell=True, stdout=subprocess.PIPE,
+            ).stdout.strip() == b"100":
+                with client as c:
+                    c.call('service.restart', 'collectd')
+
         return zfs_error, zfs_err
 
     def list_zfs_vols(self, volname, sort=None):
