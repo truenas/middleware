@@ -430,6 +430,9 @@ class AlertService(Service):
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
+            if alert_source.failover_related and not run_on_backup_node:
+                continue
+
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
 
             alerts_a = [alert
