@@ -508,9 +508,12 @@ class JailService(CRUDService):
 
         return fetch_output
 
-    @accepts(Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
-             Bool("remote", default=False))
-    def list_resource(self, resource, remote):
+    @accepts(
+        Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
+        Bool("remote", default=False),
+        Bool('want_cache'), default=True
+    )
+    def list_resource(self, resource, remote, want_cache):
         """Returns a JSON list of the supplied resource on the host"""
         self.check_dataset_existence()  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
@@ -518,13 +521,14 @@ class JailService(CRUDService):
 
         if resource == "plugin":
             if remote:
-                try:
-                    resource_list = self.middleware.call_sync(
-                        'cache.get', 'iocage_remote_plugins')
+                if want_cache:
+                    try:
+                        resource_list = self.middleware.call_sync(
+                            'cache.get', 'iocage_remote_plugins')
 
-                    return resource_list
-                except KeyError:
-                    pass
+                        return resource_list
+                    except KeyError:
+                        pass
 
                 resource_list = iocage.fetch(list=True, plugins=True,
                                              header=False)
