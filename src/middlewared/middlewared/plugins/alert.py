@@ -321,6 +321,12 @@ class AlertService(Service):
                         classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
                     )
                 ]
+                for gone_alert in list(service_gone_alerts):
+                    for new_alert in service_new_alerts:
+                        if gone_alert.klass == new_alert.klass and gone_alert.key == new_alert.key:
+                            service_gone_alerts.remove(gone_alert)
+                            service_new_alerts.remove(new_alert)
+                            break
 
                 if not service_gone_alerts and not service_new_alerts:
                     continue
