@@ -2,6 +2,7 @@ from bsd import geom
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, CallError, Service
 
+from datetime import datetime
 import enum
 import errno
 import os
@@ -456,6 +457,15 @@ class UpdateService(Service):
         )
         await self.middleware.call('cache.put', 'update.applied', True)
 
+        if (
+            await self.middleware.call_sync('system.is_freenas') or
+            (
+                await self.middleware.call('failover.licensed') and
+                await self.middleware.call('failover.status') != 'BACKUP'
+            )
+        ):
+            await self.middleware.call('update.take_systemdataset_samba4_snapshot')
+
         if attrs.get('reboot'):
             await self.middleware.call('system.reboot', {'delay': 10})
         return True
@@ -645,3 +655,25 @@ class UpdateService(Service):
         )
         if cp.returncode != 0:
             raise CallError(f'Could not destroy memory device: {cp.stderr}')
+
+    @private
+    def take_systemdataset_samba4_snapshot(self):
+        basename = self.middleware.call_sync('systemdataset.config')['basename']
+        if basename is None:
+            self.logger.warning('System dataset is not available, not taking snapshot')
+            return
+
+        dataset = f'{basename}/samba4'
+
+        proc = subprocess.run(['zfs', 'list', '-t', 'snapshot', '-H', '-o', 'name', '-s', 'name', '-d', '1', dataset],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8', errors='ignore')
+        if proc.returncode != 0:
+            self.logger.warning('Unable to list dataset %s snapshots: %s', dataset, proc.stderr)
+            return
+
+        snapshots = [s.split('@')[1] for s in proc.stdout.strip().split()]
+        for snapshot in [s for s in snapshots if s.startswith('update-')][:-4]:
+            self.logger.info('Deleting dataset %s snapshot %s', dataset, snapshot)
+            subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
+
+        subprocess.run(['zfs', 'snapshot', f'{dataset}@update-{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}'])
