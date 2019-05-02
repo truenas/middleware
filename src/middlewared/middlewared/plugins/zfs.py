@@ -590,6 +590,7 @@ class ZFSQuotaService(Service):
             self.excesses[self.__excess_key(excess)] = excess
 
             if notify:
+                to = []
                 try:
                     bsduser = await self.middleware.call(
                         'datastore.query',
@@ -597,10 +598,10 @@ class ZFSQuotaService(Service):
                         [('bsdusr_uid', '=', excess['uid'])],
                         {'get': True},
                     )
-                    to = bsduser['bsdusr_email'] or None
+                    if bsduser['bsdusr_email']:
+                        to = [bsduser['bsdusr_email']]
                 except IndexError:
                     self.logger.warning('Unable to query bsduser with uid %r', excess['uid'])
-                    to = None
 
                 hostname = socket.gethostname()
 
