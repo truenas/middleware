@@ -71,6 +71,8 @@ class AlertService(Service):
         self.blocked_sources = defaultdict(set)
         self.sources_locks = {}
 
+        self.blocked_failover_alerts_until = 0
+
     @private
     async def initialize(self):
         self.node = "A"
@@ -315,6 +317,7 @@ class AlertService(Service):
         master_node = "A"
         backup_node = "B"
         run_on_backup_node = False
+        run_failover_related = False
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("notifier.failover_licensed"):
                 master_node = await self.middleware.call("failover.node")
@@ -331,6 +334,8 @@ class AlertService(Service):
                         if remote_system_state == "READY" and remote_failover_status == "BACKUP":
                             run_on_backup_node = True
 
+            run_failover_related = time.monotonic() > self.blocked_failover_alerts_until
+
         for k, source_lock in list(self.sources_locks.items()):
             if source_lock.expires_at <= time.monotonic():
                 await self.unblock_source(k)
@@ -339,7 +344,7 @@ class AlertService(Service):
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
-            if alert_source.failover_related and not run_on_backup_node:
+            if alert_source.failover_related and not run_failover_related:
                 continue
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
@@ -441,6 +446,11 @@ class AlertService(Service):
     async def unblock_source(self, lock):
         source_lock = self.sources_locks.pop(lock)
         self.blocked_sources[source_lock.source_name].remove(lock)
+
+    @private
+    async def block_failover_alerts(self):
+        # This values come from observation from support of how long a M-series boot can take.
+        self.blocked_failover_alerts_until = time.monotonic() + 900
 
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
