@@ -1188,7 +1188,7 @@ class Middleware(LoadPluginsMixin):
             if last == current:
                 frame = sys._current_frames()[self.__thread_id]
                 stack = traceback.format_stack(frame, limit=-10)
-                self.logger.warn(''.join(['Task seems blocked:'] + stack))
+                self.logger.warn(''.join(['Task seems blocked:\n'] + stack))
             last = current
 
     def run(self):
