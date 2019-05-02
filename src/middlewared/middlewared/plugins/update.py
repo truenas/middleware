@@ -73,11 +73,12 @@ def compare_trains(t1, t2):
     ):
         return CompareTrainsResult.MINOR_UPGRADE
 
-    if (
-        isinstance(v1[1], int) and isinstance(v2[1], int) and v1[1] > v2[1] or
-        not isinstance(v2[1], int) and v1[1] > 0
-    ):
-        return CompareTrainsResult.MINOR_DOWNGRADE
+    if isinstance(v1[1], int):
+        if (
+            isinstance(v2[1], int) and v1[1] > v2[1] or
+            not isinstance(v2[1], int) and v1[1] > 0
+        ):
+            return CompareTrainsResult.MINOR_DOWNGRADE
 
 
 class CheckUpdateHandler(object):
