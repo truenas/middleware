@@ -465,7 +465,7 @@ class UpdateService(Service):
                 await self.middleware.call('failover.status') != 'BACKUP'
             )
         ):
-            await self.middleware.call('update.take_systemdataset_samba4_snapshot', new_manifest.Version())
+            await self.middleware.call('update.take_systemdataset_samba4_snapshot')
 
         if attrs.get('reboot'):
             await self.middleware.call('system.reboot', {'delay': 10})
@@ -658,7 +658,7 @@ class UpdateService(Service):
             raise CallError(f'Could not destroy memory device: {cp.stderr}')
 
     @private
-    def take_systemdataset_samba4_snapshot(self, new_version):
+    def take_systemdataset_samba4_snapshot(self):
         basename = self.middleware.call_sync('systemdataset.config')['basename']
         if basename is None:
             self.logger.warning('System dataset is not available, not taking snapshot')
@@ -673,11 +673,10 @@ class UpdateService(Service):
             return
 
         snapshots = [s.split('@')[1] for s in proc.stdout.strip().split()]
-        for snapshot in [s for s in snapshots if s.startswith('update-')][:-4]:
+        for snapshot in [s for s in snapshots if s.startswith('update--')][:-4]:
             self.logger.info('Deleting dataset %s snapshot %s', dataset, snapshot)
             subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
 
         current_version = "-".join(self.middleware.call_sync("system.info")["version"].split("-")[1:])
-        new_version = "-".join(new_version.split("-")[1:])
-        snapshot = f'update--{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}--{current_version}--{new_version}'
+        snapshot = f'update--{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}--{current_version}'
         subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
