@@ -20,6 +20,7 @@ from middlewared.plugins.update import CompareTrainsResult, compare_trains
     ("FreeNAS-11.2-STABLE", "FreeNAS-11-STABLE", CompareTrainsResult.MINOR_DOWNGRADE),
 
     ("FreeNAS-9.10-STABLE", "FreeNAS-9.10-STABLE", None),
+    ("FreeNAS-11-Nightlies", "FreeNAS-11-Nightlies", None),
 ])
 def test__compare_trains(t1, t2, result):
     assert compare_trains(t1, t2) == result
