@@ -38,6 +38,7 @@ RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
+RE_SATA_DOM_LIFETIME = re.compile(r'^164\s+.*\s+([0-9]+)$', re.M)
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 RAWTYPE = {
@@ -1729,7 +1730,7 @@ class DiskService(CRUDService):
         except subprocess.CalledProcessError:
             return None
 
-        m = re.search(r'^164\s+.*\s+([0-9]+)$', smartctl, re.MULTILINE)
+        m = RE_SATA_DOM_LIFETIME.search(smartctl)
         if m:
             aec = int(m.group(1))
             return max(1.0 - aec / 3000, 0)
