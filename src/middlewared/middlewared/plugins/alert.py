@@ -90,6 +90,8 @@ class AlertService(Service):
         self.blocked_sources = defaultdict(set)
         self.sources_locks = {}
 
+        self.blocked_failover_alerts_until = 0
+
     @private
     async def initialize(self):
         self.node = "A"
@@ -200,6 +202,22 @@ class AlertService(Service):
         List all types of alerts including active/dismissed currently in the system.
         """
 
+        classes = (await self.middleware.call("alertclasses.config"))["classes"]
+        nodes = await self.middleware.call("alert.node_map")
+
+        return [
+            dict(alert.__dict__,
+                 id=alert.uuid,
+                 node=nodes[alert.node],
+                 klass=alert.klass.name,
+                 level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
+                 formatted=alert.formatted,
+                 one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
+            for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
+        ]
+
+    @private
+    async def node_map(self):
         nodes = {
             "A": "Active Controller",
             "B": "Standby Controller",
@@ -216,18 +234,7 @@ class AlertService(Service):
         ):
             nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
 
-        classes = (await self.middleware.call("alertclasses.config"))["classes"]
-
-        return [
-            dict(alert.__dict__,
-                 id=alert.uuid,
-                 node=nodes[alert.node],
-                 klass=alert.klass.name,
-                 level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
-                 formatted=alert.formatted,
-                 one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
-            for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
-        ]
+        return nodes
 
     def __alert_by_uuid(self, uuid):
         try:
@@ -316,6 +323,12 @@ class AlertService(Service):
                         classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
                     )
                 ]
+                for gone_alert in list(service_gone_alerts):
+                    for new_alert in service_new_alerts:
+                        if gone_alert.klass == new_alert.klass and gone_alert.key == new_alert.key:
+                            service_gone_alerts.remove(gone_alert)
+                            service_new_alerts.remove(new_alert)
+                            break
 
                 if not service_gone_alerts and not service_new_alerts:
                     continue
@@ -395,20 +408,24 @@ class AlertService(Service):
         master_node = "A"
         backup_node = "B"
         run_on_backup_node = False
+        run_failover_related = False
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("failover.licensed"):
                 master_node = await self.middleware.call("failover.node")
                 try:
                     backup_node = await self.middleware.call("failover.call_remote", "failover.node")
                     remote_version = await self.middleware.call("failover.call_remote", "system.version")
+                    remote_system_state = await self.middleware.call("failover.call_remote", "system.state")
                     remote_failover_status = await self.middleware.call("failover.call_remote",
                                                                         "failover.status")
                 except Exception:
                     pass
                 else:
                     if remote_version == await self.middleware.call("system.version"):
-                        if remote_failover_status == "BACKUP":
+                        if remote_system_state == "READY" and remote_failover_status == "BACKUP":
                             run_on_backup_node = True
+
+            run_failover_related = time.monotonic() > self.blocked_failover_alerts_until
 
         for k, source_lock in list(self.sources_locks.items()):
             if source_lock.expires_at <= time.monotonic():
@@ -416,6 +433,9 @@ class AlertService(Service):
 
         for alert_source in ALERT_SOURCES.values():
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
+                continue
+
+            if alert_source.failover_related and not run_failover_related:
                 continue
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
@@ -458,7 +478,7 @@ class AlertService(Service):
                         else:
                             raise
                 except Exception as e:
-                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
                         alerts_b = [
                             Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
                                   args={
@@ -533,6 +553,11 @@ class AlertService(Service):
         source_lock = self.sources_locks.pop(lock)
         self.blocked_sources[source_lock.source_name].remove(lock)
 
+    @private
+    async def block_failover_alerts(self):
+        # This values come from observation from support of how long a M-series boot can take.
+        self.blocked_failover_alerts_until = time.monotonic() + 900
+
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
 
@@ -541,7 +566,7 @@ class AlertService(Service):
         except UnavailableException:
             raise
         except Exception as e:
-            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
                 alerts = [
                     Alert(AlertSourceRunFailedAlertClass,
                           args={
