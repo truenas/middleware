@@ -25,6 +25,9 @@ class FailoverSyncFailedAlertClass(AlertClass):
 
 
 class FailoverSyncAlert(ThreadedAlertSource):
+    failover_related = True
+    run_on_backup_node = False
+
     def check_sync(self):
         if os.path.exists(SYNC_FILE) or not Journal.is_empty():
             return Alert(FailoverSyncFailedAlertClass)

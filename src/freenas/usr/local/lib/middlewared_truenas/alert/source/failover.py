@@ -91,6 +91,9 @@ class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
 
 
 class FailoverlertSource(ThreadedAlertSource):
+    failover_related = True
+    run_on_backup_node = False
+
     def check_sync(self):
         alerts = []
 
@@ -99,6 +102,7 @@ class FailoverlertSource(ThreadedAlertSource):
 
         if os.path.exists(INTERNAL_IFACE_NF):
             alerts.append(Alert(FailoverInterfaceNotFoundAlertClass))
+            return alerts
 
         try:
             self.middleware.call_sync('failover.call_remote', 'core.ping')
@@ -123,8 +127,9 @@ class FailoverlertSource(ThreadedAlertSource):
 
         except CallError as e:
             try:
-                if e.errno not in (errno.ECONNREFUSED, errno.EHOSTDOWN, CallError.ENOMETHOD):
+                if e.errno != errno.ECONNREFUSED:
                     raise
+
                 try:
                     s = notifier().failover_rpc()
                     if s is not None:
@@ -136,7 +141,6 @@ class FailoverlertSource(ThreadedAlertSource):
                         return [Alert(TrueNASVersionsMismatchAlertClass)]
                     else:
                         raise
-
             except Exception as e:
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
 

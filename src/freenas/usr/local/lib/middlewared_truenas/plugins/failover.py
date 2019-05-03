@@ -17,7 +17,7 @@ import time
 from collections import defaultdict
 from functools import partial
 
-from middlewared.client import Client, ClientException
+from middlewared.client import Client, ClientException, CallTimeout
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
@@ -521,7 +521,10 @@ class FailoverService(ConfigService):
         options = options or {}
         remote = self.remote_ip()
         with RemoteClient(remote) as c:
-            return c.call(method, *args, **options)
+            try:
+                return c.call(method, *args, **options)
+            except CallTimeout:
+                raise CallError('Call timeout', errno.ETIMEDOUT)
 
     @private
     @accepts()

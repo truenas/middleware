@@ -49,6 +49,9 @@ class FailedToVerifyCriticalFailoverInterfaceAlertClass(AlertClass):
 
 
 class FailoverCriticalAlertSource(ThreadedAlertSource):
+    failover_related = True
+    run_on_backup_node = False
+
     def check_sync(self):
         alerts = []
 

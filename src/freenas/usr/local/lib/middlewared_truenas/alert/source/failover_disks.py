@@ -21,6 +21,7 @@ class DisksAreNotPresentOnMasterNodeAlertClass(AlertClass):
 
 
 class FailoverDisksAlertSource(AlertSource):
+    failover_related = True
     run_on_backup_node = False
 
     async def check(self):
