@@ -69,7 +69,7 @@ from freenasUI.middleware.client import (ClientException, ValidationErrors,
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services.models import (iSCSITarget,
+from freenasUI.services.models import (iSCSITarget, CIFS,
                                        iSCSITargetAuthorizedInitiator,
                                        iSCSITargetExtent, iSCSITargetGroups,
                                        iSCSITargetPortal, iSCSITargetPortalIP,
@@ -734,6 +734,11 @@ class InitialWizard(CommonWizard):
                     'ad_bindpw': cleaned_data.get('ds_ad_bindpw'),
                     'ad_enable': True,
                 })
+
+                cifs = CIFS.objects.latest('id')
+                addata['ad_netbiosname_a'] = cifs.cifs_srv_netbiosname
+                addata['ad_netbiosname_b'] = cifs.cifs_srv_netbiosname_b
+
                 adform = ActiveDirectoryForm(
                     data=addata,
                     instance=ad,
