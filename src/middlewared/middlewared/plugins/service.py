@@ -11,8 +11,8 @@ import time
 from subprocess import DEVNULL, PIPE
 
 from middlewared.schema import accepts, Bool, Dict, Ref, Str
-from middlewared.service import filterable, CallError, CRUDService, job
-from middlewared.utils import Popen, filter_list
+from middlewared.service import filterable, CallError, CRUDService
+from middlewared.utils import Popen, filter_list, run
 
 
 class ServiceDefinition:
@@ -807,28 +807,27 @@ class ServiceService(CRUDService):
             asyncio.ensure_future(self.restart('collectd'))
 
     async def _restart_ups(self, **kwargs):
-        await self.middleware.call('service._restart_ups_job')
-
-    @job(lock='restart_upsmon')
-    async def _restart_ups_job(self, job, **kwargs):
         await self.middleware.call('ups.dismiss_alerts')
         await self.middleware.call('etc.generate', 'ups')
         await self._service("nut", "stop", force=True, onetime=True)
         # We need to wait on upsmon service to die properly as multiple processes are
         # associated with it and in most cases they haven't exited when a restart is initiated
         # for upsmon which fails as the older process is still running.
-        # Also we retrieve upsmon processes before executing a stop in case any process
-        # becomes a zombie and psutil fails to retrieve the name for it
-        upsmon_processes = set()
-        for proc in psutil.process_iter():
-            with contextlib.suppress(psutil.ZombieProcess):
-                if proc.name() == 'upsmon':
-                    upsmon_processes.add(proc)
-
         await self._service("nut_upsmon", "stop", force=True, onetime=True)
-        gone, alive = await self.middleware.run_in_thread(psutil.wait_procs, upsmon_processes, timeout=30)
-        if alive:
-            self.middleware.logger.debug('Timed out stopping upsmon service')
+        upsmon_processes = await run(['pgrep', '-x', 'upsmon'], encoding='utf8', check=False)
+        if upsmon_processes.returncode == 0:
+            gone, alive = await self.middleware.run_in_thread(
+                psutil.wait_procs,
+                map(
+                    lambda v: psutil.Process(int(v)),
+                    upsmon_processes.stdout.split()
+                ),
+                timeout=10
+            )
+            if alive:
+                for pid in map(int, upsmon_processes.stdout.split()):
+                    with contextlib.suppress(ProcessLookupError):
+                        os.kill(pid, signal.SIGKILL)
 
         await self._service("nut_upslog", "stop", force=True, onetime=True)
 
