@@ -699,6 +699,7 @@ class InitialWizard(CommonWizard):
                 'stg_kbdmap': cleaned_data.get('stg_kbdmap'),
                 'stg_timezone': cleaned_data.get('stg_timezone'),
             })
+            settingsdata['stg_guicertificate'] = settingsdata.pop('stg_guicertificate_id')
             settingsform = SettingsForm(
                 data=settingsdata,
                 instance=settingsm,
@@ -707,7 +708,7 @@ class InitialWizard(CommonWizard):
                 settingsform.save()
             else:
                 log.warn(
-                    'Active Directory data failed to validate: %r',
+                    'Settings form failed to validate: %r',
                     settingsform._errors,
                 )
         except Exception:
@@ -742,6 +743,10 @@ class InitialWizard(CommonWizard):
                     'ad_bindpw': cleaned_data.get('ds_ad_bindpw'),
                     'ad_enable': True,
                 })
+                with client as c:
+                    ad_config = c.call('activedirectory.config')
+                    addata['ad_netbiosname'] = ad_config['netbiosname']
+
                 adform = ActiveDirectoryForm(
                     data=addata,
                     instance=ad,
