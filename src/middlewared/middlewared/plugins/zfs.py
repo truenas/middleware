@@ -609,10 +609,10 @@ class ZFSQuotaService(Service):
                     human_quota_type = excess["quota_type"][0].upper() + excess["quota_type"][1:]
                     await (await self.middleware.call('mail.send', {
                         'to': to,
-                        'subject': '{}: {} exceed on dataset {}'.format(hostname, human_quota_type,
-                                                                        excess["dataset_name"]),
+                        'subject': '{}: {} exceeded on dataset {}'.format(hostname, human_quota_type,
+                                                                          excess["dataset_name"]),
                         'text': textwrap.dedent('''\
-                            %(quota_type)s exceed on dataset %(dataset_name)s.
+                            %(quota_type)s exceeded on dataset %(dataset_name)s.
                             Used %(percent_used).2f%% (%(used)s of %(quota_value)s)
                         ''') % {
                             "quota_type": human_quota_type,
