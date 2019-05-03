@@ -699,6 +699,7 @@ class InitialWizard(CommonWizard):
                 'stg_kbdmap': cleaned_data.get('stg_kbdmap'),
                 'stg_timezone': cleaned_data.get('stg_timezone'),
             })
+            settingsdata['stg_guicertificate'] = settingsdata.pop('stg_guicertificate_id')
             settingsform = SettingsForm(
                 data=settingsdata,
                 instance=settingsm,
@@ -707,7 +708,7 @@ class InitialWizard(CommonWizard):
                 settingsform.save()
             else:
                 log.warn(
-                    'Active Directory data failed to validate: %r',
+                    'Settings form failed to validate: %r',
                     settingsform._errors,
                 )
         except Exception:
