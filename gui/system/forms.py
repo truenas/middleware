@@ -743,6 +743,10 @@ class InitialWizard(CommonWizard):
                     'ad_bindpw': cleaned_data.get('ds_ad_bindpw'),
                     'ad_enable': True,
                 })
+                with client as c:
+                    ad_config = c.call('activedirectory.config')
+                    addata['ad_netbiosname'] = ad_config['netbiosname']
+
                 adform = ActiveDirectoryForm(
                     data=addata,
                     instance=ad,
