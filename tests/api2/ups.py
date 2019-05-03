@@ -126,7 +126,7 @@ def test_13_look_API_reports_UPS_configuration_of_(data):
     assert payload[data] == results.json()[data], results.text
 
 
-def test_14_look_UPS_service_status_is_running():
+def test_14_look_if_UPS_service_status_is_still_running():
     results = GET(f'/service/id/{ups_id}/')
     assert results.status_code == 200, results.text
     assert results.json()['state'] == 'RUNNING', results.text
