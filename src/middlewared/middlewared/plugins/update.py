@@ -80,10 +80,12 @@ class Sysup(object):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        #try:
-        #    line = await asyncio.wait_for(self.proc.stdout.readline(), 10)
-        #except asyncio.TimeoutError:
-        #    raise SysupException('Timed out waiting update process to initialize websocket.')
+        try:
+            line = await asyncio.wait_for(self.proc.stdout.readline(), 10)
+            if not line.startswith(b'Listening on'):
+                raise SysupException(f'Failed to start update process: {line}.')
+        except asyncio.TimeoutError:
+            raise SysupException('Timed out waiting update process to initialize websocket.')
         asyncio.ensure_future(self._log_proc())
         try:
             self.session = aiohttp.ClientSession()
