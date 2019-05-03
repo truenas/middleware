@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class QuotaWarningAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "Quota Exceed on Dataset"
+    title = "Quota Exceeded on Dataset"
     text = "%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s)."
 
 
