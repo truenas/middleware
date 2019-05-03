@@ -459,7 +459,7 @@ class UpdateService(Service):
         await self.middleware.call('cache.put', 'update.applied', True)
 
         if (
-            await self.middleware.call_sync('system.is_freenas') or
+            await self.middleware.call('system.is_freenas') or
             (
                 await self.middleware.call('failover.licensed') and
                 await self.middleware.call('failover.status') != 'BACKUP'
