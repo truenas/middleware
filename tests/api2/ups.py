@@ -110,7 +110,7 @@ def test_10_change_UPS_options_while_service_is_running():
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('data', ['ports', 'identifier'])
+@pytest.mark.parametrize('data', ['port', 'identifier'])
 def test_11_look_at_UPS_options_output_of_(data):
     assert payload[data] == results.json()[data], results.text
 
@@ -121,7 +121,7 @@ def test_12_get_API_reports_UPS_configuration_as_saved():
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('data', ['ports', 'identifier'])
+@pytest.mark.parametrize('data', ['port', 'identifier'])
 def test_13_look_API_reports_UPS_configuration_of_(data):
     assert payload[data] == results.json()[data], results.text
 
