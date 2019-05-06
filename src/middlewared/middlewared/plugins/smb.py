@@ -302,13 +302,8 @@ class SMBService(SystemServiceService):
     @private
     def groupmap_list(self):
         groupmap_list = []
-        statedir = self.getparm('state directory', 'global')
-        if not os.path.exists(f'{statedir}/group_mapping.tdb'):
-            return []
-
-        samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
-
-        groupmaps = samba3.passdb.PDB("tdbsam").enum_group_mapping()
+        passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
+        groupmaps = passdb.enum_group_mapping()
         for g in groupmaps:
             groupmap_list.append({
                 'comment': g.comment,
@@ -355,13 +350,8 @@ class SMBService(SystemServiceService):
         local users in an AD environment. Immediately return in ldap enviornment.
         """
         pdbentries = []
-        privatedir = self.getparm('privatedir', 'global')
-        passdb_backend = self.getparm('passdb backend', 'global')
-        if not os.path.exists(f'{privatedir}/passdb.tdb') or passdb_backend == 'ldapsam':
-            return []
-
-        samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
-        pdb = samba3.passdb.PDB("tdbsam").search_users(SAMR_AcctFlags.NORMAL.value)
+        passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
+        pdb = passdb.search_users(SAMR_AcctFlags.NORMAL.value)
         if not verbose:
             for p in pdb:
                 acct_flags = []
@@ -378,7 +368,7 @@ class SMBService(SystemServiceService):
             return pdbentries
 
         for p in pdb:
-            u = samba3.passdb.PDB("tdbsam").getsampwnam(p['account_name'])
+            u = passdb.getsampwnam(p['account_name'])
             acct_flags = []
             for flag in SAMR_AcctFlags:
                 if int(u.acct_ctrl) & flag:
@@ -402,24 +392,20 @@ class SMBService(SystemServiceService):
         """
         Updates a user's passdb entry to reflect the current server configuration.
         """
-        privatedir = self.getparm('privatedir', 'global')
         if self.getparm('passdb backend', 'global') == 'ldapsam':
             return
-
-        if not os.path.exists(f'{privatedir}/passdb.tdb'):
-            raise CallError(f'Unable to add [{username}] to passdb.tdb. File does not exist.', errno.ENOENT)
 
         bsduser = self.middleware.call_sync('user.query', [('username', '=', username)])
         if len(bsduser) == 0 or not bsduser[0]['smbhash']:
             return
         smbpasswd_string = bsduser[0]['smbhash'].split(':')
-        samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
+        passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
         try:
-            p = samba3.passdb.PDB('tdbsam').getsampwnam(username)
+            p = passdb.getsampwnam(username)
         except Exception:
             self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", username)
-            samba3.passdb.PDB('tdbsam').create_user(username, SAMR_AcctFlags.NORMAL)
-            p = samba3.passdb.PDB('tdbsam').getsampwnam(username)
+            passdb.create_user(username, SAMR_AcctFlags.NORMAL)
+            p = passdb.getsampwnam(username)
 
         pdb_entry_changed = False
 
@@ -443,7 +429,7 @@ class SMBService(SystemServiceService):
             p.acct_ctrl = SAMR_AcctFlags.NORMAL
             pdb_entry_changed = True
         if pdb_entry_changed:
-            samba3.passdb.PDB('tdbsam').update_sam_account(p)
+            passdb.update_sam_account(p)
 
     @private
     def synchronize_passdb(self):
@@ -453,17 +439,11 @@ class SMBService(SystemServiceService):
         Synchronize the "disabled" state of users
         Delete any entries in the passdb_tdb file that don't exist in the config file.
         """
-        privatedir = self.getparm('privatedir', 'global')
-        passdb_backend = self.getparm('passdb backend', 'global')
-        if not os.path.exists(f'{privatedir}/passdb.tdb'):
-            self.logger.debug('passdb.tdb file does not exist yet. Unable to synchronize.')
-            return
-
-        if passdb_backend == 'ldapsam':
+        if self.getparm('passdb backend', 'global') == 'ldapsam':
             self.logger.debug('Refusing to synchronize passdb.tdb while LDAP is enabled.')
             return
 
-        samba3.passdb.set_smb_config("/usr/local/etc/smb4.conf")
+        passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
         conf_users = self.middleware.call_sync('user.query', [
             ['OR', [
                 ('smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
@@ -474,11 +454,11 @@ class SMBService(SystemServiceService):
             smbpasswd_string = u['smbhash'].split(':')
             pdb_entry_changed = False
             try:
-                p = samba3.passdb.PDB('tdbsam').getsampwnam(u['username'])
+                p = passdb.getsampwnam(u['username'])
             except Exception:
                 self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", u['username'])
-                samba3.passdb.PDB('tdbsam').create_user(u['username'], SAMR_AcctFlags.NORMAL)
-                p = samba3.passdb.PDB('tdbsam').getsampwnam(u['username'])
+                passdb.create_user(u['username'], SAMR_AcctFlags.NORMAL)
+                p = passdb.getsampwnam(u['username'])
 
             try:
                 nt_passwd = binascii.hexlify(p.nt_passwd).decode().upper()
@@ -500,15 +480,15 @@ class SMBService(SystemServiceService):
                 p.acct_ctrl = SAMR_AcctFlags.NORMAL
                 pdb_entry_changed = True
             if pdb_entry_changed:
-                samba3.passdb.PDB('tdbsam').update_sam_account(p)
+                passdb.update_sam_account(p)
 
         pdb_users = self.passdb_list()
         if len(pdb_users) > len(conf_users):
             for entry in pdb_users:
                 if not any(filter(lambda x: entry['username'] == x['username'], conf_users)):
                     self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry['username'])
-                    user_to_delete = samba3.passdb.PDB('tdbsam').getsampwnam(entry['username'])
-                    samba3.passdb.PDB('tdbsam').delete_user(user_to_delete)
+                    user_to_delete = passdb.getsampwnam(entry['username'])
+                    passdb.delete_user(user_to_delete)
 
     @private
     def getparm(self, parm, section):
@@ -518,7 +498,7 @@ class SMBService(SystemServiceService):
         conditions without returning the parameter's value.
         """
         try:
-            res = param.LoadParm('usr/local/etc/smb4.conf').get(parm, section)
+            res = param.LoadParm('/usr/local/etc/smb4.conf').get(parm, section)
             return res
         except Exception as e:
             raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
