@@ -9,7 +9,6 @@ import asyncio
 import binascii
 import codecs
 import enum
-import errno
 import os
 import re
 import subprocess
