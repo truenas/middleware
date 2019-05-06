@@ -1049,6 +1049,96 @@ class SystemGeneralService(ConfigService):
 
         raise CallError('Unable to connect to any of the specified UI addresses:\n' + '\n'.join(errors))
 
+    def __get_urls(self, aliases, addrs, ipv6=False):
+
+        skip_internal = False
+        if not self.middleware.call_sync('system.is_freenas'):
+            skip_internal = True
+
+        urls = []
+        for addr in addrs:
+            ip, port = addr.split(':')
+
+            if ip == '*':
+                ips = [
+                    i["address"]
+                    for i in aliases
+                    if i['type'] == ('INET6' if ipv6 else 'INET')
+                ]
+            else:
+                ips = [ip]
+
+            for o in ips:
+                if skip_internal and o in (
+                    '169.254.10.1',
+                    '169.254.10.2',
+                    '169.254.10.20',
+                    '169.254.10.80',
+                ):
+                    continue
+
+                if ipv6 and '%' in o:
+                    o = o.split('%')[0]
+
+                if ipv6:
+                    url = f'http://[{o}]'
+                else:
+                    url = f'http://{o}'
+                if port != '80':
+                    url = f'{url}:{port}'
+                try:
+                    r = requests.head(url, timeout=10)
+                    assert r.status_code in (200, 302, 301)
+                    urls.append(url)
+                    continue
+                except Exception:
+                    pass
+
+                if ipv6:
+                    url = f'https://[{o}]'
+                else:
+                    url = f'https://{o}'
+                if port != '443':
+                    url = f'{url}:{port}'
+                try:
+                    r = requests.head(url, timeout=15, verify=False)
+                    assert r.status_code in (200, 302)
+                    urls.append(url)
+                    continue
+                except Exception:
+                    pass
+        return urls
+
+    @private
+    def get_ui_urls(self):
+        addrsv4 = []
+        addrsv6 = []
+        aliases = []
+        for i in self.middleware.call_sync('interface.query'):
+            if not i['state'] or not i['state']['aliases']:
+                continue
+            aliases += list(filter(lambda x: x['type'].startswith('INET'), i['state']['aliases']))
+
+        cp = subprocess.run(
+            'sockstat -46P tcp |awk \'{ if ($2 == "nginx" && $7 == "*:*") print $5","$6 }\' | '
+            'sort | uniq',
+            shell=True, capture_output=True, text=True,
+        )
+        for line in cp.stdout.strip('\n').split('\n'):
+            _type, addr = line.split(',')
+
+            if _type == 'tcp4':
+                addrsv4.append(addr)
+            else:
+                addrsv6.append(addr)
+
+        urls = []
+        if addrsv4:
+            urls += self.__get_urls(aliases, addrsv4)
+        if addrsv6:
+            urls += self.__get_urls(aliases, addrsv6, ipv6=True)
+        return sorted(urls)
+
     @private
     def set_language(self):
         language = self.middleware.call_sync('system.general.config')['language']
