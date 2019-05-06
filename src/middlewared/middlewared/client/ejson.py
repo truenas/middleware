@@ -19,12 +19,13 @@ class JSONEncoder(json.JSONEncoder):
 
 
 def object_hook(obj):
-    if len(obj) == 1:
+    obj_len = len(obj)
+    if obj_len == 1:
         if '$date' in obj:
             return datetime.fromtimestamp(obj['$date'] / 1000, tz=timezone.utc) + timedelta(milliseconds=obj['$date'] % 1000)
         if '$time' in obj:
             return time(*[int(i) for i in obj['$time'].split(':')])
-    if len(obj) == 2 and '$type' in obj and '$value' in obj:
+    if obj_len == 2 and '$type' in obj and '$value' in obj:
         if obj['$type'] == 'date':
             return date(*[int(i) for i in obj['$value'].split('-')])
     return obj
