@@ -113,21 +113,11 @@ class NotifierService(Service):
                 'ad_idmap_backend': ad['idmap_backend'],
                 'ds_type': 2,
                 'krb_realm': krb_realm,
+                'workgroups': smb['workgroup']
             }
         else:
             raise ValueError('Unknown ds name {0}'.format(name))
-        data = {}
-        for i in (
-            'netbiosname', 'keytab_file', 'keytab_principal', 'domainname',
-            'use_default_domain', 'dchost', 'basedn', 'binddn', 'bindpw',
-            'userdn', 'groupdn', 'ssl', 'certfile', 'id',
-            'ad_idmap_backend', 'ds_type',
-            'krb_realm', 'krbname', 'kpwdname',
-            'krb_kdc', 'krb_admin_server', 'krb_kpasswd_server',
-            'workgroups'
-        ):
-            if hasattr(ds, i):
-                data[i] = getattr(ds, i)
+
         return data
 
     def get_user_object(self, username):
@@ -147,24 +137,14 @@ class NotifierService(Service):
         return group
 
     def ldap_status(self):
-        ret = False
-        try:
-            f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
-            f.open()
-            if f.isOpen():
-                ret = True
-            f.close()
-        except Exception as e:
-            pass
-
-        return ret
+        return self.middleware.call_sync('ldap.started')
 
     def ad_status(self):
         return self.middleware.call_sync('activedirectory.started')
 
     def ds_get_idmap_object(self, ds_type, id, idmap_backend):
         data = self.middleware.call_sync('idmap.get_idmap_legacy', ds_type, idmap_backend)
-        return data 
+        return data
 
     async def ds_clearcache(self):
         """Temporary call to rebuild DS cache"""

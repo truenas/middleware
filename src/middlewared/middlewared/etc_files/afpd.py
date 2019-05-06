@@ -68,7 +68,7 @@ def render(service, middleware):
         if middleware.call_sync('activedirectory.get_state') != 'DISABLED':
             ad = Struct(middleware.call_sync('notifier.directoryservice', 'AD'))
             ds_type = 'AD'
-        elif middleware.call_sync('ldap.get_state') != 'DISABLED:
+        elif middleware.call_sync('ldap.get_state') != 'DISABLED':
             ad = Struct(middleware.call_sync('notifier.directoryservice', 'LDAP'))
             ds_type = 'LDAP'
 

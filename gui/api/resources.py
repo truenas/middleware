@@ -66,6 +66,8 @@ from freenasUI.common.freenasusers import (
     FreeNAS_Users,
     FreeNAS_ActiveDirectory_Group,
     FreeNAS_ActiveDirectory_User,
+    FreeNAS_LDAP_User,
+    FreeNAS_LDAP_Group
 )
 from freenasUI.common.system import (
     get_sw_login_version,

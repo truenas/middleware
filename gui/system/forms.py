@@ -80,7 +80,6 @@ from freenasUI.storage.forms import VolumeAutoImportForm, VolumeMixin
 from freenasUI.storage.models import Disk, Scrub, Volume
 from freenasUI.system import models
 from freenasUI.tasks.models import SMARTTest
-from ldap import LDAPError
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'

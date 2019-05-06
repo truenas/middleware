@@ -35,16 +35,10 @@ from dojango import forms
 
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.system import (
-    validate_netbios_name,
-)
 from freenasUI.directoryservice import models
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
-from freenasUI.middleware.notifier import notifier
-from freenasUI.services.models import CIFS
 
 log = logging.getLogger('directoryservice.form')
 
@@ -301,6 +295,7 @@ class NISForm(MiddlewareModelForm, ModelForm):
         data['servers'] = data['servers'].split(',')
         return data
 
+
 class LDAPForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = 'ldap_'
     middleware_attr_schema = 'ldap'
@@ -314,7 +309,7 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
         help_text=_("Kerberos principal to use for LDAP-related operations."),
         initial=''
     )
-         
+
     advanced_fields = [
         'ldap_anonbind',
         'ldap_usersuffix',
@@ -336,11 +331,11 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
         'ldap_auxiliary_parameters',
         'ldap_schema'
     ]
-            
+
     class Meta:
         fields = '__all__'
         exclude = ['ldap_idmap_backend_type']
-            
+
         model = models.LDAP
         widgets = {
             'ldap_bindpw': forms.widgets.PasswordInput(render_value=False),
@@ -371,6 +366,7 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
             data.pop('kerberos_realm')
 
         return data
+
 
 class KerberosRealmForm(MiddlewareModelForm, ModelForm):
 
@@ -432,7 +428,7 @@ class KerberosKeytabCreateForm(ModelForm):
         return encoded
 
     def save(self):
-        obj = super(KerberosKeytabCreateForm, self).save()
+        super(KerberosKeytabCreateForm, self).save()
         with client as c:
             c.call('kerberos.start')
 

@@ -660,4 +660,3 @@ class KerberosKeytabService(CRUDService):
             'KEYTAB_MTIME',
             (os.stat(keytab['SYSTEM'].value)).st_mtime
         )
-

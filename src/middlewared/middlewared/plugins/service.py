@@ -683,17 +683,17 @@ class ServiceService(CRUDService):
         return (await self.middleware.call('nis.stop')), []
 
     async def _started_ldap(self, **kwargs):
-        return await self.middleware.call('ldap.started'), [] 
+        return await self.middleware.call('ldap.started'), []
 
     async def _start_ldap(self, **kwargs):
-        return await self.middleware.call('ldap.start'), [] 
+        return await self.middleware.call('ldap.start'), []
 
     async def _stop_ldap(self, **kwargs):
-        return await self.middleware.call('ldap.stop'), [] 
+        return await self.middleware.call('ldap.stop'), []
 
     async def _restart_ldap(self, **kwargs):
         await self.middleware.call('ldap.stop')
-        return await self.middleware.call('ldap.start'), [] 
+        return await self.middleware.call('ldap.start'), []
 
     async def _start_lldp(self, **kwargs):
         await self._service("ladvd", "start", **kwargs)
@@ -706,17 +706,17 @@ class ServiceService(CRUDService):
         await self._service("ladvd", "restart", **kwargs)
 
     async def _started_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.started'), [] 
+        return await self.middleware.call('activedirectory.started'), []
 
     async def _start_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.start'), [] 
+        return await self.middleware.call('activedirectory.start'), []
 
     async def _stop_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.stop'), [] 
+        return await self.middleware.call('activedirectory.stop'), []
 
     async def _restart_activedirectory(self, **kwargs):
         await self.middleware.call('kerberos.stop'), []
-        return await self.middleware.call('activedirectory.start'), [] 
+        return await self.middleware.call('activedirectory.start'), []
 
     async def _reload_activedirectory(self, **kwargs):
         await self._service("samba_server", "stop", force=True, **kwargs)

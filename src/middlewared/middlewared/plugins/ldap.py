@@ -6,13 +6,13 @@ import ldap
 import ldap.sasl
 import pwd
 import socket
-import subprocess
 
 from ldap.controls import SimplePagedResultsControl
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService
 from middlewared.service_exception import CallError
 from middlewared.utils import run
+
 
 class DSStatus(enum.Enum):
     """
@@ -51,7 +51,7 @@ class LDAPQuery(object):
 
     def __enter__(self):
         return self
-        
+
     def __exit__(self, typ, value, traceback):
         if self._isopen:
             self._close()
@@ -85,7 +85,7 @@ class LDAPQuery(object):
             saved_gssapi_error = None
             for server in self.hosts:
                 proto = 'ldaps' if SSL(self.ldap['ssl']) == SSL.USESSL else 'ldap'
-                port = 636 if SSL(self.ldap['ssl']) == SSL.USESSL else 389 
+                port = 636 if SSL(self.ldap['ssl']) == SSL.USESSL else 389
                 uri = f"{proto}://{server}:{port}"
                 try:
                     self._handle = ldap.initialize(uri)
@@ -214,7 +214,7 @@ class LDAPQuery(object):
     def get_samba_domains(self):
         if not self._handle:
             self._open()
-        filter = '(objectclass=sambaDomain)' 
+        filter = '(objectclass=sambaDomain)'
         results = self._search(self.ldap['basedn'], ldap.SCOPE_SUBTREE, filter)
         domains = []
         if results:
@@ -222,7 +222,7 @@ class LDAPQuery(object):
                 domains.append(d[1]['sambaDomainName'][0].decode())
 
         self._close()
-        return domains 
+        return domains
 
     def get_root_DSE(self):
         """
@@ -238,17 +238,17 @@ class LDAPQuery(object):
         results = self._search('', ldap.SCOPE_BASE, filter)
         dse_objs = []
         for r in results:
-            parsed_data = {} 
-            for k,v in r[1].items():
+            parsed_data = {}
+            for k, v in r[1].items():
                 v = list(i.decode() for i in v)
-                parsed_data.update({k:v}) 
+                parsed_data.update({k: v})
 
             dse_objs.append({
                 'dn': r[0],
-                'data': parsed_data 
+                'data': parsed_data
             })
         self._close()
-        return dse_objs 
+        return dse_objs
 
 
 class LDAPService(ConfigService):
@@ -261,12 +261,12 @@ class LDAPService(ConfigService):
     @private
     async def ldap_extend(self, data):
         data['hostname'] = data['hostname'].split()
-        return data 
+        return data
 
     @private
     async def ldap_compress(self, data):
         data['hostname'] = ','.join(data['hostname'])
-        return data 
+        return data
 
     @private
     async def ldap_validate(self, ldap):
@@ -336,7 +336,6 @@ class LDAPService(ConfigService):
 
         return await self.config()
 
-
     @private
     def port_is_listening(self, host, port, timeout=1):
         ret = False
@@ -360,7 +359,7 @@ class LDAPService(ConfigService):
     @private
     def validate_credentials(self, ldap=None):
         ret = False
-        if ldap == None:
+        if ldap is None:
             ldap = self.middleware.call_sync('ldap.config')
 
         with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
@@ -370,15 +369,14 @@ class LDAPService(ConfigService):
 
     @private
     def get_samba_domains(self, ldap=None):
-        ret = [] 
-        if ldap == None:
+        ret = []
+        if ldap is None:
             ldap = self.middleware.call_sync('ldap.config')
 
         with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
             ret = LDAP.get_samba_domains()
 
         return ret
-
 
     @private
     def get_root_DSE(self, ldap=None):
@@ -396,14 +394,14 @@ class LDAPService(ConfigService):
         `supportedControl` list of supported controls
 
         `supportedSASLMechnaisms` recognized Simple Authentication and Security layers
-        (SASL) [RFC4422] mechanisms. 
+        (SASL) [RFC4422] mechanisms.
 
         `supportedLDAPVersion` LDAP versions implemented by the LDAP server
 
         In practice, this full data is not returned from many LDAP servers
         """
         ret = []
-        if ldap == None:
+        if ldap is None:
             ldap = self.middleware.call_sync('ldap.config')
 
         with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
@@ -419,34 +417,32 @@ class LDAPService(ConfigService):
             ret = await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),
                                          timeout=ldap['timeout'])
         except asyncio.TimeoutError:
-            raise CallError('LDAP status check timed out after %s seconds.' % ldap['timeout'])
+            raise CallError(f'LDAP status check timed out after {ldap["timeout"]} seconds.', errno.ETIMEDOUT)
 
         if ret:
             await self.__set_state(DSStatus['HEALTHY'])
         else:
             await self.__set_state(DSStatus['FAULTED'])
 
-        return True if ret else False 
- 
+        return True if ret else False
+
     @private
     async def get_workgroup(self, ldap=None):
         ret = None 
         smb = await self.middleware.call('smb.config')
-        if ldap == None:
+        if ldap is None:
             ldap = await self.config()
 
         try:
             ret = await asyncio.wait_for(self.middleware.call('ldap.get_samba_domains', ldap),
                                          timeout=ldap['timeout'])
         except asyncio.TimeoutError:
-            raise CallError('ldap.get_workgroup timed out after %s seconds.' % ldap['timeout'])
+            raise CallError(f'ldap.get_workgroup timed out after {ldap["timeout"]} seconds.', errno.ETIMEDOUT)
 
         if len(ret) > 1:
-            raise CallError("Multiple Samba Domains detected in LDAP environment: %s", ret)
-        self.logger.debug(ret)
+            raise CallError(f'Multiple Samba Domains detected in LDAP environment: {ret}', errno.EINVAL)
 
-        ret = ret[0] if ret else [] 
-        self.logger.debug(ret)
+        ret = ret[0] if ret else []
 
         if ret and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the LDAP domain name [{ret}]')
@@ -481,12 +477,12 @@ class LDAPService(ConfigService):
     async def nslcd_cmd(self, cmd):
         nslcd = await run(['service', 'nslcd', cmd], check=False)
         if nslcd.returncode != 0:
-            raise CallError('nslcd failed to %s with errror: %s' % cmd, nslcd.sterr.decode())
+            raise CallError(f'nslcd failed to {cmd} with errror: {nscld.stderr.decode()}', errno.EFAULT)
 
     @private
     async def nslcd_status(self):
         nslcd = await run(['service', 'nslcd', 'onestatus'], check=False)
-        return True if nslcd.returncode == 0 else False 
+        return True if nslcd.returncode == 0 else False
 
     @private
     async def start(self):
@@ -499,8 +495,8 @@ class LDAPService(ConfigService):
 
         ldap_state = await self.middleware.call('ldap.get_state')
         if ldap_state in ['LEAVING', 'JOINING']:
-            raise CallError('LDAP state is [%s]. Please wait until directory service operation completes.' % ldap_state)
- 
+            raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
+
         await self.middleware.call('datastore.update', self._config.datastore, ldap['id'], {'ldap_enable': True})
         if ldap['kerberos_realm']:
             await self.middleware.call('kerberos.start')
@@ -509,7 +505,7 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
-        has_samba_schema = True if (await self.middleware.call('ldap.get_workgroup')) else False 
+        has_samba_schema = True if (await self.middleware.call('ldap.get_workgroup')) else False
 
         if not await self.nslcd_status():
             await self.nslcd_cmd('onestart')
@@ -546,11 +542,10 @@ class LDAPService(ConfigService):
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
         self.middleware.call_sync('cache.pop', 'LDAP_cache')
-        ldap = self.middleware.call_sync('ldap.config')
         pwd_list = pwd.getpwall()
         grp_list = grp.getgrall()
 
-        local_uid_list = list(u['uid'] for u in self.middleware.call_sync('user.query')) 
+        local_uid_list = list(u['uid'] for u in self.middleware.call_sync('user.query'))
         local_gid_list = list(g['gid'] for g in self.middleware.call_sync('group.query'))
         cache_data = {'users': [], 'groups': []}
 
@@ -602,7 +597,7 @@ class LDAPService(ConfigService):
         ldap_cache = await self.get_ldap_cache()
         if not ldap_cache:
             return []
-        
+
         return ldap_cache[entry_type]
 
     @private
@@ -614,7 +609,7 @@ class LDAPService(ConfigService):
                 return grp.getgrnam(obj)
 
         except Exception:
-            return None 
+            return None
 
     @private
     async def get_ldap_userorgroup_legacy(self, entry_type='users', obj=None):
@@ -629,7 +624,7 @@ class LDAPService(ConfigService):
         else:
             if await self.middleware.call('group.query', [('group', '=', obj)]):
                 return None
-                    
+
         ldap_cache = await self.get_ldap_cache()
         if not ldap_cache:
             await self.middleware.call('ldap.get_uncached_userorgroup_legacy', entry_type, obj)
@@ -642,4 +637,3 @@ class LDAPService(ConfigService):
             ret = ret[0]
 
         return ret
-

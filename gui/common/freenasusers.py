@@ -293,6 +293,7 @@ class FreeNAS_ActiveDirectory_User(object):
         with client as c:
             self._pw = c.call('activedirectory.get_ad_userorgroup_legacy', 'users', user)
 
+
 class FreeNAS_LDAP_User(object):
     def __new__(cls, user, **kwargs):
         obj = None
@@ -320,6 +321,7 @@ class FreeNAS_LDAP_User(object):
             u['loginShell']
         ))
 
+
 class FreeNAS_LDAP_Group(object):
     def __new__(cls, group, **kwargs):
         log.debug('new-group: %s' % group)
@@ -344,6 +346,7 @@ class FreeNAS_LDAP_Group(object):
             g['gidNumber'],
             g['members']
         ))
+
 
 class FreeNAS_ActiveDirectory_Group(object):
     def __new__(cls, group, **kwargs):
@@ -445,7 +448,6 @@ class FreeNAS_Users(object):
                         user['loginShell']
                     ))
                 )
-
 
         if dir is not None:
             try:
