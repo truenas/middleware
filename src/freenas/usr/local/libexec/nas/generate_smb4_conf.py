@@ -1054,6 +1054,10 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
             gc = client.call('network.configuration.config')
             confset2(smb4_conf, "zeroconf name = %s", gc['hostname_virtual'])
 
+    if truenas_params['smb_ha_mode'] == 'UNIFIED':
+        gc = client.call('network.configuration.config')
+        confset2(smb4_conf, "zeroconf name = %s", gc['hostname_virtual'])
+
     confset1(smb4_conf, "load printers = no")
     confset1(smb4_conf, "printing = bsd")
     confset1(smb4_conf, "printcap name = /dev/null")
