@@ -731,6 +731,7 @@ class VLANForm(ModelForm):
                     int_name=vlan_vint,
                     int_dhcp=False,
                     int_ipv6auto=False,
+                    int_options='up',
                 )
             return super(VLANForm, self).save()
 
