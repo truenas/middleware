@@ -340,7 +340,9 @@ class SMBService(SystemServiceService):
             check=False
         )
         if gm_add.returncode != 0:
-            raise CallError(f'Failed to generate groupmap for [{group}]: ({gm_add.stderr.decode})')
+            raise CallError(
+                f'Failed to generate groupmap for [{group}]: ({gm_add.stderr.decode()})'
+            )
 
     @private
     def passdb_list(self, verbose=False):
