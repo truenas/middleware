@@ -114,7 +114,8 @@ class JailService(CRUDService):
             Bool("basejail", default=False),
             Bool("empty", default=False),
             Bool("short", default=False),
-            List("props", default=[])
+            List("props", default=[]),
+            Bool('https', default=True)
         )
     )
     async def do_create(self, options):
@@ -168,6 +169,7 @@ class JailService(CRUDService):
         props = options["props"]
         pool = IOCJson().json_get_value("pool")
         iocroot = IOCJson(pool).json_get_value("iocroot")
+        https = options.get('https', True)
 
         if template:
             release = template
@@ -179,7 +181,7 @@ class JailService(CRUDService):
         ):
             job.set_progress(50, f'{release} missing, calling fetch')
             self.middleware.call_sync(
-                'jail.fetch', {"release": release}, job=True
+                'jail.fetch', {"release": release, "https": https}, job=True
             )
 
         err, msg = iocage.create(
