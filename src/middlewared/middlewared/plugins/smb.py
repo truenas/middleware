@@ -394,8 +394,15 @@ class SMBService(SystemServiceService):
         if self.getparm('passdb backend', 'global') == 'ldapsam':
             return
 
-        bsduser = self.middleware.call_sync('user.query', [('username', '=', username)])
-        if len(bsduser) == 0 or not bsduser[0]['smbhash']:
+        bsduser = self.middleware.call_sync('user.query', [
+            ('username', '=', username),
+            ['OR', [
+                ('smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
+                ('smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
+            ]]
+        ])
+        if not bsduser:
+            self.logger.debug(f'{username} is not an SMB user, bypassing passdb import')
             return
         smbpasswd_string = bsduser[0]['smbhash'].split(':')
         passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
