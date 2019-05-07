@@ -250,9 +250,9 @@ def configure_interface():
             continue
 
     while True:
-        _input = input(_("Reset network configuration? (y/n) ")).lower()
+        _input = input(_("Remove the current settings of this interface? (This causes a momentary disconnection of the network.) (y/n) ")).lower()
         if _input.startswith("y"):
-            print(_("Resetting interface configuration:"), end=' ')
+            print(_("Removing interface configuration:"), end=' ')
             try:
                 if iface.id != None:
                     iface.int_ipv4address = ''
