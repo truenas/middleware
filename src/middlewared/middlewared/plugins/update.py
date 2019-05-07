@@ -76,20 +76,22 @@ class Sysup(object):
 
     async def __aenter__(self):
         self.proc = await Popen(
-            ['sysup', '-websocket'],
+            ['sysup', '--websocket', '--port', '0'],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
         try:
             line = await asyncio.wait_for(self.proc.stdout.readline(), 10)
-            if not line.startswith(b'Listening on'):
+            listen = line.decode().split('Listening on ')
+            if len(listen) != 2:
                 raise SysupException(f'Failed to start update process: {line}.')
+            listen = listen[1]
         except asyncio.TimeoutError:
             raise SysupException('Timed out waiting update process to initialize websocket.')
         asyncio.ensure_future(self._log_proc())
         try:
             self.session = aiohttp.ClientSession()
-            self.ws = await self.session.ws_connect('tcp://localhost:8134/ws')
+            self.ws = await self.session.ws_connect(f'tcp://{listen}/ws')
         except Exception:
             self.proc.kill()
             raise
