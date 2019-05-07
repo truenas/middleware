@@ -13,8 +13,13 @@ def loader_config(middleware):
 
 
 def generate_loader_config(middleware):
-    generators = [generate_serial_loader_config, generate_user_loader_config, generate_debugkernel_loader_config,
-                  generate_ha_loader_config]
+    generators = [
+        generate_serial_loader_config,
+        generate_user_loader_config,
+        generate_debugkernel_loader_config,
+        generate_ha_loader_config,
+        generate_boot_delay_config,
+    ]
     if middleware.call_sync("system.is_freenas"):
         generators.append(generate_xen_loader_config)
 
@@ -83,6 +88,12 @@ def generate_xen_loader_config(middleware):
     if proc.returncode == 0 and proc.stdout.strip() == b"HVM domU":
         return ['hint.hpet.0.clock="0"']
 
+    return []
+
+
+def generate_boot_delay_config(middleware):
+    if sysctl.filter("kern.vm_guest")[0].value != "none":
+        return ['kern.cam.boot_delay="0"']
     return []
 
 
