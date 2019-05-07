@@ -246,7 +246,7 @@ class ActiveDirectory_LDAP(object):
                         ldap.OPT_X_TLS_ALLOW
                     )
 
-                if SSL(self.ad['ssl']) == SSL.USESSL:
+                if SSL(self.ad['ssl']) == SSL.USETLS:
                     try:
                         self._handle.start_tls_s()
 

@@ -47,14 +47,16 @@ class LDAPQuery(object):
         self._isopen = False
         self._handle = None
         self._rootDSE = None
-        return
 
     def __enter__(self):
         return self
 
     def __exit__(self, typ, value, traceback):
         if self._isopen:
-            self._close()
+            try:
+                self._close()
+            except Exception as e:
+                raise CallError(f'Failed to close connection to LDAP server: {e}')
 
     def validate_credentials(self):
         """
@@ -109,12 +111,14 @@ class LDAPQuery(object):
                         ldap.OPT_X_TLS_ALLOW
                     )
 
-                if SSL(self.ldap['ssl']) == SSL.USESSL:
+                if SSL(self.ldap['ssl']) == SSL.USETLS:
                     try:
                         self._handle.start_tls_s()
 
                     except ldap.LDAPError as e:
-                        self.logger.debug('%s', e)
+                        self.logger.debug('Encountered error initializing start_tls: %s', e)
+                        saved_simple_error = e
+                        continue
 
                 if self.ldap['anonbind']:
                     try:
@@ -514,6 +518,7 @@ class LDAPService(ConfigService):
 
         if has_samba_schema:
             await self.middleware.call('etc.generate', 'smb')
+            await self.middleware.call('smb.store_ldap_admin_password')
             await self.middleware.call('service.restart', 'smb')
 
         await self.middleware.call('ldap.fill_ldap_cache')
@@ -535,9 +540,7 @@ class LDAPService(ConfigService):
 
     @private
     @job(lock='fill_ldap_cache')
-    def fill_ldap_cache(self, force=False):
-        """
-        """
+    def fill_ldap_cache(self, job, force=False):
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
@@ -580,10 +583,9 @@ class LDAPService(ConfigService):
 
     @private
     async def get_ldap_cache(self):
-        """
-        """
         if not await self.middleware.call('cache.has_key', 'LDAP_cache'):
-            await self.middleware.run_in_thread(self.fill_ldap_cache)
+            cache_job = await self.middleware.run_in_thread(self.fill_ldap_cache)
+            await cache_job.wait()
             self.logger.debug('cache fill is in progress.')
             return {}
         return await self.middleware.call('cache.get', 'LDAP_cache')
