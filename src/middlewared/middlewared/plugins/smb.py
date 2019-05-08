@@ -264,7 +264,7 @@ class SMBService(SystemServiceService):
         if out.returncode != 0:
             raise CallError(f'groupmap list failed with error {out.stderr.decode()}')
         for line in (out.stdout.decode()).splitlines():
-            m = re.match('^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
+            m = re.match(r'^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
             if m:
                 groupmap.append(m.groupdict())
 
@@ -316,7 +316,7 @@ class SMBService(SystemServiceService):
             return pdbentries
 
         if not verbose:
-            pdb= await run([SMBCmd.PDBEDIT.value, '-L', '-d', '0'], check = False)
+            pdb = await run([SMBCmd.PDBEDIT.value, '-L', '-d', '0'], check=False)
             if pdb.returncode != 0:
                 raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
             for p in (pdb.stdout.decode()).splitlines():
@@ -328,7 +328,7 @@ class SMBService(SystemServiceService):
                 })
             return pdbentries
 
-        pdb= await run([SMBCmd.PDBEDIT.value, '-Lv', '-d', '0'], check = False)
+        pdb = await run([SMBCmd.PDBEDIT.value, '-Lv', '-d', '0'], check=False)
         if pdb.returncode != 0:
             raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
 
