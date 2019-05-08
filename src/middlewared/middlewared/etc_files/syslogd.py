@@ -35,7 +35,7 @@ def generate_syslog_conf(middleware):
             host, port = config["syslogserver"], "514"
 
         syslog_conf += f'destination loghost {{ udp("{host}" port({port}) localport(514)); }};\n'
-        syslog_conf += f'log {{ source(src); filter({config["sysloglevel"]}); destination(loghost); }};'
+        syslog_conf += f'log {{ source(src); filter({config["sysloglevel"].lower()}); destination(loghost); }};\n'
 
     with open("/etc/local/syslog-ng.conf", "w") as f:
         f.write(syslog_conf)
