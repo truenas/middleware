@@ -260,8 +260,8 @@ def fixsid(middleware, conf, groupmap):
         group_SID = str(group['SID'])
         if well_known_SID_prefix not in group_SID:
             domain_SID = get_domain_sid_from_group_sid(group_SID)
-            if groupmap_SID is not None and groupmap_SID is not domain_SID:
-                logger.debug(f"Groupmap table contains more than one unique domain SIDs ({group_SID}) and ({domain_SID})")
+            if groupmap_SID is not None and groupmap_SID != domain_SID:
+                logger.debug(f"Groupmap table contains more than one unique domain SIDs ({groupmap_SID}) and ({domain_SID})")
                 logger.debug('Inconsistent entries in group_mapping.tdb. Situation uncorrectable. Removing corrupted tdb file.')
                 os.unlink(f"{conf['state directory']}/group_mapping.tdb")
                 return False
