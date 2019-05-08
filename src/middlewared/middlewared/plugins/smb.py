@@ -809,17 +809,103 @@ class SharingSMBService(CRUDService):
 
     @private
     async def apply_default_perms(self, default_perms, path, is_home):
-        if default_perms:
-            try:
-                stat = await self.middleware.call('filesystem.stat', path)
-                owner = stat['user'] or 'root'
-                group = stat['group'] or 'wheel'
-            except Exception:
-                (owner, group) = ('root', 'wheel')
+        """
+        Reset permissions on an SMB share to "default". This is a recursive
+        operaton, and will replace any existing ACL on the share path and any
+        sub-datasets. The default ACLS depends on whether this is a `[homes]`
+        share. Shares that are not the special "homes" share have the
+        following ACL:
 
-            await self.middleware.call(
-                'notifier.winacl_reset', path, owner, group, None, not is_home
-            )
+        `owner@:full_set:fd:allow`
+
+        `group@:full_set:fd:allow`
+
+        The path to homes shares are dynamically generated via pam_mkhomedir
+        The final path (the user's actual home directory) will only have the
+        following ACE:
+
+        `owner@:full_set:fd:allow`
+
+        The actual ACL written on the path specified in the UI will vary for
+        homes shares depending on whether Active Directory is enabled. In all
+        cases, the ACL is written so that users have adequate permissions to
+        traverse to their home directory and the actual home directory is only
+        accessible by the user.
+
+        If an SMB admin group has been selected, then it will also be added to the
+        share's ACL.
+        """
+        if not default_perms:
+            return
+
+        acl = []
+        admin = None
+        smb = await self.middleware.call('smb.config')
+        if smb['admin_group']:
+            admin = await self.middleware.call('notifier.get_group_object', smb['admin_group'])
+            acl.append({
+                "tag": "GROUP",
+                "id": admin[2],
+                "type": "ALLOW",
+                "perms": {"BASIC": "FULL_CONTROL"},
+                "flags": {"BASIC": "INHERIT"}
+            })
+
+        acl.append({
+            "tag": "owner@",
+            "id": None,
+            "type": "ALLOW",
+            "perms": {"BASIC": "FULL_CONTROL"},
+            "flags": {"BASIC": "INHERIT"},
+        })
+
+        if not is_home:
+            acl.append({
+                "tag": "group@",
+                "id": None,
+                "type": "ALLOW",
+                "perms": {"BASIC": "FULL_CONTROL"},
+                "flags": {"BASIC": "INHERIT"},
+            })
+
+        elif await self.middleware.call('activedirectory.get_state') == 'DISABLED':
+            acl.extend([
+                {
+                    "tag": "group@",
+                    "id": None,
+                    "type": "ALLOW",
+                    "perms": {"BASIC": "MODIFY"},
+                    "flags": {"BASIC": "NOINHERIT"}
+                },
+                {
+                    "tag": "everyone@",
+                    "id": None,
+                    "type": "ALLOW",
+                    "perms": {"BASIC": "TRAVERSE"},
+                    "flags": {"BASIC": "NOINHERIT"}
+                },
+            ])
+
+        elif default_perms and is_home and (await self.middleware.call('activedirectory.get_state')) == 'DISABLED':
+            acl.extend([
+                {
+                    "tag": "group@",
+                    "id": None,
+                    "type": "ALLOW",
+                    "perms": {"BASIC": "MODIFY"},
+                    "flags": {"INHERIT_ONLY": True}
+                },
+                {
+                    "tag": "everyone@",
+                    "id": None,
+                    "type": "ALLOW",
+                    "perms": {"BASIC": "TRAVERSE"},
+                    "flags": {"BASIC": "NOINHERIT"}
+                },
+            ])
+
+        job = await self.middleware.call('filesystem.setacl', path, acl, {'recursive': True, 'traverse': True})
+        await job.wait()
 
     @private
     async def generate_vuid(self, timemachine, vuid=""):

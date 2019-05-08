@@ -309,11 +309,17 @@ class FilesystemService(Service):
     def getacl(self, path, simplified=True):
         """
         Return ACL of a given path.
+
         Simplified returns a shortened form of the ACL permset and flags
+
         - TRAVERSE = sufficient rights to traverse a directory, but not read contents.
+
         - READ = sufficient rights to traverse a directory, and read file contents.
+
         - MODIFIY = sufficient rights to traverse, read, write, and modify a file. Equivalent to modify_set.
+
         - FULL_CONTROL = all permissions.
+
         - OTHER = does not fit into any of the above categories without losing information.
 
         In all cases we replace USER_OBJ, GROUP_OBJ, and EVERYONE with owner@, group@, everyone@ for
@@ -388,7 +394,7 @@ class FilesystemService(Service):
                         Bool('WRITE_ACL'),
                         Bool('WRITE_OWNER'),
                         Bool('SYNCHRONIZE'),
-                        Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'OTHER']),
+                        Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'TRAVERSE']),
                     ),
                     Dict(
                         'flags',
@@ -397,7 +403,7 @@ class FilesystemService(Service):
                         Bool('NO_PROPAGATE_INHERIT'),
                         Bool('INHERIT_ONLY'),
                         Bool('INHERITED'),
-                        Str('BASIC', enum=['INHERIT', 'NOINHERIT', 'OTHER']),
+                        Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
                     ),
                 )
             ],
@@ -414,12 +420,15 @@ class FilesystemService(Service):
     def setacl(self, job, path, dacl, options):
         """
         Set ACL of a given path. Takes the following parameters:
-        :path: realpath or relative path. We make a subsequent realpath call to resolve it.
-        :dacl: Accept a "simplified" ACL here or a full ACL. If the simplified ACL
-        contains ACE perms or flags that are "SPECIAL", then raise a validation error.
-        :recursive: apply the ACL recursively
-        :traverse: traverse filestem boundaries (ZFS datasets)
-        :strip: convert ACL to trivial. ACL is trivial if it can be expressed as a file mode without
+        `path` full path to directory or file.
+
+        `dacl` "simplified" ACL here or a full ACL.
+
+        `recursive` apply the ACL recursively
+
+        `traverse` traverse filestem boundaries (ZFS datasets)
+
+        `strip` convert ACL to trivial. ACL is trivial if it can be expressed as a file mode without
         losing any access rules.
 
         In all cases we replace USER_OBJ, GROUP_OBJ, and EVERYONE with owner@, group@, everyone@ for
