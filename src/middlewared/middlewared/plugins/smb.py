@@ -22,6 +22,7 @@ LOGLEVEL_MAP = {
     '10': 'DEBUG',
 }
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
+RE_NETGROUPMAP = re.compile(r"^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$")
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -264,7 +265,7 @@ class SMBService(SystemServiceService):
         if out.returncode != 0:
             raise CallError(f'groupmap list failed with error {out.stderr.decode()}')
         for line in (out.stdout.decode()).splitlines():
-            m = re.match(r'^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
+            m = RE_NETGROUPMAP.match(line)
             if m:
                 groupmap.append(m.groupdict())
 
