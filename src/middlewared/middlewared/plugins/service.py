@@ -727,18 +727,33 @@ class ServiceService(CRUDService):
 
     async def _start_activedirectory(self, **kwargs):
         res = False
+        if not await self.middleware.call('notifier.is_freenas') and await self.middleware.call('notifier.failover_licensed'):
+            systemdataset = await self.middleware.call('systemdataset.config')
+            if systemdataset['pool'] != 'freenas-boot' and await self.middleware.call('notifier.failover_status') == 'BACKUP':
+                return res
+
         if not await self._system("/etc/directoryservice/ActiveDirectory/ctl start"):
             res = True
         return res
 
     async def _stop_activedirectory(self, **kwargs):
         res = False
+        if not await self.middleware.call('notifier.is_freenas') and await self.middleware.call('notifier.failover_licensed'):
+            systemdataset = await self.middleware.call('systemdataset.config')
+            if systemdataset['pool'] != 'freenas-boot' and await self.middleware.call('notifier.failover_status') == 'BACKUP':
+                return res
+
         if not await self._system("/etc/directoryservice/ActiveDirectory/ctl stop"):
             res = True
         return res
 
     async def _restart_activedirectory(self, **kwargs):
         res = False
+        if not await self.middleware.call('notifier.is_freenas') and await self.middleware.call('notifier.failover_licensed'):
+            systemdataset = await self.middleware.call('systemdataset.config')
+            if systemdataset['pool'] != 'freenas-boot' and await self.middleware.call('notifier.failover_status') == 'BACKUP':
+                return res
+
         if not await self._system("/etc/directoryservice/ActiveDirectory/ctl restart"):
             res = True
         return res

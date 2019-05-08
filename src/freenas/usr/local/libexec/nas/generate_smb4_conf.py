@@ -1054,6 +1054,10 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
             gc = client.call('network.configuration.config')
             confset2(smb4_conf, "zeroconf name = %s", gc['hostname_virtual'])
 
+    if truenas_params['smb_ha_mode'] == 'UNIFIED':
+        gc = client.call('network.configuration.config')
+        confset2(smb4_conf, "zeroconf name = %s", gc['hostname_virtual'])
+
     confset1(smb4_conf, "load printers = no")
     confset1(smb4_conf, "printing = bsd")
     confset1(smb4_conf, "printcap name = /dev/null")
@@ -1125,13 +1129,23 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
         elif client.call('notifier.common', 'system', 'activedirectory_enabled'):
             add_activedirectory_conf(client, smb4_conf)
 
-        confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
+        if truenas_params['smb_ha_mode'] == 'UNIFIED':
+            gc = client.call('network.configuration.config')
+            confset2(smb4_conf, "netbios name = %s", gc['hostname_virtual'].upper())
+        else:
+            confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
+
         if cifs.netbiosalias:
             confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")
-        confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
+        if truenas_params['smb_ha_mode'] == 'UNIFIED':
+            gc = client.call('network.configuration.config')
+            confset2(smb4_conf, "netbios name = %s", gc['hostname_virtual'].upper())
+        else:
+            confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
+
         if cifs.netbiosalias:
             confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
         confset2(smb4_conf, "workgroup = %s", cifs.workgroup.upper())

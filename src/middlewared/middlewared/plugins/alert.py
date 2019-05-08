@@ -71,6 +71,8 @@ class AlertService(Service):
         self.blocked_sources = defaultdict(set)
         self.sources_locks = {}
 
+        self.blocked_failover_alerts_until = 0
+
     @private
     async def initialize(self):
         self.node = "A"
@@ -136,6 +138,19 @@ class AlertService(Service):
 
     @accepts()
     async def list(self):
+        nodes = await self.middleware.call("alert.node_map")
+
+        return [
+            dict(alert.__dict__,
+                 id=f"{alert.node};{alert.source};{alert.key}",
+                 node=nodes[alert.node],
+                 level=alert.level.name,
+                 formatted=alert.formatted)
+            for alert in sorted(self.__get_all_alerts(), key=lambda alert: alert.title)
+        ]
+
+    @private
+    async def node_map(self):
         nodes = {
             "A": "Active Controller",
             "B": "Standby Controller",
@@ -152,14 +167,7 @@ class AlertService(Service):
         ):
             nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
 
-        return [
-            dict(alert.__dict__,
-                 id=f"{alert.node};{alert.source};{alert.key}",
-                 node=nodes[alert.node],
-                 level=alert.level.name,
-                 formatted=alert.formatted)
-            for alert in sorted(self.__get_all_alerts(), key=lambda alert: alert.title)
-        ]
+        return nodes
 
     @accepts(Str("id"))
     def dismiss(self, id):
@@ -199,6 +207,13 @@ class AlertService(Service):
         now = datetime.now()
         for policy_name, policy in self.policies.items():
             gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
+
+            for gone_alert in list(gone_alerts):
+                for new_alert in new_alerts:
+                    if gone_alert.source == new_alert.source and gone_alert.key == new_alert.key:
+                        gone_alerts.remove(gone_alert)
+                        new_alerts.remove(new_alert)
+                        break
 
             for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice",
                                                                  [["enabled", "=", True]]):
@@ -303,20 +318,24 @@ class AlertService(Service):
         master_node = "A"
         backup_node = "B"
         run_on_backup_node = False
+        run_failover_related = False
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("notifier.failover_licensed"):
                 master_node = await self.middleware.call("failover.node")
                 try:
                     backup_node = await self.middleware.call("failover.call_remote", "failover.node")
                     remote_version = await self.middleware.call("failover.call_remote", "system.version")
+                    remote_system_state = await self.middleware.call("failover.call_remote", "system.state")
                     remote_failover_status = await self.middleware.call("failover.call_remote",
                                                                         "notifier.failover_status")
                 except Exception:
                     pass
                 else:
                     if remote_version == await self.middleware.call("system.version"):
-                        if remote_failover_status == "BACKUP":
+                        if remote_system_state == "READY" and remote_failover_status == "BACKUP":
                             run_on_backup_node = True
+
+            run_failover_related = time.monotonic() > self.blocked_failover_alerts_until
 
         for k, source_lock in list(self.sources_locks.items()):
             if source_lock.expires_at <= time.monotonic():
@@ -324,6 +343,9 @@ class AlertService(Service):
 
         for alert_source in ALERT_SOURCES.values():
             if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
+                continue
+
+            if alert_source.failover_related and not run_failover_related:
                 continue
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
@@ -362,10 +384,11 @@ class AlertService(Service):
                         else:
                             raise
                 except Exception as e:
-                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
                         alerts_b = [
                             Alert(title="Unable to run alert source %(source_name)r on backup node: %(error)s",
                                   args={
+                                      "source_name": alert_source.name,
                                       "error": str(e),
                                   },
                                   key="__remote_call_error__",
@@ -425,6 +448,11 @@ class AlertService(Service):
         source_lock = self.sources_locks.pop(lock)
         self.blocked_sources[source_lock.source_name].remove(lock)
 
+    @private
+    async def block_failover_alerts(self):
+        # This values come from observation from support of how long a M-series boot can take.
+        self.blocked_failover_alerts_until = time.monotonic() + 900
+
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
 
@@ -433,10 +461,11 @@ class AlertService(Service):
         except UnavailableException:
             raise
         except Exception as e:
-            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
                 alerts = [
                     Alert(title="Unable to run alert source %(source_name)r: %(error)s",
                           args={
+                              "source_name": alert_source.name,
                               "error": str(e),
                           },
                           key="__remote_call_error__",
