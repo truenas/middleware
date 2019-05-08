@@ -185,7 +185,7 @@ ldapctl_start()
 	fi
 
 	ldapctl_cmd ${service} ix-pam quietstart
-	ldapctl_cmd "${service} ix-cache quietstart &"
+	ldapctl_cmd ${python} ${notifier} call notifier.cachetool fill > /dev/null
 	touch "${status_file}"
 
 	return 0

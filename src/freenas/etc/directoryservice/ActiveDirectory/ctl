@@ -150,7 +150,7 @@ adctl_start()
 	cifs_restart
 
 	adctl_cmd ${service} ix-pam quietstart
-	adctl_cmd "${service} ix-cache quietstart &"
+	adctl_cmd ${python} ${notifier} call notifier.cachetool fill > /dev/null
 
 	touch "${status_file}"
 	rm "${start_file}"

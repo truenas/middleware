@@ -14,7 +14,7 @@ populate_cache()
 		dirsrv_enabled nis ||
 		dirsrv_enabled ldap
 	then
-		/usr/local/www/freenasUI/tools/cachetool.py fill
+		LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.cachetool fill > /dev/null
 	fi
 }
 

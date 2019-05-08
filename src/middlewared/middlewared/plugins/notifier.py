@@ -1,4 +1,4 @@
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, job
 
 import errno
 import os
@@ -241,11 +241,12 @@ class NotifierService(Service):
 
     async def ds_clearcache(self):
         """Temporary call to rebuild DS cache"""
-        await Popen(
-            '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire && '
-            '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill',
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True
-        )
+        cachetool_job = await self.middleware.call('notifier.cachetool', 'expire')
+        cachetool_job.wait()
+        if cachetool_job.error:
+            raise CallError(f'cachetool expire failed with error {cachetool_job.error}')
+
+        self.middleware.call('notifier.cachetool', 'fill')
 
     def samba4(self, name, args=None):
         """Temporary wrapper to use Samba4 over middlewared"""
@@ -277,6 +278,16 @@ class NotifierService(Service):
     def gui_languages(self):
         """Temporary wrapper to return available languages in django"""
         return settings.LANGUAGES
+
+    @job(lock=lambda args: 'cachetool')
+    def cachetool(self, job, action):
+        cachetool = subprocess.Popen(
+            ['/usr/local/www/freenasUI/tools/cachetool.py', action],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
+        )
+        output = cachetool.communicate()
+        if cachetool.returncode != 0:
+            raise CallError(f'Cachetool [{action}] failed: {output[1].decode()}')
 
     def humanize_size(self, number):
         """Temporary wrapper to return a human readable bytesize"""
