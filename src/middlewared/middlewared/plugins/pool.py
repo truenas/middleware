@@ -261,6 +261,8 @@ class MountFsContextManager:
 
 class PoolService(CRUDService):
 
+    attachment_delegates = []
+
     GELI_KEYPATH = '/data/geli'
 
     class Config:
@@ -1750,6 +1752,7 @@ class PoolService(CRUDService):
         Str('guid', required=True),
         Str('name'),
         Str('passphrase', private=True),
+        Bool('enable_attachments'),
     ))
     @job(lock='import_pool', pipes=['input'], check_pipes=False)
     async def import_pool(self, job, data):
@@ -1758,8 +1761,11 @@ class PoolService(CRUDService):
 
         If a `name` is specified the pool will be imported using that new name.
 
-        `devices` is required while importing an encrypted pool. In that case this method needs to
+        `passphrase` is required while importing an encrypted pool. In that case this method needs to
         be called using /_upload/ endpoint with the encryption key.
+
+        If `enable_attachments` is set to true, attachments that were disabled during pool export will be
+        re-enabled.
 
         Errors:
             ENOENT - Pool not found
@@ -1848,6 +1854,17 @@ class PoolService(CRUDService):
             if passfile:
                 os.unlink(passfile)
             raise
+
+        key = f'pool:{pool["name"]}:enable_on_import'
+        if await self.middleware.call('keyvalue.has_key', key):
+            for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
+                for delegate in self.attachment_delegates:
+                    if delegate.name == name:
+                        attachments = await delegate.query(pool, False)
+                        attachments = [attachment for attachment in attachments if attachment['id'] in ids]
+                        if attachments:
+                            await delegate.toggle(attachments, True)
+            await self.middleware.call('keyvalue.delete', key)
 
         await self.middleware.call('service.reload', 'disk')
         await self.middleware.call_hook('pool.post_import_pool', pool)
@@ -2015,7 +2032,7 @@ class PoolService(CRUDService):
         """
         Export pool of `id`.
 
-        `cascade` will remove all attachments of the given pool (`pool.attachments`).
+        `cascade` will delete all attachments of the given pool (`pool.attachments`).
         `destroy` will also PERMANENTLY destroy the pool/data.
 
         .. examples(websocket)::
@@ -2035,21 +2052,24 @@ class PoolService(CRUDService):
         """
         pool = await self._get_instance(oid)
 
-        job.set_progress(5, 'Retrieving pool attachments')
-        attachments = await self.__attachments(pool)
-        if options['cascade']:
-            job.set_progress(10, 'Deleting pool attachments')
-            await self.__delete_attachments(attachments, pool)
+        enable_on_import = {}
+        for i, delegate in enumerate(self.attachment_delegates):
+            job.set_progress(
+                i, f'{"Deleting" if options["cascade"] else "Disabling"} pool attachments: {delegate.title}')
 
-        job.set_progress(20, 'Stopping VMs using this pool (if any)')
-        # If there is any guest vm attached to this volume, we stop them
-        await self.middleware.call('vm.stop_by_pool', pool['name'], True)
+            attachments = await delegate.query(pool, True)
+            if attachments:
+                if options["cascade"]:
+                    await delegate.delete(attachments)
+                else:
+                    await delegate.toggle(attachments, False)
+                    enable_on_import[delegate.name] = [attachment['id'] for attachment in attachments]
 
-        job.set_progress(30, 'Stopping jails using this pool (if any)')
-        activated_pool = await self.middleware.call('jail.get_activated_pool')
-        if activated_pool == pool['name']:
-            for jail_host in attachments['jails']:
-                await self.middleware.call('jail.stop', jail_host)
+        key = f'pool:{pool["name"]}:enable_on_import'
+        if enable_on_import:
+            await self.middleware.call('keyvalue.set', key, enable_on_import)
+        else:
+            await self.middleware.call('keyvalue.delete', key)
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
@@ -2116,89 +2136,20 @@ class PoolService(CRUDService):
     @accepts(Int('id'))
     async def attachments(self, oid):
         """
-        Return a dict composed by the name of services and ids of each item
-        dependent of this pool.
+        Return a list of services dependent of this pool.
 
         Responsible for telling the user whether there is a related
         share, asking for confirmation.
         """
+        result = []
         pool = await self._get_instance(oid)
-        return await self.__attachments(pool)
-
-    async def __attachments(self, pool):
-        attachments = {
-            'afp': [],
-            'iscsi_extents': [],
-            'jails': [],
-            'nfs': [],
-            'replication': [],
-            'smb': [],
-            'snaptask': [],
-            'vm_devices': [],
-        }
-
-        for smb in await self.middleware.call('sharing.smb.query'):
-            if smb['path'] == pool['path'] or smb['path'].startswith(pool['path'] + '/'):
-                attachments['smb'].append(smb['id'])
-
-        for afp in await self.middleware.call('sharing.afp.query'):
-            if afp['path'] == pool['path'] or afp['path'].startswith(pool['path'] + '/'):
-                attachments['afp'].append(afp['id'])
-
-        for nfs in await self.middleware.call('sharing.nfs.query'):
-            for path in nfs['paths']:
-                if (
-                    (path == pool['path'] or path.startswith(pool['path'] + '/')) and
-                    nfs['id'] not in attachments['nfs']
-                ):
-                    attachments['nfs'].append(nfs['id'])
-
-        for extent in await self.middleware.call('iscsi.extent.query', [('type', '=', 'DISK')]):
-            if extent['path'].startswith(f'zvol/{pool["name"]}/'):
-                attachments['iscsi_extents'].append(extent['id'])
-
-        for vm_attached in await self.middleware.call('vm.stop_by_pool', pool['name']):
-            attachments['vm_devices'].append(vm_attached['device_id'])
-
-        for repl in await self.middleware.call('replication.query'):
-            if any(
-                source_dataset == pool['name'] or source_dataset.startswith(pool['name'] + '/')
-                for source_dataset in repl['source_datasets']
-            ):
-                attachments['replication'].append(repl['id'])
-
-        for snap in await self.middleware.call('pool.snapshottask.query'):
-            if (
-                snap['dataset'] == pool['name'] or
-                snap['dataset'].startswith(pool['name'] + '/')
-            ):
-                attachments['snaptask'].append(snap['id'])
-
-        activated_pool = await self.middleware.call('jail.get_activated_pool')
-        if activated_pool == pool['name']:
-            for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
-                attachments['jails'].append(j['host_hostuuid'])
-
-        return attachments
-
-    async def __delete_attachments(self, attachments, pool):
-        # TODO: use a hook and move delete/stop to each plugin
-        for name, service in (
-            ('smb', 'sharing.smb.delete'),
-            ('afp', 'sharing.afp.delete'),
-            ('nfs', 'sharing.nfs.delete'),
-            ('iscsi_extents', 'iscsi.extent.delete'),
-            ('snaptask', 'pool.snapshottask.delete'),
-        ):
-            for aid in attachments[name]:
-                await self.middleware.call(service, aid)
-
-        for name, datastore in (
-            ('replication', 'storage.replication'),
-            ('vm_devices', 'vm.device'),
-        ):
-            for aid in attachments[name]:
-                await self.middleware.call('datastore.delete', datastore, aid)
+        for delegate in self.attachment_delegates:
+            attachments = {"type": delegate.title, "attachments": []}
+            for attachment in await delegate.query(pool, True):
+                attachments["attachments"].append(await delegate.get_attachment_name(attachment))
+            if attachments["attachments"]:
+                result.append(attachments)
+        return result
 
     @staticmethod
     def __get_dev_and_disk(topology):
@@ -2424,6 +2375,10 @@ class PoolService(CRUDService):
         self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
 
         job.set_progress(100, 'Pools import completed')
+
+    @private
+    def register_attachment_delegate(self, delegate):
+        self.attachment_delegates.append(delegate)
 
     """
     These methods are hacks for old UI which supports only one volume import at a time

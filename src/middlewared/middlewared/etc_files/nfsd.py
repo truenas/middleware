@@ -75,7 +75,7 @@ def build_share_targets(share):
 async def render(service, middleware):
     config = await middleware.call("nfs.config")
 
-    shares = await middleware.call("sharing.nfs.query")
+    shares = await middleware.call("sharing.nfs.query", [["enabled", "=", True]])
 
     kerberos_keytabs = await middleware.call("datastore.query", "directoryservice.kerberoskeytab")
 

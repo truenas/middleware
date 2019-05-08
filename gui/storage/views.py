@@ -667,17 +667,14 @@ def volume_detach(request, vid):
     usedbytes = volume._get_used_bytes()
     usedsize = humanize_size(usedbytes) if usedbytes else None
     with client as c:
-        services = {
-            key: val
-            for key, val in list(c.call('pool.attachments', volume.id).items()) if len(val) > 0
-        }
+        attachments = c.call('pool.attachments', volume.id)
     if volume.vol_encrypt > 0:
         request.session["allow_gelikey"] = True
     if request.method == "POST":
         form = forms.VolumeExport(
             request.POST,
             instance=volume,
-            services=services)
+            attachments=attachments)
         if form.is_valid():
             _n = notifier()
             if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
@@ -703,13 +700,13 @@ def volume_detach(request, vid):
                     message=e.value,
                     events=["serviceFailed(\"%s\")" % e.service])
     else:
-        form = forms.VolumeExport(instance=volume, services=services)
+        form = forms.VolumeExport(instance=volume, attachments=attachments)
     return render(request, 'storage/volume_detach.html', {
         'standby_offline': standby_offline,
         'volume': volume,
         'form': form,
         'used': usedsize,
-        'services': services,
+        'attachments': attachments,
     })
 
 

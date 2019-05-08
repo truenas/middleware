@@ -43,3 +43,7 @@ class KeyValueService(Service):
             })
 
         return value
+
+    @accepts(Str('key'))
+    async def delete(self, key):
+        await self.middleware.call("datastore.delete", "system.keyvalue", [["key", "=", key]])

@@ -94,7 +94,7 @@ def render(service, middleware):
     cf_contents.append("\tlog level = %s\n" % "default:info")
     cf_contents.append("\n")
 
-    for share in middleware.call_sync('datastore.query', 'sharing.afp_share'):
+    for share in middleware.call_sync('datastore.query', 'sharing.afp_share', [['afp_enabled', '=', True]]):
         share = Struct(share)
         if share.afp_home:
             cf_contents.append("[Homes]\n")

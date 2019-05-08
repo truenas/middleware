@@ -145,6 +145,7 @@ class SharingNFSService(CRUDService):
             default=[],
             items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
         ),
+        Bool("enabled"),
         register=True,
     ))
     async def do_create(self, data):

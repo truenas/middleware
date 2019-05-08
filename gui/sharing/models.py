@@ -145,6 +145,10 @@ class CIFS_Share(Model):
             "These parameters are added to [Share] section of smb.conf"
         )
     )
+    cifs_enabled = models.BooleanField(
+        verbose_name=_("Enabled"),
+        default=True,
+    )
 
     def __str__(self):
         return self.cifs_name
@@ -297,6 +301,10 @@ class AFP_Share(Model):
         ),
         verbose_name=_("Auxiliary Parameters")
     )
+    afp_enabled = models.BooleanField(
+        verbose_name=_("Enabled"),
+        default=True,
+    )
 
     def __str__(self):
         return str(self.afp_name)
@@ -405,6 +413,10 @@ class NFS_Share(Model):
             ('krb5i', 'krb5i'),
             ('krb5p', 'krb5p'),
         ),
+    )
+    nfs_enabled = models.BooleanField(
+        verbose_name=_("Enabled"),
+        default=True,
     )
 
     def __str__(self):

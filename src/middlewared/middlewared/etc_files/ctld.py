@@ -213,7 +213,8 @@ def main(middleware):
     zpoollist = middleware.call_sync('notifier.zpool_list')
 
     # Generate the LUN section
-    for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent'):
+    for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
+                                       [['iscsi_target_extent_enabled', '=', True]]):
         extent = Struct(extent)
         path = extent.iscsi_target_extent_path
         if not path:
