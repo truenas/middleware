@@ -570,14 +570,11 @@ class UserService(CRUDService):
         if password:
             data['unixhash'] = crypted_password(password)
             # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
-            if data['locked']:
-                data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[DU         ]:LCT-{int(time.time()):X}:'
-            else:
-                data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
+            data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U         ]:LCT-{int(time.time()):X}:'
         else:
             data['unixhash'] = '*'
             data['smbhash'] = '*'
-        return password
+        return data
 
     async def __set_smbpasswd(self, username):
         """
