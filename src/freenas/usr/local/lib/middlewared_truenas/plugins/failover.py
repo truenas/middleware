@@ -72,7 +72,13 @@ class RemoteClient(object):
             ) or isinstance(e, socket.timeout):
                 raise CallError('Standby node is down', errno.EHOSTDOWN)
             raise
-        return self.client
+        return self
+
+    def call(self, *args, **kwargs):
+        try:
+            return self.client.call(*args, **kwargs)
+        except ClientException as e:
+            raise CallError(str(e), e.errno)
 
     def __exit__(self, typ, value, traceback):
         self.client.close()
@@ -653,8 +659,8 @@ class FailoverService(ConfigService):
             legacy_upgrade = False
             try:
                 remote.call('failover.upgrade_version')
-            except ClientException as e:
-                if e.errno == ClientException.ENOMETHOD:
+            except CallError as e:
+                if e.errno == CallError.ENOMETHOD:
                     legacy_upgrade = True
                 else:
                     raise
@@ -699,7 +705,7 @@ class FailoverService(ConfigService):
 
             # If they are the same we assume this is a clean upgade so we start by
             # upgrading the standby controller.
-            if local_version == remote_version:
+            if legacy_upgrade or local_version == remote_version:
                 rjob = remote.call(update_method, *update_remote_args, job='RETURN', callback=partial(
                     callback, controller='REMOTE',
                 ))
@@ -742,7 +748,7 @@ class FailoverService(ConfigService):
                 while time.monotonic() - retry_time < shutdown_timeout:
                     remote.call('core.ping')
                     time.sleep(5)
-        except CallError as e:
+        except CallError:
             pass
         else:
             raise CallError('Standby Controller failed to reboot.', errno.ETIMEDOUT)
