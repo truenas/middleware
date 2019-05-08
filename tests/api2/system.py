@@ -31,7 +31,8 @@ def test_03_check_system_version_match_with_system_info():
 
 def test_04_check_system_is_freenas():
     results = GET("/system/is_freenas/")
-    assert results.json() is True, results.text
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), bool) is True, results.text
 
 
 def test_05_check_system_debug():
