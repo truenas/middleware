@@ -192,7 +192,7 @@ def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_ale
 
 
 def format_alert(alert, node_map):
-    return (f"{node_map[alert.node]} - " if node_map else None) + alert.formatted
+    return (f"{node_map[alert.node]} - " if node_map else "") + alert.formatted
 
 
 def ellipsis(s, l):
