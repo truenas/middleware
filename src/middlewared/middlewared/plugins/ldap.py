@@ -53,10 +53,10 @@ class LDAPQuery(object):
 
     def __exit__(self, typ, value, traceback):
         if self._isopen:
-            try:
-                self._close()
-            except Exception as e:
-                raise CallError(f'Failed to close connection to LDAP server: {e}')
+            self._close()
+
+        if typ is not None:
+            raise
 
     def validate_credentials(self):
         """
