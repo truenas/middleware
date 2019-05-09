@@ -83,7 +83,8 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
         "attributes": {
             "host": "localhost",
             "private_key": result.json()["id"],
-            "remote_host_key": "ecdsa-sha2-nistp256 AAA=",
+            "remote_host_key": "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBB5fBj8hpYu+"
+                               "ts0pvDbjKOGwxRaSHqJMjo2MxkNkgn2VfG7tHq/KWmoXh/PdRu3h/b7mLrAJ1k7ZDJE1+A1MHXc=",
         },
     })
     assert result.status_code == 200, result.text
