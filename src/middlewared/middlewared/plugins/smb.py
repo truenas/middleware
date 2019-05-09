@@ -905,9 +905,7 @@ class SharingSMBService(CRUDService):
                 },
             ])
 
-        job = await self.middleware.call('filesystem.setacl', path, acl, {'recursive': True, 'traverse': True})
-        if job.error:
-            raise CallError(job.error)
+        await self.middleware.call('filesystem.setacl', path, acl, {'recursive': True, 'traverse': True})
 
     @private
     async def generate_vuid(self, timemachine, vuid=""):
