@@ -3,6 +3,7 @@ import ipaddress
 import os
 import socket
 
+from middlewared.common.pool.attachment import PoolAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import private, CRUDService, SystemServiceService, ValidationErrors
@@ -449,5 +450,35 @@ async def pool_post_import(middleware, pool):
             break
 
 
+class NFSPoolAttachmentDelegate(PoolAttachmentDelegate):
+    name = 'nfs'
+    title = 'NFS Share'
+
+    async def query(self, pool, enabled):
+        results = []
+        for nfs in await self.middleware.call('sharing.nfs.query', [['enabled', '=', enabled]]):
+            if any(path == pool['path'] or path.startswith(pool['path'] + '/') for path in nfs['paths']):
+                results.append(nfs)
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return ', '.join(attachment['paths'])
+
+    async def delete(self, attachments):
+        for attachment in attachments[:-1]:
+            await self.middleware.call('datastore.delete', 'sharing.nfs_share', attachment['id'])
+
+        await self.middleware.call('sharing.nfs.delete', attachments[-1]['id'])
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call('datastore.update', 'sharing.nfs_share', attachment['id'],
+                                       {'nfs_enabled': enabled})
+
+        await self.middleware.call('service.reload', 'nfs')
+
+
 async def setup(middleware):
+    await middleware.call('pool.register_attachment_delegate', NFSPoolAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)
