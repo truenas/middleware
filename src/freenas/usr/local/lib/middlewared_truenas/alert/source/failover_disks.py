@@ -30,15 +30,14 @@ class FailoverDisksAlertSource(AlertSource):
         if not await self.middleware.call("failover.licensed"):
             return alerts
 
-        local_disks = set((await self.middleware.call("device.get_info", "DISK")).keys())
-        remote_disks = set((await self.middleware.call("failover.call_remote", "device.get_info", ["DISK"])).keys())
+        mismatch_disks = await self.middleware.call("failover.mismatch_disks")
 
-        if local_disks - remote_disks:
+        if mismatch_disks["missing_remote"]:
             alerts.append(Alert(DisksAreNotPresentOnBackupNodeAlertClass,
-                                {"disks": ", ".join(sorted(local_disks - remote_disks))}))
+                                {"disks": ", ".join(mismatch_disks["missing_remote"])}))
 
-        if remote_disks - local_disks:
+        if mismatch_disks["missing_local"]:
             alerts.append(Alert(DisksAreNotPresentOnMasterNodeAlertClass,
-                                {"disks": ", ".join(sorted(remote_disks - local_disks))}))
+                                {"disks": ", ".join(mismatch_disks["missing_local"])}))
 
         return alerts

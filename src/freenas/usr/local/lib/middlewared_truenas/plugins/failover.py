@@ -468,9 +468,8 @@ class FailoverService(ConfigService):
             if self.middleware.call_sync('failover.check_carp_states', local, remote):
                 reasons.append('DISAGREE_CARP')
 
-            remote_disks = set(self.middleware.call_sync("failover.call_remote", "device.get_info", ["DISK"]).keys())
-            local_disks = set(self.middleware.call_sync("device.get_info", "DISK").keys())
-            if local_disks - remote_disks or remote_disks - local_disks:
+            mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
+            if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
                 reasons.append('MISMATCH_DISKS')
         except CallError as e:
             if e.errno not in (errno.ECONNREFUSED, errno.EHOSTDOWN, ClientException.ENOMETHOD):
@@ -485,6 +484,21 @@ class FailoverService(ConfigService):
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.append('NO_FAILOVER')
         return reasons
+
+    @private
+    async def mismatch_disks(self):
+        local_disks = set(filter(
+            lambda x: x.startswith('da'),
+            (await self.middleware.call('device.get_info', 'DISK')).keys(),
+        ))
+        remote_disks = set(filter(
+            lambda x: x.startswith('da'),
+            (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).keys(),
+        ))
+        return {
+            'missing_local': sorted(remote_disks - local_disks),
+            'missing_remote': sorted(local_disks - remote_disks),
+        }
 
     @accepts(Dict(
         'options',
