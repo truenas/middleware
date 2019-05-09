@@ -584,7 +584,7 @@ class LDAPService(ConfigService):
     @private
     async def get_ldap_cache(self):
         if not await self.middleware.call('cache.has_key', 'LDAP_cache'):
-            cache_job = await self.middleware.run_in_thread(self.fill_ldap_cache)
+            cache_job = await self.middleware.call('ldap.fill_ldap_cache')
             await cache_job.wait()
             self.logger.debug('cache fill is in progress.')
             return {}
