@@ -875,7 +875,7 @@ class SharingSMBService(CRUDService):
                     "id": None,
                     "type": "ALLOW",
                     "perms": {"BASIC": "MODIFY"},
-                    "flags": {"INHERIT_ONLY": True}
+                    "flags": {'DIRECTORY_INHERIT': True, 'INHERIT_ONLY': True}
                 },
                 {
                     "tag": "everyone@",
