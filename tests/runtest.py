@@ -165,7 +165,8 @@ logs_list = [
     "/var/log/middlewared.log",
     "/var/log/messages",
     "/var/log/debug.log",
-    "/var/log/console.log"
+    "/var/log/console.log",
+    "/var/log/sysup.log"
 ]
 if not path.exists(artifacts):
     makedirs(artifacts)
