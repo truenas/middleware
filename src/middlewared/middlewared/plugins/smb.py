@@ -1,10 +1,11 @@
-from middlewared.common.pool.attachment import PoolAttachmentDelegate
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, private, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
+from middlewared.utils.path import is_child
 
 import asyncio
 import binascii
@@ -953,14 +954,14 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'cifs'))
 
 
-class SMBPoolAttachmentDelegate(PoolAttachmentDelegate):
+class SMBFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'smb'
     title = 'CIFS Share'
 
-    async def query(self, pool, enabled):
+    async def query(self, path, enabled):
         results = []
         for smb in await self.middleware.call('sharing.smb.query', [['enabled', '=', enabled]]):
-            if smb['path'] == pool['path'] or smb['path'].startswith(pool['path'] + '/'):
+            if is_child(smb['path'], path):
                 results.append(smb)
 
         return results
@@ -969,10 +970,10 @@ class SMBPoolAttachmentDelegate(PoolAttachmentDelegate):
         return attachment['name']
 
     async def delete(self, attachments):
-        for attachment in attachments[:-1]:
+        for attachment in attachments:
             await self.middleware.call('datastore.delete', 'sharing.cifs_share', attachment['id'])
 
-        await self.middleware.call('sharing.smb.delete', attachments[-1]['id'])
+        await self.middleware.call('service.reload', 'cifs')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
@@ -987,5 +988,5 @@ class SMBPoolAttachmentDelegate(PoolAttachmentDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('pool.register_attachment_delegate', SMBPoolAttachmentDelegate(middleware))
+    await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

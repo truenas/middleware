@@ -3,11 +3,12 @@ import ipaddress
 import os
 import socket
 
-from middlewared.common.pool.attachment import PoolAttachmentDelegate
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import private, CRUDService, SystemServiceService, ValidationErrors
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.path import is_child
 
 
 class NFSService(SystemServiceService):
@@ -450,14 +451,14 @@ async def pool_post_import(middleware, pool):
             break
 
 
-class NFSPoolAttachmentDelegate(PoolAttachmentDelegate):
+class NFSFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'nfs'
     title = 'NFS Share'
 
-    async def query(self, pool, enabled):
+    async def query(self, path, enabled):
         results = []
         for nfs in await self.middleware.call('sharing.nfs.query', [['enabled', '=', enabled]]):
-            if any(path == pool['path'] or path.startswith(pool['path'] + '/') for path in nfs['paths']):
+            if any(is_child(nfs_path, path) for nfs_path in nfs['paths']):
                 results.append(nfs)
 
         return results
@@ -465,11 +466,16 @@ class NFSPoolAttachmentDelegate(PoolAttachmentDelegate):
     async def get_attachment_name(self, attachment):
         return ', '.join(attachment['paths'])
 
+    # NFS share can only contain paths from single dataset, that's why we can delete/disable entire share
+    # if even one path matches
     async def delete(self, attachments):
-        for attachment in attachments[:-1]:
+        for attachment in attachments:
+            await self.middleware.call(
+                'datastore.delete', 'sharing.nfs_share_path', [['share_id', '=', attachment['id']]]
+            )
             await self.middleware.call('datastore.delete', 'sharing.nfs_share', attachment['id'])
 
-        await self.middleware.call('sharing.nfs.delete', attachments[-1]['id'])
+        await self.middleware.call('service.reload', 'nfs')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
@@ -480,5 +486,5 @@ class NFSPoolAttachmentDelegate(PoolAttachmentDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('pool.register_attachment_delegate', NFSPoolAttachmentDelegate(middleware))
+    await middleware.call('pool.dataset.register_attachment_delegate', NFSFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

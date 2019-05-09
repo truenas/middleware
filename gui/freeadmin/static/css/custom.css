@@ -1407,7 +1407,7 @@ table.layoutTable > tr:first-child > td {
 .dgrid-column-nfs_alldirs {
     width: 95px;
 }
-.dgrid-column-nfs_ro, .dgrid-column-nfs_quiet {
+.dgrid-column-nfs_enabled, .dgrid-column-nfs_ro, .dgrid-column-nfs_quiet {
     width: 70px;
 }
 .dgrid-column-nfs_maproot_user, .dgrid-column-nfs_maproot_group,

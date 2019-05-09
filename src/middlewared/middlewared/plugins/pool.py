@@ -261,8 +261,6 @@ class MountFsContextManager:
 
 class PoolService(CRUDService):
 
-    attachment_delegates = []
-
     GELI_KEYPATH = '/data/geli'
 
     class Config:
@@ -1858,9 +1856,9 @@ class PoolService(CRUDService):
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.middleware.call('keyvalue.has_key', key):
             for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
-                for delegate in self.attachment_delegates:
+                for delegate in PoolDatasetService.attachment_delegates:
                     if delegate.name == name:
-                        attachments = await delegate.query(pool, False)
+                        attachments = await delegate.query(pool['path'], False)
                         attachments = [attachment for attachment in attachments if attachment['id'] in ids]
                         if attachments:
                             await delegate.toggle(attachments, True)
@@ -2053,11 +2051,11 @@ class PoolService(CRUDService):
         pool = await self._get_instance(oid)
 
         enable_on_import = {}
-        for i, delegate in enumerate(self.attachment_delegates):
+        for i, delegate in enumerate(PoolDatasetService.attachment_delegates):
             job.set_progress(
                 i, f'{"Deleting" if options["cascade"] else "Disabling"} pool attachments: {delegate.title}')
 
-            attachments = await delegate.query(pool, True)
+            attachments = await delegate.query(pool['path'], True)
             if attachments:
                 if options["cascade"]:
                     await delegate.delete(attachments)
@@ -2141,15 +2139,8 @@ class PoolService(CRUDService):
         Responsible for telling the user whether there is a related
         share, asking for confirmation.
         """
-        result = []
         pool = await self._get_instance(oid)
-        for delegate in self.attachment_delegates:
-            attachments = {"type": delegate.title, "attachments": []}
-            for attachment in await delegate.query(pool, True):
-                attachments["attachments"].append(await delegate.get_attachment_name(attachment))
-            if attachments["attachments"]:
-                result.append(attachments)
-        return result
+        return await self.middleware.call('pool.dataset.attachments', pool['name'])
 
     @staticmethod
     def __get_dev_and_disk(topology):
@@ -2376,10 +2367,6 @@ class PoolService(CRUDService):
 
         job.set_progress(100, 'Pools import completed')
 
-    @private
-    def register_attachment_delegate(self, delegate):
-        self.attachment_delegates.append(delegate)
-
     """
     These methods are hacks for old UI which supports only one volume import at a time
     """
@@ -2401,6 +2388,8 @@ class PoolService(CRUDService):
 
 
 class PoolDatasetService(CRUDService):
+
+    attachment_delegates = []
 
     class Config:
         namespace = 'pool.dataset'
@@ -2791,12 +2780,17 @@ class PoolDatasetService(CRUDService):
                 "params": ["tank/myuser"]
             }
         """
-        iscsi_target_extents = await self.middleware.call('iscsi.extent.query', [
-            ['type', '=', 'DISK'],
-            ['path', '=', f'zvol/{id}']
-        ])
-        if iscsi_target_extents:
-            raise CallError("This volume is in use by iSCSI extent, please remove it first.")
+
+        if not options['recursive'] and await self.middleware.call('zfs.dataset.query', [['id', '^', f'{id}/']]):
+            raise CallError(f'Failed to delete dataset: cannot destroy {id!r}: filesystem has children',
+                            errno.ENOTEMPTY)
+
+        dataset = await self._get_instance(id)
+        if dataset['mountpoint']:
+            for delegate in self.attachment_delegates:
+                attachments = await delegate.query(dataset['mountpoint'], True)
+                if attachments:
+                    await delegate.delete(attachments)
 
         return await self.middleware.call('zfs.dataset.delete', id, {
             'force': options['force'],
@@ -2904,6 +2898,30 @@ class PoolDatasetService(CRUDService):
             if num > numdisks:
                 numdisks = num
         return '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
+
+    @item_method
+    @accepts(Str('id', required=True))
+    async def attachments(self, oid):
+        """
+        Return a list of services dependent of this dataset.
+
+        Responsible for telling the user whether there is a related
+        share, asking for confirmation.
+        """
+        result = []
+        dataset = await self._get_instance(oid)
+        if dataset['mountpoint']:
+            for delegate in self.attachment_delegates:
+                attachments = {"type": delegate.title, "attachments": []}
+                for attachment in await delegate.query(dataset['mountpoint'], True):
+                    attachments["attachments"].append(await delegate.get_attachment_name(attachment))
+                if attachments["attachments"]:
+                    result.append(attachments)
+        return result
+
+    @private
+    def register_attachment_delegate(self, delegate):
+        self.attachment_delegates.append(delegate)
 
 
 class PoolScrubService(CRUDService):

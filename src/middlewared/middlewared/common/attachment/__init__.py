@@ -1,11 +1,11 @@
-class PoolAttachmentDelegate:
+class FSAttachmentDelegate:
     name = NotImplementedError
     title = NotImplementedError
 
     def __init__(self, middleware):
         self.middleware = middleware
 
-    async def query(self, pool, enabled):
+    async def query(self, path, enabled):
         raise NotImplementedError
 
     async def get_attachment_name(self, attachment):
