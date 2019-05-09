@@ -2643,12 +2643,14 @@ class PoolDatasetService(CRUDService):
                 'notifier.change_dataset_share_type', data['name'], data.get('share_type', 'UNIX').lower()
             )
             if data.get('share_type', 'UNIX') == 'WINDOWS':
-                dataset = await self.middleware.call('zfs.dataset.query', [('name', '=', data['name'])])
+                dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', data['id'])])
                 setacl_job = await self.middleware.call('filesystem.setacl', dataset[0]['mountpoint'], [
                     {"tag": "owner@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
                     {"tag": "group@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}}
                 ])
                 await setacl_job.wait()
+                if setacl_job.error:
+                    raise CallError(setacl_job.error)
 
         return await self._get_instance(data['id'])
 

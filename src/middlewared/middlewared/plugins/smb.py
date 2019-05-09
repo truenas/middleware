@@ -8,6 +8,7 @@ from middlewared.utils import Popen, run
 import asyncio
 import codecs
 import enum
+import grp
 import os
 import re
 import subprocess
@@ -842,7 +843,7 @@ class SharingSMBService(CRUDService):
         admin = None
         smb = await self.middleware.call('smb.config')
         if smb['admin_group']:
-            admin = await self.middleware.call('notifier.get_group_object', smb['admin_group'])
+            admin = await self.middleware.run_in_thread(grp.getgrnam, smb['admin_group'])
             acl.append({
                 "tag": "GROUP",
                 "id": admin[2],
@@ -905,7 +906,8 @@ class SharingSMBService(CRUDService):
             ])
 
         job = await self.middleware.call('filesystem.setacl', path, acl, {'recursive': True, 'traverse': True})
-        await job.wait()
+        if job.error:
+            raise CallError(job.error)
 
     @private
     async def generate_vuid(self, timemachine, vuid=""):
