@@ -1672,9 +1672,9 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
             data.pop(k, None)
         return data
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         with client as c:
-            c.call("alert_service.delete", self.instance.id)
+            c.call("alertservice.delete", self.instance.id)
 
 
 class SystemDatasetForm(MiddlewareModelForm, ModelForm):
