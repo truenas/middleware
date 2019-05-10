@@ -1733,7 +1733,7 @@ def main():
         truenas_params['failover_status'] = client.call('notifier.failover_status')
         systemdataset = client.call('systemdataset.config')
         cifs = client.call('smb.config')
-        if systemdataset['pool'] is not 'freenas-boot':
+        if systemdataset['pool'] != 'freenas-boot':
             truenas_params['smb_ha_mode'] = 'UNIFIED'
             if truenas_params['failover_status'] != "MASTER":
                 """
