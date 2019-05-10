@@ -262,6 +262,10 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
             if not data[key]:
                 data.pop(key)
 
+        for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
+            if key in data and data[key] is not None:
+                data[key] = data[key].upper()
+
         data['netbiosalias'] = data['netbiosalias'].split()
         if data['kerberos_principal'] == '---------':
             data['kerberos_principal'] = ''
@@ -354,6 +358,9 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
         for key in ['certificate']:
             if not data[key]:
                 data.pop(key)
+
+        for key in ["ssl", "idmap_backend", "schema"]:
+            data[key] = data[key].upper()
 
         if data['kerberos_principal'] == '---------':
             data['kerberos_principal'] = ''

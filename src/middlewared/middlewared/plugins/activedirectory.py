@@ -53,9 +53,9 @@ class SRV(enum.Enum):
 
 
 class SSL(enum.Enum):
-    NOSSL = 'off'
-    USESSL = 'on'
-    USETLS = 'start_tls'
+    NOSSL = 'OFF'
+    USESSL = 'ON'
+    USETLS = 'START_TLS'
 
 
 class ActiveDirectory_DNS(object):
@@ -527,6 +527,10 @@ class ActiveDirectoryService(ConfigService):
                 'netbiosalias': smb['netbiosalias']
             })
 
+        for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
+            if key in ad and ad[key] is not None:
+                ad[key] = ad[key].upper()
+
         return ad
 
     @private
@@ -543,6 +547,10 @@ class ActiveDirectoryService(ConfigService):
         for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
             if key in ad:
                 ad.pop(key)
+
+        for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
+            if key in ad:
+                ad[key] = ad[key].lower()
 
         return ad
 
@@ -583,7 +591,7 @@ class ActiveDirectoryService(ConfigService):
         Str('domainname', required=True),
         Str('bindname'),
         Str('bindpw', private=True),
-        Str('ssl', default='off', enum=['off', 'on', 'start_tls']),
+        Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
         Int('certificate'),
         Bool('verbose_logging'),
         Bool('unix_extensions'),
@@ -603,9 +611,9 @@ class ActiveDirectoryService(ConfigService):
         Str('kerberos_principal', null=True),
         Int('timeout'),
         Int('dns_timeout'),
-        Str('idmap_backend', default='rid', enum=['ad', 'autorid', 'fruit', 'ldap', 'nss', 'rfc2307', 'rid', 'script']),
-        Str('nss_info', default='', enum=['sfu', 'sfu20', 'rfc2307']),
-        Str('ldap_sasl_wrapping', default='sign', enum=['plain', 'sign', 'seal']),
+        Str('idmap_backend', default='RID', enum=['AD', 'AUTORID', 'FRUIT', 'LDAP', 'NSS', 'RFC2307', 'RID', 'SCRIPT']),
+        Str('nss_info', default='', enum=['SFU', 'SFU20', 'RFC2307']),
+        Str('ldap_sasl_wrapping', default='SIGN', enum=['PLAIN', 'SIGN', 'SEAL']),
         Str('createcomputer'),
         Str('netbiosname'),
         Str('netbiosname_b'),
@@ -712,7 +720,7 @@ class ActiveDirectoryService(ConfigService):
 
         if old['idmap_backend'] != new['idmap_backend']:
             idmap = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
-            await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend']})
+            await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend'].lower()})
 
         if not old['enable']:
             if new['enable']:

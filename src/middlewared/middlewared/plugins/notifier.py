@@ -18,9 +18,6 @@ if not apps.ready:
 from django.conf import settings
 from freenasUI import choices
 from freenasUI import common as fcommon
-from freenasUI.common.freenasldap import (
-    FLAGS_DBINIT,
-)
 from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier

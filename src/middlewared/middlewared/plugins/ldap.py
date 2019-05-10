@@ -9,7 +9,7 @@ import socket
 
 from ldap.controls import SimplePagedResultsControl
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService
+from middlewared.service import job, private, ConfigService, ValidationError
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 
@@ -32,9 +32,9 @@ class DSStatus(enum.Enum):
 
 
 class SSL(enum.Enum):
-    NOSSL = 'off'
-    USESSL = 'on'
-    USETLS = 'start_tls'
+    NOSSL = 'OFF'
+    USESSL = 'ON'
+    USETLS = 'START_TLS'
 
 
 class LDAPQuery(object):
@@ -54,9 +54,6 @@ class LDAPQuery(object):
     def __exit__(self, typ, value, traceback):
         if self._isopen:
             self._close()
-
-        if typ is not None:
-            raise
 
     def validate_credentials(self):
         """
@@ -265,16 +262,25 @@ class LDAPService(ConfigService):
     @private
     async def ldap_extend(self, data):
         data['hostname'] = data['hostname'].split()
+        for key in ["ssl", "idmap_backend", "schema"]:
+            data[key] = data[key].upper()
+
         return data
 
     @private
     async def ldap_compress(self, data):
         data['hostname'] = ','.join(data['hostname'])
+        for key in ["ssl", "idmap_backend", "schema"]:
+            data[key] = data[key].lower()
+
+        if not data['bindpw']:
+            data.pop('bindpw')
+
         return data
 
     @private
     async def ldap_validate(self, ldap):
-        port = 636 if SSL(self.ldap['ssl']) == SSL.USESSL else 389
+        port = 636 if SSL(ldap['ssl']) == SSL.USESSL else 389
         for h in ldap['hostname']:
             self.middleware.call('ldap.port_is_listening', h, port, ldap['dns_timeout'])
         self.middleware.call('ldap.validate_credentials')
@@ -291,11 +297,11 @@ class LDAPService(ConfigService):
         Str('passwordsuffix'),
         Str('machinesuffix'),
         Str('sudosuffix'),
-        Str('ssl', default='off', enum=['off', 'on', 'start_tls']),
+        Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
         Int('certificate'),
         Int('timeout', default=30),
         Int('dns_timeout', default=5),
-        Str('idmap_backend', default='ldap', enum=['script', 'ldap']),
+        Str('idmap_backend', default='LDAP', enum=['SCRIPT', 'LDAP']),
         Dict(
             'kerberos_realm',
             Int('id'),
@@ -307,7 +313,7 @@ class LDAPService(ConfigService):
         Str('kerberos_principal'),
         Bool('has_samba_schema', default=False),
         Str('auxiliary_parameters', default=False),
-        Str('schema', default='rfc2307', enum=['rfc2307', 'rfc2307bis']),
+        Str('schema', default='RFC2307', enum=['RFC2307', 'RFC2307BIS']),
         Bool('enable'),
         update=True
     ))
@@ -334,6 +340,11 @@ class LDAPService(ConfigService):
 
         if must_reload:
             if new['enable']:
+                try:
+                    await self.middleware.call('ldap.ldap_validate', new)
+                except Exception as e:
+                    ValidationError('ldap_update', str(e))
+
                 await self.middleware.call('ldap.start')
             else:
                 await self.middleware.call('ldap.stop')
@@ -411,12 +422,14 @@ class LDAPService(ConfigService):
         with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
             ret = LDAP.get_root_DSE()
 
-        self.logger.debug(ret)
         return ret
 
     @private
     async def started(self):
         ldap = await self.config()
+        if not ldap['enable']:
+            return False
+
         try:
             ret = await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),
                                          timeout=ldap['timeout'])
@@ -432,7 +445,7 @@ class LDAPService(ConfigService):
 
     @private
     async def get_workgroup(self, ldap=None):
-        ret = None 
+        ret = None
         smb = await self.middleware.call('smb.config')
         if ldap is None:
             ldap = await self.config()
@@ -481,7 +494,7 @@ class LDAPService(ConfigService):
     async def nslcd_cmd(self, cmd):
         nslcd = await run(['service', 'nslcd', cmd], check=False)
         if nslcd.returncode != 0:
-            raise CallError(f'nslcd failed to {cmd} with errror: {nscld.stderr.decode()}', errno.EFAULT)
+            raise CallError(f'nslcd failed to {cmd} with errror: {nslcd.stderr.decode()}', errno.EFAULT)
 
     @private
     async def nslcd_status(self):
