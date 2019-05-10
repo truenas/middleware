@@ -2335,11 +2335,11 @@ class PoolService(CRUDService):
                             'altroot': '/mnt',
                             'cachefile': 'none',
                         }, True, zpool_cache_saved if os.path.exists(zpool_cache_saved) else None)
-                    except Exception as e:
-                        # If the pool exists but failed to import skip this one
-                        if not isinstance(e, CallError) or e.errno != errno.ENOENT:
-                            self.logger.error('Failed to import %s', pool['name'], exc_info=True)
-                            continue
+                    except Exception:
+                        # Importing a pool may fail because of out of date guid database entry
+                        # or because bad cachefile. Try again using the pool name and wihout
+                        # the cachefile
+                        self.logger.error('Failed to import %s', pool['name'], exc_info=True)
                     else:
                         imported = True
                 if not imported:
