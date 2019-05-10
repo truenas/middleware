@@ -642,6 +642,9 @@ class SharingSMBService(CRUDService):
 
         default_perms = data.pop('default_permissions', True)
 
+        if 'noacl' in data['vfsobjects']:
+            default_perms = False
+
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
 
@@ -747,6 +750,13 @@ class SharingSMBService(CRUDService):
                 verrors, self.middleware, f"{schema_name}.path", data['path']
             )
 
+        if 'noacl' in data['vfsobjects']:
+            if not await self.middleware.call('filesystem.acl_is_trivial', data['path']):
+                verrors.add(
+                    f'{schema_name}.vfsobjects',
+                    f'The "noacl" VFS module is incompatible with the extended ACL on {data["path"]}.'
+                )
+
         if data.get('name') and data['name'] == 'global':
             verrors.add(
                 f'{schema_name}.name',
@@ -806,6 +816,7 @@ class SharingSMBService(CRUDService):
     async def compress(self, data):
         data['hostsallow'] = ' '.join(data['hostsallow'])
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
+
         return data
 
     @private
