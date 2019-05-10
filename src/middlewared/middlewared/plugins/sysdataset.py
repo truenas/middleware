@@ -112,6 +112,14 @@ class SystemDatasetService(ConfigService):
         if config['rrd'] != new['rrd']:
             await self.rrd_toggle()
             await self.middleware.call('service.restart', 'collectd')
+
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('notifier.failover_status') == 'MASTER':
+                try:
+                    await self.middleware.call('failover.call_remote', 'system.reboot')
+                except Exception as e:
+                    self.logger.debug('Failed to reboot passive storage controller after system dataset change: %s' % e)
+
         return config
 
     @accepts(Bool('mount', default=True))
