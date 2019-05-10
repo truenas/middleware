@@ -18,7 +18,6 @@ import shutil
 import socket
 import struct
 import subprocess
-import sys
 import sysctl
 import syslog
 import tarfile
@@ -26,7 +25,7 @@ import textwrap
 import time
 import uuid
 
-from licenselib.license import ContractType, Features
+from licenselib.license import ContractType, Features, License
 
 # FIXME: Temporary imports until license lives in middlewared
 if '/usr/local/www' not in sys.path:
@@ -41,6 +40,7 @@ SYSTEM_SHUTTING_DOWN = False
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
+LICENSE_FILE = '/data/license'
 
 
 class SytemAdvancedService(ConfigService):
@@ -299,6 +299,29 @@ class SystemService(Service):
         ):
             license["features"].append(Features.fibrechannel.name.upper())
         return license
+
+    @private
+    def license_path(self):
+        return LICENSE_FILE
+
+    @accepts(Str('license'))
+    def license_update(self, license):
+        """
+        Update license file.
+        """
+        try:
+            License.load(license)
+        except Exception:
+            raise CallError('This is not a valid license.')
+
+        with open(LICENSE_FILE, 'w+') as f:
+            f.write(license)
+
+        self.middleware.call_sync('etc.generate', 'rc')
+
+        self.middleware.run_coroutine(
+            self.middleware.call_hook('system.post_license_update'), wait=False,
+        )
 
     @accepts()
     async def info(self):

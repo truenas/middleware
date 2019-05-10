@@ -110,20 +110,13 @@ def license_update(request):
     if request.method == 'POST':
         form = forms.LicenseUpdateForm(request.POST)
         if form.is_valid():
-            with open(utils.LICENSE_FILE, 'wb+') as f:
-                f.write(form.cleaned_data.get('license').encode('ascii'))
             with client as c:
-                c.call('etc.generate', 'rc')
-            events = []
-            try:
-                _n = notifier()
-                if not _n.is_freenas():
-                    with client as c:
-                        _n.sync_file_send(c, utils.LICENSE_FILE)
-                        c.call('failover.call_remote', 'etc.generate', ['rc'])
-                form.done(request, events)
-            except Exception as e:
-                log.debug("Failed to sync license file: %s", e, exc_info=True)
+                try:
+                    c.call('system.license_update', form.cleaned_data.get('license').encode('ascii'))
+                except Exception as e:
+                    form._errors['__all__'] = form.error_class([str(e)])
+                    return JsonResp(request, form=form)
+
             return JsonResp(
                 request,
                 events=events,

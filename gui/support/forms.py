@@ -97,18 +97,3 @@ class LicenseUpdateForm(Form):
         label=_('License'),
         widget=forms.widgets.Textarea,
     )
-
-    def clean_license(self):
-        license = self.cleaned_data.get('license', '').strip()
-        try:
-            License.load(license)
-        except:
-            raise forms.ValidationError(_('This is not a valid license.'))
-        return license
-
-    def done(self, *args, **kwargs):
-        super(LicenseUpdateForm, self).done(*args, **kwargs)
-        _n = notifier()
-        if not _n.is_freenas() and _n.failover_licensed() and utils.fc_enabled():
-            with client as c:
-                c.call('etc.generate', 'loader')
