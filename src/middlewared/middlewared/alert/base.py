@@ -145,7 +145,11 @@ class ThreadedAlertService(AlertService):
     def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = self.middleware.call_sync("system.product_name")
         hostname = self.middleware.call_sync("system.info")["hostname"]
-        return format_alerts(product_name, hostname, alerts, gone_alerts, new_alerts)
+        if not self.middleware.call_sync("system.is_freenas"):
+            node_map = self.middleware.call_sync("alert.node_map")
+        else:
+            node_map = None
+        return format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts)
 
 
 class ProThreadedAlertService(ThreadedAlertService):
