@@ -1581,6 +1581,12 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         help_text=_("API Key"),
         required=False,
     )
+    api_url = forms.CharField(
+        max_length=255,
+        label=_("API URL"),
+        help_text=_("API URL (leave empty for default)"),
+        required=False,
+    )
 
     # AWS SNS
     region = forms.CharField(
@@ -1647,7 +1653,7 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         'InfluxDB': ['host', 'username', 'password', 'database', 'series_name'],
         'Mattermost': ['cluster_name', 'url', 'username', 'password', 'team', 'channel'],
         'Mail': ['email'],
-        'OpsGenie': ['cluster_name', 'api_key'],
+        'OpsGenie': ['cluster_name', 'api_key', 'api_url'],
         'PagerDuty': ['service_key', 'client_name'],
         'Slack': ['cluster_name', 'url', 'channel', 'username', 'icon_url', 'detailed'],
         'SNMPTrap': [],
