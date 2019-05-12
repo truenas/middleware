@@ -230,14 +230,14 @@ class ZFSPoolService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
-    def __zfs_vdev_operation(self, name, label, op):
+    def __zfs_vdev_operation(self, name, label, op, *args):
         try:
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(name)
                 target = find_vdev(pool, label)
                 if target is None:
                     raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
-                op(target)
+                op(target, *args)
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
@@ -255,12 +255,14 @@ class ZFSPoolService(CRUDService):
         """
         self.__zfs_vdev_operation(name, label, lambda target: target.offline())
 
-    @accepts(Str('pool'), Str('label'))
-    def online(self, name, label):
+    @accepts(
+        Str('pool'), Str('label'), Bool('expand', default=False)
+    )
+    def online(self, name, label, expand=False):
         """
         Online device `label` from the pool `pool`.
         """
-        self.__zfs_vdev_operation(name, label, lambda target: target.online())
+        self.__zfs_vdev_operation(name, label, lambda target, *args: target.online(*args), expand)
 
     @accepts(Str('pool'), Str('label'))
     def remove(self, name, label):
