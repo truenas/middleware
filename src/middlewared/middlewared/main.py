@@ -74,9 +74,7 @@ class Application(object):
         self.__callbacks[name].append(method)
 
     def _send(self, data):
-        asyncio.run_coroutine_threadsafe(self.response.send_json(
-            data, dumps=json.dumps
-        ), loop=self.loop)
+        asyncio.run_coroutine_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
