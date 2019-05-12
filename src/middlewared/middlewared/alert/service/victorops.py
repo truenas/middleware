@@ -21,7 +21,7 @@ class VictorOpsAlertService(ProThreadedAlertService):
             headers={"Content-type": "application/json"},
             data=json.dumps({
                 "message_type": "CRITICAL",
-                "entity_id": self._alert_id(alert),
+                "entity_id": alert.uuid,
                 "entity_display_name": alert.formatted,
                 "state_message": alert.formatted,
             }),
@@ -36,7 +36,7 @@ class VictorOpsAlertService(ProThreadedAlertService):
             headers={"Content-type": "application/json"},
             data=json.dumps({
                 "message_type": "RECOVERY",
-                "entity_id": self._alert_id(alert),
+                "entity_id": alert.uuid,
                 "entity_display_name": alert.formatted,
                 "state_message": alert.formatted,
             }),

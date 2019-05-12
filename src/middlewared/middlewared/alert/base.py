@@ -1,6 +1,5 @@
 from datetime import timedelta
 import enum
-import hashlib
 import json
 import logging
 import os
@@ -228,9 +227,6 @@ class AlertService:
 
     async def send(self, alerts, gone_alerts, new_alerts):
         raise NotImplementedError
-
-    def _alert_id(self, alert):
-        return hashlib.sha256(json.dumps([alert.source, alert.key]).encode("utf-8")).hexdigest()
 
     async def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = await self.middleware.call("system.product_name")
