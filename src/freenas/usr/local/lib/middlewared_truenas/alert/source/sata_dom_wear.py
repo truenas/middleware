@@ -22,8 +22,8 @@ class SATADOMWearAlertSource(AlertSource):
 
     async def check(self):
         alerts = []
-        for disk in self.middleware.call("disk.query"):
-            lifetime = self.middleware.call("disk.sata_dom_lifetime_left", disk["devname"])
+        for disk in await self.middleware.call("disk.query"):
+            lifetime = await self.middleware.call("disk.sata_dom_lifetime_left", disk["devname"])
             if lifetime is not None:
                 if lifetime <= 0.1:
                     alerts.append(Alert(SATADOMWearCriticalAlertClass, {
