@@ -61,7 +61,7 @@ class AlertClass(metaclass=AlertClassMeta):
         if args is None:
             return cls.text
 
-        return cls.text % args
+        return cls.text % (tuple(args) if isinstance(args, list) else args)
 
 
 class OneShotAlertClass:
