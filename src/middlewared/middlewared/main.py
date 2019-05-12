@@ -64,7 +64,7 @@ class Application(object):
         self.__callbacks[name].append(method)
 
     def _send(self, data):
-        self.response.send_json(data, dumps=json.dumps)
+        self.response.send_str(json.dumps(data))
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
