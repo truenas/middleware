@@ -238,7 +238,7 @@ class FailoverService(ConfigService):
     async def get_carp_states(self, interfaces=None):
         if interfaces is None:
             interfaces = await self.middleware.call('interface.query')
-        masters, backups = [], []
+        masters, backups, inits = [], [], []
         internal_interfaces = await self.middleware.call('failover.internal_interfaces')
         for iface in interfaces:
             if iface['name'] in internal_interfaces:
@@ -247,9 +247,14 @@ class FailoverService(ConfigService):
                 continue
             if iface['state']['carp_config'][0]['state'] == 'MASTER':
                 masters.append(iface['name'])
-            else:
+            elif iface['state']['carp_config'][0]['state'] == 'BACKUP':
                 backups.append(iface['name'])
-        return masters, backups
+            elif iface['state']['carp_config'][0]['state'] == 'INIT':
+                inits.append(iface['name'])
+            else:
+                self.logger.warning('Unknown CARP state %r for interface %s', iface['state']['carp_config'][0]['state'],
+                                    iface['name'])
+        return masters, backups, inits
 
     @private
     async def check_carp_states(self, local, remote):
@@ -266,6 +271,11 @@ class FailoverService(ConfigService):
                 errors.append(f"Interface {name} is MASTER on both nodes")
             if name in local[1] and name in remote[1]:
                 errors.append(f"Interface {name} is BACKUP on both nodes")
+        for name in set(local[2] + remote[2]):
+            if name not in local[2]:
+                errors.append(f"Interface {name} is in a non-functioning state on local system")
+            if name not in remote[2]:
+                errors.append(f"Interface {name} is in a non-functioning state on remote system")
 
         return errors
 
