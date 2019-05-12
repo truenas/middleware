@@ -7,7 +7,7 @@ IMPORTS
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 freeNas MODULE-IDENTITY
-    LAST-UPDATED "201710270000Z"
+    LAST-UPDATED "201905120000Z"
     ORGANIZATION "www.ixsystems.com"
     CONTACT-INFO
         "postal:   2490 Kruse Dr
@@ -16,7 +16,7 @@ freeNas MODULE-IDENTITY
          email:    support@iXsystems.com"
     DESCRIPTION
         ""
-    REVISION     "201710270000Z"
+    REVISION     "201905120000Z"
     DESCRIPTION
         ""
     ::= { enterprises 50536 }
@@ -39,9 +39,13 @@ AlertLevelType ::= TEXTUAL-CONVENTION
     DESCRIPTION
         ""
     SYNTAX  INTEGER {
-                info(20),
-                warning(30),
-                critical(50)
+                info(1),
+                notice(2),
+                warning(3),
+                error(4),
+                critical(5),
+                alert(6),
+                emergency(7)
                 }
 
 zfs     OBJECT IDENTIFIER ::= { freeNas 1 }
