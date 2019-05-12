@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from decimal import Decimal
 import logging
 import os
 import re
@@ -528,7 +527,7 @@ class Element(object):
 
     @property
     def value(self):
-        return Decimal(self.value_raw & 0xffff)
+        return self.value_raw & 0xffff
 
     @property
     def status(self):
@@ -663,7 +662,7 @@ class CurrSensor(Element):
     @property
     def value(self):
         output = []
-        output.append("%sA" % (Decimal(self.value_raw & 0xffff) / 100, ))
+        output.append("%sA" % ((self.value_raw & 0xffff) / 100))
 
         if self.identify:
             output.append("Identify on")
@@ -753,7 +752,7 @@ class VoltSensor(Element):
     @property
     def value(self):
         output = []
-        output.append("%sV" % (Decimal(self.value_raw & 0xffff) / 100, ))
+        output.append("%sV" % ((self.value_raw & 0xffff) / 100))
 
         if self.identify:
             output.append("Identify on")
@@ -781,7 +780,7 @@ class Cooling(Element):
 
     @property
     def value(self):
-        return "%s RPM" % (Decimal((self.value_raw & 0x7ff00) >> 8) * 10, )
+        return "%s RPM" % (((self.value_raw & 0x7ff00) >> 8) * 10)
 
 
 class TempSensor(Element):
