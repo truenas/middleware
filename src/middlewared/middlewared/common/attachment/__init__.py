@@ -1,4 +1,7 @@
-class FSAttachmentDelegate:
+from middlewared.service import ServiceChangeMixin
+
+
+class FSAttachmentDelegate(ServiceChangeMixin):
     name = NotImplementedError
     title = NotImplementedError
 

@@ -973,14 +973,14 @@ class SMBFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'sharing.cifs_share', attachment['id'])
 
-        await self.middleware.call('service.reload', 'cifs')
+        await self._service_change('cifs', 'reload')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
             await self.middleware.call('datastore.update', 'sharing.cifs_share', attachment['id'],
                                        {'cifs_enabled': enabled})
 
-        await self.middleware.call('service.reload', 'cifs')
+        await self._service_change('cifs', 'reload')
 
         if not enabled:
             for attachment in attachments:

@@ -1,12 +1,14 @@
 import asyncio
 
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
                                 Patch, UnixPerm)
 from middlewared.validators import IpAddress, Range
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  CRUDService, private)
 from middlewared.service_exception import CallError
+from middlewared.utils.path import is_child
 import os
 
 
@@ -307,5 +309,40 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'afp'))
 
 
+class AFPFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'afp'
+    title = 'AFP Share'
+
+    async def query(self, path, enabled):
+        results = []
+        for afp in await self.middleware.call('sharing.afp.query', [['enabled', '=', enabled]]):
+            if is_child(afp['path'], path):
+                results.append(afp)
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['name']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', 'sharing.afp_share', attachment['id'])
+
+        # AFP does not allow us to close specific share forcefully so we have to abort all connections
+        await self._service_change('afp', 'restart')
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call('datastore.update', 'sharing.afp_share', attachment['id'],
+                                       {'afp_enabled': enabled})
+
+        if enabled:
+            await self._service_change('afp', 'reload')
+        else:
+            # AFP does not allow us to close specific share forcefully so we have to abort all connections
+            await self._service_change('afp', 'restart')
+
+
 async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', AFPFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

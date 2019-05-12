@@ -475,14 +475,14 @@ class NFSFSAttachmentDelegate(FSAttachmentDelegate):
             )
             await self.middleware.call('datastore.delete', 'sharing.nfs_share', attachment['id'])
 
-        await self.middleware.call('service.reload', 'nfs')
+        await self._service_change('nfs', 'reload')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
             await self.middleware.call('datastore.update', 'sharing.nfs_share', attachment['id'],
                                        {'nfs_enabled': enabled})
 
-        await self.middleware.call('service.reload', 'nfs')
+        await self._service_change('nfs', 'reload')
 
 
 async def setup(middleware):

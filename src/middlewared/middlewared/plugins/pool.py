@@ -2050,7 +2050,12 @@ class PoolService(CRUDService):
         """
         pool = await self._get_instance(oid)
 
+        enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
         enable_on_import = {}
+        if not options['cascade']:
+            if await self.middleware.call('keyvalue.has_key', enable_on_import_key):
+                enable_on_import = await self.middleware.call('keyvalue.get', enable_on_import_key)
+
         for i, delegate in enumerate(PoolDatasetService.attachment_delegates):
             job.set_progress(
                 i, f'{"Deleting" if options["cascade"] else "Disabling"} pool attachments: {delegate.title}')
@@ -2061,13 +2066,15 @@ class PoolService(CRUDService):
                     await delegate.delete(attachments)
                 else:
                     await delegate.toggle(attachments, False)
-                    enable_on_import[delegate.name] = [attachment['id'] for attachment in attachments]
+                    enable_on_import[delegate.name] = list(
+                        set(enable_on_import.get(delegate.name, [])) |
+                        {attachment['id'] for attachment in attachments}
+                    )
 
-        key = f'pool:{pool["name"]}:enable_on_import'
         if enable_on_import:
-            await self.middleware.call('keyvalue.set', key, enable_on_import)
+            await self.middleware.call('keyvalue.set', enable_on_import_key, enable_on_import)
         else:
-            await self.middleware.call('keyvalue.delete', key)
+            await self.middleware.call('keyvalue.delete', enable_on_import_key)
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
@@ -2786,9 +2793,10 @@ class PoolDatasetService(CRUDService):
                             errno.ENOTEMPTY)
 
         dataset = await self._get_instance(id)
-        if dataset['mountpoint']:
+        path = self.__attachments_path(dataset)
+        if path:
             for delegate in self.attachment_delegates:
-                attachments = await delegate.query(dataset['mountpoint'], True)
+                attachments = await delegate.query(path, True)
                 if attachments:
                     await delegate.delete(attachments)
 
@@ -2910,14 +2918,22 @@ class PoolDatasetService(CRUDService):
         """
         result = []
         dataset = await self._get_instance(oid)
-        if dataset['mountpoint']:
+        path = self.__attachments_path(dataset)
+        if path:
             for delegate in self.attachment_delegates:
                 attachments = {"type": delegate.title, "attachments": []}
-                for attachment in await delegate.query(dataset['mountpoint'], True):
+                for attachment in await delegate.query(path, True):
                     attachments["attachments"].append(await delegate.get_attachment_name(attachment))
                 if attachments["attachments"]:
                     result.append(attachments)
         return result
+
+    def __attachments_path(self, dataset):
+        if dataset['type'] == 'FILESYSTEM':
+            return dataset['mountpoint']
+
+        if dataset['type'] == 'VOLUME':
+            return os.path.join('/mnt', dataset['name'])
 
     @private
     def register_attachment_delegate(self, delegate):

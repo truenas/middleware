@@ -667,7 +667,10 @@ def volume_detach(request, vid):
     usedbytes = volume._get_used_bytes()
     usedsize = humanize_size(usedbytes) if usedbytes else None
     with client as c:
-        attachments = c.call('pool.attachments', volume.id)
+        try:
+            attachments = c.call('pool.attachments', volume.id)
+        except Exception:
+            attachments = []
     if volume.vol_encrypt > 0:
         request.session["allow_gelikey"] = True
     if request.method == "POST":

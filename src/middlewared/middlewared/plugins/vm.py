@@ -1,11 +1,13 @@
 from collections import deque
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch, Ref
 from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors,
     ValidationError
 )
 from middlewared.utils import Nid, Popen
+from middlewared.utils.path import is_child
 
 import middlewared.logger
 import asyncio
@@ -592,42 +594,6 @@ class VMService(CRUDService):
 
         default_ifaces.extend(ifaces)
         return default_ifaces
-
-    @accepts(Str('pool'),
-             Bool('stop', default=False),)
-    async def stop_by_pool(self, pool, stop):
-        """
-        Get all guests attached to a given pool, if set stop True, it will stop the guests.
-
-        Returns:
-            dict: will return a dict with vm_id, vm_name, device_id and disk path.
-        """
-        vms_attached = []
-        if not pool:
-            return vms_attached
-        devices = await self.middleware.call('datastore.query', 'vm.device')
-        for device in devices:
-            if device['dtype'] not in ('DISK', 'RAW'):
-                continue
-            disk = device['attributes'].get('path', None)
-            if not disk:
-                continue
-            if device['dtype'] == 'DISK':
-                disk = disk.lstrip('/dev/zvol/').split('/')[0]
-            elif device['dtype'] == 'RAW':
-                disk = disk.lstrip('/mnt/').split('/')[0]
-
-            if disk == pool:
-                status = await self.status(device['vm'].get('id'))
-                vms_attached.append({
-                    'vm_id': device['vm'].get('id'),
-                    'vm_name': device['vm'].get('name'),
-                    'device_id': device.get('id'),
-                    'vm_disk': device['attributes'].get('path', None)
-                })
-                if stop and status.get('state') == 'RUNNING':
-                    await self.stop(device['vm'].get('id'))
-        return vms_attached
 
     @accepts(Int('id'))
     async def get_attached_iface(self, id):
@@ -1428,8 +1394,53 @@ async def __event_system_ready(middleware, event_type, args):
         await middleware.call('vm.start', vm['id'])
 
 
+class VMFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'vm'
+    title = 'VM'
+
+    async def query(self, path, enabled):
+        vms_attached = set()
+        for device in await self.middleware.call('datastore.query', 'vm.device'):
+            if device['dtype'] not in ('DISK', 'RAW'):
+                continue
+
+            disk = device['attributes'].get('path', None)
+            if not disk:
+                continue
+
+            disk = re.sub(r'^/dev/zvol', '/mnt', disk)
+
+            if is_child(disk, path):
+                vms_attached.add({
+                    'id': device['vm'].get('id'),
+                    'name': device['vm'].get('name'),
+                })
+
+        return list(vms_attached)
+
+    async def get_attachment_name(self, attachment):
+        return attachment['name']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            try:
+                await self.middleware.call('vm.stop', attachment['id'])
+            except Exception:
+                self.middleware.logger.warning('Unable to vm.stop %r', attachment['id'])
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            action = 'vm.start' if enabled else 'vm.stop'
+            try:
+                await self.middleware.call(action, attachment['id'])
+            except Exception:
+                self.middleware.logger.warning('Unable to %s %r: %r', action, attachment['id'])
+
+
 def setup(middleware):
     global ZFS_ARC_MAX_INITIAL
     ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc_max')[0].value
     asyncio.ensure_future(kmod_load())
+    asyncio.ensure_future(middleware.call('pool.dataset.register_attachment_delegate',
+                                          VMFSAttachmentDelegate(middleware)))
     middleware.event_subscribe('system', __event_system_ready)
