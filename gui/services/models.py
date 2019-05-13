@@ -44,7 +44,7 @@ from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
-from freenasUI.system.models import Certificate
+from freenasUI.system.models import Certificate, CertificateAuthority
 
 log = logging.getLogger("services.forms")
 
@@ -2223,3 +2223,121 @@ class Asigra(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "AsigraIcon"
+
+
+class OpenVPNBase(Model):
+    class Meta:
+        abstract = True
+
+    port = models.IntegerField(
+        default=1194,
+        verbose_name=_('Port')
+    )
+
+    protocol = models.CharField(
+        max_length=4,
+        default='UDP'
+    )
+
+    device_type = models.CharField(
+        max_length=4,
+        default='TUN'
+    )
+
+    root_ca = models.ForeignKey(
+        CertificateAuthority,
+        verbose_name=_('Root Certificate Authority'),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+
+    authentication_algorithm = models.CharField(
+        max_length=32,
+        verbose_name=_('Authentication Algorithm'),
+        null=True,
+        default='RSA-SHA256'
+    )
+
+    tls_crypt_auth = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_('TLS Crypt Authentication')
+    )
+
+    cipher = models.CharField(
+        max_length=32,
+        null=True,
+        default = 'AES-256-CBC'
+    )
+
+    compression = models.CharField(
+        max_length=32,
+        null=True,
+        default='LZO'
+    )
+
+    additional_parameters = models.TextField(
+        verbose_name=_('Additional Parameters'),
+        default=''
+    )
+
+
+class OpenVPNServer(OpenVPNBase):
+    class Meta:
+        verbose_name = _('OpenVPN Server')
+
+    class FreeAdmin:
+        deletable = False
+
+    server = models.CharField(
+        verbose_name=_('Server IP'),
+        max_length=45,
+        default='10.8.0.0'
+    )
+
+    netmask = models.IntegerField(
+        verbose_name=_('Server Netmask'),
+        default=24
+    )
+
+    topology = models.CharField(
+        max_length=16,
+        verbose_name=_('Topology'),
+        null=True,
+        default='SUBNET'
+    )
+
+    server_certificate = models.ForeignKey(
+        Certificate,
+        verbose_name=_('Server Certificate'),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
+
+
+class OpenVPNClient(OpenVPNBase):
+    class Meta:
+        verbose_name = _('OpenVPN Client')
+
+    class FreeAdmin:
+        deletable = False
+
+    remote = models.CharField(
+        verbose_name=_('Remote IP/Domain'),
+        max_length=120
+    )
+
+    nobind = models.BooleanField(
+        default=True,
+        verbose_name=_('Nobind')
+    )
+
+    client_certificate = models.ForeignKey(
+        Certificate,
+        verbose_name=_('Client Certificate'),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
