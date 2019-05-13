@@ -171,7 +171,7 @@ class DiskService(CRUDService):
 
         if any(
                 new[key] != old[key]
-                for key in ['togglesmart', 'smartoptions', 'critical', 'difference', 'informational']
+                for key in ['togglesmart', 'smartoptions', 'hddstandby', 'critical', 'difference', 'informational']
         ):
 
             if new['togglesmart']:
