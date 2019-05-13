@@ -771,7 +771,7 @@ class JailService(CRUDService):
             )
 
             for i in _list:
-                fstab_entry = i[1].split('\t')
+                fstab_entry = i[1].split()
                 _fstab_type = 'SYSTEM' if fstab_entry[0].endswith(
                     system_mounts) else 'USER'
 
