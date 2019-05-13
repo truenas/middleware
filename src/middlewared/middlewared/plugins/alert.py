@@ -838,6 +838,7 @@ class AlertServiceService(CRUDService):
             TestAlertClass,
             node="A",
             datetime=datetime.utcnow(),
+            _uuid="test",
         )
 
         try:

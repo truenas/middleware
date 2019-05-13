@@ -48,6 +48,8 @@ class SNMPTrapAlertService(ThreadedAlertService):
 
             self.initialized = True
 
+        classes = (self.middleware.call_sync("alertclasses.config"))["classes"]
+
         for alert in gone_alerts:
             error_indication, error_status, error_index, var_binds = next(
                 pysnmp.hlapi.sendNotification(
@@ -79,7 +81,8 @@ class SNMPTrapAlertService(ThreadedAlertService):
                          pysnmp.hlapi.OctetString(alert.uuid)),
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level),
                          self.snmp_alert_level_type(
-                             self.snmp_alert_level_type.namedValues.getValue(alert.level_name.lower()))),
+                             self.snmp_alert_level_type.namedValues.getValue(
+                                 classes.get(alert.klass.name, {}).get("level", alert.klass.level.name).lower()))),
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_message),
                          pysnmp.hlapi.OctetString(alert.formatted))
                     )
@@ -88,6 +91,3 @@ class SNMPTrapAlertService(ThreadedAlertService):
 
             if error_indication:
                 self.logger.warning(f"Failed to send SNMP trap: %s", error_indication)
-
-    def _alert_id(self, alert):
-        return f"{alert.source};{alert.key}"
