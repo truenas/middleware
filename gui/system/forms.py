@@ -405,7 +405,8 @@ class InitialWizard(CommonWizard):
                         ) % volume_name)
 
                 with client as c:
-                    lock = c.call("alert.block_source", "VolumeStatus")
+                    # Creating large pool can take a very long time
+                    lock = c.call("alert.block_source", "VolumeStatus", 14400)
                     try:
                         volume = Volume(vol_name=volume_name)
                         volume.save()
