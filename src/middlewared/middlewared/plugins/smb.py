@@ -6,14 +6,13 @@ from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
 
 import asyncio
-import binascii
 import codecs
 import enum
+import grp
 import os
 import re
 import subprocess
 import uuid
-from samba import samba3
 from samba import param
 
 LOGLEVEL_MAP = {
@@ -24,6 +23,7 @@ LOGLEVEL_MAP = {
     '10': 'DEBUG',
 }
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
+RE_NETGROUPMAP = re.compile(r"^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$")
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -37,50 +37,11 @@ class SMBHAMODE(enum.IntEnum):
     UNIFIED = 2
 
 
-class LSA_sidType(enum.IntEnum):
-    """
-    Defined in MS-SAMR (2.2.2.3) and lsa.idl
-    Samba's group mapping database will primarily contain SID_NAME_ALIAS entries (local groups)
-    """
-    SID_NAME_USE_NONE = 0
-    SID_NAME_USER = 1
-    SID_NAME_DOM_GRP = 2
-    SID_NAME_DOMAIN = 3
-    SID_NAME_ALIAS = 4
-    SID_NAME_WKN_GRP = 5
-    SID_NAME_DELETED = 6
-    SID_NAME_INVALID = 7
-    SID_NAME_UNKNOWN = 8
-    SID_NAME_COMPUTER = 9
-    SID_NAME_LABEL = 10
-
-
-class SAMR_AcctFlags(enum.IntFlag):
-    """
-    Defined in MS-SAMR (2.2.1.12) and samr.idl
-    """
-    DISABLED = 0x00000001
-    HOMEDIRREQ = 0x00000002
-    PWNOTREQ = 0x00000004
-    TEMPDUP = 0x00000008
-    NORMAL = 0x00000010
-    MNS = 0x00000020
-    DOMTRUST = 0x00000040
-    WSTRUST = 0x00000080
-    SVRTRUST = 0x00000100
-    PWNOEXP = 0x00000200
-    AUTOLOCK = 0x00000400
-    ENC_TXT_PWD_ALLOWED = 0x00000800
-    SMARTCARD_REQUIRED = 0x00001000
-    TRUSTED_FOR_DELEGATION = 0x00002000
-    NOT_DELEGATED = 0x00004000
-    USE_DES_KEY_ONLY = 0x00008000
-    DONT_REQUIRE_PREAUTH = 0x00010000
-    PW_EXPIRED = 0x00020000
-    TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION = 0x00040000
-    NO_AUTH_DATA_REQD = 0x00080000
-    PARTIAL_SECRETS_ACCOUNT = 0x00100000
-    USE_AES_KEYS = 0x00200000
+class SMBCmd(enum.Enum):
+    NET = '/usr/local/bin/net'
+    PDBEDIT = '/usr/local/bin/pdbedit'
+    SMBCONTROL = '/usr/local/bin/smbcontrol'
+    SMBPASSWD = '/usr/local/bin/smbpasswd'
 
 
 class SMBService(SystemServiceService):
@@ -299,19 +260,17 @@ class SMBService(SystemServiceService):
         return True
 
     @private
-    def groupmap_list(self):
-        groupmap_list = []
-        passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
-        groupmaps = passdb.enum_group_mapping()
-        for g in groupmaps:
-            groupmap_list.append({
-                'comment': g.comment,
-                'gid': g.gid,
-                'ntgroup': g.nt_name,
-                'SID': str(g.sid),
-                'sid_type': LSA_sidType(g.sid_name_use).name,
-            })
-        return groupmap_list
+    async def groupmap_list(self):
+        groupmap = []
+        out = await run([SMBCmd.NET.value, 'groupmap', 'list'], check=False)
+        if out.returncode != 0:
+            raise CallError(f'groupmap list failed with error {out.stderr.decode()}')
+        for line in (out.stdout.decode()).splitlines():
+            m = RE_NETGROUPMAP.match(line)
+            if m:
+                groupmap.append(m.groupdict())
+
+        return groupmap
 
     @private
     async def groupmap_add(self, group):
@@ -326,7 +285,7 @@ class SMBService(SystemServiceService):
             return
 
         disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
-        existing_groupmap = await self.middleware.run_in_thread(self.groupmap_list)
+        existing_groupmap = await self.middleware.call('smb.groupmap_list')
         for user in (await self.middleware.call('user.query')):
             disallowed_list.append(user['username'].upper())
         for g in existing_groupmap:
@@ -345,58 +304,61 @@ class SMBService(SystemServiceService):
             )
 
     @private
-    def passdb_list(self, verbose=False):
+    async def passdb_list(self, verbose=False):
         """
         passdb entries for local SAM database. This will be populated with
         local users in an AD environment. Immediately return in ldap enviornment.
         """
         pdbentries = []
-        passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
-        pdb = passdb.search_users(SAMR_AcctFlags.NORMAL.value)
+        private_dir = await self.middleware.call('smb.getparm', 'privatedir', 'global')
+        if not os.path.exists(f'{private_dir}/passdb.tdb'):
+            return pdbentries
+
+        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
+            return pdbentries
+
         if not verbose:
-            for p in pdb:
-                acct_flags = []
-                for flag in SAMR_AcctFlags:
-                    if int(p['acct_flags']) & flag:
-                        acct_flags.append(flag.name)
+            pdb = await run([SMBCmd.PDBEDIT.value, '-L', '-d', '0'], check=False)
+            if pdb.returncode != 0:
+                raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
+            for p in (pdb.stdout.decode()).splitlines():
+                entry = p.split(':')
                 pdbentries.append({
-                    'username': p['account_name'],
-                    'full_name': p['fullname'],
-                    'comment': p['description'],
-                    'rid': p['rid'],
-                    'acct_ctrl': acct_flags
+                    'username': entry[0],
+                    'full_name': entry[2],
+                    'uid': entry[1],
                 })
             return pdbentries
 
-        for p in pdb:
-            u = passdb.getsampwnam(p['account_name'])
-            acct_flags = []
-            for flag in SAMR_AcctFlags:
-                if int(u.acct_ctrl) & flag:
-                    acct_flags.append(flag.name)
+        pdb = await run([SMBCmd.PDBEDIT.value, '-Lv', '-d', '0'], check=False)
+        if pdb.returncode != 0:
+            raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
 
-            pdbentries.append({
-                'username': u.username,
-                'full_name': u.full_name,
-                'user_sid': str(u.user_sid),
-                'profile_path': u.profile_path,
-                'home_dir': u.home_dir,
-                'domain': str(u.domain),
-                'comment': str(u.comment),
-                'logon_count': u.logon_count,
-                'acct_ctrl': acct_flags
-            })
+        for p in (pdb.stdout.decode()).split('---------------'):
+            pdbentry = {}
+            for entry in p.splitlines():
+                parm = entry.split(':')
+                if len(parm) != 2:
+                    continue
+
+                pdbentry.update({parm[0].rstrip(): parm[1].lstrip() if parm[1] else ''})
+
+            if pdbentry:
+                pdbentries.append(pdbentry)
+
         return pdbentries
 
     @private
-    def update_passdb_user(self, username):
+    async def update_passdb_user(self, username):
         """
         Updates a user's passdb entry to reflect the current server configuration.
+        Accounts that are 'locked' in the UI will have their corresponding passdb entry
+        disabled.
         """
         if self.getparm('passdb backend', 'global') == 'ldapsam':
             return
 
-        bsduser = self.middleware.call_sync('user.query', [
+        bsduser = await self.middleware.call('user.query', [
             ('username', '=', username),
             ['OR', [
                 ('smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
@@ -407,96 +369,72 @@ class SMBService(SystemServiceService):
             self.logger.debug(f'{username} is not an SMB user, bypassing passdb import')
             return
         smbpasswd_string = bsduser[0]['smbhash'].split(':')
-        passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
-        try:
-            p = passdb.getsampwnam(username)
-        except Exception:
+        p = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-Lw', username], check=False)
+        if p.returncode != 0:
+            CallError(f'Failed to retrieve passdb entry for {username}: {p.stderr.decode()}')
+        entry = p.stdout.decode()
+        if not entry:
             self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", username)
-            passdb.create_user(username, SAMR_AcctFlags.NORMAL)
-            p = passdb.getsampwnam(username)
+            pdbcreate = await Popen(
+                [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username, '-t'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+            )
+            await pdbcreate.communicate(input=" \n \n".encode())
+            setntpass = await run([SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
+            if setntpass.returncode != 0:
+                raise CallError(f'Failed to set NT password for {username}: {setntpass.stderr.decode()}')
+            if bsduser[0]['locked']:
+                disableacct = await run([SMBCmd.SMBPASSWD.value, '-d', username], check=False)
+                if disableacct.returncode != 0:
+                    raise CallError(f'Failed to disable {username}: {disableacct.stderr.decode()}')
+            return
 
-        pdb_entry_changed = False
+        if entry == bsduser[0]['smbhash']:
+            return
 
-        try:
-            nt_passwd = binascii.hexlify(p.nt_passwd).decode().upper()
-        except Exception:
-            nt_passwd = ''
+        entry = entry.split(':')
 
-        pass_last_set_time = int(smbpasswd_string[5].strip("LCT-"), 16)
-
-        if smbpasswd_string[3] != nt_passwd:
-            p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
-            pdb_entry_changed = True
-        if pass_last_set_time != p.pass_last_set_time:
-            p.pass_last_set_time = pass_last_set_time
-            pdb_entry_changed = True
-        if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
-            p.acct_ctrl |= SAMR_AcctFlags.DISABLED
-            pdb_entry_changed = True
-        elif 'D' not in smbpasswd_string[4] and (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
-            p.acct_ctrl = SAMR_AcctFlags.NORMAL
-            pdb_entry_changed = True
-        if pdb_entry_changed:
-            passdb.update_sam_account(p)
+        if smbpasswd_string[3] != entry[3]:
+            setntpass = await run([SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
+            if setntpass.returncode != 0:
+                raise CallError(f'Failed to set NT password for {username}: {setntpass.stderr.decode()}')
+        if bsduser[0]['locked'] and 'D' not in entry[4]:
+            disableacct = await run([SMBCmd.SMBPASSWD.value, '-d', username], check=False)
+            if disableacct.returncode != 0:
+                raise CallError(f'Failed to disable {username}: {disableacct.stderr.decode()}')
+        elif not bsduser[0]['locked'] and 'D' in entry[4]:
+            enableacct = await run([SMBCmd.SMBPASSWD.value, '-e', username], check=False)
+            if enableacct.returncode != 0:
+                raise CallError(f'Failed to enable {username}: {enableacct.stderr.decode()}')
 
     @private
-    def synchronize_passdb(self):
+    async def synchronize_passdb(self):
         """
         Create any missing entries in the passdb.tdb.
         Replace NT hashes of users if they do not match what is the the config file.
         Synchronize the "disabled" state of users
         Delete any entries in the passdb_tdb file that don't exist in the config file.
         """
-        if self.getparm('passdb backend', 'global') == 'ldapsam':
-            self.logger.debug('Refusing to synchronize passdb.tdb while LDAP is enabled.')
+        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
             return
 
-        passdb = samba3.Samba3('/usr/local/etc/smb4.conf').get_sam_db()
-        conf_users = self.middleware.call_sync('user.query', [
+        conf_users = await self.middleware.call('user.query', [
             ['OR', [
                 ('smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
                 ('smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
             ]]
         ])
         for u in conf_users:
-            smbpasswd_string = u['smbhash'].split(':')
-            pdb_entry_changed = False
-            try:
-                p = passdb.getsampwnam(u['username'])
-            except Exception:
-                self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", u['username'])
-                passdb.create_user(u['username'], SAMR_AcctFlags.NORMAL)
-                p = passdb.getsampwnam(u['username'])
+            await self.middleware.call('smb.update_passdb_user', u['username'])
 
-            try:
-                nt_passwd = binascii.hexlify(p.nt_passwd).decode().upper()
-            except Exception:
-                nt_passwd = ''
-
-            pass_last_set_time = int(smbpasswd_string[5].strip("LCT-"), 16)
-
-            if smbpasswd_string[3] != nt_passwd:
-                p.nt_passwd = binascii.unhexlify(smbpasswd_string[3])
-                pdb_entry_changed = True
-            if pass_last_set_time != p.pass_last_set_time:
-                p.pass_last_set_time = pass_last_set_time
-                pdb_entry_changed = True
-            if 'D' in smbpasswd_string[4] and not (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
-                p.acct_ctrl |= SAMR_AcctFlags.DISABLED
-                pdb_entry_changed = True
-            elif 'D' not in smbpasswd_string[4] and (p.acct_ctrl & SAMR_AcctFlags.DISABLED):
-                p.acct_ctrl = SAMR_AcctFlags.NORMAL
-                pdb_entry_changed = True
-            if pdb_entry_changed:
-                passdb.update_sam_account(p)
-
-        pdb_users = self.passdb_list()
+        pdb_users = await self.passdb_list()
         if len(pdb_users) > len(conf_users):
             for entry in pdb_users:
                 if not any(filter(lambda x: entry['username'] == x['username'], conf_users)):
                     self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry['username'])
-                    user_to_delete = passdb.getsampwnam(entry['username'])
-                    passdb.delete_user(user_to_delete)
+                    deluser = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-x', entry['username']], check=False)
+                    if deluser.returncode != 0:
+                        raise CallError(f'Failed to delete user {entry["username"]}: {deluser.stderr.decode()}')
 
     @private
     def getparm(self, parm, section):
@@ -704,6 +642,9 @@ class SharingSMBService(CRUDService):
 
         default_perms = data.pop('default_permissions', True)
 
+        if 'noacl' in data['vfsobjects']:
+            default_perms = False
+
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
 
@@ -809,6 +750,13 @@ class SharingSMBService(CRUDService):
                 verrors, self.middleware, f"{schema_name}.path", data['path']
             )
 
+        if 'noacl' in data['vfsobjects']:
+            if not await self.middleware.call('filesystem.acl_is_trivial', data['path']):
+                verrors.add(
+                    f'{schema_name}.vfsobjects',
+                    f'The "noacl" VFS module is incompatible with the extended ACL on {data["path"]}.'
+                )
+
         if data.get('name') and data['name'] == 'global':
             verrors.add(
                 f'{schema_name}.name',
@@ -868,21 +816,107 @@ class SharingSMBService(CRUDService):
     async def compress(self, data):
         data['hostsallow'] = ' '.join(data['hostsallow'])
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
+
         return data
 
     @private
     async def apply_default_perms(self, default_perms, path, is_home):
-        if default_perms:
-            try:
-                stat = await self.middleware.call('filesystem.stat', path)
-                owner = stat['user'] or 'root'
-                group = stat['group'] or 'wheel'
-            except Exception:
-                (owner, group) = ('root', 'wheel')
+        """
+        Reset permissions on an SMB share to "default". This is a recursive
+        operaton, and will replace any existing ACL on the share path and any
+        sub-datasets. The default ACLS depends on whether this is a `[homes]`
+        share. Shares that are not the special "homes" share have the
+        following ACL:
 
-            await self.middleware.call(
-                'notifier.winacl_reset', path, owner, group, None, not is_home
-            )
+        `owner@:full_set:fd:allow`
+
+        `group@:full_set:fd:allow`
+
+        The path to homes shares are dynamically generated via pam_mkhomedir
+        The final path (the user's actual home directory) will only have the
+        following ACE:
+
+        `owner@:full_set:fd:allow`
+
+        The actual ACL written on the path specified in the UI will vary for
+        homes shares depending on whether Active Directory is enabled. In all
+        cases, the ACL is written so that users have adequate permissions to
+        traverse to their home directory and the actual home directory is only
+        accessible by the user.
+
+        If an SMB admin group has been selected, then it will also be added to the
+        share's ACL.
+        """
+        if not default_perms:
+            return
+
+        acl = []
+        admin = None
+        smb = await self.middleware.call('smb.config')
+        if smb['admin_group']:
+            admin = await self.middleware.run_in_thread(grp.getgrnam, smb['admin_group'])
+            acl.append({
+                "tag": "GROUP",
+                "id": admin[2],
+                "type": "ALLOW",
+                "perms": {"BASIC": "FULL_CONTROL"},
+                "flags": {"BASIC": "INHERIT"}
+            })
+
+        acl.append({
+            "tag": "owner@",
+            "id": None,
+            "type": "ALLOW",
+            "perms": {"BASIC": "FULL_CONTROL"},
+            "flags": {"BASIC": "INHERIT"},
+        })
+
+        if not is_home:
+            acl.append({
+                "tag": "group@",
+                "id": None,
+                "type": "ALLOW",
+                "perms": {"BASIC": "FULL_CONTROL"},
+                "flags": {"BASIC": "INHERIT"},
+            })
+
+        elif await self.middleware.call('activedirectory.get_state') != 'DISABLED':
+            acl.extend([
+                {
+                    "tag": "group@",
+                    "id": None,
+                    "type": "ALLOW",
+                    "perms": {"BASIC": "MODIFY"},
+                    "flags": {'DIRECTORY_INHERIT': True, 'INHERIT_ONLY': True, 'NO_PROPAGATE_INHERIT': True}
+                },
+                {
+                    "tag": "everyone@",
+                    "id": None,
+                    "type": "ALLOW",
+                    "perms": {"BASIC": "TRAVERSE"},
+                    "flags": {"BASIC": "NOINHERIT"}
+                },
+            ])
+
+        else:
+            acl.extend([
+                {
+                    "tag": "group@",
+                    "id": None,
+                    "type": "ALLOW",
+                    "perms": {"BASIC": "MODIFY"},
+                    "flags": {"BASIC": "NOINHERIT"}
+                },
+                {
+                    "tag": "everyone@",
+                    "id": None,
+                    "type": "ALLOW",
+                    "perms": {"BASIC": "TRAVERSE"},
+                    "flags": {"BASIC": "NOINHERIT"}
+                },
+            ])
+
+        await self.middleware.call('filesystem.setacl', path, acl, {'recursive': True, 'traverse': True})
 
     @private
     async def generate_vuid(self, timemachine, vuid=""):

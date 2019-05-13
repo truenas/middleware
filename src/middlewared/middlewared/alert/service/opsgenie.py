@@ -22,7 +22,7 @@ class OpsGenieAlertService(ProThreadedAlertService):
                      "Content-type": "application/json"},
             data=json.dumps({
                 "message": ellipsis(alert.formatted, 130),
-                "alias": self._alert_id(alert),
+                "alias": alert.uuid,
                 "description": ellipsis(alert.formatted, 15000),
             }),
             timeout=15,
@@ -31,7 +31,7 @@ class OpsGenieAlertService(ProThreadedAlertService):
 
     def delete_alert(self, alert):
         r = requests.delete(
-            (self.attributes.get("api_url") or "https://api.opsgenie.com") + "/v2/alerts/" + self._alert_id(alert),
+            (self.attributes.get("api_url") or "https://api.opsgenie.com") + "/v2/alerts/" + alert.uuid,
             params={"identifierType": "alias"},
             headers={"Authorization": f"GenieKey {self.attributes['api_key']}"},
             timeout=15,

@@ -1,6 +1,5 @@
 from datetime import timedelta
 import enum
-import hashlib
 import json
 import logging
 import os
@@ -61,7 +60,7 @@ class AlertClass(metaclass=AlertClassMeta):
         if args is None:
             return cls.text
 
-        return cls.text % args
+        return cls.text % (tuple(args) if isinstance(args, list) else args)
 
 
 class OneShotAlertClass:
@@ -229,9 +228,6 @@ class AlertService:
     async def send(self, alerts, gone_alerts, new_alerts):
         raise NotImplementedError
 
-    def _alert_id(self, alert):
-        return hashlib.sha256(json.dumps([alert.source, alert.key]).encode("utf-8")).hexdigest()
-
     async def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = await self.middleware.call("system.product_name")
         hostname = (await self.middleware.call("system.info"))["hostname"]
@@ -252,7 +248,11 @@ class ThreadedAlertService(AlertService):
     def _format_alerts(self, alerts, gone_alerts, new_alerts):
         product_name = self.middleware.call_sync("system.product_name")
         hostname = self.middleware.call_sync("system.info")["hostname"]
-        return format_alerts(product_name, hostname, alerts, gone_alerts, new_alerts)
+        if not self.middleware.call_sync("system.is_freenas"):
+            node_map = self.middleware.call_sync("alert.node_map")
+        else:
+            node_map = None
+        return format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts)
 
 
 class ProThreadedAlertService(ThreadedAlertService):
@@ -299,7 +299,7 @@ def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_ale
 
 
 def format_alert(alert, node_map):
-    return (f"{node_map[alert.node]} - " if node_map else None) + alert.formatted
+    return (f"{node_map[alert.node]} - " if node_map else "") + alert.formatted
 
 
 def ellipsis(s, l):

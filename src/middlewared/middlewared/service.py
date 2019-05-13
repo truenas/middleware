@@ -89,7 +89,7 @@ class throttle(object):
             if time_since_last_call > self.throttle_period:
                 self.last_calls[key] = now
                 return fn(*args, **kwargs)
-            raise self.exc_class('{fn!r} called too many times')
+            raise self.exc_class(f'{fn!r} called too many times')
 
         @wraps(fn)
         async def async_wrapper(*args, **kwargs):
