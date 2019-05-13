@@ -1053,6 +1053,7 @@ require([
 
         // OpsGenie
         var api_key = registry.byId("id_api_key").domNode.parentNode.parentNode;
+        var api_url = registry.byId("id_api_url").domNode.parentNode.parentNode;
 
         // AWS SNS
         var region = registry.byId("id_region").domNode.parentNode.parentNode;
@@ -1084,6 +1085,7 @@ require([
         domStyle.set(room_id, "display", "none");
         domStyle.set(auth_token, "display", "none");
         domStyle.set(api_key, "display", "none");
+        domStyle.set(api_url, "display", "none");
         domStyle.set(region, "display", "none");
         domStyle.set(topic_arn, "display", "none");
         domStyle.set(aws_access_key_id, "display", "none");
@@ -1123,6 +1125,7 @@ require([
         } else if(type.get('value') == 'OpsGenie') {
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(api_key, "display", "table-row");
+            domStyle.set(api_url, "display", "table-row");
         } else if(type.get('value') == 'AWSSNS') {
             domStyle.set(region, "display", "table-row");
             domStyle.set(topic_arn, "display", "table-row");
