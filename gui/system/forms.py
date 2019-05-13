@@ -386,7 +386,8 @@ class InitialWizard(CommonWizard):
                     f.write(pickle.dumps(progress))
 
                 with client as c:
-                    lock = c.call("alert.block_source", "VolumeStatus")
+                    # Creating large pool can take a very long time
+                    lock = c.call("alert.block_source", "VolumeStatus", 14400)
                     try:
                         if volume_import:
                             volume_name, guid = cleaned_data.get(
