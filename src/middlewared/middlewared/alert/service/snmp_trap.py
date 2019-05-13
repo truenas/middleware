@@ -58,7 +58,7 @@ class SNMPTrapAlertService(ThreadedAlertService):
                     "trap",
                     pysnmp.hlapi.NotificationType(self.snmp_alert_cancellation).addVarBinds(
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_id),
-                         pysnmp.hlapi.OctetString(self._alert_id(alert)))
+                         pysnmp.hlapi.OctetString(alert.uuid))
                     )
                 )
             )
@@ -76,7 +76,7 @@ class SNMPTrapAlertService(ThreadedAlertService):
                     "trap",
                     pysnmp.hlapi.NotificationType(self.snmp_alert).addVarBinds(
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_id),
-                         pysnmp.hlapi.OctetString(self._alert_id(alert))),
+                         pysnmp.hlapi.OctetString(alert.uuid)),
                         (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level),
                          self.snmp_alert_level_type(
                              self.snmp_alert_level_type.namedValues.getValue(alert.level_name.lower()))),
