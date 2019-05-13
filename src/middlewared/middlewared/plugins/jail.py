@@ -628,7 +628,10 @@ class JailService(CRUDService):
         Str("jail"),
         Dict(
             "options",
-            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"], required=True),
+            Str(
+                "action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"],
+                required=True
+            ),
             Str("source"),
             Str("destination"),
             Str("fstype", default='nullfs'),
@@ -638,10 +641,11 @@ class JailService(CRUDService):
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
-        """Adds an fstab mount to the jail"""
+        """Manipulate a jails fstab"""
         uuid, _, iocage = self.check_jail_existence(jail, skip=False)
         status, jid = IOCList.list_get_jid(uuid)
         action = options['action'].lower()
+        index = options.get('index')
 
         if status and action != 'list':
             raise CallError(
@@ -656,10 +660,16 @@ class JailService(CRUDService):
                     'options.source',
                     'Provided path for source does not exist'
                 )
+        elif (not source and index is None) and action != 'list':
+            verrors.add(
+                'options.source',
+                'Provide a source path'
+            )
 
         destination = options.get('destination')
         if destination:
-            destination = f'/{destination}' if destination[0] != '/' else destination
+            destination = f'/{destination}' if destination[0] != '/' else \
+                destination
             dst = f'{self.get_iocroot()}/jails/{jail}/root'
             if dst not in destination:
                 destination = f'{dst}{destination}'
@@ -668,7 +678,8 @@ class JailService(CRUDService):
                 if not os.path.isdir(destination):
                     verrors.add(
                         'options.destination',
-                        'Destination is not a directory, please provide a valid destination'
+                        'Destination is not a directory, please provide a'
+                        ' valid destination'
                     )
                 elif os.listdir(destination):
                     verrors.add(
@@ -677,6 +688,16 @@ class JailService(CRUDService):
                     )
             else:
                 os.makedirs(destination)
+        elif (not destination and index is None) and action != 'list':
+            verrors.add(
+                'options.destination',
+                'Provide a destination path'
+            )
+
+        if index is not None:
+            # Setup defaults for library
+            source = ''
+            destination = ''
 
         if action != 'list':
             for f in options:
@@ -690,7 +711,6 @@ class JailService(CRUDService):
         fsoptions = options.get('fsoptions')
         dump = options.get('dump')
         _pass = options.get('pass')
-        index = options.get('index')
 
         if action == 'replace' and index is None:
             verrors.add(
