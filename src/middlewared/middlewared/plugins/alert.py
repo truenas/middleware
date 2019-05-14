@@ -252,7 +252,7 @@ class AlertService(Service):
                 if not await self.middleware.call("system.is_freenas"):
                     new_hardware_alerts = [alert for alert in new_alerts if ALERT_SOURCES[alert.source].hardware]
                     if new_hardware_alerts:
-                        license = get_license()
+                        license = get_license()[0]
                         if license and license.contract_type in [ContractType.silver.value, ContractType.gold.value]:
                             try:
                                 support = await self.middleware.call("datastore.query", "system.support", None,
