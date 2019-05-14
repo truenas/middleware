@@ -512,7 +512,7 @@ class JailService(CRUDService):
         return fetch_output
 
     @accepts(
-        Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
+        Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN", 'BRANCHES']),
         Bool("remote", default=False),
         Bool('want_cache', default=True),
         Str('branch', default=None)
@@ -590,6 +590,13 @@ class JailService(CRUDService):
                     'cache.put', 'iocage_remote_releases', resource_list,
                     86400
                 )
+        elif resource == 'branches':
+            branches = requests.get(
+                'https://api.github.com/repos/freenas/iocage-ix-plugins/'
+                'branches'
+            )
+            branches.raise_for_status()
+            resource_list = [b['name'] for b in branches.json()]
         else:
             resource_list = iocage.list(resource)
 
