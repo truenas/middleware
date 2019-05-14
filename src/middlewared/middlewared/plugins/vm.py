@@ -1434,7 +1434,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call(action, attachment['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to %s %r: %r', action, attachment['id'])
+                self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
 
 
 def setup(middleware):

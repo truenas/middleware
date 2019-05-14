@@ -147,7 +147,7 @@ class SharingNFSService(CRUDService):
             default=[],
             items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
         ),
-        Bool("enabled"),
+        Bool("enabled", default=True),
         register=True,
     ))
     async def do_create(self, data):
@@ -247,7 +247,6 @@ class SharingNFSService(CRUDService):
         """
         Delete NFS Share of `id`.
         """
-        await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
         await self.middleware.call("datastore.delete", self._config.datastore, id)
         await self._service_change("nfs", "reload")
 
@@ -470,9 +469,6 @@ class NFSFSAttachmentDelegate(FSAttachmentDelegate):
     # if even one path matches
     async def delete(self, attachments):
         for attachment in attachments:
-            await self.middleware.call(
-                'datastore.delete', 'sharing.nfs_share_path', [['share_id', '=', attachment['id']]]
-            )
             await self.middleware.call('datastore.delete', 'sharing.nfs_share', attachment['id'])
 
         await self._service_change('nfs', 'reload')

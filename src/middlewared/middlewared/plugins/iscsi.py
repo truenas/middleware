@@ -515,7 +515,7 @@ class iSCSITargetExtentService(CRUDService):
         Str('rpm', enum=['UNKNOWN', 'SSD', '5400', '7200', '10000', '15000'],
             default='SSD'),
         Bool('ro'),
-        Bool('enabled'),
+        Bool('enabled', default=True),
         register=True
     ))
     async def do_create(self, data):

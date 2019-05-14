@@ -110,7 +110,7 @@ class SharingAFPService(CRUDService):
         List('hostsallow', items=[], default=[]),
         List('hostsdeny', items=[], default=[]),
         Str('auxparams'),
-        Bool('enabled'),
+        Bool('enabled', default=True),
         register=True
     ))
     async def do_create(self, data):

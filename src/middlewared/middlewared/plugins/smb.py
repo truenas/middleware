@@ -676,7 +676,7 @@ class SharingSMBService(CRUDService):
         Bool('shadowcopy', default=False),
         Str('auxsmbconf'),
         Bool('default_permissions'),
-        Bool('enabled'),
+        Bool('enabled', default=True),
         register=True
     ))
     async def do_create(self, data):
@@ -956,7 +956,7 @@ async def pool_post_import(middleware, pool):
 
 class SMBFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'smb'
-    title = 'CIFS Share'
+    title = 'SMB Share'
 
     async def query(self, path, enabled):
         results = []

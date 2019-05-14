@@ -1162,7 +1162,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call('jail.stop', attachment['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to jail.stop %r: %r', attachment['id'], exc_info=True)
+                self.middleware.logger.warning('Unable to jail.stop %r', attachment['id'], exc_info=True)
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
@@ -1170,7 +1170,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call(action, attachment['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to %s %r: %r', action, attachment['id'], exc_info=True)
+                self.middleware.logger.warning('Unable to %s %r', action, attachment['id'], exc_info=True)
 
 
 async def setup(middleware):
