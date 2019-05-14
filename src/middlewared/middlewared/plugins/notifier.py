@@ -44,7 +44,7 @@ from freenasUI.directoryservice.models import (
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 
-from middlewared.utils import Popen, django_modelobj_serialize
+from middlewared.utils import django_modelobj_serialize
 
 
 logger = logging.getLogger('plugins.notifier')
