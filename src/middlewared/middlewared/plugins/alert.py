@@ -311,7 +311,7 @@ class AlertService(Service):
 
                         classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name and
 
-                        not issubclass(alert.klass, OneShotAlertClass)
+                        not (issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
                     )
                 ]
                 service_new_alerts = [

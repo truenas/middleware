@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
@@ -362,11 +362,20 @@ class FsLockManager:
         self.locks.pop(path)
 
 
-class CloudSyncTaskFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.ERROR
     title = "Cloud Sync Task Failed"
-    text = "Cloud sync task %(name)s failed."
+    text = "Cloud sync task \"%(name)s\" failed."
+
+    async def create(self, args):
+        return Alert(CloudSyncTaskFailedAlertClass, args, key=args["id"])
+
+    async def delete(self, alerts, query):
+        return list(filter(
+            lambda alert: alert.key != str(query),
+            alerts
+        ))
 
 
 class CredentialsService(CRUDService):
@@ -756,6 +765,7 @@ class CloudSyncService(CRUDService):
         Deletes cloud_sync entry `id`.
         """
         await self.middleware.call("datastore.delete", "tasks.cloudsync", id)
+        await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", id)
         await self.middleware.call("service.restart", "cron")
 
     @accepts(Int("credentials_id"))
@@ -851,12 +861,14 @@ class CloudSyncService(CRUDService):
             job.set_progress(0, f"Locking remote path {remote_path!r} for {directions[remote_direction]}")
             async with self.remote_fs_lock_manager.lock(f"{credentials['id']}/{remote_path}", remote_direction):
                 job.set_progress(0, "Starting")
-                alert_args = {"name": cloud_sync["description"] or f"#{cloud_sync['id']}"}
                 try:
                     await rclone(self.middleware, job, cloud_sync)
-                    await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", alert_args)
+                    await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", cloud_sync["id"])
                 except Exception:
-                    await self.middleware.call("alert.oneshot_create", "CloudSyncTaskFailed", alert_args)
+                    await self.middleware.call("alert.oneshot_create", "CloudSyncTaskFailed", {
+                        "id": cloud_sync["id"],
+                        "name": cloud_sync["description"],
+                    })
                     raise
 
     @accepts()
