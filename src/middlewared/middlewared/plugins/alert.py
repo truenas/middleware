@@ -550,7 +550,7 @@ class AlertService(Service):
 
     @private
     async def unblock_source(self, lock):
-        source_lock = self.sources_locks.pop(lock)
+        source_lock = self.sources_locks.pop(lock, None)
         self.blocked_sources[source_lock.source_name].remove(lock)
 
     @private
