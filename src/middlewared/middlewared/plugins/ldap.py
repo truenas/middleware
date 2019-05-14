@@ -343,7 +343,7 @@ class LDAPService(ConfigService):
                 try:
                     await self.middleware.call('ldap.ldap_validate', new)
                 except Exception as e:
-                    ValidationError('ldap_update', str(e))
+                    raise ValidationError('ldap_update', str(e))
 
                 await self.middleware.call('ldap.start')
             else:
