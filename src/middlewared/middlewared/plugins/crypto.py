@@ -1585,7 +1585,9 @@ class CertificateService(CRUDService):
             ((self.middleware.call_sync('system.general.config'))['ui_certificate']['id'], 'WebUI'),
             ((self.middleware.call_sync('ftp.config'))['ssltls_certificate'], 'FTP'),
             ((self.middleware.call_sync('s3.config'))['certificate'], 'S3'),
-            ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav')
+            ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav'),
+            ((self.middleware.call_sync('openvpn.server.config'))['server_certificate'], 'OpenVPN Server'),
+            ((self.middleware.call_sync('openvpn.client.config'))['client_certificate'], 'OpenVPN Client')
         ]:
             if service_cert_id == id:
                 verrors.add(
@@ -2108,6 +2110,20 @@ class CertificateAuthorityService(CRUDService):
             }
         """
         ca = await self._get_instance(id)
+        verrors = ValidationErrors()
+
+        # Let's make sure we don't delete a ca which is being used by any service in the system
+        for service_cert_id, text in [
+            ((await self.middleware.call('openvpn.server.config'))['root_ca'], 'OpenVPN Server'),
+            ((await self.middleware.call('openvpn.client.config'))['root_ca'], 'OpenVPN Client')
+        ]:
+            if service_cert_id == id:
+                verrors.add(
+                    'certificateauthority_delete.id',
+                    f'This certificate authority is in use by {text} service and cannot be deleted.'
+                )
+
+        verrors.check()
 
         response = await self.middleware.call(
             'datastore.delete',
