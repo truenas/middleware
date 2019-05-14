@@ -202,6 +202,10 @@ class BootService(Service):
 
         await job.wrap(extend_pool_job)
 
+        # If the user is upgrading his disks, let's set expand to True to make sure that we
+        # register the new disks capacity which increase the size of the pool
+        await self.middleware.call('zfs.pool.online', 'freenas-boot', f'{dev}p2', True)
+
     @accepts(Str('dev'))
     async def detach(self, dev):
         """
