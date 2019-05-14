@@ -28,6 +28,7 @@ from django.forms.widgets import Widget
 from django.utils.safestring import mark_safe
 from dojango.forms.widgets import DojoWidgetMixin
 
+import base64
 import json
 
 from freenasUI.middleware.client import client
@@ -47,12 +48,12 @@ class CloudSyncWidget(DojoWidgetMixin, Widget):
         extra_attrs = {
             'data-dojo-name': name,
             'data-dojo-props': mark_safe("credentials: '{}', initial: '{}'".format(
-                json.dumps([
+                base64.b64encode(json.dumps([
                     (str(i), i.id, buckets[i.provider], task_schemas[i.provider])
                     for i in CloudCredentials.objects.all()
-                ]),
-                json.dumps(value),
-            ).replace('"', '&quot;')),
+                ]).encode("ascii")).decode("ascii"),
+                base64.b64encode(json.dumps(value).encode("ascii")).decode("ascii"),
+            )),
         }
         final_attrs = self.build_attrs(attrs, name=name, **extra_attrs)
         return mark_safe('<div%s></div>' % (flatatt(final_attrs),))
