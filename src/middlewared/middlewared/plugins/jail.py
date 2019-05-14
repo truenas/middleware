@@ -591,12 +591,14 @@ class JailService(CRUDService):
                     86400
                 )
         elif resource == 'branches':
-            branches = requests.get(
+            official_branches = requests.get(
                 'https://api.github.com/repos/freenas/iocage-ix-plugins/'
                 'branches'
             )
-            branches.raise_for_status()
-            resource_list = [b['name'] for b in branches.json()]
+            official_branches.raise_for_status()
+            resource_list = {
+                'official': [b['name'] for b in official_branches.json()]
+            }
         else:
             resource_list = iocage.list(resource)
 
