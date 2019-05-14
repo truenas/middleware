@@ -108,7 +108,27 @@ class OpenVPNServerService(SystemServiceService):
             self.middleware, data, schema_name, 'server'
         )
 
+        if not await self.validate_nobind(data):
+            verrors.add(
+                f'{schema_name}.nobind',
+                'Please enable "nobind" on OpenVPN Client to concurrently run OpenVPN Server/Client '
+                'on the same local port without any issues.'
+            )
+
         verrors.check()
+
+    @private
+    async def validate_nobind(self, config):
+        client_config = await self.middleware.call('openvpn.client.config')
+        if (
+                await self.middleware.call(
+                    'service.started',
+                    'openvpn_client'
+                ) and config['port'] == client_config['port'] and not client_config['nobind']
+        ):
+            return False
+        else:
+            return True
 
     @accepts(
         Dict(
@@ -151,6 +171,40 @@ class OpenVPNClientService(SystemServiceService):
         service_model = 'openvpnclient'
         service_verb = 'restart'
 
+    @private
+    async def validate(self, data, schema_name):
+        verrors = await OpenVPN.common_validation(
+            self.middleware, data, schema_name, 'client'
+        )
+
+        if not data.get('remote'):
+            verrors.add(
+                f'{schema_name}.remote',
+                'This field is required.'
+            )
+
+        if not await self.validate_nobind(data):
+            verrors.add(
+                f'{schema_name}.nobind',
+                'Please enable this to concurrently run OpenVPN Server/Client on the same local port.'
+            )
+
+        verrors.check()
+
+    @private
+    async def validate_nobind(self, config):
+        if (
+            await self.middleware.call(
+                'service.started',
+                'openvpn_server'
+            ) and config['port'] == (
+                await self.middleware.call('openvpn.server.config')
+            )['port'] and not config['nobind']
+        ):
+            return False
+        else:
+            return True
+
     @accepts(
         Dict(
             'openvpn_client_update',
@@ -171,4 +225,13 @@ class OpenVPNClientService(SystemServiceService):
         )
     )
     async def do_update(self, data):
+        old_config = await self.config()
+        config = old_config.copy()
+
+        config.update(data)
+
+        await self.validate(config, 'openvpn_client_update')
+
+        await self._update_service(old_config, config)
+
         return await self.config()
