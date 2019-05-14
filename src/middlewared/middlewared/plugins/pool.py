@@ -2284,11 +2284,11 @@ class PoolService(CRUDService):
                             'altroot': '/mnt',
                             'cachefile': 'none',
                         }, True, zpool_cache_saved if os.path.exists(zpool_cache_saved) else None)
-                    except Exception as e:
-                        # If the pool exists but failed to import skip this one
-                        if not isinstance(e, CallError) or e.errno != errno.ENOENT:
-                            self.logger.error('Failed to import %s', pool['name'], exc_info=True)
-                            continue
+                    except Exception:
+                        # Importing a pool may fail because of out of date guid database entry
+                        # or because bad cachefile. Try again using the pool name and wihout
+                        # the cachefile
+                        self.logger.error('Failed to import %s', pool['name'], exc_info=True)
                     else:
                         imported = True
                 if not imported:
@@ -2593,6 +2593,15 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call(
                 'notifier.change_dataset_share_type', data['name'], data.get('share_type', 'UNIX').lower()
             )
+            if data.get('share_type', 'UNIX') == 'WINDOWS':
+                dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', data['id'])])
+                setacl_job = await self.middleware.call('filesystem.setacl', dataset[0]['mountpoint'], [
+                    {"tag": "owner@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
+                    {"tag": "group@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}}
+                ])
+                await setacl_job.wait()
+                if setacl_job.error:
+                    raise CallError(setacl_job.error)
 
         return await self._get_instance(data['id'])
 

@@ -386,7 +386,8 @@ class InitialWizard(CommonWizard):
                     f.write(pickle.dumps(progress))
 
                 with client as c:
-                    lock = c.call("alert.block_source", "VolumeStatus")
+                    # Creating large pool can take a very long time
+                    lock = c.call("alert.block_source", "VolumeStatus", 14400)
                     try:
                         if volume_import:
                             volume_name, guid = cleaned_data.get(
@@ -1581,6 +1582,12 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         help_text=_("API Key"),
         required=False,
     )
+    api_url = forms.CharField(
+        max_length=255,
+        label=_("API URL"),
+        help_text=_("API URL (leave empty for default)"),
+        required=False,
+    )
 
     # AWS SNS
     region = forms.CharField(
@@ -1647,7 +1654,7 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         'InfluxDB': ['host', 'username', 'password', 'database', 'series_name'],
         'Mattermost': ['cluster_name', 'url', 'username', 'password', 'team', 'channel'],
         'Mail': ['email'],
-        'OpsGenie': ['cluster_name', 'api_key'],
+        'OpsGenie': ['cluster_name', 'api_key', 'api_url'],
         'PagerDuty': ['service_key', 'client_name'],
         'Slack': ['cluster_name', 'url', 'channel', 'username', 'icon_url', 'detailed'],
         'SNMPTrap': [],
@@ -1694,9 +1701,9 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
             data.pop(k, None)
         return data
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         with client as c:
-            c.call("alert_service.delete", self.instance.id)
+            c.call("alertservice.delete", self.instance.id)
 
 
 class SystemDatasetForm(MiddlewareModelForm, ModelForm):
