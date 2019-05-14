@@ -512,8 +512,8 @@ class JailService(CRUDService):
         return fetch_output
 
     @accepts(
-        Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN", 'BRANCHES']),
-        Bool("remote", default=False),
+        Str('resource', enum=['RELEASE', 'TEMPLATE', 'PLUGIN', 'BRANCHES']),
+        Bool('remote', default=False),
         Bool('want_cache', default=True),
         Str('branch', default=None)
     )
