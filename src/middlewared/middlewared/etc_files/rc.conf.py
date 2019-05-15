@@ -126,7 +126,6 @@ def services_config(middleware, context):
         'iscsitarget': ['ctld'],
         'lldp': ['ladvd'],
         's3': ['minio'],
-        'netdata': ['netdata'],
         'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
         'rsync': ['rsyncd'],
         'snmp': ['snmpd', 'snmp_agent'],
@@ -139,6 +138,7 @@ def services_config(middleware, context):
         # These services are handled by HA script
         # smartd #76242
         mapping.update({
+            'netdata': ['netdata'],
             'smartd': ['smartd_daemon'],
             'asigra': ['dssystem', 'postgresql'],
         })
