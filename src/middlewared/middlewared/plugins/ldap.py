@@ -146,9 +146,9 @@ class LDAPQuery(object):
             if res:
                 self._isopen = True
             elif saved_gssapi_error:
-                raise CallError(saved_gssapi_error)
+                raise CallError(str(saved_gssapi_error))
             elif saved_simple_error:
-                raise CallError(saved_simple_error)
+                raise CallError(str(saved_simple_error))
 
         return (self._isopen is True)
 
@@ -282,8 +282,8 @@ class LDAPService(ConfigService):
     async def ldap_validate(self, ldap):
         port = 636 if SSL(ldap['ssl']) == SSL.USESSL else 389
         for h in ldap['hostname']:
-            self.middleware.call('ldap.port_is_listening', h, port, ldap['dns_timeout'])
-        self.middleware.call('ldap.validate_credentials')
+            await self.middleware.call('ldap.port_is_listening', h, port, ldap['dns_timeout'])
+        await self.middleware.call('ldap.validate_credentials')
 
     @accepts(Dict(
         'ldap_update',
