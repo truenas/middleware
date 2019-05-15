@@ -364,6 +364,11 @@ class FilesystemService(Service):
                 }
                 if ace['tag'] == 'everyone@' and ace['perms']['BASIC'] == 'NOPERMS':
                     continue
+
+                for key in ['perms', 'flags']:
+                    if ace[key]['BASIC'] == 'OTHER':
+                        ace[key] = entry[key]
+
                 simple_acl.append(ace)
 
             return simple_acl
