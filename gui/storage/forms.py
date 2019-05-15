@@ -2401,7 +2401,7 @@ class VolumeExport(Form):
         super(VolumeExport, self).__init__(*args, **kwargs)
         if attachments:
             self.fields['cascade'] = forms.BooleanField(
-                initial=False,
+                initial=True,
                 required=False,
                 label=_("Also delete the share's configuration"))
 
