@@ -906,31 +906,33 @@ def journal_sync(middleware, retries):
         for q in list(j.queries):
             query, params = q
             try:
-                with Client() as c:
-                    c.call('failover.call_remote', 'datastore.sql', [query, params])
-                j.queries.remove(q)
-            except ClientException as e:
-                if e.errno == errno.EHOSTDOWN:
+                middleware.call_sync('failover.call_remote', 'datastore.sql', [query, params])
+            except Exception as e:
+                if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
                     middleware.logger.trace('Skipping journal sync, node down')
                     break
+
                 retries[str(q)] += 1
                 if retries[str(q)] >= 2:
                     # No need to warn/log multiple times the same thing
                     continue
-                middleware.logger.exception('Failed to run sql: %s', e)
+
+                middleware.logger.exception('Failed to run query %s: %r', query, e)
+
                 try:
                     if not os.path.exists(SYNC_FILE):
                         open(SYNC_FILE, 'w').close()
                 except Exception:
                     pass
+
                 break
-            except Exception as e:
-                middleware.logger.exception('Query %s has failed for unknown reasons', query)
+            else:
+                j.queries.remove(q)
 
         if len(list(j.queries)) == 0 and os.path.exists(SYNC_FILE):
             try:
                 os.unlink(SYNC_FILE)
-            except:
+            except Exception:
                 pass
 
 
