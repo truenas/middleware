@@ -1,6 +1,7 @@
 import datetime
 import dateutil
 import dateutil.parser
+import inspect
 import ipaddress
 import josepy as jose
 import json
@@ -164,8 +165,25 @@ class CryptoKeyService(Service):
         'email_address': 'email'
     }
 
+    EXTENSIONS = {}
+
     class Config:
         private = True
+
+    @staticmethod
+    def extensions():
+        if not CryptoKeyService.EXTENSIONS:
+            # For now we only support the following extensions
+            supported = [
+                'BasicConstraints', 'SubjectKeyIdentifier', 'AuthorityKeyIdentifier',
+                'ExtendedKeyUsage', 'KeyUsage', 'SubjectAlternativeName'
+            ]
+
+            for attr in supported:
+                attr_obj = getattr(x509.extensions, attr)
+                CryptoKeyService.EXTENSIONS[attr] = inspect.getfullargspec(attr_obj.__init__).args[1:]
+
+        return CryptoKeyService.EXTENSIONS
 
     def validate_certificate_with_key(self, certificate, private_key, schema_name, verrors, passphrase=None):
         if (
@@ -1085,6 +1103,10 @@ class CertificateService(CRUDService):
         Dictionary of supported key types for certificates.
         """
         return {k: k for k in ['RSA', 'EC']}
+
+    @accepts()
+    async def certificate_extensions(self):
+        return CryptoKeyService.extensions()
 
     # CREATE METHODS FOR CREATING CERTIFICATES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE
