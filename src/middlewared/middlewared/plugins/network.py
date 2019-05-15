@@ -18,6 +18,7 @@ import shlex
 import signal
 import socket
 import subprocess
+import time
 import urllib.request
 
 
@@ -607,8 +608,12 @@ class InterfaceService(CRUDService):
         """
         Returns wether or not we are waiting user to checkin the applied network changes
         before they are rolled back.
+        Value is in number of seconds or null.
         """
-        return self._rollback_timer is not None
+        if self._rollback_timer:
+            remaining = self._rollback_timer.when() - time.monotonic()
+            if remaining > 0:
+                return remaining
 
     @accepts(Dict(
         'options',
