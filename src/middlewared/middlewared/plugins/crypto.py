@@ -143,6 +143,11 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
                 'RSA-based keys require an entry in this field.'
             )
 
+    if not verrors and data.get('cert_extensions'):
+        verrors.extend(
+            (await middleware.call('cryptokey.validate_extensions', data['cert_extensions'], schema_name))
+        )
+
 
 class CryptoKeyService(Service):
 
@@ -189,7 +194,8 @@ class CryptoKeyService(Service):
 
         return CryptoKeyService.EXTENSIONS
 
-    def add_extensions(self, cert, extensions_data, key):
+    def add_extensions(self, cert, extensions_data, key, issuer=None):
+        # issuer must be a certificate object
         # By default we add the following
         cert = cert.public_key(
             key.public_key()
@@ -197,26 +203,41 @@ class CryptoKeyService(Service):
             x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
         )
 
-        for extension in filter(lambda v: bool(v[1]), extensions_data.items()):
+        for extension in filter(lambda v: v[1]['enabled'], extensions_data.items()):
             klass = getattr(x509.extensions, extension[0])
             cert = cert.add_extension(
-                klass(*self.convert_extension_data(extension)),
+                klass(*self.get_extension_params(extension, cert, issuer)),
                 extension[1].get('extension_critical') or False
             )
 
         return cert
 
-    def convert_extension_data(self, extension):
-        params = ()
+    def get_extension_params(self, extension, cert=None, issuer=None):
+        params = []
+
         if extension[0] == 'BasicConstraints':
-            params = (extension[1].get('ca'), extension[1].get('path_length'))
+            params = [extension[1].get('ca'), extension[1].get('path_length')]
         elif extension[0] == 'ExtendedKeyUsage':
             usages = []
             for ext_usage in extension[1].get('usages', []):
                 usages.append(getattr(x509.oid.ExtendedKeyUsageOID, ext_usage))
-            params = (usages,)
+            params = [usages]
         elif extension[0] == 'KeyUsage':
-            params = (extension[1].get(k, False) for k in self.extensions()['KeyUsage'])
+            params = [extension[1].get(k, False) for k in self.extensions()['KeyUsage']]
+        elif extension[0] == 'AuthorityKeyIdentifier':
+            params = [
+                x509.SubjectKeyIdentifier.from_public_key(
+                    issuer.public_key() if issuer else cert._public_key
+                ).digest if cert or issuer else None,
+                None, None
+            ]
+
+            if extension[1]['authority_cert_issuer'] and cert:
+                params[1:] = [
+                    [x509.DirectoryName(cert._issuer_name)],
+                    issuer.serial_number if issuer else cert._serial_number
+                ]
+
         return params
 
     @accepts(
@@ -224,12 +245,19 @@ class CryptoKeyService(Service):
         Str('schema')
     )
     def validate_extensions(self, extensions_data, schema):
+        # We do not need to validate some extensions like `AuthorityKeyIdentifier`.
+        # They are generated from the cert/ca's public key contents. So we skip these.
+
+        skip_extension = ['AuthorityKeyIdentifier']
         verrors = ValidationErrors()
 
-        for extension in filter(lambda v: bool(v[1]), extensions_data.items()):
+        for extension in filter(
+            lambda v: v[1]['enabled'] and v[0] not in skip_extension,
+            extensions_data.items()
+        ):
             klass = getattr(x509.extensions, extension[0])
             try:
-                klass(*self.convert_extension_data(extension[1]))
+                klass(*self.get_extension_params(extension))
             except Exception as e:
                 verrors.add(
                     f'{schema}.{extension[0]}',
@@ -459,7 +487,6 @@ class CryptoKeyService(Service):
             'csr': True
         })
 
-        csr = self.add_extensions(csr, data.get('cert_extensions'), key)
         csr = csr.sign(key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend())
 
         return (
@@ -567,10 +594,13 @@ class CryptoKeyService(Service):
             builder_data['crypto_issuer_name'] = {
                 k: ca_data.get(v) for k, v in self.backend_mappings.items()
             }
+            issuer = x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
+        else:
+            issuer = None
 
         cert = self.generate_builder(builder_data)
 
-        cert = self.add_extensions(cert, data.get('cert_extensions'), key)
+        cert = self.add_extensions(cert, data.get('cert_extensions'), key, issuer)
 
         cert = cert.sign(
             ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
@@ -621,12 +651,17 @@ class CryptoKeyService(Service):
             builder_data['crypto_issuer_name'] = {
                 k: ca_data.get(v) for k, v in self.backend_mappings.items()
             }
+            issuer = x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
+        else:
+            issuer = None
 
         cert = self.generate_builder(builder_data)
 
-        cert = self.add_extensions(cert, data.get('cert_extensions'), key)
+        cert = self.add_extensions(cert, data.get('cert_extensions'), key, issuer)
 
-        cert = cert.sign(ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend())
+        cert = cert.sign(
+            ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
+        )
 
         return (
             cert.public_bytes(serialization.Encoding.PEM).decode(),
@@ -645,7 +680,8 @@ class CryptoKeyService(Service):
             Str('csr', required=True, max_length=None),
             Str('csr_privatekey', required=True, max_length=None),
             Int('serial', required=True),
-            Str('digest_algorithm', default='SHA256')
+            Str('digest_algorithm', default='SHA256'),
+            Ref('cert_extensions')
         )
     )
     def sign_csr_with_ca(self, data):
@@ -664,9 +700,12 @@ class CryptoKeyService(Service):
             'san': self.normalize_san(csr_data.get('san'))
         })
 
-        new_cert = new_cert.public_key(
-            csr_key.public_key()
-        ).sign(
+        new_cert = self.add_extensions(
+            new_cert, data.get('cert_extensions'), csr_key,
+            x509.load_pem_x509_certificate(data['ca_certificate'], default_backend())
+        )
+
+        new_cert = new_cert.sign(
             ca_key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
         )
 
