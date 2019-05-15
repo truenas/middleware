@@ -25,6 +25,7 @@ define([
   "dojox/widget/Standby",
   "freeadmin/Progress",
   "dojo/text!freeadmin/templates/cloudsync.html",
+  "xstyle/build/base64",
   ], function(
   declare,
   domConst,
@@ -51,7 +52,8 @@ define([
   generateRandomUuid,
   Standby,
   Progress,
-  template) {
+  template,
+  base64) {
 
     var CloudSync = declare("freeadmin.CloudSync", [ _Widget, _Templated ], {
       name: "",
@@ -73,11 +75,11 @@ define([
         var creds = [{label: "-----", value: ""}];
 
         if(this.initial != '') {
-          this.initial = json.parse(this.initial);
+          this.initial = json.parse(base64.decode(this.initial));
         }
 
         if(this.credentials != '') {
-          credentials = json.parse(this.credentials);
+          credentials = json.parse(base64.decode(this.credentials));
         }
 
         for(var i=0;i<credentials.length;i++) {
