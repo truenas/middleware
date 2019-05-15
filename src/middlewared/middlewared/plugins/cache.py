@@ -1,7 +1,11 @@
-from middlewared.schema import Any, Str, accepts, Int
-from middlewared.service import Service, private
+from middlewared.schema import Any, Str, accepts, Int, Dict
+from middlewared.service import Service, private, filterable
+from middlewared.utils import filter_list
+
 from collections import namedtuple
 import time
+import pwd
+import grp
 
 
 class CacheService(Service):
@@ -81,3 +85,98 @@ class CacheService(Service):
             value = method()
             self.put(key, value, timeout)
             return value
+
+
+class DSCache(Service):
+
+    class Config:
+        private = True
+
+    @private
+    def get_uncached_user(self, username=None, uid=None):
+        if username:
+            u = pwd.getpwnam(username)
+        elif uid is not None:
+            u = pwd.getpwuid(uid)
+        else:
+            return {}
+        return {
+            'pw_name': u.pw_name,
+            'pw_uid': u.pw_uid,
+            'pw_gid': u.pw_gid,
+            'pw_gecos': u.pw_gecos,
+            'pw_dir': u.pw_dir,
+            'pw_shell': u.pw_shell
+        }
+
+    @private
+    def get_uncached_group(self, groupname=None, gid=None):
+        if groupname:
+            g = grp.getgrnam(groupname)
+        elif gid is not None:
+            g = grp.getgrgid(gid)
+        else:
+            return {}
+        return {
+            'gr_name': g.gr_name,
+            'gr_gid': g.gr_gid,
+            'gr_mem': g.gr_mem
+        }
+
+    @private
+    async def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
+        try:
+            if entry_type == 'users':
+                return await self.middleware.call('dscache.get_uncached_user', obj)
+            elif entry_type == 'groups':
+                return await self.middleware.call('dscache.get_uncached_group', obj)
+
+        except Exception:
+            return None
+
+    @private
+    async def query(self, objtype='USERS', objcount=50, filters=None, options=None):
+        """
+        Query User / Group cache with `query-filters` and `query-options`.
+
+        `objtype`: 'USERS' or 'GROUPS'
+
+        `obcount`: how many users or groups to return.
+        """
+        self.logger.debug(f'filters: {filters}')
+        ds_enabled = {}
+        res = []
+        for ds in ['activedirectory', 'ldap', 'nis']:
+            ds_enabled.update({
+                str(ds): True if await self.middleware.call(f'{ds}.get_state') != 'DISABLED' else False
+            })
+
+        if objtype == 'USERS':
+            local_users = []
+            for u in await self.middleware.call('user.query'):
+                local_users.append({
+                    'pw_name': u['username'],
+                    'pw_uid': u['uid'],
+                    'local': True,
+                })
+            res.extend(filter_list(local_users, filters, options))
+
+        elif objtype == 'GROUPS':
+            local_groups = []
+            for g in await self.middleware.call('group.query'):
+                local_groups.append({
+                    'gr_name': g['group'],
+                    'gr_gid': g['gid'],
+                    'local': True,
+                })
+            res.extend(filter_list(local_groups, filters, options))
+
+        for dstype, enabled in ds_enabled.items():
+            if enabled:
+                res.extend(filter_list(
+                    (await self.middleware.call(f'{dstype}.get_cache'))[objtype.lower()],
+                    filters,
+                    options
+                ))
+
+        return res[:objcount]

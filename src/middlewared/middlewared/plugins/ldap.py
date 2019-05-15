@@ -571,13 +571,9 @@ class LDAPService(ConfigService):
                 continue
 
             cache_data['users'].append({
-                'name': u.pw_name,
-                'uid': u.pw_name,
-                'uidNumber': u.pw_uid,
-                'gidNumber': u.pw_gid,
-                'gecos': u.pw_gecos,
-                'homeDirectory': u.pw_dir,
-                'loginShell': u.pw_shell,
+                'pw_name': u.pw_name,
+                'pw_uid': u.pw_uid,
+                'local': False
             })
 
         for g in grp_list:
@@ -586,16 +582,15 @@ class LDAPService(ConfigService):
                 continue
 
             cache_data['groups'].append({
-                'name': g.gr_name,
-                'group': g.gr_name,
-                'gidNumber': g.gr_gid,
-                'members': g.gr_mem,
+                'gr_name': g.gr_name,
+                'gr_gid': g.gr_gid,
+                'local': False
             })
 
         self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data, 86400)
 
     @private
-    async def get_ldap_cache(self):
+    async def get_cache(self):
         if not await self.middleware.call('cache.has_key', 'LDAP_cache'):
             cache_job = await self.middleware.call('ldap.fill_ldap_cache')
             await cache_job.wait()
@@ -604,30 +599,7 @@ class LDAPService(ConfigService):
         return await self.middleware.call('cache.get', 'LDAP_cache')
 
     @private
-    async def get_ldap_usersorgroups_legacy(self, entry_type='users'):
-        """
-        Compatibility shim for old django user cache Returns list of pwd.struct_passwd
-        for users (or corresponding grp structure for groups in the AD domain.
-        """
-        ldap_cache = await self.get_ldap_cache()
-        if not ldap_cache:
-            return []
-
-        return ldap_cache[entry_type]
-
-    @private
-    def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
-        try:
-            if entry_type == 'users':
-                return pwd.getpwnam(obj)
-            elif entry_type == 'groups':
-                return grp.getgrnam(obj)
-
-        except Exception:
-            return None
-
-    @private
-    async def get_ldap_userorgroup_legacy(self, entry_type='users', obj=None):
+    async def get_userorgroup_legacy(self, entry_type='users', obj=None):
         """
         Compatibility shim for old django user cache
         Returns cached pwd.struct_passwd or grp.struct_group for user or group specified.
@@ -640,15 +612,21 @@ class LDAPService(ConfigService):
             if await self.middleware.call('group.query', [('group', '=', obj)]):
                 return None
 
-        ldap_cache = await self.get_ldap_cache()
+        ldap_cache = await self.get_cache()
         if not ldap_cache:
-            await self.middleware.call('ldap.get_uncached_userorgroup_legacy', entry_type, obj)
+            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
 
-        ret = list(filter(lambda x: x['name'] == obj, ldap_cache[entry_type]))
+        if entry_type == 'users':
+            ret = list(filter(lambda x: x['pw_name'] == obj, ldap_cache[entry_type]))
+            if not ret:
+                try: 
+                    return await self.middleware.call('dscache.get_uncached_user', obj)
+                except Exception:
+                    return None
 
-        if not ret:
-            ret = await self.middleware.call('ldap.get_uncached_userorgroup_legacy', entry_type, obj)
         else:
-            ret = ret[0]
+            ret = list(filter(lambda x: x['gr_name'] == obj, ldap_cache[entry_type]))
+        if not ret:
+            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
 
-        return ret
+        return ret[0]

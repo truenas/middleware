@@ -51,23 +51,11 @@ from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_size, humanize_number_si
-from freenasUI.common.freenascache import (
-    FLAGS_CACHE_READ_USER,
-    FLAGS_CACHE_WRITE_USER,
-    FLAGS_CACHE_READ_GROUP,
-    FLAGS_CACHE_WRITE_GROUP
-)
-from freenasUI.common.freenasldap import (
-    FLAGS_DBINIT,
-)
-from freenasUI.common.freenasnis import FreeNAS_NIS_Users, FreeNAS_NIS_Groups
 from freenasUI.common.freenasusers import (
     FreeNAS_Groups,
     FreeNAS_Users,
-    FreeNAS_ActiveDirectory_Group,
-    FreeNAS_ActiveDirectory_User,
-    FreeNAS_LDAP_User,
-    FreeNAS_LDAP_Group
+    FreeNAS_DS_Group,
+    FreeNAS_DS_User,
 )
 from freenasUI.common.system import (
     get_sw_login_version,
@@ -4044,9 +4032,7 @@ class JsonUserResource(DojoResource):
         exclude = request.GET.get('exclude') or kwargs.get('exclude', [])
         if exclude:
             exclude = exclude.split(',')
-        for user in FreeNAS_Users(
-                flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER
-        ):
+        for user in FreeNAS_Users():
             if (
                     (query is None or user.pw_name.startswith(query)) and
                     user.pw_name not in exclude and not any(u for u in users if u.name == user.pw_name)
@@ -4064,59 +4050,40 @@ class JsonUserResource(DojoResource):
         if request.GET.get('wizard') == '1' and wizard_ds:
             if wizard_ds.get('ds_type') == 'ad':
                 with client as c:
-                    userlist = c.call('activedirectory.get_ad_usersorgroups_legacy', 'users')
+                    userlist = (c.call('activedirectory.get_cache'))['users']
                     ad_users = []
                     for user in userlist:
-                        ad_users.append(FreeNAS_ActiveDirectory_User(user))
+                        ad_users.append(FreeNAS_DS_User(user, 'activedirectory'))
                 wizard_users = ad_users
             elif wizard_ds.get('ds_type') == 'ldap':
                 with client as c:
-                    userlist = c.call('ldap.get_ldap_usersorgroups_legacy', 'users')
+                    userlist = (c.call('ldap.get_cache'))['users']
                     ldap_users = []
                     for user in userlist:
-                        ldap_users.append(FreeNAS_LDAP_User(user))
+                        ldap_users.append(FreeNAS_DS_User(user, 'ldap'))
                 wizard_users = ldap_users
             elif wizard_ds.get('ds_type') == 'nis':
-                wizard_users = FreeNAS_NIS_Users(
-                    domain=wizard_ds.get('ds_nis_domain'),
-                    servers=wizard_ds.get('ds_nis_servers'),
-                    secure_mode=wizard_ds.get('ds_nis_secure_mode'),
-                    manycast=wizard_ds.get('ds_nis_manycast'),
-                    flags=FLAGS_DBINIT,
-                )
+                with client as c:
+                    userlist = (c.call('nis.get_cache'))['users']
+                    nis_users = []
+                    for user in userlist:
+                        nis_users.append(FreeNAS_DS_User(user, 'nis'))
+                wizard_users = nis_users
             else:
                 wizard_users = None
 
             if wizard_users is not None:
-                if wizard_ds.get('ds_type') in ['ad', 'ldap']:
-                    for user in wizard_users:
-                        users.append(
-                            JsonUser(
-                                id='%s_%s' % (
-                                    wizard_ds.get('ds_type'),
-                                    user,
-                                ),
-                                name=user.pw_name,
-                                label=user.pw_name
-                            )
+                for user in wizard_users:
+                    users.append(
+                        JsonUser(
+                            id='%s_%s' % (
+                                wizard_ds.get('ds_type'),
+                                user,
+                            ),
+                            name=user.pw_name,
+                            label=user.pw_name
                         )
-                # FIXME: code duplication with the block above
-                else:
-                    for user in wizard_users._get_uncached_usernames():
-                        if (
-                                (query is None or user.startswith(query)) and
-                                user not in exclude
-                        ):
-                            users.append(
-                                JsonUser(
-                                    id='%s_%s' % (
-                                        wizard_ds.get('ds_type'),
-                                        user,
-                                    ),
-                                    name=user,
-                                    label=user
-                                )
-                            )
+                    )
 
             del wizard_users
 
@@ -4186,9 +4153,7 @@ class JsonGroupResource(DojoResource):
         }
         groups = []
         query = request.GET.get('q', None)
-        for grp in FreeNAS_Groups(
-                flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP | FLAGS_CACHE_WRITE_GROUP
-        ):
+        for grp in FreeNAS_Groups():
             if ((query is None or grp.gr_name.startswith(query)) and
                     not any(g for g in groups if g.name == grp.gr_name)):
                 groups.append(
@@ -4204,56 +4169,40 @@ class JsonGroupResource(DojoResource):
         if request.GET.get('wizard') == '1' and wizard_ds:
             if wizard_ds.get('ds_type') == 'ad':
                 with client as c:
-                    grouplist = c.call('activedirectory.get_ad_usersorgroups_legacy', 'groups')
+                    grouplist = (c.call('activedirectory.get_cache'))['groups']
                     ad_groups = []
                     for group in grouplist:
-                        ad_groups.append(FreeNAS_ActiveDirectory_Group(group))
+                        ad_groups.append(FreeNAS_DS_Group(group, 'activedirectory'))
                     wizard_groups = ad_groups
             elif wizard_ds.get('ds_type') == 'ldap':
                 with client as c:
-                    grouplist = c.call('ldap.get_ldap_usersorgroups_legacy', 'groups')
+                    grouplist = (c.call('ldap.get_cache'))['groups']
                     ldap_groups = []
                     for group in grouplist:
-                        ldap_groups.append(FreeNAS_LDAP_Group(group))
+                        ldap_groups.append(FreeNAS_DS_Group(group, 'ldap'))
                     wizard_groups = ldap_groups
             elif wizard_ds.get('ds_type') == 'nis':
-                wizard_groups = FreeNAS_NIS_Groups(
-                    domain=wizard_ds.get('ds_nis_domain'),
-                    servers=wizard_ds.get('ds_nis_servers'),
-                    secure_mode=wizard_ds.get('ds_nis_secure_mode'),
-                    manycast=wizard_ds.get('ds_nis_manycast'),
-                    flags=FLAGS_DBINIT,
-                )
+                with client as c:
+                    grouplist = (c.call('nis.get_cache'))['groups']
+                    nis_groups = []
+                    for group in grouplist:
+                        nis_groups.append(FreeNAS_DS_Group(group, 'nis'))
+                    wizard_groups = nis_groups
             else:
                 wizard_groups = None
 
             if wizard_groups:
-                if wizard_ds.get('ds_type') == 'ad':
-                    for group in wizard_groups:
-                        groups.append(
-                            JsonGroup(
-                                id='%s_%s' % (
-                                    wizard_ds.get('ds_type'),
-                                    group,
-                                ),
-                                name=group,
-                                label=group
-                            )
-                        )
-                else:
-                    # FIXME: code duplication with the block above
-                    for group in wizard_groups._get_uncached_groupnames():
-                        if query is None or group.startswith(query):
-                            groups.append(
-                                JsonGroup(
-                                    id='%s_%s' % (
-                                        wizard_ds.get('ds_type'),
-                                        group,
-                                    ),
-                                    name=group,
-                                    label=group
-                                )
-                            )
+                for group in wizard_groups:
+                    groups.append(
+                        JsonGroup(
+                            id='%s_%s' % (
+                                wizard_ds.get('ds_type'),
+                                group,
+                            ),
+                            name=group,
+                            label=group
+                         )
+                    )
 
             del wizard_groups
 

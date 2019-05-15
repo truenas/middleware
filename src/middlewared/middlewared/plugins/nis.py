@@ -211,15 +211,70 @@ class NISService(ConfigService):
         return True
 
     @private
-    @job(lock=lambda args: 'nis_cache')
-    def cache(self, job, action):
-        cachetool = subprocess.Popen(
-            ['/usr/local/www/freenasUI/tools/cachetool.py', action],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
-        )
-        output = cachetool.communicate()
-        if cachetool.returncode != 0:
-            self.logger.debug(f'Cache action [{action}] failed: {output[1].decode()}')
-            return False
+    @job(lock=lambda args: 'fill_nis_cache')
+    def fill_nis_cache(self, job, force=False):
+        if self.middleware.call_sync('cache.has_key', 'NIS_cache') and not force:
+            raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
-        return True
+        self.middleware.call_sync('cache.pop', 'NIS_cache')
+        pwd_list = pwd.getpwall()
+        grp_list = grp.getgrall()
+
+        local_uid_list = list(u['uid'] for u in self.middleware.call_sync('user.query'))
+        local_gid_list = list(g['gid'] for g in self.middleware.call_sync('group.query'))
+        cache_data = {'users': [], 'groups': []}
+
+        for u in pwd_list:
+            is_local_user = True if u.pw_uid in local_uid_list else False
+            if is_local_user:
+                continue
+
+            cache_data['users'].append({
+                'pw_name': u.pw_name,
+                'pw_uid': u.pw_uid,
+                'local': False
+            })
+
+        for g in grp_list:
+            is_local_user = True if g.gr_gid in local_gid_list else False
+            if is_local_user:
+                continue
+
+            cache_data['groups'].append({
+                'gr_name': g.gr_name,
+                'gr_gid': g.gr_gid,
+                'local': False
+            })
+
+        self.middleware.call_sync('cache.put', 'NIS_cache', cache_data, 86400)
+
+    @private
+    async def get_cache(self):
+        if not await self.middleware.call('cache.has_key', 'NIS_cache'):
+            cache_job = await self.middleware.call('nis.fill_nis_cache')
+            await cache_job.wait()
+            self.logger.debug('cache fill is in progress.')
+            return {}
+        return await self.middleware.call('cache.get', 'nis_cache')
+
+    @private
+    async def get_userorgroup_legacy(self, entry_type='users', obj=None):
+        if entry_type == 'users':
+            if await self.middleware.call('user.query', [('username', '=', obj)]):
+                return None
+        else:
+            if await self.middleware.call('group.query', [('group', '=', obj)]):
+                return None
+
+        nis_cache = await self.get_cache()
+        if not nis_cache:
+            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
+
+        if entry_type == 'users':
+            ret = list(filter(lambda x: x['pw_name'] == obj, nis_cache[entry_type]))
+        else:
+            ret = list(filter(lambda x: x['gr_name'] == obj, nis_cache[entry_type]))
+        if not ret:
+            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
+
+        return ret[0]

@@ -869,7 +869,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
             await self._set_state(DSStatus['HEALTHY'])
-            await self.get_ad_cache()
+            await self.get_cache()
         else:
             await self._set_state(DSStatus['FAULTED'])
 
@@ -1186,7 +1186,11 @@ class ActiveDirectoryService(ConfigService):
                         """
                         try:
                             user_data = pwd.getpwuid(int(cached_uid))
-                            cache_data[d['domain']]['users'].append(user_data)
+                            cache_data[d['domain']]['users'].append({
+                                'pw_name': user_data.pw_name,
+                                'pw_uid': user_data.pw_uid,
+                                'local': False
+                            })
                             break
                         except Exception:
                             break
@@ -1205,7 +1209,11 @@ class ActiveDirectoryService(ConfigService):
                         """
                         try:
                             group_data = grp.getgrgid(int(cached_gid))
-                            cache_data[d['domain']]['groups'].append(group_data)
+                            cache_data[d['domain']]['groups'].append({
+                                'gr_name': group_data.gr_name,
+                                'gr_gid': group_data.gr_gid,
+                                'local': False
+                            })
                             break
                         except Exception:
                             break
@@ -1213,10 +1221,15 @@ class ActiveDirectoryService(ConfigService):
         if not cache_data[smb['workgroup']].get('users'):
             return
 
-        self.middleware.call_sync('cache.put', 'ad_cache', cache_data, 86400)
+        ret = {'users': [], 'groups': []}
+        for key in ['users', 'groups']:
+            for key,val in ad_cache.items():
+                ret[key].extend(val[key])
+
+        self.middleware.call_sync('cache.put', 'ad_cache', ret, 86400)
 
     @private
-    async def get_ad_cache(self):
+    async def get_cache(self):
         """
         Returns cached AD user and group information. If proactive caching is enabled
         then this will contain all AD users and groups, otherwise it contains the
@@ -1229,33 +1242,6 @@ class ActiveDirectoryService(ConfigService):
             self.logger.debug('cache fill is in progress.')
             return {}
         return await self.middleware.call('cache.get', 'ad_cache')
-
-    @private
-    async def get_ad_usersorgroups_legacy(self, entry_type='users'):
-        """
-        Compatibility shim for old django user cache Returns list of pwd.struct_passwd
-        for users (or corresponding grp structure for groups in the AD domain.
-        """
-        ad_cache = await self.get_ad_cache()
-        if not ad_cache:
-            return []
-
-        ret = []
-        for key, val in ad_cache.items():
-            ret.extend(val[entry_type])
-
-        return ret
-
-    @private
-    def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
-        try:
-            if entry_type == 'users':
-                return pwd.getpwnam(obj)
-            elif entry_type == 'groups':
-                return grp.getgrnam(obj)
-
-        except Exception:
-            return False
 
     @private
     async def get_ad_userorgroup_legacy(self, entry_type='users', obj=None):
@@ -1271,29 +1257,29 @@ class ActiveDirectoryService(ConfigService):
             if await self.middleware.call('group.query', [('group', '=', obj)]):
                 return None
 
-        ad_cache = await self.get_ad_cache()
+        ad_cache = await self.get_cache()
         if not ad_cache:
-            await self.get_uncached_userorgroup_legacy(entry_type, obj)
+            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
 
         ad = await self.config()
         smb = await self.middleware.call('smb.config')
 
         if ad['use_default_domain']:
             if entry_type == 'users':
-                ret = list(filter(lambda x: x.pw_name == obj, ad_cache[smb['workgroup']][entry_type]))
+                ret = list(filter(lambda x: x['pw_name'] == obj, ad_cache[smb['workgroup']][entry_type]))
             elif entry_type == 'groups':
-                ret = list(filter(lambda x: x.gr_name == obj, ad_cache[smb['workgroup']][entry_type]))
+                ret = list(filter(lambda x: x['gr_name'] == obj, ad_cache[smb['workgroup']][entry_type]))
 
         else:
             domain_obj = None
             if '\\' not in obj:
-                await self.get_uncached_userorgroup_legacy(entry_type=entry_type, obj=obj)
+                return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
             else:
                 domain_obj = obj.split('\\')
 
             if entry_type == 'users':
-                ret = list(filter(lambda x: x.pw_name == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
+                ret = list(filter(lambda x: x['pw_name'] == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
             elif entry_type == 'groups':
-                ret = list(filter(lambda x: x.gr_name == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
+                ret = list(filter(lambda x: x['gr_name'] == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
 
         return ret[0]

@@ -35,14 +35,6 @@ from freenasUI.common.system import (
     nis_enabled
 )
 
-
-from freenasUI.common.freenasnis import (
-    FreeNAS_NIS_Group,
-    FreeNAS_NIS_User,
-    FreeNAS_NIS_Groups,
-    FreeNAS_NIS_Users
-)
-
 log = logging.getLogger("common.freenasusers")
 
 
@@ -146,13 +138,14 @@ class FreeNAS_Group(object):
         obj = None
         try:
             if dflags & U_AD_ENABLED:
-                obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
+                obj = FreeNAS_DS_Group(group, 'activedirectory', **kwargs)
             elif dflags & U_NIS_ENABLED:
-                obj = FreeNAS_NIS_Group(group, **kwargs)
+                obj = FreeNAS_DS_Group(group, 'nis', **kwargs)
             elif dflags & U_LDAP_ENABLED:
-                obj = FreeNAS_LDAP_Group(group, **kwargs)
-                if not obj._gr:
-                    obj = None
+                obj = FreeNAS_DS_Group(group, 'ldap', **kwargs)
+
+            if dflags & (U_AD_ENABLED|U_NIS_ENABLED|U_LDAP_ENABLED) and not obj._gr:
+                obj = None
 
         except Exception:
             log.debug('Failed to get group from directory service, falling back to local', exc_info=True)
@@ -160,7 +153,7 @@ class FreeNAS_Group(object):
         if obj is None:
             obj = FreeNAS_Local_Group(group, **kwargs)
 
-        if not obj or not obj._gr:
+        if obj is None or not obj._gr:
             obj = None
 
         if obj:
@@ -183,35 +176,21 @@ class FreeNAS_Groups(object):
 
         dir = None
         dflags = _get_dflags()
-        if dflags & U_AD_ENABLED:
-            with client as c:
-                grouplist = c.call('activedirectory.get_ad_usersorgroups_legacy', 'groups')
-                self.__groups = []
-                for group in grouplist:
-                    self.__groups.append(FreeNAS_ActiveDirectory_Group(group, **kwargs))
-        elif dflags & U_NIS_ENABLED:
-            dir = FreeNAS_NIS_Groups
-        elif dflags & U_LDAP_ENABLED:
-            with client as c:
-                grouplist = c.call('ldap.get_ldap_usersorgroups_legacy', 'groups')
+        grouplist = []
+        with client as c:
+            if dflags & U_AD_ENABLED:
+                grouplist = (c.call('activedirectory.get_cache'))['groups']
+            elif dflags & U_NIS_ENABLED:
+                grouplist = (c.call('nis.get_cache'))['groups']
+            elif dflags & U_LDAP_ENABLED:
+                grouplist = (c.call('ldap.get_cache'))['groups']
+
+        if grouplist:
             self.__groups = []
             for g in grouplist:
                 self.__groups.append(
-                    grp.struct_group((
-                        g['name'],
-                        '',
-                        g['gidNumber'],
-                        g['members']
-                    ))
+                    grp.struct_group((g['gr_name'], '', g['gr_gid'], []))
                 )
-
-        if dir is not None:
-            try:
-                self.__groups = dir(**kwargs)
-
-            except Exception as e:
-                log.error("Directory Groups could not be retrieved: {0}".format(str(e)))
-                self.__groups = None
 
         if self.__groups is None:
             self.__groups = []
@@ -266,111 +245,45 @@ class FreeNAS_Local_User(object):
             self._pw = None
 
 
-class FreeNAS_ActiveDirectory_User(object):
-    def __new__(cls, user, **kwargs):
+class FreeNAS_DS_User(object):
+    def __new__(cls, user, dstype, **kwargs):
         obj = None
         if user is not None:
-            obj = super(FreeNAS_ActiveDirectory_User, cls).__new__(cls)
+            obj = super(FreeNAS_DS_User, cls).__new__(cls)
 
         return obj
 
-    def __init__(self, user, **kwargs):
-        super(FreeNAS_ActiveDirectory_User, self).__init__()
-
-        self._pw = None
-        if type(user) is not list:
-            self.__get_user(user)
-        else:
-            self.pw_name = user[0]
-            self.pw_passwd = user[1]
-            self.pw_uid = user[2]
-            self.pw_gid = user[3]
-            self.pw_gecos = user[4]
-            self.pw_dir = user[5]
-            self.pw_shell = user[6]
-
-    def __get_user(self, user):
+    def __init__(self, user, dstype, **kwargs):
+        super(FreeNAS_DS_User, self).__init__()
         with client as c:
-            self._pw = c.call('activedirectory.get_ad_userorgroup_legacy', 'users', user)
-
-
-class FreeNAS_LDAP_User(object):
-    def __new__(cls, user, **kwargs):
-        obj = None
-        if user is not None:
-            obj = super(FreeNAS_LDAP_User, cls).__new__(cls)
-
-        return obj
-
-    def __init__(self, user, **kwargs):
-        super(FreeNAS_LDAP_User, self).__init__()
-        with client as c:
-            u = c.call('ldap.get_ldap_userorgroup_legacy', 'users', user)
+            u = c.call(f'{dstype}.get_userorgroup_legacy', 'users', user)
 
         if u is None:
             self._pw = None
             return
 
-        self._pw = pwd.struct_passwd((
-            u['name'],
-            '',
-            u['uidNumber'],
-            u['gidNumber'],
-            u['gecos'],
-            u['homeDirectory'],
-            u['loginShell']
-        ))
+        self._pw = pwd.struct_passwd((u['pw_name'], '', u['pw_uid'], -1, '', '', ''))
 
 
-class FreeNAS_LDAP_Group(object):
-    def __new__(cls, group, **kwargs):
+class FreeNAS_DS_Group(object):
+    def __new__(cls, group, dstype, **kwargs):
         log.debug('new-group: %s' % group)
         obj = None
         if group is not None:
-            obj = super(FreeNAS_LDAP_Group, cls).__new__(cls)
+            obj = super(FreeNAS_DS_Group, cls).__new__(cls)
 
         return obj
 
-    def __init__(self, group, **kwargs):
-        super(FreeNAS_LDAP_Group, self).__init__()
+    def __init__(self, group, dstype, **kwargs):
+        super(FreeNAS_DS_Group, self).__init__()
         with client as c:
-            g = c.call('ldap.get_ldap_userorgroup_legacy', 'groups', group)
+            g = c.call(f'{dstype}.get_userorgroup_legacy', 'groups', group)
 
         if g is None:
             self._gr = None
             return
 
-        self._gr = grp.struct_group((
-            g['name'],
-            '',
-            g['gidNumber'],
-            g['members']
-        ))
-
-
-class FreeNAS_ActiveDirectory_Group(object):
-    def __new__(cls, group, **kwargs):
-        obj = None
-        if group is not None:
-            obj = super(FreeNAS_ActiveDirectory_Group, cls).__new__(cls)
-
-        return obj
-
-    def __init__(self, group, **kwargs):
-        super(FreeNAS_ActiveDirectory_Group, self).__init__()
-
-        self._grp = None
-        if type(group) is not list:
-            self.__get_group(group)
-        else:
-            self.gr_name = group[0]
-            self.gr_passwd = group[1]
-            self.gr_gid = group[2]
-            self.gr_mem = group[3]
-
-    def __get_group(self, group):
-        with client as c:
-            self._gr = c.call('activedirectory.get_ad_userorgroup_legacy', 'groups', group)
+        self._gr = grp.struct_group((g['gr_name'], '', g['gr_gid'], []))
 
 
 class FreeNAS_User(object):
@@ -386,22 +299,22 @@ class FreeNAS_User(object):
         obj = None
         try:
             if dflags & U_AD_ENABLED:
-                obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
-                if not obj._pw:
-                    obj = None
+                obj = FreeNAS_DS_User(user, 'activedirectory', **kwargs)
             elif dflags & U_NIS_ENABLED:
-                obj = FreeNAS_NIS_User(user, **kwargs)
+                obj = FreeNAS_DS_User(user, 'nis', **kwargs)
             elif dflags & U_LDAP_ENABLED:
-                obj = FreeNAS_LDAP_User(user, **kwargs)
-                if not obj._pw:
-                    obj = None
+                obj = FreeNAS_DS_User(user, 'ldap', **kwargs)
+
+            if not obj._pw and dflags & (U_AD_ENABLED|U_NIS_ENABLED|U_LDAP_ENABLED):
+                obj = None
+
         except Exception:
             log.debug('Failed to get user from directory service, falling back to local', exc_info=True)
 
-        if not obj:
+        if obj is None:
             obj = FreeNAS_Local_User(user, data=data, **kwargs)
 
-        if not obj or not obj._pw:
+        if obj is None or not obj._pw:
             obj = None
 
         if obj:
@@ -420,42 +333,28 @@ class FreeNAS_Users(object):
         a better error handling
 
         TODO: Warn the user in the GUI that "something" happenned
+        New ds_cache only stores username and uid. Set dummy
+        values to fill out struct_pwd in this case.
         """
         dir = None
         dflags = _get_dflags()
-        if dflags & U_AD_ENABLED:
-            with client as c:
-                userlist = c.call('activedirectory.get_ad_usersorgroups_legacy', 'users')
-                self.__users = []
-                for user in userlist:
-                    self.__users.append(FreeNAS_ActiveDirectory_User(user, **kwargs))
+        userlist = []
+        with client as c:
+            if dflags & U_AD_ENABLED:
+                userlist = (c.call('activedirectory.get_cache'))['users']
+            elif dflags & U_NIS_ENABLED:
+                userlist = (c.call('nis.get_cache'))['users']
+            elif dflags & U_LDAP_ENABLED:
+                userlist = (c.call('ldap.get_cache'))['users']
 
-        elif dflags & U_NIS_ENABLED:
-            dir = FreeNAS_NIS_Users
-        elif dflags & U_LDAP_ENABLED:
-            with client as c:
-                userlist = c.call('ldap.get_ldap_usersorgroups_legacy', 'users')
+        if userlist:
             self.__users = []
             for user in userlist:
                 self.__users.append(
                     pwd.struct_passwd((
-                        user['name'],
-                        '',
-                        user['uidNumber'],
-                        user['gidNumber'],
-                        user['gecos'],
-                        user['homeDirectory'],
-                        user['loginShell']
+                        user['pw_name'], '', user['pw_uid'], -1, user['pw_name'], '', ''
                     ))
                 )
-
-        if dir is not None:
-            try:
-                self.__users = dir(**kwargs)
-
-            except Exception as e:
-                log.error("Directory Users could not be retrieved: {0}".format(str(e)), exc_info=True)
-                self.__users = None
 
         if self.__users is None:
             self.__users = []
