@@ -59,8 +59,6 @@ from freenasUI.common.freenascache import (
 )
 from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
-    FreeNAS_LDAP_Users,
-    FreeNAS_LDAP_Groups
 )
 from freenasUI.common.freenasnis import FreeNAS_NIS_Users, FreeNAS_NIS_Groups
 from freenasUI.common.freenasusers import (
@@ -68,6 +66,8 @@ from freenasUI.common.freenasusers import (
     FreeNAS_Users,
     FreeNAS_ActiveDirectory_Group,
     FreeNAS_ActiveDirectory_User,
+    FreeNAS_LDAP_User,
+    FreeNAS_LDAP_Group
 )
 from freenasUI.common.system import (
     get_sw_login_version,
@@ -4070,13 +4070,12 @@ class JsonUserResource(DojoResource):
                         ad_users.append(FreeNAS_ActiveDirectory_User(user))
                 wizard_users = ad_users
             elif wizard_ds.get('ds_type') == 'ldap':
-                wizard_users = FreeNAS_LDAP_Users(
-                    host=wizard_ds.get('ds_ldap_hostname'),
-                    basedn=wizard_ds.get('ds_ldap_basedn'),
-                    binddn=wizard_ds.get('ds_ldap_binddn'),
-                    bindpw=wizard_ds.get('ds_ldap_bindpw'),
-                    flags=FLAGS_DBINIT,
-                )
+                with client as c:
+                    userlist = c.call('ldap.get_ldap_usersorgroups_legacy', 'users')
+                    ldap_users = []
+                    for user in userlist:
+                        ldap_users.append(FreeNAS_LDAP_User(user))
+                wizard_users = ldap_users
             elif wizard_ds.get('ds_type') == 'nis':
                 wizard_users = FreeNAS_NIS_Users(
                     domain=wizard_ds.get('ds_nis_domain'),
@@ -4089,7 +4088,7 @@ class JsonUserResource(DojoResource):
                 wizard_users = None
 
             if wizard_users is not None:
-                if wizard_ds.get('ds_type') == 'ad':
+                if wizard_ds.get('ds_type') in ['ad', 'ldap']:
                     for user in wizard_users:
                         users.append(
                             JsonUser(
@@ -4209,15 +4208,14 @@ class JsonGroupResource(DojoResource):
                     ad_groups = []
                     for group in grouplist:
                         ad_groups.append(FreeNAS_ActiveDirectory_Group(group))
-                wizard_groups = ad_groups
+                    wizard_groups = ad_groups
             elif wizard_ds.get('ds_type') == 'ldap':
-                wizard_groups = FreeNAS_LDAP_Groups(
-                    host=wizard_ds.get('ds_ldap_hostname'),
-                    basedn=wizard_ds.get('ds_ldap_basedn'),
-                    binddn=wizard_ds.get('ds_ldap_binddn'),
-                    bindpw=wizard_ds.get('ds_ldap_bindpw'),
-                    flags=FLAGS_DBINIT,
-                )
+                with client as c:
+                    grouplist = c.call('ldap.get_ldap_usersorgroups_legacy', 'groups')
+                    ldap_groups = []
+                    for group in grouplist:
+                        ldap_groups.append(FreeNAS_LDAP_Group(group))
+                    wizard_groups = ldap_groups
             elif wizard_ds.get('ds_type') == 'nis':
                 wizard_groups = FreeNAS_NIS_Groups(
                     domain=wizard_ds.get('ds_nis_domain'),

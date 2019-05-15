@@ -35,12 +35,6 @@ from freenasUI.common.system import (
     nis_enabled
 )
 
-from freenasUI.common.freenasldap import (
-    FreeNAS_LDAP_Group,
-    FreeNAS_LDAP_User,
-    FreeNAS_LDAP_Groups,
-    FreeNAS_LDAP_Users
-)
 
 from freenasUI.common.freenasnis import (
     FreeNAS_NIS_Group,
@@ -157,6 +151,9 @@ class FreeNAS_Group(object):
                 obj = FreeNAS_NIS_Group(group, **kwargs)
             elif dflags & U_LDAP_ENABLED:
                 obj = FreeNAS_LDAP_Group(group, **kwargs)
+                if not obj._gr:
+                    obj = None
+
         except Exception:
             log.debug('Failed to get group from directory service, falling back to local', exc_info=True)
 
@@ -195,7 +192,18 @@ class FreeNAS_Groups(object):
         elif dflags & U_NIS_ENABLED:
             dir = FreeNAS_NIS_Groups
         elif dflags & U_LDAP_ENABLED:
-            dir = FreeNAS_LDAP_Groups
+            with client as c:
+                grouplist = c.call('ldap.get_ldap_usersorgroups_legacy', 'groups')
+            self.__groups = []
+            for g in grouplist:
+                self.__groups.append(
+                    grp.struct_group((
+                        g['name'],
+                        '',
+                        g['gidNumber'],
+                        g['members']
+                    ))
+                )
 
         if dir is not None:
             try:
@@ -286,6 +294,60 @@ class FreeNAS_ActiveDirectory_User(object):
             self._pw = c.call('activedirectory.get_ad_userorgroup_legacy', 'users', user)
 
 
+class FreeNAS_LDAP_User(object):
+    def __new__(cls, user, **kwargs):
+        obj = None
+        if user is not None:
+            obj = super(FreeNAS_LDAP_User, cls).__new__(cls)
+
+        return obj
+
+    def __init__(self, user, **kwargs):
+        super(FreeNAS_LDAP_User, self).__init__()
+        with client as c:
+            u = c.call('ldap.get_ldap_userorgroup_legacy', 'users', user)
+
+        if u is None:
+            self._pw = None
+            return
+
+        self._pw = pwd.struct_passwd((
+            u['name'],
+            '',
+            u['uidNumber'],
+            u['gidNumber'],
+            u['gecos'],
+            u['homeDirectory'],
+            u['loginShell']
+        ))
+
+
+class FreeNAS_LDAP_Group(object):
+    def __new__(cls, group, **kwargs):
+        log.debug('new-group: %s' % group)
+        obj = None
+        if group is not None:
+            obj = super(FreeNAS_LDAP_Group, cls).__new__(cls)
+
+        return obj
+
+    def __init__(self, group, **kwargs):
+        super(FreeNAS_LDAP_Group, self).__init__()
+        with client as c:
+            g = c.call('ldap.get_ldap_userorgroup_legacy', 'groups', group)
+
+        if g is None:
+            self._gr = None
+            return
+
+        self._gr = grp.struct_group((
+            g['name'],
+            '',
+            g['gidNumber'],
+            g['members']
+        ))
+
+
 class FreeNAS_ActiveDirectory_Group(object):
     def __new__(cls, group, **kwargs):
         obj = None
@@ -331,6 +393,8 @@ class FreeNAS_User(object):
                 obj = FreeNAS_NIS_User(user, **kwargs)
             elif dflags & U_LDAP_ENABLED:
                 obj = FreeNAS_LDAP_User(user, **kwargs)
+                if not obj._pw:
+                    obj = None
         except Exception:
             log.debug('Failed to get user from directory service, falling back to local', exc_info=True)
 
@@ -369,7 +433,21 @@ class FreeNAS_Users(object):
         elif dflags & U_NIS_ENABLED:
             dir = FreeNAS_NIS_Users
         elif dflags & U_LDAP_ENABLED:
-            dir = FreeNAS_LDAP_Users
+            with client as c:
+                userlist = c.call('ldap.get_ldap_usersorgroups_legacy', 'users')
+            self.__users = []
+            for user in userlist:
+                self.__users.append(
+                    pwd.struct_passwd((
+                        user['name'],
+                        '',
+                        user['uidNumber'],
+                        user['gidNumber'],
+                        user['gecos'],
+                        user['homeDirectory'],
+                        user['loginShell']
+                    ))
+                )
 
         if dir is not None:
             try:

@@ -18,10 +18,6 @@ if not apps.ready:
 from django.conf import settings
 from freenasUI import choices
 from freenasUI import common as fcommon
-from freenasUI.common.freenasldap import (
-    FreeNAS_LDAP,
-    FLAGS_DBINIT,
-)
 from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
@@ -90,27 +86,35 @@ class NotifierService(Service):
                 'domainname': ad['domainname'],
                 'use_default_domain': ad['use_default_domain'],
                 'ad_idmap_backend': ad['idmap_backend'],
+                'basedn': None,
+                'userdn': None,
+                'groupdn': None,
                 'ds_type': 1,
                 'krb_realm': ad['kerberos_realm']['krb_realm'],
                 'workgroups': smb['workgroup'],
             }
             return data
         elif name == 'LDAP':
-            ds = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+            smb = self.middleware.call_sync('smb.config')
+            ldap = self.middleware.call_sync('activedirectory.config')
+            krb_realm = ldap['kerberos_realm']['krb_realm'] if ldap['kerberos_relam'] else None
+            data = {
+                'netbiosname': smb['netbiosname'],
+                'binddn': ldap['binddn'],
+                'bindpw': ldap['bindpw'],
+                'basedn': ldap['basedn'],
+                'userdn': ldap['basedn'],
+                'groupdn': ldap['basedn'],
+                'krb_realm': ldap['kerberos_realm'],
+                'use_default_domain': ad['use_default_domain'],
+                'ad_idmap_backend': ad['idmap_backend'],
+                'ds_type': 2,
+                'krb_realm': krb_realm,
+                'workgroups': smb['workgroup']
+            }
         else:
             raise ValueError('Unknown ds name {0}'.format(name))
-        data = {}
-        for i in (
-            'netbiosname', 'keytab_file', 'keytab_principal', 'domainname',
-            'use_default_domain', 'dchost', 'basedn', 'binddn', 'bindpw',
-            'userdn', 'groupdn', 'ssl', 'certfile', 'id',
-            'ad_idmap_backend', 'ds_type',
-            'krb_realm', 'krbname', 'kpwdname',
-            'krb_kdc', 'krb_admin_server', 'krb_kpasswd_server',
-            'workgroups'
-        ):
-            if hasattr(ds, i):
-                data[i] = getattr(ds, i)
+
         return data
 
     def get_user_object(self, username):
@@ -130,24 +134,14 @@ class NotifierService(Service):
         return group
 
     def ldap_status(self):
-        ret = False
-        try:
-            f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
-            f.open()
-            if f.isOpen():
-                ret = True
-            f.close()
-        except Exception as e:
-            pass
-
-        return ret
+        return self.middleware.call_sync('ldap.started')
 
     def ad_status(self):
         return self.middleware.call_sync('activedirectory.started')
 
     def ds_get_idmap_object(self, ds_type, id, idmap_backend):
         data = self.middleware.call_sync('idmap.get_idmap_legacy', ds_type, idmap_backend)
-        return data 
+        return data
 
     async def ds_clearcache(self):
         """Temporary call to rebuild DS cache"""
