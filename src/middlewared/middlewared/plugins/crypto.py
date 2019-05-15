@@ -174,9 +174,13 @@ class CryptoKeyService(Service):
     def extensions():
         if not CryptoKeyService.EXTENSIONS:
             # For now we only support the following extensions
+            # We also support SubjectAlternativeName but as we include that natively if the user provides it
+            # we don't expose it to the end user as an extension making the process for the end user easier to
+            # create a certificate/ca as most wouldn't even want to know what extension is or does.
+            # Apart from this we also add subjectKeyIdentifier automatically
             supported = [
-                'BasicConstraints', 'SubjectKeyIdentifier', 'AuthorityKeyIdentifier',
-                'ExtendedKeyUsage', 'KeyUsage', 'SubjectAlternativeName'
+                'BasicConstraints', 'AuthorityKeyIdentifier',
+                'ExtendedKeyUsage', 'KeyUsage'
             ]
 
             for attr in supported:
@@ -184,6 +188,47 @@ class CryptoKeyService(Service):
                 CryptoKeyService.EXTENSIONS[attr] = inspect.getfullargspec(attr_obj.__init__).args[1:]
 
         return CryptoKeyService.EXTENSIONS
+
+    def convert_extension_data(self, extension):
+        params = ()
+        if extension[0] == 'BasicConstraints':
+            params = (extension[1].get('ca'), extension[1].get('path_length'))
+        elif extension[0] == 'ExtendedKeyUsage':
+            usages = []
+            for ext_usage in extension[1].get('usages', []):
+                usages.append(getattr(x509.oid.ExtendedKeyUsageOID, ext_usage))
+            params = (usages,)
+        elif extension[0] == 'KeyUsage':
+            params = (extension[1].get(k) for k in self.extensions()['KeyUsage'])
+        return params
+
+    @accepts(
+        Ref('cert_extensions'),
+        Str('schema')
+    )
+    def validate_extensions(self, extensions_data, schema):
+        verrors = ValidationErrors()
+
+        for extension in filter(lambda v: bool(v[1]), extensions_data.items()):
+            klass = getattr(x509.extensions, extension[0])
+            try:
+                klass(*self.convert_extension_data(extension[1]))
+            except Exception as e:
+                verrors.add(
+                    f'{schema}.{extension[0]}',
+                    f'Please provide valid values for {extension[0]}: {e}'
+                )
+
+        if extensions_data['KeyUsage']['enabled'] and extensions_data['KeyUsage']['key_cert_sign']:
+            if not extensions_data['BasicConstraints']['enabled'] or not extensions_data[
+                'BasicConstraints'
+            ]['ca']:
+                verrors.add(
+                    f'{schema}.BasicConstraints',
+                    'Please enable ca when key_cert_sign is set in KeyUsage as per RFC 5280.'
+                )
+
+        return verrors
 
     def validate_certificate_with_key(self, certificate, private_key, schema_name, verrors, passphrase=None):
         if (
@@ -427,6 +472,53 @@ class CryptoKeyService(Service):
             Str('email', validators=[Email()], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')], null=True),
+            Dict(
+                'cert_extensions',
+                Dict(
+                    'BasicConstraints',
+                    Bool('ca', default=False),
+                    Bool('enabled', default=False),
+                    Int('path_length', null=True, default=None),
+                    Bool('extension_critical', default=False)
+                ),
+                Dict(
+                    'AuthorityKeyIdentifier',
+                    Bool('authority_cert_issuer', default=False),
+                    Bool('enabled', default=False),
+                    Bool('extension_critical', default=False)
+                ),
+                Dict(
+                    'ExtendedKeyUsage',
+                    List(
+                        'usages',
+                        items=[
+                            Str(
+                                'usage', enum=[
+                                    i for i in dir(x509.oid.ExtendedKeyUsageOID)
+                                    if not i.startswith('__')
+                                ]
+                            )
+                        ]
+                    ),
+                    Bool('enabled', default=False),
+                    Bool('extension_critical', default=False)
+                ),
+                Dict(
+                    'KeyUsage',
+                    Bool('enabled', default=False),
+                    Bool('digital_signature', default=False),
+                    Bool('content_commitment', default=False),
+                    Bool('key_encipherment', default=False),
+                    Bool('data_encipherment', default=False),
+                    Bool('key_agreement', default=False),
+                    Bool('key_cert_sign', default=False),
+                    Bool('crl_sign', default=False),
+                    Bool('encipher_only', default=False),
+                    Bool('decipher_only', default=False),
+                    Bool('extension_critical', default=False)
+                ),
+                register=True
+            ),
             register=True
         )
     )
