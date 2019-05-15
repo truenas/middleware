@@ -637,12 +637,13 @@ _gen_conf()
 	_bool_svcconfig ladvd_enable lldp
 	_bool_svcconfig ctld_enable iscsitarget
 	_bool_svcconfig apache24_enable webdav
-	_bool_svcconfig netdata_enable netdata
 
-	# Let TrueNAS HA code manage smartd service
+	# Let TrueNAS HA code manage smartd and netdata services
 	# Redmine 76242
+	# JIRA NAS-101789
 	if [ ${failover_licensed} -ne 1 ]; then
 		_bool_svcconfig smartd_daemon_enable smartd
+		_bool_svcconfig netdata_enable netdata
 	fi
 
 	_bool_svcconfig samba_server_enable cifs
