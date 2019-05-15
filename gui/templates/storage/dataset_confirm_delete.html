@@ -10,6 +10,23 @@
         {% plural %}
         This will delete all files within the dataset and child datasets.
         {% endblocktrans %}
+        {% if attachments %}
+            <br />
+            <br />
+            The following resources depending on this dataset will also be deleted:
+            <ul style="margin: 0;">
+                {% for service in attachments %}
+                    <li>
+                        <strong>{{ service.type }}</strong><br>
+                        <ul style="margin: 0;">
+                            {% for attachment in service.attachments %}
+                                <li>{{ attachment }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
         </td>
     </tr>
 {{ block.super }}

@@ -479,6 +479,10 @@ def mp_permission(request, path):
 def dataset_delete(request, name):
     with client as c:
         datasets = c.call("pool.dataset.query", [["name", "=", name]], {"get": True})["children"]
+        try:
+            attachments = c.call('pool.dataset.attachments', name)
+        except Exception:
+            attachments = []
     if request.method == 'POST':
         form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
         if not form.is_valid() or form.done() is False:
@@ -492,6 +496,7 @@ def dataset_delete(request, name):
         'name': name,
         'form': form,
         'datasets': datasets,
+        'attachments': attachments,
     })
 
 
