@@ -338,7 +338,7 @@ class VolumeManagerForm(VolumeMixin, Form):
 
         # restart smartd to enable monitoring for any new drives added
         if (services.objects.get(srv_service='smartd').srv_enable):
-            notifier().restart("smartd")
+            notifier().restart("smartd", onetime=True)
 
         # ModelForm compatibility layer for API framework
         self.instance = volume
@@ -2295,7 +2295,7 @@ class ZFSDiskReplacementForm(Form):
         )
         if rv == 0:
             if (services.objects.get(srv_service='smartd').srv_enable):
-                notifier().restart("smartd")
+                notifier().restart("smartd", onetime=True)
             return True
         else:
             return False
