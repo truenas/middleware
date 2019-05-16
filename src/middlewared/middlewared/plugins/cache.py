@@ -124,24 +124,12 @@ class DSCache(Service):
         }
 
     @private
-    async def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
-        try:
-            if entry_type == 'users':
-                return await self.middleware.call('dscache.get_uncached_user', obj)
-            elif entry_type == 'groups':
-                return await self.middleware.call('dscache.get_uncached_group', obj)
-
-        except Exception:
-            return None
-
-    @private
     async def query(self, objtype='USERS', filters=None, options=None):
         """
         Query User / Group cache with `query-filters` and `query-options`.
 
         `objtype`: 'USERS' or 'GROUPS'
 
-        `obcount`: how many users or groups to return.
         """
         ds_enabled = {}
         res = []
