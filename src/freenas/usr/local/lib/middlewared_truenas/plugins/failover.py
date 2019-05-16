@@ -1151,6 +1151,7 @@ async def service_remote(middleware, service, verb, options):
     if service in (
         'system',
         'webshell',
+        'netdata',
         'smartd',
         'system_datasets',
     ) or await middleware.call('failover.status') != 'MASTER':
