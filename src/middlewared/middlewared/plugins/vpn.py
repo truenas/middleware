@@ -1,7 +1,7 @@
 import subprocess
 
-from middlewared.service import SystemServiceService, private
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str, ValidationErrors
+from middlewared.service import CallError, SystemServiceService, private
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str, ValidationErrors
 from middlewared.validators import Port, Range
 
 
@@ -108,6 +108,37 @@ class OpenVPNServerService(SystemServiceService):
         data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
         return data
 
+    @private
+    async def config_valid(self):
+        config = await self.config()
+        if not config['root_ca']:
+            raise CallError('Please configure root_ca first.')
+        else:
+            if not await self.middleware.call(
+                'certificateauthority.query', [
+                    ['id', '=', config['root_ca']],
+                    ['revoked', '=', False]
+                ]
+            ):
+                raise CallError('Root CA has been revoked. Please select another Root CA.')
+
+        if not config['server_certificate']:
+            raise CallError('Please configure server certificate first.')
+        else:
+            if not await self.middleware.call(
+                'certificate.query', [
+                    ['id', '=', config['server_certificate']],
+                    ['revoked', '=', False]
+                ]
+            ):
+                raise CallError('Server certificate has been revoked. Please select another Server certificate.')
+
+        if not await self.validate_nobind(config):
+            raise CallError(
+                'Please enable "nobind" on OpenVPN Client to concurrently run OpenVPN Server/Client '
+                'on the same local port without any issues.'
+            )
+
     @accepts()
     async def authentication_algorithm_choices(self):
         return OpenVPN.digests()
@@ -135,10 +166,10 @@ class OpenVPNServerService(SystemServiceService):
     async def validate_nobind(self, config):
         client_config = await self.middleware.call('openvpn.client.config')
         if (
-                await self.middleware.call(
-                    'service.started',
-                    'openvpn_client'
-                ) and config['port'] == client_config['port'] and not client_config['nobind']
+            await self.middleware.call(
+                'service.started',
+                'openvpn_client'
+            ) and config['port'] == client_config['port'] and not client_config['nobind']
         ):
             return False
         else:
