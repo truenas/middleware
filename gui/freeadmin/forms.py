@@ -100,7 +100,7 @@ class UserField(forms.ChoiceField):
         from freenasUI.account.forms import FilteredSelectJSON
         try:
             with client as c:
-                users = c.call('dscache.query', 'USERS')
+                users = c.call('dscache.query', 'USERS', '', {'order_by': ['pw_name']})
         except:
             users = []
         kwargs = {
@@ -175,7 +175,7 @@ class GroupField(forms.ChoiceField):
         from freenasUI.account.forms import FilteredSelectJSON
         try:
             with client as c:
-                groups = c.call('dscache.query', 'GROUPS')
+                groups = c.call('dscache.query', 'GROUPS', '', {'order_by': ['gr_name']})
         except:
             groups = []
         kwargs = {

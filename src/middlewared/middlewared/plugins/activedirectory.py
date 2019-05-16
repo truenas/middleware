@@ -549,7 +549,7 @@ class ActiveDirectoryService(ConfigService):
                 ad.pop(key)
 
         for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
-            if key in ad:
+            if ad.get(key):
                 ad[key] = ad[key].lower()
 
         return ad
@@ -689,9 +689,7 @@ class ActiveDirectoryService(ConfigService):
         except Exception as e:
             raise ValidationError('activedirectory_update.netbiosname', str(e))
 
-        new = await self.ad_compress(new)
-
-        if not new["bindpw"] and not new["kerberos_principal"]:
+        if new['enable'] and not new["bindpw"] and not new["kerberos_principal"]:
             raise ValidationError("activedirectory_update.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
 
         if data['enable'] and not old['enable']:
@@ -707,6 +705,7 @@ class ActiveDirectoryService(ConfigService):
         if verrors:
             raise verrors
 
+        new = await self.ad_compress(new)
         await self.middleware.call(
             'datastore.update',
             'directoryservice.activedirectory',
@@ -720,7 +719,7 @@ class ActiveDirectoryService(ConfigService):
 
         if old['idmap_backend'] != new['idmap_backend']:
             idmap = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
-            await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend'].lower()})
+            await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend'].upper()})
 
         if not old['enable']:
             if new['enable']:
@@ -1148,7 +1147,7 @@ class ActiveDirectoryService(ConfigService):
         known_domains = []
         local_users = self.middleware.call_sync('user.query')
         local_groups = self.middleware.call_sync('group.query')
-        cache_data = {}
+        cache_data = {'users': [], 'groups': []}
         configured_domains = self.middleware.call_sync('idmap.get_configured_idmap_domains')
         for d in configured_domains:
             if d['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
@@ -1157,19 +1156,16 @@ class ActiveDirectoryService(ConfigService):
                     'low_id': d['backend_data']['range_low'],
                     'high_id': d['backend_data']['range_high'],
                 })
-                cache_data.update({smb['workgroup']: {'users': [], 'groups': []}})
             elif d['domain']['idmap_domain_name'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
                 known_domains.append({
                     'domain': d['domain']['idmap_domain_name'],
                     'low_id': d['backend_data']['range_low'],
                     'high_id': d['backend_data']['range_high'],
                 })
-                cache_data.update({d['domain']['idmap_domain_name']: {'users': [], 'groups': []}})
 
         for line in netlist.stdout.decode().splitlines():
             if 'UID2SID' in line:
                 cached_uid = ((line.split())[1].split('/'))[2]
-                self.logger.debug(cached_uid)
                 """
                 Do not cache local users. This is to avoid problems where a local user
                 may enter into the id range allotted to AD users.
@@ -1186,7 +1182,7 @@ class ActiveDirectoryService(ConfigService):
                         """
                         try:
                             user_data = pwd.getpwuid(int(cached_uid))
-                            cache_data[d['domain']]['users'].append({
+                            cache_data['users'].append({
                                 'pw_name': user_data.pw_name,
                                 'pw_uid': user_data.pw_uid,
                                 'local': False
@@ -1205,28 +1201,25 @@ class ActiveDirectoryService(ConfigService):
                     if int(cached_gid) in range(d['low_id'], d['high_id']):
                         """
                         Samba will generate UID and GID cache entries when idmap backend
-                        supports id_type_both.
+                        supports id_type_both. Actual groups will return key error on
+                        attempt to generate passwd struct.
                         """
                         try:
-                            group_data = grp.getgrgid(int(cached_gid))
-                            cache_data[d['domain']]['groups'].append({
-                                'gr_name': group_data.gr_name,
-                                'gr_gid': group_data.gr_gid,
-                                'local': False
-                            })
+                            pwd.getpwuid(int(cached_gid))
                             break
                         except Exception:
+                            group_data = grp.getgrgid(int(cached_gid))
+                            cache_data['groups'].append({
+                                'gr_name': group_data.gr_name,
+                                'gr_gid': group_data.gr_gid,
+                                'local': False,
+                            })
                             break
 
-        if not cache_data[smb['workgroup']].get('users'):
+        if not cache_data.get('users'):
             return
 
-        ret = {'users': [], 'groups': []}
-        for key in ['users', 'groups']:
-            for key,val in ad_cache.items():
-                ret[key].extend(val[key])
-
-        self.middleware.call_sync('cache.put', 'ad_cache', ret, 86400)
+        self.middleware.call_sync('cache.put', 'ad_cache', cache_data, 86400)
 
     @private
     async def get_cache(self):
