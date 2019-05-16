@@ -813,6 +813,70 @@ class CertificateService(CRUDService):
         datastore_extend = 'certificate.cert_extend'
         datastore_prefix = 'cert_'
 
+    PROFILES = {
+        'openvpn_server_certificate': {
+            'cert_extensions': {
+                'BasicConstraints': {
+                    'enabled': True,
+                    'ca': False,
+                    'extension_critical': True
+                },
+                'AuthorityKeyIdentifier': {
+                    'enabled': True,
+                    'authority_cert_issuer': True,
+                    'extension_critical': False
+                },
+                'ExtendedKeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'usages': [
+                        'SERVER_AUTH',
+                    ]
+                },
+                'KeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'digital_signature': True,
+                    'key_encipherment': True
+                }
+            },
+            'key_length': 2048,
+            'key_type': 'RSA',
+            'lifetime': 3650,
+            'digest_algorithm': 'SHA256'
+        },
+        'openvpn_client_certificate': {
+            'cert_extensions': {
+                'BasicConstraints': {
+                    'enabled': True,
+                    'ca': False,
+                    'extension_critical': True
+                },
+                'AuthorityKeyIdentifier': {
+                    'enabled': True,
+                    'authority_cert_issuer': True,
+                    'extension_critical': False
+                },
+                'ExtendedKeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'usages': [
+                        'CLIENT_AUTH',
+                    ]
+                },
+                'KeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'digital_signature': True
+                }
+            },
+            'key_length': 2048,
+            'key_type': 'RSA',
+            'lifetime': 3650,
+            'digest_algorithm': 'SHA256'
+        }
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_functions = {
@@ -822,6 +886,10 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_CSR': self.__create_csr,
             'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
         }
+
+    @accepts()
+    async def profiles(self):
+        return self.PROFILES
 
     @private
     async def cert_extend(self, cert):
