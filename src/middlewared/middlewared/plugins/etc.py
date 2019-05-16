@@ -217,6 +217,9 @@ class EtcService(Service):
         'ttys': [
             {'type': 'mako', 'path': 'ttys'},
             {'type': 'py', 'path': 'ttys_config'}
+        ],
+        'openvpn_server': [
+            {'type': 'mako', 'path': 'local/openvpn/server/openvpn_server.conf'}
         ]
     }
 
