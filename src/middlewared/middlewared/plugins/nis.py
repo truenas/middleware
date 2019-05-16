@@ -212,9 +212,9 @@ class NISService(ConfigService):
 
     @private
     @job(lock=lambda args: 'fill_nis_cache')
-    def fill_nis_cache(self, job, force=False):
+    def fill_cache(self, job, force=False):
         if self.middleware.call_sync('cache.has_key', 'NIS_cache') and not force:
-            raise CallError('LDAP cache already exists. Refusing to generate cache.')
+            raise CallError('NIS cache already exists. Refusing to generate cache.')
 
         self.middleware.call_sync('cache.pop', 'NIS_cache')
         pwd_list = pwd.getpwall()
@@ -251,30 +251,8 @@ class NISService(ConfigService):
     @private
     async def get_cache(self):
         if not await self.middleware.call('cache.has_key', 'NIS_cache'):
-            cache_job = await self.middleware.call('nis.fill_nis_cache')
+            cache_job = await self.middleware.call('nis.fill_cache')
             await cache_job.wait()
             self.logger.debug('cache fill is in progress.')
             return {}
         return await self.middleware.call('cache.get', 'nis_cache')
-
-    @private
-    async def get_userorgroup_legacy(self, entry_type='users', obj=None):
-        if entry_type == 'users':
-            if await self.middleware.call('user.query', [('username', '=', obj)]):
-                return None
-        else:
-            if await self.middleware.call('group.query', [('group', '=', obj)]):
-                return None
-
-        nis_cache = await self.get_cache()
-        if not nis_cache:
-            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
-
-        if entry_type == 'users':
-            ret = list(filter(lambda x: x['pw_name'] == obj, nis_cache[entry_type]))
-        else:
-            ret = list(filter(lambda x: x['gr_name'] == obj, nis_cache[entry_type]))
-        if not ret:
-            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
-
-        return ret[0]

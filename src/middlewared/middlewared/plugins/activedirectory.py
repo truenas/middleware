@@ -1119,7 +1119,7 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     @job(lock='fill_ad_cache')
-    def fill_ad_cache(self, force=False):
+    def fill_cache(self, force=False):
         """
         Fill the FreeNAS/TrueNAS AD user and group cache from the winbindd cache.
         Refuse to fill cache if it has been filled within the last 24 hours unless
@@ -1235,51 +1235,11 @@ class ActiveDirectoryService(ConfigService):
         then this will contain all AD users and groups, otherwise it contains the
         users and groups that were present in the winbindd cache when the cache was
         last filled. The cache expires and is refilled every 24 hours, or can be
-        manually refreshed by calling fill_ad_cache(True).
+        manually refreshed by calling fill_cache(True).
         """
         if not await self.middleware.call('cache.has_key', 'ad_cache'):
-            await self.middleware.run_in_thread(self.fill_ad_cache)
+            cache_job = await self.middleware.call('activedirectory.fill_cache')
+            await cache_job.wait()
             self.logger.debug('cache fill is in progress.')
             return {}
         return await self.middleware.call('cache.get', 'ad_cache')
-
-    @private
-    async def get_ad_userorgroup_legacy(self, entry_type='users', obj=None):
-        """
-        Compatibility shim for old django user cache
-        Returns cached pwd.struct_passwd or grp.struct_group for user or group specified.
-        This is called in gui/common/freenasusers.py
-        """
-        if entry_type == 'users':
-            if await self.middleware.call('user.query', [('username', '=', obj)]):
-                return None
-        else:
-            if await self.middleware.call('group.query', [('group', '=', obj)]):
-                return None
-
-        ad_cache = await self.get_cache()
-        if not ad_cache:
-            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
-
-        ad = await self.config()
-        smb = await self.middleware.call('smb.config')
-
-        if ad['use_default_domain']:
-            if entry_type == 'users':
-                ret = list(filter(lambda x: x['pw_name'] == obj, ad_cache[smb['workgroup']][entry_type]))
-            elif entry_type == 'groups':
-                ret = list(filter(lambda x: x['gr_name'] == obj, ad_cache[smb['workgroup']][entry_type]))
-
-        else:
-            domain_obj = None
-            if '\\' not in obj:
-                return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
-            else:
-                domain_obj = obj.split('\\')
-
-            if entry_type == 'users':
-                ret = list(filter(lambda x: x['pw_name'] == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
-            elif entry_type == 'groups':
-                ret = list(filter(lambda x: x['gr_name'] == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
-
-        return ret[0]

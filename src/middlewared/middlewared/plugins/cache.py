@@ -143,7 +143,6 @@ class DSCache(Service):
 
         `obcount`: how many users or groups to return.
         """
-        self.logger.debug(f'filters: {filters}')
         ds_enabled = {}
         res = []
         for ds in ['activedirectory', 'ldap', 'nis']:
@@ -180,3 +179,15 @@ class DSCache(Service):
                 ))
 
         return res[:objcount]
+
+    @private
+    async def refresh(self):
+        """
+        Force update of Directory Service Caches
+        """
+        for ds in ['activedirectory', 'ldap', 'nis']:
+            ds_state = await self.middleware.call(f'{ds}.get_state')
+            if ds_state == 'HEALTHY':
+                await self.middleware.call(f'{ds}.fill_cache', True)
+            elif ds_state != 'DISABLED':
+                self.logger.debug('Unable to refresh [%s] cache, state is: %s' % (ds, ds_state))

@@ -51,12 +51,6 @@ from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_size, humanize_number_si
-from freenasUI.common.freenasusers import (
-    FreeNAS_Groups,
-    FreeNAS_Users,
-    FreeNAS_DS_Group,
-    FreeNAS_DS_User,
-)
 from freenasUI.common.system import (
     get_sw_login_version,
     get_sw_name,
@@ -4028,64 +4022,24 @@ class JsonUserResource(DojoResource):
             'items': [],
         }
         users = []
+        with client as c:
+            dscache = c.call('dscache.query', 'USERS')
         query = request.GET.get('q') or kwargs.get('q')
         exclude = request.GET.get('exclude') or kwargs.get('exclude', [])
         if exclude:
             exclude = exclude.split(',')
-        for user in FreeNAS_Users():
+        for user in dscache:
             if (
-                    (query is None or user.pw_name.startswith(query)) and
-                    user.pw_name not in exclude and not any(u for u in users if u.name == user.pw_name)
+                    (query is None or user['pw_name'].startswith(query)) and
+                    user['pw_name'] not in exclude and not any(u for u in users if u.name == user['pw_name'])
             ):
                 users.append(
                     JsonUser(
-                        id=user.pw_name,
-                        name=user.pw_name,
-                        label=user.pw_name
+                        id=user['pw_name'],
+                        name=user['pw_name'],
+                        label=user['pw_name']
                     )
                 )
-
-        # Show users for the directory service provided in the wizard
-        wizard_ds = request.session.get('wizard_ds')
-        if request.GET.get('wizard') == '1' and wizard_ds:
-            if wizard_ds.get('ds_type') == 'ad':
-                with client as c:
-                    userlist = (c.call('activedirectory.get_cache'))['users']
-                    ad_users = []
-                    for user in userlist:
-                        ad_users.append(FreeNAS_DS_User(user, 'activedirectory'))
-                wizard_users = ad_users
-            elif wizard_ds.get('ds_type') == 'ldap':
-                with client as c:
-                    userlist = (c.call('ldap.get_cache'))['users']
-                    ldap_users = []
-                    for user in userlist:
-                        ldap_users.append(FreeNAS_DS_User(user, 'ldap'))
-                wizard_users = ldap_users
-            elif wizard_ds.get('ds_type') == 'nis':
-                with client as c:
-                    userlist = (c.call('nis.get_cache'))['users']
-                    nis_users = []
-                    for user in userlist:
-                        nis_users.append(FreeNAS_DS_User(user, 'nis'))
-                wizard_users = nis_users
-            else:
-                wizard_users = None
-
-            if wizard_users is not None:
-                for user in wizard_users:
-                    users.append(
-                        JsonUser(
-                            id='%s_%s' % (
-                                wizard_ds.get('ds_type'),
-                                user,
-                            ),
-                            name=user.pw_name,
-                            label=user.pw_name
-                        )
-                    )
-
-            del wizard_users
 
         limit = self._meta.limit
 
@@ -4152,59 +4106,19 @@ class JsonGroupResource(DojoResource):
             'items': [],
         }
         groups = []
+        with client as c:
+            dscache = c.call('dscache.query', 'GROUPS')
         query = request.GET.get('q', None)
-        for grp in FreeNAS_Groups():
-            if ((query is None or grp.gr_name.startswith(query)) and
-                    not any(g for g in groups if g.name == grp.gr_name)):
+        for grp in dscache:
+            if ((query is None or grp['gr_name'].startswith(query)) and
+                    not any(g for g in groups if g.name == grp['gr_name'])):
                 groups.append(
                     JsonGroup(
-                        id=grp.gr_name,
-                        name=grp.gr_name,
-                        label=grp.gr_name
+                        id=grp['gr_name'],
+                        name=grp['gr_name'],
+                        label=grp['gr_name']
                     )
                 )
-
-        # Show groups for the directory service provided in the wizard
-        wizard_ds = request.session.get('wizard_ds')
-        if request.GET.get('wizard') == '1' and wizard_ds:
-            if wizard_ds.get('ds_type') == 'ad':
-                with client as c:
-                    grouplist = (c.call('activedirectory.get_cache'))['groups']
-                    ad_groups = []
-                    for group in grouplist:
-                        ad_groups.append(FreeNAS_DS_Group(group, 'activedirectory'))
-                    wizard_groups = ad_groups
-            elif wizard_ds.get('ds_type') == 'ldap':
-                with client as c:
-                    grouplist = (c.call('ldap.get_cache'))['groups']
-                    ldap_groups = []
-                    for group in grouplist:
-                        ldap_groups.append(FreeNAS_DS_Group(group, 'ldap'))
-                    wizard_groups = ldap_groups
-            elif wizard_ds.get('ds_type') == 'nis':
-                with client as c:
-                    grouplist = (c.call('nis.get_cache'))['groups']
-                    nis_groups = []
-                    for group in grouplist:
-                        nis_groups.append(FreeNAS_DS_Group(group, 'nis'))
-                    wizard_groups = nis_groups
-            else:
-                wizard_groups = None
-
-            if wizard_groups:
-                for group in wizard_groups:
-                    groups.append(
-                        JsonGroup(
-                            id='%s_%s' % (
-                                wizard_ds.get('ds_type'),
-                                group,
-                            ),
-                            name=group,
-                            label=group
-                         )
-                    )
-
-            del wizard_groups
 
         limit = self._meta.limit
 

@@ -553,7 +553,7 @@ class LDAPService(ConfigService):
 
     @private
     @job(lock='fill_ldap_cache')
-    def fill_ldap_cache(self, job, force=False):
+    def fill_cache(self, job, force=False):
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
@@ -592,41 +592,8 @@ class LDAPService(ConfigService):
     @private
     async def get_cache(self):
         if not await self.middleware.call('cache.has_key', 'LDAP_cache'):
-            cache_job = await self.middleware.call('ldap.fill_ldap_cache')
+            cache_job = await self.middleware.call('ldap.fill_cache')
             await cache_job.wait()
             self.logger.debug('cache fill is in progress.')
             return {}
         return await self.middleware.call('cache.get', 'LDAP_cache')
-
-    @private
-    async def get_userorgroup_legacy(self, entry_type='users', obj=None):
-        """
-        Compatibility shim for old django user cache
-        Returns cached pwd.struct_passwd or grp.struct_group for user or group specified.
-        This is called in gui/common/freenasusers.py
-        """
-        if entry_type == 'users':
-            if await self.middleware.call('user.query', [('username', '=', obj)]):
-                return None
-        else:
-            if await self.middleware.call('group.query', [('group', '=', obj)]):
-                return None
-
-        ldap_cache = await self.get_cache()
-        if not ldap_cache:
-            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
-
-        if entry_type == 'users':
-            ret = list(filter(lambda x: x['pw_name'] == obj, ldap_cache[entry_type]))
-            if not ret:
-                try: 
-                    return await self.middleware.call('dscache.get_uncached_user', obj)
-                except Exception:
-                    return None
-
-        else:
-            ret = list(filter(lambda x: x['gr_name'] == obj, ldap_cache[entry_type]))
-        if not ret:
-            return await self.middleware.call('dscache.get_uncached_userorgroup_legacy', entry_type, obj)
-
-        return ret[0]
