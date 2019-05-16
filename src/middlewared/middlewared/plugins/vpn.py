@@ -100,6 +100,13 @@ class OpenVPNServerService(SystemServiceService):
         service = 'openvpn_server'
         service_model = 'openvpnserver'
         service_verb = 'restart'
+        datastore_extend = 'openvpn.server.server_extend'
+
+    @private
+    async def server_extend(self, data):
+        data['server_certificate'] = None if not data['server_certificate'] else data['server_certificate']['id']
+        data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
+        return data
 
     @accepts()
     async def authentication_algorithm_choices(self):
@@ -177,6 +184,13 @@ class OpenVPNClientService(SystemServiceService):
         service = 'openvpn_client'
         service_model = 'openvpnclient'
         service_verb = 'restart'
+        datastore_extend = 'openvpn.client.client_extend'
+
+    @private
+    async def client_extend(self, data):
+        data['client_certificate'] = None if not data['client_certificate'] else data['client_certificate']['id']
+        data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
+        return data
 
     @accepts()
     async def authentication_algorithm_choices(self):
