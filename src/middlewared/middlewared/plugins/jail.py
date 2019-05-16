@@ -597,7 +597,7 @@ class JailService(CRUDService):
             )
             official_branches.raise_for_status()
             resource_list = [
-                {'name':b['name'], 'repo': 'official'}
+                {'name': b['name'], 'repo': 'official'}
                 for b in official_branches.json()
             ]
         else:
