@@ -223,7 +223,6 @@ def get(obj, path):
 
 
 def filter_list(_list, filters=None, options=None):
-
     opmap = {
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
@@ -321,6 +320,9 @@ def filter_list(_list, filters=None, options=None):
 
     if options.get('get') is True:
         return rv[0]
+
+    if options.get('limit'):
+        return rv[:options['limit']]
 
     return rv
 

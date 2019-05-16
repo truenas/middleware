@@ -135,7 +135,7 @@ class DSCache(Service):
             return None
 
     @private
-    async def query(self, objtype='USERS', objcount=50, filters=None, options=None):
+    async def query(self, objtype='USERS', filters=None, options=None):
         """
         Query User / Group cache with `query-filters` and `query-options`.
 
@@ -178,7 +178,7 @@ class DSCache(Service):
                     options
                 ))
 
-        return res[:objcount]
+        return res
 
     @private
     async def refresh(self):
