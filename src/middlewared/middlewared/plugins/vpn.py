@@ -101,6 +101,14 @@ class OpenVPNServerService(SystemServiceService):
         service_model = 'openvpnserver'
         service_verb = 'restart'
 
+    @accepts()
+    async def authentication_algorithm_choices(self):
+        return OpenVPN.digests()
+
+    @accepts()
+    async def cipher_choices(self):
+        return OpenVPN.ciphers()
+
     @private
     async def validate(self, data, schema_name):
         verrors = await OpenVPN.common_validation(
@@ -169,6 +177,14 @@ class OpenVPNClientService(SystemServiceService):
         service = 'openvpn_client'
         service_model = 'openvpnclient'
         service_verb = 'restart'
+
+    @accepts()
+    async def authentication_algorithm_choices(self):
+        return OpenVPN.digests()
+
+    @accepts()
+    async def cipher_choices(self):
+        return OpenVPN.ciphers()
 
     @private
     async def validate(self, data, schema_name):
