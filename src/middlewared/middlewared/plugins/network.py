@@ -18,7 +18,6 @@ import shlex
 import signal
 import socket
 import subprocess
-import time
 import urllib.request
 
 
@@ -611,7 +610,7 @@ class InterfaceService(CRUDService):
         Value is in number of seconds or null.
         """
         if self._rollback_timer:
-            remaining = self._rollback_timer.when() - time.monotonic()
+            remaining = self._rollback_timer.when() - asyncio.get_event_loop().time()
             if remaining > 0:
                 return remaining
 
