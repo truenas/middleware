@@ -104,6 +104,7 @@ class ServiceService(CRUDService):
         'webshell': ServiceDefinition(None, '/var/run/webshell.pid'),
         'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
         'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid'),
+        'openvpn_server': ServiceDefinition('openvpn', '/var/run/openvpn_server.pid'),
     }
 
     @filterable
@@ -379,6 +380,19 @@ class ServiceService(CRUDService):
                     for i in data.strip().split('\n') if i.isdigit()
                 ]
         return False, []
+
+    async def _start_openvpn_server(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self.middleware.call('etc.generate', 'openvpn_server')
+        await self._service('openvpn_server', 'start', **kwargs)
+
+    async def _stop_openvpn_server(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('openvpn_server', 'stop', **kwargs)
+
+    async def _restart_openvpn_server(self, **kwargs):
+        await self._stop_openvpn_server(**kwargs)
+        await self._start_openvpn_server(**kwargs)
 
     async def _start_webdav(self, **kwargs):
         await self.middleware.call('etc.generate', 'webdav')
