@@ -266,6 +266,10 @@ class EtcService(Service):
             if rendered is None:
                 continue
 
+            outfile_dirname = os.path.dirname(outfile)
+            if not os.path.exists(outfile_dirname):
+                os.makedirs(outfile_dirname)
+
             changes = write_if_changed(outfile, rendered)
 
             # If ownership or permissions are specified, see if
