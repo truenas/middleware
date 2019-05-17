@@ -1928,6 +1928,8 @@ class CertificateAuthorityService(CRUDService):
             {'prefix': 'cert_'}
         )
 
+        await self.middleware.call('service.start', 'ssl')
+
         return await self.middleware.call(
             'certificate.query',
             [['id', '=', new_csr_id]],
