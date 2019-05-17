@@ -266,6 +266,39 @@ class OpenVPNClientService(SystemServiceService):
         else:
             return True
 
+    @private
+    async def config_valid(self):
+        config = await self.config()
+        if not config['root_ca']:
+            raise CallError('Please configure root_ca first.')
+        else:
+            if not await self.middleware.call(
+                'certificateauthority.query', [
+                    ['id', '=', config['root_ca']],
+                    ['revoked', '=', False]
+                ]
+            ):
+                raise CallError('Root CA has been revoked. Please select another Root CA.')
+
+        if not config['client_certificate']:
+            raise CallError('Please configure client certificate first.')
+        else:
+            if not await self.middleware.call(
+                'certificate.query', [
+                    ['id', '=', config['client_certificate']],
+                    ['revoked', '=', False]
+                ]
+            ):
+                raise CallError('Client certificate has been revoked. Please select another Client certificate.')
+
+        if not config['remote']:
+            raise CallError('Please configure remote first.')
+
+        if not await self.validate_nobind(config):
+            raise CallError(
+                'Please enable "nobind" to concurrently run OpenVPN Server/Client on the same local port.'
+            )
+
     @accepts(
         Dict(
             'openvpn_client_update',
@@ -286,6 +319,7 @@ class OpenVPNClientService(SystemServiceService):
         )
     )
     async def do_update(self, data):
+        # TODO: Complete tls_crypt_auth for client/server please
         old_config = await self.config()
         config = old_config.copy()
 
