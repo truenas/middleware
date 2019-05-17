@@ -69,6 +69,7 @@ class SystemDatasetService(ConfigService):
         Str('pool'),
         Bool('syslog'),
         Bool('rrd'),
+        update=True,
     ))
     @job(lock='sysdataset_update')
     async def do_update(self, job, data):
