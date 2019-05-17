@@ -220,6 +220,9 @@ class EtcService(Service):
         ],
         'openvpn_server': [
             {'type': 'mako', 'path': 'local/openvpn/server/openvpn_server.conf'}
+        ],
+        'openvpn_client': [
+            {'type': 'mako', 'path': 'local/openvpn/client/openvpn_client.conf'}
         ]
     }
 
