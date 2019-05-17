@@ -106,6 +106,7 @@ class ServiceService(CRUDService):
         'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid'),
         'asigra': ServiceDefinition('asigra', '/var/run/dssystem.pid'),
         'openvpn_server': ServiceDefinition('openvpn', '/var/run/openvpn_server.pid'),
+        'openvpn_client': ServiceDefinition('openvpn', '/var/run/openvpn_client.pid')
     }
 
     @filterable
@@ -394,6 +395,19 @@ class ServiceService(CRUDService):
     async def _restart_openvpn_server(self, **kwargs):
         await self._stop_openvpn_server(**kwargs)
         await self._start_openvpn_server(**kwargs)
+
+    async def _start_openvpn_client(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self.middleware.call('etc.generate', 'openvpn_client')
+        await self._service('openvpn_client', 'start', **kwargs)
+
+    async def _stop_openvpn_client(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('openvpn_client', 'stop', **kwargs)
+
+    async def _restart_openvpn_client(self, **kwargs):
+        await self._stop_openvpn_client(**kwargs)
+        await self._start_openvpn_client(**kwargs)
 
     async def _start_asigra(self, **kwargs):
         await self.middleware.call('asigra.setup_filesystems')
