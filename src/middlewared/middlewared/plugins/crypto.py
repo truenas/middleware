@@ -1312,6 +1312,10 @@ class CertificateService(CRUDService):
     async def certificate_extensions(self):
         return CryptoKeyService.extensions()
 
+    @private
+    async def dhparam(self):
+        return '/data/dhparam.pem'
+
     # CREATE METHODS FOR CREATING CERTIFICATES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE
     # APPROPRIATE METHOD IS CALLED
