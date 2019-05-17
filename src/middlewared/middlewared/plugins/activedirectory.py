@@ -1120,9 +1120,16 @@ class ActiveDirectoryService(ConfigService):
     @job(lock='fill_ad_cache')
     def fill_cache(self, force=False):
         """
-        Fill the FreeNAS/TrueNAS AD user and group cache from the winbindd cache.
-        Refuse to fill cache if it has been filled within the last 24 hours unless
-        'force' flag is set.
+        Use UID2SID and GID2SID entries in Samba's gencache.tdb to populate the AD_cache.
+        Since this can include IDs outside of our configured idmap domains (Local accounts
+        will also appear here), there is a check to see if the ID is inside the idmap ranges
+        configured for domains that are known to us. Some samba idmap backends support
+        id_type_both, in which case the will be GID2SID entries for AD users. getent group
+        succeeds in this case (even though the group doesn't exist in AD). Since these
+        we don't want to populate the UI cache with these entries, try to getpwnam for
+        GID2SID entries. If it's an actual group, getpwnam will fail. This heuristic
+        may be revised in the future, but we want to keep things as simple as possible
+        here since the list of entries numbers perhaps in the tens of thousands.
         """
         if self.middleware.call_sync('cache.has_key', 'AD_cache') and not force:
             raise CallError('AD cache already exists. Refusing to generate cache.')
