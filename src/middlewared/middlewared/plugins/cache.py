@@ -172,6 +172,8 @@ class DSCache(Service):
     async def refresh(self):
         """
         Force update of Directory Service Caches
+        This is called from a cronjob every 24 hours and when a user clicks on the
+        UI button to 'rebuild directory service cache'.
         """
         for ds in ['activedirectory', 'ldap', 'nis']:
             ds_state = await self.middleware.call(f'{ds}.get_state')
