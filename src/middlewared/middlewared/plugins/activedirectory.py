@@ -1124,10 +1124,10 @@ class ActiveDirectoryService(ConfigService):
         Refuse to fill cache if it has been filled within the last 24 hours unless
         'force' flag is set.
         """
-        if self.middleware.call_sync('cache.has_key', 'ad_cache') and not force:
+        if self.middleware.call_sync('cache.has_key', 'AD_cache') and not force:
             raise CallError('AD cache already exists. Refusing to generate cache.')
 
-        self.middleware.call_sync('cache.pop', 'ad_cache')
+        self.middleware.call_sync('cache.pop', 'AD_cache')
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
         if not ad['disable_freenas_cache']:
@@ -1219,7 +1219,7 @@ class ActiveDirectoryService(ConfigService):
         if not cache_data.get('users'):
             return
 
-        self.middleware.call_sync('cache.put', 'ad_cache', cache_data, 86400)
+        self.middleware.call_sync('cache.put', 'AD_cache', cache_data, 86400)
 
     @private
     async def get_cache(self):
@@ -1230,9 +1230,8 @@ class ActiveDirectoryService(ConfigService):
         last filled. The cache expires and is refilled every 24 hours, or can be
         manually refreshed by calling fill_cache(True).
         """
-        if not await self.middleware.call('cache.has_key', 'ad_cache'):
+        if not await self.middleware.call('cache.has_key', 'AD_cache'):
             cache_job = await self.middleware.call('activedirectory.fill_cache')
-            await cache_job.wait()
             self.logger.debug('cache fill is in progress.')
             return {'users': [], 'groups': []}
-        return await self.middleware.call('cache.get', 'ad_cache')
+        return await self.middleware.call('cache.get', 'AD_cache')
