@@ -1231,7 +1231,7 @@ class ActiveDirectoryService(ConfigService):
         manually refreshed by calling fill_cache(True).
         """
         if not await self.middleware.call('cache.has_key', 'AD_cache'):
-            cache_job = await self.middleware.call('activedirectory.fill_cache')
+            await self.middleware.call('activedirectory.fill_cache')
             self.logger.debug('cache fill is in progress.')
             return {'users': [], 'groups': []}
         return await self.middleware.call('cache.get', 'AD_cache')
