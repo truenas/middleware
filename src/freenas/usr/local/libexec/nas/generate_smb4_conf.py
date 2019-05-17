@@ -1524,60 +1524,6 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
                 print(line)
 
 
-def smb4_grant_user_rights(user):
-    args = [
-        "/usr/local/bin/net",
-        "-d 0",
-        "sam",
-        "rights",
-        "grant"
-    ]
-
-    rights = [
-        "SeTakeOwnershipPrivilege",
-        "SeBackupPrivilege",
-        "SeRestorePrivilege"
-    ]
-
-    net_cmd = "%s %s %s" % (
-        ' '.join(args),
-        user,
-        ' '.join(rights)
-    )
-
-    p = pipeopen(net_cmd)
-    net_out = p.communicate()
-    if net_out and net_out[0]:
-        for line in net_out[0].split('\n'):
-            if not line:
-                continue
-            print(line)
-
-    if p.returncode != 0:
-        return False
-
-    return True
-
-
-def smb4_grant_rights():
-    args = [
-        "/usr/local/bin/pdbedit",
-        "-d 0",
-        "-L"
-    ]
-
-    p = pipeopen(' '.join(args))
-    pdbedit_out = p.communicate()
-    if pdbedit_out and pdbedit_out[0]:
-        for line in pdbedit_out[0].split('\n'):
-            if not line:
-                continue
-
-            parts = line.split(':')
-            user = parts[0]
-            smb4_grant_user_rights(user)
-
-
 def get_groups(client):
     _groups = {}
 
@@ -1800,8 +1746,6 @@ def main():
                 smb4_tdb,
                 privatedir + "/passdb.tdb"
             )
-            if role != 'member':
-                smb4_grant_rights()
 
             client.call('notifier.samba4', 'user_import_sentinel_file_create')
 
