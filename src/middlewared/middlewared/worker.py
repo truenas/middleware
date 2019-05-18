@@ -40,17 +40,19 @@ class FakeMiddleware(LoadPluginsMixin):
             executor.shutdown(wait=False)
 
     async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False, job=None):
-        with Client(py_exceptions=True) as c:
-            self.client = c
-            job_options = getattr(methodobj, '_job', None)
-            if job and job_options:
-                params = list(params) if params else []
-                params.insert(0, FakeJob(job['id'], self.client))
-            if asyncio.iscoroutinefunction(methodobj):
-                return await methodobj(*params)
-            else:
-                return methodobj(*params)
-        self.client = None
+        try:
+            with Client(py_exceptions=True) as c:
+                self.client = c
+                job_options = getattr(methodobj, '_job', None)
+                if job and job_options:
+                    params = list(params) if params else []
+                    params.insert(0, FakeJob(job['id'], self.client))
+                if asyncio.iscoroutinefunction(methodobj):
+                    return await methodobj(*params)
+                else:
+                    return methodobj(*params)
+        finally:
+            self.client = None
 
     async def _run(self, name, args, job=None):
         service, method = name.rsplit('.', 1)
