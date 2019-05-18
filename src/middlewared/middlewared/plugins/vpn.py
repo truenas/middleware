@@ -1,8 +1,10 @@
 import os
 import subprocess
+import tempfile
 
 from middlewared.service import CallError, SystemServiceService, private
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Str, ValidationErrors
+from middlewared.utils import run
 from middlewared.validators import Port, Range
 
 
@@ -91,7 +93,16 @@ class OpenVPN:
                 'the system and hasn\'t been revoked.'
             )
 
-        return verrors
+        if data['tls_crypt_auth_enabled'] and not data['tls_crypt_auth']:
+            verrors.add(
+                f'{schema}.tls_crypt_auth',
+                'Please provide static key for authentication/encryption of all control '
+                'channel packets when tls_crypt_auth_enabled is enabled.'
+            )
+
+        data['tls_crypt_auth'] = None if not data.pop('tls_crypt_auth_enabled') else data['tls_crypt_auth']
+
+        return verrors, data
 
 
 class OpenVPNServerService(SystemServiceService):
@@ -107,6 +118,7 @@ class OpenVPNServerService(SystemServiceService):
     async def server_extend(self, data):
         data['server_certificate'] = None if not data['server_certificate'] else data['server_certificate']['id']
         data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
+        data['tls_crypt_auth_enabled'] = bool(data['tls_crypt_auth'])
         return data
 
     @private
@@ -150,7 +162,7 @@ class OpenVPNServerService(SystemServiceService):
 
     @private
     async def validate(self, data, schema_name):
-        verrors = await OpenVPN.common_validation(
+        verrors, data = await OpenVPN.common_validation(
             self.middleware, data, schema_name, 'server'
         )
 
@@ -162,6 +174,8 @@ class OpenVPNServerService(SystemServiceService):
             )
 
         verrors.check()
+
+        return data
 
     @private
     async def validate_nobind(self, config):
@@ -175,6 +189,24 @@ class OpenVPNServerService(SystemServiceService):
             return False
         else:
             return True
+
+    @private
+    async def generate_static_key(self):
+        keyfile = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+        await run(
+            ['openvpn', '--genkey', '--secret', keyfile.name]
+        )
+        keyfile.seek(0)
+        key = keyfile.read()
+        keyfile.close()
+        return key.strip()
+
+    @accepts()
+    async def renew_static_key(self):
+        return await self.update({
+            'tls_crypt_auth': (await self.generate_static_key()),
+            'tls_crypt_auth_enabled': True
+        })
 
     @accepts(
         Dict(
@@ -202,7 +234,12 @@ class OpenVPNServerService(SystemServiceService):
 
         config.update(data)
 
-        await self.validate(config, 'openvpn_server_update')
+        # If tls_crypt_auth_enabled is set and we don't have a tls_crypt_auth key,
+        # let's generate one please
+        if config['tls_crypt_auth_enabled'] and not config['tls_crypt_auth']:
+            config['tls_crypt_auth'] = await self.generate_static_key()
+
+        config = await self.validate(config, 'openvpn_server_update')
 
         await self._update_service(old_config, config)
 
@@ -222,6 +259,7 @@ class OpenVPNClientService(SystemServiceService):
     async def client_extend(self, data):
         data['client_certificate'] = None if not data['client_certificate'] else data['client_certificate']['id']
         data['root_ca'] = None if not data['root_ca'] else data['root_ca']['id']
+        data['tls_crypt_auth_enabled'] = bool(data['tls_crypt_auth'])
         return data
 
     @accepts()
@@ -234,7 +272,7 @@ class OpenVPNClientService(SystemServiceService):
 
     @private
     async def validate(self, data, schema_name):
-        verrors = await OpenVPN.common_validation(
+        verrors, data = await OpenVPN.common_validation(
             self.middleware, data, schema_name, 'client'
         )
 
@@ -251,6 +289,8 @@ class OpenVPNClientService(SystemServiceService):
             )
 
         verrors.check()
+
+        return data
 
     @private
     async def validate_nobind(self, config):
@@ -319,13 +359,12 @@ class OpenVPNClientService(SystemServiceService):
         )
     )
     async def do_update(self, data):
-        # TODO: Complete tls_crypt_auth for client/server please
         old_config = await self.config()
         config = old_config.copy()
 
         config.update(data)
 
-        await self.validate(config, 'openvpn_client_update')
+        config = await self.validate(config, 'openvpn_client_update')
 
         await self._update_service(old_config, config)
 
