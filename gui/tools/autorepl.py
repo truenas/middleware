@@ -314,9 +314,21 @@ for replication in replication_tasks:
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
     output, error = sshproc.communicate()
     remote_zfslist = {}
-    for i in output.rstrip().split("\n"):
-        data = i.rsplit("\t", 1)
-        remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
+    if sshproc.returncode:
+        log.debug("Unable to list properties for remote dataset %s: %s" % (
+            remotefs,
+            error
+        ))
+    else:
+        try:
+            for i in output.rstrip().split("\n"):
+                data = i.rsplit("\t", 1)
+                remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
+        except Exception:
+            log.debug("Unable to parse properties for remote dataset %s: %s" % (
+                remotefs,
+                output
+            ))
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
     rzfscmd = "zfs create -o readonly=on "
