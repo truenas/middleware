@@ -282,10 +282,12 @@ class AlertService(Service):
                                     if value:
                                         msg += ["", "{}: {}".format(verbose_name, value)]
 
+                                msg = "\n".join(msg)
+
                                 try:
                                     await self.middleware.call("support.new_ticket", {
                                         "title": "Automatic alert (%s)" % serial,
-                                        "body": "\n".join(msg),
+                                        "body": msg,
                                         "attach_debug": False,
                                         "category": "Hardware",
                                         "criticality": "Loss of Functionality",
@@ -296,6 +298,18 @@ class AlertService(Service):
                                     })
                                 except Exception:
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
+                                    await self.middleware.call("mail.send", {
+                                        "cc": ["auto-support@ixsystems.com"],
+                                        "subject": "Failed creating automatic alert (%s)" % serial,
+                                        "text": f"""
+                                            Creating automatic alert for iXsystems for your system {serial} failed
+                                            for some reason. Please, contact us.
+
+                                            Below is the text of automatic alert:
+
+                                            {msg}
+                                        """,
+                                    })
 
     async def __should_run_or_send_alerts(self):
         if await self.middleware.call('system.state') != 'READY':
