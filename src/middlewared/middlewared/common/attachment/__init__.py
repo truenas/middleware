@@ -4,6 +4,7 @@ from middlewared.service import ServiceChangeMixin
 class FSAttachmentDelegate(ServiceChangeMixin):
     name = NotImplementedError
     title = NotImplementedError
+    service = None
 
     def __init__(self, middleware):
         self.middleware = middleware

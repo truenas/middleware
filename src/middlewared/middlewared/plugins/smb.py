@@ -991,6 +991,7 @@ async def pool_post_import(middleware, pool):
 class SMBFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'smb'
     title = 'SMB Share'
+    service = 'cifs'
 
     async def query(self, path, enabled):
         results = []

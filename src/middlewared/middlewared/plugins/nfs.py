@@ -453,6 +453,7 @@ async def pool_post_import(middleware, pool):
 class NFSFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'nfs'
     title = 'NFS Share'
+    service = 'nfs'
 
     async def query(self, path, enabled):
         results = []

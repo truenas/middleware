@@ -1444,6 +1444,7 @@ class iSCSITargetToExtentService(CRUDService):
 class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'iscsi'
     title = 'iSCSI Extent'
+    service = 'iscsitarget'
 
     async def query(self, path, enabled):
         results = []

@@ -312,6 +312,7 @@ async def pool_post_import(middleware, pool):
 class AFPFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'afp'
     title = 'AFP Share'
+    service = 'afp'
 
     async def query(self, path, enabled):
         results = []

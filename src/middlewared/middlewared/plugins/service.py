@@ -10,8 +10,8 @@ import threading
 import time
 from subprocess import DEVNULL, PIPE
 
-from middlewared.schema import accepts, Bool, Dict, Ref, Str
-from middlewared.service import filterable, CallError, CRUDService
+from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
+from middlewared.service import filterable, CallError, CRUDService, private
 from middlewared.utils import Popen, filter_list, run
 
 
@@ -1036,6 +1036,35 @@ class ServiceService(CRUDService):
     async def _restart_netdata(self, **kwargs):
         await self._service('netdata', 'stop')
         await self._start_netdata(**kwargs)
+
+    @private
+    async def identify_process(self, name):
+        for service, definition in self.SERVICE_DEFS.items():
+            if definition.procname == name:
+                return service
+
+    @accepts(Int("pid"), Int("timeout", default=10))
+    def terminate_process(self, pid, timeout):
+        """
+        Terminate process by `pid`.
+
+        First send `TERM` signal, then, if was not terminated in `timeout` seconds, send `KILL` signal.
+
+        Returns `true` is process has been successfully terminated with `TERM` and `false` if we had to use `KILL`.
+        """
+        try:
+            process = psutil.Process(pid)
+        except psutil.NoSuchProcessError:
+            raise CallError("Process does not exist")
+
+        process.terminate()
+
+        gone, alive = psutil.wait_procs([process], timeout)
+        if not alive:
+            return True
+
+        alive[0].kill()
+        return False
 
 
 def setup(middleware):

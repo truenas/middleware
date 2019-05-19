@@ -13,6 +13,7 @@ import tempfile
 import uuid
 
 import bsd
+import psutil
 
 from libzfs import ZFSException
 from middlewared.job import JobProgressBuffer
@@ -23,6 +24,7 @@ from middlewared.service import (
 )
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.shell import join_commandline
 from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
@@ -2149,6 +2151,15 @@ class PoolService(CRUDService):
         pool = await self._get_instance(oid)
         return await self.middleware.call('pool.dataset.attachments', pool['name'])
 
+    @item_method
+    @accepts(Int('id'))
+    async def processes(self, oid):
+        """
+        Returns a list of running processes using this pool.
+        """
+        pool = await self._get_instance(oid)
+        return await self.middleware.call('pool.dataset.processes', pool['name'])
+
     @staticmethod
     def __get_dev_and_disk(topology):
         rv = []
@@ -2924,13 +2935,22 @@ class PoolDatasetService(CRUDService):
 
         Responsible for telling the user whether there is a related
         share, asking for confirmation.
+
+        Example return value:
+        [
+          {
+            "type": "NFS Share",
+            "service": "nfs",
+            "attachments": ["/mnt/tank/work"]
+          }
+        ]
         """
         result = []
         dataset = await self._get_instance(oid)
         path = self.__attachments_path(dataset)
         if path:
             for delegate in self.attachment_delegates:
-                attachments = {"type": delegate.title, "attachments": []}
+                attachments = {"type": delegate.title, "service": delegate.service, "attachments": []}
                 for attachment in await delegate.query(path, True):
                     attachments["attachments"].append(await delegate.get_attachment_name(attachment))
                 if attachments["attachments"]:
@@ -2943,6 +2963,62 @@ class PoolDatasetService(CRUDService):
 
         if dataset['type'] == 'VOLUME':
             return os.path.join('/mnt', dataset['name'])
+
+    @item_method
+    @accepts(Str('id', required=True))
+    async def processes(self, oid):
+        """
+        Return a list of processes using this dataset.
+
+        Example return value:
+
+        [
+          {
+            "pid": 2520,
+            "name": "smbd",
+            "service": "SMB Share"
+          },
+          {
+            "pid": 97778,
+            "name": "minio",
+            "cmdline": "/usr/local/bin/minio -C /usr/local/etc/minio server --address=0.0.0.0:9000 --quiet /mnt/tank/wk"
+          }
+        ]
+        """
+        result = []
+        dataset = await self._get_instance(oid)
+        path = self.__attachments_path(dataset)
+        if path:
+            lsof = await run('lsof',
+                             '-F', 'pc',    # Output format parseable by `parse_lsof`
+                             '-x', 'f',     # Cross filesystem boundaries
+                             '+D', path,    # Include specified directory and all its descendants
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False, encoding='utf8')
+            for pid, name in parse_lsof(lsof.stdout):
+                service = await self.middleware.call('service.identify_process', name)
+                if service:
+                    result.append({
+                        "pid": pid,
+                        "name": name,
+
+                        "service": service,
+                    })
+                else:
+                    try:
+                        cmdline = await self.middleware.run_in_thread(
+                            lambda: psutil.Process(pid).cmdline()
+                        )
+                    except psutil.NoSuchProcess:
+                        pass
+                    else:
+                        result.append({
+                            "pid": pid,
+                            "name": name,
+
+                            "cmdline": join_commandline(cmdline),
+                        })
+
+        return result
 
     @private
     def register_attachment_delegate(self, delegate):
@@ -3114,6 +3190,25 @@ class PoolScrubService(CRUDService):
 
         await self.middleware.call('service.restart', 'cron')
         return response
+
+
+def parse_lsof(lsof):
+    pids = {}
+
+    pid = None
+    for line in lsof.split("\n"):
+        if line.startswith("p"):
+            try:
+                pid = int(line[1:])
+            except ValueError:
+                pass
+
+        if line.startswith("c"):
+            if pid is not None:
+                pids[pid] = line[1:]
+                pid = None
+
+    return list(pids.items())
 
 
 async def devd_zfs_hook(middleware, data):
