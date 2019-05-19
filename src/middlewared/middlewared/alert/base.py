@@ -32,9 +32,8 @@ class AlertClassMeta(type):
 
             cls.name = cls.__name__.replace("AlertClass", "")
 
-            if not cls.exclude_from_list:
-                AlertClass.classes.append(cls)
-                AlertClass.class_by_name[cls.name] = cls
+            AlertClass.classes.append(cls)
+            AlertClass.class_by_name[cls.name] = cls
 
 
 class AlertClass(metaclass=AlertClassMeta):

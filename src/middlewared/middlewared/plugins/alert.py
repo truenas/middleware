@@ -3,6 +3,7 @@ import copy
 from datetime import datetime
 import errno
 import os
+import textwrap
 import time
 import traceback
 import uuid
@@ -12,6 +13,7 @@ from middlewared.alert.base import (
     alert_category_names,
     AlertClass,
     OneShotAlertClass,
+    SimpleOneShotAlertClass,
     DismissableAlertClass,
     AlertLevel,
     Alert,
@@ -42,15 +44,37 @@ AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 class AlertSourceRunFailedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "Failed to check for alert"
+    title = "Failed to Check For Alert"
     text = "Failed to check for alert %(source_name)s:\n%(traceback)s"
+
+    exclude_from_list = True
 
 
 class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "Failed to check for alert on backup node"
+    title = "Failed to Check For Alert On Backup Node"
     text = "Failed to check for alert %(source_name)s on backup node:\n%(traceback)s"
+
+    exclude_from_list = True
+
+
+class AutomaticAlertFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.WARNING
+    title = "Failed to Notify iXsystems About Alert"
+    text = textwrap.dedent("""\
+        Creating automatic alert for iXsystems for your system %(serial)s failed: %(error)s.
+        Please contact iXsystems Support: https://www.ixsystems.com/support/
+
+        Alert:
+
+        %(alert)s
+    """)
+
+    exclude_from_list = True
+
+    deleted_automatically = False
 
 
 class TestAlertClass(AlertClass):
@@ -172,7 +196,7 @@ class AlertService(Service):
         is_freenas = await self.middleware.call("system.is_freenas")
 
         classes = [alert_class for alert_class in AlertClass.classes
-                   if not (not is_freenas and alert_class.freenas_only)]
+                   if not alert_class.exclude_from_list and not (not is_freenas and alert_class.freenas_only)]
 
         return [
             {
@@ -380,10 +404,12 @@ class AlertService(Service):
                                 if value:
                                     msg += ["", "{}: {}".format(verbose_name, value)]
 
+                            msg = "\n".join(msg)
+
                             try:
                                 await self.middleware.call("support.new_ticket", {
                                     "title": "Automatic alert (%s)" % serial,
-                                    "body": "\n".join(msg),
+                                    "body": msg,
                                     "attach_debug": False,
                                     "category": "Hardware",
                                     "criticality": "Loss of Functionality",
@@ -392,8 +418,9 @@ class AlertService(Service):
                                     "email": "auto-support@ixsystems.com",
                                     "phone": "-",
                                 })
-                            except Exception:
-                                self.logger.error(f"Failed to create a support ticket", exc_info=True)
+                            except Exception as e:
+                                await self.middleware.call("alert.oneshot_create", "AutomaticAlertFailed",
+                                                           {"serial": serial, "alert": msg, "error": str(e)})
 
     def __uuid(self):
         return str(uuid.uuid4())
