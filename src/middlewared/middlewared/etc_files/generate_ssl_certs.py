@@ -20,8 +20,29 @@ def write_certificates(certs):
                 f.write(cert['CSR'])
 
 
-async def render(service, middleware):
-    certs = await middleware.call('certificate.query')
-    certs.extend((await middleware.call('certificateauthority.query')))
+def write_crls(cas, middleware):
+    for ca in cas:
+        crl = middleware.call_sync(
+            'cryptokey.generate_crl',
+            ca, list(
+                filter(
+                    lambda cert: cert['revoked_date'],
+                    middleware.call_sync(
+                        'certificateauthority.get_ca_chain', ca['id']
+                    )
+                )
+            )
+        )
+        if crl:
+            with open(ca['crl_path'], 'w') as f:
+                f.write(crl)
 
-    await middleware.run_in_thread(write_certificates, certs)
+
+def render(service, middleware):
+    certs = middleware.call_sync('certificate.query')
+    cas = middleware.call_sync('certificateauthority.query')
+    certs.extend(cas)
+
+    write_certificates(certs)
+
+    write_crls(cas, middleware)
