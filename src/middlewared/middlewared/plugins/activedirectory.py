@@ -1118,7 +1118,7 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     @job(lock='fill_ad_cache')
-    def fill_cache(self, force=False):
+    def fill_cache(self, job, force=False):
         """
         Use UID2SID and GID2SID entries in Samba's gencache.tdb to populate the AD_cache.
         Since this can include IDs outside of our configured idmap domains (Local accounts
