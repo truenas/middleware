@@ -5,22 +5,29 @@
 
 # PROVIDE: ix-haready
 # REQUIRES: ix-postinit
+# KEYWORD: shutdown
 
-. /etc/rc.freenas
-
-do_haready()
-{
-	# Tell CARP to start allowing and advertising CARP/VRRP packets.
-	# We could also check whether HA is enabled but that does not seem necessary.
-	# See #28198 for one of the reasons why this is required.
-	if ! is_freenas; then
-		/sbin/sysctl net.inet.carp.allow=1
-	fi
-}
+. /etc/rc.subr
 
 name="ix-haready"
-start_cmd='do_haready'
-stop_cmd=':'
+start_cmd='haready_start'
+stop_cmd='haready_stop'
 
-load_rc_config $name
+haready_start()
+{
+	# Tell CARP to start allowing and advertising CARP/VRRP packets.
+	# See #28198 for one of the reasons why this is required.
+	/sbin/sysctl net.inet.carp.allow=1
+}
+
+haready_stop()
+{
+	# Once we start shutdown process, demote from CARP master role,
+	# so that another controller could promote ASAP, if it is there.
+	# Kill fenced here just in case of some races.  Normally it should
+	# be killed by carp-state-change-hook.py on CARP event.
+	/bin/pkill -9 -f fenced
+	/sbin/sysctl net.inet.carp.allow=0
+}
+
 run_rc_command "$1"
