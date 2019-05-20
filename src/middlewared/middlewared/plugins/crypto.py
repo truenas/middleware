@@ -935,6 +935,7 @@ class CertificateService(CRUDService):
         )
 
         cert['cert_type'] = 'CA' if root_path == CERT_CA_ROOT_PATH else 'CERTIFICATE'
+        cert['revoked'] = bool(cert['revoked_date'])
 
         if cert['cert_type'] == 'CA':
             # TODO: Should we look for intermediate ca's as well which this ca has signed ?
@@ -1933,6 +1934,20 @@ class CertificateAuthorityService(CRUDService):
     # HELPER METHODS
 
     @private
+    async def revoke_ca_chain(self, ca_id):
+        chain = await self.get_ca_chain(ca_id)
+        for cert in chain:
+            datastore = f'system.certificate{"authority" if cert["cert_type"] == "CA" else ""}'
+            await self.middleware.call(
+                'datastore.update',
+                datastore,
+                cert['id'], {
+                    'revoked_date': datetime.datetime.utcnow()
+                },
+                {'prefix': self._config.datastore_prefix}
+            )
+
+    @private
     async def get_ca_chain(self, ca_id):
         certs = list(
             map(
@@ -2371,6 +2386,7 @@ class CertificateAuthorityService(CRUDService):
         Int('id', required=True),
         Dict(
             'ca_update',
+            Bool('revoked'),
             Int('ca_id'),
             Int('csr_cert_id'),
             Str('create_type', enum=['CA_SIGN_CSR']),
@@ -2417,10 +2433,18 @@ class CertificateAuthorityService(CRUDService):
 
         verrors = ValidationErrors()
 
-        if new['name'] != old['name']:
-            await validate_cert_name(
-                self.middleware, data['name'], self._config.datastore, verrors, 'certificate_authority_update.name'
-            )
+        if any(new[k] != old[k] for k in ('name', 'revoked')):
+            if new['name'] != old['name']:
+                await validate_cert_name(
+                    self.middleware, new['name'], self._config.datastore,
+                    verrors, 'certificate_authority_update.name'
+                )
+
+            if old['revoked'] != new['revoked'] and new['revoked'] and not new['privatekey']:
+                verrors.add(
+                    'certificate_authority_update.revoked',
+                    'Only Certificate Authorities with a privatekey can be marked as revoked.'
+                )
 
             if verrors:
                 raise verrors
@@ -2432,6 +2456,9 @@ class CertificateAuthorityService(CRUDService):
                 {'name': new['name']},
                 {'prefix': self._config.datastore_prefix}
             )
+
+            if old['revoked'] != new['revoked'] and new['revoked']:
+                await self.revoke_ca_chain(id)
 
             await self.middleware.call('service.start', 'ssl')
 
