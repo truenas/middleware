@@ -37,8 +37,6 @@ notify 100 {
 };
 E*O*F
 
-	else
-		/usr/bin/truncate -s 0 /etc/pf.conf
 	fi
 }
 
