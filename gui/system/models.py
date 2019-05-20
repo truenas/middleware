@@ -637,6 +637,10 @@ class CertificateBase(Model):
         verbose_name=_("Signing Certificate Authority"),
         on_delete=models.CASCADE
     )
+    cert_revoked_date = models.DateTimeField(
+        verbose_name=_('Revoked Date'),
+        null=True
+    )
 
     def __str__(self):
         return self.cert_name
