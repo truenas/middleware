@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0043_2fa_authentication'),
+        ('system', '0046_2fa_authentication'),
     ]
 
     operations = [
