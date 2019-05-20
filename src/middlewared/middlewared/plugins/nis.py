@@ -146,7 +146,7 @@ class NISService(ConfigService):
 
         await self.__set_state(DSStatus['HEALTHY'])
         self.logger.debug(f'NIS service successfully started. Setting state to HEALTHY.')
-        await self.middleware.call('nis.cache', 'fill')
+        await self.middleware.call('nis.fill_cache')
         return True
 
     @private
@@ -206,7 +206,7 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
-        await self.middleware.call('nis.cache', 'expire')
+        await self.middleware.call('cache.pop', 'NIS_cache')
         self.logger.debug(f'NIS service successfully stopped. Setting state to DISABLED.')
         return True
 

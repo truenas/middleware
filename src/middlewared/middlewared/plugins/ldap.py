@@ -328,6 +328,11 @@ class LDAPService(ConfigService):
         new.update(data)
         if old != new:
             must_reload = True
+            if new['enable']:
+                try:
+                    await self.middleware.call('ldap.ldap_validate', new)
+                except Exception as e:
+                    raise ValidationError('ldap_update', str(e))
 
         await self.ldap_compress(new)
         await self.middleware.call(
@@ -340,11 +345,6 @@ class LDAPService(ConfigService):
 
         if must_reload:
             if new['enable']:
-                try:
-                    await self.middleware.call('ldap.ldap_validate', new)
-                except Exception as e:
-                    raise ValidationError('ldap_update', str(e))
-
                 await self.middleware.call('ldap.start')
             else:
                 await self.middleware.call('ldap.stop')
@@ -534,7 +534,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.store_ldap_admin_password')
             await self.middleware.call('service.restart', 'smb')
 
-        await self.middleware.call('ldap.fill_ldap_cache')
+        await self.middleware.call('ldap.fill_cache')
 
     @private
     async def stop(self):
@@ -549,6 +549,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('etc.generate', 'smb')
             await self.middleware.call('service.restart', 'smb')
         await self.middleware.call('cache.pop', 'LDAP_State')
+        await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.nslcd_cmd('onestop')
 
     @private
