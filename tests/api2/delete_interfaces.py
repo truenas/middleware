@@ -36,8 +36,7 @@ def test_03_commite_interface():
 def test_04_get_interface_checkin_waiting():
     results = GET('/interface/checkin_waiting/')
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), bool) is True, results.text
-    assert results.json() is True, results.text
+    assert isinstance(results.json(), float), results.text
 
 
 def test_05_get_interface_checkin():
