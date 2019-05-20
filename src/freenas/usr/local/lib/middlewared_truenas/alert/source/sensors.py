@@ -41,7 +41,7 @@ class PowerSupplyAlertClass(AlertClass):
 class SensorsAlertSource(AlertSource):
     async def check(self):
         baseboard_manufacturer = (
-            (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).decode(errors="ignore")
+            (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors="ignore")
         )
 
         failover_hardware = await self.middleware.call("notifier.failover_hardware")
