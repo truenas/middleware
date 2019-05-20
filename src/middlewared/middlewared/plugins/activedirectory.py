@@ -1226,7 +1226,7 @@ class ActiveDirectoryService(ConfigService):
         if not cache_data.get('users'):
             return
 
-        self.middleware.call_sync('cache.put', 'AD_cache', cache_data, 86400)
+        self.middleware.call_sync('cache.put', 'AD_cache', cache_data)
 
     @private
     async def get_cache(self):

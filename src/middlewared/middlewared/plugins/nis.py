@@ -246,7 +246,7 @@ class NISService(ConfigService):
                 'local': False
             })
 
-        self.middleware.call_sync('cache.put', 'NIS_cache', cache_data, 86400)
+        self.middleware.call_sync('cache.put', 'NIS_cache', cache_data)
 
     @private
     async def get_cache(self):

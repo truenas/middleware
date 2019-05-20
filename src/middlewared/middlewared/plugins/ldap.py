@@ -587,7 +587,7 @@ class LDAPService(ConfigService):
                 'local': False
             })
 
-        self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data, 86400)
+        self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data)
 
     @private
     async def get_cache(self):
