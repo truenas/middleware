@@ -70,7 +70,6 @@ do-install:
 		${STAGEDIR}/boot/loader.conf \
 		${STAGEDIR}/boot/loader.rc.local \
 		${STAGEDIR}/etc/sysctl.conf \
-		${STAGEDIR}/etc/pf.conf.block \
 		${STAGEDIR}/etc/motd
 .endif
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \

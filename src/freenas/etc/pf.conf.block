@@ -1,5 +1,0 @@
-set block-policy drop
-
-block drop in quick proto tcp from any to any port { 111, 548, 2049, 137, 138, 139, 860, 3260 }
-block drop in quick proto udp from any to any port { 111, 860, 2049 }
-pass out keep state
