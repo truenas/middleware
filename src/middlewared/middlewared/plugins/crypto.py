@@ -1933,6 +1933,39 @@ class CertificateAuthorityService(CRUDService):
     # HELPER METHODS
 
     @private
+    async def get_ca_chain(self, ca_id):
+        certs = list(
+            map(
+                lambda item: dict(item, cert_type='CERTIFICATE'),
+                await self.middleware.call(
+                    'datastore.query',
+                    'system.certificate',
+                    [['signedby', '=', ca_id]],
+                    {'prefix': self._config.datastore_prefix}
+                )
+            )
+        )
+
+        for ca in await self.middleware.call(
+            'datastore.query',
+            'system.certificateauthority',
+            [['signedby', '=', ca_id]],
+            {'prefix': self._config.datastore_prefix}
+        ):
+            certs.extend((await self.get_ca_chain(ca['id'])))
+
+        ca = await self.middleware.call(
+            'datastore.query',
+            'system.certificateauthority',
+            [['id', '=', ca_id]],
+            {'prefix': self._config.datastore_prefix, 'get': True}
+        )
+        ca.update({'cert_type': 'CA'})
+
+        certs.append(ca)
+        return certs
+
+    @private
     async def validate_common_attributes(self, data, schema_name):
         verrors = ValidationErrors()
 
