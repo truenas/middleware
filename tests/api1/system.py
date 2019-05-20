@@ -93,19 +93,13 @@ def test_08_verify_get_system_tunable_result_of_(data):
 
 # Reboot system to enable tunable
 def test_09_reboot_system_to_enable_tunable():
-    if vm_name is None and interface == 'vtnet0':
-        pytest.skip('skip no vm_name for bhyve')
-    else:
-        results = POST("/system/reboot/")
-        assert results.status_code == 202, results.text
+    results = POST("/system/reboot/")
+    assert results.status_code == 202, results.text
+    sleep(10)
 
 
 def test_10_wait_for_reboot():
-    if vm_name is not None:
-        while vm_state(vm_name) != 'stopped':
-            sleep(5)
-        assert vm_start(vm_name) is True
-    sleep(1)
+
     while ping_host(ip) is not True:
         sleep(5)
     assert ping_host(ip) is True
