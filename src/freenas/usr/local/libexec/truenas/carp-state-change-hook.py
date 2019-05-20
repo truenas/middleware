@@ -17,6 +17,7 @@ import os
 import sqlite3
 import subprocess
 import sys
+import sysctl
 import time
 import struct
 
@@ -212,6 +213,8 @@ def main(subsystem, event):
     if event == 'MASTER' or event == 'forcetakeover':
         carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeover)
     elif event == 'BACKUP' or event == 'INIT':
+        if sysctl.filter('net.inet.carp.allow')[0].value == 0:
+            user_override = True
         carp_backup(fobj, state_file, ifname, vhid, event, user_override)
 
 
