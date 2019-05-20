@@ -1794,6 +1794,7 @@ class CertificateService(CRUDService):
         Int('id', required=True),
         Dict(
             'certificate_update',
+            Bool('revoked'),
             Str('name')
         )
     )
@@ -1831,22 +1832,34 @@ class CertificateService(CRUDService):
 
         new.update(data)
 
-        if new['name'] != old['name']:
+        if any(new[k] != old[k] for k in ('name', 'revoked')):
 
             verrors = ValidationErrors()
 
-            await validate_cert_name(
-                self.middleware, data['name'], self._config.datastore, verrors, 'certificate_update.name'
-            )
+            if new['name'] != old['name']:
+                await validate_cert_name(
+                    self.middleware, new['name'], self._config.datastore,
+                    verrors, 'certificate_update.name'
+                )
 
-            if verrors:
-                raise verrors
+            if new['revoked'] and new['cert_type_CSR']:
+                verrors.add(
+                    'certificate_update.revoked',
+                    'A CSR cannot be marked as revoked.'
+                )
+
+            verrors.check()
+
+            if old['revoked'] != new['revoked'] and new['revoked']:
+                revoked = {'revoked_date': datetime.datetime.utcnow()}
+            else:
+                revoked = {}
 
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
                 id,
-                {'name': new['name']},
+                {'name': new['name'], **revoked},
                 {'prefix': self._config.datastore_prefix}
             )
 
