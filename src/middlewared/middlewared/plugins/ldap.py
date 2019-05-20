@@ -463,7 +463,7 @@ class LDAPService(ConfigService):
 
         if ret and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the LDAP domain name [{ret}]')
-            await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret[0]})
+            await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
 
         return ret
 
