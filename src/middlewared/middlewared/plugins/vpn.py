@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import subprocess
 import tempfile
@@ -173,6 +174,12 @@ class OpenVPNServerService(SystemServiceService):
                 'on the same local port without any issues.'
             )
 
+        if ipaddress.ip_address(data['server']).version == 4 and data['netmask'] > 32:
+            verrors.add(
+                f'{schema_name}.netmask',
+                'For IPv4 server addresses please provide a netmask value from 0-32.'
+            )
+
         verrors.check()
 
         return data
@@ -212,7 +219,7 @@ class OpenVPNServerService(SystemServiceService):
         Dict(
             'openvpn_server_update',
             Bool('tls_crypt_auth_enabled'),
-            Int('netmask', validators=[Range(min=0, max=32)]),
+            Int('netmask', validators=[Range(min=0, max=128)]),
             Int('server_certificate'),
             Int('port', validators=[Port()]),
             Int('root_ca'),
