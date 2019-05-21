@@ -95,24 +95,28 @@ def test_08_verify_get_system_tunable_result_of_(data):
 def test_09_reboot_system_to_enable_tunable():
     results = POST("/system/reboot/")
     assert results.status_code == 202, results.text
-    sleep(10)
 
 
-def test_10_wait_for_reboot():
+def test_10_wait_for_ping_to_be_down():
+    while ping_host(ip) is not False:
+        sleep(5)
+    assert ping_host(ip) is False
 
+
+def test_11_wait_for_ping_to_be_up():
     while ping_host(ip) is not True:
         sleep(5)
     assert ping_host(ip) is True
-    sleep(10)
+    sleep(15)
 
 
 # Verify loader tunable
-def test_11_verify_system_tunable_dummynet_load():
+def test_12_verify_system_tunable_dummynet_load():
     results = SSH_TEST('kldstat -m dummynet', user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_12_change_tunable_comment():
+def test_13_change_tunable_comment():
     global payload, results
     payload = {
         "tun_comment": "New tunable dummynet tests",
@@ -122,28 +126,28 @@ def test_12_change_tunable_comment():
     assert isinstance(results.json(), dict) is True, results.text
 
 
-def test_13_verify_change_tunable_comment_result():
+def test_14_verify_change_tunable_comment_result():
     assert payload['tun_comment'] == results.json()['tun_comment'], results.text
 
 
-def test_14_get_system_tunable_and_verify_comment():
+def test_15_get_system_tunable_and_verify_comment():
     results = GET(f"/system/tunable/{tunable_id}/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
     assert payload['tun_comment'] == results.json()['tun_comment'], results.text
 
 
-def test_15_delete_tunable():
+def test_16_delete_tunable():
     results = DELETE(f"/system/tunable/{tunable_id}/")
     assert results.status_code == 204, results.text
 
 
-def test_16_tunable_id_has_been_deleted():
+def test_17_tunable_id_has_been_deleted():
     results = GET(f"/system/tunable/{tunable_id}/")
     assert results.status_code == 404, results.text
 
 
-def test_17_shutdow_system():
+def test_18_shutdow_system():
     if vm_name is None and interface == 'vtnet0':
         pytest.skip('skip no vm_name for bhyve')
     else:
@@ -151,7 +155,7 @@ def test_17_shutdow_system():
         assert results.status_code == 202, results.text
 
 
-def test_18_wait_for_system_to_shutdown_with_bhyve():
+def test_19_wait_for_system_to_shutdown_with_bhyve():
     if vm_name is not None and interface == 'vtnet0':
         while vm_state(vm_name) != 'stopped':
             sleep(5)
@@ -160,30 +164,30 @@ def test_18_wait_for_system_to_shutdown_with_bhyve():
         pytest.skip('skip no vm_name')
 
 
-def test_19_start_vm_bhyve_and_wait_for_freenas_to_be_online():
+def test_20_start_vm_bhyve_and_wait_for_freenas_to_be_online():
     if vm_name is not None and interface == 'vtnet0':
         assert vm_start(vm_name) is True
         sleep(1)
         while ping_host(ip) is not True:
             sleep(5)
         assert ping_host(ip) is True
-        sleep(10)
+        sleep(15)
     else:
         pytest.skip('skip no vm_name')
 
 
-def test_20_verify_system_tunable_dummynet_not_loaded():
+def test_21_verify_system_tunable_dummynet_not_loaded():
     results = SSH_TEST('kldstat -m dummynet', user, password, ip)
     assert results['result'] is False, results['output']
 
 
-def test_21_get_system_advanced():
+def test_22_get_system_advanced():
     results = GET("/system/advanced/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
 
 
-def test_22_change_system_advanced_parameter():
+def test_23_change_system_advanced_parameter():
     global payload, results
     payload = {
         "adv_motd": "Welcome to iXsystems",
@@ -196,11 +200,11 @@ def test_22_change_system_advanced_parameter():
 
 
 @pytest.mark.parametrize('data', adv_list)
-def test_23_verify_the_change_system_advanced_parameter_(data):
+def test_24_verify_the_change_system_advanced_parameter_(data):
     assert results.json()[data] == payload[data], results.text
 
 
-def test_24_get_system_advanced():
+def test_25_get_system_advanced():
     global results
     results = GET("/system/advanced/")
     assert results.status_code == 200, results.text
@@ -208,5 +212,5 @@ def test_24_get_system_advanced():
 
 
 @pytest.mark.parametrize('data', adv_list)
-def test_25_verify_get_system_advanced_parameter_(data):
+def test_26_verify_get_system_advanced_parameter_(data):
     assert results.json()[data] == payload[data], results.text
