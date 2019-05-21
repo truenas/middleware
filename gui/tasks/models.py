@@ -36,6 +36,7 @@ from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, UserField, PathField
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
+from freenasUI.services.models import services
 from freenasUI.storage.models import Disk
 
 log = logging.getLogger('tasks.models')
@@ -638,7 +639,8 @@ class SMARTTest(Model):
     def delete(self):
         super(SMARTTest, self).delete()
         try:
-            notifier().restart("smartd")
+            if (services.objects.get(srv_service='smartd').srv_enable):
+                notifier().restart("smartd", onetime=True)
         except:
             pass
 
