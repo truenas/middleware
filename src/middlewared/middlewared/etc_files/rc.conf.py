@@ -345,7 +345,6 @@ def truenas_config(middleware, context):
         yield 'failover_enable="NO"'
     else:
         yield 'failover_enable="YES"'
-        yield 'pf_enable="YES"'
 
 
 def tunable_config(middleware, context):
