@@ -253,7 +253,7 @@ class AlertService(Service):
                     new_hardware_alerts = [alert for alert in new_alerts if ALERT_SOURCES[alert.source].hardware]
                     if new_hardware_alerts:
                         license = get_license()[0]
-                        if license and license.contract_type in [ContractType.silver.value, ContractType.gold.value]:
+                        if license and license.contract_type in [ContractType.silver, ContractType.gold]:
                             try:
                                 support = await self.middleware.call("datastore.query", "system.support", None,
                                                                      {"get": True})
@@ -278,7 +278,7 @@ class AlertService(Service):
                                     ("secondary_email", "Secondary Contact E-mail"),
                                     ("secondary_phone", "Secondary Contact Phone"),
                                 ):
-                                    value = getattr(support, name)
+                                    value = support[name]
                                     if value:
                                         msg += ["", "{}: {}".format(verbose_name, value)]
 
