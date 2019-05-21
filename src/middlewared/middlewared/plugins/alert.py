@@ -378,31 +378,21 @@ class AlertService(Service):
                                                             else alert["level"])))
                                         for alert in alerts_b]
                     except CallError as e:
-                        if e.errno == CallError.EALERTCHECKERUNAVAILABLE:
+                        if e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT,
+                                       CallError.EALERTCHECKERUNAVAILABLE]:
                             pass
                         else:
                             raise
-                except Exception as e:
-                    if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
-                        alerts_b = [
-                            Alert(title="Unable to run alert source %(source_name)r on backup node: %(error)s",
-                                  args={
-                                      "source_name": alert_source.name,
-                                      "error": str(e),
-                                  },
-                                  key="__remote_call_error__",
-                                  level=AlertLevel.CRITICAL)
-                        ]
-                    else:
-                        alerts_b = [
-                            Alert(title="Unable to run alert source %(source_name)r on backup node\n%(traceback)s",
-                                  args={
-                                      "source_name": alert_source.name,
-                                      "traceback": traceback.format_exc(),
-                                  },
-                                  key="__remote_call_unhandled_exception__",
-                                  level=AlertLevel.CRITICAL)
-                        ]
+                except Exception:
+                    alerts_b = [
+                        Alert(title="Unable to run alert source %(source_name)r on backup node\n%(traceback)s",
+                              args={
+                                  "source_name": alert_source.name,
+                                  "traceback": traceback.format_exc(),
+                              },
+                              key="__remote_call_unhandled_exception__",
+                              level=AlertLevel.CRITICAL)
+                    ]
             for alert in alerts_b:
                 alert.node = backup_node
 
