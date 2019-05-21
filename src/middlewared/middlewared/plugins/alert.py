@@ -299,11 +299,10 @@ class AlertService(Service):
                                 except Exception:
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
                                     await self.middleware.call("mail.send", {
-                                        "cc": ["auto-support@ixsystems.com"],
                                         "subject": "Failed to notify iXsystems about alert (%s)" % serial,
                                         "text": f"""
                                             Notifying iXsystems about an alert on system {serial} failed.
-                                            Please contact iXsystems Support.
+                                            Please contact iXsystems Support: https://www.ixsystems.com/support/
 
                                             Alert:
 
