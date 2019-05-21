@@ -300,12 +300,12 @@ class AlertService(Service):
                                     self.logger.error(f"Failed to create a support ticket", exc_info=True)
                                     await self.middleware.call("mail.send", {
                                         "cc": ["auto-support@ixsystems.com"],
-                                        "subject": "Failed creating automatic alert (%s)" % serial,
+                                        "subject": "Failed to notify iXsystems about alert (%s)" % serial,
                                         "text": f"""
-                                            Creating automatic alert for iXsystems for your system {serial} failed
-                                            for some reason. Please, contact us.
+                                            Notifying iXsystems about an alert on system {serial} failed.
+                                            Please contact iXsystems Support.
 
-                                            Below is the text of automatic alert:
+                                            Alert:
 
                                             {msg}
                                         """,
