@@ -8,7 +8,7 @@ import signal
 import sysctl
 import threading
 import time
-from subprocess import DEVNULL, PIPE
+import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Ref, Str
 from middlewared.service import filterable, CallError, CRUDService
@@ -303,16 +303,11 @@ class ServiceService(CRUDService):
             if inspect.iscoroutinefunction(f):
                 await call
 
-    async def _system(self, cmd, options=None):
-        stdout = DEVNULL
-        if options and 'stdout' in options:
-            stdout = options['stdout']
-        stderr = DEVNULL
-        if options and 'stderr' in options:
-            stderr = options['stderr']
-
-        proc = await Popen(cmd, stdout=stdout, stderr=stderr, shell=True, close_fds=True)
-        await proc.communicate()
+    async def _system(self, cmd):
+        proc = await Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True)
+        stdout = (await proc.communicate())[0]
+        if proc.returncode != 0:
+            self.logger.warning("Command %r failed with code %d:\n%s", cmd, proc.returncode, stdout)
         return proc.returncode
 
     async def _service(self, service, verb, **options):
@@ -336,7 +331,7 @@ class ServiceService(CRUDService):
             preverb,
             verb,
             extra,
-        ), options)
+        ))
 
     def _started_notify(self, verb, what):
         """
@@ -376,7 +371,7 @@ class ServiceService(CRUDService):
                 )
             else:
                 pgrep = "/bin/pgrep {}".format(self.SERVICE_DEFS[what].procname)
-            proc = await Popen(pgrep, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True)
+            proc = await Popen(pgrep, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
             data = (await proc.communicate())[0].decode()
 
             if proc.returncode == 0:
@@ -648,11 +643,11 @@ class ServiceService(CRUDService):
 
     async def _start_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
-        await self._service("minio", "start", quiet=True, stdout=None, stderr=None, **kwargs)
+        await self._service("minio", "start", quiet=True, **kwargs)
 
     async def _reload_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
-        await self._service("minio", "restart", quiet=True, stdout=None, stderr=None, **kwargs)
+        await self._service("minio", "restart", quiet=True, **kwargs)
 
     async def _reload_rsync(self, **kwargs):
         await self.middleware.call('etc.generate', 'rsync')
