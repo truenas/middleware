@@ -216,6 +216,76 @@ class OpenVPNServerService(SystemServiceService):
         })
 
     @accepts(
+        Int('client_certificate_id'),
+        Str('server_address', null=True)
+    )
+    async def client_configuration_generation(self, client_certificate_id, server_address=None):
+        await self.config_valid()
+        config = await self.config()
+        root_ca = await self.middleware.call(
+            'certificateauthority.query', [
+                ['id', '=', config['root_ca']]
+            ], {
+                'get': True
+            }
+        )
+        client_cert = await self.middleware.call(
+            'certificate.query', [
+                ['id', '=', client_certificate_id],
+                ['revoked', '=', False]
+            ]
+        )
+        if not client_cert:
+            raise CallError(
+                'Please provide a client certificate id for a certificate which exists on '
+                'the system and hasn\'t been marked as revoked.'
+            )
+        else:
+            client_cert = client_cert[0]
+
+        client_config = [
+            'client',
+            f'dev {config["device_type"].lower()}',
+            f'proto {config["protocol"].lower()}',
+            f'port {config["port"]}',
+            f'remote "{server_address or "PLEASE FILL OUT SERVER DOMAIN/IP HERE"}"',
+            'user nobody',
+            'group nobody',
+            'persist-key',
+            'persist-tun',
+            '<ca>',
+            f'{root_ca["certificate"]}',
+            '</ca>',
+            '<cert>',
+            client_cert['certificate'],
+            '</cert>',
+            '<key>',
+            client_cert['privatekey'],
+            '</key>',
+            'verb 3',
+            'remote-cert-tls server',
+            f'compress {config["compression"].lower()}' if config['compression'] else None,
+            f'auth {config["authentication_algorithm"]}' if config['authentication_algorithm'] else None,
+            f'cipher {config["cipher"]}' if config['cipher'] else None,
+        ]
+
+        if config['tls_crypt_auth_enabled']:
+            client_config.extend([
+                '<tls-crypt>',
+                config['tls_crypt_auth'],
+                '</tls-crypt>'
+            ])
+
+        return (
+            '\n'.join(
+                filter(
+                    bool,
+                    client_config
+                )
+            ) + f'\n{config["additional_parameters"]}'
+        ).strip()
+
+    @accepts(
         Dict(
             'openvpn_server_update',
             Bool('tls_crypt_auth_enabled'),
