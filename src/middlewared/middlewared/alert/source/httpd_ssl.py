@@ -18,7 +18,7 @@ class HTTPD_SSL_AlertSource(AlertSource):
         if os.path.exists("/tmp/alert_invalid_ssl_nginx"):
             alerts.append(Alert(
                 "HTTP server does not support certificates with keys shorter than 1024 bits. "
-                "HTTPS will not be enabled until a certificate having at least 1024 bit "
+                "HTTPS cannot be enabled until a 1024 bit keylength or greater certificate is added",
                 "keylength is provided",
             ))
 
