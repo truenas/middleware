@@ -382,6 +382,7 @@ class CryptoKeyService(Service):
             'san': [],
             'email': obj.get_subject().emailAddress,
             'DN': '',
+            'extensions': {}
         }
 
         for ext in (
@@ -392,6 +393,10 @@ class CryptoKeyService(Service):
         ):
             if 'subjectAltName' == ext.get_short_name().decode():
                 cert_info['san'] = [s.strip() for s in ext.__str__().split(',') if s]
+
+            cert_info['extensions'][
+                re.sub(r"^(\S)", lambda m: m.group(1).upper(), ext.get_short_name().decode())
+            ] = ext.__str__()
 
         dn = []
         for k, v in obj.get_subject().get_components():
@@ -1111,7 +1116,8 @@ class CertificateService(CRUDService):
             cert.update({
                 key: None for key in [
                     'digest_algorithm', 'lifetime', 'country', 'state', 'city', 'from', 'until',
-                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial', 'fingerprint'
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
+                    'fingerprint', 'extensions'
                 ]
             })
 
