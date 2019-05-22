@@ -148,6 +148,23 @@ class OpenVPN:
                         'Client certificate must have "TLS Web Client Authentication" '
                         'set in ExtendedKeyUsage extension.'
                     )
+            else:
+                if not any(
+                    k in (extensions.get('KeyUsage') or '')
+                    for k in ('Key Encipherment', 'Key Agreement')
+                ) or 'Digital Signature' not in (extensions.get('KeyUsage') or ''):
+                    verrors.add(
+                        f'{schema}.server_certificate',
+                        'Server certificate must have "Digital Signature" and either '
+                        '"Key Agreement" or "Key Encipherment" set for KeyUsage extension.'
+                    )
+
+                if 'TLS Web Server Authentication' not in (extensions.get('ExtendedKeyUsage') or ''):
+                    verrors.add(
+                        f'{schema}.server_certificate',
+                        'Server certificate must have "TLS Web Server Authentication" '
+                        'set in ExtendedKeyUsage extension.'
+                    )
 
         if data['tls_crypt_auth_enabled'] and not data['tls_crypt_auth']:
             verrors.add(
