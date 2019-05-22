@@ -107,17 +107,47 @@ class OpenVPN:
                         f'Root CA must have {k} set for KeyUsage extension.'
                     )
 
-        if not await middleware.call(
+        cert = await middleware.call(
             'certificate.query', [
                 ['id', '=', data[f'{mode}_certificate']],
                 ['revoked', '=', False]
             ]
-        ):
+        )
+
+        if not cert:
             verrors.add(
-                f'{schema}.certificate',
+                f'{schema}.{mode}_certificate',
                 f'Please provide a valid id for {mode.capitalize()} certificate which exists on '
                 'the system and hasn\'t been revoked.'
             )
+        else:
+            # Validate server/client cert
+            cert = cert[0]
+            extensions = cert['extensions']
+            for ext in ('KeyUsage', 'SubjectKeyIdentifier', 'ExtendedKeyUsage'):
+                if not extensions.get(ext):
+                    verrors.add(
+                        f'{schema}.{mode}_certificate',
+                        f'{mode.capitalize()} certificate must have {ext} extension set.'
+                    )
+
+            if mode == 'client':
+                if not any(
+                    k in (extensions.get('KeyUsage') or '')
+                    for k in ('Digital Signature', 'Key Agreement')
+                ):
+                    verrors.add(
+                        f'{schema}.client_certificate',
+                        'Client certificate must have "Digital Signature" and/or '
+                        '"Key Agreement" set for KeyUsage extension.'
+                    )
+
+                if 'TLS Web Client Authentication' not in (extensions.get('ExtendedKeyUsage') or ''):
+                    verrors.add(
+                        f'{schema}.client_certificate',
+                        'Client certificate must have "TLS Web Client Authentication" '
+                        'set in ExtendedKeyUsage extension.'
+                    )
 
         if data['tls_crypt_auth_enabled'] and not data['tls_crypt_auth']:
             verrors.add(
