@@ -15,6 +15,6 @@ class HTTPDBindAddressAlertSource(AlertSource):
                     address not in ("0.0.0.0", "")):
                 # XXX: IPv6
                 return Alert(
-                    "The web UI could bot bind to %s; using wildcard",
+                    "The web interface could not bind to %s; using 0.0.0.0",
                     address,
                 )

@@ -35,7 +35,7 @@ class CollectdAlertSource(ThreadedAlertSource):
         for k, v in list(data.items()):
             if k == "ctl-ha/disk_octets":
                 title = (
-                    "CTL HA link is in use. Please check that all iSCSI and FC initiators support ALUA and "
+                    "Storage Controller HA link is in use. Please check that all iSCSI and FC initiators support ALUA and "
                     "are able to connect to the active node."
                 )
             else:

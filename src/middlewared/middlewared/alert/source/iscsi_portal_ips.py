@@ -7,7 +7,7 @@ PORTAL_IP_FILE = "/var/tmp/iscsi_portal_ip"
 
 class iSCSIPortalIPAlertSource(AlertSource):
     level = AlertLevel.WARNING
-    title = "IP Addresses Bound to an iSCSI Portal Were Not Found in the System"
+    title = "IP Addresses Bound to an iSCSI Portal Were Not Found"
 
     async def check(self):
         if os.path.exists(PORTAL_IP_FILE):

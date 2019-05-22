@@ -20,7 +20,7 @@ class Samba4AlertSource(AlertSource):
         systemdataset = await self.middleware.call("systemdataset.config")
         if not systemdataset["pool"]:
             return Alert(
-                "The system dataset has not been configured. Please set it in Settings -> System Dataset -> Pool."
+                "The system dataset has not been set. Please choose a pool in System -> System Dataset."
             )
 
         if os.path.exists("/var/db/samba4/.alert_cant_migrate"):

@@ -35,7 +35,7 @@ class ZpoolCapacityAlertSource(ThreadedAlertSource):
 
             msg = (
                 "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
-                "Keeping space usage below 80%% is recommended for performance."
+                "Optimal pool performance requires used space remain below 80%%."
             )
             level = None
             if cap >= 90:

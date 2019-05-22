@@ -7,7 +7,7 @@ from middlewared.alert.schedule import IntervalSchedule
 
 class VolumeVersionAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "New Feature Flags Are Available for Pool."
+    title = "New Feature Flags Are Available for Pool"
 
     schedule = IntervalSchedule(timedelta(minutes=5))
 

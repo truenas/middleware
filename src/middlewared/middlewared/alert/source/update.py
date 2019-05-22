@@ -16,7 +16,7 @@ log = logging.getLogger("update_check_alertmod")
 
 class HasUpdateAlertSource(ThreadedAlertSource):
     level = AlertLevel.INFO
-    title = "New Update Available"
+    title = "Update Available"
 
     schedule = IntervalSchedule(timedelta(hours=1))
 
@@ -39,7 +39,7 @@ class HasUpdateAlertSource(ThreadedAlertSource):
             updates = None
 
         if updates:
-            return Alert("A new update is available. Apply it with System -> Update.")
+            return Alert("A system update is available. Go to System -> Update to download and apply the update.")
 
 
 class UpdateAppliedAlertSource(ThreadedAlertSource):
