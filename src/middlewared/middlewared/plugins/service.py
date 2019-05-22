@@ -844,6 +844,7 @@ class ServiceService(CRUDService):
 
     async def _reload_nfs(self, **kwargs):
         await self.middleware.call("etc.generate", "nfsd")
+        await self.middleware.call("nfs.setup_v4")
 
     async def _restart_nfs(self, **kwargs):
         await self._stop_nfs(**kwargs)
@@ -859,27 +860,10 @@ class ServiceService(CRUDService):
         await self._service("rpcbind", "stop", force=True, **kwargs)
 
     async def _start_nfs(self, **kwargs):
-        nfs = await self.middleware.call('datastore.config', 'services.nfs')
         await self.middleware.call("etc.generate", "nfsd")
         await self._service("rpcbind", "start", quiet=True, **kwargs)
         await self._service("gssd", "start", quiet=True, **kwargs)
-        # Workaround to work with "onetime", since the rc scripts depend on rc flags.
-        if nfs['nfs_srv_v4']:
-            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 4
-            if nfs['nfs_srv_v4_v3owner']:
-                # Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed
-                # You must have both of these sysctl's set to allow the desired functionality
-                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
-                sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 1
-                await self._service("nfsuserd", "stop", force=True, **kwargs)
-            else:
-                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
-                sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 0
-                await self._service("nfsuserd", "start", quiet=True, **kwargs)
-        else:
-            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 3
-            if nfs['nfs_srv_16']:
-                await self._service("nfsuserd", "start", quiet=True, **kwargs)
+        await self.middleware.call("nfs.setup_v4")
         await self._service("mountd", "start", quiet=True, **kwargs)
         await self._service("nfsd", "start", quiet=True, **kwargs)
         await self._service("statd", "start", quiet=True, **kwargs)
