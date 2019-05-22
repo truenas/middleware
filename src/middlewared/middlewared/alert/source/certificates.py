@@ -42,6 +42,56 @@ class CertificateIsExpiringAlertSource(AlertSource):
         return alerts
 
 
+class CertificateRevokedAlertClass(AlertClass):
+    category = AlertCategory.CERTIFICATES
+    level = AlertLevel.CRITICAL
+    title = 'Certificate Revoked'
+    text = '%(service)s %(type)s has been revoked. Please replace the certificate immediately.'
+
+
+class CertificateRevokedAlertSource(AlertSource):
+    async def check(self):
+        alerts = []
+
+        for cert_id, service, type_c, datastore in (
+            ((await self.middleware.call('ftp.config'))['ssltls_certificate'], 'FTP', 'certificate', 'certificate'),
+            ((await self.middleware.call('s3.config'))['certificate'], 'S3', 'certificate', 'certificate'),
+            ((await self.middleware.call('webdav.config'))['certssl'], 'Webdav', 'certificate', 'certificate'),
+            (
+                (await self.middleware.call('openvpn.server.config'))['server_certificate'],
+                'OpenVPN server', 'certificate', 'certificate'
+            ),
+            (
+                (await self.middleware.call('openvpn.client.config'))['client_certificate'],
+                'OpenVPN client', 'certificate', 'certificate'
+            ),
+            (
+                (await self.middleware.call('system.general.config'))['ui_certificate']['id'],
+                'Web UI', 'certificate', 'certificate'
+            ),
+            (
+                (await self.middleware.call('openvpn.server.config'))['root_ca'],
+                'OpenVPN server', 'root certificate authority', 'certificateauthority'
+            ),
+            (
+                (await self.middleware.call('openvpn.client.config'))['root_ca'],
+                'OpenVPN client', 'root certificate authority', 'certificateauthority'
+            )
+        ):
+            if (
+                cert_id and (
+                    await self.middleware.call(
+                        f'{datastore}.query', [
+                            ['id', '=', cert_id]
+                        ], {'get': True}
+                    )
+                )['revoked']
+            ):
+                alerts.append(Alert(CertificateRevokedAlertClass, {'service': service, 'type': type_c}))
+
+        return alerts
+
+
 class CertificateParsingFailedAlertClass(AlertClass):
     category = AlertCategory.CERTIFICATES
     level = AlertLevel.WARNING
