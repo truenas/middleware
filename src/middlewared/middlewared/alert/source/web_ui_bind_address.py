@@ -4,8 +4,8 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class WebUiBindAddressAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "The Web UI Сould Not Bind to Configured Address"
-    text = "The Web UI could not bind to %s. Using 0.0.0.0 instead."
+    title = "The Web Interface Сould Not Bind to Configured Address"
+    text = "The Web interface could not bind to %s. Using 0.0.0.0 instead."
 
 
 class WebUiBindAddressAlertSource(AlertSource):

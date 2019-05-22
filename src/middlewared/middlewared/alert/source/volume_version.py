@@ -8,7 +8,7 @@ from middlewared.alert.schedule import IntervalSchedule
 class VolumeVersionAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "New Feature Flags Are Available for Pool."
+    title = "New Feature Flags Are Available for Pool"
     text = (
         "New feature flags are available for volume %s. Refer "
         "to the \"Upgrading a ZFS Pool\" subsection in the "
