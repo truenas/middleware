@@ -3,7 +3,7 @@ from middlewared.alert.base import Alert, AlertLevel, AlertSource
 
 class ReplicationAlertSource(AlertSource):
     level = AlertLevel.CRITICAL
-    title = "Replication failed"
+    title = "Replication Failed"
 
     async def check(self):
         alerts = []

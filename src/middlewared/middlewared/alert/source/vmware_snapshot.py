@@ -10,7 +10,7 @@ VMWARESNAPDELETE_FAILS = "/var/tmp/.vmwaresnapdelete_fails"
 
 class VMWareSnapshotFailedAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "VMWare snapshot failed"
+    title = "Creating VMWare Snapshot Failed"
 
     def check_sync(self):
         try:
@@ -23,7 +23,7 @@ class VMWareSnapshotFailedAlertSource(ThreadedAlertSource):
         alerts = []
         for snapname, vms in list(fails.items()):
             alerts.append(Alert(
-                "VMWare snapshot %(snap)s failed for the following VMs: %(vms)s",
+                "Creating VMWare snapshot %(snap)s of VM %(vms)s failed",
                  {
                      "snap": snapname,
                      "vms": ", ".join(vms),
@@ -34,7 +34,7 @@ class VMWareSnapshotFailedAlertSource(ThreadedAlertSource):
 
 class VMWareSnapshotDeleteFailAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "VMWare snapshot delete failed"
+    title = "VMWare Snapshot Deletion Failed"
 
     def check_sync(self):
         try:
@@ -47,7 +47,7 @@ class VMWareSnapshotDeleteFailAlertSource(ThreadedAlertSource):
         alerts = []
         for snapname, vms in list(fails.items()):
             alerts.append(Alert(
-                "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s",
+                "Deletion of VMWare snapshot %(snap)s of VM %(vms)s failed",
                  {
                      "snap": snapname,
                      "vms": ", ".join(vms),

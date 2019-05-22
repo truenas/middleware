@@ -8,7 +8,7 @@ from middlewared.alert.schedule import IntervalSchedule
 
 class HTTPD_SSL_AlertSource(AlertSource):
     level = AlertLevel.WARNING
-    title = "FreeNAS HTTP server SSL misconfiguration"
+    title = "HTTP Server SSL Misconfiguration"
 
     schedule = IntervalSchedule(timedelta(minutes=5))
 
@@ -17,7 +17,7 @@ class HTTPD_SSL_AlertSource(AlertSource):
 
         if os.path.exists("/tmp/alert_invalid_ssl_nginx"):
             alerts.append(Alert(
-                "FreeNAS does not support certificates with keys shorter than 1024 bits. "
+                "HTTP server does not support certificates with keys shorter than 1024 bits. "
                 "HTTPS will not be enabled until a certificate having at least 1024 bit "
                 "keylength is provided",
             ))

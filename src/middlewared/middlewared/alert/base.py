@@ -87,9 +87,11 @@ class AlertSource:
 class FilePresenceAlertSource(AlertSource):
     path = NotImplementedError
 
+    text = None
+
     async def check(self):
         if os.path.exists(self.path):
-            return Alert()
+            return Alert(self.text)
 
 
 class ThreadedAlertSource(AlertSource):

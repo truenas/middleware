@@ -9,7 +9,7 @@ VMWARELOGIN_FAILS = "/var/tmp/.vmwarelogin_fails"
 
 class VMWareLoginFailedAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "VMWare failed to log in to snapshot"
+    title = "VMWare Login Failed"
 
     def check_sync(self):
         try:
@@ -28,9 +28,9 @@ class VMWareLoginFailedAlertSource(ThreadedAlertSource):
                 continue
 
             alerts.append(Alert(
-                "VMWare %(vmware)s failed to login to snapshot: %(err)s",
+                "VMWare login to %(vmware)s failed: %(err)s",
                 {
-                    "vmware": vmware,
+                    "vmware": vmware["hostname"],
                     "err": errmsg,
                 }
             ))

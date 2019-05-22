@@ -8,7 +8,7 @@ from middlewared.alert.schedule import IntervalSchedule
 
 class SMARTAlertSource(ThreadedAlertSource):
     level = AlertLevel.CRITICAL
-    title = "SMART error"
+    title = "S.M.A.R.T. Error"
 
     hardware = True
 

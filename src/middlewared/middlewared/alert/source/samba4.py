@@ -5,7 +5,7 @@ from middlewared.alert.base import Alert, AlertLevel, AlertSource
 
 class Samba4AlertSource(AlertSource):
     level = AlertLevel.WARNING
-    title = "Samba error"
+    title = "Samba Error"
 
     async def check(self):
         if not await self.middleware.call("datastore.query", "storage.volume"):
@@ -20,15 +20,14 @@ class Samba4AlertSource(AlertSource):
         systemdataset = await self.middleware.call("systemdataset.config")
         if not systemdataset["pool"]:
             return Alert(
-                "No system pool configured, please configure one in "
-                "Settings -> System Dataset -> Pool"
+                "The system dataset has not been configured. Please set it in Settings -> System Dataset -> Pool."
             )
 
         if os.path.exists("/var/db/samba4/.alert_cant_migrate"):
             return Alert(
-                "Multiple legacy samba4 datasets detected. Auto-migration "
+                "Multiple legacy Samba4 datasets detected. Auto-migration "
                 "to /mnt/%s/.system/samba4 cannot be done. Please perform "
                 "this step manually and then delete the now-obsolete "
-                "samba4 datasets and /var/db/samba4/.alert_cant_migrate",
+                "Samba4 datasets and the file /var/db/samba4/.alert_cant_migrate.",
                 systemdataset["pool"]
             )

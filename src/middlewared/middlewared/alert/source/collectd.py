@@ -9,7 +9,7 @@ COLLECTD_FILE = "/tmp/.collectdalert"
 
 class CollectdAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "collectd error"
+    title = "Collectd Warning"
 
     def check_sync(self):
         if not os.path.exists(COLLECTD_FILE):
@@ -34,7 +34,10 @@ class CollectdAlertSource(ThreadedAlertSource):
         alerts = []
         for k, v in list(data.items()):
             if k == "ctl-ha/disk_octets":
-                title = "CTL HA link is actively used, check initiators connectivity"
+                title = (
+                    "CTL HA link is in use. Please check that all iSCSI and FC initiators support ALUA and "
+                    "are able to connect to the active node."
+                )
             else:
                 title = k
 
