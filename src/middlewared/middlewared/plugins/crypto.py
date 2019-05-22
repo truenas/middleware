@@ -2197,6 +2197,17 @@ class CertificateAuthorityService(CRUDService):
             attr.enum = ['CA_CREATE_INTERNAL', 'CA_CREATE_IMPORTED', 'CA_CREATE_INTERMEDIATE']
         return {'name': name, 'method': set_enum}
 
+    def _set_cert_extensions_defaults(name):
+        def set_defaults(attr):
+            for ext, keys in (
+                ('BasicConstraints', ('enabled', 'ca', 'extension_critical')),
+                ('KeyUsage', ('enabled', 'key_cert_sign', 'crl_sign', 'extension_critical'))
+            ):
+                for k in keys:
+                    attr.attrs[ext].attrs[k].default = True
+
+        return {'name': name, 'method': set_defaults}
+
     # CREATE METHODS FOR CREATING CERTIFICATE AUTHORITIES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF CA WHICH IS TO BE CREATED, THE
     # APPROPRIATE METHOD IS CALLED
@@ -2210,6 +2221,7 @@ class CertificateAuthorityService(CRUDService):
         Patch(
             'certificate_create', 'ca_create',
             ('edit', _set_enum('create_type')),
+            ('edit', _set_cert_extensions_defaults('cert_extensions')),
             ('rm', {'name': 'dns_mapping'}),
             register=True
         )
