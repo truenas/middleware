@@ -7,7 +7,7 @@ class NoSystemPoolConfiguredAlertClass(AlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = "No System Dataset Pool Configured"
-    text = "The system dataset has not been configured. Please set it in Settings -> System Dataset -> Pool."
+    text = "The system dataset has not been set. Please choose a pool in System -> System Dataset."
 
 
 class SambaDatasetAutoMigrationCantBeDoneAlertClass(AlertClass):

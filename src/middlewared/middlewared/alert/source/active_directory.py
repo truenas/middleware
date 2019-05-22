@@ -9,14 +9,14 @@ log = logging.getLogger("activedirectory_check_alertmod")
 class ActiveDirectoryDomainBindAlertClass(AlertClass):
     category = AlertCategory.DIRECTORY_SERVICE
     level = AlertLevel.WARNING
-    title = "ActiveDirectory Bind Is Not Healthy"
+    title = "Active Directory Bind Is Not Healthy"
     text = "Attempt to connect to netlogon share failed with error: %(wberr)s."
 
 
 class ActiveDirectoryDomainHealthAlertClass(AlertClass):
     category = AlertCategory.DIRECTORY_SERVICE
     level = AlertLevel.WARNING
-    title = "ActiveDirectory Domain Validation Failed"
+    title = "Active Directory Domain Validation Failed"
     text = "Domain validation failed with error: %(verrs)s."
 
 

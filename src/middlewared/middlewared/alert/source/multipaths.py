@@ -4,8 +4,8 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class MultipathIsNotOptimalAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = "Multipath Is Not Optimal"
-    text = "Multipath %s is not optimal. Please check disk cables."
+    title = "Multipath Connection Is Not Optimal"
+    text = "Multipath %s connection is not optimal. Please check disk cables."
 
     hardware = True
 
