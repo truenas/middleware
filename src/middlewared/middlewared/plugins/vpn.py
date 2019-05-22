@@ -70,17 +70,42 @@ class OpenVPN:
             )
 
         # TODO: Let's add checks for cert extensions as well please
-        if not await middleware.call(
+        root_ca = await middleware.call(
             'certificateauthority.query', [
                 ['id', '=', data['root_ca']],
                 ['revoked', '=', False]
             ]
-        ):
+        )
+
+        if not root_ca:
             verrors.add(
                 f'{schema}.root_ca',
                 'Please provide a valid id for Root Certificate Authority which exists on the system '
                 'and hasn\'t been revoked.'
             )
+        else:
+            # Validate root ca
+            root_ca = root_ca[0]
+            extensions = root_ca['extensions']
+            for ext in ('BasicConstraints', 'KeyUsage', 'SubjectKeyIdentifier'):
+                if not extensions.get(ext):
+                    verrors.add(
+                        f'{schema}.root_ca',
+                        f'Root CA must have {ext} extension set.'
+                    )
+
+            if 'CA:TRUE' not in (extensions.get('BasicConstraints') or ''):
+                verrors.add(
+                    f'{schema}.root_ca',
+                    'Root CA must have CA=TRUE set for BasicConstraints extension.'
+                )
+
+            for k in ('Certificate Sign', 'CRL Sign'):
+                if k not in (extensions.get('KeyUsage') or ''):
+                    verrors.add(
+                        f'{schema}.root_ca',
+                        f'Root CA must have {k} set for KeyUsage extension.'
+                    )
 
         if not await middleware.call(
             'certificate.query', [
