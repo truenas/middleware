@@ -275,6 +275,22 @@ class CryptoKeyService(Service):
 
         return verrors
 
+    def validate_cert_with_chain(self, cert, chain):
+        check_cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
+        store = crypto.X509Store()
+        for chain_cert in chain:
+            store.add_cert(
+                crypto.load_certificate(crypto.FILETYPE_PEM, chain_cert)
+            )
+
+        store_ctx = crypto.X509StoreContext(store, check_cert)
+        try:
+            store_ctx.verify_certificate()
+        except crypto.X509StoreContextError:
+            return False
+        else:
+            return True
+
     def validate_certificate_with_key(self, certificate, private_key, schema_name, verrors, passphrase=None):
         if (
             (certificate and private_key) and
