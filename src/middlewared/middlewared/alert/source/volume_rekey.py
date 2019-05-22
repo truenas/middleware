@@ -10,3 +10,5 @@ class VolumeRekeyAlertSource(FilePresenceAlertSource):
              "correct the error as it may result to data loss.")
 
     path = GELI_REKEY_FAILED
+
+    hardware = True
