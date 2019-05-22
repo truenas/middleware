@@ -18,8 +18,12 @@ class FreeNASBMCAlertClass(AlertClass):
         "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details.",
     )
 
+    freenas_only = True
+
 
 class FreeNASBMCAlertSource(ThreadedAlertSource):
+    freenas_only = True
+
     def check_sync(self):
         systemname = pipeopen("/usr/local/sbin/dmidecode -s system-product-name").communicate()[0].strip()
         boardname = pipeopen("/usr/local/sbin/dmidecode -s baseboard-product-name").communicate()[0].strip()

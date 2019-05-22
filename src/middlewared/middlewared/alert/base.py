@@ -47,6 +47,7 @@ class AlertClass(metaclass=AlertClassMeta):
     text = None
 
     exclude_from_list = False
+    freenas_only = False
     hardware = False
 
     def __init__(self, middleware):
@@ -175,6 +176,7 @@ class Alert:
 class AlertSource:
     schedule = IntervalSchedule(timedelta())
 
+    freenas_only = False
     failover_related = False
     run_on_backup_node = True
 
