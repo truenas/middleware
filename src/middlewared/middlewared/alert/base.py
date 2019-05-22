@@ -70,6 +70,7 @@ class AlertSource:
     onetime = False
     schedule = IntervalSchedule(timedelta())
 
+    freenas_only = False
     failover_related = False
     run_on_backup_node = True
 

@@ -75,8 +75,10 @@ class AlertService(Service):
 
     @private
     async def initialize(self):
+        is_freenas = await self.middleware.call("system.is_freenas")
+
         self.node = "A"
-        if not await self.middleware.call("system.is_freenas"):
+        if not is_freenas:
             if await self.middleware.call("notifier.failover_node") == "B":
                 self.node = "B"
 
@@ -106,6 +108,9 @@ class AlertService(Service):
         for sources_dir in sources_dirs:
             for module in load_modules(sources_dir):
                 for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
+                    if not is_freenas and cls.freenas_only:
+                        continue
+
                     source = cls(self.middleware)
                     ALERT_SOURCES[source.name] = source
 
