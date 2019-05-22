@@ -123,6 +123,14 @@ class OpenVPN:
         else:
             # Validate server/client cert
             cert = cert[0]
+            if root_ca and not await middleware.call(
+                'cryptokey.validate_cert_with_chain',
+                cert['certificate'], [root_ca['certificate']]
+            ):
+                verrors.add(
+                    f'{schema}.{mode}_certificate',
+                    f'{mode} certificate chain could not be verified with specified root CA.'
+                )
             extensions = cert['extensions']
             for ext in ('KeyUsage', 'SubjectKeyIdentifier', 'ExtendedKeyUsage'):
                 if not extensions.get(ext):
