@@ -384,12 +384,12 @@ def main(middleware):
         addline('}\n\n')
 
     # Write out the CTL config file
-    with open(os.open(ctl_config, os.O_CREAT | os.O_WRONLY | os.TRUNC, 0o600), 'w') as fh:
+    with open(os.open(ctl_config, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600), 'w') as fh:
         for line in cf_contents:
             fh.write(line)
 
     # Write out the CTL config file with redacted CHAP passwords
-    with open(os.open(ctl_config_shadow, os.O_CREAT | os.O_WRONLY | os.TRUNC, 0o600), 'w') as fh:
+    with open(os.open(ctl_config_shadow, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600), 'w') as fh:
         for line in cf_contents_shadow:
             fh.write(line)
 
