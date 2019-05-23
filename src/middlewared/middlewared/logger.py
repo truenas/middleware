@@ -22,6 +22,7 @@ logging.getLogger('ws4py').setLevel(logging.WARN)
 logging.getLogger('git.cmd').setLevel(logging.WARN)
 
 LOGFILE = '/var/log/middlewared.log'
+ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 logging.TRACE = 6
 
 
@@ -189,9 +190,16 @@ class Logger(object):
     DEFAULT_LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
-        'root': {
-            'level': 'NOTSET',
-            'handlers': ['file'],
+        'loggers': {
+            '': {
+                'level': 'NOTSET',
+                'handlers': ['file'],
+            },
+            'zettarepl': {
+                'level': 'NOTSET',
+                'handlers': ['zettarepl_file'],
+                'propagate': False,
+            },
         },
         'handlers': {
             'file': {
@@ -204,10 +212,24 @@ class Logger(object):
                 'encoding': 'utf-8',
                 'formatter': 'file',
             },
+            'zettarepl_file': {
+                'level': 'DEBUG',
+                'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                'filename': ZETTAREPL_LOGFILE,
+                'mode': 'a',
+                'maxBytes': 10485760,
+                'backupCount': 5,
+                'encoding': 'utf-8',
+                'formatter': 'zettarepl_file',
+            },
         },
         'formatters': {
             'file': {
                 'format': '[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
+                'datefmt': '%Y/%m/%d %H:%M:%S',
+            },
+            'zettarepl_file': {
+                'format': '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s',
                 'datefmt': '%Y/%m/%d %H:%M:%S',
             },
         },
@@ -240,6 +262,10 @@ class Logger(object):
         # it affects existing installs.
         try:
             os.chmod(LOGFILE, 0o640)
+        except OSError:
+            pass
+        try:
+            os.chmod(ZETTAREPL_LOGFILE, 0o640)
         except OSError:
             pass
 

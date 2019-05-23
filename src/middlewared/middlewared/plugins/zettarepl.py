@@ -91,7 +91,7 @@ class ZettareplProcess:
         else:
             debug_level = self.debug_level
         setup_logging("", debug_level, self.log_handler)
-        for handler in logging.getLogger().handlers:
+        for handler in logging.getLogger("zettarepl").handlers:
             handler.addFilter(LongStringsFilter())
             handler.addFilter(ReplicationTaskLoggingLevelFilter())
 
