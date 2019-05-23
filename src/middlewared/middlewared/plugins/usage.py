@@ -1,6 +1,5 @@
 from middlewared.schema import accepts
 from middlewared.service import Service, private
-from middlewared.utils import filter_list
 from datetime import datetime
 
 import json
@@ -8,11 +7,12 @@ import asyncio
 import random
 import requests
 
+
 class UsageService(Service):
     @private
     async def start(self):
         try:
-            gather= await self.gather()
+            gather = await self.gather()
             requests.post(url='https://usage.freenas.org/submit', data=gather)
         except Exception:
             # We still want to schedule the next call
@@ -21,12 +21,12 @@ class UsageService(Service):
         event_loop = asyncio.get_event_loop()
         now = datetime.utcnow()
         scheduled = (
-            now.replace(hour=23,minute=59,second=59) - now
-        ).total_seconds() + random.uniform(1,86400)
+            now.replace(hour=23, minute=59, second=59) - now
+        ).total_seconds() + random.uniform(1, 86400)
 
         event_loop.call_later(
             scheduled,
-            lambda: asyncio.ensure_future(middleware.call('usage.start'))
+            lambda: asyncio.ensure_future(self.middleware.call('usage.start'))
         )
         self.logger.debug(f'Scheduled next run in {round(scheduled)} seconds')
 
@@ -88,7 +88,6 @@ class UsageService(Service):
 
         return {'jails': jail_list}
 
-
     @private
     async def gather_network(self, network):
         async def gather_bridges():
@@ -102,6 +101,7 @@ class UsageService(Service):
                         }
                     )
             return {'bridges': bridge_list}
+
         async def gather_lags():
             lag_list = []
             for l in network:
@@ -114,6 +114,7 @@ class UsageService(Service):
                         }
                     )
             return {'lags': lag_list}
+
         async def gather_physical():
             phys_list = []
             for i in network:
@@ -127,6 +128,7 @@ class UsageService(Service):
                         }
                     )
             return {'phys': phys_list}
+
         async def gather_vlans():
             vlan_list = []
             for v in network:
@@ -148,12 +150,9 @@ class UsageService(Service):
 
         return {'network': {**bridges, **lags, **phys, **vlans}}
 
-
     @private
     async def gather_system(self):
         system = await self.middleware.call('system.info')
-        system_list = []
-
         platform = 'FreeNAS' if await self.middleware.call(
             'system.is_freenas'
         ) else 'TrueNAS'
@@ -179,11 +178,13 @@ class UsageService(Service):
                 {'usage_version': usage_version},
                 {'version': version},
                 {'system': [
-                    {'users': users, 'snapshots': snapshots, 'zvols': zvols}
+                    {
+                        'users': users, 'snapshots': snapshots, 'zvols': zvols,
+                        'datasets': datasets
+                    }
                 ]}
             ]
         }
-
 
     @private
     async def gather_plugins(self):
@@ -199,7 +200,6 @@ class UsageService(Service):
             )
 
         return {'plugins': plugin_list}
-
 
     @private
     async def gather_pools(self):
@@ -233,14 +233,13 @@ class UsageService(Service):
                 else:
                     disks += 1
                     used = pd['usedbysnapshots']['parsed'] + \
-                           pd['usedbydataset']['parsed'] + \
-                           pd['usedbychildren']['parsed'] + \
-                           pd['usedbyrefreservation']['parsed']
+                        pd['usedbydataset']['parsed'] + \
+                        pd['usedbychildren']['parsed'] + \
+                        pd['usedbyrefreservation']['parsed']
 
             pool_list.append(
                 {
-                    'capacity': used +
-                        pd['available']['parsed'],
+                    'capacity': used + pd['available']['parsed'],
                     'disks': disks,
                     'encryption': bool(p['encrypt']),
                     'l2arc': bool(p['topology']['cache']),
@@ -252,7 +251,6 @@ class UsageService(Service):
             )
 
         return {'pools': pool_list}
-
 
     @private
     async def gather_services(self):
@@ -268,7 +266,6 @@ class UsageService(Service):
             )
 
         return {'services': service_list}
-
 
     @private
     async def gather_sharing(self):
@@ -404,13 +401,14 @@ class UsageService(Service):
 
         return {'vms': vm_list}
 
+
 async def setup(middleware):
     now = datetime.utcnow()
     event_loop = asyncio.get_event_loop()
 
     event_loop.call_at(
         random.uniform(1, (
-            now.replace(hour=23,minute=59,second=59) - now
+            now.replace(hour=23, minute=59, second=59) - now
         ).total_seconds()),
         lambda: asyncio.ensure_future(
             middleware.call('usage.start')
