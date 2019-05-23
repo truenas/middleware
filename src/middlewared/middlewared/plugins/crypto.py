@@ -1419,6 +1419,13 @@ class CertificateService(CRUDService):
     async def certificate_extensions(self):
         return CryptoKeyService.extensions()
 
+    @accepts()
+    async def extended_key_usage_choices(self):
+        return {
+            k: k for k in
+            dir(x509.oid.ExtendedKeyUsageOID) if not k.startswith('__')
+        }
+
     @private
     async def dhparam(self):
         return '/data/dhparam.pem'
