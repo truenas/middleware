@@ -48,15 +48,15 @@ from freenasUI.common.freenascache import (
     FreeNAS_GroupCache,
     FreeNAS_Directory_UserCache,
     FreeNAS_Directory_GroupCache,
+    FLAGS_CACHE_READ_USER,
+    FLAGS_CACHE_WRITE_USER,
+    FLAGS_CACHE_READ_GROUP,
+    FLAGS_CACHE_WRITE_GROUP,
     FREENAS_CACHEDIR
 )
 
 from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
-    FLAGS_CACHE_READ_USER,
-    FLAGS_CACHE_WRITE_USER,
-    FLAGS_CACHE_READ_GROUP,
-    FLAGS_CACHE_WRITE_GROUP
 )
 
 from freenasUI.common.freenasnis import FreeNAS_NIS

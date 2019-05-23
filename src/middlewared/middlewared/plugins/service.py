@@ -8,7 +8,7 @@ import signal
 import sysctl
 import threading
 import time
-from subprocess import DEVNULL, PIPE
+import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
 from middlewared.service import filterable, CallError, CRUDService, private
@@ -303,16 +303,11 @@ class ServiceService(CRUDService):
             if inspect.iscoroutinefunction(f):
                 await call
 
-    async def _system(self, cmd, options=None):
-        stdout = DEVNULL
-        if options and 'stdout' in options:
-            stdout = options['stdout']
-        stderr = DEVNULL
-        if options and 'stderr' in options:
-            stderr = options['stderr']
-
-        proc = await Popen(cmd, stdout=stdout, stderr=stderr, shell=True, close_fds=True)
-        await proc.communicate()
+    async def _system(self, cmd):
+        proc = await Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True)
+        stdout = (await proc.communicate())[0]
+        if proc.returncode != 0:
+            self.logger.warning("Command %r failed with code %d:\n%s", cmd, proc.returncode, stdout)
         return proc.returncode
 
     async def _service(self, service, verb, **options):
@@ -336,7 +331,7 @@ class ServiceService(CRUDService):
             preverb,
             verb,
             extra,
-        ), options)
+        ))
 
     def _started_notify(self, verb, what):
         """
@@ -376,7 +371,7 @@ class ServiceService(CRUDService):
                 )
             else:
                 pgrep = "/bin/pgrep {}".format(self.SERVICE_DEFS[what].procname)
-            proc = await Popen(pgrep, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True)
+            proc = await Popen(pgrep, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
             data = (await proc.communicate())[0].decode()
 
             if proc.returncode == 0:
@@ -648,11 +643,11 @@ class ServiceService(CRUDService):
 
     async def _start_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
-        await self._service("minio", "start", quiet=True, stdout=None, stderr=None, **kwargs)
+        await self._service("minio", "start", quiet=True, **kwargs)
 
     async def _reload_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
-        await self._service("minio", "restart", quiet=True, stdout=None, stderr=None, **kwargs)
+        await self._service("minio", "restart", quiet=True, **kwargs)
 
     async def _reload_rsync(self, **kwargs):
         await self.middleware.call('etc.generate', 'rsync')
@@ -683,30 +678,17 @@ class ServiceService(CRUDService):
         return (await self.middleware.call('nis.stop')), []
 
     async def _started_ldap(self, **kwargs):
-        if (await self._system('/usr/sbin/service ix-ldap status') != 0):
-            return False, []
-        return await self.middleware.call('notifier.ldap_status'), []
+        return await self.middleware.call('ldap.started'), []
 
     async def _start_ldap(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/LDAP/ctl start"):
-            res = True
-        return res
+        return await self.middleware.call('ldap.start'), []
 
     async def _stop_ldap(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/LDAP/ctl stop"):
-            res = True
-        return res
+        return await self.middleware.call('ldap.stop'), []
 
     async def _restart_ldap(self, **kwargs):
-        await self.middleware.call('etc.generate', 'rc')
-        res = False
-        if not await self._system("/etc/directoryservice/LDAP/ctl restart"):
-            res = True
-        return res
+        await self.middleware.call('ldap.stop')
+        return await self.middleware.call('ldap.start'), []
 
     async def _start_lldp(self, **kwargs):
         await self._service("ladvd", "start", **kwargs)
@@ -719,17 +701,17 @@ class ServiceService(CRUDService):
         await self._service("ladvd", "restart", **kwargs)
 
     async def _started_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.started'), [] 
+        return await self.middleware.call('activedirectory.started'), []
 
     async def _start_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.start'), [] 
+        return await self.middleware.call('activedirectory.start'), []
 
     async def _stop_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.stop'), [] 
+        return await self.middleware.call('activedirectory.stop'), []
 
     async def _restart_activedirectory(self, **kwargs):
         await self.middleware.call('kerberos.stop'), []
-        return await self.middleware.call('activedirectory.start'), [] 
+        return await self.middleware.call('activedirectory.start'), []
 
     async def _reload_activedirectory(self, **kwargs):
         await self._service("samba_server", "stop", force=True, **kwargs)
@@ -862,6 +844,7 @@ class ServiceService(CRUDService):
 
     async def _reload_nfs(self, **kwargs):
         await self.middleware.call("etc.generate", "nfsd")
+        await self.middleware.call("nfs.setup_v4")
         await self._service("mountd", "reload", force=True, **kwargs)
 
     async def _restart_nfs(self, **kwargs):
@@ -878,27 +861,10 @@ class ServiceService(CRUDService):
         await self._service("rpcbind", "stop", force=True, **kwargs)
 
     async def _start_nfs(self, **kwargs):
-        nfs = await self.middleware.call('datastore.config', 'services.nfs')
         await self.middleware.call("etc.generate", "nfsd")
         await self._service("rpcbind", "start", quiet=True, **kwargs)
         await self._service("gssd", "start", quiet=True, **kwargs)
-        # Workaround to work with "onetime", since the rc scripts depend on rc flags.
-        if nfs['nfs_srv_v4']:
-            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 4
-            if nfs['nfs_srv_v4_v3owner']:
-                # Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed
-                # You must have both of these sysctl's set to allow the desired functionality
-                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
-                sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 1
-                await self._service("nfsuserd", "stop", force=True, **kwargs)
-            else:
-                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
-                sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 0
-                await self._service("nfsuserd", "start", quiet=True, **kwargs)
-        else:
-            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 3
-            if nfs['nfs_srv_16']:
-                await self._service("nfsuserd", "start", quiet=True, **kwargs)
+        await self.middleware.call("nfs.setup_v4")
         await self._service("mountd", "start", quiet=True, **kwargs)
         await self._service("nfsd", "start", quiet=True, **kwargs)
         await self._service("statd", "start", quiet=True, **kwargs)

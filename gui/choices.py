@@ -1007,7 +1007,7 @@ class IDMAP_CHOICES(object):
 
         self.__idmap_modules_path = '/usr/local/lib/shared-modules/idmap'
         self.__idmap_modules = []
-        self.__idmap_exclude = {'passdb', 'hash'}
+        self.__idmap_exclude = {'passdb', 'hash', 'adex', 'tdb2'}
 
         if os.path.exists(self.__idmap_modules_path):
             self.__idmap_modules.extend(

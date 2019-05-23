@@ -348,10 +348,10 @@ class Client(object):
             self._connected.wait(10)
             if not self._connected.is_set():
                 raise ClientException('Failed connection handshake')
-        except Exception as e:
+        except Exception:
             if hasattr(self, '_ws'):
                 del self._ws
-            raise e
+            raise
 
     def __enter__(self):
         return self

@@ -11,7 +11,7 @@ class ZpoolCapacityWarningAlertClass(AlertClass):
     title = "Pool Space Usage Is Above 80%"
     text = (
         "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
-        "Keeping space usage below 80%% is recommended for performance."
+        "Optimal pool performance requires used space remain below 80%%."
     )
 
 
@@ -21,7 +21,7 @@ class ZpoolCapacityCriticalAlertClass(AlertClass):
     title = "Pool Space Usage Is Above 90%"
     text = (
         "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
-        "Keeping space usage below 80%% is recommended for performance."
+        "Optimal pool performance requires used space remain below 80%%."
     )
 
 

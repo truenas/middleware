@@ -4,7 +4,7 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 class BootPoolStatusAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "Boot Pool Status Is Not Healthy"
+    title = "Boot Pool Is Not Healthy"
     text = "Boot pool status is %(status)s: %(status_detail)s."
 
     hardware = True

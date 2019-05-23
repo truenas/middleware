@@ -156,12 +156,6 @@ __unescape()
 }
 
 
-for dsfile in $(ls /etc/directoryservice/rc.*)
-do
-	. "${dsfile}"
-done
-
-
 # Create a cache filesystem on ${FREENAS_CACHEDIR} .
 #
 # Used by ix-activedirectory and ix-ldap.

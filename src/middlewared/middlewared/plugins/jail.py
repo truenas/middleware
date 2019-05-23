@@ -513,11 +513,12 @@ class JailService(CRUDService):
         return fetch_output
 
     @accepts(
-        Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
-        Bool("remote", default=False),
-        Bool('want_cache', default=True)
+        Str('resource', enum=['RELEASE', 'TEMPLATE', 'PLUGIN', 'BRANCHES']),
+        Bool('remote', default=False),
+        Bool('want_cache', default=True),
+        Str('branch', default=None)
     )
-    def list_resource(self, resource, remote, want_cache):
+    def list_resource(self, resource, remote, want_cache, branch):
         """Returns a JSON list of the supplied resource on the host"""
         self.check_dataset_existence()  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
@@ -535,7 +536,7 @@ class JailService(CRUDService):
                         pass
 
                 resource_list = iocage.fetch(list=True, plugins=True,
-                                             header=False)
+                                             header=False, branch=branch)
             else:
                 resource_list = iocage.list("all", plugin=True)
                 pool = IOCJson().json_get_value("pool")
@@ -590,6 +591,16 @@ class JailService(CRUDService):
                     'cache.put', 'iocage_remote_releases', resource_list,
                     86400
                 )
+        elif resource == 'branches':
+            official_branches = requests.get(
+                'https://api.github.com/repos/freenas/iocage-ix-plugins/'
+                'branches'
+            )
+            official_branches.raise_for_status()
+            resource_list = [
+                {'name': b['name'], 'repo': 'official'}
+                for b in official_branches.json()
+            ]
         else:
             resource_list = iocage.list(resource)
 
@@ -1039,6 +1050,8 @@ class JailService(CRUDService):
             return ['N/A', '1']
         elif pkg == 'sickrage':
             return ['Git branch - master', '1']
+        elif pkg == 'asigra':
+            return ['14.1-20190301', '1']
 
         try:
             primary_pkg = r_plugins[pkg]['primary_pkg'].split('/', 1)[-1]
