@@ -179,9 +179,10 @@ class UsageService(Service):
                 {'usage_version': usage_version},
                 {'version': version},
                 {'system': [
-                {'users': users, 'snapshots': snapshots, 'zvols': zvols}
-              ]}
-        ]}
+                    {'users': users, 'snapshots': snapshots, 'zvols': zvols}
+                ]}
+            ]
+        }
 
 
     @private
@@ -231,10 +232,10 @@ class UsageService(Service):
                     disks += len(d['children'])
                 else:
                     disks += 1
-            used = pd['usedbysnapshots']['parsed'] + \
-                   pd['usedbydataset']['parsed'] + \
-                   pd['usedbychildren']['parsed'] + \
-                   pd['usedbyrefreservation']['parsed']
+                    used = pd['usedbysnapshots']['parsed'] + \
+                           pd['usedbydataset']['parsed'] + \
+                           pd['usedbychildren']['parsed'] + \
+                           pd['usedbyrefreservation']['parsed']
 
             pool_list.append(
                 {
