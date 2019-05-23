@@ -10,6 +10,8 @@ class VolumeRekeyAlertClass(AlertClass):
             "sure working recovery keys are available, check log files, and "
             "correct the problem immediately to avoid data loss.")
 
+    hardware = True
+
 
 class VolumeRekeyAlertSource(FilePresenceAlertSource):
     path = GELI_REKEY_FAILED
