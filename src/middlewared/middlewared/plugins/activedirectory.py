@@ -1190,10 +1190,27 @@ class ActiveDirectoryService(ConfigService):
                         try:
                             user_data = pwd.getpwuid(int(cached_uid))
                             cache_data['users'].append({
-                                'pw_name': user_data.pw_name,
-                                'pw_uid': user_data.pw_uid,
+                                'id': user_next_index,
+                                'uid': user_data.pw_uid,
+                                'username': user_data.pw_name,
+                                'unixhash': None,
+                                'smbhash': None,
+                                'group': {},
+                                'home': '',
+                                'shell': '',
+                                'full_name': u.pw_gecos,
+                                'builtin': False,
+                                'email': '',
+                                'password_disabled': False,
+                                'locked': False,
+                                'sudo': False,
+                                'microsoft_account': False,
+                                'attributes': {},
+                                'groups': [],
+                                'sshpubkey': None,
                                 'local': False
                             })
+                            user_next_index += 1
                             break
                         except Exception:
                             break
@@ -1217,10 +1234,15 @@ class ActiveDirectoryService(ConfigService):
                         except Exception:
                             group_data = grp.getgrgid(int(cached_gid))
                             cache_data['groups'].append({
-                                'gr_name': group_data.gr_name,
-                                'gr_gid': group_data.gr_gid,
+                                'id': group_next_index,
+                                'gid': group_data.gr_gid,
+                                'group': group_data.gr_name,
+                                'builtin': False,
+                                'sudo': False,
+                                'users': [],
                                 'local': False,
                             })
+                            group_next_index += 1
                             break
 
         if not cache_data.get('users'):

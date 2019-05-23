@@ -127,9 +127,9 @@ class UserField(forms.ChoiceField):
                 ).values_list('bsdusr_uid')
             ]
             ulist.extend(
-                [(x['pw_name'], x['pw_name'] ) for x in sorted([y for y in users if (
-                            y is not None and y['pw_name'] not in self._exclude
-                        )], key=lambda y: (y['pw_uid'] not in notbuiltin, y['pw_name']))]
+                [(x['username'], x['username'] ) for x in sorted([y for y in users if (
+                            y is not None and y['username'] not in self._exclude
+                        )], key=lambda y: (y['uid'] not in notbuiltin, y['username']))]
             )
 
             self.widget = FilteredSelectJSON(
@@ -200,9 +200,9 @@ class GroupField(forms.ChoiceField):
                 ).values_list('bsdgrp_gid')
             ]
             glist.extend(
-                [(x['gr_name'], x['gr_name']) for x in sorted(
+                [(x['group'], x['group']) for x in sorted(
                     groups,
-                    key=lambda y: (y['gr_gid'] not in notbuiltin, y['gr_name'])
+                    key=lambda y: (y['gid'] not in notbuiltin, y['group'])
                 )]
             )
             #self.choices = glist

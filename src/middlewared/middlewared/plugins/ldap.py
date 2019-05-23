@@ -555,6 +555,7 @@ class LDAPService(ConfigService):
     @private
     @job(lock='fill_ldap_cache')
     def fill_cache(self, job, force=False):
+        user_next_index = group_next_index = 100000000
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
@@ -572,10 +573,27 @@ class LDAPService(ConfigService):
                 continue
 
             cache_data['users'].append({
-                'pw_name': u.pw_name,
-                'pw_uid': u.pw_uid,
+                'id': user_next_index,
+                'uid': u.pw_uid,
+                'username': u.pw_name,
+                'unixhash': None,
+                'smbhash': None,
+                'group': {},
+                'home': '',
+                'shell': '',
+                'full_name': u.pw_gecos,
+                'builtin': False,
+                'email': '',
+                'password_disabled': False,
+                'locked': False,
+                'sudo': False,
+                'microsoft_account': False,
+                'attributes': {},
+                'groups': [],
+                'sshpubkey': None,
                 'local': False
             })
+            user_next_index += 1
 
         for g in grp_list:
             is_local_user = True if g.gr_gid in local_gid_list else False
@@ -583,10 +601,15 @@ class LDAPService(ConfigService):
                 continue
 
             cache_data['groups'].append({
-                'gr_name': g.gr_name,
-                'gr_gid': g.gr_gid,
+                'id': group_next_index,
+                'gid': g.gr_gid,
+                'group': g.gr_name,
+                'builtin': False,
+                'sudo': False,
+                'users': [],
                 'local': False
             })
+            group_next_index += 1
 
         self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data)
 

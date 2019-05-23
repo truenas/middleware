@@ -145,8 +145,6 @@ class DSCache(Service):
         Each directory service, when enabled, will generate a user and group cache using its
         respective 'fill_cache' method (ex: ldap.fill_cache). The cache entry is formatted
         as follows:
-        {'users': [{'pw_name': <username>, 'pw_uid': <uid>, 'local': False}],
-        'groups' [{'gr_name': <groupname>, 'gr_gid': <gid>, 'local': False}]}
 
         The cache can be refreshed by calliing 'dscache.refresh'. The actual cache fill
         will run in the background (potentially for a long time). The exact duration of the
@@ -167,24 +165,10 @@ class DSCache(Service):
             })
 
         if objtype == 'USERS':
-            local_users = []
-            for u in await self.middleware.call('user.query'):
-                local_users.append({
-                    'pw_name': u['username'],
-                    'pw_uid': u['uid'],
-                    'local': True,
-                })
-            res.extend(filter_list(local_users, filters, options))
+            res.extend(await self.middleware.call('user.query', filters, options))
 
         elif objtype == 'GROUPS':
-            local_groups = []
-            for g in await self.middleware.call('group.query'):
-                local_groups.append({
-                    'gr_name': g['group'],
-                    'gr_gid': g['gid'],
-                    'local': True,
-                })
-            res.extend(filter_list(local_groups, filters, options))
+            res.extend(await self.middleware.call('group.query', filters, options))
 
         for dstype, enabled in ds_enabled.items():
             if enabled:

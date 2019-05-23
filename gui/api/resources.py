@@ -4030,14 +4030,14 @@ class JsonUserResource(DojoResource):
             exclude = exclude.split(',')
         for user in dscache:
             if (
-                    (query is None or user['pw_name'].startswith(query)) and
-                    user['pw_name'] not in exclude and not any(u for u in users if u.name == user['pw_name'])
+                    (query is None or user['username'].startswith(query)) and
+                    user['username'] not in exclude and not any(u for u in users if u.name == user['username'])
             ):
                 users.append(
                     JsonUser(
-                        id=user['pw_name'],
-                        name=user['pw_name'],
-                        label=user['pw_name']
+                        id=user['username'],
+                        name=user['username'],
+                        label=user['username']
                     )
                 )
 
@@ -4110,13 +4110,13 @@ class JsonGroupResource(DojoResource):
             dscache = c.call('dscache.query', 'GROUPS')
         query = request.GET.get('q', None)
         for grp in dscache:
-            if ((query is None or grp['gr_name'].startswith(query)) and
-                    not any(g for g in groups if g.name == grp['gr_name'])):
+            if ((query is None or grp['group'].startswith(query)) and
+                    not any(g for g in groups if g.name == grp['group'])):
                 groups.append(
                     JsonGroup(
-                        id=grp['gr_name'],
-                        name=grp['gr_name'],
-                        label=grp['gr_name']
+                        id=grp['group'],
+                        name=grp['group'],
+                        label=grp['group']
                     )
                 )
 
