@@ -248,10 +248,16 @@ class ZettareplService(Service):
             self.queue.put(("tasks", definition))
 
     async def run_periodic_snapshot_task(self, id):
-        self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id}")))
+        try:
+            self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id}")))
+        except Exception:
+            raise CallError("Replication service is not running")
 
     async def run_replication_task(self, id):
-        self.queue.put(("run_task", ("ReplicationTask", f"task_{id}")))
+        try:
+            self.queue.put(("run_task", ("ReplicationTask", f"task_{id}")))
+        except Exception:
+            raise CallError("Replication service is not running")
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
