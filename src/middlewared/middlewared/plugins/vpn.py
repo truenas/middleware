@@ -69,7 +69,6 @@ class OpenVPN:
                 'Please specify a valid authentication_algorithm.'
             )
 
-        # TODO: Let's add checks for cert extensions as well please
         root_ca = await middleware.call(
             'certificateauthority.query', [
                 ['id', '=', data['root_ca']],
@@ -322,6 +321,18 @@ class OpenVPNServerService(SystemServiceService):
             )
         else:
             client_cert = client_cert[0]
+            if (
+                await OpenVPN.common_validation(
+                    self.middleware, {
+                        **config,
+                        'client_certificate': client_certificate_id
+                    }, '', 'client'
+                )
+            )[0]:
+                raise CallError(
+                    'Please ensure provided client certificate exists in Root CA chain '
+                    'and has necessary extensions set.'
+                )
 
         client_config = [
             'client',
