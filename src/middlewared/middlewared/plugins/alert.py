@@ -94,8 +94,10 @@ class AlertService(Service):
 
     @private
     async def initialize(self):
+        is_freenas = await self.middleware.call("system.is_freenas")
+
         self.node = "A"
-        if not await self.middleware.call("system.is_freenas"):
+        if not is_freenas:
             if await self.middleware.call("failover.node") == "B":
                 self.node = "B"
 
@@ -105,6 +107,9 @@ class AlertService(Service):
         for sources_dir in sources_dirs:
             for module in load_modules(sources_dir):
                 for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
+                    if not is_freenas and cls.freenas_only:
+                        continue
+
                     source = cls(self.middleware)
                     ALERT_SOURCES[source.name] = source
 
@@ -164,6 +169,11 @@ class AlertService(Service):
         List all types of alert sources which the system can issue.
         """
 
+        is_freenas = await self.middleware.call("system.is_freenas")
+
+        classes = [alert_class for alert_class in AlertClass.classes
+                   if not (not is_freenas and alert_class.freenas_only)]
+
         return [
             {
                 "id": alert_category.name,
@@ -174,14 +184,14 @@ class AlertService(Service):
                             "id": alert_class.name,
                             "title": alert_class.title,
                         }
-                        for alert_class in AlertClass.classes
+                        for alert_class in classes
                         if alert_class.category == alert_category
                     ],
                     key=lambda klass: klass["title"]
                 )
             }
             for alert_category in AlertCategory
-            if any(alert_class.category == alert_category for alert_class in AlertClass.classes)
+            if any(alert_class.category == alert_category for alert_class in classes)
         ]
 
     @private
