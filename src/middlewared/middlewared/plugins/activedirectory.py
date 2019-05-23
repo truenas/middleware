@@ -1156,6 +1156,7 @@ class ActiveDirectoryService(ConfigService):
         local_groups = self.middleware.call_sync('group.query')
         cache_data = {'users': [], 'groups': []}
         configured_domains = self.middleware.call_sync('idmap.get_configured_idmap_domains')
+        user_next_index = group_next_index = 300000000
         for d in configured_domains:
             if d['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
                 known_domains.append({
@@ -1198,7 +1199,7 @@ class ActiveDirectoryService(ConfigService):
                                 'group': {},
                                 'home': '',
                                 'shell': '',
-                                'full_name': u.pw_gecos,
+                                'full_name': user_data.pw_gecos,
                                 'builtin': False,
                                 'email': '',
                                 'password_disabled': False,

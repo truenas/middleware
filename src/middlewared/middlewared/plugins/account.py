@@ -107,7 +107,7 @@ class UserService(CRUDService):
             return await self.middleware.call('dscache.query', 'USERS', filters, options)
 
         result = await self.middleware.call(
-             'datastore.query', self._config.datastore, [], datastore_options
+            'datastore.query', self._config.datastore, [], datastore_options
         )
         for entry in result:
             entry.update({'local': True})
@@ -706,7 +706,7 @@ class GroupService(CRUDService):
             return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
 
         result = await self.middleware.call(
-             'datastore.query', self._config.datastore, [], datastore_options
+            'datastore.query', self._config.datastore, [], datastore_options
         )
         for entry in result:
             entry.update({'local': True})
