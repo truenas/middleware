@@ -5,7 +5,7 @@ from middlewared.alert.base import Alert, AlertLevel, AlertSource
 
 class ServiceMonitorAlertSource(AlertSource):
     level = AlertLevel.WARNING
-    title = "Service is not running"
+    title = "Service Is Not Running"
 
     async def check(self):
         alerts = []

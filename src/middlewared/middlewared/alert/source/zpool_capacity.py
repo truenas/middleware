@@ -7,7 +7,7 @@ from middlewared.alert.schedule import IntervalSchedule
 
 class ZpoolCapacityAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "The capacity for the volume is above recommended value"
+    title = "Pool Space Usage Is Above 80%"
 
     schedule = IntervalSchedule(timedelta(minutes=5))
 
@@ -34,8 +34,8 @@ class ZpoolCapacityAlertSource(ThreadedAlertSource):
                 continue
 
             msg = (
-                "The capacity for the volume \"%(volume)s\" is currently at "
-                "%(capacity)d%%, while the recommended value is below 80%%."
+                "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
+                "Optimal pool performance requires used space remain below 80%%."
             )
             level = None
             if cap >= 90:

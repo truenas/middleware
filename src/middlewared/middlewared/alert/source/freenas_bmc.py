@@ -10,9 +10,11 @@ logger = logging.getLogger("FreeNASBMCAlert")
 
 class FreeNASBMCAlertSource(ThreadedAlertSource):
     level = AlertLevel.CRITICAL
-    title = "FreeNAS Mini Critical IPMI Firmware Update Available"
+    title = "Critical Firmware Update Available"
 
     onetime = True
+
+    freenas_only = True
 
     def check_sync(self):
         systemname = pipeopen("/usr/local/sbin/dmidecode -s system-product-name").communicate()[0].strip()
@@ -33,10 +35,7 @@ class FreeNASBMCAlertSource(ThreadedAlertSource):
                 return
 
             return Alert(
-                "FreeNAS Mini Critical IPMI Firmware Update - Your "
-                "Mini has an available IPMI firmware update, please "
-                "click <a href=\"%s\" target=\"_blank\">here</a> for "
-                "installation instructions",
-
-                "https://support.ixsystems.com/index.php?/Knowledgebase/Article/View/287"
+                "A critical IPMI firmware update is available for this FreeNAS Mini. Please see "
+                "<a href=\"https://support.ixsystems.com/index.php?/Knowledgebase/Article/View/287\" target=\"_blank\">"
+                "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details.",
             )

@@ -7,7 +7,7 @@ PORTAL_IP_FILE = "/var/tmp/iscsi_portal_ip"
 
 class iSCSIPortalIPAlertSource(AlertSource):
     level = AlertLevel.WARNING
-    title = "IPs bound to iSCSI Portal were not found in the system"
+    title = "IP Addresses Bound to an iSCSI Portal Were Not Found"
 
     async def check(self):
         if os.path.exists(PORTAL_IP_FILE):
@@ -15,6 +15,6 @@ class iSCSIPortalIPAlertSource(AlertSource):
                 ips = f.read().split("\n")
                 ips = [y for y in ips if bool(y)]
                 return Alert(
-                    "The following IPs are bind to iSCSI Portal but were not found in the system: %s",
+                    "These IP addresses are bound to an iSCSI Portal but not found in the system: %s.",
                     ", ".join(ips)
                 )

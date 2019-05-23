@@ -16,7 +16,7 @@ log = logging.getLogger("update_check_alertmod")
 
 class HasUpdateAlertSource(ThreadedAlertSource):
     level = AlertLevel.INFO
-    title = "There is a new update available"
+    title = "Update Available"
 
     schedule = IntervalSchedule(timedelta(hours=1))
 
@@ -39,12 +39,12 @@ class HasUpdateAlertSource(ThreadedAlertSource):
             updates = None
 
         if updates:
-            return Alert("There is a new update available! Apply it in System -> Update tab.")
+            return Alert("A system update is available. Go to System -> Update to download and apply the update.")
 
 
 class UpdateAppliedAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "Update not applied"
+    title = "Update Not Applied"
 
     schedule = IntervalSchedule(timedelta(minutes=10))
 
@@ -69,7 +69,8 @@ class UpdateAppliedAlertSource(ThreadedAlertSource):
 
 class UpdateFailedAlertSource(FilePresenceAlertSource):
     level = AlertLevel.CRITICAL
-    title = "Update failed. Check /data/update.failed for further details"
+    title = "Update Failed"
+    text = "Update failed. Check /data/update.failed for further details"
 
     schedule = IntervalSchedule(timedelta(hours=1))
 

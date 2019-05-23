@@ -5,9 +5,10 @@ from middlewared.alert.base import AlertLevel, FilePresenceAlertSource
 
 class VolumeRekeyAlertSource(FilePresenceAlertSource):
     level = AlertLevel.CRITICAL
-    title = ("Encrypted volume failed to rekey some disks. Please make "
-             "sure you have working recovery keys, check logs files and "
-             "correct the error as it may result to data loss.")
+    title = "Failed to Rekey Encrypted Pool Disks"
+    text = ("Rekeying one or more disks in an encrypted pool failed. Please make "
+            "sure working recovery keys are available, check /var/log/messages, and "
+            "correct the problem immediately to avoid data loss.")
 
     path = GELI_REKEY_FAILED
 

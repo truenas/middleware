@@ -3,7 +3,7 @@ from middlewared.alert.base import Alert, AlertLevel, AlertSource
 
 class VolumeStatusAlertSource(AlertSource):
     level = AlertLevel.CRITICAL
-    title = "The volume status is not HEALTHY"
+    title = "Pool Status Is Not Healthy"
 
     hardware = True
 
@@ -25,7 +25,7 @@ class VolumeStatusAlertSource(AlertSource):
                         pass
 
                 alerts.append(Alert(
-                    "The volume %(volume)s state is %(state)s: %(status)s",
+                    "Pool %(volume)s state is %(state)s: %(status)s",
                     {
                         "volume": pool["name"],
                         "state": state,

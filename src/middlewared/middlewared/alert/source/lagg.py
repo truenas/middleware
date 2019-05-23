@@ -7,7 +7,7 @@ from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 class LAGGStatus(ThreadedAlertSource):
     level = AlertLevel.CRITICAL
-    title = "LAGG interface error"
+    title = "LAGG Interface Error"
 
     count = defaultdict(int)
 

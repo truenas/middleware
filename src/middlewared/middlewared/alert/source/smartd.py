@@ -5,7 +5,7 @@ from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 class smartdAlertSource(ThreadedAlertSource):
     level = AlertLevel.WARNING
-    title = "smartd is not running"
+    title = "smartd Is Not Running"
 
     def check_sync(self):
         if self.middleware.call_sync("datastore.query", "services.services", [("srv_service", "=", "smartd"),

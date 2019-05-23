@@ -4,7 +4,7 @@ from middlewared.alert.schedule import CrontabSchedule
 
 class ScrubPausedAlertSource(AlertSource):
     level = AlertLevel.WARNING
-    title = "Scrub is paused"
+    title = "Scrub Is Paused"
 
     schedule = CrontabSchedule(hour=3)
 
