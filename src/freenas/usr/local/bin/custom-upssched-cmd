@@ -29,7 +29,7 @@ case $1 in
 		else
 			ident="${ups_identifier}@${ups_remotehost}:${ups_remoteport}"
 		fi
-		if [ -n $(upsc $ident | grep "ups.status.*OL") ]; then
+		if [ -n "$(upsc $ident | grep "ups.status.*OL")" ]; then
 			logger -t upssched-cmd "Shutdown not initiated as ups.status indicates ${ident} is ONLINE (OL)"
 		else
 			logger -t upssched-cmd "issuing shutdown"
