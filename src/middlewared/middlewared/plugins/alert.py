@@ -220,7 +220,8 @@ class AlertService(Service):
                         new_alerts.remove(new_alert)
                         break
 
-            for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice"):
+            for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice",
+                                                                 [["enabled", "=", True]]):
                 service_settings = dict(default_settings, **alert_service_desc["settings"])
 
                 service_gone_alerts = [alert for alert in gone_alerts
