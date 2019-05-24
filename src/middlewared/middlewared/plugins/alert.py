@@ -44,7 +44,7 @@ AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 class AlertSourceRunFailedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "Failed to Check For Alert"
+    title = "Alert Check Failed"
     text = "Failed to check for alert %(source_name)s:\n%(traceback)s"
 
     exclude_from_list = True
@@ -53,7 +53,7 @@ class AlertSourceRunFailedAlertClass(AlertClass):
 class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "Failed to Check For Alert On Backup Node"
+    title = "Alert Check Failed (Backup Node)"
     text = "Failed to check for alert %(source_name)s on backup node:\n%(traceback)s"
 
     exclude_from_list = True
@@ -64,7 +64,7 @@ class AutomaticAlertFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     level = AlertLevel.WARNING
     title = "Failed to Notify iXsystems About Alert"
     text = textwrap.dedent("""\
-        Creating automatic alert for iXsystems for your system %(serial)s failed: %(error)s.
+        Creating an automatic alert for iXsystems about system %(serial)s failed: %(error)s.
         Please contact iXsystems Support: https://www.ixsystems.com/support/
 
         Alert:
