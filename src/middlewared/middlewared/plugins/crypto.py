@@ -983,6 +983,10 @@ class CertificateService(CRUDService):
 
     @accepts()
     async def profiles(self):
+        """
+        Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
+        configurations which can be used for creating certificates.
+        """
         return self.PROFILES
 
     @private
@@ -1416,11 +1420,10 @@ class CertificateService(CRUDService):
         return {k: k for k in ['RSA', 'EC']}
 
     @accepts()
-    async def certificate_extensions(self):
-        return CryptoKeyService.extensions()
-
-    @accepts()
     async def extended_key_usage_choices(self):
+        """
+        Dictionary of choices for `ExtendedKeyUsage` extension which can be passed over to `usages` attribute.
+        """
         return {
             k: k for k in
             dir(x509.oid.ExtendedKeyUsageOID) if not k.startswith('__')
@@ -1502,6 +1505,8 @@ class CertificateService(CRUDService):
 
         A type is selected by the Certificate Service based on `create_type`. The rest of the values in `data` are
         validated accordingly and finally a certificate is made based on the selected type.
+
+        `cert_extensions` can be specified to set X509v3 extensions.
 
         .. examples(websocket)::
 
@@ -1832,7 +1837,10 @@ class CertificateService(CRUDService):
         """
         Update certificate of `id`
 
-        Only name attribute can be updated
+        Only name and revoked attribute can be updated.
+
+        When `revoked` is enabled, the specified cert `id` is revoked and if it belongs to a CA chain which
+        exists on this system, its serial number is added to the CA's certificate revocation list.
 
         .. examples(websocket)::
 
@@ -2055,6 +2063,10 @@ class CertificateAuthorityService(CRUDService):
 
     @accepts()
     async def profiles(self):
+        """
+        Returns a dictionary of predefined options for specific use cases i.e OpenVPN certificate authority
+        configurations which can be used for creating certificate authorities.
+        """
         return self.PROFILES
 
     @periodic(86400, run_on_start=True)
@@ -2253,6 +2265,8 @@ class CertificateAuthorityService(CRUDService):
         A type is selected by the Certificate Authority Service based on `create_type`. The rest of the values
         are validated accordingly and finally a certificate is made based on the selected type.
 
+        `cert_extensions` can be specified to set X509v3 extensions.
+
         .. examples(websocket)::
 
           Create an Internal Certificate Authority
@@ -2341,6 +2355,8 @@ class CertificateAuthorityService(CRUDService):
 
         Sign CSR's and generate a certificate from it. `ca_id` provides which CA is to be used for signing
         a CSR of `csr_cert_id` which exists in the system
+
+        `cert_extensions` can be specified if specific extensions are to be set in the newly signed certificate.
 
         .. examples(websocket)::
 
@@ -2540,7 +2556,10 @@ class CertificateAuthorityService(CRUDService):
         """
         Update Certificate Authority of `id`
 
-        Only name attribute can be updated
+        Only `name` and `revoked` attribute can be updated.
+
+        If `revoked` is enabled, the CA and its complete chain is marked as revoked and added to the CA's
+        certificate revocation list.
 
         .. examples(websocket)::
 
