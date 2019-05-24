@@ -279,7 +279,6 @@ def nut_config(middleware, context):
     ups = middleware.call_sync('ups.config')
     if ups['mode'] == 'MASTER':
         yield 'nut_enable="YES"'
-        yield 'nut_upsshut="NO"'
         yield f'nut_upslog_ups="{ups["identifier"]}"'
     else:
         yield f'nut_upslog_ups="{ups["identifier"]}@{ups["remotehost"]}:{ups["remoteport"]}"'
