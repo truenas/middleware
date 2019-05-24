@@ -416,20 +416,22 @@ _nis_config() {
 _nut_config() {
 	local IFS=\|
 	local boolvalue ups_identifier ups_mode ups_remotehost ups_remoteport
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service='ups' AND srv_enable = 1 LIMIT 1" | \
-	while read boolvalue; do
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_mode, ups_remotehost, ups_remoteport, ups_identifier FROM services_ups" | \
-		while read -r ups_mode ups_remotehost ups_remoteport ups_identifier; do
+	boolvalue=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service='ups' AND srv_enable = 1 LIMIT 1")
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_mode, ups_remotehost, ups_remoteport, ups_identifier FROM services_ups" | \
+	while read -r ups_mode ups_remotehost ups_remoteport ups_identifier; do
+		if [ "${ups_mode}" = "master" ]; then
+			echo "nut_upsshut=\"NO\""
+		fi
+		if [ "$boolvalue" == "1" ]; then
 			if [ "${ups_mode}" = "master" ]; then
 				echo "nut_enable=\"YES\""
-				echo "nut_upsshut=\"NO\""
 				echo "nut_upslog_ups=\"${ups_identifier}\""
 			else
 				echo "nut_upslog_ups=\"${ups_identifier}@${ups_remotehost}:${ups_remoteport}\""
 			fi
 			echo "nut_upslog_enable=\"YES\""
 			echo "nut_upsmon_enable=\"YES\""
-		done
+		fi
 	done
 }
 
