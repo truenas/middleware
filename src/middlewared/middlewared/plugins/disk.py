@@ -1057,9 +1057,13 @@ class DiskService(CRUDService):
             # This will fail when EOL is reached
             await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', f'oseek={int(size / 1024) - 32}', check=False)
 
-    @accepts(Str('dev'), Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM']))
+    @accepts(
+        Str('dev'),
+        Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM']),
+        Bool('synccache', default=True),
+    )
     @job(lock=lambda args: args[0])
-    async def wipe(self, job, dev, mode):
+    async def wipe(self, job, dev, mode, sync):
         """
         Performs a wipe of a disk `dev`.
         It can be of the following modes:
@@ -1120,8 +1124,8 @@ class DiskService(CRUDService):
                 reg = RE_DD.search(line)
                 if reg:
                     job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': int(reg.group(2))})
-
-        await self.sync(dev)
+        if sync:
+            await self.sync(dev)
 
 
 def new_swap_name():

@@ -327,7 +327,7 @@ class notifier(metaclass=HookMetaclass):
         c = conn.cursor()
         return c, conn
 
-    def __gpt_labeldisk(self, type, devname, swapsize=2):
+    def __gpt_labeldisk(self, type, devname, swapsize=2, sync=True):
         """Label the whole disk with GPT under the desired label and type"""
 
         # Calculate swap size.
@@ -338,7 +338,7 @@ class notifier(metaclass=HookMetaclass):
         swapsize = (int((swapsize + 127) / 128)) * 128
 
         with client as c:
-            c.call('disk.wipe', devname, 'QUICK', job=True)
+            c.call('disk.wipe', devname, 'QUICK', False, job=True)
 
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
@@ -371,10 +371,11 @@ class notifier(metaclass=HookMetaclass):
         # Invalidating confxml is required or changes wont be seen
         self.__confxml = None
         # We might need to sync with reality (e.g. devname -> uuid)
-        with client as c:
-            c.call('disk.sync', devname)
+        if sync:
+            with client as c:
+                c.call('disk.sync', devname)
 
-    def __gpt_unlabeldisk(self, devname):
+    def __gpt_unlabeldisk(self, devname, sync=True):
         """Unlabel the disk"""
         with client as c:
             c.call('disk.swaps_remove_disks', [devname])
@@ -385,8 +386,9 @@ class notifier(metaclass=HookMetaclass):
         self._system("gpart destroy -F /dev/%s" % devname)
 
         # We might need to sync with reality (e.g. uuid -> devname)
-        with client as c:
-            c.call('disk.sync', devname)
+        if sync:
+            with client as c:
+                c.call('disk.sync', devname)
 
     def unlabel_disk(self, devname):
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
@@ -692,7 +694,8 @@ class notifier(metaclass=HookMetaclass):
         for disk in disks:
             self.__gpt_labeldisk(type="freebsd-zfs",
                                  devname=disk,
-                                 swapsize=swapsize)
+                                 swapsize=swapsize,
+                                 sync=False)
 
         self.__confxml = None  # Make sure to invalidate cache
         doc = self._geom_confxml()
@@ -760,6 +763,9 @@ class notifier(metaclass=HookMetaclass):
             vdevs = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, encrypt, volume)
             z_vdev += " ".join([''] + vdevs)
             device_list += vdevs
+
+        with client as c:
+            c.call('disk.sync_all')
 
         # Initialize devices with random data
         if init_rand:
@@ -955,7 +961,10 @@ class notifier(metaclass=HookMetaclass):
 
         # Clear out disks associated with the volume
         for disk in disks:
-            self.__gpt_unlabeldisk(devname=disk)
+            self.__gpt_unlabeldisk(devname=disk, sync=False)
+
+        with client as c:
+            c.call('disk.sync_all')
 
     def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
