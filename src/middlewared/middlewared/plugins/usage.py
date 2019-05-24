@@ -1,4 +1,3 @@
-from middlewared.schema import accepts
 from middlewared.service import Service
 from datetime import datetime
 
@@ -236,7 +235,7 @@ class UsageService(Service):
             pool_list.append(
                 {
                     'capacity': pd['used']['parsed'] +
-                        pd['available']['parsed'],
+                                pd['available']['parsed'],
                     'disks': disks,
                     'encryption': bool(p['encrypt']),
                     'l2arc': bool(p['topology']['cache']),
