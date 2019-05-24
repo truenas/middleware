@@ -27,7 +27,7 @@ menuSetURLs = function() {
     Menu.urlSharing = '{% url "sharing_home" %}';
     Menu.urlStorage = '{% url "storage_home" %}';
     Menu.urlSupport = '{% url "support_home" %}';
-    Menu.urlDocumentation = 'https://www.ixsystems.com/documentation/{{ sw_name|lower }}/{{ sw_version_major }}{% if sw_name|lower == "freenas" %}-legacy{% endif %}/';
+    Menu.urlDocumentation = 'https://www.ixsystems.com/documentation/{{ sw_name|lower }}/{{ sw_version_complete }}{% if sw_name|lower == "freenas" %}-legacy{% endif %}/';
     Menu.urlSystem = '{% url "system_home" %}';
     Menu.urlTasks = '{% url "tasks_home" %}';
     Menu.urlVM = '{% url "vm_home" %}';
