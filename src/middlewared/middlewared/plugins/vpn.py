@@ -234,10 +234,16 @@ class OpenVPNServerService(SystemServiceService):
 
     @accepts()
     async def authentication_algorithm_choices(self):
+        """
+        Returns a dictionary of valid authentication algorithms which can be used with OpenVPN server.
+        """
         return OpenVPN.digests()
 
     @accepts()
     async def cipher_choices(self):
+        """
+        Returns a dictionary of valid ciphers which can be used with OpenVPN server.
+        """
         return OpenVPN.ciphers()
 
     @private
@@ -289,6 +295,9 @@ class OpenVPNServerService(SystemServiceService):
 
     @accepts()
     async def renew_static_key(self):
+        """
+        Reset OpenVPN server's TLS static key which will be used to encrypt/authenticate control channel packets.
+        """
         return await self.update({
             'tls_crypt_auth': (await self.generate_static_key()),
             'tls_crypt_auth_enabled': True
@@ -299,6 +308,15 @@ class OpenVPNServerService(SystemServiceService):
         Str('server_address', null=True)
     )
     async def client_configuration_generation(self, client_certificate_id, server_address=None):
+        """
+        Returns a configuration for OpenVPN client which can be used with any client to connect to FN/TN OpenVPN
+        server.
+
+        `client_certificate_id` should be a valid certificate issued for use with OpenVPN client service.
+
+        `server_address` if specified auto-fills the remote directive in the OpenVPN configuration enabling the end
+        user to use the file without making any edits to connect to OpenVPN server.
+        """
         await self.config_valid()
         config = await self.config()
         root_ca = await self.middleware.call(
@@ -397,6 +415,12 @@ class OpenVPNServerService(SystemServiceService):
         )
     )
     async def do_update(self, data):
+        """
+        Update OpenVPN Server configuration.
+
+        When `tls_crypt_auth_enabled` is enabled and `tls_crypt_auth` not provided, a static key is automatically
+        generated to be used with OpenVPN server.
+        """
         old_config = await self.config()
         config = old_config.copy()
 
@@ -432,10 +456,16 @@ class OpenVPNClientService(SystemServiceService):
 
     @accepts()
     async def authentication_algorithm_choices(self):
+        """
+        Returns a dictionary of valid authentication algorithms which can be used with OpenVPN server.
+        """
         return OpenVPN.digests()
 
     @accepts()
     async def cipher_choices(self):
+        """
+        Returns a dictionary of valid ciphers which can be used with OpenVPN server.
+        """
         return OpenVPN.ciphers()
 
     @private
@@ -527,6 +557,13 @@ class OpenVPNClientService(SystemServiceService):
         )
     )
     async def do_update(self, data):
+        """
+        Update OpenVPN Client configuration.
+
+        `remote` can be a valid ip address / domain which openvpn will try to connect to.
+
+        `nobind` must be enabled if OpenVPN client / server are to run concurrently.
+        """
         old_config = await self.config()
         config = old_config.copy()
 
