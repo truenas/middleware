@@ -1,22 +1,29 @@
 from middlewared.schema import accepts
-from middlewared.service import Service, private
+from middlewared.service import Service
 from datetime import datetime
 
 import json
 import asyncio
 import random
-import requests
+import aiohttp
 
 
 class UsageService(Service):
-    @private
+    class Config:
+        private = True
+
     async def start(self):
         try:
             gather = await self.gather()
-            requests.post(url='https://usage.freenas.org/submit', data=gather)
-        except Exception:
+            async with aiohttp.ClientSession(raise_for_status=True) as session:
+                await session.post(
+                    'https://usage.freenas.org/submit',
+                    data=gather,
+                    headers={"Content-type": "application/json"}
+                )
+        except Exception as e:
             # We still want to schedule the next call
-            pass
+            self.logger.error(e)
 
         event_loop = asyncio.get_event_loop()
         now = datetime.utcnow()
@@ -32,7 +39,6 @@ class UsageService(Service):
 
         return True
 
-    @accepts()
     async def gather(self):
         network = await self.middleware.call('interfaces.query')
 
@@ -60,7 +66,6 @@ class UsageService(Service):
             }, sort_keys=True
         )
 
-    @private
     async def gather_hardware(self, network):
         info = await self.middleware.call('system.info')
 
@@ -72,7 +77,6 @@ class UsageService(Service):
             }
         }
 
-    @private
     async def gather_jails(self):
         jails = await self.middleware.call('jail.query')
         jail_list = []
@@ -88,7 +92,6 @@ class UsageService(Service):
 
         return {'jails': jail_list}
 
-    @private
     async def gather_network(self, network):
         async def gather_bridges():
             bridge_list = []
@@ -150,7 +153,6 @@ class UsageService(Service):
 
         return {'network': {**bridges, **lags, **phys, **vlans}}
 
-    @private
     async def gather_system(self):
         system = await self.middleware.call('system.info')
         platform = 'FreeNAS' if await self.middleware.call(
@@ -186,7 +188,6 @@ class UsageService(Service):
             ]
         }
 
-    @private
     async def gather_plugins(self):
         plugins = await self.middleware.call('jail.list_resource', 'PLUGIN')
         plugin_list = []
@@ -201,7 +202,6 @@ class UsageService(Service):
 
         return {'plugins': plugin_list}
 
-    @private
     async def gather_pools(self):
         pools = await self.middleware.call('pool.query')
         pool_list = []
@@ -232,19 +232,20 @@ class UsageService(Service):
                     disks += len(d['children'])
                 else:
                     disks += 1
-                    used = pd['usedbysnapshots']['parsed'] + \
-                        pd['usedbydataset']['parsed'] + \
-                        pd['usedbychildren']['parsed'] + \
-                        pd['usedbyrefreservation']['parsed']
 
             pool_list.append(
                 {
-                    'capacity': used + pd['available']['parsed'],
+                    'capacity': pd['used']['parsed'] +
+                        pd['available']['parsed'],
                     'disks': disks,
                     'encryption': bool(p['encrypt']),
                     'l2arc': bool(p['topology']['cache']),
                     'type': type.lower(),
-                    'used': used,
+                    'usedbydataset': pd['usedbydataset']['parsed'],
+                    'usedbysnapshots': pd['usedbysnapshots']['parsed'],
+                    'usedbychildren': pd['usedbychildren']['parsed'],
+                    'usedbyrefreservation':
+                        pd['usedbyrefreservation']['parsed'],
                     'vdevs': vdevs if vdevs else disks,
                     'zil': bool(p['topology']['log'])
                 }
@@ -252,7 +253,6 @@ class UsageService(Service):
 
         return {'pools': pool_list}
 
-    @private
     async def gather_services(self):
         services = await self.middleware.call('service.query')
         service_list = []
@@ -267,7 +267,6 @@ class UsageService(Service):
 
         return {'services': service_list}
 
-    @private
     async def gather_sharing(self):
         services = ['afp', 'iscsi', 'nfs', 'smb', 'webdav']
         sharing_list = []
@@ -355,7 +354,6 @@ class UsageService(Service):
 
         return {'shares': sharing_list}
 
-    @private
     async def gather_vms(self):
         vms = await self.middleware.call('vm.query')
         vm_list = []
