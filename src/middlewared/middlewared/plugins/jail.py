@@ -682,7 +682,7 @@ class JailService(CRUDService):
         Dict(
             "options",
             Str(
-                "action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"],
+                "action", enum=["ADD", "REMOVE", "REPLACE", "LIST"],
                 required=True
             ),
             Str("source"),
@@ -706,17 +706,30 @@ class JailService(CRUDService):
 
         verrors = ValidationErrors()
 
-        source = options.get('source')
-        if source:
-            if not os.path.exists(source):
+        if action in ('add', 'replace', 'remove'):
+            if action != 'remove' or index is None:
+                # For remove we allow removing by index or mount, so if index is not specified
+                # we should validate that rest of the fields exist.
+                for f in ('source', 'destination', 'fstype', 'fsoptions', 'dump', 'pass'):
+                    if not options.get(f):
+                        verrors.add(
+                            f'options.{f}',
+                            f'This field is required with "{action}" action.'
+                        )
+
+            if action == 'replace' and index is None:
                 verrors.add(
-                    'options.source',
-                    'Provided path for source does not exist'
+                    'options.index',
+                    'Index cannot be "None" when replacing an fstab entry.'
                 )
-        elif (not source and index is None) and action != 'list':
+
+        verrors.check()
+
+        source = options.get('source')
+        if action in ('add', 'replace') and not os.path.exists(source):
             verrors.add(
                 'options.source',
-                'Provide a source path'
+                'The provided path for the source does not exist.'
             )
 
         destination = options.get('destination')
@@ -731,45 +744,24 @@ class JailService(CRUDService):
                 if not os.path.isdir(destination):
                     verrors.add(
                         'options.destination',
-                        'Destination is not a directory, please provide a'
-                        ' valid destination'
+                        'Destination is not a directory. Please provide a '
+                        'empty directory for the destination.'
                     )
                 elif os.listdir(destination):
                     verrors.add(
                         'options.destination',
-                        'Destination directory should be empty'
+                        'Destination directory must be empty.'
                     )
             else:
                 os.makedirs(destination)
-        elif (not destination and index is None) and action != 'list':
-            verrors.add(
-                'options.destination',
-                'Provide a destination path'
-            )
 
-        if index is not None:
-            # Setup defaults for library
-            source = ''
-            destination = ''
-
-        if action != 'list':
-            for f in options:
-                if not options.get(f) and f not in ('index',):
-                    verrors.add(
-                        f'options.{f}',
-                        'This field is required'
-                    )
-
+        # Setup defaults for library
+        source = source or ''
+        destination = destination or ''
         fstype = options.get('fstype')
         fsoptions = options.get('fsoptions')
         dump = options.get('dump')
         _pass = options.get('pass')
-
-        if action == 'replace' and index is None:
-            verrors.add(
-                'options.index',
-                'Index must not be None when replacing fstab entry'
-            )
 
         if verrors:
             raise verrors
