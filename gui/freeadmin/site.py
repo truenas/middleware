@@ -223,7 +223,9 @@ class FreeAdminSite(object):
         sw_version = get_sw_version()
         version = get_sw_version(strip_build_num=True)
         sw_version_footer = version.split('-', 1)[-1]
-        sw_version_major = version.split('-')[1]
+        sw_version_complete = version.split('-', 1)[1]
+        if any(k in sw_version_complete.lower() for k in ('master', 'release')):
+            sw_version_complete = sw_version_complete.split('-')[0]
 
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
@@ -232,7 +234,7 @@ class FreeAdminSite(object):
             'sw_year': get_sw_year(),
             'sw_version': sw_version,
             'sw_version_footer': sw_version_footer,
-            'sw_version_major': sw_version_major,
+            'sw_version_complete': sw_version_complete,
             'cache_hash': hashlib.md5(sw_version.encode('utf8')).hexdigest(),
             'css_hook': appPool.get_base_css(request),
             'js_hook': appPool.get_base_js(request),
