@@ -2024,6 +2024,7 @@ class PoolService(CRUDService):
         Dict(
             'options',
             Bool('cascade', default=False),
+            Bool('restart_services', default=False),
             Bool('destroy', default=False),
         ),
     )
@@ -2033,6 +2034,7 @@ class PoolService(CRUDService):
         Export pool of `id`.
 
         `cascade` will delete all attachments of the given pool (`pool.attachments`).
+        `restart_services` will restart services that have open files on given pool.
         `destroy` will also PERMANENTLY destroy the pool/data.
 
         .. examples(websocket)::
@@ -2077,6 +2079,9 @@ class PoolService(CRUDService):
             await self.middleware.call('keyvalue.set', enable_on_import_key, enable_on_import)
         else:
             await self.middleware.call('keyvalue.delete', enable_on_import_key)
+
+        job.set_progress(20, 'Terminating processes that are using this pool')
+        await self.middleware.call('pool.dataset.kill_processes', pool['name'], options.get('restart_services', False))
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
@@ -2976,7 +2981,7 @@ class PoolDatasetService(CRUDService):
           {
             "pid": 2520,
             "name": "smbd",
-            "service": "SMB Share"
+            "service": "cifs"
           },
           {
             "pid": 97778,
@@ -3019,6 +3024,42 @@ class PoolDatasetService(CRUDService):
                         })
 
         return result
+
+    @private
+    async def kill_processes(self, oid, restart_services, max_tries=5):
+        manually_restart_services = []
+        for process in await self.middleware.call('pool.dataset.processes', oid):
+            if process.get("service") is not None:
+                manually_restart_services.append(process["service"])
+        if manually_restart_services and not restart_services:
+            raise CallError('Some services have open files and need to be restarted', errno.EBUSY, {
+                'code': 'services_restart',
+                'services': manually_restart_services,
+            })
+
+        for i in range(max_tries):
+            processes = await self.middleware.call('pool.dataset.processes', oid)
+            if not processes:
+                return
+
+            for process in processes:
+                if process.get("service") is not None:
+                    self.logger.info('Restarting service %r that holds dataset %r', process['service'], oid)
+                    await self.middleware.call('service.restart', process['service'])
+                else:
+                    self.logger.info('Killing process %r (%r) that holds dataset %r', process['pid'],
+                                     process['cmdline'], oid)
+                    await self.middleware.call('service.terminate_process', process['pid'])
+
+        processes = await self.middleware.call('pool.dataset.processes', oid)
+        if not processes:
+            return
+
+        self.logger.info('The following processes don\'t want to stop: %r', processes)
+        raise CallError('Unable to stop processes that have open files', errno.EBUSY, {
+            'code': 'unstoppable_processes',
+            'processes': processes,
+        })
 
     @private
     def register_attachment_delegate(self, delegate):
