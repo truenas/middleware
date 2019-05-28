@@ -184,6 +184,13 @@ generate_collectd()
         aggregation_plugin_cpu_type="percent"
     fi
 
+    nested_datasets_ignore=""
+    if ! use_rrd_dataset; then
+        if [ "$(zfs list -H -o name -s name -t filesystem | grep -v freenas-boot | wc -l)" -ge 100 ]; then
+            nested_datasets_ignore="Mountpoint \"/\/mnt\/.+\/.+/\""
+        fi
+    fi
+
     cat << EOF > $cfg
 Hostname "${hostname}"
 FQDNLookup true
@@ -284,6 +291,7 @@ LoadPlugin zfs_arc_v2
 
 <Plugin "df">
     Mountpoint "/^\/boot/"
+    ${nested_datasets_ignore}
     Mountpoint "/\.zfs\/snapshot/"
     Mountpoint "/\.system/"
     Mountpoint "/\.warden/"
