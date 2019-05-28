@@ -966,8 +966,7 @@ class VolumeResourceMixin(NestedMixin):
             raise ImmediateHttpResponse(
                 response=self.error_response(
                     request,_(
-                        'Pool contains the system dataset and cannot be locked. Please select a different pool or '
-                        'configure the system dataset to be on a different pool.'
+                        f'Pool {obj.vol_name} contains the system dataset. The system dataset pool cannot be locked.'
                     )
                 )
             )
@@ -1062,8 +1061,8 @@ class VolumeResourceMixin(NestedMixin):
                 raise ImmediateHttpResponse(
                     response=self.error_response(
                         request, _(
-                            'An encrypted pool containing the system dataset must not have a passphrase. '
-                            'An existing passphrase on that pool can only be removed.'
+                            f'Pool {obj.vol_name} contains the system dataset. Passphrases are not allowed on the '
+                            'system dataset pool.'
                         )
                     )
                 )

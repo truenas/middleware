@@ -937,8 +937,8 @@ def volume_create_passphrase(request, object_id):
         return render(
             request,
             'freeadmin/generic_model_dialog.html', {
-                'msg': 'An encrypted pool containing the system dataset must not have a passphrase. '
-                       'An existing passphrase on that pool can only be removed.'
+                'msg': f'Pool {volume.vol_name} contains the system dataset. Passphrases are not allowed on the '
+                       'system dataset pool.'
             }
         )
     else:
@@ -1006,8 +1006,7 @@ def volume_lock(request, object_id):
         return render(
             request,
             'freeadmin/generic_model_dialog.html', {
-                'msg': 'Pool contains the system dataset and cannot be locked. Please select a different pool '
-                       'or configure the system dataset to be on a different pool.'
+                'msg': f'Pool {volume.vol_name} contains the system dataset. The system dataset pool cannot be locked.'
             }
         )
 
