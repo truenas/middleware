@@ -1,6 +1,6 @@
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
-                                 accepts, private, CRUDService)
+                                 accepts, private, CRUDService, job)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen
@@ -357,7 +357,7 @@ class SharingSMBService(CRUDService):
         await self.extend(data)  # We should do this in the insert call ?
 
         await self.middleware.call('service.reload', 'cifs')
-        await self.apply_default_perms(default_perms, path, data['home'])
+        await self.middleware.call('sharing.smb.apply_default_perms', default_perms, path, data['home'])
 
         return data
 
@@ -403,7 +403,7 @@ class SharingSMBService(CRUDService):
         await self.extend(new)  # same here ?
 
         await self.middleware.call('service.reload', 'cifs')
-        await self.apply_default_perms(default_perms, path, data['home'])
+        await self.middleware.call('sharing.smb.apply_default_perms', default_perms, path, data['home'])
 
         return new
 
@@ -489,7 +489,8 @@ class SharingSMBService(CRUDService):
         return data
 
     @private
-    async def apply_default_perms(self, default_perms, path, is_home):
+    @job(lock=lambda args: f'setacl:{args[1]}')
+    async def apply_default_perms(self, job, default_perms, path, is_home):
         if default_perms:
             try:
                 (owner, group) = await self.middleware.call(
