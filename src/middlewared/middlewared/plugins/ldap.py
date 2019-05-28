@@ -328,6 +328,11 @@ class LDAPService(ConfigService):
         new.update(data)
         if old != new:
             must_reload = True
+            if new['enable']:
+                try:
+                    await self.middleware.call('ldap.ldap_validate', new)
+                except Exception as e:
+                    raise ValidationError('ldap_update', str(e))
 
         await self.ldap_compress(new)
         await self.middleware.call(
@@ -340,11 +345,6 @@ class LDAPService(ConfigService):
 
         if must_reload:
             if new['enable']:
-                try:
-                    await self.middleware.call('ldap.ldap_validate', new)
-                except Exception as e:
-                    raise ValidationError('ldap_update', str(e))
-
                 await self.middleware.call('ldap.start')
             else:
                 await self.middleware.call('ldap.stop')
@@ -463,7 +463,7 @@ class LDAPService(ConfigService):
 
         if ret and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the LDAP domain name [{ret}]')
-            await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret[0]})
+            await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
 
         return ret
 
@@ -534,7 +534,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.store_ldap_admin_password')
             await self.middleware.call('service.restart', 'smb')
 
-        await self.middleware.call('ldap.fill_ldap_cache')
+        await self.middleware.call('ldap.fill_cache')
 
     @private
     async def stop(self):
@@ -549,11 +549,13 @@ class LDAPService(ConfigService):
             await self.middleware.call('etc.generate', 'smb')
             await self.middleware.call('service.restart', 'smb')
         await self.middleware.call('cache.pop', 'LDAP_State')
+        await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.nslcd_cmd('onestop')
 
     @private
     @job(lock='fill_ldap_cache')
-    def fill_ldap_cache(self, job, force=False):
+    def fill_cache(self, job, force=False):
+        user_next_index = group_next_index = 100000000
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
@@ -571,14 +573,27 @@ class LDAPService(ConfigService):
                 continue
 
             cache_data['users'].append({
-                'name': u.pw_name,
-                'uid': u.pw_name,
-                'uidNumber': u.pw_uid,
-                'gidNumber': u.pw_gid,
-                'gecos': u.pw_gecos,
-                'homeDirectory': u.pw_dir,
-                'loginShell': u.pw_shell,
+                'id': user_next_index,
+                'uid': u.pw_uid,
+                'username': u.pw_name,
+                'unixhash': None,
+                'smbhash': None,
+                'group': {},
+                'home': '',
+                'shell': '',
+                'full_name': u.pw_gecos,
+                'builtin': False,
+                'email': '',
+                'password_disabled': False,
+                'locked': False,
+                'sudo': False,
+                'microsoft_account': False,
+                'attributes': {},
+                'groups': [],
+                'sshpubkey': None,
+                'local': False
             })
+            user_next_index += 1
 
         for g in grp_list:
             is_local_user = True if g.gr_gid in local_gid_list else False
@@ -586,69 +601,22 @@ class LDAPService(ConfigService):
                 continue
 
             cache_data['groups'].append({
-                'name': g.gr_name,
+                'id': group_next_index,
+                'gid': g.gr_gid,
                 'group': g.gr_name,
-                'gidNumber': g.gr_gid,
-                'members': g.gr_mem,
+                'builtin': False,
+                'sudo': False,
+                'users': [],
+                'local': False
             })
+            group_next_index += 1
 
-        self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data, 86400)
+        self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data)
 
     @private
-    async def get_ldap_cache(self):
+    async def get_cache(self):
         if not await self.middleware.call('cache.has_key', 'LDAP_cache'):
-            cache_job = await self.middleware.call('ldap.fill_ldap_cache')
-            await cache_job.wait()
+            await self.middleware.call('ldap.fill_cache')
             self.logger.debug('cache fill is in progress.')
-            return {}
+            return {'users': [], 'groups': []}
         return await self.middleware.call('cache.get', 'LDAP_cache')
-
-    @private
-    async def get_ldap_usersorgroups_legacy(self, entry_type='users'):
-        """
-        Compatibility shim for old django user cache Returns list of pwd.struct_passwd
-        for users (or corresponding grp structure for groups in the AD domain.
-        """
-        ldap_cache = await self.get_ldap_cache()
-        if not ldap_cache:
-            return []
-
-        return ldap_cache[entry_type]
-
-    @private
-    def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
-        try:
-            if entry_type == 'users':
-                return pwd.getpwnam(obj)
-            elif entry_type == 'groups':
-                return grp.getgrnam(obj)
-
-        except Exception:
-            return None
-
-    @private
-    async def get_ldap_userorgroup_legacy(self, entry_type='users', obj=None):
-        """
-        Compatibility shim for old django user cache
-        Returns cached pwd.struct_passwd or grp.struct_group for user or group specified.
-        This is called in gui/common/freenasusers.py
-        """
-        if entry_type == 'users':
-            if await self.middleware.call('user.query', [('username', '=', obj)]):
-                return None
-        else:
-            if await self.middleware.call('group.query', [('group', '=', obj)]):
-                return None
-
-        ldap_cache = await self.get_ldap_cache()
-        if not ldap_cache:
-            await self.middleware.call('ldap.get_uncached_userorgroup_legacy', entry_type, obj)
-
-        ret = list(filter(lambda x: x['name'] == obj, ldap_cache[entry_type]))
-
-        if not ret:
-            ret = await self.middleware.call('ldap.get_uncached_userorgroup_legacy', entry_type, obj)
-        else:
-            ret = ret[0]
-
-        return ret

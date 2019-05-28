@@ -146,7 +146,7 @@ class NISService(ConfigService):
 
         await self.__set_state(DSStatus['HEALTHY'])
         self.logger.debug(f'NIS service successfully started. Setting state to HEALTHY.')
-        await self.middleware.call('nis.cache', 'fill')
+        await self.middleware.call('nis.fill_cache')
         return True
 
     @private
@@ -206,20 +206,75 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
-        await self.middleware.call('nis.cache', 'expire')
+        await self.middleware.call('cache.pop', 'NIS_cache')
         self.logger.debug(f'NIS service successfully stopped. Setting state to DISABLED.')
         return True
 
     @private
-    @job(lock=lambda args: 'nis_cache')
-    def cache(self, job, action):
-        cachetool = subprocess.Popen(
-            ['/usr/local/www/freenasUI/tools/cachetool.py', action],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
-        )
-        output = cachetool.communicate()
-        if cachetool.returncode != 0:
-            self.logger.debug(f'Cache action [{action}] failed: {output[1].decode()}')
-            return False
+    @job(lock=lambda args: 'fill_nis_cache')
+    def fill_cache(self, job, force=False):
+        user_next_index = group_next_index = 200000000
+        if self.middleware.call_sync('cache.has_key', 'NIS_cache') and not force:
+            raise CallError('NIS cache already exists. Refusing to generate cache.')
 
-        return True
+        self.middleware.call_sync('cache.pop', 'NIS_cache')
+        pwd_list = pwd.getpwall()
+        grp_list = grp.getgrall()
+
+        local_uid_list = list(u['uid'] for u in self.middleware.call_sync('user.query'))
+        local_gid_list = list(g['gid'] for g in self.middleware.call_sync('group.query'))
+        cache_data = {'users': [], 'groups': []}
+
+        for u in pwd_list:
+            is_local_user = True if u.pw_uid in local_uid_list else False
+            if is_local_user:
+                continue
+
+            cache_data['users'].append({
+                'id': user_next_index,
+                'uid': u.pw_uid,
+                'username': u.pw_name,
+                'unixhash': None,
+                'smbhash': None,
+                'group': {},
+                'home': '',
+                'shell': '',
+                'full_name': u.pw_gecos,
+                'builtin': False,
+                'email': '',
+                'password_disabled': False,
+                'locked': False,
+                'sudo': False,
+                'microsoft_account': False,
+                'attributes': {},
+                'groups': [],
+                'sshpubkey': None,
+                'local': False
+            })
+            user_next_index += 1
+
+        for g in grp_list:
+            is_local_user = True if g.gr_gid in local_gid_list else False
+            if is_local_user:
+                continue
+
+            cache_data['groups'].append({
+                'id': group_next_index,
+                'gid': g.gr_gid,
+                'group': g.gr_name,
+                'builtin': False,
+                'sudo': False,
+                'users': [],
+                'local': False
+            })
+            group_next_index += 1
+
+        self.middleware.call_sync('cache.put', 'NIS_cache', cache_data)
+
+    @private
+    async def get_cache(self):
+        if not await self.middleware.call('cache.has_key', 'NIS_cache'):
+            await self.middleware.call('nis.fill_cache')
+            self.logger.debug('cache fill is in progress.')
+            return {'users': [], 'groups': []}
+        return await self.middleware.call('cache.get', 'nis_cache')

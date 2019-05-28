@@ -41,7 +41,7 @@ class IdmapService(Service):
             raise CallError(f'No domain to idmap backend exists for domain [{domain}]', errno.ENOENT)
 
         backend_entry = await self.middleware.call(
-            f'idmap.{my_domain[0]["idmap_backend"]}.query',
+            f'idmap.{my_domain[0]["idmap_backend"].lower()}.query',
             [('domain', '=', domain)]
         )
         if backend_entry:
@@ -162,7 +162,7 @@ class IdmapService(Service):
         configured_domains = []
         for domain in domains:
             b = await self.middleware.call(
-                f'idmap.{domain["idmap_backend"]}.query',
+                f'idmap.{domain["idmap_backend"].lower()}.query',
                 [('domain.idmap_domain_name', '=', domain['domain']['idmap_domain_name'])]
             )
             for entry in b:

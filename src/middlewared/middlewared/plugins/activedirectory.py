@@ -549,7 +549,7 @@ class ActiveDirectoryService(ConfigService):
                 ad.pop(key)
 
         for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
-            if key in ad:
+            if ad.get(key):
                 ad[key] = ad[key].lower()
 
         return ad
@@ -689,9 +689,7 @@ class ActiveDirectoryService(ConfigService):
         except Exception as e:
             raise ValidationError('activedirectory_update.netbiosname', str(e))
 
-        new = await self.ad_compress(new)
-
-        if not new["bindpw"] and not new["kerberos_principal"]:
+        if new['enable'] and not new["bindpw"] and not new["kerberos_principal"]:
             raise ValidationError("activedirectory_update.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
 
         if data['enable'] and not old['enable']:
@@ -707,6 +705,7 @@ class ActiveDirectoryService(ConfigService):
         if verrors:
             raise verrors
 
+        new = await self.ad_compress(new)
         await self.middleware.call(
             'datastore.update',
             'directoryservice.activedirectory',
@@ -720,7 +719,7 @@ class ActiveDirectoryService(ConfigService):
 
         if old['idmap_backend'] != new['idmap_backend']:
             idmap = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
-            await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend'].lower()})
+            await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend'].upper()})
 
         if not old['enable']:
             if new['enable']:
@@ -869,7 +868,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
             await self._set_state(DSStatus['HEALTHY'])
-            await self.get_ad_cache()
+            await self.get_cache()
         else:
             await self._set_state(DSStatus['FAULTED'])
 
@@ -1119,16 +1118,23 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     @job(lock='fill_ad_cache')
-    def fill_ad_cache(self, force=False):
+    def fill_cache(self, job, force=False):
         """
-        Fill the FreeNAS/TrueNAS AD user and group cache from the winbindd cache.
-        Refuse to fill cache if it has been filled within the last 24 hours unless
-        'force' flag is set.
+        Use UID2SID and GID2SID entries in Samba's gencache.tdb to populate the AD_cache.
+        Since this can include IDs outside of our configured idmap domains (Local accounts
+        will also appear here), there is a check to see if the ID is inside the idmap ranges
+        configured for domains that are known to us. Some samba idmap backends support
+        id_type_both, in which case the will be GID2SID entries for AD users. getent group
+        succeeds in this case (even though the group doesn't exist in AD). Since these
+        we don't want to populate the UI cache with these entries, try to getpwnam for
+        GID2SID entries. If it's an actual group, getpwnam will fail. This heuristic
+        may be revised in the future, but we want to keep things as simple as possible
+        here since the list of entries numbers perhaps in the tens of thousands.
         """
-        if self.middleware.call_sync('cache.has_key', 'ad_cache') and not force:
+        if self.middleware.call_sync('cache.has_key', 'AD_cache') and not force:
             raise CallError('AD cache already exists. Refusing to generate cache.')
 
-        self.middleware.call_sync('cache.pop', 'ad_cache')
+        self.middleware.call_sync('cache.pop', 'AD_cache')
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
         if not ad['disable_freenas_cache']:
@@ -1148,8 +1154,9 @@ class ActiveDirectoryService(ConfigService):
         known_domains = []
         local_users = self.middleware.call_sync('user.query')
         local_groups = self.middleware.call_sync('group.query')
-        cache_data = {}
+        cache_data = {'users': [], 'groups': []}
         configured_domains = self.middleware.call_sync('idmap.get_configured_idmap_domains')
+        user_next_index = group_next_index = 300000000
         for d in configured_domains:
             if d['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
                 known_domains.append({
@@ -1157,19 +1164,16 @@ class ActiveDirectoryService(ConfigService):
                     'low_id': d['backend_data']['range_low'],
                     'high_id': d['backend_data']['range_high'],
                 })
-                cache_data.update({smb['workgroup']: {'users': [], 'groups': []}})
             elif d['domain']['idmap_domain_name'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
                 known_domains.append({
                     'domain': d['domain']['idmap_domain_name'],
                     'low_id': d['backend_data']['range_low'],
                     'high_id': d['backend_data']['range_high'],
                 })
-                cache_data.update({d['domain']['idmap_domain_name']: {'users': [], 'groups': []}})
 
         for line in netlist.stdout.decode().splitlines():
             if 'UID2SID' in line:
                 cached_uid = ((line.split())[1].split('/'))[2]
-                self.logger.debug(cached_uid)
                 """
                 Do not cache local users. This is to avoid problems where a local user
                 may enter into the id range allotted to AD users.
@@ -1186,7 +1190,28 @@ class ActiveDirectoryService(ConfigService):
                         """
                         try:
                             user_data = pwd.getpwuid(int(cached_uid))
-                            cache_data[d['domain']]['users'].append(user_data)
+                            cache_data['users'].append({
+                                'id': user_next_index,
+                                'uid': user_data.pw_uid,
+                                'username': user_data.pw_name,
+                                'unixhash': None,
+                                'smbhash': None,
+                                'group': {},
+                                'home': '',
+                                'shell': '',
+                                'full_name': user_data.pw_gecos,
+                                'builtin': False,
+                                'email': '',
+                                'password_disabled': False,
+                                'locked': False,
+                                'sudo': False,
+                                'microsoft_account': False,
+                                'attributes': {},
+                                'groups': [],
+                                'sshpubkey': None,
+                                'local': False
+                            })
+                            user_next_index += 1
                             break
                         except Exception:
                             break
@@ -1201,99 +1226,42 @@ class ActiveDirectoryService(ConfigService):
                     if int(cached_gid) in range(d['low_id'], d['high_id']):
                         """
                         Samba will generate UID and GID cache entries when idmap backend
-                        supports id_type_both.
+                        supports id_type_both. Actual groups will return key error on
+                        attempt to generate passwd struct.
                         """
                         try:
-                            group_data = grp.getgrgid(int(cached_gid))
-                            cache_data[d['domain']]['groups'].append(group_data)
+                            pwd.getpwuid(int(cached_gid))
                             break
                         except Exception:
+                            group_data = grp.getgrgid(int(cached_gid))
+                            cache_data['groups'].append({
+                                'id': group_next_index,
+                                'gid': group_data.gr_gid,
+                                'group': group_data.gr_name,
+                                'builtin': False,
+                                'sudo': False,
+                                'users': [],
+                                'local': False,
+                            })
+                            group_next_index += 1
                             break
 
-        if not cache_data[smb['workgroup']].get('users'):
+        if not cache_data.get('users'):
             return
 
-        self.middleware.call_sync('cache.put', 'ad_cache', cache_data, 86400)
+        self.middleware.call_sync('cache.put', 'AD_cache', cache_data)
 
     @private
-    async def get_ad_cache(self):
+    async def get_cache(self):
         """
         Returns cached AD user and group information. If proactive caching is enabled
         then this will contain all AD users and groups, otherwise it contains the
         users and groups that were present in the winbindd cache when the cache was
         last filled. The cache expires and is refilled every 24 hours, or can be
-        manually refreshed by calling fill_ad_cache(True).
+        manually refreshed by calling fill_cache(True).
         """
-        if not await self.middleware.call('cache.has_key', 'ad_cache'):
-            await self.middleware.run_in_thread(self.fill_ad_cache)
+        if not await self.middleware.call('cache.has_key', 'AD_cache'):
+            await self.middleware.call('activedirectory.fill_cache')
             self.logger.debug('cache fill is in progress.')
-            return {}
-        return await self.middleware.call('cache.get', 'ad_cache')
-
-    @private
-    async def get_ad_usersorgroups_legacy(self, entry_type='users'):
-        """
-        Compatibility shim for old django user cache Returns list of pwd.struct_passwd
-        for users (or corresponding grp structure for groups in the AD domain.
-        """
-        ad_cache = await self.get_ad_cache()
-        if not ad_cache:
-            return []
-
-        ret = []
-        for key, val in ad_cache.items():
-            ret.extend(val[entry_type])
-
-        return ret
-
-    @private
-    def get_uncached_userorgroup_legacy(self, entry_type='users', obj=None):
-        try:
-            if entry_type == 'users':
-                return pwd.getpwnam(obj)
-            elif entry_type == 'groups':
-                return grp.getgrnam(obj)
-
-        except Exception:
-            return False
-
-    @private
-    async def get_ad_userorgroup_legacy(self, entry_type='users', obj=None):
-        """
-        Compatibility shim for old django user cache
-        Returns cached pwd.struct_passwd or grp.struct_group for user or group specified.
-        This is called in gui/common/freenasusers.py
-        """
-        if entry_type == 'users':
-            if await self.middleware.call('user.query', [('username', '=', obj)]):
-                return None
-        else:
-            if await self.middleware.call('group.query', [('group', '=', obj)]):
-                return None
-
-        ad_cache = await self.get_ad_cache()
-        if not ad_cache:
-            await self.get_uncached_userorgroup_legacy(entry_type, obj)
-
-        ad = await self.config()
-        smb = await self.middleware.call('smb.config')
-
-        if ad['use_default_domain']:
-            if entry_type == 'users':
-                ret = list(filter(lambda x: x.pw_name == obj, ad_cache[smb['workgroup']][entry_type]))
-            elif entry_type == 'groups':
-                ret = list(filter(lambda x: x.gr_name == obj, ad_cache[smb['workgroup']][entry_type]))
-
-        else:
-            domain_obj = None
-            if '\\' not in obj:
-                await self.get_uncached_userorgroup_legacy(entry_type=entry_type, obj=obj)
-            else:
-                domain_obj = obj.split('\\')
-
-            if entry_type == 'users':
-                ret = list(filter(lambda x: x.pw_name == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
-            elif entry_type == 'groups':
-                ret = list(filter(lambda x: x.gr_name == obj, ad_cache[f'{domain_obj[0]}'][entry_type]))
-
-        return ret[0]
+            return {'users': [], 'groups': []}
+        return await self.middleware.call('cache.get', 'AD_cache')

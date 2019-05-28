@@ -39,14 +39,8 @@ from dojango import forms
 from dojango.forms import widgets
 from dojango.forms.widgets import DojoWidgetMixin
 from freenasUI.account.models import bsdGroups, bsdUsers
-from freenasUI.common.freenasldap import FLAGS_DBINIT
-from freenasUI.common.freenascache import (
-    FLAGS_CACHE_READ_USER, FLAGS_CACHE_READ_GROUP,
-)
-from freenasUI.common.freenasusers import (
-    FreeNAS_Users, FreeNAS_User, FreeNAS_Groups, FreeNAS_Group
-)
 from freenasUI.storage.models import Volume
+from freenasUI.middleware.client import client
 
 import ipaddr
 
@@ -95,7 +89,8 @@ class UserField(forms.ChoiceField):
         rv = super(UserField, self).prepare_value(value)
         if rv:
             try:
-                FreeNAS_User(rv, flags=FLAGS_DBINIT)
+                with client as c:
+                    c.call('dscache.get_uncached_user', rv)
             except:
                 log.warn('Failed to get user', exc_info=True)
                 rv = 'nobody'
@@ -104,7 +99,8 @@ class UserField(forms.ChoiceField):
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
         try:
-            users = FreeNAS_Users(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER)
+            with client as c:
+                users = c.call('dscache.query', 'USERS', '', {'order_by': ['pw_name']})
         except:
             users = []
         kwargs = {
@@ -131,9 +127,9 @@ class UserField(forms.ChoiceField):
                 ).values_list('bsdusr_uid')
             ]
             ulist.extend(
-                [(x.pw_name, x.pw_name, ) for x in sorted([y for y in users if (
-                            y is not None and y.pw_name not in self._exclude
-                        )], key=lambda y: (y.pw_uid not in notbuiltin, y.pw_name))]
+                [(x['username'], x['username'] ) for x in sorted([y for y in users if (
+                            y is not None and y['username'] not in self._exclude
+                        )], key=lambda y: (y['uid'] not in notbuiltin, y['username']))]
             )
 
             self.widget = FilteredSelectJSON(
@@ -147,7 +143,8 @@ class UserField(forms.ChoiceField):
         if not self.required and user in ('-----', '', None):
             return None
         try:
-            u = FreeNAS_User(user, flags=FLAGS_DBINIT)
+            with client as c:
+                u = c.call('dscache.get_uncached_user', user)
         except:
             log.warn('Failed to get user', exc_info=True)
             u = None
@@ -168,7 +165,8 @@ class GroupField(forms.ChoiceField):
         rv = super(GroupField, self).prepare_value(value)
         if rv:
             try:
-                FreeNAS_Group(rv, flags=FLAGS_DBINIT)
+                with client as c:
+                    g = c.call('dscache.get_uncached_group', rv)
             except:
                 rv = 'nobody'
         return rv
@@ -176,7 +174,8 @@ class GroupField(forms.ChoiceField):
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
         try:
-            groups = FreeNAS_Groups(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP)
+            with client as c:
+                groups = c.call('dscache.query', 'GROUPS', '', {'order_by': ['gr_name']})
         except:
             groups = []
         kwargs = {
@@ -201,9 +200,9 @@ class GroupField(forms.ChoiceField):
                 ).values_list('bsdgrp_gid')
             ]
             glist.extend(
-                [(x.gr_name, x.gr_name) for x in sorted(
+                [(x['group'], x['group']) for x in sorted(
                     groups,
-                    key=lambda y: (y.gr_gid not in notbuiltin, y.gr_name)
+                    key=lambda y: (y['gid'] not in notbuiltin, y['group'])
                 )]
             )
             #self.choices = glist
@@ -217,7 +216,8 @@ class GroupField(forms.ChoiceField):
         if not self.required and group in ('-----', '', None):
             return None
         try:
-            g = FreeNAS_Group(group, flags=FLAGS_DBINIT)
+            with client as c:
+                g = c.call('dscache.get_uncached_group', group)
         except:
             g = None
 

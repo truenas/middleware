@@ -1,8 +1,8 @@
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private
+    CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable
 )
-from middlewared.utils import run
+from middlewared.utils import run, filter_list
 from middlewared.validators import Email
 
 import asyncio
@@ -87,6 +87,43 @@ class UserService(CRUDService):
             except Exception:
                 pass
         return user
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        """
+        Query users with `query-filters` and `query-options`. As a performance optimization, only local users
+        will be queried by default.
+
+        Users from directory services such as NIS, LDAP, or Active Directory will be included in query results
+        if the option `{'extra': {'search_dscache': True}}` is specified.
+        """
+        if not filters:
+            filters = []
+        filters += self._config.datastore_filters or []
+
+        options = options or {}
+        options['extend'] = self._config.datastore_extend
+        options['extend_context'] = self._config.datastore_extend_context
+        options['prefix'] = self._config.datastore_prefix
+
+        datastore_options = options.copy()
+        datastore_options.pop('count', None)
+        datastore_options.pop('get', None)
+
+        extra = options.get('extra', {})
+        dssearch = extra.pop('search_dscache', False)
+
+        if dssearch:
+            return await self.middleware.call('dscache.query', 'USERS', filters, options)
+
+        result = await self.middleware.call(
+            'datastore.query', self._config.datastore, [], datastore_options
+        )
+        for entry in result:
+            entry.update({'local': True})
+        return await self.middleware.run_in_thread(
+            filter_list, result, filters, options
+        )
 
     @accepts(Dict(
         'user_create',
@@ -659,6 +696,43 @@ class GroupService(CRUDService):
         group['users'] = [gm['user']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('group', '=', group['id'])], {'prefix': 'bsdgrpmember_'})]
         group['users'] += [gmu['id'] for gmu in await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_group_id', '=', group['id'])])]
         return group
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        """
+        Query groups with `query-filters` and `query-options`. As a performance optimization, only local groups
+        will be queried by default.
+
+        Groups from directory services such as NIS, LDAP, or Active Directory will be included in query results
+        if the option `{'extra': {'search_dscache': True}}` is specified.
+        """
+        if not filters:
+            filters = []
+        filters += self._config.datastore_filters or []
+
+        options = options or {}
+        options['extend'] = self._config.datastore_extend
+        options['extend_context'] = self._config.datastore_extend_context
+        options['prefix'] = self._config.datastore_prefix
+
+        datastore_options = options.copy()
+        datastore_options.pop('count', None)
+        datastore_options.pop('get', None)
+
+        extra = options.get('extra', {})
+        dssearch = extra.pop('search_dscache', False)
+
+        if dssearch:
+            return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
+
+        result = await self.middleware.call(
+            'datastore.query', self._config.datastore, [], datastore_options
+        )
+        for entry in result:
+            entry.update({'local': True})
+        return await self.middleware.run_in_thread(
+            filter_list, result, filters, options
+        )
 
     @accepts(Dict(
         'group_create',

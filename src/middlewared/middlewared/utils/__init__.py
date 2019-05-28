@@ -322,6 +322,9 @@ def filter_list(_list, filters=None, options=None):
     if options.get('get') is True:
         return rv[0]
 
+    if options.get('limit'):
+        return rv[:options['limit']]
+
     return rv
 
 

@@ -18,7 +18,6 @@ if not apps.ready:
 from django.conf import settings
 from freenasUI import choices
 from freenasUI import common as fcommon
-from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from middlewared.utils import Popen
@@ -117,18 +116,18 @@ class NotifierService(Service):
 
         return data
 
-    def get_user_object(self, username):
+    async def get_user_object(self, username):
         user = False
         try:
-            user = FreeNAS_User(username)
+            user = await self.middleware.call('dscache.get_uncached_user', username)
         except Exception:
             pass
         return user
 
-    def get_group_object(self, groupname):
+    async def get_group_object(self, groupname):
         group = False
         try:
-            group = FreeNAS_Group(groupname)
+            group = await self.middleware.call('dscache.get_uncached_group', groupname)
         except Exception:
             pass
         return group
@@ -145,11 +144,7 @@ class NotifierService(Service):
 
     async def ds_clearcache(self):
         """Temporary call to rebuild DS cache"""
-        await Popen(
-            '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire && '
-            '/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill',
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True
-        )
+        await self.middleware.call('dscache.refresh')
 
     def choices(self, name, args=None):
         """Temporary wrapper to get to UI choices"""
