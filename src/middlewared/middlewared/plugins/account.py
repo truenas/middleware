@@ -91,7 +91,7 @@ class UserService(CRUDService):
     @filterable
     async def query(self, filters=None, options=None):
         """
-        Query users with `query-filters` and `query-options`. As a performance optimation, only local users
+        Query users with `query-filters` and `query-options`. As a performance optimization, only local users
         will be queried by default.
 
         Users from directory services such as NIS, LDAP, or Active Directory will be included in query results
@@ -700,7 +700,7 @@ class GroupService(CRUDService):
     @filterable
     async def query(self, filters=None, options=None):
         """
-        Query groups with `query-filters` and `query-options`. As a performance optimation, only local groups
+        Query groups with `query-filters` and `query-options`. As a performance optimization, only local groups
         will be queried by default.
 
         Groups from directory services such as NIS, LDAP, or Active Directory will be included in query results
