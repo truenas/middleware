@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private
+    CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable
 )
 from middlewared.utils import run, filter_list
 from middlewared.validators import Email
@@ -88,8 +88,8 @@ class UserService(CRUDService):
                 pass
         return user
 
-    @accepts(Ref('query-filters'), Ref('query-options'), Bool('dssearch', default=False))
-    async def query(self, filters=None, options=None, dssearch=False):
+    @filterable
+    async def query(self, filters=None, options=None):
         if not filters:
             filters = []
         filters += self._config.datastore_filters or []
@@ -103,11 +103,14 @@ class UserService(CRUDService):
         datastore_options.pop('count', None)
         datastore_options.pop('get', None)
 
+        extra = options.get('extra', {})
+        dssearch = extra.pop('search_dscache', False)
+
         if dssearch:
             return await self.middleware.call('dscache.query', 'USERS', filters, options)
 
         result = await self.middleware.call(
-            'datastore.query', self._config.datastore, [], datastore_options
+             'datastore.query', self._config.datastore, [], datastore_options
         )
         for entry in result:
             entry.update({'local': True})
@@ -687,8 +690,8 @@ class GroupService(CRUDService):
         group['users'] += [gmu['id'] for gmu in await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_group_id', '=', group['id'])])]
         return group
 
-    @accepts(Ref('query-filters'), Ref('query-options'), Bool('dssearch', default=False))
-    async def query(self, filters=None, options=None, dssearch=False):
+    @filterable
+    async def query(self, filters=None, options=None):
         if not filters:
             filters = []
         filters += self._config.datastore_filters or []
@@ -702,11 +705,14 @@ class GroupService(CRUDService):
         datastore_options.pop('count', None)
         datastore_options.pop('get', None)
 
+        extra = options.get('extra', {})
+        dssearch = extra.pop('search_dscache', False)
+
         if dssearch:
             return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
 
         result = await self.middleware.call(
-            'datastore.query', self._config.datastore, [], datastore_options
+             'datastore.query', self._config.datastore, [], datastore_options
         )
         for entry in result:
             entry.update({'local': True})
