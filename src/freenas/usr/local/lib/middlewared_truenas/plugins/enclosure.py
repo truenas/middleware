@@ -22,6 +22,7 @@ class EnclosureService(CRUDService):
             enclosure = {
                 "id": enc.encid,
                 "name": enc.name,
+                "model": enc.model,
                 "label": enc.label,
                 "elements": [],
             }
@@ -51,6 +52,7 @@ class EnclosureService(CRUDService):
                 if header is not None and elements:
                     enclosure["elements"].append({
                         "name": name,
+                        "descriptor": enc.descriptors.get(name, ""),
                         "header": header,
                         "elements": elements,
                         "has_slot_status": has_slot_status
@@ -359,15 +361,15 @@ class Enclosure(object):
         self.devname = f"ses{num}"
         self.encname = ""
         self.encid = ""
+        self.model = ""
         self.status = "OK"
         self.__elements = []
         self.__elementsbyname = {}
+        self.descriptors = {}
         self._parse(data)
         self.enclabel = labels.get(self.encid)
 
     def _parse(self, data):
-
-        lname = ""
         status = re.search(
             r'Enclosure Name: (.+)',
             data)
@@ -375,16 +377,40 @@ class Enclosure(object):
             self.encname = status.group(1)
         else:
             self.encname = self.devname
+
         status = re.search(
             r'Enclosure ID: (.+)',
             data)
         if status:
             self.encid = status.group(1)
+
+        if "4024S" in self.encname:
+            self.model = "M Series"
+        elif "P3217" in self.encname:
+            self.model = "X Series"
+        elif "QUANTA JB9 SIM" in self.encname:
+            self.model = "E60"
+        elif "Storage 1729" in self.encname:
+            self.model = "E24"
+        elif self.encname.startswith("ECStream 3U16+4R-4X6G.3"):
+            if "SD_9GV12P1J_12R6K4" in data:
+                self.model = "Z Series"
+            else:
+                self.model = "E16"
+        elif self.encname.startswith("CELESTIC R0904"):
+            self.model = "ES60"
+        elif "4024J" in self.encname:
+            self.model = "ES24"
+        elif self.encname.startswith("CELESTIC X2012"):
+            self.model = "ES12"
+
         status = re.search(
             r'Enclosure Status <(.+)>',
             data)
         if status:
             self.status = status.group(1)
+
+        lname = ""
         elements = re.findall(
             r'Element\s+(?P<element>.+?): (?P<name>.+?)'
             ', status: (?P<status>.+?) \((?P<value>[^)]+)\)'
@@ -395,6 +421,7 @@ class Enclosure(object):
             slot, name, status, value, desc, dev = element
             if name != lname:
                 lname = name
+                self.descriptors[name] = desc
                 continue
             newvalue = 0
             for i, v in enumerate(value.split(' ')):
