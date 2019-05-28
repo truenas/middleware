@@ -3,10 +3,8 @@
 import os
 import sys
 import pytest
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-
 from config import *
 from functions import GET
 
@@ -38,9 +36,12 @@ ad_data_type = {
 }
 
 
-def test_01_Updating_Settings_for_NO_IP():
+def test_01_get_activedirectory_data():
     global results
     results = GET('/activedirectory/')
     assert results.status_code == 200, results.text
 
 
+@pytest.mark.parametrize('data', list(ad_data_type.keys()))
+def test_02_verify_activedirectory_data_type_of(data):
+    assert isinstance(results.json()[data], ad_data_type[data]), results.text
