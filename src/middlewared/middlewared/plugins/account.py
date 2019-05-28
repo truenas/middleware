@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable
 )
@@ -90,6 +90,13 @@ class UserService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
+        """
+        Query users with `query-filters` and `query-options`. As a performance optimation, only local users
+        will be queried by default.
+
+        Users from directory services such as NIS, LDAP, or Active Directory will be included in query results
+        if the option `{'extra': {'search_dscache': True}}` is specified.
+        """
         if not filters:
             filters = []
         filters += self._config.datastore_filters or []
@@ -110,7 +117,7 @@ class UserService(CRUDService):
             return await self.middleware.call('dscache.query', 'USERS', filters, options)
 
         result = await self.middleware.call(
-             'datastore.query', self._config.datastore, [], datastore_options
+            'datastore.query', self._config.datastore, [], datastore_options
         )
         for entry in result:
             entry.update({'local': True})
@@ -692,6 +699,13 @@ class GroupService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
+        """
+        Query groups with `query-filters` and `query-options`. As a performance optimation, only local groups
+        will be queried by default.
+
+        Groups from directory services such as NIS, LDAP, or Active Directory will be included in query results
+        if the option `{'extra': {'search_dscache': True}}` is specified.
+        """
         if not filters:
             filters = []
         filters += self._config.datastore_filters or []
@@ -712,7 +726,7 @@ class GroupService(CRUDService):
             return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
 
         result = await self.middleware.call(
-             'datastore.query', self._config.datastore, [], datastore_options
+            'datastore.query', self._config.datastore, [], datastore_options
         )
         for entry in result:
             entry.update({'local': True})
