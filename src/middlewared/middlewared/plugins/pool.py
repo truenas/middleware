@@ -2993,12 +2993,13 @@ class PoolDatasetService(CRUDService):
         result = []
         dataset = await self._get_instance(oid)
         path = self.__attachments_path(dataset)
+        zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
             lsof = await run('lsof',
                              '-F', 'pcn',       # Output format parseable by `parse_lsof`
                              '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False, encoding='utf8')
-            for pid, name in parse_lsof(lsof.stdout, path):
+            for pid, name in parse_lsof(lsof.stdout, [path, zvol_path]):
                 service = await self.middleware.call('service.identify_process', name)
                 if service:
                     result.append({
@@ -3230,7 +3231,7 @@ class PoolScrubService(CRUDService):
         return response
 
 
-def parse_lsof(lsof, dir):
+def parse_lsof(lsof, dirs):
     pids = {}
 
     pid = None
@@ -3253,7 +3254,7 @@ def parse_lsof(lsof, dir):
 
         if line.startswith("n"):
             path = line[1:]
-            if os.path.isabs(path) and os.path.commonpath([path, dir]) == dir:
+            if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
                 if pid is not None and command is not None:
                     pids[pid] = command
 
