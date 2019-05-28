@@ -48,6 +48,7 @@ truenas_params = {
     'is_truenas_ha': False,
     'failover_status': 'DEFAULT',
     'smb_ha_mode': 'LEGACY',
+    'fruit_enabled': False
 }
 
 from freenasUI.common.pipesubr import pipeopen
@@ -1093,6 +1094,8 @@ def generate_smb4_conf(client, smb4_conf, role, shares):
     confset1(smb4_conf, "dos filemode = yes")
     confset2(smb4_conf, "multicast dns register = %s",
              "yes" if cifs.zeroconf else "no")
+    if truenas_params['fruit_enabled']:
+        confset1(smb4_conf, "fruit:nfs_aces = no")
 
     if not smb4_ldap_enabled(client):
         confset2(smb4_conf, "domain logons = %s",
@@ -1173,12 +1176,6 @@ def generate_smb4_shares(client, smb4_shares, shares):
     if len(shares) == 0:
         return
 
-    fruit_enabled = False
-    for share in shares:
-        if "fruit" in share['cifs_vfsobjects'] or share['cifs_timemachine']:
-            fruit_enabled = True
-            break
-
     for share in shares:
         share = Struct(share)
         if (not share.cifs_home and
@@ -1251,7 +1248,7 @@ def generate_smb4_shares(client, smb4_shares, shares):
            in Linux. FreeBSD doesn't have this limitation, and so we can avoid littering
            the filesystem with ad files.
         """
-        if fruit_enabled:
+        if truenas_params['fruit_enabled']:
             if "fruit" not in share.cifs_vfsobjects:
                 vfs_objects.append('fruit')
             confset1(smb4_shares, "fruit:metadata = stream")
@@ -1758,6 +1755,10 @@ def main():
     role = get_server_role(client)
 
     shares = client.call('datastore.query', 'sharing.CIFS_Share')
+    for share in shares:
+        if "fruit" in share['cifs_vfsobjects'] or share['cifs_timemachine']:
+            truenas_params['fruit_enabled'] = True
+            break
 
     generate_smbusers(client)
     generate_smb4_tdb(client, smb4_tdb)
