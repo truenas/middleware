@@ -2995,17 +2995,15 @@ class PoolDatasetService(CRUDService):
         path = self.__attachments_path(dataset)
         if path:
             lsof = await run('lsof',
-                             '-F', 'pc',    # Output format parseable by `parse_lsof`
-                             '-x', 'f',     # Cross filesystem boundaries
-                             '+D', path,    # Include specified directory and all its descendants
+                             '-F', 'pcn',       # Output format parseable by `parse_lsof`
+                             '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False, encoding='utf8')
-            for pid, name in parse_lsof(lsof.stdout):
+            for pid, name in parse_lsof(lsof.stdout, path):
                 service = await self.middleware.call('service.identify_process', name)
                 if service:
                     result.append({
                         "pid": pid,
                         "name": name,
-
                         "service": service,
                     })
                 else:
@@ -3019,7 +3017,6 @@ class PoolDatasetService(CRUDService):
                         result.append({
                             "pid": pid,
                             "name": name,
-
                             "cmdline": join_commandline(cmdline),
                         })
 
@@ -3233,21 +3230,32 @@ class PoolScrubService(CRUDService):
         return response
 
 
-def parse_lsof(lsof):
+def parse_lsof(lsof, dir):
     pids = {}
 
     pid = None
+    command = None
     for line in lsof.split("\n"):
         if line.startswith("p"):
+            pid = None
+            command = None
+
             try:
                 pid = int(line[1:])
             except ValueError:
                 pass
 
         if line.startswith("c"):
-            if pid is not None:
-                pids[pid] = line[1:]
-                pid = None
+            command = line[1:]
+
+        if line.startswith("f"):
+            pass
+
+        if line.startswith("n"):
+            path = line[1:]
+            if os.path.isabs(path) and os.path.commonpath([path, dir]) == dir:
+                if pid is not None and command is not None:
+                    pids[pid] = command
 
     return list(pids.items())
 
