@@ -1712,9 +1712,15 @@ class SystemDatasetForm(MiddlewareModelForm, ModelForm):
         self.instance._original_sys_pool = self.instance.sys_pool
         self.instance._original_sys_syslog_usedataset = self.instance.sys_syslog_usedataset
         self.instance._original_sys_rrd_usedataset = self.instance.sys_rrd_usedataset
-        self.fields['sys_pool'].widget.attrs['onChange'] = (
-            "systemDatasetMigration();"
-        )
+        with client as c:
+            if not c.call('system.is_freenas') and c.call('notifier.failover_licensed'):
+                self.fields['sys_pool'].widget.attrs['onChange'] = (
+                    "systemDatasetMigration_TN();"
+                )
+            else:
+                self.fields['sys_pool'].widget.attrs['onChange'] = (
+                    "systemDatasetMigration();"
+                )
 
     def middleware_clean(self, update):
         update['syslog'] = update.pop('syslog_usedataset')
