@@ -2468,7 +2468,7 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
 
         data['compression'] = data['compression'].upper()
         data['remote_cipher'] = data['remote_cipher'].upper()
-        remote_http_port = int(data.pop('remote_http_port', 80))
+        remote_http_port = int(data.pop('remote_http_port', 80) or 80)
         remote_port = int(data.pop('remote_port', 22))
 
         mode = data.get('remote_mode', 'MANUAL')
