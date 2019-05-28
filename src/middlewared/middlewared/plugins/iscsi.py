@@ -132,6 +132,21 @@ class ISCSIGlobalService(SystemServiceService):
 
         return (await self.middleware.call('iscsi.global.config'))['alua']
 
+    @private
+    async def terminate_luns_for_pool(self, pool_name):
+        cp = await run(['ctladm', 'devlist', '-b', 'block', '-x'], check=False, encoding='utf8')
+        for lun in etree.fromstring(cp.stdout).xpath('//lun'):
+            lun_id = lun.attrib['id']
+
+            try:
+                path = lun.xpath('//file')[0].text
+            except IndexError:
+                continue
+
+            if path.startswith(f'/dev/zvol/{pool_name}/'):
+                self.logger.info('Terminating LUN %s (%s)', lun_id, path)
+                await run(['ctladm', 'remove', '-b', 'block', '-l', lun_id], check=False)
+
 
 class ISCSIPortalService(CRUDService):
 

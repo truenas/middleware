@@ -2082,6 +2082,7 @@ class PoolService(CRUDService):
 
         job.set_progress(20, 'Terminating processes that are using this pool')
         await self.middleware.call('pool.dataset.kill_processes', pool['name'], options.get('restart_services', False))
+        await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
