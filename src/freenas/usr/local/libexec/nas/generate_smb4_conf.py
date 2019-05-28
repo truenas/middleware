@@ -1364,6 +1364,8 @@ def smb4_unlink(dir):
 def smb4_setup(client):
     statedir = "/var/db/samba4"
     privatedir = "/var/db/samba4/private"
+    if truenas_params['is_truenas_ha']:
+        smb4_mkdir("/root/samba")
 
     if truenas_params['is_truenas_ha'] and truenas_params['smb_ha_mode'] == "LEGACY":
         privatedir = "/root/samba/private"
