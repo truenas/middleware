@@ -125,19 +125,12 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             if enc['id'] in seen_ids:
                 continue
             seen_ids.append(enc['id'])
-            if enc['name'].find('ECStream 3U16') != -1:
-                if skip_e16:
-                    skip_e16 = False
-                    continue
-                enc_nums['E16'] += 1
-            elif enc['name'].find('1729') != -1:
-                enc_nums['E24'] += 1
-            elif enc['name'].find('QUANTA JB9 SIM') != -1:
-                enc_nums['E60'] += 1
-            elif enc['name'].find('CELESTIC X2012-MT') != -1:
-                enc_nums['ES12'] += 1
-            elif enc['name'].find('ECStream 4024J') != -1:
-                enc_nums['ES24'] += 1
+
+            if enc['model'] == 'E16' and skip_e16:
+                skip_e16 = False
+                continue
+
+            enc_nums[enc['model']] += 1
 
         if license.addhw:
             for addhw in license.addhw:
