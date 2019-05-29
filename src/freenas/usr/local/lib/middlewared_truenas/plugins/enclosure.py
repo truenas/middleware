@@ -27,6 +27,7 @@ class EnclosureService(CRUDService):
                 "id": enc.encid,
                 "name": enc.name,
                 "model": enc.model,
+                "controller": enc.controller,
                 "label": enc.label,
                 "elements": [],
             }
@@ -366,6 +367,7 @@ class Enclosure(object):
         self.encname = ""
         self.encid = ""
         self.model = ""
+        self.controller = False
         self.status = "OK"
         self.__elements = []
         self.__elementsbyname = {}
@@ -390,8 +392,10 @@ class Enclosure(object):
 
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
+            self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
+            self.controller = True
         elif self.encname.startswith("QUANTA JB9 SIM"):
             self.model = "E60"
         elif self.encname.startswith("Storage 1729"):
@@ -399,6 +403,7 @@ class Enclosure(object):
         elif self.encname.startswith("ECStream 3U16+4R-4X6G.3"):
             if "SD_9GV12P1J_12R6K4" in data:
                 self.model = "Z Series"
+                self.controller = True
             else:
                 self.model = "E16"
         elif self.encname.startswith("CELESTIC R0904"):

@@ -123,6 +123,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 continue
             seen_ids.append(enc['id'])
 
+            if enc['controller']:
+                continue
+
             enc_nums[enc['model']] += 1
 
         if license.addhw:
