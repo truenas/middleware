@@ -246,7 +246,7 @@ class NotifierService(Service):
         if cachetool_job.error:
             raise CallError(f'cachetool expire failed with error {cachetool_job.error}')
 
-        self.middleware.call('notifier.cachetool', 'fill')
+        await self.middleware.call('notifier.cachetool', 'fill')
 
     def samba4(self, name, args=None):
         """Temporary wrapper to use Samba4 over middlewared"""
