@@ -84,16 +84,16 @@ class ZettareplProcess:
         start_daemon_thread(target=watch_parent)
         if logging.getLevelName(self.debug_level) == logging.TRACE:
             # If we want TRACE then we want all debug from zettarepl
-            debug_level = "DEBUG"
+            default_level = logging.DEBUG
         elif logging.getLevelName(self.debug_level) == logging.DEBUG:
             # Regular development level. We don't need verbose debug from zettarepl
-            debug_level = "INFO"
+            default_level = logging.INFO
         else:
-            debug_level = self.debug_level
-        setup_logging("", debug_level, self.log_handler)
+            default_level = logging.getLevelName(self.debug_level)
+        setup_logging("", "DEBUG", self.log_handler)
         for handler in logging.getLogger("zettarepl").handlers:
             handler.addFilter(LongStringsFilter())
-            handler.addFilter(ReplicationTaskLoggingLevelFilter())
+            handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
 
         definition = Definition.from_data(self.definition)
 
