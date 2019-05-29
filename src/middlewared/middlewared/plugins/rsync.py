@@ -245,8 +245,8 @@ class RsyncTaskService(CRUDService):
             if not remote_path:
                 verrors.add(f'{schema}.remotepath', 'This field is required')
 
-            search = os.path.join(user.pw_dir, '.ssh', 'id_[edr]*')
-            exclude_from_search = os.path.join(user.pw_dir, '.ssh', 'id_[edr]*pub')
+            search = os.path.join(user['pw_dir'], '.ssh', 'id_[edr]*')
+            exclude_from_search = os.path.join(user['pw_dir'], '.ssh', 'id_[edr]*pub')
             key_files = set(glob.glob(search)) - set(glob.glob(exclude_from_search))
             if not key_files:
                 verrors.add(
@@ -538,7 +538,7 @@ class RsyncTaskService(CRUDService):
         else:
             line += [
                 '-e',
-                f'ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes'
+                f'"ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes"'
             ]
             path_args = [path, f'{remote}:"{shlex.quote(rsync["remotepath"])}"']
             if rsync['direction'] != 'PUSH':
