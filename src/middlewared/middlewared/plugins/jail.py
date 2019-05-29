@@ -153,15 +153,21 @@ class JailService(CRUDService):
             dc = self.middleware.call_sync(
                 'service.query', [('service', '=', 'domaincontroller')]
             )[0]
-            dc_config = self.middleware.call_sync('domaincontroller.config')
+            try:
+                dc_config = self.middleware.call_sync('domaincontroller.config')
 
-            if dc['enable'] and (
-                dc_config['dns_forwarder'] and
-                dc_config['dns_backend'] == 'SAMBA_INTERNAL'
-            ):
-                options['props'].append(
-                    f'resolver=nameserver {dc_config["dns_forwarder"]}'
-                )
+                if dc['enable'] and (
+                    dc_config['dns_forwarder'] and
+                    dc_config['dns_backend'] == 'SAMBA_INTERNAL'
+                ):
+                    options['props'].append(
+                        f'resolver=nameserver {dc_config["dns_forwarder"]}'
+                    )
+            except ValueError:
+                # Temporary workaround for bad domain controller database entry.
+                # This will be removed for next major release.
+                # See NAS-101895
+                pass
 
         iocage = ioc.IOCage(skip_jails=True)
 
