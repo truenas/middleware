@@ -7,7 +7,7 @@ status_file="/var/run/directoryservice.nis"
 
 nisctl_cache_fill()
 {
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/www/freenasUI/tools/cachetool.py fill &
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.cachetool fill > /dev/null
 }
 
 nisctl_cache_expire()
