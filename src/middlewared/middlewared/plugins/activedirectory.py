@@ -12,6 +12,7 @@ import subprocess
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
+from operator import itemgetter
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
@@ -549,7 +550,7 @@ class ActiveDirectoryService(ConfigService):
                 ad.pop(key)
 
         for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
-            if ad.get(key):
+            if ad[key] is not None:
                 ad[key] = ad[key].lower()
 
         return ad
@@ -689,8 +690,17 @@ class ActiveDirectoryService(ConfigService):
         except Exception as e:
             raise ValidationError('activedirectory_update.netbiosname', str(e))
 
-        if new['enable'] and not new["bindpw"] and not new["kerberos_principal"]:
-            raise ValidationError("activedirectory_update.bindname", "Bind credentials or kerberos keytab are required to join an AD domain.")
+        if new['enable']:
+            if not new["bindpw"] and not new["kerberos_principal"]:
+                raise ValidationError(
+                    "activedirectory_update.bindname",
+                    "Bind credentials or kerberos keytab are required to join an AD domain."
+                )
+            if new["bindpw"] and new["kerberos_principal"]:
+                raise ValidationError(
+                    "activedirectory_update.kerberos_principal",
+                    "Simultaneous keytab and password authentication are not permitted."
+                )
 
         if data['enable'] and not old['enable']:
             try:
@@ -717,7 +727,7 @@ class ActiveDirectoryService(ConfigService):
         start = False
         stop = False
 
-        if old['idmap_backend'] != new['idmap_backend']:
+        if old['idmap_backend'] != new['idmap_backend'].upper():
             idmap = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
             await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend'].upper()})
 
@@ -887,9 +897,23 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     def validate_credentials(self, ad=None):
+        """
+        Performs test bind to LDAP server in AD environment. If a kerberos principal
+        is defined, then we must get a kerberos ticket before trying to validate
+        credentials. For this reason, we first generate the krb5.conf and krb5.keytab
+        and then we perform a kinit using this principal.
+        """
         ret = False
         if ad is None:
             ad = self.middleware.call_sync('activedirectory.config')
+
+        if ad['kerberos_principal']:
+            self.middleware.call_sync('etc.generate', 'kerberos')
+            kinit = subprocess.run(['kinit', '--renewable', '-k', ad['kerberos_principal']], capture_output=True)
+            if kinit.returncode != 0:
+                raise CallError(
+                    f'kinit with principal {ad["kerberos_principal"]} failed with error {kinit.stderr.decode()}'
+                )
 
         dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:
@@ -1249,7 +1273,15 @@ class ActiveDirectoryService(ConfigService):
         if not cache_data.get('users'):
             return
 
-        self.middleware.call_sync('cache.put', 'AD_cache', cache_data)
+        sorted_cache = {}
+        sorted_cache.update({
+            'users': sorted(cache_data['users'], key=itemgetter('username'))
+        })
+        sorted_cache.update({
+            'groups': sorted(cache_data['groups'], key=itemgetter('group'))
+        })
+
+        self.middleware.call_sync('cache.put', 'AD_cache', sorted_cache)
 
     @private
     async def get_cache(self):

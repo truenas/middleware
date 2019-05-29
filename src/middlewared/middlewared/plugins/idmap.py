@@ -42,7 +42,7 @@ class IdmapService(Service):
 
         backend_entry = await self.middleware.call(
             f'idmap.{my_domain[0]["idmap_backend"].lower()}.query',
-            [('domain', '=', domain)]
+            [('domain.idmap_domain_name', '=', domain)]
         )
         if backend_entry:
             return backend_entry[0]
@@ -83,7 +83,7 @@ class IdmapService(Service):
         if ds_type not in ['DS_TYPE_ACTIVEDIRECTORY', 'DS_TYPE_LDAP', 'DS_TYPE_DEFAULT_DOMAIN']:
             raise CallError(f'idmap backends are not supported for {ds_type}')
 
-        res = await self.middleware.call(f'idmap.{idmap_type}.query', [('domain', '=', ds_type)])
+        res = await self.middleware.call(f'idmap.{idmap_type}.query', [('domain.idmap_domain_name', '=', ds_type)])
         if res:
             return {
                 'idmap_id': res[0]['id'],
@@ -197,7 +197,7 @@ class IdmapService(Service):
         except Exception as e:
             self.logger.debug("Failed to remove winbindd_cache.tdb: %s" % e)
 
-        await self.middleware.call('service.start', 'smb')
+        await self.middleware.call('service.start', 'cifs')
         gencache_flush = await run(['net', 'cache', 'flush'], check=False)
         if gencache_flush.returncode != 0:
             raise CallError(f'Attempt to flush gencache failed with error: {gencache_flush.stderr.decode().strip()}')
