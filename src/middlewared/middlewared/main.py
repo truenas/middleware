@@ -28,6 +28,7 @@ import linecache
 import multiprocessing
 import os
 import pickle
+import re
 import queue
 import select
 import setproctitle
@@ -1170,6 +1171,14 @@ class Middleware(LoadPluginsMixin):
             await connection.on_close()
         return ws
 
+    _loop_monitor_ignore_frames = (
+        (
+            re.compile(r'\s+File ".+/middlewared/main\.py", line [0-9]+, in run_in_thread\s+'
+                       'return await self.loop.run_in_executor'),
+            'run_in_thread'
+        ),
+    )
+
     def _loop_monitor_thread(self):
         """
         Thread responsible for checking current tasks that are taking too long
@@ -1188,7 +1197,12 @@ class Middleware(LoadPluginsMixin):
             if last == current:
                 frame = sys._current_frames()[self.__thread_id]
                 stack = traceback.format_stack(frame, limit=10)
-                self.logger.warn(''.join(['Task seems blocked:\n'] + stack))
+                for regex, name in self._loop_monitor_ignore_frames:
+                    if any(regex.match(s) for s in stack):
+                        self.logger.warn('%s seems to be blocking event loop', name)
+                        break
+                else:
+                    self.logger.warn(''.join(['Task seems blocked:\n'] + stack))
             last = current
 
     def run(self):
