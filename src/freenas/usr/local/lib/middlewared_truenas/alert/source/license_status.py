@@ -117,18 +117,11 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         ))
 
         enc_nums = defaultdict(lambda: 0)
-        # Echostream (Z model) has a built-in E16 which is not accounted for as
-        # additional hardware, so skip the first one E16 found
-        skip_e16 = license.model.startswith('Z')
         seen_ids = []
         for enc in self.middleware.call_sync('enclosure.query'):
             if enc['id'] in seen_ids:
                 continue
             seen_ids.append(enc['id'])
-
-            if enc['model'] == 'E16' and skip_e16:
-                skip_e16 = False
-                continue
 
             enc_nums[enc['model']] += 1
 
