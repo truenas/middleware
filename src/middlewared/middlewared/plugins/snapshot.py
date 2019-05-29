@@ -36,7 +36,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         )
 
         data['state'] = context['state'].get(f'periodic_snapshot_task_{data["id"]}', {
-            'state': 'UNKNOWN',
+            'state': 'PENDING',
         })
 
         return data
