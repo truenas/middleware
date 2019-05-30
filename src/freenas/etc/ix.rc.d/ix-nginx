@@ -317,7 +317,10 @@ __EOF__
         location /api/docs/restful/static {
             alias /usr/local/www/swagger-ui/node_modules/swagger-ui-dist;
         }
+__EOF__
 
+	if is_freenas; then
+		cat << __EOF__
         location /ui {
             if ( \$request_method ~ ^POST$ ) {
                 proxy_pass http://127.0.0.1:6000;
@@ -325,7 +328,10 @@ __EOF__
             try_files \$uri \$uri/ /index.html =404;
             alias /usr/local/www/webui;
         }
+__EOF__
+	fi
 
+	cat << __EOF__
         location /netdata {
             return 301 /netdata/;
         }
