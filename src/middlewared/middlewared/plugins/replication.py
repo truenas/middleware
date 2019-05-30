@@ -147,7 +147,7 @@ class ReplicationService(CRUDService):
             Str("lifetime_unit", null=True, default=None, enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]),
             Str("compression", enum=["LZ4", "PIGZ", "PLZIP"], null=True, default=None),
             Int("speed_limit", null=True, default=None, validators=[Range(min=1)]),
-            Bool("dedup", default=True),
+            Bool("dedup", default=False),
             Bool("large_block", default=True),
             Bool("embed", default=True),
             Bool("compressed", default=True),
