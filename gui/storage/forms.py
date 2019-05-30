@@ -1611,20 +1611,20 @@ class MountPointAccessForm(Form):
         required=False,
     )
     mp_mode = UnixPermissionField(label=_('Mode'), required=False)
-    mp_acl = forms.ChoiceField(
-        label=_('Permission Type'),
-        choices=(
-            ('unix', 'Unix'),
-            ('mac', 'Mac'),
-            ('windows', 'Windows'),
-        ),
-        initial='unix',
-        widget=forms.widgets.RadioSelect(),
-    )
     mp_recursive = forms.BooleanField(
         initial=False,
         required=False,
         label=_('Set permission recursively')
+    )
+    mp_strip_acl = forms.BooleanField(
+        initial=False,
+        required=False,
+        label=_('Remove extended ACL from dataset.')
+    )
+    mp_apply_acl = forms.BooleanField(
+        initial=False,
+        required=False,
+        label=_('Apply default ACL to dataset.')
     )
 
     def __init__(self, *args, **kwargs):
@@ -1635,21 +1635,27 @@ class MountPointAccessForm(Form):
             with client as c:
                 stat = c.call('filesystem.stat', path)
 
-                self.fields['mp_acl'].initial = stat['acl']
+                """
+                Disable the mode editor if the path has an extended ACL.
+                """
+                if stat['acl']:
+                    if not self.fields['mp_strip_acl']:
+                        self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
+                        self.fields['mp_recursive'].widget.attrs['disabled'] = 'disabled'
+                    self.fields['mp_apply_acl'].widget.attrs['disabled'] = 'disabled'
 
-                if stat['acl'] == 'windows':
-                    self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
+                if self.fields['mp_apply_acl']:
+                    self.fields['mp_strip_acl'].widget.attrs['disabled'] = 'disabled'
 
                 self.fields['mp_mode'].initial = "%.3o" % stat['mode']
                 self.fields['mp_user'].initial = stat['user']
                 self.fields['mp_group'].initial = stat['group']
 
-        self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
-
     def commit(self, path):
 
         with client as c:
             dataset = c.call('pool.dataset.query', [['mountpoint', '=', path.rstrip('/')]], {'get': True})
+            stat =  c.call('filesystem.stat', path)
 
         kwargs = {}
 
@@ -1659,11 +1665,20 @@ class MountPointAccessForm(Form):
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
 
-        kwargs['acl'] = self.cleaned_data['mp_acl'].upper()
-        if kwargs['acl'] != 'WINDOWS' and self.cleaned_data.get('mp_mode_en'):
+        if not stat['acl'] and self.cleaned_data.get('mp_mode_en'):
             kwargs['mode'] = str(self.cleaned_data['mp_mode'])
 
         kwargs['recursive'] = self.cleaned_data['mp_recursive']
+
+        if self.cleaned_data['mp_strip_acl']:
+            with client as c:
+                c.call('filesystem.stripacl;', path, kwargs['mode'], uid, gid, {recursive:kwargs['recursive']})
+                return True 
+
+        if self.cleaned_data['mp_apply_acl']:
+            with client as c:
+                c.call('sharing.smb.apply_default_perms', True, path, False)
+                return True
 
         with client as c:
             try:

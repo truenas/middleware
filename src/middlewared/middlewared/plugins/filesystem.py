@@ -68,7 +68,7 @@ class FilesystemService(Service):
             rv.append(data)
         return filter_list(rv, filters=filters or [], options=options or {})
 
-    @accepts(Str('path'))
+    @private
     def stat(self, path):
         """
         Return the filesystem stat(2) for a given `path`.
@@ -101,12 +101,7 @@ class FilesystemService(Service):
         except KeyError:
             stat['group'] = None
 
-        if os.path.exists(os.path.join(path, ".windows")):
-            stat["acl"] = "windows"
-        elif os.path.exists(os.path.join(path, ".apple")):
-            stat["acl"] = "mac"
-        else:
-            stat["acl"] = "unix"
+        stat['acl'] = False if self.middleware.call_sync('filesystem.acl_is_trivial', path) else True
 
         return stat
 
@@ -301,6 +296,54 @@ class FilesystemService(Service):
             raise CallError('Path not found.', errno.ENOENT)
         a = acl.ACL(file=path)
         return a.is_trivial
+
+    @accepts(
+        Str('path'),
+        Int('mode'),
+        Int('uid', default=-1),
+        Int('gid', default=-1),
+        Dict(
+            'options',
+            Bool('recursive', default=False),
+            Bool('traverse', default=False),
+        )
+    )
+    @job(lock=lambda args: f'setacl:{args[0]}')
+    def stripacl(self, job, path, newmode=None, options=None):
+        """
+        Remove extended ACL from specified path.
+
+        If `newmode` is specified then the mode will be applied to the
+        path and files and subdirectories depending on which `options` are
+        selected.
+
+        `recursive` remove ACLs recursively, but do not traverse dataset
+        boundaries.
+
+        `traverse` remove ACLs from child datasets.
+        """
+        a = acl.ACL(file=path)
+        a.strip()
+        a.apply(path)
+
+        if mode:
+            os.chmod(path, mode)
+
+        if uid or gid:
+            os.chown(path, uid, gid) 
+
+        if not options['recurisve']:
+            return
+
+        winacl = subprocess.run([
+            '/usr/local/bin/winacl',
+            '-a', f"{'clone' if mode else 'strip'}",
+            '-O', uid, '-G', gid,
+            f"{'-rx' if options['traverse'] else '-r'}",
+            '-p', path], check=False
+        )
+        if winacl.returncode != 0:
+            raise CallError(f"Failed to recursively apply ACL: {winacl.stderr.decode()}")
 
     @accepts(
         Str('path'),

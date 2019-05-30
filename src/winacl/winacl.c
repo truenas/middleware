@@ -50,6 +50,7 @@ struct windows_acl_info {
 #define	WA_CLONE		0x00000008	/* clone an ACL */
 #define	WA_TRAVERSE		0x00000010	/* traverse filesystem mountpoints */
 #define	WA_PHYSICAL		0x00000020	/* do not follow symlinks */
+#define	WA_STRIP		0x00000040	/* strip ACL */
 
 /* default ACL entries if none are specified */
 #define	WA_DEFAULT_ACL		"owner@:rwxpDdaARWcCos:fd:allow,group@:rwxpDdaARWcCos:fd:allow,everyone@:rxaRc:fd:allow"
@@ -73,6 +74,7 @@ struct {
 	int action;
 } actions[] = {
 	{	"clone",	WA_CLONE	},
+	{	"strip",	WA_STRIP	},
 	{	"reset",	WA_RESET	}
 };
 
@@ -188,7 +190,7 @@ usage(char *path)
 	fprintf(stderr,
 		"Usage: %s [OPTIONS] ...\n"
 		"Where option is:\n"
-		"    -a <clone|reset> 		# action to perform\n"
+		"    -a <clone|reset|strip> 	# action to perform\n"
 		"    -O <owner>                	# change owner\n"
 		"    -G <group>                	# change group\n"
 		"    -s <source>         	# source (if cloning ACL). If none specified then ACL taken from -p\n"
@@ -260,7 +262,60 @@ remove_inherit_flags(acl_t *acl)
 }
 
 static int
-set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry)
+strip_acl(struct windows_acl_info *w, FTSENT *fts_entry)
+{
+	/*
+	 * Convert non-trivial ACL to trivial ACL.
+	 * This function is only called when action is set
+	 * to 'strip'. A trivial ACL is one that is fully
+	 * represented by the posix mode. If the goal is to
+	 * simply remove ACLs, it will generally be more
+	 * efficient to strip the ACL using setfacl -b
+	 * from the root directory and then use the 'clone'
+	 * action to set the ACL recursively.
+	 */
+	char *path;
+	acl_t acl_tmp, acl_new;
+
+	if (fts_entry == NULL) 
+		path = w->path;
+	else
+		path = fts_entry->fts_accpath;
+
+	if (w->flags & WA_VERBOSE)
+		fprintf(stdout, "%s\n", path);
+	acl_tmp = acl_get_file(path, ACL_TYPE_NFS4);
+	if (acl_tmp == NULL) {
+		warn("%s: acl_get_file() failed", path);
+		return (-1);
+	}
+ 	acl_new = acl_strip_np(acl_tmp, 0);	
+	if (acl_new == NULL) {
+		warn("%s: acl_strip_np() failed", path);
+		acl_free(acl_tmp);
+		return (-1);
+	}
+
+	if (acl_set_file(path, ACL_TYPE_NFS4, acl_new) < 0) {
+		warn("%s: acl_set_file() failed", path);
+		acl_free(acl_tmp);
+		acl_free(acl_new);
+		return (-1);
+	}
+	acl_free(acl_tmp);
+	acl_free(acl_new);
+
+	if (w->uid != -1 || w->gid != -1) {
+		if (chown(path, w->uid, w->gid) < 0) {
+			warn("%s: chown() failed", path);
+			return (-1);
+		}
+	}
+	return (0);
+}
+
+static int
+set_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 {
 	char *path;
 	char *buf;
@@ -307,7 +362,7 @@ fts_compare(const FTSENT * const *s1, const FTSENT * const *s2)
 
 
 static int
-set_windows_acls(struct windows_acl_info *w)
+set_acls(struct windows_acl_info *w)
 {
 	FTS *tree;
 	FTSENT *entry;
@@ -340,7 +395,7 @@ set_windows_acls(struct windows_acl_info *w)
 	for (rval = 0; (entry = fts_read(tree)) != NULL;) {
 		if ((w->flags & WA_RECURSIVE) == 0) {
 			if (entry->fts_level == FTS_ROOTLEVEL){
-				rval = set_windows_acl(w, entry);
+				rval = set_acl(w, entry);
 				break;
 			}
 		}
@@ -358,12 +413,14 @@ set_windows_acls(struct windows_acl_info *w)
 
 		switch (entry->fts_info) {
 			case FTS_D:
-				rval = set_windows_acl(w, entry);
-				break;	
-
 			case FTS_F:
-				rval = set_windows_acl(w, entry);
-				break;	
+				if (w->flags & WA_STRIP) {
+					rval = strip_acl(w, entry);
+				}
+				else {
+					rval = set_acl(w, entry);
+				}
+				break;
 
 			case FTS_ERR:
 				warnx("%s: %s", entry->fts_path, strerror(entry->fts_errno));
@@ -371,7 +428,7 @@ set_windows_acls(struct windows_acl_info *w)
 				continue;
 		}
 		if (rval < 0) {
-			err(EX_OSERR, "%s: set_windows_acl() failed", entry->fts_accpath);
+			err(EX_OSERR, "%s: set_acl() failed", entry->fts_accpath);
 			continue;
 		}
 
@@ -437,6 +494,7 @@ make_acls(struct windows_acl_info *w)
 static int
 clone_acls(struct windows_acl_info *w)
 {
+	int trivial = 0;
 	acl_t tmp_acl;
 	acl_entry_t entry, file_entry, dir_entry;
 	acl_permset_t permset;
@@ -445,6 +503,19 @@ clone_acls(struct windows_acl_info *w)
 	int ret = 0;
 	entry_id = f_entry_id = d_entry_id = ACL_FIRST_ENTRY;
 	must_set_facl = must_set_dacl = true;
+
+	/*
+	 * Short-circuit for trivial ACLs. If ACL is trivial,
+	 * assume that user does not want to apply ACL inheritance rules.
+	 */
+	if (acl_is_trivial_np(w->source_acl, &trivial) != 0) {
+		err(EX_OSERR, "acl_is_trivial_np() failed");
+	}
+	if (trivial) {
+		w->dacl = acl_dup(w->source_acl);
+		w->facl = acl_dup(w->source_acl);
+		return ret;
+	}
 
 	/* initialize separate directory and file ACLs */
 	if ((w->dacl = acl_init(ACL_MAX_ENTRIES)) == NULL) {
@@ -673,13 +744,14 @@ main(int argc, char **argv)
 			free_windows_acl_info(w);
 			return (1);
 		}
-	} else {
+	} 
+	else {
 		make_acls(w);
 	}
 
 	usage_check(w);
 
-	if (set_windows_acls(w) <0) {
+	if (set_acls(w) <0) {
 		ret = 1;
 	}
 

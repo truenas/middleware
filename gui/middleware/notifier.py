@@ -377,10 +377,6 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(path, bytes):
             path = path.decode('utf-8')
 
-        aclfile = os.path.join(path, ACL_WINDOWS_FILE)
-        if not os.path.exists(aclfile):
-            open(aclfile, 'a').close()
-
         winacl = "/usr/local/bin/winacl"
         args = "-a reset"
         if owner is not None:
@@ -416,31 +412,13 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(path, bytes):
             path = path.decode('utf-8')
 
-        winacl = os.path.join(path, ACL_WINDOWS_FILE)
-        macacl = os.path.join(path, ACL_MAC_FILE)
-        winexists = os.path.exists(winacl)
         with libzfs.ZFS() as zfs:
             zfs_dataset_name = zfs.get_dataset_by_path(path).name
 
-        if acl == 'windows':
-            if not winexists:
-                open(winacl, 'a').close()
-                winexists = True
-            if os.path.isfile(macacl):
-                os.unlink(macacl)
-        elif acl == 'mac':
-            if winexists:
-                os.unlink(winacl)
-            if not os.path.isfile(macacl):
-                open(macacl, 'a').close()
-        elif acl == 'unix':
-            if winexists:
-                os.unlink(winacl)
-                winexists = False
-            if os.path.isfile(macacl):
-                os.unlink(macacl)
+        with client as c:
+            stat = c.call('filesystem.stat', path)
 
-        if winexists:
+        if stat['acl']:
             self.zfs_set_option(zfs_dataset_name, "aclmode", "restricted", recursive)
             script = "/usr/local/bin/winacl"
             args = ''

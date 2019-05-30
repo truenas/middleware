@@ -481,13 +481,6 @@ class InitialWizard(CommonWizard):
                             _('Failed to create ZFS dataset: %s.') % e
                         )
 
-                    if share_purpose == 'afp':
-                        _n.change_dataset_share_type(dataset_name, 'mac')
-                    elif share_purpose == 'cifs':
-                        _n.change_dataset_share_type(dataset_name, 'windows')
-                    elif share_purpose == 'nfs':
-                        _n.change_dataset_share_type(dataset_name, 'unix')
-
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
                         if share_groupcreate:

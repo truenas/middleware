@@ -721,23 +721,6 @@ require([
         editbtn.placeAt(td);
     }
 
-    mpAclChange = function(acl) {
-      var mode_en = registry.byId("id_mp_mode_en");
-      var mode = registry.byId("id_mp_mode");
-      if(acl.get('value') === false) {
-        // do noting
-      } else if(acl.get('value') == 'unix') {
-        mode_en.set('disabled', false);
-        mode.set('disabled', false);
-      } else if(acl.get('value') == 'mac') {
-        mode_en.set('disabled', false);
-        mode.set('disabled', false);
-      } else {
-        mode_en.set('disabled', true);
-        mode.set('disabled', true);
-      }
-    }
-
     genericSelectFields = function(selectid, map) {
       /*
        * Show and hide fields base on the value of a single widget.
