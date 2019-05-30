@@ -1373,8 +1373,9 @@ class TunableForm(MiddlewareModelForm, ModelForm):
 
 
 class AlertServiceSettingsWidget(forms.Widget):
-    def __init__(self, allow_inherit):
+    def __init__(self, allow_inherit, prefix=''):
         self.allow_inherit = allow_inherit
+        self.prefix = prefix
 
         super().__init__()
 
@@ -1394,7 +1395,7 @@ class AlertServiceSettingsWidget(forms.Widget):
             html.append(f'<td>{source["title"]}</td>')
 
             html.append('<td>')
-            html.append(f'<select dojoType="dijit.form.Select" id="id_{name}_{source["name"]}" '
+            html.append(f'<select dojoType="dijit.form.Select" id="id_{self.prefix}{name}_{source["name"]}" '
                         f'name="{name}[{source["name"]}]">')
             options = [(policy, policy.title()) for policy in policies]
             if self.allow_inherit:
@@ -1432,7 +1433,7 @@ class AlertDefaultSettingsForm(MiddlewareModelForm, ModelForm):
     is_singletone = True
 
     settings = forms.CharField(
-        widget=AlertServiceSettingsWidget(allow_inherit=False),
+        widget=AlertServiceSettingsWidget(allow_inherit=False, prefix='alertdefaultsettings_'),
     )
 
     class Meta:
