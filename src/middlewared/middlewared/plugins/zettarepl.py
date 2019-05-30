@@ -10,7 +10,9 @@ import time
 
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
-from zettarepl.definition.definition import Definition
+from zettarepl.definition.definition import (
+    DefinitionErrors, PeriodicSnapshotTaskDefinitionError, ReplicationTaskDefinitionError, Definition
+)
 from zettarepl.observer import (
     PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
     ReplicationTaskScheduled, ReplicationTaskStart, ReplicationTaskSnapshotProgress, ReplicationTaskSnapshotSuccess,
@@ -95,7 +97,8 @@ class ZettareplProcess:
             handler.addFilter(LongStringsFilter())
             handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
 
-        definition = Definition.from_data(self.definition)
+        definition = Definition.from_data(self.definition, raise_on_error=False)
+        self.observer_queue.put(DefinitionErrors(definition.errors))
 
         clock = Clock()
         tz_clock = TzClock(definition.timezone, clock.now)
@@ -154,7 +157,9 @@ class ZettareplProcess:
             if command == "timezone":
                 self.zettarepl.scheduler.tz_clock.timezone = pytz.timezone(args)
             if command == "tasks":
-                self.zettarepl.set_tasks(Definition.from_data(args).tasks)
+                definition = Definition.from_data(args, raise_on_error=False)
+                self.observer_queue.put(DefinitionErrors(definition.errors))
+                self.zettarepl.set_tasks(definition.tasks)
             if command == "run_task":
                 class_name, task_id = args
                 for task in self.zettarepl.tasks:
@@ -179,6 +184,7 @@ class ZettareplService(Service):
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
         self.state = {}
+        self.definition_errors = {}
         self.last_snapshot = {}
         self.queue = None
         self.process = None
@@ -188,14 +194,19 @@ class ZettareplService(Service):
         return self.process is not None and self.process.is_alive()
 
     def get_state(self):
-        return {
+        state = {
             k: (
                 dict(v, last_snapshot=self.last_snapshot.get(k))
                 if k.startswith("replication_task_")
-                else v
+                else dict(v)
             )
             for k, v in self.state.items()
         }
+
+        for k, v in self.definition_errors.items():
+            state.setdefault(k, {}).update(v)
+
+        return state
 
     def start(self, definition=None):
         if definition is None:
@@ -372,8 +383,8 @@ class ZettareplService(Service):
             "replication-tasks": replication_tasks,
         }
 
-        # Test if validates
-        Definition.from_data(definition)
+        # Test if does not cause exceptions
+        Definition.from_data(definition, raise_on_error=False)
 
         return definition
 
@@ -437,6 +448,22 @@ class ZettareplService(Service):
             try:
                 self.logger.debug("Observer queue got %r", message)
 
+                if isinstance(message, DefinitionErrors):
+                    self.definition_errors = {}
+                    for error in message.errors:
+                        if isinstance(error, PeriodicSnapshotTaskDefinitionError):
+                            self.definition_errors[f"periodic_snapshot_{error.task_id}"] = {
+                                "state": "ERROR",
+                                "datetime": datetime.utcnow(),
+                                "error": str(error),
+                            }
+                        if isinstance(error, ReplicationTaskDefinitionError):
+                            self.definition_errors[f"replication_{error.task_id}"] = {
+                                "state": "ERROR",
+                                "datetime": datetime.utcnow(),
+                                "error": str(error),
+                            }
+
                 if isinstance(message, PeriodicSnapshotTaskStart):
                     self.state[f"periodic_snapshot_{message.task_id}"] = {
                         "state": "RUNNING",
@@ -453,6 +480,7 @@ class ZettareplService(Service):
                         "datetime": datetime.utcnow(),
                         "error": message.error,
                     }
+
                 if isinstance(message, ReplicationTaskScheduled):
                     self.state[f"replication_{message.task_id}"] = {
                         "state": "WAITING",
