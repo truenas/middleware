@@ -119,8 +119,6 @@ class UserService(CRUDService):
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
         )
-        for entry in result:
-            entry.update({'local': True})
         return await self.middleware.run_in_thread(
             filter_list, result, filters, options
         )
@@ -728,8 +726,6 @@ class GroupService(CRUDService):
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
         )
-        for entry in result:
-            entry.update({'local': True})
         return await self.middleware.run_in_thread(
             filter_list, result, filters, options
         )
