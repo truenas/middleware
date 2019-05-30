@@ -88,6 +88,12 @@ class UserService(CRUDService):
                 pass
         return user
 
+    @private
+    async def user_compress(self, user):
+        if 'local' in user:
+            user.pop('local')
+        return user
+
     @filterable
     async def query(self, filters=None, options=None):
         """
@@ -240,6 +246,7 @@ class UserService(CRUDService):
             data['uid'] = await self.get_next_uid()
 
         pk = None  # Make sure pk exists to rollback in case of an error
+        data = await self.user_compress(data)
         try:
             await self.__set_password(data)
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
@@ -385,6 +392,7 @@ class UserService(CRUDService):
             groups = user.pop('groups')
             await self.__set_groups(pk, groups)
 
+        user = await self.user_compress(user)
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
         await self.middleware.call('service.reload', 'user')
@@ -697,6 +705,12 @@ class GroupService(CRUDService):
         group['users'] += [gmu['id'] for gmu in await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_group_id', '=', group['id'])])]
         return group
 
+    @private
+    async def group_compress(self, group):
+        if 'local' in group:
+            group.pop('local')
+        return group
+
     @filterable
     async def query(self, filters=None, options=None):
         """
@@ -766,6 +780,7 @@ class GroupService(CRUDService):
 
         users = group.pop('users', [])
 
+        group = await self.group_compress(group)
         pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
 
         for user in users:
@@ -806,6 +821,7 @@ class GroupService(CRUDService):
         else:
             group.pop('name', None)
 
+        group = await self.group_compress(group)
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
 
         if 'users' in data:
