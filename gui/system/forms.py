@@ -1385,6 +1385,11 @@ class TunableForm(MiddlewareModelForm, ModelForm):
 
 
 class AlertClassesWidget(forms.Widget):
+    def __init__(self, prefix=''):
+        self.prefix = prefix
+
+        super().__init__()
+
     def render(self, name, value, attrs=None, renderer=None):
         value = value or {}
 
@@ -1401,7 +1406,7 @@ class AlertClassesWidget(forms.Widget):
             html.append(f'<td>{source["title"]}</td>')
 
             html.append('<td>')
-            html.append(f'<select dojoType="dijit.form.Select" id="id_{name}_{source["name"]}" '
+            html.append(f'<select dojoType="dijit.form.Select" id="id_{self.prefix}{name}_{source["name"]}" '
                         f'name="{name}[{source["name"]}]">')
             options = [(policy, policy.title()) for policy in policies]
             for k, v in options:
@@ -1437,7 +1442,7 @@ class AlertClassesForm(MiddlewareModelForm, ModelForm):
     is_singletone = True
 
     classes = forms.CharField(
-        widget=AlertClassesWidget(),
+        widget=AlertClassesWidget(prefix='alertclasses_'),
     )
 
     class Meta:
