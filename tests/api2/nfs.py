@@ -11,7 +11,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE
-from auto_config import ip, pool_name
+from auto_config import ip, pool_name, user, password
 from config import *
 
 if "BRIDGEHOST" in locals():
