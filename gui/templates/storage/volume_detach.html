@@ -25,7 +25,7 @@
     {% if attachments %}
     <tr>
         <td colspan="2">
-            {% trans "ATTENTION - Currently the following services depend on this volume: " %}
+            WARNING: The following services depend on <b>{{ volume.vol_name }}</b> and will be disrupted when the volume is detached:
             <ul style="margin: 0;">
                 {% for service in attachments %}
                     <li>
