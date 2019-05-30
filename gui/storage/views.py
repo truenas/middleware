@@ -723,15 +723,26 @@ def zpool_scrub(request, vid):
         )
     if request.method == "POST":
         with client as c:
+            pool_scan = c.call('pool.query', [['id', '=', int(vid)]], {'get': True})['scan']
+            scrub_progress = pool_scan['function'] == 'SCRUB' and pool_scan['state'] == 'RUNNING'
             if request.POST["action"] == "start":
-                c.call('pool.scrub', vid, 'START')
-                return JsonResp(request, message=_("The scrub process has been started"))
+                if not scrub_progress:
+                    c.call('pool.scrub', vid, 'START')
+                    return JsonResp(request, message=_("Scrub process started"))
+                else:
+                    return JsonResp(request, message=_('Scrub is already in progress'))
             elif request.POST["action"] == "stop":
-                c.call('pool.scrub', vid, 'STOP')
-                return JsonResp(request, message=_("The scrub process has been stopped"))
+                if scrub_progress:
+                    c.call('pool.scrub', vid, 'STOP')
+                    return JsonResp(request, message=_("Scrub process stopped"))
+                else:
+                    return JsonResp(request, message=_('No active scrub'))
             elif request.POST["action"] == "pause":
-                c.call('pool.scrub', vid, 'PAUSE')
-                return JsonResp(request, message=_("The scrub process has been paused"))
+                if scrub_progress:
+                    c.call('pool.scrub', vid, 'PAUSE')
+                    return JsonResp(request, message=_("Scrub paused"))
+                else:
+                    return JsonResp(request, message=_('No active scrub'))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
