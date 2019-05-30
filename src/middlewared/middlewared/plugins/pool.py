@@ -2350,24 +2350,6 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
-        job.set_progress(90, 'Ensuring correct ACL mode of datasets')
-
-        # Use subprocess instead of zfs plugin for speed reasons
-        cp = subprocess.run(
-            'zfs list -t filesystem -H -o name,aclmode,mountpoint | '
-            'awk \'$2 != "restricted" {print $0}\'',
-            shell=True, capture_output=True, text=True, check=False,
-        )
-        for line in cp.stdout.strip().split('\n'):
-            line = line.strip()
-            if not line:
-                continue
-            dataset, aclmode, mountpoint = line.split('\t')
-            if os.path.exists(f'{mountpoint}/.windows'):
-                self.middleware.call_sync('zfs.dataset.update', dataset, {'properties': {
-                    'aclmode': {'value': 'restricted'},
-                }})
-
         # Now that pools have been imported we are ready to configure system dataset,
         # collectd and syslogd which may depend on them.
         try:
@@ -2445,6 +2427,7 @@ class PoolDatasetService(CRUDService):
                 ('org.freenas:refquota_warning', 'refquota_warning', None),
                 ('org.freenas:refquota_critical', 'refquota_critical', None),
                 ('dedup', 'deduplication', str.upper),
+                ('aclmode', None, str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
                 ('exec', None, str.upper),
@@ -2471,13 +2454,6 @@ class PoolDatasetService(CRUDService):
                 if method:
                     dataset[i]['value'] = method(dataset[i]['value'])
             del dataset['properties']
-
-            if dataset['type'] == 'FILESYSTEM':
-                dataset['share_type'] = self.middleware.call_sync(
-                    'notifier.get_dataset_share_type', dataset['name'],
-                ).upper()
-            else:
-                dataset['share_type'] = None
 
             rv = []
             for child in dataset['children']:
@@ -2526,7 +2502,8 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
-        Str('share_type', enum=['UNIX', 'WINDOWS', 'MAC']),
+        Str('aclmode', default='PASSTHROUGH', enum=['PASSTHROUGH', 'RESTRICTED']),
+        Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         register=True,
     ))
     async def do_create(self, data):
@@ -2563,11 +2540,16 @@ class PoolDatasetService(CRUDService):
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
+        if data['share_type'] == 'SMB':
+            data['casesensitivity'] = 'INSENSITIVE'
+            data['aclmode'] = 'RESTRICTED'
+
         if verrors:
             raise verrors
 
         props = {}
         for i, real_name, transform in (
+            ('aclmode', None, str.lower),
             ('atime', None, str.lower),
             ('casesensitivity', None, str.lower),
             ('comments', 'org.freenas:description', None),
@@ -2606,19 +2588,15 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
-        if data['type'] == 'FILESYSTEM':
-            await self.middleware.call(
-                'notifier.change_dataset_share_type', data['name'], data.get('share_type', 'UNIX').lower()
-            )
-            if data.get('share_type', 'UNIX') == 'WINDOWS':
-                dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', data['id'])])
-                setacl_job = await self.middleware.call('filesystem.setacl', dataset[0]['mountpoint'], [
-                    {"tag": "owner@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
-                    {"tag": "group@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}}
-                ])
-                await setacl_job.wait()
-                if setacl_job.error:
-                    raise CallError(setacl_job.error)
+        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB':
+            dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', data['id'])])
+            setacl_job = await self.middleware.call('filesystem.setacl', dataset[0]['mountpoint'], [
+                {"tag": "owner@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
+                {"tag": "group@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}}
+            ])
+            await setacl_job.wait()
+            if setacl_job.error:
+                raise CallError(setacl_job.error)
 
         return await self._get_instance(data['id'])
 
@@ -2632,6 +2610,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'type'}),
         ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
+        ('rm', {'name': 'share_type'}), # This is something we should only do at create time
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
@@ -2687,6 +2666,7 @@ class PoolDatasetService(CRUDService):
 
         props = {}
         for i, real_name, transform, inheritable in (
+            ('aclmode', None, str.lower, True),
             ('atime', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
             ('sync', None, str.lower, True),
@@ -2717,11 +2697,7 @@ class PoolDatasetService(CRUDService):
 
         rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
 
-        if data['type'] == 'FILESYSTEM' and 'share_type' in data:
-            await self.middleware.call(
-                'notifier.change_dataset_share_type', id, data['share_type'].lower()
-            )
-        elif data['type'] == 'VOLUME' and 'volsize' in data:
+        if data['type'] == 'VOLUME' and 'volsize' in data:
             if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
                 await self._service_change('iscsitarget', 'reload')
 
@@ -2752,7 +2728,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
 
             for i in (
-                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'share_type',
+                'aclmode', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'optimize_for_smb',
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
@@ -2851,7 +2827,7 @@ class PoolDatasetService(CRUDService):
             Str('user'),
             Str('group'),
             UnixPerm('mode'),
-            Str('acl', enum=['UNIX', 'MAC', 'WINDOWS'], default='UNIX'),
+            Bool('acl', default=False),
             Bool('recursive', default=False),
         ),
     )
@@ -2885,7 +2861,7 @@ class PoolDatasetService(CRUDService):
         acl = data['acl']
         verrors = ValidationErrors()
 
-        if (acl == 'UNIX' or acl == 'MAC') and mode is None:
+        if not acl and mode is None:
             verrors.add('pool_dataset_permission.mode',
                         'This field is required')
 
@@ -2893,7 +2869,7 @@ class PoolDatasetService(CRUDService):
             raise verrors
 
         await self.middleware.call('notifier.mp_change_permission', path, user,
-                                   group, mode, recursive, acl.lower())
+                                   group, mode, recursive, acl)
         return data
 
     @accepts(Str('pool'))

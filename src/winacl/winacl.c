@@ -288,7 +288,7 @@ strip_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 	char *path;
 	acl_t acl_tmp, acl_new;
 
-	if (fts_entry == NULL) 
+	if (fts_entry == NULL)
 		path = w->path;
 	else
 		path = fts_entry->fts_accpath;
@@ -300,7 +300,7 @@ strip_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 		warn("%s: acl_get_file() failed", path);
 		return (-1);
 	}
- 	acl_new = acl_strip_np(acl_tmp, 0);	
+	acl_new = acl_strip_np(acl_tmp, 0);
 	if (acl_new == NULL) {
 		warn("%s: acl_strip_np() failed", path);
 		acl_free(acl_tmp);
@@ -532,7 +532,7 @@ calculate_inherited_acl(struct windows_acl_info *w, acl_t *parent_acl, int level
 	 * information loss), then apply the mode recursively. If the ACL
 	 * is non-trivial, then user intention is less clear and so error
 	 * out.
-	 * 
+	 *
 	 * Currently, nfsv41 inheritance is not implemented.
 	 */
 	int trivial = 0;
@@ -671,10 +671,48 @@ calculate_inherited_acl(struct windows_acl_info *w, acl_t *parent_acl, int level
 	return (ret);
 }
 
+static uid_t    id(const char *, const char *);
+
+static gid_t
+a_gid(const char *s)
+{
+	struct group *gr;
+
+	if (*s == '\0')                 /* Argument was "uid[:.]". */
+		return -1;
+	return ((gr = getgrnam(s)) != NULL) ? gr->gr_gid : id(s, "group");
+}
+
+static uid_t
+a_uid(const char *s)
+{
+	struct passwd *pw;
+
+	if (*s == '\0')                 /* Argument was "[:.]gid". */
+		return -1;
+	return ((pw = getpwnam(s)) != NULL) ? pw->pw_uid : id(s, "user");
+}
+
+static uid_t
+id(const char *name, const char *type)
+{
+	uid_t val;
+	char *ep;
+
+	/*
+	 * We know that uid_t's and gid_t's are unsigned longs.
+	 */
+	errno = 0;
+	val = strtoul(name, &ep, 10);
+	if (errno || *ep != '\0')
+		errx(1, "%s: illegal %s name", name, type);
+	return (val);
+}
+
 int
 main(int argc, char **argv)
 {
-	int 	ch, ret, i;
+	int 	ch, ret;
 	struct 	windows_acl_info *w;
 	acl_t	source_acl;
 	char *p = argv[0];
@@ -718,18 +756,12 @@ main(int argc, char **argv)
 				}
 
 				case 'O': {
-					struct passwd *p = getpwnam(optarg);
-					if (p == NULL)
-						errx(EX_OSERR, "getpwnam() failed");
-					w->uid = p->pw_uid;
+					w->uid = a_uid(optarg);
 					break;
 				}
 
 				case 'G': {
-					struct group *g = getgrnam(optarg);
-					if (g == NULL)
-						errx(EX_OSERR, "getgrnam() failed");
-					w->gid = g->gr_gid;
+					w->gid = a_gid(optarg);
 					break;
 				}
 
@@ -798,7 +830,7 @@ main(int argc, char **argv)
 			free_windows_acl_info(w);
 			return (1);
 		}
-	} 
+	}
 	else {
 		make_acls(w);
 	}

@@ -475,6 +475,7 @@ class InitialWizard(CommonWizard):
                             c.call('pool.dataset.create', {
                                 'name': dataset_name,
                                 'type': 'FILESYSTEM',
+                                'share_type': 'SMB' if share_purpose == 'cifs' else 'GENERIC',
                             })
                     except ClientException as e:
                         raise MiddlewareError(
@@ -814,12 +815,10 @@ class InitialWizard(CommonWizard):
             if share_purpose == 'iscsitarget':
                 continue
 
-            if share_purpose == 'afp':
-                share_acl = 'mac'
-            elif share_purpose == 'cifs':
-                share_acl = 'windows'
+            if share_purpose == 'cifs':
+                share_acl = True
             else:
-                share_acl = 'unix'
+                share_acl = False
 
             _n.mp_change_permission(
                 path='/mnt/%s/%s' % (volume_name, share_name),

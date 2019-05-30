@@ -919,7 +919,7 @@ class SharingSMBService(CRUDService):
                 },
             ])
 
-        await self.middleware.call('filesystem.setacl', path, acl, {'recursive': True, 'traverse': True})
+        await self.middleware.call('filesystem.setacl', path, acl, -1, -1, {'recursive': True, 'traverse': True})
 
     @private
     async def generate_vuid(self, timemachine, vuid=""):

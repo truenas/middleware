@@ -68,7 +68,7 @@ class FilesystemService(Service):
             rv.append(data)
         return filter_list(rv, filters=filters or [], options=options or {})
 
-    @private
+    @accepts(Str('path'))
     def stat(self, path):
         """
         Return the filesystem stat(2) for a given `path`.
@@ -299,48 +299,69 @@ class FilesystemService(Service):
 
     @accepts(
         Str('path'),
-        Int('mode'),
+        Str('mode'),
         Int('uid', default=-1),
         Int('gid', default=-1),
         Dict(
             'options',
+            Bool('stripacl', default=False),
             Bool('recursive', default=False),
             Bool('traverse', default=False),
         )
     )
-    @job(lock=lambda args: f'setacl:{args[0]}')
-    def stripacl(self, job, path, newmode=None, options=None):
+    @job(lock=lambda args: f'setperm:{args[0]}')
+    def setperm(self, job, path, mode=None, uid=-1, gid=-1, options=None):
         """
         Remove extended ACL from specified path.
 
-        If `newmode` is specified then the mode will be applied to the
+        If `mode` is specified then the mode will be applied to the
         path and files and subdirectories depending on which `options` are
-        selected.
+        selected. Mode should be formatted as string representation of octal
+        permissions bits.
+
+        `stripacl` setperm will fail if an extended ACL is present on `path`,
+        unless `stripacl` is set to True.
 
         `recursive` remove ACLs recursively, but do not traverse dataset
         boundaries.
 
         `traverse` remove ACLs from child datasets.
+
+        If no `mode` is set, and `stripacl` is True, then non-trivial ACLs
+        will be converted to trivial ACLs. An ACL is trivial if it can be
+        expressed as a file mode without losing any access rules.
+
         """
+        if not os.path.exists(path):
+            raise CallError('Path not found.', errno.ENOENT)
+
+        acl_is_trivial = self.middleware.call_sync('filesystem.acl_is_trivial', path)
+        if not acl_is_trivial and not options.get('stripacl', False):
+            CallError(
+                f'Non-trivial ACL present on [{path}]. Option "stripacl" required to change permission'
+            )
+
+        mode = int(mode,8) if mode else None
         a = acl.ACL(file=path)
         a.strip()
         a.apply(path)
 
+        self.logger.debug(f'Mode: {mode}')
         if mode:
             os.chmod(path, mode)
 
         if uid or gid:
-            os.chown(path, uid, gid) 
+            os.chown(path, uid, gid)
 
-        if not options['recurisve']:
+        if not options['recursive']:
             return
 
         winacl = subprocess.run([
             '/usr/local/bin/winacl',
             '-a', f"{'clone' if mode else 'strip'}",
-            '-O', uid, '-G', gid,
+            '-O', str(uid), '-G', str(gid),
             f"{'-rx' if options['traverse'] else '-r'}",
-            '-p', path], check=False
+            '-p', path], check=False, capture_output=True
         )
         if winacl.returncode != 0:
             raise CallError(f"Failed to recursively apply ACL: {winacl.stderr.decode()}")
@@ -457,6 +478,8 @@ class FilesystemService(Service):
             ],
             default=[]
         ),
+        Int('uid', default=-1),
+        Int('gid', default=-1),
         Dict(
             'options',
             Bool('stripacl', default=False),
@@ -465,12 +488,16 @@ class FilesystemService(Service):
         )
     )
     @job(lock=lambda args: f'setacl:{args[0]}')
-    def setacl(self, job, path, dacl, options):
+    def setacl(self, job, path='', dacl=[], uid=-1, gid=-1, options=None):
         """
         Set ACL of a given path. Takes the following parameters:
         `path` full path to directory or file.
 
         `dacl` "simplified" ACL here or a full ACL.
+
+        `uid` the desired UID of the file user. If set to -1, then UID is not changed.
+
+        `gid` the desired GID of the file group. If set to -1 then GID is not changed.
 
         `recursive` apply the ACL recursively
 
@@ -533,14 +560,12 @@ class FilesystemService(Service):
 
         winacl = subprocess.run([
             '/usr/local/bin/winacl',
-            '-a', 'clone',
+            '-a', 'clone', '-O', str(uid), '-G', str(gid),
             f"{'-rx' if options['traverse'] else '-r'}",
-            '-p', path], check=False
+            '-p', path], check=False, capture_output=True
         )
         if winacl.returncode != 0:
             raise CallError(f"Failed to recursively apply ACL: {winacl.stderr.decode()}")
-
-        return True
 
 
 class FileFollowTailEventSource(EventSource):

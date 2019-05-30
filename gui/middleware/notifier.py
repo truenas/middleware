@@ -364,41 +364,20 @@ class notifier(metaclass=HookMetaclass):
 
         return ret
 
-    def winacl_reset(self, path, owner=None, group=None, exclude=None, recursive=True):
-        if exclude is None:
-            exclude = []
-
-        if isinstance(owner, bytes):
-            owner = owner.decode('utf-8')
-
-        if isinstance(group, bytes):
-            group = group.decode('utf-8')
-
-        if isinstance(path, bytes):
-            path = path.decode('utf-8')
-
-        winacl = "/usr/local/bin/winacl"
-        args = "-a reset"
-        if owner is not None:
-            args = "%s -O '%s'" % (args, owner)
-        if group is not None:
-            args = "%s -G '%s'" % (args, group)
-        apply_paths = exclude_path(path, exclude)
-        apply_paths = [(y, f' {"-r " if recursive else ""}') for y in apply_paths]
-        if len(apply_paths) > 1:
-            apply_paths.insert(0, (path, ''))
-        for apath, flags in apply_paths:
-            fargs = args + "%s -p '%s'" % (flags, apath)
-            cmd = "%s %s" % (winacl, fargs)
-            log.debug("winacl_reset: cmd = %s", cmd)
-            self._system(cmd)
-
     def mp_change_permission(self, path='/mnt', user=None, group=None,
-                             mode=None, recursive=False, acl='unix',
+                             mode=None, recursive=False, acl=False,
                              exclude=None):
 
         if exclude is None:
             exclude = []
+
+        if path == '/mnt/':
+            return
+
+        """
+        UID / GID of -1 will preserve the current User and Group.
+        """
+        uid = gid = -1
 
         if isinstance(group, bytes):
             group = group.decode('utf-8')
@@ -412,52 +391,51 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(path, bytes):
             path = path.decode('utf-8')
 
-        with libzfs.ZFS() as zfs:
-            zfs_dataset_name = zfs.get_dataset_by_path(path).name
+        if user:
+            with client as c:
+                uid = (c.call('dscache.get_uncached_user', user))['pw_uid']
 
-        with client as c:
-            stat = c.call('filesystem.stat', path)
+        if group:
+            with client as c:
+                gid = (c.call('dscache.get_uncached_group', group))['gr_gid']
 
-        if stat['acl']:
-            self.zfs_set_option(zfs_dataset_name, "aclmode", "restricted", recursive)
-            script = "/usr/local/bin/winacl"
-            args = ''
-            if user is not None:
-                args += " -O '%s'" % user
-            if group is not None:
-                args += " -G '%s'" % group
-            args += " -a reset "
-            if recursive:
-                apply_paths = exclude_path(path, exclude)
-                apply_paths = [(y, ' -r ') for y in apply_paths]
-                if len(apply_paths) > 1:
-                    apply_paths.insert(0, (path, ''))
-            else:
-                apply_paths = [(path, '')]
-            for apath, flags in apply_paths:
-                fargs = args + "%s -p '%s'" % (flags, apath)
-                cmd = "%s %s" % (script, fargs)
-                log.debug("XXX: CMD = %s", cmd)
-                self._system(cmd)
+        if acl:
+            with client as c:
+                c.call(
+                    'filesystem.setacl',
+                    path,
+                    [
+                        {
+                            "tag": "owner@",
+                            "id": None,
+                            "type": "ALLOW",
+                            "perms": {"BASIC": "FULL_CONTROL"},
+                            "flags": {"BASIC": "INHERIT"}
+                        },
+                        {
+                            "tag": "group@",
+                            "id": None,
+                            "type": "ALLOW",
+                            "perms": {"BASIC": "FULL_CONTROL"},
+                            "flags": {"BASIC": "INHERIT"}
+                        }
+                    ],
+                    uid,
+                    gid,
+                    {'recursive':True, 'traverse': recursive}
+                )
 
         else:
-            self.zfs_set_option(zfs_dataset_name, "aclmode", "passthrough", recursive)
-            if recursive:
-                apply_paths = exclude_path(path, exclude)
-                apply_paths = [(y, '-R') for y in apply_paths]
-                if len(apply_paths) > 1:
-                    apply_paths.insert(0, (path, ''))
-            else:
-                apply_paths = [(path, '')]
-            for apath, flags in apply_paths:
-                if user is not None and group is not None:
-                    self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, apath))
-                elif user is not None:
-                    self._system("/usr/sbin/chown %s '%s' '%s'" % (flags, user, apath))
-                elif group is not None:
-                    self._system("/usr/sbin/chown %s :'%s' '%s'" % (flags, group, apath))
-                if mode is not None:
-                    self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
+            with client as c:
+                c.call(
+                     'filesystem.setperm',
+                     path,
+                     kwargs['mode'],
+                     uid,
+                     gid,
+                     {'recursive':True, 'traverse': recursive}
+                )
+                return True
 
     def change_upload_location(self, path):
         vardir = "/var/tmp/firmware"
@@ -898,70 +876,6 @@ class notifier(metaclass=HookMetaclass):
         if sysc:
             return sysc[0].value
         raise ValueError(name)
-
-    def dataset_init_unix(self, dataset):
-        """path = "/mnt/%s" % dataset"""
-        pass
-
-    def dataset_init_windows_meta_file(self, dataset):
-        path = "/mnt/%s" % dataset
-        with open("%s/.windows" % path, "w") as f:
-            f.close()
-
-    def dataset_init_windows(self, dataset):
-        acl = [
-            "owner@:rwxpDdaARWcCos:fd:allow",
-            "group@:rwxpDdaARWcCos:fd:allow",
-            "everyone@:rxaRc:fd:allow"
-        ]
-
-        self.dataset_init_windows_meta_file(dataset)
-
-        path = "/mnt/%s" % dataset
-        for ace in acl:
-            self._pipeopen("/bin/setfacl -m '%s' '%s'" % (ace, path)).wait()
-
-    def dataset_init_apple_meta_file(self, dataset):
-        path = "/mnt/%s" % dataset
-        with open("%s/.apple" % path, "w") as f:
-            f.close()
-
-    def dataset_init_apple(self, dataset):
-        self.dataset_init_apple_meta_file(dataset)
-
-    def get_dataset_share_type(self, dataset):
-        share_type = "unix"
-
-        path = "/mnt/%s" % dataset
-        if os.path.exists("%s/.windows" % path):
-            share_type = "windows"
-        elif os.path.exists("%s/.apple" % path):
-            share_type = "mac"
-
-        return share_type
-
-    def change_dataset_share_type(self, dataset, changeto):
-        share_type = self.get_dataset_share_type(dataset)
-
-        if changeto == "windows":
-            self.dataset_init_windows_meta_file(dataset)
-            self.zfs_set_option(dataset, "aclmode", "restricted")
-
-        elif changeto == "mac":
-            self.dataset_init_apple_meta_file(dataset)
-            self.zfs_set_option(dataset, "aclmode", "passthrough")
-
-        else:
-            self.zfs_set_option(dataset, "aclmode", "passthrough")
-
-        path = None
-        if share_type == "mac" and changeto != "mac":
-            path = "/mnt/%s/.apple" % dataset
-        elif share_type == "windows" and changeto != "windows":
-            path = "/mnt/%s/.windows" % dataset
-
-        if path and os.path.exists(path):
-            os.unlink(path)
 
     def pwenc_encrypt(self, text):
         if isinstance(text, bytes):
