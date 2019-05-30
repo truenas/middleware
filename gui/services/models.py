@@ -647,6 +647,10 @@ class iSCSITargetExtent(Model):
     iscsi_target_extent_legacy = models.BooleanField(
         default=False,
     )
+    iscsi_target_extent_enabled = models.BooleanField(
+        verbose_name=_("Enabled"),
+        default=True,
+    )
 
     class Meta:
         verbose_name = _("Extent")

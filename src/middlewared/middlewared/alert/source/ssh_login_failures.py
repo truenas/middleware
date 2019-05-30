@@ -62,7 +62,7 @@ class SSHLoginFailuresAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "SSH Login Failures"
-    text = "%(count)s SSH login failures:\n%(failures)s"
+    text = "%(count)d SSH login failures:\n%(failures)s"
 
 
 class SSHLoginFailuresAlertSource(ThreadedAlertSource):

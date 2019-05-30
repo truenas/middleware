@@ -479,6 +479,10 @@ def mp_permission(request, path):
 def dataset_delete(request, name):
     with client as c:
         datasets = c.call("pool.dataset.query", [["name", "=", name]], {"get": True})["children"]
+        try:
+            attachments = c.call('pool.dataset.attachments', name)
+        except Exception:
+            attachments = []
     if request.method == 'POST':
         form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
         if not form.is_valid() or form.done() is False:
@@ -492,6 +496,7 @@ def dataset_delete(request, name):
         'name': name,
         'form': form,
         'datasets': datasets,
+        'attachments': attachments,
     })
 
 
@@ -667,17 +672,17 @@ def volume_detach(request, vid):
     usedbytes = volume._get_used_bytes()
     usedsize = humanize_size(usedbytes) if usedbytes else None
     with client as c:
-        services = {
-            key: val
-            for key, val in list(c.call('pool.attachments', volume.id).items()) if len(val) > 0
-        }
+        try:
+            attachments = c.call('pool.attachments', volume.id)
+        except Exception:
+            attachments = []
     if volume.vol_encrypt > 0:
         request.session["allow_gelikey"] = True
     if request.method == "POST":
         form = forms.VolumeExport(
             request.POST,
             instance=volume,
-            services=services)
+            attachments=attachments)
         if form.is_valid():
             _n = notifier()
             if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
@@ -703,13 +708,13 @@ def volume_detach(request, vid):
                     message=e.value,
                     events=["serviceFailed(\"%s\")" % e.service])
     else:
-        form = forms.VolumeExport(instance=volume, services=services)
+        form = forms.VolumeExport(instance=volume, attachments=attachments)
     return render(request, 'storage/volume_detach.html', {
         'standby_offline': standby_offline,
         'volume': volume,
         'form': form,
         'used': usedsize,
-        'services': services,
+        'attachments': attachments,
     })
 
 

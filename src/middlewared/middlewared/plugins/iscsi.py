@@ -1,12 +1,14 @@
 from lxml import etree
 
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
 from middlewared.service import (
     CallError, CRUDService, SystemServiceService, ValidationErrors, filterable, private
 )
 from middlewared.utils import filter_list, run
+from middlewared.utils.path import is_child
 from middlewared.validators import IpAddress, Range
 
 import bidict
@@ -129,6 +131,21 @@ class ISCSIGlobalService(SystemServiceService):
             return True
 
         return (await self.middleware.call('iscsi.global.config'))['alua']
+
+    @private
+    async def terminate_luns_for_pool(self, pool_name):
+        cp = await run(['ctladm', 'devlist', '-b', 'block', '-x'], check=False, encoding='utf8')
+        for lun in etree.fromstring(cp.stdout).xpath('//lun'):
+            lun_id = lun.attrib['id']
+
+            try:
+                path = lun.xpath('//file')[0].text
+            except IndexError:
+                continue
+
+            if path.startswith(f'/dev/zvol/{pool_name}/'):
+                self.logger.info('Terminating LUN %s (%s)', lun_id, path)
+                await run(['ctladm', 'remove', '-b', 'block', '-l', lun_id], check=False)
 
 
 class ISCSIPortalService(CRUDService):
@@ -513,6 +530,7 @@ class iSCSITargetExtentService(CRUDService):
         Str('rpm', enum=['UNKNOWN', 'SSD', '5400', '7200', '10000', '15000'],
             default='SSD'),
         Bool('ro'),
+        Bool('enabled', default=True),
         register=True
     ))
     async def do_create(self, data):
@@ -1436,3 +1454,55 @@ class iSCSITargetToExtentService(CRUDService):
                 f'{schema_name}.target',
                 'Extent is already in this target.'
             )
+
+
+class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'iscsi'
+    title = 'iSCSI Extent'
+    service = 'iscsitarget'
+
+    async def query(self, path, enabled):
+        results = []
+        for extent in await self.middleware.call('iscsi.extent.query', [['type', '=', 'DISK'],
+                                                                        ['enabled', '=', enabled]]):
+            if is_child(extent['path'], os.path.join('zvol', os.path.relpath(path, '/mnt'))):
+                results.append(extent)
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['name']
+
+    async def delete(self, attachments):
+        lun_ids = []
+        for attachment in attachments:
+            for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
+                await self.middleware.call('datastore.delete', 'services.iscsitargettoextent', te['id'])
+                lun_ids.append(te['lunid'])
+
+            await self.middleware.call('datastore.delete', 'services.iscsitargetextent', attachment['id'])
+
+        await self._service_change('iscsitarget', 'reload')
+
+        for lun_id in lun_ids:
+            await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
+
+    async def toggle(self, attachments, enabled):
+        lun_ids = []
+        for attachment in attachments:
+            for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
+                await self.middleware.call('datastore.delete', 'services.iscsitargettoextent', te['id'])
+                lun_ids.append(te['lunid'])
+
+            await self.middleware.call('datastore.update', 'services.iscsitargetextent', attachment['id'],
+                                       {'iscsi_target_extent_enabled': enabled})
+
+        await self._service_change('iscsitarget', 'reload')
+
+        if not enabled:
+            for lun_id in lun_ids:
+                await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
+
+
+async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', ISCSIFSAttachmentDelegate(middleware))

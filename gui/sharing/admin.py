@@ -36,6 +36,7 @@ class AFPShareFAdmin(BaseFreeAdmin):
         'afp_name',
         'afp_comment',
         'afp_path',
+        'afp_enabled',
     )
     resource_name = 'sharing/afp'
 
@@ -65,7 +66,8 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_path',
         'cifs_ro',
         'cifs_browsable',
-        'cifs_guestok'
+        'cifs_guestok',
+        'cifs_enabled',
     )
     resource_mixin = CIFSResourceMixin
 
@@ -112,7 +114,8 @@ class NFSShareFAdmin(BaseFreeAdmin):
         'nfs_paths',
         'nfs_comment',
         'nfs_alldirs',
-        'nfs_ro'
+        'nfs_ro',
+        'nfs_enabled',
     )
 
     def get_datagrid_columns(self):

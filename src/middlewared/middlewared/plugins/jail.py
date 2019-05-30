@@ -20,6 +20,7 @@ from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage_lib.ioc_list import IOCList
 
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError, ValidationErrors
@@ -1160,6 +1161,44 @@ async def __event_system(middleware, event_type, args):
             await middleware.call('jail.stop_on_shutdown')
 
 
-def setup(middleware):
+class JailFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'jail'
+    title = 'Jail'
+
+    async def query(self, path, enabled):
+        results = []
+        pool_name = os.path.relpath(path, '/mnt').split('/')[0]
+        try:
+            activated_pool = await self.middleware.call('jail.get_activated_pool')
+        except Exception:
+            pass
+        else:
+            if activated_pool == pool_name:
+                for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
+                    results.append({'id': j['host_hostuuid']})
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['id']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            try:
+                await self.middleware.call('jail.stop', attachment['id'])
+            except Exception:
+                self.middleware.logger.warning('Unable to jail.stop %r', attachment['id'], exc_info=True)
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            action = 'jail.start' if enabled else 'jail.stop'
+            try:
+                await self.middleware.call(action, attachment['id'])
+            except Exception:
+                self.middleware.logger.warning('Unable to %s %r', action, attachment['id'], exc_info=True)
+
+
+async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', JailFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.pre_lock', jail_pool_pre_lock)
     middleware.event_subscribe('system', __event_system)

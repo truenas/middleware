@@ -2397,9 +2397,9 @@ class VolumeExport(Form):
 
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
-        services = kwargs.pop('services', {})
+        attachments = kwargs.pop('attachments', [])
         super(VolumeExport, self).__init__(*args, **kwargs)
-        if list(services.keys()):
+        if attachments:
             self.fields['cascade'] = forms.BooleanField(
                 initial=True,
                 required=False,

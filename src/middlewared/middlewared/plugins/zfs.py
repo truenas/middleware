@@ -133,7 +133,10 @@ class ZFSPoolService(CRUDService):
             with libzfs.ZFS() as zfs:
                 zfs.destroy(name, force=options['force'])
         except libzfs.ZFSException as e:
-            raise CallError(str(e))
+            errno_ = errno.EFAULT
+            if e.code == libzfs.Error.UMOUNTFAILED:
+                errno_ = errno.EBUSY
+            raise CallError(str(e), errno_)
 
     @accepts(Str('pool', required=True))
     def upgrade(self, pool):
@@ -573,7 +576,11 @@ class ZFSDatasetService(CRUDService):
             )
         except subprocess.CalledProcessError as e:
             self.logger.error('Failed to delete dataset', exc_info=True)
-            raise CallError(f'Failed to delete dataset: {e.stderr.strip()}')
+            error = e.stderr.strip()
+            errno_ = errno.EFAULT
+            if "Device busy" in error:
+                errno_ = errno.EBUSY
+            raise CallError(f'Failed to delete dataset: {error}', errno_)
 
     @accepts(Str('name'), Dict('options', Bool('recursive', default=False)))
     def mount(self, name, options):

@@ -1,9 +1,11 @@
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, private, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
+from middlewared.utils.path import is_child
 
 import asyncio
 import codecs
@@ -612,6 +614,7 @@ class SharingSMBService(CRUDService):
         Bool('shadowcopy', default=False),
         Str('auxsmbconf'),
         Bool('default_permissions'),
+        Bool('enabled', default=True),
         register=True
     ))
     async def do_create(self, data):
@@ -985,5 +988,40 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'cifs'))
 
 
+class SMBFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'smb'
+    title = 'SMB Share'
+    service = 'cifs'
+
+    async def query(self, path, enabled):
+        results = []
+        for smb in await self.middleware.call('sharing.smb.query', [['enabled', '=', enabled]]):
+            if is_child(smb['path'], path):
+                results.append(smb)
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['name']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', 'sharing.cifs_share', attachment['id'])
+
+        await self._service_change('cifs', 'reload')
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call('datastore.update', 'sharing.cifs_share', attachment['id'],
+                                       {'cifs_enabled': enabled})
+
+        await self._service_change('cifs', 'reload')
+
+        if not enabled:
+            for attachment in attachments:
+                await run(['smbcontrol', 'smbd', 'close-share', attachment['name']], check=False)
+
+
 async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)

@@ -13,6 +13,7 @@ import tempfile
 import uuid
 
 import bsd
+import psutil
 
 from libzfs import ZFSException
 from middlewared.job import JobProgressBuffer
@@ -23,6 +24,7 @@ from middlewared.service import (
 )
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.shell import join_commandline
 from middlewared.validators import Range, Time
 
 logger = logging.getLogger(__name__)
@@ -1750,6 +1752,7 @@ class PoolService(CRUDService):
         Str('guid', required=True),
         Str('name'),
         Str('passphrase', private=True),
+        Bool('enable_attachments'),
     ))
     @job(lock='import_pool', pipes=['input'], check_pipes=False)
     async def import_pool(self, job, data):
@@ -1758,8 +1761,11 @@ class PoolService(CRUDService):
 
         If a `name` is specified the pool will be imported using that new name.
 
-        `devices` is required while importing an encrypted pool. In that case this method needs to
+        `passphrase` is required while importing an encrypted pool. In that case this method needs to
         be called using /_upload/ endpoint with the encryption key.
+
+        If `enable_attachments` is set to true, attachments that were disabled during pool export will be
+        re-enabled.
 
         Errors:
             ENOENT - Pool not found
@@ -1848,6 +1854,17 @@ class PoolService(CRUDService):
             if passfile:
                 os.unlink(passfile)
             raise
+
+        key = f'pool:{pool["name"]}:enable_on_import'
+        if await self.middleware.call('keyvalue.has_key', key):
+            for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
+                for delegate in PoolDatasetService.attachment_delegates:
+                    if delegate.name == name:
+                        attachments = await delegate.query(pool['path'], False)
+                        attachments = [attachment for attachment in attachments if attachment['id'] in ids]
+                        if attachments:
+                            await delegate.toggle(attachments, True)
+            await self.middleware.call('keyvalue.delete', key)
 
         await self.middleware.call('service.reload', 'disk')
         await self.middleware.call_hook('pool.post_import_pool', pool)
@@ -2007,6 +2024,7 @@ class PoolService(CRUDService):
         Dict(
             'options',
             Bool('cascade', default=False),
+            Bool('restart_services', default=False),
             Bool('destroy', default=False),
         ),
     )
@@ -2015,7 +2033,8 @@ class PoolService(CRUDService):
         """
         Export pool of `id`.
 
-        `cascade` will remove all attachments of the given pool (`pool.attachments`).
+        `cascade` will delete all attachments of the given pool (`pool.attachments`).
+        `restart_services` will restart services that have open files on given pool.
         `destroy` will also PERMANENTLY destroy the pool/data.
 
         .. examples(websocket)::
@@ -2035,21 +2054,35 @@ class PoolService(CRUDService):
         """
         pool = await self._get_instance(oid)
 
-        job.set_progress(5, 'Retrieving pool attachments')
-        attachments = await self.__attachments(pool)
-        if options['cascade']:
-            job.set_progress(10, 'Deleting pool attachments')
-            await self.__delete_attachments(attachments, pool)
+        enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
+        enable_on_import = {}
+        if not options['cascade']:
+            if await self.middleware.call('keyvalue.has_key', enable_on_import_key):
+                enable_on_import = await self.middleware.call('keyvalue.get', enable_on_import_key)
 
-        job.set_progress(20, 'Stopping VMs using this pool (if any)')
-        # If there is any guest vm attached to this volume, we stop them
-        await self.middleware.call('vm.stop_by_pool', pool['name'], True)
+        for i, delegate in enumerate(PoolDatasetService.attachment_delegates):
+            job.set_progress(
+                i, f'{"Deleting" if options["cascade"] else "Disabling"} pool attachments: {delegate.title}')
 
-        job.set_progress(30, 'Stopping jails using this pool (if any)')
-        activated_pool = await self.middleware.call('jail.get_activated_pool')
-        if activated_pool == pool['name']:
-            for jail_host in attachments['jails']:
-                await self.middleware.call('jail.stop', jail_host)
+            attachments = await delegate.query(pool['path'], True)
+            if attachments:
+                if options["cascade"]:
+                    await delegate.delete(attachments)
+                else:
+                    await delegate.toggle(attachments, False)
+                    enable_on_import[delegate.name] = list(
+                        set(enable_on_import.get(delegate.name, [])) |
+                        {attachment['id'] for attachment in attachments}
+                    )
+
+        if enable_on_import:
+            await self.middleware.call('keyvalue.set', enable_on_import_key, enable_on_import)
+        else:
+            await self.middleware.call('keyvalue.delete', enable_on_import_key)
+
+        job.set_progress(20, 'Terminating processes that are using this pool')
+        await self.middleware.call('pool.dataset.kill_processes', pool['name'], options.get('restart_services', False))
+        await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
@@ -2116,89 +2149,22 @@ class PoolService(CRUDService):
     @accepts(Int('id'))
     async def attachments(self, oid):
         """
-        Return a dict composed by the name of services and ids of each item
-        dependent of this pool.
+        Return a list of services dependent of this pool.
 
         Responsible for telling the user whether there is a related
         share, asking for confirmation.
         """
         pool = await self._get_instance(oid)
-        return await self.__attachments(pool)
+        return await self.middleware.call('pool.dataset.attachments', pool['name'])
 
-    async def __attachments(self, pool):
-        attachments = {
-            'afp': [],
-            'iscsi_extents': [],
-            'jails': [],
-            'nfs': [],
-            'replication': [],
-            'smb': [],
-            'snaptask': [],
-            'vm_devices': [],
-        }
-
-        for smb in await self.middleware.call('sharing.smb.query'):
-            if smb['path'] == pool['path'] or smb['path'].startswith(pool['path'] + '/'):
-                attachments['smb'].append(smb['id'])
-
-        for afp in await self.middleware.call('sharing.afp.query'):
-            if afp['path'] == pool['path'] or afp['path'].startswith(pool['path'] + '/'):
-                attachments['afp'].append(afp['id'])
-
-        for nfs in await self.middleware.call('sharing.nfs.query'):
-            for path in nfs['paths']:
-                if (
-                    (path == pool['path'] or path.startswith(pool['path'] + '/')) and
-                    nfs['id'] not in attachments['nfs']
-                ):
-                    attachments['nfs'].append(nfs['id'])
-
-        for extent in await self.middleware.call('iscsi.extent.query', [('type', '=', 'DISK')]):
-            if extent['path'].startswith(f'zvol/{pool["name"]}/'):
-                attachments['iscsi_extents'].append(extent['id'])
-
-        for vm_attached in await self.middleware.call('vm.stop_by_pool', pool['name']):
-            attachments['vm_devices'].append(vm_attached['device_id'])
-
-        for repl in await self.middleware.call('replication.query'):
-            if any(
-                source_dataset == pool['name'] or source_dataset.startswith(pool['name'] + '/')
-                for source_dataset in repl['source_datasets']
-            ):
-                attachments['replication'].append(repl['id'])
-
-        for snap in await self.middleware.call('pool.snapshottask.query'):
-            if (
-                snap['dataset'] == pool['name'] or
-                snap['dataset'].startswith(pool['name'] + '/')
-            ):
-                attachments['snaptask'].append(snap['id'])
-
-        activated_pool = await self.middleware.call('jail.get_activated_pool')
-        if activated_pool == pool['name']:
-            for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
-                attachments['jails'].append(j['host_hostuuid'])
-
-        return attachments
-
-    async def __delete_attachments(self, attachments, pool):
-        # TODO: use a hook and move delete/stop to each plugin
-        for name, service in (
-            ('smb', 'sharing.smb.delete'),
-            ('afp', 'sharing.afp.delete'),
-            ('nfs', 'sharing.nfs.delete'),
-            ('iscsi_extents', 'iscsi.extent.delete'),
-            ('snaptask', 'pool.snapshottask.delete'),
-        ):
-            for aid in attachments[name]:
-                await self.middleware.call(service, aid)
-
-        for name, datastore in (
-            ('replication', 'storage.replication'),
-            ('vm_devices', 'vm.device'),
-        ):
-            for aid in attachments[name]:
-                await self.middleware.call('datastore.delete', datastore, aid)
+    @item_method
+    @accepts(Int('id'))
+    async def processes(self, oid):
+        """
+        Returns a list of running processes using this pool.
+        """
+        pool = await self._get_instance(oid)
+        return await self.middleware.call('pool.dataset.processes', pool['name'])
 
     @staticmethod
     def __get_dev_and_disk(topology):
@@ -2446,6 +2412,8 @@ class PoolService(CRUDService):
 
 
 class PoolDatasetService(CRUDService):
+
+    attachment_delegates = []
 
     class Config:
         namespace = 'pool.dataset'
@@ -2845,12 +2813,18 @@ class PoolDatasetService(CRUDService):
                 "params": ["tank/myuser"]
             }
         """
-        iscsi_target_extents = await self.middleware.call('iscsi.extent.query', [
-            ['type', '=', 'DISK'],
-            ['path', '=', f'zvol/{id}']
-        ])
-        if iscsi_target_extents:
-            raise CallError("This volume is in use by iSCSI extent, please remove it first.")
+
+        if not options['recursive'] and await self.middleware.call('zfs.dataset.query', [['id', '^', f'{id}/']]):
+            raise CallError(f'Failed to delete dataset: cannot destroy {id!r}: filesystem has children',
+                            errno.ENOTEMPTY)
+
+        dataset = await self._get_instance(id)
+        path = self.__attachments_path(dataset)
+        if path:
+            for delegate in self.attachment_delegates:
+                attachments = await delegate.query(path, True)
+                if attachments:
+                    await delegate.delete(attachments)
 
         return await self.middleware.call('zfs.dataset.delete', id, {
             'force': options['force'],
@@ -2958,6 +2932,137 @@ class PoolDatasetService(CRUDService):
             if num > numdisks:
                 numdisks = num
         return '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
+
+    @item_method
+    @accepts(Str('id', required=True))
+    async def attachments(self, oid):
+        """
+        Return a list of services dependent of this dataset.
+
+        Responsible for telling the user whether there is a related
+        share, asking for confirmation.
+
+        Example return value:
+        [
+          {
+            "type": "NFS Share",
+            "service": "nfs",
+            "attachments": ["/mnt/tank/work"]
+          }
+        ]
+        """
+        result = []
+        dataset = await self._get_instance(oid)
+        path = self.__attachments_path(dataset)
+        if path:
+            for delegate in self.attachment_delegates:
+                attachments = {"type": delegate.title, "service": delegate.service, "attachments": []}
+                for attachment in await delegate.query(path, True):
+                    attachments["attachments"].append(await delegate.get_attachment_name(attachment))
+                if attachments["attachments"]:
+                    result.append(attachments)
+        return result
+
+    def __attachments_path(self, dataset):
+        if dataset['type'] == 'FILESYSTEM':
+            return dataset['mountpoint']
+
+        if dataset['type'] == 'VOLUME':
+            return os.path.join('/mnt', dataset['name'])
+
+    @item_method
+    @accepts(Str('id', required=True))
+    async def processes(self, oid):
+        """
+        Return a list of processes using this dataset.
+
+        Example return value:
+
+        [
+          {
+            "pid": 2520,
+            "name": "smbd",
+            "service": "cifs"
+          },
+          {
+            "pid": 97778,
+            "name": "minio",
+            "cmdline": "/usr/local/bin/minio -C /usr/local/etc/minio server --address=0.0.0.0:9000 --quiet /mnt/tank/wk"
+          }
+        ]
+        """
+        result = []
+        dataset = await self._get_instance(oid)
+        path = self.__attachments_path(dataset)
+        zvol_path = f"/dev/zvol/{dataset['name']}"
+        if path:
+            lsof = await run('lsof',
+                             '-F', 'pcn',       # Output format parseable by `parse_lsof`
+                             '-l', '-n', '-P',  # Inhibits login name, hostname and port number conversion
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False, encoding='utf8')
+            for pid, name in parse_lsof(lsof.stdout, [path, zvol_path]):
+                service = await self.middleware.call('service.identify_process', name)
+                if service:
+                    result.append({
+                        "pid": pid,
+                        "name": name,
+                        "service": service,
+                    })
+                else:
+                    try:
+                        cmdline = await self.middleware.run_in_thread(
+                            lambda: psutil.Process(pid).cmdline()
+                        )
+                    except psutil.NoSuchProcess:
+                        pass
+                    else:
+                        result.append({
+                            "pid": pid,
+                            "name": name,
+                            "cmdline": join_commandline(cmdline),
+                        })
+
+        return result
+
+    @private
+    async def kill_processes(self, oid, restart_services, max_tries=5):
+        manually_restart_services = []
+        for process in await self.middleware.call('pool.dataset.processes', oid):
+            if process.get("service") is not None:
+                manually_restart_services.append(process["service"])
+        if manually_restart_services and not restart_services:
+            raise CallError('Some services have open files and need to be restarted', errno.EBUSY, {
+                'code': 'services_restart',
+                'services': manually_restart_services,
+            })
+
+        for i in range(max_tries):
+            processes = await self.middleware.call('pool.dataset.processes', oid)
+            if not processes:
+                return
+
+            for process in processes:
+                if process.get("service") is not None:
+                    self.logger.info('Restarting service %r that holds dataset %r', process['service'], oid)
+                    await self.middleware.call('service.restart', process['service'])
+                else:
+                    self.logger.info('Killing process %r (%r) that holds dataset %r', process['pid'],
+                                     process['cmdline'], oid)
+                    await self.middleware.call('service.terminate_process', process['pid'])
+
+        processes = await self.middleware.call('pool.dataset.processes', oid)
+        if not processes:
+            return
+
+        self.logger.info('The following processes don\'t want to stop: %r', processes)
+        raise CallError('Unable to stop processes that have open files', errno.EBUSY, {
+            'code': 'unstoppable_processes',
+            'processes': processes,
+        })
+
+    @private
+    def register_attachment_delegate(self, delegate):
+        self.attachment_delegates.append(delegate)
 
 
 class PoolScrubService(CRUDService):
@@ -3125,6 +3230,36 @@ class PoolScrubService(CRUDService):
 
         await self.middleware.call('service.restart', 'cron')
         return response
+
+
+def parse_lsof(lsof, dirs):
+    pids = {}
+
+    pid = None
+    command = None
+    for line in lsof.split("\n"):
+        if line.startswith("p"):
+            pid = None
+            command = None
+
+            try:
+                pid = int(line[1:])
+            except ValueError:
+                pass
+
+        if line.startswith("c"):
+            command = line[1:]
+
+        if line.startswith("f"):
+            pass
+
+        if line.startswith("n"):
+            path = line[1:]
+            if os.path.isabs(path) and any(os.path.commonpath([path, dir]) == dir for dir in dirs):
+                if pid is not None and command is not None:
+                    pids[pid] = command
+
+    return list(pids.items())
 
 
 async def devd_zfs_hook(middleware, data):

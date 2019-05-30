@@ -22,10 +22,22 @@
         </td>
     </tr>
     {% endif %}
-    {% if services %}
+    {% if attachments %}
     <tr>
         <td colspan="2">
-        <p>{% trans "ATTENTION - Currently the following services depend on this volume: " %}<strong>{{ services.keys|join:", " }}</strong></p>
+            WARNING: The following services depend on <b>{{ volume.vol_name }}</b> and will be disrupted when the volume is detached:
+            <ul style="margin: 0;">
+                {% for service in attachments %}
+                    <li>
+                        <strong>{{ service.type }}</strong><br>
+                        <ul style="margin: 0;">
+                            {% for attachment in service.attachments %}
+                                <li>{{ attachment }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
         </td>
     </tr>
     {% endif %}

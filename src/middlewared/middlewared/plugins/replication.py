@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 import pickle
 
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import item_method, private, CallError, CRUDService, ValidationErrors
 from middlewared.utils.path import is_child
@@ -645,3 +646,44 @@ class ReplicationService(CRUDService):
             "ssh_port": result["port"],
             "ssh_hostkey": result["host_key"],
         }
+
+
+class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'replication'
+    title = 'Replication'
+
+    async def query(self, path, enabled):
+        results = []
+        for replication in await self.middleware.call('replication.query', [['enabled', '=', enabled]]):
+            if replication['direction'] == 'PUSH':
+                if any(is_child(os.path.join('/mnt', source_dataset), path)
+                       for source_dataset in replication['source_datasets']):
+                    results.append(replication)
+
+            if replication['direction'] == 'PULL':
+                if is_child(os.path.join('/mnt', replication['target_dataset']), path):
+                    results.append(replication)
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['name']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', 'storage.replication', attachment['id'])
+
+        await self.middleware.call('service.restart', 'cron')
+        await self.middleware.call('zettarepl.update_tasks')
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call('datastore.update', 'storage.replication', attachment['id'],
+                                       {'repl_enabled': enabled})
+
+        await self.middleware.call('service.restart', 'cron')
+        await self.middleware.call('zettarepl.update_tasks')
+
+
+async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', ReplicationFSAttachmentDelegate(middleware))
