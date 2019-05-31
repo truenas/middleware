@@ -27,11 +27,6 @@ import uuid
 
 from licenselib.license import ContractType, Features, License
 
-# FIXME: Temporary imports until license lives in middlewared
-if '/usr/local/www' not in sys.path:
-    sys.path.append('/usr/local/www')
-from freenasUI.support.utils import get_license
-
 SYSTEM_BOOT_ID = None
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
@@ -277,9 +272,17 @@ class SystemService(Service):
         return "BOOTING"
 
     async def __get_license(self):
-        licenseobj = get_license()[0]
-        if not licenseobj:
+        if not os.path.exists(LICENSE_FILE):
             return
+
+        with open(LICENSE_FILE, 'r') as f:
+            license_file = f.read().strip('\n')
+
+        try:
+            licenseobj = License.load(license_file)
+        except Exception:
+            return
+
         license = {
             "system_serial": licenseobj.system_serial,
             "system_serial_ha": licenseobj.system_serial_ha,
