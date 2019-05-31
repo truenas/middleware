@@ -503,7 +503,7 @@ make_acls(struct windows_acl_info *w)
 		err(EX_OSERR, "acl_dup() failed");
 	}
 
-	for (i=0; i<=MAX_ACL_DEPTH; i++){
+	for (i=0; i<MAX_ACL_DEPTH; i++){
 		/* create a directory acl */
 		if ((w->acls[i].dacl = acl_dup(acl)) == NULL) {
 			err(EX_OSERR, "acl_dup() failed");

@@ -299,7 +299,7 @@ class FilesystemService(Service):
 
     @accepts(
         Str('path'),
-        Str('mode'),
+        Str('mode', null=True),
         Int('uid', default=-1),
         Int('gid', default=-1),
         Dict(
@@ -310,7 +310,7 @@ class FilesystemService(Service):
         )
     )
     @job(lock=lambda args: f'setperm:{args[0]}')
-    def setperm(self, job, path, mode=None, uid=-1, gid=-1, options=None):
+    def setperm(self, job, path, mode, uid, gid, options):
         """
         Remove extended ACL from specified path.
 
@@ -340,13 +340,13 @@ class FilesystemService(Service):
             CallError(
                 f'Non-trivial ACL present on [{path}]. Option "stripacl" required to change permission'
             )
+        if mode is not None:
+            mode = int(mode,8)
 
-        mode = int(mode,8) if mode else None
         a = acl.ACL(file=path)
         a.strip()
         a.apply(path)
 
-        self.logger.debug(f'Mode: {mode}')
         if mode:
             os.chmod(path, mode)
 
@@ -411,7 +411,6 @@ class FilesystemService(Service):
                     'flags': entry['flags'],
                 }
                 if ace['tag'] == 'everyone@' and self.__convert_to_basic_permset(ace['perms']) == 'NOPERMS':
-                    self.logger.debug('detected hidden ace')
                     continue
                 advanced_acl.append(ace)
             return advanced_acl
@@ -488,7 +487,7 @@ class FilesystemService(Service):
         )
     )
     @job(lock=lambda args: f'setacl:{args[0]}')
-    def setacl(self, job, path='', dacl=[], uid=-1, gid=-1, options=None):
+    def setacl(self, job, path, dacl, uid, gid, options):
         """
         Set ACL of a given path. Takes the following parameters:
         `path` full path to directory or file.
@@ -555,7 +554,6 @@ class FilesystemService(Service):
             a.apply(path)
 
         if not options['recursive']:
-            self.logger.debug('exiting early on non-recursive task')
             return True
 
         winacl = subprocess.run([

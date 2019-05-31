@@ -1760,7 +1760,7 @@ class MountPointAccessForm(Form):
                     c.call(
                          'filesystem.setperm',
                          path,
-                         kwargs['mode'],
+                         kwargs.get('mode', None),
                          uid,
                          gid,
                          {
