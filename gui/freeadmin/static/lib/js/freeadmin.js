@@ -727,7 +727,6 @@ require([
       if(acl.get('value') === false) {
         // do nothing
       } else if(acl.get('value') == 'remove') {
-        console.log("remove");
         mode_en.set('disabled', false);
         mode.set('disabled', false);
       } else {

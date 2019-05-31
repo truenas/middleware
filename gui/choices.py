@@ -902,7 +902,7 @@ SAMBA4_FOREST_LEVEL_CHOICES = (
 )
 
 SHARE_TYPE_CHOICES = (
-    ('GENERAL', 'General'),
+    ('GENERIC', 'Generic'),
     ('SMB', 'SMB'),
 )
 
