@@ -2728,7 +2728,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
 
             for i in (
-                'aclmode', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'optimize_for_smb',
+                'aclmode', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'share_type',
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
