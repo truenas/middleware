@@ -67,9 +67,6 @@ if not apps.app_configs:
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.pipesubr import SIG_SETMASK
-from freenasUI.common.system import (
-    exclude_path,
-)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
@@ -422,18 +419,18 @@ class notifier(metaclass=HookMetaclass):
                     ],
                     uid,
                     gid,
-                    {'recursive':True, 'traverse': recursive}
+                    {'recursive': True, 'traverse': recursive}
                 )
 
         else:
             with client as c:
                 c.call(
-                     'filesystem.setperm',
-                     path,
-                     kwargs['mode'],
-                     uid,
-                     gid,
-                     {'recursive':True, 'traverse': recursive}
+                    'filesystem.setperm',
+                    path,
+                    mode,
+                    uid,
+                    gid,
+                    {'recursive': True, 'traverse': recursive}
                 )
                 return True
 

@@ -1750,7 +1750,7 @@ class MountPointAccessForm(Form):
                     ],
                     uid,
                     gid,
-                    {'recursive':True, 'traverse': kwargs['traverse']}
+                    {'recursive': True, 'traverse': kwargs['traverse']}
                 )
                 return True
 
@@ -1758,16 +1758,16 @@ class MountPointAccessForm(Form):
             with client as c:
                 try:
                     c.call(
-                         'filesystem.setperm',
-                         path,
-                         kwargs.get('mode', None),
-                         uid,
-                         gid,
-                         {
-                             'recursive':True,
-                             'traverse': kwargs['traverse'],
-                             'stripacl': True if action == 'remove' else False
-                         }
+                        'filesystem.setperm',
+                        path,
+                        kwargs.get('mode', None),
+                        uid,
+                        gid,
+                        {
+                            'recursive': True,
+                            'traverse': kwargs['traverse'],
+                            'stripacl': True if action == 'remove' else False
+                        }
                     )
                     return True
                 except Exception as e:

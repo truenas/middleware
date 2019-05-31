@@ -2610,7 +2610,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'type'}),
         ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
-        ('rm', {'name': 'share_type'}), # This is something we should only do at create time
+        ('rm', {'name': 'share_type'}),  # This is something we should only do at create time
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),

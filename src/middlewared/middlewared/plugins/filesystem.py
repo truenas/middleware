@@ -341,7 +341,7 @@ class FilesystemService(Service):
                 f'Non-trivial ACL present on [{path}]. Option "stripacl" required to change permission'
             )
         if mode is not None:
-            mode = int(mode,8)
+            mode = int(mode, 8)
 
         a = acl.ACL(file=path)
         a.strip()
