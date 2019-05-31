@@ -127,6 +127,8 @@ def services_config(middleware, context):
         'lldp': ['ladvd'],
         's3': ['minio'],
         'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
+        'openvpn_client': ['openvpn_client'],
+        'openvpn_server': ['openvpn_server'],
         'rsync': ['rsyncd'],
         'snmp': ['snmpd', 'snmp_agent'],
         'ssh': ['openssh'],
@@ -287,6 +289,16 @@ def nut_config(middleware, context):
     yield 'nut_upsmon_enable="YES"'
 
 
+def openvpn_server_config(middleware, context):
+    yield 'openvpn_server_configfile="/usr/local/etc/openvpn/server/openvpn_server.conf"'
+    yield 'openvpn_server_dir="/usr/local/etc/openvpn/server"'
+
+
+def openvpn_client_config(middleware, context):
+    yield 'openvpn_client_configfile="/usr/local/etc/openvpn/client/openvpn_client.conf"'
+    yield 'openvpn_client_dir="/usr/local/etc/openvpn/client"'
+
+
 def powerd_config(middleware, context):
     value = 'YES' if middleware.call_sync('system.advanced.config')['powerdaemon'] else 'NO'
     yield f'powerd_enable="{value}"'
@@ -435,6 +447,8 @@ def render(service, middleware):
         nfs_config,
         nis_config,
         nut_config,
+        openvpn_client_config,
+        openvpn_server_config,
         powerd_config,
         s3_config,
         smart_config,

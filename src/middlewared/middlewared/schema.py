@@ -437,9 +437,9 @@ class List(EnumMixin, Attribute):
                     try:
                         value[index] = i.clean(v)
                         found = True
+                        break
                     except Error as e:
                         found = e
-                        break
                 if self.items and found is not True:
                     raise Error(self.name, 'Item#{0} is not valid per list types: {1}'.format(index, found))
         return value
@@ -464,11 +464,16 @@ class List(EnumMixin, Attribute):
                 if v in s:
                     verrors.add(f"{self.name}.{i}", "This value is not unique.")
                 s.add(v)
+            attr_verrors = ValidationErrors()
             for attr in self.items:
                 try:
                     attr.validate(v)
                 except ValidationErrors as e:
-                    verrors.add_child(f"{self.name}.{i}", e)
+                    attr_verrors.add_child(f"{self.name}.{i}", e)
+                else:
+                    break
+            else:
+                verrors.extend(attr_verrors)
 
         if verrors:
             raise verrors

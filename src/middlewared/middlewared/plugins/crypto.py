@@ -1,6 +1,7 @@
 import datetime
 import dateutil
 import dateutil.parser
+import inspect
 import ipaddress
 import josepy as jose
 import json
@@ -142,6 +143,11 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
                 'RSA-based keys require an entry in this field.'
             )
 
+    if not verrors and data.get('cert_extensions'):
+        verrors.extend(
+            (await middleware.call('cryptokey.validate_extensions', data['cert_extensions'], schema_name))
+        )
+
 
 class CryptoKeyService(Service):
 
@@ -164,8 +170,126 @@ class CryptoKeyService(Service):
         'email_address': 'email'
     }
 
+    EXTENSIONS = {}
+
     class Config:
         private = True
+
+    @staticmethod
+    def extensions():
+        if not CryptoKeyService.EXTENSIONS:
+            # For now we only support the following extensions
+            # We also support SubjectAlternativeName but as we include that natively if the user provides it
+            # we don't expose it to the end user as an extension making the process for the end user easier to
+            # create a certificate/ca as most wouldn't even want to know what extension is or does.
+            # Apart from this we also add subjectKeyIdentifier automatically
+            supported = [
+                'BasicConstraints', 'AuthorityKeyIdentifier',
+                'ExtendedKeyUsage', 'KeyUsage'
+            ]
+
+            for attr in supported:
+                attr_obj = getattr(x509.extensions, attr)
+                CryptoKeyService.EXTENSIONS[attr] = inspect.getfullargspec(attr_obj.__init__).args[1:]
+
+        return CryptoKeyService.EXTENSIONS
+
+    def add_extensions(self, cert, extensions_data, key, issuer=None):
+        # issuer must be a certificate object
+        # By default we add the following
+        cert = cert.public_key(
+            key.public_key()
+        ).add_extension(
+            x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
+        )
+
+        for extension in filter(lambda v: v[1]['enabled'], extensions_data.items()):
+            klass = getattr(x509.extensions, extension[0])
+            cert = cert.add_extension(
+                klass(*self.get_extension_params(extension, cert, issuer)),
+                extension[1].get('extension_critical') or False
+            )
+
+        return cert
+
+    def get_extension_params(self, extension, cert=None, issuer=None):
+        params = []
+
+        if extension[0] == 'BasicConstraints':
+            params = [extension[1].get('ca'), extension[1].get('path_length')]
+        elif extension[0] == 'ExtendedKeyUsage':
+            usages = []
+            for ext_usage in extension[1].get('usages', []):
+                usages.append(getattr(x509.oid.ExtendedKeyUsageOID, ext_usage))
+            params = [usages]
+        elif extension[0] == 'KeyUsage':
+            params = [extension[1].get(k, False) for k in self.extensions()['KeyUsage']]
+        elif extension[0] == 'AuthorityKeyIdentifier':
+            params = [
+                x509.SubjectKeyIdentifier.from_public_key(
+                    issuer.public_key() if issuer else cert._public_key
+                ).digest if cert or issuer else None,
+                None, None
+            ]
+
+            if extension[1]['authority_cert_issuer'] and cert:
+                params[1:] = [
+                    [x509.DirectoryName(cert._issuer_name)],
+                    issuer.serial_number if issuer else cert._serial_number
+                ]
+
+        return params
+
+    @accepts(
+        Ref('cert_extensions'),
+        Str('schema')
+    )
+    def validate_extensions(self, extensions_data, schema):
+        # We do not need to validate some extensions like `AuthorityKeyIdentifier`.
+        # They are generated from the cert/ca's public key contents. So we skip these.
+
+        skip_extension = ['AuthorityKeyIdentifier']
+        verrors = ValidationErrors()
+
+        for extension in filter(
+            lambda v: v[1]['enabled'] and v[0] not in skip_extension,
+            extensions_data.items()
+        ):
+            klass = getattr(x509.extensions, extension[0])
+            try:
+                klass(*self.get_extension_params(extension))
+            except Exception as e:
+                verrors.add(
+                    f'{schema}.{extension[0]}',
+                    f'Please provide valid values for {extension[0]}: {e}'
+                )
+
+        if extensions_data['KeyUsage']['enabled'] and extensions_data['KeyUsage']['key_cert_sign']:
+            if not extensions_data['BasicConstraints']['enabled'] or not extensions_data[
+                'BasicConstraints'
+            ]['ca']:
+                verrors.add(
+                    f'{schema}.BasicConstraints',
+                    'Please enable ca when key_cert_sign is set in KeyUsage as per RFC 5280.'
+                )
+
+        return verrors
+
+    def validate_cert_with_chain(self, cert, chain):
+        check_cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
+        store = crypto.X509Store()
+        for chain_cert in chain:
+            store.add_cert(
+                crypto.load_certificate(crypto.FILETYPE_PEM, chain_cert)
+            )
+
+        store_ctx = crypto.X509StoreContext(store, check_cert)
+        try:
+            store_ctx.verify_certificate()
+        except crypto.X509StoreContextError:
+            return False
+        else:
+            return True
 
     def validate_certificate_with_key(self, certificate, private_key, schema_name, verrors, passphrase=None):
         if (
@@ -274,6 +398,7 @@ class CryptoKeyService(Service):
             'san': [],
             'email': obj.get_subject().emailAddress,
             'DN': '',
+            'extensions': {}
         }
 
         for ext in (
@@ -284,6 +409,10 @@ class CryptoKeyService(Service):
         ):
             if 'subjectAltName' == ext.get_short_name().decode():
                 cert_info['san'] = [s.strip() for s in ext.__str__().split(',') if s]
+
+            cert_info['extensions'][
+                re.sub(r"^(\S)", lambda m: m.group(1).upper(), ext.get_short_name().decode())
+            ] = ext.__str__()
 
         dn = []
         for k, v in obj.get_subject().get_components():
@@ -409,6 +538,53 @@ class CryptoKeyService(Service):
             Str('email', validators=[Email()], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')], null=True),
+            Dict(
+                'cert_extensions',
+                Dict(
+                    'BasicConstraints',
+                    Bool('ca', default=False),
+                    Bool('enabled', default=False),
+                    Int('path_length', null=True, default=None),
+                    Bool('extension_critical', default=False)
+                ),
+                Dict(
+                    'AuthorityKeyIdentifier',
+                    Bool('authority_cert_issuer', default=False),
+                    Bool('enabled', default=False),
+                    Bool('extension_critical', default=False)
+                ),
+                Dict(
+                    'ExtendedKeyUsage',
+                    List(
+                        'usages',
+                        items=[
+                            Str(
+                                'usage', enum=[
+                                    i for i in dir(x509.oid.ExtendedKeyUsageOID)
+                                    if not i.startswith('__')
+                                ]
+                            )
+                        ]
+                    ),
+                    Bool('enabled', default=False),
+                    Bool('extension_critical', default=False)
+                ),
+                Dict(
+                    'KeyUsage',
+                    Bool('enabled', default=False),
+                    Bool('digital_signature', default=False),
+                    Bool('content_commitment', default=False),
+                    Bool('key_encipherment', default=False),
+                    Bool('data_encipherment', default=False),
+                    Bool('key_agreement', default=False),
+                    Bool('key_cert_sign', default=False),
+                    Bool('crl_sign', default=False),
+                    Bool('encipher_only', default=False),
+                    Bool('decipher_only', default=False),
+                    Bool('extension_critical', default=False)
+                ),
+                register=True
+            ),
             register=True
         )
     )
@@ -439,14 +615,15 @@ class CryptoKeyService(Service):
             builder_data['crypto_issuer_name'] = {
                 k: ca_data.get(v) for k, v in self.backend_mappings.items()
             }
+            issuer = x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
+        else:
+            issuer = None
 
         cert = self.generate_builder(builder_data)
 
-        cert = cert.public_key(
-            key.public_key()
-        ).add_extension(
-            x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
-        ).sign(
+        cert = self.add_extensions(cert, data.get('cert_extensions'), key, issuer)
+
+        cert = cert.sign(
             ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
         )
 
@@ -495,23 +672,17 @@ class CryptoKeyService(Service):
             builder_data['crypto_issuer_name'] = {
                 k: ca_data.get(v) for k, v in self.backend_mappings.items()
             }
+            issuer = x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
+        else:
+            issuer = None
 
         cert = self.generate_builder(builder_data)
 
-        cert = cert.add_extension(
-            x509.BasicConstraints(True, 0 if ca_key else None), True
-        ).add_extension(
-            x509.KeyUsage(
-                digital_signature=False, content_commitment=False, key_encipherment=False, data_encipherment=False,
-                key_agreement=False, key_cert_sign=True, crl_sign=True, encipher_only=False, decipher_only=False
-            ), True
-        ).add_extension(
-            x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
-        ).public_key(
-            key.public_key()
-        )
+        cert = self.add_extensions(cert, data.get('cert_extensions'), key, issuer)
 
-        cert = cert.sign(ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend())
+        cert = cert.sign(
+            ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
+        )
 
         return (
             cert.public_bytes(serialization.Encoding.PEM).decode(),
@@ -530,7 +701,8 @@ class CryptoKeyService(Service):
             Str('csr', required=True),
             Str('csr_privatekey', required=True),
             Int('serial', required=True),
-            Str('digest_algorithm', default='SHA256')
+            Str('digest_algorithm', default='SHA256'),
+            Ref('cert_extensions')
         )
     )
     def sign_csr_with_ca(self, data):
@@ -549,9 +721,12 @@ class CryptoKeyService(Service):
             'san': self.normalize_san(csr_data.get('san'))
         })
 
-        new_cert = new_cert.public_key(
-            csr_key.public_key()
-        ).sign(
+        new_cert = self.add_extensions(
+            new_cert, data.get('cert_extensions'), csr_key,
+            x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
+        )
+
+        new_cert = new_cert.sign(
             ca_key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
         )
 
@@ -651,6 +826,79 @@ class CryptoKeyService(Service):
                 encryption_algorithm=serialization.NoEncryption()
             ).decode()
 
+    def generate_crl(self, ca, certs, next_update=1):
+        # There is a tricky case here - what happens if the root CA is compromised ?
+        # In normal world scenarios, that CA is removed from app's trust store and any
+        # subsequent certs it had issues wouldn't be validated by the app then. Making a CRL
+        # for a revoked root CA in normal cases doesn't make sense as the thief can sign a
+        # counter CRL saying that everything is fine. As our environment is controlled,
+        # i think we are safe to create a crl for root CA as well which we can publish for
+        # services which make use of it i.e openvpn and they'll know that the certs/ca's have been
+        # compromised.
+        #
+        # `ca` is root ca from where the chain `certs` starts.
+        # `certs` is a list of all certs ca inclusive which are to be
+        # included in the CRL ( if root ca is compromised, it will be in `certs` as well ).
+
+        private_key = self.load_private_key(
+            ca['privatekey']
+        )
+        ca_cert = x509.load_pem_x509_certificate(ca['certificate'].encode(), default_backend())
+
+        if not private_key:
+            return None
+
+        ca_data = self.load_certificate(ca['certificate'])
+
+        issuer = {
+            k: ca_data.get(v) for k, v in self.backend_mappings.items()
+        }
+
+        crl_builder = x509.CertificateRevocationListBuilder().issuer_name(x509.Name([
+            x509.NameAttribute(getattr(NameOID, k.upper()), v)
+            for k, v in issuer.items() if v
+        ])).last_update(
+            datetime.datetime.utcnow()
+        ).next_update(
+            datetime.datetime.utcnow() + datetime.timedelta(next_update, 300, 0)
+        )
+
+        for cert in certs:
+            crl_builder = crl_builder.add_revoked_certificate(
+                x509.RevokedCertificateBuilder().serial_number(
+                    self.load_certificate(cert['certificate'])['serial']
+                ).revocation_date(
+                    cert['revoked_date']
+                ).build(
+                    default_backend()
+                )
+            )
+
+        # https://www.ietf.org/rfc/rfc5280.txt
+        # We should add AuthorityKeyIdentifier and CRLNumber at the very least
+
+        crl = crl_builder.add_extension(
+            x509.AuthorityKeyIdentifier(
+                x509.SubjectKeyIdentifier.from_public_key(
+                    ca_cert.public_key()
+                ).digest, [x509.DirectoryName(
+                    x509.Name([
+                        x509.NameAttribute(getattr(NameOID, k.upper()), v)
+                        for k, v in issuer.items() if v
+                    ])
+                )], ca_cert.serial_number
+            ), False
+        ).add_extension(
+            x509.CRLNumber(1), False
+        ).sign(
+            private_key=private_key, algorithm=hashes.SHA256(),
+            backend=default_backend()
+        )
+
+        return crl.public_bytes(
+            serialization.Encoding.PEM
+        ).decode()
+
 
 class CertificateService(CRUDService):
 
@@ -658,6 +906,70 @@ class CertificateService(CRUDService):
         datastore = 'system.certificate'
         datastore_extend = 'certificate.cert_extend'
         datastore_prefix = 'cert_'
+
+    PROFILES = {
+        'openvpn_server_certificate': {
+            'cert_extensions': {
+                'BasicConstraints': {
+                    'enabled': True,
+                    'ca': False,
+                    'extension_critical': True
+                },
+                'AuthorityKeyIdentifier': {
+                    'enabled': True,
+                    'authority_cert_issuer': True,
+                    'extension_critical': False
+                },
+                'ExtendedKeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'usages': [
+                        'SERVER_AUTH',
+                    ]
+                },
+                'KeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'digital_signature': True,
+                    'key_encipherment': True
+                }
+            },
+            'key_length': 2048,
+            'key_type': 'RSA',
+            'lifetime': 3650,
+            'digest_algorithm': 'SHA256'
+        },
+        'openvpn_client_certificate': {
+            'cert_extensions': {
+                'BasicConstraints': {
+                    'enabled': True,
+                    'ca': False,
+                    'extension_critical': True
+                },
+                'AuthorityKeyIdentifier': {
+                    'enabled': True,
+                    'authority_cert_issuer': True,
+                    'extension_critical': False
+                },
+                'ExtendedKeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'usages': [
+                        'CLIENT_AUTH',
+                    ]
+                },
+                'KeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'digital_signature': True
+                }
+            },
+            'key_length': 2048,
+            'key_type': 'RSA',
+            'lifetime': 3650,
+            'digest_algorithm': 'SHA256'
+        }
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -668,6 +980,14 @@ class CertificateService(CRUDService):
             'CERTIFICATE_CREATE_CSR': self.__create_csr,
             'CERTIFICATE_CREATE_ACME': self.__create_acme_certificate,
         }
+
+    @accepts()
+    async def profiles(self):
+        """
+        Returns a dictionary of predefined options for specific use cases i.e openvpn client/server
+        configurations which can be used for creating certificates.
+        """
+        return self.PROFILES
 
     @private
     async def cert_extend(self, cert):
@@ -713,6 +1033,7 @@ class CertificateService(CRUDService):
         )
 
         cert['cert_type'] = 'CA' if root_path == CERT_CA_ROOT_PATH else 'CERTIFICATE'
+        cert['revoked'] = bool(cert['revoked_date'])
 
         if cert['cert_type'] == 'CA':
             # TODO: Should we look for intermediate ca's as well which this ca has signed ?
@@ -724,6 +1045,17 @@ class CertificateService(CRUDService):
                     {'prefix': 'cert_'}
                 )
             ))
+
+            ca_chain = await self.middleware.call('certificateauthority.get_ca_chain', cert['id'])
+
+            cert['revoked_certs'] = list(filter(
+                lambda c: c['revoked_date'],
+                ca_chain
+            ))
+
+            cert['crl_path'] = os.path.join(
+                root_path, f'{cert["name"]}.crl'
+            )
 
         if not os.path.exists(root_path):
             os.makedirs(root_path, 0o755, exist_ok=True)
@@ -804,7 +1136,8 @@ class CertificateService(CRUDService):
             cert.update({
                 key: None for key in [
                     'digest_algorithm', 'lifetime', 'country', 'state', 'city', 'from', 'until',
-                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial', 'fingerprint'
+                    'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
+                    'fingerprint', 'extensions'
                 ]
             })
 
@@ -1086,6 +1419,20 @@ class CertificateService(CRUDService):
         """
         return {k: k for k in ['RSA', 'EC']}
 
+    @accepts()
+    async def extended_key_usage_choices(self):
+        """
+        Dictionary of choices for `ExtendedKeyUsage` extension which can be passed over to `usages` attribute.
+        """
+        return {
+            k: k for k in
+            dir(x509.oid.ExtendedKeyUsageOID) if not k.startswith('__')
+        }
+
+    @private
+    async def dhparam(self):
+        return '/data/dhparam.pem'
+
     # CREATE METHODS FOR CREATING CERTIFICATES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF THE CERTIFICATE WHICH IS TO BE CREATED THE
     # APPROPRIATE METHOD IS CALLED
@@ -1130,6 +1477,7 @@ class CertificateService(CRUDService):
                 'CERTIFICATE_CREATE_ACME'], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
+            Ref('cert_extensions'),
             register=True
         )
     )
@@ -1157,6 +1505,8 @@ class CertificateService(CRUDService):
 
         A type is selected by the Certificate Service based on `create_type`. The rest of the values in `data` are
         validated accordingly and finally a certificate is made based on the selected type.
+
+        `cert_extensions` can be specified to set X509v3 extensions.
 
         .. examples(websocket)::
 
@@ -1238,6 +1588,14 @@ class CertificateService(CRUDService):
             raise verrors
 
         job.set_progress(10, 'Initial validation complete')
+
+        if create_type in (
+            'CERTIFICATE_CREATE_IMPORTED_CSR',
+            'CERTIFICATE_CREATE_ACME',
+            'CERTIFICATE_CREATE_IMPORTED',
+            'CERTIFICATE_CREATE_CSR'
+        ):
+            data.pop('cert_extensions')
 
         if create_type == 'CERTIFICATE_CREATE_ACME':
             data = await self.middleware.run_in_thread(
@@ -1450,7 +1808,8 @@ class CertificateService(CRUDService):
         cert_info.update({
             'ca_privatekey': signing_cert['privatekey'],
             'ca_certificate': signing_cert['certificate'],
-            'serial': cert_serial
+            'serial': cert_serial,
+            'cert_extensions': data['cert_extensions']
         })
 
         cert, key = await self.middleware.call(
@@ -1469,6 +1828,7 @@ class CertificateService(CRUDService):
         Int('id', required=True),
         Dict(
             'certificate_update',
+            Bool('revoked'),
             Str('name')
         )
     )
@@ -1477,7 +1837,10 @@ class CertificateService(CRUDService):
         """
         Update certificate of `id`
 
-        Only name attribute can be updated
+        Only name and revoked attribute can be updated.
+
+        When `revoked` is enabled, the specified cert `id` is revoked and if it belongs to a CA chain which
+        exists on this system, its serial number is added to the CA's certificate revocation list.
 
         .. examples(websocket)::
 
@@ -1506,22 +1869,34 @@ class CertificateService(CRUDService):
 
         new.update(data)
 
-        if new['name'] != old['name']:
+        if any(new[k] != old[k] for k in ('name', 'revoked')):
 
             verrors = ValidationErrors()
 
-            await validate_cert_name(
-                self.middleware, data['name'], self._config.datastore, verrors, 'certificate_update.name'
-            )
+            if new['name'] != old['name']:
+                await validate_cert_name(
+                    self.middleware, new['name'], self._config.datastore,
+                    verrors, 'certificate_update.name'
+                )
 
-            if verrors:
-                raise verrors
+            if new['revoked'] and new['cert_type_CSR']:
+                verrors.add(
+                    'certificate_update.revoked',
+                    'A CSR cannot be marked as revoked.'
+                )
+
+            verrors.check()
+
+            if old['revoked'] != new['revoked'] and new['revoked']:
+                revoked = {'revoked_date': datetime.datetime.utcnow()}
+            else:
+                revoked = {}
 
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
                 id,
-                {'name': new['name']},
+                {'name': new['name'], **revoked},
                 {'prefix': self._config.datastore_prefix}
             )
 
@@ -1585,7 +1960,9 @@ class CertificateService(CRUDService):
             ((self.middleware.call_sync('system.general.config'))['ui_certificate']['id'], 'WebUI'),
             ((self.middleware.call_sync('ftp.config'))['ssltls_certificate'], 'FTP'),
             ((self.middleware.call_sync('s3.config'))['certificate'], 'S3'),
-            ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav')
+            ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav'),
+            ((self.middleware.call_sync('openvpn.server.config'))['server_certificate'], 'OpenVPN Server'),
+            ((self.middleware.call_sync('openvpn.client.config'))['client_certificate'], 'OpenVPN Client')
         ]:
             if service_cert_id == id:
                 verrors.add(
@@ -1630,6 +2007,52 @@ class CertificateAuthorityService(CRUDService):
         datastore_extend = 'certificate.cert_extend'
         datastore_prefix = 'cert_'
 
+    PROFILES = {
+        'openvpn_root_ca': {
+            'cert_extensions': {
+                'AuthorityKeyIdentifier': {
+                    'enabled': True,
+                    'authority_cert_issuer': True,
+                    'extension_critical': False
+                },
+                'KeyUsage': {
+                    'enabled': True,
+                    'key_cert_sign': True,
+                    'crl_sign': True,
+                    'extension_critical': True
+                },
+                'BasicConstraints': {
+                    'enabled': True,
+                    'ca': True,
+                    'extension_critical': True
+                }
+            },
+            'key_length': 2048,
+            'key_type': 'RSA',
+            'lifetime': 3650,
+            'digest_algorithm': 'SHA256'
+        },
+        'ca': {
+            'key_length': 2048,
+            'key_type': 'RSA',
+            'lifetime': 3650,
+            'digest_algorithm': 'SHA256',
+            'cert_extensions': {
+                'KeyUsage': {
+                    'enabled': True,
+                    'key_cert_sign': True,
+                    'crl_sign': True,
+                    'extension_critical': True
+                },
+                'BasicConstraints': {
+                    'enabled': True,
+                    'ca': True,
+                    'extension_critical': True
+                }
+            }
+        }
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_create_functions = {
@@ -1638,13 +2061,95 @@ class CertificateAuthorityService(CRUDService):
             'CA_CREATE_INTERMEDIATE': self.__create_intermediate_ca,
         }
 
+    @accepts()
+    async def profiles(self):
+        """
+        Returns a dictionary of predefined options for specific use cases i.e OpenVPN certificate authority
+        configurations which can be used for creating certificate authorities.
+        """
+        return self.PROFILES
+
+    @periodic(86400, run_on_start=True)
+    @private
+    async def crl_generation(self):
+        await self.middleware.call('service.start', 'ssl')
+
     # HELPER METHODS
+
+    @private
+    async def revoke_ca_chain(self, ca_id):
+        chain = await self.get_ca_chain(ca_id)
+        for cert in chain:
+            datastore = f'system.certificate{"authority" if cert["cert_type"] == "CA" else ""}'
+            await self.middleware.call(
+                'datastore.update',
+                datastore,
+                cert['id'], {
+                    'revoked_date': datetime.datetime.utcnow()
+                },
+                {'prefix': self._config.datastore_prefix}
+            )
+
+    @private
+    async def get_ca_chain(self, ca_id):
+        certs = list(
+            map(
+                lambda item: dict(item, cert_type='CERTIFICATE'),
+                await self.middleware.call(
+                    'datastore.query',
+                    'system.certificate',
+                    [['signedby', '=', ca_id]],
+                    {'prefix': self._config.datastore_prefix}
+                )
+            )
+        )
+
+        for ca in await self.middleware.call(
+            'datastore.query',
+            'system.certificateauthority',
+            [['signedby', '=', ca_id]],
+            {'prefix': self._config.datastore_prefix}
+        ):
+            certs.extend((await self.get_ca_chain(ca['id'])))
+
+        ca = await self.middleware.call(
+            'datastore.query',
+            'system.certificateauthority',
+            [['id', '=', ca_id]],
+            {'prefix': self._config.datastore_prefix, 'get': True}
+        )
+        ca.update({'cert_type': 'CA'})
+
+        certs.append(ca)
+        return certs
 
     @private
     async def validate_common_attributes(self, data, schema_name):
         verrors = ValidationErrors()
 
         await _validate_common_attributes(self.middleware, data, verrors, schema_name)
+
+        if not data['cert_extensions']['BasicConstraints']['enabled']:
+            verrors.add(
+                f'{schema_name}.cert_extensions.BasicConstraints.enabled',
+                'This must be enabled for a Certificate Authority.'
+            )
+        elif not data['cert_extensions']['BasicConstraints']['ca']:
+            verrors.add(
+                f'{schema_name}.cert_extensions.BasicConstraints.ca',
+                '"ca" must be enabled for a Certificate Authority.'
+            )
+
+        if not data['cert_extensions']['KeyUsage']['enabled']:
+            verrors.add(
+                f'{schema_name}.cert_extensions.KeyUsage.enabled',
+                'This must be enabled for a Certificate Authority.'
+            )
+        elif not data['cert_extensions']['KeyUsage']['key_cert_sign']:
+            verrors.add(
+                f'{schema_name}.cert_extensions.KeyUsage.key_cert_sign',
+                '"key_cert_sign" must be enabled for a Certificate Authority.'
+            )
 
         return verrors
 
@@ -1711,6 +2216,17 @@ class CertificateAuthorityService(CRUDService):
             attr.enum = ['CA_CREATE_INTERNAL', 'CA_CREATE_IMPORTED', 'CA_CREATE_INTERMEDIATE']
         return {'name': name, 'method': set_enum}
 
+    def _set_cert_extensions_defaults(name):
+        def set_defaults(attr):
+            for ext, keys in (
+                ('BasicConstraints', ('enabled', 'ca', 'extension_critical')),
+                ('KeyUsage', ('enabled', 'key_cert_sign', 'crl_sign', 'extension_critical'))
+            ):
+                for k in keys:
+                    attr.attrs[ext].attrs[k].default = True
+
+        return {'name': name, 'method': set_defaults}
+
     # CREATE METHODS FOR CREATING CERTIFICATE AUTHORITIES
     # "do_create" IS CALLED FIRST AND THEN BASED ON THE TYPE OF CA WHICH IS TO BE CREATED, THE
     # APPROPRIATE METHOD IS CALLED
@@ -1724,6 +2240,7 @@ class CertificateAuthorityService(CRUDService):
         Patch(
             'certificate_create', 'ca_create',
             ('edit', _set_enum('create_type')),
+            ('edit', _set_cert_extensions_defaults('cert_extensions')),
             ('rm', {'name': 'dns_mapping'}),
             register=True
         )
@@ -1747,6 +2264,8 @@ class CertificateAuthorityService(CRUDService):
 
         A type is selected by the Certificate Authority Service based on `create_type`. The rest of the values
         are validated accordingly and finally a certificate is made based on the selected type.
+
+        `cert_extensions` can be specified to set X509v3 extensions.
 
         .. examples(websocket)::
 
@@ -1826,6 +2345,7 @@ class CertificateAuthorityService(CRUDService):
             Int('ca_id', required=True),
             Int('csr_cert_id', required=True),
             Str('name', required=True),
+            Ref('cert_extensions'),
             register=True
         )
     )
@@ -1835,6 +2355,8 @@ class CertificateAuthorityService(CRUDService):
 
         Sign CSR's and generate a certificate from it. `ca_id` provides which CA is to be used for signing
         a CSR of `csr_cert_id` which exists in the system
+
+        `cert_extensions` can be specified if specific extensions are to be set in the newly signed certificate.
 
         .. examples(websocket)::
 
@@ -1909,7 +2431,8 @@ class CertificateAuthorityService(CRUDService):
                 'csr': csr_cert_data['CSR'],
                 'csr_privatekey': csr_cert_data['privatekey'],
                 'serial': serial,
-                'digest_algorithm': ca_data['digest_algorithm']
+                'digest_algorithm': ca_data['digest_algorithm'],
+                'cert_extensions': data['cert_extensions']
             }
         )
 
@@ -1954,7 +2477,8 @@ class CertificateAuthorityService(CRUDService):
         cert_info.update({
             'ca_privatekey': signing_cert['privatekey'],
             'ca_certificate': signing_cert['certificate'],
-            'serial': serial
+            'serial': serial,
+            'cert_extensions': data['cert_extensions']
         })
 
         cert, key = await self.middleware.call(
@@ -2005,6 +2529,7 @@ class CertificateAuthorityService(CRUDService):
         cert_info = get_cert_info_from_data(data)
         cert_info['serial'] = random.getrandbits(24)
 
+        cert_info['cert_extensions'] = data['cert_extensions']
         (cert, key) = await self.middleware.call(
             'cryptokey.generate_self_signed_ca',
             cert_info
@@ -2020,6 +2545,7 @@ class CertificateAuthorityService(CRUDService):
         Int('id', required=True),
         Dict(
             'ca_update',
+            Bool('revoked'),
             Int('ca_id'),
             Int('csr_cert_id'),
             Str('create_type', enum=['CA_SIGN_CSR']),
@@ -2030,7 +2556,10 @@ class CertificateAuthorityService(CRUDService):
         """
         Update Certificate Authority of `id`
 
-        Only name attribute can be updated
+        Only `name` and `revoked` attribute can be updated.
+
+        If `revoked` is enabled, the CA and its complete chain is marked as revoked and added to the CA's
+        certificate revocation list.
 
         .. examples(websocket)::
 
@@ -2066,10 +2595,18 @@ class CertificateAuthorityService(CRUDService):
 
         verrors = ValidationErrors()
 
-        if new['name'] != old['name']:
-            await validate_cert_name(
-                self.middleware, data['name'], self._config.datastore, verrors, 'certificate_authority_update.name'
-            )
+        if any(new[k] != old[k] for k in ('name', 'revoked')):
+            if new['name'] != old['name']:
+                await validate_cert_name(
+                    self.middleware, new['name'], self._config.datastore,
+                    verrors, 'certificate_authority_update.name'
+                )
+
+            if old['revoked'] != new['revoked'] and new['revoked'] and not new['privatekey']:
+                verrors.add(
+                    'certificate_authority_update.revoked',
+                    'Only Certificate Authorities with a privatekey can be marked as revoked.'
+                )
 
             if verrors:
                 raise verrors
@@ -2081,6 +2618,9 @@ class CertificateAuthorityService(CRUDService):
                 {'name': new['name']},
                 {'prefix': self._config.datastore_prefix}
             )
+
+            if old['revoked'] != new['revoked'] and new['revoked']:
+                await self.revoke_ca_chain(id)
 
             await self.middleware.call('service.start', 'ssl')
 
@@ -2108,6 +2648,20 @@ class CertificateAuthorityService(CRUDService):
             }
         """
         ca = await self._get_instance(id)
+        verrors = ValidationErrors()
+
+        # Let's make sure we don't delete a ca which is being used by any service in the system
+        for service_cert_id, text in [
+            ((await self.middleware.call('openvpn.server.config'))['root_ca'], 'OpenVPN Server'),
+            ((await self.middleware.call('openvpn.client.config'))['root_ca'], 'OpenVPN Client')
+        ]:
+            if service_cert_id == id:
+                verrors.add(
+                    'certificateauthority_delete.id',
+                    f'This certificate authority is in use by {text} service and cannot be deleted.'
+                )
+
+        verrors.check()
 
         response = await self.middleware.call(
             'datastore.delete',

@@ -217,6 +217,12 @@ class EtcService(Service):
         'ttys': [
             {'type': 'mako', 'path': 'ttys'},
             {'type': 'py', 'path': 'ttys_config'}
+        ],
+        'openvpn_server': [
+            {'type': 'mako', 'path': 'local/openvpn/server/openvpn_server.conf'}
+        ],
+        'openvpn_client': [
+            {'type': 'mako', 'path': 'local/openvpn/client/openvpn_client.conf'}
         ]
     }
 
@@ -265,6 +271,10 @@ class EtcService(Service):
 
             if rendered is None:
                 continue
+
+            outfile_dirname = os.path.dirname(outfile)
+            if not os.path.exists(outfile_dirname):
+                os.makedirs(outfile_dirname)
 
             changes = write_if_changed(outfile, rendered)
 
