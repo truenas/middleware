@@ -258,7 +258,7 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
             raise MiddlewareError(e)
 
     def middleware_clean(self, data):
-        for key in ['certificate', 'nss_info']:
+        for key in ['certificate', 'nss_info', 'kerberos_realm']:
             if not data[key]:
                 data.pop(key)
 
@@ -269,11 +269,6 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
         data['netbiosalias'] = data['netbiosalias'].split()
         if data['kerberos_principal'] == '---------':
             data['kerberos_principal'] = ''
-
-        if data['kerberos_realm']:
-            data['kerberos_realm'] = {'id': data['kerberos_realm']}
-        else:
-            data.pop('kerberos_realm')
 
         return data
 

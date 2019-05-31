@@ -541,8 +541,6 @@ class ActiveDirectoryService(ConfigService):
         foreign entries.
         kinit will fail if domain name is lower-case.
         """
-        if ad['kerberos_realm']:
-            ad['kerberos_realm'] = ad['kerberos_realm']['id']
         ad['domainname'] = ad['domainname'].upper()
 
         for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
@@ -593,7 +591,7 @@ class ActiveDirectoryService(ConfigService):
         Str('bindname'),
         Str('bindpw', private=True),
         Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
-        Int('certificate'),
+        Int('certificate', null=True),
         Bool('verbose_logging'),
         Bool('unix_extensions'),
         Bool('use_default_domain'),
@@ -601,14 +599,7 @@ class ActiveDirectoryService(ConfigService):
         Bool('allow_dns_updates'),
         Bool('disable_freenas_cache'),
         Str('site'),
-        Dict(
-            'kerberos_realm',
-            Int('id'),
-            Str('krb_realm'),
-            List('krb_kdc'),
-            List('krb_admin_server'),
-            List('krb_kpasswd_server'),
-        ),
+        Int('kerberos_realm', null=True),
         Str('kerberos_principal', null=True),
         Int('timeout'),
         Int('dns_timeout'),
