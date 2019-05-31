@@ -2103,7 +2103,7 @@ class ManualSnapshotForm(Form):
                             VimTask.WaitForTask(vm.CreateSnapshot_Task(
                                 name=vmsnapname,
                                 description=vmsnapdescription,
-                                memory=False, quiesce=False,
+                                memory=False, quiesce=True,
                             ))
                             snapvms.append(vm)
                             break
