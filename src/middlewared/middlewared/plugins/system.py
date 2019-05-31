@@ -284,11 +284,16 @@ class SystemService(Service):
             return
 
         license = {
+            "model": licenseobj.model,
             "system_serial": licenseobj.system_serial,
             "system_serial_ha": licenseobj.system_serial_ha,
             "contract_type": ContractType(licenseobj.contract_type).name.upper(),
+            "contract_start": licenseobj.contract_start,
             "contract_end": licenseobj.contract_end,
+            "customer_name": licenseobj.customer_name,
+            "expired": licenseobj.expired,
             "features": [],
+            "addhw": licenseobj.addhw,
         }
         for feature in licenseobj.features:
             license["features"].append(feature.name.upper())
