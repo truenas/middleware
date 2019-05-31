@@ -1051,6 +1051,20 @@ async def hook_restart_devd(middleware, *args, **kwargs):
     await middleware.call('service.start', 'ix-devd')
 
 
+async def hook_license_update(middleware, *args, **kwargs):
+    if await middleware.call('failover.licensed'):
+        etc_generate = ['rc']
+        if await middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
+            await middleware.call('etc.generate', 'loader')
+            etc_generate += ['loader']
+        try:
+            await middleware.call('failover.send_small_file', '/data/license')
+            for etc in etc_generate:
+                await middleware.call('falover.call_remote', 'etc.generate', [etc])
+        except Exception:
+            middleware.logger.warning('Failed to sync license file to standby.')
+
+
 async def hook_setup_ha(middleware, *args, **kwargs):
 
     if not await middleware.call('failover.licensed'):
@@ -1203,5 +1217,6 @@ def setup(middleware):
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
+    middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
     asyncio.ensure_future(journal_ha(middleware))
