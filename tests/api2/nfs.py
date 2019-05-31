@@ -97,7 +97,7 @@ def test_08_checking_to_see_if_nfs_service_is_running():
 
 def test_09_checking_if_sysctl_vfs_nfsd_server_max_nfsvers_is_4():
     cmd = 'sysctl -n vfs.nfsd.server_max_nfsvers'
-    results = SSH_TEST(cmd, 'root', 'testing', '192.168.2.140 ')
+    results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == '4', results['output']
 
