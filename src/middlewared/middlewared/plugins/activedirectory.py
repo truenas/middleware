@@ -604,7 +604,7 @@ class ActiveDirectoryService(ConfigService):
         Int('timeout'),
         Int('dns_timeout'),
         Str('idmap_backend', default='RID', enum=['AD', 'AUTORID', 'FRUIT', 'LDAP', 'NSS', 'RFC2307', 'RID', 'SCRIPT']),
-        Str('nss_info', default='', enum=['SFU', 'SFU20', 'RFC2307']),
+        Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
         Str('ldap_sasl_wrapping', default='SIGN', enum=['PLAIN', 'SIGN', 'SEAL']),
         Str('createcomputer'),
         Str('netbiosname'),
