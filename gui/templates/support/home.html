@@ -71,7 +71,7 @@
     <td>{{ license.system_serial }}{% if license.system_serial_ha %} / {{ license.system_serial_ha }}{% endif %}</td>
     <th>{% trans "Contract Type" %}</th>
     <td>
-      {% if license.contract_type.value == 0 %}
+      {% if license.contract_type == 'LEGACY' %}
         Hardware:
         {% if license.contract_hardware.value == 0 %}Advanced Parts Replacement{% endif %}
         {% if license.contract_hardware.value == 1 %}Next Business Day On-Site{% endif %}
@@ -82,12 +82,12 @@
         {% if license.contract_software.value == 1 %}8x5 Help Desk{% endif %}
         {% if license.contract_software.value == 2 %}24x7 Help Desk{% endif %}
       {% endif %}
-      {% if license.contract_type.value == 1 %}{% trans "Standard" %}{% endif %}
-      {% if license.contract_type.value == 2 %}{% trans "Bronze" %}{% endif %}
-      {% if license.contract_type.value == 3 %}{% trans "Silver" %}{% endif %}
-      {% if license.contract_type.value == 4 %}{% trans "Gold" %}{% endif %}
-      {% if license.contract_type.value == 5 %}{% trans "8x5 FreeNAS Support" %}{% endif %}
-      {% if license.contract_type.value == 6 %}{% trans "8x5 FreeNAS Support" %}<br />{% trans "Maximum of 6 incidents per year" %}{% endif %}
+      {% if license.contract_type == 'STANDARD' %}{% trans "Standard" %}{% endif %}
+      {% if license.contract_type == 'BRONZE' %}{% trans "Bronze" %}{% endif %}
+      {% if license.contract_type == 'SILVER' %}{% trans "Silver" %}{% endif %}
+      {% if license.contract_type == 'GOLD' %}{% trans "Gold" %}{% endif %}
+      {% if license.contract_type == 'FREENASCERTIFIED' %}{% trans "8x5 FreeNAS Support" %}{% endif %}
+      {% if license.contract_type == 'FREENASMINI' %}{% trans "8x5 FreeNAS Support" %}<br />{% trans "Maximum of 6 incidents per year" %}{% endif %}
     </td>
     <th>{% trans "Contract Date" %}</th>
     <td>{{ license.contract_start }} - {{ license.contract_end }}{% if license.expired %} <span style="color: red;">({% trans "Expired" %})</span>{% endif %}</td>
@@ -98,13 +98,13 @@
     <th>{% trans "Features" %}</th>
     <td>
       {% for f in license.features %}
-        {% if f.value == 1 %}{% trans "Deduplication" %}<br />{% endif %}
-        {% if f.value == 2 %}{% trans "Jails/Plugins" %}<br />{% endif %}
-        {% if f.value == 8 %}{% trans "Virtual Machines" %}<br />{% endif %}
+        {% if f == 'DEDUP' %}{% trans "Deduplication" %}<br />{% endif %}
+        {% if f == 'JAILS' %}{% trans "Jails/Plugins" %}<br />{% endif %}
+        {% if f == 'VM' %}{% trans "Virtual Machines" %}<br />{% endif %}
+        {% if f == 'FIBRECHANNEL' %}{% trans "Fibre Channel" %}<br />{% endif %}
       {% empty %}
         {% trans "None" %}
       {% endfor %}
-      {% if fc_enabled %}{% trans "Fibre Channel" %}<br />{% endif %}
     </td>
     <th>{% trans "Additional Hardware" %}</th>
     <td>

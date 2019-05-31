@@ -55,7 +55,7 @@ def index(request):
 
     sw_name = get_sw_name().lower()
 
-    license, reason = utils.get_license()
+    license = utils.get_license()[0]
     allow_update = True
     if hasattr(notifier, 'failover_status'):
         status = notifier().failover_status()
@@ -106,7 +106,7 @@ def eula(request):
 
 def license_update(request):
 
-    license, reason = utils.get_license()
+    license = utils.get_license()[0]
     if request.method == 'POST':
         form = forms.LicenseUpdateForm(request.POST)
         if form.is_valid():
@@ -119,7 +119,6 @@ def license_update(request):
 
             return JsonResp(
                 request,
-                events=events,
                 message=_('License updated.')
             )
         else:
@@ -150,11 +149,11 @@ def license_update(request):
 def license_status(request):
 
     sw_name = get_sw_name().lower()
-    license, reason = utils.get_license()
+    license = utils.get_license()[0]
     if (
         license is None and sw_name != 'freenas'
     ) or (
-        license is not None and license.expired
+        license is not None and license['expired']
     ):
         return HttpResponse('PROMPT')
 

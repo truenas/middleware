@@ -24,7 +24,6 @@
 #
 ######################################################################
 import logging
-import os
 import time
 
 from django.conf import settings
@@ -36,7 +35,6 @@ from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
-from licenselib.license import ContractType
 
 log = logging.getLogger('system.models')
 
@@ -825,13 +823,10 @@ class Support(Model):
             except IndexError:
                 support = cls.objects.create()
 
-        license, error = get_license()
+        license = get_license()[0]
         if license is None:
             return False, support
-        if license.contract_type in (
-            ContractType.silver,
-            ContractType.gold,
-        ):
+        if license['contract_type'] in ('SILVER', 'GOLD'):
             return True, support
         return False, support
 

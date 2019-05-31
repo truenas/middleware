@@ -28,11 +28,9 @@ import logging
 from django.utils.translation import ugettext as _
 
 from dojango import forms
-from licenselib.license import License
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.middleware.client import client
-from freenasUI.middleware.notifier import notifier
-from freenasUI.support import models, utils
+from freenasUI.support import models
 
 log = logging.getLogger("support.forms")
 
