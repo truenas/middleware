@@ -18,7 +18,6 @@ import shutil
 import socket
 import struct
 import subprocess
-import sys
 import sysctl
 import syslog
 import tarfile
@@ -26,12 +25,7 @@ import textwrap
 import time
 import uuid
 
-from licenselib.license import ContractType, Features
-
-# FIXME: Temporary imports until license lives in middlewared
-if '/usr/local/www' not in sys.path:
-    sys.path.append('/usr/local/www')
-from freenasUI.support.utils import get_license
+from licenselib.license import ContractType, Features, License
 
 SYSTEM_BOOT_ID = None
 # Flag telling whether the system completed boot and is ready to use
@@ -41,6 +35,7 @@ SYSTEM_SHUTTING_DOWN = False
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
+LICENSE_FILE = '/data/license'
 
 
 class SytemAdvancedService(ConfigService):
@@ -276,16 +271,39 @@ class SystemService(Service):
             return "READY"
         return "BOOTING"
 
-    async def __get_license(self):
-        licenseobj = get_license()[0]
-        if not licenseobj:
+    def __get_license(self):
+        if not os.path.exists(LICENSE_FILE):
             return
+
+        with open(LICENSE_FILE, 'r') as f:
+            license_file = f.read().strip('\n')
+
+        try:
+            licenseobj = License.load(license_file)
+        except Exception:
+            return
+
         license = {
+            "model": licenseobj.model,
             "system_serial": licenseobj.system_serial,
             "system_serial_ha": licenseobj.system_serial_ha,
             "contract_type": ContractType(licenseobj.contract_type).name.upper(),
+            "contract_start": licenseobj.contract_start,
             "contract_end": licenseobj.contract_end,
+            "legacy_contract_hardware": (
+                licenseobj.contract_hardware.name.upper()
+                if licenseobj.contract_type == ContractType.legacy
+                else None
+            ),
+            "legacy_contract_software": (
+                licenseobj.contract_software.name.upper()
+                if licenseobj.contract_type == ContractType.legacy
+                else None
+            ),
+            "customer_name": licenseobj.customer_name,
+            "expired": licenseobj.expired,
             "features": [],
+            "addhw": licenseobj.addhw,
         }
         for feature in licenseobj.features:
             license["features"].append(feature.name.upper())
@@ -299,6 +317,29 @@ class SystemService(Service):
         ):
             license["features"].append(Features.fibrechannel.name.upper())
         return license
+
+    @private
+    def license_path(self):
+        return LICENSE_FILE
+
+    @accepts(Str('license'))
+    def license_update(self, license):
+        """
+        Update license file.
+        """
+        try:
+            License.load(license)
+        except Exception:
+            raise CallError('This is not a valid license.')
+
+        with open(LICENSE_FILE, 'w+') as f:
+            f.write(license)
+
+        self.middleware.call_sync('etc.generate', 'rc')
+
+        self.middleware.run_coroutine(
+            self.middleware.call_hook('system.post_license_update'), wait=False,
+        )
 
     @accepts()
     async def info(self):
@@ -339,7 +380,7 @@ class SystemService(Service):
             'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
             'system_serial': serial,
             'system_product': product,
-            'license': await self.__get_license(),
+            'license': await self.middleware.run_in_thread(self.__get_license),
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
@@ -358,7 +399,7 @@ class SystemService(Service):
             return False
         elif is_freenas:
             return True
-        license = await self.__get_license()
+        license = await self.middleware.run_in_thread(self.__get_license)
         if license and name in license['features']:
             return True
         return False
