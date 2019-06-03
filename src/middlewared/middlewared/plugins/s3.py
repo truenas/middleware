@@ -100,7 +100,7 @@ class S3Service(SystemServiceService):
                 str(775),
                 (await self.middleware.call('dscache.get_uncached_user', 'minio'))['pw_uid'],
                 (await self.middleware.call('dscache.get_uncached_group', 'minio'))['pw_gid'],
-                {'recursive':True, 'traverse': False}
+                {'recursive': True, 'traverse': False}
             )
 
         return await self.config()

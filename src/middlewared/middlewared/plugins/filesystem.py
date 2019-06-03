@@ -10,7 +10,7 @@ import shutil
 import subprocess
 
 from middlewared.main import EventSource
-from middlewared.schema import Bool, Dict, Int, Ref, List, Str, accepts
+from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accepts
 from middlewared.service import private, CallError, Service, job
 from middlewared.utils import filter_list
 
@@ -299,7 +299,7 @@ class FilesystemService(Service):
 
     @accepts(
         Str('path'),
-        Str('mode', null=True),
+        UnixPerm('mode', null=True),
         Int('uid', default=-1),
         Int('gid', default=-1),
         Dict(

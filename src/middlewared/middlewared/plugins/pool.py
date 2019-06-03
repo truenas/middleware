@@ -2826,15 +2826,62 @@ class PoolDatasetService(CRUDService):
             'pool_dataset_permission',
             Str('user'),
             Str('group'),
-            UnixPerm('mode'),
-            Bool('acl', default=False),
-            Bool('recursive', default=False),
+            UnixPerm('mode', null=True),
+            List(
+                'acl',
+                items=[
+                    Dict(
+                        'aclentry',
+                        Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
+                        Int('id', null=True),
+                        Str('type', enum=['ALLOW', 'DENY']),
+                        Dict(
+                        'perms',
+                            Bool('READ_DATA'),
+                            Bool('WRITE_DATA'),
+                            Bool('APPEND_DATA'),
+                            Bool('READ_NAMED_ATTRS'),
+                            Bool('WRITE_NAMED_ATTRS'),
+                            Bool('EXECUTE'),
+                            Bool('DELETE_CHILD'),
+                            Bool('READ_ATTRIBUTES'),
+                            Bool('WRITE_ATTRIBUTES'),
+                            Bool('DELETE'),
+                            Bool('READ_ACL'),
+                            Bool('WRITE_ACL'),
+                            Bool('WRITE_OWNER'),
+                            Bool('SYNCHRONIZE'),
+                            Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'TRAVERSE']),
+                        ),
+                        Dict(
+                            'flags',
+                            Bool('FILE_INHERIT'),
+                            Bool('DIRECTORY_INHERIT'),
+                            Bool('NO_PROPAGATE_INHERIT'),
+                            Bool('INHERIT_ONLY'),
+                            Bool('INHERITED'),
+                            Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
+                        ),
+                    )
+                ],
+                default=[]
+            ),
+            Dict(
+                'options',
+                Bool('stripacl', default=False),
+                Bool('recursive', default=False),
+                Bool('traverse', default=False),
+            )
+
         ),
     )
     @item_method
     async def permission(self, id, data):
         """
-        Set permissions for a dataset `id`.
+        Set permissions for a dataset `id`. Permissions may be specified as
+        either a posix `mode` or an nfsv4 `acl`. Setting mode will fail if the
+        dataset has an existing nfsv4 acl. In this case, the option `stripacl`
+        must be set to `True`.
 
         .. examples(websocket)::
 
@@ -2849,27 +2896,72 @@ class PoolDatasetService(CRUDService):
                     "user": "myuser",
                     "group": "wheel",
                     "mode": "755",
-                    "recursive": true,
+                    "options": {"recursive": true, "stripacl": true},
+                }]
+            }
+
+          Change permission of dataset "tank/myuser" to myuser:wheel and set
+          ACL granting inheriting full control to owner@ and group@.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.permission",
+                "params": ["tank/myuser", {
+                    "user": "myuser",
+                    "group": "wheel",
+                    "acl": [
+                        {
+                            "tag": "owner@",
+                            "id": None,
+                            "type": "ALLOW",
+                            "perms": {"BASIC": "FULL_CONTROL"},
+                            "flags": {"BASIC": "INHERIT"}
+                        },
+                        {
+                            "tag": "group@",
+                            "id": None,
+                            "type": "ALLOW",
+                            "perms": {"BASIC": "FULL_CONTROL"},
+                            "flags": {"BASIC": "INHERIT"}
+                        }
+                    ]
+                    "options": {"recursive": true},
                 }]
             }
         """
         path = (await self._get_instance(id))['mountpoint']
         user = data.get('user', None)
         group = data.get('group', None)
+        uid = gid = -1
         mode = data.get('mode', None)
-        recursive = data.get('recursive', False)
-        acl = data['acl']
+        options = data.get('options', {})
+        acl = data.get('acl', [])
         verrors = ValidationErrors()
+        if user:
+            uid = (await self.middleware.call('dscache.get_uncached_user', user))['pw_uid']
+
+        if group:
+            gid = (await self.middleware.call('dscache.get_uncached_group', group))['gr_gid']
 
         if not acl and mode is None:
             verrors.add('pool_dataset_permission.mode',
-                        'This field is required')
+                        'mode or ACL is required')
+
+        if acl and mode:
+            verrors.add('pool_dataset_permission.mode',
+                        'setting mode and ACL simultaneously is not permitted.')
 
         if verrors:
             raise verrors
 
-        await self.middleware.call('notifier.mp_change_permission', path, user,
-                                   group, mode, recursive, acl)
+        if acl:
+            await self.middleware.call('filesystem.setacl', path, acl, uid, gid, options)
+
+        elif mode:
+            await self.middleware.call('filesystem.setperm', path, mode, uid, gid, options)
+
         return data
 
     @accepts(Str('pool'))
