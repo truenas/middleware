@@ -73,14 +73,14 @@
     <td>
       {% if license.contract_type == 'LEGACY' %}
         Hardware:
-        {% if license.contract_hardware.value == 0 %}Advanced Parts Replacement{% endif %}
-        {% if license.contract_hardware.value == 1 %}Next Business Day On-Site{% endif %}
-        {% if license.contract_hardware.value == 2 %}4-Hour On-Site{% endif %}
+        {% if license.contract_hardware == 'PARTS' %}Advanced Parts Replacement{% endif %}
+        {% if license.contract_hardware == 'NEXTDAY' %}Next Business Day On-Site{% endif %}
+        {% if license.contract_hardware == 'FOURHOUR' %}4-Hour On-Site{% endif %}
         <br />
         Software:
-        {% if license.contract_software.value == 0 %}None{% endif %}
-        {% if license.contract_software.value == 1 %}8x5 Help Desk{% endif %}
-        {% if license.contract_software.value == 2 %}24x7 Help Desk{% endif %}
+        {% if license.contract_software == 'NONE' %}None{% endif %}
+        {% if license.contract_software == 'BUSINESS' %}8x5 Help Desk{% endif %}
+        {% if license.contract_software == 'INTEGRAL' %}24x7 Help Desk{% endif %}
       {% endif %}
       {% if license.contract_type == 'STANDARD' %}{% trans "Standard" %}{% endif %}
       {% if license.contract_type == 'BRONZE' %}{% trans "Bronze" %}{% endif %}
