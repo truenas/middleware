@@ -449,7 +449,7 @@ class VMWareService(CRUDService):
                                 VimTask.WaitForTask(vm.CreateSnapshot_Task(
                                     name=vmsnapname,
                                     description=vmsnapdescription,
-                                    memory=False, quiesce=False,
+                                    memory=False, quiesce=True,
                                 ))
                             else:
                                 self.logger.debug("Not creating snapshot %s for VM %s because it "
