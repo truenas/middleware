@@ -629,9 +629,12 @@ class FailoverService(ConfigService):
     def upgrade_version(self):
         return 1
 
-    @accepts()
+    @accepts(Dict(
+        'failover_upgrade',
+        Str('train', empty=False),
+    ))
     @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
-    def upgrade(self, job):
+    def upgrade(self, job, options):
         """
         Upgrades both controllers.
 
@@ -653,6 +656,10 @@ class FailoverService(ConfigService):
             updatefile = False
         else:
             updatefile = True
+
+        train = options.get('train')
+        if train:
+            self.middleware.call_sync('update.set_train', train)
 
         local_path = self.middleware.call_sync('update.get_update_location')
 
