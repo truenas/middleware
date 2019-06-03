@@ -290,6 +290,16 @@ class SystemService(Service):
             "contract_type": ContractType(licenseobj.contract_type).name.upper(),
             "contract_start": licenseobj.contract_start,
             "contract_end": licenseobj.contract_end,
+            "legacy_contract_hardware": (
+                licenseobj.contract_hardware.name.upper()
+                if licenseobj.contract_type == ContractType.legacy
+                else None
+            ),
+            "legacy_contract_software": (
+                licenseobj.contract_software.name.upper()
+                if licenseobj.contract_type == ContractType.legacy
+                else None
+            ),
             "customer_name": licenseobj.customer_name,
             "expired": licenseobj.expired,
             "features": [],
