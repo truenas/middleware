@@ -268,6 +268,58 @@ class UpdateService(Service):
             'selected': selected,
         }
 
+    @accepts(Str('train', empty=False))
+    def set_train(self, train):
+        """
+        Set an update train to be used by default in updates.
+        """
+        return self.__set_train(train)
+
+    def __set_train(self, train, trains=None):
+        """
+        Wrapper so we dont call get_trains twice on update method.
+        """
+        if trains is None:
+            trains = self.get_trains()
+        if train != trains['selected']:
+            if train not in trains['trains']:
+                raise CallError('Invalid train name.', errno.ENOENT)
+
+            try:
+                result = compare_trains(trains['current'], train)
+            except Exception:
+                self.logger.warning(
+                    "Failed to compare trains %r and %r", trains['current'], train, exc_info=True
+                )
+            else:
+                errors = {
+                    CompareTrainsResult.NIGHTLY_DOWNGRADE: textwrap.dedent("""\
+                        You're not allowed to change away from the nightly train, it is considered a downgrade.
+                        If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                        that train.
+                    """),
+                    CompareTrainsResult.MINOR_DOWNGRADE: textwrap.dedent("""\
+                        Changing minor version is considered a downgrade, thus not a supported operation.
+                        If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                        that train.
+                    """),
+                    CompareTrainsResult.MAJOR_DOWNGRADE: textwrap.dedent("""\
+                        Changing major version is considered a downgrade, thus not a supported operation.
+                        If you have an existing boot environment that uses that train, boot into it in order to upgrade
+                        that train.
+                    """),
+                }
+                if result in errors:
+                    raise CallError(errors[result])
+
+            data = self.middleware.call_sync('datastore.config', 'system.update')
+            if data['upd_train'] != train:
+                self.middleware.call_sync('datastore.update', 'system.update', data['id'], {
+                    'upd_train': train
+                })
+
+        return True
+
     @accepts(Dict(
         'update-check-available',
         Str('train', required=False),
@@ -402,39 +454,11 @@ class UpdateService(Service):
 
         trains = await self.middleware.call('update.get_trains')
         train = attrs.get('train') or trains['selected']
-        try:
-            result = compare_trains(trains['current'], train)
-        except Exception:
-            self.logger.warning("Failed to compare trains %r and %r", trains['current'], train, exc_info=True)
-        else:
-            errors = {
-                CompareTrainsResult.NIGHTLY_DOWNGRADE: textwrap.dedent("""\
-                    You're not allowed to change away from the nightly train, it is considered a downgrade.
-                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
-                    that train.
-                """),
-                CompareTrainsResult.MINOR_DOWNGRADE: textwrap.dedent("""\
-                    Changing minor version is considered a downgrade, thus not a supported operation.
-                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
-                    that train.
-                """),
-                CompareTrainsResult.MAJOR_DOWNGRADE: textwrap.dedent("""\
-                    Changing major version is considered a downgrade, thus not a supported operation.
-                    If you have an existing boot environment that uses that train, boot into it in order to upgrade
-                    that train.
-                """),
-            }
-            if result in errors:
-                raise CallError(errors[result])
-
-        location = await self.middleware.call('update.get_update_location')
 
         if attrs.get('train'):
-            data = await self.middleware.call('datastore.config', 'system.update')
-            if data['upd_train'] != attrs['train']:
-                await self.middleware.call('datastore.update', 'system.update', data['id'], {
-                    'upd_train': attrs['train']
-                })
+            await self.middleware.run_in_thread(self.__set_train, attrs.get('train'), trains)
+
+        location = await self.middleware.call('update.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
 
