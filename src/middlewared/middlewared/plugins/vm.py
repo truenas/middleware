@@ -1174,8 +1174,9 @@ class VMDeviceService(CRUDService):
         'VNC': Dict(
             'attributes',
             Str('vnc_resolution', enum=[
-                '1920x1200', '1920x1080', '1600x1200', '1600x900', '1280x1024',
-                '1280x720', '1024x768', '800x600', '640x480',
+                '1920x1200', '1920x1080', '1600x1200', '1600x900',
+                '1400x1050', '1280x1024', '1280x720',
+                '1024x768', '800x600', '640x480',
             ], default='1024x768'),
             Int('vnc_port', default=None, null=True),
             Str('vnc_bind'),
