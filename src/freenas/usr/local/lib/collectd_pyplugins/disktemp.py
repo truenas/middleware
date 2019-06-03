@@ -146,7 +146,11 @@ class DiskTemp(object):
     def init(self):
         collectd.info('Initializing "disktemp" plugin')
         with Client() as c:
-            self.disks = [disk['devname'] for disk in c.call('disk.query', [['togglesmart', '=', True]])]
+            self.disks = [disk['devname'] for disk in c.call('disk.query', [['togglesmart', '=', True],
+                                                                            # Polling for disk temperature does
+                                                                            # not allow them to go to sleep
+                                                                            # automatically
+                                                                            ['hddstandby', '=', 'ALWAYS ON']])]
             self.powermode = c.call('smart.config')['powermode'].lower()
 
     def dispatch_value(self, name, instance, value, data_type=None):
