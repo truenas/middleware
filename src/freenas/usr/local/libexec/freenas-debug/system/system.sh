@@ -76,8 +76,8 @@ system_func()
 	vmstat -ia
 	section_footer
 
-	section_header "top -SHIz -d 2"
-	top -SHIz -d 2
+	section_header "top -SHIwz -d 2"
+	top -SHIwz -d 2
 	section_footer
 
 	section_header "procstat -akk"
