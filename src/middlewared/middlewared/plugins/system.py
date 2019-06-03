@@ -271,7 +271,7 @@ class SystemService(Service):
             return "READY"
         return "BOOTING"
 
-    async def __get_license(self):
+    def __get_license(self):
         if not os.path.exists(LICENSE_FILE):
             return
 
@@ -380,7 +380,7 @@ class SystemService(Service):
             'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
             'system_serial': serial,
             'system_product': product,
-            'license': await self.__get_license(),
+            'license': await self.middleware.run_in_thread(self.__get_license),
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
@@ -399,7 +399,7 @@ class SystemService(Service):
             return False
         elif is_freenas:
             return True
-        license = await self.__get_license()
+        license = await self.middleware.run_in_thread(self.__get_license)
         if license and name in license['features']:
             return True
         return False
