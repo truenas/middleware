@@ -2836,7 +2836,7 @@ class PoolDatasetService(CRUDService):
                         Int('id', null=True),
                         Str('type', enum=['ALLOW', 'DENY']),
                         Dict(
-                        'perms',
+                            'perms',
                             Bool('READ_DATA'),
                             Bool('WRITE_DATA'),
                             Bool('APPEND_DATA'),
