@@ -1710,14 +1710,15 @@ class MountPointAccessForm(Form):
 
         with client as c:
             dataset = c.call('pool.dataset.query', [['mountpoint', '=', path.rstrip('/')]], {'get': True})
+            acl_is_present = (c.call('filesystem.stat', path))['acl']
 
         kwargs = {}
 
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
 
-        if self.cleaned_data.get('mp_mode_en'):
-            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
+        if self.cleaned_data.get('mp_group_en'):
+            kwargs['mode'] = str(self.cleaned_data['mp_group'])
 
         if self.cleaned_data.get('mp_mode_en'):
             kwargs['mode'] = str(self.cleaned_data['mp_mode'])
@@ -1732,6 +1733,16 @@ class MountPointAccessForm(Form):
 
         if action == 'applydefault':
             kwargs['mode'] = None
+        elif action == "noaction" and acl_is_present:
+            """
+            ACL exists and user has selected 'noaction'. Original
+            behavior was to perform an ACL reset in this situation.
+            New behavior is to only reset permissions if explictly
+            selected.
+            """
+            with client as c:
+                kwargs['acl'] = []
+                kwargs['mode'] = None
         else:
             kwargs['acl'] = []
 

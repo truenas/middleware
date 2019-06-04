@@ -2908,6 +2908,7 @@ class PoolDatasetService(CRUDService):
                     "options": {"recursive": true, "stripacl": true},
                 }]
             }
+
         """
         path = (await self._get_instance(id))['mountpoint']
         user = data.get('user', None)
@@ -2925,8 +2926,11 @@ class PoolDatasetService(CRUDService):
             gid = (await self.middleware.call('dscache.get_uncached_group', group))['gr_gid']
 
         if not acl and mode is None:
-            verrors.add('pool_dataset_permission.mode',
-                        'mode or ACL is required')
+            await run('/usr/sbin/chown',
+                '-R' if not options['traverse'] else '-Rx',
+                f'{uid}:{gid}', path, check=False
+            )
+            return data
 
         if acl and mode:
             verrors.add('pool_dataset_permission.mode',
