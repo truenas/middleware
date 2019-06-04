@@ -466,7 +466,6 @@ class InitialWizard(CommonWizard):
                 share_userpw = share.get('share_userpw')
                 share_group = share.get('share_group')
                 share_groupcreate = share.get('share_groupcreate')
-                share_mode = share.get('share_mode')
 
                 dataset_name = '%s/%s' % (volume_name, share_name)
                 if share_purpose != 'iscsitarget':
@@ -817,8 +816,9 @@ class InitialWizard(CommonWizard):
                 continue
 
             if share_purpose == 'cifs':
-                kwargs['option']['apply_default_acl'] = True
                 kwargs['mode'] = None
+            else:
+                kwargs['acl'] = [] 
 
             with client as c:
                 dataset = c.call('pool.dataset.query', [['mountpoint', '=', f'/mnt/{volume_name}/{share_name}']], {'get': True})
