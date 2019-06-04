@@ -88,8 +88,8 @@ def test_04_enabling_activedirectory():
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
         "domainname": BRIDGEDOMAIN,
-        "netbiosname_a": BRIDGEHOST,
-        "idmap_backend": "rid",
+        "netbiosname": BRIDGEHOST,
+        "idmap_backend": "RID",
         "enable": True
     }
     results = PUT("/activedirectory/", payload)
@@ -107,6 +107,16 @@ def test_05_get_activedirectory_new_data():
 @pytest.mark.parametrize('data', ad_object_list)
 def test_06_verify_activedirectory_data_of_(data):
     assert results.json()[data] == payload[data], results.text
+
+
+@ad_test_cfg
+def test_07_disabling_activedirectory():
+    global payload, results
+    payload = {
+        "enable": False
+    }
+    results = PUT("/activedirectory/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_07_destroying_afp_dataset():
