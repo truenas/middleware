@@ -1707,73 +1707,52 @@ class MountPointAccessForm(Form):
         self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
 
     def commit(self, path):
-        kwargs = {}
 
-        uid = -1
-        gid = -1
-        if self.cleaned_data.get('mp_group_en'):
-            kwargs['group'] = self.cleaned_data['mp_group']
-            with client as c:
-                gid = (c.call('dscache.get_uncached_group', kwargs['group']))['gr_gid']
+        with client as c:
+            dataset = c.call('pool.dataset.query', [['mountpoint', '=', path.rstrip('/')]], {'get': True})
+
+        kwargs = {}
 
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
-            with client as c:
-                uid = (c.call('dscache.get_uncached_user', kwargs['user']))['pw_uid']
 
         if self.cleaned_data.get('mp_mode_en'):
             kwargs['mode'] = str(self.cleaned_data['mp_mode'])
 
-        kwargs['traverse'] = self.cleaned_data['mp_traverse']
+        if self.cleaned_data.get('mp_mode_en'):
+            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
+
         action = self.cleaned_data['mp_acl']
 
-        if action == 'applydefault':
-            with client as c:
-                c.call(
-                    'filesystem.setacl',
-                    path,
-                    [
-                        {
-                            "tag": "owner@",
-                            "id": None,
-                            "type": "ALLOW",
-                            "perms": {"BASIC": "FULL_CONTROL"},
-                            "flags": {"BASIC": "INHERIT"}
-                        },
-                        {
-                            "tag": "group@",
-                            "id": None,
-                            "type": "ALLOW",
-                            "perms": {"BASIC": "FULL_CONTROL"},
-                            "flags": {"BASIC": "INHERIT"}
-                        },
-                    ],
-                    uid,
-                    gid,
-                    {'recursive': True, 'traverse': kwargs['traverse']}
-                )
-                return True
+        kwargs['options'] = {
+            'traverse': self.cleaned_data['mp_traverse'],
+            'recursive': True,
+            'stripacl': True if action == 'remove' else False
+        }
 
+        if action == 'applydefault':
+            kwargs['mode'] = None
         else:
-            with client as c:
-                try:
-                    c.call(
-                        'filesystem.setperm',
-                        path,
-                        kwargs.get('mode', None),
-                        uid,
-                        gid,
-                        {
-                            'recursive': True,
-                            'traverse': kwargs['traverse'],
-                            'stripacl': True if action == 'remove' else False
-                        }
-                    )
-                    return True
-                except Exception as e:
-                    field_name = '__all__'
-                    self._errors[field_name] = e
-                    return False
+            kwargs['acl'] = []
+
+        with client as c:
+            try:
+                c.call('pool.dataset.permission', dataset['id'], kwargs)
+                return True
+            except ValidationErrors as e:
+                for err in e.errors:
+                    field_name = 'mp_' + err.attribute.split('.', 1)[-1]
+                    error_message = err.errmsg
+
+                    if field_name not in self.fields:
+                        field_name = '__all__'
+
+                    if field_name not in self._errors:
+                        self._errors[field_name] = self.error_class([error_message])
+                    else:
+                        self._errors[field_name] += [error_message]
+
+        return False
 
 
 class ResilverForm(MiddlewareModelForm, ModelForm):

@@ -806,28 +806,24 @@ class InitialWizard(CommonWizard):
             if not share:
                 continue
 
+            kwargs = {}
             share_name = share.get('share_name')
             share_purpose = share.get('share_purpose')
-            share_user = share.get('share_user')
-            share_group = share.get('share_group')
-            share_mode = share.get('share_mode')
+            kwargs['user'] = share.get('share_user')
+            kwargs['group'] = share.get('share_group')
+            kwargs['mode'] = share.get('share_mode')
 
             if share_purpose == 'iscsitarget':
                 continue
 
             if share_purpose == 'cifs':
-                share_acl = True
-            else:
-                share_acl = False
+                kwargs['option']['apply_default_acl'] = True
+                kwargs['mode'] = None
 
-            _n.mp_change_permission(
-                path='/mnt/%s/%s' % (volume_name, share_name),
-                user=share_user,
-                group=share_group,
-                mode=share_mode,
-                recursive=False,
-                acl=share_acl,
-            )
+            with client as c:
+                dataset = c.call('pool.dataset.query', [['mountpoint', '=', f'/mnt/{volume_name}/{share_name}']], {'get': True})
+
+                c.call('pool.dataset.permission', dataset['id'], kwargs)
 
         curstep += 1
         progress['step'] = curstep

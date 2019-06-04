@@ -75,8 +75,6 @@ from middlewared.plugins.pwenc import encrypt, decrypt
 
 import sysctl
 
-ACL_WINDOWS_FILE = ".windows"
-ACL_MAC_FILE = ".mac"
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
 
@@ -203,10 +201,6 @@ class notifier(metaclass=HookMetaclass):
                 {'onetime': onetime, 'wait': wait, 'sync': sync},
                 **kwargs,
             )
-
-    def clear_activedirectory_config(self):
-        with client as c:
-            return c.call('service._clear_activedirectory_config')
 
     def geli_recoverykey_add(self, volume, passphrase=None):
         from freenasUI.middleware.util import download_job
@@ -360,79 +354,6 @@ class notifier(metaclass=HookMetaclass):
             ret = False
 
         return ret
-
-    def mp_change_permission(self, path='/mnt', user=None, group=None,
-                             mode=None, recursive=False, acl=False,
-                             exclude=None):
-
-        if exclude is None:
-            exclude = []
-
-        if path == '/mnt/':
-            return
-
-        """
-        UID / GID of -1 will preserve the current User and Group.
-        """
-        uid = gid = -1
-
-        if isinstance(group, bytes):
-            group = group.decode('utf-8')
-
-        if isinstance(user, bytes):
-            user = user.decode('utf-8')
-
-        if isinstance(mode, bytes):
-            mode = mode.decode('utf-8')
-
-        if isinstance(path, bytes):
-            path = path.decode('utf-8')
-
-        if user:
-            with client as c:
-                uid = (c.call('dscache.get_uncached_user', user))['pw_uid']
-
-        if group:
-            with client as c:
-                gid = (c.call('dscache.get_uncached_group', group))['gr_gid']
-
-        if acl:
-            with client as c:
-                c.call(
-                    'filesystem.setacl',
-                    path,
-                    [
-                        {
-                            "tag": "owner@",
-                            "id": None,
-                            "type": "ALLOW",
-                            "perms": {"BASIC": "FULL_CONTROL"},
-                            "flags": {"BASIC": "INHERIT"}
-                        },
-                        {
-                            "tag": "group@",
-                            "id": None,
-                            "type": "ALLOW",
-                            "perms": {"BASIC": "FULL_CONTROL"},
-                            "flags": {"BASIC": "INHERIT"}
-                        }
-                    ],
-                    uid,
-                    gid,
-                    {'recursive': True, 'traverse': recursive}
-                )
-
-        else:
-            with client as c:
-                c.call(
-                    'filesystem.setperm',
-                    path,
-                    mode,
-                    uid,
-                    gid,
-                    {'recursive': True, 'traverse': recursive}
-                )
-                return True
 
     def change_upload_location(self, path):
         vardir = "/var/tmp/firmware"

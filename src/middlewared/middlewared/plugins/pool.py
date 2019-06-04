@@ -2589,14 +2589,7 @@ class PoolDatasetService(CRUDService):
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
         if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB':
-            dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', data['id'])])
-            setacl_job = await self.middleware.call('filesystem.setacl', dataset[0]['mountpoint'], [
-                {"tag": "owner@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
-                {"tag": "group@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}}
-            ])
-            await setacl_job.wait()
-            if setacl_job.error:
-                raise CallError(setacl_job.error)
+            await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
 
         return await self._get_instance(data['id'])
 
@@ -2864,7 +2857,22 @@ class PoolDatasetService(CRUDService):
                         ),
                     )
                 ],
-                default=[]
+                default=[
+                    {
+                        "tag": "owner@",
+                        "id": None,
+                        "type": "ALLOW",
+                        "perms": {"BASIC": "FULL_CONTROL"},
+                        "flags": {"BASIC": "INHERIT"}
+                    },
+                    {
+                        "tag": "group@",
+                        "id": None,
+                        "type": "ALLOW",
+                        "perms": {"BASIC": "FULL_CONTROL"},
+                        "flags": {"BASIC": "INHERIT"}
+                    }
+                ],
             ),
             Dict(
                 'options',
@@ -2894,40 +2902,10 @@ class PoolDatasetService(CRUDService):
                 "method": "pool.dataset.permission",
                 "params": ["tank/myuser", {
                     "user": "myuser",
+                    "acl": [],
                     "group": "wheel",
                     "mode": "755",
                     "options": {"recursive": true, "stripacl": true},
-                }]
-            }
-
-          Change permission of dataset "tank/myuser" to myuser:wheel and set
-          ACL granting inheriting full control to owner@ and group@.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.dataset.permission",
-                "params": ["tank/myuser", {
-                    "user": "myuser",
-                    "group": "wheel",
-                    "acl": [
-                        {
-                            "tag": "owner@",
-                            "id": None,
-                            "type": "ALLOW",
-                            "perms": {"BASIC": "FULL_CONTROL"},
-                            "flags": {"BASIC": "INHERIT"}
-                        },
-                        {
-                            "tag": "group@",
-                            "id": None,
-                            "type": "ALLOW",
-                            "perms": {"BASIC": "FULL_CONTROL"},
-                            "flags": {"BASIC": "INHERIT"}
-                        }
-                    ]
-                    "options": {"recursive": true},
                 }]
             }
         """
@@ -2938,6 +2916,7 @@ class PoolDatasetService(CRUDService):
         mode = data.get('mode', None)
         options = data.get('options', {})
         acl = data.get('acl', [])
+
         verrors = ValidationErrors()
         if user:
             uid = (await self.middleware.call('dscache.get_uncached_user', user))['pw_uid']
@@ -2957,10 +2936,22 @@ class PoolDatasetService(CRUDService):
             raise verrors
 
         if acl:
-            await self.middleware.call('filesystem.setacl', path, acl, uid, gid, options)
+            await self.middleware.call('filesystem.setacl', {
+                'path': path,
+                'dacl': acl,
+                'uid': uid,
+                'gid': gid,
+                'options': options
+            })
 
         elif mode:
-            await self.middleware.call('filesystem.setperm', path, mode, uid, gid, options)
+            await self.middleware.call('filesystem.setperm', {
+                'path': path,
+                'mode': mode,
+                'uid': uid,
+                'gid': gid,
+                'options': options
+            })
 
         return data
 
