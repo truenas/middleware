@@ -86,7 +86,7 @@ def test_04_get_activedirectory_started_before_starting_activedirectory():
     assert results.status_code == 400, results.text
 
 
-def test_05_creating_ad_dataset():
+def test_05_creating_ad_dataset_for_smb():
     results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
@@ -148,6 +148,6 @@ def test_11_disabling_activedirectory():
     assert results.status_code == 200, results.text
 
 
-def test_12_destroying_afp_dataset():
+def test_12_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
