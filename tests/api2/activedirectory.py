@@ -81,7 +81,7 @@ def test_03_get_activedirectory_state():
     assert results.json() == 'DISABLED', results.text
 
 
-def test_04_get_activedirectory_started_before_starting():
+def test_04_get_activedirectory_started_before_starting_activedirectory():
     results = GET('/activedirectory/started/')
     assert results.status_code == 400, results.text
 
