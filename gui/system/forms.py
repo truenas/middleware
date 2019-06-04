@@ -818,7 +818,7 @@ class InitialWizard(CommonWizard):
             if share_purpose == 'cifs':
                 kwargs['mode'] = None
             else:
-                kwargs['acl'] = [] 
+                kwargs['acl'] = []
 
             with client as c:
                 dataset = c.call('pool.dataset.query', [['mountpoint', '=', f'/mnt/{volume_name}/{share_name}']], {'get': True})
