@@ -13,7 +13,10 @@ from datetime import datetime
 
 from middlewared.schema import Bool, Dict, accepts
 from middlewared.service import CallError, Service, job, private
+from middlewared.plugins.pwenc import PWENC_FILE_SECRET
+from middlewared.plugins.pool import GELI_KEYPATH
 
+CONFIG_FILES = {'pwenc_secret': PWENC_FILE_SECRET, 'geli': GELI_KEYPATH}
 FREENAS_DATABASE = '/data/freenas-v1.db'
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
@@ -24,27 +27,36 @@ class ConfigService(Service):
     @accepts(Dict(
         'configsave',
         Bool('secretseed', default=False),
+        Bool('pool_keys', default=False),
     ))
     @job(pipes=["output"])
-    async def save(self, job, options=None):
+    async def save(self, job, options):
         """
         Provide configuration file.
 
-        secretseed - will include the password secret seed in the bundle.
-        """
-        if options is None:
-            options = {}
+        `secretseed` - will include the password secret seed in the bundle.
 
-        if not options.get('secretseed'):
+        `pool_keys` when set will include the geli encryption keys in the bundle.
+        """
+
+        if not options['secretseed'] and not options['pool_keys']:
             bundle = False
             filename = FREENAS_DATABASE
         else:
             bundle = True
+            files = CONFIG_FILES.copy()
+            if not options['secretseed']:
+                files['secretseed'] = None
+            if not options['pool_keys'] or not os.path.exists(files['geli']) or not os.listdir(files['geli']):
+                files['geli'] = None
+
             filename = tempfile.mkstemp()[1]
             os.chmod(filename, 0o600)
             with tarfile.open(filename, 'w') as tar:
                 tar.add(FREENAS_DATABASE, arcname='freenas-v1.db')
-                tar.add('/data/pwenc_secret', arcname='pwenc_secret')
+                for arcname, path in files.items():
+                    if path:
+                        tar.add(path, arcname=arcname)
 
         with open(filename, 'rb') as f:
             await self.middleware.run_in_thread(shutil.copyfileobj, f, job.pipes.output.w)
