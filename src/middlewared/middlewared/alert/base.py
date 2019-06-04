@@ -186,6 +186,9 @@ class ProThreadedAlertService(ThreadedAlertService):
 def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts):
     text = f"{product_name} @ {hostname}\n\n"
 
+    if len(alerts) == 1 and len(gone_alerts) == 0 and len(new_alerts) == 1 and new_alerts[0].source == "Test":
+        return text + "This is a test alert"
+
     if new_alerts:
         text += "New alerts:\n" + "".join(["* %s\n" % format_alert(alert, node_map) for alert in new_alerts]) + "\n"
 

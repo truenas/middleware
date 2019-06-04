@@ -629,9 +629,15 @@ class AlertServiceService(CRUDService):
                               data["type"], data["attributes"], exc_info=True)
             return False
 
+        master_node = "A"
+        if not await self.middleware.call("system.is_freenas"):
+            if await self.middleware.call("notifier.failover_licensed"):
+                master_node = await self.middleware.call("failover.node")
+
         test_alert = Alert(
             title="Test alert",
-            node="A",
+            node=master_node,
+            source="Test",
             datetime=datetime.utcnow(),
             level=AlertLevel.INFO,
         )
