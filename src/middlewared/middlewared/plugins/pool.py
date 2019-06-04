@@ -2920,17 +2920,16 @@ class PoolDatasetService(CRUDService):
 
         verrors = ValidationErrors()
         if user:
-            uid = (await self.middleware.call('dscache.get_uncached_user', user))['pw_uid']
+            try:
+                uid = (await self.middleware.call('dscache.get_uncached_user', user))['pw_uid']
+            except Exception as e:
+                verrors.add('pool_dataset_permission.user', str(e))
 
         if group:
-            gid = (await self.middleware.call('dscache.get_uncached_group', group))['gr_gid']
-
-        if not acl and mode is None:
-            await run('/usr/sbin/chown',
-                '-R' if not options['traverse'] else '-Rx',
-                f'{uid}:{gid}', path, check=False
-            )
-            return data
+            try:
+                gid = (await self.middleware.call('dscache.get_uncached_group', group))['gr_gid']
+            except Exception as e:
+                verrors.add('pool_dataset_permission.group', str(e))
 
         if acl and mode:
             verrors.add('pool_dataset_permission.mode',
@@ -2939,7 +2938,14 @@ class PoolDatasetService(CRUDService):
         if verrors:
             raise verrors
 
-        if acl:
+        if not acl and mode is None:
+            await run(
+                '/usr/sbin/chown',
+                '-R' if not options['traverse'] else '-Rx',
+                f'{uid}:{gid}', path, check=False
+            )
+
+        elif acl:
             await self.middleware.call('filesystem.setacl', {
                 'path': path,
                 'dacl': acl,

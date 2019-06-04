@@ -1656,16 +1656,6 @@ class MountPointAccessForm(Form):
             "of the dataset, but not extend to child datasets."
         )
     )
-    mp_traverse = forms.BooleanField(
-        initial=False,
-        required=False,
-        label=_('Apply to child datasets'),
-        help_text=_(
-            "Apply changes to dataset permissions to child datasets. "
-            "When this is unchecked, changes will be restricted to the "
-            "contents of the referenced dataset."
-        )
-    )
     mp_acl = forms.ChoiceField(
         label=_('Modify Access Control List'),
         choices=(
@@ -1681,9 +1671,18 @@ class MountPointAccessForm(Form):
             "form field is disabled when an ACL is present on the dataset. The "
             "'Remove' option will remove the ACL from the dataset, and enable "
             "the 'Mode' form field. The 'Apply Default' option will apply a default "
-            "ACL granting Owner 'Full Control', Group 'Full Control', and "
-            "everyone else 'Read Only' permissions to the dataset. Changes are committed "
-            "when the 'Change' button is clicked."
+            "ACL granting Owner 'Full Control', and Group 'Full Control'. "
+            "Changes are committed when the 'Change' button is clicked."
+        )
+    )
+    mp_traverse = forms.BooleanField(
+        initial=False,
+        required=False,
+        label=_('Apply to child datasets'),
+        help_text=_(
+            "Apply changes to dataset permissions to child datasets. "
+            "When this is unchecked, changes will be restricted to the "
+            "contents of the referenced dataset."
         )
     )
 

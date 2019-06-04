@@ -335,7 +335,7 @@ class FilesystemService(Service):
         expressed as a file mode without losing any access rules.
 
         """
-        options = data.get('options', {})
+        options = data.get('options')
         mode = data.get('mode', None)
 
         uid = -1 if data['uid'] is None else data['uid']
@@ -454,7 +454,7 @@ class FilesystemService(Service):
     @accepts(
         Dict(
             'filesystem_acl',
-            Str('path'),
+            Str('path', required=True),
             List(
                 'dacl',
                 items=[
@@ -494,8 +494,8 @@ class FilesystemService(Service):
                 ],
                 default=[]
             ),
-            Int('uid', default=-1),
-            Int('gid', default=-1),
+            Int('uid', null=True, default=None),
+            Int('gid', null=True, default=None),
             Dict(
                 'options',
                 Bool('stripacl', default=False),
@@ -531,10 +531,9 @@ class FilesystemService(Service):
         expectations regarding permissions inheritance. This entry is removed from NT ACL returned
         to SMB clients when 'ixnas' samba VFS module is enabled.
         """
-        path = data.get('path', None)
-        options = data.get('options', {})
+        options = data.get('options')
         dacl = data.get('dacl', [])
-        if not os.path.exists(path):
+        if not os.path.exists(data['path']):
             raise CallError('Path not found.', errno.ENOENT)
 
         if dacl and options['stripacl']:
@@ -543,9 +542,9 @@ class FilesystemService(Service):
         uid = -1 if data.get('uid', None) is None else data['uid']
         gid = -1 if data.get('gid', None) is None else data['gid']
         if options['stripacl']:
-            a = acl.ACL(file=path)
+            a = acl.ACL(file=data['path'])
             a.strip()
-            a.apply(path)
+            a.apply(data['path'])
         else:
             cleaned_acl = []
             lockace_is_present = False
@@ -574,7 +573,7 @@ class FilesystemService(Service):
 
             a = acl.ACL()
             a.__setstate__(cleaned_acl)
-            a.apply(path)
+            a.apply(data['path'])
 
         if not options['recursive']:
             return True
@@ -583,7 +582,7 @@ class FilesystemService(Service):
             '/usr/local/bin/winacl',
             '-a', 'clone', '-O', str(uid), '-G', str(gid),
             '-rx' if options['traverse'] else '-r',
-            '-p', path], check=False, capture_output=True
+            '-p', data['path']], check=False, capture_output=True
         )
         if winacl.returncode != 0:
             raise CallError(f"Failed to recursively apply ACL: {winacl.stderr.decode()}")
