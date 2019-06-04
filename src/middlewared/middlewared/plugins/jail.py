@@ -357,10 +357,14 @@ class JailService(CRUDService):
             raise CallError(e, errno=errno.ENOENT)
 
     @private
-    def check_jail_existence(self, jail, skip=True):
+    def check_jail_existence(self, jail, skip=True, callback=None):
         """Wrapper for iocage's API, as a few commands aren't ported to it"""
         try:
-            iocage = ioc.IOCage(skip_jails=skip, jail=jail)
+            if callback is not None:
+                iocage = ioc.IOCage(callback=callback,
+                                    skip_jails=skip, jail=jail)
+            else:
+                iocage = ioc.IOCage(skip_jails=skip, jail=jail)
             jail, path = iocage.__check_jail_existence__()
         except (SystemExit, RuntimeError):
             raise CallError(f"jail '{jail}' not found!")
@@ -822,33 +826,38 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_update:{args[-1]}")
     def update_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
+        job.set_progress(0, f'Updating {jail}')
+        msg_queue = deque(maxlen=10)
 
-        uuid, path, _ = self.check_jail_existence(jail)
-        status, jid = IOCList.list_get_jid(uuid)
-        conf = IOCJson(path).json_load()
+        def progress_callback(content, exception):
+            msg = content['message'].strip('\n')
+            msg_queue.append(msg)
+            final_msg = '\n'.join(msg_queue)
 
-        # Sometimes if they don't have an existing patch level, this
-        # becomes 11.1 instead of 11.1-RELEASE
-        _release = conf["release"].rsplit("-", 1)[0]
-        release = _release if "-RELEASE" in _release else conf["release"]
+            if 'Inspecting system... done' in msg:
+                job.set_progress(20)
+            elif 'Preparing to download files... done.' in msg:
+                job.set_progress(50)
+            elif 'Applying patches... done.' in msg:
+                job.set_progress(75)
+            elif 'Installing updates... done.' in msg:
+                job.set_progress(90)
+            elif f'{jail} has been updated successfully' in msg:
+                job.set_progress(100)
 
-        started = False
+            job.set_progress(None, description=final_msg)
 
-        if conf["type"] == "jail":
-            if not status:
-                self.start(jail)
-                started = True
-        else:
-            return False
+        _, path, iocage = self.check_jail_existence(
+            jail,
+            callback=progress_callback
+        )
+        jail_type = IOCJson(path).json_load()['type']
+        iocage.update()
 
-        if conf["basejail"] != "yes":
-            IOCFetch(release).fetch_update(True, uuid)
-        else:
-            # Basejails only need their base RELEASE updated
-            IOCFetch(release).fetch_update()
-
-        if started:
-            self.stop(jail)
+        if jail_type == 'pluginv2':
+            # Lame 11.2 hack to update the plugin version shown
+            iocage.start()
+            iocage.stop()
 
         return True
 
