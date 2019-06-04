@@ -37,7 +37,6 @@ ad_data_type = {
 }
 
 ad_object_list = [
-        "bindpw",
         "bindname",
         "domainname",
         "netbiosname",
@@ -77,7 +76,6 @@ def test_02_verify_activedirectory_data_type_of_(data):
 
 
 def test_03_get_activedirectory_state():
-    global results
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
@@ -104,15 +102,22 @@ def test_05_enabling_activedirectory():
 
 
 @ad_test_cfg
-def test_06_get_activedirectory_state():
+def test_07_get_activedirectory_state():
     global results
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
-    assert results.json() == 'DISABLED', results.text
+    assert results.json() == 'HEALTHY', results.text
 
 
 @ad_test_cfg
-def test_07_get_activedirectory_new_data():
+def test_08_get_activedirectory_started():
+    results = GET('/activedirectory/started/')
+    assert results.status_code == 200, results.text
+    assert results.json() is True, results.text
+
+
+@ad_test_cfg
+def test_09_get_activedirectory_data():
     global results
     results = GET('/activedirectory/')
     assert results.status_code == 200, results.text
@@ -120,13 +125,13 @@ def test_07_get_activedirectory_new_data():
 
 @ad_test_cfg
 @pytest.mark.parametrize('data', ad_object_list)
-def test_08_verify_activedirectory_data_of_(data):
+def test_10_verify_activedirectory_data_of_(data):
     assert results.json()[data] == payload[data], results.text
 
 
 # put all code to disable and delete under here
 @ad_test_cfg
-def test_09_disabling_activedirectory():
+def test_11_disabling_activedirectory():
     global payload, results
     payload = {
         "enable": False
@@ -135,6 +140,6 @@ def test_09_disabling_activedirectory():
     assert results.status_code == 200, results.text
 
 
-def test_10_destroying_afp_dataset():
+def test_12_destroying_afp_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
