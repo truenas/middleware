@@ -81,13 +81,18 @@ def test_03_get_activedirectory_state():
     assert results.json() == 'DISABLED', results.text
 
 
-def test_04_creating_ad_dataset():
+def test_04_get_activedirectory_started_before_starting():
+    results = GET('/activedirectory/started/')
+    assert results.status_code == 400, results.text
+
+
+def test_05_creating_ad_dataset():
     results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
 
 @ad_test_cfg
-def test_05_enabling_activedirectory():
+def test_06_enabling_activedirectory():
     global payload, results
     payload = {
         "bindpw": ADPASSWORD,
@@ -126,7 +131,10 @@ def test_09_get_activedirectory_data():
 @ad_test_cfg
 @pytest.mark.parametrize('data', ad_object_list)
 def test_10_verify_activedirectory_data_of_(data):
-    assert results.json()[data] == payload[data], results.text
+    if data == 'domainname':
+        assert results.json()[data].lower() == payload[data], results.text
+    else:
+        assert results.json()[data] == payload[data], results.text
 
 
 # put all code to disable and delete under here
