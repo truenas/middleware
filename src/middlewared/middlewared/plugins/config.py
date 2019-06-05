@@ -34,7 +34,7 @@ class ConfigService(Service):
         """
         Provide configuration file.
 
-        `secretseed` - will include the password secret seed in the bundle.
+        `secretseed` will include the password secret seed in the bundle.
 
         `pool_keys` when set will include the geli encryption keys in the bundle.
         """
@@ -153,9 +153,18 @@ class ConfigService(Service):
 
         shutil.move(config_file_name, '/data/uploaded.db')
         if bundle:
-            secret = os.path.join(tmpdir, 'pwenc_secret')
-            if os.path.exists(secret):
-                shutil.move(secret, self.middleware.call_sync('pwenc.file_secret_path'))
+            for filename, destination in CONFIG_FILES.items():
+                file_path = os.path.join(tmpdir, filename)
+                if os.path.exists(file_path):
+                    if filename == 'geli':
+                        # Let's only copy the geli keys and not overwrite the entire directory
+                        os.makedirs(CONFIG_FILES['geli'], exist_ok=True)
+                        for key_path in os.listdir(file_path):
+                            shutil.move(
+                                os.path.join(file_path, key_path), os.path.join(destination, key_path)
+                            )
+                    else:
+                        shutil.move(file_path, destination)
 
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
