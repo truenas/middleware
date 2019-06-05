@@ -3,6 +3,7 @@
 import os
 import sys
 import pytest
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name
@@ -45,7 +46,7 @@ ad_object_list = [
 ]
 
 if "BRIDGEHOST" in locals():
-    MOUNTPOINT = f"/tmp/afp{BRIDGEHOST}"
+    MOUNTPOINT = f"/tmp/ad{BRIDGEHOST}"
 dataset = f"{pool_name}/ad-bsd"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestShare"
@@ -62,6 +63,12 @@ ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                       "ADUSERNAME" in locals(),
                                       "MOUNTPOINT" in locals()
                                       ]) is False, reason=Reason)
+
+
+bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
+                                       "BSD_USERNAME" in locals(),
+                                       "BSD_PASSWORD" in locals()
+                                       ]) is False, reason=BSDReason)
 
 
 def test_01_get_activedirectory_data():
@@ -137,9 +144,53 @@ def test_10_verify_activedirectory_data_of_(data):
         assert results.json()[data] == payload[data], results.text
 
 
+def test_11_enabling_smb_service():
+    payload = {
+        "description": "Test FreeNAS Server",
+        "guest": "nobody",
+        "hostlookup": False,
+    }
+    results = PUT("/smb/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_12_Creating_a_SMB_share_on_SMB_PATH():
+    payload = {
+        "comment": "My Test SMB Share",
+        "path": SMB_PATH,
+        "name": SMB_NAME,
+        "guestok": True,
+        "vfsobjects": ["streams_xattr"]
+    }
+    results = POST("/sharing/smb/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_13_enable_cifs_service():
+    results = PUT("/service/id/cifs/", {"enable": True})
+    assert results.status_code == 200, results.text
+
+
+def test_14_checking_to_see_if_clif_service_is_enabled():
+    results = GET("/service?service=cifs")
+    assert results.json()[0]["enable"] is True, results.text
+
+
+def test_15_starting_cifs_service():
+    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    results = POST("/service/restart/", payload)
+    assert results.status_code == 200, results.text
+    sleep(1)
+
+
+def test_16_checking_to_see_if_nfs_service_is_running():
+    results = GET("/service?service=cifs")
+    assert results.json()[0]["state"] == "RUNNING", results.text
+
+
 # put all code to disable and delete under here
 @ad_test_cfg
-def test_11_disabling_activedirectory():
+def test_17_disabling_activedirectory():
     global payload, results
     payload = {
         "enable": False
@@ -148,6 +199,28 @@ def test_11_disabling_activedirectory():
     assert results.status_code == 200, results.text
 
 
-def test_12_destroying_ad_dataset_for_smb():
+def test_18_disable_cifs_service_at_boot():
+    results = PUT("/service/id/cifs/", {"enable": False})
+    assert results.status_code == 200, results.text
+
+
+def test_19_checking_to_see_if_clif_service_is_enabled_at_boot():
+    results = GET("/service?service=cifs")
+    assert results.json()[0]["enable"] is False, results.text
+
+
+def test_20_stoping_clif_service():
+    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    results = POST("/service/stop/", payload)
+    assert results.status_code == 200, results.text
+    sleep(1)
+
+
+def test_21_checking_if_cifs_is_stop():
+    results = GET("/service?service=cifs")
+    assert results.json()[0]['state'] == "STOPPED", results.text
+
+
+def test_22_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
