@@ -455,6 +455,7 @@ class FailoverService(ConfigService):
         NO_LICENSE - Other storage controller has no license.
         DISAGREE_CARP - Nodes CARP states do not agree.
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
+        NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         """
         reasons = []
         if not self.middleware.call_sync('pool.query'):
@@ -481,6 +482,9 @@ class FailoverService(ConfigService):
             mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
             if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
                 reasons.append('MISMATCH_DISKS')
+
+            if not self.middleware.call_sync('datastore.query', 'network.interfaces', [['int_critical', '=', True]]):
+                reasons.append('NO_CRITICAL_INTERFACES')
         except CallError as e:
             if e.errno not in (errno.ECONNREFUSED, errno.EHOSTDOWN, ClientException.ENOMETHOD):
                 reasons.append('NO_PONG')

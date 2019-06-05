@@ -13,6 +13,13 @@ from freenasUI.failover.detect import ha_node
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 
+class NoCriticalFailoverInterfaceFoundAlertClass(AlertClass):
+    category = AlertCategory.HA
+    level = AlertLevel.CRITICAL
+    title = "No Interfaces Are Marked Critical For Failover"
+    text = "No network interfaces are marked critical for failover."
+
+
 class CriticalFailoverInterfaceNotFoundAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
@@ -58,7 +65,13 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
         if not self.middleware.call_sync('failover.licensed'):
             return alerts
 
-        for iface in Interfaces.objects.filter(int_critical=True):
+        ifaces = list(Interfaces.objects.filter(int_critical=True))
+
+        if not ifaces:
+            return [Alert(NoCriticalFailoverInterfaceFoundAlertClass)]
+
+
+        for iface in ifaces:
             proc = subprocess.Popen(
                 ["/sbin/ifconfig", str(iface.int_interface)],
                 stdout=subprocess.PIPE,
