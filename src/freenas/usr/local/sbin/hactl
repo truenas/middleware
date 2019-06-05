@@ -40,7 +40,9 @@ def main(command, quiet):
 
         if fo_exists:
             ret = client.call('failover.disabled_reasons')
-            if 'MISMATCH_DISKS' in ret:
+            if 'NO_CRITICAL_INTERFACES' in ret:
+                print("Failover status: Unavailable (no network interfaces are marked critical for failover)")
+            elif 'MISMATCH_DISKS' in ret:
                 print("Failover status: Unavailable (the storage controllers do not have the same quantity of disks)")
             elif 'DISAGREE_CARP' in ret:
                 print("Failover status: Unavailable (nodes CARP states do not agree)")
