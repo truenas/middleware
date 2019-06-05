@@ -905,10 +905,13 @@ class VMService(CRUDService):
         arc_min = sysctl.filter('vfs.zfs.arc_min')[0].value
         arc_meta = sysctl.filter('vfs.zfs.arc_meta_limit')[0].value
 
-        if arc_max > arc_min and arc_max > arc_meta:
+        if arc_max > arc_min:
             new_arc_max = max(arc_min, arc_max - memory_bytes)
-            self.logger.info(f'===> Setting ARC FROM: {arc_max} TO: {new_arc_max}')
-            sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
+            if new_arc_max > arc_meta:
+                self.logger.info(
+                    f'===> Setting ARC FROM: {arc_max} TO: {new_arc_max}'
+                )
+                sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
         return True
 
     async def __init_guest_vmemory(self, vm, overcommit):
