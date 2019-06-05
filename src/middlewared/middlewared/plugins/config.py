@@ -13,7 +13,10 @@ from datetime import datetime
 
 from middlewared.schema import Bool, Dict, accepts
 from middlewared.service import CallError, Service, job, private
+from middlewared.plugins.pwenc import PWENC_FILE_SECRET
+from middlewared.plugins.pool import GELI_KEYPATH
 
+CONFIG_FILES = {'pwenc_secret': PWENC_FILE_SECRET, 'geli': GELI_KEYPATH}
 FREENAS_DATABASE = '/data/freenas-v1.db'
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
@@ -24,27 +27,36 @@ class ConfigService(Service):
     @accepts(Dict(
         'configsave',
         Bool('secretseed', default=False),
+        Bool('pool_keys', default=False),
     ))
     @job(pipes=["output"])
-    async def save(self, job, options=None):
+    async def save(self, job, options):
         """
         Provide configuration file.
 
-        secretseed - will include the password secret seed in the bundle.
-        """
-        if options is None:
-            options = {}
+        `secretseed` will include the password secret seed in the bundle.
 
-        if not options.get('secretseed'):
+        `pool_keys` when set will include the geli encryption keys in the bundle.
+        """
+
+        if not options['secretseed'] and not options['pool_keys']:
             bundle = False
             filename = FREENAS_DATABASE
         else:
             bundle = True
+            files = CONFIG_FILES.copy()
+            if not options['secretseed']:
+                files['secretseed'] = None
+            if not options['pool_keys'] or not os.path.exists(files['geli']) or not os.listdir(files['geli']):
+                files['geli'] = None
+
             filename = tempfile.mkstemp()[1]
             os.chmod(filename, 0o600)
             with tarfile.open(filename, 'w') as tar:
                 tar.add(FREENAS_DATABASE, arcname='freenas-v1.db')
-                tar.add('/data/pwenc_secret', arcname='pwenc_secret')
+                for arcname, path in files.items():
+                    if path:
+                        tar.add(path, arcname=arcname)
 
         with open(filename, 'rb') as f:
             await self.middleware.run_in_thread(shutil.copyfileobj, f, job.pipes.output.w)
@@ -141,9 +153,18 @@ class ConfigService(Service):
 
         shutil.move(config_file_name, '/data/uploaded.db')
         if bundle:
-            secret = os.path.join(tmpdir, 'pwenc_secret')
-            if os.path.exists(secret):
-                shutil.move(secret, self.middleware.call_sync('pwenc.file_secret_path'))
+            for filename, destination in CONFIG_FILES.items():
+                file_path = os.path.join(tmpdir, filename)
+                if os.path.exists(file_path):
+                    if filename == 'geli':
+                        # Let's only copy the geli keys and not overwrite the entire directory
+                        os.makedirs(CONFIG_FILES['geli'], exist_ok=True)
+                        for key_path in os.listdir(file_path):
+                            shutil.move(
+                                os.path.join(file_path, key_path), os.path.join(destination, key_path)
+                            )
+                    else:
+                        shutil.move(file_path, destination)
 
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
