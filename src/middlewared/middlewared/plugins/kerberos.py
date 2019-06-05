@@ -95,7 +95,7 @@ class KerberosService(ConfigService):
                     {'get': True}
                 )
                 bind_cn = (ldap['binddn'].split(','))[0].strip("cn=")
-                principal = f'{bind_cn}@krb_realm["realm"]'
+                principal = f'{bind_cn}@{krb_realm["realm"]}'
                 ad_kinit = await Popen(
                     ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
