@@ -1123,11 +1123,12 @@ menu_install()
     mkdir -p /tmp/data/var/db/pkg
     export PKG_DBDIR="/tmp/data/var/db/pkg"
 
-    for inspkg in os/userland os/kernel ports-mgmt/pkg
+    for inspkg in os/userland os/kernel os/kernel-debug ports-mgmt/pkg
     do
         env ASSUME_ALWAYS_YES=YES pkg -r /tmp/data install -yf $inspkg
         if [ $? -ne 0 ] ; then
             echo "Failed installing ${inspkg}"
+	    exit 1
         fi
     done
 
@@ -1136,6 +1137,7 @@ menu_install()
     # Set automatic flag for base packages explicitly
     chroot /tmp/data pkg set -y -A 00 os/userland
     chroot /tmp/data pkg set -y -A 00 os/kernel
+    chroot /tmp/data pkg set -y -A 00 os/kernel-debug
 
     # beadm will need a devfs and we need to mount it before we install packages as well
     mount -t devfs devfs /tmp/data/dev
