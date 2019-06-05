@@ -26,11 +26,12 @@
 #####################################################################
 from django.conf.urls import url
 
-from .views import home, cloudsync_run, cron_run, rsync_run
+from .views import home, cloudsync_run, cloudsync_stop, cron_run, rsync_run
 
 urlpatterns = [
     url(r'^$', home, name="tasks_home"),
     url(r'^cloudsync/(?P<oid>\d+)/run/$', cloudsync_run, name="cloudsync_run"),
+    url(r'^cloudsync/(?P<oid>\d+)/stop/$', cloudsync_stop, name="cloudsync_stop"),
     url(r'^cron/(?P<oid>\d+)/run/$', cron_run, name="cron_run"),
     url(r'^rsync/(?P<oid>\d+)/run/$', rsync_run, name="rsync_run"),
 ]

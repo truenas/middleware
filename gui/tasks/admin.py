@@ -82,6 +82,16 @@ class CloudSyncFAdmin(BaseFreeAdmin):
                 }
             }""" % (escapejs(_('Run Now')), ),
         }
+        actions['Stop'] = {
+            'button_name': _('Stop'),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('%s', data._stop_url, [mybtn,]);
+                }
+            }""" % (escapejs(_('Stop')), ),
+        }
         return actions
 
     def get_datagrid_columns(self):

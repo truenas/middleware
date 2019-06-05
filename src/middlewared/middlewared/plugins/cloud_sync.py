@@ -195,12 +195,23 @@ async def rclone(middleware, job, cloud_sync):
             stderr=subprocess.STDOUT,
         )
         check_cloud_sync = asyncio.ensure_future(rclone_check_progress(job, proc))
-        await proc.wait()
-        await asyncio.wait_for(check_cloud_sync, None)
+        cancelled_error = None
+        try:
+            await proc.wait()
+            await asyncio.wait_for(check_cloud_sync, None)
+        except asyncio.CancelledError as e:
+            cancelled_error = e
+            try:
+                await middleware.call("service.terminate_process", proc.pid)
+            except CallError as e:
+                job.middleware.logger.warning(f"Error terminating rclone on cloud sync abort: {e!r}")
+            check_cloud_sync.cancel()
 
         if snapshot:
             await middleware.call("zfs.snapshot.remove", snapshot)
 
+        if cancelled_error is not None:
+            raise cancelled_error
         if proc.returncode != 0:
             raise ValueError("rclone failed")
 
@@ -870,6 +881,24 @@ class CloudSyncService(CRUDService):
                         "name": cloud_sync["description"],
                     })
                     raise
+
+    @item_method
+    @accepts(Int("id"))
+    async def abort(self, id):
+        """
+        Aborts cloud sync task.
+        """
+
+        cloud_sync = await self._get_instance(id)
+
+        if cloud_sync["job"] is None:
+            return False
+
+        if cloud_sync["job"]["state"] not in ["WAITING", "RUNNING"]:
+            return False
+
+        await self.middleware.call("core.job_abort", cloud_sync["job"]["id"])
+        return True
 
     @accepts()
     async def providers(self):
