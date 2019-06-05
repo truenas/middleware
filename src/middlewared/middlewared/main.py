@@ -15,6 +15,7 @@ from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
+from bsd import closefrom
 from bsd.threading import set_thread_name
 from collections import defaultdict
 
@@ -36,6 +37,7 @@ import select
 import setproctitle
 import signal
 import sys
+import termios
 import threading
 import time
 import traceback
@@ -549,13 +551,8 @@ class ShellWorkerThread(threading.Thread):
 
         self.shell_pid, master_fd = os.forkpty()
         if self.shell_pid == 0:
-            for i in range(3, 1024):
-                if i == master_fd:
-                    continue
-                try:
-                    os.close(i)
-                except Exception:
-                    pass
+            closefrom(3)
+
             os.chdir('/root')
             cmd = [
                 '/usr/bin/login', '-fp', 'root',
@@ -574,6 +571,11 @@ class ShellWorkerThread(threading.Thread):
                 'LANG': 'en_US.UTF-8',
                 'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin',
             })
+
+        # Terminal baudrate affects input queue size
+        attr = termios.tcgetattr(master_fd)
+        attr[4] = attr[5] = termios.B921600
+        termios.tcsetattr(master_fd, termios.TCSANOW, attr)
 
         def reader():
             """
