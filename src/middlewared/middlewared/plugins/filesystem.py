@@ -303,7 +303,8 @@ class FilesystemService(Service):
             Str('path', required=True),
             Int('uid', null=True, default=None),
             Int('gid', null=True, default=None),
-            Dict('options',
+            Dict(
+                'options',
                 Bool('recursive', default=False),
                 Bool('traverse', default=False)
             )
@@ -334,11 +335,10 @@ class FilesystemService(Service):
             chown = subprocess.run([
                 '/usr/sbin/chown',
                 '-R' if options['traverse'] else '-Rx',
-                f'{uid}:{gid}', data['path'],], check=False
+                f'{uid}:{gid}', data['path']], check=False
             )
             if chown.returncode != 0:
                 raise CallError(f"Failed to recursively change ownership: {chown.stderr.decode()}")
-
 
     @accepts(
         Dict(
