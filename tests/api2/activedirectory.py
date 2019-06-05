@@ -8,7 +8,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name
 from config import *
-from functions import GET, POST, PUT, DELETE
+from functions import GET, POST, PUT, DELETE, SSH_TEST
 
 ad_data_type = {
     'id': int,
@@ -144,7 +144,7 @@ def test_10_verify_activedirectory_data_of_(data):
         assert results.json()[data] == payload[data], results.text
 
 
-def test_11_enabling_smb_service():
+def test_11_setting_up_smb():
     payload = {
         "description": "Test FreeNAS Server",
         "guest": "nobody",
@@ -188,9 +188,92 @@ def test_16_checking_to_see_if_nfs_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
+@bsd_host_cfg
+@ad_test_cfg
+def test_17_creating_smb_mountpoint():
+    results = SSH_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_18_store_AD_credentials_in_a_file_for_mount_smbfs():
+    cmd = 'echo "[TESTNAS:ADUSER]" > ~/.nsmbrc && '
+    cmd += 'echo "password=12345678" >> ~/.nsmbrc'
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_19_mounting_SMB():
+    cmd = 'mount_smbfs -N -I %s -W AD03 ' % ip
+    cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_20_creating_SMB_file():
+    results = SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_21_moving_SMB_file():
+    cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_22_copying_SMB_file():
+    cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_23_deleting_SMB_file_1_2():
+    results = SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_24_deleting_SMB_file_2_2():
+    results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+@ad_test_cfg
+def test_25_unmounting_SMB():
+    results = SSH_TEST('umount "%s"' % MOUNTPOINT,
+                       BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+# Delete tests
+@bsd_host_cfg
+@ad_test_cfg
+def test_26_removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
 # put all code to disable and delete under here
 @ad_test_cfg
-def test_17_disabling_activedirectory():
+def test_27_disabling_activedirectory():
     global payload, results
     payload = {
         "enable": False
@@ -199,28 +282,28 @@ def test_17_disabling_activedirectory():
     assert results.status_code == 200, results.text
 
 
-def test_18_disable_cifs_service_at_boot():
+def test_28_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_19_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_29_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_20_stoping_clif_service():
+def test_30_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_21_checking_if_cifs_is_stop():
+def test_31_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_22_destroying_ad_dataset_for_smb():
+def test_32_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
