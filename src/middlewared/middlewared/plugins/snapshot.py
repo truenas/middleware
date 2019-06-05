@@ -39,7 +39,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         )
 
         data['state'] = context['state'].get(f'periodic_snapshot_task_{data["id"]}', {
-            'state': 'UNKNOWN',
+            'state': 'PENDING',
         })
 
         return data
@@ -185,7 +185,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         verrors.add_child('periodic_snapshot_update', await self._validate(new))
 
-        if not data['enabled']:
+        if not new['enabled']:
             for replication_task in await self.middleware.call('replication.query', [['enabled', '=', True]]):
                 if any(periodic_snapshot_task['id'] == id
                        for periodic_snapshot_task in replication_task['periodic_snapshot_tasks']):
