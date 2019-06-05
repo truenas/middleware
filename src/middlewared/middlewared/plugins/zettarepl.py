@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import pytz
+import re
 import setproctitle
 import signal
 import threading
@@ -32,7 +33,9 @@ from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
 from middlewared.worker import watch_parent
 
-SCAN_THREADS = {}
+INVALID_DATASETS = (
+    re.compile(r"freenas-boot/?"),
+)
 
 
 def lifetime_timedelta(value, unit):
@@ -272,9 +275,15 @@ class ZettareplService(Service):
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
-            return list_datasets(await self._get_zettarepl_shell(transport, ssh_credentials))
+            datasets = list_datasets(await self._get_zettarepl_shell(transport, ssh_credentials))
         except Exception as e:
             raise CallError(repr(e))
+
+        return [
+            ds
+            for ds in datasets
+            if not any(r.match(ds) for r in INVALID_DATASETS)
+        ]
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
         try:
