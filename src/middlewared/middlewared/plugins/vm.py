@@ -1405,7 +1405,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
     title = 'VM'
 
     async def query(self, path, enabled):
-        vms_attached = set()
+        vms_attached = []
         for device in await self.middleware.call('datastore.query', 'vm.device'):
             if device['dtype'] not in ('DISK', 'RAW'):
                 continue
@@ -1417,12 +1417,14 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             disk = re.sub(r'^/dev/zvol', '/mnt', disk)
 
             if is_child(disk, path):
-                vms_attached.add({
+                vm = {
                     'id': device['vm'].get('id'),
                     'name': device['vm'].get('name'),
-                })
+                }
+                if vm not in vms_attached:
+                    vms_attached.append(vm)
 
-        return list(vms_attached)
+        return vms_attached
 
     async def get_attachment_name(self, attachment):
         return attachment['name']
