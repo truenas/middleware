@@ -310,8 +310,7 @@ class FilesystemService(Service):
             )
         )
     )
-    @job(lock=lambda args: f'chown:{args[0]}')
-    def chown(self, job, data):
+    def chown(self, data):
         """
         Change owner or group of file at `path`.
 
@@ -325,6 +324,7 @@ class FilesystemService(Service):
         If `traverse` and `recursive` are specified, then the chown
         operation will traverse filesystem mount points.
         """
+        self.logger.debug(f'chown: {data}')
         uid = -1 if data['uid'] is None else data['uid']
         gid = -1 if data['gid'] is None else data['gid']
         options = data.get('options')
@@ -332,13 +332,17 @@ class FilesystemService(Service):
         if not options['recursive']:
             os.chown(data['path'], uid, gid)
         else:
-            chown = subprocess.run([
-                '/usr/sbin/chown',
-                '-R' if options['traverse'] else '-Rx',
-                f'{uid}:{gid}', data['path']], check=False
+            winacl = subprocess.run([
+                '/usr/local/bin/winacl',
+                '-a', 'chown',
+                '-O', str(uid), '-G', str(gid),
+                '-rx' if options['traverse'] else '-r',
+                '-p', data['path']], check=False, capture_output=True
             )
-            if chown.returncode != 0:
-                raise CallError(f"Failed to recursively change ownership: {chown.stderr.decode()}")
+            if winacl.returncode != 0:
+                raise CallError(f"Failed to recursively change ownership: {winacl.stderr.decode()}")
+
+        self.logger.debug('got here')
 
     @accepts(
         Dict(

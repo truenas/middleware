@@ -50,11 +50,12 @@
 #define	WA_TRAVERSE		0x00000010	/* traverse filesystem mountpoints */
 #define	WA_PHYSICAL		0x00000020	/* do not follow symlinks */
 #define	WA_STRIP		0x00000040	/* strip ACL */
+#define	WA_CHOWN		0x00000080	/* only chown */
 
 /* default ACL entries if none are specified */
 #define	WA_DEFAULT_ACL		"owner@:rwxpDdaARWcCos:fd:allow,group@:rwxpDdaARWcCos:fd:allow,everyone@:rxaRc:fd:allow"
 
-#define	WA_OP_SET	(WA_CLONE|WA_RESET|WA_STRIP)
+#define	WA_OP_SET	(WA_CLONE|WA_RESET|WA_STRIP|WA_CHOWN)
 #define	WA_OP_CHECK(flags, bit) ((flags & ~bit) & WA_OP_SET)
 #define	MAX_ACL_DEPTH		2
 
@@ -80,7 +81,8 @@ struct {
 } actions[] = {
 	{	"clone",	WA_CLONE	},
 	{	"strip",	WA_STRIP	},
-	{	"reset",	WA_RESET	}
+	{	"reset",	WA_RESET	},
+	{	"chown",	WA_CHOWN	}
 };
 
 size_t actions_size = sizeof(actions) / sizeof(actions[0]);
@@ -201,15 +203,15 @@ usage(char *path)
 	fprintf(stderr,
 		"Usage: %s [OPTIONS] ...\n"
 		"Where option is:\n"
-		"    -a <clone|reset|strip> 	# action to perform\n"
-		"    -O <owner>                	# change owner\n"
-		"    -G <group>                	# change group\n"
-		"    -s <source>         	# source (if cloning ACL). If none specified then ACL taken from -p\n"
-		"    -p <path>                 	# path to set\n"
-		"    -l                        	# do not traverse symlinks\n"
-		"    -r                        	# recursive\n"
-		"    -v                        	# verbose\n"
-		"    -x                        	# traverse filesystem mountpoints\n",
+		"    -a <clone|reset|strip|chown> # action to perform\n"
+		"    -O <owner>                   # change owner\n"
+		"    -G <group>                   # change group\n"
+		"    -s <source>                  # source (if cloning ACL). If none specified then ACL taken from -p\n"
+		"    -p <path>                    # path to set\n"
+		"    -l                           # do not traverse symlinks\n"
+		"    -r                           # recursive\n"
+		"    -v                           # verbose\n"
+		"    -x                           # traverse filesystem mountpoints\n",
 		path
 	);
 	}
@@ -352,8 +354,8 @@ set_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 		else {
 			acl_depth = fts_entry->fts_level -1;
 		}
-                acl_new = ((fts_entry->fts_statp->st_mode & S_IFDIR) == 0) ? w->acls[acl_depth].facl : w->acls[acl_depth].dacl;
-        }
+		acl_new = ((fts_entry->fts_statp->st_mode & S_IFDIR) == 0) ? w->acls[acl_depth].facl : w->acls[acl_depth].dacl;
+	}
 
 	/* write out the acl to the file */
 	if (acl_set_file(path, ACL_TYPE_NFS4, acl_new) < 0) {
@@ -435,6 +437,19 @@ set_acls(struct windows_acl_info *w)
 			case FTS_F:
 				if (w->flags & WA_STRIP) {
 					rval = strip_acl(w, entry);
+				}
+				else if (w->flags & WA_CHOWN) {
+					if ((w->uid == (uid_t)-1 || w->uid == entry->fts_statp->st_uid) &&
+					    (w->gid == (gid_t)-1 || w->gid == entry->fts_statp->st_gid)){
+						continue;
+					}
+					if (chown(entry->fts_accpath, w->uid, w->gid) < 0) {
+						warn("%s: chown() failed", entry->fts_accpath);
+						rval = -1;
+					}
+					if (w->flags & WA_VERBOSE)
+						fprintf(stdout, "%s\n", entry->fts_accpath);
+
 				}
 				else {
 					rval = set_acl(w, entry);
