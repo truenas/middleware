@@ -644,9 +644,10 @@ def config_save(request):
             return JsonResp(
                 request,
                 message=_("Config download is starting..."),
-                events=['window.location="%s?secret=%s"' % (
+                events=['window.location="%s?secret=%s&pool_keys=%s"' % (
                     reverse('system_configdownload'),
-                    '1' if form.cleaned_data.get('secret') else '0'
+                    '1' if form.cleaned_data.get('secret') else '0',
+                    '1' if form.cleaned_data.get('pool_keys') else '0',
                 )]
             )
     else:
@@ -658,7 +659,10 @@ def config_save(request):
 
 
 def config_download(request):
-    if request.GET.get('secret') == '0':
+    secret = request.GET.get('secret') == '1'
+    pool_keys = request.GET.get('pool_keys') == '1'
+    geli_path = '/data/geli'
+    if not secret and not pool_keys:
         filename = '/data/freenas-v1.db'
         bundle = False
     else:
@@ -667,7 +671,10 @@ def config_download(request):
         os.chmod(filename, 0o600)
         with tarfile.open(filename, 'w') as tar:
             tar.add('/data/freenas-v1.db', arcname='freenas-v1.db')
-            tar.add('/data/pwenc_secret', arcname='pwenc_secret')
+            if secret:
+                tar.add('/data/pwenc_secret', arcname='pwenc_secret')
+            if pool_keys and os.path.exists(geli_path) and os.listdir(geli_path):
+                tar.add(geli_path, arcname='geli')
 
     wrapper = FileWrapper(open(filename, 'rb'))
 

@@ -1316,6 +1316,11 @@ class ConfigSaveForm(Form):
         initial=False,
         required=False,
     )
+    pool_keys = forms.BooleanField(
+        label=_('Export encrypted pools geli keys'),
+        initial=False,
+        required=False,
+    )
 
 
 """
