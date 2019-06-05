@@ -265,6 +265,10 @@ class LDAPService(ConfigService):
         for key in ["ssl", "idmap_backend", "schema"]:
             data[key] = data[key].upper()
 
+        for key in ["certificate", "kerberos_realm"]:
+            if data[key] is not None:
+                data[key] = data[key]["id"]
+
         return data
 
     @private
@@ -298,18 +302,11 @@ class LDAPService(ConfigService):
         Str('machinesuffix'),
         Str('sudosuffix'),
         Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
-        Int('certificate'),
+        Int('certificate', null=True),
         Int('timeout', default=30),
         Int('dns_timeout', default=5),
         Str('idmap_backend', default='LDAP', enum=['SCRIPT', 'LDAP']),
-        Dict(
-            'kerberos_realm',
-            Int('id'),
-            Str('krb_realm'),
-            List('krb_kdc'),
-            List('krb_admin_server'),
-            List('krb_kpasswd_server'),
-        ),
+        Int('kerberos_realm', null=True),
         Str('kerberos_principal'),
         Bool('has_samba_schema', default=False),
         Str('auxiliary_parameters', default=False),

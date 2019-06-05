@@ -89,14 +89,20 @@ class KerberosService(ConfigService):
                 if ldap_kinit.returncode != 0:
                     raise CallError(f"kinit for realm {ldap['kerberos_realm']} with keytab failed: {ad_kinit.stderr.decode()}")
             else:
-                principal = f'{ldap["bindn"]}'
+                krb_realm = await self.middleware.call(
+                    'kerberos.realm.query',
+                    [('id', '=', ldap['krb_realm'])],
+                    {'get': True}
+                )
+                bind_cn = (ldap['binddn'].split(','))[0].strip("cn=")
+                principal = f'{bind_cn}@krb_realm["realm"]'
                 ad_kinit = await Popen(
                     ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
                 )
                 output = await ad_kinit.communicate(input=ldap['bindpw'].encode())
                 if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm{ldap['kerberos_realm']} with password failed: {output[1].decode()}")
+                    raise CallError(f"kinit for realm{krb_realm['realm']} with password failed: {output[1].decode()}")
 
     @private
     async def _get_cached_klist(self):
@@ -347,13 +353,6 @@ class KerberosRealmService(CRUDService):
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
-
-        verrors = ValidationErrors()
-
-        verrors.add_child('kerberos_realm_update', await self._validate(new))
-
-        if verrors:
-            raise verrors
 
         data = await self.kerberos_compress(new)
         await self.middleware.call(
