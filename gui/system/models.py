@@ -138,6 +138,10 @@ class Settings(Model):
         max_length=100,
         editable=False,
     )
+    stg_usage_collection = models.NullBooleanField(
+        verbose_name=_("Usage collection"),
+        help_text=_("Enable sending anonymous usage collection to iXsystems"),
+    )
 
     class Meta:
         verbose_name = _("General")

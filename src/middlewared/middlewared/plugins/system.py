@@ -608,6 +608,10 @@ class SystemGeneralService(ConfigService):
         if data['crash_reporting'] is None:
             data['crash_reporting'] = await self.middleware.call("system.is_freenas")
 
+        data['usage_collection_is_set'] = data['usage_collection'] is not None
+        if data['usage_collection'] is None:
+            data['usage_collection'] = await self.middleware.call("system.is_freenas")
+
         return data
 
     @accepts()
@@ -926,6 +930,7 @@ class SystemGeneralService(ConfigService):
             Str('syslogserver'),
             Str('timezone'),
             Bool('crash_reporting', null=True),
+            Bool('usage_collection', null=True),
             update=True,
         )
     )
@@ -948,6 +953,8 @@ class SystemGeneralService(ConfigService):
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         if not config.pop('crash_reporting_is_set'):
             config['crash_reporting'] = None
+        if not config.pop('usage_collection_is_set'):
+            config['usage_collection'] = None
         new_config = config.copy()
         new_config.update(data)
 
