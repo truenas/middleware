@@ -200,6 +200,11 @@ class CloudSync(Model):
             jid = c.call('cloudsync.sync', self.id)
         return jid
 
+    def stop(self):
+        with client as c:
+            jid = c.call('cloudsync.abort', self.id)
+        return jid
+
 
 class CronJob(Model):
     cron_user = UserField(

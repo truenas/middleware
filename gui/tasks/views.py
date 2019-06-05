@@ -58,6 +58,17 @@ def cloudsync_run(request, oid):
     })
 
 
+def cloudsync_stop(request, oid):
+    cloudsync = models.CloudSync.objects.get(pk=oid)
+    if request.method == "POST":
+        cloudsync.stop()
+        return JsonResp(request, message=_("The cloud sync process has stopped"))
+
+    return render(request, 'tasks/cloudsync_stop.html', {
+        'cloudsync': cloudsync,
+    })
+
+
 def cron_run(request, oid):
     cron = models.CronJob.objects.get(pk=oid)
     if request.method == "POST":

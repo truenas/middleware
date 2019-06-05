@@ -2056,6 +2056,9 @@ class CloudSyncResourceMixin(NestedMixin):
             bundle.data['_run_url'] = reverse('cloudsync_run', kwargs={
                 'oid': bundle.obj.id
             })
+            bundle.data['_stop_url'] = reverse('cloudsync_stop', kwargs={
+                'oid': bundle.obj.id
+            })
             bundle.data['credential'] = str(bundle.obj.credential)
         job = self.__tasks.get(bundle.obj.id, {}).get("job")
         if job:
