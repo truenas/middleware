@@ -299,6 +299,49 @@ class FilesystemService(Service):
 
     @accepts(
         Dict(
+            'filesystem_ownership',
+            Str('path', required=True),
+            Int('uid', null=True, default=None),
+            Int('gid', null=True, default=None),
+            Dict('options',
+                Bool('recursive', default=False),
+                Bool('traverse', default=False)
+            )
+        )
+    )
+    @job(lock=lambda args: f'chown:{args[0]}')
+    def chown(self, job, data):
+        """
+        Change owner or group of file at `path`.
+
+        `uid` and `gid` specify new owner of the file. If either
+        key is absent or None, then existing value on the file is not
+        changed.
+
+        `recursive` performs action recursively, but does
+        not traverse filesystem mount points.
+
+        If `traverse` and `recursive` are specified, then the chown
+        operation will traverse filesystem mount points.
+        """
+        uid = -1 if data['uid'] is None else data['uid']
+        gid = -1 if data['gid'] is None else data['gid']
+        options = data.get('options')
+
+        if not options['recursive']:
+            os.chown(data['path'], uid, gid)
+        else:
+            chown = subprocess.run([
+                '/usr/sbin/chown',
+                '-R' if options['traverse'] else '-Rx',
+                f'{uid}:{gid}', data['path'],], check=False
+            )
+            if chown.returncode != 0:
+                raise CallError(f"Failed to recursively change ownership: {chown.stderr.decode()}")
+
+
+    @accepts(
+        Dict(
             'filesystem_permission',
             Str('path', required=True),
             UnixPerm('mode', null=True),

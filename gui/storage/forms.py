@@ -1717,7 +1717,7 @@ class MountPointAccessForm(Form):
             kwargs['user'] = self.cleaned_data['mp_user']
 
         if self.cleaned_data.get('mp_group_en'):
-            kwargs['mode'] = str(self.cleaned_data['mp_group'])
+            kwargs['group'] = str(self.cleaned_data['mp_group'])
 
         if self.cleaned_data.get('mp_mode_en'):
             kwargs['mode'] = str(self.cleaned_data['mp_mode'])

@@ -2935,15 +2935,29 @@ class PoolDatasetService(CRUDService):
             verrors.add('pool_dataset_permission.mode',
                         'setting mode and ACL simultaneously is not permitted.')
 
+        if acl and options['stripacl']:
+            verrors.add('pool_dataset_permissions.acl',
+                        'Simultaneously setting and removing ACL is not permitted.')
+
+        if mode and not await self.middleware.call('filesystem.acl_is_trivial'):
+            verrors.add('pool_dataset_permissions.options',
+                        f'{path} has an extended ACL. The option "stripacl" must be selected.')
+
         if verrors:
             raise verrors
 
-        if not acl and mode is None:
-            await run(
-                '/usr/sbin/chown',
-                '-R' if not options['traverse'] else '-Rx',
-                f'{uid}:{gid}', path, check=False
-            )
+        if not acl and mode is None and not options['stripacl']:
+            """
+            Neither an ACL, mode, or removing the existing ACL are
+            specified in `data`. Perform a simple chown.
+            """
+            options.pop('stripacl', None)
+            await self.middleware.call('filesystem.chown', {
+                'path': path,
+                'uid': uid,
+                'gid': gid,
+                'options': options
+            })
 
         elif acl:
             await self.middleware.call('filesystem.setacl', {
@@ -2954,7 +2968,17 @@ class PoolDatasetService(CRUDService):
                 'options': options
             })
 
-        elif mode:
+        elif mode or options['stripacl']:
+            """
+            `setperm` performs one of two possible actions. If
+            `mode` is not set, but `stripacl` is specified, then
+            the existing ACL on the file is converted in place via
+            `acl_strip_np()`. This preserves the existing posix mode
+            while removing any extended ACL entries.
+
+            If `mode` is set, then the ACL is removed from the file
+            and the new `mode` is applied.
+            """
             await self.middleware.call('filesystem.setperm', {
                 'path': path,
                 'mode': mode,
