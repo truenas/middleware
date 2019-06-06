@@ -145,6 +145,7 @@ def test_10_verify_activedirectory_data_of_(data):
 
 
 def test_11_setting_up_smb():
+    global payload
     payload = {
         "description": "Test FreeNAS Server",
         "guest": "nobody",
@@ -154,7 +155,18 @@ def test_11_setting_up_smb():
     assert results.status_code == 200, results.text
 
 
-def test_12_Creating_a_SMB_share_on_SMB_PATH():
+def test_12_get_smb_data():
+    global results
+    results = GET("/smb/")
+    assert results.status_code == 200, results.text
+
+
+@pytest.mark.parametrize('data', ["description", "guest", "hostlookup"])
+def test_13_looking_smb_data_of_(data):
+    assert results.json()[data] == payload[data], results.text
+
+
+def test_14_creating_a_SMB_share_on_SMB_PATH():
     payload = {
         "comment": "My Test SMB Share",
         "path": SMB_PATH,
@@ -166,17 +178,17 @@ def test_12_Creating_a_SMB_share_on_SMB_PATH():
     assert results.status_code == 200, results.text
 
 
-def test_13_enable_cifs_service():
+def test_15_enable_cifs_service():
     results = PUT("/service/id/cifs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
-def test_14_checking_to_see_if_clif_service_is_enabled():
+def test_16_checking_to_see_if_clif_service_is_enabled():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is True, results.text
 
 
-def test_15_starting_cifs_service():
+def test_17_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
