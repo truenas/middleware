@@ -995,6 +995,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
             'stg_guiport': forms.widgets.TextInput(),
             'stg_guihttpsport': forms.widgets.TextInput(),
             'stg_crash_reporting': forms.widgets.CheckboxInput(),
+            'stg_usage_collection': forms.widgets.CheckboxInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1032,6 +1033,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
                 update.pop(key, None)
 
         update['crash_reporting'] = update['crash_reporting'] == 'True'
+        update['usage_collection'] = update['usage_collection'] == 'True'
 
         return update
 
