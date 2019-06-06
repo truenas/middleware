@@ -341,7 +341,6 @@ class FilesystemService(Service):
             if winacl.returncode != 0:
                 raise CallError(f"Failed to recursively change ownership: {winacl.stderr.decode()}")
 
-
     @accepts(
         Dict(
             'filesystem_permission',
