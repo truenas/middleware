@@ -1617,8 +1617,7 @@ class MountPointAccessForm(Form):
         initial=True,
         required=False,
         help_text=_(
-            "Recursively change the owner (user) of the contents of the ZFS "
-            "dataset. By default, changes will not extend to child datasets."
+            "Recursively change the user ownership of the ZFS dataset contents. "
         )
     )
     mp_user = UserField(label=_('Owner (user)'))
@@ -1627,8 +1626,7 @@ class MountPointAccessForm(Form):
         initial=True,
         required=False,
         help_text=_(
-            "Recursively change the owner (group) of the contents of the ZFS "
-            "dataset. By default, changes will not extend to child datasets."
+            "Recursively change the group ownership of the ZFS dataset contents. "
         )
     )
     mp_group = GroupField(label=_('Owner (group)'))
@@ -1638,21 +1636,20 @@ class MountPointAccessForm(Form):
         required=False,
         help_text=_(
             "Recursively apply the selected mode to the contents of "
-            "the referenced ZFS dataset. By default, changes to the "
-            "mode will not extend to child datasets."
+            "the referenced ZFS dataset."
         )
     )
     mp_mode = UnixPermissionField(
         label=_('Mode'),
         required=False,
         help_text=_(
-            "Graphical representation of the posix mode (permissions) "
+            "Graphical representation of the POSIX mode (permissions) "
             "at the root of the referenced dataset. This mode may not "
             "be representative of the contents of the dataset. This box "
             "is disabled when an Access Control List (ACL) is present on "
             "the dataset. In this situation, the ACL must be removed if "
             "a new posix mode is to be applied on the dataset. By default, "
-            "changes to the posix mode will recursively apply to the contents "
+            "changes to the POSIX mode will recursively apply to the contents "
             "of the dataset, but not extend to child datasets."
         )
     )
@@ -1670,9 +1667,8 @@ class MountPointAccessForm(Form):
             "typical use case where setting an ACL may be desireable. The 'Mode' "
             "form field is disabled when an ACL is present on the dataset. The "
             "'Remove' option will remove the ACL from the dataset, and enable "
-            "the 'Mode' form field. The 'Apply Default' option will apply a default "
-            "ACL granting Owner 'Full Control', and Group 'Full Control'. "
-            "Changes are committed when the 'Change' button is clicked."
+            "'Mode'. 'Apply Default' sets a default ACL granting Owner 'Full "
+            "Control' and Group 'Full Control'."
         )
     )
     mp_traverse = forms.BooleanField(
@@ -1680,9 +1676,9 @@ class MountPointAccessForm(Form):
         required=False,
         label=_('Apply to child datasets'),
         help_text=_(
-            "Apply changes to dataset permissions to child datasets. "
-            "When this is unchecked, changes will be restricted to the "
-            "contents of the referenced dataset."
+            "Apply dataset permissions changes to child datasets. "
+            "Unset for changes to be restricted to the contents of the "
+            "referenced dataset."
         )
     )
 
@@ -1699,6 +1695,7 @@ class MountPointAccessForm(Form):
                 """
                 if stat['acl']:
                     self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
+                    self.fields['mp_mode_en'].widget.attrs['disabled'] = 'disabled'
 
                 self.fields['mp_mode'].initial = "%.3o" % stat['mode']
                 self.fields['mp_user'].initial = stat['user']

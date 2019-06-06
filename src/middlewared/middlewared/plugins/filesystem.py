@@ -324,10 +324,9 @@ class FilesystemService(Service):
         If `traverse` and `recursive` are specified, then the chown
         operation will traverse filesystem mount points.
         """
-        self.logger.debug(f'chown: {data}')
         uid = -1 if data['uid'] is None else data['uid']
         gid = -1 if data['gid'] is None else data['gid']
-        options = data.get('options')
+        options = data['options']
 
         if not options['recursive']:
             os.chown(data['path'], uid, gid)
@@ -342,7 +341,6 @@ class FilesystemService(Service):
             if winacl.returncode != 0:
                 raise CallError(f"Failed to recursively change ownership: {winacl.stderr.decode()}")
 
-        self.logger.debug('got here')
 
     @accepts(
         Dict(
@@ -382,7 +380,7 @@ class FilesystemService(Service):
         expressed as a file mode without losing any access rules.
 
         """
-        options = data.get('options')
+        options = data['options']
         mode = data.get('mode', None)
 
         uid = -1 if data['uid'] is None else data['uid']
@@ -392,7 +390,7 @@ class FilesystemService(Service):
             raise CallError('Path not found.', errno.ENOENT)
 
         acl_is_trivial = self.middleware.call_sync('filesystem.acl_is_trivial', data['path'])
-        if not acl_is_trivial and not options.get('stripacl', False):
+        if not acl_is_trivial and not options['stripacl']:
             raise CallError(
                 f'Non-trivial ACL present on [{data["path"]}]. Option "stripacl" required to change permission.'
             )
@@ -578,7 +576,7 @@ class FilesystemService(Service):
         expectations regarding permissions inheritance. This entry is removed from NT ACL returned
         to SMB clients when 'ixnas' samba VFS module is enabled.
         """
-        options = data.get('options')
+        options = data['options']
         dacl = data.get('dacl', [])
         if not os.path.exists(data['path']):
             raise CallError('Path not found.', errno.ENOENT)
