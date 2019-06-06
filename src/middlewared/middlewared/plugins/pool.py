@@ -2939,9 +2939,10 @@ class PoolDatasetService(CRUDService):
             verrors.add('pool_dataset_permissions.acl',
                         'Simultaneously setting and removing ACL is not permitted.')
 
-        if mode and not await self.middleware.call('filesystem.acl_is_trivial'):
-            verrors.add('pool_dataset_permissions.options',
-                        f'{path} has an extended ACL. The option "stripacl" must be selected.')
+        if mode and not options['stripacl']:
+            if not await self.middleware.call('filesystem.acl_is_trivial', path):
+                verrors.add('pool_dataset_permissions.options',
+                            f'{path} has an extended ACL. The option "stripacl" must be selected.')
 
         if verrors:
             raise verrors
