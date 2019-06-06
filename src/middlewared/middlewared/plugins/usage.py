@@ -12,6 +12,11 @@ class UsageService(Service):
         private = True
 
     async def start(self):
+        if not (
+            await self.middleware.call('system.general.config')
+        )['usage_collection']:
+            return False
+
         try:
             gather = await self.gather()
             async with aiohttp.ClientSession(raise_for_status=True) as session:
@@ -399,15 +404,14 @@ class UsageService(Service):
 
 
 async def setup(middleware):
-    if (await middleware.call('system.general.config'))['usage_collection']:
-        now = datetime.utcnow()
-        event_loop = asyncio.get_event_loop()
+    now = datetime.utcnow()
+    event_loop = asyncio.get_event_loop()
 
-        event_loop.call_at(
-            random.uniform(1, (
-                now.replace(hour=23, minute=59, second=59) - now
-            ).total_seconds()),
-            lambda: asyncio.ensure_future(
-                middleware.call('usage.start')
-            )
+    event_loop.call_at(
+        random.uniform(1, (
+            now.replace(hour=23, minute=59, second=59) - now
+        ).total_seconds()),
+        lambda: asyncio.ensure_future(
+            middleware.call('usage.start')
         )
+    )
