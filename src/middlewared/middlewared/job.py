@@ -338,7 +338,7 @@ class Job(object):
             logs_dir = os.path.join("/tmp/middlewared/jobs")
             os.makedirs(logs_dir, exist_ok=True)
             self.logs_path = os.path.join(logs_dir, f"{self.id}.log")
-            self.logs_fd = open(self.logs_path, "wb")
+            self.logs_fd = open(self.logs_path, "wb", buffering=0)
 
         self.set_state('RUNNING')
         try:
