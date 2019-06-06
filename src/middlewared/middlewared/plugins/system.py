@@ -38,7 +38,7 @@ FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
 
-class SytemAdvancedService(ConfigService):
+class SystemAdvancedService(ConfigService):
 
     class Config:
         datastore = 'system.advanced'
