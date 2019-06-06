@@ -395,6 +395,7 @@ class JailService(CRUDService):
             Str('user', default='anonymous'),
             Str('password', default='anonymous@'),
             Str('name', default=None, null=True),
+            Str('jail_name', default=None, null=True),
             Bool('accept', default=True),
             Bool('https', default=True),
             List('props', default=[]),
@@ -411,6 +412,8 @@ class JailService(CRUDService):
         fetch_output = {'install_notes': []}
         release = options.get('release', None)
         https = options.pop('https', False)
+        name = options.pop('name')
+        jail_name = options.pop('jail_name')
 
         post_install = False
 
@@ -426,7 +429,7 @@ class JailService(CRUDService):
             rel_up = f'* Updating {release} to the latest patch level... '
             nonlocal post_install
 
-            if options['name'] is None:
+            if name is None:
                 if 'Downloading : base.txz' in msg and '100%' in msg:
                     job.set_progress(5, msg)
                 elif 'Downloading : lib32.txz' in msg and '100%' in msg:
@@ -469,32 +472,33 @@ class JailService(CRUDService):
 
         iocage = ioc.IOCage(callback=progress_callback, silent=False)
 
-        if options["name"] is not None:
+        if name is not None:
             pool = IOCJson().json_get_value('pool')
             iocroot = IOCJson(pool).json_get_value('iocroot')
 
-            options["plugin_file"] = True
+            options["plugin_name"] = name
             start_msg = 'Starting plugin install'
-            final_msg = f"Plugin: {options['name']} installed"
-        elif options['name'] is None and https:
+            final_msg = f"Plugin: {name} installed"
+        elif name is None and https:
             if 'https' not in options['server']:
                 options['server'] = f'https://{options["server"]}'
 
         options["accept"] = True
+        options['name'] = jail_name
 
         job.set_progress(0, start_msg)
         iocage.fetch(**options)
 
-        if post_install and options['name'] is not None:
+        if post_install and name is not None:
             plugin_manifest = pathlib.Path(
-                f'{iocroot}/.plugin_index/{options["name"]}.json'
+                f'{iocroot}/.plugin_index/{name}.json'
             )
             plugin_json = json.loads(plugin_manifest.read_text())
             schema_version = plugin_json.get('plugin_schema', '1')
 
             if schema_version.isdigit() and int(schema_version) >= 2:
                 plugin_output = pathlib.Path(
-                    f'{iocroot}/jails/{options["name"]}/root/root/PLUGIN_INFO'
+                    f'{iocroot}/jails/{name}/root/root/PLUGIN_INFO'
                 )
 
                 if plugin_output.is_file():
