@@ -872,9 +872,12 @@ class JailService(CRUDService):
 
         return '\n'.join(msg)
 
-    @accepts(Str("jail"))
-    @job(lock=lambda args: f"jail_update:{args[-1]}")
-    def update_to_latest_patch(self, job, jail):
+    @accepts(
+        Str("jail"),
+        Bool("update_pkgs", default=False)
+    )
+    @job(lock=lambda args: f"jail_update:{args[-2]}")
+    def update_to_latest_patch(self, job, jail, update_pkgs=False):
         """Updates specified jail to latest patch level."""
         job.set_progress(0, f'Updating {jail}')
         msg_queue = deque(maxlen=10)
@@ -901,7 +904,7 @@ class JailService(CRUDService):
             jail,
             callback=progress_callback
         )
-        iocage.update()
+        iocage.update(update_pkgs)
 
         return True
 
