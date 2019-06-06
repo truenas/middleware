@@ -133,9 +133,8 @@ class JobsQueue(object):
         # waiting for the same lock
         self.queue_event.set()
 
-    async def __next__(self):
+    async def next(self):
         """
-        This is a blocking method.
         Returns when there is a new job ready to run.
         """
         while True:
@@ -167,7 +166,7 @@ class JobsQueue(object):
 
     async def run(self):
         while True:
-            job = await self.__next__()
+            job = await self.next()
             asyncio.ensure_future(job.run(self))
 
 
