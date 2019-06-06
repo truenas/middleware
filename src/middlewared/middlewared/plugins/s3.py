@@ -94,6 +94,15 @@ class S3Service(SystemServiceService):
         await self._update_service(old, new)
 
         if (await self.middleware.call('filesystem.stat', new['disks']))['user'] != 'minio':
-            await self.middleware.call('notifier.winacl_reset', new['disks'], 'minio', 'minio')
+            await self.middleware.call(
+                'filesystem.setperm',
+                {
+                    'path': new['disks'],
+                    'mode': str(775),
+                    'uid': (await self.middleware.call('dscache.get_uncached_user', 'minio'))['pw_uid'],
+                    'gid': (await self.middleware.call('dscache.get_uncached_group', 'minio'))['pw_gid'],
+                    'options': {'recursive': True, 'traverse': False}
+                }
+            )
 
         return await self.config()

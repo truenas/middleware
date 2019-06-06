@@ -466,7 +466,6 @@ class InitialWizard(CommonWizard):
                 share_userpw = share.get('share_userpw')
                 share_group = share.get('share_group')
                 share_groupcreate = share.get('share_groupcreate')
-                share_mode = share.get('share_mode')
 
                 dataset_name = '%s/%s' % (volume_name, share_name)
                 if share_purpose != 'iscsitarget':
@@ -475,18 +474,12 @@ class InitialWizard(CommonWizard):
                             c.call('pool.dataset.create', {
                                 'name': dataset_name,
                                 'type': 'FILESYSTEM',
+                                'share_type': 'SMB' if share_purpose == 'cifs' else 'GENERIC',
                             })
                     except ClientException as e:
                         raise MiddlewareError(
                             _('Failed to create ZFS dataset: %s.') % e
                         )
-
-                    if share_purpose == 'afp':
-                        _n.change_dataset_share_type(dataset_name, 'mac')
-                    elif share_purpose == 'cifs':
-                        _n.change_dataset_share_type(dataset_name, 'windows')
-                    elif share_purpose == 'nfs':
-                        _n.change_dataset_share_type(dataset_name, 'unix')
 
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
@@ -812,30 +805,25 @@ class InitialWizard(CommonWizard):
             if not share:
                 continue
 
+            kwargs = {}
             share_name = share.get('share_name')
             share_purpose = share.get('share_purpose')
-            share_user = share.get('share_user')
-            share_group = share.get('share_group')
-            share_mode = share.get('share_mode')
+            kwargs['user'] = share.get('share_user')
+            kwargs['group'] = share.get('share_group')
+            kwargs['mode'] = share.get('share_mode')
 
             if share_purpose == 'iscsitarget':
                 continue
 
-            if share_purpose == 'afp':
-                share_acl = 'mac'
-            elif share_purpose == 'cifs':
-                share_acl = 'windows'
+            if share_purpose == 'cifs':
+                kwargs['mode'] = None
             else:
-                share_acl = 'unix'
+                kwargs['acl'] = []
 
-            _n.mp_change_permission(
-                path='/mnt/%s/%s' % (volume_name, share_name),
-                user=share_user,
-                group=share_group,
-                mode=share_mode,
-                recursive=False,
-                acl=share_acl,
-            )
+            with client as c:
+                dataset = c.call('pool.dataset.query', [['mountpoint', '=', f'/mnt/{volume_name}/{share_name}']], {'get': True})
+
+                c.call('pool.dataset.permission', dataset['id'], kwargs)
 
         curstep += 1
         progress['step'] = curstep
