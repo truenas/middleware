@@ -194,7 +194,7 @@ class ConfigService(Service):
                 '--fake-initial',
             ],
             capture_output=True,
-            env={'FREENAS_FACTORY': '1'},
+            env={'FREENAS_FACTORY': '1', **os.environ},
         )
         if cp.returncode != 0:
             job.logs_fd.write(cp.stderr)
