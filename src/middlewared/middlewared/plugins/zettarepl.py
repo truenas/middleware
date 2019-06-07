@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
 import multiprocessing
@@ -32,7 +33,7 @@ from zettarepl.zettarepl import Zettarepl
 
 from middlewared.client import Client
 from middlewared.logger import setup_logging
-from middlewared.service import CallError, job, Service
+from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
 from middlewared.worker import watch_parent
 
@@ -213,7 +214,7 @@ class ZettareplService(Service):
         self.state = {}
         self.definition_errors = {}
         self.last_snapshot = {}
-        self.replication_jobs_channels = {}
+        self.replication_jobs_channels = defaultdict(list)
         self.queue = None
         self.process = None
         self.zettarepl = None
@@ -223,8 +224,7 @@ class ZettareplService(Service):
 
     def get_state(self):
         jobs = {}
-        for j in self.middleware.call_sync("core.get_jobs", [("method", "=", "zettarepl.replication_job")],
-                                           {"order_by": ["id"]}):
+        for j in self.middleware.call_sync("core.get_jobs", [("method", "=", "replication.run")], {"order_by": ["id"]}):
             try:
                 task_id = int(j["arguments"][0])
             except (IndexError, ValueError):
@@ -302,11 +302,30 @@ class ZettareplService(Service):
         except Exception:
             raise CallError("Replication service is not running")
 
-    async def run_replication_task(self, id):
+    def run_replication_task(self, id, really_run, job):
+        if really_run:
+            try:
+                self.queue.put(("run_task", ("ReplicationTask", f"task_{id}")))
+            except Exception:
+                raise CallError("Replication service is not running")
+
+        channels = self.replication_jobs_channels[f"task_{id}"]
+        channel = queue.Queue()
+        channels.append(channel)
         try:
-            self.queue.put(("run_task", ("ReplicationTask", f"task_{id}")))
-        except Exception:
-            raise CallError("Replication service is not running")
+            while True:
+                message = channel.get()
+
+                if isinstance(message, ReplicationTaskLog):
+                    job.logs_fd.write(message.log.encode("utf8", "ignore") + b"\n")
+
+                if isinstance(message, ReplicationTaskSuccess):
+                    return
+
+                if isinstance(message, ReplicationTaskError):
+                    raise CallError(message.error)
+        finally:
+            channels.remove(channel)
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
@@ -545,21 +564,13 @@ class ZettareplService(Service):
                         "datetime": datetime.utcnow(),
                     }
 
-                    channel = self.replication_jobs_channels.get(message.task_id)
-                    if channel:
-                        self.logger.warning("Received ReplicationTaskStart for task %r but already have job channel",
-                                            message.task_id)
-                        channel.put(None)
-
-                    self.replication_jobs_channels[message.task_id] = queue.Queue()
-                    self.middleware.call_sync("zettarepl.replication_job", int(message.task_id[5:]))
+                    # Start fake job if none are already running
+                    if not self.replication_jobs_channels[message.task_id]:
+                        self.middleware.call_sync("replication.run", int(message.task_id[5:]), False)
 
                 if isinstance(message, ReplicationTaskLog):
-                    channel = self.replication_jobs_channels.get(message.task_id)
-                    if channel:
+                    for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
-                    else:
-                        self.logger.warning("Don't have job channel for task %r", message.task_id)
 
                 if isinstance(message, ReplicationTaskSnapshotProgress):
                     self.state[f"replication_{message.task_id}"] = {
@@ -573,20 +584,14 @@ class ZettareplService(Service):
                         }
                     }
 
-                    channel = self.replication_jobs_channels.get(message.task_id)
-                    if channel:
+                    for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
-                    else:
-                        self.logger.warning("Don't have job channel for task %r", message.task_id)
 
                 if isinstance(message, ReplicationTaskSnapshotSuccess):
                     self.last_snapshot[f"replication_{message.task_id}"] = f"{message.dataset}@{message.snapshot}"
 
-                    channel = self.replication_jobs_channels.get(message.task_id)
-                    if channel:
+                    for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
-                    else:
-                        self.logger.warning("Don't have job channel for task %r", message.task_id)
 
                 if isinstance(message, ReplicationTaskSuccess):
                     self.state[f"replication_{message.task_id}"] = {
@@ -594,11 +599,8 @@ class ZettareplService(Service):
                         "datetime": datetime.utcnow(),
                     }
 
-                    channel = self.replication_jobs_channels.pop(message.task_id, None)
-                    if channel:
+                    for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
-                    else:
-                        self.logger.warning("Don't have job channel for task %r", message.task_id)
 
                 if isinstance(message, ReplicationTaskError):
                     self.state[f"replication_{message.task_id}"] = {
@@ -607,33 +609,11 @@ class ZettareplService(Service):
                         "error": message.error,
                     }
 
-                    channel = self.replication_jobs_channels.pop(message.task_id, None)
-                    if channel:
+                    for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
-                    else:
-                        self.logger.warning("Don't have job channel for task %r", message.task_id)
 
             except Exception:
                 self.logger.warning("Unhandled exception in observer_queue_reader", exc_info=True)
-
-    @job(logs=True)
-    def replication_job(self, job, task_id):
-        channel = self.replication_jobs_channels[f"task_{task_id}"]
-
-        while True:
-            message = channel.get()
-
-            if message is None:
-                raise CallError("Replication job did not receive proper termination event")
-
-            if isinstance(message, ReplicationTaskLog):
-                job.logs_fd.write(message.log.encode("utf8", "ignore") + b"\n")
-
-            if isinstance(message, ReplicationTaskSuccess):
-                return
-
-            if isinstance(message, ReplicationTaskError):
-                raise CallError(message.error)
 
     async def terminate(self):
         await self.middleware.run_in_thread(self.stop)

@@ -5,7 +5,7 @@ import pickle
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
-from middlewared.service import item_method, private, CallError, CRUDService, ValidationErrors
+from middlewared.service import item_method, job, private, CallError, CRUDService, ValidationErrors
 from middlewared.utils.path import is_child
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
 
@@ -375,17 +375,19 @@ class ReplicationService(CRUDService):
         return response
 
     @item_method
-    @accepts(Int("id"))
-    async def run(self, id):
+    @accepts(Int("id"), Bool("really_run", default=True, hidden=True))
+    @job(logs=True)
+    async def run(self, job, id, really_run):
         """
         Run Replication Task of `id`.
         """
-        task = await self._get_instance(id)
+        if really_run:
+            task = await self._get_instance(id)
 
-        if not task["enabled"]:
-            raise CallError("Task is not enabled")
+            if not task["enabled"]:
+                raise CallError("Task is not enabled")
 
-        await self.middleware.call("zettarepl.run_replication_task", task["id"])
+        await self.middleware.call("zettarepl.run_replication_task", id, really_run, job)
 
     async def _validate(self, data):
         verrors = ValidationErrors()
