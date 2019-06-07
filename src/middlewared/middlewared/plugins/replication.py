@@ -150,7 +150,7 @@ class ReplicationService(CRUDService):
             Int("speed_limit", null=True, default=None, validators=[Range(min=1)]),
             Bool("dedup", default=False),
             Bool("large_block", default=True),
-            Bool("embed", default=True),
+            Bool("embed", default=False),
             Bool("compressed", default=True),
             Int("retries", default=5, validators=[Range(min=1)]),
             Str("logging_level", enum=["DEBUG", "INFO", "WARNING", "ERROR"], null=True, default=None),

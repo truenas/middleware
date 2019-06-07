@@ -2149,6 +2149,7 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
     )
 
     class Meta:
+        exclude = ("repl_embed",)
         fields = "__all__"
         model = models.Replication
 
