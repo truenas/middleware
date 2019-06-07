@@ -741,7 +741,7 @@ class Replication(Model):
         ),
     )
     repl_embed = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_('Allow WRITE_EMBEDDED records'),
         help_text=_(
             'Generate a more compact stream by using WRITE_EMBEDDED '
