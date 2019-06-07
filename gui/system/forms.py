@@ -61,7 +61,7 @@ from freenasUI.common.forms import Form, ModelForm
 from freenasUI.directoryservice.forms import (ActiveDirectoryForm, LDAPForm,
                                               NISForm)
 from freenasUI.directoryservice.models import LDAP, NIS, ActiveDirectory
-from freenasUI.freeadmin.forms import SizeField
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import (ClientException, ValidationErrors,
@@ -3713,6 +3713,13 @@ class SSHKeyPairKeychainCredentialForm(MiddlewareModelForm, ModelForm):
             "attributes": attributes,
         }
 
+    def delete(self, request=None, events=None, **kwargs):
+        with client as c:
+            c.call(f"{self.middleware_plugin}.delete", self.instance.id, {"cascade": True})
+
+        fname = str(type(self).__name__)
+        appPool.hook_form_delete(fname, self, request, events)
+
     name = forms.CharField(
         label=_("Name"),
     )
@@ -3794,6 +3801,13 @@ class SSHCredentialsKeychainCredentialForm(MiddlewareModelForm, ModelForm):
                     return self.instance
 
         return super().save()
+
+    def delete(self, request=None, events=None, **kwargs):
+        with client as c:
+            c.call(f"{self.middleware_plugin}.delete", self.instance.id, {"cascade": True})
+
+        fname = str(type(self).__name__)
+        appPool.hook_form_delete(fname, self, request, events)
 
     name = forms.CharField(
         label=_("Name"),
