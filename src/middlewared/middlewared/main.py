@@ -6,6 +6,7 @@ from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
+from .service_exception import adapt_exception
 from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
@@ -197,13 +198,17 @@ class Application(object):
             # send errors to the client
             self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
         except Exception as e:
-            self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
-            if not self._py_exceptions:
-                self.logger.warn('Exception while calling {}(*{})'.format(
-                    message['method'],
-                    self.middleware.dump_args(message.get('params', []), method_name=message['method'])
-                ), exc_info=True)
-                asyncio.ensure_future(self.__crash_reporting(sys.exc_info()))
+            adapted = adapt_exception(e)
+            if adapted:
+                self.send_error(message, adapted.errno, str(adapted), sys.exc_info(), extra=adapted.extra)
+            else:
+                self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
+                if not self._py_exceptions:
+                    self.logger.warn('Exception while calling {}(*{})'.format(
+                        message['method'],
+                        self.middleware.dump_args(message.get('params', []), method_name=message['method'])
+                    ), exc_info=True)
+                    asyncio.ensure_future(self.__crash_reporting(sys.exc_info()))
 
     async def __crash_reporting(self, exc_info):
         if self.middleware.crash_reporting.is_disabled():

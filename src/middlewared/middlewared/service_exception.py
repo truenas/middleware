@@ -1,4 +1,6 @@
 import errno
+import subprocess
+
 from .client import ErrnoMixin
 
 
@@ -79,3 +81,23 @@ class ValidationErrors(CallException):
     def __contains__(self, item):
         # check if an error exists for a given attribute ( item )
         return item in [e.attribute for e in self.errors]
+
+
+def adapt_exception(e):
+    from .utils.shell import join_commandline
+
+    if isinstance(e, subprocess.CalledProcessError):
+        if isinstance(e.cmd, (list, tuple)):
+            cmd = join_commandline(e.cmd)
+        else:
+            cmd = e.cmd
+
+        stdout = e.stdout or ""
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", "ignore")
+        stderr = e.stderr or ""
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", "ignore")
+        output = ''.join([stdout, stderr]).rstrip()
+
+        return CallError(f'Command {cmd} failed (code {e.returncode}):\n{output}')

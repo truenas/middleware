@@ -10,7 +10,7 @@ import time
 import traceback
 import threading
 
-from middlewared.service_exception import CallError, ValidationError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
 
 logger = logging.getLogger(__name__)
@@ -343,7 +343,14 @@ class Job(object):
         self.set_state('RUNNING')
         try:
             self.future = asyncio.ensure_future(self.__run_body())
-            await self.future
+            try:
+                await self.future
+            except Exception as e:
+                handled = adapt_exception(e)
+                if handled is not None:
+                    raise handled
+                else:
+                    raise
         except asyncio.CancelledError:
             self.set_state('ABORTED')
         except Exception:
