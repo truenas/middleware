@@ -1,4 +1,5 @@
 import base64
+import enum
 import errno
 import os
 import random
@@ -10,7 +11,7 @@ import urllib.parse
 
 from middlewared.client import Client
 from middlewared.service_exception import CallError
-from middlewared.schema import (Dict, Int, Patch, Str,
+from middlewared.schema import (Bool, Dict, Int, Patch, Str,
                                 ValidationErrors, accepts)
 from middlewared.service import CRUDService, private
 from middlewared.utils import run
@@ -23,11 +24,82 @@ class KeychainCredentialType:
 
     credentials_schema = NotImplemented
 
+    used_by_delegates = []
+
     async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
         pass
 
-    async def used_by(self, middleware, id):
+
+class KeychainCredentialUsedByDelegate:
+    unbind_method = NotImplemented
+
+    def __init__(self, middleware):
+        self.middleware = middleware
+
+    async def query(self, id):
         raise NotImplementedError
+
+    async def get_title(self, row):
+        raise NotImplementedError
+
+    async def unbind(self, row):
+        raise NotImplementedError
+
+
+class KeychainCredentialUsedByDelegateUnbindMethod(enum.Enum):
+    DELETE = "delete"
+    DISABLE = "disable"
+
+
+class OtherKeychainCredentialKeychainCredentialUsedByDelegate(KeychainCredentialUsedByDelegate):
+    unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DELETE
+
+    type = NotImplemented
+
+    async def query(self, id):
+        result = []
+        for row in await self.middleware.call("keychaincredential.query", [["type", "=", self.type]]):
+            if await self._is_related(row, id):
+                result.append(row)
+
+        return result
+
+    async def get_title(self, row):
+        return f"{TYPES[self.type].title} {row['name']}"
+
+    async def unbind(self, row):
+        await self.middleware.call("keychaincredential.delete", row["id"], {"cascade": True})
+
+    async def _is_related(self, row, id):
+        raise NotImplementedError
+
+
+class SSHCredentialsSSHKeyPairUsedByDelegate(OtherKeychainCredentialKeychainCredentialUsedByDelegate):
+    type = "SSH_CREDENTIALS"
+
+    async def _is_related(self, row, id):
+        return row["attributes"]["private_key"] == id
+
+
+class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByDelegate):
+    unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
+
+    async def query(self, id):
+        result = []
+        for cloud_credentials in await self.middleware.call("cloudsync.credentials.query", [["provider", "=", "SFTP"]]):
+            if cloud_credentials["attributes"].get("private_key") == id:
+                result.append(cloud_credentials)
+
+        return result
+
+    async def get_title(self, row):
+        return f"Cloud credentials {row['name']}"
+
+    async def unbind(self, row):
+        row["attributes"].pop("private_key")
+        await self.middleware.call("datastore.update", "system.cloudcredentials", row["id"], {
+            "attributes": row["attributes"]
+        })
 
 
 class SSHKeyPair(KeychainCredentialType):
@@ -37,6 +109,11 @@ class SSHKeyPair(KeychainCredentialType):
     credentials_schema = [
         Str("private_key", null=True, default=None),
         Str("public_key", null=True, default=None),
+    ]
+
+    used_by_delegates = [
+        SSHCredentialsSSHKeyPairUsedByDelegate,
+        SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate,
     ]
 
     async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
@@ -75,16 +152,21 @@ class SSHKeyPair(KeychainCredentialType):
                 verrors.add(f"{schema_name}.public_key", "Invalid public key")
                 return
 
-    async def used_by(self, middleware, id):
-        used_by = []
-        for ssh_credentials in await middleware.call("keychaincredential.query", [["type", "=", "SSH_CREDENTIALS"]]):
-            if ssh_credentials["attributes"]["private_key"] == id:
-                used_by.append(f"SSH credentials {ssh_credentials['name']}")
-        for cloud_credentials in await middleware.call("cloudsync.credentials.query", [["provider", "=", "SFTP"]]):
-            if cloud_credentials["attributes"].get("private_key") == id:
-                used_by.append(f"Cloud credentials {cloud_credentials['name']}")
 
-        return used_by
+class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
+    unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
+
+    async def query(self, id):
+        return await self.middleware.call("replication.query", [["ssh_credentials.id", "=", id]])
+
+    async def get_title(self, row):
+        return f"Replication task {row['name']}"
+
+    async def unbind(self, row):
+        await self.middleware.call("replication.update", row["id"], {"enabled": False})
+        await self.middleware.call("datastore.update", "storage.replication", row["id"], {
+            "repl_ssh_credentials": None,
+        })
 
 
 class SSHCredentials(KeychainCredentialType):
@@ -101,12 +183,9 @@ class SSHCredentials(KeychainCredentialType):
         Int("connect_timeout", default=10),
     ]
 
-    async def used_by(self, middleware, id):
-        used_by = []
-        for replication_task in await middleware.call("replication.query", [["ssh_credentials.id", "=", id]]):
-            used_by.append(f"Replication task {replication_task['id']}")
-
-        return used_by
+    used_by_delegates = [
+        ReplicationTaskSSHCredentialsUsedByDelegate,
+    ]
 
 
 TYPES = {
@@ -257,8 +336,8 @@ class KeychainCredentialService(CRUDService):
 
         return new
 
-    @accepts(Int("id"))
-    async def do_delete(self, id):
+    @accepts(Int("id"), Dict("options", Bool("cascade", default=False)))
+    async def do_delete(self, id, options):
         """
         Delete Keychain Credential with specific `id`
 
@@ -277,15 +356,38 @@ class KeychainCredentialService(CRUDService):
 
         instance = await self._get_instance(id)
 
-        used_by = await TYPES[instance["type"]].used_by(self.middleware, id)
-        if used_by:
-            raise CallError(f"Unable to delete this credential, it is used by: {', '.join(used_by)}")
+        for delegate in TYPES[instance["type"]].used_by_delegates:
+            delegate = delegate(self.middleware)
+            for row in await delegate.query(instance["id"]):
+                if not options["cascade"]:
+                    raise CallError("This credential is used and no cascade option is specified")
+
+                await delegate.unbind(row)
 
         await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
             id,
         )
+
+    @accepts(Int("id"))
+    async def used_by(self, id):
+        """
+        Returns list of objects that use this credential.
+        """
+        instance = await self._get_instance(id)
+
+        result = []
+        for delegate in TYPES[instance["type"]].used_by_delegates:
+            delegate = delegate(self.middleware)
+            for row in await delegate.query(instance["id"]):
+                result.append({
+                    "title": await delegate.get_title(row),
+                    "unbind_method": delegate.unbind_method.value,
+                })
+                if isinstance(delegate, OtherKeychainCredentialKeychainCredentialUsedByDelegate):
+                    result.extend(await self.middleware.call("keychaincredential.used_by", row["id"]))
+        return result
 
     async def _validate(self, schema_name, data, id=None):
         verrors = ValidationErrors()
