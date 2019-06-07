@@ -8,6 +8,13 @@ from middlewared.schema import (
 )
 
 
+def test__nonhidden_after_hidden():
+    with pytest.raises(ValueError):
+        @accepts(Int('id'), Bool('fake', hidden=True), List('flags'))
+        def f(self, id, fake, flags):
+            pass
+
+
 def test__schema_str_empty():
 
     @accepts(Str('data', empty=False))
