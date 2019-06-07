@@ -725,11 +725,8 @@ require([
       var mode_en = registry.byId("id_mp_mode_en");
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {
-        // do noting
-      } else if(acl.get('value') == 'unix') {
-        mode_en.set('disabled', false);
-        mode.set('disabled', false);
-      } else if(acl.get('value') == 'mac') {
+        // do nothing
+      } else if(acl.get('value') == 'remove') {
         mode_en.set('disabled', false);
         mode.set('disabled', false);
       } else {

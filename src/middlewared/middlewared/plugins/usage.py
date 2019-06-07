@@ -12,17 +12,22 @@ class UsageService(Service):
         private = True
 
     async def start(self):
-        try:
-            gather = await self.gather()
-            async with aiohttp.ClientSession(raise_for_status=True) as session:
-                await session.post(
-                    'https://usage.freenas.org/submit',
-                    data=gather,
-                    headers={"Content-type": "application/json"}
-                )
-        except Exception as e:
-            # We still want to schedule the next call
-            self.logger.error(e)
+        if (
+            await self.middleware.call('system.general.config')
+        )['usage_collection']:
+            try:
+                gather = await self.gather()
+                async with aiohttp.ClientSession(
+                    raise_for_status=True
+                ) as session:
+                    await session.post(
+                        'https://usage.freenas.org/submit',
+                        data=gather,
+                        headers={"Content-type": "application/json"}
+                    )
+            except Exception as e:
+                # We still want to schedule the next call
+                self.logger.error(e)
 
         event_loop = asyncio.get_event_loop()
         now = datetime.utcnow()

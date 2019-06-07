@@ -2350,24 +2350,6 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
-        job.set_progress(90, 'Ensuring correct ACL mode of datasets')
-
-        # Use subprocess instead of zfs plugin for speed reasons
-        cp = subprocess.run(
-            'zfs list -t filesystem -H -o name,aclmode,mountpoint | '
-            'awk \'$2 != "restricted" {print $0}\'',
-            shell=True, capture_output=True, text=True, check=False,
-        )
-        for line in cp.stdout.strip().split('\n'):
-            line = line.strip()
-            if not line:
-                continue
-            dataset, aclmode, mountpoint = line.split('\t')
-            if os.path.exists(f'{mountpoint}/.windows'):
-                self.middleware.call_sync('zfs.dataset.update', dataset, {'properties': {
-                    'aclmode': {'value': 'restricted'},
-                }})
-
         # Now that pools have been imported we are ready to configure system dataset,
         # collectd and syslogd which may depend on them.
         try:
@@ -2445,6 +2427,7 @@ class PoolDatasetService(CRUDService):
                 ('org.freenas:refquota_warning', 'refquota_warning', None),
                 ('org.freenas:refquota_critical', 'refquota_critical', None),
                 ('dedup', 'deduplication', str.upper),
+                ('aclmode', None, str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
                 ('exec', None, str.upper),
@@ -2471,13 +2454,6 @@ class PoolDatasetService(CRUDService):
                 if method:
                     dataset[i]['value'] = method(dataset[i]['value'])
             del dataset['properties']
-
-            if dataset['type'] == 'FILESYSTEM':
-                dataset['share_type'] = self.middleware.call_sync(
-                    'notifier.get_dataset_share_type', dataset['name'],
-                ).upper()
-            else:
-                dataset['share_type'] = None
 
             rv = []
             for child in dataset['children']:
@@ -2526,7 +2502,8 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
-        Str('share_type', enum=['UNIX', 'WINDOWS', 'MAC']),
+        Str('aclmode', default='PASSTHROUGH', enum=['PASSTHROUGH', 'RESTRICTED']),
+        Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         register=True,
     ))
     async def do_create(self, data):
@@ -2563,11 +2540,16 @@ class PoolDatasetService(CRUDService):
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
 
+        if data['share_type'] == 'SMB':
+            data['casesensitivity'] = 'INSENSITIVE'
+            data['aclmode'] = 'RESTRICTED'
+
         if verrors:
             raise verrors
 
         props = {}
         for i, real_name, transform in (
+            ('aclmode', None, str.lower),
             ('atime', None, str.lower),
             ('casesensitivity', None, str.lower),
             ('comments', 'org.freenas:description', None),
@@ -2606,19 +2588,8 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.mount', data['name'])
 
-        if data['type'] == 'FILESYSTEM':
-            await self.middleware.call(
-                'notifier.change_dataset_share_type', data['name'], data.get('share_type', 'UNIX').lower()
-            )
-            if data.get('share_type', 'UNIX') == 'WINDOWS':
-                dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', data['id'])])
-                setacl_job = await self.middleware.call('filesystem.setacl', dataset[0]['mountpoint'], [
-                    {"tag": "owner@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
-                    {"tag": "group@", "id": None, "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}}
-                ])
-                await setacl_job.wait()
-                if setacl_job.error:
-                    raise CallError(setacl_job.error)
+        if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB':
+            await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
 
         return await self._get_instance(data['id'])
 
@@ -2632,6 +2603,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'type'}),
         ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
+        ('rm', {'name': 'share_type'}),  # This is something we should only do at create time
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
@@ -2687,6 +2659,7 @@ class PoolDatasetService(CRUDService):
 
         props = {}
         for i, real_name, transform, inheritable in (
+            ('aclmode', None, str.lower, True),
             ('atime', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
             ('sync', None, str.lower, True),
@@ -2717,11 +2690,7 @@ class PoolDatasetService(CRUDService):
 
         rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
 
-        if data['type'] == 'FILESYSTEM' and 'share_type' in data:
-            await self.middleware.call(
-                'notifier.change_dataset_share_type', id, data['share_type'].lower()
-            )
-        elif data['type'] == 'VOLUME' and 'volsize' in data:
+        if data['type'] == 'VOLUME' and 'volsize' in data:
             if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
                 await self._service_change('iscsitarget', 'reload')
 
@@ -2752,7 +2721,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
 
             for i in (
-                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'share_type',
+                'aclmode', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'share_type',
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
@@ -2850,15 +2819,77 @@ class PoolDatasetService(CRUDService):
             'pool_dataset_permission',
             Str('user'),
             Str('group'),
-            UnixPerm('mode'),
-            Str('acl', enum=['UNIX', 'MAC', 'WINDOWS'], default='UNIX'),
-            Bool('recursive', default=False),
+            UnixPerm('mode', null=True),
+            List(
+                'acl',
+                items=[
+                    Dict(
+                        'aclentry',
+                        Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
+                        Int('id', null=True),
+                        Str('type', enum=['ALLOW', 'DENY']),
+                        Dict(
+                            'perms',
+                            Bool('READ_DATA'),
+                            Bool('WRITE_DATA'),
+                            Bool('APPEND_DATA'),
+                            Bool('READ_NAMED_ATTRS'),
+                            Bool('WRITE_NAMED_ATTRS'),
+                            Bool('EXECUTE'),
+                            Bool('DELETE_CHILD'),
+                            Bool('READ_ATTRIBUTES'),
+                            Bool('WRITE_ATTRIBUTES'),
+                            Bool('DELETE'),
+                            Bool('READ_ACL'),
+                            Bool('WRITE_ACL'),
+                            Bool('WRITE_OWNER'),
+                            Bool('SYNCHRONIZE'),
+                            Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'TRAVERSE']),
+                        ),
+                        Dict(
+                            'flags',
+                            Bool('FILE_INHERIT'),
+                            Bool('DIRECTORY_INHERIT'),
+                            Bool('NO_PROPAGATE_INHERIT'),
+                            Bool('INHERIT_ONLY'),
+                            Bool('INHERITED'),
+                            Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
+                        ),
+                    )
+                ],
+                default=[
+                    {
+                        "tag": "owner@",
+                        "id": None,
+                        "type": "ALLOW",
+                        "perms": {"BASIC": "FULL_CONTROL"},
+                        "flags": {"BASIC": "INHERIT"}
+                    },
+                    {
+                        "tag": "group@",
+                        "id": None,
+                        "type": "ALLOW",
+                        "perms": {"BASIC": "FULL_CONTROL"},
+                        "flags": {"BASIC": "INHERIT"}
+                    }
+                ],
+            ),
+            Dict(
+                'options',
+                Bool('stripacl', default=False),
+                Bool('recursive', default=False),
+                Bool('traverse', default=False),
+            )
+
         ),
     )
     @item_method
     async def permission(self, id, data):
         """
-        Set permissions for a dataset `id`.
+        Set permissions for a dataset `id`. Permissions may be specified as
+        either a posix `mode` or an nfsv4 `acl`. Setting mode will fail if the
+        dataset has an existing nfsv4 acl. In this case, the option `stripacl`
+        must be set to `True`.
 
         .. examples(websocket)::
 
@@ -2871,29 +2902,92 @@ class PoolDatasetService(CRUDService):
                 "method": "pool.dataset.permission",
                 "params": ["tank/myuser", {
                     "user": "myuser",
+                    "acl": [],
                     "group": "wheel",
                     "mode": "755",
-                    "recursive": true,
+                    "options": {"recursive": true, "stripacl": true},
                 }]
             }
+
         """
         path = (await self._get_instance(id))['mountpoint']
         user = data.get('user', None)
         group = data.get('group', None)
+        uid = gid = -1
         mode = data.get('mode', None)
-        recursive = data.get('recursive', False)
-        acl = data['acl']
-        verrors = ValidationErrors()
+        options = data.get('options', {})
+        acl = data.get('acl', [])
 
-        if (acl == 'UNIX' or acl == 'MAC') and mode is None:
+        verrors = ValidationErrors()
+        if user:
+            try:
+                uid = (await self.middleware.call('dscache.get_uncached_user', user))['pw_uid']
+            except Exception as e:
+                verrors.add('pool_dataset_permission.user', str(e))
+
+        if group:
+            try:
+                gid = (await self.middleware.call('dscache.get_uncached_group', group))['gr_gid']
+            except Exception as e:
+                verrors.add('pool_dataset_permission.group', str(e))
+
+        if acl and mode:
             verrors.add('pool_dataset_permission.mode',
-                        'This field is required')
+                        'setting mode and ACL simultaneously is not permitted.')
+
+        if acl and options['stripacl']:
+            verrors.add('pool_dataset_permissions.acl',
+                        'Simultaneously setting and removing ACL is not permitted.')
+
+        if mode and not options['stripacl']:
+            if not await self.middleware.call('filesystem.acl_is_trivial', path):
+                verrors.add('pool_dataset_permissions.options',
+                            f'{path} has an extended ACL. The option "stripacl" must be selected.')
 
         if verrors:
             raise verrors
 
-        await self.middleware.call('notifier.mp_change_permission', path, user,
-                                   group, mode, recursive, acl.lower())
+        if not acl and mode is None and not options['stripacl']:
+            """
+            Neither an ACL, mode, or removing the existing ACL are
+            specified in `data`. Perform a simple chown.
+            """
+            options.pop('stripacl', None)
+            await self.middleware.call('filesystem.chown', {
+                'path': path,
+                'uid': uid,
+                'gid': gid,
+                'options': options
+            })
+
+        elif acl:
+            await self.middleware.call('filesystem.setacl', {
+                'path': path,
+                'dacl': acl,
+                'uid': uid,
+                'gid': gid,
+                'options': options
+            })
+
+        elif mode or options['stripacl']:
+            """
+            `setperm` performs one of two possible actions. If
+            `mode` is not set, but `stripacl` is specified, then
+            the existing ACL on the file is converted in place via
+            `acl_strip_np()`. This preserves the existing posix mode
+            while removing any extended ACL entries.
+
+            If `mode` is set, then the ACL is removed from the file
+            and the new `mode` is applied.
+            """
+            await self.middleware.call('filesystem.setperm', {
+                'path': path,
+                'mode': mode,
+                'uid': uid,
+                'gid': gid,
+                'options': options
+            })
+
         return data
 
     @accepts(Str('pool'))

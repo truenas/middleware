@@ -16,7 +16,7 @@ from operator import itemgetter
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
-from middlewared.utils import run
+from middlewared.utils import run, Popen
 
 
 class DSStatus(enum.Enum):
@@ -531,6 +531,10 @@ class ActiveDirectoryService(ConfigService):
         for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
             if key in ad and ad[key] is not None:
                 ad[key] = ad[key].upper()
+
+        for key in ['kerberos_realm', 'certificate']:
+            if ad[key] is not None:
+                ad[key] = ad[key]['id']
 
         return ad
 
@@ -1130,6 +1134,45 @@ class ActiveDirectoryService(ConfigService):
             )
 
         return site
+
+    @accepts(
+        Dict(
+            'leave_ad',
+            Str('username', required=True),
+            Str('password', required=True, private=True)
+        )
+    )
+    async def leave(self, data):
+        """
+        Leave Active Directory domain. This will remove computer
+        object from AD and clear relevant configuration data from
+        the NAS.
+        This requires credentials for appropriately-privileged user.
+        """
+        ad = await self.config()
+        principal = f'{data["username"]}@{ad["domainname"]}'
+        ad_kinit = await Popen(
+            ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+        )
+        output = await ad_kinit.communicate(input=data['password'].encode())
+        if ad_kinit.returncode != 0:
+            raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {output[1].decode()}")
+
+        netads = await run(['/usr/local/bin/net', '-U', data['username'], '-k', 'ads', 'leave'], check=False)
+        if netads.returncode != 0:
+            raise CallError(f"Failed to leave domain: [{netads.stderr.decode()}]")
+
+        krb_princ = await self.middleware.call(
+            'kerberos.keytab.query',
+            [('name', '=', 'AD_MACHINE_ACCOUNT')],
+            {'get': True}
+        )
+        await self.middleware.call('datastore.delete', 'directoryservice.kerberoskeytab', krb_princ['id'])
+        await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
+        await self.middleware.call('activedirectory.stop')
+
+        self.logger.debug(f"Successfully left domain: ad['domainname']")
 
     @private
     @job(lock='fill_ad_cache')

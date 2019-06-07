@@ -328,9 +328,9 @@ class VMWareService(CRUDService):
                         'remote_hostnames': host_mount_info.volume.remoteHostNames,
                         'username': host_mount_info.volume.userName,
                     }
-                elif host_mount_info.volume.type in ('OTHER', 'VFFS'):
+                elif host_mount_info.volume.type in ('other', 'VFFS'):
                     # Ignore VFFS type, it does not store VM's
-                    # Ignore OTHER type, it does not seem to be meaningful
+                    # Ignore other type, it does not seem to be meaningful
                     pass
                 else:
                     self.logger.debug(f'Unknown volume type "{host_mount_info.volume.type}": {host_mount_info.volume}')

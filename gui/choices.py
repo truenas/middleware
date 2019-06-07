@@ -306,6 +306,11 @@ VLAN_PCP_CHOICES = (
     (7, _('Network control (highest)')),
 )
 
+ZFS_AclmodeChoices = (
+    ('passthrough', _('Passthrough')),
+    ('restricted', _('Restricted')),
+)
+
 ZFS_AtimeChoices = (
     ('inherit', _('Inherit')),
     ('on', _('On')),
@@ -897,9 +902,8 @@ SAMBA4_FOREST_LEVEL_CHOICES = (
 )
 
 SHARE_TYPE_CHOICES = (
-    ('unix', 'UNIX'),
-    ('windows', 'Windows'),
-    ('mac', 'Mac')
+    ('GENERIC', 'Generic'),
+    ('SMB', 'SMB'),
 )
 
 CASE_SENSITIVITY_CHOICES = (

@@ -67,9 +67,6 @@ if not apps.app_configs:
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.pipesubr import SIG_SETMASK
-from freenasUI.common.system import (
-    exclude_path,
-)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
@@ -78,8 +75,6 @@ from middlewared.plugins.pwenc import encrypt, decrypt
 
 import sysctl
 
-ACL_WINDOWS_FILE = ".windows"
-ACL_MAC_FILE = ".mac"
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
 
@@ -206,10 +201,6 @@ class notifier(metaclass=HookMetaclass):
                 {'onetime': onetime, 'wait': wait, 'sync': sync},
                 **kwargs,
             )
-
-    def clear_activedirectory_config(self):
-        with client as c:
-            return c.call('service._clear_activedirectory_config')
 
     def geli_recoverykey_add(self, volume, passphrase=None):
         from freenasUI.middleware.util import download_job
@@ -363,123 +354,6 @@ class notifier(metaclass=HookMetaclass):
             ret = False
 
         return ret
-
-    def winacl_reset(self, path, owner=None, group=None, exclude=None, recursive=True):
-        if exclude is None:
-            exclude = []
-
-        if isinstance(owner, bytes):
-            owner = owner.decode('utf-8')
-
-        if isinstance(group, bytes):
-            group = group.decode('utf-8')
-
-        if isinstance(path, bytes):
-            path = path.decode('utf-8')
-
-        aclfile = os.path.join(path, ACL_WINDOWS_FILE)
-        if not os.path.exists(aclfile):
-            open(aclfile, 'a').close()
-
-        winacl = "/usr/local/bin/winacl"
-        args = "-a reset"
-        if owner is not None:
-            args = "%s -O '%s'" % (args, owner)
-        if group is not None:
-            args = "%s -G '%s'" % (args, group)
-        apply_paths = exclude_path(path, exclude)
-        apply_paths = [(y, f' {"-r " if recursive else ""}') for y in apply_paths]
-        if len(apply_paths) > 1:
-            apply_paths.insert(0, (path, ''))
-        for apath, flags in apply_paths:
-            fargs = args + "%s -p '%s'" % (flags, apath)
-            cmd = "%s %s" % (winacl, fargs)
-            log.debug("winacl_reset: cmd = %s", cmd)
-            self._system(cmd)
-
-    def mp_change_permission(self, path='/mnt', user=None, group=None,
-                             mode=None, recursive=False, acl='unix',
-                             exclude=None):
-
-        if exclude is None:
-            exclude = []
-
-        if isinstance(group, bytes):
-            group = group.decode('utf-8')
-
-        if isinstance(user, bytes):
-            user = user.decode('utf-8')
-
-        if isinstance(mode, bytes):
-            mode = mode.decode('utf-8')
-
-        if isinstance(path, bytes):
-            path = path.decode('utf-8')
-
-        winacl = os.path.join(path, ACL_WINDOWS_FILE)
-        macacl = os.path.join(path, ACL_MAC_FILE)
-        winexists = os.path.exists(winacl)
-        with libzfs.ZFS() as zfs:
-            zfs_dataset_name = zfs.get_dataset_by_path(path).name
-
-        if acl == 'windows':
-            if not winexists:
-                open(winacl, 'a').close()
-                winexists = True
-            if os.path.isfile(macacl):
-                os.unlink(macacl)
-        elif acl == 'mac':
-            if winexists:
-                os.unlink(winacl)
-            if not os.path.isfile(macacl):
-                open(macacl, 'a').close()
-        elif acl == 'unix':
-            if winexists:
-                os.unlink(winacl)
-                winexists = False
-            if os.path.isfile(macacl):
-                os.unlink(macacl)
-
-        if winexists:
-            self.zfs_set_option(zfs_dataset_name, "aclmode", "restricted", recursive)
-            script = "/usr/local/bin/winacl"
-            args = ''
-            if user is not None:
-                args += " -O '%s'" % user
-            if group is not None:
-                args += " -G '%s'" % group
-            args += " -a reset "
-            if recursive:
-                apply_paths = exclude_path(path, exclude)
-                apply_paths = [(y, ' -r ') for y in apply_paths]
-                if len(apply_paths) > 1:
-                    apply_paths.insert(0, (path, ''))
-            else:
-                apply_paths = [(path, '')]
-            for apath, flags in apply_paths:
-                fargs = args + "%s -p '%s'" % (flags, apath)
-                cmd = "%s %s" % (script, fargs)
-                log.debug("XXX: CMD = %s", cmd)
-                self._system(cmd)
-
-        else:
-            self.zfs_set_option(zfs_dataset_name, "aclmode", "passthrough", recursive)
-            if recursive:
-                apply_paths = exclude_path(path, exclude)
-                apply_paths = [(y, '-R') for y in apply_paths]
-                if len(apply_paths) > 1:
-                    apply_paths.insert(0, (path, ''))
-            else:
-                apply_paths = [(path, '')]
-            for apath, flags in apply_paths:
-                if user is not None and group is not None:
-                    self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, apath))
-                elif user is not None:
-                    self._system("/usr/sbin/chown %s '%s' '%s'" % (flags, user, apath))
-                elif group is not None:
-                    self._system("/usr/sbin/chown %s :'%s' '%s'" % (flags, group, apath))
-                if mode is not None:
-                    self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
 
     def change_upload_location(self, path):
         vardir = "/var/tmp/firmware"
@@ -920,70 +794,6 @@ class notifier(metaclass=HookMetaclass):
         if sysc:
             return sysc[0].value
         raise ValueError(name)
-
-    def dataset_init_unix(self, dataset):
-        """path = "/mnt/%s" % dataset"""
-        pass
-
-    def dataset_init_windows_meta_file(self, dataset):
-        path = "/mnt/%s" % dataset
-        with open("%s/.windows" % path, "w") as f:
-            f.close()
-
-    def dataset_init_windows(self, dataset):
-        acl = [
-            "owner@:rwxpDdaARWcCos:fd:allow",
-            "group@:rwxpDdaARWcCos:fd:allow",
-            "everyone@:rxaRc:fd:allow"
-        ]
-
-        self.dataset_init_windows_meta_file(dataset)
-
-        path = "/mnt/%s" % dataset
-        for ace in acl:
-            self._pipeopen("/bin/setfacl -m '%s' '%s'" % (ace, path)).wait()
-
-    def dataset_init_apple_meta_file(self, dataset):
-        path = "/mnt/%s" % dataset
-        with open("%s/.apple" % path, "w") as f:
-            f.close()
-
-    def dataset_init_apple(self, dataset):
-        self.dataset_init_apple_meta_file(dataset)
-
-    def get_dataset_share_type(self, dataset):
-        share_type = "unix"
-
-        path = "/mnt/%s" % dataset
-        if os.path.exists("%s/.windows" % path):
-            share_type = "windows"
-        elif os.path.exists("%s/.apple" % path):
-            share_type = "mac"
-
-        return share_type
-
-    def change_dataset_share_type(self, dataset, changeto):
-        share_type = self.get_dataset_share_type(dataset)
-
-        if changeto == "windows":
-            self.dataset_init_windows_meta_file(dataset)
-            self.zfs_set_option(dataset, "aclmode", "restricted")
-
-        elif changeto == "mac":
-            self.dataset_init_apple_meta_file(dataset)
-            self.zfs_set_option(dataset, "aclmode", "passthrough")
-
-        else:
-            self.zfs_set_option(dataset, "aclmode", "passthrough")
-
-        path = None
-        if share_type == "mac" and changeto != "mac":
-            path = "/mnt/%s/.apple" % dataset
-        elif share_type == "windows" and changeto != "windows":
-            path = "/mnt/%s/.windows" % dataset
-
-        if path and os.path.exists(path):
-            os.unlink(path)
 
     def pwenc_encrypt(self, text):
         if isinstance(text, bytes):
