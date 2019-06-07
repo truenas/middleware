@@ -580,7 +580,8 @@ class AlertService(Service):
     @private
     async def unblock_source(self, lock):
         source_lock = self.sources_locks.pop(lock, None)
-        self.blocked_sources[source_lock.source_name].remove(lock)
+        if source_lock:
+            self.blocked_sources[source_lock.source_name].remove(lock)
 
     @private
     async def block_failover_alerts(self):
