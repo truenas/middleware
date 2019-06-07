@@ -549,7 +549,7 @@ class CoreService(Service):
 
                 accepts = getattr(method, 'accepts', None)
                 if accepts:
-                    accepts = [i.to_json_schema() for i in accepts]
+                    accepts = [i.to_json_schema() for i in accepts if not getattr(i, 'hidden', False)]
 
                 data['{0}.{1}'.format(name, attr)] = {
                     'description': doc,

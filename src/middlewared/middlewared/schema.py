@@ -57,7 +57,7 @@ class EnumMixin(object):
 class Attribute(object):
 
     def __init__(self, name, title=None, description=None, required=False, null=False, empty=True, private=False,
-                 validators=None, register=False, **kwargs):
+                 validators=None, register=False, hidden=False, **kwargs):
         self.name = name
         self.has_default = 'default' in kwargs
         self.default = kwargs.pop('default', None)
@@ -69,6 +69,7 @@ class Attribute(object):
         self.description = description
         self.validators = validators or []
         self.register = register
+        self.hidden = hidden
 
     def clean(self, value):
         if value is None and self.null is False:
@@ -849,6 +850,13 @@ def resolve_methods(schemas, to_resolve):
 
 
 def accepts(*schema):
+    further_only_hidden = False
+    for i in schema:
+        if getattr(i, 'hidden', False):
+            further_only_hidden = True
+        elif further_only_hidden:
+            raise ValueError("You can't have non-hidden arguments after hidden")
+
     def wrap(f):
         # Make sure number of schemas is same as method argument
         args_index = 1

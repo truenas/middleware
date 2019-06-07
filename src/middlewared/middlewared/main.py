@@ -21,9 +21,11 @@ from collections import defaultdict
 
 import argparse
 import asyncio
+import atexit
 import binascii
 import concurrent.futures
 import concurrent.futures.process
+import concurrent.futures.thread
 import errno
 import functools
 import inspect
@@ -775,6 +777,7 @@ class Middleware(LoadPluginsMixin):
         self.__server_threads = []
         self.__init_services()
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
+        self.__terminate_task = None
         self.jobs = JobsQueue(self)
 
     def __init_services(self):
@@ -1353,20 +1356,23 @@ class Middleware(LoadPluginsMixin):
 
     def terminate(self):
         self.logger.info('Terminating')
-        self.__loop.create_task(self.__terminate())
+        self.__terminate_task = self.__loop.create_task(self.__terminate())
 
     async def __terminate(self):
         for service_name, service in self.get_services().items():
             # We're using this instead of having no-op `terminate`
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
+                self.logger.trace("Terminating %r", service)
                 try:
                     await asyncio.wait_for(service.terminate(), 10)
                 except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
         for task in asyncio.all_tasks(loop=self.__loop):
-            task.cancel()
+            if task != self.__terminate_task:
+                self.logger.trace("Canceling %r", task)
+                task.cancel()
 
         self.__loop.stop()
 
@@ -1413,6 +1419,8 @@ def main():
                     raise
 
     logger.setup_logging('middleware', args.debug_level, args.log_handler)
+
+    atexit.unregister(concurrent.futures.thread._python_exit)
 
     setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
