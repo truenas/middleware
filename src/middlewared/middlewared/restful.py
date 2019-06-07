@@ -12,6 +12,7 @@ from .client import ejson as json
 from .job import Job
 from .schema import Error as SchemaError
 from .service import CallError, ValidationError, ValidationErrors
+from .service_exception import adapt_exception
 
 
 async def authenticate(middleware, req):
@@ -519,7 +520,7 @@ class Resource(object):
         try:
             result = await self.middleware.call(methodname, *method_args)
         except CallError as e:
-            resp = web.Response(status=400)
+            resp = web.Response(status=422)
             result = {
                 'message': e.errmsg,
                 'errno': e.errno,
@@ -535,11 +536,19 @@ class Resource(object):
                 })
             resp = web.Response(status=422)
         except Exception as e:
-            resp = web.Response(status=500)
-            result = {
-                'message': str(e),
-                'traceback': ''.join(traceback.format_exc()),
-            }
+            adapted = adapt_exception(e)
+            if adapted:
+                resp = web.Response(status=422)
+                result = {
+                    'message': adapted.errmsg,
+                    'errno': adapted.errno,
+                }
+            else:
+                resp = web.Response(status=500)
+                result = {
+                    'message': str(e),
+                    'traceback': ''.join(traceback.format_exc()),
+                }
 
         if isinstance(result, types.GeneratorType):
             result = list(result)
