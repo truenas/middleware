@@ -175,7 +175,7 @@ class Str(EnumMixin, Attribute):
             if self.has_default:
                 schema['default'] = self.default
             schema['_required_'] = self.required
-        if not self.required:
+        if self.null:
             schema['type'] = ['string', 'null']
         else:
             schema['type'] = 'string'
@@ -354,7 +354,7 @@ class Bool(Attribute):
 
     def to_json_schema(self, parent=None):
         schema = {
-            'type': ['boolean', 'null'] if not self.required else 'boolean',
+            'type': ['boolean', 'null'] if self.null else 'boolean',
         }
         if not parent:
             schema['title'] = self.title
@@ -380,7 +380,7 @@ class Int(EnumMixin, Attribute):
 
     def to_json_schema(self, parent=None):
         schema = {
-            'type': ['integer', 'null'] if not self.required else 'integer',
+            'type': ['integer', 'null'] if self.null else 'integer',
         }
         if not parent:
             schema['title'] = self.title
@@ -409,7 +409,7 @@ class Float(EnumMixin, Attribute):
 
     def to_json_schema(self, parent=None):
         schema = {
-            'type': ['float', 'null'] if not self.required else 'float',
+            'type': ['float', 'null'] if self.null else 'float',
         }
         if not parent:
             schema['title'] = self.verbose
@@ -485,7 +485,7 @@ class List(EnumMixin, Attribute):
             if self.has_default:
                 schema['default'] = self.default
             schema['_required_'] = self.required
-        if self.required:
+        if self.null:
             schema['type'] = ['array', 'null']
         else:
             schema['type'] = 'array'
