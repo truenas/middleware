@@ -22,7 +22,7 @@ from iocage_lib.ioc_list import IOCList
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import CRUDService, job, private
+from middlewared.service import CRUDService, job, private, filterable
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import IpInUse, MACAddr
@@ -43,13 +43,7 @@ class JailService(CRUDService):
         # We want debug for jails starting/stopping
         os.environ['IOCAGE_DEBUG'] = 'TRUE'
 
-    # FIXME: foreign schemas cannot be referenced when
-    # using `process_pool`
-    # @filterable
-    @accepts(
-        List('query-filters', default=[]),
-        Dict('query-options', additional_attrs=True),
-    )
+    @filterable
     def query(self, filters=None, options=None):
         """
         Query all jails with `query-filters` and `query-options`.
@@ -103,7 +97,6 @@ class JailService(CRUDService):
             self.logger.debug('Failed to get list of jails', exc_info=True)
 
         return filter_list(jails, filters, options)
-    query._fiterable = True
 
     @accepts(
         Dict(
