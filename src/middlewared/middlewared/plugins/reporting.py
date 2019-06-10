@@ -713,6 +713,7 @@ class ReportingService(ConfigService):
             'reporting_update',
             Bool('cpu_in_percentage'),
             Str('graphite'),
+            Bool('graphite_separateinstances'),
             Int('graph_age', validators=[Range(min=1)]),
             Int('graph_points', validators=[Range(min=1)]),
             Bool('confirm_rrd_destroy'),
@@ -726,6 +727,8 @@ class ReportingService(ConfigService):
         If `cpu_in_percentage` is `true`, collectd reports CPU usage in percentage instead of "jiffies".
 
         `graphite` specifies a destination hostname or IP for collectd data sent by the Graphite plugin..
+
+        `graphite_separateinstances` corresponds to collectd SeparateInstances option.
 
         `graph_age` specifies the maximum age of stored graphs in months. `graph_points` is the number of points for
         each hourly, daily, weekly, etc. graph. Changing these requires destroying the current reporting database,
