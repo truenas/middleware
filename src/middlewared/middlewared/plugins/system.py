@@ -487,10 +487,10 @@ class SystemService(Service):
                     int(percent.split()[-1].strip('%')),
                     help.lstrip()
                 )
-        cp.communicate()
+        _, stderr = cp.communicate()
 
         if cp.returncode != 0:
-            raise CallError(f'Failed to generate debug file: {cp.stderr}')
+            raise CallError(f'Failed to generate debug file: {stderr}')
 
         job.set_progress(100, 'Debug generation finished')
 
