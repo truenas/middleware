@@ -43,7 +43,7 @@ def asigra_config(middleware, context):
 
 def collectd_config(middleware, context):
     if context['is_freenas'] or context['failover_status'] != 'BACKUP':
-        yield 'collectd_enable="YES"'
+        yield 'collectd_daemon_enable="YES"'
         yield 'rrdcached_enable="YES"'
 
         rrdcached_flags = '-s www -l /var/run/rrdcached.sock -p /var/run/rrdcached.pid'
