@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# $FreeBSD$
+#
+# PROVIDE: collectd-daemon
+# REQUIRE: LOGIN
+# KEYWORD: shutdown nojail
+#
+# Define these collectd_daemon_* variables in one of these files:
+#	/etc/rc.conf
+#	/etc/rc.conf.local
+#	/etc/rc.conf.d/collectd_daemon
+#
+# DO NOT CHANGE THESE DEFAULT VALUES HERE
+
+. /etc/rc.subr
+
+name=collectd_daemon
+rcvar=collectd_daemon_enable
+
+load_rc_config collectd_daemon
+
+: ${collectd_daemon_enable:="NO"}
+
+pidfile=${collectd_daemon_pidfile:="/var/run/collectd-daemon.pid"}
+
+command="/usr/sbin/daemon"
+
+start_cmd=collectd_daemon_start
+
+collectd_daemon_start()
+{
+	check_startmsgs && echo "Starting $name."
+	$command -f -P /var/run/collectd-daemon.pid -r -R 60 /usr/local/sbin/collectd -f
+}
+
+run_rc_command "$1"

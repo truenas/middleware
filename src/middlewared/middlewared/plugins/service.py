@@ -461,14 +461,17 @@ class ServiceService(CRUDService):
             await self.start('rrdcached')
 
         await self.middleware.call('etc.generate', 'collectd')
-        await self._service("collectd", "restart", **kwargs)
+        await self._service("collectd-daemon", "restart", **kwargs)
+
+    async def _stop_collectd(self, **kwargs):
+        await self._service("collectd-daemon", "stop", **kwargs)
 
     async def _restart_collectd(self, **kwargs):
-        await self._service("collectd", "stop", **kwargs)
+        await self._stop_collectd(**kwargs)
         await self._start_collectd(**kwargs)
 
     async def _started_collectd(self, **kwargs):
-        if await self._service('collectd', 'status', quiet=True, **kwargs):
+        if await self._service('collectd-daemon', 'status', quiet=True, **kwargs):
             return False, []
         else:
             return True, []
@@ -480,7 +483,7 @@ class ServiceService(CRUDService):
             return True, []
 
     async def _stop_rrdcached(self, **kwargs):
-        await self._service("collectd", "stop", **kwargs)
+        await self.stop('collectd')
         await self._service('rrdcached', 'stop', **kwargs)
 
     async def _restart_rrdcached(self, **kwargs):
