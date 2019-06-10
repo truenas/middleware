@@ -996,6 +996,14 @@ class Reporting(Model):
         verbose_name=_("Graphite Server"),
         help_text=_("Destination hostname or IP for collectd data sent by the Graphite plugin.")
     )
+    graphite_separateinstances = models.BooleanField(
+        default=False,
+        verbose_name=_("Graphite SeparateInstances"),
+        help_text=_("If checked, when sending to Graphite, the plugin instance and type instance will be in their own "
+                    "path component, for example host.cpu.0.cpu.idle. If unchecked (the default), the plugin and "
+                    "plugin instance  (and likewise the type and type instance) are put into one component, "
+                    "for example host.cpu-0.cpu-idle."),
+    )
     graph_age = models.IntegerField(
         default=12,
         verbose_name=_("Graph Age"),
