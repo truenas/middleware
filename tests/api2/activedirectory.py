@@ -331,7 +331,7 @@ def test_35_get_activedirectory_started_before_starting_activedirectory():
 
 
 @ad_test_cfg
-def test_36_re_enabling_activedirectory():
+def test_36_re_enable_activedirectory():
     global payload, results
     payload = {
         "bindpw": ADPASSWORD,
@@ -345,9 +345,40 @@ def test_36_re_enabling_activedirectory():
     assert results.status_code == 200, results.text
 
 
+@ad_test_cfg
+def test_37_get_activedirectory_state():
+    global results
+    results = GET('/activedirectory/get_state/')
+    assert results.status_code == 200, results.text
+    assert results.json() == 'HEALTHY', results.text
+
+
+@ad_test_cfg
+def test_38_get_activedirectory_started():
+    results = GET('/activedirectory/started/')
+    assert results.status_code == 200, results.text
+    assert results.json() is True, results.text
+
+
+@ad_test_cfg
+def test_39_get_activedirectory_data():
+    global results
+    results = GET('/activedirectory/')
+    assert results.status_code == 200, results.text
+
+
+@ad_test_cfg
+@pytest.mark.parametrize('data', ad_object_list)
+def test_40_verify_activedirectory_data_of_(data):
+    if data == 'domainname':
+        assert results.json()[data].lower() == payload[data], results.text
+    else:
+        assert results.json()[data] == payload[data], results.text
+
+
 # put all code to disable and delete under here
 @ad_test_cfg
-def test_37_disable_activedirectory():
+def test_41_disable_activedirectory():
     global payload, results
     payload = {
         "enable": False
@@ -356,39 +387,39 @@ def test_37_disable_activedirectory():
     assert results.status_code == 200, results.text
 
 
-def test_38_get_activedirectory_state():
+def test_42_get_activedirectory_state():
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-def test_39_get_activedirectory_started_before_starting_activedirectory():
+def test_43_get_activedirectory_started_before_starting_activedirectory():
     results = GET('/activedirectory/started/')
     assert results.status_code == 400, results.text
 
 
-def test_40_disable_cifs_service_at_boot():
+def test_44_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_41_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_45_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_42_stoping_clif_service():
+def test_46_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_43_checking_if_cifs_is_stop():
+def test_47_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_44_destroying_ad_dataset_for_smb():
+def test_48_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
