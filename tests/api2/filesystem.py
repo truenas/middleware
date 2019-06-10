@@ -37,17 +37,17 @@ def test_02_looking_at_listdir_path_(name):
 def test_03_get_filesystem_stat_(path):
     results = POST('/filesystem/stat/', path)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict) is True, results.test
-    assert isinstance(results.json()['size'], int) is True, results.test
-    assert isinstance(results.json()['mode'], int) is True, results.test
-    assert results.json()['uid'] == 0, results.test
-    assert results.json()['gid'] == 0, results.test
-    assert isinstance(results.json()['atime'], float) is True, results.test
-    assert isinstance(results.json()['mtime'], float) is True, results.test
-    assert isinstance(results.json()['ctime'], float) is True, results.test
-    assert isinstance(results.json()['dev'], int) is True, results.test
-    assert isinstance(results.json()['inode'], int) is True, results.test
-    assert results.json()['nlink'] in (2, 3), results.test
-    assert results.json()['user'] == 'root', results.test
-    assert results.json()['group'] == 'wheel', results.test
-    assert results.json()['acl'] == 'unix', results.test
+    assert isinstance(results.json(), dict) is True, results.text
+    assert isinstance(results.json()['size'], int) is True, results.text
+    assert isinstance(results.json()['mode'], int) is True, results.text
+    assert results.json()['uid'] == 0, results.text
+    assert results.json()['gid'] == 0, results.text
+    assert isinstance(results.json()['atime'], float) is True, results.text
+    assert isinstance(results.json()['mtime'], float) is True, results.text
+    assert isinstance(results.json()['ctime'], float) is True, results.text
+    assert isinstance(results.json()['dev'], int) is True, results.text
+    assert isinstance(results.json()['inode'], int) is True, results.text
+    assert results.json()['nlink'] in (2, 3), results.text
+    assert results.json()['user'] == 'root', results.text
+    assert results.json()['group'] == 'wheel', results.text
+    assert results.json()['acl'] is False, results.text
