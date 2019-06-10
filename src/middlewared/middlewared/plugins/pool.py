@@ -54,7 +54,13 @@ class Inheritable(EnumMixin, Attribute):
 
     def to_json_schema(self, parent=None):
         schema = self.value.to_json_schema(parent)
-        schema['anyOf'] = [{'type': schema.pop('type')}, {'type': 'string', 'enum': ['INHERIT']}]
+        type_schema = schema.pop('type')
+        schema['nullable'] = 'null' in type_schema
+        if schema['nullable']:
+            type_schema.remove('null')
+            if len(type_schema) == 1:
+                type_schema = type_schema[0]
+        schema['anyOf'] = [{'type': type_schema}, {'type': 'string', 'enum': ['INHERIT']}]
         return schema
 
 
