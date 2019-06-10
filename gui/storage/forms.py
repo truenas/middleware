@@ -329,10 +329,12 @@ class VolumeManagerForm(VolumeMixin, Form):
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
-        notifier().reload("disk")
+        bulk = [["service.reload", [["disk"]]]]
         if not add:
-            notifier().start("ix-syslogd")
-            notifier().restart("system_datasets")
+            bulk.append(["service.start", [["syslogd"]]])
+            bulk.append(["service.restart", [["system_datasets"]]])
+        with client as c:
+            c.call("core.bulk", "core.bulk", bulk)
         # For scrub cronjob
         notifier().restart("cron")
 
