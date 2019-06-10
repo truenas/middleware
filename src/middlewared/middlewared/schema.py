@@ -142,6 +142,7 @@ class Any(Attribute):
                 {'type': 'array'},
             ],
             'title': self.title,
+            'nullable': True if self.null else False
         }
         if self.description:
             schema['description'] = self.description
