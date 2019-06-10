@@ -214,7 +214,8 @@ class PoolService(CRUDService):
                 [
                     ('name', 'rnin', '.system'),
                     ('pool', 'in', vol_names)
-                ]
+                ],
+                {'select': ['name', 'pool']}
             )
         ]
 
