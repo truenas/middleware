@@ -197,7 +197,7 @@ class OpenAPIResource(object):
                         'schema': {'type': 'string'},
                     },
                 ]
-            elif accepts:
+            elif accepts and not (operation == 'delete' and method['item_method'] and len(accepts) == 1):
                 opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
 
             # For now we only accept `id` as an url parameters
