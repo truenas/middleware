@@ -5,7 +5,7 @@ from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
 
 
-class HtpChatAlertService(ThreadedAlertService):
+class HipChatAlertService(ThreadedAlertService):
     title = "HipChat"
 
     schema = Dict(
