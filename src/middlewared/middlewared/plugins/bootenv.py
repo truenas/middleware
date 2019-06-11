@@ -24,6 +24,10 @@ class BootEnvService(CRUDService):
         results = []
 
         cp = subprocess.run(['beadm', 'list', '-H'], capture_output=True, text=True)
+        datasets_origins = [
+            d['properties']['origin']['parsed']
+            for d in self.middleware.call_sync('zfs.dataset.query')
+        ]
         for line in cp.stdout.strip().split('\n'):
             fields = line.split('\t')
             name = fields[0]
@@ -43,23 +47,75 @@ class BootEnvService(CRUDService):
 
             ds = self.middleware.call_sync('zfs.dataset.query', [
                 ('id', '=', f'freenas-boot/ROOT/{fields[0]}'),
-            ])
+            ], {'extra': {'snapshots': True}})
             if ds:
                 ds = ds[0]
-                rawspace = 0
-                for i in ('usedbydataset', 'usedbyrefreservation', 'usedbysnapshots'):
-                    rawspace += ds['properties'][i]['parsed']
+                snapshot = None
                 origin = ds['properties']['origin']['parsed']
                 if '@' in origin:
-                    snap = self.middleware.call_sync('zfs.snapshot.query', [('id', '=', origin)])
-                    if snap:
-                        snap = snap[0]
-                        rawspace += snap['properties']['used']['parsed']
+                    snapshot = self.middleware.call_sync('zfs.snapshot.query', [('id', '=', origin)])
+                    if snapshot:
+                        snapshot = snapshot[0]
                 if 'beadm:keep' in ds['properties']:
                     if ds['properties']['beadm:keep']['value'] == 'True':
                         be['keep'] = True
                     elif ds['properties']['beadm:keep']['value'] == 'False':
                         be['keep'] = False
+
+                # When a BE is deleted, following actions happen
+                # 1) It's descendants ( if any ) are promoted once
+                # 2) BE is deleted
+                # 3) Filesystems dependent on BE's origin are promoted
+                # 4) Origin is deleted
+                #
+                # Now we would like to find out the space which will be freed when a BE is removed.
+                # We classify a BE as of being 2 types,
+                # 1) BE without descendants
+                # 2) BE with descendants
+                #
+                # For (1), space freed is "usedbydataset" property and space freed by it's "origin".
+                # For (2), space freed is "usedbydataset" property and space freed by it's "origin" but this cannot
+                # actively determined because all the descendants are promoted once for this BE and at the end origin
+                # of current BE would be determined by last descendant promoted. So we ignore this for now and rely
+                # only on the space it is currently consuming as a best effort to predict.
+                # There is also "usedbysnaps" property, for that we will retrieve all snapshots of the dataset,
+                # find if any of them do not have a dataset cloned, that space will also be freed when we delete
+                # this dataset. And we will also factor in the space consumed by children.
+
+                be['rawspace'] = ds['properties']['usedbydataset']['parsed'] + ds[
+                    'properties']['usedbychildren']['parsed']
+
+                children = False
+                for snap in ds['snapshots']:
+                    if snap['name'] not in datasets_origins:
+                        be['rawspace'] += snap['properties']['used']['parsed']
+                    else:
+                        children = True
+
+                if snapshot and not children:
+                    # This indicates the current BE is a leaf and it is safe to add the BE's origin
+                    # space to the space freed when it is deleted.
+                    be['rawspace'] += snapshot['properties']['used']['parsed']
+
+                if be['rawspace'] < 1024:
+                    be['space'] = f'{be["rawspace"]}B'
+                elif 1024 <= be['rawspace'] < 1048576:
+                    be['space'] = f'{be["rawspace"] / 1024}K'
+                elif 1048576 <= be['rawspace'] < 1073741824:
+                    be['space'] = f'{be["rawspace"] / 1048576}M'
+                elif 1073741824 <= be['rawspace'] < 1099511627776:
+                    be['space'] = f'{be["rawspace"] / 1073741824}G'
+                elif 1099511627776 <= be['rawspace'] < 1125899906842624:
+                    be['space'] = f'{be["rawspace"] / 1099511627776}T'
+                elif 1125899906842624 <= be['rawspace'] < 1152921504606846976:
+                    be['space'] = f'{be["rawspace"] / 1125899906842624}P'
+                elif 1152921504606846976 <= be['rawspace'] < 1152921504606846976:
+                    be['space'] = f'{be["rawspace"] / 1152921504606846976}E'
+                else:
+                    be['space'] = f'{be["rawspace"] / 1152921504606846976}Z'
+
+                be['space'] = f'{round(float(be["space"][:-1]), 2)}{be["space"][-1]}'
+
             results.append(be)
         return filter_list(results, filters, options)
 
