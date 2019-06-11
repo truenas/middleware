@@ -54,14 +54,15 @@ def test_02_creating_smb_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_03_changing_permissions_on_smb_PATH():
-    payload = {"mp_path": SMB_PATH,
-               "mp_acl": "unix",
-               "mp_mode": "777",
-               "mp_user": "root",
-               "mp_group": "wheel"}
-    results = PUT("/storage/permission/", payload, api="1")
-    assert results.status_code == 201, results.text
+def test_03_changing__dataset_permissions_of_smb_dataset():
+    payload = {
+        "acl": [],
+        "mode": "777",
+        "user": "root",
+        "group": "wheel"
+    }
+    results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_04_starting_cifs_service_at_boot():

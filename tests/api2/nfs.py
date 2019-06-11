@@ -53,14 +53,15 @@ def test_02_creating_dataset_nfs():
     assert results.status_code == 200, results.text
 
 
-def test_03_changing_permissions_on_nfs():
-    payload = {"mp_path": NFS_PATH,
-               "mp_acl": "unix",
-               "mp_mode": "777",
-               "mp_user": "root",
-               "mp_group": "wheel"}
-    results = PUT("/storage/permission/", payload, api="1")
-    assert results.status_code == 201, results.text
+def test_03_changing__dataset_permissions_of_nfs_dataset():
+    payload = {
+        "acl": [],
+        "mode": "777",
+        "user": "root",
+        "group": "wheel"
+    }
+    results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
+    assert results.status_code == 200, results.text
 
 
 # creating a NFS share

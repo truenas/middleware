@@ -28,7 +28,7 @@ def test_01_Creating_dataset_tftproot():
 
 def test_02_Setting_permissions_for_TFTP_on_mnt_pool_name_tftproot():
     payload = {
-        'acl': 'UNIX',
+        'acl': [],
         'mode': '777',
         'group': 'nobody',
         'user': 'nobody'
