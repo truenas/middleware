@@ -760,10 +760,10 @@ class SharingSMBService(CRUDService):
                     f'The "noacl" VFS module is incompatible with the extended ACL on {data["path"]}.'
                 )
 
-        if data.get('name') and data['name'] == 'global':
+        if data.get('name') and data['name'].lower() in ['global', 'homes', 'printers']:
             verrors.add(
                 f'{schema_name}.name',
-                'Global is a reserved section name, please select another one'
+                f'{data["name"]} is a reserved section name, please select another one'
             )
 
     @private
