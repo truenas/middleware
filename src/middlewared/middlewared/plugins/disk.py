@@ -1063,7 +1063,7 @@ class DiskService(CRUDService):
         Bool('synccache', default=True),
     )
     @job(lock=lambda args: args[0])
-    async def wipe(self, job, dev, mode, sync):
+    async def wipe(self, job, dev, mode, sync=True):
         """
         Performs a wipe of a disk `dev`.
         It can be of the following modes:
