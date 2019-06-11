@@ -478,28 +478,52 @@ def test_51_get_activedirectory_started_before_starting_activedirectory():
     assert results.status_code == 400, results.text
 
 
-def test_52_disable_cifs_service_at_boot():
+@ad_test_cfg
+def test_52_leave_activedirectory():
+    global payload, results
+    payload = {
+        "username": ADUSERNAME,
+        "password": ADPASSWORD
+    }
+    results = POST("/activedirectory/leave/", payload)
+    assert results.status_code == 200, results.text
+
+
+@ad_test_cfg
+def test_53_get_activedirectory_state():
+    results = GET('/activedirectory/get_state/')
+    assert results.status_code == 200, results.text
+    assert results.json() == 'DISABLED', results.text
+
+
+@ad_test_cfg
+def test_54_get_activedirectory_started_before_starting_activedirectory():
+    results = GET('/activedirectory/started/')
+    assert results.status_code == 400, results.text
+
+
+def test_55_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_53_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_56_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_54_stoping_clif_service():
+def test_57_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_55_checking_if_cifs_is_stop():
+def test_58_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_56_destroying_ad_dataset_for_smb():
+def test_59_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
