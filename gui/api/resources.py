@@ -399,11 +399,19 @@ class PermissionResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
+        mp_acl = deserialized.get('mp_acl', None)
+        acl_action = None
+        if mp_acl is not None and mp_acl.lower() in ['unix', 'mac', 'windows']:
+            acl_action = 'applydefault' if mp_acl.lower() == 'windows' else 'noaction'
+
         deserialized.update({
             'mp_group_en': deserialized.get('mp_group_en', True),
             'mp_mode_en': deserialized.get('mp_mode_en', True),
             'mp_user_en': deserialized.get('mp_user_en', True),
         })
+        if acl_action is not None:
+            deserialized.update({'mp_acl': acl_action})
+
         form = MountPointAccessForm(data=deserialized)
         if form.is_valid():
             if form.commit(deserialized.get('mp_path')):
