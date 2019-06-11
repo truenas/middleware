@@ -40,15 +40,15 @@ def test_01_creating_afp_dataset():
     assert results.status_code == 200, results.text
 
 
-# have to wait for the volume api
 def test_02_changing_permissions_on_afp_path():
-    payload = {"mp_path": AFP_PATH,
-               "mp_acl": "unix",
-               "mp_mode": "777",
-               "mp_user": "root",
-               "mp_group": "wheel"}
-    results = PUT("/storage/permission/", payload, api="1")
-    assert results.status_code == 201, results.text
+    payload = {
+        "acl": [],
+        "mode": "777",
+        "user": "root",
+        "group": "wheel"
+    }
+    results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
+    assert results.status_code == 200, results.text
 
 
 def test_03_get_afp_bindip():
