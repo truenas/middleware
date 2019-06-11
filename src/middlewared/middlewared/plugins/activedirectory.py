@@ -1168,7 +1168,7 @@ class ActiveDirectoryService(ConfigService):
             [('name', '=', 'AD_MACHINE_ACCOUNT')],
             {'get': True}
         )
-        await self.middleware.call('datastore.delete', 'directoryservice.kerberoskeytab', krb_princ['id'])
+        await self.middleware.call('kerberos.keytab.delete', krb_princ['id'])
         await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
         await self.middleware.call('activedirectory.stop')
 
