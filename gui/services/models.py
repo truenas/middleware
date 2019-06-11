@@ -366,6 +366,12 @@ class NFS(Model):
         default=False,
         verbose_name=_("Require Kerberos for NFSv4"),
     )
+    nfs_srv_v4_domain = models.CharField(
+        blank=True,
+        max_length=120,
+        verbose_name=_("NFSv4 nfsuserd(8) domain name"),
+        help_text=_("Override the default DNS domain name"),
+    )
     nfs_srv_bindip = MultiSelectField(
         blank=True,
         max_length=250,
