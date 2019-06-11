@@ -40,7 +40,7 @@ def test_01_creating_afp_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_02_changing_permissions_on_afp_path():
+def test_02_changing__dataset_permissions_of_afp_dataset():
     payload = {
         "acl": [],
         "mode": "777",

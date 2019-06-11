@@ -47,7 +47,7 @@ def test_02_Creating_WebDAV_share_on_dataset_path(webdav_dict):
 
 def test_03_Changing_permissions_on_dataset():
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', {
-        'acl': 'UNIX',
+        'acl': [],
         'mode': '777',
         'user': 'root',
         'group': 'wheel'
