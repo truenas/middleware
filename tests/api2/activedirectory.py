@@ -6,7 +6,7 @@ import pytest
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, user, password
+from auto_config import pool_name
 from config import *
 from functions import GET, POST, PUT, DELETE, SSH_TEST
 
@@ -56,6 +56,7 @@ VOL_GROUP = "wheel"
 Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
 Reason += "ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
+OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
 ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
                                       "BRIDGEDOMAIN" in locals(),
@@ -69,6 +70,11 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
                                        "BSD_USERNAME" in locals(),
                                        "BSD_PASSWORD" in locals()
                                        ]) is False, reason=BSDReason)
+
+osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
+                                       "OSX_USERNAME" in locals(),
+                                       "OSX_PASSWORD" in locals()
+                                       ]) is False, reason=OSXReason)
 
 
 def test_01_get_activedirectory_data():
@@ -376,9 +382,83 @@ def test_40_verify_activedirectory_data_of_(data):
         assert results.json()[data] == payload[data], results.text
 
 
+# Testing OSX
+# Mount share on OSX system and create a test file
+@osx_host_cfg
+@ad_test_cfg
+def test_41_Create_mount_point_for_SMB_on_OSX_system():
+    results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
+
+
+@osx_host_cfg
+@ad_test_cfg
+def test_42_Mount_SMB_share_on_OSX_system():
+    cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME
+    cmd += '%s@%s/%s" "%s"' % (ADPASSWORD, ip, SMB_NAME, MOUNTPOINT)
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
+
+
+@osx_host_cfg
+@ad_test_cfg
+def test_43_Create_file_on_SMB_share_via_OSX_to_test_permissions():
+    results = SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
+
+
+# Move test file to a new location on the SMB share
+@osx_host_cfg
+@ad_test_cfg
+def test_44_Moving_SMB_test_file_into_a_new_directory():
+    cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
+    cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
+    cmd += '"%s/tmp/testfile.txt"' % MOUNTPOINT
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
+
+
+# Delete test file and test directory from SMB share
+@osx_host_cfg
+@ad_test_cfg
+def test_45_Deleting_test_file_and_directory_from_SMB_share():
+    cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
+    cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
+
+
+@osx_host_cfg
+@ad_test_cfg
+def test_46_Verifying_that_test_file_directory_successfully_removed():
+    cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
+
+
+# Clean up mounted SMB share
+@osx_host_cfg
+@ad_test_cfg
+def test_47_Unmount_SMB_share():
+    results = SSH_TEST('umount -f "%s"' % MOUNTPOINT,
+                       OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
+
+
+# Delete tests
+@osx_host_cfg
+@ad_test_cfg
+def test_48_Removing_SMB_mountpoint():
+    cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
+    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+    assert results['result'] is True, results['output']
+
+
 # put all code to disable and delete under here
 @ad_test_cfg
-def test_41_disable_activedirectory():
+def test_49_disable_activedirectory():
     global payload, results
     payload = {
         "enable": False
@@ -387,39 +467,39 @@ def test_41_disable_activedirectory():
     assert results.status_code == 200, results.text
 
 
-def test_42_get_activedirectory_state():
+def test_50_get_activedirectory_state():
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-def test_43_get_activedirectory_started_before_starting_activedirectory():
+def test_51_get_activedirectory_started_before_starting_activedirectory():
     results = GET('/activedirectory/started/')
     assert results.status_code == 400, results.text
 
 
-def test_44_disable_cifs_service_at_boot():
+def test_52_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_45_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_53_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_46_stoping_clif_service():
+def test_54_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_47_checking_if_cifs_is_stop():
+def test_55_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_48_destroying_ad_dataset_for_smb():
+def test_56_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
