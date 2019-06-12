@@ -155,6 +155,11 @@ class Any(Attribute):
 
 class Str(EnumMixin, Attribute):
 
+    def __init__(self, *args, **kwargs):
+        # Sqlite limits ( (2 ** 31) - 1 ) for storing text - https://www.sqlite.org/limits.html
+        self.max_length = kwargs.pop('max_length', 1024) or (2 ** 31) - 1
+        super().__init__(*args, **kwargs)
+
     def clean(self, value):
         value = super(Str, self).clean(value)
         if value is None:
@@ -183,6 +188,19 @@ class Str(EnumMixin, Attribute):
         if self.enum is not None:
             schema['enum'] = self.enum
         return schema
+
+    def validate(self, value):
+        if value is None:
+            return value
+
+        verrors = ValidationErrors()
+
+        if value and len(value) > self.max_length:
+            verrors.add(self.name, f'Value greater than {self.max_length} not allowed')
+
+        verrors.check()
+
+        return super().validate(value)
 
 
 class Path(Str):
