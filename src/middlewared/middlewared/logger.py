@@ -195,7 +195,7 @@ class Logger(object):
         self.debug_level = debug_level or 'DEBUG'
         self.log_format = log_format
 
-        DEFAULT_LOGGING = {
+        self.DEFAULT_LOGGING = {
             'version': 1,
             'disable_existing_loggers': False,
             'loggers': {
