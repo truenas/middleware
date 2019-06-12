@@ -863,7 +863,6 @@ class ServiceService(CRUDService):
     async def _start_nfs(self, **kwargs):
         await self.middleware.call("etc.generate", "nfsd")
         await self._service("rpcbind", "start", quiet=True, **kwargs)
-        await self._service("gssd", "start", quiet=True, **kwargs)
         await self.middleware.call("nfs.setup_v4")
         await self._service("mountd", "start", quiet=True, **kwargs)
         await self._service("nfsd", "start", quiet=True, **kwargs)

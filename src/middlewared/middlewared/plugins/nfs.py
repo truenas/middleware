@@ -128,6 +128,11 @@ class NFSService(SystemServiceService):
     def setup_v4(self):
         config = self.middleware.call_sync("nfs.config")
 
+        if config["v4_krb"]:
+            subprocess.run(["service", "gssd", "onerestart"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run(["service", "gssd", "forcestop"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
         if config["v4"]:
             sysctl.filter("vfs.nfsd.server_max_nfsvers")[0].value = 4
             if config["v4_v3owner"]:
@@ -140,12 +145,15 @@ class NFSService(SystemServiceService):
             else:
                 sysctl.filter("vfs.nfsd.enable_stringtouid")[0].value = 0
                 sysctl.filter("vfs.nfs.enable_uidtostring")[0].value = 0
-                subprocess.run(["service", "nfsuserd", "quietstart"], stdout=subprocess.DEVNULL,
+                subprocess.run(["service", "nfsuserd", "onerestart"], stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL)
         else:
             sysctl.filter("vfs.nfsd.server_max_nfsvers")[0].value = 3
             if config["userd_manage_gids"]:
-                subprocess.run(["service", "nfsuserd", "quietstart"], stdout=subprocess.DEVNULL,
+                subprocess.run(["service", "nfsuserd", "onerestart"], stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run(["service", "nfsuserd", "forcestop"], stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL)
 
 
