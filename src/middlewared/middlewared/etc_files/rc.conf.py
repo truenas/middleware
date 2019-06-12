@@ -213,36 +213,32 @@ def nfs_config(middleware, context):
             ('srv_service', '=', 'nfs'), ('srv_enable', '=', True),
         ]
     )
-    if not enabled:
-        return []
 
     if nfs['v4']:
         yield 'nfsv4_server_enable="YES"'
 
-        gssd = 'NO'
         if nfs['v4_krb'] and middleware.call_sync('datastore.query', 'directoryservice.kerberoskeytab'):
-            gssd = 'YES'
+            if enabled:
+                yield f'gssd_enable="YES"'
 
             gc = middleware.call_sync("datastore.config", "network.globalconfiguration")
             if gc["gc_hostname_virtual"] and gc["gc_domain"]:
                 yield f'nfs_server_vhost="{gc["gc_hostname_virtual"]}.{gc["gc_domain"]}"'
 
-        yield f'gssd_enable="{gssd}"'
-
         if nfs['v4_v3owner']:
-            yield 'nfsuserd_enable="NO"'
             # Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed
             # You must have both of these sysctl's set to allow the desired functionality
             sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
             sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 1
         else:
-            yield 'nfsuserd_enable="YES"'
+            if enabled:
+                yield 'nfsuserd_enable="YES"'
             sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
             sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 0
     else:
-        yield 'nfsv4_server_enable="NO"'
         if nfs['userd_manage_gids']:
-            yield 'nfsuserd_enable="YES"'
+            if enabled:
+                yield 'nfsuserd_enable="YES"'
             yield 'nfsuserd_flags="-manage-gids"'
 
 
