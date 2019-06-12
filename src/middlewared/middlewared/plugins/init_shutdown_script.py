@@ -1,6 +1,7 @@
 from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.utils import Popen
+from middlewared.validators import Range
 
 import asyncio
 import os
@@ -22,6 +23,7 @@ class InitShutdownScriptService(CRUDService):
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
         Int('timeout', default=10),
+        Str('comment', default='', validators=[Range(max=255)]),
         register=True,
     ))
     async def do_create(self, data):
