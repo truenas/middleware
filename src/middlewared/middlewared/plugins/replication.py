@@ -630,6 +630,19 @@ class ReplicationService(CRUDService):
 
         return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 
+    @accepts()
+    async def list_naming_schemas(self):
+        """
+        List all naming schemas used in periodic snapshot and replication tasks
+        """
+        naming_schemas = []
+        for snapshottask in await self.middleware.call("pool.snapshottask.query"):
+            naming_schemas.append(snapshottask["naming_schema"])
+        for replication in await self.middleware.call("replication.query"):
+            naming_schemas.extend(replication["naming_schema"])
+            naming_schemas.extend(replication["also_include_naming_schema"])
+        return sorted(set(naming_schemas))
+
     # Legacy pair support
     @private
     @accepts(Dict(
