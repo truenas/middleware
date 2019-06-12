@@ -215,7 +215,6 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
         'ad_ssl',
         'ad_certificate',
         'ad_verbose_logging',
-        'ad_unix_extensions',
         'ad_allow_trusted_doms',
         'ad_use_default_domain',
         'ad_createcomputer',

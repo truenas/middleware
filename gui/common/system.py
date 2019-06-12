@@ -264,20 +264,6 @@ def activedirectory_enabled():
     return enabled
 
 
-def activedirectory_has_unix_extensions():
-    from freenasUI.directoryservice.models import ActiveDirectory
-
-    ad_unix_extensions = False
-    try:
-        ad = ActiveDirectory.objects.all()[0]
-        ad_unix_extensions = ad.ad_unix_extensions
-
-    except Exception:
-        ad_unix_extensions = False
-
-    return ad_unix_extensions
-
-
 def activedirectory_has_principal():
     from freenasUI.directoryservice.models import ActiveDirectory
 

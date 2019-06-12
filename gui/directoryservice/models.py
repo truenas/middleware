@@ -807,11 +807,6 @@ class ActiveDirectory(DirectoryServiceBase):
         verbose_name=_("Verbose logging"),
         default=False
     )
-    ad_unix_extensions = models.BooleanField(
-        verbose_name=_("UNIX extensions"),
-        help_text=_("Set this if your Active Directory has UNIX extensions."),
-        default=False
-    )
     ad_allow_trusted_doms = models.BooleanField(
         verbose_name=_("Allow Trusted Domains"),
         help_text=_("Set this if you want to allow Trusted Domains."),
