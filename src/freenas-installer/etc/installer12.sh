@@ -1128,7 +1128,7 @@ menu_install()
         env ASSUME_ALWAYS_YES=YES pkg -r /tmp/data install -yf $inspkg
         if [ $? -ne 0 ] ; then
             echo "Failed installing ${inspkg}"
-	    exit 1
+            exit 1
         fi
     done
 
@@ -1156,6 +1156,7 @@ menu_install()
         pkg -c /tmp/data install -y ${i}
         if [ $? -ne 0 ] ; then
             echo "Failed installing: ${i}"
+            exit 1
         fi
     done
 
