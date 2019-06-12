@@ -37,6 +37,7 @@ class NFSService(SystemServiceService):
         Bool('v4'),
         Bool('v4_v3owner'),
         Bool('v4_krb'),
+        Str('v4_domain'),
         List('bindip', items=[IPAddr('ip')]),
         Int('mountd_port', null=True, validators=[Range(min=1, max=65535)]),
         Int('rpcstatd_port', null=True, validators=[Range(min=1, max=65535)]),
@@ -60,6 +61,8 @@ class NFSService(SystemServiceService):
         `v4` when set means that we switch from NFSv3 to NFSv4.
 
         `v4_v3owner` when set means that system will use NFSv3 ownership model for NFSv4.
+
+        `v4_domain` overrides the default DNS domain name for NFSv4.
 
         `mountd_port` specifies the port mountd(8) binds to.
 
@@ -110,6 +113,9 @@ class NFSService(SystemServiceService):
         if new["v4_v3owner"] and new["userd_manage_gids"]:
             verrors.add(
                 "nfs_update.userd_manage_gids", "This option is incompatible with NFSv3 ownership model for NFSv4")
+
+        if not new["v4"] and new["v4_domain"]:
+            verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
         if verrors:
             raise verrors
