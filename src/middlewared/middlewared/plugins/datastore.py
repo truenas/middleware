@@ -111,7 +111,6 @@ class DatastoreService(Service):
             Bool('count', default=False),
             Bool('get', default=False),
             Int('limit', default=0),
-            default=None,
             null=True,
             register=True,
         ),
