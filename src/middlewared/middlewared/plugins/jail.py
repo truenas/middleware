@@ -101,7 +101,7 @@ class JailService(CRUDService):
                         except su.CalledProcessError:
                             jail['jid'] = 'ERROR'
                     else:
-                        jail['jid'] = '-'
+                        jail['jid'] = None
 
                     jails.append(jail)
         except ioc_exceptions.JailMisconfigured as e:
