@@ -418,9 +418,10 @@ install_loader()
 	    echo "Stamping EFI loader on: ${_disk}"
 	    mkdir -p /tmp/efi
 	    mount -t msdosfs /dev/${_disk}p1 /tmp/efi
-	    # Copy the .efi file
+	    # Copy the .efi file and create a fallback startup script
 	    mkdir -p /tmp/efi/efi/boot
 	    cp ${_mnt}/boot/boot1.efi /tmp/efi/efi/boot/BOOTx64.efi
+	    echo "BOOTx64.efi" > /tmp/efi/efi/boot/startup.nsh
 	    umount /tmp/efi
 	else
 	    echo "Stamping GPT loader on: ${_disk}"
