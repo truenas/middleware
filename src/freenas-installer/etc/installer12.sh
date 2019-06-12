@@ -1122,7 +1122,7 @@ menu_install()
     mkdir -p /tmp/data/var/db/pkg
     export PKG_DBDIR="/tmp/data/var/db/pkg"
 
-    for inspkg in os/userland os/kernel os/kernel-debug ports-mgmt/pkg
+    for inspkg in os-nozfs-userland os-nozfs-kernel sysutils/openzfs ports-mgmt/pkg
     do
         env ASSUME_ALWAYS_YES=YES pkg -r /tmp/data install -yf $inspkg
         if [ $? -ne 0 ] ; then
