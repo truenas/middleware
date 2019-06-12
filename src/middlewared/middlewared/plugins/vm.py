@@ -89,9 +89,7 @@ class VMSupervisor(object):
     def __init__(self, manager, vm):
         self.manager = manager
 
-        if not os.path.exists('/var/log/vm'):
-            os.makedirs('/var/log/vm', exist_ok=True)
-
+        os.makedirs('/var/log/vm', exist_ok=True)
         self.logger = self.manager.logger.getChild(f'vm_{vm["id"]}')
 
         handler = middlewared.logger.ErrorProneRotatingFileHandler(
