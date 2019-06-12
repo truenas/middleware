@@ -97,12 +97,10 @@ class VMSupervisor(object):
             maxBytes=10485760,
             backupCount=5,
         )
-        handler.setFormatter(logging.Formatter(
-            '[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d'
-            ' - %(message)s'
-        ))
-        self.logger.addHandler(handler)  # main log + vm specific log
         self.middleware = self.manager.service.middleware
+
+        handler.setFormatter(logging.Formatter(self.middleware.log_format))
+        self.logger.addHandler(handler)  # main log + vm specific log
         self.logger.setLevel(self.middleware.debug_level)
 
         self.vm = vm
