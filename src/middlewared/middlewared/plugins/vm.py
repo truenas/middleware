@@ -26,6 +26,7 @@ import sysctl
 import shutil
 import signal
 import tempfile
+import logging
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
@@ -87,8 +88,21 @@ class VMSupervisor(object):
 
     def __init__(self, manager, vm):
         self.manager = manager
-        self.logger = self.manager.logger
+
+        os.makedirs('/var/log/vm', exist_ok=True)
+        self.logger = self.manager.logger.getChild(f'vm_{vm["id"]}')
+
+        handler = middlewared.logger.ErrorProneRotatingFileHandler(
+            f'/var/log/vm/{vm["name"]}_{vm["id"]}',
+            maxBytes=10485760,
+            backupCount=5,
+        )
         self.middleware = self.manager.service.middleware
+
+        handler.setFormatter(logging.Formatter(self.middleware.log_format))
+        self.logger.addHandler(handler)  # main log + vm specific log
+        self.logger.setLevel(self.middleware.debug_level)
+
         self.vm = vm
         self.proc = None
         self.grub_proc = None

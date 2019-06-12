@@ -187,57 +187,61 @@ class ErrorProneRotatingFileHandler(logging.handlers.RotatingFileHandler):
 
 class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
-    DEFAULT_LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'loggers': {
-            '': {
-                'level': 'NOTSET',
-                'handlers': ['file'],
-            },
-            'zettarepl': {
-                'level': 'NOTSET',
-                'handlers': ['zettarepl_file'],
-                'propagate': False,
-            },
-        },
-        'handlers': {
-            'file': {
-                'level': 'DEBUG',
-                'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
-                'filename': LOGFILE,
-                'mode': 'a',
-                'maxBytes': 10485760,
-                'backupCount': 5,
-                'encoding': 'utf-8',
-                'formatter': 'file',
-            },
-            'zettarepl_file': {
-                'level': 'DEBUG',
-                'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
-                'filename': ZETTAREPL_LOGFILE,
-                'mode': 'a',
-                'maxBytes': 10485760,
-                'backupCount': 5,
-                'encoding': 'utf-8',
-                'formatter': 'zettarepl_file',
-            },
-        },
-        'formatters': {
-            'file': {
-                'format': '[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
-                'datefmt': '%Y/%m/%d %H:%M:%S',
-            },
-            'zettarepl_file': {
-                'format': '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s',
-                'datefmt': '%Y/%m/%d %H:%M:%S',
-            },
-        },
-    }
-
-    def __init__(self, application_name, debug_level=None):
+    def __init__(
+        self, application_name, debug_level=None,
+        log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s'
+    ):
         self.application_name = application_name
         self.debug_level = debug_level or 'DEBUG'
+        self.log_format = log_format
+
+        self.DEFAULT_LOGGING = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'loggers': {
+                '': {
+                    'level': 'NOTSET',
+                    'handlers': ['file'],
+                },
+                'zettarepl': {
+                    'level': 'NOTSET',
+                    'handlers': ['zettarepl_file'],
+                    'propagate': False,
+                },
+            },
+            'handlers': {
+                'file': {
+                    'level': 'DEBUG',
+                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'filename': LOGFILE,
+                    'mode': 'a',
+                    'maxBytes': 10485760,
+                    'backupCount': 5,
+                    'encoding': 'utf-8',
+                    'formatter': 'file',
+                },
+                'zettarepl_file': {
+                    'level': 'DEBUG',
+                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'filename': ZETTAREPL_LOGFILE,
+                    'mode': 'a',
+                    'maxBytes': 10485760,
+                    'backupCount': 5,
+                    'encoding': 'utf-8',
+                    'formatter': 'zettarepl_file',
+                },
+            },
+            'formatters': {
+                'file': {
+                    'format': self.log_format,
+                    'datefmt': '%Y/%m/%d %H:%M:%S',
+                },
+                'zettarepl_file': {
+                    'format': '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s',
+                    'datefmt': '%Y/%m/%d %H:%M:%S',
+                },
+            },
+        }
 
     def getLogger(self):
         return logging.getLogger(self.application_name)
@@ -274,10 +278,8 @@ class Logger(object):
 
         console_handler = logging.StreamHandler()
         logging.root.setLevel(getattr(logging, self.debug_level))
-
-        log_format = "[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s"
         time_format = "%Y/%m/%d %H:%M:%S"
-        console_handler.setFormatter(LoggerFormatter(log_format, datefmt=time_format))
+        console_handler.setFormatter(LoggerFormatter(self.log_format, datefmt=time_format))
 
         logging.root.addHandler(console_handler)
 

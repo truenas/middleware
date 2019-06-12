@@ -753,15 +753,19 @@ class Middleware(LoadPluginsMixin):
     def __init__(
         self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
         log_handler=None, startup_seq_path=None,
+        log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s'
     ):
         super().__init__(overlay_dirs)
-        self.logger = logger.Logger('middlewared', debug_level).getLogger()
+        self.logger = logger.Logger(
+            'middlewared', debug_level, log_format
+        ).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
         self.debug_level = debug_level
         self.log_handler = log_handler
+        self.log_format = log_format
         self.startup_seq = 0
         self.startup_seq_path = startup_seq_path
         self.app = None
