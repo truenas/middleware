@@ -90,11 +90,9 @@ class VMSupervisor(object):
         self.manager = manager
 
         if not os.path.exists('/var/log/vm'):
-            os.makedirs('/var/log/vm')
+            os.makedirs('/var/log/vm', exist_ok=True)
 
-        self.logger = middlewared.logger.Logger(
-            f'VM: {vm["name"]}_{vm["id"]}'
-        ).getLogger()
+        self.logger = self.manager.logger.getChild(f'vm_{vm["id"]}')
 
         handler = middlewared.logger.ErrorProneRotatingFileHandler(
             f'/var/log/vm/{vm["name"]}_{vm["id"]}',
@@ -106,9 +104,9 @@ class VMSupervisor(object):
             ' - %(message)s'
         ))
         self.logger.addHandler(handler)  # main log + vm specific log
-        self.logger.setLevel(logging.DEBUG)
-
         self.middleware = self.manager.service.middleware
+        self.logger.setLevel(self.middleware.debug_level)
+
         self.vm = vm
         self.proc = None
         self.grub_proc = None
