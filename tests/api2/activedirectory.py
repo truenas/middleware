@@ -18,7 +18,6 @@ ad_data_type = {
     'ssl': str,
     'certificate': type(None),
     'verbose_logging': bool,
-    'unix_extensions': bool,
     'allow_trusted_doms': bool,
     'use_default_domain': bool,
     'allow_dns_updates': bool,
