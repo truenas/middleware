@@ -475,12 +475,43 @@ class KerberosKeytabService(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
-        Delete kerberos keytab by id.
+        Delete kerberos keytab by id, and force regeneration of
+        system keytab.
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+        if os.path.exists(keytab['SYSTEM'].value):
+            os.remove(keytab['SYSTEM'].value)
         await self.middleware.call('etc.generate', 'kerberos')
+        await self._cleanup_kerberos_principals()
         await self.middleware.call('kerberos.stop')
-        await self.middleware.call('kerberos.start')
+        try:
+            await self.middleware.call('kerberos.start')
+        except Exception as e:
+            self.logger.debug(
+                'Failed to start kerberos service after deleting keytab entry: %s' % e
+            )
+
+    @private
+    async def _cleanup_kerberos_principals(self):
+        principal_choices = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
+        ad = await self.middleware.call('activedirectory.config')
+        ldap = await self.middleware.call('ldap.config')
+        if ad['kerberos_principal'] and ad['kerberos_principal'] not in principal_choices:
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.activedirectory',
+                ad['id'],
+                {'kerberos_principal': ''},
+                {'prefix': 'ad_'}
+            )
+        if ldap['kerberos_principal'] and ldap['kerberos_principal'] not in principal_choices:
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.ldap',
+                ldap['id'],
+                {'kerberos_principal': ''},
+                {'prefix': 'ldap_'}
+            )
 
     @private
     async def _validate(self, data):
