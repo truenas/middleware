@@ -1611,7 +1611,7 @@ class PoolService(CRUDService):
         ])
         if 'jails' in options['services_restart']:
             await self.middleware.call('core.bulk', 'jail.rc_action', [['RESTART']])
-        elif 'vms' in options['services_restart']:
+        if 'vms' in options['services_restart']:
             vms = (await self.middleware.call(
                 'vm.query', [('autostart', '=', True)])
             )
