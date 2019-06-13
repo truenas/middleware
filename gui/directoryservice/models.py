@@ -1102,11 +1102,9 @@ class LDAP(DirectoryServiceBase):
     ldap_disable_freenas_cache = models.BooleanField(
         verbose_name=_("Disable LDAP user/group cache"),
         help_text=_(
-            "Set to disable caching LDAP users "
-            "and groups. This is an optimization for large LDAP "
-            "Environments. When caching is disabled, LDAP users "
-            "and groups do not appear in dropdown menus, but are "
-            "still accepted in relevant form fields if manually entered."
+            "Set to disable caching LDAP users and groups in large LDAP environments. "
+            "When caching is disabled, LDAP users and groups do not appear in dropdown "
+            "menus, but are still accepted when manually entered."
         ),
         default=False
     )
