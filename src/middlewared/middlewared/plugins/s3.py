@@ -100,7 +100,7 @@ class S3Service(SystemServiceService):
                     'path': new['disks'],
                     'mode': str(775),
                     'uid': (await self.middleware.call('dscache.get_uncached_user', 'minio'))['pw_uid'],
-                    'gid': (await self.middleware.call('dscache.get_uncached_group', 'minio'))['pw_gid'],
+                    'gid': (await self.middleware.call('dscache.get_uncached_group', 'minio'))['gr_gid'],
                     'options': {'recursive': True, 'traverse': False}
                 }
             )
