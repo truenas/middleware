@@ -1505,6 +1505,7 @@ class PoolService(CRUDService):
             'nfs': 'NFS',
             'webdav': 'WebDAV',
             'jails': 'Jails/Plugins',
+            'vms': 'Virtual Machines',
         }
         return svcs
 
@@ -1610,6 +1611,13 @@ class PoolService(CRUDService):
         ])
         if 'jails' in options['services_restart']:
             await self.middleware.call('core.bulk', 'jail.rc_action', [['RESTART']])
+        if 'vms' in options['services_restart']:
+            vms = (await self.middleware.call(
+                'vm.query', [('autostart', '=', True)])
+            )
+            for vm in vms:
+                await self.middleware.call('vm.stop', vm['id'])
+                await self.middleware.call('vm.start', vm['id'])
 
         await self.middleware.call_hook('pool.post_unlock', pool=pool)
 
