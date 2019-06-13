@@ -215,7 +215,6 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
         'ad_ssl',
         'ad_certificate',
         'ad_verbose_logging',
-        'ad_unix_extensions',
         'ad_allow_trusted_doms',
         'ad_use_default_domain',
         'ad_createcomputer',
@@ -431,7 +430,9 @@ class KerberosKeytabCreateForm(ModelForm):
 
     def save(self):
         super(KerberosKeytabCreateForm, self).save()
+        keytab = self.cleaned_data.get("keytab_file")
         with client as c:
+            c.call('kerberos.keytab.create', keytab)
             c.call('kerberos.start')
 
 
