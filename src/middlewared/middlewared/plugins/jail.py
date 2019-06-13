@@ -571,26 +571,26 @@ class JailService(CRUDService):
                     # iocage returns - for None
                     plugin[i] = elem if elem != "-" else None
 
-                # plugin[1] is the UUID
-                plugin_output = pathlib.Path(
-                    f'{iocroot}/jails/{plugin[1]}/root/root/PLUGIN_INFO'
-                )
-
-                if plugin_output.is_file():
-                    plugin_info = [[
-                        x for x in plugin_output.read_text().split('\n') if x
-                    ]]
-                else:
-                    plugin_info = [None]
-
                 if remote:
                     pv = self.get_plugin_version(plugin[2])
                 else:
-                    pv = self.get_local_plugin_version(
-                        plugin[1], index_json, iocroot)
+                    # plugin[1] is the UUID
+                    plugin_output = pathlib.Path(
+                        f'{iocroot}/jails/{plugin[1]}/root/root/PLUGIN_INFO'
+                    )
 
-                resource_list[resource_list.index(plugin)] = plugin + pv + \
-                    plugin_info
+                    if plugin_output.is_file():
+                        plugin_info = [[
+                            x for x in plugin_output.read_text().split(
+                                '\n') if x
+                        ]]
+                    else:
+                        plugin_info = [None]
+
+                    pv = self.get_local_plugin_version(
+                        plugin[1], index_json, iocroot) + plugin_info
+
+                resource_list[resource_list.index(plugin)] = plugin + pv
 
             if remote:
                 self.middleware.call_sync(
