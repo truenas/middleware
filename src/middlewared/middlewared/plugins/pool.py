@@ -1505,7 +1505,7 @@ class PoolService(CRUDService):
             'nfs': 'NFS',
             'webdav': 'WebDAV',
             'jails': 'Jails/Plugins',
-            'vms': 'Virtual Machines'
+            'vms': 'Virtual Machines',
         }
         return svcs
 
