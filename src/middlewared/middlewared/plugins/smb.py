@@ -613,7 +613,7 @@ class SharingSMBService(CRUDService):
         List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
         Bool('shadowcopy', default=False),
         Str('auxsmbconf'),
-        Bool('default_permissions'),
+        Bool('default_permissions', default=False),
         Bool('enabled', default=True),
         register=True
     ))
