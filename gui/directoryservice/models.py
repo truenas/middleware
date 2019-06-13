@@ -1103,10 +1103,10 @@ class LDAP(DirectoryServiceBase):
         verbose_name=_("Disable LDAP user/group cache"),
         help_text=_(
             "Set this if you want to disable caching LDAP users "
-            "and groups. This is an optimization for large LDAP  "
-            "Environments. If caching is disabled, then LDAP users "
-            "and groups will not appear in dropdown menus, but will "
-            "still be accepted if manually entered.",
+            "and groups. This is an optimization for large LDAP "
+            "Environments. When caching is disabled, LDAP users "
+            "and groups do not appear in dropdown menus, but are "
+            "still accepted in relevant form fields if manually entered."
         ),
         default=False
     )
