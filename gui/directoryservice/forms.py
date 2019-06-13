@@ -310,6 +310,7 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
 
     advanced_fields = [
         'ldap_anonbind',
+        'ldap_disable_freenas_cache',
         'ldap_usersuffix',
         'ldap_groupsuffix',
         'ldap_passwordsuffix',
@@ -430,9 +431,7 @@ class KerberosKeytabCreateForm(ModelForm):
 
     def save(self):
         super(KerberosKeytabCreateForm, self).save()
-        keytab = self.cleaned_data.get("keytab_file")
         with client as c:
-            c.call('kerberos.keytab.create', keytab)
             c.call('kerberos.start')
 
 
