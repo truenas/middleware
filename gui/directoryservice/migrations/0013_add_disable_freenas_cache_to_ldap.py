@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 verbose_name='Disable LDAP user/group cache',
                 default=False,
                 help_text=(
-                    "Set this if you want to disable caching LDAP users "
+                    "Set to disable caching LDAP users "
                     "and groups. This is an optimization for large LDAP "
                     "Environments. When caching is disabled, LDAP users "
                     "and groups do not appear in dropdown menus, but are "
