@@ -164,6 +164,14 @@ class ServiceMonitorThread(threading.Thread):
 
         return False
 
+    @private
+    def isPassive(self):
+        if not self.middleware.call_sync('notifier.is_freenas'):
+            if self.middleware.call_sync('notifier.failover_status') == 'BACKUP':
+                return True
+
+        return False
+
     def run(self):
         ntries = 0
 
@@ -179,6 +187,9 @@ class ServiceMonitorThread(threading.Thread):
                 # Thread.cancel() takes a while to propagate here
                 ServiceMonitorThread.reset_alerts(service)
                 return
+
+            if self.isPassive():
+                continue
 
             if os.path.exists('/tmp/.ad_start'):
                 """
