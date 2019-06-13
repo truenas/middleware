@@ -95,7 +95,7 @@ def test_03_get_activedirectory_state():
 
 def test_04_get_activedirectory_started_before_starting_activedirectory():
     results = GET('/activedirectory/started/')
-    assert results.status_code == 400, results.text
+    assert results.status_code == 422, results.text
 
 
 def test_05_creating_ad_dataset_for_smb():
@@ -340,9 +340,9 @@ def test_35_get_activedirectory_state():
 
 
 @ad_test_cfg
-def test_36_get_activedirectory_started_before_starting_activedirectory():
+def test_36_get_activedirectory_started_after_leaving_AD():
     results = GET('/activedirectory/started/')
-    assert results.status_code == 400, results.text
+    assert results.status_code == 422, results.text
 
 
 @ad_test_cfg
@@ -482,13 +482,38 @@ def test_51_get_activedirectory_state():
     assert results.json() == 'DISABLED', results.text
 
 
-def test_52_get_activedirectory_started_before_starting_activedirectory():
+def test_52_get_activedirectory_started_after_disabling_AD():
     results = GET('/activedirectory/started/')
-    assert results.status_code == 400, results.text
+    assert results.status_code == 422, results.text
 
 
 @ad_test_cfg
-def test_53_leave_activedirectory():
+def test_53_re_enable_activedirectory():
+    global payload, results
+    payload = {
+        "enable": True
+    }
+    results = PUT("/activedirectory/", payload)
+    assert results.status_code == 200, results.text
+
+
+@ad_test_cfg
+def test_54_get_activedirectory_state():
+    global results
+    results = GET('/activedirectory/get_state/')
+    assert results.status_code == 200, results.text
+    assert results.json() == 'HEALTHY', results.text
+
+
+@ad_test_cfg
+def test_55_get_activedirectory_started():
+    results = GET('/activedirectory/started/')
+    assert results.status_code == 200, results.text
+    assert results.json() is True, results.text
+
+
+@ad_test_cfg
+def test_56_leave_activedirectory():
     global payload, results
     payload = {
         "username": ADUSERNAME,
@@ -499,40 +524,40 @@ def test_53_leave_activedirectory():
 
 
 @ad_test_cfg
-def test_54_get_activedirectory_state():
+def test_57_get_activedirectory_state():
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
 @ad_test_cfg
-def test_55_get_activedirectory_started_before_starting_activedirectory():
+def test_58_get_activedirectory_started_after_living():
     results = GET('/activedirectory/started/')
-    assert results.status_code == 400, results.text
+    assert results.status_code == 422, results.text
 
 
-def test_56_disable_cifs_service_at_boot():
+def test_59_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_57_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_60_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_58_stoping_clif_service():
+def test_61_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_59_checking_if_cifs_is_stop():
+def test_62_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
-def test_60_destroying_ad_dataset_for_smb():
+def test_63_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
