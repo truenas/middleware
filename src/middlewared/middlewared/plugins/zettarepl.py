@@ -24,6 +24,8 @@ from zettarepl.observer import (
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
+from zettarepl.snapshot.list import list_snapshots
+from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
 from zettarepl.utils.logging import (
@@ -329,7 +331,8 @@ class ZettareplService(Service):
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
-            datasets = list_datasets(await self._get_zettarepl_shell(transport, ssh_credentials))
+            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
+            datasets = await self.middleware.run_in_thread(list_datasets, shell)
         except Exception as e:
             raise CallError(repr(e))
 
@@ -341,9 +344,24 @@ class ZettareplService(Service):
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
         try:
-            return create_dataset(await self._get_zettarepl_shell(transport, ssh_credentials), dataset)
+            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
+            return await self.middleware.run_in_thread(create_dataset, shell, dataset)
         except Exception as e:
             raise CallError(repr(e))
+
+    async def count_eligible_manual_snapshots(self, dataset, naming_schemas, transport, ssh_credentials=None):
+        try:
+            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
+            snapshots = await self.middleware.run_in_thread(list_snapshots, shell, dataset, False)
+        except Exception as e:
+            raise CallError(repr(e))
+
+        parsed = parse_snapshots_names_with_multiple_schemas([s.name for s in snapshots], naming_schemas)
+
+        return {
+            "total": len(snapshots),
+            "eligible": len(parsed),
+        }
 
     async def get_definition(self):
         timezone = (await self.middleware.call("system.general.config"))["timezone"]
