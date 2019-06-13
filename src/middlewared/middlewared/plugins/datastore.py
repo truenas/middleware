@@ -109,7 +109,6 @@ class DatastoreService(Service):
             List('select', default=[]),
             Bool('count', default=False),
             Bool('get', default=False),
-            default=None,
             null=True,
             register=True,
         ),

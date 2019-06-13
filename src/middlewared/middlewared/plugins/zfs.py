@@ -441,15 +441,21 @@ class ZFSDatasetService(CRUDService):
                     'type': type_.upper(),
                 })
         else:
+            extra = options.get('extra', {})
+            state_options = {
+                'snapshots': extra.get('snapshots', False),
+                'recursive': extra.get('recursive', True),
+                'snapshots_recursive': extra.get('snapshots_recursive', False)
+            }
             with libzfs.ZFS() as zfs:
                 # Handle `id` filter specially to avoiding getting all datasets
                 if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
                     try:
-                        datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
+                        datasets = [zfs.get_dataset(filters[0][2]).__getstate__(**state_options)]
                     except libzfs.ZFSException:
                         datasets = []
                 else:
-                    datasets = [i.__getstate__() for i in zfs.datasets]
+                    datasets = [i.__getstate__(**state_options) for i in zfs.datasets]
         return filter_list(datasets, filters, options)
 
     def query_for_quota_alert(self):
