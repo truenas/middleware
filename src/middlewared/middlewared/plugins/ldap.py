@@ -212,18 +212,36 @@ class LDAPQuery(object):
 
         return result
 
+    def parse_results(self, results):
+        res = []
+        for r in results:
+            parsed_data = {}
+            for k, v in r[1].items():
+                try:
+                    v = list(i.decode() for i in v)
+                except Exception:
+                    v = list(str(i) for i in v)
+                parsed_data.update({k: v})
+
+            res.append({
+                'dn': r[0],
+                'data': parsed_data
+            })
+
+        return res
+
     def get_samba_domains(self):
+        """
+        This returns a list of configured samba domains on the LDAP
+        server. This is used to determine whether the LDAP server has
+        The Samba LDAP schema. In this case, the SMB service can be
+        configured to use Samba's ldapsam passdb backend.
+        """
         if not self._handle:
             self._open()
         filter = '(objectclass=sambaDomain)'
         results = self._search(self.ldap['basedn'], ldap.SCOPE_SUBTREE, filter)
-        domains = []
-        if results:
-            for d in results:
-                domains.append(d[1]['sambaDomainName'][0].decode())
-
-        self._close()
-        return domains
+        return self.parse_results(results)
 
     def get_root_DSE(self):
         """
@@ -237,19 +255,14 @@ class LDAPQuery(object):
             self._open()
         filter = '(objectclass=*)'
         results = self._search('', ldap.SCOPE_BASE, filter)
-        dse_objs = []
-        for r in results:
-            parsed_data = {}
-            for k, v in r[1].items():
-                v = list(i.decode() for i in v)
-                parsed_data.update({k: v})
+        return self.parse_results(results)
 
-            dse_objs.append({
-                'dn': r[0],
-                'data': parsed_data
-            })
-        self._close()
-        return dse_objs
+    def get_dn(self, dn):
+        if not self._handle:
+            self._open()
+        filter = '(objectclass=*)'
+        results = self._search(dn, ldap.SCOPE_SUBTREE, filter)
+        return self.parse_results(results)
 
 
 class LDAPService(ConfigService):
@@ -422,6 +435,22 @@ class LDAPService(ConfigService):
         return ret
 
     @private
+    def get_dn(self, dn=None, ldap=None):
+        """
+        Outputs contents of specified DN in JSON. By default will target the basedn.
+        """
+        ret = []
+        if ldap is None:
+            ldap = self.middleware.call_sync('ldap.config')
+
+        if dn is None:
+            dn = ldap['basedn']
+        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
+            ret = LDAP.get_dn(dn)
+
+        return ret
+
+    @private
     async def started(self):
         ldap = await self.config()
         if not ldap['enable']:
@@ -456,7 +485,7 @@ class LDAPService(ConfigService):
         if len(ret) > 1:
             raise CallError(f'Multiple Samba Domains detected in LDAP environment: {ret}', errno.EINVAL)
 
-        ret = ret[0] if ret else []
+        ret = ret[0]['data']['sambaDomainName'][0] if ret else []
 
         if ret and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the LDAP domain name [{ret}]')

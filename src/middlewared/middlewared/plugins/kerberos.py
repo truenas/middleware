@@ -87,22 +87,22 @@ class KerberosService(ConfigService):
             if ldap['kerberos_principal']:
                 ldap_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
                 if ldap_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm {ldap['kerberos_realm']} with keytab failed: {ad_kinit.stderr.decode()}")
+                    raise CallError(f"kinit for realm {ldap['kerberos_realm']} with keytab failed: {ldap_kinit.stderr.decode()}")
             else:
                 krb_realm = await self.middleware.call(
                     'kerberos.realm.query',
-                    [('id', '=', ldap['krb_realm'])],
+                    [('id', '=', ldap['kerberos_realm'])],
                     {'get': True}
                 )
-                bind_cn = (ldap['binddn'].split(','))[0].strip("cn=")
-                principal = f'{bind_cn}@{krb_realm["realm"]}'
-                ad_kinit = await Popen(
+                bind_cn = (ldap['binddn'].split(','))[0].split("=")
+                principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
+                ldap_kinit = await Popen(
                     ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
                 )
-                output = await ad_kinit.communicate(input=ldap['bindpw'].encode())
-                if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm{krb_realm['realm']} with password failed: {output[1].decode()}")
+                output = await ldap_kinit.communicate(input=ldap['bindpw'].encode())
+                if ldap_kinit.returncode != 0:
+                    raise CallError(f"kinit for realm {krb_realm['realm']} with password failed: {output[1].decode()}")
 
     @private
     async def _get_cached_klist(self):
@@ -425,6 +425,7 @@ class KerberosKeytabService(CRUDService):
             raise verrors
 
         data = await self.kerberos_keytab_compress(data)
+        self.logger.debug(f'got here: {data}')
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -459,7 +460,7 @@ class KerberosKeytabService(CRUDService):
         if verrors:
             raise verrors
 
-        data = await self.kerberos_keytab_compress(data)
+        new = await self.kerberos_keytab_compress(data)
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
