@@ -316,6 +316,7 @@ class LDAPService(ConfigService):
         Str('sudosuffix'),
         Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
         Int('certificate', null=True),
+        Bool('disable_freenas_cache'),
         Int('timeout', default=30),
         Int('dns_timeout', default=5),
         Str('idmap_backend', default='LDAP', enum=['SCRIPT', 'LDAP']),
@@ -582,16 +583,23 @@ class LDAPService(ConfigService):
     @job(lock='fill_ldap_cache')
     def fill_cache(self, job, force=False):
         user_next_index = group_next_index = 100000000
+        cache_data = {'users': [], 'groups': []}
+
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
         self.middleware.call_sync('cache.pop', 'LDAP_cache')
+
+        if (self.middleware.call_sync('ldap.config'))['disable_freenas_cache']:
+            self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data)
+            self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
+            return
+
         pwd_list = pwd.getpwall()
         grp_list = grp.getgrall()
 
         local_uid_list = list(u['uid'] for u in self.middleware.call_sync('user.query'))
         local_gid_list = list(g['gid'] for g in self.middleware.call_sync('group.query'))
-        cache_data = {'users': [], 'groups': []}
 
         for u in pwd_list:
             is_local_user = True if u.pw_uid in local_uid_list else False
