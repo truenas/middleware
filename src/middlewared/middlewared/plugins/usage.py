@@ -5,6 +5,7 @@ import json
 import asyncio
 import random
 import aiohttp
+import hashlib
 
 
 class UsageService(Service):
@@ -165,6 +166,9 @@ class UsageService(Service):
 
         usage_version = 1
         version = system['version']
+        system_hash = hashlib.sha256((await self.middleware.call(
+            'systemdataset.config'
+        ))['uuid'].encode()).hexdigest()
         datasets = await self.middleware.call(
             'zfs.dataset.query', [('type', '!=', 'VOLUME')], {'count': True}
         )
@@ -180,6 +184,7 @@ class UsageService(Service):
 
         return {
             'gather_system': [
+                {'system_hash': system_hash},
                 {'platform': platform},
                 {'usage_version': usage_version},
                 {'version': version},
