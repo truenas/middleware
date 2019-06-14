@@ -1,7 +1,7 @@
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
-                                 accepts, private, CRUDService)
+                                 accepts, private, periodic, CRUDService, Service)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
@@ -26,6 +26,7 @@ LOGLEVEL_MAP = {
 }
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 RE_NETGROUPMAP = re.compile(r"^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$")
+RE_SHAREACLENTRY = re.compile(r"^ACL:(?P<ae_who_sid>.+):(?P<ae_type>.+)\/0x0\/(?P<ae_perm>.+)$")
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -812,6 +813,8 @@ class SharingSMBService(CRUDService):
     async def extend(self, data):
         data['hostsallow'] = data['hostsallow'].split()
         data['hostsdeny'] = data['hostsdeny'].split()
+        if 'share_acl' in data:
+            data.pop('share_acl')
 
         return data
 
@@ -992,6 +995,239 @@ async def pool_post_import(middleware, pool):
         ])
     ]):
         asyncio.ensure_future(middleware.call('service.reload', 'cifs'))
+
+
+class ShareSec(Service):
+
+    class Config:
+        namespace = 'smb.sharesec'
+
+
+    @private
+    async def _parse_share_sd(self, sd, options=None):
+        """
+        Parses security descriptor text returned from 'sharesec'.
+        Optionally will resolve the SIDs in the SD to names.
+        """
+
+        if len(sd) == 0:
+            return {}
+        parsed_share_sd = {'share_name': None, 'share_acl': []}
+        if options is None:
+            options = {'resolve_sids': True}
+
+        sd_lines = sd.splitlines()
+        # Share name is always enclosed in brackets. Remove them.
+        parsed_share_sd['share_name'] = sd_lines[0][1:-1]
+
+        # ACL entries begin at line 5 in the Security Descriptor
+        for i in sd_lines[5:]:
+            acl_entry = {}
+            m = RE_SHAREACLENTRY.match(i)
+            if m is None:
+                self.logger.debug(f'{i} did not match regex')
+                continue
+
+            acl_entry.update(m.groupdict())
+            if (options.get('resolve_sids', True)) is True:
+                wb = await run(['/usr/local/bin/wbinfo', '--sid-to-name', acl_entry['ae_who_sid']], check=False)
+                if wb.returncode == 0:
+                    acl_entry['ae_who_name'] = wb.stdout.decode()[:-3]
+                else:
+                    self.logger.debug(
+                        'Failed to resolve SID (%s) to name: (%s)' % (acl_entry['ae_who_sid'], wb.stderr.decode())
+                    )
+
+            parsed_share_sd['share_acl'].append(acl_entry)
+
+        return parsed_share_sd
+
+    @private
+    async def _view_all(self, options=None):
+        """
+        Return Security Descriptor for all shares.
+        """
+        share_sd_list = []
+        sharesec = await run(['/usr/local/bin/sharesec', '--view-all'], check=False)
+        if sharesec.returncode != 0:
+            raise CallError(f'sharesec --view-all failed: {sharesec.stderr.decode()}')
+
+        share_entries = (sharesec.stdout.decode()).split('\n\n')
+        for share in share_entries:
+            parsed_sd = await self.middleware.call('smb.sharesec._parse_share_sd', share, options)
+            if parsed_sd:
+                share_sd_list.append(parsed_sd)
+
+        return share_sd_list
+
+    @accepts(
+        Str('share_name'),
+        Dict(
+            'options',
+            Bool('resolve_sids', default=True)
+        )
+    )
+    async def getacl(self, share_name, options):
+        """
+        View the ACL information for `share_name`. The share ACL is distinct from filesystem
+        ACLs which can be viewed by calling `filesystem,.getacl`. `ae_who_name` will appear
+        as `None` if the SMB service is stopped or if winbind is unable  to resolve the SID
+        to a name.
+
+        If the `option` `resolve_sids` is set to `False` then the returned ACL will not
+        contain names.
+        """
+        sharesec = await run(['/usr/local/bin/sharesec', '--view', share_name], check=False)
+        if sharesec.returncode != 0:
+            raise CallError(f'failed to look up share security descriptor: {sharesec.stderr.decode()}')
+
+        share_sd = f'[{share_name.upper()}]\n{sharesec.stdout.decode()}'
+        return await self.middleware.call('smb.sharesec._parse_share_sd', share_sd, options)
+
+    @private
+    async def _ae_to_string(self, ae):
+        """
+        Convert aclentry in Securty Descriptor dictionary to string
+        representation used by sharesec.
+        """
+        if not ae['ae_who_sid'] and not ae['ae_who_name']:
+            raise CallError('ACL Entry must have ae_who_sid or ae_who_name.', errno.EINVAL)
+
+        if not ae['ae_who_sid']:
+            wbinfo = await run(['/usr/local/bin/wbinfo', '--name-to-sid', ae['ae_who_name']], check=False)
+            if wbinfo.returncode != 0:
+                raise CallError(f'SID lookup for {ae["ae_who_name"]} failed: {wbinfo.stderr.decode()}')
+            ae['ae_who_sid'] = (wbinfo.stdout.decode().split())[0]
+
+        return f'{ae["ae_who_sid"]}:{ae["ae_type"]}/0x0/{ae["ae_perm"]}'
+
+    @private
+    async def _string_to_ae(self, perm_str):
+        """
+        Convert string representation of SD into dictionary.
+        """
+        return (RE_SHAREACLENTRY.match(f'ACL:{perm_str}')).groupdict()
+
+    @accepts(Dict(
+        'sharesec_setacl',
+        Str('share_name', required=True),
+        List(
+            'share_acl',
+            items=[
+                Dict(
+                    'aclentry',
+                    Str('ae_who_sid', default=None),
+                    Str('ae_who_name', default=None),
+                    Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
+                    Str('ae_type', enum=['ALLOWED', 'DENIED']),
+                )
+            ],
+            default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]
+        ),
+        Dict(
+            'options',
+            Bool('db_commit', default=True),
+        )
+    ))
+    async def setacl(self, data):
+        """
+        Set an ACL on `share_name`. Changes are written to samba's share_info.tdb file.
+        This only impacts SMB sessions. Either ae_who_sid or ae_who_name must be specified
+        for each ACL entry in the `share_acl`. If both are specified, then ae_who_sid will be used.
+        The SMB service must be started in order to convert ae_who_name to a SID if those are
+        used.
+
+        `share_name` the name of the share
+
+        `share_acl` a list of ACL entries (dictionaries) with the following keys:
+
+        `ae_who_sid` who the ACL entry applies to expressed as a Windows SID
+
+        `ae_who_name` who the ACL entry applies to expressed as a name. `ae_who_name` must
+        be prefixed with the domain that the user is a member of. Local users will have the
+        netbios name of the SMB server as a prefix. Example `freenas\smbusers`
+
+        `ae_perm` string representation of the permissions granted to the user or group.
+        `FULL` grants read, write, execute, delete, write acl, and change owner.
+        `CHANGE` grants read, write, execute, and delete.
+        `READ` grants read and execute.
+
+        `ae_type` can be ALLOWED or DENIED.
+        """
+        ae_list = []
+        cleaned_acl = []
+        data['share_name'] = data['share_name'].upper()
+        for entry in data['share_acl']:
+            ae_list.append(await self._ae_to_string(entry))
+
+        ssec = await run(['/usr/local/bin/sharesec', data['share_name'], '-R', ','.join(ae_list)], check=False)
+        if ssec.returncode != 0:
+            raise CallError(f"setacl on share [{data['share_name']}] failed: {ssec.stderr.decode()}")
+
+        if not data['options']['db_commit']:
+            return
+
+        config_share = await self.middleware.call('sharing.smb.query', [('name', '=', data['share_name'])], {'get': True})
+        await self.middleware.call('datastore.update', 'sharing.cifs_share', config_share['id'],
+                                   {'cifs_share_acl': ' '.join(ae_list)})
+
+    @private
+    async def _flush_share_info(self):
+        """
+        Write stored share acls to share_info.tdb. This should only be called
+        if share_info.tdb contains default entries.
+        """
+        shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
+        for share in shares:
+            if share['share_acl']:
+                converted_acl = [(await self._string_to_ae(i)) for i in share['share_acl'].split()]
+                await self.middleware.call('smb.sharesec.setacl', {
+                    'share_name': share['name'],
+                    'share_acl': converted_acl,
+                    'options': {'db_commit': False},
+                })
+
+    @periodic(21600, run_on_start=False)
+    @accepts()
+    async def synchronize_acls(self):
+        """
+        Synchronize the share ACL stored in the config database with Samba's running
+        configuration as reflected in the share_info.tdb file.
+
+        The only situation in which the configuration stored in the database will
+        overwrite samba's running configuration is if share_info.tdb is empty. Samba
+        fakes a single S-1-1-0:ALLOW/0x0/FULL entry in the absence of an entry for a
+        share in share_info.tdb.
+        """
+        rc = await self.middleware.call('smb.sharesec._view_all', {'resolve_sids': False})
+        write_share_info = True
+
+        for i in rc:
+            if len(i['share_acl']) > 1:
+                write_share_info = False
+                break
+
+            if i['share_acl'][0]['ae_who_sid'] != 'S-1-1-0' or i['share_acl'][0]['ae_perm'] != 'FULL':
+                write_share_info = False
+                break
+
+        if write_share_info:
+            return await self._flush_share_info()
+
+        shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
+        for s in shares:
+            rc_info = (list(filter(lambda x: s['name'] == x['share_name'], rc)))[0]
+            rc_acl = ' '.join([(await self._ae_to_string(i)) for i in rc_info['share_acl']])
+            if rc_acl != s['share_acl']:
+                self.logger.debug(
+                    'updating stored ACL on %s to %s' % (s['name'], rc_acl)
+                )
+                await self.middleware.call(
+                    'datastore.update',
+                    'sharing.cifs_share',
+                    s['id'],
+                    {'cifs_share_acl': rc_acl}
+                )
 
 
 class SMBFSAttachmentDelegate(FSAttachmentDelegate):
