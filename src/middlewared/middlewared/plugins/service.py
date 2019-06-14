@@ -919,8 +919,6 @@ class ServiceService(CRUDService):
         except Exception as e:
             raise CallError(e)
 
-        await self._service("ix-post-samba", "start", quiet=True, **kwargs)
-
     async def _stop_cifs(self, **kwargs):
         await self._service("samba_server", "stop", force=True, **kwargs)
 
