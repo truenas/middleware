@@ -290,20 +290,20 @@ class AlertService(Service):
 
                                 msg = "\n".join(msg)
 
-                                try:
-                                    await self.middleware.call("support.new_ticket", {
-                                        "title": "Automatic alert (%s)" % serial,
-                                        "body": msg,
-                                        "attach_debug": False,
-                                        "category": "Hardware",
-                                        "criticality": "Loss of Functionality",
-                                        "environment": "Production",
-                                        "name": "Automatic Alert",
-                                        "email": "auto-support@ixsystems.com",
-                                        "phone": "-",
-                                    })
-                                except Exception:
-                                    self.logger.error(f"Failed to create a support ticket", exc_info=True)
+                                job = await self.middleware.call("support.new_ticket", {
+                                    "title": "Automatic alert (%s)" % serial,
+                                    "body": msg,
+                                    "attach_debug": False,
+                                    "category": "Hardware",
+                                    "criticality": "Loss of Functionality",
+                                    "environment": "Production",
+                                    "name": "Automatic Alert",
+                                    "email": "auto-support@ixsystems.com",
+                                    "phone": "-",
+                                })
+                                await job.wait()
+                                if job.error:
+                                    self.logger.error(f"Failed to create a support ticket: %s", job.error)
                                     await self.middleware.call("mail.send", {
                                         "subject": "Failed to notify iXsystems about alert (%s)" % serial,
                                         "text": f"""
