@@ -218,7 +218,7 @@ class CryptoKeyService(Service):
         return t2.ctime()
 
     @accepts(
-        Str('certificate', required=True)
+        Str('certificate', required=True, max_length=None)
     )
     def load_certificate(self, certificate):
         try:
@@ -396,8 +396,8 @@ class CryptoKeyService(Service):
             Int('key_length'),
             Int('serial', required=False, null=True),
             Int('lifetime', required=True),
-            Str('ca_certificate', required=False),
-            Str('ca_privatekey', required=False),
+            Str('ca_certificate', required=False, max_length=None),
+            Str('ca_privatekey', required=False, max_length=None),
             Str('key_type', required=False),
             Str('ec_curve', required=False),
             Str('country', required=True),
@@ -525,10 +525,10 @@ class CryptoKeyService(Service):
     @accepts(
         Dict(
             'sign_csr',
-            Str('ca_certificate', required=True),
-            Str('ca_privatekey', required=True),
-            Str('csr', required=True),
-            Str('csr_privatekey', required=True),
+            Str('ca_certificate', required=True, max_length=None),
+            Str('ca_privatekey', required=True, max_length=None),
+            Str('csr', required=True, max_length=None),
+            Str('csr_privatekey', required=True, max_length=None),
             Int('serial', required=True),
             Str('digest_algorithm', default='SHA256')
         )
@@ -1110,11 +1110,11 @@ class CertificateService(CRUDService):
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),
             Str('acme_directory_uri'),
-            Str('certificate'),
+            Str('certificate', max_length=None),
             Str('city'),
-            Str('common'),
+            Str('common', max_length=None),
             Str('country'),
-            Str('CSR'),
+            Str('CSR', max_length=None),
             Str('ec_curve', enum=CryptoKeyService.ec_curves, default=CryptoKeyService.ec_curve_default),
             Str('email', validators=[Email()]),
             Str('key_type', enum=['RSA', 'EC'], default='RSA'),
@@ -1122,7 +1122,7 @@ class CertificateService(CRUDService):
             Str('organization'),
             Str('organizational_unit'),
             Str('passphrase'),
-            Str('privatekey'),
+            Str('privatekey', max_length=None),
             Str('state'),
             Str('create_type', enum=[
                 'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
@@ -1370,10 +1370,10 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_create_imported',
             Int('csr_id'),
-            Str('certificate', required=True),
+            Str('certificate', required=True, max_length=None),
             Str('name'),
             Str('passphrase'),
-            Str('privatekey')
+            Str('privatekey', max_length=None)
         )
     )
     @skip_arg(count=1)

@@ -197,7 +197,7 @@ class NetDataService(SystemServiceService):
     @accepts(
         Dict(
             'netdata_update',
-            Str('additional_params'),
+            Str('additional_params', max_length=None),
             Dict(
                 'alarms',
                 additional_attrs=True
