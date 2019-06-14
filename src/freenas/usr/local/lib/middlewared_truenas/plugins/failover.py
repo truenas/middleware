@@ -35,7 +35,6 @@ from freenasUI.freeadmin.sqlite3_ha.base import Journal
 from freenasUI.failover.detect import ha_hardware, ha_node
 from freenasUI.failover.enc_helper import LocalEscrowCtl
 from freenasUI.middleware.notifier import notifier
-from freenasUI.support.utils import get_license
 
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 SYNC_FILE = '/var/tmp/sync_failed'
@@ -176,8 +175,8 @@ class FailoverService(ConfigService):
         """
         Checks whether this instance is licensed as a HA unit.
         """
-        license, error = get_license()
-        if license is None or not license.system_serial_ha:
+        info = self.middleware.call_sync('system.info')
+        if not info['license'] or not info['license']['system_serial_ha']:
             return False
         return True
 
