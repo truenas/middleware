@@ -1615,9 +1615,12 @@ class PoolService(CRUDService):
             vms = (await self.middleware.call(
                 'vm.query', [('autostart', '=', True)])
             )
+            pool_name = pool['name']
             for vm in vms:
-                await self.middleware.call('vm.stop', vm['id'])
-                await self.middleware.call('vm.start', vm['id'])
+                for device in vm['devices']:
+                    if pool_name in device['attributes'].get('path', ''):
+                        await self.middleware.call('vm.stop', vm['id'])
+                        await self.middleware.call('vm.start', vm['id'])
 
         await self.middleware.call_hook('pool.post_unlock', pool=pool)
 
