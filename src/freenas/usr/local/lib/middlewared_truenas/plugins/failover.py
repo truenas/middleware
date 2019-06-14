@@ -671,6 +671,7 @@ class FailoverService(ConfigService):
             updatefile_name = 'updatefile.tar'
             job.set_progress(None, 'Uploading update file')
             updatefile_localpath = os.path.join(local_path, updatefile_name)
+            os.makedirs(local_path, exist_ok=True)
             with open(updatefile_localpath, 'wb') as f:
                 shutil.copyfileobj(job.pipes.input.r, f, 1048576)
         else:
