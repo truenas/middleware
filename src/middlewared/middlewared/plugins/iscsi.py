@@ -518,7 +518,7 @@ class iSCSITargetExtentService(CRUDService):
         Str('name', required=True),
         Str('type', enum=['DISK', 'FILE'], default='DISK'),
         Str('disk', default=None, null=True),
-        Str('serial', default=None, null=True),
+        Str('serial', default=None, null=True, max_length=16),
         Str('path', default=None, null=True),
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),

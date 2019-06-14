@@ -17,13 +17,13 @@ class SNMPService(SystemServiceService):
         Bool('v3'),
         Str('community', validators=[Match(r'^[-_.a-zA-Z0-9\s]*$')],
             default='public'),
-        Str('v3_username'),
+        Str('v3_username', max_length=20),
         Str('v3_authtype', enum=['', 'MD5', 'SHA']),
         Str('v3_password'),
         Str('v3_privproto', enum=[None, 'AES', 'DES'], null=True),
         Str('v3_privpassphrase'),
         Int('loglevel', validators=[Range(min=0, max=7)]),
-        Str('options'),
+        Str('options', max_length=None),
         Bool('zilstat'),
         update=True
     ))
