@@ -10,7 +10,7 @@ class LLDPService(SystemServiceService):
     @accepts(Dict(
         'lldp_update',
         Bool('intdesc'),
-        Str('country'),
+        Str('country', max_length=2),
         Str('location'),
         update=True
     ))

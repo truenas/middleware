@@ -40,7 +40,7 @@ class AFPService(SystemServiceService):
         List('bindip', items=[Str('ip', validators=[IpAddress()])]),
         Int('connections_limit', validators=[Range(min=1, max=65535)]),
         Dir('dbpath'),
-        Str('global_aux'),
+        Str('global_aux', max_length=None),
         Str('map_acls', enum=['RIGHTS', 'MODE', 'NONE']),
         Str('chmod_request', enum=['PRESERVE', 'SIMPLE', 'IGNORE']),
         update=True
@@ -109,7 +109,7 @@ class SharingAFPService(CRUDService):
         UnixPerm('umask', default='000'),
         List('hostsallow', items=[], default=[]),
         List('hostsdeny', items=[], default=[]),
-        Str('auxparams'),
+        Str('auxparams', max_length=None),
         Bool('enabled', default=True),
         register=True
     ))

@@ -51,7 +51,7 @@ class RsyncdService(SystemServiceService):
     @accepts(Dict(
         'rsyncd_update',
         Int('port', validators=[Range(min=1, max=65535)]),
-        Str('auxiliary'),
+        Str('auxiliary', max_length=None),
         update=True
     ))
     async def do_update(self, data):
@@ -120,7 +120,7 @@ class RsyncModService(CRUDService):
         Str('group', default='nobody'),
         List('hostsallow', items=[Str('hostsallow')], default=[]),
         List('hostsdeny', items=[Str('hostdeny')], default=[]),
-        Str('auxiliary'),
+        Str('auxiliary', max_length=None),
         register=True,
     ))
     async def do_create(self, data):
