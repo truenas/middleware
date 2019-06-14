@@ -406,21 +406,21 @@ class AlertService(Service):
 
                             msg = "\n".join(msg)
 
-                            try:
-                                await self.middleware.call("support.new_ticket", {
-                                    "title": "Automatic alert (%s)" % serial,
-                                    "body": msg,
-                                    "attach_debug": False,
-                                    "category": "Hardware",
-                                    "criticality": "Loss of Functionality",
-                                    "environment": "Production",
-                                    "name": "Automatic Alert",
-                                    "email": "auto-support@ixsystems.com",
-                                    "phone": "-",
-                                })
-                            except Exception as e:
+                            job = await self.middleware.call("support.new_ticket", {
+                                "title": "Automatic alert (%s)" % serial,
+                                "body": msg,
+                                "attach_debug": False,
+                                "category": "Hardware",
+                                "criticality": "Loss of Functionality",
+                                "environment": "Production",
+                                "name": "Automatic Alert",
+                                "email": "auto-support@ixsystems.com",
+                                "phone": "-",
+                            })
+                            await job.wait()
+                            if job.error:
                                 await self.middleware.call("alert.oneshot_create", "AutomaticAlertFailed",
-                                                           {"serial": serial, "alert": msg, "error": str(e)})
+                                                           {"serial": serial, "alert": msg, "error": str(job.error)})
 
     def __uuid(self):
         return str(uuid.uuid4())
