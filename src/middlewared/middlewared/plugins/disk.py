@@ -1394,15 +1394,15 @@ class DiskService(CRUDService):
                 part_a, part_b = part_ab
 
                 if not dumpdev:
-                    dumpdev = await dempdev_configure(part_a)
+                    dumpdev = await dumpdev_configure(part_a)
+                name = new_swap_name()
+                if name is None:
+                    # Which means maximum has been reached and we can stop
+                    break
                 try:
-                    name = new_swap_name()
-                    if name is None:
-                        # Which means maximum has been reached and we can stop
-                        break
                     await run('gmirror', 'create', name, part_a, part_b)
                 except subprocess.CalledProcessError as e:
-                    self.logger.warn('Failed to create gmirror %s: %s', name, e.stderr.decode())
+                    self.logger.warning('Failed to create gmirror %s: %s', name, e.stderr.decode())
                     continue
                 swap_devices.append(f'mirror/{name}')
                 # Add remaining partitions to unused list
@@ -1412,13 +1412,22 @@ class DiskService(CRUDService):
         # partition as a swap device
         if not swap_devices and unused_partitions:
             if not dumpdev:
-                dumpdev = await dempdev_configure(unused_partitions[0])
+                dumpdev = await dumpdev_configure(unused_partitions[0])
             swap_devices.append(unused_partitions[0])
 
         for name in swap_devices:
             if not os.path.exists(f'/dev/{name}.eli'):
-                await run('geli', 'onetime', name)
-            await run('swapon', f'/dev/{name}.eli', check=False)
+                try:
+                    await run('geli', 'onetime', name)
+                except subprocess.CalledProcessError as e:
+                    self.logger.warning('Failed to encrypt swap partition %s: %s', name, e.stderr.decode())
+                    continue
+
+            try:
+                await run('swapon', f'/dev/{name}.eli')
+            except subprocess.CalledProcessError as e:
+                self.logger.warning('Failed to activate swap partition %s: %s', name, e.stderr.decode())
+                continue
 
         return swap_devices
 
@@ -1756,7 +1765,7 @@ def new_swap_name():
             return name
 
 
-async def dempdev_configure(name):
+async def dumpdev_configure(name):
     # Configure dumpdev on first swap device
     if not os.path.exists('/dev/dumpdev'):
         try:
