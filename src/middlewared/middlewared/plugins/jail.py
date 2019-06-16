@@ -1,10 +1,6 @@
 import asyncio
 import os
 import subprocess as su
-
-import iocage_lib.iocage as ioc
-import iocage_lib.ioc_exceptions as ioc_exceptions
-
 import libzfs
 import requests
 import itertools
@@ -13,19 +9,23 @@ import json
 import sqlite3
 import errno
 
+import iocage_lib.iocage as ioc
+import iocage_lib.ioc_exceptions as ioc_exceptions
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
 from iocage_lib.ioc_image import IOCImage
 from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage_lib.ioc_list import IOCList
+from iocage_lib.ioc_plugin import IOCPlugin
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import CRUDService, job, private, filterable
+from middlewared.service import CRUDService, job, private, filterable, periodic
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import IpInUse, MACAddr
+
 from collections import deque, Iterable
 
 
@@ -630,6 +630,39 @@ class JailService(CRUDService):
             resource_list = iocage.list(resource)
 
         return resource_list
+
+    @private
+    @job(lock='retrieve_plugin_versions')
+    def retrieve_plugin_versions(self, job):
+        branch = self.get_version()
+        ioc_plugin = IOCPlugin(branch=branch)
+        if self.get_activated_pool():
+            return ioc_plugin.fetch_plugin_versions()
+        else:
+            # iocage hasn't been activated yet, we should use requests to retrieve plugin json files
+            session = requests.Session()
+            url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/{branch}/{file_name}'
+            try:
+                index = session.get(url.format(branch=branch, file_name='INDEX'), timeout=20)
+                index.raise_for_status()
+            except Exception:
+                return {}
+
+            plugins_index_data = {}
+            index = index.json()
+            for plugin in index:
+                try:
+                    plugin_data = session.get(url.format(branch=branch, file_name=f'{plugin}.json'), timeout=10)
+                    plugin_data.raise_for_status()
+                except Exception:
+                    pass
+                else:
+                    plugins_index_data[plugin] = {
+                        'primary_pkg': index[plugin].get('primary_pkg'),
+                        **(plugin_data.json())
+                    }
+
+            return ioc_plugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
 
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
     def rc_action(self, action):
