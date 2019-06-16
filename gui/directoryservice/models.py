@@ -1099,6 +1099,15 @@ class LDAP(DirectoryServiceBase):
         null=True,
         limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
     )
+    ldap_disable_freenas_cache = models.BooleanField(
+        verbose_name=_("Disable LDAP user/group cache"),
+        help_text=_(
+            "Set to disable caching LDAP users and groups in large LDAP environments. "
+            "When caching is disabled, LDAP users and groups do not appear in dropdown "
+            "menus, but are still accepted when manually entered."
+        ),
+        default=False
+    )
     ldap_timeout = models.IntegerField(
         verbose_name=_("LDAP timeout"),
         help_text=_("Timeout for LDAP related commands."),

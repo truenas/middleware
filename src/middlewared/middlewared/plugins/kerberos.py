@@ -87,22 +87,22 @@ class KerberosService(ConfigService):
             if ldap['kerberos_principal']:
                 ldap_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
                 if ldap_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm {ldap['kerberos_realm']} with keytab failed: {ad_kinit.stderr.decode()}")
+                    raise CallError(f"kinit for realm {ldap['kerberos_realm']} with keytab failed: {ldap_kinit.stderr.decode()}")
             else:
                 krb_realm = await self.middleware.call(
                     'kerberos.realm.query',
-                    [('id', '=', ldap['krb_realm'])],
+                    [('id', '=', ldap['kerberos_realm'])],
                     {'get': True}
                 )
-                bind_cn = (ldap['binddn'].split(','))[0].strip("cn=")
-                principal = f'{bind_cn}@{krb_realm["realm"]}'
-                ad_kinit = await Popen(
+                bind_cn = (ldap['binddn'].split(','))[0].split("=")
+                principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
+                ldap_kinit = await Popen(
                     ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
                 )
-                output = await ad_kinit.communicate(input=ldap['bindpw'].encode())
-                if ad_kinit.returncode != 0:
-                    raise CallError(f"kinit for realm{krb_realm['realm']} with password failed: {output[1].decode()}")
+                output = await ldap_kinit.communicate(input=ldap['bindpw'].encode())
+                if ldap_kinit.returncode != 0:
+                    raise CallError(f"kinit for realm {krb_realm['realm']} with password failed: {output[1].decode()}")
 
     @private
     async def _get_cached_klist(self):
@@ -425,6 +425,7 @@ class KerberosKeytabService(CRUDService):
             raise verrors
 
         data = await self.kerberos_keytab_compress(data)
+        self.logger.debug(f'got here: {data}')
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -459,7 +460,7 @@ class KerberosKeytabService(CRUDService):
         if verrors:
             raise verrors
 
-        data = await self.kerberos_keytab_compress(data)
+        new = await self.kerberos_keytab_compress(data)
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
@@ -474,12 +475,43 @@ class KerberosKeytabService(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
-        Delete kerberos keytab by id.
+        Delete kerberos keytab by id, and force regeneration of
+        system keytab.
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+        if os.path.exists(keytab['SYSTEM'].value):
+            os.remove(keytab['SYSTEM'].value)
         await self.middleware.call('etc.generate', 'kerberos')
+        await self._cleanup_kerberos_principals()
         await self.middleware.call('kerberos.stop')
-        await self.middleware.call('kerberos.start')
+        try:
+            await self.middleware.call('kerberos.start')
+        except Exception as e:
+            self.logger.debug(
+                'Failed to start kerberos service after deleting keytab entry: %s' % e
+            )
+
+    @private
+    async def _cleanup_kerberos_principals(self):
+        principal_choices = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
+        ad = await self.middleware.call('activedirectory.config')
+        ldap = await self.middleware.call('ldap.config')
+        if ad['kerberos_principal'] and ad['kerberos_principal'] not in principal_choices:
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.activedirectory',
+                ad['id'],
+                {'kerberos_principal': ''},
+                {'prefix': 'ad_'}
+            )
+        if ldap['kerberos_principal'] and ldap['kerberos_principal'] not in principal_choices:
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.ldap',
+                ldap['id'],
+                {'kerberos_principal': ''},
+                {'prefix': 'ldap_'}
+            )
 
     @private
     async def _validate(self, data):

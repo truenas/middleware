@@ -1505,6 +1505,7 @@ class PoolService(CRUDService):
             'nfs': 'NFS',
             'webdav': 'WebDAV',
             'jails': 'Jails/Plugins',
+            'vms': 'Virtual Machines',
         }
         return svcs
 
@@ -1610,6 +1611,13 @@ class PoolService(CRUDService):
         ])
         if 'jails' in options['services_restart']:
             await self.middleware.call('core.bulk', 'jail.rc_action', [['RESTART']])
+        if 'vms' in options['services_restart']:
+            vms = (await self.middleware.call(
+                'vm.query', [('autostart', '=', True)])
+            )
+            for vm in vms:
+                await self.middleware.call('vm.stop', vm['id'])
+                await self.middleware.call('vm.start', vm['id'])
 
         await self.middleware.call_hook('pool.post_unlock', pool=pool)
 
@@ -2508,7 +2516,7 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
-        Str('aclmode', default='PASSTHROUGH', enum=['PASSTHROUGH', 'RESTRICTED']),
+        Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         register=True,
     ))
@@ -2727,7 +2735,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
 
             for i in (
-                'aclmode', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize', 'share_type',
+                'aclmode', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')

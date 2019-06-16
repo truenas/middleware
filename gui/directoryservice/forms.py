@@ -310,6 +310,7 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
 
     advanced_fields = [
         'ldap_anonbind',
+        'ldap_disable_freenas_cache',
         'ldap_usersuffix',
         'ldap_groupsuffix',
         'ldap_passwordsuffix',
