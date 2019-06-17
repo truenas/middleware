@@ -399,6 +399,16 @@ class CoreService(Service):
         ], filters, options)
         return jobs
 
+    @accepts(Int('id'))
+    @job()
+    def job_wait(self, job, id):
+        target_job = self.middleware.jobs.get(id)
+        target_job.wait_sync()
+        if target_job.error:
+            raise CallError(target_job.error)
+        else:
+            return target_job.result
+
     @accepts(Int('id'), Dict(
         'job-update',
         Dict('progress', additional_attrs=True),
