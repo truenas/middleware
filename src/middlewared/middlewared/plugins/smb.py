@@ -1177,7 +1177,6 @@ class ShareSec(Service):
         `ae_type` can be ALLOWED or DENIED.
         """
         ae_list = []
-        cleaned_acl = []
         data['share_name'] = data['share_name'].upper()
         for entry in data['share_acl']:
             ae_list.append(await self._ae_to_string(entry))
