@@ -1152,7 +1152,7 @@ class JailService(CRUDService):
 
         try:
             base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
-            primary_pkg = index_json[base_plugin]['primary_pkg']
+            primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
             version = ['N/A', 'N/A']
 
             # Since these are plugins, we don't want to spin them up just to
@@ -1162,6 +1162,11 @@ class JailService(CRUDService):
                 primary_pkg)
 
             for row in db_rows:
+                row = list(row)
+                if '/' not in primary_pkg:
+                    row[1] = row[1].split('/', 1)[-1]
+                    row[2] = row[2].split('/', 1)[-1]
+
                 if primary_pkg == row[1] or primary_pkg == row[2]:
                     version = [row[3], '1']
                     break
