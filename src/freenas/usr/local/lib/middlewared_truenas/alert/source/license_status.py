@@ -9,10 +9,6 @@ from datetime import date, timedelta
 import subprocess
 import textwrap
 
-from licenselib.license import ContractType
-
-from freenasUI.support.utils import get_license
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
@@ -41,7 +37,7 @@ class LicenseHasExpiredAlertClass(AlertClass):
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
     def check_sync(self):
-        license, errmsg = get_license()
+        license = self.middleware.call_sync('system.info')['license']
         alerts = []
         if license is None:
             return Alert(LicenseAlertClass, "Your TrueNAS has no license, contact support.")
@@ -52,7 +48,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         serial = proc.communicate()[0].split('\n', 1)[0].strip()
 
-        if license.system_serial != serial and license.system_serial_ha != serial:
+        if license['system_serial'] != serial and license['system_serial_ha'] != serial:
             alerts.append(Alert(LicenseAlertClass, 'System serial does not match license.'))
 
         standby_info = None
@@ -76,35 +72,35 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             alerts.append(Alert(LicenseAlertClass, 'You are not running TrueNAS on supported hardware.'))
         else:
             if hardware[0] == 'M':
-                if not license.model.startswith('M'):
+                if not license['model'].startswith('M'):
                     alerts.append(Alert(
                         LicenseAlertClass,
                         (
                             'Your license was issued for model "%s" but it was '
                             ' detected as M series.'
-                        ) % license.model
+                        ) % license['model']
                     ))
             elif hardware[0] == 'X':
-                if not license.model.startswith('X'):
+                if not license['model'].startswith('X'):
                     alerts.append(Alert(
                         LicenseAlertClass,
                         (
                             'Your license was issued for model "%s" but it was '
                             ' detected as X series.'
-                        ) % license.model
+                        ) % license['model']
                     ))
             elif hardware[0] == 'Z':
-                if not license.model.startswith('Z'):
+                if not license['model'].startswith('Z'):
                     alerts.append(Alert(
                         LicenseAlertClass,
                         (
                             'Your license was issued for model "%s" but it was '
                             ' detected as Z series.'
-                        ) % license.model
+                        ) % license['model']
                     ))
             else:
                 if hardware[0] in ('M40', 'M50', 'X10', 'X20', 'Z20', 'Z30', 'Z35', 'Z50'):
-                    if hardware[0] != license.model:
+                    if hardware[0] != license['model']:
                         alerts.append(Alert(
                             LicenseAlertClass,
                             (
@@ -112,7 +108,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                                 'but it was detected as "%(model)s".'
                             ) % {
                                 'model': hardware[0],
-                                'license': license.model,
+                                'license': license['model'],
                             }
                         ))
 
@@ -128,8 +124,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
             enc_nums[enc['model']] += 1
 
-        if license.addhw:
-            for addhw in license.addhw:
+        if license['addhw']:
+            for addhw in license['addhw']:
                 # E16 Expansion shelf
                 if addhw[1] == 1:
                     if enc_nums['E16'] != addhw[0]:
@@ -198,12 +194,12 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             ))
 
         for days in [0, 14, 30, 90, 180]:
-            if license.contract_end <= date.today() + timedelta(days=days):
-                serial_numbers = ", ".join(list(filter(None, [license.system_serial, license.system_serial_ha])))
-                contract_start = license.contract_start.strftime("%B %-d, %Y")
-                contract_expiration = license.contract_end.strftime("%B %-d, %Y")
-                contract_type = ContractType(license.contract_type).name
-                customer_name = license.customer_name
+            if license['contract_end'] <= date.today() + timedelta(days=days):
+                serial_numbers = ", ".join(list(filter(None, [license['system_serial'], license['system_serial_ha']])))
+                contract_start = license['contract_start'].strftime("%B %-d, %Y")
+                contract_expiration = license['contract_end'].strftime("%B %-d, %Y")
+                contract_type = license['contract_type'].lower()
+                customer_name = license['customer_name']
 
                 if days == 0:
                     alert_klass = LicenseHasExpiredAlertClass
