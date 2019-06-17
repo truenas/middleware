@@ -1905,7 +1905,8 @@ class ManualSnapshotForm(Form):
         required=False,
         label=_('Recursive snapshot'))
 
-    ms_name = forms.CharField(label=_('Snapshot Name'))
+    ms_name = forms.CharField(label=_('Snapshot Name'), required=False)
+    ms_naming_schema = forms.ChoiceField(label=_('Snapshot Naming Schema'), required=False)
 
     vmwaresync = forms.BooleanField(
         required=False,
@@ -1919,12 +1920,21 @@ class ManualSnapshotForm(Form):
         self.fields['ms_name'].initial = datetime.today().strftime(
             'manual-%Y%m%d')
         with client as c:
+            self.fields['ms_naming_schema'].choices = [
+                ('', '---')
+            ] + [
+                (v, v)
+                for v in c.call('replication.list_naming_schemas')
+            ]
+
             if not c.call("vmware.dataset_has_vms", self._fs, True):
                 self.fields.pop('vmwaresync')
 
     def clean_ms_name(self):
         regex = re.compile('^[-a-zA-Z0-9_. ]+$')
         name = self.cleaned_data.get('ms_name')
+        if not name:
+            return name
         if regex.match(name) is None:
             raise forms.ValidationError(
                 _("Only [-a-zA-Z0-9_. ] permitted as snapshot name")
@@ -1937,14 +1947,28 @@ class ManualSnapshotForm(Form):
                 )
         return name
 
+    def clean(self):
+        cdata = self.cleaned_data
+
+        if cdata.get('ms_name') and cdata.get('ms_naming_schema'):
+            self._errors.setdefault('ms_naming_schema', self.error_class([]))
+            self._errors['ms_naming_schema'].append('You can\'t specify name and naming schema at the same time')
+        if not cdata.get('ms_name') and not cdata.get('ms_naming_schema'):
+            self._errors.setdefault('ms_name', self.error_class([]))
+            self._errors['ms_name'].append('You must specify either name or naming schema')
+
     def commit(self, fs):
         with client as c:
-            c.call("zfs.snapshot.create", {
+            data = {
                 "dataset": fs,
-                "name": str(self.cleaned_data['ms_name']),
                 "recursive": self.cleaned_data['ms_recursively'],
                 "vmware_sync": self.cleaned_data.get('vmwaresync', False),
-            })
+            }
+            if self.cleaned_data.get('ms_name'):
+                data['name'] = self.cleaned_data['ms_name']
+            if self.cleaned_data.get('ms_naming_schema'):
+                data['naming_schema'] = self.cleaned_data['ms_naming_schema']
+            c.call("zfs.snapshot.create", data)
 
 
 class CloneSnapshotForm(Form):

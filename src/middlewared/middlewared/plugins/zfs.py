@@ -1,3 +1,4 @@
+from datetime import datetime
 import errno
 import subprocess
 import threading
@@ -13,6 +14,7 @@ from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
 )
 from middlewared.utils import filter_list, filter_getattrs, start_daemon_thread
+from middlewared.validators import ReplicationSnapshotNamingSchema
 
 SCAN_THREADS = {}
 
@@ -677,11 +679,12 @@ class ZFSSnapshot(CRUDService):
 
     @accepts(Dict(
         'snapshot_create',
-        Str('dataset'),
-        Str('name'),
-        Bool('recursive'),
+        Str('dataset', required=True, empty=False),
+        Str('name', empty=False),
+        Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
+        Bool('recursive', default=False),
         Bool('vmware_sync', default=False),
-        Dict('properties', additional_attrs=True)
+        Dict('properties', additional_attrs=True),
     ))
     def do_create(self, data):
         """
@@ -691,13 +694,23 @@ class ZFSSnapshot(CRUDService):
             bool: True if succeed otherwise False.
         """
 
-        dataset = data.get('dataset', '')
-        name = data.get('name', '')
-        recursive = data.get('recursive', False)
-        properties = data.get('properties', None)
+        dataset = data['dataset']
+        recursive = data['recursive']
+        properties = data['properties']
 
-        if not dataset or not name:
-            return False
+        verrors = ValidationErrors()
+
+        if 'name' in data and 'naming_schema' in data:
+            verrors.add('snapshot_create.naming_schema', 'You can\'t specify name and naming schema at the same time')
+        elif 'name' in data:
+            name = data['name']
+        elif 'naming_schema' in data:
+            name = datetime.now().strftime(data['naming_schema'])
+        else:
+            verrors.add('snapshot_create.naming_schema', 'You must specify either name or naming schema')
+
+        if verrors:
+            raise verrors
 
         vmware_context = None
         if data['vmware_sync']:

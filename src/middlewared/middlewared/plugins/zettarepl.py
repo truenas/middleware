@@ -24,6 +24,8 @@ from zettarepl.observer import (
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
+from zettarepl.snapshot.list import list_snapshots
+from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
 from zettarepl.utils.logging import (
@@ -31,9 +33,9 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import Zettarepl
 
-from middlewared.client import Client
+from middlewared.client import Client, ejson
 from middlewared.logger import setup_logging
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, periodic, Service
 from middlewared.utils import start_daemon_thread
 from middlewared.worker import watch_parent
 
@@ -214,6 +216,7 @@ class ZettareplService(Service):
         self.state = {}
         self.definition_errors = {}
         self.last_snapshot = {}
+        self.serializable_state = defaultdict(dict)
         self.replication_jobs_channels = defaultdict(list)
         self.queue = None
         self.process = None
@@ -329,7 +332,8 @@ class ZettareplService(Service):
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
-            datasets = list_datasets(await self._get_zettarepl_shell(transport, ssh_credentials))
+            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
+            datasets = await self.middleware.run_in_thread(list_datasets, shell)
         except Exception as e:
             raise CallError(repr(e))
 
@@ -341,9 +345,24 @@ class ZettareplService(Service):
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
         try:
-            return create_dataset(await self._get_zettarepl_shell(transport, ssh_credentials), dataset)
+            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
+            return await self.middleware.run_in_thread(create_dataset, shell, dataset)
         except Exception as e:
             raise CallError(repr(e))
+
+    async def count_eligible_manual_snapshots(self, dataset, naming_schemas, transport, ssh_credentials=None):
+        try:
+            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
+            snapshots = await self.middleware.run_in_thread(list_snapshots, shell, dataset, False)
+        except Exception as e:
+            raise CallError(repr(e))
+
+        parsed = parse_snapshots_names_with_multiple_schemas([s.name for s in snapshots], naming_schemas)
+
+        return {
+            "total": len(snapshots),
+            "eligible": len(parsed),
+        }
 
     async def get_definition(self):
         timezone = (await self.middleware.call("system.general.config"))["timezone"]
@@ -588,26 +607,33 @@ class ZettareplService(Service):
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskSnapshotSuccess):
-                    self.last_snapshot[f"replication_{message.task_id}"] = f"{message.dataset}@{message.snapshot}"
+                    last_snapshot = f"{message.dataset}@{message.snapshot}"
+                    self.last_snapshot[f"replication_{message.task_id}"] = last_snapshot
+                    self.serializable_state[int(message.task_id.split("_")[1])]["last_snapshot"] = last_snapshot
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskSuccess):
-                    self.state[f"replication_{message.task_id}"] = {
+                    state = {
                         "state": "FINISHED",
                         "datetime": datetime.utcnow(),
                     }
+                    self.state[f"replication_{message.task_id}"] = state
+                    self.serializable_state[int(message.task_id.split("_")[1])]["state"] = state
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskError):
-                    self.state[f"replication_{message.task_id}"] = {
+                    state = {
                         "state": "ERROR",
                         "datetime": datetime.utcnow(),
                         "error": message.error,
                     }
+
+                    self.state[f"replication_{message.task_id}"] = state
+                    self.serializable_state[int(message.task_id.split("_")[1])]["state"] = state
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
@@ -616,10 +642,27 @@ class ZettareplService(Service):
                 self.logger.warning("Unhandled exception in observer_queue_reader", exc_info=True)
 
     async def terminate(self):
+        await self.flush_state()
         await self.middleware.run_in_thread(self.stop)
+
+    async def load_state(self):
+        for replication in await self.middleware.call("datastore.query", "storage.replication"):
+            state = ejson.loads(replication["repl_state"])
+            if "last_snapshot" in state:
+                self.last_snapshot[f"replication_task_{replication['id']}"] = state["last_snapshot"]
+            if "state" in state:
+                self.state[f"replication_task_{replication['id']}"] = state
+
+    @periodic(3600)
+    async def flush_state(self):
+        for task_id, state in self.serializable_state.items():
+            await self.middleware.call("datastore.update", "storage.replication", task_id,
+                                       {"repl_state": ejson.dumps(state)})
 
 
 async def setup(middleware):
+    await middleware.call("zettarepl.load_state")
+
     try:
         await middleware.call("zettarepl.start")
     except Exception:

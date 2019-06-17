@@ -630,6 +630,49 @@ class ReplicationService(CRUDService):
 
         return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 
+    @accepts()
+    async def list_naming_schemas(self):
+        """
+        List all naming schemas used in periodic snapshot and replication tasks.
+        """
+        naming_schemas = []
+        for snapshottask in await self.middleware.call("pool.snapshottask.query"):
+            naming_schemas.append(snapshottask["naming_schema"])
+        for replication in await self.middleware.call("replication.query"):
+            naming_schemas.extend(replication["naming_schema"])
+            naming_schemas.extend(replication["also_include_naming_schema"])
+        return sorted(set(naming_schemas))
+
+    @accepts(
+        Path("dataset", empty=False),
+        List("naming_schema", empty=False, items=[
+            Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])
+        ]),
+        Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+        Int("ssh_credentials", null=True, default=None),
+    )
+    async def count_eligible_manual_snapshots(self, dataset, naming_schema, transport, ssh_credentials):
+        """
+        Count how many existing snapshots of `dataset` match `naming_schema`.
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.count_eligible_manual_snapshots",
+                "params": [
+                    "repl/work",
+                    ["auto-%Y-%m-%d_%H-%M"],
+                    "SSH",
+                    4
+                ]
+            }
+        """
+        return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", dataset, naming_schema,
+                                          transport, ssh_credentials)
+
     # Legacy pair support
     @private
     @accepts(Dict(

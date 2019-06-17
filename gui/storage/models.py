@@ -795,6 +795,10 @@ class Replication(Model):
             'Disabling will not stop any replications which are in progress.'
         ),
     )
+    repl_state = models.TextField(
+        default="{}",
+        editable=False,
+    )
 
     class Meta:
         verbose_name = _("Replication Task")
