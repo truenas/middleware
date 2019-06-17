@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
@@ -1095,7 +1094,7 @@ class ShareSec(Service):
     async def getacl(self, share_name, options):
         """
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
-        ACLs which can be viewed by calling `filesystem,.getacl`. `ae_who_name` will appear
+        ACLs which can be viewed by calling `filesystem.getacl`. `ae_who_name` will appear
         as `None` if the SMB service is stopped or if winbind is unable  to resolve the SID
         to a name.
 
@@ -1264,9 +1263,7 @@ class ShareSec(Service):
             rc_info = (list(filter(lambda x: s['name'] == x['share_name'], rc)))[0]
             rc_acl = ' '.join([(await self._ae_to_string(i)) for i in rc_info['share_acl']])
             if rc_acl != s['share_acl']:
-                self.logger.debug(
-                    'updating stored ACL on %s to %s' % (s['name'], rc_acl)
-                )
+                self.logger.debug('updating stored ACL on %s to %s', s['name'], rc_acl)
                 await self.middleware.call(
                     'datastore.update',
                     'sharing.cifs_share',
