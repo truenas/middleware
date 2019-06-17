@@ -4,6 +4,7 @@ import subprocess as su
 import libzfs
 import requests
 import itertools
+import tempfile
 import pathlib
 import json
 import sqlite3
@@ -631,38 +632,33 @@ class JailService(CRUDService):
 
         return resource_list
 
+    @periodic(interval=86400)
     @private
+    @accepts(Str('branch', null=True, default=None))
     @job(lock='retrieve_plugin_versions')
-    def retrieve_plugin_versions(self, job):
-        branch = self.get_version()
-        ioc_plugin = IOCPlugin(branch=branch)
-        if self.get_activated_pool():
-            return ioc_plugin.fetch_plugin_versions()
+    def retrieve_plugin_versions(self, job, branch=None):
+        branch = branch or self.get_version()
+        try:
+            pool = self.get_activated_pool()
+        except CallError:
+            pool = None
+
+        if pool:
+            plugins = IOCPlugin(branch=branch).fetch_plugin_versions()
         else:
-            # iocage hasn't been activated yet, we should use requests to retrieve plugin json files
-            session = requests.Session()
-            url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/{branch}/{file_name}'
-            try:
-                index = session.get(url.format(branch=branch, file_name='INDEX'), timeout=20)
-                index.raise_for_status()
-            except Exception:
-                return {}
-
-            plugins_index_data = {}
-            index = index.json()
-            for plugin in index:
+            with tempfile.TemporaryDirectory() as td:
+                github_repo = 'https://github.com/freenas/iocage-ix-plugins.git'
                 try:
-                    plugin_data = session.get(url.format(branch=branch, file_name=f'{plugin}.json'), timeout=10)
-                    plugin_data.raise_for_status()
+                    IOCPlugin._clone_repo(branch, github_repo, td, depth=1)
                 except Exception:
-                    pass
+                    self.middleware.logger.error('Failed to clone iocage-ix-plugins repository.', exc_info=True)
+                    return {}
                 else:
-                    plugins_index_data[plugin] = {
-                        'primary_pkg': index[plugin].get('primary_pkg'),
-                        **(plugin_data.json())
-                    }
+                    plugins_index_data = IOCPlugin.retrieve_plugin_index_data(td)
+                    plugins = IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
 
-            return ioc_plugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
+        self.middleware.call_sync('cache.put', 'iocage_plugin_versions', plugins)
+        return plugins
 
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
     def rc_action(self, action):
