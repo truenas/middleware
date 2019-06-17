@@ -1083,65 +1083,6 @@ class JailService(CRUDService):
         return True
 
     @private
-    def get_plugin_version(self, pkg):
-        """
-        Fetches a list of pkg's from the http://pkg.cdn.trueos.org/iocage/
-        repo and returns a list with the pkg version and plugin revision
-        """
-        try:
-            pkg_dict = self.middleware.call_sync('cache.get',
-                                                 'iocage_rpkgdict')
-            r_plugins = self.middleware.call_sync('cache.get',
-                                                  'iocage_rplugins')
-        except KeyError:
-            branch = self.get_version()
-            r_pkgs = requests.get(
-                f'http://pkg.cdn.trueos.org/iocage/{branch}/All')
-            r_pkgs.raise_for_status()
-            pkg_dict = {}
-            for i in r_pkgs.iter_lines():
-                i = i.decode().split('"')
-
-                try:
-                    pkg, version = i[1].rsplit('-', 1)
-                    pkg_dict[pkg] = version
-                except (ValueError, IndexError):
-                    continue  # It's not a pkg
-            self.middleware.call_sync(
-                'cache.put', 'iocage_rpkgdict', pkg_dict,
-                86400
-            )
-
-            r_plugins = requests.get(
-                'https://raw.githubusercontent.com/freenas/'
-                f'iocage-ix-plugins/{branch}/INDEX'
-            )
-            r_plugins.raise_for_status()
-
-            r_plugins = r_plugins.json()
-            self.middleware.call_sync(
-                'cache.put', 'iocage_rplugins', r_plugins,
-                86400
-            )
-
-        if pkg == 'bru-server':
-            return ['N/A', '1']
-        elif pkg == 'sickrage':
-            return ['Git branch - master', '1']
-        elif pkg == 'asigra':
-            return ['14.1-20190301', '1']
-
-        try:
-            primary_pkg = r_plugins[pkg]['primary_pkg'].split('/', 1)[-1]
-
-            version = pkg_dict[primary_pkg]
-            version = [version.rsplit('%2', 1)[0].replace('.txz', ''), '1']
-        except KeyError:
-            version = ['N/A', 'N/A']
-
-        return version
-
-    @private
     def get_local_plugin_version(self, plugin, index_json, iocroot):
         """
         Checks the primary_pkg key in the INDEX with the pkg version
