@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
@@ -10,6 +11,7 @@ from middlewared.utils.path import is_child
 import asyncio
 import codecs
 import enum
+import errno
 import grp
 import os
 import re
@@ -43,8 +45,10 @@ class SMBHAMODE(enum.IntEnum):
 class SMBCmd(enum.Enum):
     NET = '/usr/local/bin/net'
     PDBEDIT = '/usr/local/bin/pdbedit'
+    SHARESEC = '/usr/local/bin/sharesec'
     SMBCONTROL = '/usr/local/bin/smbcontrol'
     SMBPASSWD = '/usr/local/bin/smbpasswd'
+    WBINFO = '/usr/local/bin/wbinfo'
 
 
 class SMBService(SystemServiceService):
@@ -730,7 +734,7 @@ class SharingSMBService(CRUDService):
         """
         share = await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self.middleware.call('notifier.sharesec_delete', share['name'])
+        await self.middleware.call('smb.sharesec._delete', share['name'])
         await self._service_change('cifs', 'reload')
         return result
 
@@ -1002,7 +1006,6 @@ class ShareSec(Service):
     class Config:
         namespace = 'smb.sharesec'
 
-
     @private
     async def _parse_share_sd(self, sd, options=None):
         """
@@ -1030,7 +1033,7 @@ class ShareSec(Service):
 
             acl_entry.update(m.groupdict())
             if (options.get('resolve_sids', True)) is True:
-                wb = await run(['/usr/local/bin/wbinfo', '--sid-to-name', acl_entry['ae_who_sid']], check=False)
+                wb = await run([SMBCmd.WBINFO.value, '--sid-to-name', acl_entry['ae_who_sid']], check=False)
                 if wb.returncode == 0:
                     acl_entry['ae_who_name'] = wb.stdout.decode()[:-3]
                 else:
@@ -1043,16 +1046,38 @@ class ShareSec(Service):
         return parsed_share_sd
 
     @private
+    async def _sharesec(self, **kwargs):
+        """
+        wrapper for sharesec(1). This manipulates share permissions on SMB file shares.
+        The permissions are stored in share_info.tdb, and apply to the share as a whole.
+        This is in contrast with filesystem permissions, which define the permissions for a file
+        or directory, and in the latter case may also define permissions inheritance rules
+        for newly created files in the directory. The SMB Share ACL only affects access through
+        the SMB protocol.
+        """
+        action = kwargs.get('action')
+        share = kwargs.get('share', '')
+        args = kwargs.get('args', '')
+        sharesec = await run([SMBCmd.SHARESEC.value, share, action, args], check=False)
+        if sharesec.returncode != 0:
+            raise CallError(f'sharesec {action} failed with error: {sharesec.stderr.decode()}')
+        return sharesec.stdout.decode()
+
+    @private
+    async def _delete(self, share):
+        """
+        Delete stored SD for share. This should be performed when share is
+        deleted.
+        """
+        await self._sharesec(action='--delete', share=share)
+
+    @private
     async def _view_all(self, options=None):
         """
         Return Security Descriptor for all shares.
         """
         share_sd_list = []
-        sharesec = await run(['/usr/local/bin/sharesec', '--view-all'], check=False)
-        if sharesec.returncode != 0:
-            raise CallError(f'sharesec --view-all failed: {sharesec.stderr.decode()}')
-
-        share_entries = (sharesec.stdout.decode()).split('\n\n')
+        share_entries = (await self._sharesec(action='--view-all')).split('\n\n')
         for share in share_entries:
             parsed_sd = await self.middleware.call('smb.sharesec._parse_share_sd', share, options)
             if parsed_sd:
@@ -1077,11 +1102,8 @@ class ShareSec(Service):
         If the `option` `resolve_sids` is set to `False` then the returned ACL will not
         contain names.
         """
-        sharesec = await run(['/usr/local/bin/sharesec', '--view', share_name], check=False)
-        if sharesec.returncode != 0:
-            raise CallError(f'failed to look up share security descriptor: {sharesec.stderr.decode()}')
-
-        share_sd = f'[{share_name.upper()}]\n{sharesec.stdout.decode()}'
+        sharesec = await self._sharesec(action='--view', share=share_name)
+        share_sd = f'[{share_name.upper()}]\n{sharesec}'
         return await self.middleware.call('smb.sharesec._parse_share_sd', share_sd, options)
 
     @private
@@ -1094,7 +1116,7 @@ class ShareSec(Service):
             raise CallError('ACL Entry must have ae_who_sid or ae_who_name.', errno.EINVAL)
 
         if not ae['ae_who_sid']:
-            wbinfo = await run(['/usr/local/bin/wbinfo', '--name-to-sid', ae['ae_who_name']], check=False)
+            wbinfo = await run([SMBCmd.WBINFO.value, '--name-to-sid', ae['ae_who_name']], check=False)
             if wbinfo.returncode != 0:
                 raise CallError(f'SID lookup for {ae["ae_who_name"]} failed: {wbinfo.stderr.decode()}')
             ae['ae_who_sid'] = (wbinfo.stdout.decode().split())[0]
@@ -1145,7 +1167,7 @@ class ShareSec(Service):
 
         `ae_who_name` who the ACL entry applies to expressed as a name. `ae_who_name` must
         be prefixed with the domain that the user is a member of. Local users will have the
-        netbios name of the SMB server as a prefix. Example `freenas\smbusers`
+        netbios name of the SMB server as a prefix. Example `freenas\\smbusers`
 
         `ae_perm` string representation of the permissions granted to the user or group.
         `FULL` grants read, write, execute, delete, write acl, and change owner.
@@ -1160,10 +1182,7 @@ class ShareSec(Service):
         for entry in data['share_acl']:
             ae_list.append(await self._ae_to_string(entry))
 
-        ssec = await run(['/usr/local/bin/sharesec', data['share_name'], '-R', ','.join(ae_list)], check=False)
-        if ssec.returncode != 0:
-            raise CallError(f"setacl on share [{data['share_name']}] failed: {ssec.stderr.decode()}")
-
+        await self._sharesec(share=data['share_name'], action='--replace', args=','.join(ae_list))
         if not data['options']['db_commit']:
             return
 
@@ -1180,14 +1199,41 @@ class ShareSec(Service):
         shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
         for share in shares:
             if share['share_acl']:
-                converted_acl = [(await self._string_to_ae(i)) for i in share['share_acl'].split()]
-                await self.middleware.call('smb.sharesec.setacl', {
-                    'share_name': share['name'],
-                    'share_acl': converted_acl,
-                    'options': {'db_commit': False},
-                })
+                await self._sharesec(
+                    share=share['name'],
+                    action='--replace',
+                    args=','.join(share['share_acl'].split())
+                )
 
-    @periodic(21600, run_on_start=False)
+    @periodic(3600, run_on_start=False)
+    @private
+    async def check_share_info_tdb(self):
+        """
+        Use cached mtime value for share_info.tdb to determine whether
+        to sync it up with what is stored in the freenas configuration file.
+        Samba will run normally if share_info.tdb does not exist (it will automatically
+        generate entries granting full control to world in this case). In this situation,
+        immediately call _flush_share_info.
+        """
+        old_mtime = 0
+        statedir = await self.middleware.call('smb.getparm', 'state directory', 'global')
+        shareinfo = f'{statedir}/share_info.tdb'
+        if not os.path.exists(shareinfo):
+            if not await self.middleware.call('service.started', 'cifs'):
+                return
+            else:
+                await self._flush_share_info()
+                return
+
+        if await self.middleware.call('cache.has_key', 'SHAREINFO_MTIME'):
+            old_mtime = await self.middleware.call('cache.get', 'SHAREINFO_MTIME')
+
+        if old_mtime == (os.stat(shareinfo)).st_mtime:
+            return
+
+        await self.middleware.call('smb.sharesec.synchronize_acls')
+        await self.middleware.call('cache.put', 'SHAREINFO_MTIME', (os.stat(shareinfo)).st_mtime)
+
     @accepts()
     async def synchronize_acls(self):
         """

@@ -337,24 +337,6 @@ class notifier(metaclass=HookMetaclass):
 
         return ret
 
-    def sharesec_delete(self, share):
-        if not share:
-            return False
-
-        log.debug("sharesec_delete: deleting ACL on %s", share)
-
-        sharesec = "/usr/local/bin/sharesec"
-        delete_cmd = "%s %s -D" % (sharesec, share)
-
-        ret = True
-        try:
-            self._pipeopen(delete_cmd).communicate()
-        except Exception:
-            log.debug("sharesec_delete: %s failed", delete_cmd)
-            ret = False
-
-        return ret
-
     def change_upload_location(self, path):
         vardir = "/var/tmp/firmware"
 
