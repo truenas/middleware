@@ -138,6 +138,11 @@ class CIFS_Share(Model):
         blank=True,
         editable=False,
     )
+    cifs_share_acl = models.TextField(
+        verbose_name=_('SMB Share ACL'),
+        blank=True,
+        editable=False,
+    )
     cifs_auxsmbconf = models.TextField(
         verbose_name=_("Auxiliary Parameters"),
         blank=True,
