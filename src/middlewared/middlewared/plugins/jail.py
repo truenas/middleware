@@ -531,7 +531,8 @@ class JailService(CRUDService):
         Bool('want_cache', default=True),
         Str('branch', default=None)
     )
-    def list_resource(self, resource, remote, want_cache, branch):
+    @job(lock=lambda args: args[0])
+    def list_resource(self, job, resource, remote, want_cache, branch):
         """Returns a JSON list of the supplied resource on the host"""
         self.check_dataset_existence()  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
@@ -550,6 +551,33 @@ class JailService(CRUDService):
 
                 resource_list = iocage.fetch(list=True, plugins=True,
                                              header=False, branch=branch)
+                try:
+                    plugins_versions_data = self.middleware.call_sync('cache.get', 'iocage_plugin_versions')
+                except KeyError:
+                    plugins_versions_data_job = self.middleware.call_sync(
+                        'core.get_jobs',
+                        [['method', '=', 'jail.retrieve_plugin_versions'], ['state', '=', 'RUNNING']]
+                    )
+                    error = None
+                    plugins_versions_data = {}
+                    if plugins_versions_data_job:
+                        try:
+                            plugins_versions_data = self.middleware.call_sync(
+                                'core.job_wait', plugins_versions_data_job[0]['id'], job=True
+                            )
+                        except CallError as e:
+                            error = str(e)
+                    else:
+                        try:
+                            plugins_versions_data = self.middleware.call_sync(
+                                'jail.retrieve_plugin_versions', job=True
+                            )
+                        except Exception as e:
+                            error = e
+
+                    if error:
+                        # Let's not make the failure fatal
+                        self.middleware.logger.error(f'Retrieving plugins version failed: {error}')
             else:
                 resource_list = iocage.list("all", plugin=True)
                 pool = IOCJson().json_get_value("pool")
@@ -573,7 +601,8 @@ class JailService(CRUDService):
                     plugin[i] = elem if elem != "-" else None
 
                 if remote:
-                    pv = self.get_plugin_version(plugin[2])
+                    plugin_version = plugins_versions_data.get(plugin[2], {}).get('version', 'N/A')
+                    pv = [plugin_version, '1' if plugin_version != 'N/A' else plugin_version]
                 else:
                     # plugin[1] is the UUID
                     plugin_output = pathlib.Path(
