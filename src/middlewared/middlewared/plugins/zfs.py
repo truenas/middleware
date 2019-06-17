@@ -684,7 +684,7 @@ class ZFSSnapshot(CRUDService):
         Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
         Bool('recursive', default=False),
         Bool('vmware_sync', default=False),
-        Dict('properties', additional_attrs=True, null=True, default=None),
+        Dict('properties', additional_attrs=True),
     ))
     def do_create(self, data):
         """

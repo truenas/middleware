@@ -633,7 +633,7 @@ class ReplicationService(CRUDService):
     @accepts()
     async def list_naming_schemas(self):
         """
-        List all naming schemas used in periodic snapshot and replication tasks
+        List all naming schemas used in periodic snapshot and replication tasks.
         """
         naming_schemas = []
         for snapshottask in await self.middleware.call("pool.snapshottask.query"):
@@ -653,7 +653,7 @@ class ReplicationService(CRUDService):
     )
     async def count_eligible_manual_snapshots(self, dataset, naming_schema, transport, ssh_credentials):
         """
-        Count how many existing snapshots of `dataset` match `naming_schema`
+        Count how many existing snapshots of `dataset` match `naming_schema`.
 
         .. examples(websocket)::
 
