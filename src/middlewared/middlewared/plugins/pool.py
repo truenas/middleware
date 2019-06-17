@@ -1618,7 +1618,9 @@ class PoolService(CRUDService):
             pool_name = pool['name']
             for vm in vms:
                 for device in vm['devices']:
-                    if pool_name in device['attributes'].get('path', ''):
+                    path = device['attributes'].get('path', '')
+                    if f'/dev/zvol/{pool_name}' in path or \
+                            f'/mnt/{pool_name}' in path:
                         await self.middleware.call('vm.stop', vm['id'])
                         await self.middleware.call('vm.start', vm['id'])
 
