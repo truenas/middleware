@@ -156,7 +156,6 @@ class IdmapService(Service):
         ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
         ad_enabled = False if await self.middleware.call('activedirectory.get_state') == 'DISABLED' else True
         new_range = range(data['range_low'], data['range_high'])
-        self.logger.debug(data)
         for i in configured_domains:
             # Do not generate validation error comparing to oneself.
             if i['domain']['id'] == data['domain']['id']:
