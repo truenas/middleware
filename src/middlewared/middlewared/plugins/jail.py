@@ -345,7 +345,9 @@ class JailService(CRUDService):
                         f'space/comma-delimited MAC addresses for {key}.'
                     )
         if options['uuid']:
-            valid = True if re.match(r"^[a-zA-Z0-9\._-]+$", name) else False
+            valid = True if re.match(
+                r"^[a-zA-Z0-9\._-]+$", options['uuid']
+            ) else False
 
             if not valid:
                 verrors.add(
