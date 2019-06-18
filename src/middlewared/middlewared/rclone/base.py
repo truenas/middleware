@@ -8,6 +8,8 @@ class BaseRcloneRemote:
     rclone_type = NotImplemented
 
     credentials_schema = NotImplemented
+    credentials_oauth = False
+    refresh_credentials = False
 
     task_schema = []
 
