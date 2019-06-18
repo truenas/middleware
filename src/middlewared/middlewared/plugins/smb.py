@@ -1067,8 +1067,15 @@ class ShareSec(Service):
         """
         Delete stored SD for share. This should be performed when share is
         deleted.
+        If share_info.tdb lacks an entry for the share, sharesec --delete
+        will return -1 and NT_STATUS_NOT_FOUND. In this case, exception should not
+        be raised.
         """
-        await self._sharesec(action='--delete', share=share)
+        try:
+            await self._sharesec(action='--delete', share=share)
+        except Exception as e:
+            if 'NT_STATUS_NOT_FOUND' not in str(e):
+                raise CallError(e)
 
     @private
     async def _view_all(self, options=None):
