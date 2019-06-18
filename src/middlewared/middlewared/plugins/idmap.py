@@ -131,6 +131,21 @@ class IdmapService(Service):
     async def _common_validate(self, data):
         """
         Common validation checks for all idmap backends.
+
+        1) Check for a high range that is lower than the low range.
+
+        2) Check for overlap with other configured idmap ranges.
+
+        In some circumstances overlap is permitted:
+
+        - new idmap range may overlap previously configured idmap range of same domain.
+
+        - new idmap range may overlap an idmap range configured for a disabled directory service.
+
+        - new idmap range for 'autorid' may overlap DS_TYPE_DEFAULT_DOMAIN
+
+        - new idmap range for 'ad' may overlap other 'ad' ranges. In this situation, it is responsibility
+          of the system administrator to avoid id collisions between the configured domains.
         """
         verrors = ValidationErrors()
         if data['range_high'] < data['range_low']:
@@ -138,10 +153,29 @@ class IdmapService(Service):
             return verrors
 
         configured_domains = await self.get_configured_idmap_domains()
+        ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
+        ad_enabled = False if await self.middleware.call('activedirectory.get_state') == 'DISABLED' else True
         new_range = range(data['range_low'], data['range_high'])
         for i in configured_domains:
-            if i['domain']['id'] == data['domain']:
+            # Do not generate validation error comparing to oneself.
+            if i['domain']['id'] == data['domain']['id']:
                 continue
+
+            # Do not generate validation errors for overlapping with a disabled DS.
+            if not ldap_enabled and i['domain']['idmap_domain_name'] == 'DS_TYPE_LDAP':
+                continue
+
+            if not ad_enabled and i['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
+                continue
+
+            # Idmap settings under Services->SMB are ignored when autorid is enabled.
+            if data['idmap_backend'] == 'autorid' and i['domain']['id'] == 5:
+                continue
+
+            # Overlap between ranges defined for 'ad' backend are permitted.
+            if data['idmap_backend'] == 'ad' and i['idmap_backend'] == 'ad':
+                continue
+
             existing_range = range(i['backend_data']['range_low'], i['backend_data']['range_high'])
             if range(max(existing_range[0], new_range[0]), min(existing_range[-1], new_range[-1]) + 1):
                 verrors.add(
