@@ -395,6 +395,17 @@ class JailService(CRUDService):
 
         return pool
 
+    @accepts()
+    async def interface_choices(self):
+        """
+        Returns a dictionary of interface choices which can be used with creating/updating jails.
+        """
+        return await self.middleware.call(
+            'interface.choices', {
+                'exclude': ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair', 'vnet', 'bridge']
+            }
+        )
+
     @accepts(
         Dict(
             'options',
