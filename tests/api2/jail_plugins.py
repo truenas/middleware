@@ -74,6 +74,7 @@ def test_03_verify_list_of_instaled_plugin():
     assert isinstance(results.json(), list), results.text
 
 
+@to_skip
 def test_04_get_list_of_available_plugins():
     global results
     payload = {
@@ -83,3 +84,12 @@ def test_04_get_list_of_available_plugins():
     results = POST('/jail/list_resource/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
+
+
+@to_skip
+@pytest.mark.parametrize('plugin', plugins_list)
+def test_05_verify_available_plugin_(plugin):
+    for plugin_info in results.json():
+        if plugin in plugin_info:
+            assert isinstance(plugin_info, list), results.text
+            assert plugin in plugin_info, results.text
