@@ -34,7 +34,7 @@ class SSHService(SystemServiceService):
         Str('sftp_log_level', enum=["", "QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG2", "DEBUG3"]),
         Str('sftp_log_facility', enum=["", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4",
                                        "LOCAL5", "LOCAL6", "LOCAL7"]),
-        Str('options'),
+        Str('options', max_length=None),
         update=True
     ))
     async def do_update(self, data):

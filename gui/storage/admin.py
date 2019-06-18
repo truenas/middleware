@@ -28,6 +28,13 @@ class DiskFAdmin(BaseFreeAdmin):
     )
     resource_mixin = DiskResourceMixin
 
+    def edit(self, request, oid, mf=None):
+        if request.method == 'POST':
+            request.POST._mutable = True
+            request.POST.pop('disk_serial', None)
+            request.POST._mutable = False
+        return super(DiskFAdmin, self).edit(request, oid, mf)
+
     def get_actions(self):
         actions = super(DiskFAdmin, self).get_actions()
         del actions['Delete']

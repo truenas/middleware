@@ -28,7 +28,7 @@ class FTPService(SystemServiceService):
         Bool('onlyanonymous'),
         Dir('anonpath', null=True),
         Bool('onlylocal'),
-        Str('banner'),
+        Str('banner', max_length=None),
         Str('filemask', validators=[Match(r"^[0-7]{3}$")]),
         Str('dirmask', validators=[Match(r"^[0-7]{3}$")]),
         Bool('fxp'),
@@ -59,7 +59,7 @@ class FTPService(SystemServiceService):
         Bool('tls_opt_dns_name_required'),
         Bool('tls_opt_ip_address_required'),
         Int('ssltls_certificate', null=True),
-        Str('options'),
+        Str('options', max_length=None),
         update=True
     ))
     async def do_update(self, data):

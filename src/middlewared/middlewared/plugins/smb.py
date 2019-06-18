@@ -479,9 +479,9 @@ class SMBService(SystemServiceService):
 
     @accepts(Dict(
         'smb_update',
-        Str('netbiosname'),
-        Str('netbiosname_b'),
-        List('netbiosalias', default=[]),
+        Str('netbiosname', max_length=15),
+        Str('netbiosname_b', max_length=15),
+        List('netbiosalias', default=[], items=[Str('netbios_alias', max_length=15)]),
         Str('workgroup'),
         Str('description'),
         Bool('enable_smb1'),
@@ -503,7 +503,7 @@ class SMBService(SystemServiceService):
         Bool('obey_pam_restrictions'),
         Bool('ntlmv1_auth'),
         List('bindip', items=[IPAddr('ip')], default=[]),
-        Str('smb_options'),
+        Str('smb_options', max_length=None),
         update=True,
     ))
     async def do_update(self, data):
@@ -602,7 +602,7 @@ class SharingSMBService(CRUDService):
         'sharingsmb_create',
         Str('path', required=True),
         Bool('home', default=False),
-        Str('name'),
+        Str('name', max_length=80),
         Str('comment'),
         Bool('ro', default=False),
         Bool('browsable', default=True),
@@ -616,7 +616,7 @@ class SharingSMBService(CRUDService):
         List('hostsdeny', default=[]),
         List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
         Bool('shadowcopy', default=False),
-        Str('auxsmbconf'),
+        Str('auxsmbconf', max_length=None),
         Bool('default_permissions', default=False),
         Bool('enabled', default=True),
         register=True

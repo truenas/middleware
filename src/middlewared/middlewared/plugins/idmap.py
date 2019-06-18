@@ -240,11 +240,6 @@ class IdmapDomainService(CRUDService):
         `name` the pre-windows 2000 domain name.
         `DNS_domain_name` DNS name of the domain.
         """
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_domain_create', await self._validate(data))
-        if verrors:
-            raise verrors
-
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -297,7 +292,7 @@ class IdmapDomainService(CRUDService):
     async def _validate(self, data):
         verrors = ValidationErrors()
         if data['id'] <= dstype['DS_TYPE_DEFAULT_DOMAIN'].value:
-            verrors.add(f'Modifying system idmap domain [{data["name"]}] is not permitted.')
+            verrors.add('id', f'Modifying system idmap domain [{data["name"]}] is not permitted.')
         return verrors
 
 

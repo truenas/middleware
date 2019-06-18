@@ -362,6 +362,11 @@ class DiskResourceMixin(object):
             log.debug('Failed to get unused disks', exc_info=True)
         return super(DiskResourceMixin, self).dispatch_list(request, **kwargs)
 
+    def hydrate(self, bundle):
+        bundle = super(DiskResourceMixin, self).hydrate(bundle)
+        bundle.data.pop('disk_serial', None)
+        return bundle
+
     def dehydrate(self, bundle):
         bundle = super(DiskResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):

@@ -23,8 +23,8 @@ class KerberosService(ConfigService):
 
     @accepts(Dict(
         'kerberos_settings_update',
-        Str('appdefaults_aux'),
-        Str('libdefaults_aux'),
+        Str('appdefaults_aux', max_length=None),
+        Str('libdefaults_aux', max_length=None),
         update=True
     ))
     async def do_update(self, data):
@@ -404,7 +404,7 @@ class KerberosKeytabService(CRUDService):
     @accepts(
         Dict(
             'kerberos_keytab_create',
-            Str('file'),
+            Str('file', max_length=None),
             Str('name'),
             register=True
         )

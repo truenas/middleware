@@ -134,7 +134,7 @@ class UserService(CRUDService):
     @accepts(Dict(
         'user_create',
         Int('uid'),
-        Str('username', required=True),
+        Str('username', required=True, max_length=16),
         Int('group'),
         Bool('group_create', default=False),
         Str('home', default='/nonexistent'),

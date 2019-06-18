@@ -323,7 +323,7 @@ class LDAPService(ConfigService):
         Int('kerberos_realm', null=True),
         Str('kerberos_principal'),
         Bool('has_samba_schema', default=False),
-        Str('auxiliary_parameters', default=False),
+        Str('auxiliary_parameters', default=False, max_length=None),
         Str('schema', default='RFC2307', enum=['RFC2307', 'RFC2307BIS']),
         Bool('enable'),
         update=True
