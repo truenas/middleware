@@ -128,7 +128,7 @@ class IdmapService(Service):
         return data
 
     @private
-    async def _common_validate(self, data):
+    async def _common_validate(self, idmap_backend, data):
         """
         Common validation checks for all idmap backends.
 
@@ -169,11 +169,11 @@ class IdmapService(Service):
                 continue
 
             # Idmap settings under Services->SMB are ignored when autorid is enabled.
-            if data['idmap_backend'] == 'autorid' and i['domain']['id'] == 5:
+            if idmap_backend == 'autorid' and i['domain']['id'] == 5:
                 continue
 
             # Overlap between ranges defined for 'ad' backend are permitted.
-            if data['idmap_backend'] == 'ad' and i['idmap_backend'] == 'ad':
+            if idmap_backend == 'ad' and i['idmap_backend'] == 'ad':
                 continue
 
             existing_range = range(i['backend_data']['range_low'], i['backend_data']['range_high'])
@@ -485,7 +485,7 @@ class IdmapADService(CRUDService):
         """
         verrors = ValidationErrors()
         data = await self.middleware.call('idmap.common_backend_compress', data)
-        verrors.add_child('idmap_ad_create', await self.middleware.call('idmap._common_validate', data))
+        verrors.add_child('idmap_ad_create', await self.middleware.call('idmap._common_validate', 'ad', data))
         if verrors:
             raise verrors
 
@@ -513,7 +513,7 @@ class IdmapADService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_ad_update', await self.middleware.call('idmap._common_validate', new))
+        verrors.add_child('idmap_ad_update', await self.middleware.call('idmap._common_validate', 'ad', new))
         if verrors:
             raise verrors
 
@@ -564,7 +564,7 @@ class IdmapAutoridService(CRUDService):
         Create an entry in the idmap backend table.
         """
         verrors = ValidationErrors()
-        verrors.add_child('idmap_autorid_create', await self.middleware.call('idmap._common_validate', data))
+        verrors.add_child('idmap_autorid_create', await self.middleware.call('idmap._common_validate', 'autorid', data))
         if verrors:
             raise verrors
 
@@ -593,7 +593,7 @@ class IdmapAutoridService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_autorid_update', await self.middleware.call('idmap._common_validate', new))
+        verrors.add_child('idmap_autorid_update', await self.middleware.call('idmap._common_validate', 'autorid', new))
 
         if verrors:
             raise verrors
@@ -647,7 +647,7 @@ class IdmapLDAPService(CRUDService):
         Create an entry in the idmap backend table.
         """
         verrors = ValidationErrors()
-        verrors.add_child('idmap_ldap_create', await self.middleware.call('idmap._common_validate', data))
+        verrors.add_child('idmap_ldap_create', await self.middleware.call('idmap._common_validate', 'ldap', data))
         if verrors:
             raise verrors
 
@@ -676,7 +676,7 @@ class IdmapLDAPService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_ldap_update', await self.middleware.call('idmap._common_validate', new))
+        verrors.add_child('idmap_ldap_update', await self.middleware.call('idmap._common_validate', 'ldap', new))
 
         if verrors:
             raise verrors
@@ -725,7 +725,7 @@ class IdmapNSSService(CRUDService):
         Create an entry in the idmap backend table.
         """
         verrors = ValidationErrors()
-        verrors.add_child('idmap_nss_create', await self.middleware.call('idmap._common_validate', data))
+        verrors.add_child('idmap_nss_create', await self.middleware.call('idmap._common_validate', 'nss', data))
         if verrors:
             raise verrors
 
@@ -755,7 +755,7 @@ class IdmapNSSService(CRUDService):
         new.update(data)
         new = await self.middleware.call('idmap.common_backend_compress', new)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_nss_update', await self.middleware.call('idmap._common_validate', new))
+        verrors.add_child('idmap_nss_update', await self.middleware.call('idmap._common_validate', 'nss', new))
 
         if verrors:
             raise verrors
@@ -843,7 +843,7 @@ class IdmapRFC2307Service(CRUDService):
          a stand-alone ldap server.
         """
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rfc2307_create', await self.middleware.call('idmap._common_validate', data))
+        verrors.add_child('idmap_rfc2307_create', await self.middleware.call('idmap._common_validate', 'rfc2307', data))
         if verrors:
             raise verrors
 
@@ -872,7 +872,7 @@ class IdmapRFC2307Service(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rfc2307_update', await self.middleware.call('idmap._common_validate', new))
+        verrors.add_child('idmap_rfc2307_update', await self.middleware.call('idmap._common_validate', 'rfc2307', new))
 
         if verrors:
             raise verrors
@@ -921,7 +921,7 @@ class IdmapRIDService(CRUDService):
         Create an entry in the idmap_rid backend table.
         """
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rid_create', await self.middleware.call('idmap._common_validate', data))
+        verrors.add_child('idmap_rid_create', await self.middleware.call('idmap._common_validate', 'rid', data))
         if verrors:
             raise verrors
 
@@ -950,7 +950,7 @@ class IdmapRIDService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rid_update', await self.middleware.call('idmap._common_validate', new))
+        verrors.add_child('idmap_rid_update', await self.middleware.call('idmap._common_validate', 'rid', new))
 
         if verrors:
             raise verrors
@@ -1001,7 +1001,7 @@ class IdmapScriptService(CRUDService):
         `script` full path to the script or program that generates the mappings.
         """
         verrors = ValidationErrors()
-        verrors.add_child('idmap_script_create', await self.middleware.call('idmap._common_validate', data))
+        verrors.add_child('idmap_script_create', await self.middleware.call('idmap._common_validate', 'script', data))
         if verrors:
             raise verrors
 
@@ -1030,7 +1030,7 @@ class IdmapScriptService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_script_update', await self.middleware.call('idmap._common_validate', new))
+        verrors.add_child('idmap_script_update', await self.middleware.call('idmap._common_validate', 'script', new))
 
         if verrors:
             raise verrors
@@ -1079,7 +1079,7 @@ class IdmapTDBService(CRUDService):
         Create an entry in the idmap backend table.
         """
         verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb_create', await self.middleware.call('idmap._common_validate', data))
+        verrors.add_child('idmap_tdb_create', await self.middleware.call('idmap._common_validate', 'tdb', data))
         if verrors:
             raise verrors
 
@@ -1108,7 +1108,7 @@ class IdmapTDBService(CRUDService):
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb_update', await self.middleware.call('idmap._common_validate', new))
+        verrors.add_child('idmap_tdb_update', await self.middleware.call('idmap._common_validate', 'tdb', new))
 
         if verrors:
             raise verrors
