@@ -680,7 +680,8 @@ class JailService(CRUDService):
                     'Index cannot be "None" when replacing an fstab entry.'
                 )
 
-        verrors.check()
+        if verrors:
+            raise verrors
 
         source = options.get('source')
         if action in ('add', 'replace') and not os.path.exists(source):
