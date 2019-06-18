@@ -16,6 +16,39 @@ not_freenas = GET("/system/is_freenas/").json() is False
 reason = "System is not FreeNAS skip Jails test"
 to_skip = pytest.mark.skipif(not_freenas, reason=reason)
 
+plugins_list = [
+    'asigra',
+    'backuppc',
+    'bacula-server',
+    'bru-server',
+    'clamav',
+    'couchpotato',
+    'deluge',
+    'emby',
+    'gitlab',
+    'irssi ',
+    'jenkins',
+    'jenkins-lts',
+    'madsonic',
+    'mineos',
+    'nextcloud',
+    'plexmediaserver',
+    'plexmediaserver-plexpass',
+    'qbittorrent',
+    'quasselcore',
+    'radarr',
+    'redmine',
+    'rslsync',
+    'sonarr',
+    'subsonic',
+    'syncthing',
+    'tarsnap',
+    'transmission',
+    'weechat',
+    'xmrig',
+    'zoneminder'
+]
+
 
 @to_skip
 def test_01_activate_jail_pool():
@@ -35,6 +68,17 @@ def test_02_verify_jail_pool():
 def test_03_verify_list_of_instaled_plugin():
     payload = {
         'resource': 'PLUGIN'
+    }
+    results = POST('/jail/list_resource/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+
+
+def test_04_get_list_of_available_plugins():
+    global results
+    payload = {
+        'resource': 'PLUGIN',
+        "remote": True
     }
     results = POST('/jail/list_resource/', payload)
     assert results.status_code == 200, results.text
