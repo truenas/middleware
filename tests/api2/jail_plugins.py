@@ -2,6 +2,7 @@
 import pytest
 import sys
 import os
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name
@@ -9,8 +10,8 @@ from functions import GET, POST
 
 IOCAGE_POOL = pool_name
 JOB_ID = None
-RELEASE = None
-JAIL_NAME = 'jail1'
+JAIL_NAME = 'Transmission'
+RELEASE = "11.2-RELEASE"
 
 not_freenas = GET("/system/is_freenas/").json() is False
 reason = "System is not FreeNAS skip Jails test"
@@ -93,3 +94,33 @@ def test_05_verify_available_plugin_(plugin):
         if plugin in plugin_info:
             assert isinstance(plugin_info, list), results.text
             assert plugin in plugin_info, results.text
+
+
+@to_skip
+def test_06_add_transmision_plugins():
+    global JOB_ID
+    payload = {
+        "name": "transmission",
+        'props': [
+            'bpf=yes',
+            'dhcp=on',
+            'vnet=on',
+            'vnet_default_interface=auto'
+        ]
+    }
+    results = POST('/jail/fetch/', payload)
+    assert results.status_code == 200, results.text
+    JOB_ID = results.json()
+
+
+@to_skip
+def test_07_verify_transmision_jail_creation():
+    while True:
+        job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
+        if job_status['state'] in ('RUNNING', 'WAITING'):
+            sleep(3)
+        else:
+            results = GET('/jail/')
+            assert results.status_code == 200, results.text
+            assert len(results.json()) > 0, job_status
+            break
