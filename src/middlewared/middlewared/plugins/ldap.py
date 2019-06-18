@@ -559,7 +559,7 @@ class LDAPService(ConfigService):
         if has_samba_schema:
             await self.middleware.call('etc.generate', 'smb')
             await self.middleware.call('smb.store_ldap_admin_password')
-            await self.middleware.call('service.restart', 'smb')
+            await self.middleware.call('service.restart', 'cifs')
 
         await self.middleware.call('ldap.fill_cache')
 
@@ -574,7 +574,7 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         if ldap['has_samba_schema']:
             await self.middleware.call('etc.generate', 'smb')
-            await self.middleware.call('service.restart', 'smb')
+            await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('cache.pop', 'LDAP_State')
         await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.nslcd_cmd('onestop')
