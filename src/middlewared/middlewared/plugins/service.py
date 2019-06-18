@@ -306,7 +306,7 @@ class ServiceService(CRUDService):
     async def _system(self, cmd):
         proc = await Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True)
         stdout = (await proc.communicate())[0]
-        if proc.returncode != 0:
+        if proc.returncode != 0 and "status" not in cmd:
             self.logger.warning("Command %r failed with code %d:\n%s", cmd, proc.returncode, stdout)
         return proc.returncode
 
