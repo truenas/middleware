@@ -197,15 +197,16 @@ async def rclone(middleware, job, cloud_sync):
         check_cloud_sync = asyncio.ensure_future(rclone_check_progress(job, proc))
         cancelled_error = None
         try:
-            await proc.wait()
-            await asyncio.wait_for(check_cloud_sync, None)
-        except asyncio.CancelledError as e:
-            cancelled_error = e
             try:
-                await middleware.call("service.terminate_process", proc.pid)
-            except CallError as e:
-                job.middleware.logger.warning(f"Error terminating rclone on cloud sync abort: {e!r}")
-            check_cloud_sync.cancel()
+                await proc.wait()
+            except asyncio.CancelledError as e:
+                cancelled_error = e
+                try:
+                    await middleware.call("service.terminate_process", proc.pid)
+                except CallError as e:
+                    job.middleware.logger.warning(f"Error terminating rclone on cloud sync abort: {e!r}")
+        finally:
+            await asyncio.wait_for(check_cloud_sync, None)
 
         if snapshot:
             await middleware.call("zfs.snapshot.remove", snapshot)
