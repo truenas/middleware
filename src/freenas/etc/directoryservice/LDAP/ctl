@@ -100,6 +100,16 @@ ldapctl_start()
 	local ldap_started=0
 	local realm
 	local keytab_principal
+	local syspool=$(eval echo $(${notifier} call systemdataset.config | /usr/local/bin/jq .pool))
+	local is_freenas=$(${notifier} call system.is_freenas)
+	local failover_status='SINGLE'
+	if [ ${is_freenas} == 'False' ]; then
+		failover_status=$(${notifier} call notifier.failover_status)
+	fi
+
+	if [ ${syspool} != "freenas-boot" ] && [ ${failover_status} == "BACKUP" ]; then
+		return 0
+	fi
 
 	# chicken & eggs
 	realm=$(LDAP_get_krb_realm)
