@@ -1,5 +1,7 @@
 #!/usr/bin/env python3.6
 import os
+import random
+import string
 import sys
 import textwrap
 
@@ -10,7 +12,6 @@ sys.path.append(apifolder)
 from functions import GET, PUT, POST, DELETE
 
 BASE_REPLICATION = {
-    "name": "Backup",
     "direction": "PUSH",
     "transport": "LOCAL",
     "source_datasets": ["data"],
@@ -214,7 +215,8 @@ def test_create_replication(credentials, periodic_snapshot_tasks, req, error):
     if "periodic_snapshot_tasks" in req:
         req["periodic_snapshot_tasks"] = [periodic_snapshot_tasks[k]["id"] for k in req["periodic_snapshot_tasks"]]
 
-    result = POST("/replication/", dict(BASE_REPLICATION, **req))
+    name = "".join(random.choice(string.ascii_letters) for _ in range(64))
+    result = POST("/replication/", dict(BASE_REPLICATION, name=name, **req))
 
     if error:
         assert result.status_code == 422
