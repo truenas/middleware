@@ -131,12 +131,12 @@ def test_08_verify_transmission_id_jail_exist():
     assert len(results.json()) > 0, results.text
 
 
-def test_09_get_transmission_info():
+def test_09_store_transmission_jail_info():
     assert len(results.json()) > 0, results.text
     global transmission_info
     info = results.json()[0]
     transmission_info = {
-        1: info["is"],
+        1: info["id"],
         2: info["boot"],
         3: info["state"],
         4: info["type"],
@@ -152,7 +152,17 @@ def test_10_get_installed_plugin_list_with_want_cache():
         "remote": False,
         "want_cache": True
     }
-    results = POST("/jail/list_resource/", payload).json()
+    results = POST("/jail/list_resource/", payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
     assert len(results.json()) > 0, results.text
+
+
+@pytest.mark.parametrize('data', [1, 2, 3, 4, 5, 6])
+def test_10_verify_transmission_plugin_info_value_with_jail_info_value_(data):
+    for plugin_list in results.json():
+        if 'transmission' in plugin_list:
+            assert plugin_list[data] == transmission_info[data], plugin_list
+            break
+    else:
+        assert False, results.json()
