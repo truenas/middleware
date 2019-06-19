@@ -85,7 +85,7 @@ adctl_start()
 	fi
 
 	if [ \(${syspool} != "freenas-boot"\) -a \( ${failover_status} == "BACKUP" \) ]; then
-		return
+		return 0
 	fi
 
 	touch "${start_file}"

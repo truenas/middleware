@@ -108,7 +108,7 @@ ldapctl_start()
 	fi
 
 	if [ \(${syspool} != "freenas-boot"\) -a \( ${failover_status} == "BACKUP" \) ]; then
-		return
+		return 0
 	fi
 
 	# chicken & eggs
