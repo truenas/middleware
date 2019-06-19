@@ -101,3 +101,7 @@ def adapt_exception(e):
         output = ''.join([stdout, stderr]).rstrip()
 
         return CallError(f'Command {cmd} failed (code {e.returncode}):\n{output}')
+
+class MatchNotFound(IndexError):
+    """We be raised when a GET call is issued and there is no matching id"""
+    pass

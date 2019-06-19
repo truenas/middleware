@@ -12,7 +12,7 @@ from .client import ejson as json
 from .job import Job
 from .schema import Error as SchemaError
 from .service import CallError, ValidationError, ValidationErrors
-from .service_exception import adapt_exception
+from .service_exception import adapt_exception, MatchNotFound
 
 
 async def authenticate(middleware, req):
@@ -535,6 +535,12 @@ class Resource(object):
                     'errno': errno,
                 })
             resp = web.Response(status=422)
+        except MatchNotFound as e:
+            resp = web.Response(status=404)
+            result = {
+                'message': str(e),
+                'traceback': ''.join(traceback.format_exc()),
+            }
         except Exception as e:
             adapted = adapt_exception(e)
             if adapted:
