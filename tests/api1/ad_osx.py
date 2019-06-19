@@ -256,13 +256,18 @@ def test_26_Verify_Active_Directory_is_disabled():
     sleep(1)
 
 
-@ad_test_cfg
-def test_27_Verify_SMB_service_is_disabled():
+def test_27_Stop_SMB_service():
+    results = PUT("/services/services/cifs/", {"srv_enable": False})
+    assert results.status_code == 200, results.text
+    sleep(1)
+
+
+def test_28_Verify_SMB_service_is_disabled():
     results = GET("/services/services/cifs/")
     assert results.json()["srv_state"] == "STOPPED", results.text
 
 
-def test_28_Delete_cifs_share_on_SMB_PATH():
+def test_29_Delete_cifs_share_on_SMB_PATH():
     payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
                "cifs_name": SMB_NAME,
@@ -273,6 +278,6 @@ def test_28_Delete_cifs_share_on_SMB_PATH():
 
 
 # Check destroying a SMB dataset
-def test_29_Destroying_SMB_dataset():
+def test_30_Destroying_SMB_dataset():
     results = DELETE(f"/storage/volume/{pool_name}/datasets/{DATASET}/")
     assert results.status_code == 204, results.text
