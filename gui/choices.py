@@ -182,16 +182,6 @@ def UNIXCHARSET_CHOICES():
         return choices
 
 
-def KERBEROS_PRINCIPAL_CHOICES():
-    try:
-        with client as c:
-            principals = c.call('kerberos.keytab.kerberos_principal_choices')
-            principals.insert(0, '---------')
-            return [(principal, principal) for principal in principals]
-    except Exception:
-        return [('---------', '---------')]
-
-
 LOGLEVEL_CHOICES = (
     ('0', _('None')),
     ('1', _('Minimum')),
