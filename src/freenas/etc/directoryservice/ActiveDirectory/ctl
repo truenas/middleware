@@ -77,6 +77,17 @@ adctl_start()
 {
 	local cifs_started=0	
 	local ad_started=0
+	local syspool=$(eval echo $(${notifier} call systemdataset.config | /usr/local/bin/jq .pool))
+	local is_freenas=$(${notifier} call system.is_freenas)
+	local failover_status='SINGLE'
+	if [ ${is_freenas} == 'False' ]; then
+		failover_status=$(${notifier} call notifier.failover_status)
+	fi
+
+	if [ \(${syspool} != "freenas-boot"\) -a \( ${failover_status} == "BACKUP" \) ]; then
+		return
+	fi
+
 	touch "${start_file}"
 
 	#56751 - verify that servers in /etc/directoryservice/ActiveDirectory/config
