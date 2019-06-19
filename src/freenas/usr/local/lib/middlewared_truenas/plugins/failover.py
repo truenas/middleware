@@ -411,7 +411,7 @@ class FailoverService(ConfigService):
         self.middleware.call_sync('failover.call_remote', 'service.start', ['ix-devd'])
 
         if options['reboot']:
-            self.middleware.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+            self.middleware.call_sync('failover.call_remote', 'system.reboot', [{'delay': 2}])
 
     @accepts()
     def sync_from_peer(self):
