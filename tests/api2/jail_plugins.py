@@ -166,3 +166,25 @@ def test_10_verify_transmission_plugin_info_value_with_jail_info_value_(data):
             break
     else:
         assert False, results.json()
+
+
+@to_skip
+def test_11_get_list_of_available_plugins_with_want_cache():
+    global results
+    payload = {
+        'resource': 'PLUGIN',
+        "remote": True,
+        "want_cache": True
+    }
+    results = POST('/jail/list_resource/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+
+
+@to_skip
+@pytest.mark.parametrize('plugin', plugins_list)
+def test_05_verify_available_plugin_with_want_cache_(plugin):
+    for plugin_info in results.json():
+        if plugin in plugin_info:
+            assert isinstance(plugin_info, list), results.text
+            assert plugin in plugin_info, results.text
