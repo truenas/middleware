@@ -651,7 +651,7 @@ class ZettareplService(Service):
             if "last_snapshot" in state:
                 self.last_snapshot[f"replication_task_{replication['id']}"] = state["last_snapshot"]
             if "state" in state:
-                self.state[f"replication_task_{replication['id']}"] = state
+                self.state[f"replication_task_{replication['id']}"] = state["state"]
 
     @periodic(3600)
     async def flush_state(self):
