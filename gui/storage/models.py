@@ -439,10 +439,10 @@ class Volume(Model):
             systemdataset.save()
             n.restart('system_datasets')
 
-        # Refresh the fstab
-        n.reload("disk")
-        # For scrub tasks
-        n.restart("cron")
+        bulk = [["service.reload", [["disk"]]],
+                ["service.restart", [["cron"]]]]
+        with client as c:
+            c.call("core.bulk", "core.bulk", bulk)
 
         # Django signal could have been used instead
         # Do it this way to make sure its ran in the time we want
