@@ -1,31 +1,32 @@
 import asyncio
 import os
 import subprocess as su
-
-import iocage_lib.iocage as ioc
-import iocage_lib.ioc_exceptions as ioc_exceptions
-
 import libzfs
 import requests
 import itertools
+import tempfile
 import pathlib
 import json
 import sqlite3
 import errno
 
+import iocage_lib.iocage as ioc
+import iocage_lib.ioc_exceptions as ioc_exceptions
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
 from iocage_lib.ioc_image import IOCImage
 from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage_lib.ioc_list import IOCList
+from iocage_lib.ioc_plugin import IOCPlugin
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import CRUDService, job, private, filterable
+from middlewared.service import CRUDService, job, private, filterable, periodic
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import IpInUse, MACAddr
+
 from collections import deque, Iterable
 
 
@@ -383,7 +384,7 @@ class JailService(CRUDService):
         """Returns the activated pool if there is one, or None"""
         try:
             pool = ioc.IOCage(skip_jails=True).get('', pool=True)
-        except RuntimeError as e:
+        except (RuntimeError, SystemExit) as e:
             raise CallError(f'Error occurred getting activated pool: {e}')
         except (ioc_exceptions.PoolNotActivated, FileNotFoundError):
             self.check_dataset_existence()
@@ -541,7 +542,8 @@ class JailService(CRUDService):
         Bool('want_cache', default=True),
         Str('branch', default=None)
     )
-    def list_resource(self, resource, remote, want_cache, branch):
+    @job(lock=lambda args: args[0])
+    def list_resource(self, job, resource, remote, want_cache, branch):
         """Returns a JSON list of the supplied resource on the host"""
         self.check_dataset_existence()  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
@@ -560,6 +562,33 @@ class JailService(CRUDService):
 
                 resource_list = iocage.fetch(list=True, plugins=True,
                                              header=False, branch=branch)
+                try:
+                    plugins_versions_data = self.middleware.call_sync('cache.get', 'iocage_plugin_versions')
+                except KeyError:
+                    plugins_versions_data_job = self.middleware.call_sync(
+                        'core.get_jobs',
+                        [['method', '=', 'jail.retrieve_plugin_versions'], ['state', '=', 'RUNNING']]
+                    )
+                    error = None
+                    plugins_versions_data = {}
+                    if plugins_versions_data_job:
+                        try:
+                            plugins_versions_data = self.middleware.call_sync(
+                                'core.job_wait', plugins_versions_data_job[0]['id'], job=True
+                            )
+                        except CallError as e:
+                            error = str(e)
+                    else:
+                        try:
+                            plugins_versions_data = self.middleware.call_sync(
+                                'jail.retrieve_plugin_versions', job=True
+                            )
+                        except Exception as e:
+                            error = e
+
+                    if error:
+                        # Let's not make the failure fatal
+                        self.middleware.logger.error(f'Retrieving plugins version failed: {error}')
             else:
                 resource_list = iocage.list("all", plugin=True)
                 pool = IOCJson().json_get_value("pool")
@@ -583,7 +612,8 @@ class JailService(CRUDService):
                     plugin[i] = elem if elem != "-" else None
 
                 if remote:
-                    pv = self.get_plugin_version(plugin[2])
+                    plugin_version = plugins_versions_data.get(plugin[2], {}).get('version', 'N/A')
+                    pv = [plugin_version, '1' if plugin_version != 'N/A' else plugin_version]
                 else:
                     # plugin[1] is the UUID
                     plugin_output = pathlib.Path(
@@ -641,6 +671,34 @@ class JailService(CRUDService):
             resource_list = iocage.list(resource)
 
         return resource_list
+
+    @periodic(interval=86400)
+    @private
+    @accepts(Str('branch', null=True, default=None))
+    @job(lock='retrieve_plugin_versions')
+    def retrieve_plugin_versions(self, job, branch=None):
+        branch = branch or self.get_version()
+        try:
+            pool = self.get_activated_pool()
+        except CallError:
+            pool = None
+
+        if pool:
+            plugins = IOCPlugin(branch=branch).fetch_plugin_versions()
+        else:
+            with tempfile.TemporaryDirectory() as td:
+                github_repo = 'https://github.com/freenas/iocage-ix-plugins.git'
+                try:
+                    IOCPlugin._clone_repo(branch, github_repo, td, depth=1)
+                except Exception:
+                    self.middleware.logger.error('Failed to clone iocage-ix-plugins repository.', exc_info=True)
+                    return {}
+                else:
+                    plugins_index_data = IOCPlugin.retrieve_plugin_index_data(td)
+                    plugins = IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
+
+        self.middleware.call_sync('cache.put', 'iocage_plugin_versions', plugins)
+        return plugins
 
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
     def rc_action(self, action):
@@ -1036,65 +1094,6 @@ class JailService(CRUDService):
         return True
 
     @private
-    def get_plugin_version(self, pkg):
-        """
-        Fetches a list of pkg's from the http://pkg.cdn.trueos.org/iocage/
-        repo and returns a list with the pkg version and plugin revision
-        """
-        try:
-            pkg_dict = self.middleware.call_sync('cache.get',
-                                                 'iocage_rpkgdict')
-            r_plugins = self.middleware.call_sync('cache.get',
-                                                  'iocage_rplugins')
-        except KeyError:
-            branch = self.get_version()
-            r_pkgs = requests.get(
-                f'http://pkg.cdn.trueos.org/iocage/{branch}/All')
-            r_pkgs.raise_for_status()
-            pkg_dict = {}
-            for i in r_pkgs.iter_lines():
-                i = i.decode().split('"')
-
-                try:
-                    pkg, version = i[1].rsplit('-', 1)
-                    pkg_dict[pkg] = version
-                except (ValueError, IndexError):
-                    continue  # It's not a pkg
-            self.middleware.call_sync(
-                'cache.put', 'iocage_rpkgdict', pkg_dict,
-                86400
-            )
-
-            r_plugins = requests.get(
-                'https://raw.githubusercontent.com/freenas/'
-                f'iocage-ix-plugins/{branch}/INDEX'
-            )
-            r_plugins.raise_for_status()
-
-            r_plugins = r_plugins.json()
-            self.middleware.call_sync(
-                'cache.put', 'iocage_rplugins', r_plugins,
-                86400
-            )
-
-        if pkg == 'bru-server':
-            return ['N/A', '1']
-        elif pkg == 'sickrage':
-            return ['Git branch - master', '1']
-        elif pkg == 'asigra':
-            return ['14.1-20190301', '1']
-
-        try:
-            primary_pkg = r_plugins[pkg]['primary_pkg'].split('/', 1)[-1]
-
-            version = pkg_dict[primary_pkg]
-            version = [version.rsplit('%2', 1)[0].replace('.txz', ''), '1']
-        except KeyError:
-            version = ['N/A', 'N/A']
-
-        return version
-
-    @private
     def get_local_plugin_version(self, plugin, index_json, iocroot):
         """
         Checks the primary_pkg key in the INDEX with the pkg version
@@ -1105,7 +1104,7 @@ class JailService(CRUDService):
 
         try:
             base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
-            primary_pkg = index_json[base_plugin]['primary_pkg']
+            primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
             version = ['N/A', 'N/A']
 
             # Since these are plugins, we don't want to spin them up just to
@@ -1115,6 +1114,11 @@ class JailService(CRUDService):
                 primary_pkg)
 
             for row in db_rows:
+                row = list(row)
+                if '/' not in primary_pkg:
+                    row[1] = row[1].split('/', 1)[-1]
+                    row[2] = row[2].split('/', 1)[-1]
+
                 if primary_pkg == row[1] or primary_pkg == row[2]:
                     version = [row[3], '1']
                     break
