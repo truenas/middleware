@@ -318,7 +318,7 @@ class ReplicationService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        verrors.add_child("replication_update", await self._validate(new))
+        verrors.add_child("replication_update", await self._validate(new, id))
 
         if verrors:
             raise verrors
@@ -389,8 +389,10 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.run_replication_task", id, really_run, job)
 
-    async def _validate(self, data):
+    async def _validate(self, data, id=None):
         verrors = ValidationErrors()
+
+        await self._ensure_unique(verrors, "", "name", data["name"], id)
 
         # Direction
 
