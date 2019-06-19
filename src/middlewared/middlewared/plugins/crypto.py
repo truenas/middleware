@@ -1340,9 +1340,9 @@ class CertificateService(CRUDService):
     @accepts(
         Dict(
             'create_imported_csr',
-            Str('CSR', required=True),
+            Str('CSR', required=True, max_length=None),
             Str('name'),
-            Str('privatekey', required=True),
+            Str('privatekey', required=True, max_length=None),
             Str('passphrase')
         )
     )
