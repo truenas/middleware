@@ -125,12 +125,27 @@ def test_07_verify_transmision_plugin_job_is_successfull():
 
 
 def test_08_verify_transmission_id_jail_exist():
+    global results
     results = GET('/jail/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
-def test_09_get_installed_plugin_list_with_want_cache():
+def test_09_get_transmission_info():
+    assert len(results.json()) > 0, results.text
+    global transmission_info
+    info = results.json()[0]
+    transmission_info = {
+        1: info["is"],
+        2: info["boot"],
+        3: info["state"],
+        4: info["type"],
+        5: info["release"],
+        6: info["ip4_addr"],
+    }
+
+
+def test_10_get_installed_plugin_list_with_want_cache():
     global results
     payload = {
         "resource": "PLUGIN",
