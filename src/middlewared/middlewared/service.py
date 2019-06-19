@@ -386,7 +386,8 @@ class CRUDService(ServiceChangeMixin, Service):
             f.append(('id', '!=', id))
         instance = await self.middleware.call(f'{self._config.namespace}.query', f)
         if instance:
-            verrors.add(f'{schema_name}.{field_name}', f'Object with this {field_name} already exists')
+            verrors.add('.'.join(filter(None, [schema_name, field_name])),
+                        f'Object with this {field_name} already exists')
 
 
 class CoreService(Service):
