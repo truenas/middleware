@@ -107,8 +107,8 @@ class SSHKeyPair(KeychainCredentialType):
     title = "SSH Key Pair"
 
     credentials_schema = [
-        Str("private_key", null=True, default=None),
-        Str("public_key", null=True, default=None),
+        Str("private_key", null=True, default=None, max_length=None),
+        Str("public_key", null=True, default=None, max_length=None),
     ]
 
     used_by_delegates = [
