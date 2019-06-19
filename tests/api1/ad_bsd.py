@@ -49,7 +49,7 @@ def test_02_enabling_active_directory():
     payload = {"ad_bindpw": ADPASSWORD,
                "ad_bindname": ADUSERNAME,
                "ad_domainname": BRIDGEDOMAIN,
-               "ad_netbiosname_a": BRIDGEHOST,
+               "ad_netbiosname": BRIDGEHOST,
                "ad_idmap_backend": "rid",
                "ad_enable": True}
     results = PUT("/directoryservice/activedirectory/1/", payload)
@@ -251,12 +251,12 @@ def test_26_Removing_SMB_mountpoint():
 # Disable Active Directory Directory
 @ad_test_cfg
 def test_27_Disabling_Active_Directory():
-    payload = {"ad_bindpw": ADPASSWORD,
-               "ad_bindname": ADUSERNAME,
-               "ad_domainname": BRIDGEDOMAIN,
-               "ad_netbiosname_a": BRIDGEHOST,
-               "ad_idmap_backend": "ad",
-               "ad_enable": False}
+    payload = {
+        "ad_netbiosname": BRIDGEHOST,
+        "ad_idmap_backend": "ad",
+        "ad_kerberos_principal": "",
+        "ad_enable": False
+    }
     results = PUT("/directoryservice/activedirectory/1/", payload)
     assert results.status_code == 200, results.text
 
@@ -269,7 +269,6 @@ def test_28_Verify_Active_Directory_is_disabled():
     sleep(1)
 
 
-@ad_test_cfg
 def test_29_Verify_SMB_service_is_disabled():
     results = GET("/services/services/cifs/")
     assert results.json()["srv_state"] == "STOPPED", results.text
