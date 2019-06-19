@@ -194,3 +194,20 @@ def test_12_verify_available_plugin_with_want_cache_(plugin):
 def test_13_delete_transmission_plugin():
     results = DELETE('/jail/id/transmission/')
     assert results.status_code == 200, results.text
+
+
+def test_14_verify_transmission_is_not_in_the_installed_plugin_list():
+    global results
+    payload = {
+        "resource": "PLUGIN",
+        "remote": False,
+        "want_cache": True
+    }
+    results = POST("/jail/list_resource/", payload)
+    assert results.status_code == 200, results.text
+    for plugin_list in results.json():
+        if 'transmission' in plugin_list:
+            assert False, results.json()
+            break
+    else:
+        assert True, results.json()
