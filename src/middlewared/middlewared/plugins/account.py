@@ -319,6 +319,7 @@ class UserService(CRUDService):
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
 
         home = data.get('home') or user['home']
+        has_home = home != '/nonexistent'
         # root user (uid 0) is an exception to the rule
         if data.get('sshpubkey') and not home.startswith('/mnt') and user['uid'] != 0:
             verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
@@ -333,8 +334,9 @@ class UserService(CRUDService):
 
         # Copy the home directory if it changed
         if (
+            has_home and
             'home' in data and
-            data['home'] not in (user['home'], '/nonexistent') and
+            data['home'] != user['home'] and
             not data['home'].startswith(f'{user["home"]}/')
         ):
             home_copy = True
@@ -382,7 +384,7 @@ class UserService(CRUDService):
                 set_home_mode()
 
             asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
-        else:
+        elif has_home:
             set_home_mode()
 
         user.pop('sshpubkey', None)
