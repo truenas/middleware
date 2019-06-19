@@ -33,7 +33,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 
-from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.directoryservice import models
 from freenasUI.middleware.client import client
