@@ -333,14 +333,15 @@ class VolumeManagerForm(VolumeMixin, Form):
         if not add:
             bulk.append(["service.start", [["syslogd"]]])
             bulk.append(["service.restart", [["system_datasets"]]])
-        with client as c:
-            c.call("core.bulk", "core.bulk", bulk)
         # For scrub cronjob
-        notifier().restart("cron")
+        bulk.append(["service.restart", [["cron"]]])
 
         # restart smartd to enable monitoring for any new drives added
         if (services.objects.get(srv_service='smartd').srv_enable):
-            notifier().restart("smartd", onetime=True)
+            bulk.append(["service.restart", [["smartd"]]])
+
+        with client as c:
+            c.call("core.bulk", "core.bulk", bulk)
 
         # ModelForm compatibility layer for API framework
         self.instance = volume
@@ -755,9 +756,10 @@ class ZFSVolumeWizardForm(Form):
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
-        notifier().reload("disk")
-        # For scrub cronjob
-        notifier().restart("cron")
+        bulk = [["service.reload", [["disk"]]],
+                ["service.restart", [["cron"]]]]
+        with client as c:
+            c.call("core.bulk", "core.bulk", bulk)
         super(ZFSVolumeWizardForm, self).done(request, events)
 
 
