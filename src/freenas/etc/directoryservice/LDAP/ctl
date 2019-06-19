@@ -107,7 +107,7 @@ ldapctl_start()
 		failover_status=$(${notifier} call notifier.failover_status)
 	fi
 
-	if [ \(${syspool} != "freenas-boot"\) -a \( ${failover_status} == "BACKUP" \) ]; then
+	if [ ${syspool} != "freenas-boot" ] && [ ${failover_status} == "BACKUP" ]; then
 		return 0
 	fi
 
