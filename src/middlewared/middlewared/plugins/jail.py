@@ -359,7 +359,7 @@ class JailService(CRUDService):
     @private
     def check_dataset_existence(self):
         try:
-            IOCCheck()
+            IOCCheck(migrate=True)
         except ioc_exceptions.PoolNotActivated as e:
             raise CallError(e, errno=errno.ENOENT)
 
