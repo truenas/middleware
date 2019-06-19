@@ -114,13 +114,30 @@ def test_06_add_transmision_plugins():
 
 
 @to_skip
-def test_07_verify_transmision_jail_creation():
+def test_07_verify_transmision_plugin_job_is_successfull():
     while True:
         job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
         if job_status['state'] in ('RUNNING', 'WAITING'):
             sleep(3)
         else:
-            results = GET('/jail/')
-            assert results.status_code == 200, results.text
-            assert len(results.json()) > 0, job_status
+            assert job_status['state'] == 'SUCCESS', str(job_status)
             break
+
+
+def test_08_verify_transmission_id_jail_exist():
+    results = GET('/jail/?id=transmission')
+    assert results.status_code == 200, results.text
+    assert len(results.json()) > 0, results.text
+
+
+def test_09_get_installed_plugin_list_with_want_cache():
+    global results
+    payload = {
+        "resource": "PLUGIN",
+        "remote": False,
+        "want_cache": True
+    }
+    results = POST("/jail/list_resource/", payload).json()
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+    assert len(results.json()) > 0, results.text
