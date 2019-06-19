@@ -343,6 +343,9 @@ class Time(Str):
             except TypeError:
                 raise ValueError('Time should be in 24 hour format like "18:00"')
 
+    def validate(self, value):
+        return super().validate(str(value))
+
 
 class UnixPerm(Str):
 
