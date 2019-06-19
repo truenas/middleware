@@ -196,7 +196,6 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
     ad_kerberos_principal = forms.ChoiceField(
         label=models.ActiveDirectory._meta.get_field('ad_kerberos_principal').verbose_name,
         required=False,
-        choices=choices.KERBEROS_PRINCIPAL_CHOICES(),
         help_text=_(
             "Kerberos principal to use for AD-related UI and middleware operations. "
             "Populated with exiting  principals from the system keytab. "
@@ -249,6 +248,10 @@ class ActiveDirectoryForm(MiddlewareModelForm, ModelForm):
                 self.fields['ad_netbiosname_b'].initial = ad['netbiosname_b']
             else:
                 del self.fields['ad_netbiosname_b']
+
+            self.fields['ad_kerberos_principal'].choices = [
+                (i, i) for i in c.call('kerberos.keytab.kerberos_principal_choices')
+            ]
 
     def save(self):
         try:
@@ -303,7 +306,6 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
     ldap_kerberos_principal = forms.ChoiceField(
         label=models.LDAP._meta.get_field('ldap_kerberos_principal').verbose_name,
         required=False,
-        choices=choices.KERBEROS_PRINCIPAL_CHOICES(),
         help_text=_("Kerberos principal to use for LDAP-related operations."),
         initial=''
     )
@@ -342,6 +344,11 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(LDAPForm, self).__init__(*args, **kwargs)
+
+        with client as c:
+            self.fields['ldap_kerberos_principal'].choices = [
+                (i, i) for i in c.call('kerberos.keytab.kerberos_principal_choices')
+            ]
 
     def save(self):
         try:
