@@ -1255,7 +1255,8 @@ class UPS(Model):
     ups_shutdowncmd = models.CharField(
         max_length=255,
         verbose_name=_("Shutdown Command"),
-        default='/sbin/shutdown -p now',
+        null=True,
+        blank=True,
         help_text=_(
             "The command used to shutdown the server. You can use "
             "a custom command here to perform other tasks before shutdown."
