@@ -676,7 +676,10 @@ class JailService(CRUDService):
                 for b in official_branches.json()
             ]
         else:
-            resource_list = iocage.list(resource)
+            resource_list = [
+                {k: v if v != '-' else None for k, v in zip(('jid', 'name', 'state', 'release', 'ip4'), jail_data)}
+                for jail_data in iocage.list(resource)
+            ]
 
         return resource_list
 
