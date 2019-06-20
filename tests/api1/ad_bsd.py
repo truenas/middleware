@@ -63,6 +63,7 @@ def test_03_checking_active_directory():
     assert results.json()["ad_enable"] is True, results.text
     sleep(1)
 
+
 def test_04_enabling_smb_service():
     payload = {"cifs_srv_description": "Test FreeNAS Server",
                "cifs_srv_guest": "nobody",
@@ -182,6 +183,7 @@ def test_18_Unmounting_SMB():
 
 
 # Update tests
+@bsd_host_cfg
 @ad_test_cfg
 def test_19_Mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W AD01 ' % ip
@@ -230,6 +232,7 @@ def test_24_Deleting_SMB_file_2_2():
     assert results['result'] is True, results['output']
 
 
+@bsd_host_cfg
 @ad_test_cfg
 def test_25_Unmounting_SMB():
     results = SSH_TEST('umount "%s"' % MOUNTPOINT,
