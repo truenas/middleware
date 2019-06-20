@@ -155,7 +155,7 @@ class UPSService(SystemServiceService):
             Str('port'),
             Str('remotehost'),
             Str('shutdown', enum=['LOWBATT', 'BATT']),
-            Str('shutdowncmd', empty=False),
+            Str('shutdowncmd', null=True),
             Str('subject'),
             List('toemail', items=[Str('email', validators=[Email()])]),
             update=True
