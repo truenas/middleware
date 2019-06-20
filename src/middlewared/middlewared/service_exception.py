@@ -104,5 +104,5 @@ def adapt_exception(e):
 
 
 class MatchNotFound(IndexError):
-    """We be raised when a GET call is issued and there is no matching id"""
+    """Raised when there is no matching id eg: filter_utils/datastore.query"""
     pass

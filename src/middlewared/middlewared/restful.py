@@ -535,12 +535,7 @@ class Resource(object):
                     'errno': errno,
                 })
             resp = web.Response(status=422)
-        except MatchNotFound as e:
-            resp = web.Response(status=404)
-            result = {
-                'message': str(e),
-                'traceback': ''.join(traceback.format_exc()),
-            }
+
         except Exception as e:
             adapted = adapt_exception(e)
             if adapted:
@@ -550,11 +545,17 @@ class Resource(object):
                     'errno': adapted.errno,
                 }
             else:
-                resp = web.Response(status=500)
-                result = {
-                    'message': str(e),
-                    'traceback': ''.join(traceback.format_exc()),
-                }
+                if isinstance(e, (MatchNotFound,)):
+                    resp = web.Response(status=404)
+                    result = {
+                        'message': str(e),
+                    }
+                else:
+                    resp = web.Response(status=500)
+                    result = {
+                        'message': str(e),
+                        'traceback': ''.join(traceback.format_exc()),
+                    }
 
         if isinstance(result, types.GeneratorType):
             result = list(result)
