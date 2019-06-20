@@ -305,8 +305,8 @@ class PoolService(CRUDService):
             await self.middleware.call('zfs.pool.scrub', pool['name'], action)
         )
 
-    @accepts()
-    async def filesystem_choices(self):
+    @accepts(List('types', items=[Str('type', enum=['FILESYSTEM', 'VOLUME'])], default=['FILESYSTEM', 'VOLUME']))
+    async def filesystem_choices(self, types):
         """
         Returns all available datasets, except system datasets.
 
@@ -321,6 +321,16 @@ class PoolService(CRUDService):
                 "method": "pool.filesystem_choices",
                 "params": []
             }
+
+          Get only filesystems (exclude volumes).
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.filesystem_choices",
+                "params": [["FILESYSTEM"]]
+            }
         """
         vol_names = [vol['name'] for vol in (await self.query())]
         return [
@@ -328,9 +338,10 @@ class PoolService(CRUDService):
                 'zfs.dataset.query',
                 [
                     ('name', 'rnin', '.system'),
-                    ('pool', 'in', vol_names)
+                    ('pool', 'in', vol_names),
+                    ('type', 'in', types),
                 ],
-                {'select': ['name', 'pool']}
+                {'select': ['name', 'pool', 'type']},
             )
         ]
 
