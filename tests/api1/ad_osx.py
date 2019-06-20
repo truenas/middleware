@@ -237,8 +237,11 @@ def test_24_Removing_SMB_mountpoint():
 
 # Disable Active Directory Directory
 @ad_test_cfg
-def test_25_Disabling_Active_Directory():
+def test_25_Disabling_Active_Directory_and_clear_kerberos_principal():
     payload = {
+        "ad_netbiosname": BRIDGEHOST,
+        "ad_idmap_backend": "ad",
+        "ad_kerberos_principal": "",
         "ad_enable": False
     }
     results = PUT("/directoryservice/activedirectory/1/", payload)
