@@ -131,6 +131,7 @@ def test_08_looking_transmission_jail_id_is_exist():
     assert len(results.json()) > 0, results.text
 
 
+@to_skip
 def test_09_verify_transmission_id_jail_exist():
     global results
     results = GET('/jail/?id=transmission')
@@ -138,6 +139,7 @@ def test_09_verify_transmission_id_jail_exist():
     assert len(results.json()) > 0, results.text
 
 
+@to_skip
 def test_10_store_transmission_jail_info():
     assert len(results.json()) > 0, results.text
     global transmission_info
@@ -152,6 +154,7 @@ def test_10_store_transmission_jail_info():
     }
 
 
+@to_skip
 def test_11_get_installed_plugin_list_with_want_cache():
     global results
     payload = {
@@ -165,6 +168,7 @@ def test_11_get_installed_plugin_list_with_want_cache():
     assert len(results.json()) > 0, results.text
 
 
+@to_skip
 @pytest.mark.parametrize('data', [1, 2, 3, 4, 5, 6])
 def test_12_verify_transmission_plugin_info_value_with_jail_info_value_(data):
     for plugin_list in results.json():
@@ -241,7 +245,7 @@ def test_18_verify_transmission_is_not_in_the_installed_plugin_list():
 
 
 @to_skip
-def test_19_looking_transmission_jail_id_is_missing():
+def test_19_looking_transmission_jail_id_is_delete():
     results = GET('/jail/id/transmission/')
     assert results.status_code == 200, results.text
     assert len(results.json()) == 0, results.text
