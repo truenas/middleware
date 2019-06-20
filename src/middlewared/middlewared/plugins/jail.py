@@ -344,7 +344,7 @@ class JailService(CRUDService):
                         'Please Enter two valid and different '
                         f'space/comma-delimited MAC addresses for {key}.'
                     )
-        if options['uuid']:
+        if options.get('uuid'):
             valid = True if re.match(
                 r"^[a-zA-Z0-9\._-]+$", options['uuid']
             ) else False
