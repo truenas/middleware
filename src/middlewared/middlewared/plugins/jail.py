@@ -12,6 +12,7 @@ import errno
 
 import iocage_lib.iocage as ioc
 import iocage_lib.ioc_exceptions as ioc_exceptions
+import iocage_lib.ioc_common as ioc_common
 from iocage_lib.ioc_check import IOCCheck
 from iocage_lib.ioc_clean import IOCClean
 from iocage_lib.ioc_image import IOCImage
@@ -560,8 +561,7 @@ class JailService(CRUDService):
                     except KeyError:
                         pass
 
-                resource_list = iocage.fetch(list=True, plugins=True,
-                                             header=False, branch=branch)
+                resource_list = iocage.fetch(list=True, plugins=True, header=False, branch=branch)
                 try:
                     plugins_versions_data = self.middleware.call_sync('cache.get', 'iocage_plugin_versions')
                 except KeyError:
@@ -606,16 +606,22 @@ class JailService(CRUDService):
                     index_fd = open(index_path, 'r')
                     index_json = json.load(index_fd)
 
-            for plugin in resource_list:
-                for i, elem in enumerate(plugin):
-                    # iocage returns - for None
-                    plugin[i] = elem if elem != "-" else None
+            for index, plugin in enumerate(resource_list):
 
                 if remote:
-                    plugin_version = plugins_versions_data.get(plugin[2], {}).get('version', 'N/A')
-                    pv = [plugin_version, '1' if plugin_version != 'N/A' else plugin_version]
+                    # In case of remote, "plugin" is going to be a dictionary
+                    plugin.update({
+                        k: plugins_versions_data.get(plugin['plugin'], {}).get(k, 'N/A')
+                        for k in ('version', 'revision', 'epoch')
+                    })
                 else:
-                    # plugin[1] is the UUID
+                    # "plugin" is a list which we will convert to a dictionary for readability
+                    plugin_dict = {
+                        k: v if v != '-' else None
+                        for k, v in zip((
+                            'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4', 'ip6', 'template', 'admin_portal'
+                        ), plugin)
+                    }
                     plugin_output = pathlib.Path(
                         f'{iocroot}/jails/{plugin[1]}/root/root/PLUGIN_INFO'
                     )
@@ -626,12 +632,14 @@ class JailService(CRUDService):
                                 '\n') if x
                         ]]
                     else:
-                        plugin_info = [None]
+                        plugin_info = None
 
-                    pv = self.get_local_plugin_version(
-                        plugin[1], index_json, iocroot) + plugin_info
+                    plugin_dict.update({
+                        'plugin_info': plugin_info,
+                        **self.get_local_plugin_version(plugin_dict['name'], index_json, iocroot)
+                    })
 
-                resource_list[resource_list.index(plugin)] = plugin + pv
+                    resource_list[index] = plugin_dict
 
             if remote:
                 self.middleware.call_sync(
@@ -1099,13 +1107,14 @@ class JailService(CRUDService):
         Checks the primary_pkg key in the INDEX with the pkg version
         inside the jail.
         """
+        version = {k: 'N/A' for k in ('version', 'revision', 'epoch')}
+
         if index_json is None:
-            return ['N/A', 'N/A']
+            return version
 
         try:
             base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
             primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
-            version = ['N/A', 'N/A']
 
             # Since these are plugins, we don't want to spin them up just to
             # check a pkg, directly accessing the db is best in this case.
@@ -1120,10 +1129,10 @@ class JailService(CRUDService):
                     row[2] = row[2].split('/', 1)[-1]
 
                 if primary_pkg == row[1] or primary_pkg == row[2]:
-                    version = [row[3], '1']
+                    version = ioc_common.parse_package_name(f'{plugin}-{row[3]}')
                     break
         except (KeyError, sqlite3.OperationalError):
-            version = ['N/A', 'N/A']
+            pass
 
         return version
 
