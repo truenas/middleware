@@ -124,14 +124,21 @@ def test_07_verify_transmision_plugin_job_is_successfull():
             break
 
 
-def test_08_verify_transmission_id_jail_exist():
+@to_skip
+def test_08_looking_transmission_jail_id_is_exist():
+    results = GET('/jail/id/transmission/')
+    assert results.status_code == 200, results.text
+    assert len(results.json()) > 0, results.text
+
+
+def test_09_verify_transmission_id_jail_exist():
     global results
     results = GET('/jail/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
-def test_09_store_transmission_jail_info():
+def test_10_store_transmission_jail_info():
     assert len(results.json()) > 0, results.text
     global transmission_info
     info = results.json()[0]
@@ -145,7 +152,7 @@ def test_09_store_transmission_jail_info():
     }
 
 
-def test_10_get_installed_plugin_list_with_want_cache():
+def test_11_get_installed_plugin_list_with_want_cache():
     global results
     payload = {
         "resource": "PLUGIN",
@@ -159,7 +166,7 @@ def test_10_get_installed_plugin_list_with_want_cache():
 
 
 @pytest.mark.parametrize('data', [1, 2, 3, 4, 5, 6])
-def test_10_verify_transmission_plugin_info_value_with_jail_info_value_(data):
+def test_12_verify_transmission_plugin_info_value_with_jail_info_value_(data):
     for plugin_list in results.json():
         if 'transmission' in plugin_list:
             assert plugin_list[data] == transmission_info[data], plugin_list
@@ -169,7 +176,7 @@ def test_10_verify_transmission_plugin_info_value_with_jail_info_value_(data):
 
 
 @to_skip
-def test_11_get_list_of_available_plugins_with_want_cache():
+def test_13_get_list_of_available_plugins_with_want_cache():
     global results
     payload = {
         'resource': 'PLUGIN',
@@ -183,7 +190,7 @@ def test_11_get_list_of_available_plugins_with_want_cache():
 
 @to_skip
 @pytest.mark.parametrize('plugin', plugins_list)
-def test_12_verify_available_plugin_with_want_cache_(plugin):
+def test_14_verify_available_plugin_with_want_cache_(plugin):
     for plugin_info in results.json():
         if plugin in plugin_info:
             assert isinstance(plugin_info, list), results.text
@@ -191,12 +198,32 @@ def test_12_verify_available_plugin_with_want_cache_(plugin):
 
 
 @to_skip
-def test_13_delete_transmission_plugin():
+def test_15_stop_transmission_jail():
+    global results
+    payload = {
+        "jail": "transmission",
+        "force": True
+    }
+    results = POST('/jail/stop/', payload)
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_16_start_transmission_jail():
+    global results
+    payload = "transmission"
+    results = POST('/jail/start/', payload)
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_17_delete_transmission_plugin():
     results = DELETE('/jail/id/transmission/')
     assert results.status_code == 200, results.text
 
 
-def test_14_verify_transmission_is_not_in_the_installed_plugin_list():
+@to_skip
+def test_18_verify_transmission_is_not_in_the_installed_plugin_list():
     global results
     payload = {
         "resource": "PLUGIN",
@@ -211,3 +238,10 @@ def test_14_verify_transmission_is_not_in_the_installed_plugin_list():
             break
     else:
         assert True, results.json()
+
+
+@to_skip
+def test_19_looking_transmission_jail_id_is_missing():
+    results = GET('/jail/id/transmission/')
+    assert results.status_code == 200, results.text
+    assert len(results.json()) == 0, results.text
