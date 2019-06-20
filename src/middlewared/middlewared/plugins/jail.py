@@ -594,14 +594,14 @@ class JailService(CRUDService):
                 pool = IOCJson().json_get_value("pool")
                 iocroot = IOCJson(pool).json_get_value("iocroot")
                 index_path = f'{iocroot}/.plugin_index/INDEX'
+                plugin_jails = {
+                    j['host_hostuuid']: j for j in self.middleware.call_sync(
+                        'jail.query', [['type', 'in', ['plugin', 'pluginv2']]]
+                    )
+                }
 
                 if not pathlib.Path(index_path).is_file():
                     index_json = None
-
-                    for plugin in resource_list:
-                        plugin += ['N/A', 'N/A']
-
-                    return resource_list
                 else:
                     index_fd = open(index_path, 'r')
                     index_json = json.load(index_fd)
@@ -634,9 +634,14 @@ class JailService(CRUDService):
                     else:
                         plugin_info = None
 
+                    plugin_name = plugin_jails[plugin_dict['name']]['plugin_name']
                     plugin_dict.update({
                         'plugin_info': plugin_info,
-                        **self.get_local_plugin_version(plugin_dict['name'], index_json, iocroot)
+                        'plugin': plugin_name if plugin_name != 'none' else plugin_dict['name'],
+                        **self.get_local_plugin_version(
+                            plugin_name if plugin_name != 'none' else plugin_dict['name'],
+                            index_json, iocroot, plugin_dict['name']
+                        )
                     })
 
                     resource_list[index] = plugin_dict
@@ -1105,7 +1110,7 @@ class JailService(CRUDService):
         return True
 
     @private
-    def get_local_plugin_version(self, plugin, index_json, iocroot):
+    def get_local_plugin_version(self, plugin, index_json, iocroot, jail_name):
         """
         Checks the primary_pkg key in the INDEX with the pkg version
         inside the jail.
@@ -1122,7 +1127,7 @@ class JailService(CRUDService):
             # Since these are plugins, we don't want to spin them up just to
             # check a pkg, directly accessing the db is best in this case.
             db_rows = self.read_plugin_pkg_db(
-                f'{iocroot}/jails/{plugin}/root/var/db/pkg/local.sqlite',
+                f'{iocroot}/jails/{jail_name}/root/var/db/pkg/local.sqlite',
                 primary_pkg)
 
             for row in db_rows:
