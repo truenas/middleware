@@ -944,13 +944,24 @@ class VMService(CRUDService):
         else:
             return update_devices
 
-    @accepts(Int('id'))
-    async def do_delete(self, id):
+    @accepts(Int('id'), Bool('disks'))
+    async def do_delete(self, id, disks):
         """Delete a VM."""
         status = await self.status(id)
         if isinstance(status, dict):
             if status.get('state') == 'RUNNING':
                 await self.stop(id)
+        if disks:
+            devices = await self.middleware.call('vm.device.query', [
+                ('vm', '=', id)
+            ])
+
+            for device in devices:
+                if device['dtype'] == 'DISK':
+                    disk_name = device['attributes']['path'].rsplit(
+                        '/dev/zvol/'
+                    )[-1]
+                    await self.middleware.call('zfs.dataset.delete', disk_name)
         return await self.middleware.call('datastore.delete', 'vm.vm', id)
 
     @item_method
