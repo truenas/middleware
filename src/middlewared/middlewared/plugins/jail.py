@@ -353,7 +353,7 @@ class JailService(CRUDService):
                 verrors.add(
                     'options.uuid',
                     f'Invalid character in {options["uuid"]}. '
-                    'Valid options are alphanumeric characters, '
+                    'Alphanumeric, period (.), underscore (_), '
                     'a period, underscore or dash.'
                 )
 
