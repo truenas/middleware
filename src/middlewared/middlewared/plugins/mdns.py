@@ -112,48 +112,6 @@ class mDNSObject(object):
         }
 
 
-class mDNSDiscoverObject(mDNSObject):
-    def __init__(self, **kwargs):
-        super(mDNSDiscoverObject, self).__init__(**kwargs)
-        self.regtype = kwargs.get('regtype')
-        self.domain = kwargs.get('domain')
-
-    @property
-    def fullname(self):
-        return "%s.%s.%s" % (
-            self.name.strip('.'),
-            self.regtype.strip('.'),
-            self.domain.strip('.')
-        )
-
-    def to_dict(self):
-        bdict = super(mDNSDiscoverObject, self).to_dict()
-        bdict.update({
-            'type': 'mDNSDiscoverObject',
-            'regtype': self.regtype,
-            'domain': self.domain
-        })
-        return bdict
-
-
-class mDNSServiceObject(mDNSObject):
-    def __init__(self, **kwargs):
-        super(mDNSServiceObject, self).__init__(**kwargs)
-        self.target = kwargs.get('target')
-        self.port = kwargs.get('port')
-        self.text = kwargs.get('text')
-
-    def to_dict(self):
-        bdict = super(mDNSServiceObject, self).to_dict()
-        bdict.update({
-            'type': 'mDNSServiceObject',
-            'target': self.target,
-            'port': self.port,
-            'text': self.text
-        })
-        return bdict
-
-
 class mDNSThread(threading.Thread):
     def __init__(self, **kwargs):
         super(mDNSThread, self).__init__()
@@ -164,103 +122,6 @@ class mDNSThread(threading.Thread):
 
     def active(self, sdRef):
         return (bool(sdRef) and sdRef.fileno() != -1)
-
-
-class ServicesThread(mDNSThread):
-    def __init__(self, **kwargs):
-        super(ServicesThread, self).__init__(**kwargs)
-        self.queue = kwargs.get('queue')
-        self.service_queue = kwargs.get('service_queue')
-        self.finished = threading.Event()
-        self.pipe = os.pipe()
-        self.references = []
-        self.cache = {}
-
-    def to_regtype(self, obj):
-        regtype = None
-
-        if (obj.flags & (kDNSServiceFlagsAdd | kDNSServiceFlagsMoreComing)) \
-           or not (obj.flags & kDNSServiceFlagsAdd):
-            service = obj.name
-            proto = obj.regtype.split('.')[0]
-            regtype = "%s.%s." % (service, proto)
-
-        return regtype
-
-    def on_discover(self, sdRef, flags, interface, error, name, regtype, domain):
-        self.logger.trace("ServicesThread: name=%s flags=0x%08x error=%d", name, flags, error)
-
-        if error != kDNSServiceErr_NoError:
-            return
-
-        obj = mDNSDiscoverObject(
-            sdRef=sdRef,
-            flags=flags,
-            interface=interface,
-            name=name,
-            regtype=regtype,
-            domain=domain
-        )
-
-        if not (obj.flags & kDNSServiceFlagsAdd):
-            self.logger.trace("ServicesThread: remove %s", name)
-            cobj = self.cache.get(obj.fullname)
-            if cobj:
-                if cobj.sdRef in self.references:
-                    self.references.remove(cobj.sdRef)
-                if self.active(cobj.sdRef):
-                    cobj.sdRef.close()
-                del self.cache[obj.fullname]
-        else:
-            self.cache[obj.fullname] = obj
-            self.service_queue.put(obj)
-
-    def run(self):
-        set_thread_name('mdns_services')
-        while True:
-            if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
-                return
-
-            try:
-                obj = self.queue.get(block=True, timeout=self.timeout)
-            except queue.Empty:
-                if self.finished.is_set():
-                    break
-                continue
-
-            regtype = self.to_regtype(obj)
-            if not regtype:
-                continue
-
-            sdRef = pybonjour.DNSServiceBrowse(
-                regtype=regtype,
-                callBack=self.on_discover
-            )
-
-            self.references.append(sdRef)
-            _references = list(filter(self.active, self.references))
-
-            r, w, x = select.select(_references + [self.pipe[0]], [], [])
-            if self.pipe[0] in r:
-                break
-            for ref in r:
-                pybonjour.DNSServiceProcessResult(ref)
-            if not (obj.flags & kDNSServiceFlagsAdd):
-                self.references.remove(sdRef)
-                if self.active(sdRef):
-                    sdRef.close()
-
-            if self.finished.is_set():
-                break
-
-        for ref in self.references:
-            self.references.remove(ref)
-            if self.active(ref):
-                ref.close()
-
-    def cancel(self):
-        self.finished.set()
-        os.write(self.pipe[1], b'42')
 
 
 class mDNSServiceThread(threading.Thread):
@@ -274,28 +135,22 @@ class mDNSServiceThread(threading.Thread):
         self.service = kwargs.get('service')
         self.regtype = kwargs.get('regtype')
         self.port = kwargs.get('port')
-        self.pipe = os.pipe()
         self.finished = threading.Event()
 
     def _register(self, name, regtype, port):
+        """
+        An instance of DNSServiceRef (sdRef) represents an active connection to mdnsd.
+
+        DNSServiceRef class supports the context management protocol, sdRef
+        is closed automatically when block is exited.
+        """
         if not (name and regtype and port):
             return
 
         sdRef = pybonjour.DNSServiceRegister(name=name, regtype=regtype, port=port, callBack=None)
-
-        while True:
-            r, w, x = select.select([sdRef, self.pipe[0]], [], [])
-            if self.pipe[0] in r:
-                break
-
-            for ref in r:
-                pybonjour.DNSServiceProcessResult(ref)
-
-            if self.finished.is_set():
-                break
-
-        # This deregisters service
-        sdRef.close()
+        with sdRef:
+            self.finished.wait()
+            self.logger.trace(f'Unregistering {name} {regtype}')
 
     def register(self):
         if self.hostname and self.regtype and self.port:
@@ -306,14 +161,13 @@ class mDNSServiceThread(threading.Thread):
         try:
             self.register()
         except pybonjour.BonjourError:
-            self.logger.trace("ServiceThread: failed to register '%s', is mdnsd running?", self.service)
+            self.logger.debug("ServiceThread: failed to register '%s', is mdnsd running?", self.service)
 
     def setup(self):
         pass
 
     def cancel(self):
         self.finished.set()
-        os.write(self.pipe[1], b'42')
 
 
 class mDNSServiceSSHThread(mDNSServiceThread):
