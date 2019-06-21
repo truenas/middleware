@@ -517,7 +517,7 @@ class ServiceService(CRUDService):
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'rc')
         await self._service("hostname", "start", quiet=True, **kwargs)
-        await self._service("mdnsd", "restart", quiet=True, **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._restart_collectd(**kwargs)
 
     async def _reload_resolvconf(self, **kwargs):
@@ -895,20 +895,12 @@ class ServiceService(CRUDService):
     async def _reload_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "reload", force=True, **kwargs)
-        await self._service("mdnsd", "restart", **kwargs)
-        # After mdns is restarted we need to reload netatalk to have it rereregister
-        # with mdns. Ticket #7133
-        await self._service("netatalk", "reload", **kwargs)
 
     async def _restart_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("samba_server", "restart", quiet=True, **kwargs)
-        await self._service("mdnsd", "restart", **kwargs)
-        # After mdns is restarted we need to reload netatalk to have it rereregister
-        # with mdns. Ticket #7133
-        await self._service("netatalk", "reload", **kwargs)
 
     async def _start_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
