@@ -109,7 +109,7 @@ class JailService(CRUDService):
                     jails.append(jail)
         except ioc_exceptions.JailMisconfigured as e:
             self.logger.error(e, exc_info=True)
-        except BaseException:
+        except Exception:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
             self.logger.debug('Failed to get list of jails', exc_info=True)
@@ -432,7 +432,7 @@ class JailService(CRUDService):
             else:
                 iocage = ioc.IOCage(skip_jails=skip, jail=jail)
             jail, path = iocage.__check_jail_existence__()
-        except (SystemExit, RuntimeError):
+        except RuntimeError:
             raise CallError(f"jail '{jail}' not found!")
 
         return jail, path, iocage
@@ -785,7 +785,7 @@ class JailService(CRUDService):
                 iocage.stop()
             else:
                 iocage.restart()
-        except BaseException as e:
+        except Exception as e:
             raise CallError(str(e))
 
         return True
@@ -800,7 +800,7 @@ class JailService(CRUDService):
         if not status:
             try:
                 iocage.start()
-            except BaseException as e:
+            except Exception as e:
                 raise CallError(str(e))
 
         return True
@@ -815,7 +815,7 @@ class JailService(CRUDService):
         if status:
             try:
                 iocage.stop(force=force)
-            except BaseException as e:
+            except Exception as e:
                 raise CallError(str(e))
 
             return True
@@ -830,12 +830,12 @@ class JailService(CRUDService):
         if status:
             try:
                 iocage.stop()
-            except BaseException as e:
+            except Exception as e:
                 raise CallError(str(e))
 
         try:
             iocage.start()
-        except BaseException as e:
+        except Exception as e:
             raise CallError(str(e))
 
         return True
@@ -1030,7 +1030,7 @@ class JailService(CRUDService):
             msg = iocage.exec(
                 command, host_user, jail_user, start_jail=True, msg_return=True
             )
-        except BaseException as e:
+        except Exception as e:
             raise CallError(str(e))
 
         return '\n'.join(msg)
@@ -1319,3 +1319,4 @@ async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', JailFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.pre_lock', jail_pool_pre_lock)
     middleware.event_subscribe('system', __event_system)
+    ioc_common.set_interactive(False)
