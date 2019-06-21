@@ -23,7 +23,7 @@ from iocage_lib.ioc_plugin import IOCPlugin
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import CRUDService, job, private, filterable, periodic
+from middlewared.service import CRUDService, job, private, filterable, periodic, item_method
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import IpInUse, MACAddr
@@ -214,6 +214,7 @@ class JailService(CRUDService):
 
         return True
 
+    @item_method
     @accepts(
         Str('source_jail', empty=False),
         Dict(
@@ -224,7 +225,8 @@ class JailService(CRUDService):
             List('props', default=[]),
         )
     )
-    def clone(self, source_jail, options):
+    @job(lock=lambda args: f'clone_jail:{args[-2]}')
+    def clone(self, job, source_jail, options):
         verrors = ValidationErrors()
         try:
             self.check_jail_existence(source_jail, skip=False)
@@ -248,11 +250,15 @@ class JailService(CRUDService):
         verrors = self.common_validation(verrors, options)
         verrors.check()
 
+        job.set_progress(25, 'Initial validation complete.')
+
         ioc.IOCage(jail=source_jail, skip_jails=True).create(
             source_jail, options['props'], _uuid=options['uuid'], thickjail=options['thickjail'], clone=True
         )
 
-        return self._get_instance(options['uuid'])
+        job.set_progress(100, 'Jail has been successfully cloned.')
+
+        return self.middleware.call_sync('jail._get_instance', options['uuid'])
 
     @private
     def validate_ips(self, verrors, options, schema='options.props', exclude=None):
