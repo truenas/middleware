@@ -442,12 +442,17 @@ class SMBService(SystemServiceService):
                     if deluser.returncode != 0:
                         raise CallError(f'Failed to delete user {entry["username"]}: {deluser.stderr.decode()}')
 
-    @private
+    @accepts(
+        Str('parm', required=True),
+        Str('section', default='GLOBAL'),
+    )
     def getparm(self, parm, section):
         """
-        Get a parameter from the smb4.conf file. This is more reliable than
-        'testparm --parameter-name'. testparm will fail in a variety of
-        conditions without returning the parameter's value.
+        Get a parameter from the running smb4.conf file.
+
+        `parm` - smb.conf parameter name
+
+        `section` - section of smb.conf file. Default is "global".
         """
         try:
             res = param.LoadParm('/usr/local/etc/smb4.conf').get(parm, section)
