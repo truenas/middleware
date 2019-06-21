@@ -95,23 +95,6 @@ class mDNSDaemonMonitor(threading.Thread):
         return p.returncode == 0
 
 
-class mDNSObject(object):
-    def __init__(self, **kwargs):
-        self.sdRef = kwargs.get('sdRef')
-        self.flags = kwargs.get('flags')
-        self.interface = kwargs.get('interface')
-        self.name = kwargs.get('name')
-
-    def to_dict(self):
-        return {
-            'type': 'mDNSObject',
-            'sdRef': memoryview(self.sdRef).tobytes().decode('utf-8'),
-            'flags': self.flags,
-            'interface': self.interface,
-            'name': self.name
-        }
-
-
 class mDNSThread(threading.Thread):
     def __init__(self, **kwargs):
         super(mDNSThread, self).__init__()
