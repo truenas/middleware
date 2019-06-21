@@ -33,17 +33,27 @@ jails_directory() { echo "Jails"; }
 jails_func()
 {
 
-	section_header "jls"
-	jls
-	section_footer
+	# Only run on FreeNAS.
+	# Only run this on TrueNAS that is licensed for jails.
+	# We do this because everytime a debug is captured
+	# iocage list and iocage debug autocreate the datasets.
+	# This causes mass confusion to customers and ultimately
+	# ends up causing a support ticket.
+	jails="$(midclt call system.feature_enabled JAILS)"
 
-	section_header "jls -v"
-	jls -v
-	section_footer
+	if [ "$jails" = "True" ]; then
+		section_header "jls"
+		jls
+		section_footer
 
-	section_header "iocage list"
-	iocage list
-	section_footer
+		section_header "jls -v"
+		jls -v
+		section_footer
 
-	iocage debug -d "$FREENAS_DEBUG_DIRECTORY/Jails/iocage-debug"
+		section_header "iocage list"
+		iocage list
+		section_footer
+
+		iocage debug -d "$FREENAS_DEBUG_DIRECTORY/Jails/iocage-debug"
+	fi
 }
