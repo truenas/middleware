@@ -120,7 +120,7 @@ class JailService(CRUDService):
             "options",
             Str("release", required=True),
             Str("template"),
-            Str("pkglist"),
+            List("pkglist", default=[], items=[Str("pkg", empty=False)]),
             Str("uuid", required=True),
             Bool("basejail", default=False),
             Bool("empty", default=False),
@@ -186,9 +186,7 @@ class JailService(CRUDService):
             release = template
 
         if (
-                not os.path.isdir(f'{iocroot}/releases/{release}') and
-                not template and
-                not empty
+            not os.path.isdir(f'{iocroot}/releases/{release}') and not template and not empty
         ):
             job.set_progress(50, f'{release} missing, calling fetch')
             self.middleware.call_sync(
