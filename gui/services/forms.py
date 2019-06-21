@@ -32,7 +32,6 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.system import activedirectory_enabled, ldap_enabled
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
