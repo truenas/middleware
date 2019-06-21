@@ -236,6 +236,7 @@ class Job(object):
             'description': None,
             'extra': None,
         }
+        self.internal_data = {}
         self.time_started = datetime.now()
         self.time_finished = None
         self.loop = asyncio.get_event_loop()
