@@ -214,6 +214,46 @@ class JailService(CRUDService):
 
         return True
 
+    @accepts(
+        Str('source_jail', empty=False),
+        Dict(
+            'clone_jail',
+            Str('uuid', required=True, empty=False),
+            List('pkglist', default=[], items=[Str('pkg', empty=False)]),
+            Bool('thickjail', default=False),
+            List('props', default=[]),
+        )
+    )
+    def clone(self, source_jail, options):
+        verrors = ValidationErrors()
+        try:
+            self.check_jail_existence(source_jail, skip=False)
+        except CallError:
+            verrors.add(
+                'source_jail',
+                f'{source_jail} does not exist.', errno.ENOENT
+            )
+        else:
+            try:
+                self.check_jail_existence(options['uuid'], skip=False)
+            except CallError:
+                pass
+            else:
+                verrors.add(
+                    'clone_jail.uuid',
+                    f'Jail with "{options["uuid"]}" uuid already exists.', errno.EEXIST
+                )
+
+        verrors.check()
+        verrors = self.common_validation(verrors, options)
+        verrors.check()
+
+        ioc.IOCage(jail=source_jail, skip_jails=True).create(
+            source_jail, options['props'], _uuid=options['uuid'], thickjail=options['thickjail'], clone=True
+        )
+
+        return self._get_instance(options['uuid'])
+
     @private
     def validate_ips(self, verrors, options, schema='options.props', exclude=None):
         for item in options['props']:
