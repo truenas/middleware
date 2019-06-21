@@ -1,5 +1,5 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Ref, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Error, Int, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
@@ -195,14 +195,14 @@ class CredentialsService(CRUDService):
         datastore = "system.cloudcredentials"
 
     @accepts(Dict(
-        "cloud_sync_credentials",
-        Str("name"),
-        Str("provider"),
+        "cloud_sync_credentials_create",
+        Str("name", required=True),
+        Str("provider", required=True),
         Dict("attributes", additional_attrs=True),
         register=True,
     ))
     async def do_create(self, data):
-        await self._validate("cloud_sync_credentials", data)
+        await self._validate("cloud_sync_credentials_create", data)
 
         data["id"] = await self.middleware.call(
             "datastore.insert",
@@ -211,9 +211,16 @@ class CredentialsService(CRUDService):
         )
         return data
 
-    @accepts(Int("id"), Ref("cloud_sync_credentials"))
+    @accepts(
+        Int("id"),
+        Patch(
+            "cloud_sync_credentials_create",
+            "cloud_sync_credentials_update",
+            ("attr", {"update": True})
+        )
+    )
     async def do_update(self, id, data):
-        await self._validate("cloud_sync_credentials", data, id)
+        await self._validate("cloud_sync_credentials_update", data, id)
 
         await self.middleware.call(
             "datastore.update",
@@ -237,15 +244,17 @@ class CredentialsService(CRUDService):
     async def _validate(self, schema_name, data, id=None):
         verrors = ValidationErrors()
 
-        await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
+        if "name" in data:
+            await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
 
-        if data["provider"] not in REMOTES:
-            verrors.add(f"{schema_name}.provider", "Invalid provider")
-        else:
-            provider = REMOTES[data["provider"]]
+        if "provider" in data:
+            if data["provider"] not in REMOTES:
+                verrors.add(f"{schema_name}.provider", "Invalid provider")
+            else:
+                provider = REMOTES[data["provider"]]
 
-            attributes_verrors = validate_attributes(provider.credentials_schema, data)
-            verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
+                attributes_verrors = validate_attributes(provider.credentials_schema, data)
+                verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
         if verrors:
             raise verrors
