@@ -23,7 +23,7 @@ from iocage_lib.ioc_plugin import IOCPlugin
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import CRUDService, job, private, filterable, periodic
+from middlewared.service import CRUDService, job, private, filterable, periodic, item_method
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import IpInUse, MACAddr
@@ -211,6 +211,52 @@ class JailService(CRUDService):
         job.set_progress(100, f'Created: {uuid}')
 
         return True
+
+    @item_method
+    @accepts(
+        Str('source_jail', empty=False),
+        Dict(
+            'clone_jail',
+            Str('uuid', required=True, empty=False),
+            List('pkglist', default=[], items=[Str('pkg', empty=False)]),
+            Bool('thickjail', default=False),
+            List('props', default=[]),
+        )
+    )
+    @job(lock=lambda args: f'clone_jail:{args[-2]}')
+    def clone(self, job, source_jail, options):
+        verrors = ValidationErrors()
+        try:
+            self.check_jail_existence(source_jail, skip=False)
+        except CallError:
+            verrors.add(
+                'source_jail',
+                f'{source_jail} does not exist.', errno.ENOENT
+            )
+        else:
+            try:
+                self.check_jail_existence(options['uuid'], skip=False)
+            except CallError:
+                pass
+            else:
+                verrors.add(
+                    'clone_jail.uuid',
+                    f'Jail with "{options["uuid"]}" uuid already exists.', errno.EEXIST
+                )
+
+        verrors.check()
+        verrors = self.common_validation(verrors, options)
+        verrors.check()
+
+        job.set_progress(25, 'Initial validation complete.')
+
+        ioc.IOCage(jail=source_jail, skip_jails=True).create(
+            source_jail, options['props'], _uuid=options['uuid'], thickjail=options['thickjail'], clone=True
+        )
+
+        job.set_progress(100, 'Jail has been successfully cloned.')
+
+        return self.middleware.call_sync('jail._get_instance', options['uuid'])
 
     @private
     def validate_ips(self, verrors, options, schema='options.props', exclude=None):
