@@ -31,7 +31,7 @@ def test_02_verify_jail_pool():
 
 
 @to_skip
-def test_03_verify_list_of_instaled_plugin_job_id():
+def test_03_get_list_of_instaled_plugin_job_id():
     global JOB_ID
     payload = {
         'resource': 'PLUGIN'
