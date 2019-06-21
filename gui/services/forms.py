@@ -135,18 +135,6 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
         else:
             self.fields['cifs_srv_bindip'].initial = ('')
 
-        if activedirectory_enabled():
-            self.initial['cifs_srv_localmaster'] = False
-            self.fields['cifs_srv_localmaster'].widget.attrs['disabled'] = 'disabled'
-            self.initial['cifs_srv_timeserver'] = False
-            self.fields['cifs_srv_timeserver'].widget.attrs['disabled'] = 'disabled'
-            self.initial['cifs_srv_domain_logons'] = False
-            self.fields['cifs_srv_domain_logons'].widget.attrs['disabled'] = 'disabled'
-
-        elif ldap_enabled():
-            self.initial['cifs_srv_domain_logons'] = True
-            self.fields['cifs_srv_domain_logons'].widget.attrs['readonly'] = True
-
         _n = notifier()
         if not _n.is_freenas():
             if not _n.failover_licensed():

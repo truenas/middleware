@@ -127,14 +127,6 @@ class CIFS(Model):
         verbose_name=_("Local Master"),
         default=False,
     )
-    cifs_srv_domain_logons = models.BooleanField(
-        verbose_name=_("Domain logons"),
-        default=False,
-    )
-    cifs_srv_timeserver = models.BooleanField(
-        verbose_name=_("Time Server for Domain"),
-        default=False,
-    )
     cifs_srv_guest = UserField(
         max_length=120,
         default="nobody",
@@ -175,22 +167,11 @@ class CIFS(Model):
         help_text=_("Use this option to override the directory creation "
                     "mask (0777 by default)."),
     )
-    cifs_srv_nullpw = models.BooleanField(
-        verbose_name=_("Allow Empty Password"),
-        default=False,
-    )
     cifs_srv_smb_options = models.TextField(
         verbose_name=_("Auxiliary parameters"),
         blank=True,
         help_text=_("These parameters are added to the [global] section of "
                     "smb.conf"),
-    )
-    cifs_srv_unixext = models.BooleanField(
-        verbose_name=_("Unix Extensions"),
-        default=True,
-        help_text=_("These extensions enable Samba to better serve UNIX "
-                    "SMB clients by supporting features such as symbolic "
-                    "links, hard links, etc..."),
     )
     cifs_srv_aio_enable = models.BooleanField(
         default=False,
@@ -219,36 +200,6 @@ class CIFS(Model):
                     "OSX finder in particular) to automatically discover the "
                     "SMB shares on the system similar to the Computer "
                     "Browser service in Windows."),
-    )
-    cifs_srv_hostlookup = models.BooleanField(
-        verbose_name=_("Hostnames lookups"),
-        default=True,
-        help_text=_("Specifies whether Samba should use (expensive) "
-                    "hostname lookups or use IP addresses instead. An "
-                    "example place where hostname lookups are currently used "
-                    "is when checking the hosts deny and hosts allow."),
-    )
-    cifs_srv_allow_execute_always = models.BooleanField(
-        verbose_name=_("Allow execute always"),
-        default=True,
-        help_text=_("This boolean parameter controls the behaviour of smbd(8) "
-                    "when receiving a protocol request of \"open for "
-                    "execution\" from a Windows " "client. With Samba 3.6 and "
-                    "older, the execution right in the ACL was not checked, "
-                    "so a client could execute a file even if it did not have "
-                    "execute rights on the file. In Samba 4.0, this has been "
-                    "fixed, so that by default, i.e. when this parameter is "
-                    "set to " "\"False\", \"open for execution\" is now "
-                    "denied when execution " "permissions are not present. If "
-                    "this parameter is set to \"True\", Samba does not check "
-                    "execute permissions on \"open for execution\", thus "
-                    "re-establishing the behavior of Samba 3.6 "),
-    )
-    cifs_srv_obey_pam_restrictions = models.BooleanField(
-        verbose_name=_("Obey pam restrictions"),
-        default=True,
-        help_text=_("This parameter controls whether or not Samba should obey "
-                    "PAM's account and session management directives"),
     )
     cifs_srv_ntlmv1_auth = models.BooleanField(
         verbose_name=_("NTLMv1 auth"),
