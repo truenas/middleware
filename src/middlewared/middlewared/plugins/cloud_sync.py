@@ -214,7 +214,10 @@ async def rclone(middleware, job, cloud_sync):
         if cancelled_error is not None:
             raise cancelled_error
         if proc.returncode != 0:
-            raise ValueError("rclone failed")
+            message = "rclone failed"
+            if "dropbox__restricted_content" in job.internal_data:
+                message = "DropBox restricted content"
+            raise ValueError(message)
 
         await run_script(job, env, cloud_sync["post_script"], "Post-script")
 
@@ -273,16 +276,31 @@ async def run_script_check(job, proc, name):
 
 
 async def rclone_check_progress(job, proc):
+    dropbox__restricted_content = False
     while True:
         read = (await proc.stdout.readline()).decode()
         if read == "":
             break
+        if "failed to open source object: path/restricted_content/" in read:
+            job.internal_data["dropbox__restricted_content"] = True
+            dropbox__restricted_content = True
         job.logs_fd.write(read.encode("utf-8", "ignore"))
         reg = RE_TRANSF.search(read)
         if reg:
             transferred = reg.group(1).strip()
             if not transferred.isdigit():
                 job.set_progress(None, transferred)
+
+    if dropbox__restricted_content:
+        message = "\n" + (
+            "We have detected that your DropBox sync failed due to restricted content being present in one of your\n"
+            "folders. It can be copyrighted content or just default DropBox manual pdf you get in your home directory\n"
+            "after signing up. All your other files were synchronized, but no deletions were performed as\n"
+            "synchronization is considered unsuccessful. Please inspect logs to determine which files are considered\n"
+            "restricted and exclude them from your synchronization. Refer to corresponding User Manual section for\n"
+            "more details.\n"
+        )
+        job.logs_fd.write(message.encode("utf-8", "ignore"))
 
 
 def rclone_encrypt_password(password):
