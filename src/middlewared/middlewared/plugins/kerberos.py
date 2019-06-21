@@ -611,7 +611,7 @@ class KerberosKeytabService(CRUDService):
         try:
             keytab_list = await self._ktutil_list()
         except Exception as e:
-            self.logger.debug('"ktutil list" failed. Generating empty list of kerberos principal choices. Error: %s' % e)
+            self.logger.trace('"ktutil list" failed. Generating empty list of kerberos principal choices. Error: %s' % e)
             return []
 
         kerberos_principals = []
