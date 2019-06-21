@@ -2,17 +2,11 @@ import threading
 import time
 import os
 import pybonjour
-import queue
 import select
 import socket
 import subprocess
 
 from bsd.threading import set_thread_name
-from pybonjour import (
-    kDNSServiceFlagsMoreComing,
-    kDNSServiceFlagsAdd,
-    kDNSServiceErr_NoError
-)
 
 from middlewared.service import Service, private
 
