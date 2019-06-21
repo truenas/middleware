@@ -957,10 +957,10 @@ class VMService(CRUDService):
             ])
 
             for zvol in devices:
-                if not device['attributes']['path'].startswith('/dev/zvol/'):
+                if not zvol['attributes']['path'].startswith('/dev/zvol/'):
                     continue
 
-                disk_name = device['attributes']['path'].rsplit(
+                disk_name = zvol['attributes']['path'].rsplit(
                     '/dev/zvol/'
                 )[-1]
                 await self.middleware.call('pool.dataset.delete', disk_name)
