@@ -33,17 +33,29 @@ jails_directory() { echo "Jails"; }
 jails_func()
 {
 
-	section_header "jls"
-	jls
-	section_footer
+	# We don't need to run this on TrueNAS because it
+	# auto-creates the iocage dataset structure.
+	# This will cause customers to get confused and ultimately
+	# open up a support ticket.
 
-	section_header "jls -v"
-	jls -v
-	section_footer
+	# This disables this section entirely but in 11.3 there 
+	# is an API call to query if the license on TrueNAS is
+	# licensed for jails/plugins. 11.3 will have the proper fix
+	# for only running this section on truenas if the customer
+	# is licensed for jails/plugins.
+	if grep -i 'freenas' /etc/version > /dev/null 2>&1; then
+		section_header "jls"
+		jls
+		section_footer
 
-	section_header "iocage list"
-	iocage list
-	section_footer
+		section_header "jls -v"
+		jls -v
+		section_footer
 
-	iocage debug -d "$FREENAS_DEBUG_DIRECTORY/Jails/iocage-debug"
+		section_header "iocage list"
+		iocage list
+		section_footer
+
+		iocage debug -d "$FREENAS_DEBUG_DIRECTORY/Jails/iocage-debug"
+	fi
 }
