@@ -9,6 +9,7 @@ import pathlib
 import json
 import sqlite3
 import errno
+import re
 
 import iocage_lib.iocage as ioc
 import iocage_lib.ioc_exceptions as ioc_exceptions
@@ -389,6 +390,18 @@ class JailService(CRUDService):
                         'Please Enter two valid and different '
                         f'space/comma-delimited MAC addresses for {key}.'
                     )
+        if options.get('uuid'):
+            valid = True if re.match(
+                r"^[a-zA-Z0-9\._-]+$", options['uuid']
+            ) else False
+
+            if not valid:
+                verrors.add(
+                    'options.uuid',
+                    f'Invalid character in {options["uuid"]}. '
+                    'Alphanumeric, period (.), underscore (_), '
+                    'and dash (-) characters are allowed.'
+                )
 
         return verrors
 
