@@ -266,6 +266,7 @@ class Application(object):
         elif ident in self.__event_sources:
             event_source = self.__event_sources[ident]['event_source']
             await self.middleware.run_in_thread(event_source.cancel)
+            self.__event_sources.pop(ident)
 
     def send_event(self, name, event_type, **kwargs):
         if (
