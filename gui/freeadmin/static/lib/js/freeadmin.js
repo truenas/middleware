@@ -1683,6 +1683,10 @@ require([
                     }
                     input += '</select>';
                 }
+                if (provider == "ONEDRIVE" && property.property == "drive_id")
+                {
+                    input += '<br>Log in to the <a href="https://onedrive.live.com" target="_blank">OneDrive account</a>, copy the string<br>after <b>cid=</b> from the browser address bar,<br>and enter that value as the Drive ID.';
+                }
             }
             if (property.property == "service_account_credentials")
             {
