@@ -129,7 +129,7 @@ def test_09_verify_installed_release():
             break
 
 
-def test_08_create_jail():
+def test_10_create_jail():
     if freeze is True:
         pytest.skip(freeze_msg)
 
@@ -148,7 +148,7 @@ def test_08_create_jail():
     JOB_ID = results.json()
 
 
-def test_09_verify_creation_of_jail():
+def test_11_verify_creation_of_jail():
     global freeze
     global freeze_msg
     if freeze is True:
@@ -173,7 +173,7 @@ def test_09_verify_creation_of_jail():
             break
 
 
-def test_10_verify_iocage_list_with_ssh():
+def test_12_verify_iocage_list_with_ssh():
     if freeze is True:
         pytest.skip(freeze_msg)
     cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.2-RELEASE'
@@ -183,7 +183,7 @@ def test_10_verify_iocage_list_with_ssh():
     assert results['result'] is True, results2['output']
 
 
-def test_11_update_jail_description():
+def test_13_update_jail_description():
     if freeze is True:
         pytest.skip(freeze_msg)
 
@@ -198,7 +198,7 @@ def test_11_update_jail_description():
     JAIL_NAME += '_renamed'
 
 
-def test_12_start_jail():
+def test_14_start_jail():
     global JOB_ID
 
     if freeze is True:
@@ -210,7 +210,7 @@ def test_12_start_jail():
     time.sleep(1)
 
 
-def test_13_verify_jail_started():
+def test_15_verify_jail_started():
     global freeze
     global freeze_msg
 
@@ -241,7 +241,7 @@ def test_13_verify_jail_started():
             break
 
 
-def test_14_export_call():
+def test_16_export_call():
     if freeze is True:
         pytest.skip(freeze_msg)
     else:
@@ -249,7 +249,7 @@ def test_14_export_call():
         assert results.status_code == 200, results.text
 
 
-def test_15_exec_call():
+def test_17_exec_call():
     global JOB_ID
 
     if freeze is True:
@@ -266,7 +266,7 @@ def test_15_exec_call():
     time.sleep(1)
 
 
-def test_16_verify_exec_call():
+def test_18_verify_exec_call():
     global freeze
     global freeze_msg
 
@@ -296,7 +296,7 @@ def test_16_verify_exec_call():
             break
 
 
-def test_17_stop_jail():
+def test_19_stop_jail():
     global JOB_ID
 
     if freeze is True:
@@ -311,7 +311,7 @@ def test_17_stop_jail():
     time.sleep(1)
 
 
-def test_18_verify_jail_stopped():
+def test_20_verify_jail_stopped():
     global freeze
     global freeze_msg
 
@@ -342,12 +342,12 @@ def test_18_verify_jail_stopped():
             break
 
 
-def test_19_rc_action():
+def test_21_rc_action():
     results = POST('/jail/rc_action/', 'STOP')
     assert results.status_code == 200, results.text
 
 
-def test_20_verify_clean_call():
+def test_22_verify_clean_call():
     results = POST('/jail/clean/', 'ALL')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
