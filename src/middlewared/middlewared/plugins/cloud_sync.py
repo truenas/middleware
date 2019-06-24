@@ -297,8 +297,7 @@ async def rclone_check_progress(job, proc):
             "copyrighted content or the DropBox manual PDF that appears in the home directory after signing up.\n"
             "All other files were synchronized, but no deletions were performed as synchronization is considered\n"
             "unsuccessful. Please inspect logs to determine which files are considered restricted and exclude them\n"
-            "from your synchronization. Refer to https://www.ixsystems.com/documentation/freenas/11.2/tasks.html\n"
-            "for more details.\n"
+            "from your synchronization."
         )
         job.logs_fd.write(message.encode("utf-8", "ignore"))
 
