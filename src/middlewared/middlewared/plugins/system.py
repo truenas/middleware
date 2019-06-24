@@ -1003,6 +1003,14 @@ class SystemGeneralService(ConfigService):
         return await self.config()
 
     @accepts()
+    async def ui_restart(self):
+        """
+        Restart HTTP server to use latest UI settings.
+        """
+        await self.middleware.call('service.restart', 'http')
+        await self.middleware.call('service.restart', 'django')
+
+    @accepts()
     async def local_url(self):
         """
         Returns configured local url in the format of protocol://host:port
