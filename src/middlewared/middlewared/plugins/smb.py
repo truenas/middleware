@@ -103,7 +103,7 @@ class SMBService(SystemServiceService):
     async def bindip_choices(self):
         """
         List of valid choices for IP addresses to which to bind the SMB service.
-        Addresses assigned by DHCP are excluded from the results. 
+        Addresses assigned by DHCP are excluded from the results.
         """
         choices = {}
         for i in await self.middleware.call('interface.query'):
