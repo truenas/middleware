@@ -594,7 +594,8 @@ class CloudSyncService(CRUDService):
                         for field in provider.task_schema
                     ],
                 }
-                for provider in REMOTES.values()
+                for provider in REMOTES.values() if provider.name != 'MEGA'
+                # MEGA needs newer rclone
             ],
             key=lambda provider: provider["title"].lower()
         )
