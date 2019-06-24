@@ -565,6 +565,8 @@ class InterfaceService(CRUDService):
         for i in self._original_datastores['laggmembers']:
             await self.middleware.call('datastore.insert', 'network.lagginterfacemembers', i)
 
+        self._original_datastores.clear()
+
     async def __check_failover_disabled(self):
         if await self.middleware.call('system.is_freenas'):
             return
@@ -585,6 +587,9 @@ class InterfaceService(CRUDService):
         """
         Rollback pending interfaces changes.
         """
+        if self._rollback_timer:
+            self._rollback_timer.cancel()
+        self._rollback_timer = None
         await self.__check_failover_disabled()
         await self.__restore_datastores()
         await self.sync()
