@@ -955,7 +955,8 @@ class VMService(CRUDService):
                 'This system does not support virtualization.'
             )
 
-        overcommit = options.get('options')
+        overcommit = options.get('overcommit')
+
         if overcommit is None:
             # Perhaps we should have a default config option for VMs?
             overcommit = False
