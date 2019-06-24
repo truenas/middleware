@@ -100,6 +100,14 @@ class SMBService(SystemServiceService):
         }
 
     @private
+    async def interface_choices(self):
+        choices = {}
+        for i in await self.middleware.call('interface.query'):
+            for alias in i['aliases']:
+                choices[alias['address']] = alias['address']
+        return choices
+
+    @private
     async def validate_admin_groups(self, sid):
         """
         Check if group mapping already exists because 'net groupmap addmem' will fail
