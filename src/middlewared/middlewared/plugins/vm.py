@@ -752,7 +752,7 @@ class VMService(CRUDService):
     async def __set_guest_vmemory(self, memory, overcommit):
         memory_available = await self.middleware.call('vm.get_available_memory', overcommit)
         memory_bytes = memory * 1024 * 1024
-        if memory_bytes > memory_available and not overcommit:
+        if memory_bytes > memory_available:
             return False
 
         arc_max = sysctl.filter('vfs.zfs.arc_max')[0].value
