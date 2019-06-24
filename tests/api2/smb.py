@@ -87,7 +87,7 @@ def test_07_checking_to_see_if_nfs_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_08_Creating_a_cifs_share_on_smb_PATH():
+def test_08_creating_a_smb_share_path():
     global payload, results, smb_id
     payload = {
         "comment": "My Test SMB Share",
