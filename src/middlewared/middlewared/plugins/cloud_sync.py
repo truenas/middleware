@@ -293,12 +293,12 @@ async def rclone_check_progress(job, proc):
 
     if dropbox__restricted_content:
         message = "\n" + (
-            "We have detected that your DropBox sync failed due to restricted content being present in one of your\n"
-            "folders. It can be copyrighted content or just default DropBox manual pdf you get in your home directory\n"
-            "after signing up. All your other files were synchronized, but no deletions were performed as\n"
-            "synchronization is considered unsuccessful. Please inspect logs to determine which files are considered\n"
-            "restricted and exclude them from your synchronization. Refer to corresponding User Manual section for\n"
-            "more details.\n"
+            "DropBox sync failed due to restricted content being present in one of the folders. This may include\n"
+            "copyrighted content or the DropBox manual PDF that appears in the home directory after signing up.\n"
+            "All other files were synchronized, but no deletions were performed as synchronization is considered\n"
+            "unsuccessful. Please inspect logs to determine which files are considered restricted and exclude them\n"
+            "from your synchronization. Refer to https://www.ixsystems.com/documentation/freenas/11.2/tasks.html\n"
+            "for more details.\n"
         )
         job.logs_fd.write(message.encode("utf-8", "ignore"))
 
