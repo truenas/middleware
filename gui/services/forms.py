@@ -123,7 +123,7 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
                 )
 
         with client as c:
-            self.fields['cifs_srv_bindip'].choices = (c.call('smb.interface_choices')).items()
+            self.fields['cifs_srv_bindip'].choices = (c.call('smb.bindip_choices')).items()
 
         self.fields['cifs_srv_unixcharset'].choices = choices.UNIXCHARSET_CHOICES()
 

@@ -99,8 +99,12 @@ class SMBService(SystemServiceService):
             ] + initial
         }
 
-    @private
-    async def interface_choices(self):
+    @accepts()
+    async def bindip_choices(self):
+        """
+        List of valid choices for IP addresses to which to bind the SMB service.
+        Addresses assigned by DHCP are excluded from the results. 
+        """
         choices = {}
         for i in await self.middleware.call('interface.query'):
             for alias in i['aliases']:
@@ -556,6 +560,12 @@ class SMBService(SystemServiceService):
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
+
+        if data['bindip']:
+            bindip_choices = [x[0] for x in (await self.bindip_choices()).items()]
+            for idx, item in enumerate(data['bindip']):
+                if item not in bindip_choices:
+                    verrors.add(f'smb_update.bindip.{idx}', f'IP address [{item}] is not a configured address for this server')
 
         for i in ('filemask', 'dirmask'):
             if i not in data or not data[i]:
