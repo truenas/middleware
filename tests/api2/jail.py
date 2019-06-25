@@ -30,7 +30,7 @@ def test_02_verify_iocage_pool():
     assert results.json() == IOCAGE_POOL, results.text
 
 
-def test_03_verify_list_resources_is_and_integer():
+def test_03_verify_list_resources_is_an_integer():
     results = POST('/jail/list_resource/', {'resource': 'RELEASE'})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
@@ -53,6 +53,7 @@ def test_05_verify_available_bsd_release():
     stop_time = time.time() + 600
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        assert get_job.status_code == 200, get_job.text
         job_status = get_job.json()[0]
         if job_status['state'] in ('RUNNING', 'WAITING'):
             if stop_time <= time.time():
@@ -74,9 +75,7 @@ def test_06_fetch_FreeBSD():
             'release': RELEASE
         }
     )
-
     assert results.status_code == 200, results.text
-
     JOB_ID = results.json()
 
 
@@ -87,6 +86,7 @@ def test_07_verify_fetch_job_state():
     stop_time = time.time() + 600
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        assert get_job.status_code == 200, get_job.text
         job_status = get_job.json()[0]
         if job_status['state'] in ('RUNNING', 'WAITING'):
             if stop_time <= time.time():
@@ -116,6 +116,7 @@ def test_09_verify_installed_release():
     stop_time = time.time() + 600
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        assert get_job.status_code == 200, get_job.text
         job_status = get_job.json()[0]
         if job_status['state'] in ('RUNNING', 'WAITING'):
             if stop_time <= time.time():
@@ -132,7 +133,6 @@ def test_09_verify_installed_release():
 def test_10_create_jail():
     if freeze is True:
         pytest.skip(freeze_msg)
-
     global JOB_ID
     payload = {
         'release': RELEASE,
@@ -153,11 +153,11 @@ def test_11_verify_creation_of_jail():
     global freeze_msg
     if freeze is True:
         pytest.skip(freeze_msg)
-
     freeze = False
     stop_time = time.time() + 600
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        assert get_job.status_code == 200, get_job.text
         job_status = get_job.json()[0]
         if job_status['state'] in ('RUNNING', 'WAITING'):
             if stop_time <= time.time():
@@ -186,7 +186,6 @@ def test_12_verify_iocage_list_with_ssh():
 def test_13_update_jail_description():
     if freeze is True:
         pytest.skip(freeze_msg)
-
     global JAIL_NAME
     results = PUT(
         f'/jail/id/{JAIL_NAME}/', {
@@ -200,7 +199,6 @@ def test_13_update_jail_description():
 
 def test_14_start_jail():
     global JOB_ID
-
     if freeze is True:
         pytest.skip(freeze_msg)
 
@@ -213,23 +211,19 @@ def test_14_start_jail():
 def test_15_verify_jail_started():
     global freeze
     global freeze_msg
-
     if freeze is True:
         pytest.skip(freeze_msg)
-
     freeze = False
     stop_time = time.time() + 600
-
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        assert get_job.status_code == 200, get_job.text
         job_status = get_job.json()[0]
-
         if job_status['state'] in ('RUNNING', 'WAITING'):
             if stop_time <= time.time():
                 freeze = True
                 freeze_msg = f"Failed to start jail: {JAIL_NAME}"
                 assert False, get_job.text
-
                 break
             time.sleep(3)
         else:
@@ -237,7 +231,6 @@ def test_15_verify_jail_started():
             assert results.status_code == 200, results.text
             assert len(results.json()) > 0, get_job.text
             assert results.json()[0]['state'].lower() == 'up', results.text
-
             break
 
 
@@ -269,15 +262,13 @@ def test_17_exec_call():
 def test_18_verify_exec_call():
     global freeze
     global freeze_msg
-
     if freeze is True:
         pytest.skip(freeze_msg)
-
     freeze = False
     stop_time = time.time() + 600
-
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        assert get_job.status_code == 200, get_job.text
         job_status = get_job.json()[0]
 
         if job_status['state'] in ('RUNNING', 'WAITING'):
@@ -285,14 +276,12 @@ def test_18_verify_exec_call():
                 freeze = True
                 freeze_msg = f"Failed to exec into jail: {JAIL_NAME}"
                 assert False, get_job.text
-
                 break
             time.sleep(3)
         else:
             results = job_status['result']
             assert get_job.status_code == 200, results.text
             assert 'exec successful' in results, results.text
-
             break
 
 
@@ -314,23 +303,19 @@ def test_19_stop_jail():
 def test_20_verify_jail_stopped():
     global freeze
     global freeze_msg
-
     if freeze is True:
         pytest.skip(freeze_msg)
-
     freeze = False
     stop_time = time.time() + 600
-
     while True:
         get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        assert get_job.status_code == 200, get_job.text
         job_status = get_job.json()[0]
-
         if job_status['state'] in ('RUNNING', 'WAITING'):
             if stop_time <= time.time():
                 freeze = True
                 freeze_msg = f"Failed to stop jail: {JAIL_NAME}"
                 assert False, get_job.text
-
                 break
             time.sleep(3)
         else:
@@ -338,7 +323,6 @@ def test_20_verify_jail_stopped():
             assert results.status_code == 200, results.text
             assert len(results.json()) > 0, get_job.text
             assert results.json()[0]['state'].lower() == 'down', results.text
-
             break
 
 
