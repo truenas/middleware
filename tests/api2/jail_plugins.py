@@ -145,3 +145,33 @@ def test_09_verify_transmision_plugin_job_is_successfull():
         else:
             assert job_status['state'] == 'SUCCESS', str(job_status)
             break
+
+
+@to_skip
+def test_10_looking_transmission_jail_id_is_exist():
+    results = GET('/jail/id/transmission/')
+    assert results.status_code == 200, results.text
+    assert len(results.json()) > 0, results.text
+
+
+@to_skip
+def test_11_verify_transmission_id_jail_exist():
+    global results
+    results = GET('/jail/?id=transmission')
+    assert results.status_code == 200, results.text
+    assert len(results.json()) > 0, results.text
+
+
+@to_skip
+def test_10_store_transmission_jail_info():
+    assert len(results.json()) > 0, results.text
+    global transmission_info
+    info = results.json()[0]
+    transmission_info = {
+        1: info["id"],
+        2: info["boot"],
+        3: info["state"],
+        4: info["type"],
+        5: info["release"],
+        6: info["ip4_addr"],
+    }
