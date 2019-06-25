@@ -13,7 +13,7 @@ class BaseRcloneRemote:
 
     credentials_schema = NotImplemented
     credentials_oauth = False
-    refresh_credentials = False
+    refresh_credentials = []
 
     task_schema = []
 
