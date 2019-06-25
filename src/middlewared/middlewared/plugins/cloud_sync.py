@@ -127,6 +127,7 @@ async def rclone(job, cloud_sync):
             message = "rclone failed"
             if "dropbox__restricted_content" in job.internal_data:
                 message = "DropBox restricted content"
+            raise ValueError(message)
 
         if REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials:
             credentials_attributes = cloud_sync["credentials"]["attributes"].copy()
