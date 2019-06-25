@@ -15,4 +15,4 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
         Str("team_drive", verbose="Team Drive ID (if connecting to Team Drive)"),
     ]
     credentials_oauth = True
-    refresh_credentials = True
+    refresh_credentials = ["token"]

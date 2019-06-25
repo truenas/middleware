@@ -16,7 +16,7 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
         Str("drive_id", verbose="Drive ID", required=True),
     ]
     credentials_oauth = True
-    refresh_credentials = True
+    refresh_credentials = ["token"]
 
     def get_task_extra(self, task):
         return dict(
