@@ -118,3 +118,30 @@ def test_07_verify_available_plugin_(plugin):
         if plugin in plugin_info:
             assert isinstance(plugin_info, list), job_info.text
             assert plugin in plugin_info, job_info.text
+
+
+@to_skip
+def test_08_add_transmision_plugins():
+    global JOB_ID
+    payload = {
+        "name": "transmission",
+        'props': [
+            'nat=1',
+            'vnet=1',
+            'vnet_default_interface=auto'
+        ]
+    }
+    results = POST('/jail/fetch/', payload)
+    assert results.status_code == 200, results.text
+    JOB_ID = results.json()
+
+
+@to_skip
+def test_09_verify_transmision_plugin_job_is_successfull():
+    while True:
+        job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
+        if job_status['state'] in ('RUNNING', 'WAITING'):
+            sleep(3)
+        else:
+            assert job_status['state'] == 'SUCCESS', str(job_status)
+            break
