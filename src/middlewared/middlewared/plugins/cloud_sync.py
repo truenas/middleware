@@ -221,13 +221,16 @@ async def rclone(middleware, job, cloud_sync):
 
         await run_script(job, env, cloud_sync["post_script"], "Post-script")
 
-        if REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials:
+        refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials
+        if refresh_credentials:
             credentials_attributes = cloud_sync["credentials"]["attributes"].copy()
             updated = False
             ini = configparser.ConfigParser()
             ini.read(config.config_path)
             for key, value in ini["remote"].items():
-                if key in credentials_attributes and credentials_attributes[key] != value:
+                if (key in refresh_credentials and
+                        key in credentials_attributes and
+                        credentials_attributes[key] != value):
                     logger.debug("Updating credentials attributes key %r", key)
                     credentials_attributes[key] = value
                     updated = True
