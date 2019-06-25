@@ -19,6 +19,13 @@ import threading
 import time
 import uuid
 
+try:
+    from libzfs import Error as ZFSError
+except ImportError:
+    LIBZFS = False
+else:
+    LIBZFS = True
+
 
 class Event(TEvent):
 
@@ -273,6 +280,8 @@ class ErrnoMixin:
 
     @classmethod
     def _get_errname(cls, code):
+        if LIBZFS and 2000 <= code <= 2100:
+            return 'EZFS_' + ZFSError(code).name
         for k, v in cls.__dict__.items():
             if k.startswith("E") and v == code:
                 return k

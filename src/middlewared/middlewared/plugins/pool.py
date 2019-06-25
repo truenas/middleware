@@ -1280,6 +1280,12 @@ class PoolService(CRUDService):
 
         `label` is the vdev guid or device name.
 
+        Error codes:
+
+            EZFS_NOSPC(2032): out of space to remove a device
+            EZFS_NODEVICE(2017): no such device in pool
+            EZFS_NOREPLICAS(2019): no valid replicas
+
         .. examples(websocket)::
 
           Remove ZFS device.
