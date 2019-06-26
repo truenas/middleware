@@ -10,7 +10,7 @@ from functions import GET, POST
 
 IOCAGE_POOL = pool_name
 JOB_ID = None
-job_info = None
+job_results = None
 not_freenas = GET("/system/is_freenas/").json() is False
 reason = "System is not FreeNAS skip Jails test"
 to_skip = pytest.mark.skipif(not_freenas, reason=reason)
@@ -48,6 +48,12 @@ plugins_list = [
     'zoneminder'
 ]
 
+plugins_objects = [
+    "state",
+    "type",
+    "release",
+]
+
 
 @to_skip
 def test_01_activate_jail_pool():
@@ -78,11 +84,12 @@ def test_03_get_list_of_instaled_plugin_job_id():
 @to_skip
 def test_04_verify_instaled_plugin_job_id_is_successfull():
     while True:
-        job_info = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
-        if job_info['state'] in ('RUNNING', 'WAITING'):
+        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_state = job_results.json()[0]['state']
+        if job_state in ('RUNNING', 'WAITING'):
             sleep(3)
         else:
-            assert job_info['state'] == 'SUCCESS', str(job_info)
+            assert job_state == 'SUCCESS', str(job_results)
             break
 
 
@@ -101,23 +108,24 @@ def test_05_get_list_of_available_plugins_job_id():
 
 @to_skip
 def test_06_verify_list_of_available_plugins_job_id_is_successfull():
-    global job_info
+    global job_results
     while True:
-        job_info = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
-        if job_info['state'] in ('RUNNING', 'WAITING'):
+        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_state = job_results.json()[0]['state']
+        if job_state in ('RUNNING', 'WAITING'):
             sleep(3)
         else:
-            assert job_info['state'] == 'SUCCESS', str(job_info)
+            assert job_state == 'SUCCESS', str(job_results)
             break
 
 
 @to_skip
 @pytest.mark.parametrize('plugin', plugins_list)
 def test_07_verify_available_plugin_(plugin):
-    for plugin_info in job_info:
+    for plugin_info in job_results.json()[0]['result']:
         if plugin in plugin_info:
-            assert isinstance(plugin_info, list), job_info.text
-            assert plugin in plugin_info, job_info.text
+            assert isinstance(plugin_info, list), job_results.text
+            assert plugin in plugin_info, job_results.text
 
 
 @to_skip
@@ -148,30 +156,53 @@ def test_09_verify_transmision_plugin_job_is_successfull():
 
 
 @to_skip
-def test_10_looking_transmission_jail_id_is_exist():
-    results = GET('/jail/id/transmission/')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) > 0, results.text
-
-
-@to_skip
-def test_11_verify_transmission_id_jail_exist():
-    global results
+def test_10_verify_transmission_id_jail_exist():
     results = GET('/jail/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
 @to_skip
-def test_10_store_transmission_jail_info():
+def test_11_looking_transmission_jail_id_is_exist():
+    global results
+    results = GET('/jail/id/transmission/')
+    assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
-    global transmission_info
-    info = results.json()[0]
-    transmission_info = {
-        1: info["id"],
-        2: info["boot"],
-        3: info["state"],
-        4: info["type"],
-        5: info["release"],
-        6: info["ip4_addr"],
+
+
+@to_skip
+def test_12_get_installed_plugin_list_with_want_cache():
+    global JOB_ID
+    payload = {
+        "resource": "PLUGIN",
+        "remote": False,
+        "want_cache": True
     }
+    results = POST("/jail/list_resource/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    JOB_ID = results.json()
+
+
+@to_skip
+def test_13_verify_list_of_available_plugins_job_id_is_successfull():
+    global job_results
+    while True:
+        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_state = job_results.json()[0]['state']
+        if job_state in ('RUNNING', 'WAITING'):
+            sleep(3)
+        else:
+            assert job_state == 'SUCCESS', job_results.text
+            break
+
+
+@to_skip
+@pytest.mark.parametrize('object', plugins_objects)
+def test_14_verify_transmission_plugin_info_value_with_jail_info_value_(object):
+    for plugin_list in job_results.json()[0]['result']:
+        if 'transmission' in plugin_list['name']:
+            assert plugin_list[object] == results.json()[object], plugin_list
+            break
+    else:
+        assert False, job_results.text
