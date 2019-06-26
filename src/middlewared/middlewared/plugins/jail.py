@@ -744,7 +744,7 @@ class JailService(CRUDService):
 
         return resource_list
 
-    @periodic(interval=86400)
+    @periodic(interval=86400, run_on_start=False)
     @private
     @accepts(Str('branch', null=True, default=None))
     @job(lock='retrieve_plugin_versions')
