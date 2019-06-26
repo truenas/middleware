@@ -13,6 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cifs_share',
             name='cifs_share_acl',
-            field=models.TextField(default=False, verbose_name='SMB Share ACL'),
+            field=models.TextField(default='', verbose_name='SMB Share ACL'),
+            blank=True
         ),
     ]
