@@ -1185,6 +1185,8 @@ require([
         var attributesInput = dom.byId("id_attributes");
         var attributes = JSON.parse(attributesInput.value) || {};
 
+        var last_onedrive_drives_request = null;
+
         var updateAttributes = function() {
             var attributes = {};
             for (var i = 0; i < credentialsSchemas[provider].length; i++)
@@ -1206,6 +1208,40 @@ require([
             }
 
             attributesInput.value = JSON.stringify(attributes);
+
+            if (provider == "ONEDRIVE")
+            {
+                if (attributes.client_id && attributes.client_secret && attributes.token)
+                {
+                    var onedrive_drives_request = {
+                        "client_id": attributes.client_id,
+                        "client_secret": attributes.client_secret,
+                        "token": attributes.token,
+                    };
+                    if (JSON.stringify(last_onedrive_drives_request) != JSON.stringify(onedrive_drives_request))
+                    {
+                        last_onedrive_drives_request = onedrive_drives_request;
+
+                        var onedrive_drives = document.getElementById("onedrive_drives");
+                        onedrive_drives.innerHTML = "Loading...";
+                        Middleware.call("cloudsync.onedrive_list_drives", [onedrive_drives_request], function(result) {
+                            var html = '<ul>';
+                            for (var i = 0; i < result.length; i++)
+                            {
+                                html += '<li><a href="#" onclick="cloudAttributesSet(' + JSON.stringify(result[i]).replace(/\"/g, '&quot;') + ');">' + result[i].drive_id + ' (' + result[i].drive_type + ')</a></li>';
+                            }
+                            html += '</ul>';
+                            onedrive_drives.innerHTML = html;
+                        }, function(error) {
+                            onedrive_drives.innerHTML = '<div style="color: #f00;">Error: ' + error.reason + '</div>';
+                        });
+                    }
+                }
+            }
+            else
+            {
+                last_onedrive_drives_request = null;
+            }
         };
 
         while (true)
@@ -1290,6 +1326,15 @@ require([
             }
 
             document.getElementById(id).onchange = updateAttributes;
+
+            if (provider == "ONEDRIVE" && property.property == "drive_type")
+            {
+                var newNode = document.createElement("tr");
+                newNode.className = "cloud-credentials-attribute";
+                newNode.innerHTML = "<th>Drives</th><td id='onedrive_drives'></td>";
+
+                attributesInput.parentNode.insertBefore(newNode, attributesInput.nextSibling);
+            }
         }
         if (credentialsOauths[provider])
         {
@@ -1316,17 +1361,21 @@ require([
             }
             else
             {
-                for (k in message.data.result)
-                {
-                    if (document.getElementById("id_attributes_" + k))
-                    {
-                        document.getElementById("id_attributes_" + k).value = message.data.result[k];
-                        document.getElementById("id_attributes_" + k).onchange();
-                    }
-                }
+                cloudAttributesSet(message.data.result);
             }
         }
     }, false);
+
+    window.cloudAttributesSet = function(result) {
+        for (k in result)
+        {
+            if (document.getElementById("id_attributes_" + k))
+            {
+                document.getElementById("id_attributes_" + k).value = result[k];
+                document.getElementById("id_attributes_" + k).onchange();
+            }
+        }
+    }
 
     cloudSyncDirectionToggle = function() {
 

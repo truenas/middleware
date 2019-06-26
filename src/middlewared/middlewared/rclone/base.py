@@ -17,6 +17,8 @@ class BaseRcloneRemote:
 
     task_schema = []
 
+    extra_methods = []
+
     def __init__(self, middleware):
         self.middleware = middleware
 
