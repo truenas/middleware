@@ -775,7 +775,7 @@ class Middleware(LoadPluginsMixin):
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__io_threadpool = IoThreadPoolExecutor("IoThread", 20)
+        self.__io_threadpool = IoThreadPoolExecutor('IoThread', 20)
         self.__ws_threadpool = concurrent.futures.ThreadPoolExecutor(
             initializer=lambda: set_thread_name('threadpool_ws'),
             max_workers=10,

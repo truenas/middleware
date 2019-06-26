@@ -5,6 +5,8 @@ import queue
 import random
 import threading
 
+from bsd.threading import set_thread_name
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,11 +38,11 @@ class Worker:
 
         self.busy = False
 
-        self.thread = threading.Thread(name=self.name, target=self._target)
-        self.thread.daemon = True
+        self.thread = threading.Thread(name=self.name, daemon=True, target=self._target)
         self.thread.start()
 
     def _target(self):
+        set_thread_name(self.name)
         try:
             while True:
                 work_item = self.executor.get_work_item(self)
