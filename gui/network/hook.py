@@ -73,7 +73,7 @@ class NetworkHook(AppHook):
                 tabs.insert(index, {
                     'name': 'IPMI_B',
                     'focus': 'network.IPMI_B',
-                    'verbose_name': _('IPMI (Node %s)') % ('B' if node == 'A' else 'A'),
+                    'verbose_name': _('IPMI (TrueNAS Controller %s)') % ('2' if node == 'A' else '1'),
                     'url': reverse('failover_ipmi'),
                 })
                 index += 1
