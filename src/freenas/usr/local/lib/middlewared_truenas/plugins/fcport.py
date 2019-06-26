@@ -90,7 +90,7 @@ class FCPortService(CRUDService):
                     if port_name != name:
                         continue
                     for i in parent.xpath("./initiator"):
-                        initiators.append(f"{i.text} (Node {'B' if node == 'A' else 'A'})")
+                        initiators.append(f"{i.text} (TrueNAS Controller {'2' if node == 'A' else '1'})")
 
             results.append(dict(
                 id=name,

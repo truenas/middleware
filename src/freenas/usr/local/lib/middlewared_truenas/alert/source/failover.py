@@ -31,7 +31,7 @@ class TrueNASVersionsMismatchAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "TrueNAS Versions Mismatch In Failover"
-    text = "TrueNAS versions mismatch in failover. Update both nodes to the same version."
+    text = "TrueNAS versions mismatch in failover. Update both controllers to the same version."
 
 
 class FailoverAccessDeniedAlertClass(AlertClass):
@@ -44,8 +44,8 @@ class FailoverAccessDeniedAlertClass(AlertClass):
 class FailoverStatusCheckFailedAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Failed to Check Failover Status with the Other Node"
-    text = "Failed to check failover status with the other node: %s."
+    title = "Failed to Check Failover Status with the Other Controller"
+    text = "Failed to check failover status with the other controller: %s."
 
 
 class FailoverFailedAlertClass(AlertClass):
@@ -72,8 +72,8 @@ class InternalFailoverLinkStatusAlertClass(AlertClass):
 class CARPStatesDoNotAgreeAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Nodes CARP States Do Not Agree"
-    text = "Nodes CARP states do not agree: %(error)s."
+    title = "Controllers CARP States Do Not Agree"
+    text = "Controllers CARP states do not agree: %(error)s."
 
 
 class CTLHALinkAlertClass(AlertClass):
