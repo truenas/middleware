@@ -27,7 +27,5 @@ class Migration(migrations.Migration):
                 verbose_name='Volume UUID'
             )
         ),
-        migrations.RunPython(
-            add_vuid
-        ),
+        migrations.RunPython(add_vuid, reverse_code=migrations.RunPython.noop),
     ]
