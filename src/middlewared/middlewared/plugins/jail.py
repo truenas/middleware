@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import os
 import subprocess as su
 import libzfs
@@ -657,11 +658,11 @@ class JailService(CRUDService):
                     )
                 }
 
-                if not pathlib.Path(index_path).is_file():
-                    index_json = None
-                else:
-                    index_fd = open(index_path, 'r')
-                    index_json = json.load(index_fd)
+                index_json = None
+                if pathlib.Path(index_path).is_file():
+                    with contextlib.suppress(json.decoder.JSONDecodeError):
+                        with open(index_path, 'r') as f:
+                            index_json = json.loads(f.read())
 
             for index, plugin in enumerate(resource_list):
 
@@ -708,8 +709,6 @@ class JailService(CRUDService):
                     'cache.put', 'iocage_remote_plugins', resource_list,
                     86400
                 )
-            else:
-                index_fd.close()
         elif resource == "base":
             try:
                 if remote:
