@@ -769,7 +769,7 @@ class JailService(CRUDService):
                     plugins_index_data = IOCPlugin.retrieve_plugin_index_data(td)
                     plugins = IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
 
-        self.middleware.call_sync('cache.put', 'iocage_plugin_versions', plugins)
+        self.middleware.call_sync('cache.put', 'iocage_plugin_versions', plugins, 86400)
         return plugins
 
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
