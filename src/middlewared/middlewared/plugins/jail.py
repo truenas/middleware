@@ -405,13 +405,19 @@ class JailService(CRUDService):
 
         return verrors
 
-    @accepts(Str("jail"))
-    def do_delete(self, jail):
+    @accepts(
+        Str('jail'),
+        Dict(
+            'options',
+            Bool('force', default=False),
+        )
+    )
+    def do_delete(self, jail, options):
         """Takes a jail and destroys it."""
         _, _, iocage = self.check_jail_existence(jail)
 
         # TODO: Port children checking, release destroying.
-        iocage.destroy_jail()
+        iocage.destroy_jail(force=options.get('force'))
 
         return True
 
