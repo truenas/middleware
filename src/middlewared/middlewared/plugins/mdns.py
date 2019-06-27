@@ -307,10 +307,10 @@ class mDNSAdvertiseService(Service):
         This is to ensure that the correct hostname is used for mdns advertisements.
         """
         ngc = await self.middleware.call('network.configuration.config')
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('notfier.failover_licensed'):
-            failover_status = await self.middleware.call('notifier.failover_status')
+        if 'hostname_virtual' in ngc:
+            failover_status = await self.middleware.call('failover.status')
             if failover_status == 'MASTER':
-                return ngc['virtual_hostname']
+                return ngc['hostname_virtual']
             elif failover_status == 'BACKUP':
                 return None
         else:
