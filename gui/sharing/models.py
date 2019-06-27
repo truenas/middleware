@@ -30,7 +30,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.freeadmin.models.fields import MultiSelectField
-from freenasUI.middleware.notifier import notifier
 
 
 class CIFS_Share(Model):
@@ -295,6 +294,12 @@ class AFP_Share(Model):
         max_length=120,
         help_text=_("Deny listed hosts and/or networks access to this volume"),
         verbose_name=_("Hosts Deny")
+    )
+    afp_vuid = models.CharField(
+        max_length=36,
+        verbose_name=_('vuid for Time Machine'),
+        blank=True,
+        editable=False,
     )
 
     afp_auxparams = models.TextField(

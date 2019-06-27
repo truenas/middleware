@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
@@ -109,6 +110,7 @@ class SharingAFPService(CRUDService):
         UnixPerm('umask', default='000'),
         List('hostsallow', items=[], default=[]),
         List('hostsdeny', items=[], default=[]),
+        Str('vuid', null=True, default=''),
         Str('auxparams', max_length=None),
         Bool('enabled', default=True),
         register=True
@@ -214,6 +216,11 @@ class SharingAFPService(CRUDService):
     @private
     async def validate(self, data, schema_name, verrors, old=None):
         await self.home_exists(data['home'], schema_name, verrors, old)
+        if data['vuid']:
+            try:
+                uuid.UUID(data['vuid'], version=4)
+            except ValueError:
+                verrors.add(f'{schema_name}.vuid', 'vuid must be a valid UUID.')
 
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
@@ -291,7 +298,8 @@ class SharingAFPService(CRUDService):
         data['rw'] = ' '.join(data['rw'])
         data['hostsallow'] = ' '.join(data['hostsallow'])
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
-
+        if not data['vuid'] and data['timemachine']:
+            data['vuid'] = str(uuid.uuid4())
         return data
 
 
