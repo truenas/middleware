@@ -8,6 +8,7 @@ import subprocess
 
 from bsd.threading import set_thread_name
 
+from middlewared.service_exception import CallError
 from middlewared.service import Service, private
 from middlewared.utils import filter_list
 
@@ -31,32 +32,15 @@ class ServiceType(enum.Enum):
     FTP = ('_ftp._tcp.', 21)
     HTTP = ('_http._tcp.', 80)
     HTTPS = ('_https._tcp.', 443)
-    ISCSI = ('_iscsi._tcp.', 3260)
+    ISCSITARGET = ('_iscsi._tcp.', 3260)
     MIDDLEWARE = ('_middleware._tcp.', 6000)
     MIDDLEWARE_SSL = ('_middleware-ssl._tcp.', 443)
     NFS = ('_nfs._tcp.', 2049)
     SSH = ('_ssh._tcp.', 22)
     SFTP_SSH = ('_sftp-ssh._tcp.', 22)
     SMB = ('_smb._tcp.', 445)
-
-
-class SrvToThread(enum.Enum):
-    ADISK = 'mDNSServiceAdiskThread'
-    AFP = 'mDNSServiceAFPThread'
-    DEV_INFO = 'mDNSServiceDevInfoThread'
-    FTP = 'mDNSServiceFTPThread'
-    HTTP = 'mDNSServiceHTTPThread'
-    HTTPS = 'mDNSServiceHTTPSThread'
-    ISCSI = 'mDNSServiceISCSIThread'
-    MIDDLEWARE = 'mDNSServiceMiddlewareThread'
-    MIDDLEWARE_SSL = 'mDNSServiceMiddlewareSSLThread'
-    NFS = 'mDNSServiceNFSThread'
-    SSH = 'mDNSServiceSSHThread'
-    SFTP_SSH = 'mDNSServiceSFTP_SSHThread'
-    SMB = 'mDNSServiceSMBThread'
-
-    def __str__(self):
-        return self.value
+    TFTP = ('_tftp._udp.', 69)
+    WEBDAV = ('_webdav._tcp.', 8080)
 
 
 class mDNSDaemonMonitor(threading.Thread):
@@ -142,127 +126,50 @@ class mDNSServiceThread(threading.Thread):
         super(mDNSServiceThread, self).__init__()
         self.setDaemon(True)
         self.service = kwargs.get('service')
+        self.service_info = kwargs.get('service_info')
         self.middleware = kwargs.get('middleware')
         self.logger = self.middleware.logger
         self.hostname = kwargs.get('hostname')
         self.service = kwargs.get('service')
-        self.regtype = kwargs.get('regtype')
-        self.is_running = kwargs.get('is_running', True)
-        self.txtrecord = kwargs.get('txtrecord', '')
-        self.port = kwargs.get('port')
+        self.regtype, self.port = ServiceType[self.service].value
         self.finished = threading.Event()
 
-    def _register(self, name, regtype, port, txtrecord, is_running):
+    def _is_system_service(self):
+        if self.service in ['DEV_INFO', 'HTTP', 'HTTPS', 'MIDDLEWARE', 'MIDDLEWARE_SSL']:
+            return True
+        else:
+            return False
+
+    def _is_running(self):
+        if self._is_system_service():
+            return True
+
+        if self.service == 'ADISK':
+            afp_is_running = any(filter_list(
+                self.service_info, [('service', '=', 'afp'), ('state', '=', 'RUNNING')]
+            ))
+            smb_is_running = any(filter_list(
+                self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]
+            ))
+            if afp_is_running or smb_is_running:
+                return True
+            else:
+                return False
+        if self.service == 'SMB':
+            return any(filter_list(self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]))
+
+        return any(filter_list(self.service_info, [('service', '=', self.service.lower()), ('state', '=', 'RUNNING')]))
+
+    def _generate_txtRecord(self):
         """
-        An instance of DNSServiceRef (sdRef) represents an active connection to mdnsd.
-
-        DNSServiceRef class supports the context management protocol, sdRef
-        is closed automatically when block is exited.
-        """
-        if not is_running:
-            return
-
-        sdRef = pybonjour.DNSServiceRegister(
-            name=name,
-            regtype=regtype,
-            port=port,
-            txtRecord=txtrecord,
-            callBack=None
-        )
-        with sdRef:
-            self.finished.wait()
-            self.logger.trace(f'Unregistering {name} {regtype}')
-
-    def register(self):
-        if self.hostname and self.regtype and self.port:
-            self._register(self.hostname, self.regtype, self.port, self.txtrecord, self.is_running)
-
-    def run(self):
-        set_thread_name(f'mdns_svc_{self.service}')
-        try:
-            self.register()
-        except pybonjour.BonjourError:
-            self.logger.debug("ServiceThread: failed to register '%s', is mdnsd running?", self.service)
-
-    def setup(self):
-        pass
-
-    def cancel(self):
-        self.finished.set()
+        Device Info:
+        -------------------------
+        The TXTRecord string here determines the icon that will be displayed in Finder on MacOS
+        clients. Default is to use MacRack which will display the icon for a rackmounted server.
 
 
-class mDNSServiceSMBThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        if 'service' not in kwargs:
-            kwargs['service'] = 'smb'
-        super(mDNSServiceSMBThread, self).__init__(**kwargs)
-        self.is_running = any(filter_list(
-            kwargs.get('services'), [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]
-        ))
-
-    def setup(self):
-        self.regtype, self.port = ServiceType.SMB.value
-
-
-class mDNSServiceFTPThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        if 'service' not in kwargs:
-            kwargs['service'] = 'ftp'
-        super(mDNSServiceFTPThread, self).__init__(**kwargs)
-        self.is_running = any(filter_list(
-            kwargs.get('services'), [('service', '=', 'ftp'), ('state', '=', 'RUNNING')]
-        ))
-
-    def setup(self):
-        self.regtype, self.port = ServiceType.FTP.value
-
-
-class mDNSServiceISCSIThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        if 'service' not in kwargs:
-            kwargs['service'] = 'iscsi'
-        super(mDNSServiceISCSIThread, self).__init__(**kwargs)
-        self.is_running = any(filter_list(
-            kwargs.get('services'), [('service', '=', 'iscsitarget'), ('state', '=', 'RUNNING')]
-        ))
-
-    def setup(self):
-        self.regtype, self.port = ServiceType.ISCSI.value
-
-
-class mDNSServiceAFPThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        if 'service' not in kwargs:
-            kwargs['service'] = 'afp'
-        super(mDNSServiceAFPThread, self).__init__(**kwargs)
-        self.is_running = any(filter_list(
-            kwargs.get('services'), [('service', '=', 'afp'), ('state', '=', 'RUNNING')]
-        ))
-
-    def setup(self):
-        self.regtype, self.port = ServiceType.AFPOVERTCP.value
-
-
-class mDNSServiceDevInfoThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        if 'service' not in kwargs:
-            kwargs['service'] = 'dev_info'
-        super(mDNSServiceDevInfoThread, self).__init__(**kwargs)
-
-    def setup(self):
-        self.regtype, self.port = ServiceType.DEV_INFO.value
-        self.txtrecord = pybonjour.TXTRecord()
-        self.txtrecord['model'] = DevType.RACKMAC
-
-
-class mDNSServiceAdiskThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        if 'service' not in kwargs:
-            kwargs['service'] = 'adisk'
-        super(mDNSServiceAdiskThread, self).__init__(**kwargs)
-
-    def setup(self):
-        """
+        Time Machine (adisk):
+        -------------------------
         sys=adVF=0x100 -- this is required when ._adisk._tcp is present on device. When it is
         set, the MacOS client will send a NetShareEnumAll IOCTL and shares will be visible.
         Otherwise, Finder will only see the Time Machine share. In the absence of ._adisk._tcp
@@ -281,108 +188,107 @@ class mDNSServiceAdiskThread(mDNSServiceThread):
         adVN -- AirDisk Volume Name. We set this to the share name.
         network analysis indicates that current MacOS Time Machine shares set the port for adisk to 311.
         """
-        afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
-        smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
-        afp = set([(x['name'], x['path']) for x in afp_shares])
-        smb = set([(x['name'], x['path']) for x in smb_shares])
-        mixed_shares = afp & smb
-        afp.difference_update(mixed_shares)
-        smb.difference_update(mixed_shares)
-        if afp_shares or smb_shares:
-            dkno = 0
-            self.regtype, self.port = ServiceType.ADISK.value
-            self.txtrecord = pybonjour.TXTRecord()
-            self.txtrecord['sys'] = 'waMa=0,adVF=0x100'
-            for i in mixed_shares:
-                smb_advu = (list(filter(lambda x: i[0] == x['name'], smb_shares)))[0]['vuid']
-                self.txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x83,adVU={smb_advu}'
-                dkno += 1
+        if self.service not in ['ADISK', 'DEV_INFO']:
+            return ''
 
-            for i in smb:
-                smb_advu = (list(filter(lambda x: i[0] == x['name'], smb_shares)))[0]['vuid']
-                self.txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x82,adVU={smb_advu}'
-                dkno += 1
+        txtrecord = pybonjour.TXTRecord()
+        if self.service == 'DEV_INFO':
+            txtrecord['model'] = DevType.RACKMAC
+            return txtrecord
 
-            for i in afp:
-                afp_advu = (list(filter(lambda x: i[0] == x['name'], afp_shares)))[0]['vuid']
-                self.txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x81,adVU={afp_advu}'
-                dkno += 1
+        if self.service == 'ADISK':
+            afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
+            smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
+            afp = set([(x['name'], x['path']) for x in afp_shares])
+            smb = set([(x['name'], x['path']) for x in smb_shares])
+            if len(afp | smb) == 0:
+                return None
 
+            mixed_shares = afp & smb
+            afp.difference_update(mixed_shares)
+            smb.difference_update(mixed_shares)
+            if afp_shares or smb_shares:
+                dkno = 0
+                txtrecord['sys'] = 'waMa=0,adVF=0x100'
+                for i in mixed_shares:
+                    smb_advu = (list(filter(lambda x: i[0] == x['name'], smb_shares)))[0]['vuid']
+                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x83,adVU={smb_advu}'
+                    dkno += 1
 
-class mDNSServiceSSHThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        if 'service' not in kwargs:
-            kwargs['service'] = 'ssh'
-        super(mDNSServiceSSHThread, self).__init__(**kwargs)
-        self.is_running = any(filter_list(
-            kwargs.get('services'), [('service', '=', 'ssh'), ('state', '=', 'RUNNING')]
-        ))
+                for i in smb:
+                    smb_advu = (list(filter(lambda x: i[0] == x['name'], smb_shares)))[0]['vuid']
+                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x82,adVU={smb_advu}'
+                    dkno += 1
 
-    def setup(self):
-        if self.is_running:
-            self.regtype, self.port = ServiceType.SSH.value
-            response = self.middleware.call_sync('datastore.query', 'services.ssh', [], {'get': True})
-            if response:
-                self.port = response['ssh_tcpport']
+                for i in afp:
+                    afp_advu = (list(filter(lambda x: i[0] == x['name'], afp_shares)))[0]['vuid']
+                    txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x81,adVU={afp_advu}'
+                    dkno += 1
 
+            return txtrecord
 
-class mDNSServiceSFTP_SSHThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        kwargs['service'] = 'sftp'
-        super(mDNSServiceSFTP_SSHThread, self).__init__(**kwargs)
-        self.is_running = any(filter_list(
-            kwargs.get('services'), [('service', '=', 'ssh'), ('state', '=', 'RUNNING')]
-        ))
+    def _get_port(self):
+        if self.service in ['FTP', 'TFPT']:
+            return (self.middleware.call_sync(f'{self.service.lower()}.config'))['port']
 
-    def setup(self):
-        if self.is_running:
-            self.regtype, self.port = ServiceType.SFTP_SSH.value
-            response = self.middleware.call_sync('datastore.query', 'services.ssh', [], {'get': True})
-            if response:
-                self.port = response['ssh_tcpport']
+        if self.service in ['SSH', 'SFTP_SSH']:
+            return (self.middleware.call_sync('ssh.config'))['tcpport']
 
+        if self.service == 'HTTP':
+            return (self.middleware.call_sync('system.general.config'))['ui_port']
 
-class mDNSServiceHTTPThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        kwargs['service'] = 'http'
-        super(mDNSServiceHTTPThread, self).__init__(**kwargs)
+        if self.service in ['HTTPS', 'MIDDLEWARE_SSL']:
+            return (self.middleware.call_sync('system.general.config'))['ui_httpsport']
 
-    def setup(self):
-        self.regtype, self.port = ServiceType.HTTP.value
-        webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        self.port = int(webui[0]['stg_guiport'] or self.port)
+        if self.service == 'WEBDAV':
+            return (self.middleware.call_sync('webdav.config'))['tcpport']
 
+        return self.port
 
-class mDNSServiceHTTPSThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        kwargs['service'] = 'https'
-        super(mDNSServiceHTTPSThread, self).__init__(**kwargs)
+    def register(self):
+        """
+        An instance of DNSServiceRef (sdRef) represents an active connection to mdnsd.
 
-    def setup(self):
-        self.regtype, self.port = ServiceType.HTTPS.value
-        webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        self.port = int(webui[0]['stg_guihttpsport'] or self.port)
+        DNSServiceRef class supports the context management protocol, sdRef
+        is closed automatically when block is exited.
+        """
+        if not self._is_running():
+            return
 
+        txtrecord = self._generate_txtRecord()
+        if txtrecord is None:
+            return
 
-class mDNSServiceMiddlewareThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        kwargs['service'] = 'middleware'
-        super(mDNSServiceMiddlewareThread, self).__init__(**kwargs)
-        set_thread_name(f'mdns_{self.service}')
+        port = self._get_port()
 
-    def setup(self):
-        self.regtype, self.port = ServiceType.MIDDLEWARE.value
+        self.logger.debug(
+            'Registering mDNS service hostnamename: %s,  regtype: %s, port: %s, TXTRecord: %s',
+            self.hostname, self.regtype, port, txtrecord
+        )
 
+        sdRef = pybonjour.DNSServiceRegister(
+            name=self.hostname,
+            regtype=self.regtype,
+            port=port,
+            txtRecord=txtrecord,
+            callBack=None
+        )
+        with sdRef:
+            self.finished.wait()
+            self.logger.trace('Unregistering %s %s.', self.hostname, self.regtype)
 
-class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):
-    def __init__(self, **kwargs):
-        kwargs['service'] = 'middleware_ssl'
-        super(mDNSServiceMiddlewareSSLThread, self).__init__(**kwargs)
+    def run(self):
+        set_thread_name(f'mdns_svc_{self.service}')
+        try:
+            self.register()
+        except pybonjour.BonjourError:
+            self.logger.debug("ServiceThread: failed to register '%s', is mdnsd running?", self.service)
 
     def setup(self):
-        self.regtype, self.port = ServiceType.MIDDLEWARE_SSL.value
-        webui = self.middleware.call_sync('datastore.query', 'system.settings')
-        self.port = int(webui[0]['stg_guihttpsport'] or self.port)
+        pass
+
+    def cancel(self):
+        self.finished.set()
 
 
 class mDNSAdvertiseService(Service):
@@ -419,32 +325,17 @@ class mDNSAdvertiseService(Service):
         if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
             return
 
-        services = self.middleware.call_sync('service.query')
+        service_info = self.middleware.call_sync('service.query')
         hostname = self.middleware.call_sync('mdnsadvertise.get_hostname')
         if hostname is None:
             return
 
-        mdns_advertise_services = [
-            mDNSServiceAdiskThread,
-            mDNSServiceAFPThread,
-            mDNSServiceDevInfoThread,
-            mDNSServiceFTPThread,
-            mDNSServiceISCSIThread,
-            mDNSServiceSSHThread,
-            mDNSServiceSFTP_SSHThread,
-            mDNSServiceSMBThread,
-            mDNSServiceHTTPThread,
-            mDNSServiceHTTPSThread,
-            mDNSServiceMiddlewareThread,
-            mDNSServiceMiddlewareSSLThread
-        ]
-
-        for service in mdns_advertise_services:
-            if self.threads.get(SrvToThread(service.__name__).name.lower()):
-                self.logger.debug('mDNS advertise thread is already started for service: %s', service.__name__)
+        for srv in ServiceType:
+            if self.threads.get(srv.name):
+                self.logger.debug('mDNS advertise thread is already started for service: %s', srv.name)
                 continue
 
-            thread = service(middleware=self.middleware, hostname=hostname, services=services)
+            thread = mDNSServiceThread(middleware=self.middleware, hostname=hostname, service=srv.name, service_info=service_info)
             thread.setup()
             thread_name = thread.service
             self.threads[thread_name] = thread
@@ -471,35 +362,30 @@ class mDNSAdvertiseService(Service):
 
     @private
     def reload(self, service_list):
-        mdns_advertise_services = [
-            mDNSServiceAdiskThread,
-            mDNSServiceAFPThread,
-            mDNSServiceFTPThread,
-            mDNSServiceISCSIThread,
-            mDNSServiceSSHThread,
-            mDNSServiceSFTP_SSHThread,
-            mDNSServiceSMBThread,
-            mDNSServiceHTTPThread,
-            mDNSServiceHTTPSThread,
-        ]
-        services = self.middleware.call_sync('service.query')
+        """
+        Re-register a list of services. Available services are in ServiceType class.
+        """
+        service_info = self.middleware.call_sync('service.query')
         hostname = self.middleware.call_sync('mdnsadvertise.get_hostname')
         if hostname is None:
             return
 
-        normalized_service_names = [SrvToThread[x].value for x in service_list]
-        for srvthread in mdns_advertise_services:
-            if srvthread.__name__ in normalized_service_names:
-                service_name = SrvToThread(srvthread.__name__).name.lower()
-                old_thread = self.threads.get(service_name)
-                if old_thread is not None:
-                    old_thread.cancel()
-                    del self.threads[service_name]
-                thread = srvthread(middleware=self.middleware, hostname=hostname, services=services)
-                thread.setup()
-                thread_name = thread.service
-                self.threads[thread_name] = thread
-                thread.start()
+        for service in service_list:
+            try:
+                srv = ServiceType[service]
+            except KeyError:
+                raise CallError(f'{service} is not valid service.')
+
+            old_thread = self.threads.get(srv.name)
+            if old_thread is not None:
+                old_thread.cancel()
+                del self.threads[srv.name]
+
+            thread = mDNSServiceThread(middleware=self.middleware, hostname=hostname, service=srv.name, service_info=service_info)
+            thread.setup()
+            thread_name = thread.service
+            self.threads[thread_name] = thread
+            thread.start()
 
 
 async def dns_post_sync(middleware):
