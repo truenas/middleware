@@ -116,7 +116,7 @@ def get_remote_path(provider, attributes):
     return remote_path
 
 
-async def rclone(middleware, job, cloud_sync):
+async def rclone(middleware, job, cloud_sync, dry_run=False):
     if not await middleware.run_in_thread(os.path.exists, cloud_sync["path"]):
         raise CallError(f"Directory {cloud_sync['path']!r} does not exist")
 
@@ -147,6 +147,9 @@ async def rclone(middleware, job, cloud_sync):
                 f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
                 for limit in cloud_sync["bwlimit"]
             ])])
+
+        if dry_run:
+            args.extend(["--dry-run"])
 
         args += config.extra_args
 
@@ -862,15 +865,50 @@ class CloudSyncService(CRUDService):
                 raise CallError(proc.stderr)
 
     @item_method
-    @accepts(Int("id"))
+    @accepts(
+        Int("id"),
+        Dict(
+            "cloud_sync_sync_options",
+             Bool("dry_run", default=False),
+            register=True,
+        )
+    )
     @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True)
-    async def sync(self, job, id):
+    async def sync(self, job, id, options):
         """
         Run the cloud_sync job `id`, syncing the local data to remote.
         """
 
         cloud_sync = await self._get_instance(id)
 
+        await self._sync(cloud_sync, options, job)
+
+    @accepts(
+        Patch("cloud_sync_create", "cloud_sync_sync_onetime"),
+        Patch("cloud_sync_sync_options", "cloud_sync_sync_onetime_options"),
+    )
+    @job(logs=True)
+    async def sync_onetime(self, job, cloud_sync, options):
+        """
+        Run cloud sync task without creating it.
+        """
+        verrors = ValidationErrors()
+
+        await self._validate(verrors, "cloud_sync_sync_onetime", cloud_sync)
+
+        if verrors:
+            raise verrors
+
+        await self._validate_folder(verrors, "cloud_sync_sync_onetime", cloud_sync)
+
+        if verrors:
+            raise verrors
+
+        cloud_sync["credentials"] = await self._get_credentials(cloud_sync["credentials"])
+
+        await self._sync(cloud_sync, options, job)
+
+    async def _sync(self, cloud_sync, options, job):
         credentials = cloud_sync["credentials"]
 
         local_path = cloud_sync["path"]
@@ -890,13 +928,15 @@ class CloudSyncService(CRUDService):
             async with self.remote_fs_lock_manager.lock(f"{credentials['id']}/{remote_path}", remote_direction):
                 job.set_progress(0, "Starting")
                 try:
-                    await rclone(self.middleware, job, cloud_sync)
-                    await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", cloud_sync["id"])
+                    await rclone(self.middleware, job, cloud_sync, options["dry_run"])
+                    if "id" in cloud_sync:
+                        await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", cloud_sync["id"])
                 except Exception:
-                    await self.middleware.call("alert.oneshot_create", "CloudSyncTaskFailed", {
-                        "id": cloud_sync["id"],
-                        "name": cloud_sync["description"],
-                    })
+                    if "id" in cloud_sync:
+                        await self.middleware.call("alert.oneshot_create", "CloudSyncTaskFailed", {
+                            "id": cloud_sync["id"],
+                            "name": cloud_sync["description"],
+                        })
                     raise
 
     @item_method
