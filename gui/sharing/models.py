@@ -84,7 +84,10 @@ class CIFS_Share(Model):
         verbose_name=_('Allow Guest Access'),
         help_text=_(
             'If true then no password is required to connect to the share. '
-            'Privileges will be those of the guest account.'
+            'Privileges are the same as the guest account. Guest access is '
+            'disabled by default in Windows 10 version 1709 and Windows Server version 1903. '
+            'Additional client-side configuration is required to provide '
+            'guest access to these clients.'
         ),
         default=False,
     )
