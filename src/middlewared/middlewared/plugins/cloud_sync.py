@@ -1003,9 +1003,16 @@ class CloudSyncService(CRUDService):
         return schema
 
 
+remote_classes = []
+for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
+                                        "rclone", "remote")):
+    for cls in load_classes(module, BaseRcloneRemote, []):
+        remote_classes.append(cls)
+        for method_name in cls.extra_methods:
+            setattr(CloudSyncService, f"{cls.name.lower()}_{method_name}", getattr(cls, method_name))
+
+
 async def setup(middleware):
-    for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
-                                            "rclone", "remote")):
-        for cls in load_classes(module, BaseRcloneRemote, []):
-            remote = cls(middleware)
-            REMOTES[remote.name] = remote
+    for cls in remote_classes:
+        remote = cls(middleware)
+        REMOTES[remote.name] = remote
