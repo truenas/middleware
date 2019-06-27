@@ -14,6 +14,5 @@ class Migration(migrations.Migration):
             model_name='cifs_share',
             name='cifs_share_acl',
             field=models.TextField(default='', verbose_name='SMB Share ACL'),
-            blank=True
         ),
     ]
