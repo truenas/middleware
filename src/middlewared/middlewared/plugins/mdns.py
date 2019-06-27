@@ -8,7 +8,6 @@ import subprocess
 
 from bsd.threading import set_thread_name
 
-from middlewared.service_exception import CallError
 from middlewared.service import Service, private
 from middlewared.utils import filter_list
 
@@ -121,17 +120,42 @@ class mDNSDaemonMonitor(threading.Thread):
         return p.returncode == 0
 
 
+class mDNSServiceObject(object):
+    def __init__(self, **kwargs):
+        self.sdRef = kwargs.get('sdRef')
+        self.txtrecord = kwargs.get('txtrecord')
+        self.port = kwargs.get('port')
+        self.regtype = kwargs.get('regtype')
+        self.name = kwargs.get('name')
+
+    @property
+    def fullname(self):
+        return "%s.%s.%s" % (
+            self.name.strip('.'),
+            self.regtype.strip('.'),
+        )
+
+    def to_dict(self):
+        return {
+            'type': 'mDNSSerivceObject',
+            'regtype': self.regtype,
+            'domain': self.domain,
+            'txtrecord': self.txtrecord,
+            'port': self.port
+        }
+
+
 class mDNSServiceThread(threading.Thread):
     def __init__(self, **kwargs):
         super(mDNSServiceThread, self).__init__()
         self.setDaemon(True)
-        self.service = kwargs.get('service')
         self.service_info = kwargs.get('service_info')
         self.middleware = kwargs.get('middleware')
         self.logger = self.middleware.logger
         self.hostname = kwargs.get('hostname')
-        self.service = kwargs.get('service')
-        self.regtype, self.port = ServiceType[self.service].value
+        self.service = None
+        self.regtype = None
+        self.port = None
         self.finished = threading.Event()
 
     def _is_system_service(self):
@@ -252,30 +276,45 @@ class mDNSServiceThread(threading.Thread):
         DNSServiceRef class supports the context management protocol, sdRef
         is closed automatically when block is exited.
         """
-        if not self._is_running():
-            return
+        mDNSServices = {}
+        for srv in ServiceType:
+            self.service = srv.name
+            self.regtype, self.port = ServiceType[self.service].value
+            if not self._is_running():
+                continue
 
-        txtrecord = self._generate_txtRecord()
-        if txtrecord is None:
-            return
+            txtrecord = self._generate_txtRecord()
+            if txtrecord is None:
+                continue
 
-        port = self._get_port()
+            port = self._get_port()
 
-        self.logger.debug(
-            'Registering mDNS service hostnamename: %s,  regtype: %s, port: %s, TXTRecord: %s',
-            self.hostname, self.regtype, port, txtrecord
-        )
+            self.logger.trace(
+                'Registering mDNS service hostnamename: %s,  regtype: %s, port: %s, TXTRecord: %s',
+                self.hostname, self.regtype, port, txtrecord
+            )
+            mDNSServices[srv.name] = mDNSServiceObject(
+                sdRef=None,
+                regtype=self.regtype,
+                port=port,
+                txtrecord=txtrecord,
+                name=self.hostname
+            )
 
-        sdRef = pybonjour.DNSServiceRegister(
-            name=self.hostname,
-            regtype=self.regtype,
-            port=port,
-            txtRecord=txtrecord,
-            callBack=None
-        )
-        with sdRef:
-            self.finished.wait()
-            self.logger.trace('Unregistering %s %s.', self.hostname, self.regtype)
+            mDNSServices[srv.name].sdRef = pybonjour.DNSServiceRegister(
+                name=self.hostname,
+                regtype=self.regtype,
+                port=port,
+                txtRecord=txtrecord,
+                callBack=None
+            )
+
+        self.finished.wait()
+        self.logger.trace("we're finished")
+        for srv in mDNSServices.keys():
+            self.logger.trace('Unregistering %s %s.',
+                              mDNSServices[srv].name, mDNSServices[srv].regtype)
+            mDNSServices[srv].sdRef.close()
 
     def run(self):
         set_thread_name(f'mdns_svc_{self.service}')
@@ -330,26 +369,31 @@ class mDNSAdvertiseService(Service):
         if hostname is None:
             return
 
-        for srv in ServiceType:
-            if self.threads.get(srv.name):
-                self.logger.debug('mDNS advertise thread is already started for service: %s', srv.name)
-                continue
+        if self.threads.get('mDNSThread'):
+            self.logger.debug('mDNS advertise thread is already started.')
+            return
 
-            thread = mDNSServiceThread(middleware=self.middleware, hostname=hostname, service=srv.name, service_info=service_info)
-            thread.setup()
-            thread_name = thread.service
-            self.threads[thread_name] = thread
-            thread.start()
+        thread = mDNSServiceThread(
+            middleware=self.middleware,
+            hostname=hostname,
+            service_info=service_info
+        )
+        thread.setup()
+        thread_name = 'mDNSThread'
+        self.threads[thread_name] = thread
+        thread.start()
 
         with self.lock:
             self.initialized = True
 
     @private
     def stop(self):
-        for thread in self.threads.copy():
-            thread = self.threads.get(thread)
-            thread.cancel()
-            del self.threads[thread.service]
+        thread = self.threads.get('mDNSThread')
+        if thread is None:
+            return
+
+        thread.cancel()
+        del self.threads['mDNSThread']
         self.threads = {}
 
         with self.lock:
@@ -359,33 +403,6 @@ class mDNSAdvertiseService(Service):
     def restart(self):
         self.stop()
         self.start()
-
-    @private
-    def reload(self, service_list):
-        """
-        Re-register a list of services. Available services are in ServiceType class.
-        """
-        service_info = self.middleware.call_sync('service.query')
-        hostname = self.middleware.call_sync('mdnsadvertise.get_hostname')
-        if hostname is None:
-            return
-
-        for service in service_list:
-            try:
-                srv = ServiceType[service]
-            except KeyError:
-                raise CallError(f'{service} is not valid service.')
-
-            old_thread = self.threads.get(srv.name)
-            if old_thread is not None:
-                old_thread.cancel()
-                del self.threads[srv.name]
-
-            thread = mDNSServiceThread(middleware=self.middleware, hostname=hostname, service=srv.name, service_info=service_info)
-            thread.setup()
-            thread_name = thread.service
-            self.threads[thread_name] = thread
-            thread.start()
 
 
 async def dns_post_sync(middleware):
