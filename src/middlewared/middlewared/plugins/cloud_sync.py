@@ -505,7 +505,8 @@ class CloudSyncService(CRUDService):
         tasks_or_task = await super().query(filters, options)
 
         jobs = {}
-        for j in await self.middleware.call("core.get_jobs", [("method", "=", "cloudsync.sync")],
+        for j in await self.middleware.call("core.get_jobs", [('OR', [("method", "=", "cloudsync.sync"),
+                                                                      ("method", "=", "cloudsync.restore")])],
                                             {"order_by": ["id"]}):
             try:
                 task_id = int(j["arguments"][0])
@@ -910,6 +911,42 @@ class CloudSyncService(CRUDService):
                             "name": cloud_sync["description"],
                         })
                     raise
+
+    @item_method
+    @accepts(
+        Int("id"),
+        Dict(
+            "cloud_sync_restore",
+            Str("transfer_mode", enum=["SYNC", "COPY"], required=True),
+            Str("path", required=True),
+        )
+    )
+    @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True)
+    async def restore(self, job, id, data):
+        """
+        Run the cloud_sync job `id`, syncing the local data to remote.
+        """
+        cloud_sync = await self._get_instance(id)
+        credentials = cloud_sync["credentials"]
+
+        if cloud_sync["direction"] == "PUSH":
+            data["direction"] = "PULL"
+        else:
+            data["direction"] = "PUSH"
+
+        data["credentials"] = credentials["id"]
+
+        for k in ["encryption", "filename_encryption", "encryption_password", "encryption_salt", "schedule",
+                  "transfers", "attributes"]:
+            data[k] = cloud_sync[k]
+
+        # Set other values to harmless defaults to avoid KeyError
+        data = self.middleware._schemas["cloud_sync_create"].clean(data)
+
+        data["credential"] = credentials
+        await self._extend(data)
+
+        await rclone(self.middleware, job, data)
 
     @accepts()
     async def providers(self):

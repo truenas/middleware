@@ -106,15 +106,21 @@ db_update()
 	echo "Saving current ${FREENAS_CONFIG} to ${FREENAS_CONFIG}.bak"
 	cp ${FREENAS_CONFIG} ${FREENAS_CONFIG}.bak
 
+	is_upload=0
 	if [ -f /data/uploaded.db ]; then
 		echo "Moving uploaded config to ${FREENAS_CONFIG}"
 		mv /data/uploaded.db ${FREENAS_CONFIG}
-		/usr/local/bin/sqlite3 /data/freenas-v1.db "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')"
+		is_upload=1
 	fi
 
 	set +e
 	db_update_real || handle_error
 	set -e
+
+	if [ $is_upload -eq 1 ]; then
+		/usr/local/bin/sqlite3 ${FREENAS_CONFIG} "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')"
+		/usr/local/bin/sqlite3 ${FREENAS_CONFIG} "UPDATE system_update SET upd_train = ''"
+	fi
 
 	rm -f $NEED_UPDATE_SENTINEL
 	rm -f $CD_UPGRADE_SENTINEL

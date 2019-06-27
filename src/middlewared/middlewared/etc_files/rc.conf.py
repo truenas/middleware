@@ -241,6 +241,11 @@ def nfs_config(middleware, context):
             yield 'nfsuserd_enable="YES"'
             sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
             sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 0
+            nfsuserd_flags = []
+            if nfs['v4_domain']:
+                nfsuserd_flags.append(f"-domain {nfs['v4_domain']}")
+            if nfsuserd_flags:
+                yield f"nfsuserd_flags=\"{' '.join(nfsuserd_flags)}\""
     else:
         yield 'nfsv4_server_enable="NO"'
         if nfs['userd_manage_gids']:
