@@ -14,4 +14,4 @@ class PcloudRcloneRemote(BaseRcloneRemote):
         Str("token", verbose="Access Token", required=True),
     ]
     credentials_oauth = True
-    refresh_credentials = True
+    refresh_credentials = ["token"]
