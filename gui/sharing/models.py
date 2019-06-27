@@ -88,7 +88,7 @@ class CIFS_Share(Model):
             'Privileges are the same as the guest account. Guest access is '
             'disabled by default in Windows 10 version 1709 and Windows Server version 1903. '
             'Additional client-side configuration is required to provide '
-            'required to provide guest access to these clients. '
+            'guest access to these clients. See <url with instructions>.'
         ),
         default=False,
     )
