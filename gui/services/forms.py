@@ -122,7 +122,9 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
                     self.data['cifs_srv_bindip'].split(',')
                 )
 
-        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
+        with client as c:
+            self.fields['cifs_srv_bindip'].choices = (c.call('smb.bindip_choices')).items()
+
         self.fields['cifs_srv_unixcharset'].choices = choices.UNIXCHARSET_CHOICES()
 
         if self.instance.id and self.instance.cifs_srv_bindip:
