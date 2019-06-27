@@ -120,31 +120,6 @@ class mDNSDaemonMonitor(threading.Thread):
         return p.returncode == 0
 
 
-class mDNSServiceObject(object):
-    def __init__(self, **kwargs):
-        self.sdRef = kwargs.get('sdRef')
-        self.txtrecord = kwargs.get('txtrecord')
-        self.port = kwargs.get('port')
-        self.regtype = kwargs.get('regtype')
-        self.name = kwargs.get('name')
-
-    @property
-    def fullname(self):
-        return "%s.%s.%s" % (
-            self.name.strip('.'),
-            self.regtype.strip('.'),
-        )
-
-    def to_dict(self):
-        return {
-            'type': 'mDNSSerivceObject',
-            'regtype': self.regtype,
-            'domain': self.domain,
-            'txtrecord': self.txtrecord,
-            'port': self.port
-        }
-
-
 class mDNSServiceThread(threading.Thread):
     def __init__(self, **kwargs):
         super(mDNSServiceThread, self).__init__()
@@ -293,15 +268,15 @@ class mDNSServiceThread(threading.Thread):
                 'Registering mDNS service hostnamename: %s,  regtype: %s, port: %s, TXTRecord: %s',
                 self.hostname, self.regtype, port, txtrecord
             )
-            mDNSServices[srv.name] = mDNSServiceObject(
-                sdRef=None,
-                regtype=self.regtype,
-                port=port,
-                txtrecord=txtrecord,
-                name=self.hostname
-            )
+            mDNSServices[srv.name] = {
+                'sdRef': None,
+                'regtype': self.regtype,
+                'port': port,
+                'txtrecord': txtrecord,
+                'name': self.hostname
+            }
 
-            mDNSServices[srv.name].sdRef = pybonjour.DNSServiceRegister(
+            mDNSServices[srv.name]['sdRef'] = pybonjour.DNSServiceRegister(
                 name=self.hostname,
                 regtype=self.regtype,
                 port=port,
@@ -312,8 +287,8 @@ class mDNSServiceThread(threading.Thread):
         self.finished.wait()
         for srv in mDNSServices.keys():
             self.logger.trace('Unregistering %s %s.',
-                              mDNSServices[srv].name, mDNSServices[srv].regtype)
-            mDNSServices[srv].sdRef.close()
+                              mDNSServices[srv]['name'], mDNSServices[srv]['regtype'])
+            mDNSServices[srv]['sdRef'].close()
 
     def run(self):
         set_thread_name(f'mdns_svc_{self.service}')

@@ -842,7 +842,6 @@ class ServiceService(CRUDService):
     async def _restart_afp(self, **kwargs):
         await self._stop_afp()
         await self._start_afp()
-        await self.middleware.call('mdnsadvertise.restart')
 
     async def _reload_afp(self, **kwargs):
         await self.middleware.call("etc.generate", "afpd")
