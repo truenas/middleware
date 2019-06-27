@@ -562,7 +562,7 @@ class SMBService(SystemServiceService):
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
 
         if data['bindip']:
-            bindip_choices = [x[0] for x in (await self.bindip_choices()).items()]
+            bindip_choices = list((await self.bindip_choices()).keys())
             for idx, item in enumerate(data['bindip']):
                 if item not in bindip_choices:
                     verrors.add(f'smb_update.bindip.{idx}', f'IP address [{item}] is not a configured address for this server')
