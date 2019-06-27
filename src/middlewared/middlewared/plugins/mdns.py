@@ -310,7 +310,6 @@ class mDNSServiceThread(threading.Thread):
             )
 
         self.finished.wait()
-        self.logger.trace("we're finished")
         for srv in mDNSServices.keys():
             self.logger.trace('Unregistering %s %s.',
                               mDNSServices[srv].name, mDNSServices[srv].regtype)
