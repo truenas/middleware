@@ -185,7 +185,7 @@ def test_12_get_installed_plugin_list_with_want_cache():
 
 
 @to_skip
-def test_13_verify_list_of_available_plugins_job_id_is_successfull():
+def test_13_verify_list_of_installed_plugins_job_id_is_successfull():
     global job_results
     while True:
         job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
@@ -206,3 +206,39 @@ def test_14_verify_transmission_plugin_info_value_with_jail_info_value_(object):
             break
     else:
         assert False, job_results.text
+
+
+@to_skip
+def test_15_get_list_of_available_plugins_with_want_cache():
+    global JOB_ID
+    payload = {
+        'resource': 'PLUGIN',
+        "remote": True,
+        "want_cache": True
+    }
+    results = POST('/jail/list_resource/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    JOB_ID = results.json()
+
+
+@to_skip
+def test_16_verify_list_of_available_plugins_job_id_is_successfull():
+    global job_results
+    while True:
+        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_state = job_results.json()[0]['state']
+        if job_state in ('RUNNING', 'WAITING'):
+            sleep(3)
+        else:
+            assert job_state == 'SUCCESS', job_results.text
+            break
+
+
+@to_skip
+@pytest.mark.parametrize('plugin', plugins_list)
+def test_17_verify_available_plugin_with_want_cache_(plugin):
+    for plugin_info in job_results.json()[0]['result']:
+        if plugin in plugin_info:
+            assert isinstance(plugin_info, list), job_results.text
+            assert plugin in plugin_info, job_results.text
