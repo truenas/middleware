@@ -777,7 +777,8 @@ class ServiceService(CRUDService):
     async def _start_ups(self, **kwargs):
         await self.middleware.call('ups.dismiss_alerts')
         await self.middleware.call('etc.generate', 'ups')
-        await self._service("nut", "start", **kwargs)
+        if (await self.middleware.call('ups.config'))['mode'] == 'MASTER':
+            await self._service("nut", "start", **kwargs)
         await self._service("nut_upsmon", "start", **kwargs)
         await self._service("nut_upslog", "start", **kwargs)
         if await self.started('collectd'):
@@ -816,7 +817,8 @@ class ServiceService(CRUDService):
 
         await self._service("nut_upslog", "stop", force=True, onetime=True)
 
-        await self._service("nut", "restart", onetime=True)
+        if (await self.middleware.call('ups.config'))['mode'] == 'MASTER':
+            await self._service("nut", "restart", onetime=True)
         await self._service("nut_upsmon", "restart", onetime=True)
         await self._service("nut_upslog", "restart", onetime=True)
         if await self.started('collectd'):
