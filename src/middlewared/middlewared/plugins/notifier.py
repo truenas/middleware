@@ -2,7 +2,6 @@ from middlewared.service import CallError, Service
 
 import errno
 import os
-import subprocess
 import sys
 import logging
 
@@ -20,7 +19,6 @@ from freenasUI import choices
 from freenasUI import common as fcommon
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
-from middlewared.utils import Popen
 
 
 logger = logging.getLogger('plugins.notifier')
@@ -104,7 +102,6 @@ class NotifierService(Service):
                 'basedn': ldap['basedn'],
                 'userdn': ldap['basedn'],
                 'groupdn': ldap['basedn'],
-                'krb_realm': ldap['kerberos_realm'],
                 'use_default_domain': ad['use_default_domain'],
                 'ad_idmap_backend': ad['idmap_backend'],
                 'ds_type': 2,
