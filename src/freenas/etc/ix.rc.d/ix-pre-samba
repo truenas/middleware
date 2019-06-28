@@ -10,6 +10,12 @@
 
 . /etc/rc.freenas
 
+: ${SMBCONF="/usr/local/etc/smb4.conf"}
+: ${NETCMD="/usr/local/bin/net"}
+: ${PYTHON="/usr/local/bin/python"}
+: ${GENSMB4CONF="/usr/local/libexec/nas/generate_smb4_conf.py"}
+
+
 get_sambaSID()
 {
 	local sambaSID
@@ -36,7 +42,7 @@ set_sambaSID()
 	if [ -n "${sambaSID}" ]
 	then
 		export LOGNAME=anonymous
-		/usr/local/bin/net setlocalsid "${sambaSID}"
+		${NETCMD} setlocalsid "${sambaSID}"
 	fi
 }
 
@@ -45,7 +51,7 @@ save_sambaSID()
 	local sambaSID
 
 	export LOGNAME=anonymous
-	sambaSID="$(/usr/local/bin/net getlocalsid | \
+	sambaSID="${NETCMD} getlocalsid | \
 		cut -f2 -d: | awk '{ print $1 }')"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -58,7 +64,12 @@ save_sambaSID()
 
 generate_smb_config()
 {
-	/usr/local/libexec/nas/generate_smb4_conf.py
+	${PYTHON} ${GENSMB4CONF}
+}
+
+write_stub_smb_conf()
+{
+	echo "[global]" > ${SMBCONF}
 }
 
 samba_pre_init()
@@ -66,9 +77,11 @@ samba_pre_init()
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
+	write_stub_smb_conf
+
 	local sambaSID="$(get_sambaSID)"
 
-	if [ -z "${sambaSID}" ] && [ -s "/usr/local/etc/smb4.conf" ]
+	if [ -z "${sambaSID}" ]
 	then
 		save_sambaSID
 	fi
