@@ -216,7 +216,7 @@ adctl_stop()
 		srv_set cifs 1
 		cifs_start
 
-	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
+	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]
 	then
 		adctl_cmd ${service} samba_server forcestop
 		activedirectory_set 0

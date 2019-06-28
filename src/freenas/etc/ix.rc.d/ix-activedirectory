@@ -179,10 +179,8 @@ setup_homedirs()
 activedirectory_start()
 {
 	if is_unified_standby; then
-                echo got here
 		return 0
 	fi
-        return
 	if dirsrv_enabled activedirectory
 	then
 		RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
