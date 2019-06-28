@@ -91,6 +91,9 @@ setup_homedirs()
 
 ldap_status()
 {
+	if is_unified_standby; then
+		return 0
+	fi
 	local IFS=\|
 	local ret=0
 	local fail="/tmp/.ldap_fail"
@@ -196,6 +199,9 @@ ldap_status()
 
 ldap_start()
 {
+	if is_unified_standby; then
+		return 0
+	fi
 	if dirsrv_enabled ldap
 	then
 		RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
@@ -230,6 +236,9 @@ ldap_start()
 
 ldap_stop()
 {
+	if is_unified_standby; then
+		return 0
+	fi
         /usr/local/www/freenasUI/tools/cachetool.py expire
 }
 

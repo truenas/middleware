@@ -77,14 +77,8 @@ adctl_start()
 {
 	local cifs_started=0	
 	local ad_started=0
-	local syspool=$(eval echo $(${notifier} call systemdataset.config | /usr/local/bin/jq .pool))
-	local is_freenas=$(${notifier} call system.is_freenas)
-	local failover_status='SINGLE'
-	if [ ${is_freenas} == 'False' ]; then
-		failover_status=$(${notifier} call notifier.failover_status)
-	fi
 
-	if [ ${syspool} != "freenas-boot" ] && [ ${failover_status} == "BACKUP" ]; then
+	if is_unified_standby; then
 		return 0
 	fi
 
@@ -173,6 +167,10 @@ adctl_stop()
 	local cifs_started=1
 	local prev_cifs_started=0
 
+	if is_unified_standby; then
+		return 0
+	fi
+
 	AD_generate_config
 
 	if [ -s "${cifs_file}" ]
@@ -218,7 +216,7 @@ adctl_stop()
 		srv_set cifs 1
 		cifs_start
 
-	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
+	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]
 	then
 		adctl_cmd ${service} samba_server forcestop
 		activedirectory_set 0
@@ -242,6 +240,9 @@ adctl_stop()
 
 adctl_status()
 {
+	if is_unified_standby; then
+		return 0
+	fi
 	adctl_cmd ${service} ix-activedirectory status
 }
 

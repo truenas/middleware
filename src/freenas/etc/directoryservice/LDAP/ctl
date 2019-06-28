@@ -100,14 +100,7 @@ ldapctl_start()
 	local ldap_started=0
 	local realm
 	local keytab_principal
-	local syspool=$(eval echo $(${notifier} call systemdataset.config | /usr/local/bin/jq .pool))
-	local is_freenas=$(${notifier} call system.is_freenas)
-	local failover_status='SINGLE'
-	if [ ${is_freenas} == 'False' ]; then
-		failover_status=$(${notifier} call notifier.failover_status)
-	fi
-
-	if [ ${syspool} != "freenas-boot" ] && [ ${failover_status} == "BACKUP" ]; then
+	if is_unified_standby; then
 		return 0
 	fi
 
@@ -203,6 +196,9 @@ ldapctl_start()
 
 ldapctl_stop()
 {
+	if is_unified_standby; then
+		return 0
+	fi
 	LDAP_init
 
 	if ! ldap_enabled
@@ -241,6 +237,9 @@ ldapctl_stop()
 
 ldapctl_status()
 {
+	if is_unified_standby; then
+		return 0
+	fi
 	ldapctl_cmd ${service} ix-ldap status
 }
 

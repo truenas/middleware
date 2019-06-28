@@ -112,6 +112,9 @@
 #	TrueNAS
 #
 : ${HA_MODE_FILE="/tmp/.ha_mode"}
+: ${HA_STATUS_SINGLE="SINGLE"}
+: ${HA_STATUS_ACTIVE="ACTIVE"}
+: ${HA_STATUS_STANDBY="BACKUP"}
 
 
 __escape()

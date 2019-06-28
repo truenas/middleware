@@ -178,6 +178,9 @@ setup_homedirs()
 
 activedirectory_start()
 {
+	if is_unified_standby; then
+		return 0
+	fi
 	if dirsrv_enabled activedirectory
 	then
 		RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
@@ -218,6 +221,9 @@ activedirectory_start()
 
 activedirectory_status()
 {
+	if is_unified_standby; then
+		return 0
+	fi
 	local res=1
 
 	if dirsrv_enabled activedirectory
@@ -234,6 +240,9 @@ activedirectory_status()
 
 activedirectory_stop()
 {
+	if is_unified_standby; then
+		return 0
+	fi
 	AD_init
 
         /usr/local/www/freenasUI/tools/cachetool.py expire
