@@ -204,12 +204,12 @@ class SMBService(SystemServiceService):
             admin_group = smb['admin_group']
 
         # We must use GIDs because wbinfo --name-to-sid expects a domain prefix "FREENAS\user"
-        group = await self.middleware.call("notifier.get_group_object", admin_group)
+        group = await self.middleware.call("dscache.get_uncached_group", admin_group)
         if not group:
             verrors.add('smb_update.admin_group', f"Failed to validate group: {admin_group}")
             raise verrors
 
-        sid = await self.wbinfo_gidtosid(group[2])
+        sid = await self.wbinfo_gidtosid(group['gr_gid'])
         if sid == "WBC_ERR_WINBIND_NOT_AVAILABLE":
             self.logger.debug("Delaying admin group add until winbind starts")
             await self.middleware.call('cache.put', 'SMB_SET_ADMIN', True)
