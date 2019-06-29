@@ -27,11 +27,12 @@ from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CRUDService, job, private, filterable, periodic, item_method
 from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, run
 from middlewared.validators import IpInUse, MACAddr
 
 from collections import deque, Iterable
 
+BRANCH_REGEX = re.compile(r'\d+\.\d-RELEASE')
 
 SHUTDOWN_LOCK = asyncio.Lock()
 
@@ -132,6 +133,20 @@ class JailService(CRUDService):
             self.middleware.call_sync('cache.put', 'iocage_remote_releases', choices, 86400)
 
         return choices
+
+    @accepts(
+        Str('repository', default='https://github.com/freenas/iocage-ix-plugins.git')
+    )
+    async def branches_choices(self, repository):
+
+        cp = await run(['git', 'ls-remote', repository], check=False, encoding='utf8')
+        if cp.returncode:
+            raise CallError(f'Failed to retrieve branches for {repository}: {cp.stderr}')
+
+        return {
+            branch: {'official': bool(BRANCH_REGEX.match(branch))}
+            for branch in re.findall(r'refs/heads/(.*)', cp.stdout)
+        }
 
     @accepts(
         Dict(
