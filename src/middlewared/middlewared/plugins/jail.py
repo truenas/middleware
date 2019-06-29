@@ -118,6 +118,22 @@ class JailService(CRUDService):
         return filter_list(jails, filters, options)
 
     @accepts(
+        Bool('remote', default=False),
+    )
+    def releases_choices(self, remote):
+        if remote:
+            with contextlib.suppress(KeyError):
+                return self.middleware.call_sync('cache.get', 'iocage_remote_releases')
+
+        iocage = ioc.IOCage(skip_jails=True)
+        choices = {k: k for k in iocage.fetch(list=True, remote=remote, http=True)}
+
+        if remote:
+            self.middleware.call_sync('cache.put', 'iocage_remote_releases', choices, 86400)
+
+        return choices
+
+    @accepts(
         Dict(
             "options",
             Str("release", required=True),
