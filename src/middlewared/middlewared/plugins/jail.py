@@ -24,7 +24,7 @@ from iocage_lib.ioc_list import IOCList
 from iocage_lib.ioc_plugin import IOCPlugin
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import Bool, Dict, Int, List, Str, accepts
+from middlewared.schema import Bool, Dict, Int, List, Str, accepts, Patch
 from middlewared.service import CRUDService, job, private, filterable, periodic, item_method
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list, run
@@ -264,6 +264,19 @@ class PluginService(CRUDService):
         new_plugin['install_notes'] = install_notes.strip()
 
         return new_plugin
+
+    @accepts(
+        Str('id'),
+        Patch('jail_update', 'plugin_update')
+    )
+    async def do_update(self, id, data):
+        await self._get_instance(id)
+        return await self.middleware.call('jail.update', id, data)
+
+    @accepts(Str('id'))
+    async def do_delete(self, id):
+        await self._get_instance(id)
+        return await self.middleware.call('jail.delete', id)
 
     @accepts(
         Dict(
@@ -702,11 +715,15 @@ class JailService(CRUDService):
 
         return self.middleware.call_sync('jail._get_instance', options['uuid'])
 
-    @accepts(Str("jail"), Dict(
-             "options",
-             Bool("plugin", default=False),
-             additional_attrs=True,
-             ))
+    @accepts(
+        Str('jail'),
+        Dict(
+            'jail_update',
+            Bool('plugin', default=False),
+            additional_attrs=True,
+            register=True
+        )
+    )
     def do_update(self, jail, options):
         """Sets a jail property."""
         plugin = options.pop("plugin")
