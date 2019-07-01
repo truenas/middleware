@@ -24,12 +24,13 @@ from middlewared.alert.base import (
     ProThreadedAlertService,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch, Ref
+from middlewared.schema import Any, Bool, Dict, Error, Int, Str, accepts, Patch, Ref
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
 )
 from middlewared.service_exception import CallError
+from middlewared.validators import validate_attributes
 from middlewared.utils import bisect, load_modules, load_classes
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
@@ -726,6 +727,8 @@ class AlertServiceService(CRUDService):
 
     @private
     async def _compress(self, service):
+        service.pop("type__title")
+
         return service
 
     @private
@@ -737,10 +740,8 @@ class AlertServiceService(CRUDService):
             verrors.add(f"{schema_name}.type", "This field has invalid value")
             raise verrors
 
-        try:
-            factory.validate(service.get('attributes', {}))
-        except ValidationErrors as e:
-            verrors.add_child(f"{schema_name}.attributes", e)
+        verrors.add_child(f"{schema_name}.attributes",
+                          validate_attributes(list(factory.schema.attrs.values()), service))
 
         if verrors:
             raise verrors
@@ -806,11 +807,11 @@ class AlertServiceService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self._validate(data, "alert_service_update")
+        await self._validate(new, "alert_service_update")
 
-        await self._compress(data)
+        await self._compress(new)
 
-        await self.middleware.call("datastore.update", self._config.datastore, id, data)
+        await self.middleware.call("datastore.update", self._config.datastore, id, new)
 
         await self._extend(new)
 
@@ -872,7 +873,6 @@ class AlertServiceService(CRUDService):
         test_alert = Alert(
             TestAlertClass,
             node=master_node,
-            source="Test",
             datetime=datetime.utcnow(),
             _uuid="test",
         )
