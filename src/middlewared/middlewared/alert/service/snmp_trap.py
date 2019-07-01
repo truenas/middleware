@@ -2,7 +2,7 @@ import pysnmp.hlapi
 import pysnmp.smi
 
 from middlewared.alert.base import ThreadedAlertService
-from middlewared.schema import Dict
+from middlewared.schema import Bool, Dict, Int, Str
 
 
 class SNMPTrapAlertService(ThreadedAlertService):
@@ -10,6 +10,20 @@ class SNMPTrapAlertService(ThreadedAlertService):
 
     schema = Dict(
         "snmp_attributes",
+        Str("host", required=True),
+        Int("port", required=True),
+        Bool("v3", required=True),
+        # v1/v2
+        Str("community", null=True, default=None, empty=False),
+        # v3
+        Str("v3_username", null=True, default=None, empty=False),
+        Str("v3_authkey", null=True, default=None),
+        Str("v3_privkey", null=True, default=None),
+        Str("v3_authprotocol", enum=[None, "MD5", "SHA", "128SHA224", "192SHA256", "256SHA384", "384SHA512"],
+            null=True, default=None),
+        Str("v3_privprotocol", enum=[None, "DES", "3DESEDE", "AESCFB128", "AESCFB192", "AESCFB256",
+                                     "AESBLUMENTHALCFB192", "AESBLUMENTHALCFB256"],
+            null=True, default=None),
     )
 
     def __init__(self, middleware, attributes):
@@ -18,14 +32,41 @@ class SNMPTrapAlertService(ThreadedAlertService):
         self.initialized = False
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
-        if not self.middleware.call_sync("service.started", "snmp"):
-            self.logger.trace("SNMP service not started, not sending traps")
-            return
+        if self.attributes["host"] in ("localhost", "127.0.0.1", "::1"):
+            if not self.middleware.call_sync("service.started", "snmp"):
+                self.logger.trace("Local SNMP service not started, not sending traps")
+                return
 
         if not self.initialized:
             self.snmp_engine = pysnmp.hlapi.SnmpEngine()
-            self.auth_data = pysnmp.hlapi.CommunityData("public")
-            self.transport_target = pysnmp.hlapi.UdpTransportTarget(("localhost", 162))
+            if self.attributes["v3"]:
+                self.auth_data = pysnmp.hlapi.UsmUserData(
+                    self.attributes["v3_username"] or "",
+                    self.attributes["v3_authkey"],
+                    self.attributes["v3_privkey"],
+                    {
+                        None: pysnmp.hlapi.usmNoAuthProtocol,
+                        "MD5": pysnmp.hlapi.usmHMACMD5AuthProtocol,
+                        "SHA": pysnmp.hlapi.usmHMACSHAAuthProtocol,
+                        "128SHA224": pysnmp.hlapi.usmHMAC128SHA224AuthProtocol,
+                        "192SHA256": pysnmp.hlapi.usmHMAC192SHA256AuthProtocol,
+                        "256SHA384": pysnmp.hlapi.usmHMAC256SHA384AuthProtocol,
+                        "384SHA512": pysnmp.hlapi.usmHMAC384SHA512AuthProtocol,
+                    }[self.attributes["v3_authprotocol"]],
+                    {
+                        None: pysnmp.hlapi.usmNoPrivProtocol,
+                        "DES": pysnmp.hlapi.usmDESPrivProtocol,
+                        "3DESEDE": pysnmp.hlapi.usm3DESEDEPrivProtocol,
+                        "AESCFB128": pysnmp.hlapi.usmAesCfb128Protocol,
+                        "AESCFB192": pysnmp.hlapi.usmAesCfb192Protocol,
+                        "AESCFB256": pysnmp.hlapi.usmAesCfb256Protocol,
+                        "AESBLUMENTHALCFB192": pysnmp.hlapi.usmAesBlumenthalCfb192Protocol,
+                        "AESBLUMENTHALCFB256": pysnmp.hlapi.usmAesBlumenthalCfb256Protocol,
+                    }[self.attributes["v3_privprotocol"]],
+                )
+            else:
+                self.auth_data = pysnmp.hlapi.CommunityData(self.attributes["community"])
+            self.transport_target = pysnmp.hlapi.UdpTransportTarget((self.attributes["host"], self.attributes["port"]))
             self.context_data = pysnmp.hlapi.ContextData()
 
             mib_builder = pysnmp.smi.builder.MibBuilder()

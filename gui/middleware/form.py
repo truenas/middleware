@@ -24,6 +24,10 @@ def handle_middleware_validation(form, excep):
             if form.middleware_attr_prefix:
                 field_name = f'{form.middleware_attr_prefix}{field_name}'
             if (field_name not in form.fields and
+                    field_name.startswith('attributes.') and
+                    field_name.split('.')[1] in form.fields):
+                field_name = field_name[len('attributes.'):]
+            if (field_name not in form.fields and
                     len(field_name.split('.')) >= 3 and field_name.split('.')[-2].isdigit()):
                 list_field_name = '.'.join(field_name.split('.')[:-2])
                 if list_field_name in form.fields:
