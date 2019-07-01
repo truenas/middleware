@@ -37,6 +37,112 @@ BRANCH_REGEX = re.compile(r'\d+\.\d-RELEASE')
 SHUTDOWN_LOCK = asyncio.Lock()
 
 
+def validate_ips(middleware, verrors, options, schema='options.props', exclude=None):
+    for item in options['props']:
+        for f in ('ip4_addr', 'ip6_addr'):
+            # valid ip values can be
+            # 1) none
+            # 2) interface|accept_rtadv
+            # 3) interface|ip/netmask
+            # 4) interface|ip
+            # 5) ip/netmask
+            # 6) ip
+            # 7) All the while making sure that the above can be mixed with each other using ","
+            # we explicitly check these
+            if f in item:
+                for ip in map(
+                        lambda ip: ip.split('|', 1)[-1].split('/')[0],
+                        filter(
+                            lambda v: v != 'none' and v.split('|')[-1] != 'accept_rtadv',
+                            item.split('=')[1].split(',')
+                        )
+                ):
+                    try:
+                        IpInUse(middleware, exclude)(ip)
+                    except ValueError as e:
+                        verrors.add(
+                            f'{schema}.{f}',
+                            str(e)
+                        )
+
+
+def common_validation(middleware, options, update=False, jail=None, schema='options'):
+    verrors = ValidationErrors()
+
+    if not update:
+        # Ensure that api call conforms to format set by iocage for props
+        # Example 'key=value'
+
+        for value in options['props']:
+            if '=' not in value:
+                verrors.add(
+                    f'{schema}.props',
+                    'Please follow the format specified by iocage for api calls'
+                    'e.g "key=value"'
+                )
+                break
+
+        if verrors:
+            raise verrors
+
+        # normalise vnet mac address
+        # expected format here is 'vnet0_mac=00-D0-56-F2-B5-12,00-D0-56-F2-B5-13'
+        vnet_macs = {
+            f.split('=')[0]: f.split('=')[1] for f in options['props']
+            if any(f'vnet{i}_mac' in f.split('=')[0] for i in range(0, 4))
+        }
+
+        validate_ips(middleware, verrors, options, schema=f'{schema}.props')
+    else:
+        vnet_macs = {
+            key: value for key, value in options.items()
+            if any(f'vnet{i}_mac' in key for i in range(0, 4))
+        }
+
+        exclude_ips = [
+            ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+            for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
+            if ip not in ('none', 'DHCP (not running)')
+        ]
+
+        validate_ips(
+            middleware, verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
+            schema, exclude_ips
+        )
+
+    # validate vnetX_mac addresses
+    for key, value in vnet_macs.items():
+        if value and value != 'none':
+            value = value.replace(',', ' ')
+            try:
+                for mac in value.split():
+                    MACAddr()(mac)
+
+                if len(value.split()) != 2 or any(value.split().count(v) > 1 for v in value.split()):
+                    raise ValueError('Exception')
+            except ValueError:
+                verrors.add(
+                    f'{schema}.{key}',
+                    'Please enter two valid and different '
+                    f'space/comma-delimited MAC addresses for {key}.'
+                )
+
+    if options.get('uuid'):
+        valid = True if re.match(
+            r"^[a-zA-Z0-9\._-]+$", options['uuid']
+        ) else False
+
+        if not valid:
+            verrors.add(
+                f'{schema}.uuid',
+                f'Invalid character in {options["uuid"]}. '
+                'Alphanumeric, period (.), underscore (_), '
+                'and dash (-) characters are allowed.'
+            )
+
+    return verrors
+
+
 class PluginService(CRUDService):
 
     class Config:
@@ -434,7 +540,7 @@ class JailService(CRUDService):
             # A jail does not exist with the provided name, we can create one
             # now
 
-            verrors = self.common_validation(verrors, options)
+            verrors = common_validation(self.middleware, options)
 
             if verrors:
                 raise verrors
@@ -517,7 +623,7 @@ class JailService(CRUDService):
                 )
 
         verrors.check()
-        verrors = self.common_validation(verrors, options)
+        verrors = common_validation(self.middleware, options, schema='clone_jail')
         verrors.check()
 
         job.set_progress(25, 'Initial validation complete.')
@@ -529,37 +635,6 @@ class JailService(CRUDService):
         job.set_progress(100, 'Jail has been successfully cloned.')
 
         return self.middleware.call_sync('jail._get_instance', options['uuid'])
-
-    @private
-    def validate_ips(self, verrors, options, schema='options.props', exclude=None):
-        for item in options['props']:
-            for f in ('ip4_addr', 'ip6_addr'):
-                # valid ip values can be
-                # 1) none
-                # 2) interface|accept_rtadv
-                # 3) interface|ip/netmask
-                # 4) interface|ip
-                # 5) ip/netmask
-                # 6) ip
-                # 7) All the while making sure that the above can be mixed with each other using ","
-                # we explicitly check these
-                if f in item:
-                    for ip in map(
-                        lambda ip: ip.split('|', 1)[-1].split('/')[0],
-                        filter(
-                            lambda v: v != 'none' and v.split('|')[-1] != 'accept_rtadv',
-                            item.split('=')[1].split(',')
-                        )
-                    ):
-                        try:
-                            IpInUse(self.middleware, exclude)(
-                                ip
-                            )
-                        except ValueError as e:
-                            verrors.add(
-                                f'{schema}.{f}',
-                                str(e)
-                            )
 
     @accepts(Str("jail"), Dict(
              "options",
@@ -573,11 +648,9 @@ class JailService(CRUDService):
 
         name = options.pop("name", None)
 
-        verrors = ValidationErrors()
-
         jail = self.query([['id', '=', jail]], {'get': True})
 
-        verrors = self.common_validation(verrors, options, True, jail)
+        verrors = common_validation(self.middleware, options, True, jail)
 
         if name is not None and plugin:
             verrors.add('options.plugin',
@@ -598,83 +671,6 @@ class JailService(CRUDService):
             iocage.rename(name)
 
         return True
-
-    @private
-    def common_validation(self, verrors, options, update=False, jail=None):
-        if not update:
-            # Ensure that api call conforms to format set by iocage for props
-            # Example 'key=value'
-
-            for value in options['props']:
-                if '=' not in value:
-                    verrors.add(
-                        'options.props',
-                        'Please follow the format specified by iocage for api calls'
-                        'e.g "key=value"'
-                    )
-                    break
-
-            if verrors:
-                raise verrors
-
-            # normalise vnet mac address
-            # expected format here is 'vnet0_mac=00-D0-56-F2-B5-12,00-D0-56-F2-B5-13'
-            vnet_macs = {
-                f.split('=')[0]: f.split('=')[1] for f in options['props']
-                if any(f'vnet{i}_mac' in f.split('=')[0] for i in range(0, 4))
-            }
-
-            self.validate_ips(verrors, options)
-        else:
-            vnet_macs = {
-                key: value for key, value in options.items()
-                if any(f'vnet{i}_mac' in key for i in range(0, 4))
-            }
-
-            exclude_ips = [
-                ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
-                for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
-                if ip not in ('none', 'DHCP (not running)')
-            ]
-
-            self.validate_ips(
-                verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
-                'options', exclude_ips
-            )
-
-        # validate vnetX_mac addresses
-        for key, value in vnet_macs.items():
-            if value and value != 'none':
-                value = value.replace(',', ' ')
-                try:
-                    for mac in value.split():
-                        MACAddr()(mac)
-
-                    if (
-                        len(value.split()) != 2 or
-                        any(value.split().count(v) > 1 for v in value.split())
-                    ):
-                        raise ValueError('Exception')
-                except ValueError:
-                    verrors.add(
-                        key,
-                        'Please Enter two valid and different '
-                        f'space/comma-delimited MAC addresses for {key}.'
-                    )
-        if options.get('uuid'):
-            valid = True if re.match(
-                r"^[a-zA-Z0-9\._-]+$", options['uuid']
-            ) else False
-
-            if not valid:
-                verrors.add(
-                    'options.uuid',
-                    f'Invalid character in {options["uuid"]}. '
-                    'Alphanumeric, period (.), underscore (_), '
-                    'and dash (-) characters are allowed.'
-                )
-
-        return verrors
 
     @accepts(
         Str('jail'),
@@ -774,7 +770,7 @@ class JailService(CRUDService):
 
         verrors = ValidationErrors()
 
-        self.validate_ips(verrors, options)
+        validate_ips(self.middleware, verrors, options)
 
         if verrors:
             raise verrors
