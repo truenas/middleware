@@ -829,7 +829,7 @@ class JailService(CRUDService):
             Str('user', default='anonymous'),
             Str('password', default='anonymous@'),
             Str('name', default=None, null=True),
-            Str('jail_name', default=None, null=True),
+            Str('jail_name'),
             Bool('accept', default=True),
             Bool('https', default=True),
             List('props', default=[]),
@@ -843,112 +843,62 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
-        fetch_output = {'install_notes': []}
         release = options.get('release', None)
         https = options.pop('https', False)
         name = options.pop('name')
-        jail_name = options.pop('jail_name')
-
-        post_install = False
-
-        verrors = ValidationErrors()
-
-        validate_ips(self.middleware, verrors, options)
-
-        if verrors:
-            raise verrors
+        jail_name = options.pop('jail_name', None)
 
         def progress_callback(content, exception):
             msg = content['message'].strip('\r\n')
             rel_up = f'* Updating {release} to the latest patch level... '
-            nonlocal post_install
 
-            if name is None:
-                if 'Downloading : base.txz' in msg and '100%' in msg:
-                    job.set_progress(5, msg)
-                elif 'Downloading : lib32.txz' in msg and '100%' in msg:
-                    job.set_progress(10, msg)
-                elif 'Downloading : doc.txz' in msg and '100%' in msg:
-                    job.set_progress(15, msg)
-                elif 'Downloading : src.txz' in msg and '100%' in msg:
-                    job.set_progress(20, msg)
-                if 'Extracting: base.txz' in msg:
-                    job.set_progress(25, msg)
-                elif 'Extracting: lib32.txz' in msg:
-                    job.set_progress(50, msg)
-                elif 'Extracting: doc.txz' in msg:
-                    job.set_progress(75, msg)
-                elif 'Extracting: src.txz' in msg:
-                    job.set_progress(90, msg)
-                elif rel_up in msg:
-                    job.set_progress(95, msg)
-                else:
-                    job.set_progress(None, msg)
+            if 'Downloading : base.txz' in msg and '100%' in msg:
+                job.set_progress(5, msg)
+            elif 'Downloading : lib32.txz' in msg and '100%' in msg:
+                job.set_progress(10, msg)
+            elif 'Downloading : doc.txz' in msg and '100%' in msg:
+                job.set_progress(15, msg)
+            elif 'Downloading : src.txz' in msg and '100%' in msg:
+                job.set_progress(20, msg)
+            if 'Extracting: base.txz' in msg:
+                job.set_progress(25, msg)
+            elif 'Extracting: lib32.txz' in msg:
+                job.set_progress(50, msg)
+            elif 'Extracting: doc.txz' in msg:
+                job.set_progress(75, msg)
+            elif 'Extracting: src.txz' in msg:
+                job.set_progress(90, msg)
+            elif rel_up in msg:
+                job.set_progress(95, msg)
             else:
-                if post_install:
-                    for split_msg in msg.split('\n'):
-                        fetch_output['install_notes'].append(split_msg)
-
-                if '  These pkgs will be installed:' in msg:
-                    job.set_progress(50, msg)
-                elif 'Installing plugin packages:' in msg:
-                    job.set_progress(75, msg)
-                elif 'Running post_install.sh' in msg:
-                    job.set_progress(90, msg)
-                    # Sets each message going forward as important to the user
-                    post_install = True
-                else:
-                    job.set_progress(None, msg)
+                job.set_progress(None, msg)
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = f'{release} being fetched'
         final_msg = f'{release} fetched'
 
-        iocage = ioc.IOCage(callback=progress_callback, silent=False)
-
-        if name is not None:
-            pool = IOCJson().json_get_value('pool')
-            iocroot = IOCJson(pool).json_get_value('iocroot')
-
-            options["plugin_name"] = name
-            start_msg = 'Starting plugin install'
-            final_msg = f"Plugin: {name} installed"
-        elif name is None and https:
+        if name is None and https:
             if 'https' not in options['server']:
                 options['server'] = f'https://{options["server"]}'
 
-        options["accept"] = True
-        options['name'] = jail_name
-
-        job.set_progress(0, start_msg)
-        iocage.fetch(**options)
-
-        if post_install and name is not None:
-            plugin_manifest = pathlib.Path(
-                f'{iocroot}/.plugin_index/{name}.json'
+        if name is not None:
+            # we want to create a plugin in this case
+            plugin_job = self.middleware.call_sync(
+                'plugin.create', {
+                    'jail_name': jail_name,
+                    'plugin_name': name,
+                    'props': options['props'],
+                })
+            return self.middleware.call_sync(
+                'core.job_wait', plugin_job, job=True
             )
-            plugin_json = json.loads(plugin_manifest.read_text())
-            schema_version = plugin_json.get('plugin_schema', '1')
-
-            if schema_version.isdigit() and int(schema_version) >= 2:
-                plugin_output = pathlib.Path(
-                    f'{iocroot}/jails/{name}/root/root/PLUGIN_INFO'
-                )
-
-                if plugin_output.is_file():
-                    # Otherwise it will be the verbose output from the
-                    # post_install script
-                    fetch_output['install_notes'] = [
-                        x for x in plugin_output.read_text().split('\n') if x
-                    ]
-
-                    # This is to get the admin URL and such
-                    fetch_output['install_notes'] += job.progress[
-                        'description'].split('\n')
-
-        job.set_progress(100, final_msg)
-
-        return fetch_output
+        else:
+            # We are fetching a release in this case
+            iocage = ioc.IOCage(callback=progress_callback, silent=False)
+            job.set_progress(0, start_msg)
+            iocage.fetch(**options)
+            job.set_progress(100, final_msg)
+            return True
 
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
     def rc_action(self, action):
