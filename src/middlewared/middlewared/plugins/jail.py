@@ -60,10 +60,7 @@ def validate_ips(middleware, verrors, options, schema='options.props', exclude=N
                     try:
                         IpInUse(middleware, exclude)(ip)
                     except ValueError as e:
-                        verrors.add(
-                            f'{schema}.{f}',
-                            str(e)
-                        )
+                        verrors.add(f'{schema}.{f}', str(e))
 
 
 def common_validation(middleware, options, update=False, jail=None, schema='options'):
@@ -198,6 +195,75 @@ class PluginService(CRUDService):
             resource_list[index] = plugin_dict
 
         return filter_list(resource_list, filters, options)
+
+    @accepts(
+        Dict(
+            'plugin_create',
+            Str('plugin_name', required=True),
+            Str('jail_name', required=True),
+            List('props', default=[], empty=False),
+            Str('branch', default=None, null=True),
+            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+        )
+    )
+    def do_create(self, data):
+        return self.middleware.call_sync('plugin._do_create', data)
+
+    @job(lock=lambda args: f'plugin_create_{args[-1]["jail_name"]}')
+    def _do_create(self, job, data):
+        self.middleware.call_sync('jail.check_dataset_existence')
+        verrors = ValidationErrors()
+        branch = data.pop('branch') or self.get_version()
+        install_notes = ''
+        plugin_name = data.pop('plugin_name')
+        jail_name = data.pop('jail_name')
+        plugin_repository = data.pop('plugin_repository')
+        post_install = False
+
+        job.set_progress(0, f'Creating plugin: {plugin_name}')
+        if jail_name in [j['id'] for j in self.middleware.call_sync('jail.query')]:
+            verrors.add(
+                'plugin_create.jail_name',
+                f'A jail with name {jail_name} already exists'
+            )
+        else:
+            verrors = common_validation(self.middleware, data, schema='plugin_create')
+
+        verrors.check()
+
+        job.set_progress(20, 'Initial validation complete')
+
+        def progress_callback(content, exception):
+            msg = content['message'].strip('\r\n')
+            nonlocal install_notes, post_install
+
+            if post_install and msg:
+                install_notes += f'\n{msg}'
+
+            if '  These pkgs will be installed:' in msg:
+                job.set_progress(50, msg)
+            elif 'Installing plugin packages:' in msg:
+                job.set_progress(75, msg)
+            elif 'Running post_install.sh' in msg:
+                job.set_progress(90, msg)
+                # Sets each message going forward as important to the user
+                post_install = True
+            else:
+                job.set_progress(None, msg)
+
+        ioc.IOCage(callback=progress_callback, silent=False).fetch(**{
+            'accept': True,
+            'name': jail_name,
+            'plugin_name': plugin_name,
+            'git_repository': plugin_repository,
+            'props': data['props'],
+            'branch': branch,
+        })
+
+        new_plugin = self.middleware.call_sync('plugin._get_instance', jail_name)
+        new_plugin['install_notes'] = install_notes.strip()
+
+        return new_plugin
 
     @accepts(
         Dict(
