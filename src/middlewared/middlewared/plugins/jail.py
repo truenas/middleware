@@ -93,6 +93,85 @@ class PluginService(CRUDService):
 
         return filter_list(resource_list, filters, options)
 
+    @accepts(
+        Dict(
+            'available_plugin_options',
+            Bool('cache', default=True),
+            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+            Str('branch'),
+        )
+    )
+    @job(
+        lock=lambda args: 'available_plugins_{}_{}'.format(
+            args[-1].get('branch') if args else None,
+            args[-1]['plugin_repository'] if args and args[-1].get(
+                'plugin_repository'
+            ) else 'https://github.com/freenas/iocage-ix-plugins.git'
+        )
+    )
+    def available(self, job, options):
+        self.middleware.call_sync('jail.check_dataset_existence')
+        branch = options.get('branch') or self.get_version()
+        iocage = ioc.IOCage(skip_jails=True)
+        if options['cache']:
+            with contextlib.suppress(KeyError):
+                return self.middleware.call_sync(
+                    'cache.get', f'iocage_remote_plugins_{branch}_{options["plugin_repository"]}'
+                )
+
+        resource_list = iocage.fetch(
+            list=True, plugins=True, header=False, branch=branch, git_repository=options['plugin_repository']
+        )
+
+        plugins_versions_data = {}
+        if options['cache']:
+            with contextlib.suppress(KeyError):
+                plugins_versions_data = self.middleware.call_sync(
+                    'cache.get', f'iocage_plugin_versions_{branch}_{options["plugin_repository"]}'
+                )
+
+        if not plugins_versions_data:
+            plugins_versions_data_job = self.middleware.call_sync(
+                'core.get_jobs', [
+                    ['method', '=', 'plugin.retrieve_plugin_versions'],
+                    ['state', '=', 'RUNNING'],
+                    ['arguments', '=', [branch, options['plugin_repository']]],
+                ]
+            )
+            error = None
+            plugins_versions_data = {}
+            if plugins_versions_data_job:
+                try:
+                    plugins_versions_data = self.middleware.call_sync(
+                        'core.job_wait', plugins_versions_data_job[0]['id'], job=True
+                    )
+                except CallError as e:
+                    error = str(e)
+            else:
+                try:
+                    plugins_versions_data = self.middleware.call_sync(
+                        'plugin.retrieve_plugin_versions', branch, options['plugin_repository'], job=True
+                    )
+                except Exception as e:
+                    error = e
+
+            if error:
+                # Let's not make the failure fatal
+                self.middleware.logger.debug(f'Retrieving plugins version failed: {error}')
+
+        for plugin in resource_list:
+            plugin.update({
+                k: plugins_versions_data.get(plugin['plugin'], {}).get(k, 'N/A')
+                for k in ('version', 'revision', 'epoch')
+            })
+
+        self.middleware.call_sync(
+            'cache.put', f'iocage_remote_plugins_{branch}_{options["plugin_repository"]}', resource_list,
+            86400
+        )
+
+        return resource_list
+
     @periodic(interval=86400, run_on_start=False)
     @private
     @accepts(
@@ -128,6 +207,16 @@ class PluginService(CRUDService):
             'cache.put', f'iocage_plugin_versions_{branch}_{plugin_repository}', plugins, 86400
         )
         return plugins
+
+    @private
+    def get_version(self):
+        """
+        Uses system.version and parses it out for the RELEASE branch we need
+        """
+        r = os.uname().release
+        version = f'{round(float(r.split("-")[0]), 1)}-RELEASE'
+
+        return version
 
     @private
     def get_local_plugin_version(self, plugin, index_json, iocroot, jail_name):
