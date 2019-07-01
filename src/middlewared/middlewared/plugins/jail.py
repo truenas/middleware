@@ -37,6 +37,120 @@ BRANCH_REGEX = re.compile(r'\d+\.\d-RELEASE')
 SHUTDOWN_LOCK = asyncio.Lock()
 
 
+class PluginService(CRUDService):
+
+    class Config:
+        process_pool = True
+
+    @filterable
+    def query(self, filters=None, options=None):
+        options = options or {}
+        self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
+        iocage = ioc.IOCage(skip_jails=True)
+        resource_list = iocage.list('all', plugin=True)
+        pool = IOCJson().json_get_value('pool')
+        iocroot = IOCJson(pool).json_get_value('iocroot')
+        plugin_dir_path = os.path.join(iocroot, '.plugins')
+        plugin_jails = {
+            j['host_hostuuid']: j for j in self.middleware.call_sync(
+                'jail.query', [['type', 'in', ['plugin', 'pluginv2']]]
+            )
+        }
+
+        index_jsons = {}
+        for repo in os.listdir(plugin_dir_path) if os.path.exists(plugin_dir_path) else []:
+            index_path = os.path.join(plugin_dir_path, repo, 'INDEX')
+            if os.path.exists(index_path):
+                with contextlib.suppress(json.decoder.JSONDecodeError):
+                    with open(index_path, 'r') as f:
+                        index_jsons[repo] = json.loads(f.read())
+
+        for index, plugin in enumerate(resource_list):
+            # "plugin" is a list which we will convert to a dictionary for readability
+            plugin_dict = {
+                k: v if v != '-' else None
+                for k, v in zip((
+                    'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4', 'ip6', 'template', 'admin_portal'
+                ), plugin)
+            }
+            plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
+            plugin_info = plugin_output.read_text().strip() if plugin_output.is_file() else None
+
+            plugin_name = plugin_jails[plugin_dict['name']]['plugin_name']
+            plugin_repo = self.convert_repository_to_path(plugin_jails[plugin_dict['name']]['plugin_repository'])
+            plugin_dict.update({
+                'id': plugin_dict['name'],
+                'plugin_info': plugin_info,
+                'plugin': plugin_name,
+                'plugin_repository': plugin_jails[plugin_dict['name']]['plugin_repository'],
+                **self.get_local_plugin_version(
+                    plugin_name,
+                    index_jsons.get(plugin_repo), iocroot, plugin_dict['name']
+                )
+            })
+
+            resource_list[index] = plugin_dict
+
+        return filter_list(resource_list, filters, options)
+
+    @private
+    def get_local_plugin_version(self, plugin, index_json, iocroot, jail_name):
+        """
+        Checks the primary_pkg key in the INDEX with the pkg version
+        inside the jail.
+        """
+        version = {k: 'N/A' for k in ('version', 'revision', 'epoch')}
+
+        if index_json is None:
+            return version
+
+        try:
+            base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
+            primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
+
+            # Since these are plugins, we don't want to spin them up just to
+            # check a pkg, directly accessing the db is best in this case.
+            db_rows = self.read_plugin_pkg_db(
+                f'{iocroot}/jails/{jail_name}/root/var/db/pkg/local.sqlite', primary_pkg
+            )
+
+            for row in db_rows:
+                row = list(row)
+                if '/' not in primary_pkg:
+                    row[1] = row[1].split('/', 1)[-1]
+                    row[2] = row[2].split('/', 1)[-1]
+
+                if primary_pkg == row[1] or primary_pkg == row[2]:
+                    version = ioc_common.parse_package_name(f'{plugin}-{row[3]}')
+                    break
+        except (KeyError, sqlite3.OperationalError):
+            pass
+
+        return version
+
+    @private
+    def read_plugin_pkg_db(self, db, pkg):
+        try:
+            conn = sqlite3.connect(db)
+        except sqlite3.Error as e:
+            raise CallError(e)
+
+        with conn:
+            cur = conn.cursor()
+            cur.execute(
+                f'SELECT * FROM packages WHERE origin="{pkg}" OR name="{pkg}"'
+            )
+
+            rows = cur.fetchall()
+
+            return rows
+
+    @private
+    def convert_repository_to_path(self, git_repository_uri):
+        # Following is the logic which iocage uses to ensure unique directory names for each uri
+        return git_repository_uri.split('://', 1)[-1].replace('/', '_').replace('.', '_')
+
+
 class JailService(CRUDService):
 
     class Config:
