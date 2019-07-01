@@ -1,6 +1,6 @@
 from collections import defaultdict, namedtuple
 import copy
-from datetime import datetime
+from datetime import datetime, timezone
 import errno
 import os
 import textwrap
@@ -331,7 +331,7 @@ class AlertService(Service):
     async def send_alerts(self, job):
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
-        now = datetime.now()
+        now = datetime.utcnow()
         for policy_name, policy in self.policies.items():
             gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
 
@@ -552,6 +552,8 @@ class AlertService(Service):
             alert.uuid = existing_alert.uuid
         if existing_alert is None:
             alert.datetime = alert.datetime or datetime.utcnow()
+            if alert.datetime.tzinfo is not None:
+                alert.datetime = alert.datetime.astimezone(timezone.utc).replace(tzinfo=None)
         else:
             alert.datetime = existing_alert.datetime
         if existing_alert is None:
