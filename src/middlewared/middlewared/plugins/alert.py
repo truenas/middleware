@@ -24,7 +24,7 @@ from middlewared.alert.base import (
     ProThreadedAlertService,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.schema import Any, Bool, Dict, Error, Int, Str, accepts, Patch, Ref
+from middlewared.schema import Any, Bool, Dict, Int, Str, accepts, Patch, Ref
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,

@@ -1014,6 +1014,41 @@ require([
 
     }
 
+    snmpv3toggle = function() {
+        var community = registry.byId("id_community").domNode.parentNode.parentNode;
+        var v3_username = registry.byId("id_v3_username").domNode.parentNode.parentNode;
+        var v3_authkey = registry.byId("id_v3_authkey").domNode.parentNode.parentNode;
+        var v3_privkey = registry.byId("id_v3_privkey").domNode.parentNode.parentNode;
+        var v3_authprotocol = registry.byId("id_v3_authprotocol").domNode.parentNode.parentNode;
+        var v3_privprotocol = registry.byId("id_v3_privprotocol").domNode.parentNode.parentNode;
+
+        domStyle.set(community, "display", "none");
+        domStyle.set(v3_username, "display", "none");
+        domStyle.set(v3_authkey, "display", "none");
+        domStyle.set(v3_privkey, "display", "none");
+        domStyle.set(v3_authprotocol, "display", "none");
+        domStyle.set(v3_privprotocol, "display", "none");
+
+        if (registry.byId("id_v3").get('value'))
+        {
+            domStyle.set(community, "display", "none");
+            domStyle.set(v3_username, "display", "table-row");
+            domStyle.set(v3_authkey, "display", "table-row");
+            domStyle.set(v3_privkey, "display", "table-row");
+            domStyle.set(v3_authprotocol, "display", "table-row");
+            domStyle.set(v3_privprotocol, "display", "table-row");
+        }
+        else
+        {
+            domStyle.set(community, "display", "table-row");
+            domStyle.set(v3_username, "display", "none");
+            domStyle.set(v3_authkey, "display", "none");
+            domStyle.set(v3_privkey, "display", "none");
+            domStyle.set(v3_authprotocol, "display", "none");
+            domStyle.set(v3_privprotocol, "display", "none");
+        }
+    }
+
     alertServiceTypeToggle = function() {
 
         var type = registry.byId("id_type");
@@ -1064,6 +1099,16 @@ require([
         // Mail
         var email = registry.byId("id_email").domNode.parentNode.parentNode;
 
+        // SNMP Trap
+        var port = registry.byId("id_port").domNode.parentNode.parentNode;
+        var v3 = registry.byId("id_v3").domNode.parentNode.parentNode;
+        var community = registry.byId("id_community").domNode.parentNode.parentNode;
+        var v3_username = registry.byId("id_v3_username").domNode.parentNode.parentNode;
+        var v3_authkey = registry.byId("id_v3_authkey").domNode.parentNode.parentNode;
+        var v3_privkey = registry.byId("id_v3_privkey").domNode.parentNode.parentNode;
+        var v3_authprotocol = registry.byId("id_v3_authprotocol").domNode.parentNode.parentNode;
+        var v3_privprotocol = registry.byId("id_v3_privprotocol").domNode.parentNode.parentNode;
+
         domStyle.set(_url, "display", "none");
         domStyle.set(cluster_name, "display", "none");
         domStyle.set(username, "display", "none");
@@ -1089,6 +1134,14 @@ require([
         domStyle.set(aws_secret_access_key, "display", "none");
         domStyle.set(routing_key, "display", "none");
         domStyle.set(email, "display", "none");
+        domStyle.set(port, "display", "none");
+        domStyle.set(v3, "display", "none");
+        domStyle.set(community, "display", "none");
+        domStyle.set(v3_username, "display", "none");
+        domStyle.set(v3_authkey, "display", "none");
+        domStyle.set(v3_privkey, "display", "none");
+        domStyle.set(v3_authprotocol, "display", "none");
+        domStyle.set(v3_privprotocol, "display", "none");
 
         if(type.get('value') == 'InfluxDB') {
             domStyle.set(host, "display", "table-row");
@@ -1133,6 +1186,11 @@ require([
             domStyle.set(routing_key, "display", "table-row");
         } else if(type.get('value') == 'Mail') {
             domStyle.set(email, "display", "table-row");
+        } else if(type.get('value') == 'SNMPTrap') {
+            domStyle.set(host, "display", "table-row");
+            domStyle.set(port, "display", "table-row");
+            domStyle.set(v3, "display", "table-row");
+            snmpv3toggle();
         }
     }
 
