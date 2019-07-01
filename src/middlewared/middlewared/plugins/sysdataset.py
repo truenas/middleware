@@ -141,7 +141,14 @@ class SystemDatasetService(ConfigService):
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
 
-        return await self.config()
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'MASTER':
+                try:
+                    await self.middleware.call('failover.call_remote', 'system.reboot')
+                except Exception as e:
+                    self.logger.debug('Failed to reboot passive storage controller after system dataset change: %s', e)
+
+        return config
 
     @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
     @private

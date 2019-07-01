@@ -1144,7 +1144,11 @@ require([
                 id: "Warning_box_dialog",
                 content: domConstruct.create(
                     "p", {
-                        innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.") + "<br />" + gettext("NOTE: This is just a warning, to perform the operation you must click Save.")
+                        innerHTML: gettext(
+                            gettext("The system dataset will be moved to pool ")+
+                            "<i>" + gettext(sys_dataset_pool.get('value'))+ "</i>"+
+                            gettext(". Services Including syslog, SMB, and reporting will be restarted.")
+                        )
                     }
                 ),
                 onHide: function () {
@@ -1155,7 +1159,52 @@ require([
                     this.destroy();
                 }
             });
-            dialog.okButton = new Button({label: gettext("Continue")});
+            dialog.okButton = new Button({label: gettext("Acknowledge")});
+            dialog.cancelButton = new Button({label: gettext("Cancel")});
+            dialog.addChild(dialog.okButton);
+            dialog.addChild(dialog.cancelButton);
+            dialog.okButton.on('click', function(e){
+                dialog.confirmed = true;
+                dialog.hide();
+            });
+            dialog.cancelButton.on('click', function(e) {
+                dialog.hide();
+            });
+            dialog.confirmed = false;
+            dialog.startup();
+            dialog.show();
+        } else {
+            sys_dataset_pool._isReset = false;
+        }
+
+    }
+
+    systemDatasetMigration_TN = function() {
+        sys_dataset_pool = registry.byId('id_sys_pool')
+        if (!sys_dataset_pool._isReset) {
+            var dialog = new Dialog({
+                title: gettext("Warning!"),
+                id: "Warning_box_dialog",
+                content: domConstruct.create(
+                    "p", {
+                        innerHTML: gettext(
+                            gettext("The system dataset will be moved to pool ")+
+                            "<i>" + gettext(sys_dataset_pool.get('value'))+ "</i>"+
+                            gettext(". Services Including syslog, SMB, and reporting will be restarted.")+
+                            "<br />"+
+                            gettext("The passive storage controller on TrueNAS HA systems will be restarted.")
+                        )
+                    }
+                ),
+                onHide: function () {
+                    if (!this.confirmed) {
+                        sys_dataset_pool._isReset = true;
+                        sys_dataset_pool.reset();
+                    }
+                    this.destroy();
+                }
+            });
+            dialog.okButton = new Button({label: gettext("Acknowledge")});
             dialog.cancelButton = new Button({label: gettext("Cancel")});
             dialog.addChild(dialog.okButton);
             dialog.addChild(dialog.cancelButton);
