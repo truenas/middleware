@@ -333,11 +333,11 @@ def configure_interface():
                 int_name = iface.int_name
             if not _n.is_freenas() and _n.failover_licensed():
                 if _n.failover_node() == 'A':
-                    ip_label = "IPv4 Address (This Node)"
-                    ip_b_label = "IPv4 Address (Node B)"
+                    ip_label = "IPv4 Address (This TrueNAS Controller)"
+                    ip_b_label = "IPv4 Address (TrueNAS Controller 2)"
                 else:
-                    ip_label = "IPv4 Address (Node A)"
-                    ip_b_label = "IPv4 Address (This Node)"
+                    ip_label = "IPv4 Address (TrueNAS Controller 1)"
+                    ip_b_label = "IPv4 Address (This TrueNAS Controller)"
                 ip_prompt = prompt(ip_label, iface.int_ipv4address)
                 ip_b_prompt = prompt(ip_b_label, iface.int_ipv4address_b)
             else:

@@ -54,8 +54,8 @@ class AlertSourceRunFailedAlertClass(AlertClass):
 class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "Alert Check Failed (Backup Node)"
-    text = "Failed to check for alert %(source_name)s on backup node:\n%(traceback)s"
+    title = "Alert Check Failed (Standby Controller)"
+    text = "Failed to check for alert %(source_name)s on standby controller:\n%(traceback)s"
 
     exclude_from_list = True
 
