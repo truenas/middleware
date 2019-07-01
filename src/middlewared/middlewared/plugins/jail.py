@@ -1020,34 +1020,6 @@ class JailService(CRUDService):
 
         return resource_list
 
-    @periodic(interval=86400, run_on_start=False)
-    @private
-    @accepts(Str('branch', null=True, default=None))
-    @job(lock='retrieve_plugin_versions')
-    def retrieve_plugin_versions(self, job, branch=None):
-        branch = branch or self.get_version()
-        try:
-            pool = self.get_activated_pool()
-        except CallError:
-            pool = None
-
-        if pool:
-            plugins = IOCPlugin(branch=branch).fetch_plugin_versions()
-        else:
-            with tempfile.TemporaryDirectory() as td:
-                github_repo = 'https://github.com/freenas/iocage-ix-plugins.git'
-                try:
-                    IOCPlugin._clone_repo(branch, github_repo, td, depth=1)
-                except Exception:
-                    self.middleware.logger.error('Failed to clone iocage-ix-plugins repository.', exc_info=True)
-                    return {}
-                else:
-                    plugins_index_data = IOCPlugin.retrieve_plugin_index_data(td)
-                    plugins = IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
-
-        self.middleware.call_sync('cache.put', 'iocage_plugin_versions', plugins, 86400)
-        return plugins
-
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
     def rc_action(self, action):
         """Does specified action on rc enabled (boot=on) jails"""
@@ -1375,58 +1347,6 @@ class JailService(CRUDService):
         return True
 
     @private
-    def get_local_plugin_version(self, plugin, index_json, iocroot, jail_name):
-        """
-        Checks the primary_pkg key in the INDEX with the pkg version
-        inside the jail.
-        """
-        version = {k: 'N/A' for k in ('version', 'revision', 'epoch')}
-
-        if index_json is None:
-            return version
-
-        try:
-            base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
-            primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
-
-            # Since these are plugins, we don't want to spin them up just to
-            # check a pkg, directly accessing the db is best in this case.
-            db_rows = self.read_plugin_pkg_db(
-                f'{iocroot}/jails/{jail_name}/root/var/db/pkg/local.sqlite',
-                primary_pkg)
-
-            for row in db_rows:
-                row = list(row)
-                if '/' not in primary_pkg:
-                    row[1] = row[1].split('/', 1)[-1]
-                    row[2] = row[2].split('/', 1)[-1]
-
-                if primary_pkg == row[1] or primary_pkg == row[2]:
-                    version = ioc_common.parse_package_name(f'{plugin}-{row[3]}')
-                    break
-        except (KeyError, sqlite3.OperationalError):
-            pass
-
-        return version
-
-    @private
-    def read_plugin_pkg_db(self, db, pkg):
-        try:
-            conn = sqlite3.connect(db)
-        except sqlite3.Error as e:
-            raise CallError(e)
-
-        with conn:
-            cur = conn.cursor()
-            cur.execute(
-                f'SELECT * FROM packages WHERE origin="{pkg}" OR name="{pkg}"'
-            )
-
-            rows = cur.fetchall()
-
-            return rows
-
-    @private
     def start_on_boot(self):
         self.logger.debug('Starting jails on boot: PENDING')
         ioc.IOCage(rc=True).start()
@@ -1445,16 +1365,6 @@ class JailService(CRUDService):
     @private
     async def terminate(self):
         await SHUTDOWN_LOCK.acquire()
-
-    @private
-    def get_version(self):
-        """
-        Uses system.version and parses it out for the RELEASE branch we need
-        """
-        r = os.uname().release
-        version = f'{round(float(r.split("-")[0]), 1)}-RELEASE'
-
-        return version
 
 
 async def jail_pool_pre_lock(middleware, pool):
