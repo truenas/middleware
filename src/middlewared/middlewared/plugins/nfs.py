@@ -287,11 +287,8 @@ class SharingNFSService(CRUDService):
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
-        if not data["paths"]:
-            verrors.add(f"{schema_name}.paths", "At least one path is required")
-
-        if verrors:
-            raise verrors
+        if data["alldirs"] and len(data["paths"]) > 1:
+            verrors.add(f"{schema_name}.alldirs", "This option can only be used for shares that contain single path")
 
         await self.middleware.run_in_thread(self.validate_paths, data, schema_name, verrors)
 
@@ -333,7 +330,6 @@ class SharingNFSService(CRUDService):
     @private
     def validate_paths(self, data, schema_name, verrors):
         dev = None
-        is_mountpoint = False
         for i, path in enumerate(data["paths"]):
             stat = os.stat(path)
             if dev is None:
@@ -342,16 +338,6 @@ class SharingNFSService(CRUDService):
                 if dev != stat.st_dev:
                     verrors.add(f"{schema_name}.paths.{i}",
                                 "Paths for a NFS share must reside within the same filesystem")
-
-            parent = os.path.abspath(os.path.join(path, ".."))
-            if os.stat(parent).st_dev != dev:
-                is_mountpoint = True
-                if any(os.path.abspath(p).startswith(parent + "/") for p in data["paths"] if p != path):
-                    verrors.add(f"{schema_name}.paths.{i}",
-                                "You cannot share a mount point and subdirectories all at once")
-
-        if not is_mountpoint and data["alldirs"]:
-            verrors.add(f"{schema_name}.alldirs", "This option can only be used for datasets")
 
     @private
     async def resolve_hostnames(self, hostnames):
@@ -372,9 +358,6 @@ class SharingNFSService(CRUDService):
 
     @private
     def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
-        explanation = (". This is so because /etc/exports does not act like ACL and it is undefined which rule among "
-                       "all overlapping networks will be applied.")
-
         dev = os.stat(data["paths"][0]).st_dev
 
         used_networks = set()
@@ -412,39 +395,28 @@ class SharingNFSService(CRUDService):
                     used_networks.add(ipaddress.ip_network("0.0.0.0/0"))
                     used_networks.add(ipaddress.ip_network("::/0"))
 
-                if share["alldirs"] and data["alldirs"]:
-                    verrors.add(f"{schema_name}.alldirs", "This option is only available once per mountpoint")
-
-        had_explanation = False
         for i, host in enumerate(data["hosts"]):
             host = dns_cache[host]
             if host is None:
                 continue
 
             network = ipaddress.ip_network(host)
-            for another_network in used_networks:
-                if network.overlaps(another_network):
-                    verrors.add(
-                        f"{schema_name}.hosts.{i}",
-                        (f"You can't share same filesystem with overlapping networks {network} and {another_network}" +
-                         ("" if had_explanation else explanation))
-                    )
-                    had_explanation = True
+            if network in used_networks:
+                verrors.add(
+                    f"{schema_name}.hosts.{i}",
+                    "Another NFS share already exports this dataset for this host"
+                )
 
             used_networks.add(network)
 
-        had_explanation = False
         for i, network in enumerate(data["networks"]):
             network = ipaddress.ip_network(network, strict=False)
 
-            for another_network in used_networks:
-                if network.overlaps(another_network):
-                    verrors.add(
-                        f"{schema_name}.networks.{i}",
-                        (f"You can't share same filesystem with overlapping networks {network} and {another_network}" +
-                         ("" if had_explanation else explanation))
-                    )
-                    had_explanation = True
+            if network in used_networks:
+                verrors.add(
+                    f"{schema_name}.networks.{i}",
+                    "Another NFS share already exports this dataset for this network"
+                )
 
             used_networks.add(network)
 
@@ -452,8 +424,7 @@ class SharingNFSService(CRUDService):
             if used_networks:
                 verrors.add(
                     f"{schema_name}.networks",
-                    (f"You can't share same filesystem with all hosts twice" +
-                     ("" if had_explanation else explanation))
+                    "Another NFS share already exports this dataset for some network"
                 )
 
     @private
