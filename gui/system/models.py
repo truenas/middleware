@@ -88,6 +88,10 @@ class Settings(Model):
             'enable the HTTP Strict Transport Security (HSTS) header.'
         ),
     )
+    stg_guihttpsprotocols = ListField(
+        verbose_name=_('WebGUI HTTPS Protocols'),
+        default=['TLSv1', 'TLSv1.1', 'TLSv1.2'],
+    )
     stg_language = models.CharField(
         max_length=120,
         choices=settings.LANGUAGES,

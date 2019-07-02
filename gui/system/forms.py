@@ -972,6 +972,11 @@ class ManualUpdateWizard(FileWizard):
 
 class SettingsForm(MiddlewareModelForm, ModelForm):
 
+    stg_guihttpsprotocols = forms.MultipleChoiceField(
+        label=_('WebGUI HTTPS Protocols'),
+        choices=[],
+    )
+
     middleware_attr_prefix = 'stg_'
     middleware_attr_schema = 'general_settings'
     middleware_plugin = 'system.general'
@@ -981,6 +986,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         'ui_certificate': 'stg_guicertificate',
         'ui_httpsport': 'stg_guihttpsport',
         'ui_httpsredirect': 'stg_guihttpsredirect',
+        'ui_httpsprotocols': 'stg_guihttpsprotocols',
         'ui_port': 'stg_guiport',
         'ui_v6address': 'stg_guiv6address'
     }
@@ -1002,6 +1008,10 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         super(SettingsForm, self).__init__(*args, **kwargs)
         self.original_instance = dict(self.instance.__dict__)
 
+        with client as c:
+            self.fields['stg_guihttpsprotocols'].choices = [
+                (p, p) for p in c.call('system.general.https_protocols_choices')
+            ]
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.MultipleChoiceField(
