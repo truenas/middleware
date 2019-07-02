@@ -145,6 +145,14 @@ class PluginService(CRUDService):
     class Config:
         process_pool = True
 
+    OFFICIAL_REPOSITORIES = {
+        'https://github.com/freenas/iocage-ix-plugins.git'
+    }
+
+    @accepts()
+    async def official_repositories(self):
+        return {k: k for k in self.OFFICIAL_REPOSITORIES}
+
     @filterable
     def query(self, filters=None, options=None):
         options = options or {}
