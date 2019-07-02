@@ -87,6 +87,10 @@ class Settings(Model):
             'Redirect all incoming HTTP requests to HTTPS'
         ),
     )
+    stg_guihttpsprotocols = ListField(
+        verbose_name=_('WebGUI HTTPS Protocols'),
+        default=['TLSv1', 'TLSv1.1', 'TLSv1.2'],
+    )
     stg_language = models.CharField(
         max_length=120,
         choices=settings.LANGUAGES,

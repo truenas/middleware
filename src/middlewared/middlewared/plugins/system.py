@@ -575,6 +575,7 @@ class SystemService(Service):
 
 
 class SystemGeneralService(ConfigService):
+    HTTPS_PROTOCOLS = ['TLSv1', 'TLSv1.1', 'TLSv1.2']
 
     class Config:
         namespace = 'system.general'
@@ -612,6 +613,10 @@ class SystemGeneralService(ConfigService):
             data['usage_collection'] = await self.middleware.call("system.is_freenas")
 
         return data
+
+    @accepts()
+    def https_protocols_choices(self):
+        return self.HTTPS_PROTOCOLS
 
     @accepts()
     def language_choices(self):
@@ -919,6 +924,7 @@ class SystemGeneralService(ConfigService):
             Int('ui_certificate', null=True),
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
+            List('ui_httpsprotocols', items=[Str('protocol', enum=HTTPS_PROTOCOLS)], empty=False),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
