@@ -534,7 +534,7 @@ class SystemService(Service):
 
 
 class SystemGeneralService(ConfigService):
-    HTTPS_PROTOCOLS = ['TLSv1', 'TLSv1.1', 'TLSv1.2']
+    HTTPS_PROTOCOLS = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']
 
     class Config:
         namespace = 'system.general'
@@ -570,8 +570,11 @@ class SystemGeneralService(ConfigService):
         return data
 
     @accepts()
-    def https_protocols_choices(self):
-        return self.HTTPS_PROTOCOLS
+    def ui_httpsprotocols_choices(self):
+        """
+        Returns available HTTPS protocols.
+        """
+        return dict(zip(self.HTTPS_PROTOCOLS, self.HTTPS_PROTOCOLS))
 
     @accepts()
     def language_choices(self):

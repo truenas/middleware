@@ -1014,7 +1014,7 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
 
         with client as c:
             self.fields['stg_guihttpsprotocols'].choices = [
-                (p, p) for p in c.call('system.general.https_protocols_choices')
+                (p, p) for p in c.call('system.general.ui_httpsprotocols_choices')
             ]
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")

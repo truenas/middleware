@@ -16,6 +16,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='settings',
             name='stg_guihttpsprotocols',
-            field=freenasUI.freeadmin.models.fields.ListField(default=['TLSv1', 'TLSv1.1', 'TLSv1.2'], verbose_name='WebGUI HTTPS Protocols'),
+            field=freenasUI.freeadmin.models.fields.ListField(default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'], verbose_name='WebGUI HTTPS Protocols'),
         ),
     ]
