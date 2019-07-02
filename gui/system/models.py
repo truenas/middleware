@@ -90,7 +90,7 @@ class Settings(Model):
     )
     stg_guihttpsprotocols = ListField(
         verbose_name=_('WebGUI HTTPS Protocols'),
-        default=['TLSv1', 'TLSv1.1', 'TLSv1.2'],
+        default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'],
     )
     stg_language = models.CharField(
         max_length=120,

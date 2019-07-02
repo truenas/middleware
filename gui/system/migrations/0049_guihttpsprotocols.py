@@ -9,13 +9,13 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0045_graphite_separateinstances'),
+        ('system', '0048_graphite_separateinstances'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='settings',
             name='stg_guihttpsprotocols',
-            field=freenasUI.freeadmin.models.fields.ListField(default=['TLSv1', 'TLSv1.1', 'TLSv1.2'], verbose_name='WebGUI HTTPS Protocols'),
+            field=freenasUI.freeadmin.models.fields.ListField(default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'], verbose_name='WebGUI HTTPS Protocols'),
         ),
     ]
