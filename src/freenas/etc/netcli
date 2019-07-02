@@ -166,6 +166,8 @@ def get_lagg_proto():
     while True:
         protos = { }
         types = LAGGType
+        if  not notifier().is_freenas() and notifier().failover_licensed():
+            types = list(filter(lambda x: x[0] != 'failover', types))
         for i, t in enumerate(types):
             protos[i] = t[0]
             print("%d) %s" % (i + 1, protos[i]))
