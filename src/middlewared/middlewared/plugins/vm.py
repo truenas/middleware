@@ -942,7 +942,7 @@ class VMService(CRUDService):
         if isinstance(status, dict):
             if status.get('state') == 'RUNNING':
                 await self.stop(id)
-        if data['zvols']':
+        if data['zvols']:
             devices = await self.middleware.call('vm.device.query', [
                 ('vm', '=', id), ('dtype', '=', 'DISK')
             ])
