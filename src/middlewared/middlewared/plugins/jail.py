@@ -3,7 +3,6 @@ import contextlib
 import os
 import subprocess as su
 import libzfs
-import requests
 import itertools
 import tempfile
 import pathlib
@@ -151,10 +150,16 @@ class PluginService(CRUDService):
 
     @accepts()
     async def official_repositories(self):
+        """
+        List officially supported plugin repositories.
+        """
         return {k: k for k in self.OFFICIAL_REPOSITORIES}
 
     @filterable
     def query(self, filters=None, options=None):
+        """
+        Query installed plugins with `query-filters` and `query-options`.
+        """
         options = options or {}
         self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
@@ -215,8 +220,25 @@ class PluginService(CRUDService):
         )
     )
     def do_create(self, data):
+        """
+        Create a Plugin.
+
+        `plugin_name` is the name of the plugin specified by the INDEX file in "plugin_repository" and it's JSON
+        file.
+
+        `jail_name` is the name of the jail that will manage the plugin. Required.
+
+        `props` is a list of jail properties that the user manually sets. Plugins should always set the jail
+        networking capability with DHCP, IP Address, or NAT properties. i.e dhcp=1 / ip4_addr="192.168.0.2" / nat=1
+
+        `plugin_repository` is a git URI that fetches data for `plugin_name`.
+
+        `branch` is the FreeNAS repository branch to use as the base for the `plugin_repository`. The default is to
+        use the current system version. Example: 11.3-RELEASE.
+        """
         return self.middleware.call_sync('plugin._do_create', data)
 
+    @private
     @job(lock=lambda args: f'plugin_create_{args[-1]["jail_name"]}')
     def _do_create(self, job, data):
         self.middleware.call_sync('jail.check_dataset_existence')
@@ -278,11 +300,17 @@ class PluginService(CRUDService):
         Patch('jail_update', 'plugin_update')
     )
     async def do_update(self, id, data):
+        """
+        Update plugin `id`.
+        """
         await self._get_instance(id)
         return await self.middleware.call('jail.update', id, data)
 
     @accepts(Str('id'))
     async def do_delete(self, id):
+        """
+        Delete plugin `id`.
+        """
         await self._get_instance(id)
         return await self.middleware.call('jail.delete', id)
 
@@ -303,6 +331,9 @@ class PluginService(CRUDService):
         )
     )
     def available(self, job, options):
+        """
+        List available plugins which can be fetched for `plugin_repository`.
+        """
         self.middleware.call_sync('jail.check_dataset_existence')
         branch = options.get('branch') or self.get_version()
         iocage = ioc.IOCage(skip_jails=True)
@@ -554,6 +585,9 @@ class JailService(CRUDService):
         Bool('remote', default=False),
     )
     def releases_choices(self, remote):
+        """
+        List installed or available releases which can be downloaded.
+        """
         if remote:
             with contextlib.suppress(KeyError):
                 return self.middleware.call_sync('cache.get', 'iocage_remote_releases')
