@@ -550,8 +550,7 @@ class SystemGeneralService(ConfigService):
 
     @private
     async def general_system_extend(self, data):
-        keys = data.keys()
-        for key in keys:
+        for key in list(data.keys()):
             if key.startswith('gui'):
                 data['ui_' + key[3:]] = data.pop(key)
 
