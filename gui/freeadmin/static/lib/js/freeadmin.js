@@ -849,8 +849,8 @@ require([
         };
         var newFeatures = (
             ["exclude", "periodic_snapshot_tasks", "naming_schema", "auto", "only_matching_schedule",
-             "allow_from_scratch", "hold_pending_snapshots", "retention_policy", "dedup", "large_block", "embed",
-             "compressed", "retries"].
+             "allow_from_scratch", "hold_pending_snapshots", "retention_policy", "dedup", "large_block", /* "embed", */
+             "compressed", "retries", "logging_level"].
             concat("enable_schedule").concat(schedule).
             concat("enable_restrict_schedule").concat(restrictSchedule).
             concat(policies["SOURCE"]).concat(policies["CUSTOM"]).concat(policies["NONE"])
