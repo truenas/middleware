@@ -626,6 +626,7 @@ class TaskFAdmin(BaseFreeAdmin):
         'task_dayweek',
         'task_begin',
         'task_end',
+        'task_allow_empty',
     )
 
     def get_datagrid_columns(self):
@@ -726,6 +727,8 @@ class ReplicationFAdmin(BaseFreeAdmin):
         'repl_embed',
         'repl_compressed',
         'repl_retries',
+        'repl_logging_level',
+        'repl_state',
     )
     refresh_time = 12000
 
