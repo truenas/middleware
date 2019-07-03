@@ -684,12 +684,12 @@ class ReplicationService(CRUDService):
         "replication-pair-data",
         Str("hostname", required=True),
         Str("public-key", required=True),
-        Str("user"),
+        Str("user", null=True),
     ))
     async def pair(self, data):
         result = await self.middleware.call("keychaincredential.ssh_pair", {
             "remote_hostname": data["hostname"],
-            "username": data["user"],
+            "username": data["user"] or "root",
             "public_key": data["public-key"],
         })
         return {
