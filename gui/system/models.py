@@ -358,6 +358,14 @@ class Email(Model):
         ),
         default='',
     )
+    em_fromname = models.CharField(
+        max_length=120,
+        verbose_name=_("From name"),
+        help_text=_(
+            "A name which will be displayed in the \"From\" header of e-mail message"
+        ),
+        default='',
+    )
     em_outgoingserver = models.CharField(
         max_length=120,
         verbose_name=_("Outgoing mail server"),
