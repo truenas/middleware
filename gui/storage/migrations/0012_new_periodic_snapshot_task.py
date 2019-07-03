@@ -62,7 +62,7 @@ def migrate_schedule(apps, schema_editor):
         elif task.task_interval >= 60:
             task.task_hour = "*/" + str(int(task.task_interval / 60))
         else:
-            task.task_minute = "*/" + str(task.task_repeat_unit)
+            task.task_minute = "*/" + str(task.task_interval)
 
         task.save()
 

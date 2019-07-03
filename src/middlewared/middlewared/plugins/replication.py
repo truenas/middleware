@@ -387,6 +387,9 @@ class ReplicationService(CRUDService):
             if not task["enabled"]:
                 raise CallError("Task is not enabled")
 
+            if task["transport"] == "LEGACY":
+                raise CallError("You can't run legacy replication manually")
+
         await self.middleware.call("zettarepl.run_replication_task", id, really_run, job)
 
     async def _validate(self, data, id=None):
@@ -499,6 +502,10 @@ class ReplicationService(CRUDService):
 
             if len(data["source_datasets"]) != 1:
                 verrors.add("source_datasets", "You can only have one source dataset for legacy replication")
+
+            if data["retention_policy"] not in ["SOURCE", "NONE"]:
+                verrors.add("retention_policy", "Only \"source\" and \"none\" retention policies are supported by "
+                                                "legacy replication")
 
             if data["retries"] != 1:
                 verrors.add("retries", "This value should be 1 for legacy replication")
@@ -681,12 +688,12 @@ class ReplicationService(CRUDService):
         "replication-pair-data",
         Str("hostname", required=True),
         Str("public-key", required=True),
-        Str("user"),
+        Str("user", null=True),
     ))
     async def pair(self, data):
         result = await self.middleware.call("keychaincredential.ssh_pair", {
             "remote_hostname": data["hostname"],
-            "username": data["user"],
+            "username": data["user"] or "root",
             "public_key": data["public-key"],
         })
         return {
