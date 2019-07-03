@@ -6,7 +6,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name
-from functions import GET, POST
+from functions import GET, POST, DELETE
 
 IOCAGE_POOL = pool_name
 JOB_ID = None
@@ -242,3 +242,78 @@ def test_17_verify_available_plugin_with_want_cache_(plugin):
         if plugin in plugin_info:
             assert isinstance(plugin_info, list), job_results.text
             assert plugin in plugin_info, job_results.text
+
+
+@to_skip
+def test_18_stop_transmission_jail():
+    global results
+    payload = {
+        "jail": "transmission",
+        "force": True
+    }
+    results = POST('/jail/stop/', payload)
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_19_start_transmission_jail():
+    global results
+    payload = "transmission"
+    results = POST('/jail/start/', payload)
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_18_stop_transmission_jail_before_deleteing():
+    global results
+    payload = {
+        "jail": "transmission",
+        "force": True
+    }
+    results = POST('/jail/stop/', payload)
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_20_delete_transmission_plugin():
+    results = DELETE('/jail/id/transmission/')
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_21_get_installed_plugin_list_with_want_cache():
+    global JOB_ID
+    payload = {
+        "resource": "PLUGIN",
+        "remote": False,
+        "want_cache": True
+    }
+    results = POST("/jail/list_resource/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    JOB_ID = results.json()
+
+
+@to_skip
+def test_22_verify_list_of_installed_plugins_job_id_is_successfull():
+    global job_results
+    while True:
+        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_state = job_results.json()[0]['state']
+        if job_state in ('RUNNING', 'WAITING'):
+            sleep(3)
+        else:
+            assert job_state == 'SUCCESS', job_results.text
+            break
+    for plugin_list in job_results.json():
+        if 'transmission' in plugin_list:
+            assert False, job_results.json()
+            break
+    else:
+        assert True, job_results.json()
+
+
+@to_skip
+def test_23_looking_transmission_jail_id_is_delete():
+    results = GET('/jail/id/transmission/')
+    assert results.status_code == 404, results.text
