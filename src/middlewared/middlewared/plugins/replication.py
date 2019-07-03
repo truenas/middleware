@@ -387,6 +387,9 @@ class ReplicationService(CRUDService):
             if not task["enabled"]:
                 raise CallError("Task is not enabled")
 
+            if task["transport"] == "LEGACY":
+                raise CallError("You can't run legacy replication manually")
+
         await self.middleware.call("zettarepl.run_replication_task", id, really_run, job)
 
     async def _validate(self, data, id=None):
