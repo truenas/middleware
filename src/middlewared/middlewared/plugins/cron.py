@@ -1,3 +1,5 @@
+import contextlib
+
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
 from middlewared.service import CRUDService, job, private, ValidationErrors
 from middlewared.validators import Range
@@ -47,16 +49,16 @@ class CronJobService(CRUDService):
                     'Usernames cannot have spaces'
                 )
 
-            elif not (
-                await self.middleware.call(
-                    'notifier.get_user_object',
-                    user
-                )
-            ):
-                verrors.add(
-                    f'{schema}.user',
-                    'Specified user does not exist'
-                )
+            else:
+                user_data = None
+                with contextlib.suppress(KeyError):
+                    user_data = await self.middleware.call('dscache.get_uncached_user', user)
+
+                if not user_data:
+                    verrors.add(
+                        f'{schema}.user',
+                        'Specified user does not exist'
+                    )
 
         command = data.get('command')
         if not command:
