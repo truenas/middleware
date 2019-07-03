@@ -198,13 +198,12 @@ class UsageService(Service):
         }
 
     async def gather_plugins(self):
-        plugins_job = await self.middleware.call('jail.list_resource', 'PLUGIN')
-        await plugins_job.wait()
-        if plugins_job.error:
-            self.middleware.logger.debug(f'Failed to retrieve plugins: {plugins_job.error}')
-            return {'plugins': []}
-
-        return {'plugins': [{'name': p['name'], 'version': p['version']} for p in plugins_job.result]}
+        return {
+            'plugins': [
+                {'name': p['name'], 'version': p['version']}
+                for p in (await self.middleware.call('plugin.query'))
+            ]
+        }
 
     async def gather_pools(self):
         pools = await self.middleware.call('pool.query')

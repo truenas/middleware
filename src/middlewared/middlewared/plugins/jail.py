@@ -3,7 +3,6 @@ import contextlib
 import os
 import subprocess as su
 import libzfs
-import requests
 import itertools
 import tempfile
 import pathlib
@@ -24,16 +23,481 @@ from iocage_lib.ioc_list import IOCList
 from iocage_lib.ioc_plugin import IOCPlugin
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import Bool, Dict, Int, List, Str, accepts
+from middlewared.schema import Bool, Dict, Int, List, Str, accepts, Patch
 from middlewared.service import CRUDService, job, private, filterable, periodic, item_method
 from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, run
 from middlewared.validators import IpInUse, MACAddr
 
 from collections import deque, Iterable
 
+BRANCH_REGEX = re.compile(r'\d+\.\d-RELEASE')
 
 SHUTDOWN_LOCK = asyncio.Lock()
+
+
+def validate_ips(middleware, verrors, options, schema='options.props', exclude=None):
+    for item in options['props']:
+        for f in ('ip4_addr', 'ip6_addr'):
+            # valid ip values can be
+            # 1) none
+            # 2) interface|accept_rtadv
+            # 3) interface|ip/netmask
+            # 4) interface|ip
+            # 5) ip/netmask
+            # 6) ip
+            # 7) All the while making sure that the above can be mixed with each other using ","
+            # we explicitly check these
+            if f in item:
+                for ip in map(
+                        lambda ip: ip.split('|', 1)[-1].split('/')[0],
+                        filter(
+                            lambda v: v != 'none' and v.split('|')[-1] != 'accept_rtadv',
+                            item.split('=')[1].split(',')
+                        )
+                ):
+                    try:
+                        IpInUse(middleware, exclude)(ip)
+                    except ValueError as e:
+                        verrors.add(f'{schema}.{f}', str(e))
+
+
+def common_validation(middleware, options, update=False, jail=None, schema='options'):
+    verrors = ValidationErrors()
+
+    if not update:
+        # Ensure that api call conforms to format set by iocage for props
+        # Example 'key=value'
+
+        for value in options['props']:
+            if '=' not in value:
+                verrors.add(
+                    f'{schema}.props',
+                    'Please follow the format specified by iocage for api calls'
+                    'e.g "key=value"'
+                )
+                break
+
+        if verrors:
+            raise verrors
+
+        # normalise vnet mac address
+        # expected format here is 'vnet0_mac=00-D0-56-F2-B5-12,00-D0-56-F2-B5-13'
+        vnet_macs = {
+            f.split('=')[0]: f.split('=')[1] for f in options['props']
+            if any(f'vnet{i}_mac' in f.split('=')[0] for i in range(0, 4))
+        }
+
+        validate_ips(middleware, verrors, options, schema=f'{schema}.props')
+    else:
+        vnet_macs = {
+            key: value for key, value in options.items()
+            if any(f'vnet{i}_mac' in key for i in range(0, 4))
+        }
+
+        exclude_ips = [
+            ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
+            for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
+            if ip not in ('none', 'DHCP (not running)')
+        ]
+
+        validate_ips(
+            middleware, verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
+            schema, exclude_ips
+        )
+
+    # validate vnetX_mac addresses
+    for key, value in vnet_macs.items():
+        if value and value != 'none':
+            value = value.replace(',', ' ')
+            try:
+                for mac in value.split():
+                    MACAddr()(mac)
+
+                if len(value.split()) != 2 or any(value.split().count(v) > 1 for v in value.split()):
+                    raise ValueError('Exception')
+            except ValueError:
+                verrors.add(
+                    f'{schema}.{key}',
+                    'Please enter two valid and different '
+                    f'space/comma-delimited MAC addresses for {key}.'
+                )
+
+    if options.get('uuid'):
+        valid = True if re.match(
+            r"^[a-zA-Z0-9\._-]+$", options['uuid']
+        ) else False
+
+        if not valid:
+            verrors.add(
+                f'{schema}.uuid',
+                f'Invalid character in {options["uuid"]}. '
+                'Alphanumeric, period (.), underscore (_), '
+                'and dash (-) characters are allowed.'
+            )
+
+    return verrors
+
+
+class PluginService(CRUDService):
+
+    class Config:
+        process_pool = True
+
+    OFFICIAL_REPOSITORIES = {
+        'https://github.com/freenas/iocage-ix-plugins.git'
+    }
+
+    @accepts()
+    async def official_repositories(self):
+        """
+        List officially supported plugin repositories.
+        """
+        return {k: k for k in self.OFFICIAL_REPOSITORIES}
+
+    @filterable
+    def query(self, filters=None, options=None):
+        """
+        Query installed plugins with `query-filters` and `query-options`.
+        """
+        options = options or {}
+        self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
+        iocage = ioc.IOCage(skip_jails=True)
+        resource_list = iocage.list('all', plugin=True)
+        pool = IOCJson().json_get_value('pool')
+        iocroot = IOCJson(pool).json_get_value('iocroot')
+        plugin_dir_path = os.path.join(iocroot, '.plugins')
+        plugin_jails = {
+            j['host_hostuuid']: j for j in self.middleware.call_sync(
+                'jail.query', [['type', 'in', ['plugin', 'pluginv2']]]
+            )
+        }
+
+        index_jsons = {}
+        for repo in os.listdir(plugin_dir_path) if os.path.exists(plugin_dir_path) else []:
+            index_path = os.path.join(plugin_dir_path, repo, 'INDEX')
+            if os.path.exists(index_path):
+                with contextlib.suppress(json.decoder.JSONDecodeError):
+                    with open(index_path, 'r') as f:
+                        index_jsons[repo] = json.loads(f.read())
+
+        for index, plugin in enumerate(resource_list):
+            # "plugin" is a list which we will convert to a dictionary for readability
+            plugin_dict = {
+                k: v if v != '-' else None
+                for k, v in zip((
+                    'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4', 'ip6', 'template', 'admin_portal'
+                ), plugin)
+            }
+            plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
+            plugin_info = plugin_output.read_text().strip() if plugin_output.is_file() else None
+
+            plugin_name = plugin_jails[plugin_dict['name']]['plugin_name']
+            plugin_repo = self.convert_repository_to_path(plugin_jails[plugin_dict['name']]['plugin_repository'])
+            plugin_dict.update({
+                'id': plugin_dict['name'],
+                'plugin_info': plugin_info,
+                'plugin': plugin_name,
+                'plugin_repository': plugin_jails[plugin_dict['name']]['plugin_repository'],
+                **self.get_local_plugin_version(
+                    plugin_name,
+                    index_jsons.get(plugin_repo), iocroot, plugin_dict['name']
+                )
+            })
+
+            resource_list[index] = plugin_dict
+
+        return filter_list(resource_list, filters, options)
+
+    @accepts(
+        Dict(
+            'plugin_create',
+            Str('plugin_name', required=True),
+            Str('jail_name', required=True),
+            List('props', default=[], empty=False),
+            Str('branch', default=None, null=True),
+            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+        )
+    )
+    def do_create(self, data):
+        """
+        Create a Plugin.
+
+        `plugin_name` is the name of the plugin specified by the INDEX file in "plugin_repository" and it's JSON
+        file.
+
+        `jail_name` is the name of the jail that will manage the plugin. Required.
+
+        `props` is a list of jail properties that the user manually sets. Plugins should always set the jail
+        networking capability with DHCP, IP Address, or NAT properties. i.e dhcp=1 / ip4_addr="192.168.0.2" / nat=1
+
+        `plugin_repository` is a git URI that fetches data for `plugin_name`.
+
+        `branch` is the FreeNAS repository branch to use as the base for the `plugin_repository`. The default is to
+        use the current system version. Example: 11.3-RELEASE.
+        """
+        return self.middleware.call_sync('plugin._do_create', data)
+
+    @private
+    @job(lock=lambda args: f'plugin_create_{args[-1]["jail_name"]}')
+    def _do_create(self, job, data):
+        self.middleware.call_sync('jail.check_dataset_existence')
+        verrors = ValidationErrors()
+        branch = data.pop('branch') or self.get_version()
+        install_notes = ''
+        plugin_name = data.pop('plugin_name')
+        jail_name = data.pop('jail_name')
+        plugin_repository = data.pop('plugin_repository')
+        post_install = False
+
+        job.set_progress(0, f'Creating plugin: {plugin_name}')
+        if jail_name in [j['id'] for j in self.middleware.call_sync('jail.query')]:
+            verrors.add(
+                'plugin_create.jail_name',
+                f'A jail with name {jail_name} already exists'
+            )
+        else:
+            verrors = common_validation(self.middleware, data, schema='plugin_create')
+
+        verrors.check()
+
+        job.set_progress(20, 'Initial validation complete')
+
+        def progress_callback(content, exception):
+            msg = content['message'].strip('\r\n')
+            nonlocal install_notes, post_install
+
+            if post_install and msg:
+                install_notes += f'\n{msg}'
+
+            if '  These pkgs will be installed:' in msg:
+                job.set_progress(50, msg)
+            elif 'Installing plugin packages:' in msg:
+                job.set_progress(75, msg)
+            elif 'Running post_install.sh' in msg:
+                job.set_progress(90, msg)
+                # Sets each message going forward as important to the user
+                post_install = True
+            else:
+                job.set_progress(None, msg)
+
+        ioc.IOCage(callback=progress_callback, silent=False).fetch(**{
+            'accept': True,
+            'name': jail_name,
+            'plugin_name': plugin_name,
+            'git_repository': plugin_repository,
+            'props': data['props'],
+            'branch': branch,
+        })
+
+        new_plugin = self.middleware.call_sync('plugin._get_instance', jail_name)
+        new_plugin['install_notes'] = install_notes.strip()
+
+        return new_plugin
+
+    @accepts(
+        Str('id'),
+        Patch('jail_update', 'plugin_update')
+    )
+    async def do_update(self, id, data):
+        """
+        Update plugin `id`.
+        """
+        await self._get_instance(id)
+        return await self.middleware.call('jail.update', id, data)
+
+    @accepts(Str('id'))
+    async def do_delete(self, id):
+        """
+        Delete plugin `id`.
+        """
+        await self._get_instance(id)
+        return await self.middleware.call('jail.delete', id)
+
+    @accepts(
+        Dict(
+            'available_plugin_options',
+            Bool('cache', default=True),
+            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+            Str('branch'),
+        )
+    )
+    @job(
+        lock=lambda args: 'available_plugins_{}_{}'.format(
+            args[-1].get('branch') if args else None,
+            args[-1]['plugin_repository'] if args and args[-1].get(
+                'plugin_repository'
+            ) else 'https://github.com/freenas/iocage-ix-plugins.git'
+        )
+    )
+    def available(self, job, options):
+        """
+        List available plugins which can be fetched for `plugin_repository`.
+        """
+        self.middleware.call_sync('jail.check_dataset_existence')
+        branch = options.get('branch') or self.get_version()
+        iocage = ioc.IOCage(skip_jails=True)
+        if options['cache']:
+            with contextlib.suppress(KeyError):
+                return self.middleware.call_sync(
+                    'cache.get', f'iocage_remote_plugins_{branch}_{options["plugin_repository"]}'
+                )
+
+        resource_list = iocage.fetch(
+            list=True, plugins=True, header=False, branch=branch, git_repository=options['plugin_repository']
+        )
+
+        plugins_versions_data = {}
+        if options['cache']:
+            with contextlib.suppress(KeyError):
+                plugins_versions_data = self.middleware.call_sync(
+                    'cache.get', f'iocage_plugin_versions_{branch}_{options["plugin_repository"]}'
+                )
+
+        if not plugins_versions_data:
+            plugins_versions_data_job = self.middleware.call_sync(
+                'core.get_jobs', [
+                    ['method', '=', 'plugin.retrieve_plugin_versions'],
+                    ['state', '=', 'RUNNING'],
+                    ['arguments', '=', [branch, options['plugin_repository']]],
+                ]
+            )
+            error = None
+            plugins_versions_data = {}
+            if plugins_versions_data_job:
+                try:
+                    plugins_versions_data = self.middleware.call_sync(
+                        'core.job_wait', plugins_versions_data_job[0]['id'], job=True
+                    )
+                except CallError as e:
+                    error = str(e)
+            else:
+                try:
+                    plugins_versions_data = self.middleware.call_sync(
+                        'plugin.retrieve_plugin_versions', branch, options['plugin_repository'], job=True
+                    )
+                except Exception as e:
+                    error = e
+
+            if error:
+                # Let's not make the failure fatal
+                self.middleware.logger.debug(f'Retrieving plugins version failed: {error}')
+
+        for plugin in resource_list:
+            plugin.update({
+                k: plugins_versions_data.get(plugin['plugin'], {}).get(k, 'N/A')
+                for k in ('version', 'revision', 'epoch')
+            })
+
+        self.middleware.call_sync(
+            'cache.put', f'iocage_remote_plugins_{branch}_{options["plugin_repository"]}', resource_list,
+            86400
+        )
+
+        return resource_list
+
+    @periodic(interval=86400, run_on_start=False)
+    @private
+    @accepts(
+        Str('branch', null=True, default=None),
+        Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+    )
+    @job(
+        lock=lambda args: f'retrieve_plugin_versions_{args[0] if args else "None"}_'
+        f'{args[1] if len(args) == 2 else "https://github.com/freenas/iocage-ix-plugins.git"}'
+    )
+    def retrieve_plugin_versions(self, job, branch, plugin_repository):
+        # FIXME: Please fix the job arguments once job can correctly retrieve parameters from the schema layer
+        branch = branch or self.get_version()
+        try:
+            pool = self.middleware.call_sync('jail.get_activated_pool')
+        except CallError:
+            pool = None
+
+        if pool:
+            plugins = IOCPlugin(branch=branch, git_repository=plugin_repository).fetch_plugin_versions()
+        else:
+            with tempfile.TemporaryDirectory() as td:
+                try:
+                    IOCPlugin._clone_repo(branch, plugin_repository, td, depth=1)
+                except Exception:
+                    self.middleware.logger.error('Failed to clone iocage-ix-plugins repository.', exc_info=True)
+                    return {}
+                else:
+                    plugins_index_data = IOCPlugin.retrieve_plugin_index_data(td)
+                    plugins = IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
+
+        self.middleware.call_sync(
+            'cache.put', f'iocage_plugin_versions_{branch}_{plugin_repository}', plugins, 86400
+        )
+        return plugins
+
+    @private
+    def get_version(self):
+        """
+        Uses system.version and parses it out for the RELEASE branch we need
+        """
+        r = os.uname().release
+        version = f'{round(float(r.split("-")[0]), 1)}-RELEASE'
+
+        return version
+
+    @private
+    def get_local_plugin_version(self, plugin, index_json, iocroot, jail_name):
+        """
+        Checks the primary_pkg key in the INDEX with the pkg version
+        inside the jail.
+        """
+        version = {k: 'N/A' for k in ('version', 'revision', 'epoch')}
+
+        if index_json is None:
+            return version
+
+        try:
+            base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
+            primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
+
+            # Since these are plugins, we don't want to spin them up just to
+            # check a pkg, directly accessing the db is best in this case.
+            db_rows = self.read_plugin_pkg_db(
+                f'{iocroot}/jails/{jail_name}/root/var/db/pkg/local.sqlite', primary_pkg
+            )
+
+            for row in db_rows:
+                row = list(row)
+                if '/' not in primary_pkg:
+                    row[1] = row[1].split('/', 1)[-1]
+                    row[2] = row[2].split('/', 1)[-1]
+
+                if primary_pkg == row[1] or primary_pkg == row[2]:
+                    version = ioc_common.parse_package_name(f'{plugin}-{row[3]}')
+                    break
+        except (KeyError, sqlite3.OperationalError):
+            pass
+
+        return version
+
+    @private
+    def read_plugin_pkg_db(self, db, pkg):
+        try:
+            conn = sqlite3.connect(db)
+        except sqlite3.Error as e:
+            raise CallError(e)
+
+        with conn:
+            cur = conn.cursor()
+            cur.execute(
+                f'SELECT * FROM packages WHERE origin="{pkg}" OR name="{pkg}"'
+            )
+
+            rows = cur.fetchall()
+
+            return rows
+
+    @private
+    def convert_repository_to_path(self, git_repository_uri):
+        # Following is the logic which iocage uses to ensure unique directory names for each uri
+        return git_repository_uri.split('://', 1)[-1].replace('/', '_').replace('.', '_')
 
 
 class JailService(CRUDService):
@@ -118,6 +582,39 @@ class JailService(CRUDService):
         return filter_list(jails, filters, options)
 
     @accepts(
+        Bool('remote', default=False),
+    )
+    def releases_choices(self, remote):
+        """
+        List installed or available releases which can be downloaded.
+        """
+        if remote:
+            with contextlib.suppress(KeyError):
+                return self.middleware.call_sync('cache.get', 'iocage_remote_releases')
+
+        iocage = ioc.IOCage(skip_jails=True)
+        choices = {k: k for k in iocage.fetch(list=True, remote=remote, http=True)}
+
+        if remote:
+            self.middleware.call_sync('cache.put', 'iocage_remote_releases', choices, 86400)
+
+        return choices
+
+    @accepts(
+        Str('repository', default='https://github.com/freenas/iocage-ix-plugins.git')
+    )
+    async def branches_choices(self, repository):
+
+        cp = await run(['git', 'ls-remote', repository], check=False, encoding='utf8')
+        if cp.returncode:
+            raise CallError(f'Failed to retrieve branches for {repository}: {cp.stderr}')
+
+        return {
+            branch: {'official': bool(BRANCH_REGEX.match(branch))}
+            for branch in re.findall(r'refs/heads/(.*)', cp.stdout)
+        }
+
+    @accepts(
         Dict(
             "options",
             Str("release", required=True),
@@ -164,7 +661,7 @@ class JailService(CRUDService):
             # A jail does not exist with the provided name, we can create one
             # now
 
-            verrors = self.common_validation(verrors, options)
+            verrors = common_validation(self.middleware, options)
 
             if verrors:
                 raise verrors
@@ -247,7 +744,7 @@ class JailService(CRUDService):
                 )
 
         verrors.check()
-        verrors = self.common_validation(verrors, options)
+        verrors = common_validation(self.middleware, options, schema='clone_jail')
         verrors.check()
 
         job.set_progress(25, 'Initial validation complete.')
@@ -260,42 +757,15 @@ class JailService(CRUDService):
 
         return self.middleware.call_sync('jail._get_instance', options['uuid'])
 
-    @private
-    def validate_ips(self, verrors, options, schema='options.props', exclude=None):
-        for item in options['props']:
-            for f in ('ip4_addr', 'ip6_addr'):
-                # valid ip values can be
-                # 1) none
-                # 2) interface|accept_rtadv
-                # 3) interface|ip/netmask
-                # 4) interface|ip
-                # 5) ip/netmask
-                # 6) ip
-                # 7) All the while making sure that the above can be mixed with each other using ","
-                # we explicitly check these
-                if f in item:
-                    for ip in map(
-                        lambda ip: ip.split('|', 1)[-1].split('/')[0],
-                        filter(
-                            lambda v: v != 'none' and v.split('|')[-1] != 'accept_rtadv',
-                            item.split('=')[1].split(',')
-                        )
-                    ):
-                        try:
-                            IpInUse(self.middleware, exclude)(
-                                ip
-                            )
-                        except ValueError as e:
-                            verrors.add(
-                                f'{schema}.{f}',
-                                str(e)
-                            )
-
-    @accepts(Str("jail"), Dict(
-             "options",
-             Bool("plugin", default=False),
-             additional_attrs=True,
-             ))
+    @accepts(
+        Str('jail'),
+        Dict(
+            'jail_update',
+            Bool('plugin', default=False),
+            additional_attrs=True,
+            register=True
+        )
+    )
     def do_update(self, jail, options):
         """Sets a jail property."""
         plugin = options.pop("plugin")
@@ -303,11 +773,9 @@ class JailService(CRUDService):
 
         name = options.pop("name", None)
 
-        verrors = ValidationErrors()
-
         jail = self.query([['id', '=', jail]], {'get': True})
 
-        verrors = self.common_validation(verrors, options, True, jail)
+        verrors = common_validation(self.middleware, options, True, jail)
 
         if name is not None and plugin:
             verrors.add('options.plugin',
@@ -328,83 +796,6 @@ class JailService(CRUDService):
             iocage.rename(name)
 
         return True
-
-    @private
-    def common_validation(self, verrors, options, update=False, jail=None):
-        if not update:
-            # Ensure that api call conforms to format set by iocage for props
-            # Example 'key=value'
-
-            for value in options['props']:
-                if '=' not in value:
-                    verrors.add(
-                        'options.props',
-                        'Please follow the format specified by iocage for api calls'
-                        'e.g "key=value"'
-                    )
-                    break
-
-            if verrors:
-                raise verrors
-
-            # normalise vnet mac address
-            # expected format here is 'vnet0_mac=00-D0-56-F2-B5-12,00-D0-56-F2-B5-13'
-            vnet_macs = {
-                f.split('=')[0]: f.split('=')[1] for f in options['props']
-                if any(f'vnet{i}_mac' in f.split('=')[0] for i in range(0, 4))
-            }
-
-            self.validate_ips(verrors, options)
-        else:
-            vnet_macs = {
-                key: value for key, value in options.items()
-                if any(f'vnet{i}_mac' in key for i in range(0, 4))
-            }
-
-            exclude_ips = [
-                ip.split('|')[1].split('/')[0] if '|' in ip else ip.split('/')[0]
-                for f in ('ip4_addr', 'ip6_addr') for ip in jail[f].split(',')
-                if ip not in ('none', 'DHCP (not running)')
-            ]
-
-            self.validate_ips(
-                verrors, {'props': [f'{k}={v}' for k, v in options.items()]},
-                'options', exclude_ips
-            )
-
-        # validate vnetX_mac addresses
-        for key, value in vnet_macs.items():
-            if value and value != 'none':
-                value = value.replace(',', ' ')
-                try:
-                    for mac in value.split():
-                        MACAddr()(mac)
-
-                    if (
-                        len(value.split()) != 2 or
-                        any(value.split().count(v) > 1 for v in value.split())
-                    ):
-                        raise ValueError('Exception')
-                except ValueError:
-                    verrors.add(
-                        key,
-                        'Please Enter two valid and different '
-                        f'space/comma-delimited MAC addresses for {key}.'
-                    )
-        if options.get('uuid'):
-            valid = True if re.match(
-                r"^[a-zA-Z0-9\._-]+$", options['uuid']
-            ) else False
-
-            if not valid:
-                verrors.add(
-                    'options.uuid',
-                    f'Invalid character in {options["uuid"]}. '
-                    'Alphanumeric, period (.), underscore (_), '
-                    'and dash (-) characters are allowed.'
-                )
-
-        return verrors
 
     @accepts(
         Str('jail'),
@@ -480,7 +871,7 @@ class JailService(CRUDService):
             Str('user', default='anonymous'),
             Str('password', default='anonymous@'),
             Str('name', default=None, null=True),
-            Str('jail_name', default=None, null=True),
+            Str('jail_name'),
             Bool('accept', default=True),
             Bool('https', default=True),
             List('props', default=[]),
@@ -494,289 +885,62 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
-        fetch_output = {'install_notes': []}
         release = options.get('release', None)
         https = options.pop('https', False)
         name = options.pop('name')
-        jail_name = options.pop('jail_name')
-
-        post_install = False
-
-        verrors = ValidationErrors()
-
-        self.validate_ips(verrors, options)
-
-        if verrors:
-            raise verrors
+        jail_name = options.pop('jail_name', None)
 
         def progress_callback(content, exception):
             msg = content['message'].strip('\r\n')
             rel_up = f'* Updating {release} to the latest patch level... '
-            nonlocal post_install
 
-            if name is None:
-                if 'Downloading : base.txz' in msg and '100%' in msg:
-                    job.set_progress(5, msg)
-                elif 'Downloading : lib32.txz' in msg and '100%' in msg:
-                    job.set_progress(10, msg)
-                elif 'Downloading : doc.txz' in msg and '100%' in msg:
-                    job.set_progress(15, msg)
-                elif 'Downloading : src.txz' in msg and '100%' in msg:
-                    job.set_progress(20, msg)
-                if 'Extracting: base.txz' in msg:
-                    job.set_progress(25, msg)
-                elif 'Extracting: lib32.txz' in msg:
-                    job.set_progress(50, msg)
-                elif 'Extracting: doc.txz' in msg:
-                    job.set_progress(75, msg)
-                elif 'Extracting: src.txz' in msg:
-                    job.set_progress(90, msg)
-                elif rel_up in msg:
-                    job.set_progress(95, msg)
-                else:
-                    job.set_progress(None, msg)
+            if 'Downloading : base.txz' in msg and '100%' in msg:
+                job.set_progress(5, msg)
+            elif 'Downloading : lib32.txz' in msg and '100%' in msg:
+                job.set_progress(10, msg)
+            elif 'Downloading : doc.txz' in msg and '100%' in msg:
+                job.set_progress(15, msg)
+            elif 'Downloading : src.txz' in msg and '100%' in msg:
+                job.set_progress(20, msg)
+            if 'Extracting: base.txz' in msg:
+                job.set_progress(25, msg)
+            elif 'Extracting: lib32.txz' in msg:
+                job.set_progress(50, msg)
+            elif 'Extracting: doc.txz' in msg:
+                job.set_progress(75, msg)
+            elif 'Extracting: src.txz' in msg:
+                job.set_progress(90, msg)
+            elif rel_up in msg:
+                job.set_progress(95, msg)
             else:
-                if post_install:
-                    for split_msg in msg.split('\n'):
-                        fetch_output['install_notes'].append(split_msg)
-
-                if '  These pkgs will be installed:' in msg:
-                    job.set_progress(50, msg)
-                elif 'Installing plugin packages:' in msg:
-                    job.set_progress(75, msg)
-                elif 'Running post_install.sh' in msg:
-                    job.set_progress(90, msg)
-                    # Sets each message going forward as important to the user
-                    post_install = True
-                else:
-                    job.set_progress(None, msg)
+                job.set_progress(None, msg)
 
         self.check_dataset_existence()  # Make sure our datasets exist.
         start_msg = f'{release} being fetched'
         final_msg = f'{release} fetched'
 
-        iocage = ioc.IOCage(callback=progress_callback, silent=False)
-
-        if name is not None:
-            pool = IOCJson().json_get_value('pool')
-            iocroot = IOCJson(pool).json_get_value('iocroot')
-
-            options["plugin_name"] = name
-            start_msg = 'Starting plugin install'
-            final_msg = f"Plugin: {name} installed"
-        elif name is None and https:
+        if name is None and https:
             if 'https' not in options['server']:
                 options['server'] = f'https://{options["server"]}'
 
-        options["accept"] = True
-        options['name'] = jail_name
-
-        job.set_progress(0, start_msg)
-        iocage.fetch(**options)
-
-        if post_install and name is not None:
-            plugin_manifest = pathlib.Path(
-                f'{iocroot}/.plugin_index/{name}.json'
+        if name is not None:
+            # we want to create a plugin in this case
+            plugin_job = self.middleware.call_sync(
+                'plugin.create', {
+                    'jail_name': jail_name,
+                    'plugin_name': name,
+                    'props': options['props'],
+                })
+            return self.middleware.call_sync(
+                'core.job_wait', plugin_job, job=True
             )
-            plugin_json = json.loads(plugin_manifest.read_text())
-            schema_version = plugin_json.get('plugin_schema', '1')
-
-            if schema_version.isdigit() and int(schema_version) >= 2:
-                plugin_output = pathlib.Path(
-                    f'{iocroot}/jails/{name}/root/root/PLUGIN_INFO'
-                )
-
-                if plugin_output.is_file():
-                    # Otherwise it will be the verbose output from the
-                    # post_install script
-                    fetch_output['install_notes'] = [
-                        x for x in plugin_output.read_text().split('\n') if x
-                    ]
-
-                    # This is to get the admin URL and such
-                    fetch_output['install_notes'] += job.progress[
-                        'description'].split('\n')
-
-        job.set_progress(100, final_msg)
-
-        return fetch_output
-
-    @accepts(
-        Str('resource', enum=['RELEASE', 'TEMPLATE', 'PLUGIN', 'BRANCHES']),
-        Bool('remote', default=False),
-        Bool('want_cache', default=True),
-        Str('branch', default=None)
-    )
-    @job(lock=lambda args: args[0])
-    def list_resource(self, job, resource, remote, want_cache, branch):
-        """Returns a JSON list of the supplied resource on the host"""
-        self.check_dataset_existence()  # Make sure our datasets exist.
-        iocage = ioc.IOCage(skip_jails=True)
-        resource = "base" if resource == "RELEASE" else resource.lower()
-
-        if resource == "plugin":
-            if remote:
-                if want_cache:
-                    try:
-                        resource_list = self.middleware.call_sync(
-                            'cache.get', 'iocage_remote_plugins')
-
-                        return resource_list
-                    except KeyError:
-                        pass
-
-                resource_list = iocage.fetch(list=True, plugins=True, header=False, branch=branch)
-                try:
-                    plugins_versions_data = self.middleware.call_sync('cache.get', 'iocage_plugin_versions')
-                except KeyError:
-                    plugins_versions_data_job = self.middleware.call_sync(
-                        'core.get_jobs',
-                        [['method', '=', 'jail.retrieve_plugin_versions'], ['state', '=', 'RUNNING']]
-                    )
-                    error = None
-                    plugins_versions_data = {}
-                    if plugins_versions_data_job:
-                        try:
-                            plugins_versions_data = self.middleware.call_sync(
-                                'core.job_wait', plugins_versions_data_job[0]['id'], job=True
-                            )
-                        except CallError as e:
-                            error = str(e)
-                    else:
-                        try:
-                            plugins_versions_data = self.middleware.call_sync(
-                                'jail.retrieve_plugin_versions', job=True
-                            )
-                        except Exception as e:
-                            error = e
-
-                    if error:
-                        # Let's not make the failure fatal
-                        self.middleware.logger.error(f'Retrieving plugins version failed: {error}')
-            else:
-                resource_list = iocage.list("all", plugin=True)
-                pool = IOCJson().json_get_value("pool")
-                iocroot = IOCJson(pool).json_get_value("iocroot")
-                index_path = f'{iocroot}/.plugin_index/INDEX'
-                plugin_jails = {
-                    j['host_hostuuid']: j for j in self.middleware.call_sync(
-                        'jail.query', [['type', 'in', ['plugin', 'pluginv2']]]
-                    )
-                }
-
-                index_json = None
-                if pathlib.Path(index_path).is_file():
-                    with contextlib.suppress(json.decoder.JSONDecodeError):
-                        with open(index_path, 'r') as f:
-                            index_json = json.loads(f.read())
-
-            for index, plugin in enumerate(resource_list):
-
-                if remote:
-                    # In case of remote, "plugin" is going to be a dictionary
-                    plugin.update({
-                        k: plugins_versions_data.get(plugin['plugin'], {}).get(k, 'N/A')
-                        for k in ('version', 'revision', 'epoch')
-                    })
-                else:
-                    # "plugin" is a list which we will convert to a dictionary for readability
-                    plugin_dict = {
-                        k: v if v != '-' else None
-                        for k, v in zip((
-                            'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4', 'ip6', 'template', 'admin_portal'
-                        ), plugin)
-                    }
-                    plugin_output = pathlib.Path(
-                        f'{iocroot}/jails/{plugin[1]}/root/root/PLUGIN_INFO'
-                    )
-
-                    if plugin_output.is_file():
-                        plugin_info = [[
-                            x for x in plugin_output.read_text().split(
-                                '\n') if x
-                        ]]
-                    else:
-                        plugin_info = None
-
-                    plugin_name = plugin_jails[plugin_dict['name']]['plugin_name']
-                    plugin_dict.update({
-                        'plugin_info': plugin_info,
-                        'plugin': plugin_name if plugin_name != 'none' else plugin_dict['name'],
-                        **self.get_local_plugin_version(
-                            plugin_name if plugin_name != 'none' else plugin_dict['name'],
-                            index_json, iocroot, plugin_dict['name']
-                        )
-                    })
-
-                    resource_list[index] = plugin_dict
-
-            if remote:
-                self.middleware.call_sync(
-                    'cache.put', 'iocage_remote_plugins', resource_list,
-                    86400
-                )
-        elif resource == "base":
-            try:
-                if remote:
-                    resource_list = self.middleware.call_sync(
-                        'cache.get', 'iocage_remote_releases')
-
-                    return resource_list
-            except KeyError:
-                pass
-
-            resource_list = iocage.fetch(list=True, remote=remote, http=True)
-
-            if remote:
-                self.middleware.call_sync(
-                    'cache.put', 'iocage_remote_releases', resource_list,
-                    86400
-                )
-        elif resource == 'branches':
-            official_branches = requests.get(
-                'https://api.github.com/repos/freenas/iocage-ix-plugins/'
-                'branches'
-            )
-            official_branches.raise_for_status()
-            resource_list = [
-                {'name': b['name'], 'repo': 'official'}
-                for b in official_branches.json()
-            ]
         else:
-            resource_list = [
-                {k: v if v != '-' else None for k, v in zip(('jid', 'name', 'state', 'release', 'ip4'), jail_data)}
-                for jail_data in iocage.list(resource)
-            ]
-
-        return resource_list
-
-    @periodic(interval=86400, run_on_start=False)
-    @private
-    @accepts(Str('branch', null=True, default=None))
-    @job(lock='retrieve_plugin_versions')
-    def retrieve_plugin_versions(self, job, branch=None):
-        branch = branch or self.get_version()
-        try:
-            pool = self.get_activated_pool()
-        except CallError:
-            pool = None
-
-        if pool:
-            plugins = IOCPlugin(branch=branch).fetch_plugin_versions()
-        else:
-            with tempfile.TemporaryDirectory() as td:
-                github_repo = 'https://github.com/freenas/iocage-ix-plugins.git'
-                try:
-                    IOCPlugin._clone_repo(branch, github_repo, td, depth=1)
-                except Exception:
-                    self.middleware.logger.error('Failed to clone iocage-ix-plugins repository.', exc_info=True)
-                    return {}
-                else:
-                    plugins_index_data = IOCPlugin.retrieve_plugin_index_data(td)
-                    plugins = IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
-
-        self.middleware.call_sync('cache.put', 'iocage_plugin_versions', plugins, 86400)
-        return plugins
+            # We are fetching a release in this case
+            iocage = ioc.IOCage(callback=progress_callback, silent=False)
+            job.set_progress(0, start_msg)
+            iocage.fetch(**options)
+            job.set_progress(100, final_msg)
+            return True
 
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
     def rc_action(self, action):
@@ -1105,58 +1269,6 @@ class JailService(CRUDService):
         return True
 
     @private
-    def get_local_plugin_version(self, plugin, index_json, iocroot, jail_name):
-        """
-        Checks the primary_pkg key in the INDEX with the pkg version
-        inside the jail.
-        """
-        version = {k: 'N/A' for k in ('version', 'revision', 'epoch')}
-
-        if index_json is None:
-            return version
-
-        try:
-            base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
-            primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
-
-            # Since these are plugins, we don't want to spin them up just to
-            # check a pkg, directly accessing the db is best in this case.
-            db_rows = self.read_plugin_pkg_db(
-                f'{iocroot}/jails/{jail_name}/root/var/db/pkg/local.sqlite',
-                primary_pkg)
-
-            for row in db_rows:
-                row = list(row)
-                if '/' not in primary_pkg:
-                    row[1] = row[1].split('/', 1)[-1]
-                    row[2] = row[2].split('/', 1)[-1]
-
-                if primary_pkg == row[1] or primary_pkg == row[2]:
-                    version = ioc_common.parse_package_name(f'{plugin}-{row[3]}')
-                    break
-        except (KeyError, sqlite3.OperationalError):
-            pass
-
-        return version
-
-    @private
-    def read_plugin_pkg_db(self, db, pkg):
-        try:
-            conn = sqlite3.connect(db)
-        except sqlite3.Error as e:
-            raise CallError(e)
-
-        with conn:
-            cur = conn.cursor()
-            cur.execute(
-                f'SELECT * FROM packages WHERE origin="{pkg}" OR name="{pkg}"'
-            )
-
-            rows = cur.fetchall()
-
-            return rows
-
-    @private
     def start_on_boot(self):
         self.logger.debug('Starting jails on boot: PENDING')
         ioc.IOCage(rc=True).start()
@@ -1175,16 +1287,6 @@ class JailService(CRUDService):
     @private
     async def terminate(self):
         await SHUTDOWN_LOCK.acquire()
-
-    @private
-    def get_version(self):
-        """
-        Uses system.version and parses it out for the RELEASE branch we need
-        """
-        r = os.uname().release
-        version = f'{round(float(r.split("-")[0]), 1)}-RELEASE'
-
-        return version
 
 
 async def jail_pool_pre_lock(middleware, pool):
