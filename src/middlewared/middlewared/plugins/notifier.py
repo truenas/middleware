@@ -75,9 +75,9 @@ class NotifierService(Service):
 
     def directoryservice(self, name):
         """Temporary wrapper to serialize DS connectors"""
+        ad = self.middleware.call_sync('activedirectory.config')
         if name == 'AD':
             smb = self.middleware.call_sync('smb.config')
-            ad = self.middleware.call_sync('activedirectory.config')
             data = {
                 'netbiosname': smb['netbiosname'],
                 'domainname': ad['domainname'],
