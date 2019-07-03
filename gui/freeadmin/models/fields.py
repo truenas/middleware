@@ -26,9 +26,7 @@
 #####################################################################
 import json
 import logging
-import os
 import re
-import sys
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -37,11 +35,6 @@ from django.utils.text import capfirst
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('freeadmin.models.fields')
-FREENAS_INSTALL = os.environ.get('FREENAS_INSTALL', '').lower() == 'yes'
-if not FREENAS_INSTALL:
-    FREENAS_INSTALL = len(list(filter(
-        lambda x: 'manage.py' in x or x == 'migrate', sys.argv
-    ))) == 2
 
 
 class DictField(models.Field):
@@ -95,9 +88,12 @@ class EncryptedDictField(models.Field):
         return "TextField"
 
     def get_db_prep_value(self, value, connection, prepared=False):
-        if FREENAS_INSTALL or not value:
+        if not value:
+            value = {}
+        try:
+            return notifier().pwenc_encrypt(json.dumps(value))
+        except Exception:
             return ''
-        return notifier().pwenc_encrypt(json.dumps(value))
 
     def from_db_value(self, value, expression, connection, context):
         return self.to_python(value)
@@ -105,8 +101,6 @@ class EncryptedDictField(models.Field):
     def to_python(self, value):
         if not value:
             return {}
-        if FREENAS_INSTALL:
-            return value
         if isinstance(value, str):
             try:
                 return json.loads(notifier().pwenc_decrypt(value))
