@@ -1655,7 +1655,7 @@ class LegacyReplicationResourceMixin(object):
             "repl_filesystem": bundle.data["repl_source_datasets"][0],
             "repl_followdelete": bundle.data["repl_retention_policy"] == "SOURCE",
             "repl_lastsnapshot": task["state"].get("last_snapshot"),
-            "repl_limit": bundle.data["repl_speed_limit"] or 0,
+            "repl_limit": int((bundle.data["repl_speed_limit"]  or 0) / 1024),
             "repl_remote_cipher": task["ssh_credentials"]["attributes"]["cipher"].lower(),
             "repl_remote_dedicateduser": (None if task["ssh_credentials"]["attributes"]["username"] == "root"
                                           else task["ssh_credentials"]["attributes"]["username"]),

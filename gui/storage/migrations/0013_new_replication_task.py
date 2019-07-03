@@ -107,7 +107,9 @@ def speed_limit(apps, schema_editor):
     for replication in Replication.objects.all():
         if replication.repl_speed_limit == 0:
             replication.repl_speed_limit = None
-            replication.save()
+        else:
+            replication.repl_speed_limit *= 1024
+        replication.save()
 
 
 def set_defaults(apps, schema_editor):
