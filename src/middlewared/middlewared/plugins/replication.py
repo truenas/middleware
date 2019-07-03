@@ -503,6 +503,10 @@ class ReplicationService(CRUDService):
             if len(data["source_datasets"]) != 1:
                 verrors.add("source_datasets", "You can only have one source dataset for legacy replication")
 
+            if data["retention_policy"] not in ["SOURCE", "NONE"]:
+                verrors.add("retention_policy", "Only \"source\" and \"none\" retention policies are supported by "
+                                                "legacy replication")
+
             if data["retries"] != 1:
                 verrors.add("retries", "This value should be 1 for legacy replication")
 

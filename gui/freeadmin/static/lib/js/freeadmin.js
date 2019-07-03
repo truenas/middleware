@@ -849,7 +849,7 @@ require([
         };
         var newFeatures = (
             ["exclude", "periodic_snapshot_tasks", "naming_schema", "auto", "only_matching_schedule",
-             "allow_from_scratch", "hold_pending_snapshots", "retention_policy", "dedup", "large_block", /* "embed", */
+             "allow_from_scratch", "hold_pending_snapshots", "dedup", "large_block", /* "embed", */
              "compressed", "retries", "logging_level"].
             concat("enable_schedule").concat(schedule).
             concat("enable_restrict_schedule").concat(restrictSchedule).
@@ -861,7 +861,7 @@ require([
                                               "netcat_active_side_listen_address", "netcat_active_side_port_min",
                                               "netcat_active_side_port_max", "netcat_passive_side_connect_address"]),
             "LOCAL": newFeatures,
-            "LEGACY": ["ssh_credentials"],
+            "LEGACY": ["ssh_credentials", "compression", "speed_limit"],
         };
 
         var visible = {};
