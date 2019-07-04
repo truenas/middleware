@@ -1,7 +1,9 @@
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
+from middlewared.validators import Email
 
 from datetime import datetime, timedelta
+from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -94,7 +96,8 @@ class MailService(ConfigService):
 
     @accepts(Dict(
         'mail_update',
-        Str('fromemail'),
+        Str('fromemail', validators=[Email()]),
+        Str('fromname'),
         Str('outgoingserver'),
         Int('port'),
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
@@ -232,6 +235,22 @@ class MailService(ConfigService):
     @job(pipes=['input'], check_pipes=False)
     @private
     def send_raw(self, job, message, config=None):
+        if config['fromname']:
+            from_addr = Header(config['fromname'], 'utf-8')
+            try:
+                config['fromemail'].encode('ascii')
+            except UnicodeEncodeError:
+                from_addr.append(f'<{config["fromemail"]}>', 'utf-8')
+            else:
+                from_addr.append(f'<{config["fromemail"]}>', 'ascii')
+        else:
+            try:
+                config['fromemail'].encode('ascii')
+            except UnicodeEncodeError:
+                from_addr = Header(config['fromemail'], 'utf-8')
+            else:
+                from_addr = Header(config['fromemail'], 'ascii')
+
         interval = message.get('interval')
         if interval is None:
             interval = timedelta()
@@ -317,7 +336,7 @@ class MailService(ConfigService):
 
         msg['Subject'] = message['subject']
 
-        msg['From'] = config['fromemail']
+        msg['From'] = from_addr
         msg['To'] = ', '.join(to)
         if message.get('cc'):
             msg['Cc'] = ', '.join(message.get('cc'))
@@ -347,7 +366,7 @@ class MailService(ConfigService):
             #    server.connect()
             headers = '\n'.join([f'{k}: {v}' for k, v in msg._headers])
             syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
-            server.sendmail(config['fromemail'], to, msg.as_string())
+            server.sendmail(from_addr.encode(), to, msg.as_string())
             server.quit()
         except Exception as e:
             # Don't spam syslog with these messages. They should only end up in the
