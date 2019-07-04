@@ -1,6 +1,12 @@
+# Copyright (c) 2019 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
+
 import textwrap
 
-from middlewared.alert.source.nvdimm import produce_nvdimm_alerts, Alert
+from middlewared.alert.source.nvdimm import produce_nvdimm_alerts
 
 
 def test__produce_nvdimm_alerts__ok():
@@ -77,8 +83,8 @@ def test__produce_nvdimm_alerts__everything_is_broken():
 
     assert len(alerts) == 6
     assert alerts[0].title % alerts[0].args == "NVDIMM 0 Critical Health Info is 0x1"
-    assert alerts[1].title % alerts[1].args ==\
-           "NVDIMM 0 Module Health is 0x900: NOT ENOUGH ENERGY FOR CSAVE, NO ES PRESENT"
+    assert alerts[1].title % alerts[1].args == \
+        "NVDIMM 0 Module Health is 0x900: NOT ENOUGH ENERGY FOR CSAVE, NO ES PRESENT"
     assert alerts[2].title % alerts[2].args == "NVDIMM 0 Error Threshold Status is 0x3"
     assert alerts[3].title % alerts[3].args == "NVDIMM 0 Warning Threshold Status is 0x4"
     assert alerts[4].title % alerts[4].args == "NVDIMM 0 NVM Lifetime is 15%"

@@ -1,3 +1,8 @@
+# Copyright (c) 2019 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
 from subprocess import Popen, PIPE
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
@@ -19,7 +24,7 @@ class USBStorageAlertSource(ThreadedAlertSource):
         usbdevname = proc.communicate()
         if proc.returncode == 0:
             usbdevname = str(usbdevname[0])
-            usbdevname = usbdevname[usbdevname.find('<')+1:usbdevname.find('>')]
+            usbdevname = usbdevname[usbdevname.find('<') + 1:usbdevname.find('>')]
 
             return Alert(
                 USBStorageAlertClass,

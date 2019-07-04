@@ -1,14 +1,18 @@
-import asyncio
+# Copyright (c) 2019 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
+
 from datetime import datetime, timedelta
 import errno
 import json
 import os
 
-import aiohttp
 
 from licenselib.license import ContractType
 
-from freenasUI.support.utils import get_license, ADDRESS, LICENSE_FILE
+from freenasUI.support.utils import get_license
 
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import Service, private

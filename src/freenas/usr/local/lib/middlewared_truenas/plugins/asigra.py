@@ -1,4 +1,11 @@
+# Copyright (c) 2019 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
+
 import contextlib
+import errno
 import os
 import pwd
 import re
@@ -141,7 +148,7 @@ class AsigraService(SystemServiceService):
                 return
 
             # listen_address = '*'
-            pg_conf_regex = re.compile('.*(#)\s{0,}?listen_addresses\s{0,}=\s{0,}([^\s]+)', re.M | re.S)
+            pg_conf_regex = re.compile(r'.*(#)\s{0,}?listen_addresses\s{0,}=\s{0,}([^\s]+)', re.M | re.S)
             pg_conf_buf = []
             rewrite = False
 

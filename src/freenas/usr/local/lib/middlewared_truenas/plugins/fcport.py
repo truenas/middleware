@@ -1,11 +1,17 @@
+# Copyright (c) 2019 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
+
 import re
 import subprocess
 
 from lxml import etree
 import sysctl
 
-from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, CRUDService, filterable, private, ValidationErrors
+from middlewared.schema import Dict, Int, Str, accepts
+from middlewared.service import CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list
 
 
@@ -32,7 +38,7 @@ class FCPortService(CRUDService):
         for e in doc.xpath("//frontend_type[text()='camtgt']"):
             tag_port = e.getparent()
             name = tag_port.xpath("./port_name")[0].text
-            reg = re.search("\d+", name)
+            reg = re.search(r"\d+", name)
             if reg:
                 port = reg.group(0)
             else:

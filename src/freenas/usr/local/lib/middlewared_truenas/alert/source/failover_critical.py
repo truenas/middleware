@@ -70,7 +70,6 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
         if not ifaces:
             return [Alert(NoCriticalFailoverInterfaceFoundAlertClass)]
 
-
         for iface in ifaces:
             proc = subprocess.Popen(
                 ["/sbin/ifconfig", str(iface.int_interface)],

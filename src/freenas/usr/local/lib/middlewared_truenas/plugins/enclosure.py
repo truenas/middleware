@@ -1,3 +1,9 @@
+# Copyright (c) 2019 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
+
 from collections import OrderedDict
 import logging
 import os
@@ -6,7 +12,7 @@ import subprocess
 
 from bsd import geom
 
-from middlewared.schema import Bool, Dict, Int, Str, accepts
+from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.utils import filter_list
 
@@ -283,8 +289,10 @@ class EnclosureService(CRUDService):
         self.logger.debug("Disk %r not found in enclosure, trying from disk cache table", disk)
 
         try:
-            disk = self.middleware.call_sync("disk.query", [["devname", "=", disk]],
-                                        {"get": True, "order_by": ["expiretime"]})
+            disk = self.middleware.call_sync(
+                "disk.query", [["devname", "=", disk]],
+                {"get": True, "order_by": ["expiretime"]},
+            )
             if disk["enclosure"]:
                 return disk["enclosure"]["number"], disk["enclosure"]["slot"]
         except IndexError:
@@ -422,7 +430,7 @@ class Enclosure(object):
         lname = ""
         elements = re.findall(
             r'Element\s+(?P<element>.+?): (?P<name>.+?)'
-            ', status: (?P<status>.+?) \((?P<value>[^)]+)\)'
+            r', status: (?P<status>.+?) \((?P<value>[^)]+)\)'
             '(?:, descriptor: \'(?P<desc>[^\']+)\')?'
             '(?:, dev: \'(?P<dev>.+?)\')?',
             data)
@@ -543,7 +551,7 @@ class Element(object):
         self.status_raw = (self.value_raw >> 24) & 0xf
         try:
             self.descriptor = kwargs.pop('desc')
-        except:
+        except Exception:
             self.descriptor = 'Unknown'
         self.enclosure = None
 
