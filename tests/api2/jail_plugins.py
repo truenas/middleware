@@ -49,9 +49,11 @@ plugins_list = [
 ]
 
 plugins_objects = [
+    "id",
     "state",
     "type",
     "release",
+    "plugin_repository"
 ]
 
 
@@ -153,67 +155,44 @@ def test_10_search_plugin_transmission_id():
 
 
 @to_skip
-def test_11_looking_transmission_plugin_id_exist():
-    global results
+def test_11_get_transmission_plugin_info():
+    global transmission_plugin
     results = GET('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
-    assert len(results.json()) > 0, results.text
+    assert isinstance(results.json(), dict), results.text
+    transmission_plugin = results.json()
 
 
 @to_skip
-def test_12_get_installed_plugin_list_with_want_cache():
-    global JOB_ID
-    payload = {
-        "resource": "PLUGIN",
-        "remote": False,
-        "want_cache": True
-    }
-    results = POST("/jail/list_resource/", payload)
+def test_12_get_transmission_jail_info():
+    global transmission_jail
+    results = GET("/jail/id/transmission")
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), int), results.text
-    JOB_ID = results.json()
-
-
-@to_skip
-def test_13_verify_list_of_installed_plugins_job_id_is_successfull():
-    global job_results
-    while True:
-        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
-        job_state = job_results.json()[0]['state']
-        if job_state in ('RUNNING', 'WAITING'):
-            sleep(3)
-        else:
-            assert job_state == 'SUCCESS', job_results.text
-            break
+    assert isinstance(results.json(), dict), results.text
+    transmission_jail = results.json()
 
 
 @to_skip
 @pytest.mark.parametrize('object', plugins_objects)
-def test_14_verify_transmission_plugin_info_value_with_jail_info_value_(object):
-    for plugin_list in job_results.json()[0]['result']:
-        if 'transmission' in plugin_list['name']:
-            assert plugin_list[object] == results.json()[object], plugin_list
-            break
-    else:
-        assert False, job_results.text
+def test_13_verify_transmission_plugin_value_with_jail_value_of_(object):
+    assert transmission_jail[object] == transmission_plugin[object], results.text
 
 
 @to_skip
-def test_15_get_list_of_available_plugins_with_want_cache():
+def test_14_get_list_of_available_plugins_with_cache():
     global JOB_ID
     payload = {
-        'resource': 'PLUGIN',
-        "remote": True,
-        "want_cache": True
+        "plugin_repository": plugin_repos,
+        "cache": True
     }
-    results = POST('/jail/list_resource/', payload)
+    results = POST('/plugin/available/', payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
     JOB_ID = results.json()
 
 
 @to_skip
-def test_16_verify_list_of_available_plugins_job_id_is_successfull():
+def test_15_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
     while True:
         job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
@@ -227,7 +206,7 @@ def test_16_verify_list_of_available_plugins_job_id_is_successfull():
 
 @to_skip
 @pytest.mark.parametrize('plugin', plugins_list)
-def test_17_verify_available_plugin_with_want_cache_(plugin):
+def test_16_verify_available_plugin_with_want_cache_(plugin):
     for plugin_info in job_results.json()[0]['result']:
         if plugin in plugin_info:
             assert isinstance(plugin_info, list), job_results.text
@@ -235,7 +214,7 @@ def test_17_verify_available_plugin_with_want_cache_(plugin):
 
 
 @to_skip
-def test_18_stop_transmission_jail():
+def test_17_stop_transmission_jail():
     global results
     payload = {
         "jail": "transmission",
@@ -243,6 +222,15 @@ def test_18_stop_transmission_jail():
     }
     results = POST('/jail/stop/', payload)
     assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_18_wait_for_transmission_plugin_to_be_down():
+    while True:
+        results = GET('/plugin/id/transmission/')
+        assert results.status_code == 200, results.text
+        if results.json()['state'] == 'up':
+            break
 
 
 @to_skip
@@ -254,7 +242,16 @@ def test_19_start_transmission_jail():
 
 
 @to_skip
-def test_18_stop_transmission_jail_before_deleteing():
+def test_20_wait_for_transmission_plugin_to_be_up():
+    while True:
+        results = GET('/plugin/id/transmission/')
+        assert results.status_code == 200, results.text
+        if results.json()['state'] == 'up':
+            break
+
+
+@to_skip
+def test_21_stop_transmission_jail_before_deleteing():
     global results
     payload = {
         "jail": "transmission",
@@ -265,45 +262,27 @@ def test_18_stop_transmission_jail_before_deleteing():
 
 
 @to_skip
-def test_20_delete_transmission_plugin():
-    results = DELETE('/jail/id/transmission/')
-    assert results.status_code == 200, results.text
-
-
-@to_skip
-def test_21_get_installed_plugin_list_with_want_cache():
-    global JOB_ID
-    payload = {
-        "resource": "PLUGIN",
-        "remote": False,
-        "want_cache": True
-    }
-    results = POST("/jail/list_resource/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), int), results.text
-    JOB_ID = results.json()
-
-
-@to_skip
-def test_22_verify_list_of_installed_plugins_job_id_is_successfull():
-    global job_results
+def test_22_wait_for_transmission_plugin_to_be_down():
     while True:
-        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
-        job_state = job_results.json()[0]['state']
-        if job_state in ('RUNNING', 'WAITING'):
-            sleep(3)
-        else:
-            assert job_state == 'SUCCESS', job_results.text
+        results = GET('/plugin/id/transmission/')
+        assert results.status_code == 200, results.text
+        if results.json()['state'] == 'down':
             break
-    for plugin_list in job_results.json():
-        if 'transmission' in plugin_list:
-            assert False, job_results.json()
-            break
-    else:
-        assert True, job_results.json()
 
 
 @to_skip
-def test_23_looking_transmission_jail_id_is_delete():
+def test_23_delete_transmission_plugin():
+    results = DELETE('/plugin/id/transmission/')
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_24_looking_transmission_jail_id_is_delete():
     results = GET('/jail/id/transmission/')
+    assert results.status_code == 404, results.text
+
+
+@to_skip
+def test_25_looking_transmission_plugin_id_is_delete():
+    results = GET('/plugin/id/transmission/')
     assert results.status_code == 404, results.text
