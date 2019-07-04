@@ -31,14 +31,14 @@ def test_02_verify_iocage_pool():
 
 
 def test_03_verify_list_resources_is_an_integer():
-    results = POST('/jail/releases_choices', False)
+    results = POST('/jail/releases_choices/', False)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
 def test_04_get_available_FreeBSD_release():
     global RELEASE
-    results = POST('/jail/releases_choices', True)
+    results = POST('/jail/releases_choices/', True)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     assert '11.2-RELEASE' in results.json(), results.text
@@ -285,12 +285,17 @@ def test_19_rc_action():
     assert results.status_code == 200, results.text
 
 
-def test_20_delete_transmission_plugin():
+def test_20_delete_jail():
     results = DELETE(f'/jail/id/{JAIL_NAME}/')
     assert results.status_code == 200, results.text
 
 
-def test_21_verify_clean_call():
+def test_21_verify_the_jail_id_is_delete():
+    results = GET(f'/jail/id/{JAIL_NAME}/')
+    assert results.status_code == 404, results.text
+
+
+def test_22_verify_clean_call():
     results = POST('/jail/clean/', 'ALL')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
