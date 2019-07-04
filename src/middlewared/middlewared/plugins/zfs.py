@@ -642,9 +642,12 @@ class ZFSSnapshot(CRUDService):
             )
             if cp.returncode != 0:
                 raise CallError(f'Failed to retrieve snapshots: {cp.stderr}')
+            stdout = cp.stdout.strip()
+            if not stdout:
+                return []
             snaps = [
                 {'name': i, 'pool': i.split('/', 1)[0]}
-                for i in cp.stdout.strip().split('\n')
+                for i in stdout.split('\n')
             ]
             if filters:
                 return filter_list(snaps, filters, options)
