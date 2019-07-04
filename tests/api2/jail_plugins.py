@@ -8,7 +8,6 @@ sys.path.append(apifolder)
 from auto_config import pool_name
 from functions import GET, POST, DELETE
 
-IOCAGE_POOL = pool_name
 JOB_ID = None
 job_results = None
 not_freenas = GET("/system/is_freenas/").json() is False
@@ -58,7 +57,7 @@ plugins_objects = [
 
 @to_skip
 def test_01_activate_jail_pool():
-    results = POST('/jail/activate/', IOCAGE_POOL)
+    results = POST('/jail/activate/', pool_name)
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
@@ -67,11 +66,11 @@ def test_01_activate_jail_pool():
 def test_02_verify_jail_pool():
     results = GET('/jail/get_activated_pool/')
     assert results.status_code == 200, results.text
-    assert results.json() == IOCAGE_POOL, results.text
+    assert results.json() == pool_name, results.text
 
 
 @to_skip
-def test_03_get_list_of_instaled_plugin_job_id():
+def test_03_get_list_of_instaled_plugin():
     results = GET('/plugin/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
@@ -121,14 +120,16 @@ def test_07_verify_available_plugin_(plugin):
 def test_08_add_transmision_plugins():
     global JOB_ID
     payload = {
-        "name": "transmission",
+        "plugin_name": "transmission",
+        "jail_name": "transmission",
         'props': [
             'nat=1',
             'vnet=1',
             'vnet_default_interface=auto'
-        ]
+        ],
+        "plugin_repository": plugin_repos,
     }
-    results = POST('/jail/fetch/', payload)
+    results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
     JOB_ID = results.json()
 
@@ -145,16 +146,16 @@ def test_09_verify_transmision_plugin_job_is_successfull():
 
 
 @to_skip
-def test_10_verify_transmission_id_jail_exist():
-    results = GET('/jail/?id=transmission')
+def test_10_search_plugin_transmission_id():
+    results = GET('/plugin/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
 @to_skip
-def test_11_looking_transmission_jail_id_is_exist():
+def test_11_looking_transmission_plugin_id_exist():
     global results
-    results = GET('/jail/id/transmission/')
+    results = GET('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
