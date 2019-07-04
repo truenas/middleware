@@ -72,7 +72,7 @@ def test_02_verify_jail_pool():
 
 
 @to_skip
-def test_03_get_list_of_instaled_plugin():
+def test_03_get_list_of_installed_plugin():
     results = GET('/plugin/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
