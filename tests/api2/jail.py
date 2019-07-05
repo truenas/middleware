@@ -81,7 +81,7 @@ def test_07_verify_FreeBSD_release_is_installed():
     results = POST('/jail/releases_choices', False)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert '11.2-RELEASE' in results.json(), results.text
+    assert RELEASE in results.json(), results.text
 
 
 def test_08_create_jail():
@@ -246,7 +246,7 @@ def test_17_stop_jail():
         pytest.skip(freeze_msg)
     payload = {
         'jail': JAIL_NAME,
-        'force': True
+
     }
     results = POST('/jail/stop/', payload)
     assert results.status_code == 200, results.text
@@ -286,7 +286,10 @@ def test_19_rc_action():
 
 
 def test_20_delete_jail():
-    results = DELETE(f'/jail/id/{JAIL_NAME}/')
+    payload = {
+        'force': True
+    }
+    results = DELETE(f'/jail/id/{JAIL_NAME}/', payload)
     assert results.status_code == 200, results.text
 
 
