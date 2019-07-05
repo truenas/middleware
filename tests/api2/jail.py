@@ -30,7 +30,7 @@ def test_02_verify_iocage_pool():
     assert results.json() == IOCAGE_POOL, results.text
 
 
-def test_03_verify_list_resources_is_an_integer():
+def test_03_get_installed_FreeBSD_release_():
     results = POST('/jail/releases_choices/', False)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
