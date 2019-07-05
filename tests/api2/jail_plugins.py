@@ -227,10 +227,14 @@ def test_17_stop_transmission_jail():
 @to_skip
 def test_18_wait_for_transmission_plugin_to_be_down():
     results = GET('/plugin/id/transmission/')
+    timeout = 0
     while results.json()['state'] == 'up':
         sleep(1)
         results = GET('/plugin/id/transmission/')
         assert results.status_code == 200, results.text
+        if timeout == 10:
+            break
+        timeout += 1
     assert results.json()['state'] == 'down', results.text
 
 
@@ -245,10 +249,14 @@ def test_19_start_transmission_jail():
 @to_skip
 def test_20_wait_for_transmission_plugin_to_be_up():
     results = GET('/plugin/id/transmission/')
+    timeout = 0
     while results.json()['state'] == 'down':
         sleep(1)
         results = GET('/plugin/id/transmission/')
         assert results.status_code == 200, results.text
+        if timeout == 10:
+            break
+        timeout += 1
     assert results.json()['state'] == 'up', results.text
 
 
@@ -266,10 +274,14 @@ def test_21_stop_transmission_jail_before_deleteing():
 @to_skip
 def test_22_wait_for_transmission_plugin_to_be_down():
     results = GET('/plugin/id/transmission/')
+    timeout = 0
     while results.json()['state'] == 'up':
         sleep(1)
         results = GET('/plugin/id/transmission/')
         assert results.status_code == 200, results.text
+        if timeout == 10:
+            break
+        timeout += 1
     assert results.json()['state'] == 'down', results.text
 
 
