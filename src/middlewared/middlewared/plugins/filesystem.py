@@ -296,7 +296,7 @@ class FilesystemService(Service):
             '-p', path], check=False, capture_output=True
         )
         if winacl.returncode != 0:
-            raise CallError(f"Failed to recursively {action}: {winacl.stderr.decode()}")
+            self.logger.debug("winacl job on path %s failed with error: [%s]", path, winacl.stderr.decode().strip())
 
     @accepts(Str('path'))
     def acl_is_trivial(self, path):
