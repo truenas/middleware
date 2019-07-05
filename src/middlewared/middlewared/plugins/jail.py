@@ -1261,7 +1261,7 @@ class JailService(CRUDService):
 
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_import:{args[-1]}")
-    def _import(self, job, jail):
+    def import_image(self, job, jail):
         """Imports jail from zip file"""
 
         IOCImage().import_jail(jail)
