@@ -224,7 +224,6 @@ class FilesystemService(Service):
             'avail_bytes': statfs.avail_blocks * statfs.blocksize,
         }
 
-    @private
     def __convert_to_basic_permset(self, permset):
         """
         Convert "advanced" ACL permset format to basic format using
@@ -249,7 +248,6 @@ class FilesystemService(Service):
 
         return SimplePerm
 
-    @private
     def __convert_to_basic_flagset(self, flagset):
         flags = 0
         for k, v, in flagset.items():
@@ -265,7 +263,6 @@ class FilesystemService(Service):
 
         return SimpleFlag
 
-    @private
     def __convert_to_adv_permset(self, basic_perm):
         permset = {}
         perm_mask = acl.NFS4BasicPermset[basic_perm].value
@@ -277,7 +274,6 @@ class FilesystemService(Service):
 
         return permset
 
-    @private
     def __convert_to_adv_flagset(self, basic_flag):
         flagset = {}
         flag_mask = acl.NFS4BasicFlagset[basic_flag].value
@@ -298,7 +294,7 @@ class FilesystemService(Service):
             '-O', str(uid), '-G', str(gid),
             '-rx' if options['traverse'] else '-r',
             '-p', path], check=False, capture_output=True
-            )
+        )
         if winacl.returncode != 0:
             raise CallError(f"Failed to recursively {action}: {winacl.stderr.decode()}")
 
