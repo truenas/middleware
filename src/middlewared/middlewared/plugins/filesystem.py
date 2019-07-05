@@ -224,6 +224,7 @@ class FilesystemService(Service):
             'avail_bytes': statfs.avail_blocks * statfs.blocksize,
         }
 
+    @private
     def __convert_to_basic_permset(self, permset):
         """
         Convert "advanced" ACL permset format to basic format using
@@ -248,6 +249,7 @@ class FilesystemService(Service):
 
         return SimplePerm
 
+    @private
     def __convert_to_basic_flagset(self, flagset):
         flags = 0
         for k, v, in flagset.items():
@@ -263,6 +265,7 @@ class FilesystemService(Service):
 
         return SimpleFlag
 
+    @private
     def __convert_to_adv_permset(self, basic_perm):
         permset = {}
         perm_mask = acl.NFS4BasicPermset[basic_perm].value
@@ -274,6 +277,7 @@ class FilesystemService(Service):
 
         return permset
 
+    @private
     def __convert_to_adv_flagset(self, basic_flag):
         flagset = {}
         flag_mask = acl.NFS4BasicFlagset[basic_flag].value
@@ -284,6 +288,19 @@ class FilesystemService(Service):
                 flagset.update({name: False})
 
         return flagset
+
+    @private
+    @job(lock=lambda args: f'_winacl:{args[0]}')
+    def _winacl(self, job, path, action, uid, gid, options):
+        winacl = subprocess.run([
+            '/usr/local/bin/winacl',
+            '-a', action,
+            '-O', str(uid), '-G', str(gid),
+            '-rx' if options['traverse'] else '-r',
+            '-p', path], check=False, capture_output=True
+            )
+        if winacl.returncode != 0:
+            raise CallError(f"Failed to recursively {action}: {winacl.stderr.decode()}")
 
     @accepts(Str('path'))
     def acl_is_trivial(self, path):
@@ -324,6 +341,9 @@ class FilesystemService(Service):
         If `traverse` and `recursive` are specified, then the chown
         operation will traverse filesystem mount points.
         """
+        if not os.path.exists(data['path']):
+            raise CallError(f"Path {data['path']} not found.", errno.ENOENT)
+
         uid = -1 if data['uid'] is None else data['uid']
         gid = -1 if data['gid'] is None else data['gid']
         options = data['options']
@@ -331,15 +351,7 @@ class FilesystemService(Service):
         if not options['recursive']:
             os.chown(data['path'], uid, gid)
         else:
-            winacl = subprocess.run([
-                '/usr/local/bin/winacl',
-                '-a', 'chown',
-                '-O', str(uid), '-G', str(gid),
-                '-rx' if options['traverse'] else '-r',
-                '-p', data['path']], check=False, capture_output=True
-            )
-            if winacl.returncode != 0:
-                raise CallError(f"Failed to recursively change ownership: {winacl.stderr.decode()}")
+            self.middleware.call_sync('filesystem._winacl', data['path'], 'chown', uid, gid, options)
 
     @accepts(
         Dict(
@@ -356,8 +368,7 @@ class FilesystemService(Service):
             )
         )
     )
-    @job(lock=lambda args: f'setperm:{args[0]}')
-    def setperm(self, job, data):
+    def setperm(self, data):
         """
         Remove extended ACL from specified path.
 
@@ -410,15 +421,8 @@ class FilesystemService(Service):
         if not options['recursive']:
             return
 
-        winacl = subprocess.run([
-            '/usr/local/bin/winacl',
-            '-a', 'clone' if mode else 'strip',
-            '-O', str(uid), '-G', str(gid),
-            '-rx' if options['traverse'] else '-r',
-            '-p', data['path']], check=False, capture_output=True
-        )
-        if winacl.returncode != 0:
-            raise CallError(f"Failed to recursively apply ACL: {winacl.stderr.decode()}")
+        action = 'clone' if mode else 'strip'
+        self.middleware.call_sync('filesystem._winacl', data['path'], action, uid, gid, options)
 
     @accepts(
         Str('path'),
@@ -499,6 +503,8 @@ class FilesystemService(Service):
         Dict(
             'filesystem_acl',
             Str('path', required=True),
+            Int('uid', null=True, default=None),
+            Int('gid', null=True, default=None),
             List(
                 'dacl',
                 items=[
@@ -538,8 +544,6 @@ class FilesystemService(Service):
                 ],
                 default=[]
             ),
-            Int('uid', null=True, default=None),
-            Int('gid', null=True, default=None),
             Dict(
                 'options',
                 Bool('stripacl', default=False),
@@ -548,8 +552,7 @@ class FilesystemService(Service):
             )
         )
     )
-    @job(lock=lambda args: f'setacl:{args[0]}')
-    def setacl(self, job, data):
+    def setacl(self, data):
         """
         Set ACL of a given path. Takes the following parameters:
         `path` full path to directory or file.
@@ -593,8 +596,6 @@ class FilesystemService(Service):
             cleaned_acl = []
             lockace_is_present = False
             for entry in dacl:
-                if entry['perms'].get('BASIC') == 'OTHER' or entry['flags'].get('BASIC') == 'OTHER':
-                    raise CallError('Unable to apply simplified ACL due to OTHER entry. Use full ACL.', errno.EINVAL)
                 ace = {
                     'tag': (acl.ACLWho(entry['tag'])).name,
                     'id': entry['id'],
@@ -602,6 +603,11 @@ class FilesystemService(Service):
                     'perms': self.__convert_to_adv_permset(entry['perms']['BASIC']) if 'BASIC' in entry['perms'] else entry['perms'],
                     'flags': self.__convert_to_adv_flagset(entry['flags']['BASIC']) if 'BASIC' in entry['flags'] else entry['flags'],
                 }
+                if ace['flags']['INHERIT_ONLY'] and not ace['flags'].get('DIRECTORY_INHERIT', False) and not ace['flags'].get('FILE_INHERIT', False):
+                    raise CallError(
+                        'Invalid flag combination. DIRECTORY_INHERIT or FILE_INHERIT must be set if INHERIT_ONLY is set.',
+                        errno.EINVAL
+                    )
                 if ace['tag'] == 'EVERYONE' and self.__convert_to_basic_permset(ace['perms']) == 'NOPERMS':
                     lockace_is_present = True
                 cleaned_acl.append(ace)
@@ -622,14 +628,7 @@ class FilesystemService(Service):
         if not options['recursive']:
             return True
 
-        winacl = subprocess.run([
-            '/usr/local/bin/winacl',
-            '-a', 'clone', '-O', str(uid), '-G', str(gid),
-            '-rx' if options['traverse'] else '-r',
-            '-p', data['path']], check=False, capture_output=True
-        )
-        if winacl.returncode != 0:
-            raise CallError(f"Failed to recursively apply ACL: {winacl.stderr.decode()}")
+        self.middleware.call_sync('filesystem._winacl', data['path'], 'clone', uid, gid, options)
 
 
 class FileFollowTailEventSource(EventSource):
