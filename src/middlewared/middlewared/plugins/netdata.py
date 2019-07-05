@@ -37,6 +37,27 @@ class NetDataService(SystemServiceService):
             data['alarms'][alarm].pop('write_path', None)
         return data
 
+    @accepts()
+    async def ips(self):
+        """
+        Returns a list of user configured addresses with which netdata can be accessed.
+        """
+        ips = []
+        for ip in (await self.config())['bind']:
+            if ip == '0.0.0.0':
+                ips.extend([
+                    f'http://{d["address"]}/netdata/'
+                    for d in await self.middleware.call('interface.ip_in_use', {'ipv4': True})
+                ])
+            elif ip == '::':
+                ips.extend([
+                    f'http://{d["address"]}/netdata/'
+                    for d in await self.middleware.call('interface.ip_in_use', {'ipv6': True})
+                ])
+            else:
+                ips.append(f'http://{ip}/netdata/')
+        return ips
+
     @private
     async def list_alarms(self):
         alarms = copy.deepcopy(self._alarms)
