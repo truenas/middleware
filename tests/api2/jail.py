@@ -280,12 +280,32 @@ def test_18_verify_jail_stopped():
             break
 
 
-def test_19_rc_action():
+def test_19_start_jail():
+    global results
+    payload = "transmission"
+    results = POST('/jail/start/', payload)
+    assert results.status_code == 200, results.text
+
+
+def test_20_wait_for_jail_to_be_up():
+    results = GET('/plugin/id/transmission/')
+    timeout = 0
+    while results.json()['state'] == 'down':
+        time.sleep(1)
+        results = GET('/plugin/id/transmission/')
+        assert results.status_code == 200, results.text
+        if timeout == 10:
+            break
+        timeout += 1
+    assert results.json()['state'] == 'up', results.text
+
+
+def test_21_rc_action():
     results = POST('/jail/rc_action/', 'STOP')
     assert results.status_code == 200, results.text
 
 
-def test_20_delete_jail():
+def test_22_delete_jail():
     payload = {
         'force': True
     }
@@ -293,12 +313,12 @@ def test_20_delete_jail():
     assert results.status_code == 200, results.text
 
 
-def test_21_verify_the_jail_id_is_delete():
+def test_23_verify_the_jail_id_is_delete():
     results = GET(f'/jail/id/{JAIL_NAME}/')
     assert results.status_code == 404, results.text
 
 
-def test_22_verify_clean_call():
+def test_24_verify_clean_call():
     results = POST('/jail/clean/', 'ALL')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
