@@ -331,6 +331,9 @@ class mDNSAdvertiseService(Service):
 
     @private
     def start(self):
+        if 'MDNS' not in (self.middleware.call_sync('network.configuration.config'))['service_advertisement']:
+            return
+
         with self.lock:
             if self.initialized:
                 return

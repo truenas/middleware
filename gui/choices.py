@@ -50,6 +50,11 @@ SMTPAUTH_CHOICES = (
     ('tls', _('TLS')),
 )
 
+SERVICE_ADVERTISEMENT_CHOICES = (
+    ('MDNS', _('mDNS')),
+    ('NETBIOS', _('NetBIOS')),
+    ('WS-DISCOVERY', _('WS-Discovery')),
+)
 # GUI protocol choice
 PROTOCOL_CHOICES = (
     ('http', _('HTTP')),

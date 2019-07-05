@@ -35,6 +35,7 @@ from freenasUI.contrib.IPAddressField import (
     IPAddressField, IP4AddressField, IP6AddressField
 )
 from freenasUI.freeadmin.models import ListField, Model
+from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
 
@@ -114,6 +115,17 @@ class GlobalConfiguration(Model):
         verbose_name=_('HTTP Proxy'),
         blank=True,
         max_length=255,
+    )
+    gc_service_advertisement = MultiSelectField(
+        verbose_name=_('Service Advertisement Methods'),
+        blank=True,
+        max_length=255,
+        null=True,
+        default="MDNS,NETBIOS",
+        help_text=_(
+            "Enabled methods of service advertisement. Netbios and WS-Discovery "
+            "require that the SMB service be configured and running."
+        )
     )
     gc_netwait_enabled = models.BooleanField(
         verbose_name=_("Enable netwait feature"),

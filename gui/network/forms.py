@@ -623,8 +623,17 @@ class GlobalConfigurationForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = 'network.configuration'
     is_singletone = True
 
+    gc_service_advertisement = forms.MultipleChoiceField(
+        label=models.GlobalConfiguration._meta.get_field('gc_service_advertisement').verbose_name,
+        help_text=models.GlobalConfiguration._meta.get_field('gc_service_advertisement').help_text,
+        required=False,
+        choices=choices.SERVICE_ADVERTISEMENT_CHOICES,
+        widget=forms.widgets.CheckedMultiSelect(),
+    )
+
     class Meta:
         fields = '__all__'
+        exclude = ['gc_service_advertisement']
         model = models.GlobalConfiguration
 
     def __init__(self, *args, **kwargs):
@@ -646,6 +655,15 @@ class GlobalConfigurationForm(MiddlewareModelForm, ModelForm):
         else:
             del self.fields['gc_hostname_b']
             del self.fields['gc_hostname_virtual']
+
+        with client as c:
+            ngc = c.call('network.configuration.config')
+
+        if ngc['service_advertisement']:
+            self.fields['gc_service_advertisement'].initial = ngc['service_advertisement']
+
+        else:
+            self.fields['gc_service_advertisement'].initial = ([])
 
     def clean_gc_ipv4gateway(self):
         return str(self.cleaned_data['gc_ipv4gateway'])

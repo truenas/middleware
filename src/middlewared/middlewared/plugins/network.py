@@ -141,6 +141,11 @@ class NetworkConfigurationService(ConfigService):
             IPAddr('nameserver1'),
             IPAddr('nameserver2'),
             IPAddr('nameserver3'),
+            List(
+                'service_advertisement',
+                enum=['MDNS', 'NETBIOS', 'WS-DISCOVERY'],
+                null=True, default=['MDNS', 'NETBIOS']
+            ),
             Str('httpproxy'),
             Bool('netwait_enabled'),
             List('netwait_ip', items=[Str('netwait_ip')]),
@@ -181,6 +186,7 @@ class NetworkConfigurationService(ConfigService):
             raise verrors
 
         new_config['domains'] = ' '.join(new_config.get('domains', []))
+        new_config['service_advertisement'] = ','.join(new_config.get('service_advertisement', []))
         new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
         new_config.pop('hostname_local', None)
 
@@ -194,6 +200,7 @@ class NetworkConfigurationService(ConfigService):
 
         new_config['domains'] = new_config['domains'].split()
         new_config['netwait_ip'] = new_config['netwait_ip'].split()
+        config['service_advertisement'] = ','.join(config['service_advertisement'])
 
         netwait_ip_set = set(new_config.pop('netwait_ip', []))
         old_netwait_ip_set = set(config.pop('netwait_ip', []))
