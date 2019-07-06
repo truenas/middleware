@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import ipaddress
 import os
 import socket
@@ -310,12 +311,17 @@ class SharingNFSService(CRUDService):
             elif not data[f"{k}_user"] and data[f"{k}_group"]:
                 verrors.add(f"{schema_name}.{k}_user", "This field is required when map group is specified")
             else:
-                user = await self.middleware.call("notifier.get_user_object", data[f"{k}_user"])
+                user = group = None
+                with contextlib.suppress(KeyError):
+                    user = await self.middleware.call('dscache.get_uncached_user', data[f'{k}_user'])
+
                 if not user:
                     verrors.add(f"{schema_name}.{k}_user", "User not found")
 
-                if data[f"{k}_group"]:
-                    group = await self.middleware.call("notifier.get_group_object", data[f"{k}_group"])
+                if data[f'{k}_group']:
+                    with contextlib.suppress(KeyError):
+                        group = await self.middleware.call('dscache.get_uncached_group', data[f'{k}_group'])
+
                     if not group:
                         verrors.add(f"{schema_name}.{k}_group", "Group not found")
 
