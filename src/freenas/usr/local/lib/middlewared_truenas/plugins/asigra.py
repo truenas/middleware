@@ -12,7 +12,7 @@ import shutil
 import subprocess
 
 from middlewared.schema import accepts
-from middlewared.service import CallError, SystemServiceService
+from middlewared.service import CallError, SystemServiceService, job
 
 ASIGRA_DSOPDIR = '/usr/local/www/asigra'
 
@@ -26,7 +26,8 @@ class AsigraService(SystemServiceService):
         datastore_prefix = "asigra_"
 
     @accepts()
-    def migrate_to_plugin(self):
+    @job(lock='migrate_asigra')
+    def migrate_to_plugin(self, job):
         # We want to perform migration here for asigra service which intends to transfer the existing asigra content
         # over to an asigra plugin.
         # Following steps are taken to ensure a smooth migration:
@@ -66,6 +67,7 @@ class AsigraService(SystemServiceService):
 
         # Ensure iocage datasets exist
         self.middleware.call_sync('jail.check_dataset_existence')
+        job.set_progress(10, f'{pool} pool activated for iocage.')
 
         shutil.copy(custom_jail_image_path, os.path.join('/mnt', pool, 'iocage/images/'))
 
@@ -76,6 +78,8 @@ class AsigraService(SystemServiceService):
 
         if not self.middleware.call_sync('plugin.query', [['id', '=', custom_jail_image]]):
             raise CallError(f'Plugin jail {custom_jail_image} not found.')
+
+        job.set_progress(25, 'Custom asigra plugin image imported.')
 
         iocroot = self.middleware.call_sync('jail.get_iocroot')
         plugin_root_path = os.path.join(iocroot, 'jails', custom_jail_image, 'root')
@@ -107,6 +111,8 @@ class AsigraService(SystemServiceService):
         shutil.rmtree(os.path.join(plugin_postgres_home_path, 'data'))
         shutil.rmtree(os.path.join(plugin_root_path, 'zdata/root'))
 
+        job.set_progress(75, 'Asigra plugin setup complete for beginning of migration.')
+
         for source, destination in (
             (system_postgres_path, os.path.join(plugin_postgres_home_path, 'data')),
             (os.path.join(system_asigra_path, 'files'), os.path.join(plugin_root_path, 'zdata/root')),
@@ -124,6 +130,9 @@ class AsigraService(SystemServiceService):
 
         self.middleware.call_sync('datastore.update', 'services.asigra', asigra_config['id'], {'filesystem': ''})
         self.middleware.logger.debug('Migration successfully performed.')
+        job.set_progress(
+            100, 'Asigra dataset mountpoints successfully added to asigra plugin fstab completing migration.'
+        )
 
 
 def _event_system(middleware, event_type, args):
