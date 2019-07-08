@@ -177,11 +177,11 @@ def test_13_verify_transmission_plugin_value_with_jail_value_of_(prop):
 
 
 @to_skip
-def test_14_get_list_of_available_plugins_with_cache():
+def test_14_get_list_of_available_plugins_without_cache():
     global JOB_ID
     payload = {
         "plugin_repository": plugin_repos,
-        "cache": True
+        "cache": False
     }
     results = POST('/plugin/available/', payload)
     assert results.status_code == 200, results.text
