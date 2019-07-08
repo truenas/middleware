@@ -288,13 +288,14 @@ def test_19_start_jail():
 
 
 def test_20_wait_for_jail_to_be_up():
-    results = GET('/plugin/id/transmission/')
+    results = GET(f'/jail/id/{JAIL_NAME}/')
+    assert results.status_code == 200, results.text
     timeout = 0
     while results.json()['state'] == 'down':
         time.sleep(1)
-        results = GET('/plugin/id/transmission/')
+        results = GET(f'/jail/id/{JAIL_NAME}/')
         assert results.status_code == 200, results.text
-        if timeout == 10:
+        if timeout == 60:
             break
         timeout += 1
     assert results.json()['state'] == 'up', results.text
