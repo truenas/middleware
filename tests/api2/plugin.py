@@ -6,7 +6,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name
-from functions import GET, POST, DELETE
+from functions import GET, POST, DELETE, wait_on_job
 
 JOB_ID = None
 job_results = None
@@ -99,23 +99,18 @@ def test_05_get_list_of_available_plugins_job_id():
 @to_skip
 def test_06_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    while True:
-        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
-        job_state = job_results.json()[0]['state']
-        if job_state in ('RUNNING', 'WAITING'):
-            sleep(3)
-        else:
-            assert job_state == 'SUCCESS', str(job_results)
-            break
+    job_status = wait_on_job(JOB_ID)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
+    job_results = job_status['results']
 
 
 @to_skip
 @pytest.mark.parametrize('plugin', plugins_list)
 def test_07_verify_available_plugin_(plugin):
-    for plugin_info in job_results.json()[0]['result']:
+    for plugin_info in job_results['result']:
         if plugin in plugin_info:
-            assert isinstance(plugin_info, list), job_results.text
-            assert plugin in plugin_info, job_results.text
+            assert isinstance(plugin_info, list), str(job_results)
+            assert plugin in plugin_info, str(job_results)
 
 
 @to_skip
@@ -136,13 +131,8 @@ def test_08_add_transmision_plugins():
 
 @to_skip
 def test_09_verify_transmision_plugin_job_is_successfull():
-    while True:
-        job_status = GET(f'/core/get_jobs/?id={JOB_ID}').json()[0]
-        if job_status['state'] in ('RUNNING', 'WAITING'):
-            sleep(3)
-        else:
-            assert job_status['state'] == 'SUCCESS', str(job_status)
-            break
+    job_status = wait_on_job(JOB_ID)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
 
 
 @to_skip
@@ -192,23 +182,18 @@ def test_14_get_list_of_available_plugins_without_cache():
 @to_skip
 def test_15_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    while True:
-        job_results = GET(f'/core/get_jobs/?id={JOB_ID}')
-        job_state = job_results.json()[0]['state']
-        if job_state in ('RUNNING', 'WAITING'):
-            sleep(3)
-        else:
-            assert job_state == 'SUCCESS', job_results.text
-            break
+    job_status = wait_on_job(JOB_ID)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
+    job_results = job_status['results']
 
 
 @to_skip
 @pytest.mark.parametrize('plugin', plugins_list)
 def test_16_verify_available_plugin_with_want_cache_(plugin):
-    for plugin_info in job_results.json()[0]['result']:
+    for plugin_info in job_results['result']:
         if plugin in plugin_info:
-            assert isinstance(plugin_info, list), job_results.text
-            assert plugin in plugin_info, job_results.text
+            assert isinstance(plugin_info, list), str(job_results)
+            assert plugin in plugin_info, str(job_results)
 
 
 @to_skip

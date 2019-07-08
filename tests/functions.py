@@ -8,6 +8,7 @@ from auto_config import default_api_url, api1_url, api2_url, user, password
 import json
 import os
 from subprocess import run, Popen, PIPE
+from time import sleep
 import re
 
 global header
@@ -305,3 +306,18 @@ def ping_host(host):
         return False
     else:
         return True
+
+
+def wait_on_job(job_id):
+    global job_results
+    timeout = 0
+    while True:
+        job_results = GET(f'/core/get_jobs/?id={job_id}')
+        job_state = job_results.json()[0]['state']
+        if job_state in ('RUNNING', 'WAITING'):
+            sleep(5)
+        elif job_state == 'SUCCESS' or job_state == 'SUCCESS':
+            return {'state': job_state, 'results': job_results.json()[0]}
+        if timeout == 120:
+            return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
+        timeout += 1
