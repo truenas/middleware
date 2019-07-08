@@ -13,42 +13,14 @@ job_results = None
 not_freenas = GET("/system/is_freenas/").json() is False
 reason = "System is not FreeNAS skip Jails test"
 to_skip = pytest.mark.skipif(not_freenas, reason=reason)
-plugin_repos = 'https://github.com/freenas/iocage-ix-plugins.git'
+repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
+index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/master/INDEX'
 
-plugins_list = [
-    'asigra',
-    'backuppc',
-    'bacula-server',
-    'bru-server',
-    'clamav',
-    'couchpotato',
-    'deluge',
-    'emby',
-    'gitlab',
-    'irssi ',
-    'jenkins',
-    'jenkins-lts',
-    'madsonic',
-    'mineos',
-    'nextcloud',
-    'plexmediaserver',
-    'plexmediaserver-plexpass',
-    'qbittorrent',
-    'quasselcore',
-    'radarr',
-    'redmine',
-    'rslsync',
-    'sonarr',
-    'subsonic',
-    'syncthing',
-    'tarsnap',
-    'transmission',
-    'weechat',
-    'xmrig',
-    'zoneminder'
-]
+plugin_index = GET(index_url).json()
 
-plugins_objects = [
+plugin_list = list(plugin_index.keys())
+
+plugin_objects = [
     "id",
     "state",
     "type",
@@ -81,14 +53,14 @@ def test_03_get_list_of_installed_plugin():
 @to_skip
 def test_04_verify_plugin_repos_is_in_official_repositories():
     results = GET('/plugin/official_repositories/')
-    assert plugin_repos in results.json(), results.text
+    assert repos_url in results.json(), results.text
 
 
 @to_skip
 def test_05_get_list_of_available_plugins_job_id():
     global JOB_ID
     payload = {
-        "plugin_repository": plugin_repos
+        "plugin_repository": repos_url
     }
     results = POST('/plugin/available/', payload)
     assert results.status_code == 200, results.text
@@ -105,7 +77,7 @@ def test_06_verify_list_of_available_plugins_job_id_is_successfull():
 
 
 @to_skip
-@pytest.mark.parametrize('plugin', plugins_list)
+@pytest.mark.parametrize('plugin', plugin_list)
 def test_07_verify_available_plugin_(plugin):
     for plugin_info in job_results['result']:
         if plugin in plugin_info:
@@ -122,7 +94,7 @@ def test_08_add_transmision_plugins():
         'props': [
             'nat=1'
         ],
-        "plugin_repository": plugin_repos,
+        "plugin_repository": repos_url,
     }
     results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
@@ -161,7 +133,7 @@ def test_12_get_transmission_jail_info():
 
 
 @to_skip
-@pytest.mark.parametrize('prop', plugins_objects)
+@pytest.mark.parametrize('prop', plugin_objects)
 def test_13_verify_transmission_plugin_value_with_jail_value_of_(prop):
     assert transmission_jail[prop] == transmission_plugin[prop], results.text
 
@@ -170,7 +142,7 @@ def test_13_verify_transmission_plugin_value_with_jail_value_of_(prop):
 def test_14_get_list_of_available_plugins_without_cache():
     global JOB_ID
     payload = {
-        "plugin_repository": plugin_repos,
+        "plugin_repository": repos_url,
         "cache": False
     }
     results = POST('/plugin/available/', payload)
@@ -188,7 +160,7 @@ def test_15_verify_list_of_available_plugins_job_id_is_successfull():
 
 
 @to_skip
-@pytest.mark.parametrize('plugin', plugins_list)
+@pytest.mark.parametrize('plugin', plugin_list)
 def test_16_verify_available_plugin_with_want_cache_(plugin):
     for plugin_info in job_results['result']:
         if plugin in plugin_info:

@@ -18,22 +18,25 @@ authentification = (user, password)
 
 
 def GET(testpath, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
+    if 'https' in testpath or 'http' in testpath:
+        getit = requests.get(testpath)
+    else:
+        if "api" in optional:
+            api_v = optional.get('api', None)
+            if api_v == "1":
+                api_url = api1_url
+            elif api_v == "2":
+                api_url = api2_url
+            else:
+                raise ValueError('api parameter should be "1" or "2"')
         else:
-            raise ValueError('api parameter should be "1" or "2"')
-    else:
-        api_url = default_api_url
-    if optional.pop("anonymous", False):
-        auth = None
-    else:
-        auth = authentification
-    getit = requests.get(api_url + testpath, headers=header,
-                         auth=auth)
+            api_url = default_api_url
+        if optional.pop("anonymous", False):
+            auth = None
+        else:
+            auth = authentification
+        getit = requests.get(api_url + testpath, headers=header,
+                             auth=auth)
     return getit
 
 
