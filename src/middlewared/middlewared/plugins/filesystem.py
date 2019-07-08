@@ -285,9 +285,7 @@ class FilesystemService(Service):
 
         return flagset
 
-    @private
-    @job(lock=lambda args: f'_winacl:{args[0]}')
-    def _winacl(self, job, path, action, uid, gid, options):
+    def _winacl(self, path, action, uid, gid, options):
         winacl = subprocess.run([
             '/usr/local/bin/winacl',
             '-a', action,
@@ -296,7 +294,7 @@ class FilesystemService(Service):
             '-p', path], check=False, capture_output=True
         )
         if winacl.returncode != 0:
-            self.logger.debug("winacl job on path %s failed with error: [%s]", path, winacl.stderr.decode().strip())
+            CallError(f"Winacl {action} on path {path} failed with error: [{winacl.stderr.decode().strip()}]")
 
     @accepts(Str('path'))
     def acl_is_trivial(self, path):
@@ -323,7 +321,8 @@ class FilesystemService(Service):
             )
         )
     )
-    def chown(self, data):
+    @job(lock="perm_change")
+    def chown(self, job, data):
         """
         Change owner or group of file at `path`.
 
@@ -347,7 +346,7 @@ class FilesystemService(Service):
         if not options['recursive']:
             os.chown(data['path'], uid, gid)
         else:
-            self.middleware.call_sync('filesystem._winacl', data['path'], 'chown', uid, gid, options)
+            self._winacl(data['path'], 'chown', uid, gid, options)
 
     @accepts(
         Dict(
@@ -364,7 +363,8 @@ class FilesystemService(Service):
             )
         )
     )
-    def setperm(self, data):
+    @job(lock="perm_change")
+    def setperm(self, job, data):
         """
         Remove extended ACL from specified path.
 
@@ -418,7 +418,7 @@ class FilesystemService(Service):
             return
 
         action = 'clone' if mode else 'strip'
-        self.middleware.call_sync('filesystem._winacl', data['path'], action, uid, gid, options)
+        self._winacl(data['path'], action, uid, gid, options)
 
     @accepts(
         Str('path'),
@@ -548,7 +548,8 @@ class FilesystemService(Service):
             )
         )
     )
-    def setacl(self, data):
+    @job(lock="perm_change")
+    def setacl(self, job, data):
         """
         Set ACL of a given path. Takes the following parameters:
         `path` full path to directory or file.
@@ -624,7 +625,7 @@ class FilesystemService(Service):
         if not options['recursive']:
             return True
 
-        self.middleware.call_sync('filesystem._winacl', data['path'], 'clone', uid, gid, options)
+        self._winacl(data['path'], 'clone', uid, gid, options)
 
 
 class FileFollowTailEventSource(EventSource):
