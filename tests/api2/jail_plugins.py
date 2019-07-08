@@ -125,9 +125,7 @@ def test_08_add_transmision_plugins():
         "plugin_name": "transmission",
         "jail_name": "transmission",
         'props': [
-            'nat=1',
-            'vnet=1',
-            'vnet_default_interface=auto'
+            'nat=1'
         ],
         "plugin_repository": plugin_repos,
     }
