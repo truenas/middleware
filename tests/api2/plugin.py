@@ -171,9 +171,9 @@ def test_12_get_transmission_jail_info():
 
 
 @to_skip
-@pytest.mark.parametrize('object', plugins_objects)
-def test_13_verify_transmission_plugin_value_with_jail_value_of_(object):
-    assert transmission_jail[object] == transmission_plugin[object], results.text
+@pytest.mark.parametrize('prop', plugins_objects)
+def test_13_verify_transmission_plugin_value_with_jail_value_of_(prop):
+    assert transmission_jail[prop] == transmission_plugin[prop], results.text
 
 
 @to_skip
