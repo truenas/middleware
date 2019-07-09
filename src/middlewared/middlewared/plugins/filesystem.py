@@ -17,7 +17,7 @@ from middlewared.utils import filter_list
 
 
 class ACLDefault(enum.Enum):
-    GENERIC_OPEN = [
+    OPEN = [
         {
             'tag': 'owner@',
             'id': None,
@@ -40,7 +40,7 @@ class ACLDefault(enum.Enum):
             'type': 'ALLOW'
         }
     ]
-    GENERIC_RESTRICTED = [
+    RESTRICTED = [
         {
             'tag': 'owner@',
             'id': None,
@@ -56,7 +56,7 @@ class ACLDefault(enum.Enum):
             'type': 'ALLOW'
         },
     ]
-    GENERIC_HOME = [
+    HOME = [
         {
             'tag': 'owner@',
             'id': None,
