@@ -18,7 +18,7 @@ authentification = (user, password)
 
 
 def GET(testpath, **optional):
-    if 'https' in testpath or 'http' in testpath:
+    if testpath.startswith('http'):
         getit = requests.get(testpath)
     else:
         if "api" in optional:
@@ -321,6 +321,6 @@ def wait_on_job(job_id):
             sleep(5)
         elif job_state in ('SUCCESS', 'FAILED'):
             return {'state': job_state, 'results': job_results.json()[0]}
-        if timeout == 120:
+        if timeout == 600:
             return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
-        timeout += 1
+        timeout += 5

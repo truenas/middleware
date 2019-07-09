@@ -79,10 +79,11 @@ def test_06_verify_list_of_available_plugins_job_id_is_successfull():
 @to_skip
 @pytest.mark.parametrize('plugin', plugin_list)
 def test_07_verify_available_plugin_(plugin):
+    assert isinstance(job_results['result'], list), str(job_results)
     for plugin_info in job_results['result']:
         if plugin in plugin_info:
-            assert isinstance(plugin_info, list), str(job_results)
             assert plugin in plugin_info, str(job_results)
+            assert isinstance(plugin_info, dict), str(job_results)
 
 
 @to_skip
@@ -125,7 +126,7 @@ def test_11_get_transmission_plugin_info():
 
 @to_skip
 def test_12_get_transmission_jail_info():
-    global transmission_jail
+    global transmission_jail, results
     results = GET("/jail/id/transmission")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
@@ -161,82 +162,68 @@ def test_15_verify_list_of_available_plugins_job_id_is_successfull():
 
 @to_skip
 @pytest.mark.parametrize('plugin', plugin_list)
-def test_16_verify_available_plugin_with_want_cache_(plugin):
+def test_16_verify_available_plugin_without_cache_(plugin):
+    assert isinstance(job_results['result'], list), str(job_results)
     for plugin_info in job_results['result']:
         if plugin in plugin_info:
-            assert isinstance(plugin_info, list), str(job_results)
             assert plugin in plugin_info, str(job_results)
+            assert isinstance(plugin_info, dict), str(job_results)
 
 
 @to_skip
 def test_17_stop_transmission_jail():
-    global results
+    global JOB_ID
     payload = {
         "jail": "transmission",
         "force": True
     }
     results = POST('/jail/stop/', payload)
     assert results.status_code == 200, results.text
+    JOB_ID = results.json()
 
 
 @to_skip
 def test_18_wait_for_transmission_plugin_to_be_down():
+    job_status = wait_on_job(JOB_ID)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
     results = GET('/plugin/id/transmission/')
-    timeout = 0
-    while results.json()['state'] == 'up':
-        sleep(1)
-        results = GET('/plugin/id/transmission/')
-        assert results.status_code == 200, results.text
-        if timeout == 10:
-            break
-        timeout += 1
     assert results.json()['state'] == 'down', results.text
 
 
 @to_skip
 def test_19_start_transmission_jail():
-    global results
+    global JOB_ID
     payload = "transmission"
     results = POST('/jail/start/', payload)
     assert results.status_code == 200, results.text
+    JOB_ID = results.json()
 
 
 @to_skip
 def test_20_wait_for_transmission_plugin_to_be_up():
+    job_status = wait_on_job(JOB_ID)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
     results = GET('/plugin/id/transmission/')
-    timeout = 0
-    while results.json()['state'] == 'down':
-        sleep(1)
-        results = GET('/plugin/id/transmission/')
-        assert results.status_code == 200, results.text
-        if timeout == 10:
-            break
-        timeout += 1
     assert results.json()['state'] == 'up', results.text
 
 
 @to_skip
 def test_21_stop_transmission_jail_before_deleteing():
-    global results
+    global JOB_ID
     payload = {
         "jail": "transmission",
         "force": True
     }
     results = POST('/jail/stop/', payload)
     assert results.status_code == 200, results.text
+    JOB_ID = results.json()
 
 
 @to_skip
 def test_22_wait_for_transmission_plugin_to_be_down():
+    job_status = wait_on_job(JOB_ID)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
     results = GET('/plugin/id/transmission/')
-    timeout = 0
-    while results.json()['state'] == 'up':
-        sleep(1)
-        results = GET('/plugin/id/transmission/')
-        assert results.status_code == 200, results.text
-        if timeout == 10:
-            break
-        timeout += 1
     assert results.json()['state'] == 'down', results.text
 
 
