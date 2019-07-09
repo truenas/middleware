@@ -521,7 +521,7 @@ class FilesystemService(Service):
         return [x.name for x in ACLDefault]
 
     @accepts(
-        Str('acl_type', default='GENERIC_OPEN', enum=[x.name for x in ACLDefault])
+        Str('acl_type', default='OPEN', enum=[x.name for x in ACLDefault])
     )
     async def get_default_acl(self, acl_type):
         """
