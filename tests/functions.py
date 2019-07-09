@@ -319,7 +319,7 @@ def wait_on_job(job_id):
         job_state = job_results.json()[0]['state']
         if job_state in ('RUNNING', 'WAITING'):
             sleep(5)
-        elif job_state == 'SUCCESS' or job_state == 'SUCCESS':
+        elif job_state in ('SUCCESS', 'FAILED'):
             return {'state': job_state, 'results': job_results.json()[0]}
         if timeout == 120:
             return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
