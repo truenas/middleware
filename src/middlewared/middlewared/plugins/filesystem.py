@@ -2,6 +2,7 @@ import binascii
 import bsd
 from bsd import acl
 import errno
+import enum
 import grp
 import os
 import pwd
@@ -13,6 +14,98 @@ from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accepts
 from middlewared.service import private, CallError, Service, job
 from middlewared.utils import filter_list
+
+
+class ACLDefault(enum.Enum):
+    GENERIC_OPEN = [
+        {
+            'tag': 'owner@',
+            'id': None,
+            'perms': {'BASIC': 'FULL_CONTROL'},
+            'flags': {'BASIC': 'INHERIT'},
+            'type': 'ALLOW'
+        },
+        {
+            'tag': 'group@',
+            'id': None,
+            'perms': {'BASIC': 'FULL_CONTROL'},
+            'flags': {'BASIC': 'INHERIT'},
+            'type': 'ALLOW'
+        },
+        {
+            'tag': 'everyone@',
+            'id': None,
+            'perms': {'BASIC': 'MODIFY'},
+            'flags': {'BASIC': 'INHERIT'},
+            'type': 'ALLOW'
+        }
+    ]
+    GENERIC_RESTRICTED = [
+        {
+            'tag': 'owner@',
+            'id': None,
+            'perms': {'BASIC': 'FULL_CONTROL'},
+            'flags': {'BASIC': 'INHERIT'},
+            'type': 'ALLOW'
+        },
+        {
+            'tag': 'group@',
+            'id': None,
+            'perms': {'BASIC': 'MODIFY'},
+            'flags': {'BASIC': 'INHERIT'},
+            'type': 'ALLOW'
+        },
+    ]
+    GENERIC_HOME = [
+        {
+            'tag': 'owner@',
+            'id': None,
+            'perms': {'BASIC': 'FULL_CONTROL'},
+            'flags': {'BASIC': 'INHERIT'},
+            'type': 'ALLOW'
+        },
+        {
+            'tag': 'group@',
+            'id': None,
+            'perms': {'BASIC': 'MODIFY'},
+            'flags': {'BASIC': 'NOINHERIT'},
+            'type': 'ALLOW'
+        },
+        {
+            'tag': 'everyone@',
+            'id': None,
+            'perms': {'BASIC': 'TRAVERSE'},
+            'flags': {'BASIC': 'NOINHERIT'},
+            'type': 'ALLOW'
+        },
+    ]
+    DOMAIN_HOME = [
+        {
+            'tag': 'owner@',
+            'id': None,
+            'perms': {'BASIC': 'FULL_CONTROL'},
+            'flags': {'BASIC': 'INHERIT'},
+            'type': 'ALLOW'
+        },
+        {
+            'tag': 'group@',
+            'id': None,
+            'perms': {'BASIC': 'MODIFY'},
+            'flags': {
+                'DIRECTORY_INHERIT': True,
+                'INHERIT_ONLY': True,
+                'NO_PROPAGATE_INHERIT': True
+            },
+            'type': 'ALLOW'
+        },
+        {
+            'tag': 'everyone@',
+            'id': None,
+            'perms': {'BASIC': 'TRAVERSE'},
+            'flags': {'BASIC': 'NOINHERIT'},
+            'type': 'ALLOW'
+        }
+    ]
 
 
 class FilesystemService(Service):
@@ -419,6 +512,36 @@ class FilesystemService(Service):
 
         action = 'clone' if mode else 'strip'
         self._winacl(data['path'], action, uid, gid, options)
+
+    @accepts()
+    async def default_acl_choices(self):
+        """
+        Get list of default ACL types.
+        """
+        return [x.name for x in ACLDefault]
+
+    @accepts(
+        Str('acl_type', default='GENERIC_OPEN', enum=[x.name for x in ACLDefault])
+    )
+    async def get_default_acl(self, acl_type):
+        """
+        Returns a default ACL depending on the usage specified by `acl_type`.
+        If an admin group is defined, then an entry granting it full control will
+        be placed at the top of the ACL.
+        """
+        acl = []
+        admin_group = (await self.middleware.call('smb.config'))['admin_group']
+        if admin_group:
+            acl.append({
+                'tag': 'GROUP',
+                'id': (await self.middleware.call('dscache.get_uncached_group', admin_group))['gr_gid'],
+                'perms': {'BASIC': 'FULL_CONTROL'},
+                'flags': {'BASIC': 'INHERIT'},
+                'type': 'ALLOW'
+            })
+        acl.extend(ACLDefault[acl_type].value)
+
+        return acl
 
     @accepts(
         Str('path'),
