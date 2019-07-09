@@ -391,8 +391,7 @@ class NICChoices(object):
         # Remove internal interfaces for failover
         if (
             os.environ.get('MIDDLEWARED_LOADING') != 'True' and
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_licensed()
+            hasattr(notifier, 'failover_status')
         ):
             for iface in notifier().failover_internal_interfaces():
                 if iface in self._NIClist:
