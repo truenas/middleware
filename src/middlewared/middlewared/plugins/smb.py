@@ -871,7 +871,7 @@ class SharingSMBService(CRUDService):
 
         acl = []
         if not is_home:
-            acl = await self.middleware.call('filesystem.get_default_acl', 'GENERIC_RESTRICTED')
+            acl = await self.middleware.call('filesystem.get_default_acl', 'RESTRICTED')
         elif await self.middleware.call('activedirectory.get_state') != 'DISABLED':
             acl = await self.middleware.call('filesystem.get_default_acl', 'DOMAIN_HOME')
         else:
