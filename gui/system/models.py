@@ -365,6 +365,7 @@ class Email(Model):
             "A name which will be displayed in the \"From\" header of e-mail message"
         ),
         default='',
+        blank=True,
     )
     em_outgoingserver = models.CharField(
         max_length=120,
