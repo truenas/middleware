@@ -442,7 +442,7 @@ class Resource(object):
                 val = None
             filters.append((field, op, val))
 
-        return [filters, options]
+        return [filters, options] if filters or options else []
 
     async def do(self, http_method, req, resp, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
@@ -460,7 +460,19 @@ class Resource(object):
         if get_method_args is not None:
             method_args = get_method_args(req, resp, **kwargs)
         else:
-            if http_method in ('post', 'put'):
+            method_args = []
+            if http_method == 'get' and method['filterable']:
+                if self.parent and 'id' in kwargs:
+                    filterid = kwargs['id']
+                    if filterid.isdigit():
+                        filterid = int(filterid)
+                    method_args = [[('id', '=', filterid)], {'get': True}]
+                else:
+                    method_args = self._filterable_args(req)
+
+            if not method_args:
+                # RFC 7231 specifies that a GET request can accept a payload body
+                # This means that all the http methods now ( delete, get, post, put ) accept a payload body
                 try:
                     text = await req.text()
                     if not text:
@@ -499,16 +511,6 @@ class Resource(object):
                         'message': str(e),
                     })
                     return resp
-            elif http_method == 'get' and method['filterable']:
-                if self.parent and 'id' in kwargs:
-                    filterid = kwargs['id']
-                    if filterid.isdigit():
-                        filterid = int(filterid)
-                    method_args = [[('id', '=', filterid)], {'get': True}]
-                else:
-                    method_args = self._filterable_args(req)
-            else:
-                method_args = []
 
         """
         If the method is marked `item_method` then the first argument
