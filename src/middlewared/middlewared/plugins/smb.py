@@ -11,7 +11,6 @@ import asyncio
 import codecs
 import enum
 import errno
-import grp
 import os
 import re
 import subprocess
@@ -871,70 +870,12 @@ class SharingSMBService(CRUDService):
             return
 
         acl = []
-        admin = None
-        smb = await self.middleware.call('smb.config')
-        if smb['admin_group']:
-            admin = await self.middleware.run_in_thread(grp.getgrnam, smb['admin_group'])
-            acl.append({
-                "tag": "GROUP",
-                "id": admin[2],
-                "type": "ALLOW",
-                "perms": {"BASIC": "FULL_CONTROL"},
-                "flags": {"BASIC": "INHERIT"}
-            })
-
-        acl.append({
-            "tag": "owner@",
-            "id": None,
-            "type": "ALLOW",
-            "perms": {"BASIC": "FULL_CONTROL"},
-            "flags": {"BASIC": "INHERIT"},
-        })
-
         if not is_home:
-            acl.append({
-                "tag": "group@",
-                "id": None,
-                "type": "ALLOW",
-                "perms": {"BASIC": "FULL_CONTROL"},
-                "flags": {"BASIC": "INHERIT"},
-            })
-
+            acl = await self.middleware.call('filesystem.get_default_acl', 'RESTRICTED')
         elif await self.middleware.call('activedirectory.get_state') != 'DISABLED':
-            acl.extend([
-                {
-                    "tag": "group@",
-                    "id": None,
-                    "type": "ALLOW",
-                    "perms": {"BASIC": "MODIFY"},
-                    "flags": {'DIRECTORY_INHERIT': True, 'INHERIT_ONLY': True, 'NO_PROPAGATE_INHERIT': True}
-                },
-                {
-                    "tag": "everyone@",
-                    "id": None,
-                    "type": "ALLOW",
-                    "perms": {"BASIC": "TRAVERSE"},
-                    "flags": {"BASIC": "NOINHERIT"}
-                },
-            ])
-
+            acl = await self.middleware.call('filesystem.get_default_acl', 'DOMAIN_HOME')
         else:
-            acl.extend([
-                {
-                    "tag": "group@",
-                    "id": None,
-                    "type": "ALLOW",
-                    "perms": {"BASIC": "MODIFY"},
-                    "flags": {"BASIC": "NOINHERIT"}
-                },
-                {
-                    "tag": "everyone@",
-                    "id": None,
-                    "type": "ALLOW",
-                    "perms": {"BASIC": "TRAVERSE"},
-                    "flags": {"BASIC": "NOINHERIT"}
-                },
-            ])
+            acl = await self.middleware.call('filesystem.get_default_acl', 'HOME')
 
         await self.middleware.call('filesystem.setacl', {
             'path': path,
