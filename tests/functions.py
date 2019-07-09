@@ -28,7 +28,7 @@ def GET(testpath, **optional):
             elif api_v == "2":
                 api_url = api2_url
             else:
-                raise ValueError('api parameter should be "1" or "2"')
+                raise ValueError('api parameter must be "1" or "2"')
         else:
             api_url = default_api_url
         if optional.pop("anonymous", False):
