@@ -875,7 +875,7 @@ class SharingSMBService(CRUDService):
         elif await self.middleware.call('activedirectory.get_state') != 'DISABLED':
             acl = await self.middleware.call('filesystem.get_default_acl', 'DOMAIN_HOME')
         else:
-            acl = await self.middleware.call('filesystem.get_default_acl', 'GENERIC_HOME')
+            acl = await self.middleware.call('filesystem.get_default_acl', 'HOME')
 
         await self.middleware.call('filesystem.setacl', {
             'path': path,
