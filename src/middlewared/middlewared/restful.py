@@ -480,7 +480,12 @@ class Resource(object):
                     else:
                         data = await req.json()
                         params = self.__method_params.get(methodname)
-                        if not params or len(params) == 1:
+                        if not params and http_method in ('get', 'delete') and not data:
+                            # This will happen when the request body contains empty dict "{}"
+                            # Keeping compatibility with how we used to accept the above case, this
+                            # makes sure that existing client implementations are not affected
+                            method_args = []
+                        elif not params or len(params) == 1:
                             method_args = [data]
                         else:
                             if not isinstance(data, dict):
