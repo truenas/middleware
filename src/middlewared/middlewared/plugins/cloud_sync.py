@@ -296,11 +296,12 @@ async def rclone_check_progress(job, proc):
 
     if dropbox__restricted_content:
         message = "\n" + (
-            "DropBox sync failed due to restricted content being present in one of the folders. This may include\n"
+            "Dropbox sync failed due to restricted content being present in one of the folders. This may include\n"
             "copyrighted content or the DropBox manual PDF that appears in the home directory after signing up.\n"
             "All other files were synchronized, but no deletions were performed as synchronization is considered\n"
             "unsuccessful. Please inspect logs to determine which files are considered restricted and exclude them\n"
-            "from your synchronization."
+            "from your synchronization. If you think that files are restricted erroneously, contact\n"
+            "Dropbox Support: https://www.dropbox.com/support"
         )
         job.logs_fd.write(message.encode("utf-8", "ignore"))
 
