@@ -2,7 +2,6 @@
 import pytest
 import sys
 import os
-from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name
@@ -13,12 +12,18 @@ job_results = None
 not_freenas = GET("/system/is_freenas/").json() is False
 reason = "System is not FreeNAS skip Jails test"
 to_skip = pytest.mark.skipif(not_freenas, reason=reason)
+
+# default URL
 repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/master/INDEX'
-
 plugin_index = GET(index_url).json()
-
 plugin_list = list(plugin_index.keys())
+
+# custom URL
+repos_url2 = 'https://github.com/ericbsd/iocage-ix-plugins.git'
+index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-ix-plugins/11.3-RELEASE/INDEX'
+plugin_index2 = GET(index_url2).json()
+plugin_list2 = list(plugin_index.keys())
 
 plugin_objects = [
     "id",
@@ -96,7 +101,7 @@ def test_08_verify_available_plugins_rslsync_is_not_NA_with(prop):
 
 
 @to_skip
-def test_09_add_transmision_plugins():
+def test_09_add_transmission_plugins():
     global JOB_ID
     payload = {
         "plugin_name": "transmission",
@@ -112,7 +117,7 @@ def test_09_add_transmision_plugins():
 
 
 @to_skip
-def test_10_verify_transmision_plugin_job_is_successfull():
+def test_10_verify_transmission_plugin_job_is_successfull():
     job_status = wait_on_job(JOB_ID)
     assert job_status['state'] == 'SUCCESS', job_status['results']
 
@@ -267,3 +272,108 @@ def test_27_looking_transmission_jail_id_is_delete():
 def test_28_looking_transmission_plugin_id_is_delete():
     results = GET('/plugin/id/transmission/')
     assert results.status_code == 404, results.text
+
+
+@to_skip
+def test_29_get_list_of_available_plugins_job_id_on_custom_repos():
+    global JOB_ID
+    payload = {
+        "plugin_repository": repos_url,
+        "branch": "11.3-RELEASE"
+    }
+    results = POST('/plugin/available/', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int), results.text
+    JOB_ID = results.json()
+
+
+@to_skip
+def test_30_verify_list_of_available_plugins_job_id_is_successfull():
+    global job_results
+    job_status = wait_on_job(JOB_ID)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
+    job_results = job_status['results']
+
+
+@to_skip
+@pytest.mark.parametrize('plugin', plugin_list2)
+def test_31_verify_available_plugin_(plugin):
+    assert isinstance(job_results['result'], list), str(job_results)
+    for plugin_info in job_results['result']:
+        if plugin in plugin_info['plugin']:
+            assert plugin in plugin_info['plugin'], str(job_results)
+            assert isinstance(plugin_info, dict), str(job_results)
+
+
+@to_skip
+@pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
+def test_32_verify_available_plugins_rslsync_is_not_NA_with(prop):
+    for plugin_info in job_results['result']:
+        if 'rslsync' in plugin_info['plugin']:
+            break
+    assert plugin_info[prop] != 'N/A', str(job_results)
+
+
+@to_skip
+def test_33_add_openvpn_plugins():
+    global JOB_ID
+    payload = {
+        "plugin_name": "openvpn",
+        "jail_name": "openvpn",
+        'props': [
+            'nat=1'
+        ],
+        "plugin_repository": repos_url2,
+        "branch": "11.3-RELEASE"
+    }
+    results = POST('/plugin/', payload)
+    assert results.status_code == 200, results.text
+    JOB_ID = results.json()
+
+
+@to_skip
+def test_34_verify_openvpn_plugin_job_is_successfull():
+    job_status = wait_on_job(JOB_ID)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
+
+
+@to_skip
+def test_35_search_plugin_openvpn_id():
+    results = GET('/plugin/?id=openvpn')
+    assert results.status_code == 200, results.text
+    assert len(results.json()) > 0, results.text
+
+
+@to_skip
+def test_36_verify_openvpn_plugin_id_exist():
+    results = GET('/plugin/id/openvpn/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+@to_skip
+def test_37_verify_the_openvpn_jail_id_exist():
+    results = GET(f'/jail/id/openvpn/')
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_38_delete_openvpn_jail():
+    payload = {
+        'force': True
+    }
+    results = DELETE(f'/jail/id/openvpn/', payload)
+    assert results.status_code == 200, results.text
+
+
+@to_skip
+def test_39_verify_the_openvpn_jail_id_is_delete():
+    results = GET(f'/jail/id/openvpn/')
+    assert results.status_code == 404, results.text
+
+
+@to_skip
+def test_40_verify_clean_call():
+    results = POST('/jail/clean/', 'ALL')
+    assert results.status_code == 200, results.text
+    assert results.json() is True, results.text
