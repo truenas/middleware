@@ -364,8 +364,8 @@ class VMSupervisor(object):
 
         vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
         guest_memory = vm[0].get('memory', 0) * 1024 * 1024
-        arc_max = sysctl.filter('vfs.zfs.arc_max')[0].value
-        arc_min = sysctl.filter('vfs.zfs.arc_min')[0].value
+        arc_max = sysctl.filter('vfs.zfs.arc.max')[0].value
+        arc_min = sysctl.filter('vfs.zfs.arc.min')[0].value
         new_arc_max = min(
             await self.middleware.call('vm.get_initial_arc_max'),
             arc_max + guest_memory
@@ -373,7 +373,7 @@ class VMSupervisor(object):
         if arc_max != new_arc_max:
             if new_arc_max > arc_min:
                 self.logger.debug(f'===> Give back guest memory to ARC: {new_arc_max}')
-                sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
+                sysctl.filter('vfs.zfs.arc.max')[0].value = new_arc_max
             else:
                 self.logger.warn(
                     f'===> Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
@@ -696,7 +696,7 @@ class VMService(CRUDService):
 
         # Difference between current ARC total size and the minimum allowed
         arc_total = sysctl.filter('kstat.zfs.misc.arcstats.size')[0].value
-        arc_min = sysctl.filter('vfs.zfs.arc_min')[0].value
+        arc_min = sysctl.filter('vfs.zfs.arc.min')[0].value
         arc_shrink = max(0, arc_total - arc_min)
 
         vms_memory_used = 0
@@ -720,7 +720,7 @@ class VMService(CRUDService):
     @private
     async def get_initial_arc_max(self):
         tunable = await self.middleware.call('tunable.query', [
-            ('type', '=', 'SYSCTL'), ('var', '=', 'vfs.zfs.arc_max')
+            ('type', '=', 'SYSCTL'), ('var', '=', 'vfs.zfs.arc.max')
         ])
         if tunable:
             try:
@@ -735,9 +735,9 @@ class VMService(CRUDService):
         if memory_bytes > memory_available:
             return False
 
-        arc_max = sysctl.filter('vfs.zfs.arc_max')[0].value
-        arc_min = sysctl.filter('vfs.zfs.arc_min')[0].value
-        arc_meta = sysctl.filter('vfs.zfs.arc_meta_limit')[0].value
+        arc_max = sysctl.filter('vfs.zfs.arc.max')[0].value
+        arc_min = sysctl.filter('vfs.zfs.arc.min')[0].value
+        arc_meta = sysctl.filter('vfs.zfs.arc.meta_limit')[0].value
 
         if arc_max > arc_min:
             new_arc_max = max(arc_min, arc_max - memory_bytes)
@@ -745,7 +745,7 @@ class VMService(CRUDService):
                 self.logger.info(
                     f'===> Setting ARC FROM: {arc_max} TO: {new_arc_max}'
                 )
-                sysctl.filter('vfs.zfs.arc_max')[0].value = new_arc_max
+                sysctl.filter('vfs.zfs.arc.max')[0].value = new_arc_max
         return True
 
     async def __init_guest_vmemory(self, vm, overcommit):
@@ -1436,7 +1436,7 @@ async def __event_system_ready(middleware, event_type, args):
         return
 
     global ZFS_ARC_MAX_INITIAL
-    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc_max')[0].value
+    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
 
     for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
         await middleware.call('vm.start', vm['id'])
@@ -1489,7 +1489,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
 def setup(middleware):
     global ZFS_ARC_MAX_INITIAL
-    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc_max')[0].value
+    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
     asyncio.ensure_future(kmod_load())
     asyncio.ensure_future(middleware.call('pool.dataset.register_attachment_delegate',
                                           VMFSAttachmentDelegate(middleware)))
