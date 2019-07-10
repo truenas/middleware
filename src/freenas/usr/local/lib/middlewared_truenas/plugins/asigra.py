@@ -34,20 +34,33 @@ class AsigraService(SystemServiceService):
         # 1) It is ensured that asigra migration should be performed for the system in question.
         # 2) We check for the existence of custom jail image which should be present in the latest iso
         # 3) We setup iocage as needed and import the jail
-        # 4) Let's configure plugin jail's fstab to mount asigra datasets
-        # 4a) We should set the ownership of the database correctly in the asigra dataset
-        # 4b) Reword "Storage_Label.txt" in asigra dataset to correctly reflect the contents in asigra plugin
-        # 4c) Destroy database contents in jail and zdata/root as jail plugin will not add them in fstab otherwise.
-        # 4d) Finally add related mounts inside the jail
-        # 5) Set asigra filesystem value as None which indicates that migration has been performed or not needed
+        # 4) Let's configure asigra datasets to be renamed and mounted inside asigra plugin jail
+        # 4a) Reword "Storage_Label.txt" in asigra dataset to correctly reflect the contents in asigra plugin
+        # 4b) Destroy database/asigra contents in jail.
+        # 4c) Rename asigra datasets to be under plugin root jail dataset
+        # 4d) Change asigra datasets mountpoints to conform with how plugin expects them to be
+        # 4e) We should set the ownership of the database correctly in the asigra dataset
+        # 4f) Copy tmp directory to asigra plugin
+        # 5) Destroy asigra dataset
+        # 6) Set asigra filesystem value as None which indicates that migration has been performed or not needed
 
         asigra_config = self.middleware.call_sync('asigra.config')
         if not asigra_config['filesystem']:
             self.middleware.logger.debug('No migration required for the current system.')
             return
 
+        system_asigra_path = os.path.join('/mnt', asigra_config['filesystem'])
+        asigra_dataset = self.middleware.call_sync(
+            'pool.dataset.query', [['id', '=', asigra_config['filesystem']]], {'get': True}
+        )
+        if len([
+            c for c in asigra_dataset['children']
+            if c['id'] in (os.path.join(asigra_config['filesystem'], d) for d in ('files', 'database', 'upgrade'))
+        ]):
+            raise CallError('Asigra not setup correctly. Aborting migration.')
+
         custom_jail_image = 'asigra_migration_image'
-        custom_jail_image_path = glob.glob(f'/usr/local/share/{custom_jail_image}*zip')
+        custom_jail_image_path = glob.glob(f'/usr/local/share/asigra/{custom_jail_image}*zip')
         if not custom_jail_image_path:
             raise CallError('Custom asigra jail image does not exist.')
         else:
@@ -55,11 +68,9 @@ class AsigraService(SystemServiceService):
             # iocage expects zipped file to be "name_date.zip"
             custom_jail_image = custom_jail_image_path.split('/')[-1].rsplit('_', 1)[0]
 
-        pool = None
-        with contextlib.suppress(Exception):
+        try:
             pool = self.middleware.call_sync('jail.get_activated_pool')
-
-        if not pool:
+        except Exception:
             # In this case let's activate the pool being used by asigra dataset right now
             pool = asigra_config['filesystem'].split('/', 1)[0]
             if not self.middleware.call_sync('jail.activate', pool):
@@ -83,56 +94,79 @@ class AsigraService(SystemServiceService):
 
         iocroot = self.middleware.call_sync('jail.get_iocroot')
         plugin_root_path = os.path.join(iocroot, 'jails', custom_jail_image, 'root')
-        plugin_postgres_home_path = os.path.join(plugin_root_path, 'usr/local/pgsql')
-        system_asigra_path = os.path.join('/mnt', asigra_config['filesystem'])
-        system_postgres_path = os.path.join(system_asigra_path, 'database')
+        plugin_postgres_path = os.path.join(plugin_root_path, 'usr/local/pgsql/data')
+        plugin_data_path = os.path.join(plugin_root_path, 'zdata/root')
+        plugin_upgrade_path = os.path.join(plugin_root_path, 'zdata/Upgrade')
+        plugin_tmp_path = os.path.join(plugin_root_path, 'zdata/tmp')
+
+        system_data_path = os.path.join(system_asigra_path, 'files')
+        system_tmp_path = os.path.join(system_asigra_path, 'tmp')
+
+        # Plugin jail root dataset
+        plugin_root_dataset = self.middleware.call_sync(
+            'pool.dataset.query', [['mountpoint', '=', plugin_root_path]], {'get': True}
+        )
+
+        # Now we start the actual migration
+        shutil.copy(
+            os.path.join(plugin_data_path, 'Storage_Label.txt'), os.path.join(system_data_path, 'Storage_Label.txt')
+        )
+
+        shutil.rmtree(plugin_postgres_path)
+        shutil.rmtree(plugin_data_path)
+        shutil.rmtree(plugin_upgrade_path)
+        shutil.rmtree(plugin_tmp_path)
+
+        for dataset, new_path, new_mount in (
+            (
+                os.path.join(asigra_config['filesystem'], 'files'),
+                os.path.join(plugin_root_dataset['id'], 'files'), plugin_data_path
+            ),
+            (
+                os.path.join(asigra_config['filesystem'], 'database'),
+                os.path.join(plugin_root_dataset['id'], 'database'), plugin_postgres_path
+            ),
+            (
+                os.path.join(asigra_config['filesystem'], 'upgrade'),
+                os.path.join(plugin_root_dataset['id'], 'upgrade'), plugin_upgrade_path
+            ),
+        ):
+            self.middleware.call_sync('zfs.dataset.rename', dataset, {'new_name': new_path})
+
+            # "new_mount" will start with "/mnt/something", we don't want "/mnt" to be included so we remove it
+            self.middleware.call_sync(
+                'zfs.dataset.update', new_path, {'properties': {'mountpoint': {'value': new_mount[4:]}}}
+            )
+
+        job.set_progress(80, 'Asigra datasets successfully migrated to asigra plugin.')
 
         with open(os.path.join(plugin_root_path, 'etc/passwd'), 'r') as f:
             ids = re.findall(r'pgsql.*:(\d+):(\d+):', f.read())
             if not ids:
-                raise CallError(f'postgres user could not be found in {custom_jail_image} jail.')
+                raise CallError(f'Postgres user could not be found in {custom_jail_image} jail.')
             else:
                 uid, gid = ids[0]
 
-        # TODO: Please make sure there are no drawbacks to this approach
         proc = subprocess.Popen(
-            ['chown', '-R', f'{uid}:{gid}', system_postgres_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ['chown', '-R', f'{uid}:{gid}', plugin_postgres_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         stdout, stderr = proc.communicate()
 
         if proc.returncode:
-            raise CallError(f'Failed to set ownership of {system_postgres_path}: {stderr}')
+            raise CallError(f'Failed to set ownership of {plugin_postgres_path}: {stderr}')
 
-        shutil.copy(
-            os.path.join(plugin_root_path, 'zdata/root/Storage_Label.txt'),
-            os.path.join(system_asigra_path, 'files/Storage_Label.txt')
-        )
+        shutil.copytree(system_tmp_path, plugin_tmp_path)
 
-        shutil.rmtree(os.path.join(plugin_postgres_home_path, 'data'))
-        shutil.rmtree(os.path.join(plugin_root_path, 'zdata/root'))
-
-        job.set_progress(75, 'Asigra plugin setup complete for beginning of migration.')
-
-        for source, destination in (
-            (system_postgres_path, os.path.join(plugin_postgres_home_path, 'data')),
-            (os.path.join(system_asigra_path, 'files'), os.path.join(plugin_root_path, 'zdata/root')),
-            (os.path.join(system_asigra_path, 'upgrade'), os.path.join(plugin_root_path, 'zdata/Upgrade')),
-            (os.path.join(system_asigra_path, 'tmp'), os.path.join(plugin_root_path, 'zdata/tmp')),
-        ):
-            self.middleware.call_sync(
-                'jail.fstab',
-                custom_jail_image, {
-                    'action': 'ADD',
-                    'source': source,
-                    'destination': destination,
-                }
-            )
+        try:
+            # Finally we destroy asigra parent dataset
+            self.middleware.call_sync('pool.dataset.delete', asigra_dataset['id'])
+        except Exception as e:
+            self.middleware.logger.debug(f'Failed to destroy asigra dataset: {e}')
 
         self.middleware.call_sync('datastore.update', 'services.asigra', asigra_config['id'], {'filesystem': ''})
         self.middleware.logger.debug('Migration successfully performed.')
-        job.set_progress(
-            100, 'Asigra dataset mountpoints successfully added to asigra plugin fstab completing migration.'
-        )
+
+        job.set_progress(100, 'System asigra successfully migrated to asigra plugin')
 
 
 def _event_system(middleware, event_type, args):
