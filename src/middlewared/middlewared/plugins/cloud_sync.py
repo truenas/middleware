@@ -123,7 +123,11 @@ async def rclone(job, cloud_sync):
         await proc.wait()
         if proc.returncode != 0:
             await asyncio.wait_for(check_cloud_sync, None)
-            raise ValueError("rclone failed")
+
+            message = "rclone failed"
+            if "dropbox__restricted_content" in job.internal_data:
+                message = "DropBox restricted content"
+            raise ValueError(message)
 
         refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials
         if refresh_credentials:
@@ -147,16 +151,31 @@ async def rclone(job, cloud_sync):
 
 
 async def rclone_check_progress(job, proc):
+    dropbox__restricted_content = False
     while True:
         read = (await proc.stdout.readline()).decode()
-        job.logs_fd.write(read.encode("utf-8", "ignore"))
         if read == "":
             break
+        if "failed to open source object: path/restricted_content/" in read:
+            job.internal_data["dropbox__restricted_content"] = True
+            dropbox__restricted_content = True
+        job.logs_fd.write(read.encode("utf-8", "ignore"))
         reg = RE_TRANSF.search(read)
         if reg:
             transferred = reg.group(1).strip()
             if not transferred.isdigit():
                 job.set_progress(None, transferred)
+
+    if dropbox__restricted_content:
+        message = "\n" + (
+            "Dropbox sync failed due to restricted content being present in one of the folders. This may include\n"
+            "copyrighted content or the DropBox manual PDF that appears in the home directory after signing up.\n"
+            "All other files were synchronized, but no deletions were performed as synchronization is considered\n"
+            "unsuccessful. Please inspect logs to determine which files are considered restricted and exclude them\n"
+            "from your synchronization. If you think that files are restricted erroneously, contact\n"
+            "Dropbox Support: https://www.dropbox.com/support"
+        )
+        job.logs_fd.write(message.encode("utf-8", "ignore"))
 
 
 def rclone_encrypt_password(password):

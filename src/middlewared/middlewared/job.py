@@ -228,6 +228,7 @@ class Job(object):
             'description': None,
             'extra': None,
         }
+        self.internal_data = {}
         self.time_started = datetime.now()
         self.time_finished = None
         self.loop = None
@@ -376,16 +377,16 @@ class Job(object):
                 lines = 0
                 with open(self.logs_path, "r", encoding="utf-8", errors="ignore") as f:
                     for line in f:
-                        if len(head) < 5:
+                        if len(head) < 10:
                             head.append(line)
-
-                        tail.append(line)
-                        tail = tail[-5:]
+                        else:
+                            tail.append(line)
+                            tail = tail[-10:]
 
                         lines += 1
 
-                if lines > 10:
-                    excerpt = "%s... %d more lines ...\n%s" % ("".join(head), lines - 10, "".join(tail))
+                if lines > 20:
+                    excerpt = "%s... %d more lines ...\n%s" % ("".join(head), lines - 20, "".join(tail))
                 else:
                     excerpt = "".join(head + tail)
 
