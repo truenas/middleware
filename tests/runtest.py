@@ -74,7 +74,7 @@ for output, arg in myopts:
         vm_name = f"'{arg}'"
 
 if ('ip' not in locals() and
-        'password' not in locals() and
+        'passwd' not in locals() and
         'interface' not in locals()):
     print("Mandatory option missing!\n")
     print(error_msg)
