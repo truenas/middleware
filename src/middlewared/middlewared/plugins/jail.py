@@ -1244,12 +1244,14 @@ class JailService(CRUDService):
         Dict(
             'options',
             Str('jail', required=True),
-            Str('compression_algorithm', default=None, null=True)
+            Str('compression_algorithm', default='ZIP', enum=['ZIP', 'LZMA'])
         )
     )
     @job(lock=lambda args: f'jail_export:{args[-1].get("jail")}')
     def export(self, job, options):
-        """Exports jail to zip file"""
+        """
+        Export jail to compressed file.
+        """
         jail = options['jail']
         uuid, path, _ = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
@@ -1259,7 +1261,7 @@ class JailService(CRUDService):
             self.middleware.call_sync('jail.stop', jail, job=True)
             started = True
 
-        IOCImage().export_jail(uuid, path, compression_algo=options['compression_algorithm'])
+        IOCImage().export_jail(uuid, path, compression_algo=options['compression_algorithm'].lower())
 
         if started:
             self.middleware.call_sync('jail.start', jail, job=True)
@@ -1271,15 +1273,25 @@ class JailService(CRUDService):
             'options',
             Str('jail', required=True),
             Str('path', default=None, null=True),
-            Str('compression_algorithm', default=None, null=True)
+            Str('compression_algorithm', default=None, null=True, enum=['ZIP', 'LZMA', None])
         )
     )
     @job(lock=lambda args: f'jail_import:{args[-1].get("jail")}')
     def import_image(self, job, options):
-        """Imports jail from zip file"""
+        """
+        Import jail from compressed file.
+
+        `compression algorithm`: None indicates that middlewared is to automatically determine
+        which compression algorithm to use based on the compressed file extension. If multiple copies are found, an
+        exception is raised.
+
+        `path` is the directory where the exported jail lives. It defaults to the iocage images dataset.
+        """
+
+        path = options['path'] or os.path.join(self.get_iocroot(), 'images')
 
         IOCImage().import_jail(
-            options['jail'], compression_algo=options['compression_algorithm'], path=options['path']
+            options['jail'], compression_algo=options['compression_algorithm'], path=path
         )
 
         return True
