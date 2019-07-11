@@ -21,6 +21,7 @@ from iocage_lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage_lib.ioc_list import IOCList
 from iocage_lib.ioc_plugin import IOCPlugin
+from iocage_lib.release import ListableReleases
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts, Patch
@@ -592,8 +593,7 @@ class JailService(CRUDService):
             with contextlib.suppress(KeyError):
                 return self.middleware.call_sync('cache.get', 'iocage_remote_releases')
 
-        iocage = ioc.IOCage(skip_jails=True)
-        choices = {k: k for k in iocage.fetch(list=True, remote=remote, http=True)}
+        choices = {str(k): str(k) for k in ListableReleases(remote=remote)}
 
         if remote:
             self.middleware.call_sync('cache.put', 'iocage_remote_releases', choices, 86400)
