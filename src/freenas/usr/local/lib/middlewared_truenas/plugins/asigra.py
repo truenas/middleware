@@ -56,17 +56,15 @@ class AsigraService(SystemServiceService):
         if len([
             c for c in asigra_dataset['children']
             if c['id'] in (os.path.join(asigra_config['filesystem'], d) for d in ('files', 'database', 'upgrade'))
-        ]):
+        ]) != 3:
             raise CallError('Asigra not setup correctly. Aborting migration.')
 
-        custom_jail_image = 'asigra_migration_image'
-        custom_jail_image_path = glob.glob(f'/usr/local/share/asigra/{custom_jail_image}*zip')
+        custom_jail_image = 'asigra_migration_image_9b5802df'
+        custom_jail_image_path = glob.glob(f'/usr/local/share/asigra/{custom_jail_image}*')
         if not custom_jail_image_path:
             raise CallError('Custom asigra jail image does not exist.')
         else:
             custom_jail_image_path = custom_jail_image_path[0]
-            # iocage expects zipped file to be "name_date.zip"
-            custom_jail_image = custom_jail_image_path.split('/')[-1].rsplit('_', 1)[0]
 
         try:
             pool = self.middleware.call_sync('jail.get_activated_pool')
@@ -80,9 +78,9 @@ class AsigraService(SystemServiceService):
         self.middleware.call_sync('jail.check_dataset_existence')
         job.set_progress(10, f'{pool} pool activated for iocage.')
 
-        shutil.copy(custom_jail_image_path, os.path.join('/mnt', pool, 'iocage/images/'))
-
-        import_job = self.middleware.call_sync('jail.import_image', custom_jail_image)
+        import_job = self.middleware.call_sync(
+            'jail.import_image', {'jail': custom_jail_image, 'path': custom_jail_image_path.rsplit('/', 1)[0]}
+        )
         import_job.wait_sync()
         if import_job.error:
             raise CallError(f'Importing custom jail image failed: {import_job.error}')
