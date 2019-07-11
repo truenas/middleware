@@ -311,7 +311,7 @@ def ping_host(host):
         return True
 
 
-def wait_on_job(job_id):
+def wait_on_job(job_id, max_timeout):
     global job_results
     timeout = 0
     while True:
@@ -321,6 +321,6 @@ def wait_on_job(job_id):
             sleep(5)
         elif job_state in ('SUCCESS', 'FAILED'):
             return {'state': job_state, 'results': job_results.json()[0]}
-        if timeout == 600:
+        if timeout == max_timeout:
             return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
         timeout += 5

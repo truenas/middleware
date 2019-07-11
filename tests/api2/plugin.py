@@ -9,9 +9,6 @@ from functions import GET, POST, DELETE, wait_on_job
 
 JOB_ID = None
 job_results = None
-not_freenas = GET("/system/is_freenas/").json() is False
-reason = "System is not FreeNAS skip Jails test"
-to_skip = pytest.mark.skipif(not_freenas, reason=reason)
 
 # default URL
 repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
@@ -34,34 +31,29 @@ plugin_objects = [
 ]
 
 
-@to_skip
 def test_01_activate_jail_pool():
     results = POST('/jail/activate/', pool_name)
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-@to_skip
 def test_02_verify_jail_pool():
     results = GET('/jail/get_activated_pool/')
     assert results.status_code == 200, results.text
     assert results.json() == pool_name, results.text
 
 
-@to_skip
 def test_03_get_list_of_installed_plugin():
     results = GET('/plugin/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
 
 
-@to_skip
 def test_04_verify_plugin_repos_is_in_official_repositories():
     results = GET('/plugin/official_repositories/')
     assert repos_url in results.json(), results.text
 
 
-@to_skip
 def test_05_get_list_of_available_plugins_job_id():
     global JOB_ID
     payload = {
@@ -73,25 +65,19 @@ def test_05_get_list_of_available_plugins_job_id():
     JOB_ID = results.json()
 
 
-@to_skip
 def test_06_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID)
+    job_status = wait_on_job(JOB_ID, 120)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     job_results = job_status['results']
 
 
-@to_skip
 @pytest.mark.parametrize('plugin', plugin_list)
 def test_07_verify_available_plugin_(plugin):
     assert isinstance(job_results['result'], list), str(job_results)
-    for plugin_info in job_results['result']:
-        if plugin in plugin_info['plugin']:
-            assert plugin in plugin_info['plugin'], str(job_results)
-            assert isinstance(plugin_info, dict), str(job_results)
+    assert plugin in [p['plugin'] for p in job_results['result']]
 
 
-@to_skip
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_08_verify_available_plugins_rslsync_is_not_NA_with(prop):
     for plugin_info in job_results['result']:
@@ -100,7 +86,6 @@ def test_08_verify_available_plugins_rslsync_is_not_NA_with(prop):
     assert plugin_info[prop] != 'N/A', str(job_results)
 
 
-@to_skip
 def test_09_add_transmission_plugins():
     global JOB_ID
     payload = {
@@ -116,20 +101,17 @@ def test_09_add_transmission_plugins():
     JOB_ID = results.json()
 
 
-@to_skip
 def test_10_verify_transmission_plugin_job_is_successfull():
-    job_status = wait_on_job(JOB_ID)
+    job_status = wait_on_job(JOB_ID, 600)
     assert job_status['state'] == 'SUCCESS', job_status['results']
 
 
-@to_skip
 def test_11_search_plugin_transmission_id():
     results = GET('/plugin/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
-@to_skip
 def test_12_get_transmission_plugin_info():
     global transmission_plugin
     results = GET('/plugin/id/transmission/')
@@ -138,13 +120,11 @@ def test_12_get_transmission_plugin_info():
     transmission_plugin = results.json()
 
 
-@to_skip
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_13_verify_transmission_plugin_value_is_not_NA_for_(prop):
     assert transmission_plugin[prop] != 'N/A', str(transmission_plugin)
 
 
-@to_skip
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_14_verify_transmission_plugins_installed_and_available_value_(prop):
     for plugin_info in job_results['result']:
@@ -153,7 +133,6 @@ def test_14_verify_transmission_plugins_installed_and_available_value_(prop):
     assert plugin_info[prop] == transmission_plugin[prop], str(plugin_info)
 
 
-@to_skip
 def test_15_get_transmission_jail_info():
     global transmission_jail, results
     results = GET("/jail/id/transmission")
@@ -162,13 +141,11 @@ def test_15_get_transmission_jail_info():
     transmission_jail = results.json()
 
 
-@to_skip
 @pytest.mark.parametrize('prop', plugin_objects)
 def test_16_verify_transmission_plugin_value_with_jail_value_of_(prop):
     assert transmission_jail[prop] == transmission_plugin[prop], results.text
 
 
-@to_skip
 def test_17_get_list_of_available_plugins_without_cache():
     global JOB_ID
     payload = {
@@ -181,25 +158,19 @@ def test_17_get_list_of_available_plugins_without_cache():
     JOB_ID = results.json()
 
 
-@to_skip
 def test_18_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID)
+    job_status = wait_on_job(JOB_ID, 120)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     job_results = job_status['results']
 
 
-@to_skip
 @pytest.mark.parametrize('plugin', plugin_list)
 def test_19_verify_available_plugin_without_cache_(plugin):
     assert isinstance(job_results['result'], list), str(job_results)
-    for plugin_info in job_results['result']:
-        if plugin in plugin_info['plugin']:
-            assert plugin in plugin_info['plugin'], str(job_results)
-            assert isinstance(plugin_info, dict), str(job_results)
+    assert plugin in [p['plugin'] for p in job_results['result']]
 
 
-@to_skip
 def test_20_stop_transmission_jail():
     global JOB_ID
     payload = {
@@ -211,15 +182,13 @@ def test_20_stop_transmission_jail():
     JOB_ID = results.json()
 
 
-@to_skip
 def test_21_wait_for_transmission_plugin_to_be_down():
-    job_status = wait_on_job(JOB_ID)
+    job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     results = GET('/plugin/id/transmission/')
     assert results.json()['state'] == 'down', results.text
 
 
-@to_skip
 def test_22_start_transmission_jail():
     global JOB_ID
     payload = "transmission"
@@ -228,15 +197,13 @@ def test_22_start_transmission_jail():
     JOB_ID = results.json()
 
 
-@to_skip
 def test_23_wait_for_transmission_plugin_to_be_up():
-    job_status = wait_on_job(JOB_ID)
+    job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     results = GET('/plugin/id/transmission/')
     assert results.json()['state'] == 'up', results.text
 
 
-@to_skip
 def test_24_stop_transmission_jail_before_deleteing():
     global JOB_ID
     payload = {
@@ -248,33 +215,28 @@ def test_24_stop_transmission_jail_before_deleteing():
     JOB_ID = results.json()
 
 
-@to_skip
 def test_25_wait_for_transmission_plugin_to_be_down():
-    job_status = wait_on_job(JOB_ID)
+    job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     results = GET('/plugin/id/transmission/')
     assert results.json()['state'] == 'down', results.text
 
 
-@to_skip
 def test_26_delete_transmission_plugin():
     results = DELETE('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
 
 
-@to_skip
 def test_27_looking_transmission_jail_id_is_delete():
     results = GET('/jail/id/transmission/')
     assert results.status_code == 404, results.text
 
 
-@to_skip
 def test_28_looking_transmission_plugin_id_is_delete():
     results = GET('/plugin/id/transmission/')
     assert results.status_code == 404, results.text
 
 
-@to_skip
 def test_29_get_list_of_available_plugins_job_id_on_custom_repos():
     global JOB_ID
     payload = {
@@ -287,25 +249,19 @@ def test_29_get_list_of_available_plugins_job_id_on_custom_repos():
     JOB_ID = results.json()
 
 
-@to_skip
 def test_30_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID)
+    job_status = wait_on_job(JOB_ID, 120)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     job_results = job_status['results']
 
 
-@to_skip
 @pytest.mark.parametrize('plugin', plugin_list2)
 def test_31_verify_available_plugin_(plugin):
     assert isinstance(job_results['result'], list), str(job_results)
-    for plugin_info in job_results['result']:
-        if plugin in plugin_info['plugin']:
-            assert plugin in plugin_info['plugin'], str(job_results)
-            assert isinstance(plugin_info, dict), str(job_results)
+    assert plugin in [p['plugin'] for p in job_results['result']]
 
 
-@to_skip
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_32_verify_available_plugins_rslsync_is_not_NA_with(prop):
     for plugin_info in job_results['result']:
@@ -314,7 +270,6 @@ def test_32_verify_available_plugins_rslsync_is_not_NA_with(prop):
     assert plugin_info[prop] != 'N/A', str(job_results)
 
 
-@to_skip
 def test_33_add_openvpn_plugins():
     global JOB_ID
     payload = {
@@ -331,33 +286,28 @@ def test_33_add_openvpn_plugins():
     JOB_ID = results.json()
 
 
-@to_skip
 def test_34_verify_openvpn_plugin_job_is_successfull():
-    job_status = wait_on_job(JOB_ID)
+    job_status = wait_on_job(JOB_ID, 600)
     assert job_status['state'] == 'SUCCESS', job_status['results']
 
 
-@to_skip
 def test_35_search_plugin_openvpn_id():
     results = GET('/plugin/?id=openvpn')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
-@to_skip
 def test_36_verify_openvpn_plugin_id_exist():
     results = GET('/plugin/id/openvpn/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
-@to_skip
 def test_37_verify_the_openvpn_jail_id_exist():
     results = GET(f'/jail/id/openvpn/')
     assert results.status_code == 200, results.text
 
 
-@to_skip
 def test_38_delete_openvpn_jail():
     payload = {
         'force': True
@@ -366,13 +316,11 @@ def test_38_delete_openvpn_jail():
     assert results.status_code == 200, results.text
 
 
-@to_skip
 def test_39_verify_the_openvpn_jail_id_is_delete():
     results = GET(f'/jail/id/openvpn/')
     assert results.status_code == 404, results.text
 
 
-@to_skip
 def test_40_verify_clean_call():
     results = POST('/jail/clean/', 'ALL')
     assert results.status_code == 200, results.text
