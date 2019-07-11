@@ -24,6 +24,7 @@ def render(service, middleware):
     out in one go"""
 
     map_acls_mode = False
+    ds_type = None
     afp_config = "/usr/local/etc/afp.conf"
     cf_contents = []
 
@@ -60,11 +61,16 @@ def render(service, middleware):
     if afp.afp_srv_chmod_request:
         cf_contents.append("\tchmod request = %s\n" % afp.afp_srv_chmod_request)
 
-    if afp.afp_srv_map_acls == 'mode' and middleware.call_sync('notifier.common', 'system', 'activedirectory_enabled'):
-        map_acls_mode = True
+    if afp.afp_srv_map_acls == 'mode':
+        if middleware.call_sync('activedirectory.get_state') != 'DISABLED':
+            ds_type = 'AD'
+        elif middleware.call_sync('ldap.get_state') != 'DISABLED':
+            ds_type = 'LDAP'
+
+        if ds_type is not None:
+            map_acls_mode = True
 
     if map_acls_mode:
-        ds_type = None
         ds_config = {
             'bind_dn': None,
             'bind_pw': None,
@@ -72,17 +78,15 @@ def render(service, middleware):
             'userbase': None,
             'groupbase': None,
         }
-        if middleware.call_sync('activedirectory.get_state') != 'DISABLED':
+        if ds_type == 'AD':
             ad = middleware.call_sync('activedirectory.config')
-            ds_type = 'AD'
             ds_config.update({
                 'bind_dn': ad['bindname'],
                 'bind_pw': ad['bindpw'],
                 'server': ad['domainname'],
             })
-        elif middleware.call_sync('ldap.get_state') != 'DISABLED':
-            ldap = Struct(middleware.call_sync('notifier.directoryservice', 'LDAP'))
-            ds_type = 'LDAP'
+        elif ds_type == 'LDAP':
+            ldap = middleware.call_sync('ldap.config')
             ds_config.update({
                 'bind_dn': ldap['binddn'],
                 'bind_pw': ldap['bindpw'],
