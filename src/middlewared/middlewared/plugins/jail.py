@@ -1240,10 +1240,17 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(Str("jail"))
-    @job(lock=lambda args: f"jail_export:{args[-1]}")
-    def export(self, job, jail):
+    @accepts(
+        Dict(
+            'options',
+            Str('jail', required=True),
+            Str('compression_algorithm', default=None, null=True)
+        )
+    )
+    @job(lock=lambda args: f'jail_export:{args[-1].get("jail")}')
+    def export(self, job, options):
         """Exports jail to zip file"""
+        jail = options['jail']
         uuid, path, _ = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         started = False
@@ -1252,7 +1259,7 @@ class JailService(CRUDService):
             self.middleware.call_sync('jail.stop', jail, job=True)
             started = True
 
-        IOCImage().export_jail(uuid, path)
+        IOCImage().export_jail(uuid, path, compression_algo=options['compression_algorithm'])
 
         if started:
             self.middleware.call_sync('jail.start', jail, job=True)
