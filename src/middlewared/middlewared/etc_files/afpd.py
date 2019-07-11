@@ -65,28 +65,48 @@ def render(service, middleware):
 
     if map_acls_mode:
         ds_type = None
+        ds_config = {
+            'bind_dn': None,
+            'bind_pw': None,
+            'server': None,
+            'userbase': None,
+            'groupbase': None,
+        }
         if middleware.call_sync('activedirectory.get_state') != 'DISABLED':
-            ad = Struct(middleware.call_sync('notifier.directoryservice', 'AD'))
+            ad = middleware.call_sync('activedirectory.config')
             ds_type = 'AD'
+            ds_config.update({
+                'bind_dn': ad['bindname'],
+                'bind_pw': ad['bindpw'],
+                'server': ad['domainname'],
+            })
         elif middleware.call_sync('ldap.get_state') != 'DISABLED':
-            ad = Struct(middleware.call_sync('notifier.directoryservice', 'LDAP'))
+            ldap = Struct(middleware.call_sync('notifier.directoryservice', 'LDAP'))
             ds_type = 'LDAP'
+            ds_config.update({
+                'bind_dn': ldap['binddn'],
+                'bind_pw': ldap['bindpw'],
+                'server': ldap['hostname'],
+                'userbase': ldap['usersuffix'],
+                'groupbase': ldap['groupsuffix'],
+            })
+        elif middleware.call_sync('ldap.get_state') != 'DISABLED':
 
         if ds_type is not None:
             cf_contents.append("\tldap auth method = %s\n" % "simple")
-            cf_contents.append("\tldap auth dn = %s\n" % ad.binddn)
-            cf_contents.append("\tldap auth pw = %s\n" % ad.bindpw)
-            cf_contents.append("\tldap server = %s\n" % ad.domainname)
+            cf_contents.append("\tldap auth dn = %s\n" % ds_config['bind_dn'])
+            cf_contents.append("\tldap auth pw = %s\n" % ds_config['bind_pw'])
+            cf_contents.append("\tldap server = %s\n" % ds_config['server'])
 
             # This should be configured when using this option
-            if ad.userdn:
-                cf_contents.append("\tldap userbase = %s\n" % ad.userdn)
+            if ds_config['userbase']:
+                cf_contents.append("\tldap userbase = %s\n" % ds_config['userbase'])
 
             cf_contents.append("\tldap userscope = %s\n" % "sub")
 
             # This should be configured when using this option
-            if ad.groupdn:
-                cf_contents.append("\tldap groupbase = %s\n" % ad.groupdn)
+            if ds_config['groupbase']:
+                cf_contents.append("\tldap groupbase = %s\n" % ds_config['groupbase'])
 
             cf_contents.append("\tldap groupscope = %s\n" % "sub")
 
