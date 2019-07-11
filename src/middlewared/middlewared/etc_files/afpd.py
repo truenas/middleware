@@ -90,7 +90,6 @@ def render(service, middleware):
                 'userbase': ldap['usersuffix'],
                 'groupbase': ldap['groupsuffix'],
             })
-        elif middleware.call_sync('ldap.get_state') != 'DISABLED':
 
         if ds_type is not None:
             cf_contents.append("\tldap auth method = %s\n" % "simple")
