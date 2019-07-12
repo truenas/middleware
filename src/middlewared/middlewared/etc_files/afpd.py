@@ -19,9 +19,17 @@ def get_interface(ipaddress):
 
 
 def render(service, middleware):
-    """Use the django ORM to generate a config file.  We'll build the
-    config file as a series of lines, and once that is done write it
-    out in one go"""
+    """
+    The resulting afp.conf file will only allow kerberos authentication (add uams_gss.so)
+    if a kerberos keytab is uploaded to the NAS. When afp_srv_map_acls is set to "mode"
+    and the LDAP or AD directory service is enabled, the NAS is configured to query the LDAP server
+    for a UUID attribute to present to MacOS clients. This is required for the permission editor to
+    properly display users in the MacOS permissions editor because MacOS clients use UUIDs
+    rather than UIDs and GIDs. SASL is not implemented in Netatalk, and so this feature requires
+    storing the plain-text LDAP password in the afp.conf file. The default AD behavior clears
+    the bindpw after successful domain join, and so additional configuration (persistently storing
+    the bindpw and possibly LDAP schema changes) will be required for this feature to work correctly.
+    """
 
     map_acls_mode = False
     ds_type = None
@@ -67,10 +75,7 @@ def render(service, middleware):
         elif middleware.call_sync('ldap.get_state') != 'DISABLED':
             ds_type = 'LDAP'
 
-        if ds_type is not None:
-            map_acls_mode = True
-
-    if map_acls_mode:
+    if ds_type is not None:
         ds_config = {
             'bind_dn': None,
             'bind_pw': None,
@@ -95,31 +100,30 @@ def render(service, middleware):
                 'groupbase': ldap['groupsuffix'],
             })
 
-        if ds_type is not None:
-            cf_contents.append("\tldap auth method = %s\n" % "simple")
-            cf_contents.append("\tldap auth dn = %s\n" % ds_config['bind_dn'])
-            cf_contents.append("\tldap auth pw = %s\n" % ds_config['bind_pw'])
-            cf_contents.append("\tldap server = %s\n" % ds_config['server'])
+        cf_contents.append("\tldap auth method = %s\n" % "simple")
+        cf_contents.append("\tldap auth dn = %s\n" % ds_config['bind_dn'])
+        cf_contents.append("\tldap auth pw = %s\n" % ds_config['bind_pw'])
+        cf_contents.append("\tldap server = %s\n" % ds_config['server'])
 
-            # This should be configured when using this option
-            if ds_config['userbase']:
-                cf_contents.append("\tldap userbase = %s\n" % ds_config['userbase'])
+        # This should be configured when using this option
+        if ds_config['userbase']:
+            cf_contents.append("\tldap userbase = %s\n" % ds_config['userbase'])
 
-            cf_contents.append("\tldap userscope = %s\n" % "sub")
+        cf_contents.append("\tldap userscope = %s\n" % "sub")
 
-            # This should be configured when using this option
-            if ds_config['groupbase']:
-                cf_contents.append("\tldap groupbase = %s\n" % ds_config['groupbase'])
+        # This should be configured when using this option
+        if ds_config['groupbase']:
+            cf_contents.append("\tldap groupbase = %s\n" % ds_config['groupbase'])
 
-            cf_contents.append("\tldap groupscope = %s\n" % "sub")
+        cf_contents.append("\tldap groupscope = %s\n" % "sub")
 
-            cf_contents.append("\tldap user filter = %s\n" % "objectclass=user")
-            cf_contents.append("\tldap group filter = %s\n" % "objectclass=group")
-            cf_contents.append("\tldap uuid attr = %s\n" % "objectGUID")
-            if ds_type == 'AD':
-                cf_contents.append("\tldap uuid encoding = %s\n" % "ms-guid")
-                cf_contents.append("\tldap name attr = %s\n" % "sAMAccountName")
-                cf_contents.append("\tldap group attr = %s\n" % "sAMAccountName")
+        cf_contents.append("\tldap user filter = %s\n" % "objectclass=user")
+        cf_contents.append("\tldap group filter = %s\n" % "objectclass=group")
+        cf_contents.append("\tldap uuid attr = %s\n" % "objectGUID")
+        if ds_type == 'AD':
+            cf_contents.append("\tldap uuid encoding = %s\n" % "ms-guid")
+            cf_contents.append("\tldap name attr = %s\n" % "sAMAccountName")
+            cf_contents.append("\tldap group attr = %s\n" % "sAMAccountName")
 
     cf_contents.append("\tlog file = %s\n" % "/var/log/afp.log")
     cf_contents.append("\tlog level = %s\n" % "default:info")
