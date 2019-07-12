@@ -32,3 +32,5 @@ webui/dll/
 webui/dist/
 npm-debug.log
 tests/artifacts/
+tests/test-report.txt
+tests/test-report.xml
