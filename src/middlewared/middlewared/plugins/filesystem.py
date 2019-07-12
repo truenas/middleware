@@ -588,12 +588,12 @@ class FilesystemService(Service):
         if inherited_aces:
             inherited_aces = sorted(
                 inherited_aces,
-                key=lambda x: (x['type']=='ALLOW', self._is_inheritable(x['flags'])),
+                key=lambda x: (x['type'] == 'ALLOW', self._is_inheritable(x['flags'])),
             )
         if non_inherited_aces:
             non_inherited_aces = sorted(
                 non_inherited_aces,
-                key=lambda x: (x['type']=='ALLOW', self._is_inheritable(x['flags'])),
+                key=lambda x: (x['type'] == 'ALLOW', self._is_inheritable(x['flags'])),
             )
         final_acl = non_inherited_aces + inherited_aces
         return final_acl
