@@ -84,7 +84,8 @@ class Settings(Model):
         verbose_name=_('WebGUI HTTP -> HTTPS Redirect'),
         default=False,
         help_text=_(
-            'Redirect all incoming HTTP requests to HTTPS'
+            'Redirect all incoming HTTP requests to HTTPS and '
+            'enable the HTTP Strict Transport Security (HSTS) header.'
         ),
     )
     stg_language = models.CharField(
