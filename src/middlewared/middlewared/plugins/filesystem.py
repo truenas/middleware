@@ -543,6 +543,61 @@ class FilesystemService(Service):
 
         return acl
 
+    def _is_inheritable(self, flags):
+        """
+        Takes ACE flags and return True if any inheritance bits are set.
+        """
+        inheritance_flags = ['FILE_INHERIT', 'DIRECTORY_INHERIT', 'NO_PROPAGATE_INHERIT', 'INHERIT_ONLY']
+        for i in inheritance_flags:
+            if flags[i]:
+                return True
+
+        return False
+
+    @private
+    def canonicalize_acl_order(self, acl):
+        """
+        Convert flags to advanced, then separate the ACL into two lists. One for ACEs that have been inherited,
+        one for aces that have not been inherited. Non-inherited ACEs take precedence
+        and so they are placed first in finalized combined list. Within each list, the
+        ACEs are orderd according to the following:
+
+        1) Deny ACEs that apply to the object itself (NOINHERIT)
+
+        2) Deny ACEs that apply to a subobject of the object (INHERIT)
+
+        3) Allow ACEs that apply to the object itself (NOINHERIT)
+
+        4) Allow ACEs that apply to a subobject of the object (INHERIT)
+
+        See http://docs.microsoft.com/en-us/windows/desktop/secauthz/order-of-aces-in-a-dacl
+
+        The "INHERITED" bit is stripped in filesystem.getacl when generating a BASIC flag type.
+        It is best practice to use a non-simplified ACL for canonicalization.
+        """
+        inherited_aces = []
+        final_acl = []
+        non_inherited_aces = []
+        for entry in acl:
+            entry['flags'] = self.__convert_to_adv_flagset(entry['flags']['BASIC']) if 'BASIC' in entry['flags'] else entry['flags']
+            if entry['flags'].get('INHERITED'):
+                inherited_aces.append(entry)
+            else:
+                non_inherited_aces.append(entry)
+
+        if inherited_aces:
+            inherited_aces = sorted(
+                inherited_aces,
+                key=lambda x: (x['type'] == 'ALLOW', self._is_inheritable(x['flags'])),
+            )
+        if non_inherited_aces:
+            non_inherited_aces = sorted(
+                non_inherited_aces,
+                key=lambda x: (x['type'] == 'ALLOW', self._is_inheritable(x['flags'])),
+            )
+        final_acl = non_inherited_aces + inherited_aces
+        return final_acl
+
     @accepts(
         Str('path'),
         Bool('simplified', default=True),
@@ -668,6 +723,7 @@ class FilesystemService(Service):
                 Bool('stripacl', default=False),
                 Bool('recursive', default=False),
                 Bool('traverse', default=False),
+                Bool('canonicalize', default=True)
             )
         )
     )
@@ -689,6 +745,9 @@ class FilesystemService(Service):
 
         `strip` convert ACL to trivial. ACL is trivial if it can be expressed as a file mode without
         losing any access rules.
+
+        `canonicalize` reorder ACL entries so that they are in concanical form as described
+        in the Microsoft documentation MS-DTYP 2.4.5 (ACL)
 
         In all cases we replace USER_OBJ, GROUP_OBJ, and EVERYONE with owner@, group@, everyone@ for
         consistency with getfacl and setfacl. If one of aforementioned special tags is used, 'id' must
@@ -731,6 +790,9 @@ class FilesystemService(Service):
                 if ace['tag'] == 'EVERYONE' and self.__convert_to_basic_permset(ace['perms']) == 'NOPERMS':
                     lockace_is_present = True
                 cleaned_acl.append(ace)
+            if options['canonicalize']:
+                cleaned_acl = self.canonicalize_acl_order(cleaned_acl)
+
             if not lockace_is_present:
                 locking_ace = {
                     'tag': 'EVERYONE',
