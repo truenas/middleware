@@ -321,6 +321,6 @@ def wait_on_job(job_id, max_timeout):
             sleep(5)
         elif job_state in ('SUCCESS', 'FAILED'):
             return {'state': job_state, 'results': job_results.json()[0]}
-        if timeout == max_timeout:
+        if timeout >= max_timeout:
             return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
         timeout += 5
