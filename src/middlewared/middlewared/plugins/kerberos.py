@@ -15,6 +15,67 @@ class keytab(enum.Enum):
     SAMBA = '/var/db/system/samba4/private/samba.keytab'
 
 
+class KRB_AppDefaults(enum.Enum):
+    FORWARDABLE = ('forwardable', 'boolean')
+    PROXIABLE = ('proxiable', 'boolean')
+    NO_ADDRESSES = ('no-addresses', 'boolean')
+    TICKET_LIFETIME = ('ticket_lifetime', 'time')
+    RENEW_LIFETIME = ('renew_lifetime', 'time')
+    ENCRYPT = ('encrypt', 'boolean')
+    FORWARD = ('forward', 'boolean')
+
+    def __str__(self):
+        return self.value[0]
+
+
+class KRB_LibDefaults(enum.Enum):
+    DEFAULT_REALM = ('default_realm', 'realm')
+    ALLOW_WEAK_CRYPTO = ('allow_weak_crypto', 'boolean')
+    CLOCKSKEW = ('clockskew', 'time')
+    KDC_TIMEOUT = ('kdc_timeout', 'time')
+    DEFAULT_CC_TYPE = ('default_cc_type', 'cctype')
+    DEFAULT_CC_NAME = ('default_cc_name', 'ccname')
+    DEFAULT_ETYPES = ('default_etypes', 'etypes')
+    DEFAULT_AS_ETYPES = ('default_as_etypes', 'etypes')
+    DEFAULT_TGS_ETYPES = ('default_tgs_etypes', 'etypes')
+    DEFAULT_ETYPES_DES = ('default_etypes_des', 'etypes')
+    DEFAULT_KEYTAB_NAME = ('default_keytab_name', 'keytab')
+    DNS_LOOKUP_KDC = ('dns_lookup_kdc', 'boolean')
+    DNS_LOOKUP_REALM = ('dns_lookup_realm', 'boolean')
+    KDC_TIMESYNC = ('kdc_timesync', 'boolean')
+    MAX_RETRIES = ('max_retries', 'number')
+    LARGE_MSG_SIZE = ('large_msg_size', 'number')
+    TICKET_LIFETIME = ('ticket_lifetime', 'time')
+    RENEW_LIFETIME = ('renew_lifetime', 'time')
+    FORWARDABLE = ('forwardable', 'boolean')
+    PROXIABLE = ('proxiable', 'boolean')
+    VERIFY_AP_REQ_NOFAIL = ('verify_ap_req_nofail', 'boolean')
+    WARN_PWEXPIRE = ('warn_pwexpire', 'time')
+    HTTP_PROXY = ('http_proxy', 'proxy-spec')
+    DNS_PROXY = ('dns_proxy', 'proxy-spec')
+    EXTRA_ADDRESSES = ('extra_addresses', 'address')
+    TIME_FORMAT = ('time_format', 'string')
+    DATE_FORMAT = ('date_format', 'string')
+    LOG_UTC = ('log_utc', 'boolean')
+    SCAN_INTERFACES = ('scan_interfaces', 'boolean')
+    FCACHE_VERSION = ('fcache_version', 'int')
+    KRB4_GET_TICKETS = ('krb4_get_tickets', 'boolean')
+    FCC_MIT_TICKETFLAGS = ('fcc-mit-ticketflags', 'boolean')
+
+    def __str__(self):
+        return self.value[0]
+
+
+class KRB_ETYPE(enum.Enum):
+    DES_CBC_CRC = 'des-cbc-crc'
+    DES_CBC_MD4 = 'des-cbc-md4'
+    DES_CBC_MD5 = 'des-cbc-md5'
+    DES3_CBC_SHA1 = 'des3-cbc-sha1'
+    ARCFOUR_HMAC_MD5 = 'arcfour-hmac-md5'
+    AES128_CTS_HMAC_SHA1_96 = 'aes128-cts-hmac-sha1-96'
+    AES256_CTS_HMAC_SHA1_96 = 'aes256-cts-hmac-sha1-96'
+
+
 class KerberosService(ConfigService):
     class Config:
         service = "kerberos"
@@ -29,12 +90,26 @@ class KerberosService(ConfigService):
     ))
     async def do_update(self, data):
         """
-        :appdefaults_aux: add parameters to "appdefaults" section of the krb5.conf file.
-        :libdefautls_aux: add parameters to "libdefaults" section of the krb5.conf file.
+        `appdefaults_aux` add parameters to "appdefaults" section of the krb5.conf file.
+
+        `libdefaults_aux` add parameters to "libdefaults" section of the krb5.conf file.
         """
+        verrors = ValidationErrors()
+
         old = await self.config()
         new = old.copy()
         new.update(data)
+        verrors.add_child(
+            'kerberos_settings_update',
+            await self._validate_appdefaults(new['appdefaults_aux'])
+        )
+        verrors.add_child(
+            'kerberos_settings_update',
+            await self._validate_libdefaults(new['libdefaults_aux'])
+        )
+        if verrors:
+            raise verrors
+
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
@@ -55,6 +130,103 @@ class KerberosService(ConfigService):
         if klist.returncode != 0:
             return False
         return True
+
+    @private
+    async def _validate_param_type(self, data):
+        supported_validation_types = [
+            'boolean',
+            'cctype',
+            'etypes',
+            'keytab',
+        ]
+        if data['ptype'] not in supported_validation_types:
+            return
+
+        if data['ptype'] == 'boolean':
+            if data['value'].upper() not in ['YES', 'TRUE', 'NO', 'FALSE']:
+                raise CallError(f'[{data["value"]}] is not boolean')
+
+        if data['ptype'] == 'etypes':
+            for e in data['value'].split(' '):
+                try:
+                    KRB_ETYPE(e)
+                except Exception:
+                    raise CallError(f'[{e}] is not a supported encryption type')
+
+        if data['ptype'] == 'cctype':
+            for cctype in ['DIR', 'FILE', 'MEMORY']:
+                if cctype not in data['value']:
+                    raise CallError(f'{data["value"]} is an unsupported cctype')
+
+        if data['ptype'] == 'keytab':
+            try:
+                keytab(data['value'])
+            except Exception:
+                raise CallError(f'{data["value"]} is an unsupported keytab path')
+
+    @private
+    async def _validate_appdefaults(self, appdefaults):
+        verrors = ValidationErrors()
+        for line in appdefaults.splitlines():
+            param = line.split('=')
+            if len(param) == 2 and (param[1].strip())[0] != '{':
+                validated_param = list(filter(
+                    lambda x: param[0].strip() in (x.value)[0], KRB_AppDefaults
+                ))
+
+                if not validated_param:
+                    verrors.add(
+                        'kerberos_appdefaults',
+                        f'{param[0]} is an invalid appdefaults parameter.'
+                    )
+                    continue
+
+                try:
+                    await self._validate_param_type({
+                        'ptype': (validated_param[0]).value[1],
+                        'value': param[1].strip()
+                    })
+                except Exception as e:
+                    verrors.add(
+                        'kerberos_appdefaults',
+                        f'{param[0]} has invalid value: {e.errmsg}.'
+                    )
+                    continue
+
+        return verrors
+
+    @private
+    async def _validate_libdefaults(self, libdefaults):
+        verrors = ValidationErrors()
+        for line in libdefaults.splitlines():
+            param = line.split('=')
+            if len(param) == 2:
+                validated_param = list(filter(
+                    lambda x: param[0].strip() in (x.value)[0], KRB_LibDefaults
+                ))
+
+                if not validated_param:
+                    verrors.add(
+                        'kerberos_libdefaults',
+                        f'{param[0]} is an invalid libdefaults parameter.'
+                    )
+                    continue
+
+                try:
+                    await self._validate_param_type({
+                        'ptype': (validated_param[0]).value[1],
+                        'value': param[1].strip()
+                    })
+                except Exception as e:
+                    verrors.add(
+                        'kerberos_libdefaults',
+                        f'{param[0]} has invalid value: {e.errmsg}.'
+                    )
+
+            else:
+                verrors.add('kerberos_libdefaults', f'{line} is an invalid libdefaults parameter.')
+
+        return verrors
 
     @private
     async def _kinit(self):
