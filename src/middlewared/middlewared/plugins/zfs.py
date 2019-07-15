@@ -446,7 +446,8 @@ class ZFSDatasetService(CRUDService):
                     except libzfs.ZFSException:
                         datasets = []
                 else:
-                    datasets = [i.__getstate__() for i in zfs.datasets]
+                    props = (options or {}).get('extra', {}).get('properties', []).copy()
+                    datasets = list(zfs.datasets_serialized(props=props))
         return filter_list(datasets, filters, options)
 
     def query_for_quota_alert(self):
