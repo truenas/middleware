@@ -627,7 +627,6 @@ class SharingSMBService(CRUDService):
         List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
         Bool('shadowcopy', default=False),
         Str('auxsmbconf', max_length=None),
-        Bool('default_permissions', default=False),
         Bool('enabled', default=True),
         register=True
     ))
@@ -636,9 +635,6 @@ class SharingSMBService(CRUDService):
         Create a SMB Share.
 
         `timemachine` when set, enables Time Machine backups for this share.
-
-        `default_permissions` when set makes ACLs grant read and write for owner or group and read-only for others. It
-        is advised to be disabled when creating shares on a sytem with custom ACLs.
 
         `ro` when enabled, prohibits write access to the share.
 
@@ -656,11 +652,6 @@ class SharingSMBService(CRUDService):
         """
         verrors = ValidationErrors()
         path = data['path']
-
-        default_perms = data.pop('default_permissions', True)
-
-        if 'noacl' in data['vfsobjects']:
-            default_perms = False
 
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
@@ -683,7 +674,6 @@ class SharingSMBService(CRUDService):
         await self.extend(data)  # We should do this in the insert call ?
 
         await self._service_change('cifs', 'reload')
-        await self.apply_default_perms(default_perms, path, data['home'])
 
         return data
 
@@ -701,7 +691,6 @@ class SharingSMBService(CRUDService):
         """
         verrors = ValidationErrors()
         path = data.get('path')
-        default_perms = data.pop('default_permissions', False)
 
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
@@ -732,7 +721,6 @@ class SharingSMBService(CRUDService):
         await self.extend(new)  # same here ?
 
         await self._service_change('cifs', 'reload')
-        await self.apply_default_perms(default_perms, path, data['home'])
 
         return new
 
@@ -837,53 +825,6 @@ class SharingSMBService(CRUDService):
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
 
         return data
-
-    @private
-    async def apply_default_perms(self, default_perms, path, is_home):
-        """
-        Reset permissions on an SMB share to "default". This is a recursive
-        operaton, and will replace any existing ACL on the share path and any
-        sub-datasets. The default ACLS depends on whether this is a `[homes]`
-        share. Shares that are not the special "homes" share have the
-        following ACL:
-
-        `owner@:full_set:fd:allow`
-
-        `group@:full_set:fd:allow`
-
-        The path to homes shares are dynamically generated via pam_mkhomedir
-        The final path (the user's actual home directory) will only have the
-        following ACE:
-
-        `owner@:full_set:fd:allow`
-
-        The actual ACL written on the path specified in the UI will vary for
-        homes shares depending on whether Active Directory is enabled. In all
-        cases, the ACL is written so that users have adequate permissions to
-        traverse to their home directory and the actual home directory is only
-        accessible by the user.
-
-        If an SMB admin group has been selected, then it will also be added to the
-        share's ACL.
-        """
-        if not default_perms:
-            return
-
-        acl = []
-        if not is_home:
-            acl = await self.middleware.call('filesystem.get_default_acl', 'RESTRICTED')
-        elif await self.middleware.call('activedirectory.get_state') != 'DISABLED':
-            acl = await self.middleware.call('filesystem.get_default_acl', 'DOMAIN_HOME')
-        else:
-            acl = await self.middleware.call('filesystem.get_default_acl', 'HOME')
-
-        await self.middleware.call('filesystem.setacl', {
-            'path': path,
-            'dacl': acl,
-            'uid': None,
-            'gid': None,
-            'options': {'recursive': True, 'traverse': True}
-        })
 
     @private
     async def generate_vuid(self, timemachine, vuid=""):
