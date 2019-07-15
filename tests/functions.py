@@ -8,6 +8,7 @@ from auto_config import default_api_url, api1_url, api2_url, user, password
 import json
 import os
 from subprocess import run, Popen, PIPE
+from time import sleep
 import re
 
 global header
@@ -17,22 +18,25 @@ authentification = (user, password)
 
 
 def GET(testpath, **optional):
-    if "api" in optional:
-        api_v = optional.get('api', None)
-        if api_v == "1":
-            api_url = api1_url
-        elif api_v == "2":
-            api_url = api2_url
+    if testpath.startswith('http'):
+        getit = requests.get(testpath)
+    else:
+        if "api" in optional:
+            api_v = optional.get('api', None)
+            if api_v == "1":
+                api_url = api1_url
+            elif api_v == "2":
+                api_url = api2_url
+            else:
+                raise ValueError('api parameter must be "1" or "2"')
         else:
-            raise ValueError('api parameter should be "1" or "2"')
-    else:
-        api_url = default_api_url
-    if optional.pop("anonymous", False):
-        auth = None
-    else:
-        auth = authentification
-    getit = requests.get(api_url + testpath, headers=header,
-                         auth=auth)
+            api_url = default_api_url
+        if optional.pop("anonymous", False):
+            auth = None
+        else:
+            auth = authentification
+        getit = requests.get(api_url + testpath, headers=header,
+                             auth=auth)
     return getit
 
 
@@ -305,3 +309,18 @@ def ping_host(host):
         return False
     else:
         return True
+
+
+def wait_on_job(job_id, max_timeout):
+    global job_results
+    timeout = 0
+    while True:
+        job_results = GET(f'/core/get_jobs/?id={job_id}')
+        job_state = job_results.json()[0]['state']
+        if job_state in ('RUNNING', 'WAITING'):
+            sleep(5)
+        elif job_state in ('SUCCESS', 'FAILED'):
+            return {'state': job_state, 'results': job_results.json()[0]}
+        if timeout >= max_timeout:
+            return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
+        timeout += 5

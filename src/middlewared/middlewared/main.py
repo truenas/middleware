@@ -10,6 +10,7 @@ from .service_exception import adapt_exception
 from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
+from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -266,6 +267,7 @@ class Application(object):
         elif ident in self.__event_sources:
             event_source = self.__event_sources[ident]['event_source']
             await self.middleware.run_in_thread(event_source.cancel)
+            self.__event_sources.pop(ident)
 
     def send_event(self, name, event_type, **kwargs):
         if (
@@ -773,7 +775,8 @@ class Middleware(LoadPluginsMixin):
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__threadpool = concurrent.futures.ThreadPoolExecutor(
+        self.__io_threadpool = IoThreadPoolExecutor('IoThread', 20)
+        self.__ws_threadpool = concurrent.futures.ThreadPoolExecutor(
             initializer=lambda: set_thread_name('threadpool_ws'),
             max_workers=10,
         )
@@ -1013,7 +1016,7 @@ class Middleware(LoadPluginsMixin):
 
     async def _run_in_conn_threadpool(self, method, *args, **kwargs):
         """
-        Threads to handle websocket connection are gated on `__threadpool`.
+        Threads to handle websocket connection are gated on `__ws_threadpool`.
         Any other calls should use `run_in_thread` as that launches its own thread
         and does not cause deadlock waiting another thread to finish in the pool
         (which could happen on the stack call, e.g.
@@ -1021,7 +1024,7 @@ class Middleware(LoadPluginsMixin):
            uses the thread pool. If service.foo is called many times before each thread
            finishes we will have a deadlock)
         """
-        return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
+        return await self.run_in_executor(self.__ws_threadpool, method, *args, **kwargs)
 
     def __init_procpool(self):
         self.__procpool = concurrent.futures.ProcessPoolExecutor(
@@ -1042,14 +1045,7 @@ class Middleware(LoadPluginsMixin):
                 self.__init_procpool()
 
     async def run_in_thread(self, method, *args, **kwargs):
-        executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=1,
-            initializer=lambda: set_thread_name('io_thread'),
-        )
-        try:
-            return await self.loop.run_in_executor(executor, functools.partial(method, *args, **kwargs))
-        finally:
-            executor.shutdown(wait=False)
+        return await self.loop.run_in_executor(self.__io_threadpool, functools.partial(method, *args, **kwargs))
 
     def pipe(self):
         return Pipe(self)

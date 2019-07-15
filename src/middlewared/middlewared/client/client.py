@@ -19,6 +19,13 @@ import threading
 import time
 import uuid
 
+try:
+    from libzfs import Error as ZFSError
+except ImportError:
+    LIBZFS = False
+else:
+    LIBZFS = True
+
 
 class Event(TEvent):
 
@@ -273,6 +280,8 @@ class ErrnoMixin:
 
     @classmethod
     def _get_errname(cls, code):
+        if LIBZFS and 2000 <= code <= 2100:
+            return 'EZFS_' + ZFSError(code).name
         for k, v in cls.__dict__.items():
             if k.startswith("E") and v == code:
                 return k
@@ -409,6 +418,12 @@ class Client(object):
                     if subid == event['id']:
                         event['ready'].set()
                         break
+        elif msg == 'nosub':
+            for event in self._event_callbacks.values():
+                if message['id'] == event['id']:
+                    event['error'] = message['error']['error']
+                    event['ready'].set()
+                    break
 
     def on_open(self):
         features = []
@@ -502,6 +517,7 @@ class Client(object):
             'id': _id,
             'callback': callback,
             'ready': ready,
+            'error': None,
         }
         self._send({
             'msg': 'sub',
@@ -509,6 +525,18 @@ class Client(object):
             'name': name,
         })
         ready.wait()
+        if self._event_callbacks[name]['error']:
+            raise ValueError(self._event_callbacks[name]['error'])
+        return _id
+
+    def unsubscribe(self, id):
+        self._send({
+            'msg': 'unsub',
+            'id': id,
+        })
+        for k, v in list(self._event_callbacks.items()):
+            if v['id'] == id:
+                self._event_callbacks.pop(k)
 
     def ping(self, timeout=10):
         _id = str(uuid.uuid4())

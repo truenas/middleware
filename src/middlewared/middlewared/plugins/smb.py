@@ -11,7 +11,6 @@ import asyncio
 import codecs
 import enum
 import errno
-import grp
 import os
 import re
 import subprocess
@@ -98,6 +97,18 @@ class SMBService(SystemServiceService):
                 c for c in sorted(charset, key=key_cp) if c not in initial
             ] + initial
         }
+
+    @accepts()
+    async def bindip_choices(self):
+        """
+        List of valid choices for IP addresses to which to bind the SMB service.
+        Addresses assigned by DHCP are excluded from the results.
+        """
+        choices = {}
+        for i in await self.middleware.call('interface.query'):
+            for alias in i['aliases']:
+                choices[alias['address']] = alias['address']
+        return choices
 
     @private
     async def validate_admin_groups(self, sid):
@@ -192,12 +203,12 @@ class SMBService(SystemServiceService):
             admin_group = smb['admin_group']
 
         # We must use GIDs because wbinfo --name-to-sid expects a domain prefix "FREENAS\user"
-        group = await self.middleware.call("notifier.get_group_object", admin_group)
+        group = await self.middleware.call("dscache.get_uncached_group", admin_group)
         if not group:
             verrors.add('smb_update.admin_group', f"Failed to validate group: {admin_group}")
             raise verrors
 
-        sid = await self.wbinfo_gidtosid(group[2])
+        sid = await self.wbinfo_gidtosid(group['gr_gid'])
         if sid == "WBC_ERR_WINBIND_NOT_AVAILABLE":
             self.logger.debug("Delaying admin group add until winbind starts")
             await self.middleware.call('cache.put', 'SMB_SET_ADMIN', True)
@@ -489,18 +500,11 @@ class SMBService(SystemServiceService):
         Str('loglevel', enum=['NONE', 'MINIMUM', 'NORMAL', 'FULL', 'DEBUG']),
         Bool('syslog'),
         Bool('localmaster'),
-        Bool('domain_logons'),
-        Bool('timeserver'),
         Str('guest'),
         Str('admin_group', required=False, default=None, null=True),
         Str('filemask'),
         Str('dirmask'),
-        Bool('nullpw'),
-        Bool('unixext'),
         Bool('zeroconf'),
-        Bool('hostlookup'),
-        Bool('allow_execute_always'),
-        Bool('obey_pam_restrictions'),
         Bool('ntlmv1_auth'),
         List('bindip', items=[IPAddr('ip')], default=[]),
         Str('smb_options', max_length=None),
@@ -555,6 +559,12 @@ class SMBService(SystemServiceService):
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
+
+        if data.get('bindip'):
+            bindip_choices = list((await self.bindip_choices()).keys())
+            for idx, item in enumerate(data['bindip']):
+                if item not in bindip_choices:
+                    verrors.add(f'smb_update.bindip.{idx}', f'IP address [{item}] is not a configured address for this server')
 
         for i in ('filemask', 'dirmask'):
             if i not in data or not data[i]:
@@ -860,70 +870,12 @@ class SharingSMBService(CRUDService):
             return
 
         acl = []
-        admin = None
-        smb = await self.middleware.call('smb.config')
-        if smb['admin_group']:
-            admin = await self.middleware.run_in_thread(grp.getgrnam, smb['admin_group'])
-            acl.append({
-                "tag": "GROUP",
-                "id": admin[2],
-                "type": "ALLOW",
-                "perms": {"BASIC": "FULL_CONTROL"},
-                "flags": {"BASIC": "INHERIT"}
-            })
-
-        acl.append({
-            "tag": "owner@",
-            "id": None,
-            "type": "ALLOW",
-            "perms": {"BASIC": "FULL_CONTROL"},
-            "flags": {"BASIC": "INHERIT"},
-        })
-
         if not is_home:
-            acl.append({
-                "tag": "group@",
-                "id": None,
-                "type": "ALLOW",
-                "perms": {"BASIC": "FULL_CONTROL"},
-                "flags": {"BASIC": "INHERIT"},
-            })
-
+            acl = await self.middleware.call('filesystem.get_default_acl', 'RESTRICTED')
         elif await self.middleware.call('activedirectory.get_state') != 'DISABLED':
-            acl.extend([
-                {
-                    "tag": "group@",
-                    "id": None,
-                    "type": "ALLOW",
-                    "perms": {"BASIC": "MODIFY"},
-                    "flags": {'DIRECTORY_INHERIT': True, 'INHERIT_ONLY': True, 'NO_PROPAGATE_INHERIT': True}
-                },
-                {
-                    "tag": "everyone@",
-                    "id": None,
-                    "type": "ALLOW",
-                    "perms": {"BASIC": "TRAVERSE"},
-                    "flags": {"BASIC": "NOINHERIT"}
-                },
-            ])
-
+            acl = await self.middleware.call('filesystem.get_default_acl', 'DOMAIN_HOME')
         else:
-            acl.extend([
-                {
-                    "tag": "group@",
-                    "id": None,
-                    "type": "ALLOW",
-                    "perms": {"BASIC": "MODIFY"},
-                    "flags": {"BASIC": "NOINHERIT"}
-                },
-                {
-                    "tag": "everyone@",
-                    "id": None,
-                    "type": "ALLOW",
-                    "perms": {"BASIC": "TRAVERSE"},
-                    "flags": {"BASIC": "NOINHERIT"}
-                },
-            ])
+            acl = await self.middleware.call('filesystem.get_default_acl', 'HOME')
 
         await self.middleware.call('filesystem.setacl', {
             'path': path,

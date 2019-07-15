@@ -849,8 +849,8 @@ require([
         };
         var newFeatures = (
             ["exclude", "periodic_snapshot_tasks", "naming_schema", "auto", "only_matching_schedule",
-             "allow_from_scratch", "hold_pending_snapshots", "retention_policy", "dedup", "large_block", "embed",
-             "compressed", "retries"].
+             "allow_from_scratch", "hold_pending_snapshots", "dedup", "large_block", /* "embed", */
+             "compressed", "retries", "logging_level"].
             concat("enable_schedule").concat(schedule).
             concat("enable_restrict_schedule").concat(restrictSchedule).
             concat(policies["SOURCE"]).concat(policies["CUSTOM"]).concat(policies["NONE"])
@@ -861,7 +861,7 @@ require([
                                               "netcat_active_side_listen_address", "netcat_active_side_port_min",
                                               "netcat_active_side_port_max", "netcat_passive_side_connect_address"]),
             "LOCAL": newFeatures,
-            "LEGACY": ["ssh_credentials"],
+            "LEGACY": ["ssh_credentials", "compression", "speed_limit"],
         };
 
         var visible = {};
@@ -1014,6 +1014,41 @@ require([
 
     }
 
+    snmpv3toggle = function() {
+        var community = registry.byId("id_community").domNode.parentNode.parentNode;
+        var v3_username = registry.byId("id_v3_username").domNode.parentNode.parentNode;
+        var v3_authkey = registry.byId("id_v3_authkey").domNode.parentNode.parentNode;
+        var v3_privkey = registry.byId("id_v3_privkey").domNode.parentNode.parentNode;
+        var v3_authprotocol = registry.byId("id_v3_authprotocol").domNode.parentNode.parentNode;
+        var v3_privprotocol = registry.byId("id_v3_privprotocol").domNode.parentNode.parentNode;
+
+        domStyle.set(community, "display", "none");
+        domStyle.set(v3_username, "display", "none");
+        domStyle.set(v3_authkey, "display", "none");
+        domStyle.set(v3_privkey, "display", "none");
+        domStyle.set(v3_authprotocol, "display", "none");
+        domStyle.set(v3_privprotocol, "display", "none");
+
+        if (registry.byId("id_v3").get('value'))
+        {
+            domStyle.set(community, "display", "none");
+            domStyle.set(v3_username, "display", "table-row");
+            domStyle.set(v3_authkey, "display", "table-row");
+            domStyle.set(v3_privkey, "display", "table-row");
+            domStyle.set(v3_authprotocol, "display", "table-row");
+            domStyle.set(v3_privprotocol, "display", "table-row");
+        }
+        else
+        {
+            domStyle.set(community, "display", "table-row");
+            domStyle.set(v3_username, "display", "none");
+            domStyle.set(v3_authkey, "display", "none");
+            domStyle.set(v3_privkey, "display", "none");
+            domStyle.set(v3_authprotocol, "display", "none");
+            domStyle.set(v3_privprotocol, "display", "none");
+        }
+    }
+
     alertServiceTypeToggle = function() {
 
         var type = registry.byId("id_type");
@@ -1064,6 +1099,16 @@ require([
         // Mail
         var email = registry.byId("id_email").domNode.parentNode.parentNode;
 
+        // SNMP Trap
+        var port = registry.byId("id_port").domNode.parentNode.parentNode;
+        var v3 = registry.byId("id_v3").domNode.parentNode.parentNode;
+        var community = registry.byId("id_community").domNode.parentNode.parentNode;
+        var v3_username = registry.byId("id_v3_username").domNode.parentNode.parentNode;
+        var v3_authkey = registry.byId("id_v3_authkey").domNode.parentNode.parentNode;
+        var v3_privkey = registry.byId("id_v3_privkey").domNode.parentNode.parentNode;
+        var v3_authprotocol = registry.byId("id_v3_authprotocol").domNode.parentNode.parentNode;
+        var v3_privprotocol = registry.byId("id_v3_privprotocol").domNode.parentNode.parentNode;
+
         domStyle.set(_url, "display", "none");
         domStyle.set(cluster_name, "display", "none");
         domStyle.set(username, "display", "none");
@@ -1089,6 +1134,14 @@ require([
         domStyle.set(aws_secret_access_key, "display", "none");
         domStyle.set(routing_key, "display", "none");
         domStyle.set(email, "display", "none");
+        domStyle.set(port, "display", "none");
+        domStyle.set(v3, "display", "none");
+        domStyle.set(community, "display", "none");
+        domStyle.set(v3_username, "display", "none");
+        domStyle.set(v3_authkey, "display", "none");
+        domStyle.set(v3_privkey, "display", "none");
+        domStyle.set(v3_authprotocol, "display", "none");
+        domStyle.set(v3_privprotocol, "display", "none");
 
         if(type.get('value') == 'InfluxDB') {
             domStyle.set(host, "display", "table-row");
@@ -1133,6 +1186,11 @@ require([
             domStyle.set(routing_key, "display", "table-row");
         } else if(type.get('value') == 'Mail') {
             domStyle.set(email, "display", "table-row");
+        } else if(type.get('value') == 'SNMPTrap') {
+            domStyle.set(host, "display", "table-row");
+            domStyle.set(port, "display", "table-row");
+            domStyle.set(v3, "display", "table-row");
+            snmpv3toggle();
         }
     }
 
@@ -1144,7 +1202,11 @@ require([
                 id: "Warning_box_dialog",
                 content: domConstruct.create(
                     "p", {
-                        innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.") + "<br />" + gettext("NOTE: This is just a warning, to perform the operation you must click Save.")
+                        innerHTML: gettext(
+                            gettext("The system dataset will be moved to pool ")+
+                            "<i>" + gettext(sys_dataset_pool.get('value'))+ "</i>"+
+                            gettext(". Services Including syslog, SMB, and reporting will be restarted.")
+                        )
                     }
                 ),
                 onHide: function () {
@@ -1155,7 +1217,52 @@ require([
                     this.destroy();
                 }
             });
-            dialog.okButton = new Button({label: gettext("Continue")});
+            dialog.okButton = new Button({label: gettext("Acknowledge")});
+            dialog.cancelButton = new Button({label: gettext("Cancel")});
+            dialog.addChild(dialog.okButton);
+            dialog.addChild(dialog.cancelButton);
+            dialog.okButton.on('click', function(e){
+                dialog.confirmed = true;
+                dialog.hide();
+            });
+            dialog.cancelButton.on('click', function(e) {
+                dialog.hide();
+            });
+            dialog.confirmed = false;
+            dialog.startup();
+            dialog.show();
+        } else {
+            sys_dataset_pool._isReset = false;
+        }
+
+    }
+
+    systemDatasetMigration_TN = function() {
+        sys_dataset_pool = registry.byId('id_sys_pool')
+        if (!sys_dataset_pool._isReset) {
+            var dialog = new Dialog({
+                title: gettext("Warning!"),
+                id: "Warning_box_dialog",
+                content: domConstruct.create(
+                    "p", {
+                        innerHTML: gettext(
+                            gettext("The system dataset will be moved to pool ")+
+                            "<i>" + gettext(sys_dataset_pool.get('value'))+ "</i>"+
+                            gettext(". Services Including syslog, SMB, and reporting will be restarted.")+
+                            "<br />"+
+                            gettext("The passive storage controller on TrueNAS HA systems will be restarted.")
+                        )
+                    }
+                ),
+                onHide: function () {
+                    if (!this.confirmed) {
+                        sys_dataset_pool._isReset = true;
+                        sys_dataset_pool.reset();
+                    }
+                    this.destroy();
+                }
+            });
+            dialog.okButton = new Button({label: gettext("Acknowledge")});
             dialog.cancelButton = new Button({label: gettext("Cancel")});
             dialog.addChild(dialog.okButton);
             dialog.addChild(dialog.cancelButton);
@@ -1185,6 +1292,8 @@ require([
         var attributesInput = dom.byId("id_attributes");
         var attributes = JSON.parse(attributesInput.value) || {};
 
+        var last_onedrive_drives_request = null;
+
         var updateAttributes = function() {
             var attributes = {};
             for (var i = 0; i < credentialsSchemas[provider].length; i++)
@@ -1206,6 +1315,40 @@ require([
             }
 
             attributesInput.value = JSON.stringify(attributes);
+
+            if (provider == "ONEDRIVE")
+            {
+                if (attributes.client_id && attributes.client_secret && attributes.token)
+                {
+                    var onedrive_drives_request = {
+                        "client_id": attributes.client_id,
+                        "client_secret": attributes.client_secret,
+                        "token": attributes.token,
+                    };
+                    if (JSON.stringify(last_onedrive_drives_request) != JSON.stringify(onedrive_drives_request))
+                    {
+                        last_onedrive_drives_request = onedrive_drives_request;
+
+                        var onedrive_drives = document.getElementById("onedrive_drives");
+                        onedrive_drives.innerHTML = "Loading...";
+                        Middleware.call("cloudsync.onedrive_list_drives", [onedrive_drives_request], function(result) {
+                            var html = '<ul>';
+                            for (var i = 0; i < result.length; i++)
+                            {
+                                html += '<li><a href="#" onclick="cloudAttributesSet(' + JSON.stringify(result[i]).replace(/\"/g, '&quot;') + ');">' + result[i].drive_id + ' (' + result[i].drive_type + ')</a></li>';
+                            }
+                            html += '</ul>';
+                            onedrive_drives.innerHTML = html;
+                        }, function(error) {
+                            onedrive_drives.innerHTML = '<div style="color: #f00;">Error: ' + error.reason + '</div>';
+                        });
+                    }
+                }
+            }
+            else
+            {
+                last_onedrive_drives_request = null;
+            }
         };
 
         while (true)
@@ -1290,6 +1433,15 @@ require([
             }
 
             document.getElementById(id).onchange = updateAttributes;
+
+            if (provider == "ONEDRIVE" && property.property == "drive_type")
+            {
+                var newNode = document.createElement("tr");
+                newNode.className = "cloud-credentials-attribute";
+                newNode.innerHTML = "<th>Drives</th><td id='onedrive_drives'></td>";
+
+                attributesInput.parentNode.insertBefore(newNode, attributesInput.nextSibling);
+            }
         }
         if (credentialsOauths[provider])
         {
@@ -1316,17 +1468,21 @@ require([
             }
             else
             {
-                for (k in message.data.result)
-                {
-                    if (document.getElementById("id_attributes_" + k))
-                    {
-                        document.getElementById("id_attributes_" + k).value = message.data.result[k];
-                        document.getElementById("id_attributes_" + k).onchange();
-                    }
-                }
+                cloudAttributesSet(message.data.result);
             }
         }
     }, false);
+
+    window.cloudAttributesSet = function(result) {
+        for (k in result)
+        {
+            if (document.getElementById("id_attributes_" + k))
+            {
+                document.getElementById("id_attributes_" + k).value = result[k];
+                document.getElementById("id_attributes_" + k).onchange();
+            }
+        }
+    }
 
     cloudSyncDirectionToggle = function() {
 

@@ -214,17 +214,23 @@ async def rclone(middleware, job, cloud_sync):
         if cancelled_error is not None:
             raise cancelled_error
         if proc.returncode != 0:
-            raise ValueError("rclone failed")
+            message = "rclone failed"
+            if "dropbox__restricted_content" in job.internal_data:
+                message = "DropBox restricted content"
+            raise ValueError(message)
 
         await run_script(job, env, cloud_sync["post_script"], "Post-script")
 
-        if REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials:
+        refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials
+        if refresh_credentials:
             credentials_attributes = cloud_sync["credentials"]["attributes"].copy()
             updated = False
             ini = configparser.ConfigParser()
             ini.read(config.config_path)
             for key, value in ini["remote"].items():
-                if key in credentials_attributes and credentials_attributes[key] != value:
+                if (key in refresh_credentials and
+                        key in credentials_attributes and
+                        credentials_attributes[key] != value):
                     logger.debug("Updating credentials attributes key %r", key)
                     credentials_attributes[key] = value
                     updated = True
@@ -273,16 +279,31 @@ async def run_script_check(job, proc, name):
 
 
 async def rclone_check_progress(job, proc):
+    dropbox__restricted_content = False
     while True:
         read = (await proc.stdout.readline()).decode()
         if read == "":
             break
+        if "failed to open source object: path/restricted_content/" in read:
+            job.internal_data["dropbox__restricted_content"] = True
+            dropbox__restricted_content = True
         job.logs_fd.write(read.encode("utf-8", "ignore"))
         reg = RE_TRANSF.search(read)
         if reg:
             transferred = reg.group(1).strip()
             if not transferred.isdigit():
                 job.set_progress(None, transferred)
+
+    if dropbox__restricted_content:
+        message = "\n" + (
+            "Dropbox sync failed due to restricted content being present in one of the folders. This may include\n"
+            "copyrighted content or the DropBox manual PDF that appears in the home directory after signing up.\n"
+            "All other files were synchronized, but no deletions were performed as synchronization is considered\n"
+            "unsuccessful. Please inspect logs to determine which files are considered restricted and exclude them\n"
+            "from your synchronization. If you think that files are restricted erroneously, contact\n"
+            "Dropbox Support: https://www.dropbox.com/support"
+        )
+        job.logs_fd.write(message.encode("utf-8", "ignore"))
 
 
 def rclone_encrypt_password(password):
@@ -983,9 +1004,16 @@ class CloudSyncService(CRUDService):
         return schema
 
 
+remote_classes = []
+for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
+                                        "rclone", "remote")):
+    for cls in load_classes(module, BaseRcloneRemote, []):
+        remote_classes.append(cls)
+        for method_name in cls.extra_methods:
+            setattr(CloudSyncService, f"{cls.name.lower()}_{method_name}", getattr(cls, method_name))
+
+
 async def setup(middleware):
-    for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir,
-                                            "rclone", "remote")):
-        for cls in load_classes(module, BaseRcloneRemote, []):
-            remote = cls(middleware)
-            REMOTES[remote.name] = remote
+    for cls in remote_classes:
+        remote = cls(middleware)
+        REMOTES[remote.name] = remote

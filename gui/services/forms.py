@@ -32,7 +32,6 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.system import activedirectory_enabled, ldap_enabled
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
@@ -123,7 +122,9 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
                     self.data['cifs_srv_bindip'].split(',')
                 )
 
-        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices(noloopback=False))
+        with client as c:
+            self.fields['cifs_srv_bindip'].choices = (c.call('smb.bindip_choices')).items()
+
         self.fields['cifs_srv_unixcharset'].choices = choices.UNIXCHARSET_CHOICES()
 
         if self.instance.id and self.instance.cifs_srv_bindip:
@@ -134,18 +135,6 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
             self.fields['cifs_srv_bindip'].initial = (bindips)
         else:
             self.fields['cifs_srv_bindip'].initial = ('')
-
-        if activedirectory_enabled():
-            self.initial['cifs_srv_localmaster'] = False
-            self.fields['cifs_srv_localmaster'].widget.attrs['disabled'] = 'disabled'
-            self.initial['cifs_srv_timeserver'] = False
-            self.fields['cifs_srv_timeserver'].widget.attrs['disabled'] = 'disabled'
-            self.initial['cifs_srv_domain_logons'] = False
-            self.fields['cifs_srv_domain_logons'].widget.attrs['disabled'] = 'disabled'
-
-        elif ldap_enabled():
-            self.initial['cifs_srv_domain_logons'] = True
-            self.fields['cifs_srv_domain_logons'].widget.attrs['readonly'] = True
 
         _n = notifier()
         if not _n.is_freenas():

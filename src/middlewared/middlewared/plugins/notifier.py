@@ -2,7 +2,6 @@ from middlewared.service import CallError, Service
 
 import errno
 import os
-import subprocess
 import sys
 import logging
 
@@ -20,7 +19,6 @@ from freenasUI import choices
 from freenasUI import common as fcommon
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
-from middlewared.utils import Popen
 
 
 logger = logging.getLogger('plugins.notifier')
@@ -75,51 +73,19 @@ class NotifierService(Service):
 
         return serialize(rv)
 
-    def directoryservice(self, name):
-        """Temporary wrapper to serialize DS connectors"""
-        if name == 'AD':
-            smb = self.middleware.call_sync('smb.config')
-            ad = self.middleware.call_sync('activedirectory.config')
-            data = {
-                'netbiosname': smb['netbiosname'],
-                'domainname': ad['domainname'],
-                'use_default_domain': ad['use_default_domain'],
-                'ad_idmap_backend': ad['idmap_backend'],
-                'basedn': None,
-                'userdn': None,
-                'groupdn': None,
-                'ds_type': 1,
-                'krb_realm': ad['kerberos_realm']['krb_realm'],
-                'workgroups': smb['workgroup'],
-            }
-            return data
-        elif name == 'LDAP':
-            smb = self.middleware.call_sync('smb.config')
-            ldap = self.middleware.call_sync('activedirectory.config')
-            krb_realm = ldap['kerberos_realm']['krb_realm'] if ldap['kerberos_relam'] else None
-            data = {
-                'netbiosname': smb['netbiosname'],
-                'binddn': ldap['binddn'],
-                'bindpw': ldap['bindpw'],
-                'basedn': ldap['basedn'],
-                'userdn': ldap['basedn'],
-                'groupdn': ldap['basedn'],
-                'krb_realm': ldap['kerberos_realm'],
-                'use_default_domain': ad['use_default_domain'],
-                'ad_idmap_backend': ad['idmap_backend'],
-                'ds_type': 2,
-                'krb_realm': krb_realm,
-                'workgroups': smb['workgroup']
-            }
-        else:
-            raise ValueError('Unknown ds name {0}'.format(name))
-
-        return data
-
     async def get_user_object(self, username):
         user = False
         try:
-            user = await self.middleware.call('dscache.get_uncached_user', username)
+            u = await self.middleware.call('dscache.get_uncached_user', username)
+            user = [
+                u['pw_name'],
+                '',
+                u['pw_uid'],
+                u['pw_gid'],
+                u['pw_gecos'],
+                u['pw_dir'],
+                u['pw_shell']
+            ]
         except Exception:
             pass
         return user
@@ -127,7 +93,8 @@ class NotifierService(Service):
     async def get_group_object(self, groupname):
         group = False
         try:
-            group = await self.middleware.call('dscache.get_uncached_group', groupname)
+            g = await self.middleware.call('dscache.get_uncached_group', groupname)
+            group = [g['gr_name'], '', g['gr_gid'], g['gr_mem']]
         except Exception:
             pass
         return group

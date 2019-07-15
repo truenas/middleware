@@ -563,7 +563,7 @@ class ActiveDirectoryService(ConfigService):
         must_update = False
         for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
             if key in new and old[key] != new[key]:
-                must_update = True
+                must_update = True if new[key] else False
 
         if smb_ha_mode == 'STANDALONE' and must_update:
             await self.middleware.call(

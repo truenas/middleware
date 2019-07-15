@@ -1487,8 +1487,7 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
     # Influxdb
     host = forms.CharField(
         max_length=255,
-        label=_("Host"),
-        help_text=_("Influxdb Host"),
+        label=_("Hostname"),
         required=False,
     )
     database = forms.CharField(
@@ -1628,6 +1627,61 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         required=False,
     )
 
+    # SNMPTrap
+    port = forms.IntegerField(
+        label=_('Port'),
+        required=False,
+        initial=162,
+    )
+    v3 = forms.BooleanField(
+        label=_('SNMPv3 Security Model'),
+        required=False,
+    )
+    community = forms.CharField(
+        label=_('SNMP Community'),
+        required=False,
+        initial='public',
+    )
+    v3_username = forms.CharField(
+        label=_('Username'),
+        required=False,
+    )
+    v3_authkey = forms.CharField(
+        label=_('Secret authentication key'),
+        required=False,
+    )
+    v3_privkey = forms.CharField(
+        label=_('Secret encryption key'),
+        required=False,
+    )
+    v3_authprotocol = forms.ChoiceField(
+        label=_('Authentication protocol'),
+        required=False,
+        choices=[
+            ('', 'Disabled'),
+            ('MD5', 'MD5'),
+            ('SHA', 'SHA'),
+            ('128SHA224', 'HMAC128SHA224'),
+            ('192SHA256', 'HMAC192SHA256'),
+            ('256SHA384', 'HMAC256SHA384'),
+            ('384SHA512', 'HMAC384SHA512'),
+        ],
+    )
+    v3_privprotocol = forms.ChoiceField(
+        label=_('Encryption protocol'),
+        required=False,
+        choices=[
+            ('', 'Disabled'),
+            ('DES', 'DES'),
+            ('3DESEDE', '3DES-EDE'),
+            ('AESCFB128', 'CFB128-AES-128'),
+            ('AESCFB192', 'CFB128-AES-192'),
+            ('AESCFB256', 'CFB128-AES-256'),
+            ('AESBLUMENTHALCFB192', 'CFB128-AES-192 Blumenthal'),
+            ('AESBLUMENTHALCFB256', 'CFB128-AES-256 Blumenthal'),
+        ],
+    )
+
     level = forms.ChoiceField(
         choices=[
             ('INFO', 'Info'),
@@ -1655,7 +1709,8 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         'OpsGenie': ['cluster_name', 'api_key', 'api_url'],
         'PagerDuty': ['service_key', 'client_name'],
         'Slack': ['cluster_name', 'url', 'channel', 'username', 'icon_url', 'detailed'],
-        'SNMPTrap': [],
+        'SNMPTrap': ['host', 'port', 'v3', 'community', 'v3_username', 'v3_authkey', 'v3_privkey', 'v3_authprotocol',
+                     'v3_privprotocol'],
         'VictorOps': ['api_key', 'routing_key'],
     }
 
@@ -1669,6 +1724,9 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
             self.fields['type'].choices = [(t["name"], t["title"]) for t in c.call('alertservice.list_types')]
         self.fields['type'].widget.attrs['onChange'] = (
             "alertServiceTypeToggle();"
+        )
+        self.fields['v3'].widget.attrs['onChange'] = (
+            "snmpv3toggle();"
         )
         key_order(self, len(self.fields) - 2, 'level', instance=True)
         key_order(self, len(self.fields) - 1, 'enabled', instance=True)
@@ -1695,6 +1753,9 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, data):
         data["attributes"] = {k: data[k] for k in self.types_fields[data["type"]]}
+        for k in ["community", "v3_username", "v3_authkey", "v3_privkey", "v3_authprotocol", "v3_privprotocol"]:
+            if not data["attributes"][k]:
+                data["attributes"][k] = None
         for k in sum(self.types_fields.values(), []):
             data.pop(k, None)
         return data
@@ -1729,9 +1790,15 @@ class SystemDatasetForm(MiddlewareModelForm, ModelForm):
                 pool_choices.append((v.vol_name, v.vol_name))
 
         self.fields['sys_pool'].choices = pool_choices
-        self.fields['sys_pool'].widget.attrs['onChange'] = (
-            "systemDatasetMigration();"
-        )
+        with client as c:
+            if not c.call('system.is_freenas') and c.call('notifier.failover_licensed'):
+                self.fields['sys_pool'].widget.attrs['onChange'] = (
+                    "systemDatasetMigration_TN();"
+                )
+            else:
+                self.fields['sys_pool'].widget.attrs['onChange'] = (
+                    "systemDatasetMigration();"
+                )
 
     def middleware_clean(self, update):
         update['syslog'] = update.pop('syslog_usedataset')

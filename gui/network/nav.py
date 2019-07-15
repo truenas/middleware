@@ -56,9 +56,9 @@ class IPMI_B(TreeNode):
             raise ValueError
 
         if node == 'A':
-            self.name = _('IPMI (Node B)')
+            self.name = _('IPMI (TrueNAS Controller 2)')
         else:
-            self.name = _('IPMI (Node A)')
+            self.name = _('IPMI (TrueNAS Controller 1)')
 
 
 class NetSummary(TreeNode):

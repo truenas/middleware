@@ -268,7 +268,7 @@ def test_29_checking_if_cifs_is_stop():
 
 # Create tests
 def test_30_update_smb():
-    payload = {"timeserver": False}
+    payload = {"syslog": False}
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 

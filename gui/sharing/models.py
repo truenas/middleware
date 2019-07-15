@@ -30,7 +30,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.freeadmin.models.fields import MultiSelectField
-from freenasUI.middleware.notifier import notifier
 
 
 class CIFS_Share(Model):
@@ -85,7 +84,10 @@ class CIFS_Share(Model):
         verbose_name=_('Allow Guest Access'),
         help_text=_(
             'If true then no password is required to connect to the share. '
-            'Privileges will be those of the guest account.'
+            'Privileges are the same as the guest account. Guest access is '
+            'disabled by default in Windows 10 version 1709 and Windows Server version 1903. '
+            'Additional client-side configuration is required to provide '
+            'guest access to these clients.'
         ),
         default=False,
     )
@@ -295,6 +297,12 @@ class AFP_Share(Model):
         max_length=120,
         help_text=_("Deny listed hosts and/or networks access to this volume"),
         verbose_name=_("Hosts Deny")
+    )
+    afp_vuid = models.CharField(
+        max_length=36,
+        verbose_name=_('vuid for Time Machine'),
+        blank=True,
+        editable=False,
     )
 
     afp_auxparams = models.TextField(

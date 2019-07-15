@@ -1,6 +1,6 @@
 from collections import defaultdict, namedtuple
 import copy
-from datetime import datetime
+from datetime import datetime, timezone
 import errno
 import os
 import textwrap
@@ -30,6 +30,7 @@ from middlewared.service import (
     job, periodic, private,
 )
 from middlewared.service_exception import CallError
+from middlewared.validators import validate_attributes
 from middlewared.utils import bisect, load_modules, load_classes
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
@@ -53,8 +54,8 @@ class AlertSourceRunFailedAlertClass(AlertClass):
 class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "Alert Check Failed (Backup Node)"
-    text = "Failed to check for alert %(source_name)s on backup node:\n%(traceback)s"
+    title = "Alert Check Failed (Standby Controller)"
+    text = "Failed to check for alert %(source_name)s on standby controller:\n%(traceback)s"
 
     exclude_from_list = True
 
@@ -331,7 +332,7 @@ class AlertService(Service):
     async def send_alerts(self, job):
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
-        now = datetime.now()
+        now = datetime.utcnow()
         for policy_name, policy in self.policies.items():
             gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
 
@@ -552,6 +553,8 @@ class AlertService(Service):
             alert.uuid = existing_alert.uuid
         if existing_alert is None:
             alert.datetime = alert.datetime or datetime.utcnow()
+            if alert.datetime.tzinfo is not None:
+                alert.datetime = alert.datetime.astimezone(timezone.utc).replace(tzinfo=None)
         else:
             alert.datetime = existing_alert.datetime
         if existing_alert is None:
@@ -726,6 +729,8 @@ class AlertServiceService(CRUDService):
 
     @private
     async def _compress(self, service):
+        service.pop("type__title")
+
         return service
 
     @private
@@ -737,10 +742,8 @@ class AlertServiceService(CRUDService):
             verrors.add(f"{schema_name}.type", "This field has invalid value")
             raise verrors
 
-        try:
-            factory.validate(service.get('attributes', {}))
-        except ValidationErrors as e:
-            verrors.add_child(f"{schema_name}.attributes", e)
+        verrors.add_child(f"{schema_name}.attributes",
+                          validate_attributes(list(factory.schema.attrs.values()), service))
 
         if verrors:
             raise verrors
@@ -806,11 +809,11 @@ class AlertServiceService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self._validate(data, "alert_service_update")
+        await self._validate(new, "alert_service_update")
 
-        await self._compress(data)
+        await self._compress(new)
 
-        await self.middleware.call("datastore.update", self._config.datastore, id, data)
+        await self.middleware.call("datastore.update", self._config.datastore, id, new)
 
         await self._extend(new)
 
@@ -872,7 +875,6 @@ class AlertServiceService(CRUDService):
         test_alert = Alert(
             TestAlertClass,
             node=master_node,
-            source="Test",
             datetime=datetime.utcnow(),
             _uuid="test",
         )

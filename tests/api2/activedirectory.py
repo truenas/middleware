@@ -164,13 +164,12 @@ def test_12_setting_up_smb():
     payload = {
         "description": "Test FreeNAS Server",
         "guest": "nobody",
-        "hostlookup": False,
     }
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('data', ["description", "guest", "hostlookup"])
+@pytest.mark.parametrize('data', ["description", "guest"])
 def test_13_verify_the_value_of_put_smb_object_value_of_(data):
     assert results.json()[data] == payload[data], results.text
 
@@ -181,7 +180,7 @@ def test_14_get_smb_data():
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('data', ["description", "guest", "hostlookup"])
+@pytest.mark.parametrize('data', ["description", "guest"])
 def test_15_verify_the_value_of_get_smb_object_(data):
     assert results.json()[data] == payload[data], results.text
 

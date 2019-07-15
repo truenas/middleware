@@ -84,7 +84,8 @@ class Settings(Model):
         verbose_name=_('WebGUI HTTP -> HTTPS Redirect'),
         default=False,
         help_text=_(
-            'Redirect all incoming HTTP requests to HTTPS'
+            'Redirect all incoming HTTP requests to HTTPS and '
+            'enable the HTTP Strict Transport Security (HSTS) header.'
         ),
     )
     stg_language = models.CharField(
@@ -357,6 +358,15 @@ class Email(Model):
             "sending address for mail it sends, eg: freenas@example.com"
         ),
         default='',
+    )
+    em_fromname = models.CharField(
+        max_length=120,
+        verbose_name=_("From name"),
+        help_text=_(
+            "A name which will be displayed in the \"From\" header of e-mail message"
+        ),
+        default='',
+        blank=True,
     )
     em_outgoingserver = models.CharField(
         max_length=120,

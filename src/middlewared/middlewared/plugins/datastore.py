@@ -26,6 +26,7 @@ from freenasUI.freeadmin.sqlite3_ha import base as sqlite3_ha_base
 sqlite3_ha_base.execute_sync = True
 
 from middlewared.utils import django_modelobj_serialize
+from middlewared.service_exception import MatchNotFound
 
 
 class DatastoreService(Service):
@@ -186,8 +187,10 @@ class DatastoreService(Service):
             result.append(i)
 
         if options.get('get') is True:
-            return result[0]
-
+            try:
+                return result[0]
+            except IndexError:
+                raise MatchNotFound()
         if options.get('limit'):
             return result[:options['limit']]
 

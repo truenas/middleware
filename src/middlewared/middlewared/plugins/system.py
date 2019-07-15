@@ -591,8 +591,7 @@ class SystemGeneralService(ConfigService):
 
     @private
     async def general_system_extend(self, data):
-        keys = data.keys()
-        for key in keys:
+        for key in list(data.keys()):
             if key.startswith('gui'):
                 data['ui_' + key[3:]] = data.pop(key)
 
@@ -1001,6 +1000,14 @@ class SystemGeneralService(ConfigService):
         await self.middleware.call('service.start', 'ssl')
 
         return await self.config()
+
+    @accepts()
+    async def ui_restart(self):
+        """
+        Restart HTTP server to use latest UI settings.
+        """
+        await self.middleware.call('service.restart', 'http')
+        await self.middleware.call('service.restart', 'django')
 
     @accepts()
     async def local_url(self):

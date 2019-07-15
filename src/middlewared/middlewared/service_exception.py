@@ -101,3 +101,8 @@ def adapt_exception(e):
         output = ''.join([stdout, stderr]).rstrip()
 
         return CallError(f'Command {cmd} failed (code {e.returncode}):\n{output}')
+
+
+class MatchNotFound(IndexError):
+    """Raised when there is no matching id eg: filter_utils/datastore.query"""
+    pass

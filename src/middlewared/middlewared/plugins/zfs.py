@@ -355,14 +355,6 @@ class ZFSPoolService(CRUDService):
             t.start()
             t.join()
 
-    def pools_with_paused_scrubs(self):
-        with libzfs.ZFS() as zfs:
-            return [
-                pool.name
-                for pool in zfs.pools
-                if pool.scrub.pause is not None
-            ]
-
     @accepts()
     def find_import(self):
         with libzfs.ZFS() as zfs:
@@ -650,9 +642,12 @@ class ZFSSnapshot(CRUDService):
             )
             if cp.returncode != 0:
                 raise CallError(f'Failed to retrieve snapshots: {cp.stderr}')
+            stdout = cp.stdout.strip()
+            if not stdout:
+                return []
             snaps = [
                 {'name': i, 'pool': i.split('/', 1)[0]}
-                for i in cp.stdout.strip().split('\n')
+                for i in stdout.split('\n')
             ]
             if filters:
                 return filter_list(snaps, filters, options)

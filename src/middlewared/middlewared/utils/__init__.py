@@ -17,6 +17,7 @@ from multiprocessing import Process, Queue, Value
 from threading import Lock
 
 from middlewared.schema import Schemas
+from middlewared.service_exception import MatchNotFound
 
 # For freenasOS
 if '/usr/local/lib' not in sys.path:
@@ -320,7 +321,10 @@ def filter_list(_list, filters=None, options=None):
             rv = sorted(rv, key=lambda x: x[o], reverse=reverse)
 
     if options.get('get') is True:
-        return rv[0]
+        try:
+            return rv[0]
+        except IndexError:
+            raise MatchNotFound()
 
     if options.get('limit'):
         return rv[:options['limit']]

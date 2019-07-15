@@ -12,7 +12,7 @@ from .client import ejson as json
 from .job import Job
 from .schema import Error as SchemaError
 from .service import CallError, ValidationError, ValidationErrors
-from .service_exception import adapt_exception
+from .service_exception import adapt_exception, MatchNotFound
 
 
 async def authenticate(middleware, req):
@@ -442,7 +442,7 @@ class Resource(object):
                 val = None
             filters.append((field, op, val))
 
-        return [filters, options]
+        return [filters, options] if filters or options else []
 
     async def do(self, http_method, req, resp, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
@@ -460,7 +460,19 @@ class Resource(object):
         if get_method_args is not None:
             method_args = get_method_args(req, resp, **kwargs)
         else:
-            if http_method in ('post', 'put'):
+            method_args = []
+            if http_method == 'get' and method['filterable']:
+                if self.parent and 'id' in kwargs:
+                    filterid = kwargs['id']
+                    if filterid.isdigit():
+                        filterid = int(filterid)
+                    method_args = [[('id', '=', filterid)], {'get': True}]
+                else:
+                    method_args = self._filterable_args(req)
+
+            if not method_args:
+                # RFC 7231 specifies that a GET request can accept a payload body
+                # This means that all the http methods now ( delete, get, post, put ) accept a payload body
                 try:
                     text = await req.text()
                     if not text:
@@ -468,7 +480,12 @@ class Resource(object):
                     else:
                         data = await req.json()
                         params = self.__method_params.get(methodname)
-                        if not params or len(params) == 1:
+                        if not params and http_method in ('get', 'delete') and not data:
+                            # This will happen when the request body contains empty dict "{}"
+                            # Keeping compatibility with how we used to accept the above case, this
+                            # makes sure that existing client implementations are not affected
+                            method_args = []
+                        elif not params or len(params) == 1:
                             method_args = [data]
                         else:
                             if not isinstance(data, dict):
@@ -499,16 +516,6 @@ class Resource(object):
                         'message': str(e),
                     })
                     return resp
-            elif http_method == 'get' and method['filterable']:
-                if self.parent and 'id' in kwargs:
-                    filterid = kwargs['id']
-                    if filterid.isdigit():
-                        filterid = int(filterid)
-                    method_args = [[('id', '=', filterid)], {'get': True}]
-                else:
-                    method_args = self._filterable_args(req)
-            else:
-                method_args = []
 
         """
         If the method is marked `item_method` then the first argument
@@ -535,6 +542,7 @@ class Resource(object):
                     'errno': errno,
                 })
             resp = web.Response(status=422)
+
         except Exception as e:
             adapted = adapt_exception(e)
             if adapted:
@@ -544,11 +552,17 @@ class Resource(object):
                     'errno': adapted.errno,
                 }
             else:
-                resp = web.Response(status=500)
-                result = {
-                    'message': str(e),
-                    'traceback': ''.join(traceback.format_exc()),
-                }
+                if isinstance(e, (MatchNotFound,)):
+                    resp = web.Response(status=404)
+                    result = {
+                        'message': str(e),
+                    }
+                else:
+                    resp = web.Response(status=500)
+                    result = {
+                        'message': str(e),
+                        'traceback': ''.join(traceback.format_exc()),
+                    }
 
         if isinstance(result, types.GeneratorType):
             result = list(result)

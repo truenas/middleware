@@ -26,6 +26,7 @@
 
 import asyncio
 import asyncssh
+import contextlib
 import glob
 import os
 import re
@@ -211,10 +212,10 @@ class RsyncTaskService(CRUDService):
             verrors.add(f'{schema}.user', 'User names cannot have spaces')
             raise verrors
 
-        user = await self.middleware.call(
-            'notifier.get_user_object',
-            username
-        )
+        user = None
+        with contextlib.suppress(KeyError):
+            user = await self.middleware.call('dscache.get_uncached_user', username)
+
         if not user:
             verrors.add(f'{schema}.user', f'Provided user "{username}" does not exist')
             raise verrors

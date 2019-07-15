@@ -16,4 +16,4 @@ class WebDavRcloneRemote(BaseRcloneRemote):
         Str("token", title="Access Token", required=True),
     ]
     credentials_oauth = True
-    refresh_credentials = True
+    refresh_credentials = ["token"]

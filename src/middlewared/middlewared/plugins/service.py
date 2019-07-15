@@ -637,8 +637,8 @@ class ServiceService(CRUDService):
     async def _restart_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
         await self._service("openssh", "stop", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
         await self._service("openssh", "restart", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_ssl(self, **kwargs):
@@ -777,7 +777,8 @@ class ServiceService(CRUDService):
     async def _start_ups(self, **kwargs):
         await self.middleware.call('ups.dismiss_alerts')
         await self.middleware.call('etc.generate', 'ups')
-        await self._service("nut", "start", **kwargs)
+        if (await self.middleware.call('ups.config'))['mode'] == 'MASTER':
+            await self._service("nut", "start", **kwargs)
         await self._service("nut_upsmon", "start", **kwargs)
         await self._service("nut_upslog", "start", **kwargs)
         if await self.started('collectd'):
@@ -816,7 +817,8 @@ class ServiceService(CRUDService):
 
         await self._service("nut_upslog", "stop", force=True, onetime=True)
 
-        await self._service("nut", "restart", onetime=True)
+        if (await self.middleware.call('ups.config'))['mode'] == 'MASTER':
+            await self._service("nut", "restart", onetime=True)
         await self._service("nut_upsmon", "restart", onetime=True)
         await self._service("nut_upslog", "restart", onetime=True)
         if await self.started('collectd'):
@@ -828,6 +830,7 @@ class ServiceService(CRUDService):
     async def _start_afp(self, **kwargs):
         await self.middleware.call("etc.generate", "afpd")
         await self._service("netatalk", "start", **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
 
     async def _stop_afp(self, **kwargs):
         await self._service("netatalk", "stop", force=True, **kwargs)
@@ -836,6 +839,7 @@ class ServiceService(CRUDService):
         # restarting netatalk.
         await self._system("pkill -9 afpd")
         await self._system("pkill -9 cnid_metad")
+        await self.middleware.call('mdnsadvertise.restart')
 
     async def _restart_afp(self, **kwargs):
         await self._stop_afp()
@@ -844,6 +848,7 @@ class ServiceService(CRUDService):
     async def _reload_afp(self, **kwargs):
         await self.middleware.call("etc.generate", "afpd")
         await self._system("killall -1 netatalk")
+        await self.middleware.call('mdnsadvertise.restart')
 
     async def _reload_nfs(self, **kwargs):
         await self.middleware.call("etc.generate", "nfsd")
@@ -895,17 +900,20 @@ class ServiceService(CRUDService):
     async def _reload_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "reload", force=True, **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
 
     async def _restart_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "stop", force=True, **kwargs)
         await self._service("samba_server", "restart", quiet=True, **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
 
     async def _start_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("samba_server", "start", quiet=True, **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
         try:
             await self.middleware.call("smb.add_admin_group", "", True)
         except Exception as e:
@@ -913,6 +921,7 @@ class ServiceService(CRUDService):
 
     async def _stop_cifs(self, **kwargs):
         await self._service("samba_server", "stop", force=True, **kwargs)
+        await self.middleware.call('mdnsadvertise.restart')
 
     async def _started_cifs(self, **kwargs):
         if await self._service("samba_server", "status", quiet=True, onetime=True, **kwargs):

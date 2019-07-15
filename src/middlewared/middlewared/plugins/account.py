@@ -147,7 +147,7 @@ class UserService(CRUDService):
         Bool('locked', default=False),
         Bool('microsoft_account', default=False),
         Bool('sudo', default=False),
-        Str('sshpubkey', null=True),
+        Str('sshpubkey', null=True, max_length=None),
         List('groups', default=[]),
         Dict('attributes', additional_attrs=True),
         register=True,
