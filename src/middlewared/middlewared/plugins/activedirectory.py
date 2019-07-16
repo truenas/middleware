@@ -575,13 +575,13 @@ class ActiveDirectoryService(ConfigService):
             )
 
         elif smb_ha_mode == 'UNIFIED' and must_update:
-            await self.middleware.call('smb.update', 1, {'netbiosalias': new['netbiosalias']})
-            await self.middleware.call('network.configuration', 1, {'hostname_virtual': new['netbiosname']})
+            await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
+            await self.middleware.call('network.configuration.update', {'hostname_virtual': new['netbiosname']})
 
         elif smb_ha_mode == 'LEGACY' and must_update:
-            await self.middleware.call('smb.update', 1, {'netbiosalias': new['netbiosalias']})
+            await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
             await self.middleware.call(
-                'network.configuration',
+                'network.configuration.update',
                 {
                     'hostname': new['netbiosname'],
                     'hostname_b': new['netbiosname_b']
@@ -787,6 +787,8 @@ class ActiveDirectoryService(ConfigService):
             raise CallError(f'Active Directory Service has status of [{state.value}]. Wait until operation completes.', errno.EBUSY)
 
         await self._set_state(DSStatus['JOINING'])
+        if ad['verbose_logging']:
+            self.logger.debug('Starting Active Directory service for [%s]', ad['domainname'])
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': True})
         await self.middleware.call('etc.generate', 'hostname')
 
@@ -858,12 +860,7 @@ class ActiveDirectoryService(ConfigService):
             ret = neterr.JOINED
             await self.middleware.call('idmap.get_or_create_idmap_by_domain', 'DS_TYPE_ACTIVEDIRECTORY')
             await self.middleware.call('service.update', 'cifs', {'enable': True})
-            try:
-                await self.middleware.call('idmap.clear_idmap_cache')
-            except Exception as e:
-                self.logger.debug('Failed to clear idmap cache: %s', e)
-            await self.middleware.call('service.update', 'cifs', {'enable': True})
-            await self.middleware.run_in_thread(self.set_ntp_servers)
+            await self.middleware.call('activedirectory.set_ntp_servers')
             if ad['allow_trusted_doms']:
                 await self.middleware.call('idmap.autodiscover_trusted_domains')
 
@@ -872,9 +869,12 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
             await self._set_state(DSStatus['HEALTHY'])
-            await self.get_cache()
+            await self.middleware.call('activedirectory.get_cache')
+            if ad['verbose_logging']:
+                self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
         else:
             await self._set_state(DSStatus['FAULTED'])
+            self.logger.debug('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
 
     @private
     async def stop(self):
@@ -1081,7 +1081,8 @@ class ActiveDirectoryService(ConfigService):
         return {'krb_kdc': kdc, 'krb_admin_server': admin_server, 'krb_kpasswd_server': kpasswd}
 
     @private
-    def set_ntp_servers(self):
+    @job(lock='set_ntp_servers')
+    def set_ntp_servers(self, job):
         """
         Appropriate time sources are a requirement for an AD environment. By default kerberos authentication
         fails if there is more than a 5 minute time difference between the AD domain and the member server.
@@ -1171,7 +1172,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
         await self.middleware.call('activedirectory.stop')
 
-        self.logger.debug(f"Successfully left domain: ad['domainname']")
+        self.logger.debug("Successfully left domain: %s", ad['domainname'])
 
     @private
     @job(lock='fill_ad_cache')
