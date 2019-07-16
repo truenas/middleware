@@ -349,6 +349,7 @@ def test_40_unmount_smb_share_on_osx():
 
 
 def test_41_change_timemachine_to_true_and_add_vfsobjects():
+    global vuid
     payload = {
         'timemachine': True,
         "vfsobjects": [
@@ -358,24 +359,25 @@ def test_41_change_timemachine_to_true_and_add_vfsobjects():
     }
     results = PUT(f"/sharing/smb/id/{smb_id}", payload)
     assert results.status_code == 200, results.text
+    vuid = results.json()['vuid']
 
 
 def test_42_verify_smb_getparm_vfs_objects_share():
-    cmd = 'midclt call smb.getparm "vfs objects" share'
+    cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() != 'null', results['output']
+    assert results['output'].strip() == '["fruit", "streams_xattr"]', results['output']
 
 
 def test_43_verify_smb_getparm_fruit_volume_uuid_share():
-    cmd = 'midclt call smb.getparm "fruit:volume_uuid" share'
+    cmd = f'midclt call smb.getparm "fruit:volume_uuid" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() != 'null', results['output']
+    assert results['output'].strip() == vuid, results['output']
 
 
 def test_44_verify_smb_getparm_fruit_time_machine_is_yes():
-    cmd = 'midclt call smb.getparm "fruit:time machine" share'
+    cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'yes', results['output']
