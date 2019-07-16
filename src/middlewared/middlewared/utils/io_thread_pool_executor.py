@@ -5,7 +5,7 @@ import queue
 import random
 import threading
 
-from bsd.threading import set_thread_name
+from .os_ import osc
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class Worker:
         self.thread.start()
 
     def _target(self):
-        set_thread_name(self.name)
+        osc.set_thread_name(self.name)
         try:
             while True:
                 work_item = self.executor.get_work_item(self)

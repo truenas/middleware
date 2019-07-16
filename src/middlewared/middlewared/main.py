@@ -11,6 +11,7 @@ from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
+from .utils.os_ import osc
 from .utils.profile import profile_wrap
 from .utils.run_in_thread import RunInThreadMixin
 from .webui_auth import WebUIAuth
@@ -19,8 +20,6 @@ from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
-from bsd import closefrom
-from bsd.threading import set_thread_name
 from collections import defaultdict
 
 import argparse
@@ -525,7 +524,7 @@ class ShellWorkerThread(threading.Thread):
 
         self.shell_pid, master_fd = os.forkpty()
         if self.shell_pid == 0:
-            closefrom(3)
+            osc.close_fds(3)
 
             os.chdir('/root')
             cmd = [
@@ -742,7 +741,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
         self.__ws_threadpool = concurrent.futures.ThreadPoolExecutor(
-            initializer=lambda: set_thread_name('threadpool_ws'),
+            initializer=lambda: osc.set_thread_name('threadpool_ws'),
             max_workers=10,
         )
         self.__init_procpool()
@@ -1276,7 +1275,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         DISCLAIMER/TODO: This is not free of race condition so it may show
         false positives.
         """
-        set_thread_name('loop_monitor')
+        osc.set_thread_name('loop_monitor')
         last = None
         while True:
             time.sleep(2)
@@ -1299,7 +1298,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         self._console_write('starting')
 
-        set_thread_name('asyncio_loop')
+        osc.set_thread_name('asyncio_loop')
         self.loop = asyncio.get_event_loop()
 
         if self.loop_debug:

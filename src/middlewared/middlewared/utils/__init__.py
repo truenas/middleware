@@ -17,12 +17,9 @@ from functools import wraps
 from multiprocessing import Process, Queue, Value
 from threading import Lock
 
+from .os_ import osc
 from middlewared.schema import Schemas
 from middlewared.service_exception import MatchNotFound
-
-# For freenasOS
-if '/usr/local/lib' not in sys.path:
-    sys.path.append('/usr/local/lib')
 
 BUILDTIME = None
 VERSION = None
@@ -311,38 +308,24 @@ def filter_getattrs(filters):
 
 
 def sw_buildtime():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
     global BUILDTIME
     if BUILDTIME is None:
-        conf = Configuration.Configuration()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            BUILDTIME = sys_mani.TimeStamp()
+        version = osc.get_app_version()
+        BUILDTIME = version['buildtime']
     return BUILDTIME
 
 
 def sw_version():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
     global VERSION
     if VERSION is None:
-        conf = Configuration.Configuration()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            VERSION = sys_mani.Version()
+        version = osc.get_app_version()
+        VERSION = version['fullname']
     return VERSION
 
 
 def sw_version_is_stable():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
-    conf = Configuration.Configuration()
-    train = conf.CurrentTrain()
-    if train and 'stable' in train.lower():
-        return True
-    else:
-        return False
+    version = osc.get_app_version()
+    return version['stable']
 
 
 def is_empty(val):
