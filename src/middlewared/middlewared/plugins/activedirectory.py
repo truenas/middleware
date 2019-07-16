@@ -13,7 +13,6 @@ import socket
 import subprocess
 import threading
 
-from bsd.threading import set_thread_name
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 from middlewared.plugins.smb import SMBCmd
@@ -23,6 +22,7 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
 from middlewared.plugins.directoryservices import DSStatus
+from middlewared.utils.os_ import osc
 from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
 
 
@@ -1652,7 +1652,7 @@ class WBStatusThread(threading.Thread):
         self.logger.debug('exiting winbind messaging thread')
 
     def run(self):
-        set_thread_name('ad_monitor_thread')
+        osc.set_thread_name('ad_monitor_thread')
         try:
             self.read_messages()
         except Exception as e:
