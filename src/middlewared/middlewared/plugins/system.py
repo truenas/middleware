@@ -225,7 +225,7 @@ class SystemService(Service):
     @accepts()
     async def is_freenas(self):
         """
-        Returns `true` if running system is a FreeNAS or `false` is Something Else.
+        Returns `true` if running system is a FreeNAS or `false` if something else.
         """
         # This is a stub calling notifier until we have all infrastructure
         # to implement in middlewared
@@ -234,6 +234,9 @@ class SystemService(Service):
     @no_auth_required
     @accepts()
     async def product_name(self):
+        """
+        Returns name of the product we are using (FreeNAS or something else).
+        """
         return "FreeNAS" if await self.middleware.call("system.is_freenas") else "TrueNAS"
 
     @accepts()
