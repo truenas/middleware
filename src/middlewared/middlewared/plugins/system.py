@@ -231,6 +231,8 @@ class SystemService(Service):
         # to implement in middlewared
         return await self.middleware.call('notifier.is_freenas')
 
+    @no_auth_required
+    @accepts()
     async def product_name(self):
         return "FreeNAS" if await self.middleware.call("system.is_freenas") else "TrueNAS"
 
