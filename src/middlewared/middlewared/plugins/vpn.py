@@ -615,6 +615,8 @@ class OpenVPNClientService(SystemServiceService):
 
 
 def setup(middleware):
+    if not os.path.exists('/usr/local/etc/rc.d/openvpn'):
+        return
     for srv in ('openvpn_client', 'openvpn_server'):
         if not os.path.exists(f'/etc/local/rc.d/{srv}'):
             os.symlink('/usr/local/etc/rc.d/openvpn', f'/usr/local/etc/rc.d/{srv}')
