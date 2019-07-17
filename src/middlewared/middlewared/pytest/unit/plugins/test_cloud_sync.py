@@ -14,6 +14,10 @@ def test__get_dataset_recursive_1():
                         "children": []
                     }
                 ]
+            },
+            {
+                "mountpoint": "/mnt/data/test",
+                "children": []
             }
         ],
         "/mnt/data",
@@ -34,6 +38,10 @@ def test__get_dataset_recursive_2():
                         "children": []
                     }
                 ]
+            },
+            {
+                "mountpoint": "/mnt/data/test",
+                "children": []
             }
         ],
         "/mnt/data/test",
@@ -54,6 +62,10 @@ def test__get_dataset_recursive_3():
                         "children": []
                     }
                 ]
+            },
+            {
+                "mountpoint": "/mnt/data/test",
+                "children": []
             }
         ],
         "/mnt/data/test2",
@@ -79,6 +91,19 @@ def test__get_dataset_recursive_4():
                         ]
                     }
                 ]
+            },
+            {
+                "mountpoint": "/mnt/data/backup",
+                "children": [
+                    {
+                        "mountpoint": "/mnt/data/backup/test0/test1/test2",
+                        "children": [],
+                    }
+                ]
+            },
+            {
+                "mountpoint": "/mnt/data/backup/test0/test1/test2",
+                "children": [],
             }
         ],
         "/mnt/data/backup/test0",
@@ -104,6 +129,19 @@ def test__get_dataset_recursive_5():
                         ]
                     }
                 ]
+            },
+            {
+                "mountpoint": "/mnt/data/backup",
+                "children": [
+                    {
+                        "mountpoint": "/mnt/data/backup/test0/test1/test2",
+                        "children": [],
+                    }
+                ]
+            },
+            {
+                "mountpoint": "/mnt/data/backup/test0/test1/test2",
+                "children": [],
             }
         ],
         "/mnt/data/backup/test0/test3",
