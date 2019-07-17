@@ -445,7 +445,7 @@ class ZFSDatasetService(CRUDService):
             options = options or {}
             extra = options.get('extra', {}).copy()
             mountpoint = extra.get('mountpoint', True)
-            props = extra.get('properties', []).copy()
+            props = extra.get('properties', None)
             flat = extra.get('flat', True)
 
             with libzfs.ZFS() as zfs:
