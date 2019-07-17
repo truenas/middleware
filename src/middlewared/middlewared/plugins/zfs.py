@@ -1,9 +1,10 @@
-from datetime import datetime
 import errno
 import subprocess
 import threading
 import time
 from collections import defaultdict
+from copy import deepcopy
+from datetime import datetime
 
 from bsd import geom
 import libzfs
@@ -417,6 +418,9 @@ class ZFSDatasetService(CRUDService):
         private = True
         process_pool = True
 
+    def flatten_datasets(self, datasets):
+        return sum([[deepcopy(ds)] + self.flatten_datasets(ds['children']) for ds in datasets], [])
+
     @filterable
     def query(self, filters=None, options=None):
         # If we are only filtering by name, pool and type we can use
@@ -438,6 +442,12 @@ class ZFSDatasetService(CRUDService):
                     'type': type_.upper(),
                 })
         else:
+            options = options or {}
+            extra = options.get('extra', {}).copy()
+            mountpoint = extra.get('mountpoint', True)
+            props = extra.get('properties', []).copy()
+            flat = extra.get('flat', True)
+
             with libzfs.ZFS() as zfs:
                 # Handle `id` filter specially to avoiding getting all datasets
                 if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
@@ -446,8 +456,11 @@ class ZFSDatasetService(CRUDService):
                     except libzfs.ZFSException:
                         datasets = []
                 else:
-                    props = (options or {}).get('extra', {}).get('properties', []).copy()
-                    datasets = list(zfs.datasets_serialized(props=props))
+                    datasets = zfs.datasets_serialized(props=props, mountpoint=mountpoint)
+                    if flat:
+                        datasets = self.flatten_datasets(datasets)
+                    else:
+                        datasets = list(datasets)
         return filter_list(datasets, filters, options)
 
     def query_for_quota_alert(self):
