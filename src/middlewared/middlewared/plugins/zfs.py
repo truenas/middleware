@@ -425,15 +425,15 @@ class ZFSDatasetService(CRUDService):
     def query(self, filters=None, options=None):
         options = options or {}
         extra = options.get('extra', {}).copy()
-        mountpoint = extra.get('mountpoint', True)
+        top_level_props = None if extra.get('top_level_properties') is None else extra['top_level_properties'].copy()
         props = extra.get('properties', None)
         flat = extra.get('flat', True)
-        custom_props = extra.get('custom_properties', True)
+        user_properties = extra.get('user_properties', True)
         retrieve_properties = extra.get('retrieve_properties', True)
         if not retrieve_properties:
             # This is a short hand version where consumer can specify that they don't want any property to
             # be retrieved
-            custom_props = mountpoint = False
+            user_properties = False
             props = []
 
         with libzfs.ZFS() as zfs:
@@ -444,7 +444,9 @@ class ZFSDatasetService(CRUDService):
                 except libzfs.ZFSException:
                     datasets = []
             else:
-                datasets = zfs.datasets_serialized(props=props, mountpoint=mountpoint, custom_props=custom_props)
+                datasets = zfs.datasets_serialized(
+                    props=props, top_level_props=top_level_props, user_props=user_properties
+                )
                 if flat:
                     datasets = self.flatten_datasets(datasets)
                 else:
