@@ -423,44 +423,27 @@ class ZFSDatasetService(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
-        # If we are only filtering by name, pool and type we can use
-        # zfs(8) which is much faster than py-libzfs
-        if (
-            options and set(options['select']).issubset({'name', 'pool', 'type'}) and
-            filter_getattrs(filters).issubset({'name', 'pool', 'type'})
-        ):
-            cp = subprocess.run([
-                'zfs', 'list', '-H', '-o', 'name,type', '-t', 'filesystem,volume',
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-            datasets = []
-            for i in cp.stdout.strip().split('\n'):
-                name, type_ = i.split('\t')
-                pool = name.split('/', 1)[0]
-                datasets.append({
-                    'name': name,
-                    'pool': pool,
-                    'type': type_.upper(),
-                })
-        else:
-            options = options or {}
-            extra = options.get('extra', {}).copy()
-            mountpoint = extra.get('mountpoint', True)
-            props = extra.get('properties', None)
-            flat = extra.get('flat', True)
+        options = options or {}
+        extra = options.get('extra', {}).copy()
+        mountpoint = extra.get('mountpoint', True)
+        props = extra.get('properties', None)
+        flat = extra.get('flat', True)
+        custom_props = extra.get('custom_properties', True)
 
-            with libzfs.ZFS() as zfs:
-                # Handle `id` filter specially to avoiding getting all datasets
-                if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
-                    try:
-                        datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
-                    except libzfs.ZFSException:
-                        datasets = []
+        with libzfs.ZFS() as zfs:
+            # Handle `id` filter specially to avoiding getting all datasets
+            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+                try:
+                    datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
+                except libzfs.ZFSException:
+                    datasets = []
+            else:
+                datasets = zfs.datasets_serialized(props=props, mountpoint=mountpoint, custom_props=custom_props)
+                if flat:
+                    datasets = self.flatten_datasets(datasets)
                 else:
-                    datasets = zfs.datasets_serialized(props=props, mountpoint=mountpoint)
-                    if flat:
-                        datasets = self.flatten_datasets(datasets)
-                    else:
-                        datasets = list(datasets)
+                    datasets = list(datasets)
+
         return filter_list(datasets, filters, options)
 
     def query_for_quota_alert(self):
