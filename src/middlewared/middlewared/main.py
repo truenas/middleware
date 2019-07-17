@@ -1452,7 +1452,7 @@ def main():
     args = parser.parse_args()
 
     pidpath = '/var/run/middlewared.pid'
-    startup_seq_path = '/var/run/middlewared_startup.seq'
+    startup_seq_path = '/tmp/middlewared_startup.seq'
 
     if args.restart:
         if os.path.exists(pidpath):
