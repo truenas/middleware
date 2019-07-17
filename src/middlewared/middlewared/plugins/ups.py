@@ -46,7 +46,10 @@ class UPSModel(sa.Model):
 
 
 class UPSService(SystemServiceService):
-    DRIVERS_AVAILABLE = set(os.listdir(DRIVER_BIN_DIR))
+    try:
+        DRIVERS_AVAILABLE = set(os.listdir(DRIVER_BIN_DIR))
+    except FileNotFoundError:
+        DRIVERS_AVAILABLE = set()
 
     class Config:
         datastore = 'services.ups'
