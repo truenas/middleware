@@ -589,6 +589,23 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to mount dataset', exc_info=True)
             raise CallError(f'Failed to mount dataset: {e}')
 
+    @accepts(
+        Str('dataset'),
+        Dict(
+            'options',
+            Str('new_name', required=True, empty=False),
+            Bool('recursive', default=False)
+        )
+    )
+    def rename(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(name)
+                dataset.rename(options['new_name'], recursive=options['recursive'])
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to rename dataset', exc_info=True)
+            raise CallError(f'Failed to rename dataset: {e}')
+
     def promote(self, name):
         try:
             with libzfs.ZFS() as zfs:
