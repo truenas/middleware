@@ -23,7 +23,10 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
 from middlewared.plugins.directoryservices import DSStatus, SSL
 import middlewared.utils.osc as osc
-from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
+try:
+    from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
+except ImportError:
+    MSG_WINBIND_ONLINE = 9
 
 
 class neterr(enum.Enum):

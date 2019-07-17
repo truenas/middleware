@@ -8,7 +8,10 @@ import re
 import subprocess
 
 from lxml import etree
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CRUDService, filterable, ValidationErrors

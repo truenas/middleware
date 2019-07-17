@@ -1,6 +1,9 @@
 import re
 
-import cam
+try:
+    import cam
+except ImportError:
+    cam = None
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.service import accepts, List, private, Service, Str

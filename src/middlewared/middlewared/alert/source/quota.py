@@ -3,7 +3,10 @@ import logging
 import os
 import socket
 
-from bsd import getmntinfo
+try:
+    from bsd import getmntinfo
+except ImportError:
+    getmntinfo = None
 import humanfriendly
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
@@ -121,7 +124,7 @@ class QuotaAlertSource(ThreadedAlertSource):
         mountpoint = None
         if dataset["mounted"]["value"] == "yes":
             if dataset["mountpoint"]["value"] == "legacy":
-                for m in getmntinfo():
+                for m in (getmntinfo() if getmntinfo else []):
                     if m.source == dataset["name"]["value"]:
                         mountpoint = m.dest
                         break

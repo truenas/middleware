@@ -3,8 +3,11 @@ import os
 import json
 import logging
 
-from freenasOS import Update
-from freenasOS.Update import PendingUpdates
+try:
+    from freenasOS import Update
+    from freenasOS.Update import PendingUpdates
+except ImportError:
+    Update = PendingUpdates = None
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, FilePresenceAlertSource, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -16,6 +19,8 @@ log = logging.getLogger("update_check_alertmod")
 
 # FIXME: use update plugin
 def is_update_applied(update_version):
+    if Update is None:
+        return False
     active_be_msg = 'Please reboot the system to activate this update.'
     # TODO: The below boot env name should really be obtained from the update code
     # for now we just duplicate that code here
@@ -63,10 +68,13 @@ class HasUpdateAlertSource(ThreadedAlertSource):
         if not path:
             return
 
+
+        updates = None
         try:
-            updates = PendingUpdates(path)
+            if PendingUpdates:
+                updates = PendingUpdates(path)
         except Exception:
-            updates = None
+            pass
 
         if updates:
             return Alert(HasUpdateAlertClass)
@@ -96,9 +104,10 @@ class UpdateNotAppliedAlertSource(ThreadedAlertSource):
                 )
                 return
 
-            update_applied, msg = is_update_applied(data["update_version"], create_alert=False)
-            if update_applied:
-                return Alert(UpdateNotAppliedAlertClass, msg)
+            if is_update_applied:
+                update_applied, msg = is_update_applied(data["update_version"], create_alert=False)
+                if update_applied:
+                    return Alert(UpdateNotAppliedAlertClass, msg)
 
 
 class UpdateFailedAlertClass(AlertClass):

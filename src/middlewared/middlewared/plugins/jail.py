@@ -9,17 +9,20 @@ import json
 import sqlite3
 import re
 
-import iocage_lib.iocage as ioc
-import iocage_lib.ioc_exceptions as ioc_exceptions
-import iocage_lib.ioc_common as ioc_common
-from iocage_lib.ioc_check import IOCCheck
-from iocage_lib.ioc_clean import IOCClean
-from iocage_lib.ioc_image import IOCImage
-from iocage_lib.ioc_json import IOCJson
-# iocage's imports are per command, these are just general facilities
-from iocage_lib.ioc_list import IOCList
-from iocage_lib.ioc_plugin import IOCPlugin
-from iocage_lib.release import ListableReleases
+try:
+    import iocage_lib.iocage as ioc
+    import iocage_lib.ioc_exceptions as ioc_exceptions
+    import iocage_lib.ioc_common as ioc_common
+    from iocage_lib.ioc_check import IOCCheck
+    from iocage_lib.ioc_clean import IOCClean
+    from iocage_lib.ioc_image import IOCImage
+    from iocage_lib.ioc_json import IOCJson
+    # iocage's imports are per command, these are just general facilities
+    from iocage_lib.ioc_list import IOCList
+    from iocage_lib.ioc_plugin import IOCPlugin
+    from iocage_lib.release import ListableReleases
+except ImportError:
+    iocage_lib = None
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts, Patch
@@ -1612,4 +1615,5 @@ async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', JailFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.pre_lock', jail_pool_pre_lock)
     middleware.event_subscribe('system', __event_system)
-    ioc_common.set_interactive(False)
+    if iocage_lib:
+        ioc_common.set_interactive(False)

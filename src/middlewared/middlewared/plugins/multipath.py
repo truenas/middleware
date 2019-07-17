@@ -1,4 +1,7 @@
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 
 from lxml import etree
 

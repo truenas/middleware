@@ -20,7 +20,10 @@ import ipaddress
 import itertools
 import libvirt
 import math
-import netif
+try:
+    import netif
+except ImportError:
+    netif = None
 import os
 import psutil
 import random
@@ -30,7 +33,10 @@ import shutil
 import signal
 import subprocess
 import sys
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import time
 import threading
 
@@ -2166,7 +2172,8 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
 async def setup(middleware):
     global ZFS_ARC_MAX_INITIAL
-    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
+    if sysctl:
+        ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
     asyncio.ensure_future(kmod_load())
     asyncio.ensure_future(middleware.call('pool.dataset.register_attachment_delegate',
                                           VMFSAttachmentDelegate(middleware)))

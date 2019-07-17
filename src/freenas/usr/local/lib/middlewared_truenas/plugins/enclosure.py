@@ -10,7 +10,10 @@ import os
 import re
 import subprocess
 
-from bsd import geom
+try:
+    from bsd import geom
+except ImportError:
+    geom = None
 
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, private

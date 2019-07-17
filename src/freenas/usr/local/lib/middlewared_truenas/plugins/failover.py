@@ -10,7 +10,10 @@ import errno
 import json
 from lockfile import LockFile
 import logging
-import netif
+try:
+    import netif
+except ImportError:
+    netif = None
 import os
 import pickle
 import queue
@@ -19,7 +22,10 @@ import requests
 import shutil
 import socket
 import subprocess
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import tempfile
 import textwrap
 import time

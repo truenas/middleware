@@ -6,7 +6,10 @@ from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 from middlewared.validators import Range
 
-from bsd import geom
+try:
+    from bsd import geom
+except ImportError:
+    geom = None
 
 
 BOOT_POOL_NAME = None

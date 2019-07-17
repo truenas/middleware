@@ -1,6 +1,5 @@
 import asyncio
 import base64
-import bsd
 import contextlib
 import enum
 import errno
@@ -12,8 +11,16 @@ import re
 import secrets
 import shutil
 import subprocess
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import tempfile
+
+try:
+    import bsd
+except ImportError:
+    bsd = None
 import psutil
 
 from collections import defaultdict

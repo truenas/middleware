@@ -5,7 +5,10 @@ import inspect
 import os
 import psutil
 import signal
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import threading
 import time
 import subprocess

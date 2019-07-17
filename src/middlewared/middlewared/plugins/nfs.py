@@ -5,7 +5,10 @@ import os
 import socket
 import subprocess
 
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str

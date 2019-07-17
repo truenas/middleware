@@ -3,7 +3,10 @@ import logging
 import re
 import subprocess
 
-from nvme import get_nsid
+try:
+    from nvme import get_nsid
+except ImportError:
+    get_nsid = None
 
 from middlewared.utils import run
 

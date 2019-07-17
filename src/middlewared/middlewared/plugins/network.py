@@ -11,7 +11,10 @@ from collections import defaultdict
 import contextlib
 import ipaddress
 import itertools
-import netif
+try:
+    import netif
+except ImportError:
+    netif = None
 import os
 import re
 import shlex

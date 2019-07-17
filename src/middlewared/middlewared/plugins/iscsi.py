@@ -18,7 +18,10 @@ import hashlib
 import re
 import os
 import subprocess
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import uuid
 
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({

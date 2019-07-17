@@ -6,7 +6,10 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 
-from bsd import geom
+try:
+    from bsd import geom
+except ImportError:
+    geom = None
 import libzfs
 
 from middlewared.alert.base import (

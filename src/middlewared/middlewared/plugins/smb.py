@@ -16,7 +16,11 @@ import os
 import re
 import subprocess
 import uuid
-from samba import param
+
+try:
+    from samba import param
+except ImportError:
+    param = None
 
 LOGLEVEL_MAP = {
     '0': 'NONE',

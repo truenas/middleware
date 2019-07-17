@@ -1,6 +1,9 @@
 import binascii
-import bsd
-from bsd import acl
+try:
+    import bsd
+    from bsd import acl
+except ImportError:
+    bsd = acl = None
 import errno
 import enum
 import grp

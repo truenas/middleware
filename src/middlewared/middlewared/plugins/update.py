@@ -1,4 +1,8 @@
-from bsd import geom
+try:
+    from bsd import geom
+except ImportError:
+    geom = None
+
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, CallError, Service
 import middlewared.sqlalchemy as sa
@@ -14,19 +18,19 @@ import subprocess
 import sys
 import textwrap
 
-if '/usr/local/lib' not in sys.path:
-    sys.path.append('/usr/local/lib')
-
 import humanfriendly
 
-from freenasOS import Configuration, Manifest, Update, Train
-from freenasOS.Exceptions import (
-    UpdateIncompleteCacheException, UpdateInvalidCacheException,
-    UpdateBusyCacheException,
-)
-from freenasOS.Update import (
-    ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
-)
+try:
+    from freenasOS import Configuration, Manifest, Update, Train
+    from freenasOS.Exceptions import (
+        UpdateIncompleteCacheException, UpdateInvalidCacheException,
+        UpdateBusyCacheException,
+    )
+    from freenasOS.Update import (
+        ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
+    )
+except ImportError:
+    freenasOS = None
 
 UPLOAD_LOCATION = '/var/tmp/firmware'
 UPLOAD_LABEL = 'updatemdu'

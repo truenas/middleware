@@ -19,7 +19,10 @@ import shutil
 import socket
 import struct
 import subprocess
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import syslog
 import tarfile
 import textwrap
@@ -276,6 +279,8 @@ class SystemAdvancedService(ConfigService):
 
     @private
     def autotune(self, conf='loader'):
+        if b'/' not in subprocess.run(['whereis', 'autotune'], capture_output=True).stdout:
+            return
         if self.middleware.call_sync('system.product_type') == 'CORE':
             kernel_reserved = 1073741824
             userland_reserved = 2417483648
@@ -1466,7 +1471,8 @@ async def setup(middleware):
 
     asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
 
-    await update_timeout_value(middleware)
+    if sysctl:
+        await update_timeout_value(middleware)
 
     for srv in ['initshutdownscript', 'tunable', 'vm']:
         for event in ('create', 'update', 'delete'):

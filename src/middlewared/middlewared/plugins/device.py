@@ -5,7 +5,10 @@ import socket
 from middlewared.schema import accepts, Str
 from middlewared.service import Service
 
-from bsd import devinfo, geom
+try:
+    from bsd import devinfo, geom
+except ImportError:
+    devinfo = geom = None
 
 DEVD_SOCKETFILE = '/var/run/devd.pipe'
 

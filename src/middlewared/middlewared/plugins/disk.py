@@ -8,11 +8,17 @@ import os
 import re
 import signal
 import subprocess
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import tempfile
 from xml.etree import ElementTree
 
-from bsd import geom, getswapinfo
+try:
+    from bsd import geom, getswapinfo
+except ImportError:
+    geom = getswapinfo = None
 from lxml import etree
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
