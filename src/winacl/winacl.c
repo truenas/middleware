@@ -57,7 +57,7 @@ struct windows_acl_info {
 /* default ACL entries if none are specified */
 #define	WA_ENTRY_OWNER		"owner@:rwxpDdaARWcCos:fd:allow"
 #define	WA_ENTRY_GROUP		"group@:rwxpDdaARWcCos:fd:allow"
-#define	WA_ENTRY_EVERYONE	"everyone@:rxaRc:fd:allow"
+#define	WA_ENTRY_EVERYONE	"everyone@::fd:allow"
 
 #define	WA_OP_SET	(WA_APPEND|WA_CLONE|WA_REMOVE|WA_UPDATE|WA_RESET)
 #define	WA_OP_CHECK(flags, bit) ((flags & ~bit) & WA_OP_SET)
