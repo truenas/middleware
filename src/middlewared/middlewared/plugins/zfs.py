@@ -423,6 +423,34 @@ class ZFSDatasetService(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
+        """
+        In `query-options` we can provide `extra` arguments which control which data should be retrieved
+        for a dataset.
+
+        `query-options.extra.top_level_properties` is a list of properties which we will like to include in the
+        top level dict of dataset. It defaults to adding only mountpoint key keeping legacy behavior. If none are
+        desired in top level dataset, an empty list should be passed else if null is specified it will add mountpoint
+        key to the top level dict if it's present in `query-options.extra.properties` or it's null as well.
+
+        `query-options.extra.properties` is a list of properties which should be retrieved. If null ( by default ),
+        it would retrieve all properties, if empty, it will retrieve no property ( `mountpoint` is special in this
+        case and is controlled by `query-options.extra.mountpoint` attribute ).
+
+        We provide 2 ways how zfs.dataset.query returns dataset's data. First is a flat structure ( default ), which
+        means that all the datasets in the system are returned as separate objects which also contain all the data
+        their is for their children. This retrieval type is slightly slower because of duplicates which exist in
+        each object.
+        Second type is hierarchical where only top level datasets are returned in the list and they contain all the
+        children there are for them in `children` key. This retrieval type is slightly faster.
+        These options are controlled by `query-options.extra.flat` attribute which defaults to true.
+
+        `query-options.extra.user_properties` controls if user defined properties of datasets should be retrieved
+        or not.
+
+        While we provide a way to exclude all properties from data retrieval, we introduce a single attribute
+        `query-options.extra.retrieve_properties` which if set to false will make sure that no property is retrieved
+        whatsoever and overrides any other property retrieval attribute.
+        """
         options = options or {}
         extra = options.get('extra', {}).copy()
         top_level_props = None if extra.get('top_level_properties') is None else extra['top_level_properties'].copy()
