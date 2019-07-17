@@ -341,7 +341,7 @@ class PoolService(CRUDService):
                     ('pool', 'in', vol_names),
                     ('type', 'in', types),
                 ],
-                {'select': ['name', 'pool', 'type']},
+                {'extra': {'retrieve_properties': False}},
             )
         ]
 
@@ -2448,7 +2448,9 @@ class PoolDatasetService(CRUDService):
             if len(f) == 3:
                 if f[0] in ('id', 'name', 'pool', 'type'):
                     zfsfilters.append(f)
-        datasets = self.middleware.call_sync('zfs.dataset.query', zfsfilters, None)
+        datasets = self.middleware.call_sync(
+            'zfs.dataset.query', zfsfilters, {'extra': (options or {}).get('extra', {})}
+        )
         return filter_list(self.__transform(datasets), filters, options)
 
     def __transform(self, datasets):

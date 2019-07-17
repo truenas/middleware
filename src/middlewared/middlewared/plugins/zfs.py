@@ -1,9 +1,10 @@
-from datetime import datetime
 import errno
 import subprocess
 import threading
 import time
 from collections import defaultdict
+from copy import deepcopy
+from datetime import datetime
 
 from bsd import geom
 import libzfs
@@ -417,50 +418,82 @@ class ZFSDatasetService(CRUDService):
         private = True
         process_pool = True
 
+    def flatten_datasets(self, datasets):
+        return sum([[deepcopy(ds)] + self.flatten_datasets(ds['children']) for ds in datasets], [])
+
     @filterable
     def query(self, filters=None, options=None):
-        # If we are only filtering by name, pool and type we can use
-        # zfs(8) which is much faster than py-libzfs
-        if (
-            options and set(options['select']).issubset({'name', 'pool', 'type'}) and
-            filter_getattrs(filters).issubset({'name', 'pool', 'type'})
-        ):
-            cp = subprocess.run([
-                'zfs', 'list', '-H', '-o', 'name,type', '-t', 'filesystem,volume',
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-            datasets = []
-            for i in cp.stdout.strip().split('\n'):
-                name, type_ = i.split('\t')
-                pool = name.split('/', 1)[0]
-                datasets.append({
-                    'name': name,
-                    'pool': pool,
-                    'type': type_.upper(),
-                })
-        else:
-            with libzfs.ZFS() as zfs:
-                # Handle `id` filter specially to avoiding getting all datasets
-                if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
-                    try:
-                        datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
-                    except libzfs.ZFSException:
-                        datasets = []
+        """
+        In `query-options` we can provide `extra` arguments which control which data should be retrieved
+        for a dataset.
+
+        `query-options.extra.top_level_properties` is a list of properties which we will like to include in the
+        top level dict of dataset. It defaults to adding only mountpoint key keeping legacy behavior. If none are
+        desired in top level dataset, an empty list should be passed else if null is specified it will add mountpoint
+        key to the top level dict if it's present in `query-options.extra.properties` or it's null as well.
+
+        `query-options.extra.properties` is a list of properties which should be retrieved. If null ( by default ),
+        it would retrieve all properties, if empty, it will retrieve no property ( `mountpoint` is special in this
+        case and is controlled by `query-options.extra.mountpoint` attribute ).
+
+        We provide 2 ways how zfs.dataset.query returns dataset's data. First is a flat structure ( default ), which
+        means that all the datasets in the system are returned as separate objects which also contain all the data
+        their is for their children. This retrieval type is slightly slower because of duplicates which exist in
+        each object.
+        Second type is hierarchical where only top level datasets are returned in the list and they contain all the
+        children there are for them in `children` key. This retrieval type is slightly faster.
+        These options are controlled by `query-options.extra.flat` attribute which defaults to true.
+
+        `query-options.extra.user_properties` controls if user defined properties of datasets should be retrieved
+        or not.
+
+        While we provide a way to exclude all properties from data retrieval, we introduce a single attribute
+        `query-options.extra.retrieve_properties` which if set to false will make sure that no property is retrieved
+        whatsoever and overrides any other property retrieval attribute.
+        """
+        options = options or {}
+        extra = options.get('extra', {}).copy()
+        top_level_props = None if extra.get('top_level_properties') is None else extra['top_level_properties'].copy()
+        props = extra.get('properties', None)
+        flat = extra.get('flat', True)
+        user_properties = extra.get('user_properties', True)
+        retrieve_properties = extra.get('retrieve_properties', True)
+        if not retrieve_properties:
+            # This is a short hand version where consumer can specify that they don't want any property to
+            # be retrieved
+            user_properties = False
+            props = []
+
+        with libzfs.ZFS() as zfs:
+            # Handle `id` filter specially to avoiding getting all datasets
+            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+                try:
+                    datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
+                except libzfs.ZFSException:
+                    datasets = []
+            else:
+                datasets = zfs.datasets_serialized(
+                    props=props, top_level_props=top_level_props, user_props=user_properties
+                )
+                if flat:
+                    datasets = self.flatten_datasets(datasets)
                 else:
-                    datasets = [i.__getstate__() for i in zfs.datasets]
+                    datasets = list(datasets)
+
         return filter_list(datasets, filters, options)
 
     def query_for_quota_alert(self):
-        with libzfs.ZFS() as zfs:
-            return [
-                {
-                    k: v.__getstate__()
-                    for k, v in i.properties.items()
-                    if k in ["name", "quota", "used", "refquota", "usedbydataset", "mounted", "mountpoint",
-                             "org.freenas:quota_warning", "org.freenas:quota_critical",
-                             "org.freenas:refquota_warning", "org.freenas:refquota_critical"]
-                }
-                for i in zfs.datasets
-            ]
+        return [
+            {
+                k: v for k, v in dataset['properties'].items()
+                if k in [
+                    "name", "quota", "used", "refquota", "usedbydataset", "mounted", "mountpoint",
+                    "org.freenas:quota_warning", "org.freenas:quota_critical",
+                    "org.freenas:refquota_warning", "org.freenas:refquota_critical"
+                ]
+            }
+            for dataset in self.query()
+        ]
 
     @accepts(Dict(
         'dataset_create',
