@@ -1077,7 +1077,7 @@ class ShareSec(CRUDService):
             parsed_sd = await self.middleware.call('smb.sharesec._parse_share_sd', share, options)
             if parsed_sd:
                 parsed_sd.update({'id': idx})
-                idx = idx+1
+                idx = idx + 1
                 share_sd_list.append(parsed_sd)
 
         return share_sd_list
@@ -1262,18 +1262,18 @@ class ShareSec(CRUDService):
     @accepts(Dict(
         'smbsharesec_create',
         Str('share_name', required=True),
-        List('share_acl', items=[
-            Dict('aclentry',
-                 Str('ae_who_sid', default=None),
-                 Dict('ae_who_name',
-                      Str('domain', default=''),
-                      Str('name', default=''),
-                      default=None),
-                 Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
-                 Str('ae_type', enum=['ALLOWED', 'DENIED']))
-            ],
-            default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]
-        )
+        List('share_acl',
+             items=[
+                Dict('aclentry',
+                     Str('ae_who_sid', default=None),
+                     Dict('ae_who_name',
+                          Str('domain', default=''),
+                          Str('name', default=''),
+                          default=None),
+                     Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
+                     Str('ae_type', enum=['ALLOWED', 'DENIED']))
+             ],
+             default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}])
     ))
     async def do_create(self, data):
         """
@@ -1305,18 +1305,18 @@ class ShareSec(CRUDService):
     @accepts(
         Int('id', required=True),
         Dict('smbsharesec_update',
-             List('share_acl', items=[
-                 Dict('aclentry',
-                      Str('ae_who_sid', default=None),
-                      Dict('ae_who_name',
-                           Str('domain', default=''),
-                           Str('name', default=''),
-                           default=None),
-                      Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
-                      Str('ae_type', enum=['ALLOWED', 'DENIED']))
-                 ],
-                 default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]
-             ))
+             List('share_acl',
+                  items=[
+                    Dict('aclentry',
+                         Str('ae_who_sid', default=None),
+                         Dict('ae_who_name',
+                              Str('domain', default=''),
+                              Str('name', default=''),
+                              default=None),
+                         Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
+                         Str('ae_type', enum=['ALLOWED', 'DENIED']))
+                  ],
+                  default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]))
     )
     async def do_update(self, id, data):
         """
