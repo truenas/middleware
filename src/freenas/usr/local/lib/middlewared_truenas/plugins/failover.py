@@ -73,6 +73,7 @@ class RemoteClient(object):
             raise CallError('Connection refused', errno.ECONNREFUSED)
         except OSError as e:
             if e.errno in (
+                errno.EPIPE,  # Happens when failover is configured on cxl device that has no link
                 errno.ENETDOWN, errno.EHOSTDOWN, errno.ENETUNREACH, errno.EHOSTUNREACH
             ) or isinstance(e, socket.timeout):
                 raise CallError('Standby node is down', errno.EHOSTDOWN)
