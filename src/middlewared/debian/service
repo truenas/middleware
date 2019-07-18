@@ -1,0 +1,7 @@
+[Unit]
+Description=middlewared
+Before=basic.target
+
+[Service]
+ExecStart=middlewared --log-handler=file -P /run/middlewared.pid
+PIDFile=/run/middlewared.pid
