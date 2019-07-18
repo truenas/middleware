@@ -1,11 +1,12 @@
+import asyncio
+import os
+import stat
+import subprocess
+import tempfile
+
 from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.utils import Popen
-from middlewared.validators import Range
-
-import asyncio
-import os
-import subprocess
 
 
 class InitShutdownScriptService(CRUDService):
@@ -17,8 +18,9 @@ class InitShutdownScriptService(CRUDService):
 
     @accepts(Dict(
         'init_shutdown_script_create',
-        Str('type', enum=['COMMAND', 'SCRIPT'], required=True),
+        Str('type', enum=['COMMAND', 'MULTILINE_COMMAND', 'SCRIPT'], required=True),
         Str('command', null=True),
+        Str('multiline_command', null=True),
         File('script', null=True),
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
@@ -117,6 +119,14 @@ class InitShutdownScriptService(CRUDService):
             if not data.get('command'):
                 verrors.add(f'{schema_name}.command', 'This field is required')
             else:
+                data['multiline_command'] = ''
+                data['script'] = ''
+
+        if data['type'] == 'MULTILINE_COMMAND':
+            if not data.get('multiline_command'):
+                verrors.add(f'{schema_name}.multiline_command', 'This field is required')
+            else:
+                data['command'] = ''
                 data['script'] = ''
 
         if data['type'] == 'SCRIPT':
@@ -124,6 +134,7 @@ class InitShutdownScriptService(CRUDService):
                 verrors.add(f'{schema_name}.script', 'This field is required')
             else:
                 data['command'] = ''
+                data['multiline_command'] = ''
 
         if verrors:
             raise verrors
@@ -132,9 +143,16 @@ class InitShutdownScriptService(CRUDService):
     async def execute_task(self, task):
         task_type = task['type']
         cmd = None
+        tmp_script = None
 
         if task_type == 'COMMAND':
             cmd = task['command']
+        elif task_type == 'MULTILINE_COMMAND':
+            _, tmp_script = tempfile.mkstemp(text=True)
+            os.chmod(tmp_script, stat.S_IRWXU)
+            with open(tmp_script, 'w') as f:
+                f.write(task['multiline_command'])
+            cmd = f'exec {tmp_script}'
         elif os.path.exists(task['script'] or '') and os.access(task['script'], os.X_OK):
             cmd = f'exec {task["script"]}'
 
@@ -149,10 +167,20 @@ class InitShutdownScriptService(CRUDService):
             stdout, stderr = await proc.communicate()
 
             if proc.returncode:
+                if task_type == 'COMMAND':
+                    cmd = task['command']
+                elif task_type == 'MULTILINE_COMMAND':
+                    cmd = task['multiline_command']
+                elif task_type == 'SCRIPT':
+                    cmd = task['script']
+                else:
+                    cmd = ''
                 self.middleware.logger.debug(
                     'Execution failed for '
-                    f'{task_type} {task["command"] if task_type == "COMMAND" else task["script"]}: {stderr.decode()}'
+                    f'{task_type} {cmd}: {stderr.decode()}'
                 )
+        if tmp_script:
+            os.unlink(tmp_script)
 
     @private
     @accepts(
