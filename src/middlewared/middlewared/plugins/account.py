@@ -531,14 +531,35 @@ class UserService(CRUDService):
         ))['bsdusr_unixhash'] != '*'
 
     @no_auth_required
-    @accepts(Str('password'))
+    @accepts(
+        Str('password'),
+        Dict(
+            'options',
+            Dict(
+                'ec2',
+                Str('instance_id', required=True),
+            ),
+            update=True,
+        )
+    )
     @pass_app
-    async def set_root_password(self, app, password):
+    async def set_root_password(self, app, password, options):
         """
         Set password for root user if it is not already set.
         """
-        if not app.authenticated and await self.middleware.call('user.has_root_password'):
-            raise CallError('You cannot call this method anonymously if root already has a password', errno.EACCES)
+        if not app.authenticated:
+            if await self.middleware.call('user.has_root_password'):
+                raise CallError('You cannot call this method anonymously if root already has a password', errno.EACCES)
+
+            if await self.middleware.call('system.environment') == 'EC2':
+                if 'ec2' not in options:
+                    raise CallError(
+                        'You need to specify instance ID when setting initial root password on EC2 instance',
+                        errno.EACCES,
+                    )
+
+                if options['ec2']['instance_id'] != await self.middleware.call('ec2.instance_id'):
+                    raise CallError('Incorrect EC2 instance ID', errno.EACCES)
 
         root = await self.middleware.call('user.query', [('username', '=', 'root')], {'get': True})
         await self.middleware.call('user.update', root['id'], {'password': password})

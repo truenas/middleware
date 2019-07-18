@@ -19,6 +19,7 @@ def generate_loader_config(middleware):
         generate_debugkernel_loader_config,
         generate_ha_loader_config,
         generate_boot_delay_config,
+        generate_ec2_config,
     ]
     if middleware.call_sync("system.is_freenas"):
         generators.append(generate_xen_loader_config)
@@ -95,6 +96,18 @@ def generate_boot_delay_config(middleware):
     if sysctl.filter("kern.vm_guest")[0].value != "none":
         return ['kern.cam.boot_delay="0"']
     return []
+
+
+def generate_ec2_config(middleware):
+    if middleware.call_sync("system.environment") == "EC2":
+        return [
+            'if_ena_load="YES"',
+            'autoboot_delay="-1"',
+            'beastie_disable="YES"',
+            'boot_multicons="YES"',
+            'hint.atkbd.0.disabled="1"',
+            'hint.atkbdc.0.disabled="1"',
+        ]
 
 
 def render(service, middleware):
