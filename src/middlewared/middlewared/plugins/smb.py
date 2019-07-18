@@ -428,7 +428,7 @@ class SMBService(SystemServiceService):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
             )
             await pdbcreate.communicate(input=" \n \n".encode())
-            setntpass = await run([SMBCmd.PDBEDIT, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
+            setntpass = await run([SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
             if setntpass.returncode != 0:
                 raise CallError(f'Failed to set NT password for {username}: {setntpass.stderr.decode()}')
             if bsduser[0]['locked']:
