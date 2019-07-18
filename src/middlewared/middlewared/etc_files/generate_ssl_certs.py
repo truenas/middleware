@@ -8,8 +8,7 @@ def write_certificates(certs):
 
         if cert['chain_list']:
             with open(cert['certificate_path'], 'w') as f:
-                for i in cert['chain_list']:
-                    f.write(i)
+                f.write('\n'.join(cert['chain_list']))
 
         if cert['privatekey']:
             with open(cert['privatekey_path'], 'w') as f:
