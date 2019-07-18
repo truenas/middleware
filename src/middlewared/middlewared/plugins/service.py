@@ -104,7 +104,6 @@ class ServiceService(CRUDService):
         'webshell': ServiceDefinition(None, '/var/run/webshell.pid'),
         'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
         'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid'),
-        'asigra': ServiceDefinition('asigra', '/var/run/dssystem.pid')
     }
 
     @filterable
@@ -380,27 +379,6 @@ class ServiceService(CRUDService):
                     for i in data.strip().split('\n') if i.isdigit()
                 ]
         return False, []
-
-    async def _start_asigra(self, **kwargs):
-        await self.middleware.call('asigra.setup_filesystems')
-        await self.middleware.call('asigra.setup_postgresql')
-        await self._service("postgresql", "start", force=True, **kwargs)
-        await self.middleware.call('asigra.setup_asigra')
-        await self.middleware.call('etc.generate', 'asigra')
-        await self._service("dssystem", "start", force=True, **kwargs)
-
-    async def _stop_asigra(self, **kwargs):
-        await self._service("dssystem", "stop", force=True, **kwargs)
-        await self._service("postgresql", "stop", force=True, **kwargs)
-
-    async def _restart_asigra(self, **kwargs):
-        await self._stop_asigra(**kwargs)
-        await self._start_asigra(**kwargs)
-
-    async def _started_asigra(self, **kwargs):
-        if await self._service("dssystem", "status", force=True, **kwargs) != 0:
-            return False, []
-        return True, []
 
     async def _start_webdav(self, **kwargs):
         await self.middleware.call('etc.generate', 'webdav')

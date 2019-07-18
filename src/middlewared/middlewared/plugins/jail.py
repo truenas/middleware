@@ -146,7 +146,10 @@ class PluginService(CRUDService):
         process_pool = True
 
     OFFICIAL_REPOSITORIES = {
-        'https://github.com/freenas/iocage-ix-plugins.git'
+        'IXSYSTEMS': {
+            'name': 'iXsystems',
+            'git_repository': 'https://github.com/freenas/iocage-ix-plugins.git',
+        }
     }
 
     @accepts()
@@ -154,7 +157,7 @@ class PluginService(CRUDService):
         """
         List officially supported plugin repositories.
         """
-        return {k: k for k in self.OFFICIAL_REPOSITORIES}
+        return self.OFFICIAL_REPOSITORIES
 
     @filterable
     def query(self, filters=None, options=None):

@@ -320,8 +320,6 @@ def rclone_encrypt_password(password):
 
 
 def get_dataset_recursive(datasets, directory):
-    datasets = flatten_datasets(datasets)
-
     datasets = [
         dict(dataset, prefixlen=len(
             os.path.dirname(os.path.commonprefix([dataset["mountpoint"] + "/", directory + "/"]))))
@@ -344,10 +342,6 @@ def get_dataset_recursive(datasets, directory):
         for ds in datasets
         if ds != dataset
     )
-
-
-def flatten_datasets(datasets):
-    return sum([[ds] + flatten_datasets(ds["children"]) for ds in datasets], [])
 
 
 class _FsLockCore(aiorwlock._RWLockCore):

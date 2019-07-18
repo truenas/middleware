@@ -36,7 +36,6 @@ List resource
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
                 "cifs_home": false,
-                "cifs_default_permissions": true,
                 "cifs_guestok": false,
                 "cifs_showhiddenfiles": false,
                 "cifs_hostsdeny": "",
@@ -88,7 +87,6 @@ Create resource
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
                 "cifs_home": false,
-                "cifs_default_permissions": true,
                 "cifs_guestok": false,
                 "cifs_showhiddenfiles": false,
                 "cifs_hostsdeny": "",
@@ -109,7 +107,6 @@ Create resource
    :json string cifs_hostsallow: explictly allowed hosts
    :json string cifs_hostsdeny: explicitly denied hosts
    :json string cifs_auxsmbconf: auxiliary parameters to append to smb.conf
-   :json string cifs_default_permissions: recursively set sane default windows permissions on share
    :json boolean cifs_guestok: allow guests
    :json boolean cifs_guestonly: only guests are allowed
    :json boolean cifs_shadowcopy: export ZFS snapshots as shadow copies
@@ -151,7 +148,6 @@ Update resource
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
                 "cifs_home": false,
-                "cifs_default_permissions": true,
                 "cifs_guestok": true,
                 "cifs_showhiddenfiles": false,
                 "cifs_hostsdeny": "",
@@ -172,7 +168,6 @@ Update resource
    :json string cifs_hostsallow: explictly allowed hosts
    :json string cifs_hostsdeny: explicitly denied hosts
    :json string cifs_auxsmbconf: auxiliary parameters to append to smb.conf
-   :json string cifs_default_permissions: recursively set sane default windows permissions on share
    :json boolean cifs_guestok: allow guests
    :json boolean cifs_guestonly: only guests are allowed
    :json boolean cifs_shadowcopy: export ZFS snapshots as shadow copies

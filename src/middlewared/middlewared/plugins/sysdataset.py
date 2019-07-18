@@ -244,6 +244,7 @@ class SystemDatasetService(ConfigService):
                 os.chmod(corepath, 0o775)
 
             await self.__nfsv4link(config)
+            await self.middleware.call('etc.generate', 'smb_configure')
 
         return config
 
