@@ -1355,7 +1355,7 @@ class ShareSec(CRUDService):
             old_acl = await self.getacl(id_or_name)
             new_acl.update({'share_name': id_or_name})
         else:
-            old_acl = await self._get_instance(id_or_name)
+            old_acl = await self._get_instance(int(id_or_name))
             new_acl.update({'share_name': old_acl['share_name']})
 
         await self.setacl(new_acl)
