@@ -284,11 +284,10 @@ class InitShutdown(Model):
     ini_type = models.CharField(
         choices=(
             ('command', _('Command')),
-            ('multiline_command', _('Multiline command')),
             ('script', _('Script')),
         ),
         default='command',
-        max_length=17,
+        max_length=15,
         verbose_name=_("Type"),
     )
     ini_command = models.CharField(
@@ -296,8 +295,8 @@ class InitShutdown(Model):
         verbose_name=_("Command"),
         blank=True,
     )
-    ini_multiline_command = models.TextField(
-        verbose_name=_("Multiline command"),
+    ini_script_text = models.TextField(
+        verbose_name=_("Script text"),
         blank=True,
     )
     ini_script = PathField(
