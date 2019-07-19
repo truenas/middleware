@@ -267,9 +267,9 @@ def test_31_verify_available_plugin_(plugin):
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_32_verify_available_plugins_rslsync_is_not_NA_with(prop):
+def test_32_verify_available_plugins_openvpn_is_not_na_(prop):
     for plugin_info in job_results['result']:
-        if 'rslsync' in plugin_info['plugin']:
+        if 'openvpn' in plugin_info['plugin']:
             break
     assert plugin_info[prop] != 'N/A', str(job_results)
 
