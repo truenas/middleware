@@ -240,6 +240,11 @@ class SystemService(Service):
         """
         return "FreeNAS" if await self.middleware.call("system.is_freenas") else "TrueNAS"
 
+    @no_auth_required
+    @accepts()
+    async def legacy_ui_enabled(self):
+        return (await self.middleware.call('system.advanced.config'))['legacy_ui']
+
     @accepts()
     def version(self):
         """
