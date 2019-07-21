@@ -105,6 +105,7 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
+            Bool('legacy_ui'),
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
