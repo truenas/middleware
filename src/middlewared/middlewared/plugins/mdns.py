@@ -4,9 +4,11 @@ import enum
 import os
 import pybonjour
 import select
+import socket
 import subprocess
 
 from bsd.threading import set_thread_name
+from pybonjour import kDNSServiceInterfaceIndexAny
 
 from middlewared.service import Service, private
 from middlewared.utils import filter_list
@@ -155,6 +157,9 @@ class mDNSServiceThread(threading.Thread):
             else:
                 return False
         if self.service == 'SMB':
+            if not self.middleware.call_sync('smb.config')['zeroconf']:
+                return False
+
             return any(filter_list(self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]))
 
         return any(filter_list(self.service_info, [('service', '=', self.service.lower()), ('state', '=', 'RUNNING')]))
@@ -169,9 +174,9 @@ class mDNSServiceThread(threading.Thread):
 
         Time Machine (adisk):
         -------------------------
-        sys=adVF=0x100 -- this is required when ._adisk._tcp is present on device. When it is
+        sys=adVF=0x100 -- this is required when _adisk._tcp is present on device. When it is
         set, the MacOS client will send a NetShareEnumAll IOCTL and shares will be visible.
-        Otherwise, Finder will only see the Time Machine share. In the absence of ._adisk._tcp
+        Otherwise, Finder will only see the Time Machine share. In the absence of _adisk._tcp
         MacOS will _always_ send NetShareEnumAll IOCTL.
 
         waMa=0 -- MacOS server uses waMa=0, while embedded devices have it set to their Mac Address.
@@ -188,25 +193,27 @@ class mDNSServiceThread(threading.Thread):
         network analysis indicates that current MacOS Time Machine shares set the port for adisk to 311.
         """
         if self.service not in ['ADISK', 'DEV_INFO']:
-            return ''
+            return ('', self._get_interfaceindex())
 
         txtrecord = pybonjour.TXTRecord()
         if self.service == 'DEV_INFO':
             txtrecord['model'] = DevType.RACKMAC
-            return txtrecord
+            return (txtrecord, [kDNSServiceInterfaceIndexAny])
 
         if self.service == 'ADISK':
+            iindex = [kDNSServiceInterfaceIndexAny]
             afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
             smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
             afp = set([(x['name'], x['path']) for x in afp_shares])
             smb = set([(x['name'], x['path']) for x in smb_shares])
             if len(afp | smb) == 0:
-                return None
+                return (None, [kDNSServiceInterfaceIndexAny])
 
             mixed_shares = afp & smb
             afp.difference_update(mixed_shares)
             smb.difference_update(mixed_shares)
             if afp_shares or smb_shares:
+                iindex = []
                 dkno = 0
                 txtrecord['sys'] = 'waMa=0,adVF=0x100'
                 for i in mixed_shares:
@@ -224,7 +231,12 @@ class mDNSServiceThread(threading.Thread):
                     txtrecord[f'dk{dkno}'] = f'adVN={i[0]},adVF=0x81,adVU={afp_advu}'
                     dkno += 1
 
-            return txtrecord
+                if smb:
+                    iindex.append(self._get_interfaceindex('SMB'))
+                if afp:
+                    iindex.append(self._get_interfaceindex('AFP'))
+
+            return (txtrecord, iindex)
 
     def _get_port(self):
         if self.service in ['FTP', 'TFPT']:
@@ -244,51 +256,90 @@ class mDNSServiceThread(threading.Thread):
 
         return self.port
 
+    def _get_interfaceindex(self, service=None):
+        """
+        interfaceIndex specifies the interface on which to register the sdRef.
+        kDNSServiceInterfaceIndexAny (0) will register on all available interfaces.
+        This function will return kDNSServiceInterfaceIndexAny if the service is
+        not configured to bind on a particular interface. Otherwise it will return
+        a list of interfaces on which to register mDNS.
+        """
+        iindex = []
+        bind_ip = []
+        if service is None:
+            service = self.service
+        if service in ['AFP', 'NFS', 'SMB']:
+            bind_ip = self.middleware.call_sync(f'{self.service.lower()}.config')['bindip']
+
+        if service in ['HTTP', 'HTTPS']:
+            ui_address = self.middleware.call_sync('system.general.config')['ui_address']
+            if ui_address[0] != "0.0.0.0":
+                bind_ip = ui_address
+
+        if service in ['SSH', 'SFTP_SSH']:
+            for iface in self.middleware.call_sync('ssh.config')['bindiface']:
+                iindex.append(socket.if_nametoindex(iface))
+
+            return iindex if iindex else [kDNSServiceInterfaceIndexAny]
+
+        if bind_ip is None:
+            return [kDNSServiceInterfaceIndexAny]
+
+        for ip in bind_ip:
+            for intobj in self.middleware.call_sync('interface.query'):
+                if any(filter(lambda x: ip in x['address'], intobj['aliases'])):
+                    iindex.append(socket.if_nametoindex(intobj['name']))
+                    break
+
+        return iindex if iindex else [kDNSServiceInterfaceIndexAny]
+
     def register(self):
         """
         An instance of DNSServiceRef (sdRef) represents an active connection to mdnsd.
-
-        DNSServiceRef class supports the context management protocol, sdRef
-        is closed automatically when block is exited.
         """
         mDNSServices = {}
         for srv in ServiceType:
+            mDNSServices.update({srv.name: {}})
             self.service = srv.name
             self.regtype, self.port = ServiceType[self.service].value
             if not self._is_running():
                 continue
 
-            txtrecord = self._generate_txtRecord()
+            txtrecord, interfaceIndex = self._generate_txtRecord()
             if txtrecord is None:
                 continue
 
             port = self._get_port()
 
             self.logger.trace(
-                'Registering mDNS service hostnamename: %s,  regtype: %s, port: %s, TXTRecord: %s',
-                self.hostname, self.regtype, port, txtrecord
+                'Registering mDNS service host: %s,  regtype: %s, port: %s, interface: %s, TXTRecord: %s',
+                self.hostname, self.regtype, port, interfaceIndex, txtrecord
             )
-            mDNSServices[srv.name] = {
-                'sdRef': None,
-                'regtype': self.regtype,
-                'port': port,
-                'txtrecord': txtrecord,
-                'name': self.hostname
-            }
+            for i in interfaceIndex:
+                mDNSServices[srv.name].update({i: {
+                    'sdRef': None,
+                    'interfaceIndex': i,
+                    'regtype': self.regtype,
+                    'port': port,
+                    'txtrecord': txtrecord,
+                    'name': self.hostname
+                }})
 
-            mDNSServices[srv.name]['sdRef'] = pybonjour.DNSServiceRegister(
-                name=self.hostname,
-                regtype=self.regtype,
-                port=port,
-                txtRecord=txtrecord,
-                callBack=None
-            )
+                mDNSServices[srv.name][i]['sdRef'] = pybonjour.DNSServiceRegister(
+                    name=self.hostname,
+                    regtype=self.regtype,
+                    interfaceIndex=i,
+                    port=port,
+                    txtRecord=txtrecord,
+                    callBack=None
+                )
 
         self.finished.wait()
         for srv in mDNSServices.keys():
-            self.logger.trace('Unregistering %s %s.',
-                              mDNSServices[srv]['name'], mDNSServices[srv]['regtype'])
-            mDNSServices[srv]['sdRef'].close()
+            for i in mDNSServices[srv].keys():
+                self.logger.trace('Unregistering %s %s.',
+                                  mDNSServices[srv][i]['name'], mDNSServices[srv][i]['regtype'])
+                mDNSServices[srv][i]['sdRef'].close()
 
     def run(self):
         set_thread_name(f'mdns_svc_{self.service}')
