@@ -184,7 +184,7 @@ class InitShutdownScriptService(CRUDService):
                     )
         except Exception as error:
             self.middleware.logger.debug(
-                f'{task["type"]} {cmd}: {error.strerror}'
+                f'{task["type"]} {cmd}: {error!r}'
             )
         finally:
             if tmp_script and os.path.exists(tmp_script):
