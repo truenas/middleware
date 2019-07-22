@@ -158,36 +158,37 @@ class InitShutdownScriptService(CRUDService):
         elif os.path.exists(task['script'] or '') and os.access(task['script'], os.X_OK):
             cmd = f'exec {task["script"]}'
 
-        if cmd:
-            proc = await Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                shell=True,
-                close_fds=True
-            )
-            stdout, stderr = await proc.communicate()
+        try:
+            if cmd:
+                proc = await Popen(
+                    cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                    close_fds=True
+                )
+                stdout, stderr = await proc.communicate()
 
-            if proc.returncode:
-                if task_type == 'COMMAND':
-                    cmd = task['command']
-                elif task_type == 'SCRIPT' and task['script_text']:
-                    cmd = task['script_text']
-                elif task_type == 'SCRIPT' and task['script']:
-                    cmd = task['script']
-                else:
-                    cmd = ''
-                self.middleware.logger.debug(
-                    'Execution failed for '
-                    f'{task_type} {cmd}: {stderr.decode()}'
-                )
-        if tmp_script:
-            try:
+                if proc.returncode:
+                    if task_type == 'COMMAND':
+                        cmd = task['command']
+                    elif task_type == 'SCRIPT' and task['script_text']:
+                        cmd = task['script_text']
+                    elif task_type == 'SCRIPT' and task['script']:
+                        cmd = task['script']
+                    else:
+                        cmd = ''
+                    self.middleware.logger.debug(
+                        'Execution failed for '
+                        f'{task_type} {cmd}: {stderr.decode()}'
+                    )
+        except Exception as error:
+            self.middleware.logger.debug(
+                f'{task["type"]} {cmd}: {error.strerror}'
+            )
+        finally:
+            if tmp_script and os.path.exists(tmp_script):
                 os.unlink(tmp_script)
-            except OSError as error:
-                self.middleware.logger.debug(
-                    f'{task["type"]} {tmp_script}: {error.strerror}'
-                )
 
     @private
     @accepts(
