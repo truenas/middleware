@@ -887,11 +887,24 @@ class VMService(CRUDService):
         for create_device in filter(lambda v: 'id' not in v, devices):
             await self.middleware.call('vm.device.create', create_device)
 
-    @accepts(Int('id'), Patch(
-        'vm_create',
-        'vm_update',
-        ('attr', {'update': True}),
-    ))
+    @accepts(
+        Int('id'),
+        Patch(
+            'vm_create',
+            'vm_update',
+            ('attr', {'update': True}),
+            (
+                'edit', {
+                    'name': 'devices', 'method': lambda v: setattr(
+                        v, 'items', [Patch(
+                            'vmdevice_create', 'vmdevice_update', ('attr', {'update': True}),
+                            ('add', {'name': 'id', 'type': 'int', 'required': False})
+                        )]
+                    )
+                }
+            )
+        )
+    )
     async def do_update(self, id, data):
         """Update all information of a specific VM."""
 
