@@ -191,6 +191,28 @@ generate_collectd()
         fi
     fi
 
+    disk_plugins=$(cat <<EOF
+LoadPlugin disk
+<Plugin "disk">
+    Disk "/^gptid/"
+    Disk "/^md/"
+    Disk "/^pass/"
+    IgnoreSelected true
+</Plugin>
+
+LoadPlugin geom_stat
+<Plugin "geom_stat">
+    Filter "^([a]?da|ciss|md|mfi|md|nvd|pmem|xbd|vtbd)[0123456789]+$"
+</Plugin>
+EOF
+)
+    if ! use_rrd_dataset; then
+        disk_count=$(ls -1 /dev | egrep "^([a]?da|ciss|md|mfi|md|nvd|pmem|xbd|vtbd)[0123456789]+$" | wc -l)
+        if [ "$disk_count" -ge 100 ]; then
+            disk_plugins=""
+        fi
+    fi
+
     cat << EOF > $cfg
 Hostname "${hostname}"
 FQDNLookup true
@@ -203,9 +225,7 @@ LoadPlugin cpu
 LoadPlugin cputemp
 LoadPlugin ctl
 LoadPlugin df
-LoadPlugin disk
 LoadPlugin exec
-LoadPlugin geom_stat
 LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
@@ -219,6 +239,8 @@ LoadPlugin syslog
 LoadPlugin threshold
 LoadPlugin zfs_arc
 LoadPlugin zfs_arc_v2
+
+${disk_plugins}
 
 <Plugin "syslog">
     LogLevel err
@@ -242,13 +264,6 @@ LoadPlugin zfs_arc_v2
     ${cpu_plugin_options}
 </Plugin>
 <Plugin cputemp>
-</Plugin>
-
-<Plugin "disk">
-    Disk "/^gptid/"
-    Disk "/^md/"
-    Disk "/^pass/"
-    IgnoreSelected true
 </Plugin>
 
 <Plugin "exec">
@@ -283,10 +298,6 @@ LoadPlugin zfs_arc_v2
 </Plugin>
 
 <Plugin "zfs_arc">
-</Plugin>
-
-<Plugin "geom_stat">
-    Filter "^([a]?da|ciss|md|mfi|md|nvd|pmem|xbd|vtbd)[0123456789]+$"
 </Plugin>
 
 <Plugin "df">
