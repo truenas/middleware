@@ -80,8 +80,9 @@ def test_05_looking_pool_info_of_(pool_keys):
         if 'disks' in keys_list:
             info = results.json()[keys_list[0]][keys_list[1]]
             disk_list = payload[keys_list[0]][keys_list[1]][0][keys_list[2]]
-            assert disk_list[0] in info[0]['device'], results.text
-            assert disk_list[1] in info[1]['device'], results.text
+            for props in info:
+                assert props['device'].partition('p')[0] in disk_list, results.text
+                assert props['disk'] in disk_list, results.text
         else:
             info = results.json()[keys_list[0]][keys_list[1]][keys_list[2]]
     else:
