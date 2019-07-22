@@ -1277,7 +1277,7 @@ class VMDeviceService(CRUDService):
         Dict(
             'vmdevice_create',
             Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'VNC', 'RAW'], required=True),
-            Int('vm', required=False),
+            Int('vm', required=True),
             Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None, null=True),
             register=True,
@@ -1287,9 +1287,6 @@ class VMDeviceService(CRUDService):
         """
         Create a new device for the VM of id `vm`.
         """
-        if not data.get('vm'):
-            raise ValidationError('vmdevice_create.vm', '"vm" is required')
-
         data = await self.validate_device(data)
         data = await self.update_device(data)
 
@@ -1314,6 +1311,8 @@ class VMDeviceService(CRUDService):
         new.update(data)
 
         new = await self.validate_device(new, device)
+        new = await self.update_device(new)
+
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
 
@@ -1354,6 +1353,8 @@ class VMDeviceService(CRUDService):
 
     @private
     async def validate_device(self, device, old=None):
+        await self.middleware.call('vm._get_instance', device['vm'])
+
         verrors = ValidationErrors()
         schema = self.DEVICE_ATTRS.get(device['dtype'])
         if schema:
@@ -1391,6 +1392,13 @@ class VMDeviceService(CRUDService):
                         'attributes.zvol_name',
                         f'Parent dataset {parentzvol} does not exist.',
                         errno.ENOENT
+                    )
+                if not verrors and create_zvol and await self.middleware.call(
+                    'pool.dataset.query', [['id', '=', device['attributes']['zvol_name']]]
+                ):
+                    verrors.add(
+                        'attributes.zvol_name',
+                        f'{device["attributes"]["zvol_name"]} already exists.'
                     )
             elif not path:
                 verrors.add('attributes.path', 'Disk path is required.')
