@@ -4,7 +4,7 @@ import stat
 import subprocess
 import tempfile
 
-from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
+from middlewared.schema import Bool, Dict, File, Int, Patch, Range, Str, ValidationErrors, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.utils import Popen
 
@@ -18,9 +18,9 @@ class InitShutdownScriptService(CRUDService):
 
     @accepts(Dict(
         'init_shutdown_script_create',
-        Str('type', enum=['COMMAND', 'MULTILINE_COMMAND', 'SCRIPT'], required=True),
+        Str('type', enum=['COMMAND', 'SCRIPT'], required=True),
         Str('command', null=True),
-        Str('multiline_command', null=True),
+        Str('script_text', null=True),
         File('script', null=True),
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
@@ -119,22 +119,24 @@ class InitShutdownScriptService(CRUDService):
             if not data.get('command'):
                 verrors.add(f'{schema_name}.command', 'This field is required')
             else:
-                data['multiline_command'] = ''
-                data['script'] = ''
-
-        if data['type'] == 'MULTILINE_COMMAND':
-            if not data.get('multiline_command'):
-                verrors.add(f'{schema_name}.multiline_command', 'This field is required')
-            else:
-                data['command'] = ''
+                data['script_text'] = ''
                 data['script'] = ''
 
         if data['type'] == 'SCRIPT':
-            if not data.get('script'):
-                verrors.add(f'{schema_name}.script', 'This field is required')
+            if data.get('script') and data.get('script_text'):
+                verrors.add(f'{schema_name}.script', 'Only one of two fields should be provided')
+            elif not data.get('script') and not data.get('script_text'):
+                # IDEA may be it's worth putting both fields validations errors to verrors
+                # e.g.
+                # verrors.add(f'{schema_name}.script', 'This field is required')
+                # verrors.add(f'{schema_name}.script_text', 'This field is required')
+                verrors.add(f'{schema_name}.script', "Either 'script' or 'script_text' field is required")
+            elif data.get('script') and not data.get('script_text'):
+                data['command'] = ''
+                data['script_text'] = ''
             else:
                 data['command'] = ''
-                data['multiline_command'] = ''
+                data['script'] = ''
 
         if verrors:
             raise verrors
@@ -147,11 +149,11 @@ class InitShutdownScriptService(CRUDService):
 
         if task_type == 'COMMAND':
             cmd = task['command']
-        elif task_type == 'MULTILINE_COMMAND':
+        elif task_type == 'SCRIPT' and task['script_text']:
             _, tmp_script = tempfile.mkstemp(text=True)
             os.chmod(tmp_script, stat.S_IRWXU)
             with open(tmp_script, 'w') as f:
-                f.write(task['multiline_command'])
+                f.write(task['script_text'])
             cmd = f'exec {tmp_script}'
         elif os.path.exists(task['script'] or '') and os.access(task['script'], os.X_OK):
             cmd = f'exec {task["script"]}'
@@ -169,9 +171,9 @@ class InitShutdownScriptService(CRUDService):
             if proc.returncode:
                 if task_type == 'COMMAND':
                     cmd = task['command']
-                elif task_type == 'MULTILINE_COMMAND':
-                    cmd = task['multiline_command']
-                elif task_type == 'SCRIPT':
+                elif task_type == 'SCRIPT' and task['script_text']:
+                    cmd = task['script_text']
+                elif task_type == 'SCRIPT' and task['script']:
                     cmd = task['script']
                 else:
                     cmd = ''
@@ -180,7 +182,12 @@ class InitShutdownScriptService(CRUDService):
                     f'{task_type} {cmd}: {stderr.decode()}'
                 )
         if tmp_script:
-            os.unlink(tmp_script)
+            try:
+                os.unlink(tmp_script)
+            except OSError as error:
+                self.middleware.logger.debug(
+                    f'{task["type"]} {tmp_script}: {error.strerror}'
+                )
 
     @private
     @accepts(
