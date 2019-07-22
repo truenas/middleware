@@ -795,50 +795,29 @@ class VMService(CRUDService):
 
         devices = data.pop('devices')
         vm_id = None
-        created_zvols = []
+        created_resources = []
         try:
             vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
             for device in devices:
-                device['vm'] = vm_id
-                if device['dtype'] == 'DISK':
-                    create_zvol = device['attributes'].pop('create_zvol', False)
-
-                    if create_zvol:
-                        ds_options = {
-                            'name': device['attributes'].pop('zvol_name'),
-                            'type': "VOLUME",
-                            'volsize': device['attributes'].pop('zvol_volsize'),
-                        }
-
-                        self.logger.debug(
-                            f'===> Creating ZVOL {ds_options["name"]} with volsize'
-                            f' {ds_options["volsize"]}')
-
-                        zvol_blocksize = await self.middleware.call(
-                            'pool.dataset.recommended_zvol_blocksize',
-                            ds_options['name'].split('/', 1)[0]
-                        )
-                        ds_options['volblocksize'] = zvol_blocksize
-
-                        new_zvol = (
-                            await self.middleware.call('pool.dataset.create', ds_options)
-                        )['id']
-                        device['attributes']['path'] = f'/dev/zvol/{new_zvol}'
-                        created_zvols.append(new_zvol)
-
-                await self.middleware.call('datastore.insert', 'vm.device', device)
+                created_resource = device['dtype'] == 'DISK' and device['attributes'].get('create_zvol')
+                created_device = await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
+                if created_resource:
+                    created_resources.append(created_device)
         except Exception as e:
-            if vm_id:
-                with contextlib.suppress(Exception):
-                    await self.middleware.call('datastore.delete', 'vm.vm', vm_id)
-            for zvol in created_zvols:
+            # We only want to delete explicit resources which were explicitly requested to be created
+            for device in created_resources:
                 try:
-                    await self.middleware.call('pool.dataset.delete', zvol)
+                    await self.middleware.call('vm.device.delete', device['id'], {'zvol': device['dtype'] == 'DISK'})
                 except Exception:
                     self.logger.warn(
-                        'Failed to delete zvol "%s" on vm.create rollback', zvol, exc_info=True
+                        'Failed to delete zvol "%s" on vm.create rollback',
+                        device['attributes'].get('path', '').rsplit('/dev/zvol/')[-1], exc_info=True
                     )
+
+            if vm_id:
+                await self.middleware.call('vm.delete', vm_id)
+
             raise e
 
         return vm_id
