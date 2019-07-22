@@ -173,7 +173,7 @@ class InitShutdownScriptService(CRUDService):
                     if task_type == 'COMMAND':
                         cmd = task['command']
                     elif task_type == 'SCRIPT' and task['script_text']:
-                        cmd = task['script_text']
+                        cmd = task['comment']
                     elif task_type == 'SCRIPT' and task['script']:
                         cmd = task['script']
                     else:
@@ -183,6 +183,8 @@ class InitShutdownScriptService(CRUDService):
                         f'{task_type} {cmd}: {stderr.decode()}'
                     )
         except Exception as error:
+            if task_type == 'SCRIPT' and task['script_text']:
+                cmd = task['comment']
             self.middleware.logger.debug(
                 f'{task["type"]} {cmd}: {error!r}'
             )
