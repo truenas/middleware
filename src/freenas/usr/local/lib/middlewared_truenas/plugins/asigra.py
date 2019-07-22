@@ -4,7 +4,6 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-import contextlib
 import glob
 import os
 import re
