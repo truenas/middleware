@@ -3,15 +3,13 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch, Ref
 from middlewared.service import (
-    item_method, pass_app, private, CRUDService, CallError, ValidationErrors,
-    ValidationError
+    item_method, pass_app, private, CRUDService, CallError, ValidationErrors
 )
 from middlewared.utils import Nid, Popen
 from middlewared.utils.path import is_child
 
 import middlewared.logger
 import asyncio
-import contextlib
 import errno
 import ipaddress
 import math
@@ -854,34 +852,40 @@ class VMService(CRUDService):
             elif not re.search(r'^[a-zA-Z_0-9]+$', data['name']):
                 verrors.add(f'{schema_name}.name', 'Only alphanumeric characters are allowed.')
 
+        devices_id_list = [d['id'] for d in await self.middleware.call('vm.device.query')]
         for i, device in enumerate(data.get('devices') or []):
             try:
-                device = await self.middleware.call('vm.device.validate_device', device)
+                await self.middleware.call('vm.device.validate_device', device)
+                if old:
+                    if device.get('id') and device['id'] not in devices_id_list:
+                        verrors.add(
+                            f'{schema_name}.devices.{i}.{device["id"]}',
+                            f'VM device of {device["id"]} does not exist.'
+                        )
+                    elif not device.get('vm') or device['vm'] != old['id']:
+                        verrors.add(
+                            f'{schema_name}.devices.{i}.{device["id"]}',
+                            f'Device must be associated with current VM {old["id"]}.'
+                        )
             except ValidationErrors as verrs:
                 for attribute, errmsg, enumber in verrs:
                     verrors.add(f'{schema_name}.devices.{i}.{attribute}', errmsg, enumber)
 
     async def __do_update_devices(self, id, devices):
-        if devices and isinstance(devices, list) is True:
-            device_query = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
+        # There are 3 cases:
+        # 1) "devices" can have new device entries
+        # 2) "devices" can have updated existing entries
+        # 3) "devices" can have removed exiting entries
+        old_devices = await self.middleware.call('vm.device.query', [['vm', '=', id]])
+        existing_devices = [d for d in devices if 'id' in devices]
+        for remove_id in ({d['id'] for d in old_devices} - {d['id'] for d in existing_devices}):
+            await self.middleware.call('vm.device.delete', remove_id)
 
-            # Make sure both list has the same size.
-            if len(device_query) != len(devices):
-                return False
+        for update_device in existing_devices:
+            await self.middleware.call('vm.device.update', update_device['id'], update_device)
 
-            get_devices = []
-            for q in device_query:
-                q.pop('vm')
-                get_devices.append(q)
-
-            while len(devices) > 0:
-                update_item = devices.pop(0)
-                old_item = get_devices.pop(0)
-                if old_item['dtype'] == update_item['dtype']:
-                    old_item['attributes'] = update_item['attributes']
-                    device_id = old_item.pop('id')
-                    await self.middleware.call('datastore.update', 'vm.device', device_id, old_item)
-            return True
+        for create_device in filter(lambda v: 'id' not in v, devices):
+            await self.middleware.call('vm.device.create', create_device)
 
     @accepts(Int('id'), Patch(
         'vm_create',
@@ -900,13 +904,10 @@ class VMService(CRUDService):
         if verrors:
             raise verrors
 
-        devices = data.pop('devices', None)
-        if devices:
-            update_devices = await self.__do_update_devices(id, devices)
-        if data:
-            return await self.middleware.call('datastore.update', 'vm.vm', id, data)
-        else:
-            return update_devices
+        await self.__do_update_devices(id, data.pop('devices') or [])
+        await self.middleware.call('datastore.update', 'vm.vm', id, data)
+
+        return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
