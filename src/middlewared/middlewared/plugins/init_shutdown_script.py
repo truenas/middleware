@@ -209,10 +209,15 @@ class InitShutdownScriptService(CRUDService):
             try:
                 await asyncio.wait_for(self.execute_task(task), timeout=task['timeout'])
             except asyncio.TimeoutError:
-                # TODO add logging of task['script_text']
-                self.middleware.logger.debug(
-                    f'{task["type"]} {task["command"] if task["type"] == "COMMAND" else task["script"]} timed out'
-                )
+                if task['type'] == 'COMMAND':
+                    cmd = task['command']
+                elif task['type'] == 'SCRIPT' and task['script_text']:
+                    cmd = task['comment']
+                elif task['type'] == 'SCRIPT' and task['script']:
+                    cmd = task['script']
+                else:
+                    cmd = ''
+                self.middleware.logger.debug(f'{task["type"]} {cmd} timed out')
             finally:
                 job.set_progress((100 / len(tasks)) * (i + 1))
 
