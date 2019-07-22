@@ -301,7 +301,7 @@ class CryptoKeyService(Service):
         return cert_info
 
     @accepts(
-        Str('csr', required=True)
+        Str('csr', required=True, max_length=None)
     )
     def load_certificate_request(self, csr):
         try:
