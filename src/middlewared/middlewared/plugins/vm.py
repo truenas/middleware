@@ -1246,6 +1246,33 @@ class VMDeviceService(CRUDService):
             })
         }
 
+    @private
+    async def update_device(self, data):
+        if data['dtype'] == 'DISK':
+            create_zvol = data['attributes'].pop('create_zvol', False)
+
+            if create_zvol:
+                ds_options = {
+                    'name': data['attributes'].pop('zvol_name'),
+                    'type': 'VOLUME',
+                    'volsize': data['attributes'].pop('zvol_volsize'),
+                }
+
+                self.logger.debug(
+                    f'Creating ZVOL {ds_options["name"]} with volsize {ds_options["volsize"]}'
+                )
+
+                zvol_blocksize = await self.middleware.call(
+                    'pool.dataset.recommended_zvol_blocksize', ds_options['name'].split('/', 1)[0]
+                )
+                ds_options['volblocksize'] = zvol_blocksize
+
+                new_zvol = (await self.middleware.call('pool.dataset.create', ds_options))['id']
+                data['attributes']['path'] = f'/dev/zvol/{new_zvol}'
+
+        return data
+>>>>>>> Ability to create zvol when creating disk device
+
     @accepts(
         Dict(
             'vmdevice_create',
@@ -1264,6 +1291,7 @@ class VMDeviceService(CRUDService):
             raise ValidationError('vmdevice_create.vm', '"vm" is required')
 
         data = await self.validate_device(data)
+        data = await self.update_device(data)
 
         id = await self.middleware.call(
             'datastore.insert', self._config.datastore, data
