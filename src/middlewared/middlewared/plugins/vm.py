@@ -1318,11 +1318,29 @@ class VMDeviceService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id):
+    @accepts(
+        Int('id'),
+        Dict(
+            'vm_device_delete',
+            Bool('zvol', default=False)
+        )
+    )
+    async def do_delete(self, id, options):
         """
         Delete a VM device of `id`.
         """
+        device = await self._get_instance(id)
+
+        if options['zvol']:
+            if device['dtype'] != 'DISK':
+                raise CallError('No zvol found to destroy as device is not a disk.')
+            zvol_id = device['attributes'].get('path', '').rsplit('/dev/zvol/')[-1]
+            if await self.middleware.call('pool.dataset.query', [['id', '=', zvol_id]]):
+                # FIXME: We should use pool.dataset.delete but right now FS attachments will consider
+                # the current device as a valid reference. Also should we stopping the vm only when deleting an
+                # attachment ?
+                await self.middleware.call('zfs.dataset.delete', zvol_id)
+
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
