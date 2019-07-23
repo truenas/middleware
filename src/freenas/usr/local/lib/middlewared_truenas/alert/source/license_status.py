@@ -195,6 +195,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 'Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves.'
             ))
 
+        if self.middleware.call_sync("failover.status") == "BACKUP":
+            return alerts
+
         for days in [0, 14, 30, 90, 180]:
             if license['contract_end'] <= date.today() + timedelta(days=days):
                 serial_numbers = ", ".join(list(filter(None, [license['system_serial'], license['system_serial_ha']])))
@@ -253,7 +256,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 alerts.append(Alert(
                     alert_klass,
                     alert_text,
-                    mail=None if self.middleware.call_sync("failover.status") == "BACKUP" else {
+                    mail={
                         "cc": ["support-renewal@ixsystems.com"],
                         "subject": subject,
                         "text": textwrap.dedent("""\
