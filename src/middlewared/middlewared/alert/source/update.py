@@ -24,6 +24,8 @@ class HasUpdateAlertClass(AlertClass):
 class HasUpdateAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
 
+    run_on_backup_node = False
+
     def check_sync(self):
         try:
             self.middleware.call_sync("datastore.query", "system.update", None, {"get": True})
