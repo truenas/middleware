@@ -41,8 +41,6 @@ do-build:
 	${MAKE} -C ${WRKSRC}/extract-tarball  all
 	${MAKE} -C ${WRKSRC}/fix_ea obj
 	${MAKE} -C ${WRKSRC}/fix_ea all
-	${MAKE} -C ${WRKSRC}/freenas-sysctl obj
-	${MAKE} -C ${WRKSRC}/freenas-sysctl all
 	${MAKE} -C ${WRKSRC}/winacl   obj
 	${MAKE} -C ${WRKSRC}/winacl  all
 
@@ -56,7 +54,6 @@ do-install:
 	${MAKE} -C ${WRKSRC}/extract-tarball DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/fix_ea DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
-	${MAKE} -C ${WRKSRC}/freenas-sysctl DESTDIR=${STAGEDIR} KMODDIR=${PREFIX}/boot/modules install
 	#
 	# Adding autotune
 	#
