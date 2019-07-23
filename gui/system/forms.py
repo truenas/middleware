@@ -1128,7 +1128,7 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
         self.fields['adv_motd'].strip = False
-        self.original_instance = self.instance.__dict__
+        self.original_instance = self.instance.__dict__.copy()
 
         self.fields['adv_serialport'].choices = list(choices.SERIAL_CHOICES())
 
@@ -1160,6 +1160,9 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
             events.append("_msg_start()")
         else:
             events.append("_msg_stop()")
+
+        if self.original_instance['adv_legacy_ui'] != self.instance.adv_legacy_ui:
+            events.append(f'evilrestartHttpd(\'http://{request.META["HTTP_HOST"]}\')')
 
         if self.original_instance['adv_advancedmode'] != self.instance.adv_advancedmode:
             # Invalidate cache
