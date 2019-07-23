@@ -1287,7 +1287,12 @@ require([
 
         var provider = registry.byId(provider_id).get('value');
         var credentialsSchemas = JSON.parse(registry.byId("id_credentials_schemas").get('value'));
-        var credentialsOauths = JSON.parse(registry.byId("id_credentials_oauths").get('value'));
+        var credentialsOauths = registry.byId("id_credentials_oauths");
+        if (credentialsOauths == null) {
+            credentialsOauths = {};
+        } else {
+            credentialsOauths = JSON.parse(credentialsOauths.get("value"));
+        }
 
         var attributesInput = dom.byId("id_attributes");
         var attributes = JSON.parse(attributesInput.value) || {};
