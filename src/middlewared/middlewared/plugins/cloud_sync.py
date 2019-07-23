@@ -28,8 +28,7 @@ import subprocess
 import tempfile
 import textwrap
 
-CHUNK_SIZE = 5 * 1024 * 1024
-RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
+RE_TRANSF = re.compile(r"Transferred:\s*(?P<progress_1>.+, )(?P<progress>[0-9]+)%, (?P<progress_2>.+)$", re.S)
 
 REMOTES = {}
 
@@ -290,9 +289,7 @@ async def rclone_check_progress(job, proc):
         job.logs_fd.write(read.encode("utf-8", "ignore"))
         reg = RE_TRANSF.search(read)
         if reg:
-            transferred = reg.group(1).strip()
-            if not transferred.isdigit():
-                job.set_progress(None, transferred)
+            job.set_progress(int(reg.group("progress")), reg.group("progress_1") + reg.group("progress_2"))
 
     if dropbox__restricted_content:
         message = "\n" + (
