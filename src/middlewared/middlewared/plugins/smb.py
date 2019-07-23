@@ -762,7 +762,7 @@ class SharingSMBService(CRUDService):
         """
         share = await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self.middleware.call('smb.sharesec._delete', share['name'])
+        await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
         await self._service_change('cifs', 'reload')
         return result
 
