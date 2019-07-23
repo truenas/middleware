@@ -166,11 +166,11 @@ class AsigraService(SystemServiceService):
         job.set_progress(100, 'System asigra successfully migrated to asigra plugin')
 
 
-def _event_system(middleware, event_type, args):
+async def _event_system(middleware, event_type, args):
     if args['id'] != 'ready':
         return
 
-    middleware.call_sync('asigra.migrate_to_plugin')
+    await middleware.call('asigra.migrate_to_plugin')
 
 
 async def setup(middleware):
