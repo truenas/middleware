@@ -161,8 +161,8 @@ class MailService(ConfigService):
     @accepts(Dict(
         'mail-message',
         Str('subject', required=True),
-        Str('text', required=True),
-        Str('html'),
+        Str('text', required=True, max_length=None),
+        Str('html', max_length=None),
         List('to', items=[Str('email')]),
         List('cc', items=[Str('email')]),
         Int('interval', null=True),

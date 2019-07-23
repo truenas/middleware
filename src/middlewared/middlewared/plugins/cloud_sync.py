@@ -697,9 +697,9 @@ class CloudSyncService(CRUDService):
         List("exclude", default=[], items=[Str("path", empty=False)]),
         Dict("attributes", additional_attrs=True, required=True),
         Bool("snapshot", default=False),
-        Str("pre_script", default=""),
-        Str("post_script", default=""),
-        Str("args", default=""),
+        Str("pre_script", default="", max_length=None),
+        Str("post_script", default="", max_length=None),
+        Str("args", default="", max_length=None),
         Bool("enabled", default=True),
         register=True,
     ))
