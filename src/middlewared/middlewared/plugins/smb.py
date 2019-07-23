@@ -371,11 +371,15 @@ class SMBService(SystemServiceService):
                 raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
             for p in (pdb.stdout.decode()).splitlines():
                 entry = p.split(':')
-                pdbentries.append({
-                    'username': entry[0],
-                    'full_name': entry[2],
-                    'uid': entry[1],
-                })
+                try:
+                    pdbentries.append({
+                        'username': entry[0],
+                        'full_name': entry[2],
+                        'uid': entry[1],
+                    })
+                except Exception as e:
+                    self.logger.debug('Failed to parse passdb entry [%s]: %s', p, e)
+
             return pdbentries
 
         pdb = await run([SMBCmd.PDBEDIT.value, '-Lv', '-d', '0'], check=False)
