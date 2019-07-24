@@ -1233,6 +1233,16 @@ class VMDeviceService(CRUDService):
             'exclude': ['bridge', 'epair', 'tap', 'vnet'],
         })
 
+    @accepts()
+    def vnc_bind_choices(self):
+        """
+        Available choices for VNC Bind attribute.
+        """
+        return {
+            i['address']: i['address']
+            for i in self.middleware.call_sync('interface.ip_in_use', {'loopback': True})
+        }
+
     @accepts(
         Dict(
             'vmdevice_create',
