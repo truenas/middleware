@@ -809,37 +809,27 @@ class VMService(CRUDService):
         # resources with the devices
         # Returns true if resources were created successfully, false otherwise
         created_resources = []
-        to_insert_back = []
         try:
             for device in filter(lambda d: (await self.middleware.call('vm.device.create_resource', d)), devices):
-                if 'id' in device:
-                    to_insert_back.append(await self.middleware.call('vm.device._get_instance', device['id']))
-                    params = ['vm.device.update', device['id'], device]
-                else:
-                    params = ['vm.device.create', {'vm': vm_id, **device}]
-                created_resources.append((await self.middleware.call(*params)))
+                created_resources.append(
+                    await self.middleware.call(
+                        'vm.device.update_device', device,
+                        await self.middleware.call('vm.device._get_instance', device['id']) if 'id' in device else None
+                    )
+                )
         except Exception as e:
             self.logger.error(str(e), exc_info=True)
             for created_resource in created_resources:
                 try:
                     await self.middleware.call(
-                        'vm.device.delete', created_resource['id'], {
+                        'vm.device.delete_resource', {
                             'zvol': created_resource['dtype'] == 'DISK', 'raw_file': created_resource['dtype'] == 'RAW'
-                        }
+                        }, created_resource
                     )
                 except Exception as e:
                     self.logger.warn(f'Failed to delete {created_resource["dtype"]}: {e}', exc_info=True)
-            for insert_device in to_insert_back:
-                try:
-                    insert_device.pop('id')
-                    await self.middleware.call('vm.device.create', insert_device)
-                except Exception as e:
-                    self.logger.warn(
-                        f'Failed to insert device {insert_device["dtype"]} in database: {e}', exc_info=True
-                    )
             return False
         else:
-            devices[:] = [d for d in devices if not (await self.middleware.call('vm.device.create_resource', d))]
             return True
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
@@ -1354,20 +1344,8 @@ class VMDeviceService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(
-        Int('id'),
-        Dict(
-            'vm_device_delete',
-            Bool('zvol', default=False),
-            Bool('raw_file', default=False),
-        )
-    )
-    async def do_delete(self, id, options):
-        """
-        Delete a VM device of `id`.
-        """
-        device = await self._get_instance(id)
-
+    @private
+    async def delete_resource(self, options, device):
         if options['zvol']:
             if device['dtype'] != 'DISK':
                 raise CallError('No zvol found to destroy as device is not a disk.')
@@ -1384,6 +1362,20 @@ class VMDeviceService(CRUDService):
                 os.unlink(device['attributes']['path'])
             except OSError:
                 raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
+
+    @accepts(
+        Int('id'),
+        Dict(
+            'vm_device_delete',
+            Bool('zvol', default=False),
+            Bool('raw_file', default=False),
+        )
+    )
+    async def do_delete(self, id, options):
+        """
+        Delete a VM device of `id`.
+        """
+        await self.delete_resource(options, (await self._get_instance(id)))
 
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
