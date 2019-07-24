@@ -1882,12 +1882,17 @@ class InterfaceService(CRUDService):
             Bool('ipv4', default=True),
             Bool('ipv6', default=True),
             Bool('loopback', default=False),
+            Bool('any', default=False),
         )
     )
     def ip_in_use(self, choices=None):
         """
         Get all IPv4 / Ipv6 from all valid interfaces, excluding bridge, tap and epair.
-        Choices is a dictionary with defaults to {'ipv4': True, 'ipv6': True}
+
+        `loopback` will return loopback interface addresses.
+
+        `any` will return wildcard addresses (0.0.0.0 and ::).
+
         Returns a list of dicts - eg -
 
         [
@@ -1910,6 +1915,22 @@ class InterfaceService(CRUDService):
         if not choices['loopback']:
             ignore_nics.append('lo')
         ignore_nics = tuple(ignore_nics)
+
+        if choices['any']:
+            if choices['ipv4']:
+                list_of_ip.append({
+                    'type': 'INET',
+                    'address': '0.0.0.0',
+                    'netmask': 0,
+                    'brodcast': '255.255.255.255',
+                })
+            if choices['ipv6']:
+                list_of_ip.append({
+                    'type': 'INET6',
+                    'address': '::',
+                    'netmask': 0,
+                    'brodcast': 'ff02::1',
+                })
 
         for iface in list(netif.list_interfaces().values()):
             if not iface.orig_name.startswith(ignore_nics):
