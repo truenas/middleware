@@ -252,8 +252,13 @@ class FailoverService(ConfigService):
             interfaces = await self.middleware.call('interface.query')
         masters, backups, inits = [], [], []
         internal_interfaces = await self.middleware.call('failover.internal_interfaces')
+        critical_interfaces = [iface['int_interface']
+                               for iface in await self.middleware.call('datastore.query', 'network.interfaces',
+                                                                       [['int_critical', '=', True]])]
         for iface in interfaces:
             if iface['name'] in internal_interfaces:
+                continue
+            if iface['name'] not in critical_interfaces:
                 continue
             if not iface['state']['carp_config']:
                 continue
