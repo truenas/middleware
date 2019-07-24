@@ -792,40 +792,55 @@ class VMService(CRUDService):
         verrors.check()
 
         devices = data.pop('devices')
-        vm_id = None
-        created_resources = []
-        try:
-            vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
-
+        vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
+        success = await self.safe_devices_updates(vm_id, devices)
+        if not success:
+            await self.middleware.call('vm.delete', vm_id)
+            raise CallError('Failed to create relevant devices, please check logs for details.')
+        else:
             for device in devices:
-                created_resource = (
-                    device['dtype'] == 'DISK' and device['attributes'].get('create_zvol') or
-                    device['dtype'] == 'RAW' and device['attributes'].get('exists', True)
-                )
-                created_device = await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
-                if created_resource:
-                    created_resources.append(created_device)
+                await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
+
+        return await self._get_instance(vm_id)
+
+    @private
+    async def safe_devices_updates(self, vm_id, devices):
+        # We will filter devices which create resources and if any of those fail, we destroy the created
+        # resources with the devices
+        # Returns true if resources were created successfully, false otherwise
+        created_resources = []
+        to_insert_back = []
+        try:
+            for device in filter(lambda d: (await self.middleware.call('vm.device.create_resource', d)), devices):
+                if 'id' in device:
+                    to_insert_back.append(await self.middleware.call('vm.device._get_instance', device['id']))
+                    params = ['vm.device.update', device['id'], device]
+                else:
+                    params = ['vm.device.create', {'vm': vm_id, **device}]
+                created_resources.append((await self.middleware.call(*params)))
         except Exception as e:
-            # We only want to delete explicit resources which were explicitly requested to be created
-            for device in created_resources:
+            self.logger.error(str(e), exc_info=True)
+            for created_resource in created_resources:
                 try:
                     await self.middleware.call(
-                        'vm.device.delete', device['id'], {
-                            'zvol': device['dtype'] == 'DISK', 'raw_file': device['dtype'] == 'RAW'
+                        'vm.device.delete', created_resource['id'], {
+                            'zvol': created_resource['dtype'] == 'DISK', 'raw_file': created_resource['dtype'] == 'RAW'
                         }
                     )
-                except Exception:
+                except Exception as e:
+                    self.logger.warn(f'Failed to delete {created_resource["dtype"]}: {e}', exc_info=True)
+            for insert_device in to_insert_back:
+                try:
+                    insert_device.pop('id')
+                    await self.middleware.call('vm.device.create', insert_device)
+                except Exception as e:
                     self.logger.warn(
-                        'Failed to delete zvol "%s" on vm.create rollback',
-                        device['attributes'].get('path', '').rsplit('/dev/zvol/')[-1], exc_info=True
+                        f'Failed to insert device {insert_device["dtype"]} in database: {e}', exc_info=True
                     )
-
-            if vm_id:
-                await self.middleware.call('vm.delete', vm_id)
-
-            raise e
-
-        return vm_id
+            return False
+        else:
+            devices[:] = [d for d in devices if not (await self.middleware.call('vm.device.create_resource', d))]
+            return True
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
 
@@ -924,8 +939,14 @@ class VMService(CRUDService):
         if verrors:
             raise verrors
 
-        await self.__do_update_devices(id, data.pop('devices') or [])
-        await self.middleware.call('datastore.update', 'vm.vm', id, data)
+        devices = new.pop('devices') or []
+        if devices != old['devices']:
+            success = await self.safe_devices_updates(id, devices)
+            if not success:
+                raise CallError('Could not create new resources, please check logs.')
+            await self.__do_update_devices(id, devices)
+
+        await self.middleware.call('datastore.update', 'vm.vm', id, new)
 
         return await self._get_instance(id)
 
@@ -1210,6 +1231,13 @@ class VMDeviceService(CRUDService):
         namespace = 'vm.device'
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
+
+    @private
+    async def create_resource(self, device):
+        return (
+            device['dtype'] == 'DISK' and device['attributes'].get('create_zvol') or
+            device['dtype'] == 'RAW' and device['attributes'].get('exists', True)
+        )
 
     @private
     async def extend_device(self, device):
