@@ -25,6 +25,10 @@ def move_syslog(apps, schema_editor):
                 advanced.save()
 
 
+def empty_reverse_migration(apps, schema_editor):
+    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -32,5 +36,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(move_syslog),
+        migrations.RunPython(move_syslog, empty_reverse_migration),
     ]
