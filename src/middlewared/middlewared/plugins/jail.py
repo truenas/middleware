@@ -190,7 +190,8 @@ class PluginService(CRUDService):
             plugin_dict = {
                 k: v if v != '-' else None
                 for k, v in zip((
-                    'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4', 'ip6', 'template', 'admin_portal'
+                    'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4',
+                    'ip6', 'template', 'admin_portal', 'doc_url'
                 ), plugin)
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
