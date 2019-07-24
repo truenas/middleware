@@ -5,7 +5,7 @@ from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors
 )
-from middlewared.utils import Nid, Popen
+from middlewared.utils import Nid, Popen, run
 from middlewared.utils.path import is_child
 
 import middlewared.logger
@@ -798,7 +798,10 @@ class VMService(CRUDService):
             vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
             for device in devices:
-                created_resource = device['dtype'] == 'DISK' and device['attributes'].get('create_zvol')
+                created_resource = (
+                    device['dtype'] == 'DISK' and device['attributes'].get('create_zvol') or
+                    device['dtype'] == 'RAW' and device['attributes'].get('exists', True)
+                )
                 created_device = await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
                 if created_resource:
                     created_resources.append(created_device)
@@ -1240,7 +1243,7 @@ class VMDeviceService(CRUDService):
         }
 
     @private
-    async def update_device(self, data):
+    async def update_device(self, data, old=None):
         if data['dtype'] == 'DISK':
             create_zvol = data['attributes'].pop('create_zvol', False)
 
@@ -1262,6 +1265,15 @@ class VMDeviceService(CRUDService):
 
                 new_zvol = (await self.middleware.call('pool.dataset.create', ds_options))['id']
                 data['attributes']['path'] = f'/dev/zvol/{new_zvol}'
+        elif data['dtype'] == 'RAW' and (
+            not data['attributes'].pop('exists', True) or (
+                old and old['attributes']['size'] != data['attributes']['size']
+            )
+        ):
+            path = data['attributes']['path']
+            cp = await run(['truncate', '-s', str(data['attributes']['size']), path], check=False)
+            if cp.returncode:
+                raise CallError(f'Failed to create/update raw file {path}: {cp.stderr}')
 
         return data
 >>>>>>> Ability to create zvol when creating disk device
@@ -1304,7 +1316,7 @@ class VMDeviceService(CRUDService):
         new.update(data)
 
         new = await self.validate_device(new, device)
-        new = await self.update_device(new)
+        new = await self.update_device(new, device)
 
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
@@ -1433,7 +1445,7 @@ class VMDeviceService(CRUDService):
                 )
         elif device.get('dtype') == 'RAW':
             path = device['attributes'].get('path')
-            exists = device['attributes'].pop('exists', True)
+            exists = device['attributes'].get('exists', True)
             if not path:
                 verrors.add('attributes.path', 'Path is required.')
             else:
@@ -1444,7 +1456,7 @@ class VMDeviceService(CRUDService):
                 await check_path_resides_within_volume(
                     verrors, self.middleware, 'attributes.path', path,
                 )
-                if any(
+                if exists and any(
                     d.get('attributes', {}).get('path') == path for d in vm_instance['devices'] if d['dtype'] == 'RAW'
                 ):
                     verrors.add(
