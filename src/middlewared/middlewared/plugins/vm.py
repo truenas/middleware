@@ -1169,7 +1169,7 @@ class VMDeviceService(CRUDService):
             Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
             Bool('exists', default=True),
             Bool('boot', default=False),
-            Int('size', default=0),
+            Int('size', default=None, null=True),
             Int('sectorsize', enum=[0, 512, 4096], default=0),
         ),
         'DISK': Dict(
@@ -1276,7 +1276,6 @@ class VMDeviceService(CRUDService):
                 raise CallError(f'Failed to create/update raw file {path}: {cp.stderr}')
 
         return data
->>>>>>> Ability to create zvol when creating disk device
 
     @accepts(
         Dict(
@@ -1451,8 +1450,16 @@ class VMDeviceService(CRUDService):
             else:
                 if exists and not os.path.exists(path):
                     verrors.add('attributes.path', 'Path must exist.')
-                if not exists and os.path.exists(path):
-                    verrors.add('attributes.path', 'Path must not exist.')
+                if not exists:
+                    if os.path.exists(path):
+                        verrors.add('attributes.path', 'Path must not exist.')
+                    elif not device['attributes'].get('size'):
+                        verrors.add('attributes.size', 'Please provide a valid size for raw file.')
+                if (
+                    old and old['attributes'].get('size') != device['attributes'].get('size') and
+                    not device['attributes'].get('size')
+                ):
+                    verrors.add('attributes.size', 'Please provide a valid size for raw file.')
                 await check_path_resides_within_volume(
                     verrors, self.middleware, 'attributes.path', path,
                 )
