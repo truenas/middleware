@@ -1879,8 +1879,9 @@ class InterfaceService(CRUDService):
     @accepts(
         Dict(
             'ips',
-            Bool('ipv4'),
-            Bool('ipv6')
+            Bool('ipv4', default=True),
+            Bool('ipv6', default=True),
+            Bool('loopback', default=False),
         )
     )
     def ip_in_use(self, choices=None):
@@ -1904,25 +1905,21 @@ class InterfaceService(CRUDService):
         ]
 
         """
-        if not choices:
-            choices = {
-                'ipv4': True,
-                'ipv6': True
-            }
-
-        ipv4 = choices['ipv4'] if choices.get('ipv4') else False
-        ipv6 = choices['ipv6'] if choices.get('ipv6') else False
         list_of_ip = []
-        ignore_nics = ('lo', 'bridge', 'tap', 'epair', 'pflog')
+        ignore_nics = ['bridge', 'tap', 'epair', 'pflog']
+        if not choices['loopback']:
+            ignore_nics.append('lo')
+        ignore_nics = tuple(ignore_nics)
+
         for if_name, iface in list(netif.list_interfaces().items()):
             if not if_name.startswith(ignore_nics):
                 aliases_list = iface.__getstate__()['aliases']
                 for alias_dict in aliases_list:
 
-                    if ipv4 and alias_dict['type'] == 'INET':
+                    if choices['ipv4'] and alias_dict['type'] == 'INET':
                         list_of_ip.append(alias_dict)
 
-                    if ipv6 and alias_dict['type'] == 'INET6':
+                    if choices['ipv6'] and alias_dict['type'] == 'INET6':
                         list_of_ip.append(alias_dict)
 
         return list_of_ip
