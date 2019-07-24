@@ -1364,7 +1364,7 @@ class VMDeviceService(CRUDService):
 
     @private
     async def validate_device(self, device, old=None):
-        await self.middleware.call('vm._get_instance', device['vm'])
+        vm_instance = await self.middleware.call('vm._get_instance', device['vm'])
 
         verrors = ValidationErrors()
         schema = self.DEVICE_ATTRS.get(device['dtype'])
@@ -1424,6 +1424,13 @@ class VMDeviceService(CRUDService):
                     ' characters',
                     errno.ENAMETOOLONG
                 )
+            if any(
+                d.get('attributes', {}).get('path') == path for d in vm_instance['devices'] if d['dtype'] == 'DISK'
+            ):
+                verrors.add(
+                    'attributes.path',
+                    f'{vm_instance["name"]} has "{path}" already configured'
+                )
         elif device.get('dtype') == 'RAW':
             path = device['attributes'].get('path')
             exists = device['attributes'].pop('exists', True)
@@ -1437,6 +1444,13 @@ class VMDeviceService(CRUDService):
                 await check_path_resides_within_volume(
                     verrors, self.middleware, 'attributes.path', path,
                 )
+                if any(
+                    d.get('attributes', {}).get('path') == path for d in vm_instance['devices'] if d['dtype'] == 'RAW'
+                ):
+                    verrors.add(
+                        'attributes.path',
+                        f'{vm_instance["name"]} has "{path}" already configured'
+                    )
         elif device.get('dtype') == 'CDROM':
             path = device['attributes'].get('path')
             if not path:
@@ -1448,11 +1462,8 @@ class VMDeviceService(CRUDService):
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
         elif device.get('dtype') == 'VNC':
-            vm = device.get('vm')
-            if vm:
-                vm = await self.middleware.call('vm.query', [('id', '=', vm)])
-                if vm and vm[0]['bootloader'] != 'UEFI':
-                    verrors.add('dtype', 'VNC only works with UEFI bootloader.')
+            if vm_instance['bootloader'] != 'UEFI':
+                verrors.add('dtype', 'VNC only works with UEFI bootloader.')
 
         if verrors:
             raise verrors
