@@ -809,7 +809,11 @@ class VMService(CRUDService):
             # We only want to delete explicit resources which were explicitly requested to be created
             for device in created_resources:
                 try:
-                    await self.middleware.call('vm.device.delete', device['id'], {'zvol': device['dtype'] == 'DISK'})
+                    await self.middleware.call(
+                        'vm.device.delete', device['id'], {
+                            'zvol': device['dtype'] == 'DISK', 'raw_file': device['dtype'] == 'RAW'
+                        }
+                    )
                 except Exception:
                     self.logger.warn(
                         'Failed to delete zvol "%s" on vm.create rollback',
@@ -1326,7 +1330,8 @@ class VMDeviceService(CRUDService):
         Int('id'),
         Dict(
             'vm_device_delete',
-            Bool('zvol', default=False)
+            Bool('zvol', default=False),
+            Bool('raw_file', default=False),
         )
     )
     async def do_delete(self, id, options):
@@ -1344,6 +1349,13 @@ class VMDeviceService(CRUDService):
                 # the current device as a valid reference. Also should we stopping the vm only when deleting an
                 # attachment ?
                 await self.middleware.call('zfs.dataset.delete', zvol_id)
+        if options['raw_file']:
+            if device['dtype'] != 'RAW':
+                raise CallError('Device is not of RAW type.')
+            try:
+                os.unlink(device['attributes']['path'])
+            except OSError:
+                raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
 
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
