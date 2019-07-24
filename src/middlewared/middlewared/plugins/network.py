@@ -1886,7 +1886,7 @@ class InterfaceService(CRUDService):
     )
     def ip_in_use(self, choices=None):
         """
-        Get all IPv4 / Ipv6 from all valid interfaces, excluding lo0, bridge* and tap*.
+        Get all IPv4 / Ipv6 from all valid interfaces, excluding bridge, tap and epair.
         Choices is a dictionary with defaults to {'ipv4': True, 'ipv6': True}
         Returns a list of dicts - eg -
 
@@ -1911,8 +1911,8 @@ class InterfaceService(CRUDService):
             ignore_nics.append('lo')
         ignore_nics = tuple(ignore_nics)
 
-        for if_name, iface in list(netif.list_interfaces().items()):
-            if not if_name.startswith(ignore_nics):
+        for iface in list(netif.list_interfaces().values()):
+            if not iface.orig_name.startswith(ignore_nics):
                 aliases_list = iface.__getstate__()['aliases']
                 for alias_dict in aliases_list:
 
