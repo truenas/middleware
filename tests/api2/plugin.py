@@ -67,7 +67,7 @@ def test_05_get_list_of_available_plugins_job_id():
 
 def test_06_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID, 120)
+    job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     job_results = job_status['results']
 
@@ -160,7 +160,7 @@ def test_17_get_list_of_available_plugins_without_cache():
 
 def test_18_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID, 120)
+    job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     job_results = job_status['results']
 
@@ -251,7 +251,7 @@ def test_29_get_list_of_available_plugins_job_id_on_custom_repos():
 
 def test_30_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID, 120)
+    job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', job_status['results']
     job_results = job_status['results']
 

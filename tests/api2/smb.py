@@ -382,10 +382,33 @@ def test_44_verify_smb_getparm_fruit_time_machine_is_yes():
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'yes', results['output']
 
+
+def test_45_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
+    smb_id = GET(f"/smb/sharesec/?share_name={SMB_NAME}").json()[0]['id']
+    payload = {
+        'share_acl': [
+            {
+                'ae_who_sid': 'S-1-5-32-544',
+                'ae_perm': 'FULL',
+                'ae_type': 'ALLOWED'
+            }
+        ]
+    }
+    results = PUT(f"/smb/sharesec/id/{smb_id}/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_45_verify_midclt_call_smb_getparm_access_based_share_enum_is_true():
+    cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    assert results['output'].strip() == 'False', results['output']
+
+
 # Update tests
 @mount_test_cfg
 @osx_host_cfg
-def test_45_mount_smb_share_on_osx():
+def test_46_mount_smb_share_on_osx():
     cmd = f'mount -t smbfs "smb://guest@{ip}/{SMB_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -393,7 +416,7 @@ def test_45_mount_smb_share_on_osx():
 
 @mount_test_cfg
 @osx_host_cfg
-def test_46_create_file_on_smb_share_via_osx_to_test_permissions_on_osx():
+def test_47_create_file_on_smb_share_via_osx_to_test_permissions_on_osx():
     cmd = f'touch "{MOUNTPOINT}/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -402,7 +425,7 @@ def test_46_create_file_on_smb_share_via_osx_to_test_permissions_on_osx():
 # Move test file to a new location on the SMB share
 @mount_test_cfg
 @osx_host_cfg
-def test_47_moving_smb_test_file_into_a_new_directory_on_osx():
+def test_48_moving_smb_test_file_into_a_new_directory_on_osx():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
         f'"{MOUNTPOINT}/tmp/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -412,7 +435,7 @@ def test_47_moving_smb_test_file_into_a_new_directory_on_osx():
 # Delete test file and test directory from SMB share
 @mount_test_cfg
 @osx_host_cfg
-def test_48_deleting_test_file_and_directory_from_smb_share_on_osx():
+def test_49_deleting_test_file_and_directory_from_smb_share_on_osx():
     cmd = f'rm -f "{MOUNTPOINT}/tmp/testfile.txt" && rmdir "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -420,7 +443,7 @@ def test_48_deleting_test_file_and_directory_from_smb_share_on_osx():
 
 @mount_test_cfg
 @osx_host_cfg
-def test_49_verifying_test_file_directory_were_successfully_removed_on_osx():
+def test_50_verifying_test_file_directory_were_successfully_removed_on_osx():
     cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -429,7 +452,7 @@ def test_49_verifying_test_file_directory_were_successfully_removed_on_osx():
 # Clean up mounted SMB share
 @mount_test_cfg
 @osx_host_cfg
-def test_50_Unmount_smb_share_on_osx():
+def test_51_Unmount_smb_share_on_osx():
     cmd = f'umount -f "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -437,41 +460,41 @@ def test_50_Unmount_smb_share_on_osx():
 
 @mount_test_cfg
 @osx_host_cfg
-def test_51_Removing_smb_mountpoint_on_osx():
+def test_52_Removing_smb_mountpoint_on_osx():
     cmd = f'test -d "{MOUNTPOINT}" && rmdir "{MOUNTPOINT}" || exit 0'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
-def test_52_delete_cifs_share():
+def test_53_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
 # Now stop the service
-def test_53_disable_cifs_service_at_boot():
+def test_54_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_54_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_55_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_55_stoping_clif_service():
+def test_56_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_56_checking_if_cifs_is_stop():
+def test_57_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset
-def test_57_destroying_smb_dataset():
+def test_58_destroying_smb_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
