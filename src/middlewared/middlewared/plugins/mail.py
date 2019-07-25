@@ -104,7 +104,8 @@ class MailService(ConfigService):
         Bool('smtp'),
         Str('user'),
         Str('pass', private=True),
-        update=True
+        register=True,
+        update=True,
     ))
     async def do_update(self, data):
         """
@@ -159,7 +160,7 @@ class MailService(ConfigService):
         return verrors
 
     @accepts(Dict(
-        'mail-message',
+        'mail_message',
         Str('subject', required=True),
         Str('text', required=True, max_length=None),
         Str('html', max_length=None),
@@ -171,16 +172,10 @@ class MailService(ConfigService):
         Bool('attachments', default=False),
         Bool('queue', default=True),
         Dict('extra_headers', additional_attrs=True),
-        register=True
-    ), Dict(
-        'mail-config',
-        Str('pass', private=True),
-        additional_attrs=True,
-        null=True,
-        register=True
-    ))
+        register=True,
+    ), Ref('mail_update'))
     @job(pipes=['input'], check_pipes=False)
-    def send(self, job, message, config=None):
+    def send(self, job, message, config):
         """
         Sends mail using configured mail settings.
 
@@ -231,10 +226,12 @@ class MailService(ConfigService):
 
         return self.send_raw(job, message, config)
 
-    @accepts(Ref('mail-message'), Ref('mail-config'))
+    @accepts(Ref('mail_message'), Ref('mail_update'))
     @job(pipes=['input'], check_pipes=False)
     @private
-    def send_raw(self, job, message, config=None):
+    def send_raw(self, job, message, config):
+        config = dict(self.middleware.call_sync('mail.config'), **config)
+
         if config['fromname']:
             from_addr = Header(config['fromname'], 'utf-8')
             try:
@@ -278,8 +275,6 @@ class MailService(ConfigService):
             else:
                 raise CallError('This message was already sent in the given interval')
 
-        if not config:
-            config = self.middleware.call_sync('mail.config')
         verrors = self.__password_verify(config['pass'], 'mail-config.pass')
         if verrors:
             raise verrors
