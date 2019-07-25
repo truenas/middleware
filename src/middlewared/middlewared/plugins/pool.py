@@ -1595,8 +1595,8 @@ class PoolService(CRUDService):
         if options['recoverykey']:
             job.check_pipe("input")
             with tempfile.NamedTemporaryFile(mode='wb+', dir='/tmp/') as f:
-                f.write(job.pipes.input.r.read())
-                f.flush()
+                await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, f)
+                await self.middleware.run_in_thread(f.flush)
                 failed = await self.middleware.call('disk.geli_attach', pool, None, f.name)
         else:
             failed = await self.middleware.call('disk.geli_attach', pool, options['passphrase'])
