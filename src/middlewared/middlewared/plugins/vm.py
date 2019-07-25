@@ -793,10 +793,11 @@ class VMService(CRUDService):
 
         devices = data.pop('devices')
         vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
-        success = await self.safe_devices_updates(devices)
-        if not success:
+        try:
+            await self.safe_devices_updates(devices)
+        except Exception as e:
             await self.middleware.call('vm.delete', vm_id)
-            raise CallError('Failed to create relevant devices, please check logs for details.')
+            raise e
         else:
             for device in devices:
                 await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
@@ -831,9 +832,7 @@ class VMService(CRUDService):
                     )
                 except Exception as e:
                     self.logger.warn(f'Failed to delete {created_resource["dtype"]}: {e}', exc_info=True)
-            return False
-        else:
-            return True
+            raise e
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
 
@@ -950,9 +949,7 @@ class VMService(CRUDService):
         devices = new.pop('devices', [])
         new.pop('status', None)
         if devices != old['devices']:
-            success = await self.safe_devices_updates(devices)
-            if not success:
-                raise CallError('Could not create new resources, please check logs.')
+            await self.safe_devices_updates(devices)
             await self.__do_update_devices(id, devices)
 
         await self.middleware.call('datastore.update', 'vm.vm', id, new)
