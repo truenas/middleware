@@ -102,6 +102,7 @@ class FreeNAS_BaseCache(object):
             db.DB_INIT_MPOOL | db.DB_INIT_TXN
 
         self.__dbenv = db.DBEnv()
+        self.__dbenv.set_lk_detect(db.DB_LOCK_DEFAULT)
         self.__dbenv.open(
             self.cachedir,
             flags,
