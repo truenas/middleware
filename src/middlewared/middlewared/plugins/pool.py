@@ -16,7 +16,7 @@ import bsd
 import psutil
 
 from libzfs import ZFSException
-from middlewared.job import JobProgressBuffer
+from middlewared.job import JobProgressBuffer, Pipes
 from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch,
                                 Str, UnixPerm)
 from middlewared.service import (
@@ -1525,10 +1525,11 @@ class PoolService(CRUDService):
 
     @item_method
     @accepts(Int('id'), Dict(
-        'options',
+        'pool_unlock_options',
         Str('passphrase', private=True, required=False),
         Bool('recoverykey', default=False),
         List('services_restart', default=[]),
+        register=True,
     ))
     @job(lock='unlock_pool', pipes=['input'], check_pipes=False)
     async def unlock(self, job, oid, options):
@@ -1659,18 +1660,7 @@ class PoolService(CRUDService):
             verrors.add('id', 'Pool already locked.')
 
         if not verrors:
-            # Make sure that this pool is not being used by system dataset service
-            if pool['name'] == (await self.middleware.call('systemdataset.config'))['pool']:
-                verrors.add(
-                    'id',
-                    f'Pool {pool["name"]} contains the system dataset. The system dataset pool cannot be locked.'
-                )
-            else:
-                if not await self.middleware.call('disk.geli_testkey', pool, passphrase):
-                    verrors.add(
-                        'passphrase',
-                        'The entered passphrase was not valid. Please enter the correct passphrase to lock the pool.'
-                    )
+            verrors.extend(await self.__pool_lock_pre_check(pool, passphrase))
 
         if verrors:
             raise verrors
@@ -1697,6 +1687,24 @@ class PoolService(CRUDService):
         await self.middleware.call('service.restart', 'system_datasets')
 
         return True
+
+    async def __pool_lock_pre_check(self, pool, passphrase):
+        verrors = ValidationErrors()
+
+        # Make sure that this pool is not being used by system dataset service
+        if pool['name'] == (await self.middleware.call('systemdataset.config'))['pool']:
+            verrors.add(
+                'id',
+                f'Pool {pool["name"]} contains the system dataset. The system dataset pool cannot be locked.'
+            )
+        else:
+            if not await self.middleware.call('disk.geli_testkey', pool, passphrase):
+                verrors.add(
+                    'passphrase',
+                    'The entered passphrase was not valid. Please enter the correct passphrase to lock the pool.'
+                )
+
+        return verrors
 
     @item_method
     @accepts(Int('id'))
@@ -2176,6 +2184,160 @@ class PoolService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
 
         await self.middleware.call_hook('pool.post_export', pool=pool, options=options)
+
+    @item_method
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Dict(
+                'geli',
+                Str('passphrase', private=True, default=''),
+            ),
+        )
+    )
+    @job(lock='pool_expand')
+    async def expand(self, job, id, options):
+        """
+        Expand pool to fit all available disk space.
+        """
+
+        pool = await self._get_instance(id)
+
+        if pool['encrypt']:
+            if not pool['is_decrypted']:
+                raise CallError('You can only expand decrypted pool')
+
+            for error in (await self.__pool_lock_pre_check(pool, options['geli']['passphrase'])).errors:
+                raise CallError(error.errmsg)
+
+        await self.middleware.run_in_thread(bsd.geom.scan)
+
+        try:
+            sysctl.filter('kern.geom.debugflags')[0].value = 16
+
+            geli_resize = []
+            try:
+                for vdev in sum(pool['topology'].values(), []):
+                    if vdev['type'] != 'DISK':
+                        logger.debug('Not expanding vdev of type %r', vdev['type'])
+                        continue
+
+                    if vdev['status'] != 'ONLINE':
+                        logger.debug('Not expanding vdev that is %r', vdev['status'])
+                        continue
+
+                    partition_number = RE_DISKPART.match(vdev['device'])
+                    if partition_number is None:
+                        logger.debug('Could not parse partition number from %r', vdev['device'])
+                        continue
+
+                    assert partition_number.group(1) == vdev['disk']
+                    partition_number = int(partition_number.group(2)[1:])
+
+                    mediasize = bsd.geom.geom_by_name('LABEL', vdev['device']).provider.mediasize
+
+                    await run('camcontrol', 'reprobe', vdev['disk'])
+                    await run('gpart', 'recover', vdev['disk'])
+                    await run('gpart', 'resize', '-i', str(partition_number), vdev['disk'])
+
+                    if pool['encrypt']:
+                        geli_resize_cmd = (
+                            'geli', 'resize', '-s', str(mediasize), vdev['device']
+                        )
+                        rollback_cmd = (
+                            'gpart', 'resize', '-i', str(partition_number), '-s', str(mediasize), vdev['disk']
+                        )
+
+                        logger.warning('It will be obligatory to notify GELI that the provider has been resized: %r',
+                                       join_commandline(geli_resize_cmd))
+                        logger.warning('Or to resize provider back: %r',
+                                       join_commandline(rollback_cmd))
+
+                        geli_resize.append((geli_resize_cmd, rollback_cmd))
+            finally:
+                if geli_resize:
+                    failed_rollback = []
+
+                    lock_job = await self.middleware.call('pool.lock', pool['id'], options['geli']['passphrase'])
+                    await lock_job.wait()
+                    if lock_job.error:
+                        logger.warning('Error locking pool: %s', lock_job.error)
+
+                        for geli_resize_cmd, rollback_cmd in geli_resize:
+                            if not await self.__run_rollback_cmd(rollback_cmd):
+                                failed_rollback.append(rollback_cmd)
+
+                        if failed_rollback:
+                            raise CallError('Locking your encrypted pool failed and rolling back changes failed too. '
+                                            'You\'ll need to run the following commands manually:\n%s',
+                                            '\n'.join(map(join_commandline, failed_rollback)))
+                    else:
+                        for geli_resize_cmd, rollback_cmd in geli_resize:
+                            try:
+                                await run(*geli_resize_cmd, encoding='utf-8', errors='ignore')
+                            except subprocess.CalledProcessError as geli_resize_error:
+                                if geli_resize_error.stderr.strip() == 'geli: Size hasn\'t changed.':
+                                    logger.info('%s: %s',
+                                                join_commandline(geli_resize_cmd),
+                                                geli_resize_error.stderr.strip())
+                                else:
+                                    logger.error('%r failed: %s. Resizing partition back',
+                                                 join_commandline(geli_resize_cmd),
+                                                 geli_resize_error.stderr.strip())
+                                    if not await self.__run_rollback_cmd(rollback_cmd):
+                                        failed_rollback.append(rollback_cmd)
+
+                        if failed_rollback:
+                            raise CallError('Resizing partitions of your encrypted pool failed and rolling back '
+                                            'changes failed too. You\'ll need to run the following commands manually:\n'
+                                            '%s',
+                                            '\n'.join(map(join_commandline, failed_rollback)))
+
+                        if options['geli']['passphrase']:
+                            unlock_job = await self.middleware.call('pool.unlock', pool['id'],
+                                                                    {'passphrase': options['geli']['passphrase']})
+                        else:
+                            unlock_job = await self.middleware.call('pool.unlock', pool['id'],
+                                                                    {'recoverykey': True},
+                                                                    pipes=Pipes(input=self.middleware.pipe()))
+
+                            def copy():
+                                with open(pool['encryptkey_path'], 'rb') as f:
+                                    shutil.copyfileobj(f, unlock_job.pipes.input.w)
+
+                            try:
+                                await self.middleware.run_in_thread(copy)
+                            finally:
+                                await self.middleware.run_in_thread(unlock_job.pipes.input.w.close)
+
+                        await unlock_job.wait()
+                        if unlock_job.error:
+                            raise CallError(unlock_job.error)
+        finally:
+            sysctl.filter('kern.geom.debugflags')[0].value = 0
+
+        for vdev in sum(pool['topology'].values(), []):
+            if vdev['type'] != 'DISK':
+                continue
+
+            if vdev['status'] != 'ONLINE':
+                continue
+
+            await self.middleware.call('zfs.pool.online', pool['name'], vdev['guid'])
+
+    async def __run_rollback_cmd(self, rollback_cmd):
+        try:
+            await run(*rollback_cmd, encoding='utf-8', errors='ignore')
+        except subprocess.CalledProcessError as rollback_error:
+            logger.critical(
+                '%r failed: %s. To restore your pool functionality you will have to run this command manually.',
+                join_commandline(rollback_cmd),
+                rollback_error.stderr.strip()
+            )
+            return False
+        else:
+            return True
 
     @item_method
     @accepts(Int('id'))
