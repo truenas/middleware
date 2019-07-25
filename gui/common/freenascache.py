@@ -34,7 +34,8 @@ from freenasUI.common.system import (
     ldap_enabled,
     activedirectory_enabled,
     domaincontroller_enabled,
-    nis_enabled
+    nis_enabled,
+    ds_cache_enabled
 )
 
 log = logging.getLogger('common.frenascache')
@@ -86,6 +87,9 @@ FLAGS_CACHE_WRITE_QUERY = 0x00000020
 
 class FreeNAS_BaseCache(object):
     def __init__(self, cachedir=FREENAS_CACHEDIR):
+        """
+        See https://docs.oracle.com/cd/E17076_05/html/api_reference/C/
+        """
         log.debug("FreeNAS_BaseCache._init__: enter")
 
         self.cachedir = cachedir
@@ -94,8 +98,8 @@ class FreeNAS_BaseCache(object):
         if not self.__dir_exists(self.cachedir):
             os.makedirs(self.cachedir)
 
-        flags = db.DB_CREATE | db.DB_THREAD | db.DB_INIT_LOCK | db.DB_INIT_LOG | \
-            db.DB_INIT_MPOOL | db.DB_THREAD | db.DB_INIT_TXN
+        flags = db.DB_CREATE | db.DB_THREAD | db.DB_INIT_LOCK | \
+            db.DB_INIT_MPOOL | db.DB_INIT_TXN
 
         self.__dbenv = db.DBEnv()
         self.__dbenv.open(
@@ -427,7 +431,7 @@ class FreeNAS_Directory_UserCache(FreeNAS_BaseCache):
         if ldap_enabled():
             obj = FreeNAS_LDAP_UserCache(**kwargs)
 
-        elif activedirectory_enabled():
+        elif activedirectory_enabled() and ds_cache_enabled():
             obj = FreeNAS_ActiveDirectory_UserCache(**kwargs)
 
         elif nis_enabled():
@@ -448,7 +452,7 @@ class FreeNAS_Directory_GroupCache(FreeNAS_BaseCache):
         if ldap_enabled():
             obj = FreeNAS_LDAP_GroupCache(**kwargs)
 
-        elif activedirectory_enabled():
+        elif activedirectory_enabled() and ds_cache_enabled():
             obj = FreeNAS_ActiveDirectory_GroupCache(**kwargs)
 
         elif nis_enabled():
@@ -508,9 +512,11 @@ class FreeNAS_UserCache(FreeNAS_BaseCache):
         log.debug("FreeNAS_UserCache.__new__: enter")
 
         obj = None
-        if (
+
+        ds_enabled = (
             ldap_enabled() or activedirectory_enabled() or nis_enabled() or domaincontroller_enabled()
-        ):
+        )
+        if ds_enabled and ds_cache_enabled():
             obj = FreeNAS_Directory_LocalUserCache(**kwargs)
 
         else:
@@ -525,9 +531,11 @@ class FreeNAS_GroupCache(FreeNAS_BaseCache):
         log.debug("FreeNAS_GroupCache.__new__: enter")
 
         obj = None
-        if (
+
+        ds_enabled = (
             ldap_enabled() or activedirectory_enabled() or nis_enabled() or domaincontroller_enabled()
-        ):
+        )
+        if ds_enabled and ds_cache_enabled():
             obj = FreeNAS_Directory_LocalGroupCache(**kwargs)
 
         else:

@@ -379,6 +379,19 @@ def activedirectory_enabled():
     return enabled
 
 
+def ds_cache_enabled():
+    from freenasUI.directoryservice.models import ActiveDirectory
+
+    enabled = False
+    try:
+        ad = ActiveDirectory.objects.all()[0]
+        enabled = not ad.ad_disable_freenas_cache
+    except Exception:
+        log_traceback(log=log)
+
+    return enabled
+
+
 def activedirectory_has_unix_extensions():
     from freenasUI.directoryservice.models import ActiveDirectory
 

@@ -826,13 +826,12 @@ def add_activedirectory_conf(client, smb4_conf):
              "yes" if ad.ad_allow_dns_updates else "no")
 
     confset1(smb4_conf, "winbind cache time = 7200")
-    confset1(smb4_conf, "winbind offline logon = yes")
+    confset1(smb4_conf, "winbind max domain connections = 10")
     confset1(smb4_conf, "winbind enum users = yes")
     confset1(smb4_conf, "winbind enum groups = yes")
     confset1(smb4_conf, "winbind nested groups = yes")
     confset2(smb4_conf, "winbind use default domain = %s",
              "yes" if ad.ad_use_default_domain else "no")
-    confset1(smb4_conf, "winbind refresh tickets = yes")
 
     if ad.ad_nss_info:
         confset2(smb4_conf, "winbind nss info = %s", ad.ad_nss_info)
