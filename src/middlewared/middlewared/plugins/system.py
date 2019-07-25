@@ -121,6 +121,10 @@ class SystemAdvancedService(ConfigService):
             Bool('anonstats'),
             Str('sed_user', enum=['USER', 'MASTER']),
             Str('sed_passwd', private=True),
+            Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR',
+                                     'F_WARNING', 'F_NOTICE', 'F_INFO',
+                                     'F_DEBUG', 'F_IS_DEBUG']),
+            Str('syslogserver'),
             update=True
         )
     )
