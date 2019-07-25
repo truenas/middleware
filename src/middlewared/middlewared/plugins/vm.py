@@ -1,7 +1,7 @@
 from collections import deque
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch, Ref
+from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors
 )
@@ -778,10 +778,13 @@ class VMService(CRUDService):
     ))
     async def do_create(self, data):
         """
-        Create a Virual Machine (VM).
+        Create a Virtual Machine (VM).
 
         `grubconfig` may either be a path for the grub.cfg file or the actual content
         of the file to be used with GRUB bootloader.
+
+        `devices` is a list of virtualized hardware to add to the newly created Virtual Machine.
+        Failure to attach a device destroys the VM and any resources allocated by the VM devices.
         """
 
         verrors = ValidationErrors()
@@ -874,7 +877,7 @@ class VMService(CRUDService):
                     if device.get('id') and device['id'] not in devices_id_list:
                         verrors.add(
                             f'{schema_name}.devices.{i}.{device["id"]}',
-                            f'VM device of {device["id"]} does not exist.'
+                            f'VM device {device["id"]} does not exist.'
                         )
                     elif not device.get('vm') or device['vm'] != old['id']:
                         verrors.add(
@@ -921,7 +924,19 @@ class VMService(CRUDService):
         )
     )
     async def do_update(self, id, data):
-        """Update all information of a specific VM."""
+        """
+        Update all information of a specific VM.
+
+        `devices` is a list of virtualized hardware to attach to the virtual machine. If `devices` is not present,
+        no change is made to devices. If either the device list order or data stored by the device changes when the
+        attribute is passed, these actions are taken:
+
+        1) If there is no device in the `devices` list which was previously attached to the VM, that device is
+           removed from the virtual machine.
+        2) Devices are updated in the `devices` list when they contain a valid `id` attribute that corresponds to
+           an existing device.
+        3) Devices that do not have an `id` attribute are created and attached to `id` VM.
+        """
 
         old = await self._get_instance(id)
         new = old.copy()
@@ -1299,7 +1314,7 @@ class VMDeviceService(CRUDService):
             path = data['attributes']['path']
             cp = await run(['truncate', '-s', str(data['attributes']['size']), path], check=False)
             if cp.returncode:
-                raise CallError(f'Failed to create/update raw file {path}: {cp.stderr}')
+                raise CallError(f'Failed to create or update raw file {path}: {cp.stderr}')
 
         return data
 
@@ -1316,6 +1331,12 @@ class VMDeviceService(CRUDService):
     async def do_create(self, data):
         """
         Create a new device for the VM of id `vm`.
+
+        If `dtype` is the `RAW` type and a new raw file is to be created, `attributes.exists` will be passed as false.
+        This means the API handles creating the raw file and raises the appropriate exception if file creation fails.
+
+        If `dtype` is of `DISK` type and a new Zvol is to be created, `attributes.create_zvol` will be passed as
+        true with valid `attributes.zvol_name` and `attributes.zvol_volsize` values.
         """
         data = await self.validate_device(data)
         data = await self.update_device(data)
@@ -1335,6 +1356,8 @@ class VMDeviceService(CRUDService):
     async def do_update(self, id, data):
         """
         Update a VM device of `id`.
+
+        Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
         """
         device = await self._get_instance(id)
         new = device.copy()
@@ -1352,7 +1375,7 @@ class VMDeviceService(CRUDService):
     async def delete_resource(self, options, device):
         if options['zvol']:
             if device['dtype'] != 'DISK':
-                raise CallError('No zvol found to destroy as device is not a disk.')
+                raise CallError('The device is not a disk and has no zvol to destroy.')
             zvol_id = device['attributes'].get('path', '').rsplit('/dev/zvol/')[-1]
             if await self.middleware.call('pool.dataset.query', [['id', '=', zvol_id]]):
                 # FIXME: We should use pool.dataset.delete but right now FS attachments will consider
@@ -1491,12 +1514,12 @@ class VMDeviceService(CRUDService):
                     if os.path.exists(path):
                         verrors.add('attributes.path', 'Path must not exist.')
                     elif not device['attributes'].get('size'):
-                        verrors.add('attributes.size', 'Please provide a valid size for raw file.')
+                        verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
                 if (
                     old and old['attributes'].get('size') != device['attributes'].get('size') and
                     not device['attributes'].get('size')
                 ):
-                    verrors.add('attributes.size', 'Please provide a valid size for raw file.')
+                    verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
                 await check_path_resides_within_volume(
                     verrors, self.middleware, 'attributes.path', path,
                 )
