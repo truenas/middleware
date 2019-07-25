@@ -810,19 +810,20 @@ class VMService(CRUDService):
         # resources with the devices
         # Returns true if resources were created successfully, false otherwise
         created_resources = []
+        existing_devices = {d['id']: d for d in await self.middleware.call('vm.device.query')}
         try:
             for device in devices:
-                if not await self.middleware.call('vm.device.create_resource', device):
+                if not await self.middleware.call(
+                    'vm.device.create_resource', device, existing_devices.get(device.get('id'))
+                ):
                     continue
 
                 created_resources.append(
                     await self.middleware.call(
-                        'vm.device.update_device', device,
-                        await self.middleware.call('vm.device._get_instance', device['id']) if 'id' in device else None
+                        'vm.device.update_device', device, existing_devices.get(device.get('id'))
                     )
                 )
         except Exception as e:
-            self.logger.error(str(e), exc_info=True)
             for created_resource in created_resources:
                 try:
                     await self.middleware.call(
@@ -866,14 +867,14 @@ class VMService(CRUDService):
             elif not re.search(r'^[a-zA-Z_0-9]+$', data['name']):
                 verrors.add(f'{schema_name}.name', 'Only alphanumeric characters are allowed.')
 
-        devices_id_list = [d['id'] for d in await self.middleware.call('vm.device.query')]
+        devices_ids = {d['id']: d for d in await self.middleware.call('vm.device.query')}
         for i, device in enumerate(data.get('devices') or []):
             try:
-                await self.middleware.call('vm.device.validate_device', device)
+                await self.middleware.call('vm.device.validate_device', device, devices_ids.get(device.get('id')))
                 if old:
                     # We would like to enforce the presence of "vm" attribute in each device so that
                     # it explicitly tells it wants to be associated to the provided "vm" in question
-                    if device.get('id') and device['id'] not in devices_id_list:
+                    if device.get('id') and device['id'] not in devices_ids:
                         verrors.add(
                             f'{schema_name}.devices.{i}.{device["id"]}',
                             f'VM device {device["id"]} does not exist.'
@@ -893,7 +894,7 @@ class VMService(CRUDService):
         # 2) "devices" can have updated existing entries
         # 3) "devices" can have removed exiting entries
         old_devices = await self.middleware.call('vm.device.query', [['vm', '=', id]])
-        existing_devices = [d for d in devices if 'id' in d]
+        existing_devices = [d.copy() for d in devices if 'id' in d]
         for remove_id in ({d['id'] for d in old_devices} - {d['id'] for d in existing_devices}):
             await self.middleware.call('vm.device.delete', remove_id)
 
@@ -1198,7 +1199,7 @@ class VMDeviceService(CRUDService):
             'attributes',
             Str('path', required=True),
             Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
-            Bool('exists', default=True),
+            Bool('exists'),
             Bool('boot', default=False),
             Int('size', default=None, null=True),
             Int('sectorsize', enum=[0, 512, 4096], default=0),
@@ -1207,7 +1208,7 @@ class VMDeviceService(CRUDService):
             'attributes',
             Str('path'),
             Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
-            Bool('create_zvol', default=False),
+            Bool('create_zvol'),
             Str('zvol_name'),
             Int('zvol_volsize'),
             Int('sectorsize', enum=[0, 512, 4096], default=0),
@@ -1239,10 +1240,13 @@ class VMDeviceService(CRUDService):
         datastore_extend = 'vm.device.extend_device'
 
     @private
-    async def create_resource(self, device):
+    async def create_resource(self, device, old=None):
         return (
-            (device['dtype'] == 'DISK' and device['attributes'].get('create_zvol')) or
-            (device['dtype'] == 'RAW' and not device['attributes'].get('exists', True))
+            (device['dtype'] == 'DISK' and device['attributes'].get('create_zvol')) or (
+                device['dtype'] == 'RAW' and (not device['attributes'].get('exists', True) or (
+                    old and old['attributes'].get('size') != device['attributes'].get('size')
+                ))
+            )
         )
 
     @private
