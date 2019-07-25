@@ -533,10 +533,7 @@ class VMService(CRUDService):
         return False
 
     async def _extend_vm(self, vm):
-        vm['devices'] = []
-        for device in await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])]):
-            device.pop('vm', None)
-            vm['devices'].append(device)
+        vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
         vm['status'] = await self.status(vm['id'])
         return vm
 
@@ -774,7 +771,7 @@ class VMService(CRUDService):
         Int('memory', required=True),
         Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB']),
         Str('grubconfig', null=True),
-        List('devices', default=[], items=[Ref('vmdevice_create')]),
+        List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         register=True,
@@ -793,7 +790,7 @@ class VMService(CRUDService):
 
         devices = data.pop('devices')
         vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
-        success = await self.safe_devices_updates(vm_id, devices)
+        success = await self.safe_devices_updates(devices)
         if not success:
             await self.middleware.call('vm.delete', vm_id)
             raise CallError('Failed to create relevant devices, please check logs for details.')
@@ -804,13 +801,16 @@ class VMService(CRUDService):
         return await self._get_instance(vm_id)
 
     @private
-    async def safe_devices_updates(self, vm_id, devices):
+    async def safe_devices_updates(self, devices):
         # We will filter devices which create resources and if any of those fail, we destroy the created
         # resources with the devices
         # Returns true if resources were created successfully, false otherwise
         created_resources = []
         try:
-            for device in filter(lambda d: (await self.middleware.call('vm.device.create_resource', d)), devices):
+            for device in devices:
+                if not await self.middleware.call('vm.device.create_resource', device):
+                    continue
+
                 created_resources.append(
                     await self.middleware.call(
                         'vm.device.update_device', device,
@@ -869,6 +869,8 @@ class VMService(CRUDService):
             try:
                 await self.middleware.call('vm.device.validate_device', device)
                 if old:
+                    # We would like to enforce the presence of "vm" attribute in each device so that
+                    # it explicitly tells it wants to be associated to the provided "vm" in question
                     if device.get('id') and device['id'] not in devices_id_list:
                         verrors.add(
                             f'{schema_name}.devices.{i}.{device["id"]}',
@@ -889,12 +891,13 @@ class VMService(CRUDService):
         # 2) "devices" can have updated existing entries
         # 3) "devices" can have removed exiting entries
         old_devices = await self.middleware.call('vm.device.query', [['vm', '=', id]])
-        existing_devices = [d for d in devices if 'id' in devices]
+        existing_devices = [d for d in devices if 'id' in d]
         for remove_id in ({d['id'] for d in old_devices} - {d['id'] for d in existing_devices}):
             await self.middleware.call('vm.device.delete', remove_id)
 
         for update_device in existing_devices:
-            await self.middleware.call('vm.device.update', update_device['id'], update_device)
+            device_id = update_device.pop('id')
+            await self.middleware.call('vm.device.update', device_id, update_device)
 
         for create_device in filter(lambda v: 'id' not in v, devices):
             await self.middleware.call('vm.device.create', create_device)
@@ -909,7 +912,7 @@ class VMService(CRUDService):
                 'edit', {
                     'name': 'devices', 'method': lambda v: setattr(
                         v, 'items', [Patch(
-                            'vmdevice_create', 'vmdevice_update', ('attr', {'update': True}),
+                            'vmdevice_create', 'vmdevice_update',
                             ('add', {'name': 'id', 'type': 'int', 'required': False})
                         )]
                     )
@@ -929,9 +932,10 @@ class VMService(CRUDService):
         if verrors:
             raise verrors
 
-        devices = new.pop('devices') or []
+        devices = new.pop('devices', [])
+        new.pop('status', None)
         if devices != old['devices']:
-            success = await self.safe_devices_updates(id, devices)
+            success = await self.safe_devices_updates(devices)
             if not success:
                 raise CallError('Could not create new resources, please check logs.')
             await self.__do_update_devices(id, devices)
@@ -1225,8 +1229,8 @@ class VMDeviceService(CRUDService):
     @private
     async def create_resource(self, device):
         return (
-            device['dtype'] == 'DISK' and device['attributes'].get('create_zvol') or
-            device['dtype'] == 'RAW' and device['attributes'].get('exists', True)
+            (device['dtype'] == 'DISK' and device['attributes'].get('create_zvol')) or
+            (device['dtype'] == 'RAW' and not device['attributes'].get('exists', True))
         )
 
     @private
@@ -1407,7 +1411,7 @@ class VMDeviceService(CRUDService):
 
     @private
     async def validate_device(self, device, old=None):
-        vm_instance = await self.middleware.call('vm._get_instance', device['vm'])
+        vm_instance = await self.middleware.call('vm._get_instance', device['vm']) if device.get('vm') else None
 
         verrors = ValidationErrors()
         schema = self.DEVICE_ATTRS.get(device['dtype'])
@@ -1467,8 +1471,9 @@ class VMDeviceService(CRUDService):
                     ' characters',
                     errno.ENAMETOOLONG
                 )
-            if any(
-                d.get('attributes', {}).get('path') == path for d in vm_instance['devices'] if d['dtype'] == 'DISK'
+            if vm_instance and any(
+                d.get('attributes', {}).get('path') == path and d['id'] != device.get('id')
+                for d in vm_instance['devices'] if d['dtype'] == 'DISK'
             ):
                 verrors.add(
                     'attributes.path',
@@ -1495,8 +1500,9 @@ class VMDeviceService(CRUDService):
                 await check_path_resides_within_volume(
                     verrors, self.middleware, 'attributes.path', path,
                 )
-                if exists and any(
-                    d.get('attributes', {}).get('path') == path for d in vm_instance['devices'] if d['dtype'] == 'RAW'
+                if vm_instance and exists and any(
+                    d.get('attributes', {}).get('path') == path and d['id'] != device.get('id')
+                    for d in vm_instance['devices'] if d['dtype'] == 'RAW'
                 ):
                     verrors.add(
                         'attributes.path',
@@ -1513,7 +1519,7 @@ class VMDeviceService(CRUDService):
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
         elif device.get('dtype') == 'VNC':
-            if vm_instance['bootloader'] != 'UEFI':
+            if vm_instance and vm_instance['bootloader'] != 'UEFI':
                 verrors.add('dtype', 'VNC only works with UEFI bootloader.')
 
         if verrors:
