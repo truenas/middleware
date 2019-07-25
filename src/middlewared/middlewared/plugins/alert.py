@@ -313,7 +313,7 @@ class AlertService(Service):
 
     @periodic(60)
     @private
-    @job(lock="process_alerts", transient=True)
+    @job(lock="process_alerts", transient=True, lock_queue_size=1)
     async def process_alerts(self, job):
         if not await self.__should_run_or_send_alerts():
             return
