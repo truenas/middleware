@@ -1,10 +1,10 @@
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
-                                 accepts, private, periodic, CRUDService, Service)
+                                 accepts, filterable, private, periodic, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
-from middlewared.utils import Popen, run
+from middlewared.utils import Popen, run, filter_list
 from middlewared.utils.path import is_child
 
 import asyncio
@@ -47,6 +47,24 @@ class SMBCmd(enum.Enum):
     SMBCONTROL = '/usr/local/bin/smbcontrol'
     SMBPASSWD = '/usr/local/bin/smbpasswd'
     WBINFO = '/usr/local/bin/wbinfo'
+
+
+class SIDType(enum.IntEnum):
+    """
+    Defined in MS-SAMR (2.2.2.3) and lsa.idl
+    Samba's group mapping database will primarily contain SID_NAME_ALIAS entries (local groups)
+    """
+    NONE = 0
+    USER = 1
+    DOM_GROUP = 2
+    DOMAIN = 3
+    ALIAS = 4
+    WELL_KNOWN_GROUP = 5
+    DELETED = 6
+    INVALID = 7
+    UNKNOWN = 8
+    COMPUTER = 9
+    LABEL = 10
 
 
 class SMBService(SystemServiceService):
@@ -110,6 +128,19 @@ class SMBService(SystemServiceService):
                 choices[alias['address']] = alias['address']
         return choices
 
+    @accepts()
+    async def domain_choices(self):
+        """
+        List of domains visible to winbindd. Returns empty list if winbindd is
+        stopped.
+        """
+        domains = []
+        wb = await run([SMBCmd.WBINFO.value, '-m'], check=False)
+        if wb.returncode == 0:
+            domains = wb.stdout.decode().splitlines()
+
+        return domains
+
     @private
     async def validate_admin_groups(self, sid):
         """
@@ -126,7 +157,7 @@ class SMBService(SystemServiceService):
             self.logger.debug("As a safety precaution, extra alias entries for S-1-5-32-544 cannot be removed while LDAP is enabled. Skipping removal.")
             return True
         proc = await Popen(
-            ['/usr/local/bin/net', 'groupmap', 'listmem', 'S-1-5-32-544'],
+            [SMBCmd.NET.value, 'groupmap', 'listmem', 'S-1-5-32-544'],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         member_list = (await proc.communicate())[0].decode()
@@ -141,7 +172,7 @@ class SMBService(SystemServiceService):
             if group.rsplit('-', 1)[-1] != "512" and group != sid:
                 self.logger.debug(f"Removing {group} from local admins group.")
                 rem = await Popen(
-                    ['/usr/local/bin/net', 'groupmap', 'delmem', 'S-1-5-32-544', group],
+                    [SMBCmd.NET.value, 'groupmap', 'delmem', 'S-1-5-32-544', group],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
                 remout = await rem.communicate()
@@ -312,7 +343,7 @@ class SMBService(SystemServiceService):
             self.logger.debug('Setting group map for %s is not permitted', group)
             return False
         gm_add = await run(
-            ['net', '-d', '0', 'groupmap', 'add', 'type=local', f'unixgroup={group}', f'ntgroup={group}'],
+            [SMBCmd.NET.value, '-d', '0', 'groupmap', 'add', 'type=local', f'unixgroup={group}', f'ntgroup={group}'],
             check=False
         )
         if gm_add.returncode != 0:
@@ -340,11 +371,15 @@ class SMBService(SystemServiceService):
                 raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
             for p in (pdb.stdout.decode()).splitlines():
                 entry = p.split(':')
-                pdbentries.append({
-                    'username': entry[0],
-                    'full_name': entry[2],
-                    'uid': entry[1],
-                })
+                try:
+                    pdbentries.append({
+                        'username': entry[0],
+                        'full_name': entry[2],
+                        'uid': entry[1],
+                    })
+                except Exception as e:
+                    self.logger.debug('Failed to parse passdb entry [%s]: %s', p, e)
+
             return pdbentries
 
         pdb = await run([SMBCmd.PDBEDIT.value, '-Lv', '-d', '0'], check=False)
@@ -627,7 +662,6 @@ class SharingSMBService(CRUDService):
         List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
         Bool('shadowcopy', default=False),
         Str('auxsmbconf', max_length=None),
-        Bool('default_permissions', default=False),
         Bool('enabled', default=True),
         register=True
     ))
@@ -636,9 +670,6 @@ class SharingSMBService(CRUDService):
         Create a SMB Share.
 
         `timemachine` when set, enables Time Machine backups for this share.
-
-        `default_permissions` when set makes ACLs grant read and write for owner or group and read-only for others. It
-        is advised to be disabled when creating shares on a sytem with custom ACLs.
 
         `ro` when enabled, prohibits write access to the share.
 
@@ -656,11 +687,6 @@ class SharingSMBService(CRUDService):
         """
         verrors = ValidationErrors()
         path = data['path']
-
-        default_perms = data.pop('default_permissions', True)
-
-        if 'noacl' in data['vfsobjects']:
-            default_perms = False
 
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
@@ -683,7 +709,6 @@ class SharingSMBService(CRUDService):
         await self.extend(data)  # We should do this in the insert call ?
 
         await self._service_change('cifs', 'reload')
-        await self.apply_default_perms(default_perms, path, data['home'])
 
         return data
 
@@ -701,7 +726,6 @@ class SharingSMBService(CRUDService):
         """
         verrors = ValidationErrors()
         path = data.get('path')
-        default_perms = data.pop('default_permissions', False)
 
         old = await self.middleware.call(
             'datastore.query', self._config.datastore, [('id', '=', id)],
@@ -732,7 +756,6 @@ class SharingSMBService(CRUDService):
         await self.extend(new)  # same here ?
 
         await self._service_change('cifs', 'reload')
-        await self.apply_default_perms(default_perms, path, data['home'])
 
         return new
 
@@ -743,7 +766,7 @@ class SharingSMBService(CRUDService):
         """
         share = await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self.middleware.call('smb.sharesec._delete', share['name'])
+        await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
         await self._service_change('cifs', 'reload')
         return result
 
@@ -839,53 +862,6 @@ class SharingSMBService(CRUDService):
         return data
 
     @private
-    async def apply_default_perms(self, default_perms, path, is_home):
-        """
-        Reset permissions on an SMB share to "default". This is a recursive
-        operaton, and will replace any existing ACL on the share path and any
-        sub-datasets. The default ACLS depends on whether this is a `[homes]`
-        share. Shares that are not the special "homes" share have the
-        following ACL:
-
-        `owner@:full_set:fd:allow`
-
-        `group@:full_set:fd:allow`
-
-        The path to homes shares are dynamically generated via pam_mkhomedir
-        The final path (the user's actual home directory) will only have the
-        following ACE:
-
-        `owner@:full_set:fd:allow`
-
-        The actual ACL written on the path specified in the UI will vary for
-        homes shares depending on whether Active Directory is enabled. In all
-        cases, the ACL is written so that users have adequate permissions to
-        traverse to their home directory and the actual home directory is only
-        accessible by the user.
-
-        If an SMB admin group has been selected, then it will also be added to the
-        share's ACL.
-        """
-        if not default_perms:
-            return
-
-        acl = []
-        if not is_home:
-            acl = await self.middleware.call('filesystem.get_default_acl', 'RESTRICTED')
-        elif await self.middleware.call('activedirectory.get_state') != 'DISABLED':
-            acl = await self.middleware.call('filesystem.get_default_acl', 'DOMAIN_HOME')
-        else:
-            acl = await self.middleware.call('filesystem.get_default_acl', 'HOME')
-
-        await self.middleware.call('filesystem.setacl', {
-            'path': path,
-            'dacl': acl,
-            'uid': None,
-            'gid': None,
-            'options': {'recursive': True, 'traverse': True}
-        })
-
-    @private
     async def generate_vuid(self, timemachine, vuid=""):
         try:
             if timemachine and vuid:
@@ -952,7 +928,7 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'cifs'))
 
 
-class ShareSec(Service):
+class ShareSec(CRUDService):
 
     class Config:
         namespace = 'smb.sharesec'
@@ -986,7 +962,12 @@ class ShareSec(Service):
             if (options.get('resolve_sids', True)) is True:
                 wb = await run([SMBCmd.WBINFO.value, '--sid-to-name', acl_entry['ae_who_sid']], check=False)
                 if wb.returncode == 0:
-                    acl_entry['ae_who_name'] = wb.stdout.decode()[:-3]
+                    wb_ret = wb.stdout.decode()[:-3].split('\\')
+                    sidtypeint = int(wb.stdout.decode().strip()[-1:])
+                    acl_entry['ae_who_name'] = {'domain': None, 'name': None, 'sidtype': SIDType.NONE}
+                    acl_entry['ae_who_name']['domain'] = wb_ret[0]
+                    acl_entry['ae_who_name']['name'] = wb_ret[1]
+                    acl_entry['ae_who_name']['sidtype'] = SIDType(sidtypeint).name
                 else:
                     self.logger.debug(
                         'Failed to resolve SID (%s) to name: (%s)' % (acl_entry['ae_who_sid'], wb.stderr.decode())
@@ -1035,10 +1016,13 @@ class ShareSec(Service):
         Return Security Descriptor for all shares.
         """
         share_sd_list = []
+        idx = 1
         share_entries = (await self._sharesec(action='--view-all')).split('\n\n')
         for share in share_entries:
             parsed_sd = await self.middleware.call('smb.sharesec._parse_share_sd', share, options)
             if parsed_sd:
+                parsed_sd.update({'id': idx})
+                idx = idx + 1
                 share_sd_list.append(parsed_sd)
 
         return share_sd_list
@@ -1074,9 +1058,10 @@ class ShareSec(Service):
             raise CallError('ACL Entry must have ae_who_sid or ae_who_name.', errno.EINVAL)
 
         if not ae['ae_who_sid']:
-            wbinfo = await run([SMBCmd.WBINFO.value, '--name-to-sid', ae['ae_who_name']], check=False)
+            name = f'{ae["ae_who_name"]["domain"]}\\{ae["ae_who_name"]["name"]}'
+            wbinfo = await run([SMBCmd.WBINFO.value, '--name-to-sid', name], check=False)
             if wbinfo.returncode != 0:
-                raise CallError(f'SID lookup for {ae["ae_who_name"]} failed: {wbinfo.stderr.decode()}')
+                raise CallError(f'SID lookup for {name} failed: {wbinfo.stderr.decode()}')
             ae['ae_who_sid'] = (wbinfo.stdout.decode().split())[0]
 
         return f'{ae["ae_who_sid"]}:{ae["ae_type"]}/0x0/{ae["ae_perm"]}'
@@ -1088,28 +1073,8 @@ class ShareSec(Service):
         """
         return (RE_SHAREACLENTRY.match(f'ACL:{perm_str}')).groupdict()
 
-    @accepts(Dict(
-        'sharesec_setacl',
-        Str('share_name', required=True),
-        List(
-            'share_acl',
-            items=[
-                Dict(
-                    'aclentry',
-                    Str('ae_who_sid', default=None),
-                    Str('ae_who_name', default=None),
-                    Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
-                    Str('ae_type', enum=['ALLOWED', 'DENIED']),
-                )
-            ],
-            default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]
-        ),
-        Dict(
-            'options',
-            Bool('db_commit', default=True),
-        )
-    ))
-    async def setacl(self, data):
+    @private
+    async def setacl(self, data, db_commit=True):
         """
         Set an ACL on `share_name`. Changes are written to samba's share_info.tdb file.
         This only impacts SMB sessions. Either ae_who_sid or ae_who_name must be specified
@@ -1140,7 +1105,7 @@ class ShareSec(Service):
             ae_list.append(await self._ae_to_string(entry))
 
         await self._sharesec(share=data['share_name'], action='--replace', args=','.join(ae_list))
-        if not data['options']['db_commit']:
+        if not db_commit:
             return
 
         config_share = await self.middleware.call('sharing.smb.query', [('name', '=', data['share_name'])], {'get': True})
@@ -1230,6 +1195,117 @@ class ShareSec(Service):
                     {'cifs_share_acl': rc_acl}
                 )
 
+    @filterable
+    async def query(self, filters=None, options=None):
+        """
+        Use query-filters to search the SMB share ACLs present on server.
+        """
+        share_acls = await self._view_all({'resolve_sids': True})
+        ret = filter_list(share_acls, filters, options)
+        return ret
+
+    @accepts(Dict(
+        'smbsharesec_create',
+        Str('share_name', required=True),
+        List(
+            'share_acl',
+            items=[
+                Dict(
+                    'aclentry',
+                    Str('ae_who_sid', default=None),
+                    Dict(
+                        'ae_who_name',
+                        Str('domain', default=''),
+                        Str('name', default=''),
+                        default=None
+                    ),
+                    Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
+                    Str('ae_type', enum=['ALLOWED', 'DENIED'])
+                )
+            ],
+            default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}])
+    ))
+    async def do_create(self, data):
+        """
+        Update the ACL on a given SMB share. Will write changes to both
+        /var/db/system/samba4/share_info.tdb and the configuration file.
+        Since an SMB share will _always_ have an ACL present, there is little
+        distinction between the `create` and `update` methods apart from arguments.
+
+        `share_name` - name of SMB share.
+
+        `share_acl` a list of ACL entries (dictionaries) with the following keys:
+
+        `ae_who_sid` who the ACL entry applies to expressed as a Windows SID
+
+        `ae_who_name` who the ACL entry applies to expressed as a name. `ae_who_name` is
+        a dictionary containing the following keys: `domain` that the user is a member of,
+        `name` username in the domain. The domain for local users is the netbios name of
+        the FreeNAS server.
+
+        `ae_perm` string representation of the permissions granted to the user or group.
+        `FULL` grants read, write, execute, delete, write acl, and change owner.
+        `CHANGE` grants read, write, execute, and delete.
+        `READ` grants read and execute.
+
+        `ae_type` can be ALLOWED or DENIED.
+        """
+        await self.setacl(data)
+
+    @accepts(
+        Int('id', required=True),
+        Dict(
+            'smbsharesec_update',
+            List(
+                'share_acl',
+                items=[
+                    Dict(
+                        'aclentry',
+                        Str('ae_who_sid', default=None),
+                        Dict(
+                            'ae_who_name',
+                            Str('domain', default=''),
+                            Str('name', default=''),
+                            default=None
+                        ),
+                        Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
+                        Str('ae_type', enum=['ALLOWED', 'DENIED']))
+                ],
+                default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]
+            )
+        )
+    )
+    async def do_update(self, id, data):
+        """
+        Update the ACL on the share specified by the numerical index `id`. Will write changes
+        to both /var/db/system/samba4/share_info.tdb and the configuration file.
+        """
+        old_acl = await self._get_instance(id)
+        await self.setacl({"share_name": old_acl["share_name"], "share_acl": data["share_acl"]})
+        return await self.getacl(old_acl["share_name"])
+
+    @accepts(Str('id_or_name', required=True))
+    async def do_delete(self, id_or_name):
+        """
+        Replace share ACL for the specified SMB share with the samba default ACL of S-1-1-0/FULL
+        (Everyone - Full Control). In this case, access will be fully determined
+        by the underlying filesystem ACLs and smb4.conf parameters governing access control
+        and permissions.
+        Share can be deleted by name or numerical by numerical index.
+        """
+        new_acl = {'share_acl': [
+            {'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}
+        ]}
+        if not id_or_name.isdigit():
+            old_acl = await self.getacl(id_or_name)
+            new_acl.update({'share_name': id_or_name})
+        else:
+            old_acl = await self._get_instance(int(id_or_name))
+            new_acl.update({'share_name': old_acl['share_name']})
+
+        await self.setacl(new_acl)
+        return old_acl
+
 
 class SMBFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'smb'
@@ -1262,7 +1338,7 @@ class SMBFSAttachmentDelegate(FSAttachmentDelegate):
 
         if not enabled:
             for attachment in attachments:
-                await run(['smbcontrol', 'smbd', 'close-share', attachment['name']], check=False)
+                await run([SMBCmd.SMBCONTROL.value, 'smbd', 'close-share', attachment['name']], check=False)
 
 
 async def setup(middleware):

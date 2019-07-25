@@ -297,7 +297,7 @@ class VMSupervisor(object):
             split_port = int(str(vnc_port)[:2]) - 1
             vnc_web_port = str(split_port) + str(vnc_port)[2:]
 
-            web_bind = ':{}'.format(vnc_web_port) if vnc_bind is '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
+            web_bind = ':{}'.format(vnc_web_port) if vnc_bind == '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
 
             self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
                                          '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
@@ -603,7 +603,7 @@ class VMService(CRUDService):
            list: will return a list of available IPv4 address.
         """
         default_ifaces = ['0.0.0.0', '127.0.0.1']
-        ifaces_dict_list = self.middleware.call_sync('interface.ip_in_use', {'ipv4': True})
+        ifaces_dict_list = self.middleware.call_sync('interface.ip_in_use', {'ipv6': False})
         ifaces = [alias_dict['address'] for alias_dict in ifaces_dict_list]
 
         default_ifaces.extend(ifaces)
@@ -645,7 +645,7 @@ class VMService(CRUDService):
         if guest_status and guest_status['state'] == 'RUNNING':
             device = '/dev/nmdm{0}B'.format(id)
             if stat.S_ISCHR(os.stat(device).st_mode) is True:
-                    return device
+                return device
 
         return False
 
@@ -1232,6 +1232,19 @@ class VMDeviceService(CRUDService):
         return self.middleware.call_sync('interface.choices', {
             'exclude': ['bridge', 'epair', 'tap', 'vnet'],
         })
+
+    @accepts()
+    def vnc_bind_choices(self):
+        """
+        Available choices for VNC Bind attribute.
+        """
+        return {
+            i['address']: i['address']
+            for i in self.middleware.call_sync('interface.ip_in_use', {
+                'any': True,
+                'loopback': True,
+            })
+        }
 
     @accepts(
         Dict(

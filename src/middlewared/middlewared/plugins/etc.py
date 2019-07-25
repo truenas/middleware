@@ -72,11 +72,6 @@ class EtcService(Service):
         'afpd': [
             {'type': 'py', 'path': 'afpd'},
         ],
-        'asigra': [
-            {'type': 'mako', 'path': 'dssys.cfg'},
-            {'type': 'mako', 'path': 'libmap.conf'},
-            {'type': 'mako', 'path': 'local/pam.d/dssystem'},
-        ],
         'cron': [
             {'type': 'mako', 'path': 'crontab'},
         ],
@@ -215,7 +210,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd']
+    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'smb_configure']
 
     class Config:
         private = True

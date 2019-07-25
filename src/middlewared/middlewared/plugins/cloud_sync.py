@@ -28,8 +28,7 @@ import subprocess
 import tempfile
 import textwrap
 
-CHUNK_SIZE = 5 * 1024 * 1024
-RE_TRANSF = re.compile(r"Transferred:\s*?(.+)$", re.S)
+RE_TRANSF = re.compile(r"Transferred:\s*(?P<progress_1>.+, )(?P<progress>[0-9]+)%, (?P<progress_2>.+)$", re.S)
 
 REMOTES = {}
 
@@ -290,9 +289,7 @@ async def rclone_check_progress(job, proc):
         job.logs_fd.write(read.encode("utf-8", "ignore"))
         reg = RE_TRANSF.search(read)
         if reg:
-            transferred = reg.group(1).strip()
-            if not transferred.isdigit():
-                job.set_progress(None, transferred)
+            job.set_progress(int(reg.group("progress")), reg.group("progress_1") + reg.group("progress_2"))
 
     if dropbox__restricted_content:
         message = "\n" + (
@@ -320,8 +317,6 @@ def rclone_encrypt_password(password):
 
 
 def get_dataset_recursive(datasets, directory):
-    datasets = flatten_datasets(datasets)
-
     datasets = [
         dict(dataset, prefixlen=len(
             os.path.dirname(os.path.commonprefix([dataset["mountpoint"] + "/", directory + "/"]))))
@@ -344,10 +339,6 @@ def get_dataset_recursive(datasets, directory):
         for ds in datasets
         if ds != dataset
     )
-
-
-def flatten_datasets(datasets):
-    return sum([[ds] + flatten_datasets(ds["children"]) for ds in datasets], [])
 
 
 class _FsLockCore(aiorwlock._RWLockCore):
@@ -703,9 +694,9 @@ class CloudSyncService(CRUDService):
         List("exclude", default=[], items=[Str("path", empty=False)]),
         Dict("attributes", additional_attrs=True, required=True),
         Bool("snapshot", default=False),
-        Str("pre_script", default=""),
-        Str("post_script", default=""),
-        Str("args", default=""),
+        Str("pre_script", default="", max_length=None),
+        Str("post_script", default="", max_length=None),
+        Str("args", default="", max_length=None),
         Bool("enabled", default=True),
         register=True,
     ))

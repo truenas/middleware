@@ -105,6 +105,7 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
+            Bool('legacy_ui'),
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
@@ -133,6 +134,8 @@ class SystemAdvancedService(ConfigService):
 
         `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
         hardware.
+
+        `legacy_ui` is disabled by default. Enabling it allows end users to use the legacy UI.
         """
         config_data = await self.config()
         original_data = config_data.copy()
@@ -225,14 +228,27 @@ class SystemService(Service):
     @accepts()
     async def is_freenas(self):
         """
-        Returns `true` if running system is a FreeNAS or `false` is Something Else.
+        Returns `true` if running system is a FreeNAS or `false` if something else.
         """
         # This is a stub calling notifier until we have all infrastructure
         # to implement in middlewared
         return await self.middleware.call('notifier.is_freenas')
 
+    @no_auth_required
+    @accepts()
     async def product_name(self):
+        """
+        Returns name of the product we are using (FreeNAS or something else).
+        """
         return "FreeNAS" if await self.middleware.call("system.is_freenas") else "TrueNAS"
+
+    @no_auth_required
+    @accepts()
+    async def legacy_ui_enabled(self):
+        """
+        Returns a boolean value indicating if the legacy UI can be used by end users.
+        """
+        return (await self.middleware.call('system.advanced.config'))['legacy_ui']
 
     @accepts()
     def version(self):

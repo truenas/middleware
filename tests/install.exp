@@ -64,7 +64,7 @@ expect {
 # └────────────────────────────────────────────────────────────────────────┘
 
 expect {
-  "FreeNAS installation" {
+  "NAS installation" {
     sleep .5
     send "Y"
     send "\r"
@@ -83,7 +83,7 @@ expect {
 # └────────────────────────────────────────────────┘
 
 expect {
-  "Enter your root password" {
+  "Enter your root password;" {
     sleep .5
     send "testing"
     # Tab to next field
@@ -107,7 +107,7 @@ expect {
 # └────────────────────────────────────────────────────────────────────────┘
 
 expect {
-  "FreeNAS Boot Mode" {
+  "NAS Boot Mode" {
     sleep .5
     send "B"
   }

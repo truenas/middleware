@@ -2,7 +2,7 @@ import enum
 import errno
 import os
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
-from middlewared.service import CallError, CRUDService, Service, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, Service, private, ValidationErrors
 from middlewared.utils import run
 from middlewared.validators import Range
 
@@ -220,12 +220,13 @@ class IdmapService(Service):
         return (low_range, high_range)
 
     @accepts()
-    async def clear_idmap_cache(self):
+    @job(lock='clear_idmap_cache')
+    async def clear_idmap_cache(self, job):
         """
         Stop samba, remove the winbindd_cache.tdb file, start samba, flush samba's cache.
         This should be performed after finalizing idmap changes.
         """
-        await self.middleware.call('service.stop', 'smb')
+        await self.middleware.call('service.stop', 'cifs')
         try:
             os.remove('/var/db/system/samba4/winbindd_cache.tdb')
         except Exception as e:

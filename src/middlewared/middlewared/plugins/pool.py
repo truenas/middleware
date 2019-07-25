@@ -22,6 +22,7 @@ from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin,
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
+from middlewared.service_exception import ValidationError
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.shell import join_commandline
@@ -341,7 +342,7 @@ class PoolService(CRUDService):
                     ('pool', 'in', vol_names),
                     ('type', 'in', types),
                 ],
-                {'select': ['name', 'pool', 'type']},
+                {'extra': {'retrieve_properties': False}},
             )
         ]
 
@@ -1594,8 +1595,8 @@ class PoolService(CRUDService):
         if options['recoverykey']:
             job.check_pipe("input")
             with tempfile.NamedTemporaryFile(mode='wb+', dir='/tmp/') as f:
-                f.write(job.pipes.input.r.read())
-                f.flush()
+                await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, f)
+                await self.middleware.run_in_thread(f.flush)
                 failed = await self.middleware.call('disk.geli_attach', pool, None, f.name)
         else:
             failed = await self.middleware.call('disk.geli_attach', pool, options['passphrase'])
@@ -2118,7 +2119,15 @@ class PoolService(CRUDService):
             await self.middleware.call('keyvalue.delete', enable_on_import_key)
 
         job.set_progress(20, 'Terminating processes that are using this pool')
-        await self.middleware.call('pool.dataset.kill_processes', pool['name'], options.get('restart_services', False))
+        try:
+            await self.middleware.call('pool.dataset.kill_processes', pool['name'],
+                                       options.get('restart_services', False))
+        except ValidationError as e:
+            if e.errno == errno.ENOENT:
+                # Dataset might not exist (e.g. pool is not decrypted), this is not an error
+                pass
+            else:
+                raise
         await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
         job.set_progress(30, 'Removing pool disks from swap')
@@ -2448,7 +2457,9 @@ class PoolDatasetService(CRUDService):
             if len(f) == 3:
                 if f[0] in ('id', 'name', 'pool', 'type'):
                     zfsfilters.append(f)
-        datasets = self.middleware.call_sync('zfs.dataset.query', zfsfilters, None)
+        datasets = self.middleware.call_sync(
+            'zfs.dataset.query', zfsfilters, {'extra': (options or {}).get('extra', {})}
+        )
         return filter_list(self.__transform(datasets), filters, options)
 
     def __transform(self, datasets):

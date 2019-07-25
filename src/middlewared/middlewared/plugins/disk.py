@@ -358,10 +358,11 @@ class DiskService(CRUDService):
                     continue
                 try:
                     self.geli_attach_single(
-                        name, pool['encryptkey_path'], tf.name, skip_existing=True,
+                        name, pool['encryptkey_path'], tf.name if passphrase else None, skip_existing=True,
                     )
                 except Exception as e:
-                    if str(e).find('Wrong key') != -1:
+                    # "Missing -p flag" happens when using passphrase on a pool without passphrase
+                    if any(s in str(e) for s in ('Wrong key', 'Missing -p flag')):
                         return False
         return True
 

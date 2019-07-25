@@ -25,22 +25,6 @@ def get_context(middleware):
     return context
 
 
-def asigra_config(middleware, context):
-    if context['is_freenas']:
-        return []
-
-    yield (
-        'dssystem_env="PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:'
-        '/root/bin"'
-    )
-    yield 'postgresql_user="pgsql"'
-
-    pgsql_path = middleware.call_sync('asigra.config')['filesystem']
-    if not os.path.exists(pgsql_path):
-        pgsql_path = '/usr/local/pgsql/data'
-    yield f'postgresql_data="{pgsql_path}"'
-
-
 def collectd_config(middleware, context):
     if context['is_freenas'] or context['failover_status'] != 'BACKUP':
         yield 'collectd_daemon_enable="YES"'
@@ -140,7 +124,6 @@ def services_config(middleware, context):
         mapping.update({
             'netdata': ['netdata'],
             'smartd': ['smartd_daemon'],
-            'asigra': ['dssystem', 'postgresql'],
         })
 
     for service in services:
@@ -420,7 +403,6 @@ def render(service, middleware):
     rcs = []
     for i in (
         services_config,
-        asigra_config,
         collectd_config,
         geli_config,
         host_config,

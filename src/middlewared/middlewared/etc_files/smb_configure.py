@@ -64,6 +64,7 @@ def setup_samba_dirs(middleware, conf):
     statedir = conf['state directory']
     samba_dirs = [
         statedir,
+        "/root/samba",
         conf['privatedir'],
         "/var/run/samba",
         "/var/run/samba4",

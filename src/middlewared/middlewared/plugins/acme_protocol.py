@@ -350,9 +350,9 @@ class DNSAuthenticatorService(CRUDService):
         Dict(
             'update_txt_record',
             Int('authenticator', required=True),
-            Str('key', required=True),
+            Str('key', required=True, max_length=None),
             Str('domain', required=True),
-            Str('challenge', required=True)
+            Str('challenge', required=True, max_length=None),
         )
     )
     @private

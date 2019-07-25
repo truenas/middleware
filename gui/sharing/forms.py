@@ -32,7 +32,6 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
-from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.services.models import services, NFS
@@ -44,13 +43,6 @@ log = logging.getLogger('sharing.forms')
 
 class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
 
-    cifs_default_permissions = forms.BooleanField(
-        label=_('Apply Default Permissions'),
-        help_text=_(
-            'Recursively set appropriate default Windows permissions on share'
-        ),
-        required=False
-    )
     middleware_attr_prefix = "cifs_"
     middleware_attr_schema = "sharingsmb"
     middleware_plugin = "sharing.smb"
@@ -58,8 +50,6 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
-        key_order(self, 4, 'cifs_default_permissions', instance=True)
-
         self.fields['cifs_guestok'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_cifs_guestok", '
             '["id_cifs_guestonly"], true);')

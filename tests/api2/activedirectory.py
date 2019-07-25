@@ -122,6 +122,8 @@ def test_07_enabling_activedirectory():
         "domainname": BRIDGEDOMAIN,
         "netbiosname": BRIDGEHOST,
         "idmap_backend": "RID",
+        "dns_timeout": 15,
+        "verbose_logging": True,
         "enable": True
     }
     results = PUT("/activedirectory/", payload)
