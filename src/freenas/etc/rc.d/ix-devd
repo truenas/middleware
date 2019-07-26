@@ -24,8 +24,6 @@ ix_devd_gen()
 	/usr/local/bin/python /usr/local/libexec/truenas/generate_failover_json.py
 	local IFS=\|
 
-	local failovers=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT COUNT(id) FROM system_failover;"`
-
 	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call failover.licensed)" = "True" ]; then
 		cp /conf/base/etc/devd.conf /etc/devd.conf
 		cat >> /etc/devd.conf << E*O*F
