@@ -200,6 +200,12 @@ class SystemAdvancedService(ConfigService):
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
+            if (
+                original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower()
+                or original_data['syslogserver'] != config_data['syslogserver']
+            ):
+                await self.middleware.call('service.restart', 'syslogd')
+
         return await self.config()
 
     @private
