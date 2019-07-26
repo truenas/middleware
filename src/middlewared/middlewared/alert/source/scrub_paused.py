@@ -11,6 +11,8 @@ class ScrubPausedAlertClass(AlertClass):
 
 
 class ScrubPausedAlertSource(ThreadedAlertSource):
+    run_on_backup_node = False
+
     async def check(self):
         alerts = []
         for pool in await self.middleware.call("pool.query"):
