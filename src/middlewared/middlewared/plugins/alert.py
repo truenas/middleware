@@ -506,9 +506,11 @@ class AlertService(Service):
                             alerts_b = await self.middleware.call("failover.call_remote", "alert.run_source",
                                                                   [alert_source.name])
 
-                            alerts_b = [Alert(**dict(alert,
-                                                     level=(AlertLevel(alert["level"]) if alert["level"] is not None
-                                                            else alert["level"])))
+                            alerts_b = [Alert(**dict({k: v for k, v in alert.items()
+                                                      if k in ["args", "datetime", "dismissed", "mail"]},
+                                                     klass=AlertClass.class_by_name[alert["klass"]],
+                                                     _source=alert["source"],
+                                                     _key=alert["key"]))
                                         for alert in alerts_b]
                     except CallError as e:
                         if e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT,
