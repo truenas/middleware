@@ -1128,7 +1128,7 @@ def debug(request):
     if not DEBUG_JOB:
         # XXX: Dont do this, temporary workaround for legacy UI
         with client as c:
-            DEBUG_JOB = c.call('core.download', 'system.debug_download', [], 'debug.tar')
+            DEBUG_JOB = c.call('core.download', 'system.debug', [], 'debug.tar')
         return HttpResponse('1', status=202)
     with client as c:
         job = c.call('core.get_jobs', [('id', '=', DEBUG_JOB[0])])
