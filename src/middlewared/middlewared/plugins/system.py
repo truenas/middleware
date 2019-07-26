@@ -469,9 +469,9 @@ class SystemService(Service):
 
         await Popen(['/sbin/poweroff'])
 
-    @accepts()
-    @job(lock='systemdebug')
-    def debug(self, job):
+    @private
+    @job(lock='system.debug_generate')
+    def debug_generate(self, job):
         """
         Generate system debug file.
 
@@ -513,8 +513,8 @@ class SystemService(Service):
         return dump
 
     @accepts()
-    @job(lock='systemdebugdownload', pipes=['output'])
-    def debug_download(self, job):
+    @job(lock='system.debug', pipes=['output'])
+    def debug(self, job):
         """
         Job to stream debug file.
 
@@ -522,14 +522,18 @@ class SystemService(Service):
         downloaded via HTTP.
         """
         job.set_progress(0, 'Generating debug file')
-        debug_job = self.middleware.call_sync('system.debug')
+        debug_job = self.middleware.call_sync(
+            'system.debug_generate',
+            job_on_progress_cb=lambda encoded: job.set_progress(int(encoded['progress']['percent'] * 0.9),
+                                                                encoded['progress']['description'])
+        )
 
         standby_debug = None
         is_freenas = self.middleware.call_sync('system.is_freenas')
         if not is_freenas and self.middleware.call_sync('failover.licensed'):
             try:
                 standby_debug = self.middleware.call_sync(
-                    'failover.call_remote', 'system.debug', [], {'job': True}
+                    'failover.call_remote', 'system.debug_generate', [], {'job': True}
                 )
             except Exception:
                 self.logger.warn('Failed to get debug from standby node', exc_info=True)
