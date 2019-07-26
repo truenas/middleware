@@ -972,7 +972,7 @@ class JailService(CRUDService):
 
         if not status:
             try:
-                iocage.start()
+                iocage.start(used_ports=[6000] + list(range(1025)))
             except Exception as e:
                 raise CallError(str(e))
 
