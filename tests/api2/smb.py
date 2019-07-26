@@ -348,25 +348,24 @@ def test_40_unmount_smb_share_on_osx():
     assert results['result'] is True, results['output']
 
 
-def test_41_change_timemachine_to_true_and_add_vfsobjects():
+def test_41_change_timemachine_to_true():
     global vuid
     payload = {
         'timemachine': True,
-        "vfsobjects": [
-            "fruit",
-            "streams_xattr"
-        ],
     }
     results = PUT(f"/sharing/smb/id/{smb_id}", payload)
     assert results.status_code == 200, results.text
     vuid = results.json()['vuid']
+    results = GET(f"/sharing/smb/id/{smb_id}")
+    assert results.status_code == 400, results.text
 
 
 def test_42_verify_smb_getparm_vfs_objects_share():
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == '["fruit", "streams_xattr"]', results['output']
+    string_list = '["fruit", "streams_xattr"]'
+    assert results['output'].strip() == string_list, results['output']
 
 
 def test_43_verify_smb_getparm_fruit_volume_uuid_share():
@@ -411,6 +410,24 @@ def test_47_verify_midclt_call_smb_getparm_access_based_share_enum_is_true():
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'False', results['output']
+
+
+def test_48_change_recyclebin_to_true():
+    global vuid
+    payload = {
+        "recyclebin": True,
+    }
+    results = PUT(f"/sharing/smb/id/{smb_id}", payload)
+    assert results.status_code == 200, results.text
+    vuid = results.json()['vuid']
+
+
+def test_49_verify_smb_getparm_vfs_objects_share():
+    cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+    string_list = '["fruit", "streams_xattr", "crossrename", "recycle"]'
+    assert results['output'].strip() == string_list, results['output']
 
 
 # Update tests
