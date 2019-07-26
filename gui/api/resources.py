@@ -3750,7 +3750,10 @@ class UpdateResourceMixin(NestedMixin):
                 except ClientException as e:
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
-                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('ConnectionRefusedError', 'KeyError'):
+                    if (
+                        e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED)
+                        and e.trace['class'] not in ('ConnectionRefusedError', 'KeyError')
+                    ):
                         raise
                     s = notifier().failover_rpc()
                     data = s.update_pending()
@@ -3992,7 +3995,8 @@ class VMResourceMixin(object):
                     '_vncweb_url': device_vncweb_url
                 })
             if bundle.obj.device_set.filter(dtype='VNC').exists():
-                vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)
+                vnc_port = bundle.obj.device_set.filter(
+                    dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)
                 info += 'VNC Port: {}<br />'.format(vnc_port)
             bundle.data.update({
                 'info': info,
