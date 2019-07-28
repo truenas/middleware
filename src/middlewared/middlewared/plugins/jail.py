@@ -164,6 +164,9 @@ class PluginService(CRUDService):
         """
         Query installed plugins with `query-filters` and `query-options`.
         """
+        if not self.middleware.call_sync('jail.iocage_set_up'):
+            return []
+
         options = options or {}
         self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
@@ -524,6 +527,9 @@ class JailService(CRUDService):
         options = options or {}
         jail_identifier = None
         jails = []
+
+        if not self.iocage_set_up():
+            return []
 
         if filters and len(filters) == 1 and list(
                 filters[0][:2]) == ['host_hostuuid', '=']:
