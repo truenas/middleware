@@ -586,6 +586,17 @@ class JailService(CRUDService):
 
         return filter_list(jails, filters, options)
 
+    @private
+    def iocage_set_up(self):
+        datasets = self.middleware.call_sync(
+            'zfs.dataset.query',
+            [['properties.org\\.freebsd\\.ioc:active.value', '=', 'yes']],
+            {'extra': {'properties': [], 'flat': False}}
+        )
+        return not (not datasets or not any(
+            d['name'].endswith('/iocage') for root_dataset in datasets for d in root_dataset['children']
+        ))
+
     @accepts(
         Bool('remote', default=False),
     )
