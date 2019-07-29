@@ -2,6 +2,8 @@ from middlewared.service import CallError, Service, job
 
 import errno
 import os
+import pwd
+import grp
 import subprocess
 import sys
 import logging
@@ -23,7 +25,6 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FLAGS_DBINIT,
 )
-from freenasUI.common.freenasusers import FreeNAS_User, FreeNAS_Group
 from freenasUI.common.samba import Samba4
 from freenasUI.common.warden import Warden
 from freenasUI.middleware import zfs
@@ -167,7 +168,7 @@ class NotifierService(Service):
     def get_user_object(self, username):
         user = False
         try:
-            user = FreeNAS_User(username)
+            user = pwd.getpwnam(username)
         except Exception:
             pass
         return user
@@ -175,7 +176,7 @@ class NotifierService(Service):
     def get_group_object(self, groupname):
         group = False
         try:
-            group = FreeNAS_Group(groupname)
+            group = grp.getgrnam(groupname)
         except Exception:
             pass
         return group
@@ -279,11 +280,11 @@ class NotifierService(Service):
         """Temporary wrapper to return available languages in django"""
         return settings.LANGUAGES
 
-    @job(lock=lambda args: 'cachetool')
+    @job(lock='cachetool')
     def cachetool(self, job, action):
         cachetool = subprocess.Popen(
             ['/usr/local/www/freenasUI/tools/cachetool.py', action],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         output = cachetool.communicate()
         if cachetool.returncode != 0:

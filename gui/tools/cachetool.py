@@ -40,7 +40,8 @@ django.setup()
 from freenasUI.common.system import (
     activedirectory_enabled,
     ldap_enabled,
-    nis_enabled
+    nis_enabled,
+    ds_cache_enabled
 )
 
 from freenasUI.common.freenascache import (
@@ -210,7 +211,7 @@ def _cache_keys_default(**kwargs):
 
 
 def cache_keys(**kwargs):
-    if activedirectory_enabled():
+    if activedirectory_enabled() and ds_cache_enabled():
         _cache_keys_ActiveDirectory(**kwargs)
 
     elif nis_enabled():
@@ -301,7 +302,7 @@ def _cache_rawdump_default(**kwargs):
 
 
 def cache_rawdump(**kwargs):
-    if activedirectory_enabled():
+    if activedirectory_enabled() and ds_cache_enabled():
         _cache_rawdump_ActiveDirectory(**kwargs)
 
     elif nis_enabled():
@@ -492,7 +493,7 @@ def _cache_check_default(**kwargs):
 
 
 def cache_check(**kwargs):
-    if activedirectory_enabled():
+    if activedirectory_enabled() and ds_cache_enabled():
         _cache_check_ActiveDirectory(**kwargs)
 
     elif nis_enabled():
@@ -540,7 +541,7 @@ def _cache_count_default(**kwargs):
 
 
 def cache_count(**kwargs):
-    if activedirectory_enabled():
+    if activedirectory_enabled() and ds_cache_enabled():
         _cache_count_ActiveDirectory(**kwargs)
 
     elif nis_enabled():

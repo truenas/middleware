@@ -31,7 +31,8 @@ from freenasUI.common.system import (
     activedirectory_enabled,
     domaincontroller_enabled,
     ldap_enabled,
-    nis_enabled
+    nis_enabled,
+    ds_cache_enabled
 )
 
 from freenasUI.common.freenasldap import (
@@ -66,6 +67,7 @@ U_AD_ENABLED = 0x00000001
 U_NIS_ENABLED = 0x00000004
 U_LDAP_ENABLED = 0x00000008
 U_DC_ENABLED = 0x00000010
+U_CACHE_ENABLED = 0x00000020
 
 
 def _get_dflags():
@@ -79,6 +81,9 @@ def _get_dflags():
         dflags |= U_LDAP_ENABLED
     elif domaincontroller_enabled():
         dflags |= U_DC_ENABLED
+
+    if ds_cache_enabled():
+        dflags |= U_CACHE_ENABLED
 
     return dflags
 
@@ -162,13 +167,20 @@ class FreeNAS_Group(object):
             dflags = _get_dflags()
 
         obj = None
+        uncached = None
         try:
             if dflags & U_AD_ENABLED:
-                obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
+                if dflags & U_CACHE_ENABLED:
+                    obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
+                else:
+                    uncached = grp.getgrnam(group)
             elif dflags & U_NIS_ENABLED:
                 obj = FreeNAS_NIS_Group(group, **kwargs)
             elif dflags & U_LDAP_ENABLED:
-                obj = FreeNAS_LDAP_Group(group, **kwargs)
+                if dflags & U_CACHE_ENABLED:
+                    obj = FreeNAS_LDAP_Group(group, **kwargs)
+                else:
+                    uncached = grp.getgrnam(group)
             elif dflags & U_DC_ENABLED:
                 obj = FreeNAS_DomainController_Group(group, **kwargs)
         except:
@@ -183,7 +195,7 @@ class FreeNAS_Group(object):
         if obj:
             obj = obj._gr
 
-        return obj
+        return uncached if uncached else obj
 
 
 class FreeNAS_Groups(object):
@@ -200,11 +212,11 @@ class FreeNAS_Groups(object):
 
         dir = None
         dflags = _get_dflags()
-        if dflags & U_AD_ENABLED:
+        if dflags & U_AD_ENABLED and dflags & U_CACHE_ENABLED:
             dir = FreeNAS_ActiveDirectory_Groups
         elif dflags & U_NIS_ENABLED:
             dir = FreeNAS_NIS_Groups
-        elif dflags & U_LDAP_ENABLED:
+        elif dflags & U_LDAP_ENABLED and dflags & U_CACHE_ENABLED:
             dir = FreeNAS_LDAP_Groups
         elif dflags & U_DC_ENABLED:
             dir = FreeNAS_DomainController_Groups
@@ -281,13 +293,20 @@ class FreeNAS_User(object):
         data = kwargs.pop('data', None)
 
         obj = None
+        uncached = None
         try:
             if dflags & U_AD_ENABLED:
-                obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
+                if dflags & U_CACHE_ENABLED:
+                    obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
+                else:
+                    uncached = pwd.getpwnam(user)
             elif dflags & U_NIS_ENABLED:
                 obj = FreeNAS_NIS_User(user, **kwargs)
             elif dflags & U_LDAP_ENABLED:
-                obj = FreeNAS_LDAP_User(user, **kwargs)
+                if dflags & U_CACHE_ENABLED:
+                    obj = FreeNAS_LDAP_User(user, **kwargs)
+                else:
+                    uncached = pwd.getpwnam(user)
             elif dflags & U_DC_ENABLED:
                 obj = FreeNAS_DomainController_User(user, **kwargs)
         except:
@@ -302,7 +321,7 @@ class FreeNAS_User(object):
         if obj:
             obj = obj._pw
 
-        return obj
+        return uncached if uncached else obj
 
 
 class FreeNAS_Users(object):
@@ -318,11 +337,11 @@ class FreeNAS_Users(object):
         """
         dir = None
         dflags = _get_dflags()
-        if dflags & U_AD_ENABLED:
+        if dflags & U_AD_ENABLED and dflags & U_CACHE_ENABLED:
             dir = FreeNAS_ActiveDirectory_Users
         elif dflags & U_NIS_ENABLED:
             dir = FreeNAS_NIS_Users
-        elif dflags & U_LDAP_ENABLED:
+        elif dflags & U_LDAP_ENABLED and dflags & U_CACHE_ENABLED:
             dir = FreeNAS_LDAP_Users
         elif dflags & U_DC_ENABLED:
             dir = FreeNAS_DomainController_Users
