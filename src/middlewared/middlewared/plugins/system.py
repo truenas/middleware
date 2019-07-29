@@ -72,6 +72,8 @@ class SystemAdvancedService(ConfigService):
     @private
     async def system_advanced_extend(self, data):
 
+        data.pop('pwenc_check')
+
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
 
