@@ -652,7 +652,7 @@ class InterfaceService(CRUDService):
     @accepts(Dict(
         'interface_create',
         Str('name'),
-        Str('description'),
+        Str('description', null=True),
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
