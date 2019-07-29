@@ -1157,14 +1157,11 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
         return cdata
 
     def middleware_clean(self, data):
-        """TODO: add doc-string. What is it for?"""
 
         data.pop('reset_sed_password', None)
 
         if data.get('sed_user'):
             data['sed_user'] = data['sed_user'].upper()
-        if data.get('sysloglevel'):
-            data['sysloglevel'] = data['sysloglevel'].upper()
 
         return data
 
