@@ -2092,6 +2092,15 @@ class PoolService(CRUDService):
         """
         pool = await self._get_instance(oid)
 
+        pool_count = await self.middleware.call('pool.query', [], {'count': True})
+        is_freenas = await self.middleware.call('system.is_freenas')
+        if (
+            pool_count == 1 and not is_freenas and
+            await self.middleware.call('failover.licensed') and
+            not (await self.middleware.call('failover.config'))['disabled']
+        ):
+            raise CallError('Disable failover before exporting last pool on system.')
+
         enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
         enable_on_import = {}
         if not options['cascade']:
