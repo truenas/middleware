@@ -748,8 +748,8 @@ class VMService(CRUDService):
         guest_status = await self.status(vm['id'])
         if guest_status.get('state') != 'RUNNING':
             setvmem = await self.__set_guest_vmemory(guest_memory, overcommit)
-            if setvmem is False:
-                raise CallError(f'Cannot guarantee memory for guest {vm["name"]}')
+            if setvmem is False and not overcommit:
+                raise CallError(f'Cannot guarantee memory for guest {vm["name"]}', errno.ENOMEM)
         else:
             raise CallError('bhyve process is running, we won\'t allocate memory')
 
@@ -971,9 +971,14 @@ class VMService(CRUDService):
     async def start(self, id, options):
         """
         Start a VM.
+
         options.overcommit defaults to false, meaning VMs are not allowed to
         start if there is not enough available memory to hold all configured VMs.
         If true, VM starts even if there is not enough memory for all configured VMs.
+
+        Error codes:
+
+            ENOMEM(12): not enough free memory to run the VM without overcommit
         """
         vm = await self._get_instance(id)
         flags = await self.middleware.call('vm.flags')
