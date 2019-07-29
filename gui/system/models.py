@@ -29,6 +29,7 @@ import time
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
@@ -110,7 +111,22 @@ class Settings(Model):
         default="America/Los_Angeles",
         verbose_name=_("Timezone")
     )
-
+    stg_crash_reporting = models.NullBooleanField(
+        verbose_name=_("Crash reporting"),
+        help_text=_("Enable sending anonymous crash reports to iXsystems"),
+    )
+    stg_wizardshown = models.BooleanField(
+        editable=False,
+        default=False,
+    )
+    stg_pwenc_check = models.CharField(
+        max_length=100,
+        editable=False,
+    )
+    stg_usage_collection = models.NullBooleanField(
+        verbose_name=_("Usage collection"),
+        help_text=_("Enable sending anonymous usage collection to iXsystems"),
+    )
     stg_sysloglevel = models.CharField(
         max_length=120,
         choices=choices.SYS_LOG_LEVEL,
@@ -131,22 +147,6 @@ class Settings(Model):
                     "will be sent to.  The accepted format is hostname:port "
                     "or ip:port, if :port is not specified it will default to "
                     "port 514 (this field currently only takes IPv4 addresses)"),
-    )
-    stg_crash_reporting = models.NullBooleanField(
-        verbose_name=_("Crash reporting"),
-        help_text=_("Enable sending anonymous crash reports to iXsystems"),
-    )
-    stg_wizardshown = models.BooleanField(
-        editable=False,
-        default=False,
-    )
-    stg_pwenc_check = models.CharField(
-        max_length=100,
-        editable=False,
-    )
-    stg_usage_collection = models.NullBooleanField(
-        verbose_name=_("Usage collection"),
-        help_text=_("Enable sending anonymous usage collection to iXsystems"),
     )
 
     class Meta:
@@ -1104,3 +1104,21 @@ class TwoFactorAuthentication(Model):
         verbose_name=_('Enabled'),
         default=False
     )
+
+
+def replicate_syslog_settings(sender, instance, **kwargs):
+    """Replicate `sysloglevel` and `syslogserver` settings in two instances"""
+    if isinstance(instance, Settings):
+        Advanced.objects.all().update(
+            adv_sysloglevel=instance.stg_sysloglevel,
+            adv_syslogserver=instance.stg_syslogserver
+        )
+    elif isinstance(instance, Advanced):
+        Settings.objects.all().update(
+            stg_sysloglevel=instance.adv_sysloglevel,
+            stg_syslogserver=instance.adv_syslogserver
+        )
+
+
+post_save.connect(replicate_syslog_settings, sender=Advanced)
+post_save.connect(replicate_syslog_settings, sender=Settings)
