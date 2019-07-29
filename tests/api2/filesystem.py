@@ -47,7 +47,7 @@ def test_03_get_filesystem_stat_(path):
     assert isinstance(results.json()['ctime'], float) is True, results.text
     assert isinstance(results.json()['dev'], int) is True, results.text
     assert isinstance(results.json()['inode'], int) is True, results.text
-    assert results.json()['nlink'] in (2, 3), results.text
+    assert results.json()['nlink'] in (2, 3, 4), results.text
     assert results.json()['user'] == 'root', results.text
     assert results.json()['group'] == 'wheel', results.text
     assert results.json()['acl'] is False, results.text
