@@ -4,9 +4,10 @@ import stat
 import subprocess
 import tempfile
 
-from middlewared.schema import Bool, Dict, File, Int, Patch, Range, Str, ValidationErrors, accepts
+from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.utils import Popen
+from middlewared.validators import Range
 
 
 class InitShutdownScriptService(CRUDService):
