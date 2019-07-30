@@ -47,4 +47,12 @@ class Migration(migrations.Migration):
             code=move_syslog,
             reverse_code=django.db.migrations.operations.special.RunPython.noop
         ),
+        migrations.RemoveField(
+            model_name='settings',
+            name='stg_sysloglevel',
+        ),
+        migrations.RemoveField(
+            model_name='settings',
+            name='stg_syslogserver',
+        ),
     ]
