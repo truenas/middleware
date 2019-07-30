@@ -1519,12 +1519,6 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         help_text=_("URL of a custom image for notification icons. This overrides the default if set in the Incoming Webhook settings."),
         required=False,
     )
-    detailed = forms.BooleanField(
-        label=_("Detailed"),
-        help_text=_("Enable pretty Slack notifications"),
-        initial=False,
-        required=False,
-    )
 
     # Mattermost
     team = forms.CharField(
@@ -1711,7 +1705,7 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         'Mail': ['email'],
         'OpsGenie': ['cluster_name', 'api_key', 'api_url'],
         'PagerDuty': ['service_key', 'client_name'],
-        'Slack': ['cluster_name', 'url', 'channel', 'username', 'icon_url', 'detailed'],
+        'Slack': ['cluster_name', 'url', 'channel', 'username', 'icon_url'],
         'SNMPTrap': ['host', 'port', 'v3', 'community', 'v3_username', 'v3_authkey', 'v3_privkey', 'v3_authprotocol',
                      'v3_privprotocol'],
         'VictorOps': ['api_key', 'routing_key'],
