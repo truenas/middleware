@@ -127,27 +127,6 @@ class Settings(Model):
         verbose_name=_("Usage collection"),
         help_text=_("Enable sending anonymous usage collection to iXsystems"),
     )
-    stg_sysloglevel = models.CharField(
-        max_length=120,
-        choices=choices.SYS_LOG_LEVEL,
-        default="f_info",
-        verbose_name=_("Syslog level"),
-        help_text=_("Specifies which messages will be logged by "
-                    "server. INFO and VERBOSE log transactions that "
-                    "server performs on behalf of the client. "
-                    "f_is_debug specify higher levels of debugging output. "
-                    "The default is f_info."),
-    )
-    stg_syslogserver = models.CharField(
-        default='',
-        blank=True,
-        max_length=120,
-        verbose_name=_("Syslog server"),
-        help_text=_("Specifies the server and port syslog messages "
-                    "will be sent to.  The accepted format is hostname:port "
-                    "or ip:port, if :port is not specified it will default to "
-                    "port 514 (this field currently only takes IPv4 addresses)"),
-    )
 
     class Meta:
         verbose_name = _("General")
@@ -1104,21 +1083,3 @@ class TwoFactorAuthentication(Model):
         verbose_name=_('Enabled'),
         default=False
     )
-
-
-def replicate_syslog_settings(sender, instance, **kwargs):
-    """Replicate `sysloglevel` and `syslogserver` settings in two instances"""
-    if isinstance(instance, Settings):
-        Advanced.objects.all().update(
-            adv_sysloglevel=instance.stg_sysloglevel,
-            adv_syslogserver=instance.stg_syslogserver
-        )
-    elif isinstance(instance, Advanced):
-        Settings.objects.all().update(
-            stg_sysloglevel=instance.adv_sysloglevel,
-            stg_syslogserver=instance.adv_syslogserver
-        )
-
-
-post_save.connect(replicate_syslog_settings, sender=Advanced)
-post_save.connect(replicate_syslog_settings, sender=Settings)
