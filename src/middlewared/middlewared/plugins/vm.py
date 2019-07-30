@@ -24,11 +24,13 @@ import sysctl
 import shutil
 import signal
 import tempfile
+import libvirt
 import logging
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
 BUFSIZE = 65536
+LIBVIRT_URI = 'bhyve+unix:///system'
 ZFS_ARC_MAX_INITIAL = None
 
 ZVOL_CLONE_SUFFIX = '_clone'
@@ -80,6 +82,38 @@ class VMManager(object):
                 'state': 'STOPPED',
                 'pid': None,
             }
+
+
+class VMSupervisorLibVirt:
+
+    def __init__(self, vm_data, connection, logger_obj=None, log_format=None, debug_level=None):
+        self.vm_data = vm_data
+        self.connection = connection
+        if not self.connection or not self.connection.isAlive():
+            raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
+
+        # Setup logging
+        if logger_obj:
+            self.logger = logger_obj.getChild(f'vm_{vm_data["name"]}')
+
+            handler = logger_obj.ErrorProneRotatingFileHandler(
+                f'/var/log/vm/{self.vm_data["name"]}_{self.vm_data["id"]}',
+                maxBytes=10485760,
+                backupCount=5,
+            )
+            handler.setFormatter(logging.Formatter(log_format))
+            self.logger.addHandler(handler)  # main log + vm specific log
+            self.logger.setLevel(debug_level)
+        else:
+            # FIXME: Done for dev purposes for a while
+            self.logger = None
+
+    @property
+    def domain(self):
+        try:
+            return self.connection.lookupByName(self.vm_data['name'])
+        except libvirt.libvirtError:
+            return None
 
 
 class VMSupervisor(object):
@@ -494,6 +528,7 @@ class VMService(CRUDService):
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
         self._manager = VMManager(self)
+        os.makedirs('/var/log/vm', exist_ok=True)
 
     @accepts()
     def flags(self):
