@@ -460,6 +460,21 @@ class SMBService(SystemServiceService):
                 raise CallError(f'Failed to enable {username}: {enableacct.stderr.decode()}')
 
     @private
+    def wsdd_cmd(self, cmd=None):
+        if cmd is None:
+            raise CallError('wsdd command not specified')
+
+        wsdd = subprocess.Popen(['service', 'wsdd', cmd])
+        try:
+            wsdd.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            wsdd.kill()
+            wsdd.communicate()
+
+        if wsdd.returncode != 0:
+            self.logger.debug('Failed to %s wsdd service', cmd)
+
+    @private
     async def synchronize_passdb(self):
         """
         Create any missing entries in the passdb.tdb.
