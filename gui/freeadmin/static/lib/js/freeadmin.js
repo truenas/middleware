@@ -1437,7 +1437,6 @@ require([
         // Slack
         var channel = registry.byId("id_channel").domNode.parentNode.parentNode;
         var icon_url = registry.byId("id_icon_url").domNode.parentNode.parentNode;
-        var detailed = registry.byId("id_detailed").domNode.parentNode.parentNode;
 
         // Mattermost
         var team = registry.byId("id_team").domNode.parentNode.parentNode;
@@ -1476,7 +1475,6 @@ require([
         domStyle.set(series_name, "display", "none");
         domStyle.set(channel, "display", "none");
         domStyle.set(icon_url, "display", "none");
-        domStyle.set(detailed, "display", "none");
         domStyle.set(team, "display", "none");
         domStyle.set(service_key, "display", "none");
         domStyle.set(client_name, "display", "none");
@@ -1504,7 +1502,6 @@ require([
             domStyle.set(channel, "display", "table-row");
             domStyle.set(username, "display", "table-row");
             domStyle.set(icon_url, "display", "table-row");
-            domStyle.set(detailed, "display", "table-row");
         } else if(type.get('value') == 'Mattermost') {
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(_url, "display", "table-row");

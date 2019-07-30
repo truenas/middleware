@@ -15,7 +15,6 @@ class SlackAlertService(ThreadedAlertService):
         Str("channel"),
         Str("username"),
         Str("icon_url"),
-        Str("detailed"),
     )
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
