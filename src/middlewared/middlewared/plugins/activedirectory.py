@@ -7,6 +7,7 @@ import json
 import ldap
 import ldap.sasl
 import ntplib
+import os
 import pwd
 import select
 import socket
@@ -21,7 +22,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run, Popen
-from samba.dcerpc import messaging as msg
+from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
 
 
 class DSStatus(enum.Enum):
@@ -35,10 +36,10 @@ class DSStatus(enum.Enum):
     There is no "DISABLED" DSStatus because this is controlled by the "enable" checkbox.
     This is a design decision to avoid conflict between the checkbox and the cache entry.
     """
-    FAULTED = msg.MSG_WINBIND_OFFLINE
+    FAULTED = MSG_WINBIND_OFFLINE
     LEAVING = enum.auto()
     JOINING = enum.auto()
-    HEALTHY = msg.MSG_WINBIND_ONLINE
+    HEALTHY = MSG_WINBIND_ONLINE
 
 
 class neterr(enum.Enum):
@@ -1345,11 +1346,15 @@ class WBStatusThread(threading.Thread):
         self.middleware = kwargs.get('middleware')
         self.logger = self.middleware.logger
         self.finished = threading.Event()
-        self.state = msg.MSG_WINBIND_ONLINE
+        self.state = MSG_WINBIND_ONLINE
 
     def parse_msg(self, data):
+        if data == str(DSStatus.LEAVING.value):
+            return
+
         m = json.loads(data)
         new_state = self.state
+
         if not self.middleware.call_sync('activedirectory.config')['enable']:
             self.logger.debug('Ignoring winbind message for disabled AD service: [%s]', m)
             return
@@ -1358,6 +1363,7 @@ class WBStatusThread(threading.Thread):
             new_state = DSStatus(m['winbind_message']).value
         except Exception as e:
             self.logger.debug('Received invalid winbind status message [%s]: %s', m, e)
+            return
 
         if m['domain_name_netbios'] != self.middleware.call_sync('smb.config')['workgroup']:
             self.logger.debug(
@@ -1387,13 +1393,12 @@ class WBStatusThread(threading.Thread):
     def read_messages(self):
         while not self.finished.is_set():
             with open('/var/run/samba4/.wb_fifo') as f:
-                while not self.finished.is_set():
-                    select.select([f], [], [f])
-                    data = f.read()
-                    if len(data) == 0:
-                        break
-                    else:
-                        self.parse_msg(data)
+                select.select([f], [], [f])
+                data = f.read()
+                if len(data) == 0:
+                    break
+                else:
+                    self.parse_msg(data)
 
         self.logger.debug('exiting winbind messaging thread')
 
@@ -1405,10 +1410,16 @@ class WBStatusThread(threading.Thread):
             self.logger.debug('Failed to start monitor thread %s', e)
 
     def setup(self):
-        pass
+        if not os.path.exists('/var/run/samba4/.wb_fifo'):
+            os.mkfifo('/var/run/samba4/.wb_fifo')
 
     def cancel(self):
+        """
+        Write to named pipe to unblock open() in thread and exit cleanly.
+        """
         self.finished.set()
+        with open('/var/run/samba4/.wb_fifo', 'w') as f:
+            f.write(str(DSStatus.LEAVING.value))
 
 
 class ADMonitorService(Service):
@@ -1420,18 +1431,20 @@ class ADMonitorService(Service):
 
     @private
     def start(self):
+        if not self.middleware.call_sync('activedirectory.config')['enable']:
+            self.logger.trace('Active directory is disabled. Exiting AD monitoring.')
+            return
+
         with self.lock:
             if self.initialized:
                 return
 
-        thread = WBStatusThread(
-            middleware=self.middleware,
-        )
-        thread.setup()
-        self.thread = thread
-        thread.start()
-
-        with self.lock:
+            thread = WBStatusThread(
+                middleware=self.middleware,
+            )
+            thread.setup()
+            self.thread = thread
+            thread.start()
             self.initialized = True
 
     @private
@@ -1450,3 +1463,12 @@ class ADMonitorService(Service):
     def restart(self):
         self.stop()
         self.start()
+
+
+async def setup(middleware):
+    """
+    During initial boot let smb_configure script start monitoring once samba's
+    rundir is created.
+    """
+    if await middleware.call('system.ready'):
+        await middleware.call('admonitor.start')
