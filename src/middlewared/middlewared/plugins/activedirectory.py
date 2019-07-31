@@ -1380,12 +1380,16 @@ class WBStatusThread(threading.Thread):
             )
             self.middleware.call_sync('activedirectory._set_state', DSStatus(m['winbind_message']))
             if new_state == DSStatus.FAULTED.value:
-                self.middleware.call_sync("alert.oneshot_create",
-                    "ActiveDirectoryDomainOffline", {"domain": m["domain_name_netbios"]}
+                self.middleware.call_sync(
+                    "alert.oneshot_create",
+                    "ActiveDirectoryDomainOffline",
+                    {"domain": m["domain_name_netbios"]}
                 )
             else:
-                self.middleware.call_sync("alert.oneshot_delete",
-                    "ActiveDirectoryDomainOffline", {"domain": m["domain_name_netbios"]}
+                self.middleware.call_sync(
+                    "alert.oneshot_delete",
+                    "ActiveDirectoryDomainOffline",
+                    {"domain": m["domain_name_netbios"]}
                 )
 
         self.state = new_state

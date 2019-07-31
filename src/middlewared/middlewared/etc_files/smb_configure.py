@@ -309,4 +309,3 @@ def render(service, middleware):
         middleware.call_sync('smb.synchronize_passdb')
         validate_group_mappings(middleware, conf)
         middleware.call_sync('admonitor.start')
-
