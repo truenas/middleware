@@ -135,8 +135,12 @@ class VMSupervisorLibVirt:
                     create_element('name', attribute_dict={'text': f'{self.vm_data["id"]}_{self.vm_data["name"]}'}),
                     create_element('title', attribute_dict={'text': self.vm_data['name']}),
                     create_element('description', attribute_dict={'text': self.vm_data['description']}),
+                    # OS/boot related xml
                     self.os_xml(),
+                    # VCPU related xml
                     create_element('vcpu', attribute_dict={'text': str(self.vm_data['vcpus'])}),
+                    # Memory related xml
+                    create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
                 ]
             }
         )
