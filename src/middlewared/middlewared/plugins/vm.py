@@ -141,6 +141,8 @@ class VMSupervisorLibVirt:
                     create_element('vcpu', attribute_dict={'text': str(self.vm_data['vcpus'])}),
                     # Memory related xml
                     create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
+                    # Clock offset
+                    create_element('clock', offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'),
                 ]
             }
         )
