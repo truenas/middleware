@@ -1,4 +1,3 @@
-from collections import deque
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch
@@ -12,6 +11,8 @@ import middlewared.logger
 import asyncio
 import errno
 import ipaddress
+import libvirt
+import logging
 import math
 import netif
 import os
@@ -24,8 +25,10 @@ import sysctl
 import shutil
 import signal
 import tempfile
-import libvirt
-import logging
+
+from collections import deque
+from lxml import etree
+
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
@@ -35,6 +38,16 @@ ZFS_ARC_MAX_INITIAL = None
 
 ZVOL_CLONE_SUFFIX = '_clone'
 ZVOL_CLONE_RE = re.compile(rf'^(.*){ZVOL_CLONE_SUFFIX}\d+$')
+
+
+def create_element(*args, **kwargs):
+    attribute_dict = kwargs.pop('attribute_dict', {})
+    element = etree.Element(*args, **kwargs)
+    element.text = attribute_dict.get('text')
+    element.tail = attribute_dict.get('tail')
+    for child in attribute_dict.get('children', []):
+        element.append(child)
+    return element
 
 
 class VMManager(object):
@@ -114,6 +127,18 @@ class VMSupervisorLibVirt:
             return self.connection.lookupByName(self.vm_data['name'])
         except libvirt.libvirtError:
             return None
+
+    def construct_xml(self):
+        domain = create_element(
+            'domain', type='bhyve', id=str(self.vm_data['id']), attribute_dict={
+                'children': [
+                    create_element('name', attribute_dict={'text': f'{self.vm_data["id"]}_{self.vm_data["name"]}'}),
+                    create_element('title', attribute_dict={'text': self.vm_data['name']}),
+                    create_element('description', attribute_dict={'text': self.vm_data['description']}),
+                ]
+            }
+        )
+        return domain
 
 
 class VMSupervisor(object):
