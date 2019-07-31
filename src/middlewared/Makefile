@@ -8,7 +8,9 @@ reinstall: clean
 	rm -rf /usr/local/lib/python3.7/site-packages/middlewared*
 	python setup.py install --single-version-externally-managed --record=/dev/null
 
-dev: reinstall
+dev: reinstall run
+
+run:
 .if ${VERSION:MTrueNAS*}
 	middlewared restart --loop-debug -P -o /usr/local/lib/middlewared_truenas --debug-level 'TRACE'
 .else
