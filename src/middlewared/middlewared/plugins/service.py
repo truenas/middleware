@@ -890,7 +890,7 @@ class ServiceService(CRUDService):
         await self._service("smbd", "restart", force=True, **kwargs)
         await self._service("winbindd", "restart", force=True, **kwargs)
         await self._service("nmbd", "restart", force=True, **kwargs)
-        await self.middleware.call('smb.wsdd_cmd', 'restart')
+        await self._service("wsdd", "restart", force=True, **kwargs)
         await self.middleware.call('mdnsadvertise.restart')
 
     async def _start_cifs(self, **kwargs):
@@ -899,7 +899,7 @@ class ServiceService(CRUDService):
         await self._service("smbd", "start", force=True, **kwargs)
         await self._service("winbindd", "start", force=True, **kwargs)
         await self._service("nmbd", "start", force=True, **kwargs)
-        await self.middleware.call('smb.wsdd_cmd', 'start')
+        await self._service("wsdd", "start", force=True, **kwargs)
         await self.middleware.call('mdnsadvertise.restart')
         try:
             await self.middleware.call("smb.add_admin_group", "", True)
@@ -910,7 +910,7 @@ class ServiceService(CRUDService):
         await self._service("smbd", "stop", force=True, **kwargs)
         await self._service("winbindd", "stop", force=True, **kwargs)
         await self._service("nmbd", "stop", force=True, **kwargs)
-        await self.middleware.call('smb.wsdd_cmd', 'stop')
+        await self._service("wsdd", "stop", force=True, **kwargs)
         await self.middleware.call('mdnsadvertise.restart')
 
     async def _started_cifs(self, **kwargs):
