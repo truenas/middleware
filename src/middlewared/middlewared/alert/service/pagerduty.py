@@ -10,8 +10,8 @@ class PagerDutyAlertService(ProThreadedAlertService):
 
     schema = Dict(
         "pagerduty_attributes",
-        Str("service_key"),
-        Str("client_name"),
+        Str("service_key", required=True, empty=False),
+        Str("client_name", required=True, empty=False),
     )
 
     def create_alert(self, alert):

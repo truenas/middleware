@@ -7,7 +7,7 @@ class MailAlertService(AlertService):
 
     schema = Dict(
         "mail_attributes",
-        Str("email")
+        Str("email", default=""),
     )
 
     async def send(self, alerts, gone_alerts, new_alerts):

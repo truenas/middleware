@@ -10,8 +10,8 @@ class OpsGenieAlertService(ProThreadedAlertService):
 
     schema = Dict(
         "opsgenie_attributes",
-        Str("cluster_name"),
-        Str("api_key"),
+        Str("cluster_name", default=""),
+        Str("api_key", required=True, empty=False),
     )
 
     def create_alert(self, alert):
