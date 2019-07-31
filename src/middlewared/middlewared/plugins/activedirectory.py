@@ -9,7 +9,6 @@ import ldap.sasl
 import ntplib
 import os
 import pwd
-import select
 import socket
 import subprocess
 import threading
@@ -1397,12 +1396,8 @@ class WBStatusThread(threading.Thread):
     def read_messages(self):
         while not self.finished.is_set():
             with open('/var/run/samba4/.wb_fifo') as f:
-                select.select([f], [], [f])
                 data = f.read()
-                if len(data) == 0:
-                    break
-                else:
-                    self.parse_msg(data)
+                self.parse_msg(data)
 
         self.logger.debug('exiting winbind messaging thread')
 
