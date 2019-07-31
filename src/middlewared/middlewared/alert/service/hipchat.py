@@ -10,11 +10,12 @@ class HipChatAlertService(ThreadedAlertService):
 
     schema = Dict(
         "hipchat_attributes",
-        Str("hfrom"),
-        Str("cluster_name"),
-        Str("base_url"),
-        Str("room_id"),
-        Str("auth_token"),
+        Str("hfrom", required=True, empty=False),
+        Str("cluster_name", default=""),
+        Str("base_url", default=""),
+        Str("room_id", required=True, empty=False),
+        Str("auth_token", required=True, empty=False),
+        strict=True,
     )
 
     def send_sync(self, alerts, gone_alerts, new_alerts):

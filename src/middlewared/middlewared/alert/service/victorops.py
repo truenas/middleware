@@ -10,8 +10,9 @@ class VictorOpsAlertService(ProThreadedAlertService):
 
     schema = Dict(
         "victorops_attributes",
-        Str("api_key"),
-        Str("routing_key"),
+        Str("api_key", required=True, empty=False),
+        Str("routing_key", required=True, empty=False),
+        strict=True,
     )
 
     def create_alert(self, alert):

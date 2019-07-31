@@ -1750,9 +1750,10 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, data):
         data["attributes"] = {k: data[k] for k in self.types_fields[data["type"]]}
-        for k in ["community", "v3_username", "v3_authkey", "v3_privkey", "v3_authprotocol", "v3_privprotocol"]:
-            if not data["attributes"][k]:
-                data["attributes"][k] = None
+        if data["type"] == "SNMPTrap":
+            for k in ["community", "v3_username", "v3_authkey", "v3_privkey", "v3_authprotocol", "v3_privprotocol"]:
+                if not data["attributes"][k]:
+                    data["attributes"][k] = None
         for k in sum(self.types_fields.values(), []):
             data.pop(k, None)
         return data
