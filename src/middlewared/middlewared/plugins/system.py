@@ -72,8 +72,6 @@ class SystemAdvancedService(ConfigService):
     @private
     async def system_advanced_extend(self, data):
 
-        data.pop('pwenc_check')
-
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
 
@@ -632,6 +630,8 @@ class SystemGeneralService(ConfigService):
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
             data['usage_collection'] = await self.middleware.call("system.is_freenas")
+
+        data.pop('pwenc_check')
 
         return data
 
