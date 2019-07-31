@@ -10,11 +10,11 @@ class SlackAlertService(ThreadedAlertService):
 
     schema = Dict(
         "slack_attributes",
-        Str("cluster_name"),
-        Str("url"),
-        Str("channel"),
-        Str("username"),
-        Str("icon_url"),
+        Str("cluster_name", default=""),
+        Str("url", required=True, empty=False),
+        Str("channel", default=""),
+        Str("username", default=""),
+        Str("icon_url", default=""),
     )
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
