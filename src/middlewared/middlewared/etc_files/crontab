@@ -10,6 +10,8 @@
 %>\
 ${system_crontab}
 
+45 3 * * * root /usr/local/libexec/nas/scrub -t ${system_advanced['boot_scrub']} freenas-boot
+
 ## Don't run these on TrueNAS HA passive controllers
 ## Redmine 55908
 % if middleware.call_sync("system.is_freenas") or middleware.call_sync("failover.status") != "BACKUP":
