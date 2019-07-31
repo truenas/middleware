@@ -10,12 +10,13 @@ class MattermostAlertService(ThreadedAlertService):
 
     schema = Dict(
         "mattermost_attributes",
-        Str("cluster_name"),
-        Str("url"),
-        Str("username"),
-        Str("password"),
-        Str("team"),
-        Str("channel"),
+        Str("cluster_name", default=""),
+        Str("url", required=True, empty=False),
+        Str("username", required=True, empty=False),
+        Str("password", default=""),
+        Str("team", default=""),
+        Str("channel", required=True, empty=False),
+        strict=True,
     )
 
     def send_sync(self, alerts, gone_alerts, new_alerts):

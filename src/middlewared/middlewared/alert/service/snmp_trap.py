@@ -24,6 +24,7 @@ class SNMPTrapAlertService(ThreadedAlertService):
         Str("v3_privprotocol", enum=[None, "DES", "3DESEDE", "AESCFB128", "AESCFB192", "AESCFB256",
                                      "AESBLUMENTHALCFB192", "AESBLUMENTHALCFB256"],
             null=True, default=None),
+        strict=True,
     )
 
     def __init__(self, middleware, attributes):

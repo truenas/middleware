@@ -9,10 +9,11 @@ class AWSSNSAlertService(ThreadedAlertService):
 
     schema = Dict(
         "awssns_attributes",
-        Str("region"),
-        Str("topic_arn"),
-        Str("aws_access_key_id"),
-        Str("aws_secret_access_key"),
+        Str("region", required=True, empty=False),
+        Str("topic_arn", required=True, empty=False),
+        Str("aws_access_key_id", required=True, empty=False),
+        Str("aws_secret_access_key", required=True, empty=False),
+        strict=True,
     )
 
     def send_sync(self, alerts, gone_alerts, new_alerts):

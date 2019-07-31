@@ -9,11 +9,12 @@ class InfluxDBAlertService(ThreadedAlertService):
 
     schema = Dict(
         "influxdb_attributes",
-        Str("host"),
-        Str("username"),
-        Str("password"),
-        Str("database"),
-        Str("series_name"),
+        Str("host", required=True, empty=False),
+        Str("username", required=True, empty=False),
+        Str("password", required=True, empty=False),
+        Str("database", required=True, empty=False),
+        Str("series_name", required=True, empty=False),
+        strict=True,
     )
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
