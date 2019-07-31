@@ -135,10 +135,28 @@ class VMSupervisorLibVirt:
                     create_element('name', attribute_dict={'text': f'{self.vm_data["id"]}_{self.vm_data["name"]}'}),
                     create_element('title', attribute_dict={'text': self.vm_data['name']}),
                     create_element('description', attribute_dict={'text': self.vm_data['description']}),
+                    self.os_xml(),
                 ]
             }
         )
+
         return domain
+
+    def os_xml(self):
+        children = [create_element('type', attribute_dict={'text': 'hvm'})]
+        if self.vm_data['bootloader'] in ('UEFI', 'UEFI_CSM'):
+            children.append(
+                create_element(
+                    'loader', attribute_dict={
+                        'text': '/usr/local/share/uefi-firmware/BHYVE_UEFI'
+                        f'{"_CSM" if self.vm_data["bootloader"] == "UEFI_CSM" else ""}.fd'
+                    }, readonly='yes', type='pflash',
+                ),  # FIXME: Add host-bootloader support i.e grub-bhyve
+                # FIXME: Please test for BIOS
+            )
+        os_element = create_element('os', attribute_dict={'children': children})
+
+        return os_element
 
 
 class VMSupervisor(object):
