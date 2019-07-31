@@ -615,7 +615,7 @@ class ActiveDirectoryService(ConfigService):
         Str('idmap_backend', default='RID', enum=['AD', 'AUTORID', 'FRUIT', 'LDAP', 'NSS', 'RFC2307', 'RID', 'SCRIPT']),
         Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
         Str('ldap_sasl_wrapping', default='SIGN', enum=['PLAIN', 'SIGN', 'SEAL']),
-        Str('createcomputer', null=True),
+        Str('createcomputer'),
         Str('netbiosname'),
         Str('netbiosname_b'),
         List('netbiosalias'),
@@ -1407,7 +1407,7 @@ class WBStatusThread(threading.Thread):
         try:
             self.read_messages()
         except Exception as e:
-            self.logger.debug('Failed to start monitor thread %s', e)
+            self.logger.debug('Failed to run monitor thread %s', e, exc_info=True)
 
     def setup(self):
         if not os.path.exists('/var/run/samba4/.wb_fifo'):
@@ -1423,13 +1423,15 @@ class WBStatusThread(threading.Thread):
 
 
 class ADMonitorService(Service):
+    class Config:
+        private = True
+
     def __init__(self, *args, **kwargs):
         super(ADMonitorService, self).__init__(*args, **kwargs)
         self.thread = None
         self.initialized = False
         self.lock = threading.Lock()
 
-    @private
     def start(self):
         if not self.middleware.call_sync('activedirectory.config')['enable']:
             self.logger.trace('Active directory is disabled. Exiting AD monitoring.')
@@ -1447,7 +1449,6 @@ class ADMonitorService(Service):
             thread.start()
             self.initialized = True
 
-    @private
     def stop(self):
         thread = self.thread
         if thread is None:
@@ -1459,7 +1460,6 @@ class ADMonitorService(Service):
         with self.lock:
             self.initialized = False
 
-    @private
     def restart(self):
         self.stop()
         self.start()
