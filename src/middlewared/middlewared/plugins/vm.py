@@ -136,6 +136,7 @@ class VMSupervisorLibVirt:
                     create_element('title', attribute_dict={'text': self.vm_data['name']}),
                     create_element('description', attribute_dict={'text': self.vm_data['description']}),
                     self.os_xml(),
+                    create_element('vcpu', attribute_dict={'text': str(self.vm_data['vcpus'])}),
                 ]
             }
         )
