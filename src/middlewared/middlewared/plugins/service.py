@@ -695,8 +695,7 @@ class ServiceService(CRUDService):
         return await self.middleware.call('activedirectory.start'), []
 
     async def _reload_activedirectory(self, **kwargs):
-        await self._service("samba_server", "stop", force=True, **kwargs)
-        await self._service("samba_server", "start", quiet=True, **kwargs)
+        await self._service("winbindd", "reload", quiet=True, **kwargs)
 
     async def _restart_syslogd(self, **kwargs):
         await self.middleware.call("etc.generate", "syslogd")
@@ -876,21 +875,31 @@ class ServiceService(CRUDService):
         asyncio.ensure_future(self.middleware.call('system.shutdown', {'delay': 3}))
 
     async def _reload_cifs(self, **kwargs):
+        """
+        Reload occurs when SMB shares change. This does not require
+        restarting nmbd, winbindd, or wsdd. mDNS advertisement may
+        change due to time machine.
+        """
         await self.middleware.call("etc.generate", "smb_share")
-        await self._service("samba_server", "reload", force=True, **kwargs)
+        await self._service("smbd", "reload", force=True, **kwargs)
         await self.middleware.call('mdnsadvertise.restart')
 
     async def _restart_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
         await self.middleware.call("etc.generate", "smb_share")
-        await self._service("samba_server", "stop", force=True, **kwargs)
-        await self._service("samba_server", "restart", quiet=True, **kwargs)
+        await self._service("smbd", "restart", force=True, **kwargs)
+        await self._service("winbindd", "restart", force=True, **kwargs)
+        await self._service("nmbd", "restart", force=True, **kwargs)
+        await self._service("wsdd", "restart", force=True, **kwargs)
         await self.middleware.call('mdnsadvertise.restart')
 
     async def _start_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
         await self.middleware.call("etc.generate", "smb_share")
-        await self._service("samba_server", "start", quiet=True, **kwargs)
+        await self._service("smbd", "start", force=True, **kwargs)
+        await self._service("winbindd", "start", force=True, **kwargs)
+        await self._service("nmbd", "start", force=True, **kwargs)
+        await self._service("wsdd", "start", force=True, **kwargs)
         await self.middleware.call('mdnsadvertise.restart')
         try:
             await self.middleware.call("smb.add_admin_group", "", True)
@@ -898,11 +907,14 @@ class ServiceService(CRUDService):
             raise CallError(e)
 
     async def _stop_cifs(self, **kwargs):
-        await self._service("samba_server", "stop", force=True, **kwargs)
+        await self._service("smbd", "stop", force=True, **kwargs)
+        await self._service("winbindd", "stop", force=True, **kwargs)
+        await self._service("nmbd", "stop", force=True, **kwargs)
+        await self._service("wsdd", "stop", force=True, **kwargs)
         await self.middleware.call('mdnsadvertise.restart')
 
     async def _started_cifs(self, **kwargs):
-        if await self._service("samba_server", "status", quiet=True, onetime=True, **kwargs):
+        if await self._service("smbd", "status", quiet=True, onetime=True, **kwargs):
             return False, []
         else:
             return True, []
