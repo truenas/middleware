@@ -185,6 +185,18 @@ class VMSupervisorLibVirt:
             device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
             devices.append(device_obj.xml())
 
+        devices.append(
+            create_element(
+                'serial', type='nmdm', attribute_dict={
+                    'children': [
+                        create_element(
+                            'source', master=f'/dev/nmdm{self.vm_data["id"]}A', slave=f'/dev/nmdm{self.vm_data["id"]}B'
+                        )
+                    ]
+                }
+            )
+        )
+
         return create_element('devices', attribute_dict={'children': devices})
 
 
