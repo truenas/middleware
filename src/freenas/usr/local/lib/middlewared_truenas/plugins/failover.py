@@ -82,6 +82,12 @@ class RemoteClient(object):
     def call(self, *args, **kwargs):
         try:
             return self.client.call(*args, **kwargs)
+        except AttributeError as e:
+            # ws4py traceback which can happen when connection is lost
+            if "'NoneType' object has no attribute 'text_message'" in str(e):
+                raise CallError('Remote connection closed.', errno.EREMOTE)
+            else:
+                raise
         except ClientException as e:
             raise CallError(str(e), e.errno)
 
