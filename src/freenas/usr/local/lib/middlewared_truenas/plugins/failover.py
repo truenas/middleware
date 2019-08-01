@@ -90,7 +90,7 @@ class RemoteClient(object):
         if typ is None:
             return
         if typ is ClientException:
-            raise CallError(str(value), value.errno)
+            raise CallError(str(value), value.errno or errno.EREMOTE)
 
     def sendfile(self, token, local_path, remote_path):
         r = requests.post(
@@ -679,17 +679,6 @@ class FailoverService(ConfigService):
             os.makedirs(local_path, exist_ok=True)
             with open(updatefile_localpath, 'wb') as f:
                 shutil.copyfileobj(job.pipes.input.r, f, 1048576)
-        else:
-            def download_callback(j):
-                job.set_progress(None, j['progress']['description'] or 'Downloading upgrade files')
-
-            # Download update first so we can transfer it to the other node.
-            djob = self.middleware.call_sync('update.download', job_on_progress_cb=download_callback)
-            djob.wait_sync()
-            if djob.error:
-                raise CallError(f'Error downloading update: {djob.error}')
-            if not djob.result:
-                raise CallError('No updates available.')
 
         remote_ip = self.remote_ip()
         with RemoteClient(remote_ip) as remote:
@@ -706,15 +695,35 @@ class FailoverService(ConfigService):
                 else:
                     raise
 
+            if not updatefile and not legacy_upgrade:
+                def download_callback(j):
+                    job.set_progress(
+                        None, j['progress']['description'] or 'Downloading upgrade files'
+                    )
+
+                djob = self.middleware.call_sync('update.download', job_on_progress_cb=download_callback)
+                djob.wait_sync()
+                if djob.error:
+                    raise CallError(f'Error downloading update: {djob.error}')
+                if not djob.result:
+                    raise CallError('No updates available.')
+
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
-            job.set_progress(None, 'Sending files to Standby Controller')
             remote.call('update.destroy_upload_location')
             remote_path = remote.call('update.create_upload_location')
-            token = remote.call('auth.generate_token')
 
-            for f in os.listdir(local_path):
-                remote.sendfile(token, os.path.join(local_path, f), os.path.join(remote_path, f))
+            # Only send files to standby:
+            # 1. Its a manual upgrade which means it needs to go through master first
+            # 2. Its not a legacy upgrade, which means files are downloaded on master first
+            #
+            # For legacy upgrade it will be downloaded directly from standby.
+            if updatefile or not legacy_upgrade:
+                job.set_progress(None, 'Sending files to Standby Controller')
+                token = remote.call('auth.generate_token')
+
+                for f in os.listdir(local_path):
+                    remote.sendfile(token, os.path.join(local_path, f), os.path.join(remote_path, f))
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = remote.call('system.version')
@@ -744,7 +753,7 @@ class FailoverService(ConfigService):
                 update_remote_args = []
                 update_local_args = []
 
-            # If they are the same we assume this is a clean upgade so we start by
+            # If they are the same we assume this is a clean upgrade so we start by
             # upgrading the standby controller.
             if legacy_upgrade or local_version == remote_version:
                 rjob = remote.call(update_method, *update_remote_args, job='RETURN', callback=partial(
