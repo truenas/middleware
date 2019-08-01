@@ -20,10 +20,11 @@ import psutil
 import random
 import re
 import stat
-import subprocess
-import sysctl
 import shutil
 import signal
+import subprocess
+import sys
+import sysctl
 import tempfile
 
 from abc import ABC, abstractmethod
@@ -153,6 +154,8 @@ class VMSupervisorLibVirt:
                     ),
                     # Clock offset
                     create_element('clock', offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'),
+                    # Devices
+                    self.devices_xml(),
                 ]
             }
         )
@@ -175,6 +178,15 @@ class VMSupervisorLibVirt:
 
         return os_element
 
+    def devices_xml(self):
+        # FIXME: Please add order
+        devices = []
+        for device in self.vm_data['devices']:
+            device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
+            devices.append(device_obj.xml())
+
+        return create_element('devices', attribute_dict={'children': devices})
+
 
 class Device(ABC):
 
@@ -188,7 +200,7 @@ class Device(ABC):
         pass
 
 
-class Disk(Device):
+class DISK(Device):
 
     schema = Dict(
         'attributes',
@@ -1399,7 +1411,7 @@ class VMDeviceService(CRUDService):
     DEVICE_ATTRS = {
         'CDROM': CDROM.schema,
         'RAW': RAW.schema,
-        'DISK': Disk.schema,
+        'DISK': DISK.schema,
         'NIC': NIC.schema,
         'VNC': VNC.schema,
     }
