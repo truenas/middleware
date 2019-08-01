@@ -466,6 +466,10 @@ class FilesystemService(Service):
         selected. Mode should be formatted as string representation of octal
         permissions bits.
 
+        `uid` the desired UID of the file user. If set to None (the default), then user is not changed.
+
+        `gid` the desired GID of the file group. If set to None (the default), then group is not changed.
+
         `stripacl` setperm will fail if an extended ACL is present on `path`,
         unless `stripacl` is set to True.
 
@@ -735,9 +739,9 @@ class FilesystemService(Service):
 
         `dacl` "simplified" ACL here or a full ACL.
 
-        `uid` the desired UID of the file user. If set to -1, then UID is not changed.
+        `uid` the desired UID of the file user. If set to None (the default), then user is not changed.
 
-        `gid` the desired GID of the file group. If set to -1 then GID is not changed.
+        `gid` the desired GID of the file group. If set to None (the default), then group is not changed.
 
         `recursive` apply the ACL recursively
 
