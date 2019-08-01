@@ -191,6 +191,7 @@ class ServiceBase(type):
             'service': None,
             'service_model': None,
             'service_verb': 'reload',
+            'service_verb_sync': True,
             'namespace': namespace,
             'namespace_alias': None,
             'private': False,
@@ -303,7 +304,12 @@ class SystemServiceService(ConfigService):
         await self.middleware.call('datastore.update',
                                    f'services.{self._config.service_model or self._config.service}', old['id'], new,
                                    {'prefix': self._config.datastore_prefix})
-        await self._service_change(self._config.service, self._config.service_verb)
+
+        fut = self._service_change(self._config.service, self._config.service_verb)
+        if self._config.service_verb_sync:
+            await fut
+        else:
+            asyncio.ensure_future(fut)
 
 
 class CRUDService(ServiceChangeMixin, Service):
