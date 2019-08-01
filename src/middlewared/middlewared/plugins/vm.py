@@ -200,6 +200,21 @@ class Disk(Device):
         Int('sectorsize', enum=[0, 512, 4096], default=0),
     )
 
+    def __init__(self, data):
+        super().__init__(data)
+
+    def xml(self, *args, **kwargs):
+        child_element = kwargs.pop('child_element')
+        return create_element(
+            'disk', type='file', device='disk', attribute_dict={
+                'children': [
+                    create_element('source', file=self.data['attributes']['path']),
+                    create_element('target', dev=f'hdc{self.data["id"]}', bus='sata'),
+                    child_element,
+                ]
+            }
+        )
+
 
 class CDROM(Device):
 
