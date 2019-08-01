@@ -10,7 +10,7 @@
 %>\
 ${system_crontab}
 
-45 3 * * * root /usr/local/bin/midclt call pool.scrub.scrub freenas-boot ${system_advanced['boot_scrub']}
+45 3 * * * root /usr/local/bin/midclt call pool.scrub.run freenas-boot ${system_advanced['boot_scrub']}
 
 ## Don't run these on TrueNAS HA passive controllers
 ## Redmine 55908
@@ -28,7 +28,7 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
     % endfor
 
     % for job in middleware.call_sync("pool.scrub.query", [["enabled", "=", True]]):
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call pool.scrub.scrub {job['pool_name']} {job['threshold']}"))}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call pool.scrub.run {job['pool_name']} {job['threshold']}"))}
     % endfor
 
     % if resilver["enabled"]:

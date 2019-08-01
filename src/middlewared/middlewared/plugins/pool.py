@@ -3389,14 +3389,14 @@ class PoolScrubService(CRUDService):
         return response
 
     @accepts(Str('name'), Int('threshold', default=35))
-    async def scrub(self, name, threshold):
+    async def run(self, name, threshold):
         """
         Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.
         """
         await self.middleware.call('alert.oneshot_delete', 'ScrubNotStarted', name)
         await self.middleware.call('alert.oneshot_delete', 'ScrubStarted', name)
         try:
-            started = await self.__scrub(name, threshold)
+            started = await self.__run(name, threshold)
         except ScrubError as e:
             await self.middleware.call('alert.oneshot_create', 'ScrubNotStarted', {
                 'pool': name,
@@ -3406,7 +3406,7 @@ class PoolScrubService(CRUDService):
             if started:
                 await self.middleware.call('alert.oneshot_create', 'ScrubStarted', name)
 
-    async def __scrub(self, name, threshold):
+    async def __run(self, name, threshold):
         if name == 'freenas-boot':
             if not await self.middleware.call('system.is_freenas'):
                 if await self.middleware.call('failover.status') == 'BACKUP':
