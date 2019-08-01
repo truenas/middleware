@@ -282,11 +282,30 @@ class VNC(Device):
             '1024x768', '800x600', '640x480',
         ], default='1024x768'),
         Int('vnc_port', default=None, null=True),
-        Str('vnc_bind'),
+        Str('vnc_bind', default='0.0.0.0'),
         Bool('wait', default=False),
         Str('vnc_password', default=None, null=True, private=True),
         Bool('vnc_web', default=False),
     )
+
+    def xml(self, *args, **kwargs):
+        # FIXME: Please ensure we have a valid port at this time - also it seems we have a bug otherwise
+        #  with vnc port - we have autoport in libvirt, not sure if it works on freebsd, confirm please
+        #  Also confirm vnc_web involvement as well
+        return create_element(
+            'graphics', type='vnc', port=str(self.data['attributes']['vnc_port']), attribute_dict={
+                'children': [
+                    create_element(
+                        # We use .get for safety as old users might not have this set
+                        'listen', type='address', address=self.data['attributes'].get('vnc_bind') or '0.0.0.0'
+                    ),
+                ]
+            }, **(
+                {} if not self.data['attributes']['vnc_password'] else {
+                    'passwd': self.data['attributes']['vnc_password']
+                }
+            )
+        ), create_element('controller', type='usb', model='nec-xhci'), create_element('input', type='tablet', bus='usb')
 
 
 class VMSupervisor(object):
