@@ -456,6 +456,18 @@ class UserService(CRUDService):
             for shell in shells + ['/usr/sbin/nologin']
         }
 
+    @accepts(Dict(
+        'get_user_obj',
+        Str('username', default=None),
+        Int('uid', default=None)
+    ))
+    async def get_user_obj(self, data):
+        """
+        Returns dictionary containing information from struct passwd for the user specified by either
+        the username or uid. Bypasses user cache.
+        """
+        return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'])
+
     @item_method
     @accepts(
         Int('id'),
@@ -885,6 +897,18 @@ class GroupService(CRUDService):
                 return last_gid + 1
             last_gid = i['gid']
         return last_gid + 1
+
+    @accepts(Dict(
+        'get_group_obj',
+        Str('groupname', default=None),
+        Int('gid', default=None)
+    ))
+    async def get_group_obj(self, data):
+        """
+        Returns dictionary containing information from struct grp for the group specified by either
+        the groupname or gid. Bypasses group cache.
+        """
+        return await self.middleware.call('dscache.get_uncached_group', data['groupname'], data['gid'])
 
     async def __common_validation(self, verrors, data, schema, pk=None):
 
