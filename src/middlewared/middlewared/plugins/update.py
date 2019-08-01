@@ -353,6 +353,23 @@ class UpdateService(Service):
         if applied is True:
             return {'status': 'REBOOT_REQUIRED'}
 
+        if (
+            not self.middleware.call_sync('system.is_freenas') and
+            self.middleware.call_sync('failover.licensed')
+        ):
+            # If its HA and standby is running old version we assume
+            # legacy upgrade and check update on standby.
+            try:
+                self.middleware.call_sync(
+                    'failover.call_remote', 'failover.upgrade_version',
+                )
+            except CallError as e:
+                if e.errno != CallError.ENOMETHOD:
+                    raise
+                return self.middleware.call_sync(
+                    'failover.call_remote', 'update.check_available', [attrs],
+                )
+
         train = (attrs or {}).get('train') or self.middleware.call_sync('update.get_trains')['selected']
 
         handler = CheckUpdateHandler()
