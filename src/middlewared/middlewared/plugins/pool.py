@@ -3422,10 +3422,7 @@ class PoolScrubService(CRUDService):
                     raise ScrubError(f'Pool {name} is offline, not running scrub')
 
         if pool['scan']['state'] == 'SCANNING':
-            if pool["scan"]["function"] == 'RESILVER':
-                raise ScrubError(f'Resilvering of pool {name} is in progress, skipping scrub')
-            else:
-                raise ScrubError(f'Scrubbing of pool {name} is in progress, skipping scrub')
+            return False
 
         history = (await run('zpool', 'history', name, encoding='utf-8')).stdout
         for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB.finditer(history))):

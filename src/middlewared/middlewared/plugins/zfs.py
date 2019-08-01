@@ -921,7 +921,7 @@ class ScanWatch(object):
 class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.WARNING
-    title = "Scrub Not Started"
+    title = "Scrub Failed to Start"
     text = "%s."
 
     async def create(self, args):
