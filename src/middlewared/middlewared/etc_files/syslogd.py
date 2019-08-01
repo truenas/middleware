@@ -22,20 +22,19 @@ def generate_syslog_conf(middleware):
     with open("/etc/local/syslog-ng.conf") as f:
         syslog_conf = f.read()
 
-    config = middleware.call_sync("system.general.config")
     advanced_config = middleware.call_sync("system.advanced.config")
 
     if advanced_config["fqdn_syslog"]:
         syslog_conf = syslog_conf.replace("use-fqdn(no)", "use-fqdn(yes)")
 
-    if config["syslogserver"]:
-        if ":" in config["syslogserver"]:
-            host, port = config["syslogserver"].split(":")[:2]
+    if advanced_config["syslogserver"]:
+        if ":" in advanced_config["syslogserver"]:
+            host, port = advanced_config["syslogserver"].split(":")[:2]
         else:
-            host, port = config["syslogserver"], "514"
+            host, port = advanced_config["syslogserver"], "514"
 
         syslog_conf += f'destination loghost {{ udp("{host}" port({port}) localport(514)); }};\n'
-        syslog_conf += f'log {{ source(src); filter({config["sysloglevel"].lower()}); destination(loghost); }};\n'
+        syslog_conf += f'log {{ source(src); filter({advanced_config["sysloglevel"].lower()}); destination(loghost); }};\n'
 
     with open("/etc/local/syslog-ng.conf", "w") as f:
         f.write(syslog_conf)
