@@ -179,9 +179,8 @@ class VMSupervisorLibVirt:
         return os_element
 
     def devices_xml(self):
-        # FIXME: Please add order
         devices = []
-        for device in self.vm_data['devices']:
+        for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id'])):
             device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
             devices.append(device_obj.xml())
 
