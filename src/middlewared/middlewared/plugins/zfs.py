@@ -9,7 +9,9 @@ from datetime import datetime
 from bsd import geom
 import libzfs
 
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import (
+    Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
+)
 from middlewared.schema import Dict, List, Str, Bool, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
@@ -914,6 +916,29 @@ class ScanWatch(object):
 
     def cancel(self):
         self._cancel.set()
+
+
+class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
+    category = AlertCategory.TASKS
+    level = AlertLevel.WARNING
+    title = "Scrub Not Started"
+    text = "%s."
+
+    async def create(self, args):
+        return Alert(self.__class__, args["text"], _key=args["pool"])
+
+    async def delete(self, alerts, query):
+        return list(filter(
+            lambda alert: alert.key != query,
+            alerts
+        ))
+
+
+class ScrubStartedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.TASKS
+    level = AlertLevel.INFO
+    title = "Scrub Started"
+    text = "Scrub of pool %r started."
 
 
 class ScrubFinishedAlertClass(AlertClass, SimpleOneShotAlertClass):
