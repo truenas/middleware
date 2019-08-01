@@ -26,6 +26,7 @@ import shutil
 import signal
 import tempfile
 
+from abc import ABC, abstractmethod
 from collections import deque
 from lxml import etree
 
@@ -173,6 +174,79 @@ class VMSupervisorLibVirt:
         os_element = create_element('os', attribute_dict={'children': children})
 
         return os_element
+
+
+class Device(ABC):
+
+    schema = NotImplemented
+
+    def __init__(self, data):
+        self.data = data
+
+    @abstractmethod
+    def xml(self, *args, **kwargs):
+        pass
+
+
+class Disk(Device):
+
+    schema = Dict(
+        'attributes',
+        Str('path'),
+        Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
+        Bool('create_zvol'),
+        Str('zvol_name'),
+        Int('zvol_volsize'),
+        Int('sectorsize', enum=[0, 512, 4096], default=0),
+    )
+
+
+class CDROM(Device):
+
+    schema = Dict(
+        'attributes',
+        Str('path', required=True),
+    )
+
+
+class RAW(Device):
+
+    schema = Dict(
+        'attributes',
+        Str('path', required=True),
+        Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
+        Bool('exists'),
+        Bool('boot', default=False),
+        Int('size', default=None, null=True),
+        Int('sectorsize', enum=[0, 512, 4096], default=0),
+    )
+
+
+class NIC(Device):
+
+    schema = Dict(
+        'attributes',
+        Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
+        Str('nic_attach', default=None, null=True),
+        Str('mac'),
+    )
+
+
+class VNC(Device):
+
+    schema = Dict(
+        'attributes',
+        Str('vnc_resolution', enum=[
+            '1920x1200', '1920x1080', '1600x1200', '1600x900',
+            '1400x1050', '1280x1024', '1280x720',
+            '1024x768', '800x600', '640x480',
+        ], default='1024x768'),
+        Int('vnc_port', default=None, null=True),
+        Str('vnc_bind'),
+        Bool('wait', default=False),
+        Str('vnc_password', default=None, null=True, private=True),
+        Bool('vnc_web', default=False),
+    )
 
 
 class VMSupervisor(object):
@@ -1308,47 +1382,11 @@ class VMService(CRUDService):
 class VMDeviceService(CRUDService):
 
     DEVICE_ATTRS = {
-        'CDROM': Dict(
-            'attributes',
-            Str('path', required=True),
-        ),
-        'RAW': Dict(
-            'attributes',
-            Str('path', required=True),
-            Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
-            Bool('exists'),
-            Bool('boot', default=False),
-            Int('size', default=None, null=True),
-            Int('sectorsize', enum=[0, 512, 4096], default=0),
-        ),
-        'DISK': Dict(
-            'attributes',
-            Str('path'),
-            Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
-            Bool('create_zvol'),
-            Str('zvol_name'),
-            Int('zvol_volsize'),
-            Int('sectorsize', enum=[0, 512, 4096], default=0),
-        ),
-        'NIC': Dict(
-            'attributes',
-            Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
-            Str('nic_attach', default=None, null=True),
-            Str('mac'),
-        ),
-        'VNC': Dict(
-            'attributes',
-            Str('vnc_resolution', enum=[
-                '1920x1200', '1920x1080', '1600x1200', '1600x900',
-                '1400x1050', '1280x1024', '1280x720',
-                '1024x768', '800x600', '640x480',
-            ], default='1024x768'),
-            Int('vnc_port', default=None, null=True),
-            Str('vnc_bind'),
-            Bool('wait', default=False),
-            Str('vnc_password', default=None, null=True, private=True),
-            Bool('vnc_web', default=False),
-        ),
+        'CDROM': CDROM.schema,
+        'RAW': RAW.schema,
+        'DISK': Disk.schema,
+        'NIC': NIC.schema,
+        'VNC': VNC.schema,
     }
 
     class Config:
