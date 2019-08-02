@@ -90,7 +90,7 @@ class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
     text = "No escrowed passphrase for failover. Automatic failover disabled."
 
 
-class FailoverlertSource(ThreadedAlertSource):
+class FailoverAlertSource(ThreadedAlertSource):
     failover_related = True
     run_on_backup_node = False
 
