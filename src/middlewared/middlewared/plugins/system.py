@@ -974,7 +974,7 @@ class SystemGeneralService(ConfigService):
         listen on.
 
         `syslogserver` and `sysloglevel` are deprecated fields as of 11.3
-        and will be permanently moved to SystemAdvancedService for 12.0
+        and will be permanently moved to system.advanced.update for 12.0
         """
         advanced_config = {}
         # fields were moved to Advanced
