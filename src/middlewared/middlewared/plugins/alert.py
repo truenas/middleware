@@ -74,7 +74,7 @@ class AlertService(Service):
         self.blocked_failover_alerts_until = 0
 
     @private
-    async def initialize(self):
+    async def initialize(self, load=True):
         is_freenas = await self.middleware.call("system.is_freenas")
 
         self.node = "A"
@@ -83,13 +83,14 @@ class AlertService(Service):
                 self.node = "B"
 
         self.alerts = defaultdict(lambda: defaultdict(dict))
-        for alert in await self.middleware.call("datastore.query", "system.alert"):
-            del alert["id"]
-            alert["level"] = AlertLevel(alert["level"])
+        if load:
+            for alert in await self.middleware.call("datastore.query", "system.alert"):
+                del alert["id"]
+                alert["level"] = AlertLevel(alert["level"])
 
-            alert = Alert(**alert)
+                alert = Alert(**alert)
 
-            self.alerts[alert.node][alert.source][alert.key] = alert
+                self.alerts[alert.node][alert.source][alert.key] = alert
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
