@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 GELI_KEYPATH = '/data/geli'
 RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
+RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
+RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
@@ -128,6 +130,10 @@ async def mount(device, path, fs_type, fs_options, options):
         ))
     else:
         return True
+
+
+class ScrubError(CallError):
+    pass
 
 
 class PoolResilverService(ConfigService):
@@ -3381,6 +3387,62 @@ class PoolScrubService(CRUDService):
 
         await self.middleware.call('service.restart', 'cron')
         return response
+
+    @accepts(Str('name'), Int('threshold', default=35))
+    async def run(self, name, threshold):
+        """
+        Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.
+        """
+        await self.middleware.call('alert.oneshot_delete', 'ScrubNotStarted', name)
+        await self.middleware.call('alert.oneshot_delete', 'ScrubStarted', name)
+        try:
+            started = await self.__run(name, threshold)
+        except ScrubError as e:
+            await self.middleware.call('alert.oneshot_create', 'ScrubNotStarted', {
+                'pool': name,
+                'text': e.errmsg,
+            })
+        else:
+            if started:
+                await self.middleware.call('alert.oneshot_create', 'ScrubStarted', name)
+
+    async def __run(self, name, threshold):
+        if name == 'freenas-boot':
+            pool = await self.middleware.call('zfs.pool.query', [['name', '=', name]], {'get': True})
+        else:
+            if not await self.middleware.call('system.is_freenas'):
+                if await self.middleware.call('failover.status') == 'BACKUP':
+                    return
+
+            pool = await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
+            if pool['status'] == 'OFFLINE':
+                if not pool['is_decrypted']:
+                    raise ScrubError(f'Pool {name} is not decrypted, skipping scrub')
+                else:
+                    raise ScrubError(f'Pool {name} is offline, not running scrub')
+
+        if pool['scan']['state'] == 'SCANNING':
+            return False
+
+        history = (await run('zpool', 'history', name, encoding='utf-8')).stdout
+        for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB.finditer(history))):
+            last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
+            break
+        else:
+            # creation time of the pool if no scrub was done
+            for match in RE_HISTORY_ZPOOL_CREATE.finditer(history):
+                last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
+                break
+            else:
+                logger.warning("Could not find last scrub of pool %r", name)
+                last_scrub = datetime.min
+
+        if (datetime.now() - last_scrub).total_seconds() < (threshold - 1) * 86400:
+            logger.debug("Pool %r last scrub %r", name, last_scrub)
+            return False
+
+        await self.middleware.call('zfs.pool.scrub', pool['name'])
+        return True
 
 
 def parse_lsof(lsof, dirs):
