@@ -1,6 +1,8 @@
 import functools
 from itertools import chain
 
+import asyncio
+
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
@@ -223,7 +225,7 @@ class SMARTTestService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._service_change('smartd', 'restart')
+        asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
         return data
 
@@ -275,7 +277,7 @@ class SMARTTestService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._service_change('smartd', 'restart')
+        asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
@@ -292,7 +294,7 @@ class SMARTTestService(CRUDService):
             id
         )
 
-        await self._service_change('smartd', 'restart')
+        asyncio.ensure_future(self._service_change('smartd', 'restart'))
 
         return response
 
@@ -404,6 +406,7 @@ class SmartService(SystemServiceService):
     class Config:
         service = "smartd"
         service_model = "smart"
+        service_verb_sync = False
         datastore_extend = "smart.smart_extend"
         datastore_prefix = "smart_"
 
