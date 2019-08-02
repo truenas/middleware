@@ -922,15 +922,16 @@ async def ha_permission(middleware, app):
         AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
 
 
-async def hook_geli_passphrase(middleware, pool, passphrase):
+async def hook_geli_passphrase(middleware, passphrase):
     """
     Hook to set pool passphrase when its changed.
     """
-    if not passphrase:
-        return
     if not await middleware.call('failover.licensed'):
         return
-    await middleware.call('failover.encryption_setkey', passphrase, {'sync': True})
+    if passphrase:
+        await middleware.call('failover.encryption_setkey', passphrase, {'sync': True})
+    else:
+        await middleware.call('failover.encryption_clearkey')
 
 
 def journal_sync(middleware, retries):
