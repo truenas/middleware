@@ -990,7 +990,11 @@ DATASET_COMMON_MAPPING = [
     ('dataset_dedup', 'deduplication', str.upper),
     ('dataset_readonly', 'readonly', str.upper),
     ('dataset_exec', 'exec', str.upper),
-    ('dataset_recordsize', 'recordsize', str.upper),
+    (
+        'dataset_recordsize',
+        'recordsize',
+        lambda v: '1024K' if v == '1M' else (v.upper() if v else None),
+    ),
     ('dataset_aclmode', 'aclmode', str.upper),
     ('dataset_share_type', 'share_type', str.upper),
 ]
