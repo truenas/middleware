@@ -114,7 +114,7 @@ class SystemAdvancedService(ConfigService):
                 if port < 0 or port > 65535:
                     verrors.add(
                         f'{schema}.syslogserver',
-                        'Port specified should be between 0 - 65535'
+                        'Port must be in the range of 0 to 65535.'
                     )
         return verrors, data
 
@@ -973,10 +973,10 @@ class SystemGeneralService(ConfigService):
         `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
         listen on.
 
-        `syslogserver` and `sysloglevel` are deprecated fields as of 11.3 and will be permanently moved for 12.0
-
+        `syslogserver` and `sysloglevel` are deprecated fields as of 11.3
+        and will be permanently moved to SystemAdvancedService for 12.0
         """
-        advadced_config = {}
+        advanced_config = {}
         # fields were moved to Advanced
         for deprecated_field in ('sysloglevel', 'syslogserver'):
             if deprecated_field in data:
@@ -984,10 +984,10 @@ class SystemGeneralService(ConfigService):
                     f"{deprecated_field} has been deprecated and moved to 'system.advanced'",
                     DeprecationWarning
                 )
-                advadced_config[deprecated_field] = data[deprecated_field]
+                advanced_config[deprecated_field] = data[deprecated_field]
                 del data[deprecated_field]
-        if advadced_config:
-            await self.middleware.call('system.advanced.update', advadced_config)
+        if advanced_config:
+            await self.middleware.call('system.advanced.update', advanced_config)
 
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None

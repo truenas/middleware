@@ -36,12 +36,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='advanced',
             name='adv_sysloglevel',
-            field=models.CharField(choices=[('f_emerg', 'Emergency'), ('f_alert', 'Alert'), ('f_crit', 'Critical'), ('f_err', 'Error'), ('f_warning', 'Warning'), ('f_notice', 'Notice'), ('f_info', 'Info'), ('f_debug', 'Debug'), ('f_is_debug', 'Is_Debug')], default='f_info', help_text='Specifies which messages will be logged by server. INFO and VERBOSE log transactions that server performs on behalf of the client. f_is_debug specify higher levels of debugging output. The default is f_info.', max_length=120, verbose_name='Syslog level'),
+            field=models.CharField(choices=[('f_emerg', 'Emergency'), ('f_alert', 'Alert'), ('f_crit', 'Critical'), ('f_err', 'Error'), ('f_warning', 'Warning'), ('f_notice', 'Notice'), ('f_info', 'Info'), ('f_debug', 'Debug'), ('f_is_debug', 'Is_Debug')], default='f_info', max_length=120, verbose_name='Syslog level'),
         ),
         migrations.AddField(
             model_name='advanced',
             name='adv_syslogserver',
-            field=models.CharField(blank=True, default='', help_text='Specifies the server and port syslog messages will be sent to.  The accepted format is hostname:port or ip:port, if :port is not specified it will default to port 514 (this field currently only takes IPv4 addresses)', max_length=120, verbose_name='Syslog server'),
+            field=models.CharField(blank=True, default='', max_length=120, verbose_name='Syslog server'),
         ),
         migrations.RunPython(
             code=move_syslog,
