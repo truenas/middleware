@@ -255,6 +255,19 @@ class SystemService(Service):
         """
         return SYSTEM_BOOT_ID
 
+    @no_auth_required
+    @accepts()
+    async def environment(self):
+        """
+        Return environment in which product is running. Possible values:
+        - DEFAULT
+        - EC2
+        """
+        if os.path.exists("/.ec2"):
+            return "EC2"
+
+        return "DEFAULT"
+
     @accepts()
     async def ready(self):
         """
