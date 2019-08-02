@@ -564,7 +564,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 run_call(midclt, 'service.restart', 'asigra', {'sync': False})
 
             run('/usr/local/bin/midclt call alert.block_failover_alerts')
-            run('/usr/local/bin/midclt call alert.initialize')
+            run('/usr/local/bin/midclt call alert.initialize false')
 
             conn.close()
 
