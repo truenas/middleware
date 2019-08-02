@@ -325,9 +325,9 @@ class Advanced(Model):
         max_length=120,
         verbose_name=_("Syslog server"),
         help_text=_("The server and port syslog messages are sent to. "
-		    "The accepted format is hostname:port or ip:port. "
-		    "If :port is not specified, it defaults to port 514. "
-		    "This field currently only takes IPv4 addresses."),
+                    "The accepted format is hostname:port or ip:port. "
+                    "If :port is not specified, it defaults to port 514. "
+                    "This field currently only takes IPv4 addresses."),
     )
 
     class Meta:
