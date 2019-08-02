@@ -155,6 +155,8 @@ class SystemAdvancedService(ConfigService):
 
         `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
         hardware.
+
+        When `syslogserver` is defined, `sysloglevel` makes sure that logs matching the specified level are sent.
         """
         config_data = await self.config()
         original_data = config_data.copy()
@@ -971,7 +973,8 @@ class SystemGeneralService(ConfigService):
         `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
         listen on.
 
-        When `syslogserver` is defined, `sysloglevel` makes sure that logs matching the specified level are sent.
+        `syslogserver` and `sysloglevel` are deprecated fields as of 11.3 and will be permanently moved for 12.0
+
         """
         advadced_config = {}
         # fields were moved to Advanced
