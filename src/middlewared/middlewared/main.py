@@ -996,6 +996,9 @@ class Middleware(LoadPluginsMixin):
             except Exception:
                 self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
+    def call_hook_sync(self, name, *args, **kwargs):
+        return self.run_coroutine(self.call_hook(name, *args, **kwargs))
+
     def register_event_source(self, name, event_source):
         if not issubclass(event_source, EventSource):
             raise RuntimeError(f'{event_source} is not EventSource subclass')
