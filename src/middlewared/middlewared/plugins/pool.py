@@ -3434,7 +3434,8 @@ class PoolScrubService(CRUDService):
                 last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
                 break
             else:
-                raise ScrubError(f'Skipping scrubbing of pool {name}: can\'t get last scrubbing date')
+                logger.warning("Could not find last scrub of pool %r", name)
+                last_scrub = datetime.min
 
         if (datetime.now() - last_scrub).total_seconds() < (threshold - 1) * 86400:
             logger.debug("Pool %r last scrub %r", name, last_scrub)
