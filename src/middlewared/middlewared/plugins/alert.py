@@ -118,7 +118,7 @@ class AlertService(Service):
         self.blocked_failover_alerts_until = 0
 
     @private
-    async def initialize(self):
+    async def initialize(self, load=True):
         is_freenas = await self.middleware.call("system.is_freenas")
 
         self.node = "A"
@@ -148,23 +148,24 @@ class AlertService(Service):
                     ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
         self.alerts = []
-        for alert in await self.middleware.call("datastore.query", "system.alert"):
-            del alert["id"]
+        if load:
+            for alert in await self.middleware.call("datastore.query", "system.alert"):
+                del alert["id"]
 
-            try:
-                alert["klass"] = AlertClass.class_by_name[alert["klass"]]
-            except KeyError:
-                self.logger.info("Alert class %r is no longer present", alert["klass"])
-                continue
+                try:
+                    alert["klass"] = AlertClass.class_by_name[alert["klass"]]
+                except KeyError:
+                    self.logger.info("Alert class %r is no longer present", alert["klass"])
+                    continue
 
-            alert["_uuid"] = alert.pop("uuid")
-            alert["_source"] = alert.pop("source")
-            alert["_key"] = alert.pop("key")
-            alert["_text"] = alert.pop("text")
+                alert["_uuid"] = alert.pop("uuid")
+                alert["_source"] = alert.pop("source")
+                alert["_key"] = alert.pop("key")
+                alert["_text"] = alert.pop("text")
 
-            alert = Alert(**alert)
+                alert = Alert(**alert)
 
-            self.alerts.append(alert)
+                self.alerts.append(alert)
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
