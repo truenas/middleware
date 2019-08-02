@@ -14,7 +14,7 @@ from licenselib.license import ContractType
 
 from freenasUI.support.utils import get_license
 
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import Service, private
 from middlewared.utils import run
 
@@ -212,3 +212,31 @@ class TrueNASService(Service):
             "support_start_date": license.contract_start.isoformat(),
             "support_end_date": license.contract_end.isoformat(),
         }
+
+    @accepts()
+    async def is_production(self):
+        """
+        Returns if system is marked as production.
+        """
+        return await self.middleware.call('keyvalue.get', 'truenas:production', False)
+
+    @accepts(Bool('production'), Bool('send_debug', default=False))
+    async def set_production(self, production, send_debug):
+        """
+        Sets system production state and optionally sends initial debug.
+        """
+        await self.middleware.call('keyvalue.set', 'truenas:production', production)
+
+        if not await self.is_production() and production and send_debug:
+            serial = await self.middleware.call('system.info')["system_serial"]
+            await self.middleware.call('support.new_ticket', {
+                "title": f"System has been just put into production ({serial})",
+                "body": "This system has been just put into production",
+                "attach_debug": True,
+                "category": "Installation/Setup",
+                "criticality": "Inquiry",
+                "environment": "Production",
+                "name": "Automatic Alert",
+                "email": "auto-support@ixsystems.com",
+                "phone": "-",
+            })
