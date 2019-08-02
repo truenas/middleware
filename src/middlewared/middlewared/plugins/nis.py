@@ -3,7 +3,6 @@ import enum
 import errno
 import pwd
 import grp
-import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, List, Str
 from middlewared.service import job, private, ConfigService
@@ -232,7 +231,7 @@ class NISService(ConfigService):
             if is_local_user:
                 continue
 
-            cache_data['users'].append({
+            cache_data['users'].append({u.pw_name: {
                 'id': user_next_index,
                 'uid': u.pw_uid,
                 'username': u.pw_name,
@@ -252,7 +251,7 @@ class NISService(ConfigService):
                 'groups': [],
                 'sshpubkey': None,
                 'local': False
-            })
+            }})
             user_next_index += 1
 
         for g in grp_list:
@@ -260,7 +259,7 @@ class NISService(ConfigService):
             if is_local_user:
                 continue
 
-            cache_data['groups'].append({
+            cache_data['groups'].append({g.gr_name: {
                 'id': group_next_index,
                 'gid': g.gr_gid,
                 'group': g.gr_name,
@@ -268,10 +267,11 @@ class NISService(ConfigService):
                 'sudo': False,
                 'users': [],
                 'local': False
-            })
+            }})
             group_next_index += 1
 
         self.middleware.call_sync('cache.put', 'NIS_cache', cache_data)
+        self.middleware.call_sync('dscache.backup')
 
     @private
     async def get_cache(self):
