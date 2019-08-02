@@ -203,6 +203,9 @@ class SystemAdvancedService(ConfigService):
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
+            if original_data['legacy_ui'] != config_data['legacy_ui']:
+                await self.middleware.call('service.reload', 'http')
+
         return await self.config()
 
     @private
