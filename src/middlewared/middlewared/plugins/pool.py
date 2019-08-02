@@ -3408,12 +3408,12 @@ class PoolScrubService(CRUDService):
 
     async def __run(self, name, threshold):
         if name == 'freenas-boot':
+            pool = await self.middleware.call('zfs.pool.query', [['name', '=', name]], {'get': True})
+        else:
             if not await self.middleware.call('system.is_freenas'):
                 if await self.middleware.call('failover.status') == 'BACKUP':
                     return
 
-            pool = await self.middleware.call('zfs.pool.query', [['name', '=', name]], {'get': True})
-        else:
             pool = await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
             if pool['status'] == 'OFFLINE':
                 if not pool['is_decrypted']:
