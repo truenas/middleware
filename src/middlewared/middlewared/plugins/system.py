@@ -156,7 +156,7 @@ class SystemAdvancedService(ConfigService):
         `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
         hardware.
 
-        When `syslogserver` is defined, `sysloglevel` makes sure that logs matching the specified level are sent.
+        When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
         """
         config_data = await self.config()
         original_data = config_data.copy()
