@@ -228,7 +228,7 @@ class VMSupervisorLibVirt:
             else:
                 device_xml = device_obj.xml()
 
-            devices.append(device_xml)
+            devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
 
         devices.append(
             create_element(
