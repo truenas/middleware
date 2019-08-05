@@ -110,27 +110,6 @@ class Settings(Model):
         default="America/Los_Angeles",
         verbose_name=_("Timezone")
     )
-    stg_sysloglevel = models.CharField(
-        max_length=120,
-        choices=choices.SYS_LOG_LEVEL,
-        default="f_info",
-        verbose_name=_("Syslog level"),
-        help_text=_("Specifies which messages will be logged by "
-                    "server. INFO and VERBOSE log transactions that "
-                    "server performs on behalf of the client. "
-                    "f_is_debug specify higher levels of debugging output. "
-                    "The default is f_info."),
-    )
-    stg_syslogserver = models.CharField(
-        default='',
-        blank=True,
-        max_length=120,
-        verbose_name=_("Syslog server"),
-        help_text=_("Specifies the server and port syslog messages "
-                    "will be sent to.  The accepted format is hostname:port "
-                    "or ip:port, if :port is not specified it will default to "
-                    "port 514 (this field currently only takes IPv4 addresses)"),
-    )
     stg_crash_reporting = models.NullBooleanField(
         verbose_name=_("Crash reporting"),
         help_text=_("Enable sending anonymous crash reports to iXsystems"),
@@ -328,6 +307,27 @@ class Advanced(Model):
         blank=True,
         help_text=_("Global password to unlock SED disks."),
         verbose_name=_("SED Password"),
+    )
+    adv_sysloglevel = models.CharField(
+        max_length=120,
+        choices=choices.SYS_LOG_LEVEL,
+        default="f_info",
+        verbose_name=_("Syslog level"),
+        help_text=_("Which messages are logged by the server. "
+                    "INFO and VERBOSE log transactions that "
+                    "the server performs on behalf of the client. "
+                    "f_is_debug specifies higher levels of debugging output. "
+                    "The default is f_info."),
+    )
+    adv_syslogserver = models.CharField(
+        default='',
+        blank=True,
+        max_length=120,
+        verbose_name=_("Syslog server"),
+        help_text=_("The server and port syslog messages are sent to. "
+                    "The accepted format is hostname:port or ip:port. "
+                    "If :port is not specified, it defaults to port 514. "
+                    "This field currently only takes IPv4 addresses."),
     )
 
     class Meta:

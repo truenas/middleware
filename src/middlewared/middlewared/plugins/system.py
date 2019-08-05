@@ -24,6 +24,7 @@ import tarfile
 import textwrap
 import time
 import uuid
+import warnings
 
 from licenselib.license import ContractType, Features, License
 
@@ -74,6 +75,8 @@ class SystemAdvancedService(ConfigService):
 
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
+        if data.get('sysloglevel'):
+            data['sysloglevel'] = data['sysloglevel'].upper()
 
         return data
 
@@ -98,6 +101,21 @@ class SystemAdvancedService(ConfigService):
                         'Serial port specified has not been identified by the system'
                     )
 
+        syslog_server = data.get('syslogserver')
+        if syslog_server:
+            match = re.match(r"^[\w\.\-]+(\:\d+)?$", syslog_server)
+            if not match:
+                verrors.add(
+                    f'{schema}.syslogserver',
+                    'Invalid syslog server format'
+                )
+            elif ':' in syslog_server:
+                port = int(syslog_server.split(':')[-1])
+                if port < 0 or port > 65535:
+                    verrors.add(
+                        f'{schema}.syslogserver',
+                        'Port must be in the range of 0 to 65535.'
+                    )
         return verrors, data
 
     @accepts(
@@ -121,6 +139,10 @@ class SystemAdvancedService(ConfigService):
             Bool('anonstats'),
             Str('sed_user', enum=['USER', 'MASTER']),
             Str('sed_passwd', private=True),
+            Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR',
+                                     'F_WARNING', 'F_NOTICE', 'F_INFO',
+                                     'F_DEBUG', 'F_IS_DEBUG']),
+            Str('syslogserver'),
             update=True
         )
     )
@@ -133,6 +155,8 @@ class SystemAdvancedService(ConfigService):
 
         `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
         hardware.
+
+        When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
         """
         config_data = await self.config()
         original_data = config_data.copy()
@@ -199,6 +223,12 @@ class SystemAdvancedService(ConfigService):
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
+
+            if (
+                original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower()
+                or original_data['syslogserver'] != config_data['syslogserver']
+            ):
+                await self.middleware.call('service.restart', 'syslogd')
 
         return await self.config()
 
@@ -614,7 +644,6 @@ class SystemGeneralService(ConfigService):
             if key.startswith('gui'):
                 data['ui_' + key[3:]] = data.pop(key)
 
-        data['sysloglevel'] = data['sysloglevel'].upper()
         if data['ui_certificate']:
             data['ui_certificate'] = await self.middleware.call(
                 'certificate.query',
@@ -886,22 +915,6 @@ class SystemGeneralService(ConfigService):
                     f'When "{wildcard}" has been selected, selection of other addresses is not allowed'
                 )
 
-        syslog_server = data.get('syslogserver')
-        if syslog_server:
-            match = re.match(r"^[\w\.\-]+(\:\d+)?$", syslog_server)
-            if not match:
-                verrors.add(
-                    f'{schema}.syslogserver',
-                    'Invalid syslog server format'
-                )
-            elif ':' in syslog_server:
-                port = int(syslog_server.split(':')[-1])
-                if port < 0 or port > 65535:
-                    verrors.add(
-                        f'{schema}.syslogserver',
-                        'Port specified should be between 0 - 65535'
-                    )
-
         certificate_id = data.get('ui_certificate')
         cert = await self.middleware.call(
             'certificate.query',
@@ -973,8 +986,22 @@ class SystemGeneralService(ConfigService):
         `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
         listen on.
 
-        When `syslogserver` is defined, `sysloglevel` makes sure that logs matching the specified level are sent.
+        `syslogserver` and `sysloglevel` are deprecated fields as of 11.3
+        and will be permanently moved to system.advanced.update for 12.0
         """
+        advanced_config = {}
+        # fields were moved to Advanced
+        for deprecated_field in ('sysloglevel', 'syslogserver'):
+            if deprecated_field in data:
+                warnings.warn(
+                    f"{deprecated_field} has been deprecated and moved to 'system.advanced'",
+                    DeprecationWarning
+                )
+                advanced_config[deprecated_field] = data[deprecated_field]
+                del data[deprecated_field]
+        if advanced_config:
+            await self.middleware.call('system.advanced.update', advanced_config)
+
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         if not config.pop('crash_reporting_is_set'):
@@ -988,8 +1015,6 @@ class SystemGeneralService(ConfigService):
         if verrors:
             raise verrors
 
-        # Converting new_config to map the database table fields
-        new_config['sysloglevel'] = new_config['sysloglevel'].lower()
         keys = new_config.keys()
         for key in list(keys):
             if key.startswith('ui_'):
@@ -1002,13 +1027,6 @@ class SystemGeneralService(ConfigService):
             new_config,
             {'prefix': 'stg_'}
         )
-
-        # case insensitive comparison should be performed for sysloglevel
-        if (
-            config['sysloglevel'].lower() != new_config['sysloglevel'].lower() or
-                config['syslogserver'] != new_config['syslogserver']
-        ):
-            await self.middleware.call('service.restart', 'syslogd')
 
         if config['kbdmap'] != new_config['kbdmap']:
             await self.middleware.call('service.restart', 'syscons')
