@@ -180,9 +180,55 @@ class VMSupervisorLibVirt:
 
     def devices_xml(self):
         devices = []
+        pci_slot = Nid(3)
+        controller_index = Nid(1)
+        controller_base = {'index': None, 'slot': None, 'function': 0, 'devices': 0}
+        ahci_controllers = []
+
         for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id'])):
             device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
-            devices.append(device_obj.xml())
+            if isinstance(device_obj, (DISK, CDROM)) and device['attributes'].get('type') != 'VIRTIO':
+                # It would be ensured by vm.device service that we don't run out of slots/functions
+
+                if not ahci_controllers or ahci_controllers[-1]['devices'] == 32:
+                    # Two scenarios will happen, either we bump function no or slot no
+                    new_controller = controller_base.copy()
+                    new_controller['index'] = controller_index()
+                    if not ahci_controllers or ahci_controllers[-1]['function'] == 7:
+                        # We need to add a new controller with a new slot
+                        new_controller['slot'] = pci_slot()
+                    else:
+                        # We just need to bump the function here
+                        new_controller.update({
+                            'slot': ahci_controllers[-1]['slot'],
+                            'function': ahci_controllers[-1]['function'] + 1,
+                        })
+
+                    ahci_controllers.append(new_controller)
+
+                    # We should add this to xml now
+                    devices.append(create_element(
+                        'controller', type='sata', index=str(new_controller['index']), attribute_dict={
+                            'children': [
+                                create_element(
+                                    'address', type='pci', slot=str(new_controller['slot']),
+                                    function=str(new_controller['function']), multifunction='on'
+                                )
+                            ]
+                        }
+                    ))
+
+                current_controller = ahci_controllers[-1]
+                current_controller['devices'] += 1
+
+                device_xml = device_obj.xml(child_element=create_element(
+                    'address', controller=str(current_controller['index']), type='drive',
+                    target=str(current_controller['devices']),
+                ))
+            else:
+                device_xml = device_obj.xml()
+
+            devices.append(device_xml)
 
         devices.append(
             create_element(
@@ -232,7 +278,7 @@ class DISK(Device):
             'disk', type='file', device='disk', attribute_dict={
                 'children': [
                     create_element('source', file=self.data['attributes']['path']),
-                    create_element('target', dev=f'hda{self.data["id"]}', bus='sata'),
+                    create_element('target', dev=f'hdc{self.data["id"]}', bus='sata'),
                     child_element,
                 ]
             }
@@ -253,7 +299,7 @@ class CDROM(Device):
                 'children': [
                     create_element('driver', name='file', type='raw'),
                     create_element('source', file=self.data['attributes']['path']),
-                    create_element('target', dev=f'hdc{self.data["id"]}', bus='sata'),
+                    create_element('target', dev=f'hda{self.data["id"]}', bus='sata'),
                     child_element,
                 ]
             }
