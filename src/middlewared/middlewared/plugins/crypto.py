@@ -507,6 +507,8 @@ class CryptoKeyService(Service):
             ), True
         ).add_extension(
             x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
+        ).add_extension(
+            x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), False
         ).public_key(
             key.public_key()
         )
