@@ -11,16 +11,7 @@ from middlewared.utils import run
 
 
 class DSStatus(enum.Enum):
-    """
-    Following items are used for cache entries indicating the status of the
-    Directory Service.
-    :FAULTED: Directory Service is enabled, but not HEALTHY.
-    :LEAVING: Directory Service is in process of stopping.
-    :JOINING: Directory Service is in process of starting.
-    :HEALTHY: Directory Service is enabled, and last status check has passed.
-    There is no "DISABLED" DSStatus because this is controlled by the "enable" checkbox.
-    This is a design decision to avoid conflict between the checkbox and the cache entry.
-    """
+    DISABLED = 0
     FAULTED = 1
     LEAVING = 2
     JOINING = 3
@@ -98,21 +89,26 @@ class NISService(ConfigService):
     @private
     async def get_state(self):
         """
-        Check the state of the NIS Directory Service.
-        See DSStatus for definitions of return values.
-        :DISABLED: Service is not enabled.
-        If for some reason, the cache entry indicating Directory Service state
-        does not exist, re-run a status check to generate a key, then return it.
+        `DISABLED` Directory Service is disabled.
+
+        `FAULTED` Directory Service is enabled, but not HEALTHY. Review logs and generated alert
+        messages to debug the issue causing the service to be in a FAULTED state.
+
+        `LEAVING` Directory Service is in process of stopping.
+
+        `JOINING` Directory Service is in process of starting.
+
+        `HEALTHY` Directory Service is enabled, and last status check has passed.
         """
-        nis = await self.config()
-        if not nis['enable']:
-            return 'DISABLED'
-        else:
+        try:
+            return (await self.middleware.call('cache.get', 'NIS_State'))
+        except KeyError:
             try:
-                return (await self.middleware.call('cache.get', 'NIS_State'))
-            except KeyError:
                 await self.started()
-                return (await self.middleware.call('cache.get', 'NIS_State'))
+            except Exception:
+                pass
+
+        return (await self.middleware.call('cache.get', 'NIS_State'))
 
     @private
     async def start(self):
@@ -171,6 +167,9 @@ class NISService(ConfigService):
     @private
     async def started(self):
         ret = False
+        if not (await self.config())['enable']:
+            await self.__set_state(DSStatus['DISABLED'])
+            return ret
         try:
             ret = await asyncio.wait_for(self.__ypwhich(), timeout=5.0)
         except asyncio.TimeoutError:

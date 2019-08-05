@@ -24,16 +24,7 @@ from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
 
 
 class DSStatus(enum.Enum):
-    """
-    Following items are used for cache entries indicating the status of the
-    Directory Service.
-    :FAULTED: Directory Service is enabled, but not HEALTHY.
-    :LEAVING: Directory Service is in process of stopping.
-    :JOINING: Directory Service is in process of starting.
-    :HEALTHY: Directory Service is enabled, and last status check has passed.
-    There is no "DISABLED" DSStatus because this is controlled by the "enable" checkbox.
-    This is a design decision to avoid conflict between the checkbox and the cache entry.
-    """
+    DISABLED = enum.auto()
     FAULTED = MSG_WINBIND_OFFLINE
     LEAVING = enum.auto()
     JOINING = enum.auto()
@@ -753,25 +744,26 @@ class ActiveDirectoryService(ConfigService):
     @accepts()
     async def get_state(self):
         """
-        Check the state of the AD Directory Service.
-        See DSStatus for definitions of return values.
-        :DISABLED: Service is not enabled.
-        If for some reason, the cache entry indicating Directory Service state
-        does not exist, re-run a status check to generate a key, then return it.
-        """
-        ad = await self.config()
-        if not ad['enable']:
-            return 'DISABLED'
-        else:
-            try:
-                return (await self.middleware.call('cache.get', 'AD_State'))
-            except KeyError:
-                try:
-                    await self.started()
-                except Exception:
-                    pass
+        `DISABLED` Directory Service is disabled.
 
+        `FAULTED` Directory Service is enabled, but not HEALTHY. Review logs and generated alert
+        messages to debug the issue causing the service to be in a FAULTED state.
+
+        `LEAVING` Directory Service is in process of stopping.
+
+        `JOINING` Directory Service is in process of starting.
+
+        `HEALTHY` Directory Service is enabled, and last status check has passed.
+        """
+        try:
             return (await self.middleware.call('cache.get', 'AD_State'))
+        except KeyError:
+            try:
+                await self.started()
+            except Exception:
+                pass
+
+        return (await self.middleware.call('cache.get', 'AD_State'))
 
     @private
     async def start(self):
@@ -788,7 +780,7 @@ class ActiveDirectoryService(ConfigService):
 
         state = await self.get_state()
         if state in [DSStatus['JOINING'], DSStatus['LEAVING']]:
-            raise CallError(f'Active Directory Service has status of [{state.value}]. Wait until operation completes.', errno.EBUSY)
+            raise CallError(f'Active Directory Service has status of [{state}]. Wait until operation completes.', errno.EBUSY)
 
         await self._set_state(DSStatus['JOINING'])
         if ad['verbose_logging']:
@@ -989,6 +981,10 @@ class ActiveDirectoryService(ConfigService):
         Default winbind request timeout is 60 seconds, and can be adjusted by the smb4.conf parameter
         'winbind request timeout ='
         """
+        if not (await self.config())['enable']:
+            await self._set_state(DSStatus['DISABLED'])
+            return False
+
         netlogon_ping = await run(['wbinfo', '-P'], check=False)
         if netlogon_ping.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
