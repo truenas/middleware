@@ -16,7 +16,6 @@ import threading
 from bsd.threading import set_thread_name
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
-from operator import itemgetter
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
@@ -25,16 +24,7 @@ from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
 
 
 class DSStatus(enum.Enum):
-    """
-    Following items are used for cache entries indicating the status of the
-    Directory Service.
-    :FAULTED: Directory Service is enabled, but not HEALTHY.
-    :LEAVING: Directory Service is in process of stopping.
-    :JOINING: Directory Service is in process of starting.
-    :HEALTHY: Directory Service is enabled, and last status check has passed.
-    There is no "DISABLED" DSStatus because this is controlled by the "enable" checkbox.
-    This is a design decision to avoid conflict between the checkbox and the cache entry.
-    """
+    DISABLED = enum.auto()
     FAULTED = MSG_WINBIND_OFFLINE
     LEAVING = enum.auto()
     JOINING = enum.auto()
@@ -754,25 +744,26 @@ class ActiveDirectoryService(ConfigService):
     @accepts()
     async def get_state(self):
         """
-        Check the state of the AD Directory Service.
-        See DSStatus for definitions of return values.
-        :DISABLED: Service is not enabled.
-        If for some reason, the cache entry indicating Directory Service state
-        does not exist, re-run a status check to generate a key, then return it.
-        """
-        ad = await self.config()
-        if not ad['enable']:
-            return 'DISABLED'
-        else:
-            try:
-                return (await self.middleware.call('cache.get', 'AD_State'))
-            except KeyError:
-                try:
-                    await self.started()
-                except Exception:
-                    pass
+        `DISABLED` Directory Service is disabled.
 
+        `FAULTED` Directory Service is enabled, but not HEALTHY. Review logs and generated alert
+        messages to debug the issue causing the service to be in a FAULTED state.
+
+        `LEAVING` Directory Service is in process of stopping.
+
+        `JOINING` Directory Service is in process of starting.
+
+        `HEALTHY` Directory Service is enabled, and last status check has passed.
+        """
+        try:
             return (await self.middleware.call('cache.get', 'AD_State'))
+        except KeyError:
+            try:
+                await self.started()
+            except Exception:
+                pass
+
+        return (await self.middleware.call('cache.get', 'AD_State'))
 
     @private
     async def start(self):
@@ -789,7 +780,7 @@ class ActiveDirectoryService(ConfigService):
 
         state = await self.get_state()
         if state in [DSStatus['JOINING'], DSStatus['LEAVING']]:
-            raise CallError(f'Active Directory Service has status of [{state.value}]. Wait until operation completes.', errno.EBUSY)
+            raise CallError(f'Active Directory Service has status of [{state}]. Wait until operation completes.', errno.EBUSY)
 
         await self._set_state(DSStatus['JOINING'])
         if ad['verbose_logging']:
@@ -990,6 +981,10 @@ class ActiveDirectoryService(ConfigService):
         Default winbind request timeout is 60 seconds, and can be adjusted by the smb4.conf parameter
         'winbind request timeout ='
         """
+        if not (await self.config())['enable']:
+            await self._set_state(DSStatus['DISABLED'])
+            return False
+
         netlogon_ping = await run(['wbinfo', '-P'], check=False)
         if netlogon_ping.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
@@ -1217,7 +1212,7 @@ class ActiveDirectoryService(ConfigService):
         known_domains = []
         local_users = self.middleware.call_sync('user.query')
         local_groups = self.middleware.call_sync('group.query')
-        cache_data = {'users': [], 'groups': []}
+        cache_data = {'users': {}, 'groups': {}}
         configured_domains = self.middleware.call_sync('idmap.get_configured_idmap_domains')
         user_next_index = group_next_index = 300000000
         for d in configured_domains:
@@ -1253,7 +1248,7 @@ class ActiveDirectoryService(ConfigService):
                         """
                         try:
                             user_data = pwd.getpwuid(int(cached_uid))
-                            cache_data['users'].append({
+                            cache_data['users'].update({user_data.pw_name: {
                                 'id': user_next_index,
                                 'uid': user_data.pw_uid,
                                 'username': user_data.pw_name,
@@ -1273,7 +1268,7 @@ class ActiveDirectoryService(ConfigService):
                                 'groups': [],
                                 'sshpubkey': None,
                                 'local': False
-                            })
+                            }})
                             user_next_index += 1
                             break
                         except Exception:
@@ -1297,7 +1292,7 @@ class ActiveDirectoryService(ConfigService):
                             break
                         except Exception:
                             group_data = grp.getgrgid(int(cached_gid))
-                            cache_data['groups'].append({
+                            cache_data['groups'].update({group_data.gr_name: {
                                 'id': group_next_index,
                                 'gid': group_data.gr_gid,
                                 'group': group_data.gr_name,
@@ -1305,22 +1300,18 @@ class ActiveDirectoryService(ConfigService):
                                 'sudo': False,
                                 'users': [],
                                 'local': False,
-                            })
+                            }})
                             group_next_index += 1
                             break
 
         if not cache_data.get('users'):
             return
-
         sorted_cache = {}
-        sorted_cache.update({
-            'users': sorted(cache_data['users'], key=itemgetter('username'))
-        })
-        sorted_cache.update({
-            'groups': sorted(cache_data['groups'], key=itemgetter('group'))
-        })
+        sorted_cache['users'] = dict(sorted(cache_data['users'].items()))
+        sorted_cache['groups'] = dict(sorted(cache_data['groups'].items()))
 
         self.middleware.call_sync('cache.put', 'AD_cache', sorted_cache)
+        self.middleware.call_sync('dscache.backup')
 
     @private
     async def get_cache(self):
@@ -1334,7 +1325,7 @@ class ActiveDirectoryService(ConfigService):
         if not await self.middleware.call('cache.has_key', 'AD_cache'):
             await self.middleware.call('activedirectory.fill_cache')
             self.logger.debug('cache fill is in progress.')
-            return {'users': [], 'groups': []}
+            return {'users': {}, 'groups': {}}
         return await self.middleware.call('cache.get', 'AD_cache')
 
 
