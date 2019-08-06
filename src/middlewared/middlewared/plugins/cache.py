@@ -147,9 +147,12 @@ class DSCache(Service):
     def backup(self):
         for ds in [('activedirectory', 'AD'), ('ldap', 'LDAP'), ('nis', 'NIS')]:
             if self.middleware.call_sync(f'{ds[0]}.get_state') != 'DISABLED':
-                ds_cache = self.middleware.call_sync('cache.get', f'{ds[1]}_cache')
-                with open(f'/var/db/system/.{ds[1]}_cache_backup', 'wb') as f:
-                    pickle.dump(ds_cache, f)
+                try:
+                    ds_cache = self.middleware.call_sync('cache.get', f'{ds[1]}_cache')
+                    with open(f'/var/db/system/.{ds[1]}_cache_backup', 'wb') as f:
+                        pickle.dump(ds_cache, f)
+                except KeyError:
+                    self.logger.debug('No cache exists for directory service [%s].', ds[0])
 
     async def query(self, objtype='USERS', filters=None, options=None):
         """

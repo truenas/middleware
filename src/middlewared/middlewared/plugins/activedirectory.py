@@ -16,6 +16,7 @@ import threading
 from bsd.threading import set_thread_name
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
+from middlewared.plugins.smb import SMBCmd
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
@@ -985,7 +986,7 @@ class ActiveDirectoryService(ConfigService):
             await self._set_state(DSStatus['DISABLED'])
             return False
 
-        netlogon_ping = await run(['wbinfo', '-P'], check=False)
+        netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
         if netlogon_ping.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
             raise CallError(netlogon_ping.stderr.decode().strip('\n'))
@@ -997,12 +998,12 @@ class ActiveDirectoryService(ConfigService):
         ad = await self.config()
         if ad['createcomputer']:
             netads = await run([
-                'net', '-k', '-U', ad['bindname'], '-d', '5',
+                SMBCmd.NET.value, '-k', '-U', ad['bindname'], '-d', '5',
                 'ads', 'join', f'createcomputer={ad["createcomputer"]}',
                 ad['domainname']], check=False)
         else:
             netads = await run([
-                'net', '-k', '-U', ad['bindname'], '-d', '5',
+                SMBCmd.NET.value, '-k', '-U', ad['bindname'], '-d', '5',
                 'ads', 'join', ad['domainname']], check=False)
 
         if netads.returncode != 0:
@@ -1013,7 +1014,7 @@ class ActiveDirectoryService(ConfigService):
     async def _net_ads_testjoin(self, workgroup):
         ad = await self.config()
         netads = await run([
-            'net', '-k', '-w', workgroup,
+            SMBCmd.NET.value, '-k', '-w', workgroup,
             '-d', '5', 'ads', 'testjoin', ad['domainname']],
             check=False
         )
@@ -1026,6 +1027,33 @@ class ActiveDirectoryService(ConfigService):
                 return neterr.FAULT
 
         return neterr.JOINED
+
+    @accepts()
+    async def domain_info(self):
+        """
+        Returns the following information about the currently joined domain:
+
+        `LDAP server` IP address of current LDAP server to which TrueNAS is connected.
+
+        `LDAP server name` DNS name of LDAP server to which TrueNAS is connected
+
+        `Realm` Kerberos realm
+
+        `LDAP port`
+
+        `Server time` timestamp.
+
+        `KDC server` Kerberos KDC to which TrueNAS is connected
+
+        `Server time offset` current time offset from DC.
+
+        `Last machine account password change`. timestamp
+        """
+        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'info', '--json'], check=False)
+        if netads.returncode != 0:
+            raise CallError(netads.stderr.decode())
+
+        return json.loads(netads.stdout.decode())
 
     @private
     def get_netbios_domain_name(self):
@@ -1159,7 +1187,7 @@ class ActiveDirectoryService(ConfigService):
         if ad_kinit.returncode != 0:
             raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {output[1].decode()}")
 
-        netads = await run(['/usr/local/bin/net', '-U', data['username'], '-k', 'ads', 'leave'], check=False)
+        netads = await run([SMBCmd.NET.value, '-U', data['username'], '-k', 'ads', 'leave'], check=False)
         if netads.returncode != 0:
             raise CallError(f"Failed to leave domain: [{netads.stderr.decode()}]")
 
@@ -1201,8 +1229,13 @@ class ActiveDirectoryService(ConfigService):
             """
             pwd.getpwall()
             grp.getgrall()
+        elif ad['bindname']:
+            id = subprocess.run(['/usr/bin/id', f"{smb['workgroup']}\\{ad['bindname']}"], capture_output=True)
+            if id.returncode != 0:
+                self.logger.debug('failed to id AD bind account [%s]: %s', ad['bindname'], id.stderr.decode())
+
         netlist = subprocess.run(
-            ['net', 'cache', 'list'],
+            [SMBCmd.NET.value, 'cache', 'list'],
             capture_output=True,
             check=False
         )

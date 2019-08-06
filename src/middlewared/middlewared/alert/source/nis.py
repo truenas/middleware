@@ -4,25 +4,25 @@ from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel,
 from middlewared.alert.schedule import IntervalSchedule
 
 
-class LDAPBindAlertClass(AlertClass):
+class NISBindAlertClass(AlertClass):
     category = AlertCategory.DIRECTORY_SERVICE
     level = AlertLevel.WARNING
-    title = "LDAP Bind Is Not Healthy"
-    text = "Attempt to connect to root DSE failed: %(ldaperr)s."
+    title = "NIS Bind Is Not Healthy"
+    text = "NIS bind health check failed: %(niserr)s."
 
 
-class LDAPBindAlertSource(AlertSource):
+class NISBindAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=30))
 
     async def check(self):
-        if (await self.middleware.call('ldap.get_state')) == 'DISABLED':
+        if (await self.middleware.call('nis.get_state')) == 'DISABLED':
             return
 
         try:
-            await self.middleware.call("ldap.started")
+            await self.middleware.call("nis.started")
         except Exception as e:
             return Alert(
-                LDAPBindAlertClass,
-                {'ldaperr': str(e)},
+                NISBindAlertClass,
+                {'niserr': str(e)},
                 key=None
             )
