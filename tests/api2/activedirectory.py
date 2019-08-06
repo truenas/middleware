@@ -95,7 +95,8 @@ def test_03_get_activedirectory_state():
 
 def test_04_get_activedirectory_started_before_starting_activedirectory():
     results = GET('/activedirectory/started/')
-    assert results.status_code == 422, results.text
+    assert results.status_code == 200, results.text
+    assert results.json() is False, results.text
 
 
 def test_05_creating_ad_dataset_for_smb():
@@ -343,7 +344,8 @@ def test_35_get_activedirectory_state():
 @ad_test_cfg
 def test_36_get_activedirectory_started_after_leaving_AD():
     results = GET('/activedirectory/started/')
-    assert results.status_code == 422, results.text
+    assert results.status_code == 200, results.text
+    assert results.json() is False, results.text
 
 
 @ad_test_cfg
@@ -485,7 +487,8 @@ def test_51_get_activedirectory_state():
 
 def test_52_get_activedirectory_started_after_disabling_AD():
     results = GET('/activedirectory/started/')
-    assert results.status_code == 422, results.text
+    assert results.status_code == 200, results.text
+    assert results.json() is False, results.text
 
 
 @ad_test_cfg
@@ -534,7 +537,8 @@ def test_57_get_activedirectory_state():
 @ad_test_cfg
 def test_58_get_activedirectory_started_after_living():
     results = GET('/activedirectory/started/')
-    assert results.status_code == 422, results.text
+    assert results.status_code == 200, results.text
+    assert results.json() is False, results.text
 
 
 def test_59_disable_cifs_service_at_boot():
