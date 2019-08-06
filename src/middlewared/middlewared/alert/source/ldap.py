@@ -18,6 +18,10 @@ class LDAPBindAlertSource(AlertSource):
         if (await self.middleware.call('ldap.get_state')) == 'DISABLED':
             return
 
+        smbhamode = await self.middleware.call('smb.get_smb_ha_mode')
+        if smbhamode != 'STANDALONE' and (await self.middleware.call('failover.status')) != 'MASTER':
+            return
+
         try:
             await self.middleware.call("ldap.started")
         except Exception as e:
