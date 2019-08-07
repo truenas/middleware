@@ -448,6 +448,8 @@ class LDAPService(ConfigService):
             await self.__set_state(DSStatus['DISABLED'])
             return False
 
+        ldap = await self.config()
+
         try:
             await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),
                                    timeout=ldap['timeout'])

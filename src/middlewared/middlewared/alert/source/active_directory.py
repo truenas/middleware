@@ -29,6 +29,7 @@ class ActiveDirectoryDomainOfflineAlertClass(AlertClass, SimpleOneShotAlertClass
 
 class ActiveDirectoryDomainHealthAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)
+    run_on_backup_node = False
 
     async def check(self):
         if await self.middleware.call('activedirectory.get_state') == 'DISABLED':
@@ -46,6 +47,7 @@ class ActiveDirectoryDomainHealthAlertSource(AlertSource):
 
 class ActiveDirectoryDomainBindAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
+    run_on_backup_node = False
 
     async def check(self):
         if (await self.middleware.call('activedirectory.get_state')) == 'DISABLED':
