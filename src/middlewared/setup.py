@@ -54,7 +54,7 @@ setup(
             'templates/websocket/*',
             'templates/*.*',
         ],
-        'middlewared': get_assets('assets') + get_assets('etc_files'),
+        'middlewared': get_assets('assets') + get_assets('etc_files') + get_assets('migration'),
     },
     include_package_data=True,
     license='BSD',
