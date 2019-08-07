@@ -247,7 +247,7 @@ class PluginService(CRUDService):
         return self.middleware.call_sync('plugin._do_create', data)
 
     @private
-    @job(lock=lambda args: f'plugin_create_{args[-1]["jail_name"]}')
+    @job(lock=lambda args: f'plugin_create_{args[0]["jail_name"]}')
     def _do_create(self, job, data):
         self.middleware.call_sync('jail.check_dataset_existence')
         verrors = ValidationErrors()
@@ -332,8 +332,8 @@ class PluginService(CRUDService):
     )
     @job(
         lock=lambda args: 'available_plugins_{}_{}'.format(
-            args[-1].get('branch') if args else None,
-            args[-1]['plugin_repository'] if args and args[-1].get(
+            args[0].get('branch') if args else None,
+            args[0]['plugin_repository'] if args and args[0].get(
                 'plugin_repository'
             ) else 'https://github.com/freenas/iocage-ix-plugins.git'
         )
@@ -663,7 +663,7 @@ class JailService(CRUDService):
         return await self.middleware.call('jail.create_job', options)
 
     @private
-    @job(lock=lambda args: f'jail_create:{args[-1]["uuid"]}')
+    @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
     def create_job(self, job, options):
         verrors = ValidationErrors()
         uuid = options["uuid"]
@@ -743,7 +743,7 @@ class JailService(CRUDService):
             List('props', default=[]),
         )
     )
-    @job(lock=lambda args: f'clone_jail:{args[-2]}')
+    @job(lock=lambda args: f'clone_jail:{args[0]}')
     def clone(self, job, source_jail, options):
         verrors = ValidationErrors()
         try:
@@ -903,7 +903,7 @@ class JailService(CRUDService):
             Str('branch', default=None, null=True)
         )
     )
-    @job(lock=lambda args: f"jail_fetch:{args[-1]}")
+    @job(lock=lambda args: f"jail_fetch")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
         release = options.get('release', None)
@@ -981,7 +981,7 @@ class JailService(CRUDService):
         return True
 
     @accepts(Str('jail'))
-    @job(lock=lambda args: f'jail_start:{args[-1]}')
+    @job(lock=lambda args: f'jail_start:{args[0]}')
     def start(self, job, jail):
         """Takes a jail and starts it."""
         uuid, _, iocage = self.check_jail_existence(jail)
@@ -996,7 +996,7 @@ class JailService(CRUDService):
         return True
 
     @accepts(Str("jail"), Bool('force', default=False))
-    @job(lock=lambda args: f'jail_stop:{args[-1]}')
+    @job(lock=lambda args: f'jail_stop:{args[0]}')
     def stop(self, job, jail, force):
         """Takes a jail and stops it."""
         uuid, _, iocage = self.check_jail_existence(jail)
@@ -1011,7 +1011,7 @@ class JailService(CRUDService):
             return True
 
     @accepts(Str('jail'))
-    @job(lock=lambda args: f"jail_restart:{args[-1]}")
+    @job(lock=lambda args: f"jail_restart:{args[0]}")
     def restart(self, job, jail):
         """Takes a jail and restarts it."""
         uuid, _, iocage = self.check_jail_existence(jail)
@@ -1198,7 +1198,7 @@ class JailService(CRUDService):
         Str("jail"),
         List("command", required=True),
         Dict("options", Str("host_user", default="root"), Str("jail_user")))
-    @job(lock=lambda args: f"jail_exec:{args[-1]}")
+    @job(lock=lambda args: f"jail_exec:{args[0]}")
     def exec(self, job, jail, command, options):
         """Issues a command inside a jail."""
         _, _, iocage = self.check_jail_existence(jail, skip=False)
@@ -1229,7 +1229,7 @@ class JailService(CRUDService):
         Str("jail"),
         Bool("update_pkgs", default=False)
     )
-    @job(lock=lambda args: f"jail_update:{args[-2]}")
+    @job(lock=lambda args: f"jail_update:{args[0]}")
     def update_to_latest_patch(self, job, jail, update_pkgs=False):
         """Updates specified jail to latest patch level."""
         job.set_progress(0, f'Updating {jail}')
@@ -1268,7 +1268,7 @@ class JailService(CRUDService):
             Str('compression_algorithm', default='ZIP', enum=['ZIP', 'LZMA'])
         )
     )
-    @job(lock=lambda args: f'jail_export:{args[-1].get("jail")}')
+    @job(lock=lambda args: f'jail_export:{args[0]["jail"]}')
     def export(self, job, options):
         """
         Export jail to compressed file.
@@ -1297,7 +1297,7 @@ class JailService(CRUDService):
             Str('compression_algorithm', default=None, null=True, enum=['ZIP', 'LZMA', None])
         )
     )
-    @job(lock=lambda args: f'jail_import:{args[-1].get("jail")}')
+    @job(lock=lambda args: f'jail_import:{args[0]["jail"]}')
     def import_image(self, job, options):
         """
         Import jail from compressed file.
