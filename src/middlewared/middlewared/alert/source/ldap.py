@@ -12,7 +12,7 @@ class LDAPBindAlertClass(AlertClass):
 
 
 class LDAPBindAlertSource(AlertSource):
-    schedule = IntervalSchedule(timedelta(minutes=30))
+    schedule = IntervalSchedule(timedelta(minutes=10))
     run_on_backup_node = False
 
     async def check(self):
