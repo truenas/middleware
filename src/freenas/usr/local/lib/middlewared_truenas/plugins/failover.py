@@ -89,7 +89,7 @@ class RemoteClient(object):
             else:
                 raise
         except ClientException as e:
-            raise CallError(str(e), e.errno)
+            raise CallError(str(e), e.errno or errno.EFAULT)
 
     def __exit__(self, typ, value, traceback):
         self.client.close()
