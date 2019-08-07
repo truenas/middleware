@@ -511,6 +511,12 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                     pass
                 run_call(midclt, 'service.restart', 'cifs', {'sync': False})
 
+            # iscsi should be running on standby but we make sure its started anyway
+            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "iscsitarget"')
+            ret = c.fetchone()
+            if ret and ret[0] == 1:
+                run_call(midclt, 'service.start', 'iscsitarget', {'sync': True})
+
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
             ret = c.fetchone()
             if ret and ret[0] == 1:
@@ -546,22 +552,16 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run_call(midclt, 'service.restart', 'collectd', {'sync': False})
             run_call(midclt, 'service.restart', 'syslogd', {'sync': False})
 
-            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "smartd"')
-            ret = c.fetchone()
-            if ret and ret[0] == 1:
-                run_call(midclt, 'service.restart', 'smartd', {'sync': False})
-
-            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "netdata"')
-            ret = c.fetchone()
-            if ret and ret[0] == 1:
-                run_call(midclt, 'service.restart', 'netdata', {'sync': False})
+            for i in (
+                'smartd', 'netdata', 'asigra', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp',
+                'webdav',
+            ):
+                c.execute(f'SELECT srv_enable FROM services_services WHERE srv_service = "{i}"')
+                ret = c.fetchone()
+                if ret and ret[0] == 1:
+                    run_call(midclt, 'service.restart', i, {'sync': False})
 
             midclt.close()
-
-            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "asigra"')
-            ret = c.fetchone()
-            if ret and ret[0] == 1:
-                run_call(midclt, 'service.restart', 'asigra', {'sync': False})
 
             run('/usr/local/bin/midclt call alert.block_failover_alerts')
             run('/usr/local/bin/midclt call alert.initialize false')
