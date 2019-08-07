@@ -13,13 +13,10 @@ class NISBindAlertClass(AlertClass):
 
 class NISBindAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=30))
+    run_on_backup_node = False
 
     async def check(self):
         if (await self.middleware.call('nis.get_state')) == 'DISABLED':
-            return
-
-        smbhamode = await self.middleware.call('smb.get_smb_ha_mode')
-        if smbhamode != 'STANDALONE' and (await self.middleware.call('failover.status')) != 'MASTER':
             return
 
         try:

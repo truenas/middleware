@@ -29,13 +29,10 @@ class ActiveDirectoryDomainOfflineAlertClass(AlertClass, SimpleOneShotAlertClass
 
 class ActiveDirectoryDomainHealthAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)
+    run_on_backup_node = False
 
     async def check(self):
         if await self.middleware.call('activedirectory.get_state') == 'DISABLED':
-            return
-
-        smbhamode = await self.middleware.call('smb.get_smb_ha_mode')
-        if smbhamode != 'STANDALONE' and (await self.middleware.call('failover.status')) != 'MASTER':
             return
 
         try:
@@ -50,13 +47,10 @@ class ActiveDirectoryDomainHealthAlertSource(AlertSource):
 
 class ActiveDirectoryDomainBindAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
+    run_on_backup_node = False
 
     async def check(self):
         if (await self.middleware.call('activedirectory.get_state')) == 'DISABLED':
-            return
-
-        smbhamode = await self.middleware.call('smb.get_smb_ha_mode')
-        if smbhamode != 'STANDALONE' and (await self.middleware.call('failover.status')) != 'MASTER':
             return
 
         try:
