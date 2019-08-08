@@ -109,7 +109,7 @@ async def test__annotate_disk_for_smart():
             ensure_smart_enabled.return_value.set_result(True)
             assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, "/dev/ada1") == (
                 "/dev/ada1",
-                {"smartctl_args": ["/dev/ada1", "-d", "sat", "-d", "removable"]},
+                {"smartctl_args": ["/dev/ada1", "-d", "sat", "-a", "-d", "removable"]},
             )
 
 
