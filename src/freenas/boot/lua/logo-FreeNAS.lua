@@ -46,6 +46,7 @@ local freenas_color = {
 drawer.addLogo("FreeNAS", {
 	requires_color = false,
 	graphic = freenas_color,
+	shift = {x = 0, y = 6},
 })
 
 return true
