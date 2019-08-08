@@ -1583,7 +1583,7 @@ def update_check(request):
             else:
                 handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
-                raise MiddlewareError(handler.error)
+                return render(request, 'system/update_error.html', {'error': handler.error})
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
