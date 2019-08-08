@@ -1119,6 +1119,7 @@ class VMService(CRUDService):
         try:
             for item in vm['devices']:
                 item.pop('id', None)
+                item.pop('vm', None)
                 if item['dtype'] == 'NIC':
                     if 'mac' in item['attributes']:
                         del item['attributes']['mac']
