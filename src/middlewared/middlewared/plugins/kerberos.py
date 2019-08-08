@@ -857,7 +857,7 @@ class KerberosKeytabService(CRUDService):
             return
 
         await self.store_samba_keytab()
-        self.logger.debug('Updating stored AD machine account kerberos keytab')
+        self.logger.trace('Updating stored AD machine account kerberos keytab')
         await self.middleware.call(
             'cache.put',
             'KEYTAB_MTIME',

@@ -282,7 +282,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
                 next_ = p.token_next(into[0])
 
-                if next_[1].value in NO_SYNC_MAP:
+                if next_[1].get_name() in NO_SYNC_MAP:
                     continue
 
             elif p.tokens[0].normalized == 'DELETE':
@@ -293,12 +293,12 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
                 next_ = p.token_next(from_[0])
 
-                if next_[1].value in NO_SYNC_MAP:
+                if next_[1].get_name() in NO_SYNC_MAP:
                     continue
 
             elif p.tokens[0].normalized == 'UPDATE':
 
-                name = p.token_next(0)[1].value
+                name = p.token_next(0)[1].get_name()
                 no_sync = NO_SYNC_MAP.get(name)
                 # Skip if table is in set to not to sync and has no attrs
                 if no_sync is None and name in NO_SYNC_MAP:
@@ -334,7 +334,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
                 for l in lookup:
 
-                    if l.value not in no_sync['fields']:
+                    if l.get_name() not in no_sync['fields']:
                         continue
 
                     # Remove placeholder from the params

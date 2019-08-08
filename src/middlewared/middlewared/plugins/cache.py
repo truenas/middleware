@@ -1,9 +1,10 @@
-from middlewared.schema import Any, Str, accepts, Int, Dict
-from middlewared.service import Service, private, filterable
+from middlewared.schema import Any, Str, accepts, Int
+from middlewared.service import Service, private
 from middlewared.utils import filter_list
 
 from collections import namedtuple
 import time
+import pickle
 import pwd
 import grp
 
@@ -92,7 +93,6 @@ class DSCache(Service):
     class Config:
         private = True
 
-    @private
     def get_uncached_user(self, username=None, uid=None):
         """
         Returns dictionary containing pwd_struct data for
@@ -115,7 +115,6 @@ class DSCache(Service):
             'pw_shell': u.pw_shell
         }
 
-    @private
     def get_uncached_group(self, groupname=None, gid=None):
         """
         Returns dictionary containing grp_struct data for
@@ -135,7 +134,26 @@ class DSCache(Service):
             'gr_mem': g.gr_mem
         }
 
-    @private
+    def initialize(self):
+        for ds in [('activedirectory', 'AD'), ('ldap', 'LDAP'), ('nis', 'NIS')]:
+            if self.middleware.call_sync(f'{ds[0]}.get_state') != 'DISABLED':
+                try:
+                    with open(f'/var/db/system/.{ds[1]}_cache_backup', 'rb') as f:
+                        pickled_cache = pickle.load(f)
+                    self.middleware.call_sync('cache.put', f'{ds[1]}_cache', pickled_cache)
+                except FileNotFoundError:
+                    self.logger.debug('User cache file for [%s] is not present.', ds[0])
+
+    def backup(self):
+        for ds in [('activedirectory', 'AD'), ('ldap', 'LDAP'), ('nis', 'NIS')]:
+            if self.middleware.call_sync(f'{ds[0]}.get_state') != 'DISABLED':
+                try:
+                    ds_cache = self.middleware.call_sync('cache.get', f'{ds[1]}_cache')
+                    with open(f'/var/db/system/.{ds[1]}_cache_backup', 'wb') as f:
+                        pickle.dump(ds_cache, f)
+                except KeyError:
+                    self.logger.debug('No cache exists for directory service [%s].', ds[0])
+
     async def query(self, objtype='USERS', filters=None, options=None):
         """
         Query User / Group cache with `query-filters` and `query-options`.
@@ -159,31 +177,38 @@ class DSCache(Service):
         """
         ds_enabled = {}
         res = []
+
+        is_name_check = True if len(filters) == 1 and filters[0][0] in ['username', 'groupname'] else False
+
         for ds in ['activedirectory', 'ldap', 'nis']:
             ds_enabled.update({
                 str(ds): True if await self.middleware.call(f'{ds}.get_state') != 'DISABLED' else False
             })
 
-        if objtype == 'USERS':
-            res.extend(await self.middleware.call('user.query', filters, options))
-
-        elif objtype == 'GROUPS':
-            res.extend(await self.middleware.call('group.query', filters, options))
+        res.extend((await self.middleware.call(f'{objtype.lower()[:-1]}.query', filters, options)))
 
         for dstype, enabled in ds_enabled.items():
             if enabled:
-                res.extend(filter_list(
-                    (await self.middleware.call(f'{dstype}.get_cache'))[objtype.lower()],
-                    filters,
-                    options
-                ))
+                """
+                Avoid iteration here if possible.  Use keys if single filter "=" and x in x=y is a
+                username or groupname.
+                """
+                if is_name_check and filters[0][1] == '=':
+                    cache = (await self.middleware.call(f'{dstype}.get_cache'))[objtype.lower()]
+                    name = filters[0][2]
+                    return [cache.get(name)] if cache.get(name) else []
+
+                else:
+                    res.extend(filter_list(
+                        list((await self.middleware.call(f'{dstype}.get_cache'))[objtype.lower()].values()),
+                        filters,
+                        options
+                    ))
 
         return res
 
-    @private
     async def refresh(self):
         """
-        Force update of Directory Service Caches
         This is called from a cronjob every 24 hours and when a user clicks on the
         UI button to 'rebuild directory service cache'.
         """
@@ -193,3 +218,12 @@ class DSCache(Service):
                 await self.middleware.call(f'{ds}.fill_cache', True)
             elif ds_state != 'DISABLED':
                 self.logger.debug('Unable to refresh [%s] cache, state is: %s' % (ds, ds_state))
+        await self.middleware.call('dscache.backup')
+
+
+async def setup(middleware):
+    """
+    During initial boot, we need to wait for the system dataset to be imported.
+    """
+    if await middleware.call('system.ready'):
+        await middleware.call('dscache.initialize')

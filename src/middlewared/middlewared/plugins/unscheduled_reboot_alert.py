@@ -24,6 +24,8 @@ class UnscheduledRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
     title = "Unscheduled System Reboot"
     text = "%s"
 
+    deleted_automatically = False
+
 
 class UnscheduledRebootAlertService(Service):
     async def terminate(self):

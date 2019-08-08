@@ -371,11 +371,15 @@ class SMBService(SystemServiceService):
                 raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
             for p in (pdb.stdout.decode()).splitlines():
                 entry = p.split(':')
-                pdbentries.append({
-                    'username': entry[0],
-                    'full_name': entry[2],
-                    'uid': entry[1],
-                })
+                try:
+                    pdbentries.append({
+                        'username': entry[0],
+                        'full_name': entry[2],
+                        'uid': entry[1],
+                    })
+                except Exception as e:
+                    self.logger.debug('Failed to parse passdb entry [%s]: %s', p, e)
+
             return pdbentries
 
         pdb = await run([SMBCmd.PDBEDIT.value, '-Lv', '-d', '0'], check=False)
@@ -762,7 +766,7 @@ class SharingSMBService(CRUDService):
         """
         share = await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
-        await self.middleware.call('smb.sharesec._delete', share['name'])
+        await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
         await self._service_change('cifs', 'reload')
         return result
 
@@ -1096,7 +1100,7 @@ class ShareSec(CRUDService):
         `ae_type` can be ALLOWED or DENIED.
         """
         ae_list = []
-        data['share_name'] = data['share_name'].upper()
+        data['share_name']
         for entry in data['share_acl']:
             ae_list.append(await self._ae_to_string(entry))
 

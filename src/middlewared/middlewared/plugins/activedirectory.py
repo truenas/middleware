@@ -3,37 +3,33 @@ import enum
 import errno
 import grp
 import ipaddr
+import json
 import ldap
 import ldap.sasl
 import ntplib
+import os
 import pwd
 import socket
 import subprocess
+import threading
 
+from bsd.threading import set_thread_name
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
-from operator import itemgetter
+from middlewared.plugins.smb import SMBCmd
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
+from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run, Popen
+from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
 
 
 class DSStatus(enum.Enum):
-    """
-    Following items are used for cache entries indicating the status of the
-    Directory Service.
-    :FAULTED: Directory Service is enabled, but not HEALTHY.
-    :LEAVING: Directory Service is in process of stopping.
-    :JOINING: Directory Service is in process of starting.
-    :HEALTHY: Directory Service is enabled, and last status check has passed.
-    There is no "DISABLED" DSStatus because this is controlled by the "enable" checkbox.
-    This is a design decision to avoid conflict between the checkbox and the cache entry.
-    """
-    FAULTED = 1
-    LEAVING = 2
-    JOINING = 3
-    HEALTHY = 4
+    DISABLED = enum.auto()
+    FAULTED = MSG_WINBIND_OFFLINE
+    LEAVING = enum.auto()
+    JOINING = enum.auto()
+    HEALTHY = MSG_WINBIND_ONLINE
 
 
 class neterr(enum.Enum):
@@ -601,7 +597,7 @@ class ActiveDirectoryService(ConfigService):
         Bool('allow_trusted_doms'),
         Bool('allow_dns_updates'),
         Bool('disable_freenas_cache'),
-        Str('site'),
+        Str('site', null=True),
         Int('kerberos_realm', null=True),
         Str('kerberos_principal', null=True),
         Int('timeout'),
@@ -749,25 +745,26 @@ class ActiveDirectoryService(ConfigService):
     @accepts()
     async def get_state(self):
         """
-        Check the state of the AD Directory Service.
-        See DSStatus for definitions of return values.
-        :DISABLED: Service is not enabled.
-        If for some reason, the cache entry indicating Directory Service state
-        does not exist, re-run a status check to generate a key, then return it.
-        """
-        ad = await self.config()
-        if not ad['enable']:
-            return 'DISABLED'
-        else:
-            try:
-                return (await self.middleware.call('cache.get', 'AD_State'))
-            except KeyError:
-                try:
-                    await self.started()
-                except Exception:
-                    pass
+        `DISABLED` Directory Service is disabled.
 
+        `FAULTED` Directory Service is enabled, but not HEALTHY. Review logs and generated alert
+        messages to debug the issue causing the service to be in a FAULTED state.
+
+        `LEAVING` Directory Service is in process of stopping.
+
+        `JOINING` Directory Service is in process of starting.
+
+        `HEALTHY` Directory Service is enabled, and last status check has passed.
+        """
+        try:
             return (await self.middleware.call('cache.get', 'AD_State'))
+        except KeyError:
+            try:
+                await self.started()
+            except Exception:
+                pass
+
+        return (await self.middleware.call('cache.get', 'AD_State'))
 
     @private
     async def start(self):
@@ -784,7 +781,7 @@ class ActiveDirectoryService(ConfigService):
 
         state = await self.get_state()
         if state in [DSStatus['JOINING'], DSStatus['LEAVING']]:
-            raise CallError(f'Active Directory Service has status of [{state.value}]. Wait until operation completes.', errno.EBUSY)
+            raise CallError(f'Active Directory Service has status of [{state}]. Wait until operation completes.', errno.EBUSY)
 
         await self._set_state(DSStatus['JOINING'])
         if ad['verbose_logging']:
@@ -861,14 +858,13 @@ class ActiveDirectoryService(ConfigService):
             await self.middleware.call('idmap.get_or_create_idmap_by_domain', 'DS_TYPE_ACTIVEDIRECTORY')
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.middleware.call('activedirectory.set_ntp_servers')
-            if ad['allow_trusted_doms']:
-                await self.middleware.call('idmap.autodiscover_trusted_domains')
 
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
             await self._set_state(DSStatus['HEALTHY'])
+            await self.middleware.call('admonitor.start')
             await self.middleware.call('activedirectory.get_cache')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
@@ -881,6 +877,7 @@ class ActiveDirectoryService(ConfigService):
         ad = await self.config()
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': False})
         await self._set_state(DSStatus['LEAVING'])
+        await self.middleware.call('admonitor.stop')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('kerberos.stop')
         await self.middleware.call('etc.generate', 'smb')
@@ -985,7 +982,11 @@ class ActiveDirectoryService(ConfigService):
         Default winbind request timeout is 60 seconds, and can be adjusted by the smb4.conf parameter
         'winbind request timeout ='
         """
-        netlogon_ping = await run(['wbinfo', '-P'], check=False)
+        if not (await self.config())['enable']:
+            await self._set_state(DSStatus['DISABLED'])
+            return False
+
+        netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
         if netlogon_ping.returncode != 0:
             await self._set_state(DSStatus['FAULTED'])
             raise CallError(netlogon_ping.stderr.decode().strip('\n'))
@@ -997,12 +998,12 @@ class ActiveDirectoryService(ConfigService):
         ad = await self.config()
         if ad['createcomputer']:
             netads = await run([
-                'net', '-k', '-U', ad['bindname'], '-d', '5',
+                SMBCmd.NET.value, '-k', '-U', ad['bindname'], '-d', '5',
                 'ads', 'join', f'createcomputer={ad["createcomputer"]}',
                 ad['domainname']], check=False)
         else:
             netads = await run([
-                'net', '-k', '-U', ad['bindname'], '-d', '5',
+                SMBCmd.NET.value, '-k', '-U', ad['bindname'], '-d', '5',
                 'ads', 'join', ad['domainname']], check=False)
 
         if netads.returncode != 0:
@@ -1013,7 +1014,7 @@ class ActiveDirectoryService(ConfigService):
     async def _net_ads_testjoin(self, workgroup):
         ad = await self.config()
         netads = await run([
-            'net', '-k', '-w', workgroup,
+            SMBCmd.NET.value, '-k', '-w', workgroup,
             '-d', '5', 'ads', 'testjoin', ad['domainname']],
             check=False
         )
@@ -1026,6 +1027,33 @@ class ActiveDirectoryService(ConfigService):
                 return neterr.FAULT
 
         return neterr.JOINED
+
+    @accepts()
+    async def domain_info(self):
+        """
+        Returns the following information about the currently joined domain:
+
+        `LDAP server` IP address of current LDAP server to which TrueNAS is connected.
+
+        `LDAP server name` DNS name of LDAP server to which TrueNAS is connected
+
+        `Realm` Kerberos realm
+
+        `LDAP port`
+
+        `Server time` timestamp.
+
+        `KDC server` Kerberos KDC to which TrueNAS is connected
+
+        `Server time offset` current time offset from DC.
+
+        `Last machine account password change`. timestamp
+        """
+        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'info', '--json'], check=False)
+        if netads.returncode != 0:
+            raise CallError(netads.stderr.decode())
+
+        return json.loads(netads.stdout.decode())
 
     @private
     def get_netbios_domain_name(self):
@@ -1159,7 +1187,7 @@ class ActiveDirectoryService(ConfigService):
         if ad_kinit.returncode != 0:
             raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {output[1].decode()}")
 
-        netads = await run(['/usr/local/bin/net', '-U', data['username'], '-k', 'ads', 'leave'], check=False)
+        netads = await run([SMBCmd.NET.value, '-U', data['username'], '-k', 'ads', 'leave'], check=False)
         if netads.returncode != 0:
             raise CallError(f"Failed to leave domain: [{netads.stderr.decode()}]")
 
@@ -1201,8 +1229,13 @@ class ActiveDirectoryService(ConfigService):
             """
             pwd.getpwall()
             grp.getgrall()
+        elif ad['bindname']:
+            id = subprocess.run(['/usr/bin/id', f"{smb['workgroup']}\\{ad['bindname']}"], capture_output=True)
+            if id.returncode != 0:
+                self.logger.debug('failed to id AD bind account [%s]: %s', ad['bindname'], id.stderr.decode())
+
         netlist = subprocess.run(
-            ['net', 'cache', 'list'],
+            [SMBCmd.NET.value, 'cache', 'list'],
             capture_output=True,
             check=False
         )
@@ -1212,7 +1245,7 @@ class ActiveDirectoryService(ConfigService):
         known_domains = []
         local_users = self.middleware.call_sync('user.query')
         local_groups = self.middleware.call_sync('group.query')
-        cache_data = {'users': [], 'groups': []}
+        cache_data = {'users': {}, 'groups': {}}
         configured_domains = self.middleware.call_sync('idmap.get_configured_idmap_domains')
         user_next_index = group_next_index = 300000000
         for d in configured_domains:
@@ -1248,7 +1281,7 @@ class ActiveDirectoryService(ConfigService):
                         """
                         try:
                             user_data = pwd.getpwuid(int(cached_uid))
-                            cache_data['users'].append({
+                            cache_data['users'].update({user_data.pw_name: {
                                 'id': user_next_index,
                                 'uid': user_data.pw_uid,
                                 'username': user_data.pw_name,
@@ -1268,7 +1301,7 @@ class ActiveDirectoryService(ConfigService):
                                 'groups': [],
                                 'sshpubkey': None,
                                 'local': False
-                            })
+                            }})
                             user_next_index += 1
                             break
                         except Exception:
@@ -1292,7 +1325,7 @@ class ActiveDirectoryService(ConfigService):
                             break
                         except Exception:
                             group_data = grp.getgrgid(int(cached_gid))
-                            cache_data['groups'].append({
+                            cache_data['groups'].update({group_data.gr_name: {
                                 'id': group_next_index,
                                 'gid': group_data.gr_gid,
                                 'group': group_data.gr_name,
@@ -1300,22 +1333,18 @@ class ActiveDirectoryService(ConfigService):
                                 'sudo': False,
                                 'users': [],
                                 'local': False,
-                            })
+                            }})
                             group_next_index += 1
                             break
 
         if not cache_data.get('users'):
             return
-
         sorted_cache = {}
-        sorted_cache.update({
-            'users': sorted(cache_data['users'], key=itemgetter('username'))
-        })
-        sorted_cache.update({
-            'groups': sorted(cache_data['groups'], key=itemgetter('group'))
-        })
+        sorted_cache['users'] = dict(sorted(cache_data['users'].items()))
+        sorted_cache['groups'] = dict(sorted(cache_data['groups'].items()))
 
         self.middleware.call_sync('cache.put', 'AD_cache', sorted_cache)
+        self.middleware.call_sync('dscache.backup')
 
     @private
     async def get_cache(self):
@@ -1329,5 +1358,140 @@ class ActiveDirectoryService(ConfigService):
         if not await self.middleware.call('cache.has_key', 'AD_cache'):
             await self.middleware.call('activedirectory.fill_cache')
             self.logger.debug('cache fill is in progress.')
-            return {'users': [], 'groups': []}
+            return {'users': {}, 'groups': {}}
         return await self.middleware.call('cache.get', 'AD_cache')
+
+
+class WBStatusThread(threading.Thread):
+    def __init__(self, **kwargs):
+        super(WBStatusThread, self).__init__()
+        self.setDaemon(True)
+        self.middleware = kwargs.get('middleware')
+        self.logger = self.middleware.logger
+        self.finished = threading.Event()
+        self.state = MSG_WINBIND_ONLINE
+
+    def parse_msg(self, data):
+        if data == str(DSStatus.LEAVING.value):
+            return
+
+        m = json.loads(data)
+        new_state = self.state
+
+        if not self.middleware.call_sync('activedirectory.config')['enable']:
+            self.logger.debug('Ignoring winbind message for disabled AD service: [%s]', m)
+            return
+
+        try:
+            new_state = DSStatus(m['winbind_message']).value
+        except Exception as e:
+            self.logger.debug('Received invalid winbind status message [%s]: %s', m, e)
+            return
+
+        if m['domain_name_netbios'] != self.middleware.call_sync('smb.config')['workgroup']:
+            self.logger.debug(
+                'Domain [%s] changed state to %s',
+                m['domain_name_netbios'],
+                DSStatus(m['winbind_message']).name
+            )
+            return
+
+        if self.state != new_state:
+            self.logger.debug(
+                'State of domain [%s] transistioned to [%s]',
+                m['forest_name'], DSStatus(m['winbind_message'])
+            )
+            self.middleware.call_sync('activedirectory._set_state', DSStatus(m['winbind_message']))
+            if new_state == DSStatus.FAULTED.value:
+                self.middleware.call_sync(
+                    "alert.oneshot_create",
+                    "ActiveDirectoryDomainOffline",
+                    {"domain": m["domain_name_netbios"]}
+                )
+            else:
+                self.middleware.call_sync(
+                    "alert.oneshot_delete",
+                    "ActiveDirectoryDomainOffline",
+                    {"domain": m["domain_name_netbios"]}
+                )
+
+        self.state = new_state
+
+    def read_messages(self):
+        while not self.finished.is_set():
+            with open('/var/run/samba4/.wb_fifo') as f:
+                data = f.read()
+                self.parse_msg(data)
+
+        self.logger.debug('exiting winbind messaging thread')
+
+    def run(self):
+        set_thread_name('ad_monitor_thread')
+        try:
+            self.read_messages()
+        except Exception as e:
+            self.logger.debug('Failed to run monitor thread %s', e, exc_info=True)
+
+    def setup(self):
+        if not os.path.exists('/var/run/samba4/.wb_fifo'):
+            os.mkfifo('/var/run/samba4/.wb_fifo')
+
+    def cancel(self):
+        """
+        Write to named pipe to unblock open() in thread and exit cleanly.
+        """
+        self.finished.set()
+        with open('/var/run/samba4/.wb_fifo', 'w') as f:
+            f.write(str(DSStatus.LEAVING.value))
+
+
+class ADMonitorService(Service):
+    class Config:
+        private = True
+
+    def __init__(self, *args, **kwargs):
+        super(ADMonitorService, self).__init__(*args, **kwargs)
+        self.thread = None
+        self.initialized = False
+        self.lock = threading.Lock()
+
+    def start(self):
+        if not self.middleware.call_sync('activedirectory.config')['enable']:
+            self.logger.trace('Active directory is disabled. Exiting AD monitoring.')
+            return
+
+        with self.lock:
+            if self.initialized:
+                return
+
+            thread = WBStatusThread(
+                middleware=self.middleware,
+            )
+            thread.setup()
+            self.thread = thread
+            thread.start()
+            self.initialized = True
+
+    def stop(self):
+        thread = self.thread
+        if thread is None:
+            return
+
+        thread.cancel()
+        self.thread = None
+
+        with self.lock:
+            self.initialized = False
+
+    def restart(self):
+        self.stop()
+        self.start()
+
+
+async def setup(middleware):
+    """
+    During initial boot let smb_configure script start monitoring once samba's
+    rundir is created.
+    """
+    if await middleware.call('system.ready'):
+        await middleware.call('admonitor.start')

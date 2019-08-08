@@ -123,6 +123,7 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
+            Bool('legacy_ui'),
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
@@ -157,6 +158,8 @@ class SystemAdvancedService(ConfigService):
         hardware.
 
         When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
+
+        `legacy_ui` is disabled by default. Enabling it allows end users to use the legacy UI.
         """
         config_data = await self.config()
         original_data = config_data.copy()
@@ -230,6 +233,9 @@ class SystemAdvancedService(ConfigService):
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 
+            if original_data['legacy_ui'] != config_data['legacy_ui']:
+                await self.middleware.call('service.reload', 'http')
+
         return await self.config()
 
     @private
@@ -268,6 +274,14 @@ class SystemService(Service):
         Returns name of the product we are using (FreeNAS or something else).
         """
         return "FreeNAS" if await self.middleware.call("system.is_freenas") else "TrueNAS"
+
+    @no_auth_required
+    @accepts()
+    async def legacy_ui_enabled(self):
+        """
+        Returns a boolean value indicating if the legacy UI can be used by end users.
+        """
+        return (await self.middleware.call('system.advanced.config'))['legacy_ui']
 
     @accepts()
     def version(self):
@@ -501,9 +515,9 @@ class SystemService(Service):
 
         await Popen(['/sbin/poweroff'])
 
-    @accepts()
-    @job(lock='systemdebug')
-    def debug(self, job):
+    @private
+    @job(lock='system.debug_generate')
+    def debug_generate(self, job):
         """
         Generate system debug file.
 
@@ -545,8 +559,8 @@ class SystemService(Service):
         return dump
 
     @accepts()
-    @job(lock='systemdebugdownload', pipes=['output'])
-    def debug_download(self, job):
+    @job(lock='system.debug', pipes=['output'])
+    def debug(self, job):
         """
         Job to stream debug file.
 
@@ -554,14 +568,18 @@ class SystemService(Service):
         downloaded via HTTP.
         """
         job.set_progress(0, 'Generating debug file')
-        debug_job = self.middleware.call_sync('system.debug')
+        debug_job = self.middleware.call_sync(
+            'system.debug_generate',
+            job_on_progress_cb=lambda encoded: job.set_progress(int(encoded['progress']['percent'] * 0.9),
+                                                                encoded['progress']['description'])
+        )
 
         standby_debug = None
         is_freenas = self.middleware.call_sync('system.is_freenas')
         if not is_freenas and self.middleware.call_sync('failover.licensed'):
             try:
                 standby_debug = self.middleware.call_sync(
-                    'failover.call_remote', 'system.debug', [], {'job': True}
+                    'failover.call_remote', 'system.debug_generate', [], {'job': True}
                 )
             except Exception:
                 self.logger.warn('Failed to get debug from standby node', exc_info=True)
@@ -658,6 +676,8 @@ class SystemGeneralService(ConfigService):
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
             data['usage_collection'] = await self.middleware.call("system.is_freenas")
+
+        data.pop('pwenc_check')
 
         return data
 

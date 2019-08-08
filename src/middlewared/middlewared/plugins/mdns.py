@@ -232,9 +232,16 @@ class mDNSServiceThread(threading.Thread):
                     dkno += 1
 
                 if smb:
-                    iindex.append(self._get_interfaceindex('SMB'))
+                    smb_iindex = self._get_interfaceindex('SMB')
+                    if smb_iindex != [kDNSServiceInterfaceIndexAny]:
+                        iindex.extend(smb_iindex)
                 if afp:
-                    iindex.append(self._get_interfaceindex('AFP'))
+                    afp_iindex = self._get_interfaceindex('AFP')
+                    if afp_iindex != [kDNSServiceInterfaceIndexAny]:
+                        iindex.extend(afp_iindex)
+
+                if not iindex:
+                    iindex = [kDNSServiceInterfaceIndexAny]
 
             return (txtrecord, iindex)
 
@@ -269,7 +276,7 @@ class mDNSServiceThread(threading.Thread):
         if service is None:
             service = self.service
         if service in ['AFP', 'NFS', 'SMB']:
-            bind_ip = self.middleware.call_sync(f'{self.service.lower()}.config')['bindip']
+            bind_ip = self.middleware.call_sync(f'{service.lower()}.config')['bindip']
 
         if service in ['HTTP', 'HTTPS']:
             ui_address = self.middleware.call_sync('system.general.config')['ui_address']

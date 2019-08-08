@@ -139,6 +139,16 @@ class RRDBase(object, metaclass=RRDMeta):
     def encode(self, identifier):
         return identifier
 
+    def has_data(self):
+        if self.get_identifiers() is not None or not self.rrd_types:
+            return True
+        for _type, dsname, transform, in self.rrd_types:
+            direc = self.plugin
+            path = os.path.join(self._base_path, direc, f'{_type}.rrd')
+            if os.path.exists(path):
+                return True
+        return False
+
     def get_defs(self, identifier):
 
         rrd_types = self.get_rrd_types(identifier)
@@ -887,7 +897,9 @@ class ReportingService(ConfigService):
 
     @filterable
     def graphs(self, filters, options):
-        return filter_list([i.__getstate__() for i in self.__rrds.values()], filters, options)
+        return filter_list([
+            i.__getstate__() for i in self.__rrds.values() if i.has_data()
+        ], filters, options)
 
     def __rquery_to_start_end(self, query):
         unit = query.get('unit')

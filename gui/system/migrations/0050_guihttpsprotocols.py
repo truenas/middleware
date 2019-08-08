@@ -9,7 +9,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0048_graphite_separateinstances'),
+        ('system', '0049_graphite_separateinstances'),
     ]
 
     operations = [

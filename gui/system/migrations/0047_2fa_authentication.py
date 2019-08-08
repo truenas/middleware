@@ -6,7 +6,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0045_fromname'),
+        ('system', '0046_legacy_ui'),
     ]
 
     operations = [

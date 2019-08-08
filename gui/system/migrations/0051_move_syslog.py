@@ -29,7 +29,7 @@ def move_syslog(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0049_guihttpsprotocols'),
+        ('system', '0050_guihttpsprotocols'),
     ]
 
     operations = [

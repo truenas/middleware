@@ -245,6 +245,7 @@ class SystemDatasetService(ConfigService):
 
             await self.__nfsv4link(config)
             await self.middleware.call('etc.generate', 'smb_configure')
+            await self.middleware.call('dscache.initialize')
 
         return config
 

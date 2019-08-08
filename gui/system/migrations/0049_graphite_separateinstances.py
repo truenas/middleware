@@ -10,7 +10,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0047_revoked_field'),
+        ('system', '0048_revoked_field'),
     ]
 
     operations = [

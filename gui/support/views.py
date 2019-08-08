@@ -112,7 +112,7 @@ def license_update(request):
         if form.is_valid():
             with client as c:
                 try:
-                    c.call('system.license_update', form.cleaned_data.get('license').encode('ascii'))
+                    c.call('system.license_update', form.cleaned_data.get('license'))
                 except Exception as e:
                     form._errors['__all__'] = form.error_class([str(e)])
                     return JsonResp(request, form=form)

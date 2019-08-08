@@ -301,6 +301,7 @@ class DiskService(CRUDService):
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if cp.stderr or not os.path.exists(f'/dev/{dev}.eli'):
                 raise CallError(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
+            self.__geli_notify_passphrase(passphrase)
         else:
             self.logger.debug(f'{dev} already attached')
 
@@ -358,10 +359,11 @@ class DiskService(CRUDService):
                     continue
                 try:
                     self.geli_attach_single(
-                        name, pool['encryptkey_path'], tf.name, skip_existing=True,
+                        name, pool['encryptkey_path'], tf.name if passphrase else None, skip_existing=True,
                     )
                 except Exception as e:
-                    if str(e).find('Wrong key') != -1:
+                    # "Missing -p flag" happens when using passphrase on a pool without passphrase
+                    if any(s in str(e) for s in ('Wrong key', 'Missing -p flag')):
                         return False
         return True
 
@@ -376,6 +378,8 @@ class DiskService(CRUDService):
         ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.stderr:
             raise CallError(f'Unable to set passphrase on {dev}: {cp.stderr.decode()}')
+
+        self.__geli_notify_passphrase(passphrase)
 
     @private
     def geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
@@ -556,6 +560,13 @@ class DiskService(CRUDService):
                 except Exception as e:
                     self.logger.warn('Failed to clear %s: %s', dev, e)
         return failed
+
+    def __geli_notify_passphrase(self, passphrase):
+        if passphrase:
+            with open(passphrase) as f:
+                self.middleware.call_hook_sync('disk.post_geli_passphrase', f.read())
+        else:
+            self.middleware.call_hook_sync('disk.post_geli_passphrase', None)
 
     @private
     def encrypt(self, devname, keypath, passphrase=None):

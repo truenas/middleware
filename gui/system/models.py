@@ -201,6 +201,11 @@ class NTPServer(Model):
 
 
 class Advanced(Model):
+    adv_legacy_ui = models.BooleanField(
+        verbose_name=_('Enable legacy UI'),
+        default=False,
+        help_text=_('Enable or disable the legacy UI.')
+    )
     adv_consolemenu = models.BooleanField(
         verbose_name=_("Show Text Console without Password Prompt"),
         default=False,

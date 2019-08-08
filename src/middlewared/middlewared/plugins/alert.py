@@ -118,7 +118,7 @@ class AlertService(Service):
         self.blocked_failover_alerts_until = 0
 
     @private
-    async def initialize(self):
+    async def initialize(self, load=True):
         is_freenas = await self.middleware.call("system.is_freenas")
 
         self.node = "A"
@@ -148,23 +148,24 @@ class AlertService(Service):
                     ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
         self.alerts = []
-        for alert in await self.middleware.call("datastore.query", "system.alert"):
-            del alert["id"]
+        if load:
+            for alert in await self.middleware.call("datastore.query", "system.alert"):
+                del alert["id"]
 
-            try:
-                alert["klass"] = AlertClass.class_by_name[alert["klass"]]
-            except KeyError:
-                self.logger.info("Alert class %r is no longer present", alert["klass"])
-                continue
+                try:
+                    alert["klass"] = AlertClass.class_by_name[alert["klass"]]
+                except KeyError:
+                    self.logger.info("Alert class %r is no longer present", alert["klass"])
+                    continue
 
-            alert["_uuid"] = alert.pop("uuid")
-            alert["_source"] = alert.pop("source")
-            alert["_key"] = alert.pop("key")
-            alert["_text"] = alert.pop("text")
+                alert["_uuid"] = alert.pop("uuid")
+                alert["_source"] = alert.pop("source")
+                alert["_key"] = alert.pop("key")
+                alert["_text"] = alert.pop("text")
 
-            alert = Alert(**alert)
+                alert = Alert(**alert)
 
-            self.alerts.append(alert)
+                self.alerts.append(alert)
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
@@ -313,7 +314,7 @@ class AlertService(Service):
 
     @periodic(60)
     @private
-    @job(lock="process_alerts", transient=True)
+    @job(lock="process_alerts", transient=True, lock_queue_size=1)
     async def process_alerts(self, job):
         if not await self.__should_run_or_send_alerts():
             return
@@ -506,9 +507,11 @@ class AlertService(Service):
                             alerts_b = await self.middleware.call("failover.call_remote", "alert.run_source",
                                                                   [alert_source.name])
 
-                            alerts_b = [Alert(**dict(alert,
-                                                     level=(AlertLevel(alert["level"]) if alert["level"] is not None
-                                                            else alert["level"])))
+                            alerts_b = [Alert(**dict({k: v for k, v in alert.items()
+                                                      if k in ["args", "datetime", "dismissed", "mail"]},
+                                                     klass=AlertClass.class_by_name[alert["klass"]],
+                                                     _source=alert["source"],
+                                                     _key=alert["key"]))
                                         for alert in alerts_b]
                     except CallError as e:
                         if e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT,

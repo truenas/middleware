@@ -240,7 +240,7 @@ def configure_interface():
             print(_("ok"))
             print(_("Restarting routing:"), end=' ')
             try:
-                notifier().restart("routing")
+                notifier().reload("networkgeneral")
             except:
                 print(_("Failed"))
             print(_("ok"))
@@ -280,7 +280,7 @@ def configure_interface():
             print(_("ok"))
             print(_("Restarting routing:"), end=' ')
             try:
-                notifier().restart("routing")
+                notifier().reload("networkgeneral")
             except:
                 print(_("Failed"))
             print(_("ok"))
@@ -561,7 +561,7 @@ Acceptable formats are 255.255.255.0,
     if need_restart == "DHCP":
         print(_("Restarting routing:"), end=' ')
         try:
-            notifier().restart("routing")
+            notifier().reload("networkgeneral")
         except:
             print(_("Failed"))
         print(_("ok"))
@@ -1003,7 +1003,7 @@ def configure_default_route(*args):
     if need_save:
         print(_("Restarting routing:"), end=' ')
         try:
-            notifier().restart("routing")
+            notifier().reload("networkgeneral")
         except:
             print(_("Failed"))
             return False
@@ -1044,7 +1044,7 @@ def configure_static_routes(*args):
     print(_("ok"))
     try:
         print(_("Restarting routing:"), end=' ')
-        notifier().restart("routing")
+        notifier().reload("networkgeneral")
     except:
         print(_("Failed"))
         return False

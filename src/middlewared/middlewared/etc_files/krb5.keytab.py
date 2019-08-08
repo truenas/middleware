@@ -31,7 +31,7 @@ async def write_keytab(db_keytabname, db_keytabfile):
 async def render(service, middleware):
     keytabs = await middleware.call('kerberos.keytab.query')
     if not keytabs:
-        logger.debug(f'No keytabs in configuration database, skipping keytab generation')
+        logger.trace(f'No keytabs in configuration database, skipping keytab generation')
         return
 
     for keytab in keytabs:

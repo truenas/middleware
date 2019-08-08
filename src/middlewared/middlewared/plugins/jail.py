@@ -164,6 +164,9 @@ class PluginService(CRUDService):
         """
         Query installed plugins with `query-filters` and `query-options`.
         """
+        if not self.middleware.call_sync('jail.iocage_set_up'):
+            return []
+
         options = options or {}
         self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
@@ -190,7 +193,8 @@ class PluginService(CRUDService):
             plugin_dict = {
                 k: v if v != '-' else None
                 for k, v in zip((
-                    'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4', 'ip6', 'template', 'admin_portal'
+                    'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4',
+                    'ip6', 'template', 'admin_portal', 'doc_url'
                 ), plugin)
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
@@ -524,6 +528,9 @@ class JailService(CRUDService):
         jail_identifier = None
         jails = []
 
+        if not self.iocage_set_up():
+            return []
+
         if filters and len(filters) == 1 and list(
                 filters[0][:2]) == ['host_hostuuid', '=']:
             jail_identifier = filters[0][2]
@@ -584,6 +591,17 @@ class JailService(CRUDService):
             self.logger.debug('Failed to get list of jails', exc_info=True)
 
         return filter_list(jails, filters, options)
+
+    @private
+    def iocage_set_up(self):
+        datasets = self.middleware.call_sync(
+            'zfs.dataset.query',
+            [['properties.org\\.freebsd\\.ioc:active.value', '=', 'yes']],
+            {'extra': {'properties': [], 'flat': False}}
+        )
+        return not (not datasets or not any(
+            d['name'].endswith('/iocage') for root_dataset in datasets for d in root_dataset['children']
+        ))
 
     @accepts(
         Bool('remote', default=False),
@@ -971,7 +989,7 @@ class JailService(CRUDService):
 
         if not status:
             try:
-                iocage.start()
+                iocage.start(used_ports=[6000] + list(range(1025)))
             except Exception as e:
                 raise CallError(str(e))
 

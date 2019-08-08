@@ -1138,7 +1138,7 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
         self.fields['adv_motd'].strip = False
-        self.original_instance = self.instance.__dict__
+        self.original_instance = self.instance.__dict__.copy()
 
         self.fields['adv_serialport'].choices = list(choices.SERIAL_CHOICES())
 
@@ -1170,6 +1170,9 @@ class AdvancedForm(MiddlewareModelForm, ModelForm):
             events.append("_msg_start()")
         else:
             events.append("_msg_stop()")
+
+        if self.original_instance['adv_legacy_ui'] != self.instance.adv_legacy_ui:
+            events.append(f'evilrestartHttpd(\'http://{request.META["HTTP_HOST"]}\')')
 
         if self.original_instance['adv_advancedmode'] != self.instance.adv_advancedmode:
             # Invalidate cache
@@ -1526,12 +1529,6 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         help_text=_("URL of a custom image for notification icons. This overrides the default if set in the Incoming Webhook settings."),
         required=False,
     )
-    detailed = forms.BooleanField(
-        label=_("Detailed"),
-        help_text=_("Enable pretty Slack notifications"),
-        initial=False,
-        required=False,
-    )
 
     # Mattermost
     team = forms.CharField(
@@ -1718,7 +1715,7 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         'Mail': ['email'],
         'OpsGenie': ['cluster_name', 'api_key', 'api_url'],
         'PagerDuty': ['service_key', 'client_name'],
-        'Slack': ['cluster_name', 'url', 'channel', 'username', 'icon_url', 'detailed'],
+        'Slack': ['cluster_name', 'url', 'channel', 'username', 'icon_url'],
         'SNMPTrap': ['host', 'port', 'v3', 'community', 'v3_username', 'v3_authkey', 'v3_privkey', 'v3_authprotocol',
                      'v3_privprotocol'],
         'VictorOps': ['api_key', 'routing_key'],
@@ -1763,9 +1760,10 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
 
     def middleware_clean(self, data):
         data["attributes"] = {k: data[k] for k in self.types_fields[data["type"]]}
-        for k in ["community", "v3_username", "v3_authkey", "v3_privkey", "v3_authprotocol", "v3_privprotocol"]:
-            if not data["attributes"][k]:
-                data["attributes"][k] = None
+        if data["type"] == "SNMPTrap":
+            for k in ["community", "v3_username", "v3_authkey", "v3_privkey", "v3_authprotocol", "v3_privprotocol"]:
+                if not data["attributes"][k]:
+                    data["attributes"][k] = None
         for k in sum(self.types_fields.values(), []):
             data.pop(k, None)
         return data

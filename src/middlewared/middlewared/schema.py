@@ -832,6 +832,7 @@ class Patch(object):
                 attr = schema.attrs[patch['name']]
                 if 'method' in patch:
                     patch['method'](attr)
+                    schema.attrs[patch['name']] = attr.resolve(schemas)
             elif operation == 'attr':
                 for key, val in list(patch.items()):
                     setattr(schema, key, val)

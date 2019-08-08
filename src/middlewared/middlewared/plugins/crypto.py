@@ -430,7 +430,7 @@ class CryptoKeyService(Service):
         return cert_info
 
     @accepts(
-        Str('csr', required=True)
+        Str('csr', required=True, max_length=None)
     )
     def load_certificate_request(self, csr):
         try:
@@ -678,7 +678,20 @@ class CryptoKeyService(Service):
 
         cert = self.generate_builder(builder_data)
 
-        cert = self.add_extensions(cert, data.get('cert_extensions'), key, issuer)
+        cert = cert.add_extension(
+            x509.BasicConstraints(True, 0 if ca_key else None), True
+        ).add_extension(
+            x509.KeyUsage(
+                digital_signature=False, content_commitment=False, key_encipherment=False, data_encipherment=False,
+                key_agreement=False, key_cert_sign=True, crl_sign=True, encipher_only=False, decipher_only=False
+            ), True
+        ).add_extension(
+            x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
+        ).add_extension(
+            x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), False
+        ).public_key(
+            key.public_key()
+        )
 
         cert = cert.sign(
             ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
@@ -2675,9 +2688,15 @@ class CertificateAuthorityService(CRUDService):
 
 
 async def setup(middlewared):
-    system_cert = (await middlewared.call('system.general.config'))['ui_certificate']
-    certs = await middlewared.call('certificate.query')
-    if not system_cert or system_cert['id'] not in [c['id'] for c in certs]:
+    failure = False
+    try:
+        system_cert = (await middlewared.call('system.general.config'))['ui_certificate']
+        certs = await middlewared.call('certificate.query')
+    except Exception as e:
+        failure = True
+        middlewared.logger.error(f'Failed to retrieve certificates: {e}', exc_info=True)
+
+    if not failure and (not system_cert or system_cert['id'] not in [c['id'] for c in certs]):
         # create a self signed cert if it doesn't exist and set ui_certificate to it's value
         try:
             if not any('freenas_default' == c['name'] for c in certs):
@@ -2706,6 +2725,8 @@ async def setup(middlewared):
 
             await middlewared.call('system.general.update', {'ui_certificate': id})
         except Exception as e:
+            failure = True
             middlewared.logger.debug(f'Failed to set certificate for system.general plugin: {e}')
 
-    middlewared.logger.debug('Certificate setup for System complete')
+    if not failure:
+        middlewared.logger.debug('Certificate setup for System complete')

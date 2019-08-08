@@ -74,6 +74,10 @@ class UserService(CRUDService):
     @private
     async def user_extend(self, user):
 
+        # Normalize email, empty is really null
+        if user['email'] == '':
+            user['email'] = None
+
         # Get group membership
         user['groups'] = [gm['group']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('user', '=', user['id'])], {'prefix': 'bsdgrpmember_'})]
 
@@ -451,6 +455,18 @@ class UserService(CRUDService):
             shell: os.path.basename(shell)
             for shell in shells + ['/usr/sbin/nologin']
         }
+
+    @accepts(Dict(
+        'get_user_obj',
+        Str('username', default=None),
+        Int('uid', default=None)
+    ))
+    async def get_user_obj(self, data):
+        """
+        Returns dictionary containing information from struct passwd for the user specified by either
+        the username or uid. Bypasses user cache.
+        """
+        return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'])
 
     @item_method
     @accepts(
@@ -902,6 +918,18 @@ class GroupService(CRUDService):
                 return last_gid + 1
             last_gid = i['gid']
         return last_gid + 1
+
+    @accepts(Dict(
+        'get_group_obj',
+        Str('groupname', default=None),
+        Int('gid', default=None)
+    ))
+    async def get_group_obj(self, data):
+        """
+        Returns dictionary containing information from struct grp for the group specified by either
+        the groupname or gid. Bypasses group cache.
+        """
+        return await self.middleware.call('dscache.get_uncached_group', data['groupname'], data['gid'])
 
     async def __common_validation(self, verrors, data, schema, pk=None):
 

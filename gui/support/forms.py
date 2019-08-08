@@ -55,29 +55,11 @@ class ProductionForm(Form):
         )
 
         with client as c:
-            self.initial['production'] = c.call('keyvalue.get', 'truenas:production', False)
+            self.initial['production'] = c.call('truenas.is_production')
 
     def save(self):
         with client as c:
-            send_debug = (
-                not c.call('keyvalue.get', 'truenas:production', False) and
-                self.cleaned_data['production'] and
-                self.cleaned_data['send_debug']
-            )
-            c.call('keyvalue.set', 'truenas:production', self.cleaned_data['production'])
-            if send_debug:
-                serial = c.call('system.info')["system_serial"]
-                c.call('support.new_ticket', {
-                    "title": f"System has been just put into production ({serial})",
-                    "body": "This system has been just put into production",
-                    "attach_debug": True,
-                    "category": "Installation/Setup",
-                    "criticality": "Inquiry",
-                    "environment": "Production",
-                    "name": "Automatic Alert",
-                    "email": "auto-support@ixsystems.com",
-                    "phone": "-",
-                })
+            c.call('truenas.set_production', self.cleaned_data['production'], self.cleaned_data['send_debug'])
 
 
 class SupportForm(ModelForm):

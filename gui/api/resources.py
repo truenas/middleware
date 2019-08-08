@@ -2872,7 +2872,7 @@ class DebugResource(DojoResource):
 
     def post_list(self, request, **kwargs):
         with client as c:
-            url = c.call('core.download', 'system.debug_download', [], 'debug.tar')[1]
+            url = c.call('core.download', 'system.debug', [], 'debug.tar')[1]
             url = base64.b64encode(url.encode()).decode()
         data = {
             'url': reverse('system_debug_download') + f'?url=url',

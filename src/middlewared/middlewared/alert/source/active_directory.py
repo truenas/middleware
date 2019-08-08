@@ -1,6 +1,6 @@
 from datetime import timedelta
 import logging
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, SimpleOneShotAlertClass
 from middlewared.alert.schedule import CrontabSchedule, IntervalSchedule
 
 log = logging.getLogger("activedirectory_check_alertmod")
@@ -20,8 +20,16 @@ class ActiveDirectoryDomainHealthAlertClass(AlertClass):
     text = "Domain validation failed with error: %(verrs)s."
 
 
+class ActiveDirectoryDomainOfflineAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.DIRECTORY_SERVICE
+    level = AlertLevel.WARNING
+    title = "Domain Offline"
+    text = "Active Directory Domain \"%(domain)s\" is Offline."
+
+
 class ActiveDirectoryDomainHealthAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)
+    run_on_backup_node = False
 
     async def check(self):
         if await self.middleware.call('activedirectory.get_state') == 'DISABLED':
@@ -39,6 +47,7 @@ class ActiveDirectoryDomainHealthAlertSource(AlertSource):
 
 class ActiveDirectoryDomainBindAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=10))
+    run_on_backup_node = False
 
     async def check(self):
         if (await self.middleware.call('activedirectory.get_state')) == 'DISABLED':

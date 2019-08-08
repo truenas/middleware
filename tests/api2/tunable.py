@@ -98,6 +98,6 @@ def test_11_ensure_tunalbe_deleted_id_is_not_searchable():
     assert results.json() == [], results.text
 
 
-def test_11_ensure_tunnable_does_not_exist():
+def test_12_ensure_tunnable_does_not_exist():
     results = GET(f'/tunable/id/{TUNABLE_ID}/')
-    assert results.status_code == 500, results.text
+    assert results.status_code == 404, results.text

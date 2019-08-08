@@ -64,6 +64,7 @@ def setup_samba_dirs(middleware, conf):
     statedir = conf['state directory']
     samba_dirs = [
         statedir,
+        "/root/samba",
         conf['privatedir'],
         "/var/run/samba",
         "/var/run/samba4",
@@ -307,4 +308,4 @@ def render(service, middleware):
     if conf['role'] == "file_server":
         middleware.call_sync('smb.synchronize_passdb')
         validate_group_mappings(middleware, conf)
-
+        middleware.call_sync('admonitor.start')

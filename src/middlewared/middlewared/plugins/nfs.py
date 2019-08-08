@@ -19,6 +19,7 @@ class NFSService(SystemServiceService):
 
     class Config:
         service = "nfs"
+        service_verb = "restart"
         datastore_prefix = "nfs_srv_"
         datastore_extend = 'nfs.nfs_extend'
 

@@ -652,7 +652,7 @@ class InterfaceService(CRUDService):
     @accepts(Dict(
         'interface_create',
         Str('name'),
-        Str('description'),
+        Str('description', null=True),
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
@@ -1879,14 +1879,20 @@ class InterfaceService(CRUDService):
     @accepts(
         Dict(
             'ips',
-            Bool('ipv4'),
-            Bool('ipv6')
+            Bool('ipv4', default=True),
+            Bool('ipv6', default=True),
+            Bool('loopback', default=False),
+            Bool('any', default=False),
         )
     )
     def ip_in_use(self, choices=None):
         """
-        Get all IPv4 / Ipv6 from all valid interfaces, excluding lo0, bridge* and tap*.
-        Choices is a dictionary with defaults to {'ipv4': True, 'ipv6': True}
+        Get all IPv4 / Ipv6 from all valid interfaces, excluding bridge, tap and epair.
+
+        `loopback` will return loopback interface addresses.
+
+        `any` will return wildcard addresses (0.0.0.0 and ::).
+
         Returns a list of dicts - eg -
 
         [
@@ -1904,25 +1910,37 @@ class InterfaceService(CRUDService):
         ]
 
         """
-        if not choices:
-            choices = {
-                'ipv4': True,
-                'ipv6': True
-            }
-
-        ipv4 = choices['ipv4'] if choices.get('ipv4') else False
-        ipv6 = choices['ipv6'] if choices.get('ipv6') else False
         list_of_ip = []
-        ignore_nics = ('lo', 'bridge', 'tap', 'epair', 'pflog')
-        for if_name, iface in list(netif.list_interfaces().items()):
-            if not if_name.startswith(ignore_nics):
+        ignore_nics = ['bridge', 'tap', 'epair', 'pflog']
+        if not choices['loopback']:
+            ignore_nics.append('lo')
+        ignore_nics = tuple(ignore_nics)
+
+        if choices['any']:
+            if choices['ipv4']:
+                list_of_ip.append({
+                    'type': 'INET',
+                    'address': '0.0.0.0',
+                    'netmask': 0,
+                    'brodcast': '255.255.255.255',
+                })
+            if choices['ipv6']:
+                list_of_ip.append({
+                    'type': 'INET6',
+                    'address': '::',
+                    'netmask': 0,
+                    'brodcast': 'ff02::1',
+                })
+
+        for iface in list(netif.list_interfaces().values()):
+            if not iface.orig_name.startswith(ignore_nics):
                 aliases_list = iface.__getstate__()['aliases']
                 for alias_dict in aliases_list:
 
-                    if ipv4 and alias_dict['type'] == 'INET':
+                    if choices['ipv4'] and alias_dict['type'] == 'INET':
                         list_of_ip.append(alias_dict)
 
-                    if ipv6 and alias_dict['type'] == 'INET6':
+                    if choices['ipv6'] and alias_dict['type'] == 'INET6':
                         list_of_ip.append(alias_dict)
 
         return list_of_ip

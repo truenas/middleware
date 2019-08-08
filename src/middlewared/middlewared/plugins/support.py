@@ -237,7 +237,7 @@ class SupportService(ConfigService):
             job.set_progress(60, 'Generating debug file')
 
             debug_job = await self.middleware.call(
-                'system.debug_download', pipes=Pipes(output=self.middleware.pipe()),
+                'system.debug', pipes=Pipes(output=self.middleware.pipe()),
             )
 
             not_freenas = not (await self.middleware.call('system.is_freenas'))
