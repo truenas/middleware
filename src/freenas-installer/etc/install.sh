@@ -21,7 +21,6 @@ export TERM
 
 is_truenas()
 {
-
     test "$AVATAR_PROJECT" = "TrueNAS"
     return $?
 }
@@ -93,7 +92,6 @@ is_swap_safe()
 
 do_sata_dom()
 {
-
     if ! is_truenas ; then
 	return 1
     fi
@@ -161,54 +159,6 @@ upgrade_version_to_avatar_conf()
     mv $destconf.$$ $destconf
 }
 
-build_config_old()
-{
-    # build_config ${_disk} ${_image} ${_config_file}
-
-    local _disk=$1
-    local _image=$2
-    local _config_file=$3
-
-    cat << EOF > "${_config_file}"
-# Added to stop pc-sysinstall from complaining
-installMode=fresh
-installInteractive=no
-installType=FreeBSD
-installMedium=dvd
-packageType=tar
-
-disk0=${_disk}
-partition=image
-image=${_image}
-bootManager=bsd
-commitDiskPart
-EOF
-}
-
-build_config()
-{
-    # build_config ${_disk} ${_image} ${_config_file}
-
-    local _disk=$1
-    local _image=$2
-    local _config_file=$3
-
-    cat << EOF > "${_config_file}"
-# Added to stop pc-sysinstall from complaining
-installMode=fresh
-installInteractive=no
-installType=FreeBSD
-installMedium=dvd
-packageType=tar
-
-disk0=${_disk}
-partscheme=GPT
-partition=all
-bootManager=bsd
-commitDiskPart
-EOF
-}
-
 wait_keypress()
 {
     local _tmp
@@ -217,7 +167,6 @@ wait_keypress()
 
 sort_disklist()
 {
-
     sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
 }
 
@@ -305,7 +254,6 @@ disk_is_mounted()
     done
     return 1
 }
-
 
 new_install_verify()
 {
@@ -398,7 +346,6 @@ install_loader()
     _mnt="$1"
     shift
     _disks="$*"
-
 
     # When doing inplace upgrades, its entirely possible we've
     # booted in the wrong mode (I.E. bios/efi)
@@ -744,7 +691,6 @@ disk_is_freenas()
 
 prompt_password()
 {
-
     local values value password="" password1 password2 _counter _tmpfile="/tmp/pwd.$$"
 
     cat << __EOF__ > /tmp/dialogconf
@@ -790,9 +736,7 @@ __EOF__
     rm -f ${DIALOGRC}
     unset DIALOGRC
 
-
     echo -n "${password}" 1>&2
-
 }
 
 create_be()
@@ -824,18 +768,15 @@ menu_install()
     local _disklist
     local _tmpfile
     local _answer
-    local _cdlist
     local _items
     local _disk
     local _disks=""
     local _realdisks=""
-    local _disk_old
     local _config_file
     local _desc
     local _list
     local _msg
     local _satadom
-    local _i
     local _do_upgrade=""
     local _menuheight
     local _msg
@@ -845,13 +786,15 @@ menu_install()
     local data_part
     local upgrade_style="new"
     local whendone=""
-    
-    local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
-    local readonly NEED_UPDATE_SENTINEL="/data/need-update"
+
+    local CD_UPGRADE_SENTINEL NEED_UPDATE_SENTINEL FIRST_INSTALL_SENTINEL
+    local TRUENAS_EULA_PENDING_SENTINEL POOL
+    readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
+    readonly NEED_UPDATE_SENTINEL="/data/need-update"
     # create a sentinel file for post-fresh-install boots
-    local readonly FIRST_INSTALL_SENTINEL="/data/first-boot"
-    local readonly TRUENAS_EULA_PENDING_SENTINEL="/data/truenas-eula-pending"
-    local readonly POOL="freenas-boot"
+    readonly FIRST_INSTALL_SENTINEL="/data/first-boot"
+    readonly TRUENAS_EULA_PENDING_SENTINEL="/data/truenas-eula-pending"
+    readonly POOL="freenas-boot"
 
     _tmpfile="/tmp/answer"
     TMPFILE=$_tmpfile
@@ -875,7 +818,7 @@ menu_install()
 	esac
     done
     shift $((OPTIND-1))
-    
+
     if [ $# -gt 0 ]
     then
 	_disks="$@"
@@ -887,7 +830,7 @@ menu_install()
     if ${INTERACTIVE}; then
 	pre_install_check || return 0
     fi
-    
+
     if do_sata_dom
     then
 	_satadom="YES"
@@ -1005,7 +948,6 @@ menu_install()
 	_realdisks=$_disks
     fi
 
-
     ${INTERACTIVE} && new_install_verify "$_action" "$_upgrade_type" ${_realdisks}
     _config_file="/tmp/pc-sysinstall.cfg"
 
@@ -1022,19 +964,14 @@ menu_install()
 	# or else it'll do an update anyway.  Oops.
 	rm -rf /tmp/data_preserved
     fi
+
     # Start critical section.
     if ${INTERACTIVE}; then
 	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_realdisks} has failed. Press enter to continue.. \" junk" EXIT
     else
-#	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_realdisks} has failed.\" ; sleep 15" EXIT
 	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_realdisks} has failed. Press enter to continue.. \" junk" EXIT
     fi
     set -e
-#    set -x
-
-    #  _disk, _image, _config_file
-    # we can now build a config file for pc-sysinstall
-    # build_config  ${_disk} "$(get_image_name)" ${_config_file}
 
     if [ ${_do_upgrade} -eq 1 ]
     then
@@ -1131,9 +1068,9 @@ menu_install()
 
     if [ -d /tmp/data_preserved ]; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
-	# we still need the newer version we are upgrading to's
+	# We still need the newer version we are upgrading to's
 	# factory-v1.db, else issuing a factory-restore on the
-	# newly upgraded system completely horks the system
+	# newly upgraded system completely borks the system.
 	cp /data/factory-v1.db /tmp/data/data/
 	chown www:www /tmp/data/data/factory-v1.db
     else
@@ -1158,7 +1095,7 @@ menu_install()
 	if [ -d /tmp/.ssh ]; then
             cp -pR /tmp/.ssh /tmp/data/root/
 	fi
-	
+
 	# TODO: this needs to be revisited.
 	if [ -d /tmp/modules ]; then
             for i in `ls /tmp/modules`
@@ -1180,19 +1117,14 @@ menu_install()
 		-e '/^kernel=.*/d' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
 	fi
     fi
-    
+
     # To support Xen, we need to disable HPET.
     if [ "$(/tmp/data/usr/local/sbin/dmidecode -s system-product-name)" = "HVM domU" ]; then
 	if ! grep -q 'hint.hpet.0.clock' /tmp/data/boot/loader.conf.local 2>/dev/null ; then
 	    echo 'hint.hpet.0.clock="0"' >> /tmp/data/boot/loader.conf.local
 	fi
     fi
-    # Debugging pause.
-    # read foo
-    
-    # XXX: Fixup
-    # tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
-    
+
     # beadm will need a devfs
     mount -t devfs devfs /tmp/data/dev
     # Create a temporary /var
@@ -1206,8 +1138,7 @@ menu_install()
     # Set default boot filesystem
     zpool set bootfs=freenas-boot/ROOT/${BENAME} freenas-boot
     install_loader /tmp/data ${_realdisks}
-    
-#    set +x
+
     if [ -d /tmp/data_preserved ]; then
 	# Instead of sentinel files, let's just migrate!
 	# Unfortunately, this doesn't seem to work well.
@@ -1219,7 +1150,7 @@ menu_install()
 	: > /tmp/data/${CD_UPGRADE_SENTINEL}
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
 	${INTERACTIVE} && dialog --msgbox "The installer has preserved your database file.
-#$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
+$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     elif [ "${_do_upgrade}" -eq 0 ]; then
 	if [ -n "${_password}" ]; then
 		# Set the root password
@@ -1416,7 +1347,7 @@ getsize()
     esac
     return 0
 }
-	
+
 parse_config()
 {
     local _conf="/etc/install.conf"
@@ -1436,7 +1367,7 @@ parse_config()
     local _diskCount=0
     local password=""
     local whenDone=""
-    
+
     while read line
     do
 	if expr "${line}" : "^#" > /dev/null
