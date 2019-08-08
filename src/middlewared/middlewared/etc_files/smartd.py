@@ -20,6 +20,7 @@ async def annotate_disk_for_smart(devices, disk):
         args = await get_smartctl_args(disk, device)
         if args:
             if await ensure_smart_enabled(args):
+                args.extend(["-a"])
                 args.extend(["-d", "removable"])
                 return disk, dict(smartctl_args=args)
 
