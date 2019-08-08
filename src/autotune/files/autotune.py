@@ -44,9 +44,9 @@ except ImportError:
     # Not working state, abort
     sys.exit(1)
 
-KB = 1024 ** 1
-MB = 1024 ** 2
-GB = 1024 ** 3
+KiB = 1024 ** 1
+MiB = 1024 ** 2
+GiB = 1024 ** 3
 
 NO_HASYNC = "/tmp/.sqlite3_ha_skip"
 
@@ -69,23 +69,23 @@ SYSCTL_CONF = '/etc/sysctl.conf'
 # for other things.
 if ARCH_WIDTH == 32:
 
-    DEFAULT_USERLAND_RESERVED_MEM = USERLAND_RESERVED_MEM = int(1.00 * GB)
+    DEFAULT_USERLAND_RESERVED_MEM = USERLAND_RESERVED_MEM = int(1.00 * GiB)
 
-    DEFAULT_KERNEL_RESERVED_MEM = KERNEL_RESERVED_MEM = 384 * MB
+    DEFAULT_KERNEL_RESERVED_MEM = KERNEL_RESERVED_MEM = 384 * MiB
 
-    MIN_KERNEL_RESERVED_MEM = 64 * MB
+    MIN_KERNEL_RESERVED_MEM = 64 * MiB
 
-    MIN_ZFS_RESERVED_MEM = 512 * MB
+    MIN_ZFS_RESERVED_MEM = 512 * MiB
 
 elif ARCH_WIDTH == 64:
 
-    DEFAULT_USERLAND_RESERVED_MEM = USERLAND_RESERVED_MEM = int(2.25 * GB)
+    DEFAULT_USERLAND_RESERVED_MEM = USERLAND_RESERVED_MEM = int(2.25 * GiB)
 
-    DEFAULT_KERNEL_RESERVED_MEM = KERNEL_RESERVED_MEM = 768 * MB
+    DEFAULT_KERNEL_RESERVED_MEM = KERNEL_RESERVED_MEM = 768 * MiB
 
-    MIN_KERNEL_RESERVED_MEM = 128 * MB
+    MIN_KERNEL_RESERVED_MEM = 128 * MiB
 
-    MIN_ZFS_RESERVED_MEM = 1024 * MB
+    MIN_ZFS_RESERVED_MEM = 1024 * MiB
 
 else:
 
@@ -109,7 +109,7 @@ def sysctl_int(oid):
 
 # TrueNAS HA heads may have slighty different available memory
 HW_PHYSMEM = sysctl_int('hw.physmem') // 10000000 * 10000000
-HW_PHYSMEM_GB = HW_PHYSMEM / GB
+HW_PHYSMEM_GiB = HW_PHYSMEM / GiB
 
 # If you add a dictionary key here be sure to add it
 # as a valid choice to the -c option.
@@ -149,7 +149,7 @@ DEF_KNOBS = {
 
 def guess_vfs_zfs_dirty_data_max_max():
     if TRUENAS and hardware[0].startswith("M"):
-        return 12 * GB
+        return 12 * GiB
     else:
         return None
 
@@ -161,24 +161,24 @@ def guess_kern_ipc_maxsockbuf():
     and memory use/chance for starvation with a larger number of connections.
     """
     if TRUENAS and (hardware[0] == "Z50" or hardware[0] == "Z35"):
-        return 16 * MB
+        return 16 * MiB
     elif TRUENAS and hardware[0] == "Z30":
-        return 8 * MB
+        return 8 * MiB
     elif TRUENAS and hardware[0] == "Z20":
-        return 4 * MB
-    elif HW_PHYSMEM_GB > 180:
-        return 16 * MB
-    elif HW_PHYSMEM_GB > 84:
-        return 8 * MB
-    elif HW_PHYSMEM_GB > 44:
-        return 4 * MB
+        return 4 * MiB
+    elif HW_PHYSMEM_GiB > 180:
+        return 16 * MiB
+    elif HW_PHYSMEM_GiB > 84:
+        return 8 * MiB
+    elif HW_PHYSMEM_GiB > 44:
+        return 4 * MiB
     else:
-        return 2 * MB
+        return 2 * MiB
 
 
 def guess_kern_ipc_nmbclusters():
     # You can't make this smaller
-    return max(sysctl_int('kern.ipc.nmbclusters'), 2 * MB)
+    return max(sysctl_int('kern.ipc.nmbclusters'), 2 * MiB)
 
 
 def guess_net_inet_tcp_delayed_ack():
@@ -193,7 +193,7 @@ def guess_net_inet_tcp_recvbuf_max():
 
     See guess_kern_ipc_maxsockbuf().
     """
-    return 16 * MB
+    return 16 * MiB
 
 
 def guess_net_inet_tcp_sendbuf_max():
@@ -201,7 +201,7 @@ def guess_net_inet_tcp_sendbuf_max():
 
     See guess_kern_ipc_maxsockbuf().
     """
-    return 16 * MB
+    return 16 * MiB
 
 
 def guess_vfs_zfs_arc_max():
@@ -209,7 +209,7 @@ def guess_vfs_zfs_arc_max():
 
     - See comments for USERLAND_RESERVED_MEM.
     """
-    if HW_PHYSMEM_GB > 200 and TRUENAS:
+    if HW_PHYSMEM_GiB > 200 and TRUENAS:
         return int(max(min(int(HW_PHYSMEM * .92),
                        HW_PHYSMEM - (USERLAND_RESERVED_MEM + KERNEL_RESERVED_MEM)),
                        MIN_ZFS_RESERVED_MEM))
@@ -245,44 +245,44 @@ def guess_net_inet_tcp_mssdflt():
 
 def guess_net_inet_tcp_recvspace():
     if TRUENAS and (hardware[0] == "Z50" or hardware[0] == "Z35"):
-        return 1 * MB
+        return 1 * MiB
     elif TRUENAS and hardware[0] == "Z30":
-        return 512 * KB
+        return 512 * KiB
     elif TRUENAS and hardware[0] == "Z20":
-        return 256 * KB
-    elif HW_PHYSMEM_GB > 180:
-        return 1 * MB
-    elif HW_PHYSMEM_GB > 84:
-        return 512 * KB
-    elif HW_PHYSMEM_GB > 44:
-        return 256 * KB
+        return 256 * KiB
+    elif HW_PHYSMEM_GiB > 180:
+        return 1 * MiB
+    elif HW_PHYSMEM_GiB > 84:
+        return 512 * KiB
+    elif HW_PHYSMEM_GiB > 44:
+        return 256 * KiB
     else:
-        return 128 * KB
+        return 128 * KiB
 
 
 def guess_net_inet_tcp_sendspace():
     if TRUENAS and (hardware[0] == "Z50" or hardware[0] == "Z35"):
-        return 1 * MB
+        return 1 * MiB
     elif TRUENAS and hardware[0] == "Z30":
-        return 512 * KB
+        return 512 * KiB
     elif TRUENAS and hardware[0] == "Z20":
-        return 256 * KB
-    elif HW_PHYSMEM_GB > 180:
-        return 1 * MB
-    elif HW_PHYSMEM_GB > 84:
-        return 512 * KB
-    elif HW_PHYSMEM_GB > 44:
-        return 256 * KB
+        return 256 * KiB
+    elif HW_PHYSMEM_GiB > 180:
+        return 1 * MiB
+    elif HW_PHYSMEM_GiB > 84:
+        return 512 * KiB
+    elif HW_PHYSMEM_GiB > 44:
+        return 256 * KiB
     else:
-        return 128 * KB
+        return 128 * KiB
 
 
 def guess_net_inet_tcp_sendbuf_inc():
-    return 16 * KB
+    return 16 * KiB
 
 
 def guess_net_inet_tcp_recvbuf_inc():
-    return 512 * KB
+    return 512 * KiB
 
 
 def guess_vfs_zfs_vdev_async_read_max_active():
@@ -328,7 +328,7 @@ def guess_vfs_zfs_metaslab_lba_weighting_enabled():
 
 
 def guess_vfs_zfs_zfetch_max_distance():
-    return 32 * MB
+    return 32 * MiB
 
 
 def main(argv):
