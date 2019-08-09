@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 #
 # $Id: arc_summary.pl,v 388:e27800740aa2 2011-07-08 02:53:29Z jhell $
 #
