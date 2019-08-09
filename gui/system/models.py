@@ -315,7 +315,7 @@ class Advanced(Model):
     )
     adv_sysloglevel = models.CharField(
         max_length=120,
-        choices=choices.SYS_LOG_LEVEL,
+        choices=choices.SYSLOG_LEVEL,
         default="f_info",
         verbose_name=_("Syslog level"),
         help_text=_("Which messages are logged by the server. "
@@ -333,6 +333,23 @@ class Advanced(Model):
                     "The accepted format is hostname:port or ip:port. "
                     "If :port is not specified, it defaults to port 514. "
                     "This field currently only takes IPv4 addresses."),
+    )
+    adv_syslog_transport = models.CharField(
+        max_length=12,
+        choices=choices.SYSLOG_TRANSPORT,
+        default="udp",
+        verbose_name=_("Syslog server transport"),
+        help_text=_("Which transport is used to deliver log messages to the server. "
+                    "The default is udp."),
+    )
+    adv_syslog_tls_certificate = models.ForeignKey(
+        "Certificate",
+        verbose_name=_("Certificate for remote Syslog"),
+        limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING,
+                                            CERT_TYPE_INTERNAL]},
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
 
     class Meta:
