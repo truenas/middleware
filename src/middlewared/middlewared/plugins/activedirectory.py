@@ -1243,8 +1243,10 @@ class ActiveDirectoryService(ConfigService):
             raise CallError(f'Winbind cache dump failed with error: {netlist.stderr.decode().strip()}')
 
         known_domains = []
-        local_users = self.middleware.call_sync('user.query')
-        local_groups = self.middleware.call_sync('group.query')
+        local_users = {}
+        local_groups = {}
+        local_users.update({x['uid']: x for x in self.middleware.call_sync('user.query')})
+        local_users.update({x['gid']: x for x in self.middleware.call_sync('group.query')})
         cache_data = {'users': {}, 'groups': {}}
         configured_domains = self.middleware.call_sync('idmap.get_configured_idmap_domains')
         user_next_index = group_next_index = 300000000
@@ -1264,23 +1266,22 @@ class ActiveDirectoryService(ConfigService):
 
         for line in netlist.stdout.decode().splitlines():
             if line.startswith('Key: IDMAP/UID2SID'):
-                cached_uid = ((line.split())[1].split('/'))[2]
+                cached_uid = int((line.split())[1][14:])
                 """
                 Do not cache local users. This is to avoid problems where a local user
                 may enter into the id range allotted to AD users.
                 """
-                is_local_user = any(filter(lambda x: x['uid'] == int(cached_uid), local_users))
-                if is_local_user:
+                if local_users.get(cached_uid, None):
                     continue
 
                 for d in known_domains:
-                    if int(cached_uid) >= d['low_id'] and int(cached_uid) <= d['high_id']:
+                    if cached_uid in range(d['low_id'], d['high_id']):
                         """
                         Samba will generate UID and GID cache entries when idmap backend
                         supports id_type_both.
                         """
                         try:
-                            user_data = pwd.getpwuid(int(cached_uid))
+                            user_data = pwd.getpwuid(cached_uid)
                             cache_data['users'].update({user_data.pw_name: {
                                 'id': user_next_index,
                                 'uid': user_data.pw_uid,
@@ -1308,13 +1309,12 @@ class ActiveDirectoryService(ConfigService):
                             break
 
             if line.startswith('Key: IDMAP/GID2SID'):
-                cached_gid = ((line.split())[1].split('/'))[2]
-                is_local_group = any(filter(lambda x: x['gid'] == int(cached_gid), local_groups))
-                if is_local_group:
+                cached_gid = int((line.split())[1][14:])
+                if local_groups.get(cached_gid, None):
                     continue
 
                 for d in known_domains:
-                    if int(cached_gid) >= d['low_id'] and int(cached_gid) <= d['high_id']:
+                    if cached_gid in range(d['low_id'], d['high_id']):
                         """
                         Samba will generate UID and GID cache entries when idmap backend
                         supports id_type_both. Actual groups will return key error on
@@ -1323,11 +1323,11 @@ class ActiveDirectoryService(ConfigService):
                         should not be fatal here.
                         """
                         try:
-                            pwd.getpwuid(int(cached_gid))
+                            pwd.getpwuid(cached_gid)
                             break
                         except KeyError:
                             try:
-                                group_data = grp.getgrgid(int(cached_gid))
+                                group_data = grp.getgrgid(cached_gid)
                             except KeyError:
                                 break
 
