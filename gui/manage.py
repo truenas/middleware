@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
