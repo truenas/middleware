@@ -1304,7 +1304,7 @@ class ActiveDirectoryService(ConfigService):
                             }})
                             user_next_index += 1
                             break
-                        except Exception:
+                        except KeyError:
                             break
 
             if 'GID2SID' in line:
@@ -1318,13 +1318,19 @@ class ActiveDirectoryService(ConfigService):
                         """
                         Samba will generate UID and GID cache entries when idmap backend
                         supports id_type_both. Actual groups will return key error on
-                        attempt to generate passwd struct.
+                        attempt to generate passwd struct. It is also possible that the
+                        winbindd cache will have stale or expired entries. Failure on getgrgid
+                        should not be fatal here.
                         """
                         try:
                             pwd.getpwuid(int(cached_gid))
                             break
-                        except Exception:
-                            group_data = grp.getgrgid(int(cached_gid))
+                        except KeyError:
+                            try:
+                                group_data = grp.getgrgid(int(cached_gid))
+                            except KeyError:
+                                break
+
                             cache_data['groups'].update({group_data.gr_name: {
                                 'id': group_next_index,
                                 'gid': group_data.gr_gid,
