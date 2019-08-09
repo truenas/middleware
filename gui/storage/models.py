@@ -553,6 +553,10 @@ class Replication(Model):
     repl_exclude = ListField(
         verbose_name=_("Exclude child datasets"),
     )
+    repl_properties = models.BooleanField(
+        default=True,
+        verbose_name=_("Send dataset properties along with snapshots"),
+    )
     repl_periodic_snapshot_tasks = models.ManyToManyField(
         "Task",
         related_name="replication_tasks",

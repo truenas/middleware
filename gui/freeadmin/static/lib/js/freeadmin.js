@@ -848,7 +848,7 @@ require([
             "NONE": [],
         };
         var newFeatures = (
-            ["exclude", "periodic_snapshot_tasks", "naming_schema", "auto", "only_matching_schedule",
+            ["exclude", "properties", "periodic_snapshot_tasks", "naming_schema", "auto", "only_matching_schedule",
              "allow_from_scratch", "hold_pending_snapshots", "dedup", "large_block", /* "embed", */
              "compressed", "retries", "logging_level"].
             concat("enable_schedule").concat(schedule).

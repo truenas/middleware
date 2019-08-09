@@ -422,6 +422,7 @@ class ZettareplService(Service):
                 "target-dataset": replication_task["target_dataset"],
                 "recursive": replication_task["recursive"],
                 "exclude": replication_task["exclude"],
+                "properties": replication_task["properties"],
                 "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
                 "auto": replication_task["auto"],
                 "only-matching-schedule": replication_task["only_matching_schedule"],

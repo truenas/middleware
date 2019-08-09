@@ -119,6 +119,7 @@ class ReplicationService(CRUDService):
             Path("target_dataset", required=True, empty=False),
             Bool("recursive", required=True),
             List("exclude", items=[Path("dataset", empty=False)], default=[]),
+            Bool('properties', default=True),
             List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
                  validators=[Unique()]),
             List("naming_schema", items=[
@@ -180,6 +181,7 @@ class ReplicationService(CRUDService):
         * `source_datasets` is a non-empty list of datasets to replicate snapshots from
         * `target_dataset` is a dataset to put snapshots into. It must exist on target side
         * `recursive` and `exclude` have the same meaning as for Periodic Snapshot Task
+        * `properties` control whether we should send dataset properties along with snapshots
         * `periodic_snapshot_tasks` is a list of periodic snapshot task IDs that are sources of snapshots for this
           replication task. Only push replication tasks can be bound to periodic snapshot tasks.
         * `naming_schema` is a list of naming schemas for pull replication
