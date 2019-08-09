@@ -1263,7 +1263,7 @@ class ActiveDirectoryService(ConfigService):
                 })
 
         for line in netlist.stdout.decode().splitlines():
-            if 'UID2SID' in line:
+            if line.startswith('Key: IDMAP/UID2SID'):
                 cached_uid = ((line.split())[1].split('/'))[2]
                 """
                 Do not cache local users. This is to avoid problems where a local user
@@ -1274,7 +1274,7 @@ class ActiveDirectoryService(ConfigService):
                     continue
 
                 for d in known_domains:
-                    if int(cached_uid) in range(d['low_id'], d['high_id']):
+                    if int(cached_uid) >= d['low_id'] and int(cached_uid) <= d['high_id']:
                         """
                         Samba will generate UID and GID cache entries when idmap backend
                         supports id_type_both.
@@ -1307,14 +1307,14 @@ class ActiveDirectoryService(ConfigService):
                         except KeyError:
                             break
 
-            if 'GID2SID' in line:
+            if line.startswith('Key: IDMAP/GID2SID'):
                 cached_gid = ((line.split())[1].split('/'))[2]
                 is_local_group = any(filter(lambda x: x['gid'] == int(cached_gid), local_groups))
                 if is_local_group:
                     continue
 
                 for d in known_domains:
-                    if int(cached_gid) in range(d['low_id'], d['high_id']):
+                    if int(cached_gid) >= d['low_id'] and int(cached_gid) <= d['high_id']:
                         """
                         Samba will generate UID and GID cache entries when idmap backend
                         supports id_type_both. Actual groups will return key error on
