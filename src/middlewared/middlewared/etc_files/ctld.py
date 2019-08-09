@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 from middlewared.client.utils import Struct
 import contextlib
 import logging
