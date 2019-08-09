@@ -13,3 +13,5 @@ class VolumeRekeyAlertSource(FilePresenceAlertSource):
     path = GELI_REKEY_FAILED
 
     hardware = True
+
+    run_on_backup_node = False
