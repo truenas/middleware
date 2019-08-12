@@ -33,23 +33,6 @@ from django.views.static import serve
 from django.conf import settings
 
 from freenasUI import freeadmin
-from freenasUI.api import v1_api
-from freenasUI.api.resources import (
-    AlertResource,
-    BootEnvResource,
-    ConfigFactoryRestoreResource,
-    DatasetResource,
-    DebugResource,
-    FCPortsResource,
-    JsonUserResource,
-    JsonGroupResource,
-    PermissionResource,
-    RebootResource,
-    ShutdownResource,
-    SnapshotResource,
-    VersionResource,
-    VolumeImportResource,
-)
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.navtree import navtree
@@ -57,47 +40,8 @@ from freenasUI.freeadmin.navtree import navtree
 handler500 = 'freenasUI.freeadmin.views.server_error'
 handler404 = 'freenasUI.freeadmin.views.page_not_found'
 
-v1_api.register(AlertResource())
-v1_api.register(BootEnvResource())
-v1_api.register(DatasetResource())
-v1_api.register(DebugResource())
-v1_api.register(ConfigFactoryRestoreResource())
-v1_api.register(FCPortsResource())
-v1_api.register(JsonUserResource())
-v1_api.register(JsonGroupResource())
-v1_api.register(PermissionResource())
-v1_api.register(RebootResource())
-v1_api.register(ShutdownResource())
-v1_api.register(SnapshotResource())
-v1_api.register(VersionResource())
-v1_api.register(VolumeImportResource())
-
 navtree.prepare_modelforms()
-freeadmin.autodiscover()
 
-urlpatterns = [
-    url('^legacy/$', site.adminInterface, name="index"),
-    url(r'^legacy/static/(?P<path>.*)',
-        public(serve),
-        {'document_root': os.path.join(settings.HERE, "freeadmin/static")}),
-    url(r'^legacy/dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
-        public(serve),
-        {'document_root': '/usr/local/www/dojo'}),
-    url(r'^legacy/admin/', include(site.urls)),
-    url(r'^legacy/jsi18n/', javascript_catalog, name='javascript_catalog'),
-    url(r'^plugins/', include('freenasUI.plugins.urls')),
-]
-
-for app in settings.APP_MODULES:
-    # plugins must stay on old URL for plugins compatibility
-    if app == 'freenasUI.plugins':
-        continue
-    urlpatterns += [
-        url(r'^legacy/%s/' % app.rsplit('.')[-1], include('%s.urls' % app)),
-    ]
-
-urlpatterns += [
-    url(r'^api/', include(v1_api.urls)),
-]
+urlpatterns = []
 
 urlpatterns += staticfiles_urlpatterns()
