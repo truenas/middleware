@@ -233,10 +233,10 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
             if (
-                config_current['sysloglevel'].lower() != config_new['sysloglevel'].lower()
-                or config_current['syslogserver'] != config_new['syslogserver']
-                or config_current['syslog_transport'] != config_new['syslog_transport']
-                or config_current['syslog_tls_certificate'] != config_new['syslog_tls_certificate']
+                config_current['sysloglevel'].lower() != config_new['sysloglevel'].lower() or
+                config_current['syslogserver'] != config_new['syslogserver'] or
+                config_current['syslog_transport'] != config_new['syslog_transport'] or
+                config_current['syslog_tls_certificate'] != config_new['syslog_tls_certificate']
             ):
                 await self.middleware.call('service.restart', 'syslogd')
             if True:
