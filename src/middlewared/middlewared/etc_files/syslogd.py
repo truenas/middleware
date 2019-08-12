@@ -33,8 +33,16 @@ def generate_syslog_conf(middleware):
         else:
             host, port = advanced_config["syslogserver"], "514"
 
-        syslog_conf += f'destination loghost {{ udp("{host}" port({port}) localport(514)); }};\n'
-        syslog_conf += f'log {{ source(src); filter({advanced_config["sysloglevel"].lower()}); destination(loghost); }};\n'
+        if advanced_config.get('syslog_transport') == 'tls':
+            syslog_conf += f'destination loghost {{'
+            syslog_conf += f'syslog("{host}" port({port}) transport("tls") tls(ca-dir("/etc/certificates")));'
+        else:
+            transport = advanced_config.get('syslog_transport', 'tcp')
+            syslog_conf += f'destination loghost {{ {transport}("{host}" port({port}) localport(514)); '
+
+        syslog_conf += f'}};\n'
+        syslog_conf += f'log {{ source(src); filter({advanced_config["sysloglevel"].lower()});'
+        syslog_conf += f'destination(loghost); }};\n'
 
     with open("/etc/local/syslog-ng.conf", "w") as f:
         f.write(syslog_conf)

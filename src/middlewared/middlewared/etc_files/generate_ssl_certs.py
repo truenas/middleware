@@ -10,6 +10,9 @@ def write_certificates(certs):
             with open(cert['certificate_path'], 'w') as f:
                 f.write('\n'.join(cert['chain_list']))
 
+        if cert['hash_symlink_path']:
+            os.symlink(cert['certificate_path'], cert['hash_symlink_path'])
+
         if cert['privatekey']:
             with open(cert['privatekey_path'], 'w') as f:
                 f.write(cert['privatekey'])

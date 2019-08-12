@@ -674,7 +674,7 @@ class CryptoKeyService(Service):
             }
             issuer = x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
         else:
-            issuer = None
+            issuer = None  # noqa
 
         cert = self.generate_builder(builder_data)
 
@@ -1044,7 +1044,14 @@ class CertificateService(CRUDService):
         cert['csr_path'] = os.path.join(
             root_path, f'{cert["name"]}.csr'
         )
-
+        x509 = crypto.load_certificate(
+            crypto.FILETYPE_PEM,
+            cert['certificate']
+        )
+        cert['subject_name_hash'] = '%x' % x509.subject_name_hash()
+        cert['hash_symlink_path'] = os.path.join(
+            root_path, f'{cert["subject_name_hash"]}.0'
+        )
         cert['cert_type'] = 'CA' if root_path == CERT_CA_ROOT_PATH else 'CERTIFICATE'
         cert['revoked'] = bool(cert['revoked_date'])
 
@@ -2660,7 +2667,7 @@ class CertificateAuthorityService(CRUDService):
                 ]
             }
         """
-        ca = await self._get_instance(id)
+        ca = await self._get_instance(id)  # noqa: is assigned to but never used
         verrors = ValidationErrors()
 
         # Let's make sure we don't delete a ca which is being used by any service in the system
