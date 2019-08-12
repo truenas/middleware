@@ -79,6 +79,8 @@ class SensorService(Service):
         for line in proc.stdout.decode(errors="ignore").strip("\n").split("\n"):
             fields = [field.strip(" ") for field in line.split("|")]
             fields = [None if field == "na" else field for field in fields]
+            if len(fields) != 10:
+                continue
 
             sensor = {
                 "name": fields[0],
