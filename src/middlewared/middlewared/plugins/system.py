@@ -75,12 +75,13 @@ class SystemAdvancedService(ConfigService):
 
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
+
         if data.get('sysloglevel'):
             data['sysloglevel'] = data['sysloglevel'].upper()
 
         return data
 
-    async def __validate_fields(self, schema, data):
+    async def validate_advanced_settings(self, schema, data):
         verrors = ValidationErrors()
 
         serial_choice = data.get('serialport')
@@ -144,6 +145,8 @@ class SystemAdvancedService(ConfigService):
                                      'F_WARNING', 'F_NOTICE', 'F_INFO',
                                      'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
+            Str('syslog_transport', enum=['udp', 'tcp', 'tls']),
+            Int('syslog_tls_certificate', null=True),
             update=True
         )
     )
@@ -161,57 +164,59 @@ class SystemAdvancedService(ConfigService):
 
         `legacy_ui` is disabled by default. Enabling it allows end users to use the legacy UI.
         """
-        config_data = await self.config()
-        original_data = config_data.copy()
-        config_data.update(data)
+        config_current = await self.config()
+        config_new = config_current.copy()
+        config_new.update(data)
 
-        verrors, config_data = await self.__validate_fields('advanced_settings_update', config_data)
+        verrors, config_new = await self.validate_advanced_settings(
+            'advanced_settings_update', config_new)
         if verrors:
             raise verrors
 
-        if len(set(config_data.items()) ^ set(original_data.items())) > 0:
-            if original_data.get('sed_user'):
-                original_data['sed_user'] = original_data['sed_user'].lower()
-            if config_data.get('sed_user'):
-                config_data['sed_user'] = config_data['sed_user'].lower()
+        # if len(set(config_new.items()) ^ set(config_current.items())) > 0:
+        if config_new != config_current:
+            if config_current.get('sed_user'):
+                config_current['sed_user'] = config_current['sed_user'].lower()
+            if config_new.get('sed_user'):
+                config_new['sed_user'] = config_new['sed_user'].lower()
 
             # PASSWORD ENCRYPTION FOR SED IS BEING DONE IN THE MODEL ITSELF
 
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
-                config_data['id'],
-                config_data,
+                config_new['id'],
+                config_new,
                 {'prefix': self._config.datastore_prefix}
             )
 
-            if original_data['boot_scrub'] != config_data['boot_scrub']:
+            if config_current['boot_scrub'] != config_new['boot_scrub']:
                 await self.middleware.call('service.restart', 'cron')
 
             loader_reloaded = False
-            if original_data['motd'] != config_data['motd']:
+            if config_current['motd'] != config_new['motd']:
                 await self.middleware.call('service.start', 'motd', {'onetime': False})
 
-            if original_data['consolemenu'] != config_data['consolemenu']:
+            if config_current['consolemenu'] != config_new['consolemenu']:
                 await self.middleware.call('service.start', 'ttys', {'onetime': False})
 
-            if original_data['powerdaemon'] != config_data['powerdaemon']:
+            if config_current['powerdaemon'] != config_new['powerdaemon']:
                 await self.middleware.call('service.restart', 'powerd', {'onetime': False})
 
-            if original_data['serialconsole'] != config_data['serialconsole']:
+            if config_current['serialconsole'] != config_new['serialconsole']:
                 await self.middleware.call('service.start', 'ttys', {'onetime': False})
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
             elif (
-                    original_data['serialspeed'] != config_data['serialspeed'] or
-                    original_data['serialport'] != config_data['serialport']
+                    config_current['serialspeed'] != config_new['serialspeed'] or
+                    config_current['serialport'] != config_new['serialport']
             ):
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
 
-            if original_data['autotune'] != config_data['autotune']:
+            if config_current['autotune'] != config_new['autotune']:
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
@@ -219,21 +224,25 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('system.advanced.autotune', 'sysctl')
 
             if (
-                original_data['debugkernel'] != config_data['debugkernel'] and
+                config_current['debugkernel'] != config_new['debugkernel'] and
                 not loader_reloaded
             ):
                 await self.middleware.call('service.reload', 'loader', {'onetime': False})
 
-            if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
+            if config_current['fqdn_syslog'] != config_new['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
             if (
-                original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower()
-                or original_data['syslogserver'] != config_data['syslogserver']
+                config_current['sysloglevel'].lower() != config_new['sysloglevel'].lower()
+                or config_current['syslogserver'] != config_new['syslogserver']
+                or config_current['syslog_transport'] != config_new['syslog_transport']
+                or config_current['syslog_tls_certificate'] != config_new['syslog_tls_certificate']
             ):
                 await self.middleware.call('service.restart', 'syslogd')
+            if True:
+                await self.middleware.call('service.restart', 'syslogd')
 
-            if original_data['legacy_ui'] != config_data['legacy_ui']:
+            if config_current['legacy_ui'] != config_new['legacy_ui']:
                 await self.middleware.call('service.reload', 'http')
 
         return await self.config()
