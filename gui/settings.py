@@ -47,7 +47,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_PATH = '/data/freenas-v1.db'
+DATABASE_PATH = os.environ.get('DATABASE_ROOT', '/data') + '/freenas-v1.db'
 
 # Workaround bug in database name for migrate
 if 'FREENAS_FACTORY' in os.environ:
