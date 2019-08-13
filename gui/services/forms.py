@@ -28,7 +28,7 @@ import os
 
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from dojango import forms
+from django import forms
 from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.freeadmin.forms import DirectoryBrowser
@@ -98,7 +98,7 @@ class CIFSForm(MiddlewareModelForm, ModelForm):
         label=models.CIFS._meta.get_field('cifs_srv_bindip').verbose_name,
         help_text=models.CIFS._meta.get_field('cifs_srv_bindip').help_text,
         required=False,
-        widget=forms.widgets.CheckedMultiSelect(),
+        widget=forms.widgets.SelectMultiple(),
     )
     cifs_srv_unixcharset = forms.ChoiceField(
         label=models.CIFS._meta.get_field('cifs_srv_unixcharset').verbose_name,
@@ -167,7 +167,7 @@ class AFPForm(MiddlewareModelForm, ModelForm):
         label=models.AFP._meta.get_field('afp_srv_bindip').verbose_name,
         help_text=models.AFP._meta.get_field('afp_srv_bindip').help_text,
         required=False,
-        widget=forms.widgets.CheckedMultiSelect(),
+        widget=forms.widgets.SelectMultiple(),
     )
 
     class Meta:
@@ -217,7 +217,7 @@ class NFSForm(MiddlewareModelForm, ModelForm):
             'nfs_srv_mountd_port': forms.widgets.TextInput(),
             'nfs_srv_rpcstatd_port': forms.widgets.TextInput(),
             'nfs_srv_rpclockd_port': forms.widgets.TextInput(),
-            'nfs_srv_bindip': forms.widgets.CheckedMultiSelect(),
+            'nfs_srv_bindip': forms.widgets.SelectMultiple(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -562,7 +562,7 @@ class UPSForm(MiddlewareModelForm, ModelForm):
         model = models.UPS
         widgets = {
             'ups_remoteport': forms.widgets.TextInput(),
-            'ups_driver': forms.widgets.FilteringSelect(),
+            'ups_driver': forms.widgets.Select(),
             'ups_nocommwarntime': forms.widgets.TextInput(),
             'ups_monpwd': forms.widgets.PasswordInput(render_value=True),
         }
@@ -689,9 +689,9 @@ class iSCSITargetToExtentForm(MiddlewareModelForm, ModelForm):
         fields = '__all__'
         model = models.iSCSITargetToExtent
         widgets = {
-            'iscsi_extent': forms.widgets.FilteringSelect(),
+            'iscsi_extent': forms.widgets.Select(),
             'iscsi_lunid': forms.widgets.TextInput(),
-            'iscsi_target': forms.widgets.FilteringSelect(),
+            'iscsi_target': forms.widgets.Select(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1265,7 +1265,7 @@ class S3Form(MiddlewareModelForm, ModelForm):
     s3_bindip = forms.ChoiceField(
         label=models.S3._meta.get_field("s3_bindip").verbose_name,
         help_text=models.S3._meta.get_field("s3_bindip").help_text,
-        widget=forms.widgets.FilteringSelect(),
+        widget=forms.widgets.Select(),
         required=False,
         choices=(),
     )

@@ -41,8 +41,8 @@ from django.http import HttpResponse, QueryDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 
-from dojango import forms
-from dojango.forms import CheckboxSelectMultiple
+from django import forms
+from django.forms import CheckboxSelectMultiple
 from freenasUI import choices
 from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si

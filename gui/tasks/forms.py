@@ -5,7 +5,7 @@ import logging
 
 from django.utils.translation import ugettext_lazy as _
 
-from dojango import forms
+from django import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, mchoicefield
 from freenasUI.freeadmin.forms import CronMultiple

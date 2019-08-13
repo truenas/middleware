@@ -24,8 +24,8 @@
 #
 #####################################################################
 
-from dojango import forms
-from dojango.forms import widgets
+from django import forms
+from django.forms import widgets
 
 
 class UnixPermissionWidget(widgets.TextInput):

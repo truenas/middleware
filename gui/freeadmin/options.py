@@ -40,7 +40,7 @@ from django.template.loader import get_template, render_to_string
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from dojango.forms.models import BaseInlineFormSet, inlineformset_factory
+from django.forms import BaseInlineFormSet, inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError

@@ -140,7 +140,6 @@ TEMPLATES = [{
             'django.template.context_processors.i18n',
             'django.template.context_processors.media',
             'django.template.context_processors.static',
-            'dojango.context_processors.config',
         ],
         'builtins': [
             'django.contrib.staticfiles.templatetags.staticfiles',
@@ -204,7 +203,6 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'dojango',
     'freenasUI.api',
     'freenasUI.freeadmin',
 ) + tuple(APP_MODULES)
