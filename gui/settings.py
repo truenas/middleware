@@ -67,7 +67,7 @@ DATABASES = {
 """
 Make sure the database is never world readable
 """
-if os.path.exists(DATABASE_PATH):
+if os.path.exists(DATABASE_PATH) and os.environ.get('FREENAS_INSTALL', '').lower() != 'yes':
     stat = os.stat(DATABASE_PATH)
     #TODO use pwd.getpwnam/grp.getgrnam?
     #0 - root
