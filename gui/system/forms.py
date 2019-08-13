@@ -51,7 +51,7 @@ from django.utils import timezone
 from django.utils.html import escapejs
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ugettext as __
-from dojango import forms
+from django import forms
 from formtools.wizard.views import SessionWizardView
 from freenasOS import Configuration, Update
 from freenasUI import choices
@@ -995,9 +995,9 @@ class SettingsForm(MiddlewareModelForm, ModelForm):
         fields = '__all__'
         model = models.Settings
         widgets = {
-            'stg_timezone': forms.widgets.FilteringSelect(),
-            'stg_language': forms.widgets.FilteringSelect(),
-            'stg_kbdmap': forms.widgets.FilteringSelect(),
+            'stg_timezone': forms.widgets.Select(),
+            'stg_language': forms.widgets.Select(),
+            'stg_kbdmap': forms.widgets.Select(),
             'stg_guiport': forms.widgets.TextInput(),
             'stg_guihttpsport': forms.widgets.TextInput(),
             'stg_crash_reporting': forms.widgets.CheckboxInput(),

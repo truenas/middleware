@@ -31,7 +31,7 @@ import tempfile
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
-from dojango import forms
+from django import forms
 
 from freenasUI.common.forms import ModelForm
 from freenasUI.directoryservice import models

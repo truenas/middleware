@@ -26,7 +26,6 @@
 from django.forms.utils import flatatt
 from django.forms.widgets import Widget
 from django.utils.safestring import mark_safe
-from dojango.forms.widgets import DojoWidgetMixin
 
 import base64
 import json
@@ -34,7 +33,7 @@ import json
 from freenasUI.middleware.client import client
 
 
-class CloudSyncWidget(DojoWidgetMixin, Widget):
+class CloudSyncWidget(Widget):
     dojo_type = 'freeadmin.CloudSync'
 
     def render(self, name, value, attrs=None):

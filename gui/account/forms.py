@@ -31,7 +31,7 @@ from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy as _
 from django.http import QueryDict
 
-from dojango import forms
+from django import forms
 from freenasUI.account import models
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.forms import SelectMultipleField
@@ -92,7 +92,7 @@ class NewPasswordForm(Form):
         return valid
 
 
-class FilteredSelectJSON(forms.widgets.ComboBox):
+class FilteredSelectJSON(forms.widgets.Select):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
 
     def __init__(self, attrs=None, choices=(), url=None):
@@ -175,7 +175,7 @@ class bsdUsersForm(ModelForm):
     class Meta:
         model = models.bsdUsers
         widgets = {
-            'bsdusr_uid': forms.widgets.ValidationTextInput(),
+            'bsdusr_uid': forms.widgets.TextInput(),
         }
         exclude = (
             'bsdusr_unixhash',
@@ -481,7 +481,7 @@ class bsdGroupsForm(ModelForm):
         fields = '__all__'
         model = models.bsdGroups
         widgets = {
-            'bsdgrp_gid': forms.widgets.ValidationTextInput(),
+            'bsdgrp_gid': forms.widgets.TextInput(),
         }
 
     def __init__(self, *args, **kwargs):

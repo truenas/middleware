@@ -4,7 +4,7 @@ import os
 from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
 
-from dojango import forms
+from django import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm

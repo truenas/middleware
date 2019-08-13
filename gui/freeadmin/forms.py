@@ -35,9 +35,8 @@ from django.utils.safestring import mark_safe
 from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
-from dojango import forms
-from dojango.forms import widgets
-from dojango.forms.widgets import DojoWidgetMixin
+from django import forms
+from django.forms import widgets
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.storage.models import Volume
 from freenasUI.middleware.client import client
@@ -49,7 +48,7 @@ MAC_RE = re.compile(r'^[0-9A-F]{12}$')
 log = logging.getLogger('freeadmin.forms')
 
 
-class CronMultiple(DojoWidgetMixin, Widget):
+class CronMultiple(Widget):
     dojo_type = 'freeadmin.form.Cron'
 
     def render(self, name, value, attrs=None):

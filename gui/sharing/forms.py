@@ -29,7 +29,7 @@ import os
 
 from django.utils.translation import ugettext_lazy as _
 
-from dojango import forms
+from django import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.middleware.exceptions import MiddlewareError

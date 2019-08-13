@@ -26,9 +26,9 @@
 import logging
 
 from croniter import croniter
-from dojango import forms
-from dojango.forms import ModelForm as MF
-from dojango.forms import Form as F
+from django import forms
+from django.forms import ModelForm as MF
+from django.forms import Form as F
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
@@ -142,7 +142,7 @@ class ModelForm(AdvMixin, MiddlewareMixin, MF):
             if val is None:
                 continue
             if (
-                isinstance(field.widget, forms.widgets.ValidationTextInput) and
+                isinstance(field.widget, forms.widgets.TextInput) and
                 isinstance(val, str)
             ):
                 cdata[fname] = val.strip()

@@ -27,7 +27,7 @@ import logging
 
 from django.utils.translation import ugettext as _
 
-from dojango import forms
+from django import forms
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.middleware.client import client
 from freenasUI.support import models

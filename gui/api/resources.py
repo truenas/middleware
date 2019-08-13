@@ -40,7 +40,7 @@ from django.db.models import Q
 from django.http import HttpResponse, QueryDict
 from django.utils.translation import ugettext as _
 
-from dojango.forms.models import inlineformset_factory
+from django.forms.models import inlineformset_factory
 from freenasOS import Configuration, Update, Train
 from freenasUI import choices
 from freenasUI.account.forms import (
