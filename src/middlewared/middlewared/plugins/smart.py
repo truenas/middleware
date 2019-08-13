@@ -4,7 +4,7 @@ from itertools import chain
 import asyncio
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.common.smart.smartctl import get_smartctl_args
+from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Email, Range, Unique
 from middlewared.service import CRUDService, filterable, filter_list, private, SystemServiceService, ValidationErrors
@@ -421,7 +421,7 @@ class SmartService(SystemServiceService):
     @accepts(Dict(
         'smart_update',
         Int('interval'),
-        Str('powermode', enum=['NEVER', 'SLEEP', 'STANDBY', 'IDLE']),
+        Str('powermode', enum=SMARTCTL_POWERMODES),
         Int('difference'),
         Int('informational'),
         Int('critical'),

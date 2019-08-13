@@ -8,6 +8,8 @@ from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
 
+SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
+
 
 async def get_smartctl_args(middleware, devices, disk):
     if disk.startswith("nvd"):
