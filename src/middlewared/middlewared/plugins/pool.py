@@ -1710,8 +1710,8 @@ class PoolService(CRUDService):
         return True
 
     @item_method
-    @accepts(Int('id'))
-    async def download_encryption_key(self, oid):
+    @accepts(Int('id'), Str('filename', default='geli.key'))
+    async def download_encryption_key(self, oid, filename):
         """
         Download encryption key for a given pool `id`.
         """
@@ -1723,7 +1723,7 @@ class PoolService(CRUDService):
             'core.download',
             'filesystem.get',
             [os.path.join(self.GELI_KEYPATH, f"{pool['encryptkey']}.key")],
-            'geli.key'
+            filename,
         )
         return url
 
