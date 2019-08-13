@@ -694,13 +694,13 @@ class DiskService(CRUDService):
     async def toggle_smart_off(self, devname):
         args = await self.__get_smartctl_args(devname)
         if args:
-            await run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
+            await run('smartctl', '--smart=off', *args, check=False)
 
     @private
     async def toggle_smart_on(self, devname):
         args = await self.__get_smartctl_args(devname)
         if args:
-            await run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
+            await run('smartctl', '--smart=on', *args, check=False)
 
     @private
     async def serial_from_device(self, name):
@@ -761,7 +761,7 @@ class DiskService(CRUDService):
             except Exception:
                 pass
 
-        cp = await run(['/usr/local/sbin/smartctl', '-a'] + smartctl_args, check=False, stderr=subprocess.STDOUT,
+        cp = await run(['smartctl', '-a'] + smartctl_args, check=False, stderr=subprocess.STDOUT,
                        encoding='utf8', errors='ignore')
         if (cp.returncode & 0b11) != 0:
             self.logger.warning('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
