@@ -36,6 +36,8 @@ class LicenseHasExpiredAlertClass(AlertClass):
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
+    run_on_backup_node = False
+
     def check_sync(self):
         license = self.middleware.call_sync('system.info')['license']
         alerts = []
