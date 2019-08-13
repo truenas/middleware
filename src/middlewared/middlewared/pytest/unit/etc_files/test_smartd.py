@@ -72,12 +72,12 @@ async def test__ensure_smart_enabled__handled_args_properly():
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart__skips_nvd():
-    assert await annotate_disk_for_smart({}, "/dev/nvd0") is None
+    assert await annotate_disk_for_smart(None, {}, "nvd0") is None
 
 
 @pytest.mark.asyncio
 async def test__annotate_disk_for_smart__skips_unknown_device():
-    assert await annotate_disk_for_smart({"/dev/ada0": {}}, "/dev/ada1") is None
+    assert await annotate_disk_for_smart(None, {"ada0": {}}, "ada1") is None
 
 
 @pytest.mark.asyncio
@@ -85,7 +85,7 @@ async def test__annotate_disk_for_smart__skips_device_without_args():
     with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
         get_smartctl_args.return_value = asyncio.Future()
         get_smartctl_args.return_value.set_result(None)
-        assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, "/dev/ada1") is None
+        assert await annotate_disk_for_smart(None, {"ada1": {"driver": "ata"}}, "ada1") is None
 
 
 @pytest.mark.asyncio
@@ -96,7 +96,7 @@ async def test__annotate_disk_for_smart__skips_device_with_unavailable_smart():
         with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
             ensure_smart_enabled.return_value = asyncio.Future()
             ensure_smart_enabled.return_value.set_result(False)
-            assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, "/dev/ada1") is None
+            assert await annotate_disk_for_smart(None, {"ada1": {"driver": "ata"}}, "ada1") is None
 
 
 @pytest.mark.asyncio
@@ -107,8 +107,8 @@ async def test__annotate_disk_for_smart():
         with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
             ensure_smart_enabled.return_value = asyncio.Future()
             ensure_smart_enabled.return_value.set_result(True)
-            assert await annotate_disk_for_smart({"/dev/ada1": {"driver": "ata"}}, "/dev/ada1") == (
-                "/dev/ada1",
+            assert await annotate_disk_for_smart(None, {"ada1": {"driver": "ata"}}, "ada1") == (
+                "ada1",
                 {"smartctl_args": ["/dev/ada1", "-d", "sat", "-a", "-d", "removable"]},
             )
 

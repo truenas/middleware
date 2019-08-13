@@ -3,6 +3,7 @@ import base64
 from collections import defaultdict
 from datetime import datetime, timedelta
 import errno
+import functools
 import glob
 import os
 import re
@@ -13,10 +14,11 @@ import tempfile
 from xml.etree import ElementTree
 
 from bsd import geom, getswapinfo
+import cam
 from lxml import etree
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.common.smart.smartctl import get_smartctl_args
+from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
@@ -45,6 +47,42 @@ RAWTYPE = {
     'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
     'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
 }
+
+
+def get_temperature(stdout):
+    # ataprint.cpp
+
+    data = {}
+    for s in re.findall(r'^((190|194) .+)', stdout, re.M):
+        s = s[0].split()
+        try:
+            data[s[1]] = int(s[9])
+        except (IndexError, ValueError):
+            pass
+    for k in ['Temperature_Celsius', 'Temperature_Internal', 'Drive_Temperature',
+              'Temperature_Case', 'Case_Temperature', 'Airflow_Temperature_Cel']:
+        if k in data:
+            return data[k]
+
+    reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
+    if reg:
+        return int(reg.group(0).split()[9])
+
+    # nvmeprint.cpp
+
+    reg = re.search(r'Temperature:\s+([0-9]+) Celsius', stdout, re.M)
+    if reg:
+        return int(reg.group(1))
+
+    reg = re.search(r'Temperature Sensor [0-9]+:\s+([0-9]+) Celsius', stdout, re.M)
+    if reg:
+        return int(reg.group(1))
+
+    # scsiprint.cpp
+
+    reg = re.search(r'Current Drive Temperature:\s+([0-9]+) C', stdout, re.M)
+    if reg:
+        return int(reg.group(1))
 
 
 class DiskService(CRUDService):
@@ -649,27 +687,20 @@ class DiskService(CRUDService):
         return partitions
 
     async def __get_smartctl_args(self, devname):
-        camcontrol = await camcontrol_list()
-        if devname not in camcontrol:
-            return
-
-        args = await get_smartctl_args(devname, camcontrol[devname])
-        if args is None:
-            return
-
-        return args
+        devices = await camcontrol_list()
+        return await get_smartctl_args(self.middleware, devices, devname)
 
     @private
     async def toggle_smart_off(self, devname):
         args = await self.__get_smartctl_args(devname)
         if args:
-            await run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
+            await run('smartctl', '--smart=off', *args, check=False)
 
     @private
     async def toggle_smart_on(self, devname):
         args = await self.__get_smartctl_args(devname)
         if args:
-            await run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
+            await run('smartctl', '--smart=on', *args, check=False)
 
     @private
     async def serial_from_device(self, name):
@@ -687,6 +718,56 @@ class DiskService(CRUDService):
             return g.provider.config['ident']
 
         return None
+
+    @accepts(
+        List('names', items=[Str('name')]),
+        Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
+        Dict('smartctl_args', additional_attrs=True, hidden=True),
+    )
+    async def temperatures(self, names, powermode, smartctl_args):
+        """
+        Returns temperatures for a list of device `names` using specified S.M.A.R.T. `powermode`.
+        """
+
+        if not smartctl_args:
+            smartctl_args = await self.smartctl_args_for_devices(names)
+
+        smartctl_args = {k: ['-n', powermode.lower()] + v for k, v in smartctl_args.items() if v is not None}
+
+        available_names = list(smartctl_args.keys())
+
+        result = dict(zip(
+            available_names,
+            await asyncio_map(lambda name: self.__get_temperature(name, smartctl_args[name]), names, 8),
+        ))
+
+        for name in names:
+            result.setdefault(name, None)
+
+        return result
+
+    @private
+    async def smartctl_args_for_devices(self, names):
+        devices = await camcontrol_list()
+        return dict(zip(
+            names,
+            await asyncio_map(functools.partial(get_smartctl_args, self.middleware, devices), names, 8)
+        ))
+
+    async def __get_temperature(self, disk, smartctl_args):
+        if disk.startswith('da'):
+            try:
+                return self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
+            except Exception:
+                pass
+
+        cp = await run(['smartctl', '-a'] + smartctl_args, check=False, stderr=subprocess.STDOUT,
+                       encoding='utf8', errors='ignore')
+        if (cp.returncode & 0b11) != 0:
+            self.logger.warning('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
+            return None
+
+        return get_temperature(cp.stdout)
 
     @private
     @accepts(Str('name'))
@@ -966,7 +1047,7 @@ class DiskService(CRUDService):
             # If for some reason disk is not identified as a system disk
             # mark it to expire.
             if name not in sys_disks and not disk['disk_expiretime']:
-                    disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
+                disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
             # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
             # when lots of drives are present
             if disk != original_disk:

@@ -4,7 +4,7 @@ from itertools import chain
 import asyncio
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.common.smart.smartctl import get_smartctl_args
+from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Email, Range, Unique
 from middlewared.service import CRUDService, filterable, filter_list, private, SystemServiceService, ValidationErrors
@@ -12,13 +12,12 @@ from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-async def annotate_disk_smart_tests(devices, disk):
-    if disk["disk"] is None or disk["disk"].startswith("nvd"):
-        return None
+async def annotate_disk_smart_tests(middleware, devices, disk):
+    if disk["disk"] is None:
+        return
 
-    device = devices.get(disk["disk"])
-    if device:
-        args = await get_smartctl_args(disk["disk"], device)
+    args = await get_smartctl_args(middleware, devices, disk["disk"])
+    if args:
         p = await run(["smartctl", "-l", "selftest"] + args, check=False, encoding="utf8")
         tests = parse_smart_selftest_results(p.stdout)
         if tests is not None:
@@ -395,7 +394,10 @@ class SMARTTestService(CRUDService):
 
         devices = await camcontrol_list()
         return filter_list(
-            list(filter(None, await asyncio_map(functools.partial(annotate_disk_smart_tests, devices), disks, 16))),
+            list(filter(
+                None,
+                await asyncio_map(functools.partial(annotate_disk_smart_tests, self.middleware, devices), disks, 16)
+            )),
             [],
             {"get": get},
         )
@@ -419,7 +421,7 @@ class SmartService(SystemServiceService):
     @accepts(Dict(
         'smart_update',
         Int('interval'),
-        Str('powermode', enum=['NEVER', 'SLEEP', 'STANDBY', 'IDLE']),
+        Str('powermode', enum=SMARTCTL_POWERMODES),
         Int('difference'),
         Int('informational'),
         Int('critical'),

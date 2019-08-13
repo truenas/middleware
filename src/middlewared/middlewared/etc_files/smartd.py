@@ -11,18 +11,13 @@ from middlewared.utils.asyncio_ import asyncio_map
 logger = logging.getLogger(__name__)
 
 
-async def annotate_disk_for_smart(devices, disk):
-    if disk is None or "nvd" in disk:
-        return
-
-    device = devices.get(disk)
-    if device:
-        args = await get_smartctl_args(disk, device)
-        if args:
-            if await ensure_smart_enabled(args):
-                args.extend(["-a"])
-                args.extend(["-d", "removable"])
-                return disk, dict(smartctl_args=args)
+async def annotate_disk_for_smart(middleware, devices, disk):
+    args = await get_smartctl_args(middleware, devices, disk)
+    if args:
+        if await ensure_smart_enabled(args):
+            args.extend(["-a"])
+            args.extend(["-d", "removable"])
+            return disk, dict(smartctl_args=args)
 
 
 async def ensure_smart_enabled(args):
@@ -120,8 +115,8 @@ async def render(service, middleware):
     disks = [dict(disk, **smart_config) for disk in disks]
 
     devices = await camcontrol_list()
-    annotated = dict(filter(None, await asyncio_map(functools.partial(annotate_disk_for_smart, devices),
-                                                    {disk["disk_name"] for disk in disks},
+    annotated = dict(filter(None, await asyncio_map(functools.partial(annotate_disk_for_smart, middleware, devices),
+                                                    set(filter(None, {disk["disk_name"] for disk in disks})),
                                                     16)))
     disks = [dict(disk, **annotated[disk["disk_name"]]) for disk in disks if disk["disk_name"] in annotated]
 
