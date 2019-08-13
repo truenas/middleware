@@ -76,6 +76,19 @@ from requests.packages.urllib3 import poolmanager
 from requests.packages.urllib3.connectionpool import HTTPSConnectionPool
 
 
+class FailoverIsEnabledException(Exception):
+    pass
+
+
+def ensure_failover_is_disabled():
+    if not notifier().is_freenas():
+        from freenasUI.failover.models import Failover
+        qs = Failover.objects.all()
+        if qs.exists():
+            if not qs[0].disabled:
+                raise FailoverIsEnabledException()
+
+
 # Custom class to avoid warning about unverified SSL, see #16474
 class HTTPSConnectionPoolNoWarn(HTTPSConnectionPool):
     def _validate_conn(self, conn):
@@ -1348,8 +1361,15 @@ def main_menu():
         except ValueError:
             ch = None
         if ch in menu_map:
-            menu_map[ch][1]()
-        continue
+            f = menu_map[ch][1]
+            try:
+                if f not in [reset_root_pw, reset_factory_defaults, shell, reboot, shutdown]:
+                    ensure_failover_is_disabled()
+                f()
+            except FailoverIsEnabledException:
+                print("You can't perform this action unless failover is administratively disabled")
+                print("Press Enter to return to console")
+                input()
 
 
 #
