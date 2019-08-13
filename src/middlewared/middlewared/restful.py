@@ -10,6 +10,7 @@ import types
 
 from .client import ejson as json
 from .job import Job
+from .pipe import Pipes
 from .schema import Error as SchemaError
 from .service import CallError, ValidationError, ValidationErrors
 from .service_exception import adapt_exception, MatchNotFound
@@ -30,7 +31,7 @@ async def authenticate(middleware, req):
             raise web.HTTPUnauthorized()
     except web.HTTPUnauthorized:
         raise
-    except Exception as e:
+    except Exception:
         raise web.HTTPUnauthorized()
 
 
@@ -53,8 +54,8 @@ class RESTfulAPI(object):
         for methodname, method in list((await self.middleware.call('core.get_methods')).items()):
             self._methods[methodname] = method
             self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
-        for name, service in list((await self.middleware.call('core.get_services')).items()):
 
+        for name, service in list((await self.middleware.call('core.get_services')).items()):
             kwargs = {}
             blacklist_methods = []
             """
@@ -524,8 +525,14 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
+        method_kwargs = {}
+        download_pipe = None
+        if method['downloadable']:
+            download_pipe = self.middleware.pipe()
+            method_kwargs['pipes'] = Pipes(output=download_pipe)
+
         try:
-            result = await self.middleware.call(methodname, *method_args)
+            result = await self.middleware.call(methodname, *method_args, **method_kwargs)
         except CallError as e:
             resp = web.Response(status=422)
             result = {
@@ -563,6 +570,27 @@ class Resource(object):
                         'message': str(e),
                         'traceback': ''.join(traceback.format_exc()),
                     }
+
+        if download_pipe is not None:
+            resp = web.StreamResponse(status=200, reason='OK', headers={
+                'Content-Type': 'application/octet-stream',
+                'Transfer-Encoding': 'chunked',
+            })
+            await resp.prepare(req)
+
+            loop = asyncio.get_event_loop()
+
+            def do_copy():
+                while True:
+                    read = download_pipe.r.read(1048576)
+                    if read == b'':
+                        break
+                    asyncio.run_coroutine_threadsafe(resp.write(read), loop=loop).result()
+
+            await self.middleware.run_in_thread(do_copy)
+
+            await resp.drain()
+            return resp
 
         if isinstance(result, types.GeneratorType):
             result = list(result)
