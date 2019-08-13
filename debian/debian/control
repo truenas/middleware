@@ -1,0 +1,15 @@
+Source: truenas
+Section: admin
+Priority: optional
+Maintainer: William Grzybowski <william@grzy.org>
+Build-Depends: debhelper-compat (= 12)
+Standards-Version: 4.4.0
+Homepage: http://www.truenas.com
+
+Package: truenas
+Architecture: all
+Depends: middlewared, truenas-webui, tmux, ${misc:Depends}
+Description: Main package for TrueNAS
+ This package is supposed to hold all the dependencies required
+ to build TrueNAS as well as set the correction version so other
+ software can rely on.
