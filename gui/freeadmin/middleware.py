@@ -25,7 +25,6 @@
 #####################################################################
 from io import StringIO
 
-import json
 import logging
 import re
 import sys
@@ -39,14 +38,12 @@ from django.http import HttpResponse
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
 from django.utils.translation import ugettext as _
-import oauth2 as oauth
 
 from freenasUI import settings as mysettings
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.auth import AuthTokenBackend
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.services.models import RPCToken
 from freenasUI.system.models import Settings
 
 log = logging.getLogger('freeadmin.middleware')
@@ -60,80 +57,6 @@ COMMENT_SYNTAX = (
 def public(f):
     f.__is_public = True
     return f
-
-
-def http_oauth(func):
-
-    def view(request, *args, **kwargs):
-        authorized = False
-        json_params = {}
-        oauth_params = {}
-
-        try:
-            for key in request.GET:
-                if key.startswith("oauth"):
-                    oauth_params[key] = request.GET.get(key)
-                else:
-                    json_params = json.loads(key)
-
-            for key in request.POST:
-                if key.startswith("oauth"):
-                    oauth_params[key] = request.POST.get(key)
-
-            key = oauth_params.get("oauth_consumer_key", None)
-            host = "%s://%s" % (
-                'https' if request.is_secure() else 'http',
-                request.get_host(),
-            )
-            uurl = host + request.path
-
-            oreq = oauth.Request(request.method, uurl, oauth_params, '', False)
-            # FIXME: oauth2 bytes vs str issue in signature check
-            oreq['oauth_signature'] = oreq['oauth_signature'].encode()
-            server = oauth.Server()
-
-            secret = None
-            rpctoken = RPCToken.objects.get(key=key)
-            if rpctoken:
-                secret = rpctoken.secret
-
-            if not key or not secret:
-                raise Exception
-
-            try:
-                cons = oauth.Consumer(key, secret)
-                server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
-                server.verify_request(oreq, cons, None)
-                authorized = True
-
-            except Exception as e:
-                log.debug("auth error = %s" % e, exc_info=True)
-                authorized = False
-
-            if request.method == "POST":
-                method = json_params.get("method")
-
-                if method in (
-                    'plugins.is_authenticated',
-                ):
-                    authorized = True
-
-            if authorized:
-                return func(request, *args, **kwargs)
-
-        except Exception as e:
-            log.debug('OAuth authentication failed', exc_info=True)
-
-        return HttpResponse(json.dumps({
-            'jsonrpc': json_params.get("jsonrpc", "2.0"),
-            'error': {
-                'code': '500',
-                'message': 'Not authenticated',
-            },
-            'id': json_params.get("id", "1"),
-        }))
-
-    return view
 
 
 class RequireLoginMiddleware(object):
@@ -155,10 +78,6 @@ class RequireLoginMiddleware(object):
             return None
         if hasattr(view_func, '__is_public'):
             return None
-
-        # JSON-RPC calls are authenticated through HTTP Basic
-        if request.path.startswith('/plugins/json-rpc/'):
-            return http_oauth(view_func)(request, *view_args, **view_kwargs)
 
         return login_required(view_func)(request, *view_args, **view_kwargs)
 
