@@ -1,10 +1,28 @@
+import logging
 import re
 import subprocess
 
+from nvme import get_nsid
+
 from middlewared.utils import run
 
+logger = logging.getLogger(__name__)
 
-async def get_smartctl_args(disk, device):
+
+async def get_smartctl_args(middleware, devices, disk):
+    if disk.startswith("nvd"):
+        try:
+            nvme = await middleware.run_in_thread(get_nsid, f"/dev/{disk}")
+        except Exception as e:
+            logger.warning("Unable to run nvme.get_nsid for %r: %r", disk, e)
+            return
+        else:
+            return [f"/dev/{nvme}"]
+
+    device = devices.get(disk)
+    if device is None:
+        return
+
     driver = device["driver"]
     controller_id = device["controller_id"]
     channel_no = device["channel_no"]

@@ -12,13 +12,12 @@ from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-async def annotate_disk_smart_tests(devices, disk):
-    if disk["disk"] is None or disk["disk"].startswith("nvd"):
-        return None
+async def annotate_disk_smart_tests(middleware, devices, disk):
+    if disk["disk"] is None:
+        return
 
-    device = devices.get(disk["disk"])
-    if device:
-        args = await get_smartctl_args(disk["disk"], device)
+    args = await get_smartctl_args(middleware, devices, disk["disk"])
+    if args:
         p = await run(["smartctl", "-l", "selftest"] + args, check=False, encoding="utf8")
         tests = parse_smart_selftest_results(p.stdout)
         if tests is not None:
@@ -395,7 +394,10 @@ class SMARTTestService(CRUDService):
 
         devices = await camcontrol_list()
         return filter_list(
-            list(filter(None, await asyncio_map(functools.partial(annotate_disk_smart_tests, devices), disks, 16))),
+            list(filter(
+                None,
+                await asyncio_map(functools.partial(annotate_disk_smart_tests, self.middleware, devices), disks, 16)
+            )),
             [],
             {"get": get},
         )

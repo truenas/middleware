@@ -649,15 +649,8 @@ class DiskService(CRUDService):
         return partitions
 
     async def __get_smartctl_args(self, devname):
-        camcontrol = await camcontrol_list()
-        if devname not in camcontrol:
-            return
-
-        args = await get_smartctl_args(devname, camcontrol[devname])
-        if args is None:
-            return
-
-        return args
+        devices = await camcontrol_list()
+        return await get_smartctl_args(self.middleware, devices, devname)
 
     @private
     async def toggle_smart_off(self, devname):
