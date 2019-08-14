@@ -240,7 +240,6 @@ class UserService(CRUDService):
                         'path': data['home'],
                         'uid': data['uid'],
                         'gid': group['gid'],
-                        'options': {'recursive': True}
                     })
                 except OSError as oe:
                     raise CallError(
