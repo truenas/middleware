@@ -757,7 +757,7 @@ class DiskService(CRUDService):
     async def __get_temperature(self, disk, smartctl_args):
         if disk.startswith('da'):
             try:
-                return self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
+                return await self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
             except Exception:
                 pass
 
