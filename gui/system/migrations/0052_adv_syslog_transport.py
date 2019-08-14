@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='advanced',
             name='adv_syslog_transport',
-            field=models.CharField(default='udp', max_length=12),
+            field=models.CharField(default='UDP', max_length=12),
         ),
         migrations.AddField(
             model_name='advanced',

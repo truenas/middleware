@@ -803,7 +803,7 @@ DIRECTORY_SERVICE_CHOICES = (
 )
 
 
-SYSLOG_LEVEL = (
+SYS_LOG_LEVEL = (
     ('f_emerg', _('Emergency')),
     ('f_alert', _('Alert')),
     ('f_crit', _('Critical')),
@@ -817,9 +817,9 @@ SYSLOG_LEVEL = (
 
 
 SYSLOG_TRANSPORT = (
-    ('tcp', _('TCP')),
-    ('udp', _('UDP')),
-    ('tls', _('TLS')),
+    ('TCP', _('TCP')),
+    ('UDP', _('UDP')),
+    ('TLS', _('TLS')),
 )
 
 

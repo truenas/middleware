@@ -315,7 +315,7 @@ class Advanced(Model):
     )
     adv_sysloglevel = models.CharField(
         max_length=120,
-        choices=choices.SYSLOG_LEVEL,
+        choices=choices.SYS_LOG_LEVEL,
         default="f_info",
         verbose_name=_("Syslog level"),
         help_text=_("Which messages are logged by the server. "
@@ -337,10 +337,10 @@ class Advanced(Model):
     adv_syslog_transport = models.CharField(
         max_length=12,
         choices=choices.SYSLOG_TRANSPORT,
-        default="udp",
+        default="UDP",
         verbose_name=_("Syslog server transport"),
         help_text=_("Which transport is used to deliver log messages to the server. "
-                    "The default is udp."),
+                    "The default is UDP."),
     )
     adv_syslog_tls_certificate = models.ForeignKey(
         "Certificate",

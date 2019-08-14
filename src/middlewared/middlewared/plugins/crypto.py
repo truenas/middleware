@@ -382,7 +382,7 @@ class CryptoKeyService(Service):
                 'until': self.parse_cert_date_string(cert.get_notAfter()),
                 'serial': cert.get_serial_number(),
                 'chain': len(RE_CERTIFICATE.findall(certificate)) > 1,
-                'fingerprint': cert.digest('sha1').decode()
+                'fingerprint': cert.digest('sha1').decode(),
             })
 
             return cert_info
@@ -398,7 +398,8 @@ class CryptoKeyService(Service):
             'san': [],
             'email': obj.get_subject().emailAddress,
             'DN': '',
-            'extensions': {}
+            'subject_name_hash': obj.subject_name_hash(),
+            'extensions': {},
         }
 
         for ext in (
@@ -674,7 +675,7 @@ class CryptoKeyService(Service):
             }
             issuer = x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
         else:
-            issuer = None  # noqa
+            issuer = None
 
         cert = self.generate_builder(builder_data)
 
@@ -1044,14 +1045,7 @@ class CertificateService(CRUDService):
         cert['csr_path'] = os.path.join(
             root_path, f'{cert["name"]}.csr'
         )
-        x509 = crypto.load_certificate(
-            crypto.FILETYPE_PEM,
-            cert['certificate']
-        )
-        cert['subject_name_hash'] = '%x' % x509.subject_name_hash()
-        cert['hash_symlink_path'] = os.path.join(
-            root_path, f'{cert["subject_name_hash"]}.0'
-        )
+
         cert['cert_type'] = 'CA' if root_path == CERT_CA_ROOT_PATH else 'CERTIFICATE'
         cert['revoked'] = bool(cert['revoked_date'])
 
@@ -1978,6 +1972,7 @@ class CertificateService(CRUDService):
         # Let's make sure we don't delete a certificate which is being used by any service in the system
         for service_cert_id, text in [
             ((self.middleware.call_sync('system.general.config'))['ui_certificate']['id'], 'WebUI'),
+            ((self.middleware.call_sync('system.advanced.config'))['syslog_tls_certificate'], 'Syslog'),
             ((self.middleware.call_sync('ftp.config'))['ssltls_certificate'], 'FTP'),
             ((self.middleware.call_sync('s3.config'))['certificate'], 'S3'),
             ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav'),
@@ -2667,7 +2662,7 @@ class CertificateAuthorityService(CRUDService):
                 ]
             }
         """
-        ca = await self._get_instance(id)  # noqa: is assigned to but never used
+        ca = await self._get_instance(id)
         verrors = ValidationErrors()
 
         # Let's make sure we don't delete a ca which is being used by any service in the system
