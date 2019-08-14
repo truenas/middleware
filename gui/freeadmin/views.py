@@ -26,10 +26,6 @@
 
 import json
 import logging
-import socket
-import sys
-from middlewared.client import ClientException
-import middlewared.logger as logger
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views import debug
@@ -37,8 +33,6 @@ from django.template import Context, RequestContext
 from django.template.loader import get_template, render_to_string
 
 from freenasUI.common.system import get_sw_version
-from freenasUI.freeadmin.utils import request2crashreporting
-from freenasUI.system.models import Advanced
 
 log = logging.getLogger('freeadmin.views')
 
@@ -186,39 +180,6 @@ class ExceptionReporter(debug.ExceptionReporter):
         })
         c = Context(data)
         return t.render(c)
-
-
-def server_error(request, *args, **kwargs):
-    # Save exc info before next exception occurs
-    exc_info = sys.exc_info()
-    crash_reporting = logger.CrashReporting(transport='threaded')
-    try:
-        tb = Advanced.objects.all().latest('id').adv_traceback
-    except:
-        tb = True
-
-    # Crash reporting
-    extra_log_files = [
-        ('/var/log/debug.log', 'debug_log'),
-        ('/data/update.failed', 'update_failed'),
-    ]
-    # If the exception comes from middleware client lets append the log
-    # since middlewared itself might be stuck
-    if issubclass(exc_info[0], (ClientException, socket.timeout)):
-        extra_log_files.insert(0, ('/var/log/middlewared.log', 'middlewared_log'))
-
-    log.debug('UI crash exception', exc_info=exc_info)
-    crash_reporting.report(exc_info, request2crashreporting(request), extra_log_files)
-
-    try:
-        if tb:
-            reporter = ExceptionReporter(request, *exc_info)
-            html = reporter.get_traceback_html()
-            return HttpResponse(html, content_type='text/html')
-        else:
-            raise
-    except Exception:
-        return debug.technical_500_response(request, *exc_info)
 
 
 def page_not_found(request, *args, **kwargs):
