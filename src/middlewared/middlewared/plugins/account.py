@@ -220,7 +220,13 @@ class UserService(CRUDService):
                 try:
                     os.makedirs(data['home'], mode=int(home_mode, 8))
                     new_homedir = True
-                    os.chown(data['home'], data['uid'], group['gid'])
+                    await self.middleware.call('filesystem.setperm', {
+                        'path': data['home'],
+                        'mode': home_mode,
+                        'uid': data['uid'],
+                        'gid': group['gid'],
+                        'options': {'stripacl': True}
+                    })
                 except FileExistsError:
                     if not os.path.isdir(data['home']):
                         raise CallError(
@@ -229,8 +235,12 @@ class UserService(CRUDService):
                             errno.EEXIST
                         )
 
-                    # If it exists, ensure the user is owner
-                    os.chown(data['home'], data['uid'], group['gid'])
+                    # If it exists, ensure the user is owner.
+                    await self.middleware.call('filesystem.chown', {
+                        'path': data['home'],
+                        'uid': data['uid'],
+                        'gid': group['gid'],
+                    })
                 except OSError as oe:
                     raise CallError(
                         'Failed to create the home directory '
@@ -280,7 +290,12 @@ class UserService(CRUDService):
                     dest_file = os.path.join(data['home'], f)
                 if not os.path.exists(dest_file):
                     shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
-                    os.chown(dest_file, data['uid'], group['gid'])
+                    await self.middleware.call('filesystem.chown', {
+                        'path': dest_file,
+                        'uid': data['uid'],
+                        'gid': group['gid'],
+                        'options': {'recursive': True}
+                    })
 
             data['sshpubkey'] = sshpubkey
             try:
@@ -354,7 +369,11 @@ class UserService(CRUDService):
         if home_copy and not os.path.isdir(user['home']):
             try:
                 os.makedirs(user['home'])
-                os.chown(user['home'], user['uid'], group['bsdgrp_gid'])
+                await self.middleware.call('filesystem.chown', {
+                    'path': user['home'],
+                    'uid': user['uid'],
+                    'gid': group['bsdgrp_gid'],
+                })
             except OSError:
                 self.logger.warn('Failed to chown homedir', exc_info=True)
             if not os.path.isdir(user['home']):
@@ -367,6 +386,10 @@ class UserService(CRUDService):
         def set_home_mode():
             if home_mode is not None:
                 try:
+                    # Strip ACL before chmod. This is required when aclmode = restricted
+                    setfacl = subprocess.run(['/bin/setfacl', '-b', user['home']], check=False)
+                    if setfacl.returncode != 0:
+                        self.logger.debug('Failed to strip ACL: %s', setfacl.stderr.decode())
                     os.chmod(user['home'], int(home_mode, 8))
                 except OSError:
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
@@ -702,11 +725,22 @@ class UserService(CRUDService):
             os.mkdir(sshpath, mode=0o700)
         if not os.path.isdir(sshpath):
             raise CallError(f'{sshpath} is not a directory')
+
+        # Make extra sure to enforce correct mode on .ssh directory.
+        # stripping the ACL will allow subsequent chmod calls to succeed even if
+        # dataset aclmode is restricted.
+        await self.middleware.call('filesystem.setperm', {
+            'path': sshpath,
+            'mode': str(700),
+            'uid': user['uid'],
+            'gid': group,
+            'options': {'recursive': True, 'stripacl': True}
+        })
+
         with open(keysfile, 'w') as f:
             f.write(pubkey)
             f.write('\n')
-        os.chmod(keysfile, 0o600)
-        await run('/usr/sbin/chown', '-R', f'{user["username"]}:{group}', sshpath, check=False)
+        await self.middleware.call('filesystem.setperm', {'path': keysfile, 'mode': str(600)})
 
 
 class GroupService(CRUDService):
