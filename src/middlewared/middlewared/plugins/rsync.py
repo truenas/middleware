@@ -567,7 +567,15 @@ class RsyncTaskService(CRUDService):
             commandline, rsync['user'], lambda v: job.logs_fd.write(v)
         )
 
+        for klass in ('RsyncSuccess', 'RsyncFailed') if not rsync['quiet'] else ():
+            self.middleware.call_sync('alert.oneshot_delete', klass, rsync['id'])
+
         if cp.returncode != 0:
+            if not rsync['quiet']:
+                self.middleware.call_sync('alert.oneshot_create', 'RsyncFailed', rsync)
+
             raise CallError(
                 f'rsync command returned {cp.returncode}. Check logs for further information.'
             )
+        elif not rsync['quiet']:
+            self.middleware.call_sync('alert.oneshot_create', 'RsyncSuccess', rsync)

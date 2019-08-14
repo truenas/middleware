@@ -285,7 +285,11 @@ class mDNSServiceThread(threading.Thread):
 
         if service in ['SSH', 'SFTP_SSH']:
             for iface in self.middleware.call_sync('ssh.config')['bindiface']:
-                iindex.append(socket.if_nametoindex(iface))
+                try:
+                    iindex.append(socket.if_nametoindex(iface))
+                except OSError:
+                    self.logger.debug('Failed to determine interface index for [%s], service [%s]',
+                                      iface, service, exc_info=True)
 
             return iindex if iindex else [kDNSServiceInterfaceIndexAny]
 
@@ -295,7 +299,12 @@ class mDNSServiceThread(threading.Thread):
         for ip in bind_ip:
             for intobj in self.middleware.call_sync('interface.query'):
                 if any(filter(lambda x: ip in x['address'], intobj['aliases'])):
-                    iindex.append(socket.if_nametoindex(intobj['name']))
+                    try:
+                        iindex.append(socket.if_nametoindex(intobj['name']))
+                    except OSError:
+                        self.logger.debug('Failed to determine interface index for [%s], service [%s]',
+                                          iface, service, exc_info=True)
+
                     break
 
         return iindex if iindex else [kDNSServiceInterfaceIndexAny]

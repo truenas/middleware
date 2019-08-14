@@ -473,7 +473,7 @@ class Rsync(Model):
     )
     rsync_quiet = models.BooleanField(
         verbose_name=_("Quiet"),
-        help_text=_("Suppress non-error messages"),
+        help_text=_("Suppress alerts and logs of rsync task."),
         default=False,
     )
     rsync_preserveperm = models.BooleanField(

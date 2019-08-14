@@ -1040,7 +1040,7 @@ class ServiceService(CRUDService):
         """
         try:
             process = psutil.Process(pid)
-        except psutil.NoSuchProcessError:
+        except psutil.NoSuchProcess:
             raise CallError("Process does not exist")
 
         process.terminate()

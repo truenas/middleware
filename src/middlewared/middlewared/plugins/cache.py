@@ -178,7 +178,7 @@ class DSCache(Service):
         ds_enabled = {}
         res = []
 
-        is_name_check = True if len(filters) == 1 and filters[0][0] in ['username', 'groupname'] else False
+        is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'groupname'])
 
         for ds in ['activedirectory', 'ldap', 'nis']:
             ds_enabled.update({
