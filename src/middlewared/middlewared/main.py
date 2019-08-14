@@ -222,7 +222,6 @@ class Application(object):
                 await self.middleware.run_in_thread(
                     self.middleware.crash_reporting.report,
                     exc_info,
-                    None,
                     extra_log_files,
                 )
 

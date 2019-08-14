@@ -1,14 +1,13 @@
 import logging
+from logging.config import dictConfig
 import logging.handlers
 import os
 import sys
 
-from logging.config import dictConfig
+import sentry_sdk
+
 from .utils import sw_version, sw_version_is_stable
 
-from raven import Client
-from raven.transport.http import HTTPTransport
-from raven.transport.threaded import ThreadedHTTPTransport
 
 # markdown debug is also considered useless
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
@@ -42,28 +41,24 @@ class CrashReporting(object):
     Pseudo-Class for remote crash reporting
     """
 
-    def __init__(self, transport='sync'):
-        if transport == 'threaded':
-            transport = ThreadedHTTPTransport
-        elif transport == 'sync':
-            transport = HTTPTransport
-        else:
-            raise ValueError(f'Unknown transport: {transport}')
-
+    def __init__(self):
         if sw_version_is_stable():
             self.sentinel_file_path = '/tmp/.crashreporting_disabled'
         else:
             self.sentinel_file_path = '/data/.crashreporting_disabled'
         self.logger = logging.getLogger('middlewared.logger.CrashReporting')
-        self.client = Client(
-            dsn='https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2?timeout=3',
-            install_sys_hook=False,
-            install_logging_hook=False,
-            string_max_length=10240,
-            raise_send_errors=True,
+        sentry_sdk.init(
+            'https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2?timeout=3',
             release=sw_version(),
-            transport=transport,
+            integrations=[],
         )
+        sentry_sdk.utils.MAX_STRING_LENGTH = 10240
+        # FIXME: remove this when 0.10.3 is released
+        strip_string = sentry_sdk.utils.strip_string
+        sentry_sdk.utils.strip_string = lambda s: strip_string(s, sentry_sdk.utils.MAX_STRING_LENGTH)
+        sentry_sdk.utils.slim_string = sentry_sdk.utils.strip_string
+        sentry_sdk.serializer.strip_string = sentry_sdk.utils.strip_string
+        sentry_sdk.serializer.slim_string = sentry_sdk.utils.strip_string
 
     def is_disabled(self):
         """
@@ -85,7 +80,7 @@ class CrashReporting(object):
         else:
             return False
 
-    def report(self, exc_info, data, t_log_files):
+    def report(self, exc_info, log_files):
         """"
         Args:
             exc_info (tuple): Same as sys.exc_info().
@@ -96,23 +91,22 @@ class CrashReporting(object):
         if self.is_disabled():
             return
 
-        extra_data = {}
-        if all(t_log_files):
-            payload_size = 0
-            for path, name in t_log_files:
-                if os.path.exists(path):
-                    with open(path, 'r') as absolute_file_path:
-                        contents = absolute_file_path.read()[-10240:]
-                        # There is a limit for the whole report payload.
-                        # Lets skip the file if its hits areasonable limit.
-                        if len(contents) + payload_size > 61440:
-                            continue
-                        extra_data[name] = contents
-                        payload_size += len(contents)
+        data = {}
+        for path, name in log_files:
+            if os.path.exists(path):
+                with open(path, 'r') as absolute_file_path:
+                    contents = absolute_file_path.read()[-10240:]
+                    data[name] = contents
 
         self.logger.debug('Sending a crash report...')
         try:
-            self.client.captureException(exc_info=exc_info, data=data, extra=extra_data)
+            with sentry_sdk.configure_scope() as scope:
+                payload_size = 0
+                for k, v in data.items():
+                    if payload_size + len(v) < 190000:
+                        scope.set_extra(k, v)
+                        payload_size += len(v)
+                sentry_sdk.capture_exception(exc_info)
         except Exception:
             self.logger.debug('Failed to send crash report', exc_info=True)
 
