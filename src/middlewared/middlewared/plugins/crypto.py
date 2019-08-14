@@ -2662,7 +2662,7 @@ class CertificateAuthorityService(CRUDService):
                 ]
             }
         """
-        ca = await self._get_instance(id)
+        await self._get_instance(id)
         verrors = ValidationErrors()
 
         # Let's make sure we don't delete a ca which is being used by any service in the system
