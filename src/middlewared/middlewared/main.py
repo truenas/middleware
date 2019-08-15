@@ -1301,13 +1301,22 @@ class Middleware(LoadPluginsMixin):
             self.loop.set_debug(True)
             self.loop.slow_callback_duration = 0.2
 
+        self.loop.create_task(self.__initialize())
+
+        try:
+            self.loop.run_forever()
+        except RuntimeError as e:
+            if e.args[0] != "Event loop is closed":
+                raise
+
+    async def __initialize(self):
         self.app = app = web.Application(middlewares=[
             normalize_path_middleware(redirect_class=HTTPPermanentRedirect)
         ], loop=self.loop)
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
-        self.loop.run_until_complete(self.__plugins_load())
+        await self.__plugins_load()
 
         self._console_write('registering services')
 
@@ -1336,9 +1345,7 @@ class Middleware(LoadPluginsMixin):
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
 
         restful_api = RESTfulAPI(self, app)
-        self.loop.run_until_complete(
-            asyncio.ensure_future(restful_api.register_resources())
-        )
+        await restful_api.register_resources()
         asyncio.ensure_future(self.jobs.run())
 
         self.__setup_periodic_tasks()
@@ -1347,20 +1354,12 @@ class Middleware(LoadPluginsMixin):
         self.__procpool._start_queue_management_thread()
 
         runner = web.AppRunner(app, handle_signals=False, access_log=None)
-        self.loop.run_until_complete(runner.setup())
-        self.loop.run_until_complete(
-            web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
-        )
-        self.loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock').start())
+        await runner.setup()
+        await web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
+        await web.UnixSite(runner, '/var/run/middlewared.sock').start()
 
         self.logger.debug('Accepting connections')
         self._console_write('loading completed\n')
-
-        try:
-            self.loop.run_forever()
-        except RuntimeError as e:
-            if e.args[0] != "Event loop is closed":
-                raise
 
     def terminate(self):
         self.logger.info('Terminating')
