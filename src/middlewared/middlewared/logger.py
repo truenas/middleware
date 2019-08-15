@@ -51,6 +51,7 @@ class CrashReporting(object):
             'https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2?timeout=3',
             release=sw_version(),
             integrations=[],
+            default_integrations=False,
         )
         sentry_sdk.utils.MAX_STRING_LENGTH = 10240
         # FIXME: remove this when 0.10.3 is released
