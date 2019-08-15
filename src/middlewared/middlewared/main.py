@@ -1427,6 +1427,7 @@ def main():
 
     logger.setup_logging('middleware', args.debug_level, args.log_handler)
 
+    atexit.unregister(concurrent.futures.process._python_exit)
     atexit.unregister(concurrent.futures.thread._python_exit)
 
     setproctitle.setproctitle('middlewared')
