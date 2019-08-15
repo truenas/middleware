@@ -771,7 +771,7 @@ class Middleware(LoadPluginsMixin):
         self.startup_seq = 0
         self.startup_seq_path = startup_seq_path
         self.app = None
-        self.__loop = None
+        self.loop = None
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
@@ -864,7 +864,7 @@ class Middleware(LoadPluginsMixin):
                     method_name = f'{service_name}.{task_name}'
                     self.logger.debug(f"Setting up periodic task {method_name} to run every {method._periodic.interval} seconds")
 
-                    self.__loop.call_later(
+                    self.loop.call_later(
                         delay,
                         functools.partial(
                             self.__call_periodic_task,
@@ -873,7 +873,7 @@ class Middleware(LoadPluginsMixin):
                     )
 
     def __call_periodic_task(self, method, service_name, service_obj, method_name, interval):
-        self.__loop.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, method_name, interval))
+        self.loop.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, method_name, interval))
 
     async def __periodic_task_wrapper(self, method, service_name, service_obj, method_name, interval):
         self.logger.trace("Calling periodic task %s", method_name)
@@ -882,7 +882,7 @@ class Middleware(LoadPluginsMixin):
         except Exception:
             self.logger.warning("Exception while calling periodic task", exc_info=True)
 
-        self.__loop.call_later(
+        self.loop.call_later(
             interval,
             functools.partial(
                 self.__call_periodic_task,
@@ -1174,7 +1174,7 @@ class Middleware(LoadPluginsMixin):
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot call_sync or run_coroutine from main thread')
 
-        fut = asyncio.run_coroutine_threadsafe(coro, self.__loop)
+        fut = asyncio.run_coroutine_threadsafe(coro, self.loop)
         if not wait:
             return fut
 
@@ -1187,7 +1187,7 @@ class Middleware(LoadPluginsMixin):
 
         # In case middleware dies while we are waiting for a `call_sync` result
         while not event.wait(1):
-            if not self.__loop.is_running():
+            if not self.loop.is_running():
                 raise RuntimeError('Middleware is terminating')
         return fut.result()
 
@@ -1240,7 +1240,7 @@ class Middleware(LoadPluginsMixin):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
 
-        connection = Application(self, self.__loop, request, ws)
+        connection = Application(self, self.loop, request, ws)
         connection.on_open()
 
         try:
@@ -1275,7 +1275,7 @@ class Middleware(LoadPluginsMixin):
         last = None
         while True:
             time.sleep(2)
-            current = asyncio.current_task(loop=self.__loop)
+            current = asyncio.current_task(loop=self.loop)
             if current is None:
                 last = None
                 continue
@@ -1295,19 +1295,19 @@ class Middleware(LoadPluginsMixin):
         self._console_write('starting')
 
         set_thread_name('asyncio_loop')
-        self.loop = self.__loop = asyncio.get_event_loop()
+        self.loop = asyncio.get_event_loop()
 
         if self.loop_debug:
-            self.__loop.set_debug(True)
-            self.__loop.slow_callback_duration = 0.2
+            self.loop.set_debug(True)
+            self.loop.slow_callback_duration = 0.2
 
         self.app = app = web.Application(middlewares=[
             normalize_path_middleware(redirect_class=HTTPPermanentRedirect)
-        ], loop=self.__loop)
+        ], loop=self.loop)
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
-        self.__loop.run_until_complete(self.__plugins_load())
+        self.loop.run_until_complete(self.__plugins_load())
 
         self._console_write('registering services')
 
@@ -1318,17 +1318,17 @@ class Middleware(LoadPluginsMixin):
             t.setDaemon(True)
             t.start()
 
-        self.__loop.add_signal_handler(signal.SIGINT, self.terminate)
-        self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
-        self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
-        self.__loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
+        self.loop.add_signal_handler(signal.SIGINT, self.terminate)
+        self.loop.add_signal_handler(signal.SIGTERM, self.terminate)
+        self.loop.add_signal_handler(signal.SIGUSR1, self.pdb)
+        self.loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
         app.router.add_route('*', '/api/docs{path_info:.*}', WSGIHandler(apidocs_app))
         app.router.add_route('*', '/ui{path_info:.*}', WebUIAuth(self))
 
-        self.fileapp = FileApplication(self, self.__loop)
+        self.fileapp = FileApplication(self, self.loop)
         app.router.add_route('*', '/_download{path_info:.*}', self.fileapp.download)
         app.router.add_route('*', '/_upload{path_info:.*}', self.fileapp.upload)
 
@@ -1336,7 +1336,7 @@ class Middleware(LoadPluginsMixin):
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
 
         restful_api = RESTfulAPI(self, app)
-        self.__loop.run_until_complete(
+        self.loop.run_until_complete(
             asyncio.ensure_future(restful_api.register_resources())
         )
         asyncio.ensure_future(self.jobs.run())
@@ -1347,24 +1347,24 @@ class Middleware(LoadPluginsMixin):
         self.__procpool._start_queue_management_thread()
 
         runner = web.AppRunner(app, handle_signals=False, access_log=None)
-        self.__loop.run_until_complete(runner.setup())
-        self.__loop.run_until_complete(
+        self.loop.run_until_complete(runner.setup())
+        self.loop.run_until_complete(
             web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
         )
-        self.__loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock').start())
+        self.loop.run_until_complete(web.UnixSite(runner, '/var/run/middlewared.sock').start())
 
         self.logger.debug('Accepting connections')
         self._console_write('loading completed\n')
 
         try:
-            self.__loop.run_forever()
+            self.loop.run_forever()
         except RuntimeError as e:
             if e.args[0] != "Event loop is closed":
                 raise
 
     def terminate(self):
         self.logger.info('Terminating')
-        self.__terminate_task = self.__loop.create_task(self.__terminate())
+        self.__terminate_task = self.loop.create_task(self.__terminate())
 
     async def __terminate(self):
         for service_name, service in self.get_services().items():
@@ -1377,12 +1377,12 @@ class Middleware(LoadPluginsMixin):
                 except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
-        for task in asyncio.all_tasks(loop=self.__loop):
+        for task in asyncio.all_tasks(loop=self.loop):
             if task != self.__terminate_task:
                 self.logger.trace("Canceling %r", task)
                 task.cancel()
 
-        self.__loop.stop()
+        self.loop.stop()
 
 
 def main():
