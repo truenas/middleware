@@ -200,6 +200,7 @@ ldap_status()
 ldap_start()
 {
 	if is_unified_standby; then
+		rm -f $LDAP_STATUS_ALERT
 		return 0
 	fi
 	if dirsrv_enabled ldap
@@ -237,6 +238,7 @@ ldap_start()
 ldap_stop()
 {
 	if is_unified_standby; then
+		rm -f $LDAP_STATUS_ALERT
 		return 0
 	fi
         /usr/local/www/freenasUI/tools/cachetool.py expire
