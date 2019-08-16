@@ -6,7 +6,6 @@ from django.db.models import Model
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.models.fields import DictField, ListField
 from freenasUI.middleware.client import client, ClientException
-from freenasUI.services.exceptions import ServiceFailed
 
 
 def handle_middleware_validation(form, excep):
@@ -117,10 +116,7 @@ class MiddlewareModelForm:
             try:
                 return c.call(f"{self.middleware_plugin}.{self._middleware_action}", *args, **kwargs)
             except ClientException as e:
-                if e.errno == ClientException.ESERVICESTARTFAILURE:
-                    raise ServiceFailed(e.extra[0], e.error)
-                else:
-                    raise
+                raise
 
     def delete(self, request=None, events=None, **kwargs):
         with client as c:

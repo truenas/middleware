@@ -44,7 +44,6 @@ from django.forms import BaseInlineFormSet, inlineformset_factory
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm, handle_middleware_validation
-from freenasUI.services.exceptions import ServiceFailed
 from middlewared.client import ValidationErrors
 from tastypie.validation import FormValidation
 
@@ -386,12 +385,6 @@ class BaseFreeAdmin(object):
                 except ValidationErrors as e:
                     handle_middleware_validation(mf, e)
                     return JsonResp(request, form=mf, formsets=formsets)
-                except ServiceFailed as e:
-                    return JsonResp(
-                        request,
-                        error=True,
-                        message=e.value,
-                        events=["serviceFailed(\"%s\")" % e.service])
                 except MiddlewareError as e:
                     return JsonResp(
                         request,
@@ -607,13 +600,6 @@ class BaseFreeAdmin(object):
                 except ValidationErrors as e:
                     handle_middleware_validation(mf, e)
                     return JsonResp(request, form=mf, formsets=formsets)
-                except ServiceFailed as e:
-                    return JsonResp(
-                        request,
-                        form=mf,
-                        error=True,
-                        message=e.value,
-                        events=["serviceFailed(\"%s\")" % e.service])
                 except MiddlewareError as e:
                     return JsonResp(
                         request,
