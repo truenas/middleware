@@ -25,7 +25,6 @@
 #
 #####################################################################
 import logging
-import subprocess
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -33,7 +32,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, ListField, Model, UserField, PathField
-from freenasUI.middleware.client import client
 from freenasUI.storage.models import Disk
 
 log = logging.getLogger('tasks.models')
@@ -194,16 +192,6 @@ class CloudSync(Model):
 
     def __str__(self):
         return self.description
-
-    def run(self):
-        with client as c:
-            jid = c.call('cloudsync.sync', self.id)
-        return jid
-
-    def stop(self):
-        with client as c:
-            jid = c.call('cloudsync.abort', self.id)
-        return jid
 
 
 class CronJob(Model):
