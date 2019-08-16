@@ -1,5 +1,0 @@
-{% extends "freeadmin/generic_form.html" %}
-{% block form %}
-<tr><td><strong>{% if not disk %}{{ label }}{% else %}{{ disk }}{% endif %}</strong>: {% trans "Are you sure you want to detach?" %}</td></tr>
-{% endblock %}
-{% block oklabel %}{% trans "Yes" %}{% endblock %}
