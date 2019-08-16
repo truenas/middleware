@@ -26,21 +26,12 @@
 #####################################################################
 import json
 import logging
-import os
-import re
 import requests
-import sqlite3
-import subprocess
 import time
 from datetime import datetime, timedelta
-from django.utils.translation import ugettext_lazy as _
-from .log import log_traceback
 
 from freenasUI.middleware.client import client
 
-RE_MOUNT = re.compile(
-    r'^(?P<fs_spec>.+?) on (?P<fs_file>.+?) \((?P<fs_vfstype>\w+)', re.S
-)
 VERSION_FILE = '/etc/version'
 _VERSION = None
 log = logging.getLogger("common.system")
@@ -84,28 +75,6 @@ def get_sw_name():
 
 def get_sw_year():
     return str(datetime.now().year)
-
-
-def get_freenas_var_by_file(f, var):
-    assert f and var
-
-    pipe = os.popen('. "%s"; echo "${%s}"' % (f, var, ))
-    try:
-        val = pipe.readlines()[-1].rstrip()
-    finally:
-        pipe.close()
-
-    return val
-
-
-def get_freenas_var(var, default=None):
-    val = get_freenas_var_by_file("/etc/rc.freenas", var)
-    if not val:
-        val = default
-    return val
-
-
-FREENAS_DATABASE = get_freenas_var("FREENAS_CONFIG", "/data/freenas-v1.db")
 
 
 def send_mail(
@@ -166,24 +135,6 @@ def send_mail(
     return False, ''
 
 
-def service_enabled(name):
-    h = sqlite3.connect(FREENAS_DATABASE)
-    c = h.cursor()
-
-    enabled = False
-    sql = "select srv_enable from services_services " \
-        "where srv_service = '%s' order by -id limit 1" % name
-    c.execute(sql)
-    row = c.fetchone()
-    if row and row[0] != 0:
-        enabled = True
-
-    c.close()
-    h.close()
-
-    return enabled
-
-
 def ldap_enabled():
     from freenasUI.directoryservice.models import LDAP
 
@@ -198,57 +149,6 @@ def ldap_enabled():
     return enabled
 
 
-def ldap_sudo_configured():
-    from freenasUI.directoryservice.models import LDAP
-
-    enabled = False
-    try:
-        ldap = LDAP.objects.all()[0]
-        if ldap.ldap_sudosuffix:
-            enabled = True
-
-    except Exception:
-        enabled = False
-
-    return enabled
-
-
-def ldap_has_samba_schema():
-    from freenasUI.directoryservice.models import LDAP
-
-    has_samba_schema = False
-    try:
-        ldap = LDAP.objects.all()[0]
-        if ldap.ldap_has_samba_schema:
-            has_samba_schema = True
-
-    except Exception:
-        has_samba_schema = False
-
-    return has_samba_schema
-
-
-def ldap_anonymous_bind():
-    from freenasUI.directoryservice.models import LDAP
-
-    anonymous_bind = False
-    try:
-        ldap = LDAP.objects.all()[0]
-        if ldap.ldap_anonbind:
-            anonymous_bind = True
-
-    except Exception:
-        anonymous_bind = False
-
-    return anonymous_bind
-
-
-def ldap_objects():
-    from freenasUI.directoryservice.models import LDAP
-
-    return LDAP.objects.all()
-
-
 def activedirectory_enabled():
     from freenasUI.directoryservice.models import ActiveDirectory
 
@@ -258,31 +158,9 @@ def activedirectory_enabled():
         enabled = ad.ad_enable
 
     except Exception:
-        log_traceback(log=log)
         enabled = False
 
     return enabled
-
-
-def activedirectory_has_principal():
-    from freenasUI.directoryservice.models import ActiveDirectory
-
-    ad_has_principal = False
-    try:
-        ad = ActiveDirectory.objects.all()[0]
-        if ad.ad_kerberos_principal:
-            ad_has_principal = True
-
-    except Exception:
-        ad_has_principal = False
-
-    return ad_has_principal
-
-
-def activedirectory_objects():
-    from freenasUI.directoryservice.models import ActiveDirectory
-
-    return ActiveDirectory.objects.all()
 
 
 def nis_enabled():
@@ -297,111 +175,3 @@ def nis_enabled():
         enabled = False
 
     return enabled
-
-
-def nis_objects():
-    from freenasUI.directoryservice.models import NIS
-
-    return NIS.objects.all()
-
-
-def exclude_path(path, exclude):
-
-    if isinstance(path, bytes):
-        path = path.decode('utf8')
-
-    exclude = [y.decode('utf8') if isinstance(y, bytes) else y for y in exclude]
-
-    fine_grained = []
-    for e in exclude:
-        if not e.startswith(path):
-            continue
-        fine_grained.append(e)
-
-    if fine_grained:
-        apply_paths = []
-        check_paths = [os.path.join(path, f) for f in os.listdir(path)]
-        while check_paths:
-            fpath = check_paths.pop()
-            if not os.path.isdir(fpath):
-                apply_paths.append(fpath)
-                continue
-            for fg in fine_grained:
-                if fg.startswith(fpath):
-                    if fg != fpath:
-                        check_paths.extend([
-                            os.path.join(fpath, f)
-                            for f in os.listdir(fpath)
-                        ])
-                else:
-                    apply_paths.append(fpath)
-        return apply_paths
-    else:
-        return [path]
-
-
-def get_hostname():
-    from freenasUI.network.models import GlobalConfiguration
-    from freenasUI.common.pipesubr import pipeopen
-
-    hostname = None
-    try:
-        gc = GlobalConfiguration.objects.all()[0]
-        hostname = gc.get_hostname()
-
-    except Exception:
-        pass
-
-    if not hostname:
-        p = pipeopen("/bin/hostname", allowfork=True)
-        out = p.communicate()
-        if p.returncode == 0:
-            buf = out[0].strip()
-            parts = buf.split('.')
-            hostname = parts[0]
-
-    return hostname
-
-
-def validate_netbios_name(netbiosname):
-    regex = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
-
-    if not regex.match(netbiosname):
-        raise Exception("Invalid NetBIOS name")
-
-
-def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_netbios_name):
-    if not netbiosname1 or not netbiosname2:
-        return False
-
-    netbiosname1_parts = []
-    if ',' in netbiosname1:
-        netbiosname1_parts = netbiosname1.split(',')
-    elif ' ' in netbiosname1:
-        netbiosname1_parts = netbiosname1.split()
-    else:
-        netbiosname1_parts = [netbiosname1]
-
-    netbiosname2_parts = []
-    if ',' in netbiosname2:
-        netbiosname2_parts = netbiosname2.split(',')
-    elif ' ' in netbiosname1:
-        netbiosname2_parts = netbiosname2.split()
-    else:
-        netbiosname2_parts = [netbiosname2]
-
-    if not netbiosname1_parts or not netbiosname2_parts:
-        return False
-
-    for n1 in netbiosname1_parts:
-        if validate_func:
-            validate_func(n1)
-
-        for n2 in netbiosname2_parts:
-            if validate_func:
-                validate_func(n2)
-
-            if n1.lower() == n2.lower():
-                return True
-
-    return False
