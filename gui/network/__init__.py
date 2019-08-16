@@ -24,7 +24,3 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
-from freenasUI.freeadmin.apppool import appPool
-from .hook import NetworkHook
-appPool.register(NetworkHook)

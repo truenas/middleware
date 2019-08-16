@@ -325,72 +325,6 @@ class Interfaces(Model):
         verbose_name_plural = _("Interfaces")
         ordering = ["int_interface"]
 
-    def get_ipv4_addresses(self):
-        """
-        Includes IPv4 addresses in aliases
-        """
-        ips = []
-        if self.int_ipv4address:
-            ips.append("%s/%s" % (
-                str(self.int_ipv4address),
-                str(self.int_v4netmaskbit),
-            ))
-        if self.int_ipv4address_b:
-            ips.append("%s/%s" % (
-                str(self.int_ipv4address_b),
-                str(self.int_v4netmaskbit),
-            ))
-        for alias in self.alias_set.exclude(alias_v4address=''):
-            ips.append("%s/%s" % (
-                str(alias.alias_v4address),
-                str(alias.alias_v4netmaskbit),
-            ))
-        return ips
-
-    def get_my_ipv4_addresses(self, vip=None):
-        """
-        Includes IPv4 addresses of this node, aliases of this node,
-        and (optionally) VIPs
-        """
-        ips = []
-        _n = notifier()
-        if not _n.is_freenas() and _n.failover_node() == 'B':
-            if self.int_ipv4address_b:
-                ips.append("%s" % str(self.int_ipv4address_b))
-            for alias in self.alias_set.exclude(alias_v4address_b=''):
-                ips.append("%s" % str(alias.alias_v4address_b))
-        else:
-            if self.int_ipv4address:
-                ips.append("%s" % str(self.int_ipv4address))
-            for alias in self.alias_set.exclude(alias_v4address=''):
-                ips.append("%s" % str(alias.alias_v4address))
-        if vip:
-            if self.int_vip:
-                ips.append("%s" % str(self.int_vip))
-            for alias in self.alias_set.exclude(alias_vip=''):
-                ips.append("%s" % str(alias.alias_vip))
-        return ips
-
-    def get_ipv6_addresses(self):
-        """
-        Includes IPv6 addresses in aliases
-        """
-        ips = []
-        if self.int_ipv6address:
-            ips.append("%s/%s" % (
-                str(self.int_ipv6address),
-                str(self.int_v6netmaskbit),
-            ))
-        for alias in self.alias_set.exclude(alias_v6address=''):
-            ips.append("%s/%s" % (
-                str(alias.alias_v6address),
-                str(alias.alias_v6netmaskbit),
-            ))
-        return ips
-
-    def get_media_status(self):
-        return notifier().iface_media_status(self.int_interface)
-
 
 class Alias(Model):
     alias_interface = models.ForeignKey(
@@ -448,13 +382,6 @@ class Alias(Model):
             return '%s:%s' % (
                 self.alias_interface.int_name,
                 self.alias_v6address)
-
-    @property
-    def alias_network(self):
-        if self.alias_v4address:
-            return '%s/%s' % (self.alias_v4address, self.alias_v4netmaskbit)
-        else:
-            return '%s/%s' % (self.alias_v6address, self.alias_v6netmaskbit)
 
     class Meta:
         verbose_name = _("Alias")
