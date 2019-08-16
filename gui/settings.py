@@ -160,12 +160,6 @@ MIDDLEWARE_CLASSES = (
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
 )
 
-DOJANGO_BASE_MEDIA_URL = '/legacy/dojango/dojo-media'
-DOJANGO_DOJO_PROFILE = 'local_release'
-DOJANGO_DOJO_VERSION = '1.12.2'
-#DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
-DOJANGO_DOJO_DEBUG = True
-
 ROOT_URLCONF = 'freenasUI.urls'
 
 LOCALE_PATHS = (
@@ -182,7 +176,6 @@ DIR_BLACKLIST = [
     'contrib',
     'common',
     'locale',
-    'dojango',
     'tools',
     'freeadmin',
     'static',
@@ -210,7 +203,6 @@ BLACKLIST_NAV = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'dojango',
     'freeadmin',
 )
 
