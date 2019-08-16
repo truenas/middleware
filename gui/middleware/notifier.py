@@ -67,7 +67,6 @@ if not apps.app_configs:
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.pipesubr import SIG_SETMASK
-from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -79,7 +78,7 @@ RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
 
 
-class notifier(metaclass=HookMetaclass):
+class notifier:
 
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
