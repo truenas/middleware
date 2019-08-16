@@ -1197,6 +1197,12 @@ class CertificateService(CRUDService):
                     schema_name,
                     f'{cert["name"]}\'s private key size is less then 1024 bits'
                 )
+
+            if cert['revoked']:
+                verrors.add(
+                    schema_name,
+                    'This certificate is revoked'
+                )
         else:
             verrors.add(
                 schema_name,
