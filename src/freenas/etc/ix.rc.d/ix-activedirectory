@@ -179,6 +179,10 @@ setup_homedirs()
 activedirectory_start()
 {
 	if is_unified_standby; then
+		if [ -f /tmp/.adalert ]
+		then
+			rm /tmp/.adalert
+		fi
 		return 0
 	fi
 	if dirsrv_enabled activedirectory
@@ -222,6 +226,10 @@ activedirectory_start()
 activedirectory_status()
 {
 	if is_unified_standby; then
+		if [ -f /tmp/.adalert ]
+		then
+			rm /tmp/.adalert
+		fi
 		return 0
 	fi
 	local res=1
@@ -241,6 +249,10 @@ activedirectory_status()
 activedirectory_stop()
 {
 	if is_unified_standby; then
+		if [ -f /tmp/.adalert ]
+		then
+			rm /tmp/.adalert
+		fi
 		return 0
 	fi
 	AD_init
