@@ -186,10 +186,7 @@ class DiskService(CRUDService):
         new.update(data)
 
         if old['passwd'] != new['passwd'] and new['passwd']:
-            new['passwd'] = await self.middleware.call(
-                'notifier.pwenc_encrypt',
-                new['passwd']
-            )
+            new['passwd'] = await self.middleware.call('pwenc.encrypt', new['passwd'])
 
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             new[key] = new[key].title()
