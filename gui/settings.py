@@ -184,7 +184,6 @@ DIR_BLACKLIST = [
     'locale',
     'dojango',
     'tools',
-    'api',
     'freeadmin',
     'static',
 ]
@@ -203,7 +202,6 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'freenasUI.api',
     'freenasUI.freeadmin',
 ) + tuple(APP_MODULES)
 
