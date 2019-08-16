@@ -70,6 +70,10 @@ class CertificateRevokedAlertSource(AlertSource):
                 'Web UI', 'certificate', 'certificate'
             ),
             (
+                (await self.middleware.call('system.advanced.config'))['syslog_tls_certificate'],
+                'Syslog', 'certificate', 'certificate'
+            ),
+            (
                 (await self.middleware.call('openvpn.server.config'))['root_ca'],
                 'OpenVPN server', 'root certificate authority', 'certificateauthority'
             ),

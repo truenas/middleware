@@ -9,6 +9,53 @@ import textwrap
 logger = logging.getLogger(__name__)
 
 
+def generate_syslog_remote_destination(middleware, advanced_config):
+    result = ""
+    if advanced_config["syslogserver"]:
+        if ":" in advanced_config["syslogserver"]:
+            host, port = advanced_config["syslogserver"].rsplit(":", 1)
+        else:
+            host, port = advanced_config["syslogserver"], "514"
+
+        result += 'destination loghost { '
+
+        if advanced_config["syslog_transport"] == "TLS":
+            try:
+                certificate = middleware.call_sync(
+                    "certificate.query",
+                    [
+                        ("id", "=", advanced_config["syslog_tls_certificate"]),
+                        ("revoked", "=", False),
+                    ],
+                    {"get": True}
+                )
+            except IndexError:
+                logger.warning("Syslog TLS certificate not available, skipping remote syslog destination")
+                return ""
+
+            try:
+                ca_dir = "/etc/certificates"
+                for filename in os.listdir(ca_dir):
+                    if filename.endswith(".0") and os.path.islink(os.path.join(ca_dir, filename)):
+                        os.unlink(os.path.join(ca_dir, filename))
+                os.symlink(certificate["certificate_path"],
+                           os.path.join(ca_dir, "%x.0" % certificate["subject_name_hash"]))
+            except Exception:
+                logger.error("Error symlinking syslog certificate, skipping remote syslog destination", exc_info=True)
+                return ""
+
+            result += f'syslog("{host}" port({port}) transport("tls") tls(ca-dir("{ca_dir}")));'
+        else:
+            transport = advanced_config["syslog_transport"].lower()
+            result += f'{transport}("{host}" port({port}) localport(514));'
+
+        result += ' };\n'
+        result += f'log {{ source(src); filter({advanced_config["sysloglevel"].lower()});'
+        result += f'destination(loghost); }};\n'
+
+    return result
+
+
 def generate_syslog_conf(middleware):
     # In 12.0 we can have /conf/base/usr__local__etc as the base point for /usr/local/etc/tmpfs
     # (see commit 704f1eb60f438171690d79bfdf17e95044cc6bb2)
@@ -27,14 +74,7 @@ def generate_syslog_conf(middleware):
     if advanced_config["fqdn_syslog"]:
         syslog_conf = syslog_conf.replace("use-fqdn(no)", "use-fqdn(yes)")
 
-    if advanced_config["syslogserver"]:
-        if ":" in advanced_config["syslogserver"]:
-            host, port = advanced_config["syslogserver"].split(":")[:2]
-        else:
-            host, port = advanced_config["syslogserver"], "514"
-
-        syslog_conf += f'destination loghost {{ udp("{host}" port({port}) localport(514)); }};\n'
-        syslog_conf += f'log {{ source(src); filter({advanced_config["sysloglevel"].lower()}); destination(loghost); }};\n'
+    syslog_conf += generate_syslog_remote_destination(middleware, advanced_config)
 
     with open("/etc/local/syslog-ng.conf", "w") as f:
         f.write(syslog_conf)

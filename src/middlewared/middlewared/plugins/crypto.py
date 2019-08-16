@@ -382,7 +382,7 @@ class CryptoKeyService(Service):
                 'until': self.parse_cert_date_string(cert.get_notAfter()),
                 'serial': cert.get_serial_number(),
                 'chain': len(RE_CERTIFICATE.findall(certificate)) > 1,
-                'fingerprint': cert.digest('sha1').decode()
+                'fingerprint': cert.digest('sha1').decode(),
             })
 
             return cert_info
@@ -398,7 +398,8 @@ class CryptoKeyService(Service):
             'san': [],
             'email': obj.get_subject().emailAddress,
             'DN': '',
-            'extensions': {}
+            'subject_name_hash': obj.subject_name_hash(),
+            'extensions': {},
         }
 
         for ext in (
@@ -1196,6 +1197,12 @@ class CertificateService(CRUDService):
                     schema_name,
                     f'{cert["name"]}\'s private key size is less then 1024 bits'
                 )
+
+            if cert['revoked']:
+                verrors.add(
+                    schema_name,
+                    'This certificate is revoked'
+                )
         else:
             verrors.add(
                 schema_name,
@@ -1971,6 +1978,7 @@ class CertificateService(CRUDService):
         # Let's make sure we don't delete a certificate which is being used by any service in the system
         for service_cert_id, text in [
             ((self.middleware.call_sync('system.general.config'))['ui_certificate']['id'], 'WebUI'),
+            ((self.middleware.call_sync('system.advanced.config'))['syslog_tls_certificate'], 'Syslog'),
             ((self.middleware.call_sync('ftp.config'))['ssltls_certificate'], 'FTP'),
             ((self.middleware.call_sync('s3.config'))['certificate'], 'S3'),
             ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav'),
@@ -2660,7 +2668,7 @@ class CertificateAuthorityService(CRUDService):
                 ]
             }
         """
-        ca = await self._get_instance(id)
+        await self._get_instance(id)
         verrors = ValidationErrors()
 
         # Let's make sure we don't delete a ca which is being used by any service in the system

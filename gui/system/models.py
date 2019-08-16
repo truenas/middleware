@@ -334,6 +334,23 @@ class Advanced(Model):
                     "If :port is not specified, it defaults to port 514. "
                     "This field currently only takes IPv4 addresses."),
     )
+    adv_syslog_transport = models.CharField(
+        max_length=12,
+        choices=choices.SYSLOG_TRANSPORT,
+        default="UDP",
+        verbose_name=_("Syslog server transport"),
+        help_text=_("Which transport is used to deliver log messages to the server. "
+                    "The default is UDP."),
+    )
+    adv_syslog_tls_certificate = models.ForeignKey(
+        "Certificate",
+        verbose_name=_("Certificate for remote Syslog"),
+        limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING,
+                                            CERT_TYPE_INTERNAL]},
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name = _("Advanced")

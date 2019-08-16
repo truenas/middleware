@@ -75,8 +75,12 @@ class SystemAdvancedService(ConfigService):
 
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
+
         if data.get('sysloglevel'):
             data['sysloglevel'] = data['sysloglevel'].upper()
+
+        if data['syslog_tls_certificate']:
+            data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
 
         return data
 
@@ -116,6 +120,11 @@ class SystemAdvancedService(ConfigService):
                         f'{schema}.syslogserver',
                         'Port must be in the range of 0 to 65535.'
                     )
+
+        if data['syslog_transport'] == 'TLS':
+            await self.middleware.call('certificate.cert_services_validation', data['syslog_tls_certificate'],
+                                       f'{schema}.syslog_tls_certificate')
+
         return verrors, data
 
     @accepts(
@@ -144,6 +153,8 @@ class SystemAdvancedService(ConfigService):
                                      'F_WARNING', 'F_NOTICE', 'F_INFO',
                                      'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
+            Str('syslog_transport', enum=['UDP', 'TCP', 'TLS']),
+            Int('syslog_tls_certificate', null=True),
             update=True
         )
     )
@@ -228,8 +239,10 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
             if (
-                original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower()
-                or original_data['syslogserver'] != config_data['syslogserver']
+                original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or
+                original_data['syslogserver'] != config_data['syslogserver'] or
+                original_data['syslog_transport'] != config_data['syslog_transport'] or
+                original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate']
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 

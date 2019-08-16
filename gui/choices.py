@@ -816,6 +816,13 @@ SYS_LOG_LEVEL = (
 )
 
 
+SYSLOG_TRANSPORT = (
+    ('TCP', _('TCP')),
+    ('UDP', _('UDP')),
+    ('TLS', _('TLS')),
+)
+
+
 # on|off|ctrl|[!]data|auth|auth+[!]data
 FTP_TLS_POLICY_CHOICES = (
     ('on', _('on')),
