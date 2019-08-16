@@ -160,33 +160,6 @@ class PathField(models.CharField):
         return super(PathField, self).formfield(**kwargs)
 
 
-class MACField(models.Field):
-    empty_strings_allowed = False
-
-    def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = 17
-        super(MACField, self).__init__(*args, **kwargs)
-
-    def get_internal_type(self):
-        return "CharField"
-
-    def formfield(self, **kwargs):
-        from freenasUI.freeadmin.forms import MACField as MF
-        defaults = {'form_class': MF}
-        defaults.update(kwargs)
-        return super(MACField, self).formfield(**defaults)
-
-    def to_python(self, value):
-        if value:
-            return value.replace(':', '')
-        return value
-
-    def get_db_prep_value(self, value, connection, prepared=False):
-        if value:
-            return re.sub(r'(?P<du>[0-9A-F]{2})(?!$)', '\g<du>:', value)
-        return value
-
-
 class MultiSelectField(models.Field):
 
     def get_internal_type(self):
@@ -270,32 +243,3 @@ class MultiSelectField(models.Field):
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
         return self.get_db_prep_value(value)
-
-
-class Network4Field(models.CharField):
-
-    def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = 18  # 255.255.255.255/32
-        super(Network4Field, self).__init__(*args, **kwargs)
-
-    def formfield(self, **kwargs):
-        # FIXME: Move to top (causes cycle-dependency)
-        from freenasUI.freeadmin.forms import Network4Field as NF
-        defaults = {'form_class': NF}
-        kwargs.update(defaults)
-        return super(Network4Field, self).formfield(**kwargs)
-
-
-class Network6Field(models.CharField):
-
-    def __init__(self, *args, **kwargs):
-        # ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128
-        kwargs['max_length'] = 43
-        super(Network6Field, self).__init__(*args, **kwargs)
-
-    def formfield(self, **kwargs):
-        # FIXME: Move to top (causes cycle-dependency)
-        from freenasUI.freeadmin.forms import Network6Field as NF
-        defaults = {'form_class': NF}
-        kwargs.update(defaults)
-        return super(Network6Field, self).formfield(**kwargs)

@@ -24,66 +24,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
-
 from django.db import models
-from django.db.models.base import ModelBase
 
-from freenasUI.common.log import log_traceback
-from freenasUI.freeadmin.apppool import appPool
-
-#FIXME: Backward compatible
 from .fields import (  # NOQA
     DictField, ListField, EncryptedDictField,
-    UserField, GroupField, PathField, MACField, Network4Field, Network6Field
+    UserField, GroupField, PathField,
 )
 
-log = logging.getLogger('freeadmin.models')
-
-
-class FreeModelBase(ModelBase):
-    def __new__(cls, name, bases, attrs):
-        from freenasUI.freeadmin.site import site
-
-        bases = list(bases)
-        appPool.hook_model_new(name, bases, attrs)
-        new_class = ModelBase.__new__(cls, name, tuple(bases), attrs)
-        if new_class._meta.abstract:
-            pass
-        elif hasattr(new_class, 'FreeAdmin'):
-            site.register(new_class, freeadmin=new_class.FreeAdmin)
-
-        return new_class
-
-
-class Model(models.Model, metaclass=FreeModelBase):
+class Model(models.Model):
     class Meta:
         abstract = True
-
-    @models.permalink
-    def get_add_url(self):
-        return ('freeadmin_%s_%s_add' % (
-            self._meta.app_label,
-            self._meta.model_name,
-        ), )
-
-    @models.permalink
-    def get_edit_url(self):
-        return ('freeadmin_%s_%s_edit' % (
-            self._meta.app_label,
-            self._meta.model_name,
-        ), (), {'oid': self.pk})
-
-    @models.permalink
-    def get_delete_url(self):
-        return ('freeadmin_%s_%s_delete' % (
-            self._meta.app_label,
-            self._meta.model_name,
-        ), (), {'oid': self.pk})
-
-    @models.permalink
-    def get_empty_formset_url(self):
-        return ('freeadmin_%s_%s_empty_formset' % (
-            self._meta.app_label,
-            self._meta.model_name,
-        ), )
