@@ -24,10 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import crypt
 import logging
-import os
-import time
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -35,7 +32,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, PathField
-from freenasUI.middleware.client import client
 
 log = logging.getLogger('account.models')
 
@@ -163,23 +159,6 @@ class bsdUsers(Model):
     is_staff = True
     objects = UserManager()
 
-    @classmethod
-    def has_root_password(cls):
-        qs = cls.objects.filter(bsdusr_uid=0).exclude(bsdusr_unixhash='*')
-        return qs.exists()
-
-    @property
-    def bsdusr_sshpubkey(self):
-        keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home
-        if not os.path.exists(keysfile):
-            return ''
-        try:
-            with open(keysfile, 'r') as f:
-                keys = f.read()
-            return keys
-        except:
-            return ''
-
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
@@ -210,30 +189,6 @@ class bsdUsers(Model):
         authenticated in templates.
         """
         return True
-
-    def set_password(self, password):
-        # Django auth backend calls set_password even if user doesnt exist
-        if not self.bsdusr_username or not self.id:
-            time.sleep(0.1)
-            return
-        with client as c:
-            pk = c.call('user.update', self.id, {'password': password})
-        user = bsdUsers.objects.get(pk=pk)
-        self.bsdusr_unixhash = user.bsdusr_unixhash
-        self.bsdusr_smbhash = user.bsdusr_smbhash
-
-    def check_password(self, raw_password):
-        # Only allow uid 0 for now
-        if self.bsdusr_uid != 0:
-            return False
-        if self.bsdusr_unixhash:
-            if self.bsdusr_unixhash == 'x' or self.bsdusr_unixhash == '*':
-                return False
-            if isinstance(raw_password, bytes):
-                raw_password = raw_password.decode('utf-8')
-            return crypt.crypt(
-                raw_password, str(self.bsdusr_unixhash)
-            ) == str(self.bsdusr_unixhash)
 
     def save(self, *args, **kwargs):
         # TODO: Add last_login field
