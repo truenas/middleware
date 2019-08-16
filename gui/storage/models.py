@@ -26,18 +26,14 @@
 
 from datetime import time
 import logging
-import os
 import uuid
 
 from django.db import models
-from django.utils.translation import ugettext as __, ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import ListField
-from freenasUI.middleware import zfs
-from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.client import client
-from freenasUI.freeadmin.models import Model, UserField
+from freenasUI.freeadmin.models import Model
 from freenasUI.system.models import SSHCredentialsKeychainCredential
 
 log = logging.getLogger('storage.models')
@@ -65,97 +61,8 @@ class Volume(Model):
         editable=False,
     )
 
-    @property
-    def is_upgraded(self):
-        with client as c:
-            return c.call('pool.is_upgraded', self.id)
-
-    @property
-    def vol_path(self):
-        return '/mnt/%s' % self.vol_name
-
     class Meta:
         verbose_name = _("Volume")
-
-    def get_disks(self):
-        try:
-            if not hasattr(self, '_disks'):
-                n = notifier()
-                if self.is_decrypted():
-                    pool = n.zpool_parse(self.vol_name)
-                    self._disks = pool.get_disks()
-                else:
-                    self._disks = []
-                    for ed in self.encrypteddisk_set.all():
-                        if not ed.encrypted_disk:
-                            continue
-                        if os.path.exists('/dev/{}'.format(ed.encrypted_disk.devname)):
-                            self._disks.append(ed.encrypted_disk.devname)
-            return self._disks
-        except Exception as e:
-            log.debug(
-                "Exception on retrieving disks for %s: %s",
-                self.vol_name,
-                e)
-            return []
-
-    def get_children(self, hierarchical=True, include_root=True):
-        return zfs.zfs_list(
-            path=self.vol_name,
-            recursive=True,
-            types=["filesystem", "volume"],
-            hierarchical=hierarchical,
-            include_root=include_root)
-
-    def get_datasets(self, hierarchical=False, include_root=False):
-        return zfs.list_datasets(
-            path=self.vol_name,
-            recursive=True,
-            hierarchical=hierarchical,
-            include_root=include_root)
-
-    def _get_status(self):
-        try:
-            # Make sure do not compute it twice
-            if not hasattr(self, '_status'):
-                status = notifier().get_volume_status(self.vol_name)
-                if status == 'UNKNOWN' and self.vol_encrypt > 0:
-                    return _("LOCKED")
-                else:
-                    self._status = status
-            return self._status
-        except Exception as e:
-            if self.is_decrypted():
-                log.debug(
-                    "Exception on retrieving status for %s: %s",
-                    self.vol_name,
-                    e)
-                return _("Error")
-    status = property(_get_status)
-
-    def get_geli_keyfile(self):
-        from freenasUI.middleware.notifier import GELI_KEYPATH
-        if not os.path.exists(GELI_KEYPATH):
-            os.mkdir(GELI_KEYPATH)
-        return "%s/%s.key" % (GELI_KEYPATH, self.vol_encryptkey, )
-
-    def is_decrypted(self):
-        __is_decrypted = getattr(self, '__is_decrypted', None)
-        if __is_decrypted is not None:
-            return __is_decrypted
-
-        self.__is_decrypted = True
-        # If the status is not UNKNOWN means the pool is already imported
-        status = notifier().get_volume_status(self.vol_name)
-        if status != 'UNKNOWN':
-            return self.__is_decrypted
-        if self.vol_encrypt > 0:
-            _notifier = notifier()
-            for ed in self.encrypteddisk_set.all():
-                if not _notifier.geli_is_decrypted(ed.encrypted_provider):
-                    self.__is_decrypted = False
-                    break
-        return self.__is_decrypted
 
     def delete(self, destroy=True, cascade=True):
         return super().delete()
@@ -167,52 +74,6 @@ class Volume(Model):
 
     def __str__(self):
         return self.vol_name
-
-    def _get__zplist(self):
-        if not hasattr(self, '__zplist'):
-            try:
-                self.__zplist = zfs.zpool_list().get(self.vol_name)
-            except SystemError:
-                self.__zplist = None
-        return self.__zplist
-
-    def _set__zplist(self, value):
-        self.__zplist = value
-
-    def _get_avail(self):
-        try:
-            return self._zplist['free']
-        except:
-            if self.is_decrypted():
-                return __("Error getting available space")
-            else:
-                return __("Locked")
-
-    def _get_used_bytes(self):
-        try:
-            return self._zplist['alloc']
-        except:
-            return 0
-
-    def _get_used(self):
-        try:
-            return self._get_used_bytes()
-        except:
-            if self.is_decrypted():
-                return __("Error getting used space")
-            else:
-                return __("Locked")
-
-    def _get_used_pct(self):
-        try:
-            return "%d%%" % self._zplist['capacity']
-        except:
-            return __("Error")
-
-    _zplist = property(_get__zplist, _set__zplist)
-    avail = property(_get_avail)
-    used_pct = property(_get_used_pct)
-    used = property(_get_used)
 
 
 class Scrub(Model):
@@ -454,13 +315,6 @@ class Disk(Model):
         blank=True,
         editable=False
     )
-
-    @property
-    def devname(self):
-        if self.disk_multipath_name:
-            return "multipath/%s" % self.disk_multipath_name
-        else:
-            return self.disk_name
 
     class Meta:
         verbose_name = _("Disk")
@@ -961,9 +815,3 @@ class VMWarePlugin(Model):
 
     def __str__(self):
         return '{}:{}'.format(self.hostname, self.datastore)
-
-    def set_password(self, passwd):
-        self.password = notifier().pwenc_encrypt(passwd)
-
-    def get_password(self):
-        return notifier().pwenc_decrypt(self.password)
