@@ -53,6 +53,7 @@ from tastypie.authentication import (
 )
 from tastypie import fields, http
 from tastypie.authorization import Authorization
+from tastypie.bundle import Bundle
 from tastypie.exceptions import ImmediateHttpResponse, NotFound, UnsupportedFormat
 from tastypie.http import HttpUnauthorized, HttpNotFound
 from tastypie.paginator import Paginator
@@ -372,6 +373,53 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 return self.create_response(request, updated_bundle)
         except (NotFound, MultipleObjectsReturned):
             return self.create_response(request, 'Object not found', response_class=HttpNotFound)
+
+    def delete_detail(self, request, **kwargs):
+        from freenasUI.freeadmin.navtree import navtree
+        bundle = Bundle(request=request)
+        bundle.obj = self.obj_get(bundle=bundle, **self.remove_api_resource_names(kwargs))
+        if bundle.obj._meta.model._admin.delete_form:
+            deserialized = self.deserialize(
+                request,
+                request.body or '{}',
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+
+            Form = __import__(
+                f'{bundle.obj._meta.app_label}.forms',
+                globals(),
+                locals(),
+                [bundle.obj._meta.model._admin.delete_form],
+                0,
+            )
+            Form = getattr(Form, bundle.obj._meta.model._admin.delete_form)
+
+            form = Form(data=deserialized, instance=bundle.obj)
+            if not form.is_valid():
+                raise ImmediateHttpResponse(
+                    response=self.error_response(request, form.errors)
+                )
+
+        # Grab the form to call delete on same as in freeadmin
+        m = bundle.obj._meta.model
+        mf = None
+        if not isinstance(navtree._modelforms[m], dict):
+            mf = navtree._modelforms[m]
+        else:
+            if mf is None:
+                try:
+                    mf = navtree._modelforms[m][m._admin.edit_modelform]
+                except Exception:
+                    mf = list(navtree._modelforms[m].values())[-1]
+            else:
+                mf = navtree._modelforms[m][mf]
+
+        if mf:
+            form = mf(instance=bundle.obj)
+            form.delete()
+            return http.HttpNoContent()
+        else:
+            return super().delete_detail(request, **kwargs)
 
     def save(self, bundle, skip_errors=False):
 
