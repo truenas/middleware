@@ -270,15 +270,21 @@ class SystemAdvancedService(ConfigService):
 
 class SystemService(Service):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__is_freenas = None
+
     @no_auth_required
     @accepts()
     async def is_freenas(self):
         """
         Returns `true` if running system is a FreeNAS or `false` if something else.
         """
-        # This is a stub calling notifier until we have all infrastructure
-        # to implement in middlewared
-        return await self.middleware.call('notifier.is_freenas')
+        if self.__is_freenas is None:
+            self.__is_freenas = True if (
+                await self.middleware.call('system.version')
+            ).lower().startswith('freenas') else False
+        return self.__is_freenas
 
     @no_auth_required
     @accepts()

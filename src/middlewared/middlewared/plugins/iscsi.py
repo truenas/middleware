@@ -865,8 +865,7 @@ class iSCSITargetExtentService(CRUDService):
                 diskchoices[f'zvol/{snap["name"]}'] = f'{snap["name"]} [ro]'
 
         for disk in await self.middleware.call('disk.get_unused'):
-            size = await self.middleware.call('notifier.humanize_size', disk['size'])
-            diskchoices[disk['name']] = f'{disk["name"]} ({size})'
+            diskchoices[disk['name']] = f'{disk["name"]}|{disk["size"]}'
 
         return diskchoices
 

@@ -872,7 +872,7 @@ class AlertServiceService(CRUDService):
 
         master_node = "A"
         if not await self.middleware.call("system.is_freenas"):
-            if await self.middleware.call("notifier.failover_licensed"):
+            if await self.middleware.call("failover.licensed"):
                 master_node = await self.middleware.call("failover.node")
 
         test_alert = Alert(
