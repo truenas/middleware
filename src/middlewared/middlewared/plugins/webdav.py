@@ -114,6 +114,14 @@ class WebDAVSharingService(CRUDService):
 
             await self._service_change('webdav', 'reload')
 
+        if data['perm']:
+            await self.middleware.call('filesystem.chown', {
+                'path': data['path'],
+                'uid': (await self.middleware.call('dscache.get_uncached_user', 'webdav'))['pw_uid'],
+                'gid': (await self.middleware.call('dscache.get_uncached_group', 'webdav'))['gr_gid'],
+                'options': {'recursive': True}
+            })
+
         return await self.query(filters=[('id', '=', id)], options={'get': True})
 
     @accepts(
