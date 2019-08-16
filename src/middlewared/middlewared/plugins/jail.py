@@ -440,6 +440,20 @@ class PluginService(CRUDService):
         )
         return plugins
 
+    @accepts(
+        Str('repository', default='https://github.com/freenas/iocage-ix-plugins.git')
+    )
+    async def branches_choices(self, repository):
+
+        cp = await run(['git', 'ls-remote', repository], check=False, encoding='utf8')
+        if cp.returncode:
+            raise CallError(f'Failed to retrieve branches for {repository}: {cp.stderr}')
+
+        return {
+            branch: {'official': bool(BRANCH_REGEX.match(branch))}
+            for branch in re.findall(r'refs/heads/(.*)', cp.stdout)
+        }
+
     @private
     def get_version(self):
         """
@@ -620,20 +634,6 @@ class JailService(CRUDService):
             self.middleware.call_sync('cache.put', 'iocage_remote_releases', choices, 86400)
 
         return choices
-
-    @accepts(
-        Str('repository', default='https://github.com/freenas/iocage-ix-plugins.git')
-    )
-    async def branches_choices(self, repository):
-
-        cp = await run(['git', 'ls-remote', repository], check=False, encoding='utf8')
-        if cp.returncode:
-            raise CallError(f'Failed to retrieve branches for {repository}: {cp.stderr}')
-
-        return {
-            branch: {'official': bool(BRANCH_REGEX.match(branch))}
-            for branch in re.findall(r'refs/heads/(.*)', cp.stdout)
-        }
 
     @accepts(
         Dict(
