@@ -201,12 +201,6 @@ class notifier:
                 **kwargs,
             )
 
-    def geli_recoverykey_add(self, volume, passphrase=None):
-        from freenasUI.middleware.util import download_job
-        reckey = tempfile.NamedTemporaryFile(dir='/tmp/', delete=False)
-        download_job(reckey.name, 'recovery.key', 'pool.recoverykey_add', volume.id, {})
-        return reckey.name
-
     def geli_delkey(self, volume):
         try:
             with client as c:
