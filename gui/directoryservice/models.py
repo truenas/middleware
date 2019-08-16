@@ -35,29 +35,6 @@ from freenasUI.system.models import Certificate
 
 log = logging.getLogger("directoryservice.models")
 
-DS_TYPE_NONE = 0
-DS_TYPE_ACTIVEDIRECTORY = 1
-DS_TYPE_LDAP = 2
-DS_TYPE_NIS = 3
-DS_TYPE_CIFS = 5
-
-
-def enum_to_directoryservice(enum):
-    ds = None
-    ds_dict = {
-        DS_TYPE_ACTIVEDIRECTORY: 'ActiveDirectory',
-        DS_TYPE_LDAP: 'LDAP',
-        DS_TYPE_NIS: 'NIS',
-        DS_TYPE_CIFS: 'CIFS'
-    }
-
-    try:
-        ds = ds_dict[enum]
-    except Exception:
-        pass
-
-    return ds
-
 
 IDMAP_TYPE_NONE = 0
 IDMAP_TYPE_AD = 1
@@ -734,9 +711,6 @@ class KerberosKeytab(Model):
         help_text=_("Kerberos keytab file")
     )
 
-    def delete(self):
-        super(KerberosKeytab, self).delete()
-
     def __str__(self):
         return self.keytab_name
 
@@ -759,12 +733,6 @@ class KerberosSettings(Model):
 class DirectoryServiceBase(Model):
     class Meta:
         abstract = True
-
-    def __init__(self, *args, **kwargs):
-        super(DirectoryServiceBase, self).__init__(*args, **kwargs)
-
-        self.ds_type = DS_TYPE_NONE
-        self.ds_name = enum_to_directoryservice(self.ds_type)
 
 
 class ActiveDirectory(DirectoryServiceBase):
@@ -864,7 +832,7 @@ class ActiveDirectory(DirectoryServiceBase):
             "automatically cleared and all future operations carried out by the AD "
             "machine account, which has a restricted set of privileges in the AD domain."),
         blank=True,
-	null=True
+        null=True,
     )
     ad_createcomputer = models.CharField(
         blank=True,
@@ -915,7 +883,7 @@ class ActiveDirectory(DirectoryServiceBase):
                     "This option is needed in the case of Domain Controllers "
                     "enforcing the usage of signed LDAP connections (e.g. "
                     "Windows 2000 SP3 or higher). LDAP sign and seal can be "
-                    "controlled with the registry key \"HKLM\System\\"
+                    "controlled with the registry key \"HKLM\\System\\"
                     "CurrentControlSet\\Services\\NTDS\\Parameters\\"
                     "LDAPServerIntegrity\" on the Windows server side."
                     ),
@@ -936,9 +904,6 @@ class ActiveDirectory(DirectoryServiceBase):
                 log.debug('Failed to decrypt AD bind password', exc_info=True)
                 self.ad_bindpw = ''
         self._ad_bindpw_encrypted = False
-
-        self.ds_type = DS_TYPE_ACTIVEDIRECTORY
-        self.ds_name = enum_to_directoryservice(self.ds_type)
 
     def save(self, **kwargs):
         if self.ad_bindpw and not self._ad_bindpw_encrypted:
@@ -979,12 +944,6 @@ class NIS(DirectoryServiceBase):
         verbose_name=_("Enable"),
         default=False,
     )
-
-    def __init__(self, *args, **kwargs):
-        super(NIS, self).__init__(*args, **kwargs)
-
-        self.ds_type = DS_TYPE_NIS
-        self.ds_name = enum_to_directoryservice(self.ds_type)
 
     class Meta:
         verbose_name = _("NIS Domain")
@@ -1159,9 +1118,6 @@ class LDAP(DirectoryServiceBase):
                 )
                 self.ldap_bindpw = ''
         self._ldap_bindpw_encrypted = False
-
-        self.ds_type = DS_TYPE_LDAP
-        self.ds_name = enum_to_directoryservice(self.ds_type)
 
     def save(self, *args, **kwargs):
         if self.ldap_bindpw and not self._ldap_bindpw_encrypted:
