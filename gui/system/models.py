@@ -34,7 +34,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model
 from freenasUI.middleware.notifier import notifier
-from freenasUI.support.utils import get_license
 
 log = logging.getLogger('system.models')
 
@@ -849,30 +848,6 @@ class Support(Model):
 
     class FreeAdmin:
         deletable = False
-
-    @classmethod
-    def is_available(cls, support=None):
-        """
-        Checks whether the Proactive Support tab should be shown.
-        It should only be for TrueNAS and Siver/Gold Customers.
-
-        Returns:
-            tuple(bool, Support instance)
-        """
-        if notifier().is_freenas():
-            return False, support
-        if support is None:
-            try:
-                support = cls.objects.order_by('-id')[0]
-            except IndexError:
-                support = cls.objects.create()
-
-        license = get_license()[0]
-        if license is None:
-            return False, support
-        if license['contract_type'] in ('SILVER', 'GOLD'):
-            return True, support
-        return False, support
 
     def is_enabled(self):
         """

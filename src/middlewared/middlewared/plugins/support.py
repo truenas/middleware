@@ -23,8 +23,6 @@ from django.apps import apps
 if not apps.ready:
     django.setup()
 
-from freenasUI.support.utils import get_license
-
 ADDRESS = 'support-proxy.ixsystems.com'
 
 
@@ -183,9 +181,9 @@ class SupportService(ConfigService):
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await (await Popen(['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE)).communicate())[0].decode().split('\n')[0].upper()
-            license = get_license()[0]
+            license = (await self.middleware.call('system.info'))['license']
             if license:
-                data['company'] = license.customer_name
+                data['company'] = license['customer_name']
             else:
                 data['company'] = 'Unknown'
 
