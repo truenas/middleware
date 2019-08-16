@@ -13,7 +13,7 @@ def generate_syslog_remote_destination(middleware, advanced_config):
     result = ""
     if advanced_config["syslogserver"]:
         if ":" in advanced_config["syslogserver"]:
-            host, port = advanced_config["syslogserver"].split(":")[:2]
+            host, port = advanced_config["syslogserver"].rsplit(":", 1)
         else:
             host, port = advanced_config["syslogserver"], "514"
 

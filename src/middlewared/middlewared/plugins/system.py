@@ -122,20 +122,8 @@ class SystemAdvancedService(ConfigService):
                     )
 
         if data['syslog_transport'] == 'TLS':
-            try:
-                await self.middleware.call(
-                    'certificate.query',
-                    [
-                        ('id', '=', data['syslog_tls_certificate']),
-                        ('revoked', '=', False),
-                    ],
-                    {'get': True}
-                )
-            except IndexError:
-                verrors.add(
-                    f'{schema}.syslog_tls_certificate',
-                    'This should be a valid certificate when TLS transport is chosen',
-                )
+            await self.middleware.call('certificate.cert_services_validation', data['syslog_tls_certificate'],
+                                       f'{schema}.syslog_tls_certificate')
 
         return verrors, data
 
