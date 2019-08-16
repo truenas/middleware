@@ -24,11 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import hashlib
-import hmac
 import logging
 import subprocess
-import uuid
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -41,9 +38,7 @@ from freenasUI.freeadmin.models import (
     Model, UserField, GroupField, PathField, DictField, ListField
 )
 from freenasUI.freeadmin.models.fields import MultiSelectField
-from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import Disk
 from freenasUI.system.models import Certificate, CertificateAuthority
 
 log = logging.getLogger("services.forms")
@@ -617,22 +612,6 @@ class iSCSITargetExtent(Model):
     def __str__(self):
         return str(self.iscsi_target_extent_name)
 
-    def get_device(self):
-        if self.iscsi_target_extent_type not in ("Disk", "ZVOL"):
-            return self.iscsi_target_extent_path
-        else:
-            try:
-                disk = Disk.objects.get(pk=self.iscsi_target_extent_path)
-                if disk.disk_multipath_name:
-                    return "/dev/%s" % disk.devname
-                else:
-                    with client as c:
-                        return "/dev/%s" % (
-                            c.call('disk.identifier_to_device', disk.disk_identifier),
-                        )
-            except Exception:
-                return self.iscsi_target_extent_path
-
 
 class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
@@ -812,7 +791,7 @@ class iSCSITargetAuthCredential(Model):
             if field and self.id:
                 try:
                     setattr(self, attr, notifier().pwenc_decrypt(field))
-                except Exception as e:
+                except Exception:
                     log.debug(f'Failed to decrypt {attr} password', exc_info=True)
                     setattr(self, attr, '')
 
@@ -1957,21 +1936,11 @@ class SMART(Model):
         icon_model = "SMARTIcon"
 
 
+# TODO: Remove, it was used in legacy plugins
 class RPCToken(Model):
 
     key = models.CharField(max_length=1024)
     secret = models.CharField(max_length=1024)
-
-    @classmethod
-    def new(cls):
-        key = str(uuid.uuid4())
-        h = hmac.HMAC(key=key.encode(), digestmod=hashlib.sha512)
-        secret = str(h.hexdigest())
-        instance = cls.objects.create(
-            key=key,
-            secret=secret,
-        )
-        return instance
 
 
 class WebDAV(Model):
@@ -2274,7 +2243,7 @@ class OpenVPNBase(Model):
     cipher = models.CharField(
         max_length=32,
         null=True,
-        default = 'AES-256-CBC'
+        default='AES-256-CBC'
     )
 
     compression = models.CharField(
