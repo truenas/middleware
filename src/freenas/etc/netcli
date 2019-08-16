@@ -63,11 +63,10 @@ from django.utils.translation import ugettext as _
 _ = lambda s: s
 
 from freenasUI.choices import NICChoices, LAGGType
-from freenasUI.common import i18n
 from freenasUI.common.system import get_sw_version
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
-from freenasUI.system.models import Settings, Support
+from freenasUI.system.models import Support
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 
@@ -1221,7 +1220,10 @@ def main_menu():
         [ _("Shut Down"), shutdown],
     ]
 
-    if not notifier().is_freenas() and Support.is_available()[0]:
+    with client as c:
+        support_available = c.call('support.is_available')
+        is_freenas = c.call('system.is_freenas')
+    if is_freenas and support_available:
         menu.insert(12, [ _("Toggle automatic support alerts to iXsystems"), automatic_ix_alert ])
 
     menu_map = {}
@@ -1235,10 +1237,8 @@ def main_menu():
                 item[1](*sys.argv[2:])
                 sys.exit(0)
 
-    is_truenas = hasattr(notifier(), 'failover_status')
-
     while True:
-        if is_truenas and os.path.exists('/tmp/.failover_needop'):
+        if not is_freenas and os.path.exists('/tmp/.failover_needop'):
             """
             Currently we can have multiple pools.
             Because one encrypted pool failed to import does not mean the node
@@ -1262,7 +1262,7 @@ def main_menu():
                     time.sleep(5)
                     continue
 
-        if is_truenas:
+        if not is_freenas:
             print(netcli_title())
 
         print()
@@ -1300,7 +1300,6 @@ def main_menu():
 #
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    i18n.apply_language()
 
     while True:
         try:
