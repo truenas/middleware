@@ -75,8 +75,6 @@ LANGUAGE_CODE = 'en-us'
 
 SITE_ID = 1
 
-ROOT_URLCONF = 'freenasUI.urls'
-
 LOCALE_PATHS = (
     os.path.join(HERE, "locale"),
 )
