@@ -21,6 +21,7 @@ def migrate_afp_home(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('services', '0001_initial'),
         ('sharing', '0006_afp_share_afp_timemachine_quota_in_gib'),
     ]
 
