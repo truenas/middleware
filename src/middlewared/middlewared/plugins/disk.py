@@ -735,7 +735,7 @@ class DiskService(CRUDService):
 
         result = dict(zip(
             available_names,
-            await asyncio_map(lambda name: self.__get_temperature(name, smartctl_args[name]), names, 8),
+            await asyncio_map(lambda name: self.__get_temperature(name, smartctl_args[name]), available_names, 8),
         ))
 
         for name in names:
@@ -754,7 +754,7 @@ class DiskService(CRUDService):
     async def __get_temperature(self, disk, smartctl_args):
         if disk.startswith('da'):
             try:
-                return self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
+                return await self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
             except Exception:
                 pass
 
