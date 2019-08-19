@@ -5,6 +5,7 @@ import glob
 import itertools
 import json
 import math
+import netif
 import os
 import psutil
 import queue
@@ -1110,6 +1111,13 @@ class RealtimeEventSource(EventSource):
                 if not v:
                     break
                 data['cpu']['temperature'][i] = v[0].value
+
+            # Interface related statistics
+            data['interfaces'] = {}
+            for iface in netif.list_interfaces().values():
+                for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
+                    addr_data = addr.__getstate__(stats=True)
+                    data['interfaces'][iface.name] = addr_data['stats']
 
             self.send_event('ADDED', fields=data)
             time.sleep(2)
