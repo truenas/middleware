@@ -1115,21 +1115,20 @@ class RealtimeEventSource(EventSource):
 
             # Interface related statistics
             data['interfaces'] = {}
+            retrieve_stat_keys = ['received_bytes', 'sent_bytes']
             for iface in netif.list_interfaces().values():
                 for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
                     addr_data = addr.__getstate__(stats=True)
-                    data['interfaces'][iface.name] = addr_data['stats']
-
-            interface_last_run_stats = data['interfaces'].copy() if not last_interface_stats else {
-                iface: {
-                    k: data['interfaces'][iface][k] - last_interface_stats.get(iface, {}).get(k, 0)
-                    for k in data['interfaces'][iface]
-                }
-                for iface in data['interfaces']
-            }
+                    data['interfaces'][iface.name] = {}
+                    for k in retrieve_stat_keys:
+                        data['interfaces'][iface.name].update({
+                            k: addr_data['stats'][k],
+                            f'{k}_last': addr_data['stats'][k] - (
+                                0 if not last_interface_stats else last_interface_stats.get(iface.name, {}).get(k, 0)
+                            )
+                        })
 
             last_interface_stats = data['interfaces'].copy()
-            data['interfaces']['last_run'] = interface_last_run_stats
 
             self.send_event('ADDED', fields=data)
             time.sleep(2)
