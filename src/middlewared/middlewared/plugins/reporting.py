@@ -1079,6 +1079,7 @@ class RealtimeEventSource(EventSource):
 
         cp_time_last = None
         cp_times_last = None
+        last_interface_stats = None
 
         while not self._cancel.is_set():
             data = {}
@@ -1118,6 +1119,17 @@ class RealtimeEventSource(EventSource):
                 for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
                     addr_data = addr.__getstate__(stats=True)
                     data['interfaces'][iface.name] = addr_data['stats']
+
+            interface_last_run_stats = data['interfaces'].copy() if not last_interface_stats else {
+                iface: {
+                    k: data['interfaces'][iface][k] - last_interface_stats.get(iface, {}).get(k, 0)
+                    for k in data['interfaces'][iface]
+                }
+                for iface in data['interfaces']
+            }
+
+            last_interface_stats = data['interfaces'].copy()
+            data['interfaces']['last_run'] = interface_last_run_stats
 
             self.send_event('ADDED', fields=data)
             time.sleep(2)
