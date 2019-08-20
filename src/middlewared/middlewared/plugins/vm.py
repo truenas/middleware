@@ -189,6 +189,31 @@ class VMSupervisorLibVirt:
         for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id'])):
             device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
             if isinstance(device_obj, (DISK, CDROM)):
+                # We classify all devices in 2 types:
+                # 1) AHCI
+                # 2) VIRTIO
+                # Before deciding how we attach the disk/cdrom devices wrt slots/functions, following are few basic
+                # rules:
+                # We have a maximum of 32 slots ( 0-31 ) available which can be attached to the VM. Each slot supports
+                # functions which for each slot can be up to 8 ( 0-7 ). For legacy reasons, we start with the 3rd
+                # slot for numbering disks.
+
+                # AHCI based devices can be up to 32 in number per function.
+                # VIRTIO based disk devices consume a complete function meaning a maximum of 1 VIRTIO device can be
+                # present in a function.
+
+                # Libvirt / freebsd specific implementation
+                # We do not have great support of bhyve driver in libvirt, so this is a best effort to emulate our
+                # old implementation command. Following are a few points i have outlined to make the following logic
+                # clearer:
+                # 1) For AHCI based devices, libvirt assigns all of them to one slot ( a bug there ), we don't want
+                # that of course as bhyve imposes a restriction of a maximum 32 devices per function for AHCI. To come
+                # around this issue, controllers have been used for AHCI based devices which help us manage them
+                # nicely allotting them on specific supplied slots/functions.
+                # 2) For VIRTIO based disk devices, we use "pci" for their address type which helps us set
+                # the slot/function number and it actually being respected. Reason this can't be used with AHCI is
+                # that pci and sata bus are incompatible in AHCI and libvirt raises an error in this case.
+
                 # TODO: It would be ensured by vm service that we don't run out of slots/functions
                 if device['attributes'].get('type') != 'VIRTIO':
                     virtio = False
