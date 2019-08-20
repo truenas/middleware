@@ -13,17 +13,12 @@ import itertools
 import netif
 import os
 import re
-import sys
 import shlex
 import signal
 import socket
 import subprocess
 import urllib.request
 
-
-# TODO: move scan_for_vrrp to middleware
-if '/usr/local/www' not in sys.path:
-    sys.path.append('/usr/local/www')
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
@@ -997,11 +992,11 @@ class InterfaceService(CRUDService):
                     )
 
                 if not update or update.get('failover_vhid') != data['failover_vhid']:
-                    # FIXME: lazy load because of TrueNAS
-                    from freenasUI.tools.vhid import scan_for_vrrp
-                    used_vhids = await self.middleware.run_in_thread(
-                        scan_for_vrrp, data['name'], count=None, timeout=5
-                    )
+                    used_vhids = set()
+                    for v in (await self.middleware.call(
+                        'interface.scan_vrrp', data['name'], None, 5,
+                    )).values():
+                        used_vhids.update(set(v))
                     if data['failover_vhid'] in used_vhids:
                         used_vhids = ', '.join([str(i) for i in used_vhids])
                         verrors.add(
@@ -1490,6 +1485,38 @@ class InterfaceService(CRUDService):
             'vlan_parent': True,
             'exclude': ['bridge', 'epair', 'tap', 'vnet', 'vlan'],
         })
+
+    @private
+    def scan_vrrp(self, ifname, count=10, timeout=10):
+        # This runs tcpdump looking for VRRP packets.  If
+        # none are seen we have a gun in the glovebox that times the
+        # tcpdump out after `timeout` seconds. If we do see VRRP packets we stop
+        # after seeing `count` of them. If there were more than `count` VRRP
+        # devices on the broadcast domain we wouldn't get them all.
+        proc = subprocess.Popen(
+            f"tcpdump -l -n {f'-c {count}' if count else ''} -i {ifname} vrrp 2> /dev/null"
+            "| awk '{print $3, $9}'| sed -e 's/,$//'",
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8', shell=True,
+        )
+        try:
+            output = proc.communicate(timeout=timeout)[0].strip().split('\n')
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            output = proc.communicate()[0].strip().split('\n')
+
+        data = defaultdict(list)
+        for i in output:
+            parts = i.split()
+            if len(parts) != 2:
+                continue
+            ip, vhid = parts
+            try:
+                vhid = int(vhid)
+            except ValueError:
+                continue
+            if vhid not in data[ip]:
+                data[ip].append(vhid)
+        return data
 
     @private
     async def sync(self, wait_dhcp=False):
