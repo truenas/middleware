@@ -183,42 +183,41 @@ class VMSupervisorLibVirt:
         pci_slot = Nid(3)
         controller_index = Nid(1)
         controller_base = {'index': None, 'slot': None, 'function': 0, 'devices': 0}
-        ahci_controllers = []
+        current_controller = controller_base.copy()
 
         for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id'])):
             device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
             if isinstance(device_obj, (DISK, CDROM)) and device['attributes'].get('type') != 'VIRTIO':
-                # It would be ensured by vm.device service that we don't run out of slots/functions
+                # TODO: It would be ensured by vm service that we don't run out of slots/functions
 
-                if not ahci_controllers or ahci_controllers[-1]['devices'] == 32:
+                if not current_controller['slot'] or current_controller['devices'] == 32:
                     # Two scenarios will happen, either we bump function no or slot no
-                    new_controller = controller_base.copy()
-                    new_controller['index'] = controller_index()
-                    if not ahci_controllers or ahci_controllers[-1]['function'] == 7:
+                    current_controller['index'] = controller_index()
+                    # TODO: Please ensure 8 is acceptable, it should be in accordance to vm(8) but better safe
+                    #  then sorry
+                    if not current_controller['slot'] or current_controller['function'] == 8:
                         # We need to add a new controller with a new slot
-                        new_controller['slot'] = pci_slot()
+                        current_controller.update({
+                            'slot': pci_slot(),
+                            'function': 0,
+                            'devices': 0,
+                        })
                     else:
                         # We just need to bump the function here
-                        new_controller.update({
-                            'slot': ahci_controllers[-1]['slot'],
-                            'function': ahci_controllers[-1]['function'] + 1,
-                        })
-
-                    ahci_controllers.append(new_controller)
+                        current_controller['function'] += 1
 
                     # We should add this to xml now
                     devices.append(create_element(
-                        'controller', type='sata', index=str(new_controller['index']), attribute_dict={
+                        'controller', type='sata', index=str(current_controller['index']), attribute_dict={
                             'children': [
                                 create_element(
-                                    'address', type='pci', slot=str(new_controller['slot']),
-                                    function=str(new_controller['function']), multifunction='on'
+                                    'address', type='pci', slot=str(current_controller['slot']),
+                                    function=str(current_controller['function']), multifunction='on'
                                 )
                             ]
                         }
                     ))
 
-                current_controller = ahci_controllers[-1]
                 current_controller['devices'] += 1
 
                 device_xml = device_obj.xml(child_element=create_element(
