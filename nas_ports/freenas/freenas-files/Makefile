@@ -37,8 +37,6 @@ MAKE_JOBS_UNSAFE=yes
 .include <bsd.port.pre.mk>
 
 do-build:
-	${MAKE} -C ${WRKSRC}/fix_ea obj
-	${MAKE} -C ${WRKSRC}/fix_ea all
 	${MAKE} -C ${WRKSRC}/freenas-sysctl obj
 	${MAKE} -C ${WRKSRC}/freenas-sysctl all
 	${MAKE} -C ${WRKSRC}/winacl   obj
@@ -51,7 +49,6 @@ do-install:
 	mkdir -p ${STAGEDIR}${DEBUGDIR}${PREFIX}/boot/modules
 .endif
 
-	${MAKE} -C ${WRKSRC}/fix_ea DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/freenas-sysctl DESTDIR=${STAGEDIR} KMODDIR=${PREFIX}/boot/modules install
 	#
