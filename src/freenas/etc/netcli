@@ -1220,10 +1220,15 @@ def main_menu():
         [ _("Shut Down"), shutdown],
     ]
 
-    with client as c:
-        support_available = c.call('support.is_available')
-        is_freenas = c.call('system.is_freenas')
-    if is_freenas and support_available:
+    try:
+        with client as c:
+            support_available = c.call('support.is_available')
+            is_freenas = c.call('system.is_freenas')
+    except Exception:
+        support_available = False
+        is_freenas = True
+
+    if not is_freenas and support_available:
         menu.insert(12, [ _("Toggle automatic support alerts to iXsystems"), automatic_ix_alert ])
 
     menu_map = {}
