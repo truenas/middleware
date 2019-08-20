@@ -161,7 +161,6 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
-            Bool('legacy_ui'),
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
@@ -198,8 +197,6 @@ class SystemAdvancedService(ConfigService):
         hardware.
 
         When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
-
-        `legacy_ui` is disabled by default. Enabling it allows end users to use the legacy UI.
         """
         config_data = await self.config()
         original_data = config_data.copy()
@@ -275,9 +272,6 @@ class SystemAdvancedService(ConfigService):
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 
-            if original_data['legacy_ui'] != config_data['legacy_ui']:
-                await self.middleware.call('service.reload', 'http')
-
         return await self.config()
 
     @private
@@ -337,14 +331,6 @@ class SystemService(Service):
         Returns name of the product we are using.
         """
         return "TrueNAS"
-
-    @no_auth_required
-    @accepts()
-    async def legacy_ui_enabled(self):
-        """
-        Returns a boolean value indicating if the legacy UI can be used by end users.
-        """
-        return (await self.middleware.call('system.advanced.config'))['legacy_ui']
 
     @accepts()
     def version(self):
