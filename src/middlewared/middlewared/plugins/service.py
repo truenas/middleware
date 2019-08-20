@@ -101,7 +101,6 @@ class ServiceService(CRUDService):
         'ups': ServiceDefinition('upsd', '/var/db/nut/upsd.pid'),
         'upsmon': ServiceDefinition('upsmon', '/var/db/nut/upsmon.pid'),
         'smartd': ServiceDefinition('smartd', 'smartd-daemon', '/var/run/smartd-daemon.pid'),
-        'webshell': ServiceDefinition(None, '/var/run/webshell.pid'),
         'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
         'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid'),
         'openvpn_server': ServiceDefinition('openvpn', '/var/run/openvpn_server.pid'),
@@ -427,20 +426,6 @@ class ServiceService(CRUDService):
 
     async def _restart_django(self, **kwargs):
         await self._service("django", "restart", **kwargs)
-
-    async def _start_webshell(self, **kwargs):
-        await self._system("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
-
-    async def _restart_webshell(self, **kwargs):
-        try:
-            with open('/var/run/webshell.pid', 'r') as f:
-                pid = f.read()
-                os.kill(int(pid), signal.SIGTERM)
-                time.sleep(0.2)
-                os.kill(int(pid), signal.SIGKILL)
-        except Exception:
-            pass
-        await self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     async def _restart_iscsitarget(self, **kwargs):
         await self.middleware.call("etc.generate", "ctld")
