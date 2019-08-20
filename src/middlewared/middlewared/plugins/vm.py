@@ -183,14 +183,23 @@ class VMSupervisorLibVirt:
         pci_slot = Nid(3)
         controller_index = Nid(1)
         controller_base = {'index': None, 'slot': None, 'function': 0, 'devices': 0}
-        current_controller = controller_base.copy()
+        ahci_current_controller = controller_base.copy()
+        virtio_current_controller = controller_base.copy()
 
         for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id'])):
             device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
-            if isinstance(device_obj, (DISK, CDROM)) and device['attributes'].get('type') != 'VIRTIO':
+            if isinstance(device_obj, (DISK, CDROM)):
                 # TODO: It would be ensured by vm service that we don't run out of slots/functions
+                if device['attributes'].get('type') != 'VIRTIO':
+                    virtio = False
+                    current_controller = ahci_current_controller
+                    max_devices = 32
+                else:
+                    virtio = True
+                    current_controller = virtio_current_controller
+                    max_devices = 1
 
-                if not current_controller['slot'] or current_controller['devices'] == 32:
+                if not current_controller['slot'] or current_controller['devices'] == max_devices:
                     # Two scenarios will happen, either we bump function no or slot no
                     current_controller['index'] = controller_index()
                     # TODO: Please ensure 8 is acceptable, it should be in accordance to vm(8) but better safe
@@ -207,23 +216,32 @@ class VMSupervisorLibVirt:
                         current_controller['function'] += 1
 
                     # We should add this to xml now
-                    devices.append(create_element(
-                        'controller', type='sata', index=str(current_controller['index']), attribute_dict={
-                            'children': [
-                                create_element(
-                                    'address', type='pci', slot=str(current_controller['slot']),
-                                    function=str(current_controller['function']), multifunction='on'
-                                )
-                            ]
-                        }
-                    ))
+                    if not virtio:
+                        devices.append(create_element(
+                            'controller', type='sata', index=str(current_controller['index']), attribute_dict={
+                                'children': [
+                                    create_element(
+                                        'address', type='pci', slot=str(current_controller['slot']),
+                                        function=str(current_controller['function']), multifunction='on'
+                                    )
+                                ]
+                            }
+                        ))
 
                 current_controller['devices'] += 1
 
-                device_xml = device_obj.xml(child_element=create_element(
-                    'address', controller=str(current_controller['index']), type='drive',
-                    target=str(current_controller['devices']),
-                ))
+                if virtio:
+                    address_dict = {
+                        'type': 'pci', 'slot': str(current_controller['slot']),
+                        'function': str(current_controller['function'])
+                    }
+                else:
+                    address_dict = {
+                        'type': 'drive', 'controller': str(current_controller['index']),
+                        'target': str(current_controller['devices'])
+                    }
+
+                device_xml = device_obj.xml(child_element=create_element('address', **address_dict))
             else:
                 device_xml = device_obj.xml()
 
@@ -273,11 +291,15 @@ class DISK(Device):
 
     def xml(self, *args, **kwargs):
         child_element = kwargs.pop('child_element')
+        virtio = self.data['attributes']['type'] == 'VIRTIO'
         return create_element(
             'disk', type='file', device='disk', attribute_dict={
                 'children': [
                     create_element('source', file=self.data['attributes']['path']),
-                    create_element('target', dev=f'hdc{self.data["id"]}', bus='sata'),
+                    create_element(
+                        'target', bus='sata' if not virtio else 'virtio',
+                        dev=f'{"hdc" if not virtio else "vdb"}{self.data["id"]}'
+                    ),
                     child_element,
                 ]
             }
