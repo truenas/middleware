@@ -26,7 +26,7 @@ def generate_loader_config(middleware):
 
     config = []
     for generator in generators:
-        config.extend(generator(middleware))
+        config.extend(generator(middleware) or [])
 
     return config
 
