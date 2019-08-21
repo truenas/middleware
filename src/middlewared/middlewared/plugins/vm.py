@@ -188,7 +188,7 @@ class VMSupervisorLibVirt:
 
         for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id'])):
             device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
-            if isinstance(device_obj, (DISK, CDROM)):
+            if isinstance(device_obj, (DISK, CDROM, RAW)):
                 # We classify all devices in 2 types:
                 # 1) AHCI
                 # 2) VIRTIO
@@ -238,7 +238,10 @@ class VMSupervisorLibVirt:
                         })
                     else:
                         # We just need to bump the function here
-                        current_controller['function'] += 1
+                        current_controller.update({
+                            'function': current_controller['function'] + 1,
+                            'devices': 0,
+                        })
 
                     # We should add this to xml now
                     if not virtio:
@@ -299,20 +302,7 @@ class Device(ABC):
         pass
 
 
-class DISK(Device):
-
-    schema = Dict(
-        'attributes',
-        Str('path'),
-        Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
-        Bool('create_zvol'),
-        Str('zvol_name'),
-        Int('zvol_volsize'),
-        Int('sectorsize', enum=[0, 512, 4096], default=0),
-    )
-
-    def __init__(self, data):
-        super().__init__(data)
+class StorageDevice(Device):
 
     def xml(self, *args, **kwargs):
         child_element = kwargs.pop('child_element')
@@ -329,6 +319,19 @@ class DISK(Device):
                 ]
             }
         )
+
+
+class DISK(StorageDevice):
+
+    schema = Dict(
+        'attributes',
+        Str('path'),
+        Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
+        Bool('create_zvol'),
+        Str('zvol_name'),
+        Int('zvol_volsize'),
+        Int('sectorsize', enum=[0, 512, 4096], default=0),
+    )
 
 
 class CDROM(Device):
@@ -352,7 +355,7 @@ class CDROM(Device):
         )
 
 
-class RAW(Device):
+class RAW(StorageDevice):
 
     schema = Dict(
         'attributes',
