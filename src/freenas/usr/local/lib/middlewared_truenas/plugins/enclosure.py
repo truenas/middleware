@@ -18,6 +18,31 @@ from middlewared.utils import filter_list
 
 logger = logging.getLogger(__name__)
 
+ENCLOSURE_ACTIONS = {
+    'clear': '0x80 0x00 0x00 0x00',
+    'identify': '0x80 0x00 0x02 0x00',
+    'fault': '0x80 0x00 0x00 0x20',
+}
+
+STATUS_DESC = [
+    "Unsupported",
+    "OK",
+    "Critical",
+    "Noncritical",
+    "Unrecoverable",
+    "Not installed",
+    "Unknown",
+    "Not available",
+    "No access allowed",
+    "reserved [9]",
+    "reserved [10]",
+    "reserved [11]",
+    "reserved [12]",
+    "reserved [13]",
+    "reserved [14]",
+    "reserved [15]",
+]
+
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
@@ -297,40 +322,6 @@ class EnclosureService(CRUDService):
                 return disk["enclosure"]["number"], disk["enclosure"]["slot"]
         except IndexError:
             pass
-
-
-async def pool_post_delete(middleware, id):
-    await middleware.call("enclosure.sync_zpool")
-
-
-def setup(middleware):
-    middleware.register_hook("pool.post_delete", pool_post_delete)
-
-
-STATUS_DESC = [
-    "Unsupported",
-    "OK",
-    "Critical",
-    "Noncritical",
-    "Unrecoverable",
-    "Not installed",
-    "Unknown",
-    "Not available",
-    "No access allowed",
-    "reserved [9]",
-    "reserved [10]",
-    "reserved [11]",
-    "reserved [12]",
-    "reserved [13]",
-    "reserved [14]",
-    "reserved [15]",
-]
-
-ENCLOSURE_ACTIONS = {
-    'clear': '0x80 0x00 0x00 0x00',
-    'identify': '0x80 0x00 0x02 0x00',
-    'fault': '0x80 0x00 0x00 0x20',
-}
 
 
 class Enclosures(object):
@@ -1107,3 +1098,23 @@ class SASExpander(Element):
         if not output:
             output.append("None")
         return ', '.join(output)
+
+
+async def devd_zfs_hook(middleware, data):
+    if data.get('type') in (
+        'ATTACH',
+        'DETACH',
+        'resource.fs.zfs.removed',
+        'misc.fs.zfs.config_sync',
+        'misc.fs.zfs.vdev_remove',
+    ):
+        await middleware.call('enclosure.sync_zpool')
+
+
+async def pool_post_delete(middleware, id):
+    await middleware.call('enclosure.sync_zpool')
+
+
+def setup(middleware):
+    middleware.register_hook('devd.zfs', devd_zfs_hook)
+    middleware.register_hook('pool.post_delete', pool_post_delete)
