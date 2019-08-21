@@ -424,9 +424,6 @@ class ServiceService(CRUDService):
         await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "reload", **kwargs)
 
-    async def _restart_django(self, **kwargs):
-        await self._service("django", "restart", **kwargs)
-
     async def _restart_iscsitarget(self, **kwargs):
         await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "stop", force=True, **kwargs)
