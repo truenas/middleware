@@ -1,7 +1,6 @@
 import logging
 import re
-
-from freenasUI.common.pipesubr import pipeopen
+import subprocess
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
@@ -25,10 +24,19 @@ class FreeNASBMCAlertSource(ThreadedAlertSource):
     freenas_only = True
 
     def check_sync(self):
-        systemname = pipeopen("/usr/local/sbin/dmidecode -s system-product-name").communicate()[0].strip()
-        boardname = pipeopen("/usr/local/sbin/dmidecode -s baseboard-product-name").communicate()[0].strip()
+        systemname = subprocess.run(
+            ["dmidecode", "-s", "system-product-name"],
+            capture_output=True, text=True,
+        ).stdout.strip()
+        boardname = subprocess.run(
+            ["dmidecode", "-s", "baseboard-product-name"],
+            capture_output=True, text=True,
+        ).stdout.strip()
         if "freenas" in systemname.lower() and boardname == "C2750D4I":
-            mcinfo = pipeopen("/usr/local/bin/ipmitool mc info").communicate()[0]
+            mcinfo = subprocess.run(
+                ["ipmitool", "mc", "info"],
+                capture_output=True, text=True,
+            ).stdout
             reg = re.search(r"Firmware Revision.*: (\S+)", mcinfo, flags=re.M)
             if not reg:
                 return
