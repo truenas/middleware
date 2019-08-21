@@ -377,6 +377,27 @@ class NIC(Device):
         Str('mac'),
     )
 
+    @staticmethod
+    def random_mac():
+        mac_address = [
+            0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)
+        ]
+        return ':'.join(['%02x' % x for x in mac_address])
+
+    def xml(self, *args, **kwargs):
+        return create_element(
+            'interface', type='bridge', attribute_dict={
+                'children': [
+                    create_element('source', bridge='virbr0'),
+                    create_element('model', type='virtio' if self.data['attributes']['type'] == 'VIRTIO' else 'e1000'),
+                    create_element(
+                        'mac', address=self.data['attributes']['mac'] if
+                        self.data['attributes'].get('mac') else self.random_mac()
+                    ),
+                ]
+            }
+        )
+
 
 class VNC(Device):
 
@@ -1091,8 +1112,7 @@ class VMService(CRUDService):
             Returns:
                 str: with six groups of two hexadecimal digits
         """
-        mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        return ':'.join(['%02x' % x for x in mac_address])
+        return NIC.random_mac()
 
     @accepts(Dict(
         'vm_create',
