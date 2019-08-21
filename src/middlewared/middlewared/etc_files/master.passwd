@@ -9,7 +9,8 @@ else:
 %>
 ${user['username']}:${passwd}:${user['uid']}:${user['group']['bsdgrp_gid']}::0:0:${user['full_name']}:${user['home']}:${user['shell']}\
 % endfor
-% if middleware.call_sync('notifier.common', 'system', 'nis_enabled'):
+% if middleware.call_sync('nis.config')['enable']:
+
 +:::::::::\
 % endif
 

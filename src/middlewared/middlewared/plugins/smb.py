@@ -352,6 +352,23 @@ class SMBService(SystemServiceService):
             )
 
     @private
+    async def groupmap_delete(self, ntgroup=None, sid=None):
+        if not ntgroup and not sid:
+            raise CallError("ntgroup or sid is required")
+
+        if ntgroup:
+            target = f"ntgroup={ntgroup}"
+        elif sid:
+            target = f"sid={sid}"
+
+        gm_delete = await run(
+            [SMBCmd.NET.value, '-d' '0', 'groupmap', 'delete', target], check=False
+        )
+
+        if gm_delete.returncode != 0:
+            self.logger.debug(f'Failed to delete groupmap for [{target}]: ({gm_delete.stderr.decode()})')
+
+    @private
     async def passdb_list(self, verbose=False):
         """
         passdb entries for local SAM database. This will be populated with

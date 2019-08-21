@@ -41,7 +41,7 @@
             return 'ActiveDirectory'
 
         def enabled(self):
-            return self.safe_call('notifier.common', 'system', 'activedirectory_enabled') 
+            return self.safe_call('activedirectory.config')['enable']
 
         def pam_auth(self):
             module = self.pam_winbind
@@ -76,7 +76,7 @@
             return 'LDAP'
 
         def enabled(self):
-            return self.safe_call('notifier.common', 'system', 'ldap_enabled')
+            return self.safe_call('ldap.config')['enable']
 
         def is_kerberized(self):
             return True if (self.safe_call('ldap.config'))['kerberos_realm'] else False
@@ -137,7 +137,7 @@
             return 'NIS'
 
         def enabled(self):
-            return self.safe_call('notifier.common', 'system', 'nis_enabled')
+            return self.safe_call('nis.config')['enable']
 
 
     class DirectoryServicePam(DirectoryServicePamBase):
