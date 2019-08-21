@@ -44,7 +44,6 @@ if os.geteuid() != 0:
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NETWORK_PATH = os.path.join(FREENAS_PATH, "network")
-NOTIFIER_PATH = os.path.join(FREENAS_PATH, "middleware/notifier.py")
 
 FREENAS_DATA_PATH = "/data"
 FREENAS_DB = os.path.join(FREENAS_DATA_PATH, "freenas-v1.db")
