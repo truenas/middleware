@@ -908,7 +908,7 @@ class GroupService(CRUDService):
                 await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': i})
 
         if delete_groupmap:
-            await self.middleware.call('notifier.groupmap_delete', delete_groupmap)
+            await self.middleware.call('smb.groupmap_delete', delete_groupmap)
 
         await self.middleware.call('service.reload', 'user')
 
@@ -925,7 +925,7 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        await self.middleware.call('notifier.groupmap_delete', group['group'])
+        await self.middleware.call('smb.groupmap_delete', group['group'])
 
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
