@@ -1,27 +1,15 @@
 import errno
 import json
-import os
 import requests
 import simplejson
 import socket
 import subprocess
-import sys
 import time
 
 from middlewared.pipe import Pipes
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 from middlewared.utils import Popen
-
-# FIXME: Remove when we can generate debug and move license to middleware
-if '/usr/local/www' not in sys.path:
-    sys.path.append('/usr/local/www')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-import django
-from django.apps import apps
-if not apps.ready:
-    django.setup()
 
 ADDRESS = 'support-proxy.ixsystems.com'
 
