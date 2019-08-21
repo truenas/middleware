@@ -1091,7 +1091,6 @@ class SystemGeneralService(ConfigService):
         Restart HTTP server to use latest UI settings.
         """
         await self.middleware.call('service.restart', 'http')
-        await self.middleware.call('service.restart', 'django')
 
     @accepts()
     async def local_url(self):
