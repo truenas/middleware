@@ -36,6 +36,7 @@ logger = middlewared.logger.Logger('vm').getLogger()
 
 BUFSIZE = 65536
 LIBVIRT_URI = 'bhyve+unix:///system'
+VM_BRIDGE = 'virbr0'
 ZFS_ARC_MAX_INITIAL = None
 
 ZVOL_CLONE_SUFFIX = '_clone'
@@ -390,11 +391,40 @@ class NIC(Device):
         ]
         return ':'.join(['%02x' % x for x in mac_address])
 
+    def pre_start(self, *args, **kwargs):
+        nic_attach = self.data['attributes']['nic_attach']
+        if not nic_attach:
+            try:
+                nic_attach = netif.RoutingTable().default_route_ipv4.interface
+                nic = netif.get_interface(nic_attach)
+            except Exception as e:
+                raise CallError(f'Unable to retrieve default interface: {e}')
+        else:
+            nic = netif.get_interface(nic_attach)
+
+        # If for some reason the main iface is down, we need to up it.
+        nic_status = netif.InterfaceFlags.UP in nic.flags
+        if nic_status is False:
+            nic.up()
+
+        try:
+            bridge_nic = netif.get_interface(VM_BRIDGE)
+        except KeyError:
+            bridge_nic = netif.get_interface(netif.create_interface('bridge'))
+            bridge_nic.rename(VM_BRIDGE)
+            # TODO: Ensure libvirt takes care of MTU tweaks/settings
+
+        if nic_attach not in bridge_nic.members:
+            bridge_nic.add_member(nic_attach)
+
+        if netif.InterfaceFlags.UP not in bridge_nic.flags:
+            bridge_nic.up()
+
     def xml(self, *args, **kwargs):
         return create_element(
             'interface', type='bridge', attribute_dict={
                 'children': [
-                    create_element('source', bridge='virbr0'),
+                    create_element('source', bridge=VM_BRIDGE),
                     create_element('model', type='virtio' if self.data['attributes']['type'] == 'VIRTIO' else 'e1000'),
                     create_element(
                         'mac', address=self.data['attributes']['mac'] if
