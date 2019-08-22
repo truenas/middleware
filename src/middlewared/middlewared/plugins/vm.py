@@ -131,6 +131,18 @@ class VMSupervisorLibVirt:
             # FIXME: Done for dev purposes for a while
             self.logger = None
 
+    def define_domain(self):
+        vm_xml = etree.tostring(self.construct_xml()).decode()
+        if not self.connection.defineXML(vm_xml):
+            raise CallError(f'Unable to define persistent domain for {self.libvirt_domain_name}')
+
+    def undefine_domain(self):
+        self._check_domain_existence()
+        if self.domain.isActive():
+            raise CallError(f'Domain {self.libvirt_domain_name} is active. Please stop it first')
+
+        self.domain.undefine()
+
     @property
     def domain(self):
         try:
@@ -138,24 +150,31 @@ class VMSupervisorLibVirt:
         except libvirt.libvirtError:
             return None
 
+    def _check_domain_existence(self):
+        if not self.domain:
+            raise CallError(f'Domain not found for {self.libvirt_domain_name}')
+
     def start(self):
-        vm_xml = etree.tostring(self.construct_xml()).decode()
+        self._check_domain_existence()
+        if self.domain.isActive():
+            raise CallError(f'{self.libvirt_domain_name} domain is already active')
 
         for device in self.devices:
             device.pre_start_vm()
 
-        domain = self.connection.createXML(vm_xml)
-        if not domain:
-            raise CallError(f'Failed to create domain for {self.vm_data["name"]}')
+        if self.domain.create() < 0:
+            raise CallError(f'Failed to boot {self.vm_data["name"]} domain')
 
         for device in self.devices:
             device.post_start_vm()
 
+    def _before_stopping_checks(self):
+        self._check_domain_existence()
+        if not self.domain.isActive():
+            raise CallError(f'{self.libvirt_domain_name} domain is not active')
+
     def stop(self):
-        # TODO: ADD checks for start
-        self.connection = libvirt.open()
-        if not self.domain:
-            raise CallError(f'{self.libvirt_domain_name} domain could not be found. Is the VM running ?')
+        self._before_stopping_checks()
 
         for device in self.devices:
             device.pre_stop_vm()
@@ -166,6 +185,8 @@ class VMSupervisorLibVirt:
             device.post_stop_vm()
 
     def poweroff(self):
+        self._before_stopping_checks()
+
         for device in self.devices:
             with contextlib.suppress(Exception):
                 device.pre_stop_vm()
