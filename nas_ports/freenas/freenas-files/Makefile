@@ -37,8 +37,14 @@ MAKE_JOBS_UNSAFE=yes
 .include <bsd.port.pre.mk>
 
 do-build:
+	(cd ${WRKSRC}/escrowd; \
+		${MAKE} cleandir && \
+		${MAKE} obj && \
+		${MAKE} depend all \
+	)
 	${MAKE} -C ${WRKSRC}/winacl   obj
 	${MAKE} -C ${WRKSRC}/winacl  all
+
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
@@ -46,6 +52,10 @@ do-install:
 .if defined(DEBUG_FLAGS)
 	mkdir -p ${STAGEDIR}${DEBUGDIR}${PREFIX}/boot/modules
 .endif
+	(cd ${WRKSRC}/escrowd; \
+		${MAKE} BINDIR=${STAGEDIR}${PREFIX}/usr/sbin \
+		MANDIR=${STAGEDIR}${PREFIX}/usr/share/man/man install \
+	)
 
 	${MAKE} -C ${WRKSRC}/winacl DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	#
@@ -56,13 +66,6 @@ do-install:
 	#
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
-.if ${PRODUCT} == "TrueNAS"
-	${RM} \
-		${STAGEDIR}/boot/loader.conf \
-		${STAGEDIR}/boot/loader.rc.local \
-		${STAGEDIR}/etc/sysctl.conf \
-		${STAGEDIR}/etc/motd
-.endif
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
