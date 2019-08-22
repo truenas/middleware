@@ -109,6 +109,7 @@ class VMSupervisorLibVirt:
             getattr(sys.modules[__name__], device['dtype'])(device)
             for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
         ]
+        self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
 
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
@@ -132,7 +133,7 @@ class VMSupervisorLibVirt:
     @property
     def domain(self):
         try:
-            return self.connection.lookupByName(self.vm_data['name'])
+            return self.connection.lookupByName(self.libvirt_domain_name)
         except libvirt.libvirtError:
             return None
 
@@ -149,11 +150,19 @@ class VMSupervisorLibVirt:
         for device in self.devices:
             device.post_start_vm()
 
+    def stop(self):
+        # TODO: ADD checks for start
+        self.connection = libvirt.open()
+        if not self.domain:
+            raise CallError(f'{self.libvirt_domain_name} domain could not be found. Is the VM running ?')
+
+        self.domain.shutdown()
+
     def construct_xml(self):
         domain = create_element(
             'domain', type='bhyve', id=str(self.vm_data['id']), attribute_dict={
                 'children': [
-                    create_element('name', attribute_dict={'text': f'{self.vm_data["id"]}_{self.vm_data["name"]}'}),
+                    create_element('name', attribute_dict={'text': self.libvirt_domain_name}),
                     create_element('title', attribute_dict={'text': self.vm_data['name']}),
                     create_element('description', attribute_dict={'text': self.vm_data['description']}),
                     # OS/boot related xml
