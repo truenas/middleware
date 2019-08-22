@@ -48,6 +48,8 @@ do-build:
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/sbin
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/share/man/man8
 	mkdir -p ${STAGEDIR}${PREFIX}/boot/modules
 .if defined(DEBUG_FLAGS)
 	mkdir -p ${STAGEDIR}${DEBUGDIR}${PREFIX}/boot/modules

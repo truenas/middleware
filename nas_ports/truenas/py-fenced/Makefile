@@ -17,7 +17,7 @@ BUILD_DEPENDS=	${PYTHON_PKGNAMEPREFIX}fastentrypoints>0:devel/py-fastentrypoints
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}cam>0:devel/py-cam@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}sysctl>0:devel/py-sysctl@${PY_FLAVOR}
 
-WRKSRC=		/usr/truenas/src/fenced
+WRKSRC=		/usr/nas_source/fenced
 
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
