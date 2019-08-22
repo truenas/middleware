@@ -506,7 +506,7 @@ class ServiceService(CRUDService):
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'rc')
         await self._service("hostname", "start", quiet=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
         await self._restart_collectd(**kwargs)
 
     async def _reload_resolvconf(self, **kwargs):
@@ -609,25 +609,25 @@ class ServiceService(CRUDService):
 
     async def _reload_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
         await self._service("openssh", "reload", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
         await self._service("openssh", "start", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _stop_ssh(self, **kwargs):
         await self._service("openssh", "stop", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
 
     async def _restart_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
         await self._service("openssh", "stop", force=True, **kwargs)
         await self._service("openssh", "restart", **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_ssl(self, **kwargs):
@@ -818,7 +818,7 @@ class ServiceService(CRUDService):
     async def _start_afp(self, **kwargs):
         await self.middleware.call("etc.generate", "afpd")
         await self._service("netatalk", "start", **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
 
     async def _stop_afp(self, **kwargs):
         await self._service("netatalk", "stop", force=True, **kwargs)
@@ -827,7 +827,7 @@ class ServiceService(CRUDService):
         # restarting netatalk.
         await self._system("pkill -9 afpd")
         await self._system("pkill -9 cnid_metad")
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
 
     async def _restart_afp(self, **kwargs):
         await self._stop_afp()
@@ -836,7 +836,7 @@ class ServiceService(CRUDService):
     async def _reload_afp(self, **kwargs):
         await self.middleware.call("etc.generate", "afpd")
         await self._system("killall -1 netatalk")
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
 
     async def _reload_nfs(self, **kwargs):
         await self.middleware.call("etc.generate", "nfsd")
@@ -893,7 +893,7 @@ class ServiceService(CRUDService):
         """
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("smbd", "reload", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
 
     async def _restart_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
@@ -902,7 +902,7 @@ class ServiceService(CRUDService):
         await self._service("winbindd", "restart", force=True, **kwargs)
         await self._service("nmbd", "restart", force=True, **kwargs)
         await self._service("wsdd", "restart", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
 
     async def _start_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
@@ -911,7 +911,7 @@ class ServiceService(CRUDService):
         await self._service("winbindd", "start", force=True, **kwargs)
         await self._service("nmbd", "start", force=True, **kwargs)
         await self._service("wsdd", "start", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
         try:
             await self.middleware.call("smb.add_admin_group", "", True)
         except Exception as e:
@@ -922,7 +922,7 @@ class ServiceService(CRUDService):
         await self._service("winbindd", "stop", force=True, **kwargs)
         await self._service("nmbd", "stop", force=True, **kwargs)
         await self._service("wsdd", "stop", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
 
     async def _started_cifs(self, **kwargs):
         if await self._service("smbd", "status", quiet=True, onetime=True, **kwargs):
@@ -955,12 +955,12 @@ class ServiceService(CRUDService):
 
     async def _restart_http(self, **kwargs):
         await self.middleware.call("etc.generate", "nginx")
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
         await self._service("nginx", "restart", **kwargs)
 
     async def _reload_http(self, **kwargs):
         await self.middleware.call("etc.generate", "nginx")
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.middleware.call('mdnsadvertise.reload')
         await self._service("nginx", "reload", **kwargs)
 
     async def _reload_loader(self, **kwargs):
