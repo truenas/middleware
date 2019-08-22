@@ -622,12 +622,14 @@ _gen_conf()
 	## Daemons
 	_bool_svcconfig netatalk_enable afp
 	_bool_svcconfig proftpd_enable ftp
-	_bool_svcconfig nfs_server_enable nfs
-	_bool_svcconfig rpc_lockd_enable nfs
-	_bool_svcconfig rpc_statd_enable nfs
-	_bool_svcconfig mountd_enable nfs
-	_bool_svcconfig nfsd_enable nfs
-	_bool_svcconfig rpcbind_enable nfs
+	if [ ${failover_licensed} -ne 1 ]; then
+		_bool_svcconfig nfs_server_enable nfs
+		_bool_svcconfig rpc_lockd_enable nfs
+		_bool_svcconfig rpc_statd_enable nfs
+		_bool_svcconfig mountd_enable nfs
+		_bool_svcconfig nfsd_enable nfs
+		_bool_svcconfig rpcbind_enable nfs
+	fi
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig snmpd_enable snmp
 	_bool_svcconfig snmp_agent_enable snmp
@@ -669,12 +671,14 @@ _gen_conf()
 		touch /etc/zfs/exports
 	fi
 
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" = 1 ] && [ ${failover_licensed} -ne 1 ]; then
+	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" = 1 ]; then
 
 		# NFS service is enabled
 		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" = 1 ]; then
 			# NFSv4 is enabled
-			echo "nfsv4_server_enable=\"YES\""
+			if [ ${failover_licensed} -ne 1 ]; then
+				echo "nfsv4_server_enable=\"YES\""
+			fi
 			if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_v3owner FROM services_nfs")" = 1 ]; then
 				# NFSv3 ownership style for NFSv4 is selected.  Note this is mutually incompatible
 				# with the >16 group support.
@@ -682,7 +686,9 @@ _gen_conf()
 				sysctl vfs.nfsd.enable_stringtouid=1 > /dev/null
 				sysctl vfs.nfs.enable_uidtostring=1 > /dev/null
 			else
-				echo "nfsuserd_enable=\"YES\""
+				if [ ${failover_licensed} -ne 1 ]; then
+					echo "nfsuserd_enable=\"YES\""
+				fi
 				sysctl vfs.nfsd.enable_stringtouid=0 > /dev/null
 				sysctl vfs.nfs.enable_uidtostring=0 > /dev/null
 				if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_16 FROM services_nfs")" = 1 ]; then
@@ -694,7 +700,9 @@ _gen_conf()
 			# NFSv4 is not enabled
 			if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_16 FROM services_nfs")" = 1 ]; then
 				# we use nfsuserd to support more than 16 groups
-				echo "nfsuserd_enable=\"YES\""
+				if [ ${failover_licensed} -ne 1 ]; then
+					echo "nfsuserd_enable=\"YES\""
+				fi
 				echo "nfsuserd_flags=\"-manage-gids\""
 			fi
 			echo "nfsv4_server_enable=\"NO\""
@@ -702,7 +710,9 @@ _gen_conf()
 
 		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" = 1 ]; then
 			# NFSv4 is kerberos only
-			echo "gssd_enable=\"YES\""
+			if [ ${failover_licensed} -ne 1 ]; then
+				echo "gssd_enable=\"YES\""
+			fi
 		else
 			if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT() FROM directoryservice_kerberoskeytab")" = 0 ]; then
 				# There are no keytabs in the database
@@ -711,7 +721,9 @@ _gen_conf()
 				# Keytabs found.  Turn on kerberos support for NFS
 				# Note that in this case kerberos won't be *required* for NFS
 				# but it will work.
-				echo "gssd_enable=\"YES\""
+				if [ ${failover_licensed} -ne 1 ]; then
+					echo "gssd_enable=\"YES\""
+				fi
 			fi
 		fi
 	fi
