@@ -11,6 +11,7 @@ import middlewared.logger
 import asyncio
 import contextlib
 import errno
+import enum
 import ipaddress
 import libvirt
 import logging
@@ -101,6 +102,17 @@ class VMManager(object):
             }
 
 
+class DomainState(enum.Enum):
+    NOSTATE = libvirt.VIR_DOMAIN_NOSTATE
+    RUNNING = libvirt.VIR_DOMAIN_RUNNING
+    BLOCKED = libvirt.VIR_DOMAIN_BLOCKED
+    PAUSED = libvirt.VIR_DOMAIN_PAUSED
+    SHUTDOWN = libvirt.VIR_DOMAIN_SHUTDOWN
+    SHUTOFF = libvirt.VIR_DOMAIN_SHUTOFF
+    CRASHED = libvirt.VIR_DOMAIN_CRASHED
+    PMSUSPENDED = libvirt.VIR_DOMAIN_PMSUSPENDED
+
+
 class VMSupervisorLibVirt:
 
     def __init__(self, vm_data, connection, logger_obj=None, log_format=None, debug_level=None):
@@ -130,6 +142,14 @@ class VMSupervisorLibVirt:
         else:
             # FIXME: Done for dev purposes for a while
             self.logger = None
+
+    def status(self):
+        state = self.domain and self.domain.isActive()
+        return {
+            'state': 'STOPPED' if not state else 'RUNNING',
+            'pid': None if not state else self.domain.ID(),
+            'domain_state': None if not self.domain else DomainState(self.domain.state()[0]).name,
+        }
 
     def define_domain(self):
         vm_xml = etree.tostring(self.construct_xml()).decode()
