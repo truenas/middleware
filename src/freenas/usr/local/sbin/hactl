@@ -1,0 +1,162 @@
+#!/usr/local/bin/python
+# -
+# Copyright (c) 2015 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
+
+import argparse
+import os
+import sys
+
+from middlewared.client import Client
+
+
+def main(command, quiet):
+    client = Client()
+    failover = client.call('datastore.query', 'failover.failover')
+    fo_exists = len(failover) > 0
+    if fo_exists:
+        failover = failover[0]
+    if command == "status":
+        ret = client.call('failover.status')
+        if ret == "MASTER":
+            print("Node status: Active")
+        elif ret == "BACKUP":
+            print("Node status: Passive")
+        elif ret == "ELECTING":
+            print("Node status: Electing master node")
+        elif ret == "IMPORTING":
+            print("Node status: Transitioning to Active")
+        elif ret == "ERROR":
+            print("Node status: Faulted")
+        elif ret == "SINGLE":
+            if not quiet:
+                print("Node status: Not an HA node")
+            sys.exit(0)
+        elif ret == "UNKNOWN" and fo_exists:
+            print("Node status: Passive (Master node unreachable)")
+
+        if fo_exists:
+            ret = client.call('failover.disabled_reasons')
+            if 'NO_CRITICAL_INTERFACES' in ret:
+                print("Failover status: Unavailable (no network interfaces are marked critical for failover)")
+            elif 'MISMATCH_DISKS' in ret:
+                print("Failover status: Unavailable (the storage controllers do not have the same quantity of disks)")
+            elif 'DISAGREE_CARP' in ret:
+                print("Failover status: Unavailable (nodes CARP states do not agree)")
+            elif 'NO_LICENSE' in ret:
+                print("Failover status: Unavailable (passive storage controller has no license)")
+            elif 'NO_FAILOVER' in ret:
+                print("Failover status: Administratively Disabled")
+            elif 'NO_PONG' in ret:
+                print("Failover status: Unavailable (remote node not responding)")
+            elif 'NO_VOLUME' in ret or 'NO_VIP' in ret:
+                print("Failover status: Unavailable (failover not configured)")
+            else:
+                print("Failover status: Enabled")
+        else:
+                print("Failover status: Not configured")
+
+    elif command == "enable":
+        if not fo_exists:
+            print("Not configured for failover. "
+                  "There's nothing to enable here.")
+            sys.exit(7)
+        if failover['disabled'] is True:
+            try:
+                client.call('failover.call_remote', 'failover.control', ['ENABLE'])
+                client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': False})
+                os.system("/usr/sbin/service ix-devd start")
+                print("Failover enabled.")
+                sys.exit(0)
+            except Exception as e:
+                print("Unable to contact remote node.  Failover not enabled.")
+                print(e)
+                sys.exit(2)
+        else:
+            print("Failover not disabled.  Cannot enable!")
+            sys.exit(3)
+    elif command == "disable":
+        if not fo_exists:
+            print("Not configured for failover. "
+                  "There's nothing to disable here.")
+            sys.exit(8)
+        if failover['disabled'] is False:
+            failover_status = client.call('failover.status')
+            if failover_status in ("MASTER", "IMPORTING"):
+                status = "master"
+                try:
+                    ret = client.call('failover.call_remote', 'failover.control', ['DISABLE', {'active': False}])
+                except:
+                    ret = False
+            else:
+                status = "passive"
+                try:
+                    ret = client.call('failover.call_remote', 'failover.control', ['DISABLE', {'active': True}])
+                except:
+                    ret = False
+            if ret is not False:
+                client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': True, 'master': True if status == "master" else False})
+                print("Failover disabled.")
+                os.system("/usr/sbin/service ix-devd start")
+                sys.exit(0)
+            else:
+                print("Unable to contact remote node.  Failover not disabled.")
+                sys.exit(3)
+        else:
+            print("Failover not enabled.  Cannot disable!")
+
+    elif command == "takeover":
+        ret = client.call('failover.status')
+        if ret != "BACKUP":
+            print("Cannot takeover volume, not passive")
+            sys.exit(5)
+        print("This will likely cause the active node to reboot.")
+        while True:
+            ret = input("Are you sure you wish to proceed with making "
+                            "this node active? (y/n): ")
+            if ret.lower() == "y":
+                break
+            elif ret.lower() == "n":
+                print("Takeover cancelled.")
+                sys.exit(1)
+            else:
+                continue
+        client.call('notifier.failover_force_master', timeout=100)
+    elif command == "giveback":
+        ret = client.call('failover.status')
+        if ret == "BACKUP":
+            print("Cannot giveback volume.  This unit is not Active!")
+            sys.exit(6)
+        print("Volume giveback will reboot this node.")
+        while True:
+            ret = input("Are you sure you wish to proceed with making "
+                            "the other node active? (y/n): ")
+            if ret.lower() == "y":
+                break
+            elif ret.lower() == "n":
+                print("Giveback cancelled.")
+                sys.exit(1)
+            else:
+                continue
+        os.system("shutdown -r now")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='HA CLI control utility.')
+    parser.add_argument('command',
+                        default="status",
+                        nargs='?',
+                        help=("subcommand: enable disable status takeover "
+                              "giveback"),
+                        choices=['enable', 'disable', 'status',
+                                 'takeover', 'giveback'],
+                        )
+    parser.add_argument('-q',
+                        help="Be silent if this is a non HA node",
+                        action='store_true'
+                        )
+
+    args = parser.parse_args()
+    main(args.command, args.q)

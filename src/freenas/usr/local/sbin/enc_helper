@@ -1,0 +1,175 @@
+#!/usr/local/bin/python3
+#
+# Copyright (c) 2015 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
+
+import argparse
+import logging
+import os
+import sys
+import subprocess
+import tempfile
+import getpass
+sys.path.append('/usr/local/www')
+sys.path.append('/usr/local/www/freenasUI')
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
+
+import django
+django.setup()
+
+from freenasUI.common.pipesubr import pipeopen
+from freenasUI.failover.enc_helper import LocalEscrowCtl
+from freenasUI.middleware.client import client
+from freenasUI.middleware.notifier import notifier
+from freenasUI.storage.models import Volume
+
+def run(cmd):
+    proc = subprocess.Popen(
+        cmd,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        shell=True,
+        encoding='utf8',
+    )
+    output = proc.communicate()[0]
+    return (proc.returncode, output.strip('\n'))
+
+
+log = logging.getLogger('tools.haenc')
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(help='sub-command help', dest='name')
+    subparsers.add_parser('clear', help='Clear the passphrase')
+    subparsers.add_parser('synctopeer', help='Transfer local passphrase to remote system')
+    subparsers.add_parser('syncfrompeer', help='Transfer remote passphrase to local system')
+    subparsers.add_parser('shutdown', help='Shutdown the escrow daemon')
+    subparsers.add_parser('status', help='Inquiry escrow daemon status')
+    subparsers.add_parser('attachall', help='Attach all GELI providers with the escrowd passphrase')
+    subparsers.add_parser('detachall', help='Detach all GELI providers')
+    iparser = subparsers.add_parser('interactive', help='Sets passphrase securely from the CLI')
+    iparser.add_argument('-k', '--key-only', action='store_true', help='Set the key only, do not force failover')
+
+    args = parser.parse_args()
+
+    escrowctl = LocalEscrowCtl()
+    cmd = args.name
+    rv = "Unknown"
+    if cmd == 'clear':
+        rv = escrowctl.clear()
+    elif cmd == 'shutdown':
+        rv = escrowctl.shutdown()
+    elif cmd == 'status':
+        rv = escrowctl.status()
+        if rv:
+            print("Escrowd has the passphrase")
+            log.warn("Escrowd has the passphrase")
+        else:
+            print("Escrowd is running without the passphrase")
+            log.warn("Escrowd is running without the passphrase")
+    elif cmd == 'attachall':
+        with tempfile.NamedTemporaryFile(mode='w+') as tmp:
+            tmp.file.write(escrowctl.getkey() or "")
+            tmp.file.flush()
+            procs = []
+            failed_drive = 0
+            failed_volume = 0
+            for vol in Volume.objects.filter(vol_encrypt__gte=1):
+                keyfile = vol.get_geli_keyfile()
+                for ed in vol.encrypteddisk_set.all():
+                    if ed.encrypted_disk:
+                        # gptid might change on the active head, so we need to rescan
+                        # See #16070
+                        try:
+                            open('/dev/%s' % ed.encrypted_disk.devname, 'w').close()
+                        except Exception as e:
+                            print("Failed to open dev %s to rescan." % ed.encrypted_disk.devname)
+                            log.warn("Failed to open dev %s to rescan." % ed.encrypted_disk.devname)
+                    provider = ed.encrypted_provider
+                    if not os.path.exists('/dev/%s.eli' % provider):
+                        proc = pipeopen("geli attach %s -k %s %s" % (
+                            '-j  %s' % tmp.name if vol.vol_encrypt == 2 else '-p',
+                            keyfile, provider), quiet=True)
+                        procs.append(proc)
+                for proc in procs:
+                    msg = proc.communicate()[1]
+                    if proc.returncode != 0:
+                        print("Unable to attach GELI provider: %s" % msg)
+                        log.warn("Unable to attach GELI provider: %s" % msg)
+                        failed_drive += 1
+                importcmd = "zpool import -f -R /mnt %s" % (vol.vol_name)
+                proc = pipeopen(importcmd)
+                proc.communicate()
+                if proc.returncode != 0:
+                    failed_volume += 1
+            if failed_drive > 0:
+                print("ERROR: %d can not be attached." % failed_drive)
+                log.warn("ERROR: %d can not be attached." % failed_drive)
+            rv = (failed_volume == 0)
+            try:
+                if rv:
+                    os.unlink('/tmp/.failover_needop')
+                    passphrase = escrowctl.getkey()
+                    try:
+                        with client as c:
+                            c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
+                    except:
+                        pass
+                else:
+                    file = open('/tmp/.failover_needop', 'w')
+            except:
+                pass
+    elif cmd == 'detachall':
+        # Let us be very careful before we rip down the GELI providers
+        for vol in Volume.objects.filter(vol_encrypt__gte=1):
+            error, output = run("zpool list -H %s" % vol.vol_name)
+            if error:
+                for ed in vol.encrypteddisk_set.all():
+                    provider = ed.encrypted_provider
+                    error1, output1 = run("geli detach %s" % provider)
+                    if error1:
+                        print("Unable to detach GELI provider %s" % provider)
+                        log.warn("Unable to detach GELI provider %s" % provider)
+            else:
+                print("Not detaching GELI providers because an encrypted zpool with name '%s' is still mounted!" % vol.vol_name)
+                log.warn("Not detaching GELI providers because an encrypted zpool with name '%s' is still mounted!" % vol.vol_name)
+                sys.exit(1)
+    
+    elif cmd == 'interactive':
+        passphrase = getpass.getpass()
+        if passphrase:
+            rv = escrowctl.setkey(passphrase)
+            try:
+                with client as c:
+                    c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
+            except:
+                print("Failed to set the passphrase on the standby node.")
+                log.warn("Failed to set the passphrase on the standby node.")
+            if not args.key_only:
+                notifier().failover_force_master()
+    else:
+        if cmd == 'synctopeer':
+            passphrase = escrowctl.getkey()
+            if passphrase:
+                with client as c:
+                    c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
+            else:
+                print("ERROR: passphrase not detected.")
+                log.warn("ERROR: passphrase not detected.")
+        elif cmd == 'syncfrompeer':
+            with client as c:
+                passphrase = c.call('failover.call_remote', 'failover.encryption_getkey')
+            rv = escrowctl.setkey(passphrase)
+        if not rv:
+            print("Error")
+
+    if rv:
+        print("Succeeded")
+        sys.exit(0)
+    else:
+        print("Failed")
+        sys.exit(1)
