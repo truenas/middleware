@@ -64,7 +64,7 @@ gstat_to_json(){
 
 ifstat_to_json(){
   _tmp=""
-  local _out=$( ifstat -a -T 0.1 1 |
+  local _out=$( ifstat -a -T 0.2 1 |
   while read line
   do
     # First line is interface labels

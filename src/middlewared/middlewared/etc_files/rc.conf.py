@@ -110,7 +110,6 @@ def services_config(middleware, context):
         'iscsitarget': ['ctld'],
         'lldp': ['ladvd'],
         's3': ['minio'],
-        'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
         'openvpn_client': ['openvpn_client'],
         'openvpn_server': ['openvpn_server'],
         'rsync': ['rsyncd'],
@@ -125,6 +124,7 @@ def services_config(middleware, context):
         # smartd #76242
         mapping.update({
             'netdata': ['netdata'],
+            'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
             'smartd': ['smartd_daemon'],
         })
 
@@ -193,11 +193,14 @@ def nfs_config(middleware, context):
     yield f'rpc_lockd_flags="{" ".join(lockd_flags)}"'
     yield f'mountd_flags="{" ".join(mountd_flags)}"'
 
-    enabled = middleware.call_sync(
-        'datastore.query', 'services.services', [
-            ('srv_service', '=', 'nfs'), ('srv_enable', '=', True),
-        ]
-    )
+    if context['failover_licensed'] is False:
+        enabled = middleware.call_sync(
+            'datastore.query', 'services.services', [
+                ('srv_service', '=', 'nfs'), ('srv_enable', '=', True),
+            ]
+        )
+    else:
+        enabled = False
 
     if nfs['v4']:
         yield 'nfsv4_server_enable="YES"'

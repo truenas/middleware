@@ -37,10 +37,6 @@ MAKE_JOBS_UNSAFE=yes
 .include <bsd.port.pre.mk>
 
 do-build:
-	${MAKE} -C ${WRKSRC}/extract-tarball   obj
-	${MAKE} -C ${WRKSRC}/extract-tarball  all
-	${MAKE} -C ${WRKSRC}/fix_ea obj
-	${MAKE} -C ${WRKSRC}/fix_ea all
 	${MAKE} -C ${WRKSRC}/winacl   obj
 	${MAKE} -C ${WRKSRC}/winacl  all
 
@@ -51,8 +47,6 @@ do-install:
 	mkdir -p ${STAGEDIR}${DEBUGDIR}${PREFIX}/boot/modules
 .endif
 
-	${MAKE} -C ${WRKSRC}/extract-tarball DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
-	${MAKE} -C ${WRKSRC}/fix_ea DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	#
 	# Adding autotune

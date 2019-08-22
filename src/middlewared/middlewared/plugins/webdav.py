@@ -114,9 +114,9 @@ class WebDAVSharingService(CRUDService):
 
             await self._service_change('webdav', 'reload')
 
-        if data['perm']:
+        if not old['perm'] and new['perm']:
             await self.middleware.call('filesystem.chown', {
-                'path': data['path'],
+                'path': new['path'],
                 'uid': (await self.middleware.call('dscache.get_uncached_user', 'webdav'))['pw_uid'],
                 'gid': (await self.middleware.call('dscache.get_uncached_group', 'webdav'))['gr_gid'],
                 'options': {'recursive': True}
