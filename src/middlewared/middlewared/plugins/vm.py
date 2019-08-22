@@ -301,6 +301,12 @@ class Device(ABC):
     def xml(self, *args, **kwargs):
         pass
 
+    def pre_start(self, *args, **kwargs):
+        pass
+
+    def post_start(self, *args, **kwargs):
+        pass
+
 
 class StorageDevice(Device):
 
@@ -415,6 +421,10 @@ class VNC(Device):
         Bool('vnc_web', default=False),
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.web_process = None
+
     def xml(self, *args, **kwargs):
         # FIXME: Please ensure we have a valid port at this time - also it seems we have a bug otherwise
         #  with vnc port - we have autoport in libvirt, not sure if it works on freebsd, confirm please
@@ -433,6 +443,20 @@ class VNC(Device):
                 }
             )
         ), create_element('controller', type='usb', model='nec-xhci'), create_element('input', type='tablet', bus='usb')
+
+    def post_start(self, *args, **kwargs):
+        vnc_port = self.data['attributes']['vnc_port']
+        vnc_bind = self.data['attributes']['vnc_bind']
+        split_port = int(str(vnc_port)[:2]) - 1
+        vnc_web_port = str(split_port) + str(vnc_port)[2:]
+
+        web_bind = f':{vnc_web_port}' if vnc_bind == '0.0.0.0' else f'{vnc_bind}:{vnc_web_port}'
+        self.web_process = subprocess.Popen(
+            [
+                '/usr/local/libexec/novnc/utils/websockify/run', '--web',
+                '/usr/local/libexec/novnc/', '--wrap-mode=ignore', web_bind, f'{vnc_bind}:{vnc_port}'
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
 
 
 class VMSupervisor(object):
