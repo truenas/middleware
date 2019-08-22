@@ -71,6 +71,6 @@ do-install:
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
-		| ${AWK} '{print $$2 }' >> ${TMPPLIST})
+		| ${AWK} '{$$1=""; sub(/^[ \t]+/, ""); print $$0}' >> ${TMPPLIST}
 
 .include <bsd.port.post.mk>
