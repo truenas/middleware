@@ -136,6 +136,19 @@ class VMSupervisorLibVirt:
         except libvirt.libvirtError:
             return None
 
+    def start(self):
+        vm_xml = etree.tostring(self.construct_xml()).decode()
+
+        for device in self.devices:
+            device.pre_start_vm()
+
+        domain = self.connection.createXML(vm_xml)
+        if not domain:
+            raise CallError(f'Failed to create domain for {self.vm_data["name"]}')
+
+        for device in self.devices:
+            device.post_start_vm()
+
     def construct_xml(self):
         domain = create_element(
             'domain', type='bhyve', id=str(self.vm_data['id']), attribute_dict={
