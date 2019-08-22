@@ -9,6 +9,7 @@ from middlewared.utils.path import is_child
 
 import middlewared.logger
 import asyncio
+import contextlib
 import errno
 import ipaddress
 import libvirt
@@ -163,6 +164,19 @@ class VMSupervisorLibVirt:
 
         for device in self.devices:
             device.post_stop_vm()
+
+    def poweroff(self):
+        for device in self.devices:
+            with contextlib.suppress(Exception):
+                device.pre_stop_vm()
+
+        self.domain.destroy()
+
+        for device in self.devices:
+            with contextlib.suppress(Exception):
+                device.post_stop_vm()
+
+        # For poweroff, we don't care about raising an exception if any device method fails
 
     def construct_xml(self):
         domain = create_element(
