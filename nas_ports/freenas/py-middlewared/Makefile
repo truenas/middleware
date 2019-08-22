@@ -49,7 +49,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}fenced>0:truenas/py-fenced@${PY_FLAVOR} \
 		rclone>0:net/rclone \
 		ifstat>0:net/ifstat \
-		samba410>=4.10.0:net/samba410 \
+		samba411>=0:net/samba411 \
 		swagger-ui>0:freenas/swagger-ui
 
 USE_RC_SUBR=	middlewared
