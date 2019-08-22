@@ -1,16 +1,8 @@
-import threading
-import time
-import enum
 import os
-import pybonjour
-import select
+import enum
+import xml.etree.ElementTree as xml
 import socket
-import subprocess
 
-from bsd.threading import set_thread_name
-from pybonjour import kDNSServiceInterfaceIndexAny
-
-from middlewared.service import Service, private
 from middlewared.utils import filter_list
 
 
@@ -44,88 +36,14 @@ class ServiceType(enum.Enum):
     WEBDAV = ('_webdav._tcp.', 8080)
 
 
-class mDNSDaemonMonitor(threading.Thread):
-
-    instance = None
-
-    def __init__(self, middleware):
-        super(mDNSDaemonMonitor, self).__init__(daemon=True)
-        self.middleware = middleware
-        self.logger = self.middleware.logger
-        self.mdnsd_pidfile = "/var/run/mdnsd.pid"
-        self.mdnsd_piddir = "/var/run/"
-        self.mdnsd_running = threading.Event()
-        self.dns_sync = threading.Event()
-
-        if self.__class__.instance:
-            raise RuntimeError('Can only be instantiated a single time')
-        self.__class__.instance = self
-        self.start()
-
-    def run(self):
-        set_thread_name('mdnsd_monitor')
-        while True:
-            """
-            If the system has not completely booted yet we need to way at least
-            for DNS to be configured.
-
-            In case middlewared is started after boot, system.ready will be set after this plugin
-            is loaded, hence the dns_sync timeout.
-            """
-            if not self.middleware.call_sync('system.ready'):
-                if not self.dns_sync.wait(timeout=2):
-                    continue
-
-            pid = self.is_alive()
-            if not pid:
-                self.start_mdnsd()
-                time.sleep(2)
-                continue
-            kqueue = select.kqueue()
-            try:
-                kqueue.control([
-                    select.kevent(
-                        pid,
-                        filter=select.KQ_FILTER_PROC,
-                        flags=select.KQ_EV_ADD,
-                        fflags=select.KQ_NOTE_EXIT,
-                    )
-                ], 0, 0)
-            except ProcessLookupError:
-                continue
-            self.mdnsd_running.set()
-            self.middleware.call_sync('mdnsadvertise.restart')
-            kqueue.control(None, 1)
-            self.mdnsd_running.clear()
-            kqueue.close()
-
-    def is_alive(self):
-        if not os.path.exists(self.mdnsd_pidfile):
-            return False
-
-        try:
-            with open(self.mdnsd_pidfile, 'r') as f:
-                pid = int(f.read().strip())
-
-            os.kill(pid, 0)
-        except (FileNotFoundError, ProcessLookupError, ValueError):
-            return False
-        except Exception as e:
-            self.logger.debug('Failed to read mdnsd pidfile', exc_info=True)
-            return False
-
-        return pid
-
-    def start_mdnsd(self):
-        p = subprocess.Popen(["/usr/local/etc/rc.d/mdnsd", "onestart"])
-        p.wait()
-        return p.returncode == 0
+class AvahiConst(enum.Enum):
+    AVAHI_IF_UNSPEC = -1
+    AVAHI_SERVICE_PATH = "/usr/local/etc/avahi/services"
 
 
-class mDNSServiceThread(threading.Thread):
+class mDNSService(object):
     def __init__(self, **kwargs):
-        super(mDNSServiceThread, self).__init__()
-        self.setDaemon(True)
+        super(mDNSService, self).__init__()
         self.service_info = kwargs.get('service_info')
         self.middleware = kwargs.get('middleware')
         self.logger = self.middleware.logger
@@ -133,7 +51,6 @@ class mDNSServiceThread(threading.Thread):
         self.service = None
         self.regtype = None
         self.port = None
-        self.finished = threading.Event()
 
     def _is_system_service(self):
         if self.service in ['DEV_INFO', 'HTTP', 'HTTPS', 'MIDDLEWARE', 'MIDDLEWARE_SSL']:
@@ -193,21 +110,21 @@ class mDNSServiceThread(threading.Thread):
         network analysis indicates that current MacOS Time Machine shares set the port for adisk to 311.
         """
         if self.service not in ['ADISK', 'DEV_INFO']:
-            return ('', self._get_interfaceindex())
+            return ({}, self._get_interfaceindex())
 
-        txtrecord = pybonjour.TXTRecord()
+        txtrecord = {}
         if self.service == 'DEV_INFO':
             txtrecord['model'] = DevType.RACKMAC
-            return (txtrecord, [kDNSServiceInterfaceIndexAny])
+            return (txtrecord, [AvahiConst.AVAHI_IF_UNSPEC])
 
         if self.service == 'ADISK':
-            iindex = [kDNSServiceInterfaceIndexAny]
+            iindex = [AvahiConst.AVAHI_IF_UNSPEC]
             afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
             smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
             afp = set([(x['name'], x['path']) for x in afp_shares])
             smb = set([(x['name'], x['path']) for x in smb_shares])
             if len(afp | smb) == 0:
-                return (None, [kDNSServiceInterfaceIndexAny])
+                return (None, [AvahiConst.AVAHI_IF_UNSPEC])
 
             mixed_shares = afp & smb
             afp.difference_update(mixed_shares)
@@ -233,15 +150,15 @@ class mDNSServiceThread(threading.Thread):
 
                 if smb:
                     smb_iindex = self._get_interfaceindex('SMB')
-                    if smb_iindex != [kDNSServiceInterfaceIndexAny]:
+                    if smb_iindex != [AvahiConst.AVAHI_IF_UNSPEC]:
                         iindex.extend(smb_iindex)
                 if afp:
                     afp_iindex = self._get_interfaceindex('AFP')
-                    if afp_iindex != [kDNSServiceInterfaceIndexAny]:
+                    if afp_iindex != [AvahiConst.AVAHI_IF_UNSPEC]:
                         iindex.extend(afp_iindex)
 
                 if not iindex:
-                    iindex = [kDNSServiceInterfaceIndexAny]
+                    iindex = [AvahiConst.AVAHI_IF_UNSPEC]
 
             return (txtrecord, iindex)
 
@@ -266,8 +183,8 @@ class mDNSServiceThread(threading.Thread):
     def _get_interfaceindex(self, service=None):
         """
         interfaceIndex specifies the interface on which to register the sdRef.
-        kDNSServiceInterfaceIndexAny (0) will register on all available interfaces.
-        This function will return kDNSServiceInterfaceIndexAny if the service is
+        AvahiConst.AVAHI_IF_UNSPEC (0) will register on all available interfaces.
+        This function will return AvahiConst.AVAHI_IF_UNSPEC if the service is
         not configured to bind on a particular interface. Otherwise it will return
         a list of interfaces on which to register mDNS.
         """
@@ -291,10 +208,10 @@ class mDNSServiceThread(threading.Thread):
                     self.logger.debug('Failed to determine interface index for [%s], service [%s]',
                                       iface, service, exc_info=True)
 
-            return iindex if iindex else [kDNSServiceInterfaceIndexAny]
+            return iindex if iindex else [AvahiConst.AVAHI_IF_UNSPEC]
 
         if bind_ip is None:
-            return [kDNSServiceInterfaceIndexAny]
+            return [AvahiConst.AVAHI_IF_UNSPEC]
 
         for ip in bind_ip:
             for intobj in self.middleware.call_sync('interface.query'):
@@ -307,12 +224,9 @@ class mDNSServiceThread(threading.Thread):
 
                     break
 
-        return iindex if iindex else [kDNSServiceInterfaceIndexAny]
+        return iindex if iindex else [AvahiConst.AVAHI_IF_UNSPEC]
 
-    def register(self):
-        """
-        An instance of DNSServiceRef (sdRef) represents an active connection to mdnsd.
-        """
+    def generate_services(self):
         mDNSServices = {}
         for srv in ServiceType:
             mDNSServices.update({srv.name: {}})
@@ -331,125 +245,78 @@ class mDNSServiceThread(threading.Thread):
                 'Registering mDNS service host: %s,  regtype: %s, port: %s, interface: %s, TXTRecord: %s',
                 self.hostname, self.regtype, port, interfaceIndex, txtrecord
             )
+            # write header of service file
+            config_file = f"{AvahiConst.AVAHI_SERVICE_PATH.value}/{srv.name}.service"
+            with open(config_file, "w") as f:
+                f.write('<?xml version="1.0" standalone="no"?>')
+                f.write('<!DOCTYPE service-group SYSTEM "avahi-service.dtd">')
+
+            root = xml.Element("service-group")
+            srv_name = xml.Element('name')
+            srv_name.text = self.hostname
+            root.append(srv_name)
             for i in interfaceIndex:
-                mDNSServices[srv.name].update({i: {
-                    'sdRef': None,
-                    'interfaceIndex': i,
-                    'regtype': self.regtype,
-                    'port': port,
-                    'txtrecord': txtrecord,
-                    'name': self.hostname
-                }})
+                service = xml.Element('service')
+                root.append(service)
+                regtype = xml.SubElement(service, 'type')
+                regtype.text = self.regtype
+                srvport = xml.SubElement(service, 'port')
+                srvport.text = str(port)
+                if i != AvahiConst.AVAHI_IF_UNSPEC:
+                    iindex = xml.SubElement(service, 'interface')
+                    iindex.text = str(i)
 
-                mDNSServices[srv.name][i]['sdRef'] = pybonjour.DNSServiceRegister(
-                    name=self.hostname,
-                    regtype=self.regtype,
-                    interfaceIndex=i,
-                    port=port,
-                    txtRecord=txtrecord,
-                    callBack=None
-                )
-
-        self.finished.wait()
-        for srv in mDNSServices.keys():
-            for i in mDNSServices[srv].keys():
-                self.logger.trace('Unregistering %s %s.',
-                                  mDNSServices[srv][i]['name'], mDNSServices[srv][i]['regtype'])
-                mDNSServices[srv][i]['sdRef'].close()
-
-    def run(self):
-        set_thread_name(f'mdns_svc_{self.service}')
-        try:
-            self.register()
-        except pybonjour.BonjourError:
-            self.logger.debug("ServiceThread: failed to register '%s', is mdnsd running?", self.service)
-
-    def setup(self):
-        pass
-
-    def cancel(self):
-        self.finished.set()
+                for t, v in txtrecord.items():
+                    txt = xml.SubElement(service, 'txt-record')
+                    txt.text = f'{t}={v}'
+            xml_service_config = xml.ElementTree(root)
+            with open(config_file, "a") as f:
+                xml_service_config.write(f, 'unicode')
+                f.write('\n')
 
 
-class mDNSAdvertiseService(Service):
-    def __init__(self, *args, **kwargs):
-        super(mDNSAdvertiseService, self).__init__(*args, **kwargs)
-        self.threads = {}
-        self.initialized = False
-        self.lock = threading.Lock()
-
-    @private
-    async def get_hostname(self):
-        """
-        Return virtual hostname if the server is HA and this is the active controller.
-        Return None if this is the passive controller.
-        In all other cases return the hostname_local.
-        This is to ensure that the correct hostname is used for mdns advertisements.
-        """
-        ngc = await self.middleware.call('network.configuration.config')
-        if 'hostname_virtual' in ngc:
-            failover_status = await self.middleware.call('failover.status')
-            if failover_status == 'MASTER':
-                return ngc['hostname_virtual']
-            elif failover_status == 'BACKUP':
-                return None
-        else:
-            return ngc['hostname_local']
-
-    @private
-    def start(self):
-        with self.lock:
-            if self.initialized:
-                return
-
-        if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
-            return
-
-        service_info = self.middleware.call_sync('service.query')
-        hostname = self.middleware.call_sync('mdnsadvertise.get_hostname')
-        if hostname is None:
-            return
-
-        if self.threads.get('mDNSThread'):
-            self.logger.debug('mDNS advertise thread is already started.')
-            return
-
-        thread = mDNSServiceThread(
-            middleware=self.middleware,
-            hostname=hostname,
-            service_info=service_info
-        )
-        thread.setup()
-        thread_name = 'mDNSThread'
-        self.threads[thread_name] = thread
-        thread.start()
-
-        with self.lock:
-            self.initialized = True
-
-    @private
-    def stop(self):
-        thread = self.threads.get('mDNSThread')
-        if thread is None:
-            return
-
-        thread.cancel()
-        del self.threads['mDNSThread']
-        self.threads = {}
-
-        with self.lock:
-            self.initialized = False
-
-    @private
-    def restart(self):
-        self.stop()
-        self.start()
+def remove_service_configs(middleware):
+    for file in os.listdir(AvahiConst.AVAHI_SERVICE_PATH.value):
+        servicefile = f'{AvahiConst.AVAHI_SERVICE_PATH.value}/{file}'
+        if os.path.isfile(servicefile):
+            try:
+                os.unlink(servicefile)
+            except Exception as e:
+                middleware.logger.debug('Filed to delete [%s]: (%s)', servicefile, e)
 
 
-async def dns_post_sync(middleware):
-    mDNSDaemonMonitor.instance.dns_sync.set()
+def get_hostname(middleware):
+    """
+    Return virtual hostname if the server is HA and this is the active controller.
+    Return None if this is the passive controller.
+    In all other cases return the hostname_local.
+    This is to ensure that the correct hostname is used for mdns advertisements.
+    """
+    ngc = middleware.call_sync('network.configuration.config')
+    if 'hostname_virtual' in ngc:
+        failover_status = middleware.call_sync('failover.status')
+        if failover_status == 'MASTER':
+            return ngc['hostname_virtual']
+        elif failover_status == 'BACKUP':
+            return None
+    else:
+        return ngc['hostname_local']
 
 
-def setup(middleware):
-    mDNSDaemonMonitor(middleware)
-    middleware.register_hook('dns.post_sync', dns_post_sync)
+def generate_avahi_config(middleware):
+    service_info = middleware.call_sync('service.query')
+    hostname = get_hostname(middleware)
+    if hostname is None:
+        return
+
+    remove_service_configs(middleware)
+    mdns_configs = mDNSService(
+       middleware=middleware,
+       hostname=hostname,
+       service_info=service_info
+    )
+    mdns_configs.generate_services()
+
+
+def render(service, middleware):
+    generate_avahi_config(middleware)

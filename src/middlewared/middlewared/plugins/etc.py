@@ -157,6 +157,10 @@ class EtcService(Service):
         'motd': [
             {'type': 'mako', 'path': 'motd'}
         ],
+        'mdns': [
+            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf'},
+            {'type': 'py', 'path': 'local/avahi/avahi_services'}
+        ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
             {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
