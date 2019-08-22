@@ -156,7 +156,13 @@ class VMSupervisorLibVirt:
         if not self.domain:
             raise CallError(f'{self.libvirt_domain_name} domain could not be found. Is the VM running ?')
 
+        for device in self.devices:
+            device.pre_stop_vm()
+
         self.domain.shutdown()
+
+        for device in self.devices:
+            device.post_stop_vm()
 
     def construct_xml(self):
         domain = create_element(
@@ -332,6 +338,12 @@ class Device(ABC):
         pass
 
     def post_start_vm(self, *args, **kwargs):
+        pass
+
+    def pre_stop_vm(self, *args, **kwargs):
+        pass
+
+    def post_stop_vm(self, *args, **kwargs):
         pass
 
 
@@ -513,6 +525,10 @@ class VNC(Device):
                 '/usr/local/libexec/novnc/', '--wrap-mode=ignore', web_bind, f'{vnc_bind}:{vnc_port}'
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
+
+    def post_stop_vm(self, *args, **kwargs):
+        if self.web_process and psutil.pid_exists(self.web_process.pid):
+            os.kill(self.web_process.pid, signal.SIGKILL)
 
 
 class VMSupervisor(object):
