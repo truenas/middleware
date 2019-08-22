@@ -487,8 +487,6 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             if ret and ret[0] == 1:
                 run('/usr/sbin/service ix-ldap quietstart')
 
-            # TODO: Why is lockd missing from this list?
-            # why are things being restarted instead of reloaded?
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "nfs"')
             ret = c.fetchone()
             if ret and ret[0] == 1:

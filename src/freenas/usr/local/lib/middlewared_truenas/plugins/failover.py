@@ -1562,6 +1562,7 @@ async def service_remote(middleware, service, verb, options):
         'netdata',
         'smartd',
         'system_datasets',
+        'nfs',
     ) or await middleware.call('failover.status') != 'MASTER':
         return
     # Nginx should never be stopped on standby node
