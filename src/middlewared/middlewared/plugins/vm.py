@@ -105,6 +105,11 @@ class VMSupervisorLibVirt:
     def __init__(self, vm_data, connection, logger_obj=None, log_format=None, debug_level=None):
         self.vm_data = vm_data
         self.connection = connection
+        self.devices = [
+            getattr(sys.modules[__name__], device['dtype'])(device)
+            for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
+        ]
+
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
 
@@ -187,9 +192,8 @@ class VMSupervisorLibVirt:
         ahci_current_controller = controller_base.copy()
         virtio_current_controller = controller_base.copy()
 
-        for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id'])):
-            device_obj = getattr(sys.modules[__name__], device['dtype'])(device)
-            if isinstance(device_obj, (DISK, CDROM, RAW)):
+        for device in self.devices:
+            if isinstance(device, (DISK, CDROM, RAW)):
                 # We classify all devices in 2 types:
                 # 1) AHCI
                 # 2) VIRTIO
@@ -216,7 +220,7 @@ class VMSupervisorLibVirt:
                 # that pci and sata bus are incompatible in AHCI and libvirt raises an error in this case.
 
                 # TODO: It would be ensured by vm service that we don't run out of slots/functions
-                if device['attributes'].get('type') != 'VIRTIO':
+                if device.data['attributes'].get('type') != 'VIRTIO':
                     virtio = False
                     current_controller = ahci_current_controller
                     max_devices = 32
@@ -270,9 +274,9 @@ class VMSupervisorLibVirt:
                         'target': str(current_controller['devices'])
                     }
 
-                device_xml = device_obj.xml(child_element=create_element('address', **address_dict))
+                device_xml = device.xml(child_element=create_element('address', **address_dict))
             else:
-                device_xml = device_obj.xml()
+                device_xml = device.xml()
 
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
 
@@ -302,10 +306,10 @@ class Device(ABC):
     def xml(self, *args, **kwargs):
         pass
 
-    def pre_start(self, *args, **kwargs):
+    def pre_start_vm(self, *args, **kwargs):
         pass
 
-    def post_start(self, *args, **kwargs):
+    def post_start_vm(self, *args, **kwargs):
         pass
 
 
@@ -391,7 +395,7 @@ class NIC(Device):
         ]
         return ':'.join(['%02x' % x for x in mac_address])
 
-    def pre_start(self, *args, **kwargs):
+    def pre_start_vm(self, *args, **kwargs):
         nic_attach = self.data['attributes']['nic_attach']
         if not nic_attach:
             try:
@@ -474,7 +478,7 @@ class VNC(Device):
             )
         ), create_element('controller', type='usb', model='nec-xhci'), create_element('input', type='tablet', bus='usb')
 
-    def post_start(self, *args, **kwargs):
+    def post_start_vm(self, *args, **kwargs):
         vnc_port = self.data['attributes']['vnc_port']
         vnc_bind = self.data['attributes']['vnc_bind']
         split_port = int(str(vnc_port)[:2]) - 1
