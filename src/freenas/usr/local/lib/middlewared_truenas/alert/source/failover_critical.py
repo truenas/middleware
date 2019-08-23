@@ -8,7 +8,6 @@ import re
 import subprocess
 
 from freenasUI.network.models import Interfaces
-from freenasUI.failover.detect import ha_node
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
@@ -70,6 +69,7 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
         if not ifaces:
             return [Alert(NoCriticalFailoverInterfaceFoundAlertClass)]
 
+        ha_node = self.middleware.call_sync('failover.node')
         for iface in ifaces:
             proc = subprocess.Popen(
                 ["/sbin/ifconfig", str(iface.int_interface)],
@@ -98,7 +98,7 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
                     }))
 
             if not iface.int_dhcp:
-                if ha_node() == 'B':
+                if ha_node == 'B':
                     pingip = str(iface.int_ipv4address)
                     pingfrom = str(iface.int_ipv4address_b)
                 else:

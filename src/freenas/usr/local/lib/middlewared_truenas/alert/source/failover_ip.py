@@ -4,8 +4,6 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-from freenasUI.failover.detect import ha_node
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
@@ -21,7 +19,7 @@ class FailoverIpAlertSource(AlertSource):
     async def check(self):
         interfaces = await self.middleware.call("datastore.query", "network.interfaces")
         alerts = []
-        node = ha_node()
+        node = await self.middleware.call("failover.node")
 
         for interface in interfaces:
             if interface["int_critical"]:
