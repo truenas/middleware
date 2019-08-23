@@ -281,9 +281,11 @@ class SystemService(Service):
         Returns `true` if running system is a FreeNAS or `false` if something else.
         """
         if self.__is_freenas is None:
+            license = await self.middleware.run_in_thread(self.__get_license)
             self.__is_freenas = True if (
-                await self.middleware.call('system.version')
-            ).lower().startswith('freenas') else False
+                not license or
+                license['model'].lower().startswith('freenas')
+            ) else False
         return self.__is_freenas
 
     @no_auth_required
@@ -418,6 +420,7 @@ class SystemService(Service):
 
         self.middleware.call_sync('etc.generate', 'rc')
 
+        self.__is_freenas = None
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update'), wait=False,
         )
