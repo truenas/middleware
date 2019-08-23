@@ -432,6 +432,9 @@ class FilesystemService(Service):
         if not os.path.exists(data['path']):
             raise CallError(f"Path {data['path']} not found.", errno.ENOENT)
 
+        if not os.path.realpath(data['path']).startswith('/mnt/'):
+            raise CallError(f"Changing ownership on path {data['path']} is not permitted.", errno.EPERM)
+
         uid = -1 if data['uid'] is None else data['uid']
         gid = -1 if data['gid'] is None else data['gid']
         options = data['options']
@@ -491,6 +494,9 @@ class FilesystemService(Service):
 
         if not os.path.exists(data['path']):
             raise CallError('Path not found.', errno.ENOENT)
+
+        if not os.path.realpath(data['path']).startswith('/mnt/'):
+            raise CallError(f"Changing permission on path {data['path']} is not permitted.", errno.EPERM)
 
         acl_is_trivial = self.middleware.call_sync('filesystem.acl_is_trivial', data['path'])
         if not acl_is_trivial and not options['stripacl']:
@@ -765,6 +771,9 @@ class FilesystemService(Service):
         dacl = data.get('dacl', [])
         if not os.path.exists(data['path']):
             raise CallError('Path not found.', errno.ENOENT)
+
+        if not os.path.realpath(data['path']).startswith('/mnt/'):
+            raise CallError(f"Changing ACL on path {data['path']} is not permitted.", errno.EPERM)
 
         if dacl and options['stripacl']:
             raise CallError('Setting ACL and stripping ACL are not permitted simultaneously.', errno.EINVAL)
