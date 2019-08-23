@@ -372,6 +372,15 @@ class InterfaceService(CRUDService):
             'mtu': None,
         }
 
+        if not is_freenas:
+            iface.update({
+                'failover_critical': False,
+                'failover_vhid': None,
+                'failover_group': None,
+                'failover_aliases': [],
+                'failover_virtual_aliases': [],
+            })
+
         config = configs.get(iface['name'])
         if not config:
             return iface
@@ -389,8 +398,6 @@ class InterfaceService(CRUDService):
                 'failover_critical': config['int_critical'],
                 'failover_vhid': config['int_vhid'],
                 'failover_group': config['int_group'],
-                'failover_aliases': [],
-                'failover_virtual_aliases': [],
             })
             if config['int_ipv4address_b']:
                 iface['failover_aliases'].append({
