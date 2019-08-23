@@ -12,8 +12,6 @@ import os
 
 from licenselib.license import ContractType
 
-from freenasUI.support.utils import get_license
-
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import Service, private
 from middlewared.utils import run
@@ -195,22 +193,22 @@ class TrueNASService(Service):
 
     async def __fetch_customer_information(self):
         result = await self.middleware.call('datastore.config', 'truenas.customerinformation')
-        result["immutable_data"] = self.__fetch_customer_information_immutable_data()
+        result["immutable_data"] = await self.__fetch_customer_information_immutable_data()
         result["data"] = json.loads(result["data"])
         result["needs_update"] = datetime.utcnow() - result["updated_at"] > timedelta(days=365)
         return result
 
-    def __fetch_customer_information_immutable_data(self):
-        license = get_license()[0]
+    async def __fetch_customer_information_immutable_data(self):
+        license = (await self.middleware.call('system.info'))['license']
         if license is None:
             return None
 
         return {
-            "serial_number": license.system_serial,
-            "serial_number_ha": license.system_serial_ha,
-            "support_level": ContractType(license.contract_type).name.title(),
-            "support_start_date": license.contract_start.isoformat(),
-            "support_end_date": license.contract_end.isoformat(),
+            "serial_number": license['system_serial'],
+            "serial_number_ha": license['system_serial_ha'],
+            "support_level": license['contract_type'].title(),
+            "support_start_date": license['contract_start'].isoformat(),
+            "support_end_date": license['contract_end'].isoformat(),
         }
 
     @accepts()
