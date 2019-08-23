@@ -201,8 +201,6 @@ class VMSupervisorLibVirt:
             device.post_stop_vm()
 
     def restart(self):
-        # TODO: Please check tearing down guest vmemory related aspects
-
         vm_process = psutil.Process(self.status()['pid'])
         self.stop()
         try:
@@ -1546,12 +1544,36 @@ class VMService(CRUDService):
             else:
                 vm.stop()
 
+        self.middleware.call_sync('vm._teardown_guest_vmemory', id)
+
     @item_method
     @accepts(Int('id'))
     def restart(self, id):
         """Restart a VM."""
         with libvirt_connection() as conn:
             VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn).restart()
+
+    async def _teardown_guest_vmemory(self, id):
+        guest_status = await self.middleware.call('vm.status', id)
+        if guest_status.get('state') != 'STOPPED':
+            return
+
+        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+        guest_memory = vm[0].get('memory', 0) * 1024 * 1024
+        arc_max = sysctl.filter('vfs.zfs.arc.max')[0].value
+        arc_min = sysctl.filter('vfs.zfs.arc.min')[0].value
+        new_arc_max = min(
+            await self.middleware.call('vm.get_initial_arc_max'),
+            arc_max + guest_memory
+        )
+        if arc_max != new_arc_max:
+            if new_arc_max > arc_min:
+                self.logger.debug(f'===> Give back guest memory to ARC: {new_arc_max}')
+                sysctl.filter('vfs.zfs.arc.max')[0].value = new_arc_max
+            else:
+                self.logger.warn(
+                    f'===> Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
+                )
 
     @item_method
     @accepts(Int('id'))
