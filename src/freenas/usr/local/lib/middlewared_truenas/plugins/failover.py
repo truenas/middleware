@@ -40,7 +40,6 @@ import django
 django.setup()
 from freenasUI.freeadmin.sqlite3_ha.base import Journal
 from freenasUI.failover.enc_helper import LocalEscrowCtl
-from freenasUI.middleware.notifier import notifier
 
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 SYNC_FILE = '/var/tmp/sync_failed'
@@ -642,14 +641,6 @@ class FailoverService(ConfigService):
 
             if not self.middleware.call_sync('datastore.query', 'network.interfaces', [['int_critical', '=', True]]):
                 reasons.append('NO_CRITICAL_INTERFACES')
-        except CallError as e:
-            if e.errno not in (errno.ECONNREFUSED, errno.EHOSTDOWN, ClientException.ENOMETHOD):
-                reasons.append('NO_PONG')
-            else:
-                try:
-                    assert self.middleware.call_sync('failover.legacy_ping') == 'pong'
-                except Exception:
-                    reasons.append('NO_PONG')
         except Exception:
             reasons.append('NO_PONG')
         if self.middleware.call_sync('failover.config')['disabled']:
@@ -682,11 +673,6 @@ class FailoverService(ConfigService):
         """
         self.middleware.call('failover.encryption_setkey', options['passphrase'])
         return self.middleware.call('failover.force_master')
-
-    @private
-    def legacy_ping(self):
-        # This is to communicate with legacy TrueNAS, pre middlewared for upgrading.
-        return notifier().failover_rpc().ping()
 
     @private
     def remote_ip(self):
@@ -1269,7 +1255,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     middleware.logger.info('[HA] Setting up')
 
     middleware.logger.debug('[HA] Synchronizing database and files')
-    await middleware.call('notifier.failover_sync_peer', 'to')
+    await middleware.call('failover.sync_to_peer')
 
     middleware.logger.debug('[HA] Configuring network on standby node')
     await middleware.call('failover.call_remote', 'interface.sync')
@@ -1308,7 +1294,7 @@ async def hook_sync_geli(middleware, pool=None):
         return
 
     # TODO: failover_sync_peer is overkill as it will sync a bunch of other things
-    await middleware.call('notifier.failover_sync_peer', 'to')
+    await middleware.call('failover.sync_to_peer')
 
 
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
