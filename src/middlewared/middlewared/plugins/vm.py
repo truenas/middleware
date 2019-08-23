@@ -115,7 +115,7 @@ class DomainState(enum.Enum):
 
 class VMSupervisorLibVirt:
 
-    def __init__(self, vm_data, connection, logger_obj=None, log_format=None, debug_level=None):
+    def __init__(self, vm_data, connection):
         self.vm_data = vm_data
         self.connection = connection
         self.devices = [
@@ -126,22 +126,6 @@ class VMSupervisorLibVirt:
 
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
-
-        # Setup logging
-        if logger_obj:
-            self.logger = logger_obj.getChild(f'vm_{vm_data["name"]}')
-
-            handler = logger_obj.ErrorProneRotatingFileHandler(
-                f'/var/log/vm/{self.vm_data["name"]}_{self.vm_data["id"]}',
-                maxBytes=10485760,
-                backupCount=5,
-            )
-            handler.setFormatter(logging.Formatter(log_format))
-            self.logger.addHandler(handler)  # main log + vm specific log
-            self.logger.setLevel(debug_level)
-        else:
-            # FIXME: Done for dev purposes for a while
-            self.logger = None
 
     def status(self):
         state = self.domain and self.domain.isActive()
