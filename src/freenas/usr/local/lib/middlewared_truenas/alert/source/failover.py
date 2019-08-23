@@ -7,11 +7,10 @@
 import errno
 import os
 import json
+import sysctl
 import subprocess
-import xmlrpc.client
 
 from freenasUI.failover.enc_helper import LocalEscrowCtl
-from freenasUI.middleware.notifier import notifier
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
 from middlewared.service_exception import CallError
@@ -125,22 +124,7 @@ class FailoverAlertSource(ThreadedAlertSource):
                 ))
 
         except CallError as e:
-            try:
-                if e.errno != errno.ECONNREFUSED:
-                    raise
-
-                try:
-                    s = notifier().failover_rpc()
-                    if s is not None:
-                        s.run_sql("SELECT 1", None)
-                except xmlrpc.client.Fault as e:
-                    if e.faultCode == 5:
-                        return [Alert(FailoverAccessDeniedAlertClass)]
-                    elif e.faultCode == 55:
-                        return [Alert(TrueNASVersionsMismatchAlertClass)]
-                    else:
-                        raise
-            except Exception as e:
+            if e.errno != errno.ECONNREFUSED:
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
 
         status = self.middleware.call_sync('failover.status')
@@ -173,7 +157,7 @@ class FailoverAlertSource(ThreadedAlertSource):
 
         if status != "SINGLE":
             try:
-                if notifier().sysctl('kern.cam.ctl.ha_link') == 1:
+                if sysctl.filter('kern.cam.ctl.ha_link')[0].value == 1:
                     alerts.append(Alert(CTLHALinkAlertClass))
             except Exception:
                 pass

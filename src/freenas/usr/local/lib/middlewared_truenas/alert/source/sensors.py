@@ -44,7 +44,7 @@ class SensorsAlertSource(AlertSource):
             (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors="ignore")
         )
 
-        failover_hardware = await self.middleware.call("notifier.failover_hardware")
+        failover_hardware = await self.middleware.call("failover.hardware")
 
         is_gigabyte = baseboard_manufacturer == "GIGABYTE"
         is_m_series = baseboard_manufacturer == "Supermicro" and failover_hardware == "ECHOWARP"
