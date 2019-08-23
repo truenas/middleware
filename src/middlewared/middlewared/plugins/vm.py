@@ -204,6 +204,20 @@ class VMSupervisorLibVirt:
         for device in self.devices:
             device.post_stop_vm()
 
+    def restart(self):
+        # TODO: Please check tearing down guest vmemory related aspects
+
+        vm_process = psutil.Process(self.status()['pid'])
+        self.stop()
+        try:
+            vm_process.wait(10)
+        except psutil.TimeoutExpired:
+            # In case domain stopped between this time
+            with contextlib.suppress(libvirt.libvirtError):
+                self.poweroff()
+
+        self.start()
+
     def poweroff(self):
         self._before_stopping_checks()
 
