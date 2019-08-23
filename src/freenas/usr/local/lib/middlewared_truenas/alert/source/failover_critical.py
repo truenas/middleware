@@ -7,8 +7,6 @@
 import re
 import subprocess
 
-from freenasUI.network.models import Interfaces
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
 
@@ -64,7 +62,7 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
         if not self.middleware.call_sync('failover.licensed'):
             return alerts
 
-        ifaces = list(Interfaces.objects.filter(int_critical=True))
+        ifaces = self.middleware.call_sync('interface.query', [('failover_critical', '=', True)])
 
         if not ifaces:
             return [Alert(NoCriticalFailoverInterfaceFoundAlertClass)]
@@ -72,48 +70,66 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
         ha_node = self.middleware.call_sync('failover.node')
         for iface in ifaces:
             proc = subprocess.Popen(
-                ["/sbin/ifconfig", str(iface.int_interface)],
+                ["/sbin/ifconfig", str(iface['name'])],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 encoding='utf8',
             )
             output = proc.communicate()[0]
             if proc.returncode != 0:
-                alerts.append(Alert(CriticalFailoverInterfaceNotFoundAlertClass, iface.int_interface))
+                alerts.append(Alert(CriticalFailoverInterfaceNotFoundAlertClass, iface['name']))
                 continue
 
             reg = re.search(r'carp: (\S+) .*vhid (\d+)', output, re.M)
             if not reg:
-                alerts.append(Alert(CriticalFailoverInterfaceCARPNotConfiguredAlertClass, iface.int_interface))
+                alerts.append(Alert(CriticalFailoverInterfaceCARPNotConfiguredAlertClass, iface['name']))
             else:
                 carp = reg.group(1)
                 vhid = int(reg.group(2))
                 if carp not in ('MASTER', 'BACKUP'):
-                    alerts.append(Alert(CriticalFailoverInterfaceCARPInvalidStateAlertClass, iface.int_interface))
-                if vhid != iface.int_vhid:
+                    alerts.append(Alert(CriticalFailoverInterfaceCARPInvalidStateAlertClass, iface['name']))
+                if vhid != iface['failover_vhid']:
                     alerts.append(Alert(CriticalFailoverInterfaceInvalidVHIDAlertClass, {
-                        'interface': iface.int_interface,
+                        'interface': iface['name'],
                         'vhid_real': vhid,
-                        'vhid': iface.int_vhid
+                        'vhid': iface['failover_vhid'],
                     }))
 
-            if not iface.int_dhcp:
+            if not iface['ipv4_dhcp']:
                 if ha_node == 'B':
-                    pingip = str(iface.int_ipv4address)
-                    pingfrom = str(iface.int_ipv4address_b)
+                    pingip = 'aliases'
+                    pingfrom = 'failover_aliases'
                 else:
-                    pingip = str(iface.int_ipv4address_b)
-                    pingfrom = str(iface.int_ipv4address)
+                    pingip = 'failover_aliases'
+                    pingfrom = 'aliases'
 
-                ping = subprocess.Popen([
-                    "/sbin/ping",
-                    "-c", "1",
-                    "-S", pingfrom,
-                    "-t", "1",
-                    pingip,
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                ping.communicate()
-                if ping.returncode != 0:
-                    alerts.append(Alert(FailedToVerifyCriticalFailoverInterfaceAlertClass, iface.int_interface))
+                pingip = next(
+                    (
+                        i['address']
+                        for i in iface[pingip] if i['type'] == 'INET'
+                    ),
+                    None,
+                )
+                pingfrom = next(
+                    (
+                        i['address']
+                        for i in iface[pingfrom] if i['type'] == 'INET'
+                    ),
+                    None,
+                )
+
+                if pingip and pingfrom:
+                    ping = subprocess.Popen([
+                        "/sbin/ping",
+                        "-c", "1",
+                        "-S", pingfrom,
+                        "-t", "1",
+                        pingip,
+                    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    ping.communicate()
+                    if ping.returncode != 0:
+                        alerts.append(Alert(
+                            FailedToVerifyCriticalFailoverInterfaceAlertClass, iface['name'],
+                        ))
 
         return alerts
