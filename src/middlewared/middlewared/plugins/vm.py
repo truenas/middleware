@@ -127,21 +127,30 @@ class VMSupervisorLibVirt:
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
 
+        if self.domain and not self.domain.isActive():
+            # We have a domain defined and it is not running
+            self.__undefine_domain()
+
+        if not self.domain:
+            self.__define_domain()
+
     def status(self):
-        state = self.domain and self.domain.isActive()
+        domain = self.domain
         return {
-            'state': 'STOPPED' if not state else 'RUNNING',
-            'pid': None if not state else self.domain.ID(),
-            'domain_state': None if not self.domain else DomainState(self.domain.state()[0]).name,
+            'state': 'STOPPED' if not domain.isActive() else 'RUNNING',
+            'pid': None if not domain.isActive() else self.domain.ID(),
+            'domain_state': DomainState(domain.state()[0]).name,
         }
 
-    def define_domain(self):
+    def __define_domain(self):
+        if self.domain:
+            raise CallError(f'{self.libvirt_domain_name} domain has already been defined')
+
         vm_xml = etree.tostring(self.construct_xml()).decode()
         if not self.connection.defineXML(vm_xml):
             raise CallError(f'Unable to define persistent domain for {self.libvirt_domain_name}')
 
-    def undefine_domain(self):
-        self._check_domain_existence()
+    def __undefine_domain(self):
         if self.domain.isActive():
             raise CallError(f'Domain {self.libvirt_domain_name} is active. Please stop it first')
 
@@ -154,12 +163,7 @@ class VMSupervisorLibVirt:
         except libvirt.libvirtError:
             return None
 
-    def _check_domain_existence(self):
-        if not self.domain:
-            raise CallError(f'Domain not found for {self.libvirt_domain_name}')
-
     def start(self):
-        self._check_domain_existence()
         if self.domain.isActive():
             raise CallError(f'{self.libvirt_domain_name} domain is already active')
 
@@ -173,7 +177,6 @@ class VMSupervisorLibVirt:
             device.post_start_vm()
 
     def _before_stopping_checks(self):
-        self._check_domain_existence()
         if not self.domain.isActive():
             raise CallError(f'{self.libvirt_domain_name} domain is not active')
 
@@ -995,7 +998,6 @@ class VMService(CRUDService):
 
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
-        self._manager = VMManager(self)
         os.makedirs('/var/log/vm', exist_ok=True)
 
     @accepts()
@@ -1483,6 +1485,10 @@ class VMService(CRUDService):
                     '/dev/zvol/'
                 )[-1]
                 await self.middleware.call('zfs.dataset.delete', disk_name)
+
+        with libvirt_connection() as conn:
+            VMSupervisorLibVirt((await self._get_instance(id)), conn).__undefine_domain()
+
         return await self.middleware.call('datastore.delete', 'vm.vm', id)
 
     @item_method
