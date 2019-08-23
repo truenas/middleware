@@ -4,13 +4,7 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-import os
-
-from freenasUI.freeadmin.sqlite3_ha.base import Journal
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
-
-SYNC_FILE = '/var/tmp/sync_failed'
 
 
 class FailoverSyncFailedAlertClass(AlertClass):
@@ -28,6 +22,6 @@ class FailoverSyncAlert(ThreadedAlertSource):
     failover_related = True
     run_on_backup_node = False
 
-    def check_sync(self):
-        if os.path.exists(SYNC_FILE) or not Journal.is_empty():
+    async def check(self):
+        if await self.middleware.call('failover.database_sync_failed'):
             return Alert(FailoverSyncFailedAlertClass)

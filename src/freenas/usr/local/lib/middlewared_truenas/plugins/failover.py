@@ -773,6 +773,10 @@ class FailoverService(ConfigService):
         return restore
 
     @private
+    def database_sync_failed(self):
+        return os.path.exists(SYNC_FILE) or not Journal.is_empty()
+
+    @private
     def upgrade_version(self):
         return 1
 
