@@ -301,7 +301,7 @@ def format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_ale
         if len(gone_alerts) == 1:
             text += "The following alert has been cleared"
         else:
-            text += "The following alerts have been cleared"
+            text += "These alerts have been cleared"
         text += ":\n" + "".join(["* %s\n" % format_alert(alert, node_map) for alert in gone_alerts]) + "\n"
 
     if alerts:
