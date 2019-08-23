@@ -127,9 +127,14 @@ class VMSupervisorLibVirt:
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
 
-        if self.domain and not self.domain.isActive():
-            # We have a domain defined and it is not running
-            self.__undefine_domain()
+        try:
+            self.domain = self.connection.lookupByName(self.libvirt_domain_name)
+        except libvirt.libvirtError:
+            self.domain = None
+        else:
+            if not self.domain.isActive():
+                # We have a domain defined and it is not running
+                self.undefine_domain()
 
         if not self.domain:
             self.__define_domain()
@@ -150,18 +155,22 @@ class VMSupervisorLibVirt:
         if not self.connection.defineXML(vm_xml):
             raise CallError(f'Unable to define persistent domain for {self.libvirt_domain_name}')
 
-    def __undefine_domain(self):
+        self.domain = self.connection.lookupByName(self.libvirt_domain_name)
+
+    def undefine_domain(self):
         if self.domain.isActive():
             raise CallError(f'Domain {self.libvirt_domain_name} is active. Please stop it first')
 
         self.domain.undefine()
+        self.domain = None
 
-    @property
-    def domain(self):
-        try:
-            return self.connection.lookupByName(self.libvirt_domain_name)
-        except libvirt.libvirtError:
-            return None
+    def __getattribute__(self, item):
+        retrieved_item = object.__getattribute__(self, item)
+        if callable(retrieved_item) and item in ('start', 'stop', 'restart', 'poweroff', 'undefine_domain', 'status'):
+            if not getattr(self, 'domain', None):
+                raise RuntimeError('Domain attribute not defined, please re-instantiate the VM class')
+
+        return retrieved_item
 
     def start(self):
         if self.domain.isActive():
@@ -1039,7 +1048,7 @@ class VMService(CRUDService):
 
     async def _extend_vm(self, vm):
         vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
-        vm['status'] = await self.status(vm['id'])
+        vm['status'] = await self.middleware.call('vm.status', vm['id'])
         return vm
 
     @accepts(Int('id'))
@@ -1138,7 +1147,7 @@ class VMService(CRUDService):
             str: with the device path or False.
         """
         try:
-            guest_status = await self.status(id)
+            guest_status = await self.middleware.call('vm.status', id)
         except Exception:
             guest_status = None
 
@@ -1162,7 +1171,7 @@ class VMService(CRUDService):
         memory_allocation = {'RNP': 0, 'PRD': 0, 'RPRD': 0}
         guests = await self.middleware.call('datastore.query', 'vm.vm')
         for guest in guests:
-            status = await self.status(guest['id'])
+            status = await self.middleware.call('vm.status', guest['id'])
             if status['state'] == 'RUNNING' and guest['autostart'] is False:
                 memory_allocation['RNP'] += guest['memory'] * 1024 * 1024
             elif status['state'] == 'RUNNING' and guest['autostart'] is True:
@@ -1246,9 +1255,9 @@ class VMService(CRUDService):
             sysctl.filter('vfs.zfs.arc.max')[0].value = new_arc_max
         return True
 
-    async def __init_guest_vmemory(self, vm, overcommit):
+    async def _init_guest_vmemory(self, vm, overcommit):
         guest_memory = vm.get('memory', None)
-        guest_status = await self.status(vm['id'])
+        guest_status = await self.middleware.call('vm.status', vm['id'])
         if guest_status.get('state') != 'RUNNING':
             setvmem = await self.__set_guest_vmemory(guest_memory, overcommit)
             if setvmem is False and not overcommit:
@@ -1466,14 +1475,16 @@ class VMService(CRUDService):
             Bool('zvols', default=False),
         ),
     )
-    async def do_delete(self, id, data):
+    def do_delete(self, id, data):
         """Delete a VM."""
-        status = await self.status(id)
-        if isinstance(status, dict):
-            if status.get('state') == 'RUNNING':
-                await self.stop(id)
+        status = self.status(id)
+        if status.get('state') == 'RUNNING':
+            self.stop(id, True)
+        elif status.get('state') == 'ERROR':
+            raise CallError('Unable to retrieve VM status. Failed to destroy VM')
+
         if data['zvols']:
-            devices = await self.middleware.call('vm.device.query', [
+            devices = self.middleware.call_sync('vm.device.query', [
                 ('vm', '=', id), ('dtype', '=', 'DISK')
             ])
 
@@ -1484,16 +1495,16 @@ class VMService(CRUDService):
                 disk_name = zvol['attributes']['path'].rsplit(
                     '/dev/zvol/'
                 )[-1]
-                await self.middleware.call('zfs.dataset.delete', disk_name)
+                self.middleware.call_sync('zfs.dataset.delete', disk_name)
 
         with libvirt_connection() as conn:
-            VMSupervisorLibVirt((await self._get_instance(id)), conn).__undefine_domain()
+            VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn).undefine_domain()
 
-        return await self.middleware.call('datastore.delete', 'vm.vm', id)
+        return self.middleware.call_sync('datastore.delete', 'vm.vm', id)
 
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit')))
-    async def start(self, id, options):
+    def start(self, id, options):
         """
         Start a VM.
 
@@ -1505,8 +1516,8 @@ class VMService(CRUDService):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
-        vm = await self._get_instance(id)
-        flags = await self.middleware.call('vm.flags')
+        vm = self.middleware.call_sync('vm._get_instance', id)
+        flags = self.flags()
 
         if not flags['intel_vmx'] and not flags['amd_rvi']:
             raise CallError(
@@ -1519,39 +1530,48 @@ class VMService(CRUDService):
             # Perhaps we should have a default config option for VMs?
             overcommit = False
 
-        await self.__init_guest_vmemory(vm, overcommit=overcommit)
-        await self._manager.start(vm)
+        self.middleware.call_sync('vm._init_guest_vmemory', vm, overcommit)
+
+        with libvirt_connection() as conn:
+            VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn).start()
 
     @item_method
     @accepts(Int('id'), Bool('force', default=False),)
-    async def stop(self, id, force):
+    def stop(self, id, force):
         """Stop a VM."""
-        try:
-            return await self._manager.stop(id, force)
-        except Exception as err:
-            self.logger.error('===> {0}'.format(err))
-            return False
+        with libvirt_connection() as conn:
+            vm = VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn)
+            if force:
+                vm.poweroff()
+            else:
+                vm.stop()
 
     @item_method
     @accepts(Int('id'))
-    async def restart(self, id):
+    def restart(self, id):
         """Restart a VM."""
-        try:
-            return await self._manager.restart(id)
-        except Exception as err:
-            self.logger.error('===> {0}'.format(err))
-            return False
+        with libvirt_connection() as conn:
+            VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn).restart()
 
     @item_method
     @accepts(Int('id'))
-    async def status(self, id):
+    def status(self, id):
         """Get the status of a VM.
 
         Returns a dict:
             - state, RUNNING or STOPPED
             - pid, process id if RUNNING
         """
-        return await self._manager.status(id)
+        # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls this
+        # and it calls vm.datastore_extend again
+        with libvirt_connection() as conn:
+            return VMSupervisorLibVirt(
+                {
+                    'devices': [],
+                    **self.middleware.call_sync('datastore.query', 'vm.vm', [('id', '=', id)], {'get': True})
+                },
+                conn
+            ).status()
 
     async def __next_clone_name(self, name):
         vm_names = [
