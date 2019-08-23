@@ -11,7 +11,6 @@ import subprocess
 import xmlrpc.client
 
 from freenasUI.failover.enc_helper import LocalEscrowCtl
-from freenasUI.failover.notifier import INTERNAL_IFACE_NF
 from freenasUI.middleware.notifier import notifier
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
@@ -100,7 +99,7 @@ class FailoverAlertSource(ThreadedAlertSource):
         if not self.middleware.call_sync('failover.licensed'):
             return alerts
 
-        if os.path.exists(INTERNAL_IFACE_NF):
+        if self.middleware.call_sync('failover.internal_interfaces_notfound'):
             alerts.append(Alert(FailoverInterfaceNotFoundAlertClass))
             return alerts
 

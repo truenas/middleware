@@ -247,6 +247,10 @@ class FailoverService(ConfigService):
         return []
 
     @private
+    def internal_interfaces_notfound(self):
+        return os.path.exists(INTERNAL_IFACE_NF)
+
+    @private
     async def get_carp_states(self, interfaces=None):
         if interfaces is None:
             interfaces = await self.middleware.call('interface.query')
