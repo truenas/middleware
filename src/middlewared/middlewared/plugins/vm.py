@@ -40,6 +40,7 @@ logger = middlewared.logger.Logger('vm').getLogger()
 
 BUFSIZE = 65536
 LIBVIRT_URI = 'bhyve+unix:///system'
+LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
 VM_BRIDGE = 'virbr0'
 ZFS_ARC_MAX_INITIAL = None
 
@@ -389,7 +390,6 @@ class VMSupervisorLibVirt:
                 # the slot/function number and it actually being respected. Reason this can't be used with AHCI is
                 # that pci and sata bus are incompatible in AHCI and libvirt raises an error in this case.
 
-                # TODO: It would be ensured by vm service that we don't run out of slots/functions
                 if device.data['attributes'].get('type') != 'VIRTIO':
                     virtio = False
                     current_controller = ahci_current_controller
@@ -401,9 +401,6 @@ class VMSupervisorLibVirt:
 
                 if not current_controller['slot'] or current_controller['devices'] == max_devices:
                     # Two scenarios will happen, either we bump function no or slot no
-                    current_controller['index'] = controller_index()
-                    # TODO: Please ensure 8 is acceptable, it should be in accordance to vm(8) but better safe
-                    #  then sorry
                     if not current_controller['slot'] or current_controller['function'] == 8:
                         # We need to add a new controller with a new slot
                         current_controller.update({
@@ -420,6 +417,7 @@ class VMSupervisorLibVirt:
 
                     # We should add this to xml now
                     if not virtio:
+                        current_controller['index'] = controller_index()
                         devices.append(create_element(
                             'controller', type='sata', index=str(current_controller['index']), attribute_dict={
                                 'children': [
@@ -1467,6 +1465,31 @@ class VMService(CRUDService):
                 for attribute, errmsg, enumber in verrs:
                     verrors.add(f'{schema_name}.devices.{i}.{attribute}', errmsg, enumber)
 
+        # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
+        if self.validate_slots(data):
+            verrors.add(
+                f'{schema_name}.devices',
+                'Please adjust the devices attached to this VM. A maximum of 30 PCI slots are allowed.'
+            )
+
+    @private
+    def validate_slots(self, vm_data):
+        # Returns True if their aren't enough slots to support all the devices configured, False otherwise
+        virtio_disk_devices = raw_ahci_disk_devices = other_devices = 0
+        for device in (vm_data.get('devices') or []):
+            if device['dtype'] not in ('DISK', 'RAW'):
+                other_devices += 1
+            else:
+                if device['attributes'].get('type') == 'VIRTIO':
+                    virtio_disk_devices += 1
+                else:
+                    raw_ahci_disk_devices += 1
+        used_slots = other_devices
+        used_slots += math.ceil(virtio_disk_devices / 8)  # Per slot we can have 8 virtio disks, so we divide it by 8
+        # Per slot we can have 256 disks.
+        used_slots += math.ceil(raw_ahci_disk_devices / 256)
+        return used_slots > LIBVIRT_AVAILABLE_SLOTS  # 3 slots are already in use i.e by libvirt/bhyve
+
     async def __do_update_devices(self, id, devices):
         # There are 3 cases:
         # 1) "devices" can have new device entries
@@ -1614,6 +1637,12 @@ class VMService(CRUDService):
         vm = self.middleware.call_sync('vm._get_instance', id)
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
+
+        if self.validate_slots(vm):
+            raise CallError(
+                'Please adjust the devices attached to this VM. '
+                f'A maximum of {LIBVIRT_AVAILABLE_SLOTS} PCI slots are allowed.'
+            )
 
         flags = self.flags()
 
