@@ -4,6 +4,5 @@ MK_MAN=	no
 
 PROG=	winacl
 BINDIR=	/usr/bin
-LINKS= ${BINDIR}/winacl ${BINDIR}/cloneacl
 
 .include <bsd.prog.mk>
