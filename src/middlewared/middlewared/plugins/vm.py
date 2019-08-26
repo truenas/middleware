@@ -6,6 +6,7 @@ from middlewared.service import (
 )
 from middlewared.utils import Nid, Popen, run
 from middlewared.utils.path import is_child
+from middlewared.validators import Range
 
 import middlewared.logger
 import asyncio
@@ -200,6 +201,9 @@ class VMSupervisorLibVirt:
             isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
         ):
             raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name} domain')
+
+        if len([d for d in self.devices if isinstance(d, VNC)]) > 1:
+            raise CallError('Only one VNC device per VM is supported')
 
         for device in self.devices:
             device.pre_start_vm()
@@ -621,7 +625,7 @@ class VNC(Device):
             '1400x1050', '1280x1024', '1280x720',
             '1024x768', '800x600', '640x480',
         ], default='1024x768'),
-        Int('vnc_port', default=None, null=True),
+        Int('vnc_port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
         Str('vnc_bind', default='0.0.0.0'),
         Bool('wait', default=False),
         Str('vnc_password', default=None, null=True, private=True),
@@ -633,9 +637,6 @@ class VNC(Device):
         self.web_process = None
 
     def xml(self, *args, **kwargs):
-        # FIXME: Please ensure we have a valid port at this time - also it seems we have a bug otherwise
-        #  with vnc port - we have autoport in libvirt, not sure if it works on freebsd, confirm please
-        #  Also confirm vnc_web involvement as well
         return create_element(
             'graphics', type='vnc', port=str(self.data['attributes']['vnc_port']), attribute_dict={
                 'children': [
@@ -651,11 +652,15 @@ class VNC(Device):
             )
         ), create_element('controller', type='usb', model='nec-xhci'), create_element('input', type='tablet', bus='usb')
 
+    @staticmethod
+    def get_vnc_web_port(vnc_port):
+        split_port = int(str(vnc_port)[:2]) - 1
+        return int(str(split_port) + str(vnc_port)[2:])
+
     def post_start_vm(self, *args, **kwargs):
         vnc_port = self.data['attributes']['vnc_port']
         vnc_bind = self.data['attributes']['vnc_bind']
-        split_port = int(str(vnc_port)[:2]) - 1
-        vnc_web_port = str(split_port) + str(vnc_port)[2:]
+        vnc_web_port = self.get_vnc_web_port(vnc_port)
 
         web_bind = f':{vnc_web_port}' if vnc_bind == '0.0.0.0' else f'{vnc_bind}:{vnc_web_port}'
         self.web_process = subprocess.Popen(
@@ -1146,41 +1151,19 @@ class VMService(CRUDService):
         return vnc_devices
 
     @accepts()
-    def vnc_port_wizard(self):
+    async def vnc_port_wizard(self):
         """
         It returns the next available VNC PORT and WEB VNC PORT.
 
-        Returns:
-            dict: with two keys vnc_port and vnc_web or None in case we can't query the db.
+        Returns a dict with two keys vnc_port and vnc_web.
         """
-        vnc_ports_in_use = []
-        vms = self.middleware.call_sync('datastore.query', 'vm.vm', [], {'order_by': ['id']})
+        all_ports = [
+            d['attributes'].get('vnc_port')
+            for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'VNC']]))
+        ] + [6000, 6100]
 
-        if vms:
-            latest_vm_id = vms.pop().get('id', None)
-            vnc_port = 5900 + latest_vm_id + 1
-
-            check_vnc_device = self.middleware.call_sync('datastore.query', 'vm.device', [('dtype', '=', 'VNC')])
-            for vnc in check_vnc_device:
-                vnc_used_port = vnc['attributes'].get('vnc_port', None)
-                if vnc_used_port is None:
-                    vm_id = vnc['vm'].get('id', None)
-                    vnc_ports_in_use.append(5900 + vm_id)
-                else:
-                    vnc_ports_in_use.append(int(vnc_used_port))
-
-            auto_generate = True
-            while auto_generate:
-                if vnc_port in vnc_ports_in_use:
-                    vnc_port = vnc_port + 1
-                else:
-                    auto_generate = False
-                    split_port = int(str(vnc_port)[:2]) - 1
-                    vnc_web = int(str(split_port) + str(vnc_port)[2:])
-                    vnc_attr = {'vnc_port': vnc_port, 'vnc_web': vnc_web}
-        else:
-            return None
-        return vnc_attr
+        vnc_port = next((i for i in range(5900, 65535) if i not in all_ports))
+        return {'vnc_port': vnc_port, 'vnc_web': VNC.get_vnc_web_port(vnc_port)}
 
     @accepts()
     def get_vnc_ipv4(self):
@@ -1811,8 +1794,7 @@ class VMService(CRUDService):
                         del item['attributes']['mac']
                 if item['dtype'] == 'VNC':
                     if 'vnc_port' in item['attributes']:
-                        vnc_dict = await self.middleware.call(
-                            'vm.vnc_port_wizard')
+                        vnc_dict = await self.vnc_port_wizard()
                         item['attributes']['vnc_port'] = vnc_dict['vnc_port']
                 if item['dtype'] == 'DISK':
                     zvol = item['attributes']['path'].replace('/dev/zvol/', '')
@@ -1866,15 +1848,9 @@ class VMService(CRUDService):
             host = f'[{host}]'
 
         for vnc_device in await self.get_vnc(id):
-            if vnc_device.get('vnc_web', None) is True:
-                vnc_port = vnc_device.get('vnc_port', None)
-                if vnc_port is None:
-                    vnc_port = 5900 + id
-                #  XXX: Create a method for web port.
-                split_port = int(str(vnc_port)[:2]) - 1
-                vnc_web_port = str(split_port) + str(vnc_port)[2:]
+            if vnc_device.get('vnc_web'):
                 vnc_web.append(
-                    f'http://{host}:{vnc_web_port}/vnc.html?autoconnect=1'
+                    f'http://{host}:{VNC.get_vnc_web_port(vnc_device["vnc_port"])}/vnc.html?autoconnect=1'
                 )
 
         return vnc_web
@@ -2227,8 +2203,24 @@ class VMDeviceService(CRUDService):
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
         elif device.get('dtype') == 'VNC':
-            if vm_instance and vm_instance['bootloader'] != 'UEFI':
-                verrors.add('dtype', 'VNC only works with UEFI bootloader.')
+            if vm_instance:
+                if vm_instance['bootloader'] != 'UEFI':
+                    verrors.add('dtype', 'VNC only works with UEFI bootloader.')
+                if any(d['dtype'] == 'VNC' and d['id'] != device.get('id') for d in vm_instance['devices']):
+                    verrors.add(
+                        'dtype',
+                        'Only one VNC device is allowed per VM'
+                    )
+            all_ports = [
+                d['attributes'].get('vnc_port')
+                for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'VNC']]))
+                if d['id'] != device.get('id')
+            ]
+            if device['attributes'].get('vnc_port'):
+                if device['attributes']['vnc_port'] in all_ports:
+                    verrors.add('attributes.vnc_port', 'Specified vnc port is already in use')
+            else:
+                device['attributes']['vnc_port'] = (await self.middleware.call('vm.vnc_port_wizard'))['vnc_port']
 
         if verrors:
             raise verrors
