@@ -6,7 +6,6 @@
 
     system_advanced = middleware.call_sync("system.advanced.config")
     resilver = middleware.call_sync("pool.resilver.config")
-    legacy_replication = middleware.call_sync("replication.query", [["transport", "=", "LEGACY"], ["enabled", "=", True]])
 %>\
 ${system_crontab}
 
@@ -37,12 +36,6 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
 
         ${resilver["end"].split(":")[1]} ${resilver["end"].split(":")[0]} * * * root \
         /usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1
-    % endif
-
-    % if legacy_replication:
-* * * * * root /usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1
-    % else:
-15 4 * * * root /usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1
     % endif
 
 ${random.randint(0, 59)} \
