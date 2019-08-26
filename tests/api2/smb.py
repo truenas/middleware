@@ -44,7 +44,10 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 # Create tests
 def test_01_setting_auxilary_parameters_for_mount_smbfs():
     toload = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
-    payload = {"smb_options": toload}
+    payload = {
+        "smb_options": toload,
+        "enable_smb1": True
+    }
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
@@ -54,7 +57,7 @@ def test_02_creating_smb_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_03_changing__dataset_permissions_of_smb_dataset():
+def test_03_changing_dataset_permissions_of_smb_dataset():
     payload = {
         "acl": [],
         "mode": "777",
