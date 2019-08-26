@@ -9,6 +9,7 @@ import base64
 import errno
 import json
 from lockfile import LockFile
+import logging
 import netif
 import os
 import re
@@ -18,6 +19,7 @@ import socket
 import subprocess
 import sys
 import sysctl
+import tempfile
 import textwrap
 import time
 
@@ -42,12 +44,15 @@ from freenasUI.freeadmin.sqlite3_ha.base import Journal
 
 BUFSIZE = 256
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
+FAILOVER_NEEDOP = '/tmp/.failover_needop'
 SYNC_FILE = '/var/tmp/sync_failed'
+
+logger = logging.getLogger('failover')
 
 
 class LocalEscrowCtl:
     def __init__(self):
-        server = "/tmp/escrowd.sock"
+        server = '/tmp/escrowd.sock'
         connected = False
         retries = 5
 
@@ -61,7 +66,7 @@ class LocalEscrowCtl:
             sock.connect(server)
             connected = True
         except Exception:
-            subprocess.Popen(["/usr/sbin/escrowd"])
+            subprocess.Popen(['escrowd'])
             while retries > 0 and connected is False:
                 try:
                     retries = retries - 1
@@ -70,50 +75,46 @@ class LocalEscrowCtl:
                 except Exception:
                     time.sleep(1)
 
-        # TODO
         if not connected:
-            print("FATAL: Can't connect to escrowd")
-            sys.exit(1)
+            raise RuntimeError('Can\'t connect to escrowd')
 
         data = sock.recv(BUFSIZE).decode()
-        if data != "220 Ready, go ahead\n":
-            print("FATAL: server didn't send welcome message, exiting")
-            sys.exit(2)
+        if data != '220 Ready, go ahead\n':
+            raise RuntimeError('server didn\'t send welcome message')
         self.sock = sock
 
-    # Set key on local escrow daemon.
     def setkey(self, passphrase):
-        command = "SETKEY %s\n" % (passphrase)
+        # Set key on local escrow daemon.
+        command = f'SETKEY {passphrase}\n'
         self.sock.sendall(command.encode())
         data = self.sock.recv(BUFSIZE).decode()
-        return (data == "250 setkey accepted.\n")
-        # Push the key to remote.
+        return (data == '250 setkey accepted.\n')
 
-    # Clear key on local escrow daemon.
     def clear(self):
-        command = "CLEAR"
+        # Clear key on local escrow daemon.
+        command = 'CLEAR'
         self.sock.sendall(command.encode())
         data = self.sock.recv(BUFSIZE).decode()
-        succeeded = (data == "200 clear succeeded.\n")
-        open('/tmp/.failover_needop', 'w')
-        return (succeeded)
+        succeeded = (data == '200 clear succeeded.\n')
+        open(FAILOVER_NEEDOP, 'w')
+        return succeeded
 
-    # Shutdown local escrow daemon.
     def shutdown(self):
-        command = "SHUTDOWN"
+        # Shutdown local escrow daemon.
+        command = 'SHUTDOWN'
         self.sock.sendall(command.encode())
         data = self.sock.recv(BUFSIZE).decode()
-        return (data == "250 Shutting down.\n")
+        return (data == '250 Shutting down.\n')
 
-    # Get key from local escrow daemon.  Returns None if not available.
     def getkey(self):
-        command = "REVEAL"
+        # Get key from local escrow daemon. Returns None if not available.
+        command = 'REVEAL'
         self.sock.sendall(command.encode())
         data = self.sock.recv(BUFSIZE).decode()
         lines = data.split('\n')
-        if lines[0] == "404 No passphrase present":
+        if lines[0] == '404 No passphrase present':
             return None
-        elif lines[0] == "200 Approved":
+        elif lines[0] == '200 Approved':
             if len(lines) > 2:
                 data = lines[1]
             else:
@@ -124,12 +125,13 @@ class LocalEscrowCtl:
             # Should never happen.
             return None
 
-    # Get status of local escrow daemon.  True -- Have key; False -- No key.
     def status(self):
-        command = "STATUS"
+        # Get status of local escrow daemon.
+        # True -- Have key; False -- No key.
+        command = 'STATUS'
         self.sock.sendall(command.encode())
         data = self.sock.recv(BUFSIZE).decode()
-        return (data == "200 keyd\n")
+        return data == '200 keyd\n'
 
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
@@ -798,6 +800,16 @@ class FailoverService(ConfigService):
         return escrowctl.getkey()
 
     @private
+    def encryption_shutdown(self):
+        escrowctl = LocalEscrowCtl()
+        return escrowctl.shutdown()
+
+    @private
+    def encryption_status(self):
+        escrowctl = LocalEscrowCtl()
+        return escrowctl.status()
+
+    @private
     @accepts(Str('passphrase'), Dict('options', Bool('sync', default=True)))
     def encryption_setkey(self, passphrase, options=None):
         # FIXME: we could get rid of escrow, middlewared can do that job
@@ -818,6 +830,117 @@ class FailoverService(ConfigService):
         # FIXME: we could get rid of escrow, middlewared can do that job
         escrowctl = LocalEscrowCtl()
         return escrowctl.clear()
+
+    @private
+    @job()
+    def encryption_attachall(self, job):
+        escrowctl = LocalEscrowCtl()
+        with tempfile.NamedTemporaryFile(mode='w+') as tmp:
+            tmp.file.write(escrowctl.getkey() or "")
+            tmp.file.flush()
+            procs = []
+            failed_drive = 0
+            failed_volume = 0
+            for pool in self.middleware.call_sync('pool.query', [('encrypt', '>', 0)]):
+                keyfile = pool['encryptkey_path']
+                for encrypted_disk in self.middleware.call_sync(
+                    'datastore.query',
+                    'storage.encrypteddisk',
+                    [('encrypted_volume', '=', pool['id'])]
+                ):
+
+                    if encrypted_disk['encrypted_disk']:
+                        # gptid might change on the active head, so we need to rescan
+                        # See #16070
+                        try:
+                            open(
+                                f'/dev/{encrypted_disk["encrypted_disk"]["disk_name"]}', 'w'
+                            ).close()
+                        except Exception:
+                            self.logger.warning(
+                                'Failed to open dev %s to rescan.',
+                                encrypted_disk['encrypted_disk']['name'],
+                            )
+                    provider = encrypted_disk['encrypted_provider']
+                    if not os.path.exists(f'/dev/{provider}.eli'):
+                        proc = subprocess.Popen(
+                            'geli attach {} -k {} {}'.format(
+                                f'-j {tmp.name}' if pool['encrypt'] == 2 else '-p',
+                                keyfile,
+                                provider,
+                            ),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            shell=True,
+                        )
+                        procs.append(proc)
+                for proc in procs:
+                    msg = proc.communicate()[1]
+                    if proc.returncode != 0:
+                        job.set_progress(None, f'Unable to attach GELI provider: {msg}')
+                        self.logger.warn('Unable to attach GELI provider: %s', msg)
+                        failed_drive += 1
+
+                job = self.middleware.call_sync('zfs.pool.import', pool['guid'], {
+                    'altroot': '/mnt',
+                })
+                job.wait_sync()
+                if job.error:
+                    failed_volume += 1
+
+            if failed_drive > 0:
+                job.set_progress(None, f'{failed_drive} can not be attached.')
+                self.logger.error('%d can not be attached.', failed_drive)
+
+            try:
+                if failed_volume == 0:
+                    try:
+                        os.unlink(FAILOVER_NEEDOP)
+                    except FileNotFoundError:
+                        pass
+                    passphrase = escrowctl.getkey()
+                    try:
+                        self.middleware.call_sync(
+                            'failover.call_remote', 'failover.encryption_setkey', [passphrase]
+                        )
+                    except Exception:
+                        self.logger.error(
+                            'Failed to set encryption key on standby node.', exc_info=True,
+                        )
+                else:
+                    open(FAILOVER_NEEDOP, 'w').close()
+            except Exception:
+                pass
+
+    @private
+    @job()
+    def encryption_detachall(self, job):
+        # Let us be very careful before we rip down the GELI providers
+        for pool in self.middleware.call_sync('pool.query', [('encrypt', '>', 0)]):
+            if pool['status'] == 'OFFLINE':
+                for encrypted_disk in self.middleware.call_sync(
+                    'datastore.query',
+                    'storage.encrypteddisk',
+                    [('encrypted_volume', '=', pool['id'])]
+                ):
+                    provider = encrypted_disk['encrypted_provider']
+                    cp = subprocess.run(
+                        ['geli', 'detach', provider],
+                        capture_output=True, text=True, check=False,
+                    )
+                    if cp.returncode != 0:
+                        job.set_progress(
+                            None,
+                            f'Unable to detach GELI provider {provider}: {cp.stderr}',
+                        )
+                return True
+            else:
+                job.set_progress(
+                    None,
+                    'Not detaching GELI providers because an encrypted zpool with name '
+                    f'{pool["name"]!r} is still mounted!',
+                )
+                return False
 
     @accepts(
         Str('action', enum=['ENABLE', 'DISABLE']),
