@@ -28,6 +28,7 @@ import subprocess
 import sys
 import sysctl
 import tempfile
+import time
 
 from abc import ABC, abstractmethod
 from collections import deque
@@ -115,18 +116,26 @@ class DomainState(enum.Enum):
 
 class VMSupervisorLibVirt:
 
-    def __init__(self, vm_data, connection):
+    def __init__(self, vm_data, connection, middleware=None):
         self.vm_data = vm_data
         self.connection = connection
-        self.devices = [
-            getattr(sys.modules[__name__], device['dtype'])(device)
-            for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
-        ]
-        self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
+        self.middleware = middleware
+        self.devices = []
+        self.libvirt_domain_name = None
 
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
 
+        self.domain = None
+        self.update_domain()
+
+    def update_domain(self, vm_data=None):
+        # This can be called to update domain to reflect any changes introduced to the VM
+        self.vm_data = vm_data or self.vm_data
+        self.devices = [
+            getattr(sys.modules[__name__], device['dtype'])(device, self.middleware)
+            for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
+        ]
         try:
             self.domain = self.connection.lookupByName(self.libvirt_domain_name)
         except libvirt.libvirtError:
@@ -137,6 +146,9 @@ class VMSupervisorLibVirt:
                 self.undefine_domain()
 
         if not self.domain:
+            # This ensures that when a domain has been renamed, we undefine the previous domain name - if object
+            # persists in this case of VMSupervisor - else it's the users responsibility to take care of this case
+            self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
             self.__define_domain()
 
     def status(self):
@@ -172,9 +184,11 @@ class VMSupervisorLibVirt:
 
         return retrieved_item
 
-    def start(self):
+    def start(self, vm_data=None):
         if self.domain.isActive():
             raise CallError(f'{self.libvirt_domain_name} domain is already active')
+
+        self.update_domain(vm_data)
 
         for device in self.devices:
             device.pre_start_vm()
@@ -197,20 +211,26 @@ class VMSupervisorLibVirt:
 
         self.domain.shutdown()
 
+        # We wait for 30 seconds before initiating post stop activities for the vm
+        # This is done because the shutdown call above is non-blocking
+        shutdown_timeout = 30
+        while shutdown_timeout > 0 and self.status()['state'] == 'RUNNING':
+            shutdown_timeout -= 5
+            time.sleep(5)
+
         for device in self.devices:
             device.post_stop_vm()
 
-    def restart(self):
-        vm_process = psutil.Process(self.status()['pid'])
+    def restart(self, vm_data=None):
         self.stop()
-        try:
-            vm_process.wait(10)
-        except psutil.TimeoutExpired:
+
+        # We don't wait anymore because during stop we have already waited for the VM to shutdown cleanly
+        if self.status()['state'] == 'RUNNING':
             # In case domain stopped between this time
             with contextlib.suppress(libvirt.libvirtError):
                 self.poweroff()
 
-        self.start()
+        self.start(vm_data)
 
     def poweroff(self):
         self._before_stopping_checks()
@@ -390,8 +410,9 @@ class Device(ABC):
 
     schema = NotImplemented
 
-    def __init__(self, data):
+    def __init__(self, data, middleware=None):
         self.data = data
+        self.middleware = middleware
 
     @abstractmethod
     def xml(self, *args, **kwargs):
@@ -591,7 +612,11 @@ class VNC(Device):
 
     def post_stop_vm(self, *args, **kwargs):
         if self.web_process and psutil.pid_exists(self.web_process.pid):
-            os.kill(self.web_process.pid, signal.SIGKILL)
+            if self.middleware:
+                self.middleware.call_sync('service.terminate_process', self.web_process.pid)
+            else:
+                os.kill(self.web_process.pid, signal.SIGKILL)
+        self.web_process = None
 
 
 class VMSupervisor(object):
@@ -1005,7 +1030,8 @@ class VMService(CRUDService):
 
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
-        os.makedirs('/var/log/vm', exist_ok=True)
+        self.vms = {}
+        self.libvirt_connection = None
 
     @accepts()
     def flags(self):
@@ -1295,6 +1321,7 @@ class VMService(CRUDService):
         `devices` is a list of virtualized hardware to add to the newly created Virtual Machine.
         Failure to attach a device destroys the VM and any resources allocated by the VM devices.
         """
+        self.ensure_libvirt_connection()
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
@@ -1310,6 +1337,11 @@ class VMService(CRUDService):
         else:
             for device in devices:
                 await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
+
+        await self.middleware.run_in_thread(
+            lambda vms, vd, con, mw: vms.update({vd['name']: VMSupervisorLibVirt(vd, con, mw)}),
+            self.vms, (await self._get_instance(id)), self.libvirt_connection, self.middleware
+        )
 
         return await self._get_instance(vm_id)
 
@@ -1451,6 +1483,14 @@ class VMService(CRUDService):
         new = old.copy()
         new.update(data)
 
+        if new['name'] != old['name']:
+            await self.middleware.call('vm.ensure_libvirt_connection')
+            if old['status']['state'] == 'RUNNING':
+                raise CallError('VM name can only be changed when VM is inactive')
+
+            if old['name'] not in self.vms:
+                raise CallError(f'Unable to locate domain for {old["name"]}')
+
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_update', new, old=old)
         if verrors:
@@ -1464,7 +1504,16 @@ class VMService(CRUDService):
 
         await self.middleware.call('datastore.update', 'vm.vm', id, new)
 
-        return await self._get_instance(id)
+        vm_data = await self._get_instance(id)
+        if new['name'] != old['name']:
+            await self.middleware.call('vm.rename_domain', old, vm_data)
+
+        return vm_data
+
+    @private
+    def rename_domain(self, old, new):
+        vm = self.vms[old['name']]
+        vm.update_domain(new)
 
     @accepts(
         Int('id'),
@@ -1475,6 +1524,7 @@ class VMService(CRUDService):
     )
     def do_delete(self, id, data):
         """Delete a VM."""
+        self.ensure_libvirt_connection()
         status = self.status(id)
         if status.get('state') == 'RUNNING':
             self.stop(id, True)
@@ -1495,10 +1545,14 @@ class VMService(CRUDService):
                 )[-1]
                 self.middleware.call_sync('zfs.dataset.delete', disk_name)
 
-        with libvirt_connection() as conn:
-            VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn).undefine_domain()
+        self.vms.pop(self.middleware.call_sync('vm._get_instance', id)['name']).undefine_domain()
 
         return self.middleware.call_sync('datastore.delete', 'vm.vm', id)
+
+    @private
+    def ensure_libvirt_connection(self):
+        if not self.libvirt_connection or not self.libvirt_connection.isAlive():
+            raise CallError('Failed to connect to libvirt')
 
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit')))
@@ -1514,7 +1568,11 @@ class VMService(CRUDService):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
+        self.ensure_libvirt_connection()
         vm = self.middleware.call_sync('vm._get_instance', id)
+        if vm['status']['state'] == 'RUNNING':
+            raise CallError(f'{vm["name"]} is already running')
+
         flags = self.flags()
 
         if not flags['intel_vmx'] and not flags['amd_rvi']:
@@ -1530,19 +1588,21 @@ class VMService(CRUDService):
 
         self.middleware.call_sync('vm._init_guest_vmemory', vm, overcommit)
 
-        with libvirt_connection() as conn:
-            VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn).start()
+        # Passing vm_data will ensure that the domain/vm is started with latest changes registered
+        # to the vm object
+        self.vms[vm['name']].start(vm_data=vm)
 
     @item_method
     @accepts(Int('id'), Bool('force', default=False),)
     def stop(self, id, force):
         """Stop a VM."""
-        with libvirt_connection() as conn:
-            vm = VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn)
-            if force:
-                vm.poweroff()
-            else:
-                vm.stop()
+        self.ensure_libvirt_connection()
+        vm = self.vms[self.middleware.call_sync('vm._get_instance', id)['name']]
+
+        if force:
+            vm.poweroff()
+        else:
+            vm.stop()
 
         self.middleware.call_sync('vm._teardown_guest_vmemory', id)
 
@@ -1550,8 +1610,9 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     def restart(self, id):
         """Restart a VM."""
-        with libvirt_connection() as conn:
-            VMSupervisorLibVirt(self.middleware.call_sync('vm._get_instance', id), conn).restart()
+        self.ensure_libvirt_connection()
+        vm = self.middleware.call_sync('vm._get_instance', id)
+        self.vms[vm['name']].restart(vm_data=vm)
 
     async def _teardown_guest_vmemory(self, id):
         guest_status = await self.middleware.call('vm.status', id)
@@ -1584,16 +1645,15 @@ class VMService(CRUDService):
             - state, RUNNING or STOPPED
             - pid, process id if RUNNING
         """
-        # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls this
-        # and it calls vm.datastore_extend again
-        with libvirt_connection() as conn:
-            return VMSupervisorLibVirt(
-                {
-                    'devices': [],
-                    **self.middleware.call_sync('datastore.query', 'vm.vm', [('id', '=', id)], {'get': True})
-                },
-                conn
-            ).status()
+        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
+        if self.libvirt_connection and vm['name'] in self.vms:
+            return self.vms[vm['name']].status()
+        else:
+            return {
+                'state': 'ERROR',
+                'pid': None,
+                'domain_state': 'ERROR',
+            }
 
     async def __next_clone_name(self, name):
         vm_names = [
@@ -1759,6 +1819,34 @@ class VMService(CRUDService):
                 )
 
         return vnc_web
+
+    def __del__(self):
+        if self.libvirt_connection:
+            with contextlib.suppress(libvirt.libvirtError):
+                self.libvirt_connection.close()
+
+    @private
+    async def wait_for_libvirtd(self, timeout):
+        async def libvirtd_started(middleware):
+            while not await middleware.call('service.started', 'libvirtd'):
+                time.sleep(2)
+
+        try:
+            await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
+            self.libvirt_connection = libvirt.open(LIBVIRT_URI)
+        except (asyncio.TimeoutError, libvirt.libvirtError):
+            self.middleware.logger.error('Failed to connect to libvirtd')
+
+    @private
+    def initialize_vms(self, timeout=10):
+        self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
+
+        # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
+        # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
+        for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm') if self.libvirt_connection else ():
+            vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
+            with contextlib.suppress(CallError):
+                self.vms[vm_data['name']] = VMSupervisorLibVirt(vm_data, self.libvirt_connection, self.middleware)
 
 
 class VMDeviceService(CRUDService):
@@ -2108,6 +2196,8 @@ async def __event_system_ready(middleware, event_type, args):
     global ZFS_ARC_MAX_INITIAL
     ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
 
+    await middleware.call('vm.initialize_vms')
+
     for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
         await middleware.call('vm.start', vm['id'])
 
@@ -2157,10 +2247,13 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
                 self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
 
 
-def setup(middleware):
+async def setup(middleware):
     global ZFS_ARC_MAX_INITIAL
     ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
     asyncio.ensure_future(kmod_load())
     asyncio.ensure_future(middleware.call('pool.dataset.register_attachment_delegate',
                                           VMFSAttachmentDelegate(middleware)))
+
+    if await middleware.call('system.ready'):
+        asyncio.ensure_future(middleware.call('vm.initialize_vms', 2))  # We use a short timeout here deliberately
     middleware.event_subscribe('system', __event_system_ready)
