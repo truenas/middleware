@@ -243,7 +243,7 @@ class NotifierService(Service):
     async def ds_clearcache(self):
         """Temporary call to rebuild DS cache"""
         cachetool_job = await self.middleware.call('notifier.cachetool', 'expire')
-        cachetool_job.wait()
+        await cachetool_job.wait()
         if cachetool_job.error:
             raise CallError(f'cachetool expire failed with error {cachetool_job.error}')
 
