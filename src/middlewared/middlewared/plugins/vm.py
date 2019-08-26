@@ -173,6 +173,11 @@ class VMSupervisorLibVirt:
         if self.domain.isActive():
             raise CallError(f'Domain {self.libvirt_domain_name} is active. Please stop it first')
 
+        if self.vm_data['bootloader'] == 'GRUB':
+            shutil.rmtree(
+                os.path.join('/tmp/grub', self.libvirt_domain_name), ignore_errors=True
+            )
+
         self.domain.undefine()
         self.domain = None
 
@@ -189,6 +194,12 @@ class VMSupervisorLibVirt:
             raise CallError(f'{self.libvirt_domain_name} domain is already active')
 
         self.update_domain(vm_data)
+
+        # Let's ensure that we are able to boot a GRUB based VM
+        if self.vm_data['bootloader'] == 'GRUB' and not any(
+            isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
+        ):
+            raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name} domain')
 
         for device in self.devices:
             device.pre_start_vm()
@@ -254,8 +265,8 @@ class VMSupervisorLibVirt:
                     create_element('name', attribute_dict={'text': self.libvirt_domain_name}),
                     create_element('title', attribute_dict={'text': self.vm_data['name']}),
                     create_element('description', attribute_dict={'text': self.vm_data['description']}),
-                    # OS/boot related xml
-                    self.os_xml(),
+                    # OS/boot related xml - returns an iterable
+                    *self.os_xml(),
                     # VCPU related xml
                     create_element('vcpu', attribute_dict={'text': str(self.vm_data['vcpus'])}),
                     # Memory related xml
@@ -280,6 +291,8 @@ class VMSupervisorLibVirt:
         return domain
 
     def os_xml(self):
+        # TODO: Ensure bios works
+        os_list = []
         children = [create_element('type', attribute_dict={'text': 'hvm'})]
         if self.vm_data['bootloader'] in ('UEFI', 'UEFI_CSM'):
             children.append(
@@ -288,12 +301,54 @@ class VMSupervisorLibVirt:
                         'text': '/usr/local/share/uefi-firmware/BHYVE_UEFI'
                         f'{"_CSM" if self.vm_data["bootloader"] == "UEFI_CSM" else ""}.fd'
                     }, readonly='yes', type='pflash',
-                ),  # FIXME: Add host-bootloader support i.e grub-bhyve
-                # FIXME: Please test for BIOS
+                ),
             )
-        os_element = create_element('os', attribute_dict={'children': children})
 
-        return os_element
+        if self.vm_data['bootloader'] == 'GRUB':
+            # Following is keeping compatibility with old code where we supported rancher/docker
+            # We can have two cases where the user has the path set pointing to his/her grub file or where
+            # the data inside grubconfig is saved and we write out a new file for it
+            # In either of these cases we require device map file to be written
+
+            device_map_data = '\n'.join(
+                f'(hd{i}) {d.data["attributes"]["path"]}' for i, d in enumerate(filter(
+                    lambda d: isinstance(d, RAW) and d.data['attributes'].get('boot'), self.devices
+                ))
+            )
+            # It will be ensured while starting that this VM is capable of starting i.e has boot devices
+
+            os_list.append(create_element(
+                'bootloader', attribute_dict={'text': '/usr/local/sbin/grub-bhyve'}
+            ))
+
+            device_map_dir = os.path.join('/tmp/grub', self.libvirt_domain_name)
+            device_map_file = os.path.join(device_map_dir, 'devices_map')
+            os.makedirs(device_map_dir, exist_ok=True)
+
+            with open(device_map_file, 'w') as f:
+                f.write(device_map_data)
+
+            if self.vm_data['grubconfig']:
+                grub_config = self.vm_data['grubconfig'].strip()
+                if grub_config.startswith('/mnt') and os.path.exists(grub_config):
+                    grub_dir = os.path.dirname(grub_config)
+                else:
+                    grub_dir = device_map_dir
+                    with open(os.path.join(grub_dir, 'grub.cfg'), 'w') as f:
+                        f.write(grub_config)
+
+                os_list.append(create_element(
+                    'bootloader_args', attribute_dict={
+                        'text': ' '.join([
+                            '-m', device_map_file, '-r', 'host', '-M', str(self.vm_data['memory']),
+                            '-d', grub_dir, self.libvirt_domain_name
+                        ])
+                    }
+                ))
+
+        os_list.append(create_element('os', attribute_dict={'children': children}))
+
+        return os_list
 
     def devices_xml(self):
         devices = []
@@ -1340,7 +1395,7 @@ class VMService(CRUDService):
 
         await self.middleware.run_in_thread(
             lambda vms, vd, con, mw: vms.update({vd['name']: VMSupervisorLibVirt(vd, con, mw)}),
-            self.vms, (await self._get_instance(id)), self.libvirt_connection, self.middleware
+            self.vms, (await self._get_instance(vm_id)), self.libvirt_connection, self.middleware
         )
 
         return await self._get_instance(vm_id)
@@ -1545,7 +1600,11 @@ class VMService(CRUDService):
                 )[-1]
                 self.middleware.call_sync('zfs.dataset.delete', disk_name)
 
-        self.vms.pop(self.middleware.call_sync('vm._get_instance', id)['name']).undefine_domain()
+        vm = self.middleware.call_sync('vm._get_instance', id)
+        if vm['name'] in self.vms:
+            self.vms.pop(vm['name']).undefine_domain()
+        else:
+            VMSupervisorLibVirt(vm, self.libvirt_connection).undefine_domain()
 
         return self.middleware.call_sync('datastore.delete', 'vm.vm', id)
 
