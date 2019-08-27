@@ -144,7 +144,7 @@ def test_13_verify_jail_started():
         pytest.skip(freeze_msg)
     freeze = False
     job_status = wait_on_job(JOB_ID, 20)
-    if job_status['state'] in ['TIMEOUT', "FAILED"]:
+    if job_status['state'] in ['TIMEOUT', 'FAILED']:
         freeze = True
         freeze_msg = f"Failed to start jail: {JAIL_NAME}"
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -177,7 +177,7 @@ def test_15_verify_exec_job():
         pytest.skip(freeze_msg)
     freeze = False
     job_status = wait_on_job(JOB_ID, 300)
-    if job_status['state'] in ['TIMEOUT', "FAILED"]:
+    if job_status['state'] in ['TIMEOUT', 'FAILED']:
         freeze = True
         freeze_msg = f"Failed to exec jail: {JAIL_NAME}"
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
