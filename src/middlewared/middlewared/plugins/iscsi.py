@@ -565,6 +565,8 @@ class iSCSITargetExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
+        await self._service_change('iscsitarget', 'reload')
+
         return await self._get_instance(data['id'])
 
     @accepts(
@@ -604,6 +606,8 @@ class iSCSITargetExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
+        await self._service_change('iscsitarget', 'reload')
+
         return await self._get_instance(id)
 
     @accepts(
@@ -628,9 +632,12 @@ class iSCSITargetExtentService(CRUDService):
         for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]]):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
 
-        return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id
-        )
+        try:
+            return await self.middleware.call(
+                'datastore.delete', self._config.datastore, id
+            )
+        finally:
+            await self._service_change('iscsitarget', 'reload')
 
     @private
     async def validate(self, data):
@@ -891,8 +898,6 @@ class iSCSITargetExtentService(CRUDService):
                 extent_size = data['filesize']
 
                 await run(['truncate', '-s', str(extent_size), path])
-
-            await self._service_change('iscsitarget', 'reload')
         else:
             data['path'] = disk
 
