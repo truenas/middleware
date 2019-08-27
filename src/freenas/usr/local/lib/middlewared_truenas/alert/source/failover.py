@@ -10,8 +10,6 @@ import json
 import sysctl
 import subprocess
 
-from freenasUI.failover.enc_helper import LocalEscrowCtl
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
 from middlewared.service_exception import CallError
 
@@ -171,15 +169,14 @@ class FailoverAlertSource(ThreadedAlertSource):
                 pass
             try:
                 if len(fobj['phrasedvolumes']) > 0:
-                    escrowctl = LocalEscrowCtl()
-                    if not escrowctl.status():
+                    if not self.middleware.call_sync('failover.encryption_status'):
                         alerts.append(Alert(NoFailoverEscrowedPassphraseAlertClass))
                         # Kick a syncfrompeer if we don't.
                         passphrase = self.middleware.call_sync(
                             'failover.call_remote', 'failover.encryption_getkey'
                         )
                         if passphrase:
-                            escrowctl.setkey(passphrase)
+                            self.middleware.call_sync('failover.encryption_setkey', passphrase)
             except Exception:
                 pass
 
