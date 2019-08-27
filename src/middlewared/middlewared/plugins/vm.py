@@ -15,7 +15,6 @@ import errno
 import enum
 import ipaddress
 import libvirt
-import logging
 import math
 import netif
 import os
@@ -28,11 +27,9 @@ import signal
 import subprocess
 import sys
 import sysctl
-import tempfile
 import time
 
 from abc import ABC, abstractmethod
-from collections import deque
 from lxml import etree
 
 
@@ -58,53 +55,6 @@ def create_element(*args, **kwargs):
     return element
 
 
-class VMManager(object):
-
-    def __init__(self, service):
-        self.service = service
-        self.logger = self.service.logger
-        self._vm = {}
-
-    async def start(self, vm):
-        vid = vm['id']
-        self._vm[vid] = VMSupervisor(self, vm)
-        coro = self._vm[vid].run()
-        # If run() has not returned in about 4 seconds we assume
-        # bhyve process started successfully.
-        done = (await asyncio.wait([coro], timeout=4))[0]
-        if done:
-            list(done)[0].result()
-
-    async def stop(self, id, force=False):
-        supervisor = self._vm.get(id)
-        if not supervisor:
-            return False
-
-        err = await supervisor.stop(force)
-        return err
-
-    async def restart(self, id):
-        supervisor = self._vm.get(id)
-        if supervisor:
-            await supervisor.restart()
-            return True
-        else:
-            return False
-
-    async def status(self, id):
-        supervisor = self._vm.get(id)
-        if supervisor and await supervisor.running():
-            return {
-                'state': 'RUNNING',
-                'pid': supervisor.proc.pid if supervisor.proc else None,
-            }
-        else:
-            return {
-                'state': 'STOPPED',
-                'pid': None,
-            }
-
-
 class DomainState(enum.Enum):
     NOSTATE = libvirt.VIR_DOMAIN_NOSTATE
     RUNNING = libvirt.VIR_DOMAIN_RUNNING
@@ -116,7 +66,7 @@ class DomainState(enum.Enum):
     PMSUSPENDED = libvirt.VIR_DOMAIN_PMSUSPENDED
 
 
-class VMSupervisorLibVirt:
+class VMSupervisor:
 
     def __init__(self, vm_data, connection, middleware=None):
         self.vm_data = vm_data
@@ -677,408 +627,6 @@ class VNC(Device):
         self.web_process = None
 
 
-class VMSupervisor(object):
-
-    def __init__(self, manager, vm):
-        self.manager = manager
-
-        os.makedirs('/var/log/vm', exist_ok=True)
-        self.logger = self.manager.logger.getChild(f'vm_{vm["id"]}')
-
-        handler = middlewared.logger.ErrorProneRotatingFileHandler(
-            f'/var/log/vm/{vm["name"]}_{vm["id"]}',
-            maxBytes=10485760,
-            backupCount=5,
-        )
-        self.middleware = self.manager.service.middleware
-
-        handler.setFormatter(logging.Formatter(self.middleware.log_format))
-        self.logger.addHandler(handler)  # main log + vm specific log
-        self.logger.setLevel(self.middleware.debug_level)
-
-        self.vm = vm
-        self.proc = None
-        self.grub_proc = None
-        self.web_proc = None
-        self.taps = []
-        self.bhyve_error = None
-
-    async def run(self):
-        vnc_web = None  # We need to initialize before line 200
-        args = [
-            'bhyve',
-            '-A',
-            '-H',
-            '-w',
-            '-c', str(self.vm['vcpus']),
-            '-m', str(self.vm['memory']),
-            '-s', '0:0,hostbridge',
-            '-s', '31,lpc',
-            '-l', 'com1,/dev/nmdm{}A'.format(self.vm['id']),
-        ]
-
-        if self.vm['bootloader'] in ('UEFI', 'UEFI_CSM'):
-            args += [
-                '-l', 'bootrom,/usr/local/share/uefi-firmware/BHYVE_UEFI{}.fd'.format('_CSM' if self.vm['bootloader'] == 'UEFI_CSM' else ''),
-            ]
-
-        if self.vm['time'] == 'UTC':
-            args += ['-u']
-
-        nid = Nid(3)
-        grub_devices = []
-        block_devices = {
-            'ahci': [],
-            'virtio-blk': [],
-        }
-        for device in sorted(self.vm['devices'], key=lambda x: (x['order'], x['id'])):
-            if device['dtype'] in ('CDROM', 'DISK', 'RAW'):
-
-                # Get grub devices to be used in grub-bhyve
-                if device['dtype'] == 'RAW' and device['attributes'].get('boot'):
-                    grub_devices.append(device['attributes']['path'])
-
-                disk_sector_size = int(device['attributes'].get('sectorsize') or 0)
-                if disk_sector_size > 0:
-                    sectorsize_args = ',sectorsize=' + str(disk_sector_size)
-                else:
-                    sectorsize_args = ''
-
-                if device['dtype'] == 'CDROM':
-                    block_name = 'ahci'
-                    suffix = 'cd:'
-                elif device['attributes'].get('type') == 'AHCI':
-                    block_name = 'ahci'
-                    suffix = 'hd:'
-                else:
-                    block_name = 'virtio-blk'
-                    suffix = ''
-
-                # Each block PCI slot takes up to 8 functions
-                # ahci can take up to 32 disks per function
-                # virtio-blk occupies the entire function
-                for block in block_devices[block_name]:
-                    if len(block['disks']) < (256 if block_name == 'ahci' else 8):
-                        break
-                else:
-                    block = {
-                        'slot': nid(),
-                        'disks': []
-                    }
-                    block_devices[block_name].append(block)
-                block['disks'].append(f'{suffix}{device["attributes"]["path"]}{sectorsize_args}')
-
-            elif device['dtype'] == 'NIC':
-                attach_iface = device['attributes'].get('nic_attach')
-
-                self.logger.debug('====> NIC_ATTACH: {0}'.format(attach_iface))
-
-                tapname = netif.create_interface('tap')
-                tap = netif.get_interface(tapname)
-                tap.description = f'Attached to {self.vm["name"]}'
-                tap.up()
-                self.taps.append(tapname)
-                await self.bridge_setup(tapname, tap, attach_iface)
-
-                if device['attributes'].get('type') == 'VIRTIO':
-                    nictype = 'virtio-net'
-                else:
-                    nictype = 'e1000'
-                mac_address = device['attributes'].get('mac', None)
-
-                # By default we add one NIC and the MAC address is an empty string.
-                # Issue: 24222
-                if mac_address == '':
-                    mac_address = None
-
-                if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
-                    random_mac = await self.middleware.call('vm.random_mac')
-                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, random_mac)]
-                else:
-                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
-            elif device['dtype'] == 'VNC':
-                if device['attributes'].get('wait'):
-                    wait = 'wait'
-                else:
-                    wait = ''
-
-                vnc_resolution = device['attributes'].get('vnc_resolution', None)
-                vnc_port = int(device['attributes'].get('vnc_port') or (5900 + self.vm['id']))
-                vnc_bind = device['attributes'].get('vnc_bind', '0.0.0.0')
-                vnc_password = device['attributes'].get('vnc_password', None)
-                vnc_web = device['attributes'].get('vnc_web', None)
-
-                vnc_password_args = ''
-                if vnc_password:
-                    vnc_password_args = 'password=' + vnc_password
-
-                if vnc_resolution is None:
-                    width = 1024
-                    height = 768
-                else:
-                    vnc_resolution = vnc_resolution.split('x')
-                    width = vnc_resolution[0]
-                    height = vnc_resolution[1]
-
-                args += ['-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width,
-                                                                                    height, vnc_password_args, wait),
-                         '-s', '30,xhci,tablet', ]
-
-        for pciemu, pcislots in block_devices.items():
-            perfunction = 32 if pciemu == 'ahci' else 1
-            for pcislot in pcislots:
-                for pcifunc in range(math.ceil(len(pcislot['disks']) / perfunction)):
-                    conf = ','.join(pcislot['disks'][
-                        pcifunc * perfunction:(pcifunc + 1) * perfunction
-                    ])
-                    args += ['-s', f'{pcislot["slot"]}:{pcifunc},{pciemu},{conf}']
-
-        # grub-bhyve support
-        device_map_file = tempfile.NamedTemporaryFile()
-        grub_dir = None
-        if self.vm['bootloader'] == 'GRUB':
-
-            if not grub_devices:
-                raise CallError(f'There is no boot disk for vm: {self.vm["name"]}')
-
-            for i, device in enumerate(grub_devices):
-                device_map_file.write(f'(hd{i}) {device}\n'.encode())
-            device_map_file.flush()
-
-            if (
-                self.vm['grubconfig'] and
-                self.vm['grubconfig'].startswith('/mnt/') and
-                os.path.exists(self.vm['grubconfig'])
-            ):
-                grub_dir = os.path.dirname(self.vm['grubconfig'])
-            else:
-                grub_dir = f'/tmp/grub/{self.vm["id"]}_{self.vm["name"]}'
-                os.makedirs(grub_dir, exist_ok=True)
-                grub_file = os.path.join(grub_dir, 'grub.cfg')
-                with open(grub_file, 'w') as f:
-                    f.write(self.vm['grubconfig'])
-
-            grub_bhyve_args = [
-                'grub-bhyve', '-m', device_map_file.name,
-                '-r', 'host',
-                '-M', str(self.vm['memory']),
-                '-d', grub_dir,
-                str(self.vm['id']) + '_' + self.vm['name'],
-            ]
-
-            self.logger.debug(f'Starting grub-bhyve: {" ".join(grub_bhyve_args)}')
-            self.grub_proc = await Popen(
-                grub_bhyve_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            )
-
-            try:
-                await asyncio.wait_for(self.grub_proc.communicate(), 2)
-            except asyncio.TimeoutError:
-                try:
-                    os.kill(self.grub_proc.pid, signal.SIGKILL)
-                except OSError:
-                    pass
-                await self.destroy_vm()
-                raise CallError('grub-bhyve timed out, please check your grub config.')
-
-        args.append(str(self.vm['id']) + '_' + self.vm['name'])
-
-        self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
-        self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-        if vnc_web:
-            split_port = int(str(vnc_port)[:2]) - 1
-            vnc_web_port = str(split_port) + str(vnc_port)[2:]
-
-            web_bind = ':{}'.format(vnc_web_port) if vnc_bind == '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
-
-            self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
-                                         '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
-                                         web_bind, '{}:{}'.format(vnc_bind, vnc_port)],
-                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            self.logger.debug('==> Start WEBVNC at port {} with pid number {}'.format(vnc_web_port, self.web_proc.pid))
-
-        output = deque(maxlen=10)
-
-        while True:
-            line = await self.proc.stdout.readline()
-            if line == b'':
-                break
-            line = line.decode().rstrip()
-            self.logger.debug('{}: {}'.format(self.vm['name'], line))
-            output.append(line)
-
-        # Clean up grub files
-        if device_map_file:
-            device_map_file.close()
-        if grub_dir and not (self.vm['grubconfig'] or '').startswith(grub_dir):
-            shutil.rmtree(grub_dir)
-
-        # bhyve returns the following status code:
-        # 0 - VM has been reset
-        # 1 - VM has been powered off
-        # 2 - VM has been halted
-        # 3 - VM generated a triple fault
-        # 4 - VM exited due to an error
-        # all other non-zero status codes are errors
-        self.bhyve_error = await self.proc.wait()
-        if self.bhyve_error == 0:
-            self.logger.info('===> Rebooting VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            await self.manager.restart(self.vm['id'])
-            await self.manager.start(self.vm)
-        elif self.bhyve_error == 1:
-            # XXX: Need a better way to handle the vmm destroy.
-            self.logger.info('===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            await self.__teardown_guest_vmemory(self.vm['id'])
-            await self.destroy_vm()
-        elif self.bhyve_error in (2, 3):
-            self.logger.info('===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            await self.__teardown_guest_vmemory(self.vm['id'])
-            await self.manager.stop(self.vm['id'])
-        elif self.bhyve_error not in (0, 1, 2, 3, None):
-            self.logger.info('===> Error VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            await self.__teardown_guest_vmemory(self.vm['id'])
-            await self.destroy_vm()
-            output = "\n".join(output)
-            raise CallError(f'VM {self.vm["name"]} failed to start: {output}')
-
-    async def destroy_vm(self):
-        self.logger.warn('===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
-        # XXX: We need to catch the bhyvectl return error.
-        await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-        self.manager._vm.pop(self.vm['id'], None)
-        await self.kill_bhyve_web()
-        self.destroy_tap()
-
-    async def __teardown_guest_vmemory(self, id):
-        guest_status = await self.middleware.call('vm.status', id)
-        if guest_status.get('state') != 'STOPPED':
-            return
-
-        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
-        guest_memory = vm[0].get('memory', 0) * 1024 * 1024
-        arc_max = sysctl.filter('vfs.zfs.arc.max')[0].value
-        arc_min = sysctl.filter('vfs.zfs.arc.min')[0].value
-        new_arc_max = min(
-            await self.middleware.call('vm.get_initial_arc_max'),
-            arc_max + guest_memory
-        )
-        if arc_max != new_arc_max:
-            if new_arc_max > arc_min:
-                self.logger.debug(f'===> Give back guest memory to ARC: {new_arc_max}')
-                sysctl.filter('vfs.zfs.arc.max')[0].value = new_arc_max
-            else:
-                self.logger.warn(
-                    f'===> Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
-                )
-
-    def destroy_tap(self):
-        while self.taps:
-            netif.destroy_interface(self.taps.pop())
-
-    def set_iface_mtu(self, ifacesrc, ifacedst):
-        ifacedst.mtu = ifacesrc.mtu
-
-        return ifacedst
-
-    async def bridge_setup(self, tapname, tap, attach_iface):
-        if_bridge = []
-        bridge_enabled = False
-
-        if tapname == attach_iface:
-            raise CallError(f'VM cannot bridge with its own interface ({tapname}).')
-
-        if attach_iface is None:
-            # XXX: backward compatibility prior to 11.1-RELEASE.
-            try:
-                attach_iface = netif.RoutingTable().default_route_ipv4.interface
-                attach_iface_info = netif.get_interface(attach_iface)
-            except Exception:
-                return
-        else:
-            attach_iface_info = netif.get_interface(attach_iface)
-
-        # If for some reason the main iface is down, we need to up it.
-        attach_iface_status = netif.InterfaceFlags.UP in attach_iface_info.flags
-        if attach_iface_status is False:
-            attach_iface_info.up()
-
-        for brgname, iface in list(netif.list_interfaces().items()):
-            if brgname.startswith('bridge'):
-                if_bridge.append(iface)
-
-        for bridge in if_bridge:
-            if attach_iface in bridge.members:
-                bridge_enabled = True
-                self.set_iface_mtu(attach_iface_info, tap)
-                bridge.add_member(tapname)
-                if netif.InterfaceFlags.UP not in bridge.flags:
-                    bridge.up()
-                break
-
-        if bridge_enabled is False:
-            bridge = netif.get_interface(netif.create_interface('bridge'))
-            self.set_iface_mtu(attach_iface_info, tap)
-            bridge.add_member(tapname)
-            bridge.add_member(attach_iface)
-            bridge.up()
-
-    async def kill_bhyve_pid(self):
-        if self.proc:
-            try:
-                os.kill(self.proc.pid, signal.SIGTERM)
-            except ProcessLookupError as e:
-                # Already stopped, process do not exist anymore
-                if e.errno != errno.ESRCH:
-                    raise
-            return True
-
-    async def kill_bhyve_web(self):
-        if self.web_proc:
-            try:
-                self.logger.debug('==> Killing WEBVNC: {}'.format(self.web_proc.pid))
-                os.kill(self.web_proc.pid, signal.SIGTERM)
-            except ProcessLookupError as e:
-                if e.errno != errno.ESRCH:
-                    raise
-            return True
-
-    async def restart(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-        self.logger.debug('==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], bhyve_error))
-        self.destroy_tap()
-        await self.kill_bhyve_web()
-
-    async def stop(self, force=False):
-        if force:
-            bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-            self.logger.debug('===> Force Stop VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            if bhyve_error:
-                self.logger.error('===> Stopping VM error: {0}'.format(bhyve_error))
-        else:
-            self.logger.debug('===> Soft Stop VM: {0} ID: {1}'.format(self.vm['name'], self.vm['id']))
-
-        self.destroy_tap()
-        return await self.kill_bhyve_pid()
-
-    async def running(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-        if bhyve_error == 0:
-            if self.proc:
-                try:
-                    os.kill(self.proc.pid, 0)
-                except OSError:
-                    self.logger.error('===> VMM {0} is running without bhyve process.'.format(self.vm['name']))
-                    return False
-                return True
-            else:
-                # XXX: We return true for now to keep the vm.status sane.
-                # It is necessary handle in a better way the bhyve process associated with the vmm.
-                return True
-        elif bhyve_error == 1:
-            return False
-
-
 class VMService(CRUDService):
 
     class Config:
@@ -1375,7 +923,7 @@ class VMService(CRUDService):
                 await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
 
         await self.middleware.run_in_thread(
-            lambda vms, vd, con, mw: vms.update({vd['name']: VMSupervisorLibVirt(vd, con, mw)}),
+            lambda vms, vd, con, mw: vms.update({vd['name']: VMSupervisor(vd, con, mw)}),
             self.vms, (await self._get_instance(vm_id)), self.libvirt_connection, self.middleware
         )
 
@@ -1610,7 +1158,7 @@ class VMService(CRUDService):
         if vm['name'] in self.vms:
             self.vms.pop(vm['name']).undefine_domain()
         else:
-            VMSupervisorLibVirt(vm, self.libvirt_connection).undefine_domain()
+            VMSupervisor(vm, self.libvirt_connection, self.middleware).undefine_domain()
 
         return self.middleware.call_sync('datastore.delete', 'vm.vm', id)
 
@@ -1910,7 +1458,7 @@ class VMService(CRUDService):
         for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm') if self.libvirt_connection else ():
             vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
             with contextlib.suppress(CallError):
-                self.vms[vm_data['name']] = VMSupervisorLibVirt(vm_data, self.libvirt_connection, self.middleware)
+                self.vms[vm_data['name']] = VMSupervisor(vm_data, self.libvirt_connection, self.middleware)
 
 
 class VMDeviceService(CRUDService):
