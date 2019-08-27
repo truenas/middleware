@@ -418,6 +418,8 @@ class iSCSITargetExtentService(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
+        await self._service_change('iscsitarget', 'reload')
+
         return await self._get_instance(data['id'])
 
     @accepts(
@@ -448,6 +450,8 @@ class iSCSITargetExtentService(CRUDService):
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
+        await self._service_change('iscsitarget', 'reload')
+
         return await self._get_instance(id)
 
     @accepts(
@@ -464,9 +468,12 @@ class iSCSITargetExtentService(CRUDService):
             if delete is not True:
                 raise CallError('Failed to remove extent file')
 
-        return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id
-        )
+        try:
+            return await self.middleware.call(
+                'datastore.delete', self._config.datastore, id
+            )
+        finally:
+            await self._service_change('iscsitarget', 'reload')
 
     @private
     async def validate(self, data):
@@ -727,8 +734,6 @@ class iSCSITargetExtentService(CRUDService):
                 extent_size = data['filesize']
 
                 await run(['truncate', '-s', str(extent_size), path])
-
-            await self.middleware.call('service.reload', 'iscsitarget')
         else:
             data['path'] = disk
 
