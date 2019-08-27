@@ -143,38 +143,18 @@ def test_13_verify_jail_started():
     if freeze is True:
         pytest.skip(freeze_msg)
     freeze = False
-    job_status = wait_on_job(JOB_ID, 600)
+    job_status = wait_on_job(JOB_ID, 20)
     if job_status['state'] in ['TIMEOUT', "FAILED"]:
         freeze = True
         freeze_msg = f"Failed to start jail: {JAIL_NAME}"
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    time.sleep(1)
     results = GET(f'/jail/id/{JAIL_NAME}/')
     assert results.status_code == 200, results.text
     assert results.json()['state'] == 'up', results.text
 
 
-def test_14_export_jail():
-    global JOB_ID
-    if freeze is True:
-        pytest.skip(freeze_msg)
-    else:
-        payload = {
-            "jail": JAIL_NAME,
-            "compression_algorithm": "ZIP"
-        }
-        results = POST('/jail/export/', payload)
-        assert results.status_code == 200, results.text
-        JOB_ID = results.json()
-
-
-def test_15_verify_export_job_succed():
-    global job_results
-    job_status = wait_on_job(JOB_ID, 300)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
-    job_results = job_status['results']
-
-
-def test_16_exec_call():
+def test_14_exec_call():
     global JOB_ID
 
     if freeze is True:
@@ -191,12 +171,12 @@ def test_16_exec_call():
     time.sleep(1)
 
 
-def test_17_verify_exec_job():
+def test_15_verify_exec_job():
     global freeze, freeze_msg
     if freeze is True:
         pytest.skip(freeze_msg)
     freeze = False
-    job_status = wait_on_job(JOB_ID, 600)
+    job_status = wait_on_job(JOB_ID, 300)
     if job_status['state'] in ['TIMEOUT', "FAILED"]:
         freeze = True
         freeze_msg = f"Failed to exec jail: {JAIL_NAME}"
@@ -205,7 +185,7 @@ def test_17_verify_exec_job():
     assert 'exec successful' in result, str(result)
 
 
-def test_18_stop_jail():
+def test_16_stop_jail():
     global JOB_ID
 
     if freeze is True:
@@ -220,15 +200,36 @@ def test_18_stop_jail():
     time.sleep(1)
 
 
-def test_19_verify_jail_stopped():
+def test_17_verify_jail_stopped():
     if freeze is True:
         pytest.skip(freeze_msg)
-    job_status = wait_on_job(JOB_ID, 600)
+    job_status = wait_on_job(JOB_ID, 20)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     time.sleep(1)
     results = GET(f'/jail/id/{JAIL_NAME}/')
     assert results.status_code == 200, results.text
     assert results.json()['state'] == 'down', results.text
+
+
+def test_18_export_jail():
+    global JOB_ID
+    if freeze is True:
+        pytest.skip(freeze_msg)
+    else:
+        payload = {
+            "jail": JAIL_NAME,
+            "compression_algorithm": "ZIP"
+        }
+        results = POST('/jail/export/', payload)
+        assert results.status_code == 200, results.text
+        JOB_ID = results.json()
+
+
+def test_19_verify_export_job_succed():
+    global job_results
+    job_status = wait_on_job(JOB_ID, 300)
+    assert job_status['state'] == 'SUCCESS', job_status['results']
+    job_results = job_status['results']
 
 
 def test_20_start_jail():
@@ -237,7 +238,7 @@ def test_20_start_jail():
 
 
 def test_21_wait_for_jail_to_be_up():
-    job_status = wait_on_job(JOB_ID, 600)
+    job_status = wait_on_job(JOB_ID, 20)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     time.sleep(1)
     results = GET(f'/jail/id/{JAIL_NAME}/')
