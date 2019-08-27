@@ -77,7 +77,8 @@ class VMSupervisor:
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
 
-        self.libvirt_domain_name = self.domain = self.stop_devices_thread = None
+        self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
+        self.domain = self.stop_devices_thread = None
         self.update_domain()
 
     def update_domain(self, vm_data=None):
@@ -263,7 +264,6 @@ class VMSupervisor:
         return domain
 
     def os_xml(self):
-        # TODO: Ensure bios works
         os_list = []
         children = [create_element('type', attribute_dict={'text': 'hvm'})]
         if self.vm_data['bootloader'] in ('UEFI', 'UEFI_CSM'):
@@ -460,6 +460,9 @@ class StorageDevice(Device):
     def xml(self, *args, **kwargs):
         child_element = kwargs.pop('child_element')
         virtio = self.data['attributes']['type'] == 'VIRTIO'
+        logical_sectorsize = self.data['attributes']['logical_sectorsize']
+        physical_sectorsize = self.data['attributes']['physical_sectorsize']
+
         return create_element(
             'disk', type='file', device='disk', attribute_dict={
                 'children': [
@@ -469,6 +472,11 @@ class StorageDevice(Device):
                         dev=f'{"hdc" if not virtio else "vdb"}{self.data["id"]}'
                     ),
                     child_element,
+                    *([] if not logical_sectorsize else [create_element(
+                        'blockio', logical_block_size=str(logical_sectorsize), **({} if not physical_sectorsize else {
+                            'physical_block_size': physical_sectorsize
+                        })
+                    )]),
                 ]
             }
         )
@@ -483,7 +491,8 @@ class DISK(StorageDevice):
         Bool('create_zvol'),
         Str('zvol_name'),
         Int('zvol_volsize'),
-        Int('sectorsize', enum=[0, 512, 4096], default=0),
+        Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
+        Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
     )
 
 
@@ -517,7 +526,8 @@ class RAW(StorageDevice):
         Bool('exists'),
         Bool('boot', default=False),
         Int('size', default=None, null=True),
-        Int('sectorsize', enum=[0, 512, 4096], default=0),
+        Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
+        Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
     )
 
 
@@ -527,7 +537,7 @@ class NIC(Device):
         'attributes',
         Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
         Str('nic_attach', default=None, null=True),
-        Str('mac'),
+        Str('mac', default=None, null=True),
     )
 
     @staticmethod
@@ -604,10 +614,7 @@ class VNC(Device):
         return create_element(
             'graphics', type='vnc', port=str(self.data['attributes']['vnc_port']), attribute_dict={
                 'children': [
-                    create_element(
-                        # We use .get for safety as old users might not have this set
-                        'listen', type='address', address=self.data['attributes'].get('vnc_bind') or '0.0.0.0'
-                    ),
+                    create_element('listen', type='address', address=self.data['attributes']['vnc_bind']),
                 ]
             }, **(
                 {} if not self.data['attributes']['vnc_password'] else {
@@ -1133,12 +1140,13 @@ class VMService(CRUDService):
         if new['name'] != old['name']:
             await self.middleware.call('vm.rename_domain', old, vm_data)
 
-        return vm_data
+        return await self._get_instance(id)
 
     @private
     def rename_domain(self, old, new):
-        vm = self.vms[old['name']]
+        vm = self.vms.pop(old['name'])
         vm.update_domain(new)
+        self.vms[new['name']] = vm
 
     @accepts(
         Int('id'),
@@ -1835,6 +1843,13 @@ class VMDeviceService(CRUDService):
                     verrors.add('attributes.vnc_port', 'Specified vnc port is already in use')
             else:
                 device['attributes']['vnc_port'] = (await self.middleware.call('vm.vnc_port_wizard'))['vnc_port']
+
+        if device['dtype'] in ('RAW', 'DISK') and device['attributes'].get('physical_sectorsize')\
+                and not device['attributes'].get('logical_sectorsize'):
+            verrors.add(
+                'attributes.logical_sectorsize',
+                'This field must be provided when physical_sectorsize is specified.'
+            )
 
         if verrors:
             raise verrors
