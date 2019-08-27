@@ -2,7 +2,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import (
-    item_method, pass_app, private, CRUDService, CallError, ValidationErrors
+    item_method, pass_app, private, CRUDService, CallError, ValidationErrors, job
 )
 from middlewared.utils import Nid, Popen, run
 from middlewared.utils.path import is_child
@@ -28,10 +28,10 @@ import subprocess
 import sys
 import sysctl
 import time
+import threading
 
 from abc import ABC, abstractmethod
 from lxml import etree
-
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
@@ -73,12 +73,11 @@ class VMSupervisor:
         self.connection = connection
         self.middleware = middleware
         self.devices = []
-        self.libvirt_domain_name = None
 
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
 
-        self.domain = None
+        self.libvirt_domain_name = self.domain = self.stop_devices_thread = None
         self.update_domain()
 
     def update_domain(self, vm_data=None):
@@ -159,36 +158,65 @@ class VMSupervisor:
         for device in self.devices:
             device.pre_start_vm()
 
-        if self.domain.create() < 0:
-            raise CallError(f'Failed to boot {self.vm_data["name"]} domain')
+        try:
+            if self.domain.create() < 0:
+                raise CallError(f'Failed to boot {self.vm_data["name"]} domain')
+        except (libvirt.libvirtError, CallError) as e:
+            errors = [str(e)]
+            for device in self.devices:
+                try:
+                    device.pre_start_vm_rollback()
+                except Exception as d_error:
+                    errors.append(f'Failed to rollback pre start changes for {device.data["dtype"]} device: {d_error}')
+            raise CallError('\n'.join(errors))
 
+        # We initialize this when we are certain that the VM has indeed booted
+        self.stop_devices_thread = threading.Thread(
+            name=f'post_stop_devices_{self.libvirt_domain_name}', target=self.run_post_stop_actions
+        )
+        self.stop_devices_thread.start()
+
+        errors = []
         for device in self.devices:
-            device.post_start_vm()
+            try:
+                device.post_start_vm()
+            except Exception as e:
+                errors.append(f'Failed to execute post start actions for {device.data["dtype"]} device: {e}')
+        else:
+            if errors:
+                raise CallError('\n'.join(errors))
 
     def _before_stopping_checks(self):
         if not self.domain.isActive():
             raise CallError(f'{self.libvirt_domain_name} domain is not active')
 
-    def stop(self):
-        self._before_stopping_checks()
+    def run_post_stop_actions(self):
+        while self.status()['state'] == 'RUNNING':
+            time.sleep(5)
 
+        errors = []
         for device in self.devices:
-            device.pre_stop_vm()
+            try:
+                device.post_stop_vm()
+            except Exception as e:
+                errors.append(f'Failed to execute post stop actions for {device.data["dtype"]} device: {e}')
+        else:
+            if errors:
+                raise CallError('\n'.join(errors))
+
+    def stop(self, shutdown_timeout=90):
+        self._before_stopping_checks()
 
         self.domain.shutdown()
 
-        # We wait for 30 seconds before initiating post stop activities for the vm
+        # We wait for timeout seconds before initiating post stop activities for the vm
         # This is done because the shutdown call above is non-blocking
-        shutdown_timeout = 30
         while shutdown_timeout > 0 and self.status()['state'] == 'RUNNING':
             shutdown_timeout -= 5
             time.sleep(5)
 
-        for device in self.devices:
-            device.post_stop_vm()
-
-    def restart(self, vm_data=None):
-        self.stop()
+    def restart(self, vm_data=None, shutdown_timeout=90):
+        self.stop(shutdown_timeout)
 
         # We don't wait anymore because during stop we have already waited for the VM to shutdown cleanly
         if self.status()['state'] == 'RUNNING':
@@ -200,18 +228,7 @@ class VMSupervisor:
 
     def poweroff(self):
         self._before_stopping_checks()
-
-        for device in self.devices:
-            with contextlib.suppress(Exception):
-                device.pre_stop_vm()
-
         self.domain.destroy()
-
-        for device in self.devices:
-            with contextlib.suppress(Exception):
-                device.post_stop_vm()
-
-        # For poweroff, we don't care about raising an exception if any device method fails
 
     def construct_xml(self):
         domain = create_element(
@@ -428,10 +445,10 @@ class Device(ABC):
     def pre_start_vm(self, *args, **kwargs):
         pass
 
-    def post_start_vm(self, *args, **kwargs):
+    def pre_start_vm_rollback(self, *args, **kwargs):
         pass
 
-    def pre_stop_vm(self, *args, **kwargs):
+    def post_start_vm(self, *args, **kwargs):
         pass
 
     def post_stop_vm(self, *args, **kwargs):
@@ -541,7 +558,6 @@ class NIC(Device):
         except KeyError:
             bridge_nic = netif.get_interface(netif.create_interface('bridge'))
             bridge_nic.rename(VM_BRIDGE)
-            # TODO: Ensure libvirt takes care of MTU tweaks/settings
 
         if nic_attach not in bridge_nic.members:
             bridge_nic.add_member(nic_attach)
@@ -1136,7 +1152,7 @@ class VMService(CRUDService):
         self.ensure_libvirt_connection()
         status = self.status(id)
         if status.get('state') == 'RUNNING':
-            self.stop(id, True)
+            self.poweroff(id)
         elif status.get('state') == 'ERROR':
             raise CallError('Unable to retrieve VM status. Failed to destroy VM')
 
@@ -1212,26 +1228,47 @@ class VMService(CRUDService):
         self.vms[vm['name']].start(vm_data=vm)
 
     @item_method
-    @accepts(Int('id'), Bool('force', default=False),)
-    def stop(self, id, force):
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Bool('force', default=False),
+            Int('timeout', default=90),
+        ),
+    )
+    @job(lock=lambda args: f'stop_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
+    def stop(self, job, id, options):
         """Stop a VM."""
         self.ensure_libvirt_connection()
         vm = self.vms[self.middleware.call_sync('vm._get_instance', id)['name']]
 
-        if force:
+        if options['force']:
             vm.poweroff()
         else:
-            vm.stop()
+            vm.stop(options['timeout'])
 
         self.middleware.call_sync('vm._teardown_guest_vmemory', id)
 
     @item_method
     @accepts(Int('id'))
-    def restart(self, id):
+    def poweroff(self, id):
+        self.ensure_libvirt_connection()
+        self.vms[self.middleware.call_sync('vm._get_instance', id)['name']].poweroff()
+
+    @item_method
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Int('timeout', default=90),
+        ),
+    )
+    @job(lock=lambda args: f'restart_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
+    def restart(self, job, id, options):
         """Restart a VM."""
         self.ensure_libvirt_connection()
         vm = self.middleware.call_sync('vm._get_instance', id)
-        self.vms[vm['name']].restart(vm_data=vm)
+        self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=options['timeout'])
 
     async def _teardown_guest_vmemory(self, id):
         guest_status = await self.middleware.call('vm.status', id)
