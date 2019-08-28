@@ -44,7 +44,7 @@ class VMForm(ModelForm):
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                     ]
-                self.instance = models.VM.objects.get(pk=c.call('vm.create', cdata))
+                self.instance = models.VM.objects.get(pk=(c.call('vm.create', cdata))['id'])
         return self.instance
 
     def delete(self, **kwargs):
