@@ -403,16 +403,14 @@ class DojoModelResource(ResourceMixin, ModelResource):
         # Grab the form to call delete on same as in freeadmin
         m = bundle.obj._meta.model
         mf = None
-        if not isinstance(navtree._modelforms[m], dict):
-            mf = navtree._modelforms[m]
-        else:
-            if mf is None:
+        if m in navtree._modelforms:
+            if not isinstance(navtree._modelforms[m], dict):
+                mf = navtree._modelforms[m]
+            else:
                 try:
                     mf = navtree._modelforms[m][m._admin.edit_modelform]
                 except Exception:
                     mf = list(navtree._modelforms[m].values())[-1]
-            else:
-                mf = navtree._modelforms[m][mf]
 
         if mf:
             form = mf(instance=bundle.obj)
