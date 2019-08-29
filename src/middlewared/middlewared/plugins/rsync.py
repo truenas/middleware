@@ -42,6 +42,9 @@ from middlewared.service import (
 from middlewared.utils import run_command_with_user_context
 
 
+RSYNC_PATH_LIMIT = 1023
+
+
 class RsyncdService(SystemServiceService):
 
     class Config:
@@ -94,8 +97,8 @@ class RsyncModService(CRUDService):
         for entity in ('user', 'group'):
             value = data.get(entity)
             if value not in map(
-                    lambda e: e[entity if entity == 'group' else 'username'],
-                    await self.middleware.call(f'{entity}.query')
+                lambda e: e[entity if entity == 'group' else 'username'],
+                await self.middleware.call(f'{entity}.query')
             ):
                 verrors.add(
                     f'{schema_name}.{entity}',
@@ -114,7 +117,7 @@ class RsyncModService(CRUDService):
         'rsyncmod_create',
         Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
-        Str('path', required=True),
+        Str('path', required=True, max_length=RSYNC_PATH_LIMIT),
         Str('mode', enum=['RO', 'RW', 'WO']),
         Int('maxconn'),
         Str('user', default='nobody'),
@@ -128,7 +131,10 @@ class RsyncModService(CRUDService):
         """
         Create a Rsyncmod module.
 
-        `path` represents the path to pool/dataset.
+        `path` represents the path to a dataset. Path length is limited to 1023 characters maximum as per the limit
+        enforced by FreeBSD. It is possible that we reach this max length recursively while transferring data. In that
+        case, the user must ensure the maximum path will not be too long or modify the recursed path to shorter
+        than the limit.
 
         `maxconn` is an integer value representing the maximum number of simultaneous connections. Zero represents
         unlimited.
@@ -358,7 +364,7 @@ class RsyncTaskService(CRUDService):
 
     @accepts(Dict(
         'rsync_task_create',
-        Str('path', required=True),
+        Str('path', required=True, max_length=RSYNC_PATH_LIMIT),
         Str('user', required=True),
         Str('remotehost'),
         Int('remoteport'),
@@ -389,7 +395,7 @@ class RsyncTaskService(CRUDService):
         """
         Create a Rsync Task.
 
-        `path` represents the path to pool/dataset.
+        See the comment in Rsyncmod about `path` length limits.
 
         `remotehost` is ip address or hostname of the remote system. If username differs on the remote host,
         "username@remote_host" format should be used.
