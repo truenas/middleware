@@ -21,6 +21,7 @@ from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, CallError, CRUDService
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -83,6 +84,35 @@ def get_temperature(stdout):
     reg = re.search(r'Current Drive Temperature:\s+([0-9]+) C', stdout, re.M)
     if reg:
         return int(reg.group(1))
+
+
+class DiskModel(sa.Model):
+    __tablename__ = 'storage_disk'
+
+    disk_identifier = sa.Column(sa.String(42), primary_key=True)
+    disk_name = sa.Column(sa.String(120))
+    disk_subsystem = sa.Column(sa.String(10))
+    disk_number = sa.Column(sa.Integer())
+    disk_serial = sa.Column(sa.String(30))
+    disk_size = sa.Column(sa.String(20))
+    disk_multipath_name = sa.Column(sa.String(30))
+    disk_multipath_member = sa.Column(sa.String(30))
+    disk_description = sa.Column(sa.String(120))
+    disk_transfermode = sa.Column(sa.String(120))
+    disk_hddstandby = sa.Column(sa.String(120))
+    disk_advpowermgmt = sa.Column(sa.String(120))
+    disk_acousticlevel = sa.Column(sa.String(120))
+    disk_togglesmart = sa.Column(sa.Boolean())
+    disk_smartoptions = sa.Column(sa.String(120))
+    disk_expiretime = sa.Column(sa.DateTime(), nullable=True)
+    disk_enclosure_slot = sa.Column(sa.Integer(), nullable=True)
+    disk_passwd = sa.Column(sa.String(120))
+    disk_critical = sa.Column(sa.Integer(), nullable=True)
+    disk_difference = sa.Column(sa.Integer(), nullable=True)
+    disk_informational = sa.Column(sa.Integer(), nullable=True)
+    disk_model = sa.Column(sa.String(200), nullable=True)
+    disk_rotationrate = sa.Column(sa.Integer(), nullable=True)
+    disk_type = sa.Column(sa.String(20))
 
 
 class DiskService(CRUDService):

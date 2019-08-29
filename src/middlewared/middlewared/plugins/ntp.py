@@ -1,7 +1,20 @@
 from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
 from middlewared.service import ValidationErrors, CRUDService, private
+import middlewared.sqlalchemy as sa
 
 import ntplib
+
+
+class NTPModel(sa.Model):
+    __tablename__ = 'system_ntpserver'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ntp_address = sa.Column(sa.String(120))
+    ntp_burst = sa.Column(sa.Boolean())
+    ntp_iburst = sa.Column(sa.Boolean())
+    ntp_prefer = sa.Column(sa.Boolean())
+    ntp_minpoll = sa.Column(sa.Integer())
+    ntp_maxpoll = sa.Column(sa.Integer())
 
 
 class NTPServerService(CRUDService):

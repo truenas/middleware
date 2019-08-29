@@ -3,6 +3,7 @@ from middlewared.service import (CallError, ConfigService, CRUDService, Service,
 from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Ref, Str,
                                 ValidationErrors, accepts)
+import middlewared.sqlalchemy as sa
 from middlewared.validators import Match, Range
 
 import asyncio
@@ -22,6 +23,26 @@ import urllib.request
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
+
+
+class NetworkConfigurationModel(sa.Model):
+    __tablename__ = 'network_globalconfiguration'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    gc_hostname = sa.Column(sa.String(120))
+    gc_hostname_b = sa.Column(sa.String(120), nullable=True)
+    gc_domain = sa.Column(sa.String(120))
+    gc_ipv4gateway = sa.Column(sa.String(42))
+    gc_ipv6gateway = sa.Column(sa.String(42))
+    gc_nameserver1 = sa.Column(sa.String(42))
+    gc_nameserver2 = sa.Column(sa.String(42))
+    gc_nameserver3 = sa.Column(sa.String(42))
+    gc_httpproxy = sa.Column(sa.String(255))
+    gc_netwait_enabled = sa.Column(sa.Boolean())
+    gc_netwait_ip = sa.Column(sa.String(300))
+    gc_hosts = sa.Column(sa.Text())
+    gc_domains = sa.Column(sa.Text())
+    gc_hostname_virtual = sa.Column(sa.String(120), nullable=True)
 
 
 class NetworkConfigurationService(ConfigService):
@@ -289,6 +310,78 @@ def dhclient_leases(interface):
     if os.path.exists(leasesfile):
         with open(leasesfile, 'r') as f:
             return f.read()
+
+
+class NetworkAliasModel(sa.Model):
+    __tablename__ = 'network_alias'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    alias_interface_id = sa.Column(sa.Integer(), index=True)
+    alias_v4address = sa.Column(sa.String(42))
+    alias_v4netmaskbit = sa.Column(sa.String(3))
+    alias_v6address = sa.Column(sa.String(42))
+    alias_v6netmaskbit = sa.Column(sa.String(3))
+    alias_vip = sa.Column(sa.String(42))
+    alias_v4address_b = sa.Column(sa.String(42))
+    alias_v6address_b = sa.Column(sa.String(42))
+
+
+class NetworkBridgeModel(sa.Model):
+    __tablename__ = 'network_bridge'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    members = sa.Column(sa.Text())
+    interface_id = sa.Column(sa.ForeignKey('network_interfaces.id'))
+
+
+class NetworkInterfaceModel(sa.Model):
+    __tablename__ = 'network_interfaces'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    int_interface = sa.Column(sa.String(300))
+    int_name = sa.Column(sa.String(120))
+    int_dhcp = sa.Column(sa.Boolean())
+    int_ipv4address = sa.Column(sa.String(42))
+    int_ipv4address_b = sa.Column(sa.String(42))
+    int_v4netmaskbit = sa.Column(sa.String(3))
+    int_ipv6auto = sa.Column(sa.Boolean())
+    int_ipv6address = sa.Column(sa.String(42))
+    int_v6netmaskbit = sa.Column(sa.String(4))
+    int_vip = sa.Column(sa.String(42), nullable=True)
+    int_vhid = sa.Column(sa.Integer(), nullable=True)
+    int_pass = sa.Column(sa.String(100))
+    int_critical = sa.Column(sa.Boolean())
+    int_group = sa.Column(sa.Integer(), nullable=True)
+    int_options = sa.Column(sa.String(120))
+    int_mtu = sa.Column(sa.Integer(), nullable=True)
+
+
+class NetworkLaggInterfaceModel(sa.Model):
+    __tablename__ = 'network_lagginterface'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    lagg_interface_id = sa.Column(sa.Integer())
+    lagg_protocol = sa.Column(sa.String(120))
+
+
+class NetworkLaggInterfaceMemberModel(sa.Model):
+    __tablename__ = 'network_lagginterfacemembers'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    lagg_ordernum = sa.Column(sa.Integer())
+    lagg_physnic = sa.Column(sa.String(120))
+    lagg_interfacegroup_id = sa.Column(sa.ForeignKey('network_lagginterface.id'), index=True)
+
+
+class NetworkVlanModel(sa.Model):
+    __tablename__ = 'network_vlan'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    vlan_vint = sa.Column(sa.String(120))
+    vlan_pint = sa.Column(sa.String(300))
+    vlan_tag = sa.Column(sa.Integer())
+    vlan_description = sa.Column(sa.String(120))
+    vlan_pcp = sa.Column(sa.Integer(), nullable=True)
 
 
 class InterfaceService(CRUDService):
@@ -2084,6 +2177,15 @@ class RouteService(Service):
                         if ipaddress.ip_address(ipv4_gateway) in ipv4_nic.network:
                             return True
         return False
+
+
+class StaticRouteModel(sa.Model):
+    __tablename__ = 'network_staticroute'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    sr_destination = sa.Column(sa.String(120))
+    sr_gateway = sa.Column(sa.String(42))
+    sr_description = sa.Column(sa.String(120))
 
 
 class StaticRouteService(CRUDService):

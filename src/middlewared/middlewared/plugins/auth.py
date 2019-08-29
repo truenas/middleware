@@ -12,6 +12,7 @@ from middlewared.schema import Dict, Int, Str, accepts, Bool
 from middlewared.service import (
     ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private, CallError
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen
 from middlewared.validators import Range
 
@@ -347,6 +348,18 @@ class AuthService(Service):
 
         self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
         return True
+
+
+class TwoFactorAuthModel(sa.Model):
+    __tablename__ = 'system_twofactorauthentication'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    otp_digits = sa.Column(sa.Integer())
+    secret = sa.Column(sa.String(16), nullable=True)
+    window = sa.Column(sa.Integer())
+    interval = sa.Column(sa.Integer())
+    services = sa.Column(sa.Text())
+    enabled = sa.Column(sa.Boolean())
 
 
 class TwoFactorAuthService(ConfigService):

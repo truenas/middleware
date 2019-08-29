@@ -1,5 +1,6 @@
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 
 import asyncio
@@ -9,6 +10,16 @@ import shutil
 import uuid
 
 SYSDATASET_PATH = '/var/db/system'
+
+
+class SystemDatasetModel(sa.Model):
+    __tablename__ = 'system_systemdataset'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    sys_pool = sa.Column(sa.String(1024))
+    sys_syslog_usedataset = sa.Column(sa.Boolean())
+    sys_uuid = sa.Column(sa.String(32))
+    sys_uuid_b = sa.Column(sa.String(32), nullable=True)
 
 
 class SystemDatasetService(ConfigService):

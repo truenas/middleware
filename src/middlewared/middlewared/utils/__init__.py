@@ -455,12 +455,15 @@ def load_modules(directory):
             os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/') +
             [f]
         )
-        fp, pathname, description = imp.find_module(f, [directory])
-        try:
-            yield imp.load_module(name, fp, pathname, description)
-        finally:
-            if fp:
-                fp.close()
+        if name in sys.modules:
+            yield sys.modules[name]
+        else:
+            fp, pathname, description = imp.find_module(f, [directory])
+            try:
+                yield imp.load_module(name, fp, pathname, description)
+            finally:
+                if fp:
+                    fp.close()
 
 
 def load_classes(module, base, blacklist):

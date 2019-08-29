@@ -11,8 +11,29 @@ from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import private, CRUDService, SystemServiceService, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
+
+
+class NFSModel(sa.Model):
+    __tablename__ = 'services_nfs'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    nfs_srv_servers = sa.Column(sa.Integer())
+    nfs_srv_udp = sa.Column(sa.Boolean())
+    nfs_srv_allow_nonroot = sa.Column(sa.Boolean())
+    nfs_srv_v4 = sa.Column(sa.Boolean())
+    nfs_srv_v4_v3owner = sa.Column(sa.Boolean())
+    nfs_srv_v4_krb = sa.Column(sa.Boolean())
+    nfs_srv_bindip = sa.Column(sa.String(250))
+    nfs_srv_mountd_port = sa.Column(sa.SmallInteger(), nullable=True)
+    nfs_srv_rpcstatd_port = sa.Column(sa.SmallInteger(), nullable=True)
+    nfs_srv_rpclockd_port = sa.Column(sa.SmallInteger(), nullable=True)
+    nfs_srv_16 = sa.Column(sa.Boolean())
+    nfs_srv_mountd_log = sa.Column(sa.Boolean())
+    nfs_srv_statd_lockd_log = sa.Column(sa.Boolean())
+    nfs_srv_v4_domain = sa.Column(sa.String(120))
 
 
 class NFSService(SystemServiceService):
@@ -163,6 +184,32 @@ class NFSService(SystemServiceService):
             else:
                 subprocess.run(["service", "nfsuserd", "forcestop"], stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL)
+
+
+class NFSShareModel(sa.Model):
+    __tablename__ = 'sharing_nfs_share'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    nfs_comment = sa.Column(sa.String(120))
+    nfs_network = sa.Column(sa.Text())
+    nfs_hosts = sa.Column(sa.Text())
+    nfs_alldirs = sa.Column(sa.Boolean())
+    nfs_ro = sa.Column(sa.Boolean())
+    nfs_quiet = sa.Column(sa.Boolean())
+    nfs_maproot_user = sa.Column(sa.String(120), nullable=True)
+    nfs_maproot_group = sa.Column(sa.String(120), nullable=True)
+    nfs_mapall_user = sa.Column(sa.String(120), nullable=True)
+    nfs_mapall_group = sa.Column(sa.String(120), nullable=True)
+    nfs_security = sa.Column(sa.String(200))
+    nfs_enabled = sa.Column(sa.Boolean())
+
+
+class NFSSharePathModel(sa.Model):
+    __tablename__ = 'sharing_nfs_share_path'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    share_id = sa.Column(sa.Integer())
+    path = sa.Column(sa.String(255))
 
 
 class SharingNFSService(CRUDService):

@@ -1,5 +1,6 @@
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
+import middlewared.sqlalchemy as sa
 from middlewared.validators import Email
 
 from datetime import datetime, timedelta
@@ -79,6 +80,20 @@ class MailQueue(object):
         self._lock.release()
         if typ is not None:
             raise
+
+
+class MailModel(sa.Model):
+    __tablename__ = 'system_email'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    em_fromemail = sa.Column(sa.String(120))
+    em_outgoingserver = sa.Column(sa.String(120))
+    em_port = sa.Column(sa.Integer())
+    em_security = sa.Column(sa.String(120))
+    em_smtp = sa.Column(sa.Boolean())
+    em_user = sa.Column(sa.String(120), nullable=True)
+    em_pass = sa.Column(sa.String(120), nullable=True)
+    em_fromname = sa.Column(sa.String(120))
 
 
 class MailService(ConfigService):

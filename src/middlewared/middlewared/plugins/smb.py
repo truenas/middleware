@@ -4,6 +4,7 @@ from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, filterable, private, periodic, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, filter_list
 from middlewared.utils.path import is_child
 
@@ -65,6 +66,34 @@ class SIDType(enum.IntEnum):
     UNKNOWN = 8
     COMPUTER = 9
     LABEL = 10
+
+
+class SMBModel(sa.Model):
+    __tablename__ = 'services_cifs'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cifs_srv_netbiosname = sa.Column(sa.String(120))
+    cifs_srv_netbiosname_b = sa.Column(sa.String(120), nullable=True)
+    cifs_srv_netbiosalias = sa.Column(sa.String(120), nullable=True)
+    cifs_srv_workgroup = sa.Column(sa.String(120))
+    cifs_srv_description = sa.Column(sa.String(120))
+    cifs_srv_unixcharset = sa.Column(sa.String(120))
+    cifs_srv_loglevel = sa.Column(sa.String(120))
+    cifs_srv_syslog = sa.Column(sa.Boolean())
+    cifs_srv_localmaster = sa.Column(sa.Boolean())
+    cifs_srv_guest = sa.Column(sa.String(120))
+    cifs_srv_filemask = sa.Column(sa.String(120))
+    cifs_srv_dirmask = sa.Column(sa.String(120))
+    cifs_srv_smb_options = sa.Column(sa.Text())
+    cifs_srv_aio_enable = sa.Column(sa.Boolean())
+    cifs_srv_aio_rs = sa.Column(sa.Integer())
+    cifs_srv_aio_ws = sa.Column(sa.Integer())
+    cifs_srv_zeroconf = sa.Column(sa.Boolean())
+    cifs_srv_bindip = sa.Column(sa.String(250), nullable=True)
+    cifs_SID = sa.Column(sa.String(120), nullable=True)
+    cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean())
+    cifs_srv_enable_smb1 = sa.Column(sa.Boolean())
+    cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True)
 
 
 class SMBService(SystemServiceService):
@@ -651,6 +680,33 @@ class SMBService(SystemServiceService):
         data['netbiosalias'] = ' '.join(data['netbiosalias'])
         data.pop('netbiosname_local', None)
         return data
+
+
+class SharingSMBModel(sa.Model):
+    __tablename__ = 'sharing_cifs_share'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cifs_path = sa.Column(sa.String(255), nullable=True)
+    cifs_home = sa.Column(sa.Boolean())
+    cifs_name = sa.Column(sa.String(120))
+    cifs_comment = sa.Column(sa.String(120))
+    cifs_ro = sa.Column(sa.Boolean())
+    cifs_browsable = sa.Column(sa.Boolean())
+    cifs_recyclebin = sa.Column(sa.Boolean())
+    cifs_showhiddenfiles = sa.Column(sa.Boolean())
+    cifs_guestok = sa.Column(sa.Boolean())
+    cifs_guestonly = sa.Column(sa.Boolean())
+    cifs_hostsallow = sa.Column(sa.Text())
+    cifs_hostsdeny = sa.Column(sa.Text())
+    cifs_vfsobjects = sa.Column(sa.String(255))
+    cifs_auxsmbconf = sa.Column(sa.Text())
+    cifs_storage_task_id = sa.Column(sa.ForeignKey('storage_task.id'), index=True, nullable=True)
+    cifs_abe = sa.Column(sa.Boolean())
+    cifs_timemachine = sa.Column(sa.Boolean())
+    cifs_vuid = sa.Column(sa.String(36))
+    cifs_shadowcopy = sa.Column(sa.Boolean())
+    cifs_enabled = sa.Column(sa.Boolean())
+    cifs_share_acl = sa.Column(sa.Text())
 
 
 class SharingSMBService(CRUDService):

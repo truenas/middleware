@@ -1,5 +1,15 @@
 from middlewared.schema import Bool, Dict, Str, accepts
 from middlewared.service import SystemServiceService
+import middlewared.sqlalchemy as sa
+
+
+class LLDPModel(sa.Model):
+    __tablename__ = 'services_lldp'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    lldp_intdesc = sa.Column(sa.Boolean())
+    lldp_country = sa.Column(sa.String(2))
+    lldp_location = sa.Column(sa.String(200))
 
 
 class LLDPService(SystemServiceService):

@@ -2,6 +2,53 @@ from middlewared.async_validators import check_path_resides_within_volume, resol
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
 from middlewared.validators import Exact, Match, Or, Range
 from middlewared.service import private, SystemServiceService, ValidationErrors
+import middlewared.sqlalchemy as sa
+
+
+class FTPModel(sa.Model):
+    __tablename__ = 'services_ftp'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ftp_port = sa.Column(sa.Integer())
+    ftp_clients = sa.Column(sa.Integer())
+    ftp_ipconnections = sa.Column(sa.Integer())
+    ftp_loginattempt = sa.Column(sa.Integer())
+    ftp_timeout = sa.Column(sa.Integer())
+    ftp_rootlogin = sa.Column(sa.Boolean())
+    ftp_onlyanonymous = sa.Column(sa.Boolean())
+    ftp_anonpath = sa.Column(sa.String(255), nullable=True)
+    ftp_onlylocal = sa.Column(sa.Boolean())
+    ftp_banner = sa.Column(sa.Text())
+    ftp_filemask = sa.Column(sa.String(3))
+    ftp_dirmask = sa.Column(sa.String(3))
+    ftp_fxp = sa.Column(sa.Boolean())
+    ftp_resume = sa.Column(sa.Boolean())
+    ftp_defaultroot = sa.Column(sa.Boolean())
+    ftp_ident = sa.Column(sa.Boolean())
+    ftp_reversedns = sa.Column(sa.Boolean())
+    ftp_masqaddress = sa.Column(sa.String(120))
+    ftp_passiveportsmin = sa.Column(sa.Integer())
+    ftp_passiveportsmax = sa.Column(sa.Integer())
+    ftp_localuserbw = sa.Column(sa.Integer())
+    ftp_localuserdlbw = sa.Column(sa.Integer())
+    ftp_anonuserbw = sa.Column(sa.Integer())
+    ftp_anonuserdlbw = sa.Column(sa.Integer())
+    ftp_tls = sa.Column(sa.Boolean())
+    ftp_tls_policy = sa.Column(sa.String(120))
+    ftp_tls_opt_allow_client_renegotiations = sa.Column(sa.Boolean())
+    ftp_tls_opt_allow_dot_login = sa.Column(sa.Boolean())
+    ftp_tls_opt_allow_per_user = sa.Column(sa.Boolean())
+    ftp_tls_opt_common_name_required = sa.Column(sa.Boolean())
+    ftp_tls_opt_enable_diags = sa.Column(sa.Boolean())
+    ftp_tls_opt_export_cert_data = sa.Column(sa.Boolean())
+    ftp_tls_opt_no_cert_request = sa.Column(sa.Boolean())
+    ftp_tls_opt_no_empty_fragments = sa.Column(sa.Boolean())
+    ftp_tls_opt_no_session_reuse_required = sa.Column(sa.Boolean())
+    ftp_tls_opt_stdenvvars = sa.Column(sa.Boolean())
+    ftp_tls_opt_dns_name_required = sa.Column(sa.Boolean())
+    ftp_tls_opt_ip_address_required = sa.Column(sa.Boolean())
+    ftp_ssltls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    ftp_options = sa.Column(sa.Text())
 
 
 class FTPService(SystemServiceService):

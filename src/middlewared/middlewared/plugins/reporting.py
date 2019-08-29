@@ -25,6 +25,7 @@ from middlewared.event import EventSource
 from middlewared.i18n import _
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, filterable, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, run, start_daemon_thread
 from middlewared.validators import Range
 
@@ -706,6 +707,17 @@ class UPSRemainingBatteryPlugin(RRDBase):
     rrd_types = (
         ('timeleft-battery', 'value', None),
     )
+
+
+class ReportingModel(sa.Model):
+    __tablename__ = 'system_reporting'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cpu_in_percentage = sa.Column(sa.Boolean())
+    graphite = sa.Column(sa.String(120))
+    graph_age = sa.Column(sa.Integer())
+    graph_points = sa.Column(sa.Integer())
+    graphite_separateinstances = sa.Column(sa.Boolean())
 
 
 class ReportingService(ConfigService):

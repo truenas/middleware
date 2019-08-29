@@ -6,8 +6,69 @@ import pickle
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import item_method, job, private, CallError, CRUDService, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
+
+
+class ReplicationModel(sa.Model):
+    __tablename__ = 'storage_replication'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    repl_target_dataset = sa.Column(sa.String(120))
+    repl_recursive = sa.Column(sa.Boolean())
+    repl_compression = sa.Column(sa.String(120), nullable=True)
+    repl_speed_limit = sa.Column(sa.Integer(), nullable=True)
+    repl_schedule_begin = sa.Column(sa.Time(), nullable=True)
+    repl_schedule_end = sa.Column(sa.Time(), nullable=True)
+    repl_enabled = sa.Column(sa.Boolean())
+    repl_direction = sa.Column(sa.String(120))
+    repl_transport = sa.Column(sa.String(120))
+    repl_ssh_credentials_id = sa.Column(sa.ForeignKey('system_keychaincredential.id'), index=True, nullable=True)
+    repl_netcat_active_side = sa.Column(sa.String(120), nullable=True)
+    repl_netcat_active_side_port_min = sa.Column(sa.Integer(), nullable=True)
+    repl_netcat_active_side_port_max = sa.Column(sa.Integer(), nullable=True)
+    repl_source_datasets = sa.Column(sa.Text())
+    repl_exclude = sa.Column(sa.Text())
+    repl_naming_schema = sa.Column(sa.Text())
+    repl_auto = sa.Column(sa.Boolean())
+    repl_schedule_minute = sa.Column(sa.String(100), nullable=True)
+    repl_schedule_hour = sa.Column(sa.String(100), nullable=True)
+    repl_schedule_daymonth = sa.Column(sa.String(100), nullable=True)
+    repl_schedule_month = sa.Column(sa.String(100), nullable=True)
+    repl_schedule_dayweek = sa.Column(sa.String(100), nullable=True)
+    repl_only_matching_schedule = sa.Column(sa.Boolean())
+    repl_allow_from_scratch = sa.Column(sa.Boolean())
+    repl_hold_pending_snapshots = sa.Column(sa.Boolean())
+    repl_retention_policy = sa.Column(sa.String(120))
+    repl_lifetime_unit = sa.Column(sa.String(120), nullable=True)
+    repl_lifetime_value = sa.Column(sa.Integer(), nullable=True)
+    repl_dedup = sa.Column(sa.Boolean())
+    repl_large_block = sa.Column(sa.Boolean())
+    repl_embed = sa.Column(sa.Boolean())
+    repl_compressed = sa.Column(sa.Boolean())
+    repl_retries = sa.Column(sa.Integer())
+    repl_restrict_schedule_minute = sa.Column(sa.String(100), nullable=True)
+    repl_restrict_schedule_hour = sa.Column(sa.String(100), nullable=True)
+    repl_restrict_schedule_daymonth = sa.Column(sa.String(100), nullable=True)
+    repl_restrict_schedule_month = sa.Column(sa.String(100), nullable=True)
+    repl_restrict_schedule_dayweek = sa.Column(sa.String(100), nullable=True)
+    repl_restrict_schedule_begin = sa.Column(sa.Time(), nullable=True)
+    repl_restrict_schedule_end = sa.Column(sa.Time(), nullable=True)
+    repl_netcat_active_side_listen_address = sa.Column(sa.String(120), nullable=True)
+    repl_netcat_passive_side_connect_address = sa.Column(sa.String(120), nullable=True)
+    repl_logging_level = sa.Column(sa.String(120), nullable=True)
+    repl_name = sa.Column(sa.String(120))
+    repl_state = sa.Column(sa.Text())
+    repl_properties = sa.Column(sa.Boolean())
+
+
+class ReplicationPeriodicSnapshotTaskModel(sa.Model):
+    __tablename__ = 'storage_replication_repl_periodic_snapshot_tasks'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    replication_id = sa.Column(sa.ForeignKey('storage_replication.id'))
+    task_id = sa.Column(sa.ForeignKey('storage_task.id'))
 
 
 class ReplicationService(CRUDService):

@@ -12,6 +12,7 @@ import re
 from middlewared.async_validators import validate_country
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import CallError, CRUDService, job, periodic, private, Service, skip_arg, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.validators import Email, IpAddress, Range
 
 from acme import client, errors, messages
@@ -912,6 +913,23 @@ class CryptoKeyService(Service):
         return crl.public_bytes(
             serialization.Encoding.PEM
         ).decode()
+
+
+class CertificateModel(sa.Model):
+    __tablename__ = 'system_certificate'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cert_type = sa.Column(sa.Integer())
+    cert_name = sa.Column(sa.String(120))
+    cert_certificate = sa.Column(sa.Text(), nullable=True)
+    cert_privatekey = sa.Column(sa.Text(), nullable=True)
+    cert_CSR = sa.Column(sa.Text(), nullable=True)
+    cert_signedby_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
+    cert_acme_uri = sa.Column(sa.String(200), nullable=True)
+    cert_domains_authenticators = sa.Column(sa.Text(), nullable=True)
+    cert_renew_days = sa.Column(sa.Integer(), nullable=True)
+    cert_acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True, nullable=True)
+    cert_revoked_date = sa.Column(sa.DateTime(), nullable=True)
 
 
 class CertificateService(CRUDService):
@@ -2019,6 +2037,19 @@ class CertificateService(CRUDService):
 
         job.set_progress(100)
         return response
+
+
+class CertificateAuthorityModel(sa.Model):
+    __tablename__ = 'system_certificateauthority'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cert_type = sa.Column(sa.Integer())
+    cert_name = sa.Column(sa.String(120))
+    cert_certificate = sa.Column(sa.Text(), nullable=True)
+    cert_privatekey = sa.Column(sa.Text(), nullable=True)
+    cert_CSR = sa.Column(sa.Text(), nullable=True)
+    cert_revoked_date = sa.Column(sa.DateTime(), nullable=True)
+    cert_signedby_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
 
 
 class CertificateAuthorityService(CRUDService):

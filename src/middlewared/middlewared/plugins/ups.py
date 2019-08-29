@@ -9,11 +9,40 @@ import syslog
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.validators import Email, Range
 
 
 DRIVER_BIN_DIR = '/usr/local/libexec/nut'
+
+
+class UPSModel(sa.Model):
+    __tablename__ = 'services_ups'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ups_mode = sa.Column(sa.String(6))
+    ups_identifier = sa.Column(sa.String(120))
+    ups_remotehost = sa.Column(sa.String(50))
+    ups_remoteport = sa.Column(sa.Integer())
+    ups_driver = sa.Column(sa.String(120))
+    ups_port = sa.Column(sa.String(120))
+    ups_options = sa.Column(sa.Text())
+    ups_optionsupsd = sa.Column(sa.Text())
+    ups_description = sa.Column(sa.String(120))
+    ups_shutdown = sa.Column(sa.String(120))
+    ups_shutdowntimer = sa.Column(sa.Integer())
+    ups_monuser = sa.Column(sa.String(50))
+    ups_monpwd = sa.Column(sa.String(30))
+    ups_extrausers = sa.Column(sa.Text())
+    ups_rmonitor = sa.Column(sa.Boolean())
+    ups_emailnotify = sa.Column(sa.Boolean())
+    ups_toemail = sa.Column(sa.String(120))
+    ups_subject = sa.Column(sa.String(120))
+    ups_powerdown = sa.Column(sa.Boolean())
+    ups_nocommwarntime = sa.Column(sa.Integer(), nullable=True)
+    ups_hostsync = sa.Column(sa.Integer())
+    ups_shutdowncmd = sa.Column(sa.String(255), nullable=True)
 
 
 class UPSService(SystemServiceService):

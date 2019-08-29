@@ -6,6 +6,38 @@ import syslog
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, ValidationErrors
 from middlewared.validators import Range
 from middlewared.service import SystemServiceService
+import middlewared.sqlalchemy as sa
+
+
+class SSHModel(sa.Model):
+    __tablename__ = 'services_ssh'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ssh_bindiface = sa.Column(sa.String(350))
+    ssh_tcpport = sa.Column(sa.Integer())
+    ssh_rootlogin = sa.Column(sa.Boolean())
+    ssh_passwordauth = sa.Column(sa.Boolean())
+    ssh_kerberosauth = sa.Column(sa.Boolean())
+    ssh_tcpfwd = sa.Column(sa.Boolean())
+    ssh_compression = sa.Column(sa.Boolean())
+    ssh_privatekey = sa.Column(sa.Text())
+    ssh_sftp_log_level = sa.Column(sa.String(20))
+    ssh_sftp_log_facility = sa.Column(sa.String(20))
+    ssh_host_dsa_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_dsa_key_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_dsa_key_cert_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_ecdsa_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_ecdsa_key_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_ecdsa_key_cert_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_ed25519_key_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_ed25519_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_ed25519_key_cert_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_key_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_rsa_key = sa.Column(sa.Text(), nullable=True)
+    ssh_host_rsa_key_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_host_rsa_key_cert_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_options = sa.Column(sa.Text())
 
 
 class SSHService(SystemServiceService):

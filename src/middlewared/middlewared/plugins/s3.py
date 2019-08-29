@@ -2,9 +2,24 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 
 
 import os
+
+
+class S3Model(sa.Model):
+    __tablename__ = 'services_s3'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    s3_bindip = sa.Column(sa.String(128))
+    s3_bindport = sa.Column(sa.SmallInteger())
+    s3_access_key = sa.Column(sa.String(128))
+    s3_secret_key = sa.Column(sa.String(128))
+    s3_mode = sa.Column(sa.String(120))
+    s3_disks = sa.Column(sa.String(255))
+    s3_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    s3_browser = sa.Column(sa.Boolean())
 
 
 class S3Service(SystemServiceService):

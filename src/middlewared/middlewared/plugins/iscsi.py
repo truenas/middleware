@@ -7,6 +7,7 @@ from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
 from middlewared.service import (
     CallError, CRUDService, SystemServiceService, ValidationErrors, filterable, private
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, run
 from middlewared.utils.path import is_child
 from middlewared.validators import IpAddress, Range
@@ -27,6 +28,16 @@ AUTHMETHOD_LEGACY_MAP = bidict.bidict({
 })
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
+
+
+class ISCSIGlobalModel(sa.Model):
+    __tablename__ = 'services_iscsitargetglobalconfiguration'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_basename = sa.Column(sa.String(120))
+    iscsi_isns_servers = sa.Column(sa.Text())
+    iscsi_pool_avail_threshold = sa.Column(sa.Integer(), nullable=True)
+    iscsi_alua = sa.Column(sa.Boolean())
 
 
 class ISCSIGlobalService(SystemServiceService):
@@ -146,6 +157,30 @@ class ISCSIGlobalService(SystemServiceService):
             if path.startswith(f'/dev/zvol/{pool_name}/'):
                 self.logger.info('Terminating LUN %s (%s)', lun_id, path)
                 await run(['ctladm', 'remove', '-b', 'block', '-l', lun_id], check=False)
+
+
+class ISCSIPortalModel(sa.Model):
+    __tablename__ = 'services_iscsitargetportal'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_target_portal_tag = sa.Column(sa.Integer())
+    iscsi_target_portal_comment = sa.Column(sa.String(120))
+    iscsi_target_portal_discoveryauthmethod = sa.Column(sa.String(120))
+    iscsi_target_portal_discoveryauthgroup = sa.Column(sa.Integer(), nullable=True)
+
+
+class ISCSIPortalIModel(sa.Model):
+    __tablename__ = 'services_iscsitargetportalip'
+    __table_args__ = (
+        sa.Index('services_iscsitargetportalip_iscsi_target_portalip_ip__iscsi_target_portalip_port',
+                 'iscsi_target_portalip_ip', 'iscsi_target_portalip_port',
+                 unique=True),
+    )
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_target_portalip_portal_id = sa.Column(sa.Integer(), index=True)
+    iscsi_target_portalip_ip = sa.Column(sa.CHAR(15))
+    iscsi_target_portalip_port = sa.Column(sa.SmallInteger())
 
 
 class ISCSIPortalService(CRUDService):
@@ -375,6 +410,17 @@ class ISCSIPortalService(CRUDService):
         return result
 
 
+class iSCSITargetAuthCredentialModel(sa.Model):
+    __tablename__ = 'services_iscsitargetauthcredential'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_target_auth_tag = sa.Column(sa.Integer())
+    iscsi_target_auth_user = sa.Column(sa.String(120))
+    iscsi_target_auth_secret = sa.Column(sa.String(120))
+    iscsi_target_auth_peeruser = sa.Column(sa.String(120))
+    iscsi_target_auth_peersecret = sa.Column(sa.String(120))
+
+
 class iSCSITargetAuthCredentialService(CRUDService):
 
     class Config:
@@ -503,6 +549,28 @@ class iSCSITargetAuthCredentialService(CRUDService):
                     f'{schema_name}.peersecret',
                     'Peer Secret must be between 12 and 16 characters.'
                 )
+
+
+class iSCSITargetExtentModel(sa.Model):
+    __tablename__ = 'services_iscsitargetextent'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_target_extent_name = sa.Column(sa.String(120))
+    iscsi_target_extent_serial = sa.Column(sa.String(16))
+    iscsi_target_extent_type = sa.Column(sa.String(120))
+    iscsi_target_extent_path = sa.Column(sa.String(120))
+    iscsi_target_extent_filesize = sa.Column(sa.String(120))
+    iscsi_target_extent_blocksize = sa.Column(sa.Integer())
+    iscsi_target_extent_pblocksize = sa.Column(sa.Boolean())
+    iscsi_target_extent_avail_threshold = sa.Column(sa.Integer(), nullable=True)
+    iscsi_target_extent_comment = sa.Column(sa.String(120))
+    iscsi_target_extent_naa = sa.Column(sa.String(34))
+    iscsi_target_extent_insecure_tpc = sa.Column(sa.Boolean())
+    iscsi_target_extent_xen = sa.Column(sa.Boolean())
+    iscsi_target_extent_rpm = sa.Column(sa.String(20))
+    iscsi_target_extent_ro = sa.Column(sa.Boolean())
+    iscsi_target_extent_legacy = sa.Column(sa.Boolean())
+    iscsi_target_extent_enabled = sa.Column(sa.Boolean())
 
 
 class iSCSITargetExtentService(CRUDService):
@@ -937,6 +1005,16 @@ class iSCSITargetExtentService(CRUDService):
         return True
 
 
+class iSCSITargetAuthorizedInitiatorModel(sa.Model):
+    __tablename__ = 'services_iscsitargetauthorizedinitiator'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_target_initiator_tag = sa.Column(sa.Integer())
+    iscsi_target_initiator_initiators = sa.Column(sa.Text())
+    iscsi_target_initiator_auth_network = sa.Column(sa.Text())
+    iscsi_target_initiator_comment = sa.Column(sa.String(120))
+
+
 class iSCSITargetAuthorizedInitiator(CRUDService):
 
     class Config:
@@ -1052,6 +1130,34 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         data['auth_network'] = auth_network
 
         return data
+
+
+class iSCSITargetModel(sa.Model):
+    __tablename__ = 'services_iscsitarget'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_target_name = sa.Column(sa.String(120))
+    iscsi_target_alias = sa.Column(sa.String(120), nullable=True)
+    iscsi_target_mode = sa.Column(sa.String(20))
+
+
+class iSCSITargetGroupModel(sa.Model):
+    __tablename__ = 'services_iscsitargetgroups'
+    __table_args__ = (
+        sa.Index(
+            'services_iscsitargetgroups_iscsi_target_id__iscsi_target_portalgroup_id',
+            'iscsi_target_id', 'iscsi_target_portalgroup_id',
+            unique=True
+        ),
+    )
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_target_id = sa.Column(sa.Integer(), index=True)
+    iscsi_target_portalgroup_id = sa.Column(sa.Integer(), index=True)
+    iscsi_target_initiatorgroup_id = sa.Column(sa.Integer(), index=True, nullable=True)
+    iscsi_target_authtype = sa.Column(sa.String(120))
+    iscsi_target_authgroup = sa.Column(sa.Integer(), nullable=True)
+    iscsi_target_initialdigest = sa.Column(sa.String(120))
 
 
 class iSCSITargetService(CRUDService):
@@ -1315,6 +1421,20 @@ class iSCSITargetService(CRUDService):
         for group in data['groups']:
             group['authmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(group.pop('authmethod'), 'NONE')
         return data
+
+
+class iSCSITargetToExtentModel(sa.Model):
+    __tablename__ = 'services_iscsitargettoextent'
+    __table_args__ = (
+        sa.Index('services_iscsitargettoextent_iscsi_target_id_757cc851_uniq',
+                 'iscsi_target_id', 'iscsi_extent_id',
+                 unique=True),
+    )
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    iscsi_extent_id = sa.Column(sa.ForeignKey('services_iscsitargetextent.id'), index=True)
+    iscsi_target_id = sa.Column(sa.ForeignKey('services_iscsitarget.id'), index=True)
+    iscsi_lunid = sa.Column(sa.Integer())
 
 
 class iSCSITargetToExtentService(CRUDService):

@@ -3,8 +3,30 @@ import os
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
 from middlewared.validators import ReplicationSnapshotNamingSchema
+
+
+class PeriodicSnapshotTaskModel(sa.Model):
+    __tablename__ = 'storage_task'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    task_dataset = sa.Column(sa.String(150))
+    task_recursive = sa.Column(sa.Boolean())
+    task_lifetime_value = sa.Column(sa.Integer())
+    task_lifetime_unit = sa.Column(sa.String(120))
+    task_begin = sa.Column(sa.Time())
+    task_end = sa.Column(sa.Time())
+    task_enabled = sa.Column(sa.Boolean())
+    task_exclude = sa.Column(sa.Text())
+    task_naming_schema = sa.Column(sa.String(150))
+    task_minute = sa.Column(sa.String(100))
+    task_hour = sa.Column(sa.String(100))
+    task_daymonth = sa.Column(sa.String(100))
+    task_month = sa.Column(sa.String(100))
+    task_dayweek = sa.Column(sa.String(100))
+    task_allow_empty = sa.Column(sa.Boolean())
 
 
 class PeriodicSnapshotTaskService(CRUDService):

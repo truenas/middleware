@@ -6,6 +6,7 @@ import time
 
 from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, private
+import middlewared.sqlalchemy as sa
 from middlewared.validators import validate_attributes
 
 from acme import client, messages
@@ -16,6 +17,29 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 # TODO: See what can be done to respect rate limits
+
+
+class ACMERegistrationModel(sa.Model):
+    __tablename__ = 'system_acmeregistration'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    uri = sa.Column(sa.String(200))
+    directory = sa.Column(sa.String(200))
+    tos = sa.Column(sa.String(200))
+    new_account_uri = sa.Column(sa.String(200))
+    new_nonce_uri = sa.Column(sa.String(200))
+    new_order_uri = sa.Column(sa.String(200))
+    revoke_cert_uri = sa.Column(sa.String(200))
+
+
+class ACMERegistrationBodyModel(sa.Model):
+    __tablename__ = 'system_acmeregistrationbody'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    contact = sa.Column(sa.String(254))
+    status = sa.Column(sa.String(10))
+    key = sa.Column(sa.Text())
+    acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True)
 
 
 class ACMERegistrationService(CRUDService):
@@ -172,6 +196,15 @@ class ACMERegistrationService(CRUDService):
         )
 
         return self.middleware.call_sync(f'{self._config.namespace}._get_instance', registration_id)
+
+
+class ACMEDNSAuthenticatorModel(sa.Model):
+    __tablename__ = 'system_acmednsauthenticator'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    authenticator = sa.Column(sa.String(64))
+    name = sa.Column(sa.String(64))
+    attributes = sa.Column(sa.Text())
 
 
 class DNSAuthenticatorService(CRUDService):

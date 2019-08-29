@@ -31,6 +31,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
+import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.system import SystemService
 from middlewared.utils import run
@@ -235,6 +236,15 @@ class RemoteClient(object):
                 elif rjob['state'] == 'SUCCESS':
                     break
             time.sleep(0.5)
+
+
+class FailoverModel(sa.Model):
+    __tablename__ = 'system_failover'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    disabled = sa.Column(sa.Boolean())
+    master = sa.Column(sa.Boolean())
+    timeout = sa.Column(sa.Integer())
 
 
 class FailoverService(ConfigService):

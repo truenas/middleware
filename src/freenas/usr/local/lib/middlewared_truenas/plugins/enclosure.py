@@ -14,6 +14,7 @@ from bsd import geom
 
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,14 @@ STATUS_DESC = [
 M_SERIES_REGEX = re.compile(r"(ECStream|iX) 4024S([ps])")
 X_SERIES_REGEX = re.compile(r"CELESTIC (P3215-O|P3217-B)")
 ES24_REGEX = re.compile(r"(ECStream|iX) 4024J")
+
+
+class EnclosureLabelModel(sa.Model):
+    __tablename__ = 'truenas_enclosurelabel'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    encid = sa.Column(sa.String(200))
+    label = sa.Column(sa.String(200))
 
 
 class EnclosureService(CRUDService):

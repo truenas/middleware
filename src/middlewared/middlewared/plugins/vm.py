@@ -4,6 +4,7 @@ from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors, job
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Nid, Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
@@ -664,6 +665,33 @@ class VNC(Device):
             else:
                 os.kill(self.web_process.pid, signal.SIGKILL)
         self.web_process = None
+
+
+class VMModel(sa.Model):
+    __tablename__ = 'vm_vm'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(150))
+    description = sa.Column(sa.String(250))
+    vcpus = sa.Column(sa.Integer())
+    memory = sa.Column(sa.Integer())
+    autostart = sa.Column(sa.Boolean())
+    time = sa.Column(sa.String(5))
+    grubconfig = sa.Column(sa.Text(), nullable=True)
+    bootloader = sa.Column(sa.String(50))
+    cores = sa.Column(sa.Integer())
+    threads = sa.Column(sa.Integer())
+    shutdown_timeout = sa.Column(sa.Integer())
+
+
+class VmDeviceModel(sa.Model):
+    __tablename__ = 'vm_device'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    dtype = sa.Column(sa.String(50))
+    attributes = sa.Column(sa.Text())
+    vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
+    order = sa.Column(sa.Integer(), nullable=True)
 
 
 class VMService(CRUDService):
