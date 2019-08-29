@@ -769,7 +769,7 @@ class VMService(CRUDService):
         Str('description'),
         Int('vcpus', default=1),
         Int('memory', required=True),
-        Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB']),
+        Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB'], default='UEFI'),
         Str('grubconfig', null=True),
         List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
