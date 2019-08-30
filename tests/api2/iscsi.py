@@ -106,7 +106,6 @@ def test_06_Enable_iSCSI_service():
     payload = {"enable": True}
     results = PUT("/service/id/iscsitarget/", payload)
     assert results.status_code == 200, results.text
-    assert results.status_code == 200, results.text
 
 
 def test_07_start_iSCSI_service():
