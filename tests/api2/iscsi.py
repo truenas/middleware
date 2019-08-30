@@ -19,8 +19,7 @@ from functions import PUT, POST, GET, SSH_TEST, return_output, DELETE
 
 global DEVICE_NAME
 
-if all(var in locals() for var in ('BSD_HOST', 'BSD_PASSWORD', 'BSD_USERNAME')):
-    MOUNTPOINT = '/tmp/iscsi'
+MOUNTPOINT = '/tmp/iscsi'
 
 DEVICE_NAME = ""
 TARGET_NAME = "iqn.1994-09.freenasqa:target0"
@@ -40,10 +39,12 @@ def test_01_Add_iSCSI_initiator():
         'tag': 0,
     }
     results = POST("/iscsi/initiator/", payload)
+    assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
 def test_02_Add_ISCSI_portal():
+    global portal_id
     payload = {
         'listen': [
             {
@@ -53,11 +54,14 @@ def test_02_Add_ISCSI_portal():
         ]
     }
     results = POST("/iscsi/portal/", payload)
+    assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
+    portal_id = results.json()['id']
 
 
 # Add iSCSI target and group
 def test_03_Add_ISCSI_target():
+    global target_id
     payload = {
         'name': TARGET_NAME,
         'groups': [
@@ -65,11 +69,14 @@ def test_03_Add_ISCSI_target():
         ]
     }
     results = POST("/iscsi/target/", payload)
+    assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
+    target_id = results.json()['id']
 
 
 # Add iSCSI extent
 def test_04_Add_ISCSI_extent():
+    global extent_id
     payload = {
         'type': 'FILE',
         'name': 'extent',
@@ -77,18 +84,23 @@ def test_04_Add_ISCSI_extent():
         'path': f'/mnt/{pool_name}/dataset03/iscsi'
     }
     results = POST("/iscsi/extent/", payload)
+    assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
+    extent_id = results.json()['id']
 
 
 # Associate iSCSI target
 def test_05_Associate_ISCSI_target():
+    global associate_id
     payload = {
-        'target': 1,
+        'target': target_id,
         'lunid': 1,
-        'extent': 1
+        'extent': extent_id
     }
     results = POST("/iscsi/targetextent/", payload)
+    assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
+    associate_id = results.json()['id']
 
 
 # Enable the iSCSI service
@@ -112,6 +124,7 @@ def test_07_start_iSCSI_service():
 
 def test_08_Verify_the_iSCSI_service_is_enabled():
     results = GET("/service/?service=iscsitarget")
+    assert results.status_code == 200, results.text
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
@@ -243,7 +256,7 @@ def test_22_Disable_iSCSI_service():
 
 
 def test_23_stop_iSCSI_service():
-    result = POST(
+    results = POST(
         '/service/stop/', {
             'service': 'iscsitarget',
             'service-control': {
@@ -251,27 +264,39 @@ def test_23_stop_iSCSI_service():
             }
         }
     )
-    assert result.status_code == 200, result.text
+    assert results.status_code == 200, result.text
+    sleep(1)
 
 
 def test_24_Verify_the_iSCSI_service_is_disabled():
     results = GET("/service/?service=iscsitarget")
+    assert results.status_code == 200, results.text
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
 # Delete iSCSI target and group
-def test_25_Delete_ISCSI_target():
-    results = DELETE("/iscsi/target/id/1/")
+def test_25_Delete_associate_ISCSI_target():
+    results = DELETE(f"/iscsi/targetextent/id/{associate_id}/")
+    assert results.status_code == 200, results.text
+    assert results.json(), results.text
+
+
+# Delete iSCSI target and group
+def test_26_Delete_ISCSI_target():
+    results = DELETE(f"/iscsi/target/id/{target_id}/")
+    assert results.status_code == 200, results.text
     assert results.json(), results.text
 
 
 # Remove iSCSI extent
-def test_26_Delete_iSCSI_extent():
-    results = DELETE("/iscsi/extent/id/1/")
+def test_27_Delete_iSCSI_extent():
+    results = DELETE(f"/iscsi/extent/id/{extent_id}/")
+    assert results.status_code == 200, results.text
     assert results.json(), results.text
 
 
 # Remove iSCSI portal
-def test_27_Delete_portal():
-    results = DELETE("/iscsi/portal/id/1/")
+def test_28_Delete_portal():
+    results = DELETE(f"/iscsi/portal/id/{portal_id}/")
+    assert results.status_code == 200, results.text
     assert results.json(), results.text
