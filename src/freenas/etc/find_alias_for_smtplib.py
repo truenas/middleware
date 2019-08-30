@@ -3,23 +3,14 @@
 import argparse
 import email
 import email.parser
-import os
+import json
 import re
+import requests
 import socket
 import sys
 import syslog
 
-from django.utils.translation import ugettext_lazy as _
-
-sys.path.extend(["/usr/local/www", "/usr/local/www/freenasUI"])
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-import django
-django.setup()
-
-from freenasUI.common.system import get_sw_name, send_mail
-from freenasUI.system.models import Email
+from middlewared.client import Client
 
 ALIASES = re.compile(r'^(?P<from>[^#]\S*?):\s*(?P<to>\S+)$')
 
@@ -57,35 +48,55 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
         syslog.syslog(f'No aliases found to send email to {", ".join(to_addrs)}')
         sys.exit(1)
 
-    margs = {}
-    margs['extra_headers'] = dict(em)
-    margs['extra_headers'].update({
-        'X-Mailer': get_sw_name(),
-        'X-%s-Host' % get_sw_name(): socket.gethostname(),
-        'To': ', '.join(to_addrs_repl),
-    })
-    margs['subject'] = em.get('Subject')
+    with Client() as c:
+        sw_name = c.call('system.product_name')
+        mailcfg = c.call('mail.config')
 
-    # abusive use of querysets
-    lemail = Email.objects.all()
-    for obj in lemail:
-        if obj.em_fromemail != '':
+        margs = {}
+        margs['extra_headers'] = dict(em)
+        margs['extra_headers'].update({
+            'X-Mailer': sw_name,
+            f'X-{sw_name}-Host': socket.gethostname(),
+            'To': ', '.join(to_addrs_repl),
+        })
+        margs['subject'] = em.get('Subject')
+
+        if mailcfg['fromemail'] != '':
             margs['extra_headers'].update({
-                'From': obj.em_fromemail
+                'From': mailcfg['fromemail']
             })
 
-    if em.is_multipart():
-        margs['attachments'] = [part for part in em.walk() if part.get_content_maintype() != 'multipart']
-        margs['text'] = "%s" % _(
-            'This is a MIME formatted message.  If you see '
-            'this text it means that your email software '
-            'does not support MIME formatted messages.')
-    else:
-        margs['text'] = ''.join(email.iterators.body_line_iterator(em))
+        if em.is_multipart():
+            attachments = [part for part in em.walk() if part.get_content_maintype() != 'multipart']
+            margs['attachments'] = True if attachments else False
+            margs['text'] = (
+                'This is a MIME formatted message.  If you see '
+                'this text it means that your email software '
+                'does not support MIME formatted messages.')
+        else:
+            margs['text'] = ''.join(email.iterators.body_line_iterator(em))
 
-    margs['to'] = to_addrs_repl
+        margs['to'] = to_addrs_repl
 
-    send_mail(**margs)
+        if not margs['attachments']:
+            c.call('mail.send', margs)
+        else:
+            token = c.call('auth.generate_token')
+            files = []
+            for attachment in attachments:
+                entry = {'headers': []}
+                for k, v in attachment.items():
+                    entry['headers'].append({'name': k, 'value': v})
+                entry['content'] = attachment.get_payload()
+                files.append(entry)
+
+            requests.post(
+                f'http://localhost:6000/_upload?auth_token={token}',
+                files={
+                    'data': json.dumps({'method': 'mail.send', 'params': [margs]}),
+                    'file': json.dumps(files),
+                },
+            )
 
 
 def get_aliases():
