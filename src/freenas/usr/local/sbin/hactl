@@ -68,7 +68,6 @@ def main(command, quiet):
             try:
                 client.call('failover.call_remote', 'failover.control', ['ENABLE'])
                 client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': False})
-                os.system("/usr/sbin/service ix-devd start")
                 print("Failover enabled.")
                 sys.exit(0)
             except Exception as e:
@@ -100,7 +99,7 @@ def main(command, quiet):
             if ret is not False:
                 client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': True, 'master': True if status == "master" else False})
                 print("Failover disabled.")
-                os.system("/usr/sbin/service ix-devd start")
+                client.call('service.restart', 'failover')
                 sys.exit(0)
             else:
                 print("Unable to contact remote node.  Failover not disabled.")

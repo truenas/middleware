@@ -180,7 +180,7 @@ class FailoverService(ConfigService):
         except Exception:
             self.logger.warn('Failed to set master flag on standby node', exc_info=True)
 
-        await self.middleware.call('service.start', 'ix-devd')
+        await self.middleware.call('service.restart', 'failover')
 
         return await self.config()
 
@@ -565,7 +565,7 @@ class FailoverService(ConfigService):
                     continue
                 self.send_small_file(fullpath)
 
-        self.middleware.call_sync('failover.call_remote', 'service.start', ['ix-devd'])
+        self.middleware.call_sync('failover.call_remote', 'service.restart', ['failover'])
 
         if options['reboot']:
             self.middleware.call_sync('failover.call_remote', 'system.reboot', [{'delay': 2}])
@@ -753,14 +753,14 @@ class FailoverService(ConfigService):
                 'master': False,
             })
             await self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
-            await self.middleware.call('service.start', 'ix-devd')
+            await self.middleware.call('service.restart', 'failover')
         elif action == 'DISABLE':
             if failover['disabled'] is True:
                 # Already disabled
                 return False
             failover['master'] = True if options.get('active') else False
             await self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
-            await self.middleware.call('service.start', 'ix-devd')
+            await self.middleware.call('service.restart', 'failover')
 
     @private
     @accepts()
@@ -1217,7 +1217,7 @@ async def hook_restart_devd(middleware, *args, **kwargs):
     """
     if not await middleware.call('failover.licensed'):
         return
-    await middleware.call('service.start', 'ix-devd')
+    await middleware.call('service.restart', 'failover')
 
 
 async def hook_license_update(middleware, *args, **kwargs):
@@ -1233,6 +1233,7 @@ async def hook_license_update(middleware, *args, **kwargs):
                 await middleware.call('falover.call_remote', 'etc.generate', [etc])
         except Exception:
             middleware.logger.warning('Failed to sync license file to standby.')
+    await middleware.call('service.restart', 'failover')
 
 
 async def hook_setup_ha(middleware, *args, **kwargs):
@@ -1269,10 +1270,8 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         middleware.logger.warn('Failed to sync routes on standby node: %s', e)
 
     middleware.logger.debug('[HA] Restarting devd to enable failover')
-    await middleware.call('failover.call_remote', 'service.start', ['ix-devd'])
-    await middleware.call('failover.call_remote', 'service.restart', ['devd'])
-    await middleware.call('service.start', 'ix-devd')
-    await middleware.call('service.restart', 'devd')
+    await middleware.call('failover.call_remote', 'service.restart', ['failover'])
+    await middleware.call('service.restart', 'failover')
 
     middleware.logger.info('[HA] Setup complete')
 
