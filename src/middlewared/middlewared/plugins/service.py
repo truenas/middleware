@@ -1031,6 +1031,10 @@ class ServiceService(CRUDService):
         await self._service('netdata', 'stop')
         await self._start_netdata(**kwargs)
 
+    async def _restart_failover(self, **kwargs):
+        await self.middleware.call('etc.generate', 'failover')
+        await self._service('devd', 'restart', **kwargs)
+
     @private
     async def identify_process(self, name):
         for service, definition in self.SERVICE_DEFS.items():
