@@ -930,6 +930,7 @@ class VMService(CRUDService):
         List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
+        Int('shutdown_timeout', default=90, valdiators=[Range(min=5, max=300)]),
         register=True,
     ))
     async def do_create(self, data):
@@ -1269,19 +1270,19 @@ class VMService(CRUDService):
         Dict(
             'options',
             Bool('force', default=False),
-            Int('timeout', default=90),
         ),
     )
     @job(lock=lambda args: f'stop_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
     def stop(self, job, id, options):
         """Stop a VM."""
         self.ensure_libvirt_connection()
-        vm = self.vms[self.middleware.call_sync('vm._get_instance', id)['name']]
+        vm_data = self.middleware.call_sync('vm._get_instance', id)
+        vm = self.vms[vm_data['name']]
 
         if options['force']:
             vm.poweroff()
         else:
-            vm.stop(options['timeout'])
+            vm.stop(vm_data['shutdown_timeout'])
 
         self.middleware.call_sync('vm._teardown_guest_vmemory', id)
 
@@ -1292,19 +1293,13 @@ class VMService(CRUDService):
         self.vms[self.middleware.call_sync('vm._get_instance', id)['name']].poweroff()
 
     @item_method
-    @accepts(
-        Int('id'),
-        Dict(
-            'options',
-            Int('timeout', default=90),
-        ),
-    )
-    @job(lock=lambda args: f'restart_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
-    def restart(self, job, id, options):
+    @accepts(Int('id'))
+    @job(lock=lambda args: f'restart_vm_{args[0]}')
+    def restart(self, job, id):
         """Restart a VM."""
         self.ensure_libvirt_connection()
         vm = self.middleware.call_sync('vm._get_instance', id)
-        self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=options['timeout'])
+        self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
 
     async def _teardown_guest_vmemory(self, id):
         guest_status = await self.middleware.call('vm.status', id)
