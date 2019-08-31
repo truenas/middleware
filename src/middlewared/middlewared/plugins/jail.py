@@ -617,6 +617,16 @@ class JailService(CRUDService):
             d['name'].endswith('/iocage') for root_dataset in datasets for d in root_dataset['children']
         ))
 
+    @accepts()
+    def default_configuration(self):
+        """
+        Retrieve default configuration for iocage jails.
+        """
+        if not self.iocage_set_up():
+            return IOCJson.retrieve_default_props()
+        else:
+            return self.query(filters=[['host_hostuuid', '=', 'default']], options={'get': True})
+
     @accepts(
         Bool('remote', default=False),
     )
