@@ -5,6 +5,7 @@ from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors, job
 )
 from middlewared.utils import Nid, Popen, run
+from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 from middlewared.validators import Range
 
@@ -13,6 +14,7 @@ import asyncio
 import contextlib
 import errno
 import enum
+import functools
 import ipaddress
 import libvirt
 import math
@@ -205,18 +207,19 @@ class VMSupervisor:
             if errors:
                 raise CallError('\n'.join(errors))
 
-    def stop(self, shutdown_timeout=90):
+    def stop(self, shutdown_timeout=None):
         self._before_stopping_checks()
 
         self.domain.shutdown()
 
+        shutdown_timeout = shutdown_timeout or self.vm_data['shutdown_timeout']
         # We wait for timeout seconds before initiating post stop activities for the vm
         # This is done because the shutdown call above is non-blocking
         while shutdown_timeout > 0 and self.status()['state'] == 'RUNNING':
             shutdown_timeout -= 5
             time.sleep(5)
 
-    def restart(self, vm_data=None, shutdown_timeout=90):
+    def restart(self, vm_data=None, shutdown_timeout=None):
         self.stop(shutdown_timeout)
 
         # We don't wait anymore because during stop we have already waited for the VM to shutdown cleanly
@@ -947,6 +950,10 @@ class VMService(CRUDService):
         separate package. Multiple cores can be configured per CPU by specifying `cores` attributes.
         `vcpus` specifies total number of CPU sockets. `cores` specifies number of cores per socket. `threads`
         specifies number of threads per core.
+
+        `shutdown_timeout` indicates the time in seconds the system waits for the VM to cleanly shutdown. During system
+        shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
+        `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
         """
         self.ensure_libvirt_connection()
 
@@ -1334,13 +1341,17 @@ class VMService(CRUDService):
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
         if self.libvirt_connection and vm['name'] in self.vms:
-            return self.vms[vm['name']].status()
-        else:
-            return {
-                'state': 'ERROR',
-                'pid': None,
-                'domain_state': 'ERROR',
-            }
+            try:
+                # Whatever happens, query shouldn't fail
+                return self.vms[vm['name']].status()
+            except Exception:
+                self.middleware.logger.debug(f'Failed to retrieve VM status for {vm["name"]}', exc_info=True)
+
+        return {
+            'state': 'ERROR',
+            'pid': None,
+            'domain_state': 'ERROR',
+        }
 
     async def __next_clone_name(self, name):
         vm_names = [
@@ -1899,16 +1910,40 @@ async def __event_system_ready(middleware, event_type, args):
     Method called when system is ready, supposed to start VMs
     flagged that way.
     """
-    if args['id'] != 'ready':
-        return
+    async def start_vm(mw, vm):
+        await mw.call('vm.start', vm['id'])
 
-    global ZFS_ARC_MAX_INITIAL
-    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
+    async def stop_vm(mw, vm):
+        stop_job = await mw.call('vm.stop', vm['id'])
+        await stop_job.wait()
+        if stop_job.error:
+            mw.logger.error(f'Stopping VM {vm["name"]} failed: {stop_job.error}')
 
-    await middleware.call('vm.initialize_vms')
+        # Let's ensure that we force poweroff the VM if it hasn't stopped by it's defined timeout
+        if (await mw.call('vm.status', vm['id']))['state'] == 'RUNNING':
+            mw.logger.debug(
+                f'Powering off VM {vm["name"]} as it failed to stop within {vm["shutdown_timeout"]} seconds.'
+            )
+            try:
+                await mw.call('vm.poweroff', vm['id'])
+            except Exception as e:
+                mw.logger.debug(f'Powering off VM {vm["name"]} failed: {e}', exc_info=True)
 
-    for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
-        await middleware.call('vm.start', vm['id'])
+    if args['id'] == 'ready':
+        global ZFS_ARC_MAX_INITIAL
+        ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
+
+        await middleware.call('vm.initialize_vms')
+
+        await asyncio_map(
+            functools.partial(start_vm, middleware),
+            (await middleware.call('vm.query', [('autostart', '=', True)])), 16
+        )
+    elif args['id'] in ('shutdown', 'reboot'):
+        await asyncio_map(
+            functools.partial(stop_vm, middleware),
+            (await middleware.call('vm.query', [('status.state', '=', 'RUNNING')])), 16
+        )
 
 
 class VMFSAttachmentDelegate(FSAttachmentDelegate):
