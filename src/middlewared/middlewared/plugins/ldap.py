@@ -35,9 +35,9 @@ class SSL(enum.Enum):
 
 
 class NlscdConst(enum.Enum):
-    NSLCD_CONF_PATH = '''/usr/local/etc/nslcd.conf'''
-    NSLCD_PIDFILE = '''/var/run/nslcd.pid'''
-    NSLCD_SOCKET = '''/var/run/nslcd/nslcd.ctl'''
+    NSLCD_CONF_PATH = '/usr/local/etc/nslcd.conf'
+    NSLCD_PIDFILE = '/var/run/nslcd.pid'
+    NSLCD_SOCKET = '/var/run/nslcd/nslcd.ctl'
     NSLCD_VERSION = 0x00000002
     NSLCD_ACTION_STATE_GET = 0x00010002
     NSLCD_RESULT_BEGIN = 1
