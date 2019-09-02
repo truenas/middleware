@@ -1547,6 +1547,8 @@ class VMDeviceService(CRUDService):
             path = device['attributes'].get('path')
             if not path:
                 verrors.add('attributes.path', 'Path is required.')
+            elif not os.path.exists(path):
+                verrors.add('attributes.path', f'Unable to locate CDROM device at {path}')
         elif device.get('dtype') == 'NIC':
             nic = device['attributes'].get('nic_attach')
             if nic:
