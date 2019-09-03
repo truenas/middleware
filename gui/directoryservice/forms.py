@@ -368,7 +368,7 @@ class LDAPForm(MiddlewareModelForm, ModelForm):
         if data['kerberos_principal'] == '---------':
             data['kerberos_principal'] = ''
 
-        data['hostname'] = data['hostname'].split()
+        data['hostname'] = data['hostname'].split(',')
 
         if data['kerberos_realm']:
             data['kerberos_realm'] = {'id': data['kerberos_realm']}
