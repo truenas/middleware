@@ -24,13 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import json
 import logging
-import requests
-import time
-from datetime import datetime, timedelta
-
-from freenasUI.middleware.client import client
 
 VERSION_FILE = '/etc/version'
 _VERSION = None
@@ -61,117 +55,7 @@ def get_sw_version(strip_build_num=False):
     return _VERSION
 
 
-def get_sw_login_version():
-    """Return a shortened version string, e.g. 8.0.1-RC1, 8.1, etc. """
-
-    return '-'.join(get_sw_version(strip_build_num=True).split('-')[1:-2])
-
-
 def get_sw_name():
     """Return the software name, e.g. FreeNAS"""
 
     return get_sw_version().split('-')[0]
-
-
-def get_sw_year():
-    return str(datetime.now().year)
-
-
-def send_mail(
-    subject=None, text=None, interval=None, channel=None,
-    to=None, extra_headers=None, attachments=None, timeout=300,
-    queue=True,
-):
-
-    if isinstance(interval, timedelta):
-        interval = int(interval.total_seconds())
-    try:
-        data = {
-            'subject': subject,
-            'text': text,
-            'interval': interval,
-            'channel': channel,
-            'to': to,
-            'timeout': timeout,
-            'queue': queue,
-            'extra_headers': extra_headers,
-            'attachments': bool(attachments),
-        }
-        if not attachments:
-            with client as c:
-                c.call('mail.send', data, job=True)
-        else:
-            # FIXME: implement upload via websocket
-            with client as c:
-                token = c.call('auth.generate_token')
-                files = []
-                for attachment in attachments:
-                    entry = {'headers': []}
-                    for k, v in attachment.items():
-                        entry['headers'].append({'name': k, 'value': v})
-                    entry['content'] = attachment.get_payload()
-                    files.append(entry)
-
-                r = requests.post(
-                    f'http://localhost:6000/_upload?auth_token={token}',
-                    files={
-                        'data': json.dumps({'method': 'mail.send', 'params': [data]}),
-                        'file': json.dumps(files),
-                    },
-                )
-                if r.status_code != 200:
-                    return True, r.text
-                res = r.json()
-                while True:
-                    job = c.call('core.get_jobs', [('id', '=', res['job_id'])])[0]
-                    if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'):
-                        break
-                    time.sleep(1)
-                if job['state'] != 'SUCCESS':
-                    return True, job['error']
-
-    except Exception as e:
-        return True, str(e)
-    return False, ''
-
-
-def ldap_enabled():
-    from freenasUI.directoryservice.models import LDAP
-
-    enabled = False
-    try:
-        ldap = LDAP.objects.all()[0]
-        enabled = ldap.ldap_enable
-
-    except Exception:
-        enabled = False
-
-    return enabled
-
-
-def activedirectory_enabled():
-    from freenasUI.directoryservice.models import ActiveDirectory
-
-    enabled = False
-    try:
-        ad = ActiveDirectory.objects.all()[0]
-        enabled = ad.ad_enable
-
-    except Exception:
-        enabled = False
-
-    return enabled
-
-
-def nis_enabled():
-    from freenasUI.directoryservice.models import NIS
-
-    enabled = False
-    try:
-        nis = NIS.objects.all()[0]
-        enabled = nis.nis_enable
-
-    except Exception:
-        enabled = False
-
-    return enabled
