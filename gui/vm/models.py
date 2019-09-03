@@ -54,6 +54,14 @@ class VM(Model):
         default=1,
         validators=[MinValueValidator(1), MaxValueValidator(16)],
     )
+    cores = models.IntegerField(
+        verbose_name=_('Number of cores per socket'),
+        default=1,
+    )
+    threads = models.IntegerField(
+        verbose_name=_('Number of threads per core'),
+        default=1,
+    )
     memory = models.IntegerField(
         verbose_name=_('Memory Size (MiB)'),
         help_text=_('Megabytes of RAM for the virtual machine.'

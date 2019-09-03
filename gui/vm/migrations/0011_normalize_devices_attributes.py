@@ -1,4 +1,4 @@
-from django.db import migrations
+from django.db import migrations, models
 
 
 def ensure_vnc_port(apps, schema_editor):
@@ -65,6 +65,16 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AddField(
+            model_name='vm',
+            name='cores',
+            field=models.IntegerField(default=1),
+        ),
+        migrations.AddField(
+            model_name='vm',
+            name='threads',
+            field=models.IntegerField(default=1),
+        ),
         migrations.RunPython(ensure_vnc_port),
         migrations.RunPython(add_physical_sector_size_support),
         migrations.RunPython(normalize_mac_address),

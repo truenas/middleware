@@ -241,7 +241,19 @@ class VMSupervisor:
                     # OS/boot related xml - returns an iterable
                     *self.os_xml(),
                     # VCPU related xml
-                    create_element('vcpu', attribute_dict={'text': str(self.vm_data['vcpus'])}),
+                    create_element('vcpu', attribute_dict={
+                        'text': str(self.vm_data['vcpus'] * self.vm_data['cores'] * self.vm_data['threads'])
+                    }),
+                    create_element(
+                        'cpu', attribute_dict={
+                            'children': [
+                                create_element(
+                                    'topology', sockets=str(self.vm_data['vcpus']), cores=str(self.vm_data['cores']),
+                                    threads=str(self.vm_data['threads'])
+                                )
+                            ]
+                        }
+                    ),
                     # Memory related xml
                     create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
                     # Add features
@@ -910,6 +922,8 @@ class VMService(CRUDService):
         Str('name', required=True),
         Str('description'),
         Int('vcpus', default=1),
+        Int('cores', default=1),
+        Int('threads', default=1),
         Int('memory', required=True),
         Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB'], default='UEFI'),
         Str('grubconfig', null=True),
@@ -927,6 +941,11 @@ class VMService(CRUDService):
 
         `devices` is a list of virtualized hardware to add to the newly created Virtual Machine.
         Failure to attach a device destroys the VM and any resources allocated by the VM devices.
+
+        Maximum of 16 guest virtual CPUs are allowed. By default, every virtual CPU is configured as a
+        separate package. Multiple cores can be configured per CPU by specifying `cores` attributes.
+        `vcpus` specifies total number of CPU sockets. `cores` specifies number of cores per socket. `threads`
+        specifies number of threads per core.
         """
         self.ensure_libvirt_connection()
 
@@ -985,10 +1004,17 @@ class VMService(CRUDService):
 
     async def __common_validation(self, verrors, schema_name, data, old=None):
 
-        vcpus = data.get('vcpus')
+        vcpus = data['vcpus'] * data['cores'] * data['threads']
         if vcpus:
             flags = await self.middleware.call('vm.flags')
-            if flags['intel_vmx']:
+            if vcpus > 16:
+                verrors.add(
+                    f'{schema_name}.vcpus',
+                    'Maximum 16 vcpus are supported.'
+                    f'Please ensure the product of "{schema_name}.vcpus", "{schema_name}.cores" and '
+                    f'"{schema_name}.threads" is less then 16.'
+                )
+            elif flags['intel_vmx']:
                 if vcpus > 1 and flags['unrestricted_guest'] is False:
                     verrors.add(
                         f'{schema_name}.vcpus',
@@ -1504,7 +1530,8 @@ class VMService(CRUDService):
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
         for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm') if self.libvirt_connection else ():
             vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
-            with contextlib.suppress(CallError):
+            with contextlib.suppress(CallError, libvirt.libvirtError):
+                # Whatever happens, we don't want middlewared not booting
                 self.vms[vm_data['name']] = VMSupervisor(vm_data, self.libvirt_connection, self.middleware)
 
 
