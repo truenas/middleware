@@ -373,7 +373,7 @@ class SMARTTestService(CRUDService):
 
     async def __manual_test(self, devices, disk):
         device = devices.get(disk['disk'])
-        args = await get_smartctl_args(disk['disk'], device)
+        args = await get_smartctl_args(self.middleware, disk['disk'], device)
 
         proc = await run(
             list(
