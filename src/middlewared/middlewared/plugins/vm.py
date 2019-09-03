@@ -1525,6 +1525,10 @@ class VMService(CRUDService):
             await self.middleware.call('vm.close_libvirt_connection')
 
     @private
+    async def terminate_timeout(self):
+        return max(map(lambda v: v['shutdown_timeout'], await self.middleware.call('vm.query')), default=10)
+
+    @private
     async def wait_for_libvirtd(self, timeout):
         async def libvirtd_started(middleware):
             await middleware.call('service.start', 'libvirtd')
