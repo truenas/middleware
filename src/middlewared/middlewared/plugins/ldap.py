@@ -58,6 +58,12 @@ class NslcdClient(object):
         self.write_int32(NlscdConst.NSLCD_VERSION.value)
         self.write_int32(action)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.close()
+
     def write(self, value):
         self.fp.write(value)
 
@@ -586,11 +592,10 @@ class LDAPService(ConfigService):
         Returns internal nslcd state. nslcd will preferentially use the first LDAP server,
         and only failover if the current LDAP server is unreachable.
         """
-        ctx = NslcdClient(NlscdConst.NSLCD_ACTION_STATE_GET.value)
-        while ctx.get_response() == NlscdConst.NSLCD_RESULT_BEGIN.value:
-            nslcd_status = ctx.read_string()
+        with NslcdClient(NlscdConst.NSLCD_ACTION_STATE_GET.value) as ctx:
+            while ctx.get_response() == NlscdConst.NSLCD_RESULT_BEGIN.value:
+                nslcd_status = ctx.read_string()
 
-        ctx.close()
         return nslcd_status
 
     @accepts()
