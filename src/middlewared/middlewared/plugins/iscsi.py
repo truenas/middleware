@@ -198,6 +198,8 @@ class ISCSIPortalService(CRUDService):
 
         else:
             for i in await self.middleware.call('interface.query'):
+                for alias in i.get('failover_virtual_aliases') or []:
+                    choices[alias['address']] = alias['address']
                 for alias in i['aliases']:
                     choices[alias['address']] = alias['address']
         return choices
