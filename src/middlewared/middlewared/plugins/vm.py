@@ -911,7 +911,7 @@ class VMService(CRUDService):
         Str('description'),
         Int('vcpus', default=1),
         Int('memory', required=True),
-        Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB']),
+        Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB'], default='UEFI'),
         Str('grubconfig', null=True),
         List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
@@ -1018,7 +1018,9 @@ class VMService(CRUDService):
         devices_ids = {d['id']: d for d in await self.middleware.call('vm.device.query')}
         for i, device in enumerate(data.get('devices') or []):
             try:
-                await self.middleware.call('vm.device.validate_device', device, devices_ids.get(device.get('id')))
+                await self.middleware.call(
+                    'vm.device.validate_device', device, devices_ids.get(device.get('id')), data
+                )
                 if old:
                     # We would like to enforce the presence of "vm" attribute in each device so that
                     # it explicitly tells it wants to be associated to the provided "vm" in question
@@ -1716,8 +1718,11 @@ class VMDeviceService(CRUDService):
                 )
 
     @private
-    async def validate_device(self, device, old=None):
-        vm_instance = await self.middleware.call('vm._get_instance', device['vm']) if device.get('vm') else None
+    async def validate_device(self, device, old=None, vm_instance=None):
+        # We allow vm_instance to be passed for cases where VM devices are being updated via VM and
+        # the device checks should be performed with the modified vm_instance object not the one db holds
+        if not vm_instance and device.get('vm'):
+            vm_instance = await self.middleware.call('vm._get_instance', device['vm'])
 
         verrors = ValidationErrors()
         schema = self.DEVICE_ATTRS.get(device['dtype'])
@@ -1818,6 +1823,8 @@ class VMDeviceService(CRUDService):
             path = device['attributes'].get('path')
             if not path:
                 verrors.add('attributes.path', 'Path is required.')
+            elif not os.path.exists(path):
+                verrors.add('attributes.path', f'Unable to locate CDROM device at {path}')
         elif device.get('dtype') == 'NIC':
             nic = device['attributes'].get('nic_attach')
             if nic:

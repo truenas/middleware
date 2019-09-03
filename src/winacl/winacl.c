@@ -27,7 +27,6 @@
 
 #include <sys/types.h>
 #include <sys/acl.h>
-#include <sys/extattr.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <err.h>
@@ -45,17 +44,13 @@
 #define	WA_NULL			0x00000000	/* nothing */
 #define	WA_RECURSIVE		0x00000001	/* recursive */
 #define	WA_VERBOSE		0x00000002	/* print more stuff */
-#define	WA_RESET		0x00000004	/* set defaults */
 #define	WA_CLONE		0x00000008	/* clone an ACL */
 #define	WA_TRAVERSE		0x00000010	/* traverse filesystem mountpoints */
 #define	WA_PHYSICAL		0x00000020	/* do not follow symlinks */
 #define	WA_STRIP		0x00000040	/* strip ACL */
 #define	WA_CHOWN		0x00000080	/* only chown */
 
-/* default ACL entries if none are specified */
-#define	WA_DEFAULT_ACL		"owner@:rwxpDdaARWcCos:fd:allow,group@:rwxpDdaARWcCos:fd:allow,everyone@:rxaRc:fd:allow"
-
-#define	WA_OP_SET	(WA_CLONE|WA_RESET|WA_STRIP|WA_CHOWN)
+#define	WA_OP_SET	(WA_CLONE|WA_STRIP|WA_CHOWN)
 #define	WA_OP_CHECK(flags, bit) ((flags & ~bit) & WA_OP_SET)
 #define	MAX_ACL_DEPTH		2
 
@@ -81,7 +76,6 @@ struct {
 } actions[] = {
 	{	"clone",	WA_CLONE	},
 	{	"strip",	WA_STRIP	},
-	{	"reset",	WA_RESET	},
 	{	"chown",	WA_CHOWN	}
 };
 
@@ -153,17 +147,17 @@ new_windows_acl_info(void)
 	if ((w = malloc(sizeof(*w))) == NULL)
 		err(EX_OSERR, "malloc() failed");
 
+	for (i=0; i<=MAX_ACL_DEPTH; i++){
+		w->acls[i].dacl = NULL;
+		w->acls[i].facl = NULL;
+	}
+
 	w->source = NULL;
 	w->path = NULL;
 	w->source_acl = NULL;
 	w->uid = -1;
 	w->gid = -1;
 	w->flags = 0;
-
-	for (i=0; i<=MAX_ACL_DEPTH; i++){
-		w->acls[i].dacl = NULL;
-		w->acls[i].facl = NULL;
-	}
 
 	return (w);
 }
@@ -483,7 +477,7 @@ usage_check(struct windows_acl_info *w)
 		errx(EX_USAGE, "nothing to do");
 
 	if (WA_OP_CHECK(w->flags, ~WA_OP_SET) &&
-		w->acls[0].dacl == NULL && w->acls[0].facl == NULL && !(w->flags & WA_RESET)) {
+		w->acls[0].dacl == NULL && w->acls[0].facl == NULL) {
 		errx(EX_USAGE, "no entries specified and not resetting");
 	}
 }
@@ -492,26 +486,8 @@ usage_check(struct windows_acl_info *w)
 static void
 make_acls(struct windows_acl_info *w)
 {
-	/*
-	 * Legacy winacl behavior for setting ACL
-	 * Applies following "default" ACL
-	 * - owner@:rwxpDdaARWcCos:fd:allow
-	 * - group@:rwxpDdaARWcCos:fd:allow
-	 * - everyone@:rxaRc:fd:allow"
-	 */
-	char *ptr;
-	char buf[8192];
 	acl_t acl;
-	char *default_acl = WA_DEFAULT_ACL;
 	int i;
-
-	/* create an acl string */
-	ptr = &buf[0];
-	copyarg(&ptr, default_acl);
-
-	/* turn our acl string into an acl */
-	if ((acl = acl_from_text(buf)) == NULL)
-		err(EX_OSERR, "acl_from_text() failed");
 
 	/* set the source ACL for top level directory */
 	if ((w->source_acl = acl_dup(acl)) == NULL) {
@@ -733,82 +709,62 @@ main(int argc, char **argv)
 	char *p = argv[0];
 	ch = ret = 0;
 
-	if (argc < 2)
+	if (argc < 2) {
 		usage(argv[0]);
+	}
 
 	w = new_windows_acl_info();
 
-	if (strcmp(p, "cloneacl") == 0) {
-		w->flags |= WA_CLONE;
-		w->flags |= WA_RECURSIVE;
-		while ((ch = getopt(argc, argv, "s:p:v")) != -1) {
-			switch(ch) {
+	while ((ch = getopt(argc, argv, "a:O:G:s:p:lrvx")) != -1) {
+		switch (ch) {
+			case 'a': {
+				int action = get_action(optarg);
+				if (action == WA_NULL)
+					errx(EX_USAGE, "invalid action");
+				if (WA_OP_CHECK(w->flags, action))
+					errx(EX_USAGE, "only one action can be specified");
+				w->flags |= action;
+				break;
+			}
+
+			case 'O': {
+				w->uid = a_uid(optarg);
+				break;
+			}
+
+			case 'G': {
+				w->gid = a_gid(optarg);
+				break;
+			}
+
 			case 's':
 				setarg(&w->source, optarg);
 				break;
+
+			case 'l':
+				w->flags |= WA_PHYSICAL;
+				break;
+
 			case 'p':
 				setarg(&w->path, optarg);
 				break;
+
+			case 'r':
+				w->flags |= WA_RECURSIVE;
+				break;
+
 			case 'v':
 				w->flags |= WA_VERBOSE;
 				break;
+
+			case 'x':
+				w->flags |= WA_TRAVERSE;
+				break;
+
 			case '?':
 			default:
 				usage(argv[0]);
 			}
-		}
-	} else {
-		while ((ch = getopt(argc, argv, "a:O:G:s:p:lrvx")) != -1) {
-			switch (ch) {
-				case 'a': {
-					int action = get_action(optarg);
-					if (action == WA_NULL)
-						errx(EX_USAGE, "invalid action");
-					if (WA_OP_CHECK(w->flags, action))
-						errx(EX_USAGE, "only one action can be specified");
-					w->flags |= action;
-					break;
-				}
-
-				case 'O': {
-					w->uid = a_uid(optarg);
-					break;
-				}
-
-				case 'G': {
-					w->gid = a_gid(optarg);
-					break;
-				}
-
-				case 's':
-					setarg(&w->source, optarg);
-					break;
-
-				case 'l':
-					w->flags |= WA_PHYSICAL;
-					break;
-
-				case 'p':
-					setarg(&w->path, optarg);
-					break;
-
-				case 'r':
-					w->flags |= WA_RECURSIVE;
-					break;
-
-				case 'v':
-					w->flags |= WA_VERBOSE;
-					break;
-
-				case 'x':
-					w->flags |= WA_TRAVERSE;
-					break;
-
-				case '?':
-				default:
-					usage(argv[0]);
-			}
-		}
 	}
 
 	/* set the source to the destination if we lack -s */

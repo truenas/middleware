@@ -128,7 +128,12 @@ class SSHKeyPair(KeychainCredentialType):
                 if proc.returncode == 0:
                     public_key = proc.stdout
                 else:
-                    verrors.add(f"{schema_name}.private_key", proc.stderr)
+                    if proc.stderr.startswith("Enter passphrase:"):
+                        error = "Encrypted private keys are not allowed"
+                    else:
+                        error = proc.stderr
+
+                    verrors.add(f"{schema_name}.private_key", error)
                     return
 
             if attributes["public_key"]:
