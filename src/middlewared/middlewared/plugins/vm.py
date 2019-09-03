@@ -40,6 +40,7 @@ logger = middlewared.logger.Logger('vm').getLogger()
 BUFSIZE = 65536
 LIBVIRT_URI = 'bhyve+unix:///system'
 LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
+SHUTDOWN_LOCK = asyncio.Lock()
 VM_BRIDGE = 'virbr0'
 ZFS_ARC_MAX_INITIAL = None
 
@@ -1511,19 +1512,28 @@ class VMService(CRUDService):
 
         return vnc_web
 
-    def __del__(self):
+    @private
+    def close_libvirt_connection(self):
         if self.libvirt_connection:
             with contextlib.suppress(libvirt.libvirtError):
                 self.libvirt_connection.close()
+            self.libvirt_connection = None
+
+    @private
+    async def terminate(self):
+        async with SHUTDOWN_LOCK:
+            await self.middleware.call('vm.close_libvirt_connection')
 
     @private
     async def wait_for_libvirtd(self, timeout):
         async def libvirtd_started(middleware):
+            await middleware.call('service.start', 'libvirtd')
             while not await middleware.call('service.started', 'libvirtd'):
                 time.sleep(2)
 
         try:
-            await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
+            if not await self.middleware.call('service.started', 'libvirtd'):
+                await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
             self.libvirt_connection = libvirt.open(LIBVIRT_URI)
         except (asyncio.TimeoutError, libvirt.libvirtError):
             self.middleware.logger.error('Failed to connect to libvirtd')
@@ -1939,11 +1949,18 @@ async def __event_system_ready(middleware, event_type, args):
             functools.partial(start_vm, middleware),
             (await middleware.call('vm.query', [('autostart', '=', True)])), 16
         )
-    elif args['id'] in ('shutdown', 'reboot'):
-        await asyncio_map(
-            functools.partial(stop_vm, middleware),
-            (await middleware.call('vm.query', [('status.state', '=', 'RUNNING')])), 16
-        )
+    elif args['id'] == 'shutdown':
+        async with SHUTDOWN_LOCK:
+            await asyncio_map(
+                functools.partial(stop_vm, middleware),
+                (await middleware.call('vm.query', [('status.state', '=', 'RUNNING')])), 16
+            )
+            middleware.logger.debug('VM(s) stopped successfully')
+            # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
+            # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
+            # and we have cleanly exited
+            await middleware.call('vm.close_libvirt_connection')
+            await middleware.call('service.stop', 'libvirtd')
 
 
 class VMFSAttachmentDelegate(FSAttachmentDelegate):
