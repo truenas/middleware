@@ -1370,8 +1370,19 @@ class Middleware(LoadPluginsMixin):
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
                 self.logger.trace("Terminating %r", service)
+                terminate_timeout_func = getattr(service, 'terminate_timeout', None)
+                timeout = None
+                if terminate_timeout_func:
+                    if asyncio.iscoroutinefunction(terminate_timeout_func):
+                        timeout = await terminate_timeout_func()
+                    else:
+                        timeout = terminate_timeout_func()
+
+                # This is to ensure if some service returns 0 as a timeout value meaning it is probably not being
+                # used, we still give it the standard default 10 seconds timeout to ensure a clean exit
+                timeout = timeout or 10
                 try:
-                    await asyncio.wait_for(service.terminate(), 10)
+                    await asyncio.wait_for(service.terminate(), timeout)
                 except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
