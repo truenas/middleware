@@ -1,46 +1,26 @@
-import json
 import requests
 
-from middlewared.alert.base import ProThreadedAlertService, ellipsis
+from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
 
 
-class PagerDutyAlertService(ProThreadedAlertService):
-    title = "PagerDuty"
+class TelegramAlertService(ThreadedAlertService):
+    title = "Telegram"
 
     schema = Dict(
-        "pagerduty_attributes",
-        Str("service_key", required=True, empty=False),
-        Str("client_name", required=True, empty=False),
+        "Telegram_attributes",
+        Str("base_url", default="https://api.telegram.org/bot"),
+        Str("TELEGRAM_CHAT_ID", required=True, empty=False),
+        Str("TELEGRAM_BOT_TOKEN", required=True, empty=False),
         strict=True,
     )
 
-    def create_alert(self, alert):
-        r = requests.post(
-            "https://events.pagerduty.com/generic/2010-04-15/create_event.json",
-            headers={"Content-type": "application/json"},
-            data=json.dumps({
-                "service_key": self.attributes["service_key"],
-                "event_type": "trigger",
-                "description": ellipsis(alert.formatted, 1024),
-                "incident_key": alert.uuid,
-                "client": self.attributes["client_name"],
-            }),
-            timeout=15,
-        )
-        r.raise_for_status()
 
-    def delete_alert(self, alert):
+    def send_sync(self, alerts, gone_alerts, new_alerts):
+        url = {self.attributes["base_url"]} + {self.attributes['TELEGRAM_BOT_TOKEN']} + '/sendMessage'
+        post_data = {"chat_id": {self.attributes['TELEGRAM_CHAT_ID']}, "text": self._format_alerts(alerts, gone_alerts, new_alerts), "parse_mode": "Markdown"}
         r = requests.post(
-            "https://events.pagerduty.com/generic/2010-04-15/create_event.json",
-            headers={"Content-type": "application/json"},
-            data=json.dumps({
-                "service_key": self.attributes["service_key"],
-                "event_type": "resolve",
-                "description": "",
-                "incident_key": alert.uuid,
-                "client": self.attributes["client_name"],
-            }),
+            url, data=post_data,
             timeout=15,
         )
         r.raise_for_status()
