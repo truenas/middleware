@@ -1,17 +1,23 @@
 import asyncio
 import enum
 import errno
+import fcntl
 import grp
 import ldap
 import ldap.sasl
+import os
 import pwd
 import socket
+import struct
+import sys
 
 from ldap.controls import SimplePagedResultsControl
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, ValidationError
 from middlewared.service_exception import CallError
 from middlewared.utils import run
+
+_int32 = struct.Struct('!i')
 
 
 class DSStatus(enum.Enum):
@@ -26,6 +32,93 @@ class SSL(enum.Enum):
     NOSSL = 'OFF'
     USESSL = 'ON'
     USETLS = 'START_TLS'
+
+
+class NlscdConst(enum.Enum):
+    NSLCD_CONF_PATH = '/usr/local/etc/nslcd.conf'
+    NSLCD_PIDFILE = '/var/run/nslcd.pid'
+    NSLCD_SOCKET = '/var/run/nslcd/nslcd.ctl'
+    NSLCD_VERSION = 0x00000002
+    NSLCD_ACTION_STATE_GET = 0x00010002
+    NSLCD_RESULT_BEGIN = 1
+    NSLCD_RESULT_END = 2
+
+
+class NslcdClient(object):
+    def __init__(self, action):
+        # set up the socket (store in class to avoid closing it)
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        fcntl.fcntl(self.sock, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+        # connect to nslcd
+        self.sock.connect(NlscdConst.NSLCD_SOCKET.value)
+        # self.sock.setblocking(1)
+        self.fp = os.fdopen(self.sock.fileno(), 'r+b', 0)
+        # write a request header with a request code
+        self.action = action
+        self.write_int32(NlscdConst.NSLCD_VERSION.value)
+        self.write_int32(action)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.close()
+
+    def write(self, value):
+        self.fp.write(value)
+
+    def write_int32(self, value):
+        self.write(_int32.pack(value))
+
+    def write_bytes(self, value):
+        self.write_int32(len(value))
+        self.write(value)
+
+    def read(self, size):
+        value = b''
+        while len(value) < size:
+            data = self.fp.read(size - len(value))
+            if not data:
+                raise IOError('NSLCD protocol cut short')
+            value += data
+        return value
+
+    def read_int32(self):
+        return _int32.unpack(self.read(_int32.size))[0]
+
+    def read_bytes(self):
+        return self.read(self.read_int32())
+
+    def read_string(self):
+        value = self.read_bytes()
+        if sys.version_info[0] >= 3:
+            value = value.decode('utf-8')
+        return value
+
+    def get_response(self):
+        # complete the request if required and check response header
+        if self.action:
+            # flush the stream
+            self.fp.flush()
+            # read and check response version number
+            if self.read_int32() != NlscdConst.NSLCD_VERSION.value:
+                raise IOError('NSLCD protocol error')
+            if self.read_int32() != self.action:
+                raise IOError('NSLCD protocol error')
+            # reset action to ensure that it is only the first time
+            self.action = None
+        # get the NSLCD_RESULT_* marker and return it
+        return self.read_int32()
+
+    def close(self):
+        if hasattr(self, 'fp'):
+            try:
+                self.fp.close()
+            except IOError:
+                pass
+
+    def __del__(self):
+        self.close()
 
 
 class LDAPQuery(object):
@@ -265,7 +358,7 @@ class LDAPService(ConfigService):
 
     @private
     async def ldap_extend(self, data):
-        data['hostname'] = data['hostname'].split()
+        data['hostname'] = data['hostname'].split(',')
         for key in ["ssl", "idmap_backend", "schema"]:
             data[key] = data[key].upper()
 
@@ -493,6 +586,18 @@ class LDAPService(ConfigService):
     async def __set_state(self, state):
         await self.middleware.call('cache.put', 'LDAP_State', state.name)
 
+    @private
+    def get_nslcd_status(self):
+        """
+        Returns internal nslcd state. nslcd will preferentially use the first LDAP server,
+        and only failover if the current LDAP server is unreachable.
+        """
+        with NslcdClient(NlscdConst.NSLCD_ACTION_STATE_GET.value) as ctx:
+            while ctx.get_response() == NlscdConst.NSLCD_RESULT_BEGIN.value:
+                nslcd_status = ctx.read_string()
+
+        return nslcd_status
+
     @accepts()
     async def get_state(self):
         """
@@ -583,7 +688,7 @@ class LDAPService(ConfigService):
     @job(lock='fill_ldap_cache')
     def fill_cache(self, job, force=False):
         user_next_index = group_next_index = 100000000
-        cache_data = {'users': [], 'groups': []}
+        cache_data = {'users': {}, 'groups': {}}
 
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
@@ -606,7 +711,7 @@ class LDAPService(ConfigService):
             if is_local_user:
                 continue
 
-            cache_data['users'].append({u.pw_name: {
+            cache_data['users'].update({u.pw_name: {
                 'id': user_next_index,
                 'uid': u.pw_uid,
                 'username': u.pw_name,
@@ -634,7 +739,7 @@ class LDAPService(ConfigService):
             if is_local_user:
                 continue
 
-            cache_data['groups'].append({g.gr_name: {
+            cache_data['groups'].update({g.gr_name: {
                 'id': group_next_index,
                 'gid': g.gr_gid,
                 'group': g.gr_name,
