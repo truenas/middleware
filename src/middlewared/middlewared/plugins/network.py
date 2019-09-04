@@ -582,6 +582,18 @@ class InterfaceService(CRUDService):
         if not (await self.middleware.call('failover.config'))['disabled']:
             raise CallError('Disable failover before performing interfaces changes.')
 
+    async def __check_dhcp_or_aliases(self):
+        for iface in await self.middleware.call('interface.query'):
+            if iface['ipv4_dhcp'] or iface['ipv6_auto']:
+                break
+            if iface['aliases']:
+                break
+        else:
+            raise CallError(
+                'At least one interface configured with either IPv4 DHCP, IPv6 auto or a static IP'
+                ' is required.'
+            )
+
     @accepts()
     async def has_pending_changes(self):
         """
@@ -641,6 +653,7 @@ class InterfaceService(CRUDService):
         within this period of time the changes will get reverted.
         """
         await self.__check_failover_disabled()
+        await self.__check_dhcp_or_aliases()
         try:
             await self.sync()
         except Exception:
