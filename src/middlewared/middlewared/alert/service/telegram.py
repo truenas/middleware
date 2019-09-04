@@ -15,6 +15,7 @@ class TelegramAlertService(ThreadedAlertService):
         strict=True,
     )
 
+    
     def send_sync(self, alerts, gone_alerts, new_alerts):
         url = self.attributes["base_url"] + {self.attributes['TELEGRAM_BOT_TOKEN']} + '/sendMessage'
         post_data = {"chat_id": {self.attributes['TELEGRAM_CHAT_ID']}, "text": self._format_alerts(alerts, gone_alerts, new_alerts), "parse_mode": "Markdown"}
