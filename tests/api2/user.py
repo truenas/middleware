@@ -136,3 +136,16 @@ def test_21_look_user_is_delete():
 
 def test_22_has_root_password():
     assert GET('/user/has_root_password/', anonymous=True).json() is True
+
+
+def test_23_creating_shareuser_to_test_sharing():
+    payload = {
+        "username": "shareuser",
+        "full_name": "Share User",
+        "group_create": True,
+        "groups": ['wheel'],
+        "password": "testing",
+        "uid": next_uid,
+        "shell": "/bin/csh"}
+    results = POST("/user/", payload)
+    assert results.status_code == 200, results.text
