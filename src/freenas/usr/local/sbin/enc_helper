@@ -83,18 +83,22 @@ if __name__ == "__main__":
                 if not args.key_only:
                     c.call('failover.force_master')
         else:
+            where = None
             if cmd == 'synctopeer':
+                where = 'standby'
                 passphrase = c.call('failover.encryption_getkey')
                 if passphrase:
-                    c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
+                    rv = c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase, {'sync': False}])
                 else:
                     print("ERROR: passphrase not detected.")
                     log.warn("ERROR: passphrase not detected.")
             elif cmd == 'syncfrompeer':
+                where = 'local'
                 passphrase = c.call('failover.call_remote', 'failover.encryption_getkey')
-                rv = c.call('failover.encryption_setkey', passphrase)
+                rv = c.call('failover.encryption_setkey', passphrase, {'sync': False})
             if not rv:
-                print("Error")
+                print(f"ERROR: Failed to sync passphrase on {where} controller.")
+                log.warn("ERROR: Failed to sync passphrase on %s controller.", where)
 
     if rv:
         print("Succeeded")
