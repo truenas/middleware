@@ -27,9 +27,15 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}markdown>0:textproc/py-markdown@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}mako>0:textproc/py-mako@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}psutil>0:sysutils/py-psutil@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}ldap>0:net/py-ldap@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}libzfs>0:devel/py-libzfs@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}lockfile>0:devel/py-lockfile@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}netsnmpagent>0:net/py-netsnmpagent@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}ntplib>0:net/py-ntplib@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}pydevd>0:devel/py-pydevd@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}pysnmp>0:net-mgmt/py-pysnmp@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}requests>0:www/py-requests@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}requests-toolbelt>0:www/py-requests-toolbelt@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}zeroconf>0:net/py-zeroconf@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}influxdb>0:databases/py-influxdb@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}asyncssh>0:security/py-asyncssh@${PY_FLAVOR} \
@@ -49,8 +55,10 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}onedrivesdk>0:devel/py-onedrivesdk@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}fenced>0:truenas/py-fenced@${PY_FLAVOR} \
 		avahi-app>0:net/avahi-app \
+		dmidecode>0:sysutils/dmidecode \
 		rclone>0:net/rclone \
 		ifstat>0:net/ifstat \
+		pyvmomi>0:net/py-pyvmomi \
 		samba411>=0:net/samba411 \
 		swagger-ui>0:freenas/swagger-ui
 
