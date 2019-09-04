@@ -83,6 +83,12 @@ class LocalEscrowCtl:
             raise RuntimeError('server didn\'t send welcome message')
         self.sock = sock
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.close()
+
     def setkey(self, passphrase):
         # Set key on local escrow daemon.
         command = f'SETKEY {passphrase}\n'
@@ -132,6 +138,16 @@ class LocalEscrowCtl:
         self.sock.sendall(command.encode())
         data = self.sock.recv(BUFSIZE).decode()
         return data == '200 keyd\n'
+
+    def close(self):
+        try:
+            if self.sock:
+                self.sock.close()
+        except OSError:
+            pass
+
+    def __del__(self):
+        self.close()
 
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
@@ -796,25 +812,25 @@ class FailoverService(ConfigService):
     @accepts()
     def encryption_getkey(self):
         # FIXME: we could get rid of escrow, middlewared can do that job
-        escrowctl = LocalEscrowCtl()
-        return escrowctl.getkey()
+        with LocalEscrowCtl() as escrowctl:
+            return escrowctl.getkey()
 
     @private
     def encryption_shutdown(self):
-        escrowctl = LocalEscrowCtl()
-        return escrowctl.shutdown()
+        with LocalEscrowCtl() as escrowctl:
+            return escrowctl.shutdown()
 
     @private
     def encryption_status(self):
-        escrowctl = LocalEscrowCtl()
-        return escrowctl.status()
+        with LocalEscrowCtl() as escrowctl:
+            return escrowctl.status()
 
     @private
     @accepts(Str('passphrase'), Dict('options', Bool('sync', default=True)))
     def encryption_setkey(self, passphrase, options=None):
         # FIXME: we could get rid of escrow, middlewared can do that job
-        escrowctl = LocalEscrowCtl()
-        rv = escrowctl.setkey(passphrase)
+        with LocalEscrowCtl() as escrowctl:
+            rv = escrowctl.setkey(passphrase)
         if not rv:
             return rv
         if options['sync']:
@@ -828,14 +844,13 @@ class FailoverService(ConfigService):
     @accepts()
     def encryption_clearkey(self):
         # FIXME: we could get rid of escrow, middlewared can do that job
-        escrowctl = LocalEscrowCtl()
-        return escrowctl.clear()
+        with LocalEscrowCtl() as escrowctl:
+            return escrowctl.clear()
 
     @private
     @job()
     def encryption_attachall(self, job):
-        escrowctl = LocalEscrowCtl()
-        with tempfile.NamedTemporaryFile(mode='w+') as tmp:
+        with LocalEscrowCtl() as escrowctl, tempfile.NamedTemporaryFile(mode='w+') as tmp:
             tmp.file.write(escrowctl.getkey() or "")
             tmp.file.flush()
             procs = []
