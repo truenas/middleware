@@ -522,14 +522,10 @@ class SystemService(Service):
         """
         Shuts down the operating system.
 
-        Emits an "added" event of name "system" and id "shutdown".
+        An "added" event of name "system" and id "shutdown" is emitted when shutdown is initiated.
         """
         if options is None:
             options = {}
-
-        self.middleware.send_event('system', 'ADDED', id='shutdown', fields={
-            'description': 'System is going to shutdown',
-        })
 
         delay = options.get('delay')
         if delay:
@@ -1235,7 +1231,7 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
-    if args['id'] == 'shutting-down':
+    if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
 
