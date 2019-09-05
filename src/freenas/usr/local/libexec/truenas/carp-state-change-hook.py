@@ -108,7 +108,7 @@ def run_async(cmd):
 
 def run_call(client, method, *args):
     try:
-        client.call(method, *args)
+        return client.call(method, *args)
     except Exception as e:
         log.error('Failed to run %s:%r: %s', method, args, e)
 
@@ -734,6 +734,19 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                 run_call(midclt, 'service.stop', 'netdata', {'sync': False})
                 run_call(midclt, 'service.stop', 'collectd', {'sync': False})
                 run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
+
+            for i in (
+                'ssh', 'iscsitarget',
+            ):
+                verb = 'restart'
+                if i == 'iscsitarget':
+                    iscsicfg = run_call(midclt, 'iscsi.global.config')
+                    if iscsicfg and iscsicfg['alua'] is False:
+                        verb = 'stop'
+
+                ret = run_call(midclt, 'datastore.query', 'services.services', [('srv_service', '=', i)])
+                if ret and ret[0]['srv_enable']:
+                    run_call(midclt, f'service.{verb}', i, {'sync': False})
 
             midclt.close()
 
