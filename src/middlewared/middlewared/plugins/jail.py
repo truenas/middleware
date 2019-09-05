@@ -562,7 +562,7 @@ class JailService(CRUDService):
                 for jail in jail_dicts:
                     jail = list(jail.values())[0]
                     jail['id'] = jail['host_hostuuid']
-                    if jail['dhcp'] == 'on':
+                    if jail['dhcp']:
                         uuid = jail['host_hostuuid']
 
                         if jail['state'] == 'up':
