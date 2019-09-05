@@ -560,52 +560,64 @@ def test_69_mount_smb_share_on_osx():
 
 
 @osx_host_cfg
-def test_70_create_file_on_smb_share_via_osx_to_test_permissions_on_osx():
+def test_70_create_testfile_on_smb_share_via_osx():
     cmd = f'touch "{MOUNTPOINT}/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
-# Move test file to a tmp location on the SMB share
 @osx_host_cfg
-def test_65_moving_smb_test_file_into_a_tmp_directory_on_osx():
-    cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
-        f'"{MOUNTPOINT}/tmp/testfile.txt"'
-    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+def test_71_verify_testfile_exist_on_freenas():
+    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
+    results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 # Delete test file and test directory from SMB share
 @osx_host_cfg
-def test_66_deleting_test_file_and_directory_from_smb_share_on_osx():
-    cmd = f'rm -f "{MOUNTPOINT}/tmp/testfile.txt" && rmdir "{MOUNTPOINT}/tmp"'
+def test_72_deleting_test_file_and_directory_from_smb_share_on_osx():
+    cmd = f'rm -f "{MOUNTPOINT}/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_67_verifying_test_file_directory_were_successfully_removed_on_osx():
-    cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
-    results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
+def test_73_verify_recycle_directory_exist_on_freenas():
+    cmd = f'test -d "{SMB_PATH}/.recycle"'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@osx_host_cfg
+def test_74_verify_guest_directory_exist_in_recycle_directory_on_freenas():
+    cmd = f'test -d "{SMB_PATH}/.recycle/guest"'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@osx_host_cfg
+def test_75_verify_testfile_exist_in_recycle_guest_dirctory_on_freenas():
+    cmd = f'test -f "{SMB_PATH}/.recycle/guest/testfile.txt"'
+    results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 # Clean up mounted SMB share
 @osx_host_cfg
-def test_68_Unmount_smb_share_on_osx():
+def test_76_Unmount_smb_share_on_osx():
     cmd = f'umount -f "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_69_Removing_smb_mountpoint_on_osx():
+def test_77_Removing_smb_mountpoint_on_osx():
     cmd = f'rm -r "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
-def test_56_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
+def test_78_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
     global share_id, payload
     share_id = GET(f"/smb/sharesec/?share_name={SMB_NAME}").json()[0]['id']
     payload = {
@@ -622,14 +634,14 @@ def test_56_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_57_verify_smb_sharesec_change_for(ae):
+def test_79_verify_smb_sharesec_change_for(ae):
     results = GET(f"/smb/sharesec/id/{share_id}/")
     assert results.status_code == 200, results.text
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-def test_58_verify_smbclient_127_0_0_1_connection():
+def test_80_verify_smbclient_127_0_0_1_connection():
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -637,42 +649,42 @@ def test_58_verify_smbclient_127_0_0_1_connection():
     assert 'My Test SMB Share' in results['output'], results['output']
 
 
-def test_59_verify_midclt_call_smb_getparm_access_based_share_enum_is_true():
+def test_81_verify_midclt_call_smb_getparm_access_based_share_enum_is_true():
     cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'False', results['output']
 
 
-def test_70_delete_cifs_share():
+def test_82_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
 # Now stop the service
-def test_71_disable_cifs_service_at_boot():
+def test_83_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_72_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_84_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_73_stoping_clif_service():
+def test_85_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_74_checking_if_cifs_is_stop():
+def test_86_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset
-def test_75_destroying_smb_dataset():
+def test_87_destroying_smb_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
