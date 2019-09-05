@@ -34,8 +34,6 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        "OSX_PASSWORD" in locals()
                                        ]) is False, reason=OSXReason)
 
-
-
 smb_acl = [
     {
         "tag": 'USER',
@@ -59,7 +57,6 @@ smb_acl = [
         "flags": {"BASIC": "INHERIT"}
     }
 ]
-
 
 
 # Create tests
@@ -258,62 +255,111 @@ def test_26_verify_testfile2_exist_on_bsd():
 
 
 @bsd_host_cfg
-def test_27_deleting_testfile2_on_bsd_smb():
-    cmd = f'rm "{MOUNTPOINT}/testfile2.txt"'
+def test_27_create_tmp_directory_on_bsd():
+    cmd = f'mkdir "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_28_verify_testfile2_does_not_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile2.txt"'
+def test_28_verify__the_tmp_directory_exist_on_freenas():
+    cmd = f'test -d {SMB_PATH}/tmp'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+def test_29_moving_testfile2_into_the_tmp_directory_on_bsd():
+    cmd = f'mv "{MOUNTPOINT}/testfile2.txt" "{MOUNTPOINT}/tmp/testfile2.txt"'
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+def test_30_verify_testfile2_is_in_tmp_directory_on_freenas():
+    cmd = f'test -f {SMB_PATH}/tmp/testfile2.txt'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+def test_31_deleting_testfile2_on_bsd_smb():
+    cmd = f'rm "{MOUNTPOINT}/tmp/testfile2.txt"'
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+def test_32_verify_testfile2_is_erased_from_freenas():
+    cmd = f'test -f {SMB_PATH}/tmp/testfile2.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
 
 
 @bsd_host_cfg
-def test_29_verify_testfile2_does_not_exist_on_bsd():
-    cmd = f'test -f "{MOUNTPOINT}/testfile2.txt"'
+def test_33_remove_tmp_directory_on_bsd_smb():
+    cmd = f'rmdir "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+def test_34_verify_the_tmp_directory_exist_on_freenas():
+    cmd = f'test -d {SMB_PATH}/tmp'
+    results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
 
 
 @bsd_host_cfg
-def test_30_creating_smb_file_on_bsd():
+def test_35_verify_the_mount_directory_is_empty_on_bsd():
+    cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
+    results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+def test_36_verify_the_mount_directory_is_empty_on_freenas():
+    cmd = f'find -- "{SMB_PATH}/" -prune -type d -empty | grep -q .'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@bsd_host_cfg
+def test_37_creating_smb_file_on_bsd():
     cmd = f'touch {MOUNTPOINT}/testfile.txt'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_31_verify_testfile_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile2.txt"'
+def test_38_verify_testfile_exist_on_freenas():
+    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, results['output']
+    assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_32_unmounting_smb_on_bsd():
+def test_39_unmounting_smb_on_bsd():
     cmd = f'umount -f {MOUNTPOINT}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_33_removing_smb_mountpoint_on_bsd():
-    cmd = f'test -d "{MOUNTPOINT}" && rmdir "{MOUNTPOINT}" || exit 0'
+def test_40_removing_smb_mountpoint_on_bsd():
+    cmd = f'rm -r "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_34_verify_testfile_exist_on_freenas_after_unmout():
-    cmd = f'test -f "{SMB_PATH}/testfile2.txt"'
+def test_41_verify_testfile_exist_on_freenas_after_unmout():
+    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, results['output']
+    assert results['result'] is True, results['output']
 
 
-def test_35_setting_enable_smb1_to_false():
+def test_42_setting_enable_smb1_to_false():
     payload = {
         "enable_smb1": False
     }
@@ -321,7 +367,7 @@ def test_35_setting_enable_smb1_to_false():
     assert results.status_code == 200, results.text
 
 
-def test_36_change_sharing_smd_home_to_true():
+def test_43_change_sharing_smd_home_to_true():
     payload = {
         'home': True
     }
@@ -329,107 +375,121 @@ def test_36_change_sharing_smd_home_to_true():
     assert results.status_code == 200, results.text
 
 
-def test_37_verify_smb_getparm_path_homes():
+def test_44_verify_smb_getparm_path_homes():
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == f'{SMB_PATH}/%U'
 
 
-def test_38_stoping_clif_service():
+def test_45_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_39_checking_if_cifs_is_stop():
+def test_46_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 # Create tests
-def test_40_update_smb():
+def test_47_update_smb():
     payload = {"syslog": False}
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_41_update_cifs_share():
+def test_48_update_cifs_share():
     results = PUT(f"/sharing/smb/id/{smb_id}/", {"home": False})
     assert results.status_code == 200, results.text
 
 
-def test_42_starting_cifs_service():
+def test_49_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_43_checking_to_see_if_nfs_service_is_running():
+def test_50_checking_to_see_if_nfs_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
 # starting ssh test for OSX
 @osx_host_cfg
-def test_44_create_mount_point_for_smb_on_osx():
+def test_51_create_mount_point_for_smb_on_osx():
     cmd = f'mkdir -p "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_45_mount_smb_share_on_osx():
+def test_52_mount_smb_share_on_osx():
     cmd = f'mount -t smbfs "smb://guest@{ip}/{SMB_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_46_verify_testfile_exist_on_osx_mountpoint():
+def test_53_verify_testfile_exist_on_osx_mountpoint():
     cmd = f'test -f "{MOUNTPOINT}/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_47_create_smb_test_file_into_a_tmp_directory_on_osx():
+def test_54_create_tmp_directory_on_osx():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_48_moving_smb_test_file_into_a_tmp_directory_on_osx():
+def test_55_verify_tmp_directory_exist_on_freenas():
+    cmd = f'test -d "{SMB_PATH}/tmp"'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@osx_host_cfg
+def test_56_moving_smb_test_file_into_a_tmp_directory_on_osx():
     cmd = f'mv "{MOUNTPOINT}/testfile.txt" "{MOUNTPOINT}/tmp/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_49_deleting_test_file_and_directory_from_smb_share_on_osx():
+def test_57_verify_testfile_is_in_tmp_directory_on_freenas():
+    cmd = f'test -f {SMB_PATH}/tmp/testfile.txt'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+@osx_host_cfg
+def test_58_deleting_test_file_and_directory_from_smb_share_on_osx():
     cmd = f'rm -f "{MOUNTPOINT}/tmp/testfile.txt" && rmdir "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_49_verifying_test_file_directory_were_successfully_removed_on_osx():
+def test_59_verifying_test_file_directory_were_successfully_removed_on_osx():
     cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_50_unmount_smb_share_on_osx():
+def test_60_unmount_smb_share_on_osx():
     cmd = f'umount -f "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
-def test_51_change_timemachine_to_true():
+def test_61_change_timemachine_to_true():
     global vuid
     payload = {
         'timemachine': True,
@@ -439,35 +499,35 @@ def test_51_change_timemachine_to_true():
     vuid = results.json()['vuid']
 
 
-def test_52_verify_that_timemachine_is_true():
+def test_62_verify_that_timemachine_is_true():
     results = GET(f"/sharing/smb/id/{smb_id}/")
     assert results.status_code == 200, results.text
     assert results.json()['timemachine'] is True, results.text
 
 
 @pytest.mark.parametrize('vfs_object', ["ixnas", "fruit", "streams_xattr"])
-def test_53_verify_smb_getparm_vfs_objects_share(vfs_object):
+def test_63_verify_smb_getparm_vfs_objects_share(vfs_object):
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert  vfs_object in results['output'], results['output']
+    assert vfs_object in results['output'], results['output']
 
 
-def test_54_verify_smb_getparm_fruit_volume_uuid_share():
+def test_64_verify_smb_getparm_fruit_volume_uuid_share():
     cmd = f'midclt call smb.getparm "fruit:volume_uuid" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == vuid, results['output']
 
 
-def test_55_verify_smb_getparm_fruit_time_machine_is_yes():
+def test_65_verify_smb_getparm_fruit_time_machine_is_yes():
     cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'yes', results['output']
 
 
-def test_60_change_recyclebin_to_true():
+def test_66_change_recyclebin_to_true():
     global vuid
     payload = {
         "recyclebin": True,
@@ -477,14 +537,14 @@ def test_60_change_recyclebin_to_true():
     vuid = results.json()['vuid']
 
 
-def test_61_verify_that_recyclebin_is_true():
+def test_67_verify_that_recyclebin_is_true():
     results = GET(f"/sharing/smb/id/{smb_id}/")
     assert results.status_code == 200, results.text
     assert results.json()['recyclebin'] is True, results.text
 
 
 @pytest.mark.parametrize('vfs_object', ["ixnas", "crossrename", "recycle"])
-def test_62_verify_smb_getparm_vfs_objects_share(vfs_object):
+def test_68_verify_smb_getparm_vfs_objects_share(vfs_object):
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -493,14 +553,14 @@ def test_62_verify_smb_getparm_vfs_objects_share(vfs_object):
 
 # Update tests
 @osx_host_cfg
-def test_63_mount_smb_share_on_osx():
+def test_69_mount_smb_share_on_osx():
     cmd = f'mount -t smbfs "smb://guest@{ip}/{SMB_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_64_create_file_on_smb_share_via_osx_to_test_permissions_on_osx():
+def test_70_create_file_on_smb_share_via_osx_to_test_permissions_on_osx():
     cmd = f'touch "{MOUNTPOINT}/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -523,9 +583,6 @@ def test_66_deleting_test_file_and_directory_from_smb_share_on_osx():
     assert results['result'] is True, results['output']
 
 
-
-
-
 @osx_host_cfg
 def test_67_verifying_test_file_directory_were_successfully_removed_on_osx():
     cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
@@ -543,7 +600,7 @@ def test_68_Unmount_smb_share_on_osx():
 
 @osx_host_cfg
 def test_69_Removing_smb_mountpoint_on_osx():
-    cmd = f'rmdir "{MOUNTPOINT}"'
+    cmd = f'rm -r "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
