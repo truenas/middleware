@@ -111,7 +111,6 @@ def test_06_creating_a_smb_share_path():
         "home": False,
         "name": SMB_NAME,
         "guestok": True,
-        # "vfsobjects": ["streams_xattr"]
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
@@ -446,12 +445,12 @@ def test_52_verify_that_timemachine_is_true():
     assert results.json()['timemachine'] is True, results.text
 
 
-def test_53_verify_smb_getparm_vfs_objects_share():
+@pytest.mark.parametrize('vfs_object', ["ixnas", "fruit", "streams_xattr"])
+def test_53_verify_smb_getparm_vfs_objects_share(vfs_object):
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    string_list = '["fruit", "streams_xattr"]'
-    assert results['output'].strip() == string_list, results['output']
+    assert  vfs_object in results['output'], results['output']
 
 
 def test_54_verify_smb_getparm_fruit_volume_uuid_share():
@@ -484,12 +483,12 @@ def test_61_verify_that_recyclebin_is_true():
     assert results.json()['recyclebin'] is True, results.text
 
 
-def test_62_verify_smb_getparm_vfs_objects_share():
+@pytest.mark.parametrize('vfs_object', ["ixnas", "crossrename", "recycle"])
+def test_62_verify_smb_getparm_vfs_objects_share(vfs_object):
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    string_list = '["fruit", "streams_xattr", "crossrename", "recycle"]'
-    assert results['output'].strip() == string_list, results['output']
+    assert vfs_object in results['output'], results['output']
 
 
 # Update tests
@@ -522,6 +521,9 @@ def test_66_deleting_test_file_and_directory_from_smb_share_on_osx():
     cmd = f'rm -f "{MOUNTPOINT}/tmp/testfile.txt" && rmdir "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
+
+
+
 
 
 @osx_host_cfg
