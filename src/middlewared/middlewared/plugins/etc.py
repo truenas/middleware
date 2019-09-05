@@ -138,7 +138,7 @@ class EtcService(Service):
         ],
         'failover': [
             {'type': 'py', 'path': 'failover'},
-        ]
+        ],
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure'}
