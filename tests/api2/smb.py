@@ -35,6 +35,33 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
+
+smb_acl = [
+    {
+        "tag": 'USER',
+        "id": 1001,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "owner@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "group@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    }
+]
+
+
+
 # Create tests
 def test_01_setting_auxilary_parameters_for_mount_smbfs():
     toload = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
@@ -58,13 +85,9 @@ def test_02_creating_smb_dataset():
 
 def test_03_changing_dataset_permissions_of_smb_dataset():
     payload = {
-        "acl": [],
-        "mode": "777",
+        "acl": smb_acl,
         "user": "shareuser",
         "group": "wheel",
-        "options": {
-        "stripacl": True
-        }
     }
     results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
     assert results.status_code == 200, results.text
@@ -88,7 +111,7 @@ def test_06_creating_a_smb_share_path():
         "home": False,
         "name": SMB_NAME,
         "guestok": True,
-        "vfsobjects": ["streams_xattr"]
+        # "vfsobjects": ["streams_xattr"]
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
@@ -373,7 +396,7 @@ def test_46_verify_testfile_exist_on_osx_mountpoint():
 
 
 @osx_host_cfg
-def test_47_creat_smb_test_file_into_a_tmp_directory_on_osx():
+def test_47_create_smb_test_file_into_a_tmp_directory_on_osx():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
