@@ -179,18 +179,31 @@ class LDAPQuery(object):
                 res = None
                 ldap.protocol_version = ldap.VERSION3
                 ldap.set_option(ldap.OPT_REFERRALS, 0)
-                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
+                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, self.ldap['dns_timeout'])
 
                 if SSL(self.ldap['ssl']) != SSL.NOSSL:
-                    ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
+                    if self.ldap['certificate']:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_CERTFILE,
+                            f"/etc/certificates/{self.ldap['certificate']}.crt"
+                        )
+
                     ldap.set_option(
                         ldap.OPT_X_TLS_CACERTFILE,
-                        f"/etc/certificates/{self.ldap['certificate']['cert_name']}.crt"
+                        '/etc/certificates/CA/freenas_cas.pem'
                     )
-                    ldap.set_option(
-                        ldap.OPT_X_TLS_REQUIRE_CERT,
-                        ldap.OPT_X_TLS_ALLOW
-                    )
+                    if self.ldap['validate_certificates']:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_REQUIRE_CERT,
+                            ldap.OPT_X_TLS_DEMAND
+                        )
+                    else:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_REQUIRE_CERT,
+                            ldap.OPT_X_TLS_ALLOW
+                        )
+
+                    ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
                 if SSL(self.ldap['ssl']) == SSL.USETLS:
                     try:
@@ -400,6 +413,7 @@ class LDAPService(ConfigService):
         Str('sudosuffix'),
         Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
         Int('certificate', null=True),
+        Bool('validate_certificates', default=True),
         Bool('disable_freenas_cache'),
         Int('timeout', default=30),
         Int('dns_timeout', default=5),

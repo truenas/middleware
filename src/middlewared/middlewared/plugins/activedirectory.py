@@ -230,18 +230,32 @@ class ActiveDirectory_LDAP(object):
                 res = None
                 ldap.protocol_version = ldap.VERSION3
                 ldap.set_option(ldap.OPT_REFERRALS, 0)
-                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
+                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, self.ad['dns_timeout'])
 
                 if SSL(self.ad['ssl']) != SSL.NOSSL:
                     ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
+                    if self.ad['certificate']:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_CERTFILE,
+                            f"/etc/certificates/{self.ad['certificate']}.crt"
+                        )
+
                     ldap.set_option(
                         ldap.OPT_X_TLS_CACERTFILE,
-                        f"/etc/certificates/{self.ad['certificate']['cert_name']}.crt"
+                        '/etc/certificates/CA/freenas_cas.pem'
                     )
-                    ldap.set_option(
-                        ldap.OPT_X_TLS_REQUIRE_CERT,
-                        ldap.OPT_X_TLS_ALLOW
-                    )
+                    if self.ad['validate_certificates']:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_REQUIRE_CERT,
+                            ldap.OPT_X_TLS_DEMAND
+                        )
+                    else:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_REQUIRE_CERT,
+                            ldap.OPT_X_TLS_ALLOW
+                        )
+
+                    ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
                 if SSL(self.ad['ssl']) == SSL.USETLS:
                     try:
@@ -590,8 +604,9 @@ class ActiveDirectoryService(ConfigService):
         Str('domainname', required=True),
         Str('bindname'),
         Str('bindpw', private=True),
-        Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
+        Str('ssl', default='ON', enum=['OFF', 'ON', 'START_TLS']),
         Int('certificate', null=True),
+        Bool('validate_certificates', default=True),
         Bool('verbose_logging'),
         Bool('use_default_domain'),
         Bool('allow_trusted_doms'),
@@ -600,8 +615,8 @@ class ActiveDirectoryService(ConfigService):
         Str('site', null=True),
         Int('kerberos_realm', null=True),
         Str('kerberos_principal', null=True),
-        Int('timeout'),
-        Int('dns_timeout'),
+        Int('timeout', default=10),
+        Int('dns_timeout', default=10),
         Str('idmap_backend', default='RID', enum=['AD', 'AUTORID', 'FRUIT', 'LDAP', 'NSS', 'RFC2307', 'RID', 'SCRIPT']),
         Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
         Str('ldap_sasl_wrapping', default='SIGN', enum=['PLAIN', 'SIGN', 'SEAL']),
@@ -910,7 +925,14 @@ class ActiveDirectoryService(ConfigService):
         if not dcs:
             raise CallError('Failed to open LDAP socket to any DC in domain.')
 
-        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs) as AD_LDAP:
+        tmpconf = ad.copy()
+        if tmpconf['certificate']:
+            tmpconf['certificate'] = self.middleware.call_sync(
+                'certificate.query'
+                [('id', '=', ad['certificate'])],
+                {'get': True}
+            )['name']
+        with ActiveDirectory_LDAP(ad_conf=tmpconf, logger=self.logger, hosts=dcs) as AD_LDAP:
             ret = AD_LDAP.validate_credentials()
 
         return ret
@@ -1077,6 +1099,12 @@ class ActiveDirectoryService(ConfigService):
         if set_new_cache:
             self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], ad['site'], dcs)
 
+        if ad['certificate']:
+            ad['certificate'] = self.middleware.call_sync(
+                'certificate.query'
+                [('id', '=', ad['certificate'])],
+                {'get': True}
+            )['name']
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs) as AD_LDAP:
             ret = AD_LDAP.get_netbios_name()
 
@@ -1147,6 +1175,12 @@ class ActiveDirectoryService(ConfigService):
         if set_new_cache:
             self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], ad['site'], dcs)
 
+        if ad['certificate']:
+            ad['certificate'] = self.middleware.call_sync(
+                'certificate.query'
+                [('id', '=', ad['certificate'])],
+                {'get': True}
+            )['name']
         with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs, interfaces=i) as AD_LDAP:
             site = AD_LDAP.locate_site()
 

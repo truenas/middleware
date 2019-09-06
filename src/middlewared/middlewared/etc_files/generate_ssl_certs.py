@@ -1,7 +1,8 @@
 import os
+import shutil
 
 
-def write_certificates(certs):
+def write_certificates(certs, cacerts):
     for cert in certs:
         if not os.path.exists(cert['root_path']):
             os.mkdir(cert['root_path'], 0o755)
@@ -19,9 +20,23 @@ def write_certificates(certs):
             with open(cert['csr_path'], 'w') as f:
                 f.write(cert['CSR'])
 
+    """
+    Write unified CA certificate file for use with LDAP.
+    """
+    shutil.copyfile('/usr/local/share/certs/ca-root-nss.crt',
+                    '/etc/certificates/CA/freenas_cas.pem')
+
+    with open('/etc/certificates/CA/freenas_cas.pem', 'a+') as f:
+        f.write('\n## USER UPLOADED CA CERTIFICATES ##\n')
+        for c in cacerts:
+            if cert['chain_list']:
+                f.write('\n'.join(c['chain_list']))
+                f.write('\n\n')
+
 
 async def render(service, middleware):
     certs = await middleware.call('certificate.query')
-    certs.extend((await middleware.call('certificateauthority.query')))
+    cacerts = await middleware.call('certificateauthority.query')
+    certs.extend(cacerts)
 
-    await middleware.run_in_thread(write_certificates, certs)
+    await middleware.run_in_thread(write_certificates, certs, cacerts)

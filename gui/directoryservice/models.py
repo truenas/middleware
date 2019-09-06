@@ -793,7 +793,7 @@ class ActiveDirectory(DirectoryServiceBase):
             " on/off/start_tls"
         ),
         choices=choices.LDAP_SSL_CHOICES,
-        default='off'
+        default='on'
     )
     ad_certificate = models.ForeignKey(
         Certificate,
@@ -802,6 +802,16 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True,
         null=True,
         limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
+    )
+    ad_validate_certificates = models.BooleanField(
+        verbose_name=_("Perform strict certificate validation"),
+        default=True,
+        help_text=_(
+            "Request certificate from remote LDAP server. If no certificate is provided "
+            "or a bad certificate is provided, immediately terminate LDAP session. "
+            "This parameter corresponds with the ldap.conf parameter TLS_REQCERT demand. "
+            "TLS_REQCERT allow is set if unchecked. "
+        )
     )
     ad_verbose_logging = models.BooleanField(
         verbose_name=_("Verbose logging"),
@@ -864,7 +874,7 @@ class ActiveDirectory(DirectoryServiceBase):
             "automatically cleared and all future operations carried out by the AD "
             "machine account, which has a restricted set of privileges in the AD domain."),
         blank=True,
-	null=True
+        null=True
     )
     ad_createcomputer = models.CharField(
         blank=True,
@@ -882,12 +892,12 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
         help_text=_("Timeout for AD related commands."),
-        default=60
+        default=10
     )
     ad_dns_timeout = models.IntegerField(
         verbose_name=_("DNS timeout"),
         help_text=_("Timeout for AD DNS queries."),
-        default=60
+        default=10
     )
     ad_idmap_backend = models.CharField(
         verbose_name=_("Idmap backend"),
@@ -919,7 +929,7 @@ class ActiveDirectory(DirectoryServiceBase):
                     "CurrentControlSet\\Services\\NTDS\\Parameters\\"
                     "LDAPServerIntegrity\" on the Windows server side."
                     ),
-        default='plain'
+        default='sign'
     )
     ad_enable = models.BooleanField(
         verbose_name=_("Enable"),
@@ -1098,6 +1108,16 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         null=True,
         limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
+    )
+    ldap_validate_certificates = models.BooleanField(
+        verbose_name=_("Perform strict certificate validation"),
+        default=True,
+        help_text=_(
+            "Request certificate from remote LDAP server. If no certificate is provided "
+            "or a bad certificate is provided, immediately terminate LDAP session. "
+            "This parameter corresponds with the ldap.conf parameter TLS_REQCERT demand. "
+            "TLS_REQCERT allow is set if unchecked. "
+        )
     )
     ldap_disable_freenas_cache = models.BooleanField(
         verbose_name=_("Disable LDAP user/group cache"),
