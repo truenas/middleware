@@ -58,10 +58,17 @@ smb_acl = [
     }
 ]
 
-path_verification = {
+guest_path_verification = {
     "user": "shareuser",
     "group": "wheel",
     "acl": True
+}
+
+
+root_path_verification = {
+    "user": "root",
+    "group": "wheel",
+    "acl": False
 }
 
 
@@ -175,11 +182,11 @@ def test_014_verify_testfile_exist_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_015_get_filesystem_stat_from_testfilet_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -212,11 +219,11 @@ def test_019_verify_testfile2_exist_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_020_get_filesystem_stat_from_testfilet2_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile2.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -234,11 +241,11 @@ def test_022_verify_testfile_exist_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_023_get_filesystem_stat_from_testfilet_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -249,11 +256,11 @@ def test_024_verify_testfile2_exist_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_025_get_filesystem_stat_from_testfilet2_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile2.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -294,11 +301,11 @@ def test_030_verify_testfile2_exist_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_031_get_filesystem_stat_from_testfilet2_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile2.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -316,11 +323,11 @@ def test_033_verify_testfile2_exist_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_034_get_filesystem_stat_from_testfilet2_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile2.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -345,11 +352,11 @@ def test_037_verify__the_tmp_directory_exist_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_038_get_filesystem_stat_from_tmp_directory_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/tmp')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -367,11 +374,11 @@ def test_040_verify_testfile2_is_in_tmp_directory_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_041_get_filesystem_stat_from_testfile2_in_tmp_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/tmp/testfile2.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -447,11 +454,11 @@ def test_051_verify_testfile_exist_on_freenas():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_052_get_filesystem_stat_from_testfile_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @bsd_host_cfg
@@ -476,11 +483,11 @@ def test_055_verify_testfile_exist_on_freenas_after_unmout():
 
 
 @bsd_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_056_get_filesystem_stat_from_testfile_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 def test_057_setting_enable_smb1_to_false():
@@ -579,11 +586,11 @@ def test_070_verify_tmp_directory_exist_on_freenas():
 
 
 @osx_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_071_get_filesystem_stat_from_tmp_dirctory_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/tmp')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @osx_host_cfg
@@ -601,11 +608,11 @@ def test_073_verify_testfile_is_in_tmp_directory_on_freenas():
 
 
 @osx_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_074_get_filesystem_stat_from_testfile_in_tmp_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/tmp/testfile.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 @osx_host_cfg
@@ -721,11 +728,11 @@ def test_089_verify_testfile_exist_on_freenas():
 
 
 @osx_host_cfg
-@pytest.mark.parametrize('stat', list(path_verification.keys()))
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
 def test_090_get_filesystem_stat_from_testfile_and_verify(stat):
     results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
     assert results.status_code == 200, results.text
-    assert results.json()[stat] == path_verification[stat], results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
 
 
 # Delete test file and test directory from SMB share
@@ -752,35 +759,59 @@ def test_093_verify_recycle_directory_exist_on_freenas():
 
 
 @osx_host_cfg
-def test_094_verify_guest_directory_exist_in_recycle_directory_on_freenas():
+@pytest.mark.parametrize('stat', list(root_path_verification.keys()))
+def test_095_get_filesystem_stat_from_recycle_directory_and_verify(stat):
+    results = POST('/filesystem/stat/', f'{smb_path}/.recycle')
+    assert results.status_code == 200, results.text
+    assert results.json()[stat] == root_path_verification[stat], results.text
+
+
+@osx_host_cfg
+def test_096_verify_guest_directory_exist_in_recycle_directory_on_freenas():
     cmd = f'test -d "{smb_path}/.recycle/guest"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_095_verify_testfile_exist_in_recycle_guest_dirctory_on_freenas():
+@pytest.mark.parametrize('stat', list(root_path_verification.keys()))
+def test_097_get_filesystem_stat_from_guest_directory_recycle_and_verify(stat):
+    results = POST('/filesystem/stat/', f'{smb_path}/.recycle/guest')
+    assert results.status_code == 200, results.text
+    assert results.json()[stat] == root_path_verification[stat], results.text
+
+
+@osx_host_cfg
+def test_098_verify_testfile_exist_in_recycle_guest_dirctory_on_freenas():
     cmd = f'test -f "{smb_path}/.recycle/guest/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
+@osx_host_cfg
+@pytest.mark.parametrize('stat', list(guest_path_verification.keys()))
+def test_099_get_filesystem_stat_from_testfile_in_recycle_and_verify(stat):
+    results = POST('/filesystem/stat/', f'{smb_path}/.recycle/guest/testfile.txt')
+    assert results.status_code == 200, results.text
+    assert results.json()[stat] == guest_path_verification[stat], results.text
+
+
 # Clean up mounted SMB share
 @osx_host_cfg
-def test_096_Unmount_smb_share_on_osx():
+def test_100_Unmount_smb_share_on_osx():
     cmd = f'umount -f "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
-def test_097_Removing_smb_mountpoint_on_osx():
+def test_102_Removing_smb_mountpoint_on_osx():
     cmd = f'rm -r "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
-def test_098_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
+def test_103_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
     global share_id, payload
     share_id = GET(f"/smb/sharesec/?share_name={SMB_NAME}").json()[0]['id']
     payload = {
@@ -797,14 +828,14 @@ def test_098_get_smb_sharesec_id_and_set_smb_sharesec_share_acl():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_099_verify_smb_sharesec_change_for(ae):
+def test_104_verify_smb_sharesec_change_for(ae):
     results = GET(f"/smb/sharesec/id/{share_id}/")
     assert results.status_code == 200, results.text
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-def test_100_verify_smbclient_127_0_0_1_connection():
+def test_105_verify_smbclient_127_0_0_1_connection():
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -812,42 +843,42 @@ def test_100_verify_smbclient_127_0_0_1_connection():
     assert 'My Test SMB Share' in results['output'], results['output']
 
 
-def test_101_verify_midclt_call_smb_getparm_access_based_share_enum_is_true():
+def test_106_verify_midclt_call_smb_getparm_access_based_share_enum_is_true():
     cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'False', results['output']
 
 
-def test_102_delete_cifs_share():
+def test_107_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
 # Now stop the service
-def test_103_disable_cifs_service_at_boot():
+def test_108_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_104_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_109_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
-def test_105_stoping_clif_service():
+def test_110_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_106_checking_if_cifs_is_stop():
+def test_111_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 # Check destroying a SMB dataset
-def test_107_destroying_smb_dataset():
+def test_112_destroying_smb_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
