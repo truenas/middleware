@@ -19,7 +19,7 @@ MOUNTPOINT = "/tmp/smb-cifs"
 dataset = f"{pool_name}/smb-cifs"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestCifsSMB"
-SMB_PATH = "/mnt/" + dataset
+smb_path = "/mnt/" + dataset
 VOL_GROUP = "wheel"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
@@ -58,6 +58,12 @@ smb_acl = [
     }
 ]
 
+path_verification = {
+    "user": "shareuser",
+    "group": "wheel",
+    "acl": True
+}
+
 
 # Create tests
 def test_01_setting_auxilary_parameters_for_mount_smbfs():
@@ -90,21 +96,27 @@ def test_03_changing_dataset_permissions_of_smb_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_04_starting_cifs_service_at_boot():
+def test_04_get_filesystem_stat_from_smb_path_and_verify_acl_is_true():
+    results = POST('/filesystem/stat/', smb_path)
+    assert results.status_code == 200, results.text
+    assert results.json()['acl'] is True, results.text
+
+
+def test_05_starting_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
-def test_05_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_06_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is True, results.text
 
 
-def test_06_creating_a_smb_share_path():
+def test_07_creating_a_smb_share_path():
     global payload, results, smb_id
     payload = {
         "comment": "My Test SMB Share",
-        "path": SMB_PATH,
+        "path": smb_path,
         "home": False,
         "name": SMB_NAME,
         "guestok": True,
@@ -114,34 +126,34 @@ def test_06_creating_a_smb_share_path():
     smb_id = results.json()['id']
 
 
-def test_07_verify_if_smb_getparm_path_homes_is_null():
+def test_08_verify_if_smb_getparm_path_homes_is_null():
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
     assert results['output'].strip() == 'null'
 
 
-def test_08_starting_cifs_service():
+def test_09_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_09_checking_to_see_if_nfs_service_is_running():
+def test_10_checking_to_see_if_nfs_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
 @bsd_host_cfg
-def test_10_creating_smb_mountpoint_on_bsd():
+def test_11_creating_smb_mountpoint_on_bsd():
     cmd = f'mkdir -p "{MOUNTPOINT}" && sync'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_11_mounting_smb_on_bsd():
+def test_12_mounting_smb_on_bsd():
     cmd = f'mount_smbfs -N -I {ip} ' \
         f'"//guest@testnas/{SMB_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -149,63 +161,78 @@ def test_11_mounting_smb_on_bsd():
 
 
 @bsd_host_cfg
-def test_12_creating_testfile_on_bsd():
+def test_13_creating_testfile_on_bsd():
     cmd = f"touch {MOUNTPOINT}/testfile.txt"
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_13_verify_testfile_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
+def test_14_verify_testfile_exist_on_freenas():
+    cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_14_moving_smb_file_on_bsd():
+@pytest.mark.parametrize('stat', list(path_verification.keys()))
+def test_15_get_filesystem_stat_from_testfilet_and_verify(stat):
+    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    assert results.status_code == 200, results.text
+    assert results.json()[stat] == path_verification[stat], results.text
+
+
+@bsd_host_cfg
+def test_16_moving_smb_file_on_bsd():
     cmd = f'mv {MOUNTPOINT}/testfile.txt {MOUNTPOINT}/testfile2.txt'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_15_verify_testfile_does_not_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
+def test_17_verify_testfile_does_not_exist_on_freenas():
+    cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
 
 
+def test_18_get_filesystem_stat_from_testfile():
+    results = POST('/filesystem/stat/', f'{smb_path}/testfile.txt')
+    assert results.status_code == 422, results.text
+    message = f"Path {smb_path}/testfile.txt not found"
+    assert results.json()['message'] == message, results.text
+
+
 @bsd_host_cfg
-def test_16_verify_testfile2_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile2.txt"'
+def test_19_verify_testfile2_exist_on_freenas():
+    cmd = f'test -f "{smb_path}/testfile2.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_17_copying_smb_file_on_bsd():
+def test_20_copying_smb_file_on_bsd():
     cmd = f'cp {MOUNTPOINT}/testfile2.txt {MOUNTPOINT}/testfile.txt'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_18_verify_testfile_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
+def test_21_verify_testfile_exist_on_freenas():
+    cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_19_verify_testfile2_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile2.txt"'
+def test_22_verify_testfile2_exist_on_freenas():
+    cmd = f'test -f "{smb_path}/testfile2.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @bsd_host_cfg
-def test_20_deleting_smb_testfile_on_bsd():
+def test_23_deleting_smb_testfile_on_bsd():
     cmd = f'rm "{MOUNTPOINT}/testfile.txt"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -213,7 +240,7 @@ def test_20_deleting_smb_testfile_on_bsd():
 
 @bsd_host_cfg
 def test_21_verify_testfile_is_deleted_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
+    cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
 
@@ -228,7 +255,7 @@ def test_22_unmounting_smb_on_bsd():
 
 @bsd_host_cfg
 def test_23_verify_testfile2_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile2.txt"'
+    cmd = f'test -f "{smb_path}/testfile2.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -242,7 +269,7 @@ def test_24_remounting_smb_on_bsd():
 
 @bsd_host_cfg
 def test_25_verify_testfile2_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile2.txt"'
+    cmd = f'test -f "{smb_path}/testfile2.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -263,7 +290,7 @@ def test_27_create_tmp_directory_on_bsd():
 
 @bsd_host_cfg
 def test_28_verify__the_tmp_directory_exist_on_freenas():
-    cmd = f'test -d {SMB_PATH}/tmp'
+    cmd = f'test -d {smb_path}/tmp'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -277,7 +304,7 @@ def test_29_moving_testfile2_into_the_tmp_directory_on_bsd():
 
 @bsd_host_cfg
 def test_30_verify_testfile2_is_in_tmp_directory_on_freenas():
-    cmd = f'test -f {SMB_PATH}/tmp/testfile2.txt'
+    cmd = f'test -f {smb_path}/tmp/testfile2.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -291,7 +318,7 @@ def test_31_deleting_testfile2_on_bsd_smb():
 
 @bsd_host_cfg
 def test_32_verify_testfile2_is_erased_from_freenas():
-    cmd = f'test -f {SMB_PATH}/tmp/testfile2.txt'
+    cmd = f'test -f {smb_path}/tmp/testfile2.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
 
@@ -305,7 +332,7 @@ def test_33_remove_tmp_directory_on_bsd_smb():
 
 @bsd_host_cfg
 def test_34_verify_the_tmp_directory_exist_on_freenas():
-    cmd = f'test -d {SMB_PATH}/tmp'
+    cmd = f'test -d {smb_path}/tmp'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
 
@@ -319,7 +346,7 @@ def test_35_verify_the_mount_directory_is_empty_on_bsd():
 
 @bsd_host_cfg
 def test_36_verify_the_mount_directory_is_empty_on_freenas():
-    cmd = f'find -- "{SMB_PATH}/" -prune -type d -empty | grep -q .'
+    cmd = f'find -- "{smb_path}/" -prune -type d -empty | grep -q .'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -333,7 +360,7 @@ def test_37_creating_smb_file_on_bsd():
 
 @bsd_host_cfg
 def test_38_verify_testfile_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
+    cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -354,7 +381,7 @@ def test_40_removing_smb_mountpoint_on_bsd():
 
 @bsd_host_cfg
 def test_41_verify_testfile_exist_on_freenas_after_unmout():
-    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
+    cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -379,7 +406,7 @@ def test_44_verify_smb_getparm_path_homes():
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == f'{SMB_PATH}/%U'
+    assert results['output'].strip() == f'{smb_path}/%U'
 
 
 def test_45_stoping_clif_service():
@@ -449,7 +476,7 @@ def test_54_create_tmp_directory_on_osx():
 
 @osx_host_cfg
 def test_55_verify_tmp_directory_exist_on_freenas():
-    cmd = f'test -d "{SMB_PATH}/tmp"'
+    cmd = f'test -d "{smb_path}/tmp"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -463,7 +490,7 @@ def test_56_moving_smb_test_file_into_a_tmp_directory_on_osx():
 
 @osx_host_cfg
 def test_57_verify_testfile_is_in_tmp_directory_on_freenas():
-    cmd = f'test -f {SMB_PATH}/tmp/testfile.txt'
+    cmd = f'test -f {smb_path}/tmp/testfile.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -568,7 +595,7 @@ def test_70_create_testfile_on_smb_share_via_osx():
 
 @osx_host_cfg
 def test_71_verify_testfile_exist_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/testfile.txt"'
+    cmd = f'test -f "{smb_path}/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -583,21 +610,21 @@ def test_72_deleting_test_file_and_directory_from_smb_share_on_osx():
 
 @osx_host_cfg
 def test_73_verify_recycle_directory_exist_on_freenas():
-    cmd = f'test -d "{SMB_PATH}/.recycle"'
+    cmd = f'test -d "{smb_path}/.recycle"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
 def test_74_verify_guest_directory_exist_in_recycle_directory_on_freenas():
-    cmd = f'test -d "{SMB_PATH}/.recycle/guest"'
+    cmd = f'test -d "{smb_path}/.recycle/guest"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @osx_host_cfg
 def test_75_verify_testfile_exist_in_recycle_guest_dirctory_on_freenas():
-    cmd = f'test -f "{SMB_PATH}/.recycle/guest/testfile.txt"'
+    cmd = f'test -f "{smb_path}/.recycle/guest/testfile.txt"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
