@@ -428,6 +428,13 @@ mount_disk()
 	return 0
 }
 
+clear_pool_label()
+{
+    local _part=$1
+
+    zpool labelclear -f /dev/${_part} 2>/dev/null
+}
+
 create_partitions()
 {
     local _disk="$1"
@@ -444,6 +451,7 @@ create_partitions()
 	  sysctl kern.geom.debugflags=16
 	  sysctl kern.geom.label.disk_ident.enable=0
 	  if gpart add -s 260m -t efi ${_disk}; then
+	    clear_pool_label ${_disk}p1
 	    if ! newfs_msdos -F 16 /dev/${_disk}p1 ; then
 	      return 1
 	    fi
@@ -453,12 +461,15 @@ create_partitions()
           if ! gpart add -t freebsd-boot -i 1 -s 512k ${_disk}; then
 	    return 1
 	  fi
+	  clear_pool_label ${_disk}p1
 	fi
 
 	if is_swap_safe; then
 	    gpart add -t freebsd-swap -a 4k -s 16g -i 3 ${_disk}
+	    clear_pool_label ${_disk}p3
 	fi
 	if gpart add -t freebsd-zfs -a 4k -i 2 ${_size} ${_disk}; then
+	    clear_pool_label ${_disk}p2
 	    return 0
 	fi
     fi
