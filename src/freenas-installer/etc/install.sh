@@ -399,7 +399,7 @@ create_partitions()
 	fi
 
 	if is_truenas; then
-	    gpart add -t freebsd-swap -s 16g -i 3 ${_disk}
+	    gpart add -t freebsd-swap -a 4k -s 16g -i 3 ${_disk}
 	    clear_pool_label ${_disk}p3
 	fi
 	if gpart add -t freebsd-zfs -a 4k -i 2 ${_size} ${_disk}; then
