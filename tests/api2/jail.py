@@ -148,10 +148,14 @@ def test_13_verify_jail_started():
         freeze = True
         freeze_msg = f"Failed to start jail: {JAIL_NAME}"
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    time.sleep(1)
-    results = GET(f'/jail/id/{JAIL_NAME}/')
-    assert results.status_code == 200, results.text
-    assert results.json()['state'] == 'up', results.text
+    for run in range(10):
+        results = GET(f'/jail/id/{JAIL_NAME}/')
+        assert results.status_code == 200, results.text
+        if results.json()['state'] == 'up':
+            break
+        time.sleep(1)
+    else:
+        assert results.json()['state'] == 'up', results.text
 
 
 def test_14_exec_call():
@@ -205,10 +209,15 @@ def test_17_verify_jail_stopped():
         pytest.skip(freeze_msg)
     job_status = wait_on_job(JOB_ID, 20)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    time.sleep(1)
-    results = GET(f'/jail/id/{JAIL_NAME}/')
-    assert results.status_code == 200, results.text
-    assert results.json()['state'] == 'down', results.text
+    for run in range(10):
+        results = GET(f'/jail/id/{JAIL_NAME}/')
+        assert results.status_code == 200, results.text
+        if results.json()['state'] == 'down':
+            break
+        time.sleep(1)
+    else:
+        assert results.json()['state'] == 'down', results.text
+
 
 
 def test_18_export_jail():
@@ -240,10 +249,14 @@ def test_20_start_jail():
 def test_21_wait_for_jail_to_be_up():
     job_status = wait_on_job(JOB_ID, 20)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    time.sleep(1)
-    results = GET(f'/jail/id/{JAIL_NAME}/')
-    assert results.status_code == 200, results.text
-    assert results.json()['state'] == 'up', results.text
+    for run in range(10):
+        results = GET(f'/jail/id/{JAIL_NAME}/')
+        assert results.status_code == 200, results.text
+        if results.json()['state'] == 'up':
+            break
+        time.sleep(1)
+    else:
+        assert results.json()['state'] == 'up', results.text
 
 
 def test_22_rc_action():
