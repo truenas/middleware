@@ -10,14 +10,14 @@ class DisksAreNotPresentOnBackupNodeAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Disks Missing on Passive Storage Controller"
-    text = "Disks %(disks)s present on active storage controller but missing on passive storage controller."
+    text = "Disks with serial %(serials)s present on active storage controller but missing on passive storage controller."
 
 
 class DisksAreNotPresentOnMasterNodeAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Disks Missing on Active Storage Controller"
-    text = "Disks %(disks)s present on passive storage controller but missing on active storage controller."
+    text = "Disks with serial %(serials)s present on passive storage controller but missing on active storage controller."
 
 
 class FailoverDisksAlertSource(AlertSource):
@@ -34,10 +34,10 @@ class FailoverDisksAlertSource(AlertSource):
 
         if mismatch_disks["missing_remote"]:
             alerts.append(Alert(DisksAreNotPresentOnBackupNodeAlertClass,
-                                {"disks": ", ".join(mismatch_disks["missing_remote"])}))
+                                {"serials": ", ".join(mismatch_disks["missing_remote"])}))
 
         if mismatch_disks["missing_local"]:
             alerts.append(Alert(DisksAreNotPresentOnMasterNodeAlertClass,
-                                {"disks": ", ".join(mismatch_disks["missing_local"])}))
+                                {"serials": ", ".join(mismatch_disks["missing_local"])}))
 
         return alerts
