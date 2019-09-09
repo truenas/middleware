@@ -61,11 +61,6 @@
 #
 : ${SAMBA_CONF:="/usr/local/etc/smb4.conf"}
 
-#
-#	TrueNAS
-#
-: ${HA_MODE_FILE="/tmp/.ha_mode"}
-
 
 
 #
@@ -85,38 +80,6 @@ is_freenas()
 
 }
 
-
-ha_mode()
-{
-	local encstat manual node serial
-
-	if [ -f ${HA_MODE_FILE} ]; then
-		cat ${HA_MODE_FILE}
-		return 0
-	fi
-
-	/usr/local/bin/python /usr/local/www/freenasUI/failover/detect.py 2> /dev/null
-	return 0
-}
-
-ha_hardware() {
-
-	ha_mode | cut -d ":" -f 1
-
-}
-
-ha_node()
-{
-
-	if ! ha_mode | grep -q ":"; then
-		return 1
-	fi
-
-	ha_mode | cut -d ":" -f 2
-
-	return 0
-
-}
 
 ro_sqlite()
 {

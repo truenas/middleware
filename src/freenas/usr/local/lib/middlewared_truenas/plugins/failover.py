@@ -32,6 +32,7 @@ from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
+from middlewared.plugins.system import SystemService
 from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
@@ -305,7 +306,8 @@ class FailoverService(ConfigService):
             self.HA_MODE = self._ha_mode()
         return self.HA_MODE
 
-    def _ha_mode(self):
+    @staticmethod
+    def _ha_mode():
         hardware = None
         node = None
 
@@ -400,7 +402,7 @@ class FailoverService(ConfigService):
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         serial = proc.communicate()[0].split('\n', 1)[0].strip()
 
-        license = self.middleware.call_sync('system.info')['license']
+        license = SystemService._get_license()
 
         if license is not None:
             if license['system_serial'] == serial:

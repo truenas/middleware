@@ -281,7 +281,7 @@ class SystemService(Service):
         Returns `true` if running system is a FreeNAS or `false` if something else.
         """
         if self.__is_freenas is None:
-            license = await self.middleware.run_in_thread(self.__get_license)
+            license = await self.middleware.run_in_thread(self._get_license)
             self.__is_freenas = True if (
                 not license or
                 license['model'].lower().startswith('freenas')
@@ -354,7 +354,8 @@ class SystemService(Service):
             return "READY"
         return "BOOTING"
 
-    def __get_license(self):
+    @staticmethod
+    def _get_license():
         if not os.path.exists(LICENSE_FILE):
             return
 
@@ -464,7 +465,7 @@ class SystemService(Service):
             'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
             'system_serial': serial,
             'system_product': product,
-            'license': await self.middleware.run_in_thread(self.__get_license),
+            'license': await self.middleware.run_in_thread(self._get_license),
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
@@ -483,7 +484,7 @@ class SystemService(Service):
             return False
         elif is_freenas:
             return True
-        license = await self.middleware.run_in_thread(self.__get_license)
+        license = await self.middleware.run_in_thread(self._get_license)
         if license and name in license['features']:
             return True
         return False
