@@ -35,13 +35,19 @@ actions.
 """
 
 
+from middlewared.plugins.system import SystemService
 from middlewared.plugins.pwenc import encrypt, decrypt
 
 
 class notifier:
 
     def is_freenas(self):
-        return True
+        license = SystemService._get_license()
+        if not license:
+            return True
+        if license['model'].lower().startswith('freenas'):
+            return True
+        return False
 
     def pwenc_encrypt(self, text):
         if isinstance(text, bytes):
