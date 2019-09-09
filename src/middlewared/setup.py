@@ -57,6 +57,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
+            'hadetect = middlewared.scripts.hadetect:main',
             'middlewared = middlewared.main:main',
             'midclt = middlewared.client.client:main',
             'midgdb = middlewared.scripts.gdb:main',
