@@ -228,7 +228,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'smb_configure']
+    SKIP_LIST = ['system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure']
 
     class Config:
         private = True
