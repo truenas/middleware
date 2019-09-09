@@ -756,14 +756,32 @@ class FailoverService(ConfigService):
 
     @private
     async def mismatch_disks(self):
-        local_disks = set(filter(
-            lambda x: x.startswith('da'),
-            (await self.middleware.call('device.get_info', 'DISK')).keys(),
-        ))
-        remote_disks = set(filter(
-            lambda x: x.startswith('da'),
-            (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).keys(),
-        ))
+        """
+        On HA systems, da#'s can be different
+        between controllers. This isn't common
+        but does occurr. An example being when
+        a customer powers off passive storage controller
+        for maintenance and also powers off an expansion shelf.
+        The active controller will reassign da#'s appropriately
+        depending on which shelf was powered off. When passive
+        storage controller comes back online, the da#'s will be
+        different than what's on the active controller because the
+        kernel reassigned those da#'s. This function now grabs
+        the serial numbers of each disk and calculates the difference
+        between the controllers. Instead of returning da#'s to alerts,
+        this returns serial numbers.
+        This accounts for 2 scenarios:
+         1. the quantity of disks are different between
+            controllers
+         2. the quantity of disks are the same between
+            controllers but serials do not match
+        """
+        local_disks = set(v['ident'] for k, v in
+            (await self.middleware.call('device.get_info', 'DISK')).items()
+            if not k.startswith('ada'))
+        remote_disks = set(v['ident'] for k, v in
+            (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).items()
+            if not k.startswith('ada'))
         return {
             'missing_local': sorted(remote_disks - local_disks),
             'missing_remote': sorted(local_disks - remote_disks),
