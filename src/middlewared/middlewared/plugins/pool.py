@@ -3564,7 +3564,7 @@ class PoolScrubService(CRUDService):
                 await self.middleware.call('alert.oneshot_create', 'ScrubStarted', name)
 
     async def __run(self, name, threshold):
-        if name == 'freenas-boot':
+        if name == await self.middleware.call('boot.pool_name'):
             pool = await self.middleware.call('zfs.pool.query', [['name', '=', name]], {'get': True})
         else:
             if not await self.middleware.call('system.is_freenas'):

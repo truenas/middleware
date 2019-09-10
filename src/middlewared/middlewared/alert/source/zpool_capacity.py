@@ -33,7 +33,7 @@ class ZpoolCapacityAlertSource(ThreadedAlertSource):
         pools = [
             pool["name"]
             for pool in self.middleware.call_sync("pool.query")
-        ] + ["freenas-boot"]
+        ] + [self.middleware.call_sync("boot.pool_name")]
         for pool in pools:
             proc = subprocess.Popen([
                 "zpool",

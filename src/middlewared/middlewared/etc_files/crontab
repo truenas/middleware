@@ -6,10 +6,11 @@
 
     system_advanced = middleware.call_sync("system.advanced.config")
     resilver = middleware.call_sync("pool.resilver.config")
+    boot_pool = middleware.call_sync("boot.pool_name")
 %>\
 ${system_crontab}
 
-45 3 * * * root /usr/local/bin/midclt call pool.scrub.run freenas-boot ${system_advanced['boot_scrub']} > /dev/null 2>&1
+45 3 * * * root /usr/local/bin/midclt call pool.scrub.run ${boot_pool} ${system_advanced['boot_scrub']} > /dev/null 2>&1
 
 ## Don't run these on TrueNAS HA passive controllers
 ## Redmine 55908

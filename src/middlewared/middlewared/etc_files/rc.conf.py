@@ -32,7 +32,7 @@ def collectd_config(middleware, context):
 
         rrdcached_flags = '-s www -l /var/run/rrdcached.sock -p /var/run/rrdcached.pid'
         sysds = middleware.call_sync('systemdataset.config')
-        if sysds['pool'] in ('', 'freenas-boot'):
+        if sysds['pool'] in ('', middleware.call_sync('boot.pool_name')):
             rrdcached_flags += ' -w 3600 -f 7200'
         yield f'rrdcached_flags="{rrdcached_flags}"'
     else:
