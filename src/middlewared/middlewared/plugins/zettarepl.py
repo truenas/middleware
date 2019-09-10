@@ -24,7 +24,7 @@ from zettarepl.observer import (
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
-from zettarepl.snapshot.list import list_snapshots
+from zettarepl.snapshot.list import multilist_snapshots
 from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
@@ -350,10 +350,11 @@ class ZettareplService(Service):
         except Exception as e:
             raise CallError(repr(e))
 
-    async def count_eligible_manual_snapshots(self, dataset, naming_schemas, transport, ssh_credentials=None):
+    async def count_eligible_manual_snapshots(self, datasets, naming_schemas, transport, ssh_credentials=None):
         try:
             shell = await self._get_zettarepl_shell(transport, ssh_credentials)
-            snapshots = await self.middleware.run_in_thread(list_snapshots, shell, dataset, False)
+            snapshots = await self.middleware.run_in_thread(multilist_snapshots, shell, [(dataset, False)
+                                                                                         for dataset in datasets])
         except Exception as e:
             raise CallError(repr(e))
 
