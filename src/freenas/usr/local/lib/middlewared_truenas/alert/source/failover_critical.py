@@ -108,41 +108,4 @@ class FailoverCriticalAlertSource(ThreadedAlertSource):
                         'vhid': iface['failover_vhid'],
                     }))
 
-            if not iface['ipv4_dhcp']:
-                if ha_node == 'B':
-                    pingip = 'aliases'
-                    pingfrom = 'failover_aliases'
-                else:
-                    pingip = 'failover_aliases'
-                    pingfrom = 'aliases'
-
-                pingip = next(
-                    (
-                        i['address']
-                        for i in iface[pingip] if i['type'] == 'INET'
-                    ),
-                    None,
-                )
-                pingfrom = next(
-                    (
-                        i['address']
-                        for i in iface[pingfrom] if i['type'] == 'INET'
-                    ),
-                    None,
-                )
-
-                if pingip and pingfrom:
-                    ping = subprocess.Popen([
-                        "/sbin/ping",
-                        "-c", "1",
-                        "-S", pingfrom,
-                        "-t", "1",
-                        pingip,
-                    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    ping.communicate()
-                    if ping.returncode != 0:
-                        alerts.append(Alert(
-                            FailedToVerifyCriticalFailoverInterfaceAlertClass, iface['name'],
-                        ))
-
         return alerts
