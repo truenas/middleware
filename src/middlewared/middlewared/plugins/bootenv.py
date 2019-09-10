@@ -28,6 +28,7 @@ class BootEnvService(CRUDService):
             d['properties']['origin']['parsed']
             for d in self.middleware.call_sync('zfs.dataset.query')
         ]
+        boot_pool = self.middleware.call_sync('boot.pool_name')
         for line in cp.stdout.strip().split('\n'):
             fields = line.split('\t')
             name = fields[0]
@@ -46,7 +47,7 @@ class BootEnvService(CRUDService):
             }
 
             ds = self.middleware.call_sync('zfs.dataset.query', [
-                ('id', '=', f'freenas-boot/ROOT/{fields[0]}'),
+                ('id', '=', rf'{boot_pool}/ROOT/{fields[0]}'),
             ], {'extra': {'snapshots': True}})
             if ds:
                 ds = ds[0]
@@ -146,7 +147,8 @@ class BootEnvService(CRUDService):
 
         Currently only `keep` attribute is allowed.
         """
-        dsname = f'freenas-boot/ROOT/{oid}'
+        boot_pool = self.middleware.call_sync('boot.pool_name')
+        dsname = f'{boot_pool}/ROOT/{oid}'
         ds = self.middleware.call_sync('zfs.dataset.query', [('id', '=', dsname)])
         if not ds:
             raise CallError(f'BE {oid!r} does not exist.', errno.ENOENT)

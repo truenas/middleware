@@ -39,10 +39,6 @@ from middlewared.service import CallError, periodic, Service
 from middlewared.utils import start_daemon_thread
 from middlewared.worker import watch_parent
 
-INVALID_DATASETS = (
-    re.compile(r"freenas-boot/?"),
-)
-
 
 def lifetime_timedelta(value, unit):
     if unit == "HOUR":
@@ -337,10 +333,16 @@ class ZettareplService(Service):
         except Exception as e:
             raise CallError(repr(e))
 
+        boot_pool = await self.middleware.call("boot.pool_name")
+
+        invalid_datasets = (
+            re.compile(rf"{boot_pool}/?"),
+        )
+
         return [
             ds
             for ds in datasets
-            if not any(r.match(ds) for r in INVALID_DATASETS)
+            if not any(r.match(ds) for r in invalid_datasets)
         ]
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):

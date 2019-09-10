@@ -525,7 +525,7 @@ class SMBService(SystemServiceService):
 
         if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
             system_dataset = await self.middleware.call('systemdataset.config')
-            if system_dataset['pool'] != 'freenas-boot':
+            if system_dataset['pool'] != await self.middleware.call('boot.pool_name'):
                 hamode = SMBHAMODE['UNIFIED'].name
             else:
                 hamode = SMBHAMODE['LEGACY'].name

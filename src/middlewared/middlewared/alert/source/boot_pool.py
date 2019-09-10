@@ -12,7 +12,8 @@ class BootPoolStatusAlertClass(AlertClass):
 
 class BootPoolStatusAlertSource(AlertSource):
     async def check(self):
-        pool = await self.middleware.call("zfs.pool.query", [["id", "=", "freenas-boot"]])
+        boot_pool = await self.middleware.call("boot.pool_name")
+        pool = await self.middleware.call("zfs.pool.query", [["id", "=", boot_pool]])
         if not pool:
             return
         pool = pool[0]

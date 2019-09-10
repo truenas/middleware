@@ -21,11 +21,12 @@ class SystemDatasetService(ConfigService):
     @private
     async def config_extend(self, config):
 
-        # Treat empty system dataset pool as freenas-boot
+        # Treat empty system dataset pool as boot pool
+        boot_pool = await self.middleware.call('boot.pool_name')
         if not config['pool']:
-            config['pool'] = 'freenas-boot'
+            config['pool'] = boot_pool
         # Add `is_decrypted` dynamic attribute
-        if config['pool'] == 'freenas-boot':
+        if config['pool'] == boot_pool:
             config['is_decrypted'] = True
         else:
             pool = await self.middleware.call('pool.query', [('name', '=', config['pool'])])
@@ -86,7 +87,7 @@ class SystemDatasetService(ConfigService):
         new.update(data)
 
         verrors = ValidationErrors()
-        if new['pool'] and new['pool'] != 'freenas-boot':
+        if new['pool'] and new['pool'] != await self.middleware.call('boot.pool_name'):
             pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
             if not pool:
                 verrors.add(
@@ -113,7 +114,7 @@ class SystemDatasetService(ConfigService):
                 break
             else:
                 # If a data pool could not be found, reset it to blank
-                # Which will eventually mean its back to freenas-boot (temporarily)
+                # Which will eventually mean its back to boot pool (temporarily)
                 new['pool'] = ''
         verrors.check()
 
@@ -161,10 +162,11 @@ class SystemDatasetService(ConfigService):
             'datastore.config', self._config.datastore, {'prefix': self._config.datastore_prefix}
         )
 
+        boot_pool = await self.middleware.call('boot.pool_name')
         if (
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('failover.status') == 'BACKUP' and
-            config.get('basename') and config['basename'] != 'freenas-boot/.system'
+            config.get('basename') and config['basename'] != f'{boot_pool}/.system'
         ):
             try:
                 os.unlink(SYSDATASET_PATH)
@@ -174,7 +176,7 @@ class SystemDatasetService(ConfigService):
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
-        if config['pool'] != 'freenas-boot' and not await self.middleware.call(
+        if config['pool'] != boot_pool and not await self.middleware.call(
             'pool.query', [('name', '=', config['pool'])]
         ):
             job = await self.middleware.call('systemdataset.update', {

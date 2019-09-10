@@ -9,21 +9,29 @@ from middlewared.validators import Range
 from bsd import geom
 
 
+BOOT_POOL_NAME = None
+BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
+
+
 class BootService(Service):
+
+    @private
+    async def pool_name(self):
+        return BOOT_POOL_NAME
 
     @accepts()
     async def get_state(self):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.
         """
-        return await self.middleware.call('zfs.pool.query', [('name', '=', 'freenas-boot')], {'get': True})
+        return await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)], {'get': True})
 
     @accepts()
     async def get_disks(self):
         """
         Returns disks of the boot pool.
         """
-        return await self.middleware.call('zfs.pool.get_disks', 'freenas-boot')
+        return await self.middleware.call('zfs.pool.get_disks', BOOT_POOL_NAME)
 
     @private
     async def get_boot_type(self):
@@ -191,9 +199,9 @@ class BootService(Service):
             format_opts['swap_size'] = swap_size
         boottype = await self.format(dev, format_opts)
 
-        pool = await self.middleware.call("zfs.pool.query", [["name", "=", "freenas-boot"]], {"get": True})
+        pool = await self.middleware.call("zfs.pool.query", [["name", "=", BOOT_POOL_NAME]], {"get": True})
 
-        extend_pool_job = await self.middleware.call('zfs.pool.extend', 'freenas-boot', None,
+        extend_pool_job = await self.middleware.call('zfs.pool.extend', BOOT_POOL_NAME, None,
                                                      [{'target': pool["groups"]["data"][0]["guid"],
                                                        'type': 'DISK',
                                                        'path': f'/dev/{dev}p2'}])
@@ -204,14 +212,14 @@ class BootService(Service):
 
         # If the user is upgrading his disks, let's set expand to True to make sure that we
         # register the new disks capacity which increase the size of the pool
-        await self.middleware.call('zfs.pool.online', 'freenas-boot', f'{dev}p2', True)
+        await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, f'{dev}p2', True)
 
     @accepts(Str('dev'))
     async def detach(self, dev):
         """
         Detach given `dev` from boot pool.
         """
-        await self.middleware.call('zfs.pool.detach', 'freenas-boot', dev)
+        await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev)
 
     @accepts(Str('label'), Str('dev'))
     async def replace(self, label, dev):
@@ -224,7 +232,7 @@ class BootService(Service):
         if swap_size:
             format_opts['swap_size'] = swap_size
         boottype = await self.format(dev, format_opts)
-        await self.middleware.call('zfs.pool.replace', 'freenas-boot', label, f'{dev}p2')
+        await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, f'{dev}p2')
         await self.install_loader(boottype, dev)
 
     @accepts()
@@ -233,7 +241,7 @@ class BootService(Service):
         """
         Scrub on boot pool.
         """
-        subjob = await self.middleware.call('zfs.pool.scrub', 'freenas-boot')
+        subjob = await self.middleware.call('zfs.pool.scrub', BOOT_POOL_NAME)
         return await job.wrap(subjob)
 
     @accepts(
@@ -257,3 +265,17 @@ class BootService(Service):
         Get Automatic Scrub Interval value in days.
         """
         return (await self.middleware.call('system.advanced.config'))['boot_scrub']
+
+
+async def setup(middleware):
+    global BOOT_POOL_NAME
+
+    pools = (
+        await run('zpool', 'list', '-H', '-o', 'name', encoding='utf8')
+    ).stdout.strip().split()
+    for i in BOOT_POOL_NAME_VALID:
+        if i in pools:
+            BOOT_POOL_NAME = i
+            break
+    else:
+        middleware.logger.error('Failed to detect boot pool name.')
