@@ -1,0 +1,200 @@
+#!/bin/sh
+
+dev=$1
+osize=$2
+
+# Check arguments count
+if [ "$#" -lt 1 -o "$#" -gt 2 -o -z "$1" ]; then
+	echo "usage: $0 <device> [<xGB>|<xTB>|<sectors>]"
+	exit 1
+fi
+
+# Make sure provided disk is valid and not open by anything
+closed=`geom disk list "${dev}" | grep -c "Mode: r0w0e0"`
+if [ ${closed} -ne 1 ]; then
+	echo "The disk is in use or specified incorrectly, aborting."
+	exit 1
+fi
+
+# Sanitize/convert size argument.
+size=${osize}
+if [ -n "${osize}" ]; then
+	size=`echo "${osize}" | awk '/^[0-9]*$/'`
+	gsize=`echo "${osize}" | awk '/^[0-9]*TB?$/ { FS="T"; print $1*1000 } /^[0-9]*GB?$/ { FS="G"; print $1 }'`
+	if [ -n "${gsize}" ]; then
+		# Supplied size in gigabytes or terabytes convert to bytes
+		if [ ${gsize} -lt 8000 ]; then
+			# For small disks fancy math is rounded to 4KB.
+			bsize=$((((${gsize} * 1000194048 + 10838016) + 4095) & ~4095))
+		else
+			# For large disks GB size rounded to next TiB.
+			bsize=$(((${gsize} * 1000000000 + ((1 << 30) - 1)) & ~((1 << 30) - 1)))
+		fi
+		# Convert bytes into sectors.
+		sector=`diskinfo /dev/${dev} | cut -w -f 2`
+		size=$((${bsize} / ${sector}))
+	elif [ -n "${size}" ]; then
+		# Supplied size in sectors use as-is.
+	else
+		# Size not in sectors or gigabytes.  Fail.
+		echo "Incorrect size '${osize}'.  Specify in TB, GB or sectors."
+		exit 1
+	fi
+	echo "Resizing ${dev} to ${size} sectors"
+else
+	echo "Resizing ${dev} to full capacity"
+fi
+
+# ATA and SCSI have completely different resize commands.
+# SAT we handle as ATA via pass-through, but with some complications.
+devtype=`camcontrol devtype ${dev} 2>/dev/null`
+case "$devtype" in
+satl)
+	# For SATL disks we first need to try to enable descriptor format
+	# sense data.  Without it some SATL devices return fixed format,
+	# that provides not enough response data for some ATA commands.
+	echo "Enabling descriptor sense"
+	echo "D_SENSE: 1" | camcontrol modepage ${dev} -m 0x0a -e 2>&1 >/dev/null
+	;&
+ata)
+	# Fetch the ATA disk capabilities, since there are many options.
+	ident=`camcontrol identify ${dev}`
+	if [ $? -ne 0 ]; then
+		echo "Can't get ATA identify data"
+		exit 1
+	fi
+	ama=`echo "${ident}" | grep -c "Accessible Max Address Config *yes"`
+	hpa=`echo "${ident}" | grep -c "Host Protected Area (HPA) *yes"`
+	if [ ${ama} -eq 0 -a ${hpa} -eq 0 ]; then
+		echo "ATA device supports neither HPA nor AMA, can't resize"
+		exit 1
+	fi
+	ssd=`echo "${ident}" | grep -c "media RPM *non-rotating"`
+	block=`echo "${ident}" | grep -c "Sanitize.*block"`
+	crypto=`echo "${ident}" | grep -c "Sanitize.*crypto"`
+	security=`echo "${ident}" | grep -c "security *yes"`
+	trim=`diskinfo -v /dev/${dev} | grep -c "Yes.*# TRIM/UNMAP support"`
+
+	# When resizing SSD to specified size (down?) deallocate the flash.
+	if [ ${ssd} -ne 0 -a -n "${size}" ]; then
+		err=1
+		if [ ${block} -ne 0 -a ${err} -ne 0 ]; then
+			echo "Doing block erase sanitize."
+			camcontrol sanitize ${dev} -a block -y
+			err=$?
+		fi
+		if [ ${crypto} -ne 0 -a ${err} -ne 0 ]; then
+			echo "Doing cryptograhic erase sanitize."
+			camcontrol sanitize ${dev} -a crypto -y
+			err=$?
+		fi
+		if [ ${security} -ne 0 -a ${err} -ne 0 ]; then
+			echo "Doing security erase."
+			camcontrol security ${dev} -q -s MyPass -e MyPass -y
+			err=$?
+		fi
+		if [ ${trim} -ne 0 -a ${err} -ne 0 ]; then
+			echo "Doing TRIM."
+			trim -fq /dev/${dev}
+			err=$?
+		fi
+		if [ ${err} -ne 0 ]; then
+			echo "No method found to deallocate the flash."
+		fi
+	fi
+
+	if [ ${ama} -ne 0 ]; then
+		if [ -z "${size}" ]; then
+			size=`echo "${ident}" | awk -F "[ \t/]+" '/Accessible Max Address Config/ { print $8 }'`
+		fi
+		echo "Setting Accessible Max Address to ${size}"
+		camcontrol ama ${dev} -qs ${size}
+		err=$?
+	else
+		if [ -z "${size}" ]; then
+			size=`echo "${ident}" | awk -F "[ \t/]+" '/Host Protected Area/ { print $8 }'`
+		fi
+		echo "Setting Host Protected Area to ${size}"
+		camcontrol hpa ${dev} -qPy -s ${size}
+		err=$?
+	fi
+	if [ ${err} -eq 0 ]; then
+		if [ ${devtype} = "satl" ]; then
+			echo "Resetting device"
+			camcontrol reset ${dev}
+			echo "Resize completed successfully.  Reboot may be needed."
+		else
+			echo "Resize completed successfully."
+		fi
+		echo "Note that resize can be done only once per power cycle."
+	else
+		echo "Resize failed."
+		exit 1
+	fi
+	;;
+scsi)
+	# Check what block descriptor(s) device supports.
+	echo "Reading existing block descriptor"
+	descr=`camcontrol modepage ${dev} -DEL`
+	if [ $? -ne 0 ]; then
+		echo "MODE SENSE commands failed"
+		exit 1
+	fi
+	ndescr=`echo "${descr}" | grep -c "Logical Block Length"`
+	if [ ${ndescr} -eq 0 ]; then
+		echo "Device does not support block descriptors, can't resize"
+		exit 1
+	fi
+	if [ ${ndescr} -gt 1 ]; then
+		echo "Can't handle more then one (${ndescr}) block descriptor"
+		exit 1
+	fi
+	ldescr=`echo "${descr}" | grep -c "Number of Logical Blocks High"`
+
+	# Do actual resize by editing the block descriptor.
+	echo "Changing number of LBAs in block descriptor"
+	if [ ${ldescr} -eq 0 ]; then
+		if [ -z "${size}" ]; then
+			lsize="0xffffffff"
+		elif [ "${size}" -le 4294967295 ]; then
+			lsize="${size}"
+		else
+			echo "Specified size is too big for the short block descriptor."
+			exit 1
+		fi
+		echo "Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe
+		err=$?
+	else
+		if [ -z "${size}" ]; then
+			hsize="0xffffffff"
+			lsize="0xffffffff"
+		else
+			hsize=$((${size} >> 32))
+			lsize=$((${size} & 0xffffffff))
+		fi
+		echo "Number of Logical Blocks High: ${hsize}
+Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe
+		err=$?
+	fi
+
+	# When resizing SSD to specified size (down?) format to deallocate the flash.
+	ssd=`sg_vpd -p bdc /dev/${dev} 2>/dev/null | grep -c "Non-rotating medium"`
+	if [ ${ssd} -ne 0 -a -n "${size}" ]; then
+		echo "Formatting device."
+		camcontrol format ${dev} -y
+	fi
+
+	if [ ${err} -eq 0 ]; then
+		echo "Resize completed successfully."
+	else
+		echo "Resize failed."
+		exit 1
+	fi
+	;;
+*)
+	echo "Unknown device type"
+	exit 1
+	;;
+esac
+
+exit 0
