@@ -764,7 +764,7 @@ class DiskService(CRUDService):
         cp = await run(['smartctl', '-a'] + smartctl_args, check=False, stderr=subprocess.STDOUT,
                        encoding='utf8', errors='ignore')
         if (cp.returncode & 0b11) != 0:
-            self.logger.warning('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
+            self.logger.trace('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
             return None
 
         return get_temperature(cp.stdout)
