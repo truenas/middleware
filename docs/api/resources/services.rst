@@ -1100,7 +1100,6 @@ List resource
                 "smart_interval": 30,
                 "smart_powermode": "never",
                 "smart_informational": 0,
-                "smart_email": "",
                 "smart_difference": 0,
                 "id": 1
         }
@@ -1140,7 +1139,6 @@ Update resource
                 "smart_interval": 60,
                 "smart_powermode": "never",
                 "smart_informational": 0,
-                "smart_email": "",
                 "smart_difference": 0,
                 "id": 1
         }
@@ -1150,7 +1148,6 @@ Update resource
    :json integer smart_difference: report if the temperature had changed by at least N degrees Celsius since last report
    :json integer smart_informational: report as informational if the temperature had changed by at least N degrees Celsius since last report
    :json integer smart_critical: report as critical if the temperature had changed by at least N degrees Celsius since last report
-   :json string smart_email: destination email address
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
