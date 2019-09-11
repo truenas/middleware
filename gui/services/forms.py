@@ -1171,21 +1171,10 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
         model = models.SMART
 
     def __init__(self, *args, **kwargs):
-        if "instance" in kwargs:
-            kwargs.setdefault("initial", {})
-            kwargs["initial"]["smart_email"] = " ".join(kwargs["instance"].smart_email.split(","))
-
         super(SMARTForm, self).__init__(*args, **kwargs)
-
-    def clean_smart_email(self):
-        if "," in self.cleaned_data["smart_email"]:
-            raise forms.ValidationError(_("Commas are not valid in an E-Mail address. "
-                                          "Separate multiple E-Mail addresses with a space."))
-        return self.cleaned_data["smart_email"]
 
     def middleware_clean(self, update):
         update["powermode"] = update["powermode"].upper()
-        update["email"] = update["email"].split()
         return update
 
 

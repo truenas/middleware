@@ -46,11 +46,6 @@ def get_smartd_config(disk):
     config = f"{args} -n {disk['smart_powermode']} -W {difference}," \
              f"{informational},{critical}"
 
-    if disk['smart_email']:
-        config += f" -m {disk['smart_email']}"
-    else:
-        config += f" -m root"
-
     config += " -M exec /usr/local/libexec/smart_alert.py"
 
     if disk.get('smarttest_type'):
