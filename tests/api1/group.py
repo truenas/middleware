@@ -9,37 +9,58 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, PUT, DELETE
-
+from functions import POST, PUT, DELETE, SSH_TEST
+from auto_config import user, password, ip
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
 
 # Create tests
 def test_01_Creating_group_testgroup():
-    payload = {"bsdgrp_gid": 1200, "bsdgrp_group": "testgroup"}
+    global groupid
+    payload = {
+        "bsdgrp_gid": 1200,
+        "bsdgrp_group": "testgroup"
+    }
     results = POST("/account/groups/", payload)
     assert results.status_code == 201, results.text
+    groupid = results.json()['id']
 
 
-# Update tests
-# Get the ID of testgroup
-# def test_01_Fetching_group_id_of_previously_created_test_group():
-#     if os.path.exists(GroupIdFile):
-#         global groupid
-#         groupid = open(GroupIdFile).readlines()[0].rstrip()
-#         assert True
-#     else:
-#         assert False
+def test_02_look_for_testgroup_is_in_freenas_group():
+    cmd = 'getent group | grep -q testgroup'
+    results = SSH_TEST(cmd, 'root', 'testing', ip)
+    assert results['result'] is True, results['output']
 
 
 # Update the testgroup
-# def test_02_Updating_group_testgroup():
-#     payload = {"bsdgrp_gid": "1201",
-#                "bsdgrp_group": "newgroup"}
-#     assert PUT("/account/groups/%s/" % groupid, payload) == 200
+def test_03_Updating_group_testgroup():
+    payload = {
+        "bsdgrp_gid": "1201",
+        "bsdgrp_group": "newgroup"
+    }
+    results = PUT(f"/account/groups/{groupid}/", payload)
+    assert results.status_code == 200, results.text
+
+
+def test_04_look_for_testgroup_is_not_in_freenas_group():
+    cmd = 'getent group | grep -q testgroup'
+    results = SSH_TEST(cmd, 'root', 'testing', ip)
+    assert results['result'] is False, results['output']
+
+
+def test_05_look_for_newgroup_is_in_freenas_group():
+    cmd = 'getent group | grep -q newgroup'
+    results = SSH_TEST(cmd, 'root', 'testing', ip)
+    assert results['result'] is True, results['output']
 
 
 # Delete tests
 # Delete the testgroup
-# def test_01_Delete_group_testgroup_newgroup():
-#     assert DELETE("/account/groups/1/") == 204
+def test_06_Delete_group_testgroup_newgroup():
+    results = DELETE(f"/account/groups/{groupid}/")
+    assert results.status_code == 204, results.text
+
+def test_07_look_for_newgroup_is_not_in_freenas_group():
+    cmd = 'getent group | grep -q newgroup'
+    results = SSH_TEST(cmd, 'root', 'testing', ip)
+    assert results['result'] is False, results['output']
