@@ -1493,7 +1493,6 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
         lun_ids = []
         for attachment in attachments:
             for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
-                await self.middleware.call('datastore.delete', 'services.iscsitargettoextent', te['id'])
                 lun_ids.append(te['lunid'])
 
             await self.middleware.call('datastore.update', 'services.iscsitargetextent', attachment['id'],
