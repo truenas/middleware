@@ -459,6 +459,11 @@ class PluginService(CRUDService):
         )
     )
     def defaults(self, options):
+        """
+        Retrieve default properties specified for `plugin` in the plugin's manifest.
+
+        When `refresh` is specified, `plugin_repository` is updated before retrieving plugin's default properties.
+        """
         index = self.retrieve_plugin_index(options)
         if options['plugin'] not in index:
             raise CallError(f'{options["plugin"]} not found')
