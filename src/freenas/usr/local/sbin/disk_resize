@@ -73,6 +73,12 @@ ata)
 	block=`echo "${ident}" | grep -c "Sanitize.*block"`
 	crypto=`echo "${ident}" | grep -c "Sanitize.*crypto"`
 	security=`echo "${ident}" | grep -c "security *yes"`
+	if [ ${security} -ne 0 ]; then
+		sfrozen=`camcontrol security ${dev} | grep -c "security config frozen *yes"`
+		if [  ${sfrozen} -ne 0 ]; then
+			security="0"
+		fi
+	fi
 	trim=`diskinfo -v /dev/${dev} | grep -c "Yes.*# TRIM/UNMAP support"`
 
 	# When resizing SSD to specified size (down?) deallocate the flash.
