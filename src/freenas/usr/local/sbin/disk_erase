@@ -1,0 +1,156 @@
+#!/bin/sh
+
+dev=$1
+osize=$2
+
+# Check arguments count
+if [ "$#" -ne 1 -o -z "$1" ]; then
+	echo "usage: $0 <device>"
+	exit 1
+fi
+
+# Make sure provided disk is valid and not open by anything
+closed=`geom disk list "${dev}" | grep -c "Mode: r0w0e0"`
+if [ ${closed} -ne 1 ]; then
+	echo "The disk is in use or specified incorrectly, aborting."
+	exit 1
+fi
+
+echo "Erasing disk ${dev}"
+
+# ATA and SCSI have significantly different erase commands.
+# SAT we handle as ATA via pass-through, but with some complications.
+devtype=`camcontrol devtype ${dev} 2>/dev/null`
+case "$devtype" in
+satl)
+	# For SATL disks we first need to try to enable descriptor format
+	# sense data.  Without it some SATL devices return fixed format,
+	# that provides not enough response data for some ATA commands.
+	echo "Enabling descriptor sense"
+	echo "D_SENSE: 1" | camcontrol modepage ${dev} -m 0x0a -e 2>&1 >/dev/null
+	;&
+ata)
+	# Fetch the ATA disk capabilities, since there are many options.
+	ident=`camcontrol identify ${dev}`
+	if [ $? -ne 0 ]; then
+		echo "Can't get ATA identify data"
+		exit 1
+	fi
+	overwrite=`echo "${ident}" | grep -c "Sanitize.*overwrite"`
+	block=`echo "${ident}" | grep -c "Sanitize.*block"`
+	crypto=`echo "${ident}" | grep -c "Sanitize.*crypto"`
+	security=`echo "${ident}" | grep -c "security *yes"`
+	if [ ${security} -ne 0 ]; then
+		sfrozen=`camcontrol security ${dev} | grep -c "security config frozen *yes"`
+		if [  ${sfrozen} -ne 0 ]; then
+			security="0"
+			esecurity="0"
+		else
+			esecurity=`camcontrol security ${dev} | grep -c "enhanced erase supported *yes"`
+		fi
+	else
+		esecurity="0"
+	fi
+	trim=`diskinfo -v /dev/${dev} | grep -c "Yes.*# TRIM/UNMAP support"`
+	dtrim=`echo "${ident}" | grep -c "DSM - deterministic read *yes"`
+	tcg=`echo "${ident}" | grep -c "Trusted Computing *yes"`
+
+	err=1
+	if [ ${crypto} -ne 0 -a ${err} -ne 0 ]; then
+		echo "Doing cryptograhic erase sanitize."
+		camcontrol sanitize ${dev} -a crypto -y
+		err=$?
+	fi
+	if [ ${block} -ne 0 -a ${err} -ne 0 ]; then
+		echo "Doing block erase sanitize."
+		camcontrol sanitize ${dev} -a block -y
+		err=$?
+	fi
+	if [ ${overwrite} -ne 0 -a ${err} -ne 0 ]; then
+		echo "Doing overwrite sanitize."
+		camcontrol sanitize ${dev} -a overwrite -y
+		err=$?
+	fi
+	if [ ${esecurity} -ne 0 -a ${err} -ne 0 ]; then
+		echo "Doing enhanced security erase."
+		camcontrol security ${dev} -q -s MyPass -h MyPass -y
+		err=$?
+	fi
+	if [ ${security} -ne 0 -a ${err} -ne 0 ]; then
+		echo "Doing security erase."
+		camcontrol security ${dev} -q -s MyPass -e MyPass -y
+		err=$?
+	fi
+	if [ ${err} -ne 0 ]; then
+		echo "No reliable erase method found, going unreliable."
+	fi
+	if [ ${dtrim} -ne 0 -a ${err} -ne 0 ]; then
+		echo "Doing TRIM (deterministic)."
+		trim -fq /dev/${dev}
+		err=$?
+	fi
+	if [ ${err} -ne 0 ]; then
+		echo "Doing software overwrite."
+		dd if=/dev/zero of=/dev/${dev} bs=1m
+		err=$?
+		if [ ${trim} -ne 0 -a ${dtrim} -eq 0 ]; then
+			echo "Doing TRIM (non-deterministic)."
+			trim -fq /dev/${dev}
+		fi
+	fi
+
+	false > /dev/${dev}
+	if [ ${err} -eq 0 ]; then
+		echo "Erase completed successfully."
+	else
+		echo "Erase failed."
+		exit 1
+	fi
+	;;
+scsi)
+	err=1
+	if [ ${err} -ne 0 ]; then
+		camcontrol opcodes ${dev} -o 0x48 -s 3 >/dev/null
+		if [ $? -eq 0 ]; then
+			echo "Doing cryptograhic erase sanitize."
+			camcontrol sanitize ${dev} -a crypto -y
+			err=$?
+		fi
+	fi
+	if [ ${err} -ne 0 ]; then
+		camcontrol opcodes ${dev} -o 0x48 -s 2 >/dev/null
+		if [ $? -eq 0 ]; then
+			echo "Doing block erase sanitize."
+			camcontrol sanitize ${dev} -a block -y
+			err=$?
+		fi
+	fi
+	if [ ${err} -ne 0 ]; then
+		camcontrol opcodes ${dev} -o 0x48 -s 1 >/dev/null
+		if [ $? -eq 0 ]; then
+			echo "Doing overwrite sanitize."
+			camcontrol sanitize ${dev} -a overwrite -y
+			err=$?
+		fi
+	fi
+	if [ ${err} -ne 0 ]; then
+		echo "Formatting device."
+		camcontrol format ${dev} -y
+		err=$?
+	fi
+
+	false > /dev/${dev}
+	if [ ${err} -eq 0 ]; then
+		echo "Erase completed successfully."
+	else
+		echo "Erase failed."
+		exit 1
+	fi
+	;;
+*)
+	echo "Unknown device type"
+	exit 1
+	;;
+esac
+
+exit 0
