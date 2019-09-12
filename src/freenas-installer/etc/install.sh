@@ -366,7 +366,7 @@ clear_pool_label()
 {
     local _part=$1
 
-    zpool labelclear -f /dev/${_part} 2>/dev/null
+    zpool labelclear -f /dev/${_part} 2>/dev/null || true
 }
 
 create_partitions()
