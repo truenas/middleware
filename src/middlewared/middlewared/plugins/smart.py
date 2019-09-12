@@ -444,7 +444,11 @@ class SmartService(SystemServiceService):
 
         new["powermode"] = new["powermode"].lower()
 
-        await self._update_service(old, new)
+        verb = "reload"
+        if any(old[k] != new[k] for k in ["interval"]):
+            verb = "restart"
+
+        await self._update_service(old, new, verb)
 
         if new["powermode"] != old["powermode"]:
             await self.middleware.call("service.restart", "collectd", {"onetime": False})
