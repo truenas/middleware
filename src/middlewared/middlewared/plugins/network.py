@@ -1501,9 +1501,10 @@ class InterfaceService(CRUDService):
         # after seeing `count` of them. If there were more than `count` VRRP
         # devices on the broadcast domain we wouldn't get them all.
         proc = subprocess.Popen(
-            f"tcpdump -l -n {f'-c {count}' if count else ''} -i {ifname} vrrp 2> /dev/null"
-            "| awk '{print $3, $9}'| sed -e 's/,$//'",
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8', shell=True,
+            ['tcpdump', '-l', '-n'] + (
+                ['-c', str(count)] if count else []
+            ) + ['-i', ifname, 'vrrp'],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding='utf8',
         )
         try:
             output = proc.communicate(timeout=timeout)[0].strip().split('\n')
@@ -1514,11 +1515,11 @@ class InterfaceService(CRUDService):
         data = defaultdict(list)
         for i in output:
             parts = i.split()
-            if len(parts) != 2:
+            if len(parts) < 9:
                 continue
-            ip, vhid = parts
+            ip, vhid = parts[2], parts[8]
             try:
-                vhid = int(vhid)
+                vhid = int(vhid.replace(',', ''))
             except ValueError:
                 continue
             if vhid not in data[ip]:
