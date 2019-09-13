@@ -1442,10 +1442,40 @@ class VMDeviceService(CRUDService):
                 )
 
     @private
+    async def disk_uniqueness_integrity_check(self, device, vm):
+        # This ensures that the disk is not already present for `vm`
+        def translate_device(dev):
+            # A disk should have a path configured at all times, when that is not the case, that means `dtype` is DISK
+            # and end user wants to create a new zvol in this case.
+            return dev['attributes'].get('path') or f'/dev/zvol/{dev["attributes"]["zvol_name"]}'
+
+        disks = [
+            d for d in vm['devices']
+            if d['dtype'] in ('DISK', 'RAW', 'CDROM') and translate_device(d) == translate_device(device)
+        ]
+        if not disks:
+            # We don't have that disk path in vm devices, we are good to go
+            return True
+        elif len(disks) > 1:
+            # VM is mis-configured
+            return False
+        elif not device.get('id') and disks:
+            # A new device is being created, however it already exists in vm. This can also happen when VM instance
+            # is being created, in that case it's okay. Key here is that we won't have the id field present
+            return not bool(disks[0].get('id'))
+        elif device.get('id'):
+            # The device is being updated, if the device is same as we have in db, we are okay
+            return device['id'] == disks[0].get('id')
+        else:
+            return False
+
+    @private
     async def validate_device(self, device, old=None, vm_instance=None):
         # We allow vm_instance to be passed for cases where VM devices are being updated via VM and
         # the device checks should be performed with the modified vm_instance object not the one db holds
-        if not vm_instance and device.get('vm'):
+        # vm_instance should be provided at all times when handled by VMService, if VMDeviceService is interacting,
+        # then it means the device is configured with a VM and we can retrieve the VM's data from db
+        if not vm_instance:
             vm_instance = await self.middleware.call('vm._get_instance', device['vm'])
 
         verrors = ValidationErrors()
@@ -1464,10 +1494,10 @@ class VMDeviceService(CRUDService):
             if verrors:
                 raise verrors
 
+        # vm_instance usages SHOULD NOT rely on device `id` field to uniquely identify objects as it's possible
+        # VMService is creating a new VM with devices and the id's don't exist yet
+
         if device.get('dtype') == 'DISK':
-            if 'attributes' not in device:
-                verrors.add('attributes', 'This field is required.')
-                raise verrors
             create_zvol = device['attributes'].get('create_zvol')
             path = device['attributes'].get('path')
             if create_zvol:
@@ -1506,10 +1536,7 @@ class VMDeviceService(CRUDService):
                     ' characters',
                     errno.ENAMETOOLONG
                 )
-            if vm_instance and any(
-                d.get('attributes', {}).get('path') == path and d['id'] != device.get('id')
-                for d in vm_instance['devices'] if d['dtype'] == 'DISK'
-            ):
+            if not await self.disk_uniqueness_integrity_check(device, vm_instance):
                 verrors.add(
                     'attributes.path',
                     f'{vm_instance["name"]} has "{path}" already configured'
@@ -1535,10 +1562,7 @@ class VMDeviceService(CRUDService):
                 await check_path_resides_within_volume(
                     verrors, self.middleware, 'attributes.path', path,
                 )
-                if vm_instance and exists and any(
-                    d.get('attributes', {}).get('path') == path and d['id'] != device.get('id')
-                    for d in vm_instance['devices'] if d['dtype'] == 'RAW'
-                ):
+                if not await self.disk_uniqueness_integrity_check(device, vm_instance):
                     verrors.add(
                         'attributes.path',
                         f'{vm_instance["name"]} has "{path}" already configured'
@@ -1549,6 +1573,8 @@ class VMDeviceService(CRUDService):
                 verrors.add('attributes.path', 'Path is required.')
             elif not os.path.exists(path):
                 verrors.add('attributes.path', f'Unable to locate CDROM device at {path}')
+            elif not await self.disk_uniqueness_integrity_check(device, vm_instance):
+                verrors.add('attributes.path', f'{vm_instance["name"]} has "{path}" already configured')
         elif device.get('dtype') == 'NIC':
             nic = device['attributes'].get('nic_attach')
             if nic:
@@ -1556,7 +1582,7 @@ class VMDeviceService(CRUDService):
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
         elif device.get('dtype') == 'VNC':
-            if vm_instance and vm_instance['bootloader'] != 'UEFI':
+            if vm_instance['bootloader'] != 'UEFI':
                 verrors.add('dtype', 'VNC only works with UEFI bootloader.')
 
         if verrors:
