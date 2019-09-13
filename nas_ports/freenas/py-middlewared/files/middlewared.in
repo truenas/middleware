@@ -12,6 +12,7 @@
 : ${middlewared_debug="NO"}
 : ${middlewared_overlay_dirs=""}
 pidfile=/var/run/middlewared.pid
+daemon_pidfile=/var/run/middlewared_daemon.pid
 command="/usr/sbin/daemon"
 
 middlewared_start() {
@@ -28,7 +29,7 @@ middlewared_start() {
 		/usr/local/bin/tmux new-session -s middlewared -d
 		/usr/local/bin/tmux send -t middlewared "env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 /usr/local/bin/middlewared ${overlay_dirs_arg} -P" ENTER
 	else
-		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -p ${pidfile} -r /usr/local/bin/middlewared ${overlay_dirs_arg} --log-handler=file
+		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -P ${daemon_pidfile} -p ${pidfile} -r /usr/local/bin/middlewared ${overlay_dirs_arg} --log-handler=file
 	fi
 	if ! LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -t 240 waitready; then
 		echo "##############################################################"
@@ -39,10 +40,15 @@ middlewared_start() {
 
 middlewared_stop() {
 	if [ -f "${pidfile}" ] ; then
-		rc_pid=$(cat $pidfile)
+		mw_pid=$(cat $pidfile)
+		if [ -f "${daemon_pidfile}" ] ; then
+			rc_pid=$(cat $daemon_pidfile)
+		else
+			rc_pid=$mw_pid
+		fi
 		echo 'Stopping middlewared.'
 		kill -s TERM ${rc_pid}
-		wait_for_pids ${rc_pid}
+		wait_for_pids ${mw_pid}
 	else
 		echo 'middlewared is not running'
 		exit 1
