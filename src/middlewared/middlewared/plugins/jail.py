@@ -440,6 +440,35 @@ class PluginService(CRUDService):
         )
         return plugins
 
+    @private
+    def retrieve_plugin_index(self, options):
+        self.middleware.call_sync('jail.check_dataset_existence')
+        branch = options['branch'] or self.get_version()
+        plugins = IOCPlugin(branch=branch, git_repository=options['plugin_repository'])
+        if not os.path.exists(plugins.git_destination) or options['refresh']:
+            plugins.pull_clone_git_repo()
+        return plugins.retrieve_plugin_index_data(plugins.git_destination)
+
+    @accepts(
+        Dict(
+            'options',
+            Bool('refresh', default=False),
+            Str('plugin', required=True),
+            Str('branch', default=None, null=True),
+            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git')
+        )
+    )
+    def defaults(self, options):
+        """
+        Retrieve default properties specified for `plugin` in the plugin's manifest.
+
+        When `refresh` is specified, `plugin_repository` is updated before retrieving plugin's default properties.
+        """
+        index = self.retrieve_plugin_index(options)
+        if options['plugin'] not in index:
+            raise CallError(f'{options["plugin"]} not found')
+        return {'plugin': options['plugin'], 'properties': index[options['plugin']].get('properties', [])}
+
     @accepts(
         Str('repository', default='https://github.com/freenas/iocage-ix-plugins.git')
     )
