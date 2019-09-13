@@ -42,7 +42,7 @@ class SensorsAlertSource(AlertSource):
     async def check(self):
         baseboard_manufacturer = (
             (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors="ignore")
-        )
+        ).strip()
 
         failover_hardware = await self.middleware.call("failover.hardware")
 
