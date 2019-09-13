@@ -506,22 +506,25 @@ class FileApplication(object):
             return resp
 
         def copy():
-            while True:
-                read = asyncio.run_coroutine_threadsafe(
-                    filepart.read_chunk(1048576),
-                    loop=self.loop,
-                ).result()
-                if read == b'':
-                    break
-                job.pipes.input.w.write(read)
+            try:
+                try:
+                    while True:
+                        read = asyncio.run_coroutine_threadsafe(
+                            filepart.read_chunk(1048576),
+                            loop=self.loop,
+                        ).result()
+                        if read == b'':
+                            break
+                        job.pipes.input.w.write(read)
+                finally:
+                    job.pipes.input.w.close()
+            except BrokenPipeError:
+                pass
 
         try:
             job = await self.middleware.call(data['method'], *(data.get('params') or []),
                                              pipes=Pipes(input=self.middleware.pipe()))
-            try:
-                await self.middleware.run_in_thread(copy)
-            finally:
-                await self.middleware.run_in_thread(job.pipes.input.w.close)
+            await self.middleware.run_in_thread(copy)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
                 status_code = 422
