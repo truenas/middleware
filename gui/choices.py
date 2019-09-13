@@ -384,21 +384,6 @@ class NICChoices(object):
         if self.noloopback is False:
             self._NIClist.append('lo0')
 
-        from freenasUI.middleware.notifier import notifier
-        # Remove internal interfaces for failover
-        try:
-            if (
-                os.environ.get('MIDDLEWARED_LOADING') != 'True' and
-                hasattr(notifier, 'failover_status')
-            ):
-                for iface in notifier().failover_internal_interfaces():
-                    if iface in self._NIClist:
-                        self._NIClist.remove(iface)
-        except (ConnectionRefusedError, FileNotFoundError):
-            pass
-        except Exception:
-            log.error('Failed to get failover internal interfaces', exc_info=True)
-
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
         # Remove interfaces that are parent devices of a lagg
@@ -537,30 +522,11 @@ class IPChoices(NICChoices):
     def __iter__(self):
         self._NIClist = list(super(IPChoices, self).__iter__())
 
-        from freenasUI.middleware.notifier import notifier
-        _n = notifier()
-        carp = False
-        if not _n.is_freenas():
-            try:
-                if (
-                    os.environ.get('MIDDLEWARED_LOADING') != 'True' and
-                    _n.failover_status() not in ('SINGLE', 'ERROR')
-                ):
-                    carp = True
-            except (sqlite3.OperationalError, ConnectionRefusedError, FileNotFoundError):
-                pass
-            except Exception:
-                log.error('Failed to get failover status', exc_info=True)
-
         self._IPlist = []
         for iface in self._NIClist:
             pipe = popen("/sbin/ifconfig %s" % iface[0])
             lines = pipe.read().strip().split('\n')
             for line in lines:
-                if carp:
-                    reg = re.search(r' vhid (\d+)', line)
-                    if not reg:
-                        continue
                 if line.startswith('\tinet6'):
                     if self.ipv6 is True:
                         self._IPlist.append(line.split(' ')[1].split('%')[0])
