@@ -63,8 +63,22 @@ middlewared_stop() {
 	fi
 }
 
+middlewared_status() {
+	if [ -f "${pidfile}" ] ; then
+		mw_pid=$(cat $pidfile)
+		kill -0 "${mw_pid}" >> /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			echo "$name is running as pid $mw_pid"
+			return 0
+		fi
+	fi
+	echo "$name is not running"
+	return 1
+}
+
 name="middlewared"
 start_cmd='middlewared_start'
+status_cmd='middlewared_status'
 stop_cmd='middlewared_stop'
 
 load_rc_config $name
