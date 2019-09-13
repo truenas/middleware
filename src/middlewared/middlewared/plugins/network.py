@@ -577,7 +577,7 @@ class InterfaceService(CRUDService):
     async def __check_failover_disabled(self):
         if await self.middleware.call('system.is_freenas'):
             return
-        if not await self.middleware.call('failover.licensed'):
+        if await self.middleware.call('failover.status') == 'SINGLE':
             return
         if not (await self.middleware.call('failover.config'))['disabled']:
             raise CallError('Disable failover before performing interfaces changes.')
