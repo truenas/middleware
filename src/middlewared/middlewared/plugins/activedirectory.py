@@ -203,18 +203,13 @@ class ActiveDirectory_LDAP(object):
         We can only intialize a single host. In this case,
         we iterate through a list of hosts until we get one that
         works and then use that to set our LDAP handle.
-
-        SASL GSSAPI bind only succeeds when DNS reverse lookup zone
-        is correctly populated. Fall through to simple bind if this
-        fails.
         """
         res = None
         if self._isopen:
             return True
 
         if self.hosts:
-            saved_simple_error = None
-            saved_gssapi_error = None
+            saved_sasl_bind_error = None
             for server in self.hosts:
                 proto = 'ldaps' if SSL(self.ad['ssl']) == SSL.USESSL else 'ldap'
                 uri = f"{proto}://{server['host']}:{server['port']}"
@@ -242,7 +237,7 @@ class ActiveDirectory_LDAP(object):
 
                     ldap.set_option(
                         ldap.OPT_X_TLS_CACERTFILE,
-                        '/etc/certificates/CA/freenas_cas.pem'
+                        '/etc/ssl/truenas_cacerts.pem'
                     )
                     if self.ad['validate_certificates']:
                         ldap.set_option(
@@ -264,34 +259,31 @@ class ActiveDirectory_LDAP(object):
                     except ldap.LDAPError as e:
                         self.logger.debug('%s', e)
 
-                if self.ad['kerberos_principal']:
+                if self.ad['certificate']:
                     try:
-                        self._handle.sasl_gssapi_bind_s()
+                        self._handle.sasl_non_interactive_bind_s('EXTERNAL')
                         if self.ad['verbose_logging']:
-                            self.logger.debug(f'Successfully bound to [{uri}] using SASL GSSAPI.')
-                        res = True
-                        break
+                            self.logger.debug('Successfully bound to [%s] using client certificate.', uri)
                     except Exception as e:
-                        saved_gssapi_error = e
-                        self.logger.debug(f'SASL GSSAPI bind failed: {e}. Attempting simple bind')
+                        saved_sasl_bind_error = e
+                        self.logger.debug('SASL EXTERNAL bind failed.', exc_info=True)
+                        continue
 
-                bindname = f"{self.ad['bindname']}@{self.ad['domainname']}"
                 try:
-                    res = self._handle.simple_bind_s(bindname, self.ad['bindpw'])
+                    self._handle.set_option(ldap.OPT_X_SASL_NOCANON, 1)
+                    self._handle.sasl_gssapi_bind_s()
                     if self.ad['verbose_logging']:
-                        self.logger.debug(f'Successfully bound to [{uri}] using [{bindname}]')
+                        self.logger.debug('Successfully bound to [%s] using SASL GSSAPI.', uri)
+                    res = True
                     break
                 except Exception as e:
-                    self.logger.debug(f'Failed to bind to [{uri}] using [{bindname}]')
-                    saved_simple_error = e
-                    continue
+                    saved_sasl_bind_error = e
+                    self.logger.debug('SASL GSSAPI bind failed.', exc_info=True)
 
             if res:
                 self._isopen = True
-            elif saved_gssapi_error:
-                raise CallError(saved_gssapi_error)
-            elif saved_simple_error:
-                raise CallError(saved_simple_error)
+            elif saved_sasl_bind_error:
+                raise CallError(saved_sasl_bind_error)
 
         return (self._isopen is True)
 
@@ -604,7 +596,7 @@ class ActiveDirectoryService(ConfigService):
         Str('domainname', required=True),
         Str('bindname'),
         Str('bindpw', private=True),
-        Str('ssl', default='ON', enum=['OFF', 'ON', 'START_TLS']),
+        Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
         Int('certificate', null=True),
         Bool('validate_certificates', default=True),
         Bool('verbose_logging'),
@@ -707,7 +699,7 @@ class ActiveDirectoryService(ConfigService):
                     "Simultaneous keytab and password authentication are not permitted."
                 )
 
-        if data['enable'] and not old['enable']:
+        if new['enable'] and not old['enable']:
             try:
                 await self.middleware.run_in_thread(self.validate_credentials, new)
             except Exception as e:
@@ -920,6 +912,30 @@ class ActiveDirectoryService(ConfigService):
                 raise CallError(
                     f'kinit with principal {ad["kerberos_principal"]} failed with error {kinit.stderr.decode()}'
                 )
+        else:
+            if not self.middleware.call_sync('kerberos.realm.query', [('realm', '=', ad['domainname'])]):
+                self.middleware.call_sync(
+                     'datastore.insert',
+                     'directoryservice.kerberosrealm',
+                     {'krb_realm': ad['domainname'].upper()}
+                )
+            self.middleware.call_sync('etc.generate', 'kerberos')
+            kinit = subprocess.run([
+                '/usr/bin/kinit',
+                '--renewable',
+                '--password-file=STDIN',
+                f'{ad["bindname"]}@{ad["domainname"]}'],
+                input=ad['bindpw'].encode(),
+                capture_output=True
+            )
+            if kinit.returncode != 0:
+                realm = self.middleware.call_sync(
+                    'kerberos.realm.query',
+                    [('realm', '=', ad['domainname'])],
+                    {'get': True}
+                )
+                self.middleware.call_sync('kerberos.realm.delete', realm['id'])
+                raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {kinit.sderr.decode()}")
 
         dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:
@@ -932,6 +948,7 @@ class ActiveDirectoryService(ConfigService):
                 [('id', '=', ad['certificate'])],
                 {'get': True}
             )['name']
+
         with ActiveDirectory_LDAP(ad_conf=tmpconf, logger=self.logger, hosts=dcs) as AD_LDAP:
             ret = AD_LDAP.validate_credentials()
 

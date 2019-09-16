@@ -793,7 +793,7 @@ class ActiveDirectory(DirectoryServiceBase):
             " on/off/start_tls"
         ),
         choices=choices.LDAP_SSL_CHOICES,
-        default='on'
+        default='off'
     )
     ad_certificate = models.ForeignKey(
         Certificate,

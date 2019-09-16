@@ -190,7 +190,7 @@ class LDAPQuery(object):
 
                     ldap.set_option(
                         ldap.OPT_X_TLS_CACERTFILE,
-                        '/etc/certificates/CA/freenas_cas.pem'
+                        '/etc/ssl/truenas_cacerts.pem'
                     )
                     if self.ldap['validate_certificates']:
                         ldap.set_option(
@@ -216,15 +216,26 @@ class LDAPQuery(object):
 
                 if self.ldap['anonbind']:
                     try:
-                        res = self._handle._handle.simple_bind_s()
+                        res = self._handle.simple_bind_s()
                         break
                     except Exception as e:
                         saved_simple_error = e
                         self.logger.debug('Anonymous bind failed: %s' % e)
                         continue
 
+                if self.ldap['certificate']:
+                    try:
+                        res = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
+                        if self.ad['verbose_logging']:
+                            self.logger.debug('Successfully bound to [%s] using client certificate.', uri)
+                    except Exception as e:
+                        saved_simple_error = e
+                        self.logger.debug('SASL EXTERNAL bind failed.', exc_info=True)
+                        continue
+
                 if self.ldap['kerberos_principal']:
                     try:
+                        self._handle.set_option(ldap.OPT_X_SASL_NOCANON, 1)
                         self._handle.sasl_gssapi_bind_s()
                         res = True
                         break

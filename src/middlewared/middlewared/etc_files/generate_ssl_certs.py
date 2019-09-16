@@ -23,15 +23,16 @@ def write_certificates(certs, cacerts):
     """
     Write unified CA certificate file for use with LDAP.
     """
-    shutil.copyfile('/usr/local/share/certs/ca-root-nss.crt',
-                    '/etc/certificates/CA/freenas_cas.pem')
-
-    with open('/etc/certificates/CA/freenas_cas.pem', 'a+') as f:
-        f.write('\n## USER UPLOADED CA CERTIFICATES ##\n')
-        for c in cacerts:
-            if cert['chain_list']:
-                f.write('\n'.join(c['chain_list']))
-                f.write('\n\n')
+    if not cacerts:
+        shutil.copyfile('/usr/local/share/certs/ca-root-nss.crt',
+                        '/etc/ssl/truenas_cacerts.pem')
+    else:
+        with open('/etc/ssl/truenas_cacerts.pem', 'a+') as f:
+            f.write('## USER PROVIDED CA CERTIFICATES ##\n')
+            for c in cacerts:
+                if cert['chain_list']:
+                    f.write('\n'.join(c['chain_list']))
+                    f.write('\n\n')
 
 
 async def render(service, middleware):
