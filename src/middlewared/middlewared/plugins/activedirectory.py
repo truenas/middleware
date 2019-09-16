@@ -915,9 +915,9 @@ class ActiveDirectoryService(ConfigService):
         else:
             if not self.middleware.call_sync('kerberos.realm.query', [('realm', '=', ad['domainname'])]):
                 self.middleware.call_sync(
-                     'datastore.insert',
-                     'directoryservice.kerberosrealm',
-                     {'krb_realm': ad['domainname'].upper()}
+                    'datastore.insert',
+                    'directoryservice.kerberosrealm',
+                    {'krb_realm': ad['domainname'].upper()}
                 )
             self.middleware.call_sync('etc.generate', 'kerberos')
             kinit = subprocess.run([
