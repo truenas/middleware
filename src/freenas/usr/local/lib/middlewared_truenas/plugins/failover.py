@@ -1097,8 +1097,12 @@ class FailoverService(ConfigService):
 
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
-            remote.call('update.destroy_upload_location')
-            remote_path = remote.call('update.create_upload_location')
+            if legacy_upgrade:
+                namespace = 'notifier'
+            else:
+                namespace = 'update'
+            remote.call(f'{namespace}.destroy_upload_location')
+            remote_path = remote.call(f'{namespace}.create_upload_location')
 
             # Only send files to standby:
             # 1. Its a manual upgrade which means it needs to go through master first
