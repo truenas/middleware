@@ -12,7 +12,7 @@ job_results = None
 
 # default URL
 repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
-index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/master/INDEX'
+index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/11.3-RELEASE/INDEX'
 plugin_index = GET(index_url).json()
 plugin_list = list(plugin_index.keys())
 
