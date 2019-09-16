@@ -179,7 +179,7 @@ def test__get_smartd_config():
         "disk_difference": None,
         "disk_informational": None,
     }) == textwrap.dedent("""\
-        /dev/ada0 -d sat -n never -W 0,1,2 -M exec /usr/local/libexec/smart_alert.py\\
+        /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/libexec/smart_alert.py\\
         -s S/../.././..\\
          --options""")
 
@@ -196,7 +196,7 @@ def test__get_smartd_config_without_schedule():
         "disk_difference": None,
         "disk_informational": None,
     }) == textwrap.dedent("""\
-        /dev/ada0 -d sat -n never -W 0,1,2 -M exec /usr/local/libexec/smart_alert.py --options""")
+        /dev/ada0 -d sat -n never -W 0,1,2 -m root -M exec /usr/local/libexec/smart_alert.py --options""")
 
 
 def test__get_smartd_config_with_temp():
@@ -211,4 +211,4 @@ def test__get_smartd_config_with_temp():
         "disk_difference": 10,
         "disk_informational": 40,
     }) == textwrap.dedent("""\
-        /dev/ada0 -d sat -n never -W 10,40,50 -M exec /usr/local/libexec/smart_alert.py --options""")
+        /dev/ada0 -d sat -n never -W 10,40,50 -m root -M exec /usr/local/libexec/smart_alert.py --options""")

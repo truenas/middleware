@@ -46,7 +46,7 @@ def get_smartd_config(disk):
     config = f"{args} -n {disk['smart_powermode']} -W {difference}," \
              f"{informational},{critical}"
 
-    config += " -M exec /usr/local/libexec/smart_alert.py"
+    config += " -m root -M exec /usr/local/libexec/smart_alert.py"
 
     if disk.get('smarttest_type'):
         config += f"\\\n-s {disk['smarttest_type']}/" + get_smartd_schedule(disk) + "\\\n"
