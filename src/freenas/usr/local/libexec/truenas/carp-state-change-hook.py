@@ -441,7 +441,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             p.start()
             for volume in fobj['volumes']:
                 log.warn('Importing %s', volume)
-                error, output = run('/sbin/zpool import %s -o cachefile=none -m -R /mnt -f %s' % (
+                error, output = run('zpool import %s -o cachefile=none -m -R /mnt -f %s' % (
                     '-c /data/zfs/zpool.cache.saved' if os.path.exists(
                         '-c /data/zfs/zpool.cache.saved'
                     ) else '',
@@ -449,7 +449,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 ))
                 if error:
                     open(FAILED_FILE, 'w').close()
-                run('/sbin/zpool set cachefile=/data/zfs/zpool.cache %s' % volume)
+                run('zpool set cachefile=/data/zfs/zpool.cache %s' % volume)
 
             p.terminate()
             os.system("pkill -9 -f 'dtrace -qn'")
