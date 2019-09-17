@@ -659,7 +659,7 @@ class ActiveDirectoryService(ConfigService):
         Str('site', null=True),
         Int('kerberos_realm', null=True),
         Str('kerberos_principal', null=True),
-        Int('timeout', default=10),
+        Int('timeout', default=60),
         Int('dns_timeout', default=10),
         Str('idmap_backend', default='RID', enum=['AD', 'AUTORID', 'FRUIT', 'LDAP', 'NSS', 'RFC2307', 'RID', 'SCRIPT']),
         Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),

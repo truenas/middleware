@@ -892,7 +892,7 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
         help_text=_("Timeout for AD related commands."),
-        default=10
+        default=60
     )
     ad_dns_timeout = models.IntegerField(
         verbose_name=_("DNS timeout"),
