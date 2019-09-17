@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import SystemServiceService, private
+from middlewared.service import SystemServiceService, private, ValidationErrors
 
 
 class DynDNSService(SystemServiceService):
@@ -55,6 +55,25 @@ class DynDNSService(SystemServiceService):
             'ipv6tb@he.net': 'he.net'
         }
 
+    @private
+    async def validate_data(self, data, schema):
+        verrors = ValidationErrors()
+        provider = data['provider']
+        if provider == 'custom':
+            for k in ('custom_ddns_server', 'custom_ddns_path'):
+                if not data[k]:
+                    verrors.add(
+                        f'{schema}.{k}',
+                        'Required when using a custom provider.'
+                    )
+        elif provider not in (await self.provider_choices()):
+            verrors.add(
+                f'{schema}.provider',
+                'Please select a valid provider.'
+            )
+
+        verrors.check()
+
     @accepts(Dict(
         'dyndns_update',
         Str('provider'),
@@ -64,7 +83,7 @@ class DynDNSService(SystemServiceService):
         Bool('ssl'),
         Str('custom_ddns_server'),
         Str('custom_ddns_path'),
-        List('domain', items=[Str('domain')]),
+        List('domain', items=[Str('domain')], empty=False),
         Str('username'),
         Str('password'),
         Int('period'),
@@ -83,6 +102,8 @@ class DynDNSService(SystemServiceService):
 
         new = old.copy()
         new.update(data)
+
+        await self.validate_data(new, 'dyndns_update')
 
         new["domain"] = " ".join(new["domain"])
         new["password"] = await self.middleware.call("pwenc.encrypt", new["password"])
