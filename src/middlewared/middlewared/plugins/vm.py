@@ -1282,7 +1282,13 @@ class VMService(CRUDService):
     )
     @job(lock=lambda args: f'stop_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
     def stop(self, job, id, options):
-        """Stop a VM."""
+        """
+        Stops a VM.
+
+        For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become
+        unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only going to send a
+        shutdown signal to the guest and wait the desired `shutdown_timeout` value before tearing down guest vmemory.
+        """
         self.ensure_libvirt_connection()
         vm_data = self.middleware.call_sync('vm._get_instance', id)
         vm = self.vms[vm_data['name']]
