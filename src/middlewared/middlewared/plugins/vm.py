@@ -1278,6 +1278,7 @@ class VMService(CRUDService):
         Dict(
             'options',
             Bool('force', default=False),
+            Bool('force_after_timeout', default=False),
         ),
     )
     @job(lock=lambda args: f'stop_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
@@ -1288,6 +1289,9 @@ class VMService(CRUDService):
         For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become
         unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only going to send a
         shutdown signal to the guest and wait the desired `shutdown_timeout` value before tearing down guest vmemory.
+
+        `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
+        not already stopped within the specified `shutdown_timeout`.
         """
         self.ensure_libvirt_connection()
         vm_data = self.middleware.call_sync('vm._get_instance', id)
@@ -1297,6 +1301,9 @@ class VMService(CRUDService):
             vm.poweroff()
         else:
             vm.stop(vm_data['shutdown_timeout'])
+
+        if options['force_after_timeout'] and self.status(id)['state'] == 'RUNNING':
+            vm.poweroff()
 
         self.middleware.call_sync('vm._teardown_guest_vmemory', id)
 
@@ -1934,20 +1941,10 @@ async def __event_system_ready(middleware, event_type, args):
         await mw.call('vm.start', vm['id'])
 
     async def stop_vm(mw, vm):
-        stop_job = await mw.call('vm.stop', vm['id'])
+        stop_job = await mw.call('vm.stop', vm['id'], {'force_after_timeout': True})
         await stop_job.wait()
         if stop_job.error:
             mw.logger.error(f'Stopping VM {vm["name"]} failed: {stop_job.error}')
-
-        # Let's ensure that we force poweroff the VM if it hasn't stopped by it's defined timeout
-        if (await mw.call('vm.status', vm['id']))['state'] == 'RUNNING':
-            mw.logger.debug(
-                f'Powering off VM {vm["name"]} as it failed to stop within {vm["shutdown_timeout"]} seconds.'
-            )
-            try:
-                await mw.call('vm.poweroff', vm['id'])
-            except Exception as e:
-                mw.logger.debug(f'Powering off VM {vm["name"]} failed: {e}', exc_info=True)
 
     if args['id'] == 'ready':
         global ZFS_ARC_MAX_INITIAL
