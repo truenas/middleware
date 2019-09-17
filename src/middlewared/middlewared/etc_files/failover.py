@@ -6,7 +6,6 @@
 
 from collections import defaultdict
 from subprocess import Popen, PIPE
-import itertools
 import json
 import os
 import shutil
@@ -43,9 +42,6 @@ def render(service, middleware):
                 ('failover_critical', '=', True),
             ])
         ],
-        'ips': list(itertools.chain(*[
-            i['failover_virtual_aliases'] for i in interfaces
-        ])),
         'internal_interfaces': middleware.call_sync('failover.internal_interfaces'),
     }
 
