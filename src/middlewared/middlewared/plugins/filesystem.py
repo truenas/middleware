@@ -201,7 +201,7 @@ class FilesystemService(Service):
     @private
     @accepts(
         Str('path'),
-        Str('content'),
+        Str('content', max_length=512000),
         Dict(
             'options',
             Bool('append', default=False),
@@ -213,8 +213,6 @@ class FilesystemService(Service):
         Simplified file receiving method for small files.
 
         `content` must be a base 64 encoded file content.
-
-        DISCLAIMER: DO NOT USE THIS FOR BIG FILES (> 500KB).
         """
         options = options or {}
         dirname = os.path.dirname(path)
