@@ -217,7 +217,7 @@ class ActiveDirectory_LDAP(object):
                     self._handle = ldap.initialize(uri)
                 except Exception as e:
                     self.logger.debug(
-                       f'Failed to initialize ldap connection to [{uri}]: ({e}). Moving to next server.'
+                        f'Failed to initialize ldap connection to [{uri}]: ({e}). Moving to next server.'
                     )
                     continue
 
