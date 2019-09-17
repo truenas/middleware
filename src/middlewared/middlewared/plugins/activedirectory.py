@@ -52,7 +52,7 @@ class SRV(enum.Enum):
 class SSL(enum.Enum):
     NOSSL = 'OFF'
     USESSL = 'ON'
-    USETLS = 'START_TLS'
+    USESTARTTLS = 'START_TLS'
 
 
 class ActiveDirectory_DNS(object):
@@ -216,7 +216,9 @@ class ActiveDirectory_LDAP(object):
                 try:
                     self._handle = ldap.initialize(uri)
                 except Exception as e:
-                    self.logger.debug(f'Failed to initialize ldap connection to [{uri}]: ({e}). Moving to next server.')
+                    self.logger.debug(
+                       f'Failed to initialize ldap connection to [{uri}]: ({e}). Moving to next server.'
+                    )
                     continue
 
                 if self.ad['verbose_logging']:
@@ -228,11 +230,14 @@ class ActiveDirectory_LDAP(object):
                 ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, self.ad['dns_timeout'])
 
                 if SSL(self.ad['ssl']) != SSL.NOSSL:
-                    ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
                     if self.ad['certificate']:
                         ldap.set_option(
                             ldap.OPT_X_TLS_CERTFILE,
                             f"/etc/certificates/{self.ad['certificate']}.crt"
+                        )
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_KEYFILE,
+                            f"/etc/certificates/{self.ad['certificate']}.key"
                         )
 
                     ldap.set_option(
@@ -252,25 +257,72 @@ class ActiveDirectory_LDAP(object):
 
                     ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
-                if SSL(self.ad['ssl']) == SSL.USETLS:
+                if SSL(self.ad['ssl']) == SSL.USESTARTTLS:
                     try:
                         self._handle.start_tls_s()
 
                     except ldap.LDAPError as e:
-                        self.logger.debug('%s', e)
+                        saved_bind_error = e
+                        self.logger.debug('Failed to initialize start_tls: %s', e)
+                        continue
 
-                if self.ad['certificate']:
+                if self.ad['certificate'] and SSL(self.ad['ssl']) != SSL.NOSSL:
+                    """
+                    Active Directory permits two means of establishing an
+                    SSL/TLS-protected connection to a DC. The first is by
+                    connecting to a DC on a protected LDAPS port (TCP ports 636
+                    and 3269 in AD DS, and a configuration-specific port in AD
+                    LDS). The second is by connecting to a DC on a regular LDAP
+                    port (TCP ports 389 or 3268 in AD DS, and a configuration-
+                    specific port in AD LDS), and later sending an
+                    LDAP_SERVER_START_TLS_OID extended operation [RFC2830]. In
+                    both cases, the DC will request (but not require) the
+                    client's certificate as part of the SSL/TLS handshake
+                    [RFC2246]. If the client presents a valid certificate to
+                    the DC at that time, it can be used by the DC to
+                    authenticate (bind) the connection as the credentials
+                    represented by the certificate. See MS-ADTS 5.1.1.2
+
+                    See also RFC2829 7.1: Following the successful completion
+                    of TLS negotiation, the client will send an LDAP bind
+                    request with the SASL "EXTERNAL" mechanism.
+                    """
                     try:
-                        self._handle.sasl_non_interactive_bind_s('EXTERNAL')
+                        res = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
                         if self.ad['verbose_logging']:
-                            self.logger.debug('Successfully bound to [%s] using client certificate.', uri)
+                            self.logger.debug(
+                                'Successfully bound to [%s] using client certificate.', uri
+                            )
+                        break
+
                     except Exception as e:
                         saved_sasl_bind_error = e
-                        self.logger.debug('SASL EXTERNAL bind failed.', exc_info=True)
+                        self.logger.debug('Certificate-based bind failed.', exc_info=True)
                         continue
 
                 try:
+                    """
+                    While Active Directory permits SASL binds to be performed
+                    on an SSL/TLS-protected connection, it does not permit the
+                    use of SASL-layer encryption/integrity verification
+                    mechanisms on such a connection. While this restriction is
+                    present in Active Directory on Windows 2000 Server
+                    operating system and later, versions prior to Windows
+                    Server 2008 operating system can fail to reject an LDAP
+                    bind that is requesting SASL-layer encryption/integrity
+                    verification mechanisms when that bind request is sent on a
+                    SSL/TLS-protected connection. See MS-ADTS 5.1.1.1.2
+
+                    Samba AD Domain controllers also require the following
+                    smb.conf parameter in order to permit SASL_GSSAPI on an SSL/
+                    TLS-protected connection:
+
+                    'ldap server require strong auth = allow_sasl_over_tls'
+                    """
                     self._handle.set_option(ldap.OPT_X_SASL_NOCANON, 1)
+                    if SSL(self.ad['ssl']) != SSL.NOSSL:
+                        self._handle.set_option(ldap.OPT_X_SASL_SSF_MAX, 0)
+
                     self._handle.sasl_gssapi_bind_s()
                     if self.ad['verbose_logging']:
                         self.logger.debug('Successfully bound to [%s] using SASL GSSAPI.', uri)
@@ -282,7 +334,7 @@ class ActiveDirectory_LDAP(object):
 
             if res:
                 self._isopen = True
-            elif saved_sasl_bind_error:
+            elif saved_bind_error:
                 raise CallError(saved_sasl_bind_error)
 
         return (self._isopen is True)
@@ -626,57 +678,105 @@ class ActiveDirectoryService(ConfigService):
 
         `bindname` username used to perform the intial domain join.
 
-        `bindpw` password used to perform the initial domain join.
+        `bindpw` password used to perform the initial domain join. User-
+        provided credentials are used to obtain a kerberos ticket, which
+        is used to perform the actual domain join.
 
-        `ssl` encryption type for LDAP queries used in parameter autodetection during initial domain join.
+        `ssl` establish SSL/TLS-protected connections to the DCs in the
+        Active Directory domain.
 
-        `certificate` certificate to use for LDAPS.
+        `certificate` LDAPs client certificate to be used for certificate-
+        based authentication in the AD domain. If certificate-based
+        authentication is not configured, SASL GSSAPI binds will be performed.
+
+        `validate_certificates` specifies whether to perform checks on server
+        certificates in a TLS session. If enabled, TLS_REQCERT demand is set.
+        The server certificate is requested. If no certificate is provided or
+        if a bad certificate is provided, the session is immediately terminated.
+        If disabled, TLS_REQCERT allow is set. The server certificate is
+        requested, but all errors are ignored.
 
         `verbose_logging` increase logging during the domain join process.
 
-        `use_default_domain` controls whether domain users and groups will have the pre-windows 2000 domain name prepended
-        to the user account. When enabled, the user will appear as "administrator" rather than "EXAMPLE\administrator"
+        `use_default_domain` controls whether domain users and groups will have
+        the pre-windows 2000 domain name prepended to the user account. When
+        enabled, the user will appear as "administrator" rather than
+        "EXAMPLE\administrator"
 
-        `allow_trusted_doms` enable support for trusted domains. If this parameter is enabled, then separate idmap backends _must_
-        be configured for each trusted domain, and the idmap cache should be cleared.
+        `allow_trusted_doms` enable support for trusted domains. If this
+        parameter is enabled, then separate idmap backends _must_ be configured
+        for each trusted domain, and the idmap cache should be cleared.
 
-        `allow_dns_updates` during the domain join process, automatically generate DNS entries in the AD domain for the NAS. If
-        this is disabled, then a domain administrator must manually add appropriate DNS entries for the NAS.
+        `allow_dns_updates` during the domain join process, automatically
+        generate DNS entries in the AD domain for the NAS. If this is disabled,
+        then a domain administrator must manually add appropriate DNS entries
+        for the NAS. This is a recommended parameter for TrueNAS HA servers.
 
-        `disable_freenas_cache` disable active caching of AD users and groups. When disabled, only users cached in winbind's internal
-        cache will be visible in GUI dropdowns. Disabling active caching is recommended environments with a large amount of users.
+        `disable_freenas_cache` disable active caching of AD users and groups.
+        When disabled, only users cached in winbind's internal cache will be
+        visible in GUI dropdowns. Disabling active caching is recommended
+        environments with a large amount of users.
 
-        `site` AD site of which the NAS is a member. This parameter is auto-detected during the domain join process. If no AD site
-        is configured for the subnet in which the NAS is configured, then this parameter will appear as 'Default-First-Site-Name'.
-        Auto-detection is only performed during the initial domain join.
+        `site` AD site of which the NAS is a member. This parameter is auto-
+        detected during the domain join process. If no AD site is configured
+        for the subnet in which the NAS is configured, then this parameter will
+        appear as 'Default-First-Site-Name'. Auto-detection is only performed
+        during the initial domain join.
 
-        `kerberos_realm` in which the server is located. This parameter will be automatically populated during the
-        initial domain join. If the NAS has an AD site configured and that site has multiple kerberos servers, then the kerberos realm
-        will be automatically updated with a site-specific configuration. Auto-detection is only performed during initial domain join.
+        `kerberos_realm` in which the server is located. This parameter will be
+        automatically populated during the initial domain join. If the NAS has
+        an AD site configured and that site has multiple kerberos servers, then
+        the kerberos realm will be automatically updated with a site-specific
+        configuration to use those servers. Auto-detection is only performed
+        during initial domain join.
 
-        `kerberos_principal` kerberos principal to use for AD-related operations outside of Samba. After intial domain join, this field
-        will be updated with the kerberos principal associated with the AD machine account for the NAS.
+        `kerberos_principal` kerberos principal to use for AD-related
+        operations outside of Samba. After intial domain join, this field will
+        be updated with the kerberos principal associated with the AD machine
+        account for the NAS.
 
-        `nss_info` controls how Winbind retrieves Name Service Information to construct a user's home directory and login shell. This parameter
-        is only effective if the Active Directory Domain Controller supports the Microsoft Services for Unix (SFU) LDAP schema.
-        :timeout: - timeout value for winbind-related operations. This value may need to be increased in  environments with high latencies
-        for communications with domain controllers or a large number of domain controllers. Lowering the value may cause status checks to fail.
+        `nss_info` controls how Winbind retrieves Name Service Information to
+        construct a user's home directory and login shell. This parameter
+        is only effective if the Active Directory Domain Controller supports
+        the Microsoft Services for Unix (SFU) LDAP schema.
 
-        `dns_timeout` timeout value for DNS queries during the initial domain join.
+        `timeout` timeout value for winbind-related operations. This value may
+        need to be increased in  environments with high latencies for
+        communications with domain controllers or a large number of domain
+        controllers. Lowering the value may cause status checks to fail.
 
-        `ldap_sasl_wrapping` defines whether ldap traffic will be signed or signed and encrypted (sealed).
+        `dns_timeout` timeout value for DNS queries during the initial domain
+        join. This value is also set as the NETWORK_TIMEOUT in the ldap config
+        file.
 
-        `createcomputer` Active Directory Organizational Unit in which to create the NAS computer object during domain join.
-        If blank, then the default OU is used during computer account creation. Precreate the computer account in a specific OU.
-        The OU string read from top to bottom without RDNs and delimited by a "/". E.g. "createcomputer=Computers/Servers/Unix NB: A backslash
-        "\" is used as escape at multiple levels and may need to be doubled or even quadrupled. It is not used as a separator.
+        `ldap_sasl_wrapping` defines whether ldap traffic will be signed or
+        signed and encrypted (sealed). LDAP traffic that does not originate
+        from Samba defaults to using GSSAPI signing unless it is tunnelled
+        over LDAPs.
 
-        `idmap_backend` provides a plugin interface for Winbind to use varying backends to store SID/uid/gid mapping tables.
+        `createcomputer` Active Directory Organizational Unit in which to
+        create the NAS computer object during domain join.
 
-        The Active Directory service will be started after a configuration update if the service was initially disabled, and the updated
-        configuration sets :enable: to True. Likewise, the Active Directory service will be stopped if :enable: is changed to False
-        during an update. If the configuration is updated, but the initial :enable: state was True, then only a samba_server restart
-        command will be issued.
+        If blank, then the default OU is used during computer account creation.
+        Precreate the computer account in a specific OU. The OU string read from
+        top to bottom without RDNs and delimited by a "/". For example,
+        "createcomputer=Computers/Servers/Unix. Backslashes "\" are used as an
+        escape character, and not as a separator.
+
+        `idmap_backend` provides a plugin interface for Winbind to use varying
+        backends to store SID/uid/gid mapping tables. The correct setting
+        depends on the environment in which the NAS is deployed.
+
+        The Active Directory service will be started after a configuration
+        update if the service was initially disabled, and the updated
+        configuration sets `enable` to `True`. Likewise, the Active Directory
+        service will be stopped if `enable` is changed to `False`. If the
+        configuration is updated, but the initial `enable` state is `True`, and
+        remains unchanged, then the samba server will only be restarted.
+
+        During the domain join, a kerberos keytab for the newly-created AD
+        machine account will be generated. It is used for all future
+        LDAP / AD interaction and the user-provided credentials are removed.
         """
         verrors = ValidationErrors()
         old = await self.config()
@@ -896,10 +996,8 @@ class ActiveDirectoryService(ConfigService):
     @private
     def validate_credentials(self, ad=None):
         """
-        Performs test bind to LDAP server in AD environment. If a kerberos principal
-        is defined, then we must get a kerberos ticket before trying to validate
-        credentials. For this reason, we first generate the krb5.conf and krb5.keytab
-        and then we perform a kinit using this principal.
+        Performs test bind to LDAP server in AD environment. Since we are performing
+        sasl_gssapi binds, we must first configure kerberos and obtain a ticket.
         """
         ret = False
         if ad is None:
@@ -1227,6 +1325,8 @@ class ActiveDirectoryService(ConfigService):
         object from AD and clear relevant configuration data from
         the NAS.
         This requires credentials for appropriately-privileged user.
+        Credentials are used to obtain a kerberos ticket, which is
+        used to perform the actual removal from the domain.
         """
         ad = await self.config()
         principal = f'{data["username"]}@{ad["domainname"]}'

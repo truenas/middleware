@@ -1034,51 +1034,6 @@ class LDAP(DirectoryServiceBase):
         verbose_name=_("Allow Anonymous Binding"),
         default=False
     )
-    ldap_usersuffix = models.CharField(
-        verbose_name=_("User Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used for "
-            "users when these are added to the LDAP directory, e.g. "
-            "ou=Users"),
-        blank=True
-    )
-    ldap_groupsuffix = models.CharField(
-        verbose_name=_("Group Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used "
-            "for groups when these are added to the LDAP directory, e.g. "
-            "ou=Groups"),
-        blank=True
-    )
-    ldap_passwordsuffix = models.CharField(
-        verbose_name=_("Password Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used for "
-            "passwords when these are added to the LDAP directory, e.g. "
-            "ou=Passwords"),
-        blank=True
-    )
-    ldap_machinesuffix = models.CharField(
-        verbose_name=_("Machine Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used for "
-            "machines when these are added to the LDAP directory, e.g. "
-            "ou=Computers"),
-        blank=True
-    )
-    ldap_sudosuffix = models.CharField(
-        verbose_name=_("SUDO Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used for "
-            "the SUDO configuration in the LDAP directory, e.g. "
-            "ou=SUDOers"),
-        blank=True
-    )
     ldap_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),

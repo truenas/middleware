@@ -7,9 +7,6 @@ def migrate_to_ldaps_ad(apps, schema_editor):
         if o.ad_dns_timeout == 60:
             o.ad_dns_timeout = 10
 
-        if o.ad_timeout == 60:
-            o.ad_timeout = 10
-
         if not o.ad_enable:
             o.ad_ldap_sasl_wrapping = 'sign'
 
@@ -51,5 +48,10 @@ class Migration(migrations.Migration):
                 )
             )
         ),
+        migrations.RemoveField(model_name='LDAP', name='ldap_usersuffix'),
+        migrations.RemoveField(model_name='LDAP', name='ldap_groupsuffix'),
+        migrations.RemoveField(model_name='LDAP', name='ldap_passwordsuffix'),
+        migrations.RemoveField(model_name='LDAP', name='ldap_machinesuffix'),
+        migrations.RemoveField(model_name='LDAP', name='ldap_sudosuffix'),
         migrations.RunPython(migrate_to_ldaps_ad, reverse_code=migrations.RunPython.noop),
     ]
