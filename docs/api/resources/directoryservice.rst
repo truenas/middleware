@@ -188,21 +188,16 @@ List resource
             "ldap_certificate": null,
             "ldap_dns_timeout": 10,
             "ldap_enable": false,
-            "ldap_groupsuffix": "",
             "ldap_has_samba_schema": false,
             "ldap_hostname": "",
             "ldap_idmap_backend": "ldap",
             "ldap_kerberos_principal": null,
             "ldap_kerberos_realm": null,
-            "ldap_machinesuffix": "",
             "ldap_netbiosalias": "",
             "ldap_netbiosname_a": "NAS",
-            "ldap_passwordsuffix": "",
             "ldap_schema": "rfc2307",
             "ldap_ssl": "off",
-            "ldap_sudosuffix": "",
             "ldap_timeout": 10,
-            "ldap_usersuffix": ""
         }
 
    :resheader Content-Type: content type of the response
@@ -238,13 +233,9 @@ Update resource
 
         {
                 "ldap_hostname": "ldaphostname",
-                "ldap_groupsuffix": "",
-                "ldap_passwordsuffix": "",
                 "ldap_anonbind": false,
                 "ldap_ssl": "off",
-                "ldap_machinesuffix": "",
                 "ldap_basedn": "dc=test,dc=org",
-                "ldap_usersuffix": "",
                 "ldap_bindpw": "",
                 "ldap_binddn": "",
                 "ldap_enable": false,
@@ -260,21 +251,16 @@ Update resource
    :json string ldap_certificate: id of your certificate
    :json integer ldap_dns_timeout: timeout for LDAP DNS queries
    :json boolean ldap_enable: enable LDAP directory service
-   :json string ldap_groupsuffix: suffix that is used for groups
    :json boolean ldap_has_samba_schema: does LDAP have Samba schema
    :json string ldap_hostname: name or IP address of the LDAP server
    :json string ldap_idmap_backend: IDmap backend
    :json string ldap_kerberos_principal: Kerberos principal
    :json string ldap_kerberos_realm: Kerberos realm
-   :json string ldap_machinesuffix: suffix that is used for machines
    :json string ldap_netbiosalias: NetBIOS alias
    :json string ldap_netbiosname_a: NetBIOS hostname
-   :json string ldap_passwordsuffix: suffix that is used for passwords
    :json string ldap_schema: LDAP schema type
    :json string ldap_ssl: encryption mode (off/on/start_tls)
-   :json string ldap_sudosuffix: suffix that is used for SUDO users
    :json integer ldap_timeout: timeout for LDAP commands
-   :json string ldap_usersuffix: suffix that is used for users
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
