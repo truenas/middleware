@@ -10,7 +10,6 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=	dev@ixsystems.com
 COMMENT=	miscellaneous files for FreeNAS
 
-PRODUCT?=
 PREFIX=/
 
 USES= 	python
