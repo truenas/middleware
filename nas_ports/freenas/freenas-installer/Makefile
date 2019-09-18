@@ -10,6 +10,8 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=	dev@ixsystems.com
 COMMENT=	FreeNAS installer
 
+RUN_DEPENDS=	dmidecode>0:sysutils/dmidecode
+
 USE_XZ=		yes
 
 NO_BUILD=	yes
