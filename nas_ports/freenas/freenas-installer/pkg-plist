@@ -1,7 +1,7 @@
 /bin/install_worker.sh
 /bin/install_worker2.sh
 /etc/install.sh
-%%TRUENAS%%/etc/install_sata_dom.sh
+/etc/install_sata_dom.sh
 /etc/rc
 /lib/functions.sh
 /pre-install/0001.prevent_downgrade.sh
