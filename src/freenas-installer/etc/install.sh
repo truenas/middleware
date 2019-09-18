@@ -12,6 +12,9 @@ export TERM
 
 . /etc/avatar.conf
 
+# Boot Pool
+readonly BOOT_POOL="boot-pool"
+
 # Constants for base 10 and base 2 units
 : ${kB:=$((1000))}      ${kiB:=$((1024))};       readonly kB kiB
 : ${MB:=$((1000 * kB))} ${MiB:=$((1024 * kiB))}; readonly MB MiB
@@ -406,7 +409,7 @@ mount_disk()
 
 	_mnt="$1"
 	mkdir -p "${_mnt}"
-	mount -t zfs -o noatime freenas-boot/ROOT/${BENAME} ${_mnt}
+	mount -t zfs -o noatime ${BOOT_POOL}/ROOT/${BENAME} ${_mnt}
 	mkdir -p ${_mnt}/data
 	return 0
 }
@@ -532,10 +535,10 @@ partition_disks()
     else
 	_mirror=""
     fi
-    zpool create -f -o cachefile=/tmp/zpool.cache -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_mirror} ${_disksparts}
-    zfs set compression=on freenas-boot
-    zfs create -o canmount=off freenas-boot/ROOT
-    zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME}
+    zpool create -f -o cachefile=/tmp/zpool.cache -O mountpoint=none -O atime=off -O canmount=off ${BOOT_POOL} ${_mirror} ${_disksparts}
+    zfs set compression=on ${BOOT_POOL}
+    zfs create -o canmount=off ${BOOT_POOL}/ROOT
+    zfs create -o mountpoint=legacy ${BOOT_POOL}/ROOT/${BENAME}
 
     return 0
 }
@@ -604,24 +607,24 @@ disk_is_freenas()
     fi
 
     # Make sure this is a FreeNAS boot pool.
-    zdb -l ${part} | grep -qF "name: 'freenas-boot'" || return 1
+    zdb -l ${part} | grep -qF "name: '${BOOT_POOL}'" || return 1
 
-    # Import the pool by GUID in case there are multiple freenas-boot pools.
+    # Import the pool by GUID in case there are multiple ${BOOT_POOL} pools.
     pool_guid=$(get_disk_pool_guid ${disk})
     zpool import -N -f ${pool_guid} || return 1
 
     # We could give the user a list of the boot environments to choose from,
     # but for now we just use the active boot environment for the pool.
-    boot_env=$(zpool get -Ho value bootfs freenas-boot)
+    boot_env=$(zpool get -Ho value bootfs ${BOOT_POOL})
     if [ -z "${boot_env}" ]; then
-	zpool export freenas-boot || true
+	zpool export ${BOOT_POOL} || true
 	return 1
     fi
 
     mkdir -p /tmp/data_old
     mount -t zfs "${boot_env}" /tmp/data_old
     if [ $? != 0 ]; then
-	zpool export freenas-boot || true
+	zpool export ${BOOT_POOL} || true
 	return 1
     fi
 
@@ -632,7 +635,7 @@ disk_is_freenas()
     if [ ! -f /tmp/data_old/data/freenas-v1.db -o \
 	   -d /tmp/data_old/data/freenas.db ]; then
 	umount /tmp/data_old || true
-	zpool export freenas-boot || true
+	zpool export ${BOOT_POOL} || true
 	return 1
     fi
 
@@ -640,7 +643,7 @@ disk_is_freenas()
     preserve_data
 
     umount /tmp/data_old || return 1
-    zpool export freenas-boot || return 1
+    zpool export ${BOOT_POOL} || return 1
     return 0
 }
 
@@ -704,16 +707,16 @@ create_be()
 
     # When upgrading, we will simply create a new BE dataset and install
     # fresh into that, so old datasets are not lost.  The pool is imported
-    # by GUID for safety in case multiple freenas-boot pools are present.
+    # by GUID for safety in case multiple ${BOOT_POOL} pools are present.
     pool_guid=$(get_disk_pool_guid ${disk})
     zpool import -N -f ${pool_guid} || return 1
 
     # Create the new BE
-    zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME} || return 1
+    zfs create -o mountpoint=legacy ${BOOT_POOL}/ROOT/${BENAME} || return 1
 
     # Mount the new BE datasets
     mkdir -p ${mountpoint}
-    mount -t zfs freenas-boot/ROOT/${BENAME} ${mountpoint} || return 1
+    mount -t zfs ${BOOT_POOL}/ROOT/${BENAME} ${mountpoint} || return 1
     mkdir -p ${mountpoint}/data
 
     return 0
@@ -741,12 +744,10 @@ menu_install()
     local whendone=""
 
     local CD_UPGRADE_SENTINEL NEED_UPDATE_SENTINEL FIRST_INSTALL_SENTINEL
-    local POOL
     readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     readonly NEED_UPDATE_SENTINEL="/data/need-update"
     # create a sentinel file for post-fresh-install boots
     readonly FIRST_INSTALL_SENTINEL="/data/first-boot"
-    readonly POOL="freenas-boot"
 
     _tmpfile="/tmp/answer"
     TMPFILE=$_tmpfile
@@ -1026,7 +1027,7 @@ menu_install()
     # Save current serial console settings into database.
     save_serial_settings /tmp/data
     # Set default boot filesystem
-    zpool set bootfs=freenas-boot/ROOT/${BENAME} freenas-boot
+    zpool set bootfs=${BOOT_POOL}/ROOT/${BENAME} ${BOOT_POOL}
     install_loader /tmp/data ${_realdisks}
 
     if [ -d /tmp/data_preserved ]; then
@@ -1050,7 +1051,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
     : > /tmp/data/${FIRST_INSTALL_SENTINEL}
 
     # Finally, before we unmount, start a scrub.
-    # zpool scrub freenas-boot || true
+    # zpool scrub ${BOOT_POOL} || true
 
     umount /tmp/data/dev
     umount /tmp/data/var
