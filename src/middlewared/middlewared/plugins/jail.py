@@ -467,7 +467,10 @@ class PluginService(CRUDService):
         index = self.retrieve_plugin_index(options)
         if options['plugin'] not in index:
             raise CallError(f'{options["plugin"]} not found')
-        return {'plugin': options['plugin'], 'properties': index[options['plugin']].get('properties', [])}
+        return {
+            'plugin': options['plugin'],
+            'properties': {**IOCPlugin.DEFAULT_PROPS, **index[options['plugin']].get('properties', {})}
+        }
 
     @accepts(
         Str('repository', default='https://github.com/freenas/iocage-ix-plugins.git')
