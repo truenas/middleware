@@ -13,7 +13,8 @@ export TERM
 . /etc/avatar.conf
 
 # Boot Pool
-readonly BOOT_POOL="boot-pool"
+BOOT_POOL="boot-pool"
+NEW_BOOT_POOL="boot-pool"
 
 # Constants for base 10 and base 2 units
 : ${kB:=$((1000))}      ${kiB:=$((1024))};       readonly kB kiB
@@ -542,6 +543,8 @@ partition_disks()
     else
 	_mirror=""
     fi
+    # Regardless of upgrade/fresh installation, if we are creating a new pool, it's going to be named after value of NEW_BOOT_POOL
+    BOOT_POOL=${NEW_BOOT_POOL}
     zpool create -f -o cachefile=/tmp/zpool.cache -O mountpoint=none -O atime=off -O canmount=off ${BOOT_POOL} ${_mirror} ${_disksparts}
     zfs set compression=on ${BOOT_POOL}
     zfs create -o canmount=off ${BOOT_POOL}/ROOT
@@ -614,7 +617,12 @@ disk_is_freenas()
     fi
 
     # Make sure this is a FreeNAS boot pool.
-    zdb -l ${part} | grep -qE "name: '${BOOT_POOL}|freenas-boot'" || return 1
+    local disk_data=$(zdb -l ${part})
+    echo ${disk_data} | grep -qF "name: '${BOOT_POOL}'"
+    if [ $? -eq 1 ]; then
+        echo ${disk_data} | grep -qF "name: 'freenas-boot'" || return 1
+        BOOT_POOL="freenas-boot"
+    fi
 
     # Import the pool by GUID in case there are multiple ${BOOT_POOL} pools.
     pool_guid=$(get_disk_pool_guid ${disk})
