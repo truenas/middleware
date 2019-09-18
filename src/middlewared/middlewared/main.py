@@ -23,7 +23,6 @@ from collections import defaultdict
 
 import argparse
 import asyncio
-import atexit
 import binascii
 import concurrent.futures
 import concurrent.futures.process
@@ -1308,6 +1307,10 @@ class Middleware(LoadPluginsMixin):
             if e.args[0] != "Event loop is closed":
                 raise
 
+        # We use "_exit" specifically as otherwise process pool executor won't let middlewared process die because
+        # it is still active. We don't initiate a shutdown for it because it may hang forever for any reason
+        os._exit(0)
+
     async def __initialize(self):
         self.app = app = web.Application(middlewares=[
             normalize_path_middleware(redirect_class=HTTPPermanentRedirect)
@@ -1370,8 +1373,20 @@ class Middleware(LoadPluginsMixin):
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
                 self.logger.trace("Terminating %r", service)
+                timeout = None
+                if hasattr(service, 'terminate_timeout'):
+                    try:
+                        timeout = await asyncio.wait_for(self.call(f'{service_name}.terminate_timeout'), 5)
+                    except Exception:
+                        self.logger.error(
+                            'Failed to retrieve terminate timeout value for %s', service_name, exc_info=True
+                        )
+
+                # This is to ensure if some service returns 0 as a timeout value meaning it is probably not being
+                # used, we still give it the standard default 10 seconds timeout to ensure a clean exit
+                timeout = timeout or 10
                 try:
-                    await asyncio.wait_for(service.terminate(), 10)
+                    await asyncio.wait_for(service.terminate(), timeout)
                 except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
@@ -1425,9 +1440,6 @@ def main():
                     raise
 
     logger.setup_logging('middleware', args.debug_level, args.log_handler)
-
-    atexit.unregister(concurrent.futures.process._python_exit)
-    atexit.unregister(concurrent.futures.thread._python_exit)
 
     setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own

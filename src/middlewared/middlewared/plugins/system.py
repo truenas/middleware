@@ -523,14 +523,10 @@ class SystemService(Service):
         """
         Shuts down the operating system.
 
-        Emits an "added" event of name "system" and id "shutdown".
+        An "added" event of name "system" and id "shutdown" is emitted when shutdown is initiated.
         """
         if options is None:
             options = {}
-
-        self.middleware.send_event('system', 'ADDED', id='shutdown', fields={
-            'description': 'System is going to shutdown',
-        })
 
         delay = options.get('delay')
         if delay:
@@ -1236,7 +1232,7 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
-    if args['id'] == 'shutting-down':
+    if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
 
@@ -1333,7 +1329,8 @@ async def update_timeout_value(middleware, *args):
     ):
         # Default 120 seconds is being added to scripts timeout to ensure other
         # system related scripts can execute safely within the default timeout
-        timeout_value = 120 + sum(
+        initial_timeout_value = 120
+        timeout_value = sum(
             list(
                 map(
                     lambda i: i['timeout'],
@@ -1346,6 +1343,14 @@ async def update_timeout_value(middleware, *args):
                 )
             )
         )
+
+        vm_timeout = (await middleware.call('vm.terminate_timeout'))
+        if vm_timeout > timeout_value:
+            # VM's and init tasks are executed asynchronously - so if VM timeout is greater then init tasks one,
+            # we use that, else init tasks timeout is good enough to ensure VM's cleanly exit
+            timeout_value = vm_timeout
+
+        timeout_value += initial_timeout_value
 
         await middleware.run_in_thread(
             lambda: setattr(
@@ -1391,7 +1396,7 @@ async def setup(middleware):
 
     await update_timeout_value(middleware)
 
-    for srv in ['initshutdownscript', 'tunable']:
+    for srv in ['initshutdownscript', 'tunable', 'vm']:
         for event in ('create', 'update', 'delete'):
             middleware.register_hook(
                 f'{srv}.post_{event}',

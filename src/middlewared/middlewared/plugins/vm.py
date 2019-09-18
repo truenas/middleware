@@ -5,6 +5,7 @@ from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors, job
 )
 from middlewared.utils import Nid, Popen, run
+from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 from middlewared.validators import Range
 
@@ -13,6 +14,7 @@ import asyncio
 import contextlib
 import errno
 import enum
+import functools
 import ipaddress
 import libvirt
 import math
@@ -38,6 +40,7 @@ logger = middlewared.logger.Logger('vm').getLogger()
 BUFSIZE = 65536
 LIBVIRT_URI = 'bhyve+unix:///system'
 LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
+SHUTDOWN_LOCK = asyncio.Lock()
 VM_BRIDGE = 'virbr0'
 ZFS_ARC_MAX_INITIAL = None
 
@@ -205,18 +208,19 @@ class VMSupervisor:
             if errors:
                 raise CallError('\n'.join(errors))
 
-    def stop(self, shutdown_timeout=90):
+    def stop(self, shutdown_timeout=None):
         self._before_stopping_checks()
 
         self.domain.shutdown()
 
+        shutdown_timeout = shutdown_timeout or self.vm_data['shutdown_timeout']
         # We wait for timeout seconds before initiating post stop activities for the vm
         # This is done because the shutdown call above is non-blocking
         while shutdown_timeout > 0 and self.status()['state'] == 'RUNNING':
             shutdown_timeout -= 5
             time.sleep(5)
 
-    def restart(self, vm_data=None, shutdown_timeout=90):
+    def restart(self, vm_data=None, shutdown_timeout=None):
         self.stop(shutdown_timeout)
 
         # We don't wait anymore because during stop we have already waited for the VM to shutdown cleanly
@@ -930,6 +934,7 @@ class VMService(CRUDService):
         List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
+        Int('shutdown_timeout', default=90, valdiators=[Range(min=5, max=300)]),
         register=True,
     ))
     async def do_create(self, data):
@@ -946,6 +951,10 @@ class VMService(CRUDService):
         separate package. Multiple cores can be configured per CPU by specifying `cores` attributes.
         `vcpus` specifies total number of CPU sockets. `cores` specifies number of cores per socket. `threads`
         specifies number of threads per core.
+
+        `shutdown_timeout` indicates the time in seconds the system waits for the VM to cleanly shutdown. During system
+        shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
+        `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
         """
         self.ensure_libvirt_connection()
 
@@ -1269,19 +1278,32 @@ class VMService(CRUDService):
         Dict(
             'options',
             Bool('force', default=False),
-            Int('timeout', default=90),
+            Bool('force_after_timeout', default=False),
         ),
     )
     @job(lock=lambda args: f'stop_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
     def stop(self, job, id, options):
-        """Stop a VM."""
+        """
+        Stops a VM.
+
+        For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become
+        unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only going to send a
+        shutdown signal to the guest and wait the desired `shutdown_timeout` value before tearing down guest vmemory.
+
+        `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
+        not already stopped within the specified `shutdown_timeout`.
+        """
         self.ensure_libvirt_connection()
-        vm = self.vms[self.middleware.call_sync('vm._get_instance', id)['name']]
+        vm_data = self.middleware.call_sync('vm._get_instance', id)
+        vm = self.vms[vm_data['name']]
 
         if options['force']:
             vm.poweroff()
         else:
-            vm.stop(options['timeout'])
+            vm.stop(vm_data['shutdown_timeout'])
+
+        if options['force_after_timeout'] and self.status(id)['state'] == 'RUNNING':
+            vm.poweroff()
 
         self.middleware.call_sync('vm._teardown_guest_vmemory', id)
 
@@ -1292,19 +1314,13 @@ class VMService(CRUDService):
         self.vms[self.middleware.call_sync('vm._get_instance', id)['name']].poweroff()
 
     @item_method
-    @accepts(
-        Int('id'),
-        Dict(
-            'options',
-            Int('timeout', default=90),
-        ),
-    )
-    @job(lock=lambda args: f'restart_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
-    def restart(self, job, id, options):
+    @accepts(Int('id'))
+    @job(lock=lambda args: f'restart_vm_{args[0]}')
+    def restart(self, job, id):
         """Restart a VM."""
         self.ensure_libvirt_connection()
         vm = self.middleware.call_sync('vm._get_instance', id)
-        self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=options['timeout'])
+        self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
 
     async def _teardown_guest_vmemory(self, id):
         guest_status = await self.middleware.call('vm.status', id)
@@ -1339,13 +1355,17 @@ class VMService(CRUDService):
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
         if self.libvirt_connection and vm['name'] in self.vms:
-            return self.vms[vm['name']].status()
-        else:
-            return {
-                'state': 'ERROR',
-                'pid': None,
-                'domain_state': 'ERROR',
-            }
+            try:
+                # Whatever happens, query shouldn't fail
+                return self.vms[vm['name']].status()
+            except Exception:
+                self.middleware.logger.debug(f'Failed to retrieve VM status for {vm["name"]}', exc_info=True)
+
+        return {
+            'state': 'ERROR',
+            'pid': None,
+            'domain_state': 'ERROR',
+        }
 
     async def __next_clone_name(self, name):
         vm_names = [
@@ -1505,19 +1525,32 @@ class VMService(CRUDService):
 
         return vnc_web
 
-    def __del__(self):
+    @private
+    def close_libvirt_connection(self):
         if self.libvirt_connection:
             with contextlib.suppress(libvirt.libvirtError):
                 self.libvirt_connection.close()
+            self.libvirt_connection = None
+
+    @private
+    async def terminate(self):
+        async with SHUTDOWN_LOCK:
+            await self.middleware.call('vm.close_libvirt_connection')
+
+    @private
+    async def terminate_timeout(self):
+        return max(map(lambda v: v['shutdown_timeout'], await self.middleware.call('vm.query')), default=10)
 
     @private
     async def wait_for_libvirtd(self, timeout):
         async def libvirtd_started(middleware):
+            await middleware.call('service.start', 'libvirtd')
             while not await middleware.call('service.started', 'libvirtd'):
                 time.sleep(2)
 
         try:
-            await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
+            if not await self.middleware.call('service.started', 'libvirtd'):
+                await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
             self.libvirt_connection = libvirt.open(LIBVIRT_URI)
         except (asyncio.TimeoutError, libvirt.libvirtError):
             self.middleware.logger.error('Failed to connect to libvirtd')
@@ -1904,16 +1937,37 @@ async def __event_system_ready(middleware, event_type, args):
     Method called when system is ready, supposed to start VMs
     flagged that way.
     """
-    if args['id'] != 'ready':
-        return
+    async def start_vm(mw, vm):
+        await mw.call('vm.start', vm['id'])
 
-    global ZFS_ARC_MAX_INITIAL
-    ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
+    async def stop_vm(mw, vm):
+        stop_job = await mw.call('vm.stop', vm['id'], {'force_after_timeout': True})
+        await stop_job.wait()
+        if stop_job.error:
+            mw.logger.error(f'Stopping VM {vm["name"]} failed: {stop_job.error}')
 
-    await middleware.call('vm.initialize_vms')
+    if args['id'] == 'ready':
+        global ZFS_ARC_MAX_INITIAL
+        ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
 
-    for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
-        await middleware.call('vm.start', vm['id'])
+        await middleware.call('vm.initialize_vms')
+
+        await asyncio_map(
+            functools.partial(start_vm, middleware),
+            (await middleware.call('vm.query', [('autostart', '=', True)])), 16
+        )
+    elif args['id'] == 'shutdown':
+        async with SHUTDOWN_LOCK:
+            await asyncio_map(
+                functools.partial(stop_vm, middleware),
+                (await middleware.call('vm.query', [('status.state', '=', 'RUNNING')])), 16
+            )
+            middleware.logger.debug('VM(s) stopped successfully')
+            # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
+            # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
+            # and we have cleanly exited
+            await middleware.call('vm.close_libvirt_connection')
+            await middleware.call('service.stop', 'libvirtd')
 
 
 class VMFSAttachmentDelegate(FSAttachmentDelegate):

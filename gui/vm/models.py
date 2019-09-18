@@ -94,6 +94,10 @@ class VM(Model):
         choices=choices.VM_TIMECHOICES,
         default='LOCAL',
     )
+    shutdown_timeout = models.IntegerField(
+        default=90,
+        verbose_name=_('Shutdown timeout')
+    )
 
     class Meta:
         verbose_name = _(u"VM")

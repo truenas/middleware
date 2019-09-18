@@ -383,10 +383,18 @@ class ServiceService(CRUDService):
         return False, []
 
     async def _started_libvirtd(self, **kwargs):
-        if await self._service('libvirtd', 'status', quiet=True, **kwargs):
+        if await self._service('libvirtd', 'status', onetime=True, **kwargs):
             return False, []
         else:
             return True, []
+
+    async def _start_libvirtd(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('libvirtd', 'start', **kwargs)
+
+    async def _stop_libvirtd(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('libvirtd', 'stop', **kwargs)
 
     async def _start_openvpn_server(self, **kwargs):
         kwargs.setdefault('onetime', True)
