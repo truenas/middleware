@@ -673,6 +673,7 @@ class iSCSITargetExtentService(CRUDService):
         extent_type = data['type'].upper()
         extent_rpm = data['rpm'].upper()
 
+        data['disk'] = None
         if extent_type != 'FILE':
             # ZVOL and HAST are type DISK
             extent_type = 'DISK'
@@ -681,6 +682,8 @@ class iSCSITargetExtentService(CRUDService):
             disk = await self.middleware.call('disk.query', [['identifier', '=', data['path']]])
             if disk:
                 data['disk'] = disk[0]['name']
+            else:
+                data['disk'] = data['path']
         else:
             extent_size = data['filesize']
 
