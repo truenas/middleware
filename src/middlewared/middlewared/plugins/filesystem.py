@@ -557,7 +557,7 @@ class FilesystemService(Service):
         """
         inheritance_flags = ['FILE_INHERIT', 'DIRECTORY_INHERIT', 'NO_PROPAGATE_INHERIT', 'INHERIT_ONLY']
         for i in inheritance_flags:
-            if flags[i]:
+            if flags.get(i):
                 return True
 
         return False
