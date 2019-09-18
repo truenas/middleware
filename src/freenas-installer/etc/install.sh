@@ -21,6 +21,12 @@ readonly BOOT_POOL="boot-pool"
 : ${GB:=$((1000 * MB))} ${GiB:=$((1024 * MiB))}; readonly GB GiB
 : ${TB:=$((1000 * GB))} ${TiB:=$((1024 * GiB))}; readonly TB TiB
 
+is_truenas()
+{
+	dmidecode -s system-product-name | grep -qi "truenas"
+	return $?
+}
+
 # Constant media size threshold for allowing swap partitions.
 : ${MIN_SWAPSAFE_MEDIASIZE:=$((60 * GB))}; readonly MIN_SWAPSAFE_MEDIASIZE
 
@@ -40,7 +46,7 @@ check_is_swap_safe()
 {
     # We assume swap is safe on TrueNAS,
     # and we try to use the existing value for ${SWAP_IS_SAFE} if already set.
-    if [ -z "${SWAP_IS_SAFE}" ] ; then
+    if ! is_truenas && [ -z "${SWAP_IS_SAFE}" ] ; then
 	local _disk
 	# Check every disk in $@, aborting if an unsafe disk is found.
 	for _disk ; do
@@ -57,11 +63,12 @@ check_is_swap_safe()
 	# Accept YES or NO (case-insensitive).
 	[Yy][Ee][Ss])
 	    # Confirm swap setup
-	    if ! dialog --clear --title "${AVATAR_PROJECT}" \
-	        --yes-label "Create swap" --no-label "No swap" --yesno  \
-	        "Create 16GB swap partition on boot devices?" \
-	        7 74 ; then
-	            SWAP_IS_SAFE="NO"
+	    if ! is_truenas &&
+		! dialog --clear --title "${AVATAR_PROJECT}" \
+		    --yes-label "Create swap" --no-label "No swap" --yesno  \
+		    "Create 16GB swap partition on boot devices?" \
+		    7 74 ; then
+		SWAP_IS_SAFE="NO"
 	    fi
 	    ;;
 	[Nn][Oo]) ;;
@@ -607,7 +614,7 @@ disk_is_freenas()
     fi
 
     # Make sure this is a FreeNAS boot pool.
-    zdb -l ${part} | grep -qF "name: '${BOOT_POOL}'" || return 1
+    zdb -l ${part} | grep -qE "name: '${BOOT_POOL}|freenas-boot'" || return 1
 
     # Import the pool by GUID in case there are multiple ${BOOT_POOL} pools.
     pool_guid=$(get_disk_pool_guid ${disk})
