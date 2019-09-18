@@ -11,19 +11,13 @@ TERM=${TERM:-xterm}
 export TERM
 
 . /etc/avatar.conf
-
+. "$(dirname "$0")/install_sata_dom.sh"
 
 # Constants for base 10 and base 2 units
 : ${kB:=$((1000))}      ${kiB:=$((1024))};       readonly kB kiB
 : ${MB:=$((1000 * kB))} ${MiB:=$((1024 * kiB))}; readonly MB MiB
 : ${GB:=$((1000 * MB))} ${GiB:=$((1024 * MiB))}; readonly GB GiB
 : ${TB:=$((1000 * GB))} ${TiB:=$((1024 * GiB))}; readonly TB TiB
-
-is_truenas()
-{
-    test "$AVATAR_PROJECT" = "TrueNAS"
-    return $?
-}
 
 # Constant media size threshold for allowing swap partitions.
 : ${MIN_SWAPSAFE_MEDIASIZE:=$((60 * GB))}; readonly MIN_SWAPSAFE_MEDIASIZE
@@ -44,7 +38,7 @@ check_is_swap_safe()
 {
     # We assume swap is safe on TrueNAS,
     # and we try to use the existing value for ${SWAP_IS_SAFE} if already set.
-    if ! is_truenas && [ -z "${SWAP_IS_SAFE}" ] ; then
+    if [ -z "${SWAP_IS_SAFE}" ] ; then
 	local _disk
 	# Check every disk in $@, aborting if an unsafe disk is found.
 	for _disk ; do
@@ -60,13 +54,12 @@ check_is_swap_safe()
     case "${SWAP_IS_SAFE:="YES"}" in
 	# Accept YES or NO (case-insensitive).
 	[Yy][Ee][Ss])
-	    # Confirm swap setup with FreeNAS users.
-	    if ! is_truenas &&
-		! dialog --clear --title "${AVATAR_PROJECT}" \
-		    --yes-label "Create swap" --no-label "No swap" --yesno  \
-		    "Create 16GB swap partition on boot devices?" \
-		    7 74 ; then
-		SWAP_IS_SAFE="NO"
+	    # Confirm swap setup
+	    if ! dialog --clear --title "${AVATAR_PROJECT}" \
+	        --yes-label "Create swap" --no-label "No swap" --yesno  \
+	        "Create 16GB swap partition on boot devices?" \
+	        7 74 ; then
+	            SWAP_IS_SAFE="NO"
 	    fi
 	    ;;
 	[Nn][Oo]) ;;
@@ -92,9 +85,6 @@ is_swap_safe()
 
 do_sata_dom()
 {
-    if ! is_truenas ; then
-	return 1
-    fi
     install_sata_dom_prompt
     return $?
 }
@@ -759,12 +749,11 @@ menu_install()
     local whendone=""
 
     local CD_UPGRADE_SENTINEL NEED_UPDATE_SENTINEL FIRST_INSTALL_SENTINEL
-    local TRUENAS_EULA_PENDING_SENTINEL POOL
+    local POOL
     readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     readonly NEED_UPDATE_SENTINEL="/data/need-update"
     # create a sentinel file for post-fresh-install boots
     readonly FIRST_INSTALL_SENTINEL="/data/first-boot"
-    readonly TRUENAS_EULA_PENDING_SENTINEL="/data/truenas-eula-pending"
     readonly POOL="freenas-boot"
 
     _tmpfile="/tmp/answer"
@@ -1001,9 +990,6 @@ menu_install()
     fi
 
     local OS=FreeNAS
-    if is_truenas; then
-        OS=TrueNAS
-    fi
 
     # Tell it to look in /.mount for the packages.
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
@@ -1080,9 +1066,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	fi
     fi
     : > /tmp/data/${FIRST_INSTALL_SENTINEL}
-    if is_truenas && [ "${_do_upgrade}" -eq 0 ]; then
-        : > /tmp/data/${TRUENAS_EULA_PENDING_SENTINEL}
-    fi
+
     # Finally, before we unmount, start a scrub.
     # zpool scrub freenas-boot || true
 
@@ -1223,10 +1207,6 @@ main()
         esac
     done
 }
-
-if is_truenas ; then
-    . "$(dirname "$0")/install_sata_dom.sh"
-fi
 
 # Parse a config file.
 # We don't do much in the way of error checking.
