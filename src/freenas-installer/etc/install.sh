@@ -11,7 +11,6 @@ TERM=${TERM:-xterm}
 export TERM
 
 . /etc/avatar.conf
-. "$(dirname "$0")/install_sata_dom.sh"
 
 # Constants for base 10 and base 2 units
 : ${kB:=$((1000))}      ${kiB:=$((1024))};       readonly kB kiB
@@ -81,12 +80,6 @@ is_swap_safe()
 	[Yy][Ee][Ss]) true;;
 	*) false;;
     esac
-}
-
-do_sata_dom()
-{
-    install_sata_dom_prompt
-    return $?
 }
 
 get_product_path()
@@ -740,7 +733,6 @@ menu_install()
     local _desc
     local _list
     local _msg
-    local _satadom
     local _do_upgrade=""
     local _menuheight
     local _msg
@@ -791,43 +783,37 @@ menu_install()
 	pre_install_check || return 0
     fi
 
-    if do_sata_dom
-    then
-	_satadom="YES"
-    else
-	_satadom=""
-	if ${INTERACTIVE}; then
-	    get_physical_disks_list
-	    _disklist="${VAL}"
+    if ${INTERACTIVE}; then
+        get_physical_disks_list
+        _disklist="${VAL}"
 
-	    _list=""
-	    _items=0
-	    for _disk in ${_disklist}; do
-		_desc=$(get_media_description "${_disk}" | sed "s/'/'\\\''/g")
-		_list="${_list} ${_disk} '${_desc}' off"
-		_items=$((${_items} + 1))
-	    done
+        _list=""
+        _items=0
+        for _disk in ${_disklist}; do
+            _desc=$(get_media_description "${_disk}" | sed "s/'/'\\\''/g")
+            _list="${_list} ${_disk} '${_desc}' off"
+            _items=$((${_items} + 1))
+        done
 	    
-	    _tmpfile="/tmp/answer"
-	    if [ ${_items} -ge 10 ]; then
-		_items=10
-		_menuheight=20
-	    else
-		_menuheight=9
-		_menuheight=$((${_menuheight} + ${_items}))
-	    fi
-	    if [ "${_items}" -eq 0 ]; then
-		# Inform the user
-		eval "dialog --title 'Choose destination media' --msgbox 'No drives available' 5 60" 2>${_tmpfile}
-		return 0
-	    fi
+        _tmpfile="/tmp/answer"
+        if [ ${_items} -ge 10 ]; then
+            _items=10
+            _menuheight=20
+        else
+            _menuheight=9
+            _menuheight=$((${_menuheight} + ${_items}))
+        fi
+        if [ "${_items}" -eq 0 ]; then
+            # Inform the user
+            eval "dialog --title 'Choose destination media' --msgbox 'No drives available' 5 60" 2>${_tmpfile}
+            return 0
+        fi
 
-	    eval "dialog --title 'Choose destination media' \
-	      --checklist 'Select one or more drives where $AVATAR_PROJECT should be installed (use arrow keys to navigate to the drive(s) for installation; select a drive with the spacebar).' \
-	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
-	    [ $? -eq 0 ] || exit 1
-	fi
-    fi # ! do_sata_dom
+        eval "dialog --title 'Choose destination media' \
+            --checklist 'Select one or more drives where $AVATAR_PROJECT should be installed (use arrow keys to navigate to the drive(s) for installation; select a drive with the spacebar).' \
+            ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
+        [ $? -eq 0 ] || exit 1
+    fi
 
     if [ -f "${_tmpfile}" ]; then
 	_disks=$(eval "echo `cat "${_tmpfile}"`")
@@ -884,11 +870,7 @@ menu_install()
 	_do_upgrade=0
     fi
 
-    if [ "${_satadom}" = "YES" -a -n "$(echo ${_disks}|grep "raid/")" ]; then
-	_realdisks=$(cat ${REALDISKS})
-    else
-	_realdisks=$_disks
-    fi
+    _realdisks=$_disks
 
     ${INTERACTIVE} && new_install_verify "$_action" "$_upgrade_type" ${_realdisks}
     _config_file="/tmp/pc-sysinstall.cfg"
