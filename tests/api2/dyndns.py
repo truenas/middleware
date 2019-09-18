@@ -31,8 +31,15 @@ def test_01_get_dyndns_provider_choices():
     assert results.json()['default@dyndns.org'] == 'dyndns.org', results.text
 
 
+def test_02_Updating_Settings_with_a_not_supported_provider_expect_422():
+    global test
+    results = PUT('/dyndns/', {
+        'provider': 'ixsystems.com'})
+    assert results.status_code == 422, results.text
+
+
 @noip_test_cfg
-def test_02_Updating_Settings_for_NO_IP():
+def test_03_Updating_Settings_for_NO_IP():
     global test
     results = PUT('/dyndns/', {
         'username': NOIPUSERNAME,
@@ -44,7 +51,7 @@ def test_02_Updating_Settings_for_NO_IP():
 
 
 @custom_test_cfg
-def test_03_Updating_Settings_for_Custom_Provider():
+def test_04_Updating_Settings_for_Custom_Provider():
     global test
     results = PUT('/dyndns/', {
         'username': 'foo',
@@ -55,7 +62,7 @@ def test_03_Updating_Settings_for_Custom_Provider():
     test = 'CUSTOM'
 
 
-def test_04_Check_that_API_reports_dyndns_service():
+def test_05_Check_that_API_reports_dyndns_service():
     results = GET('/dyndns/')
     assert results.status_code == 200, results.text
 
@@ -74,18 +81,18 @@ def test_06_Check_that_API_reports_dynsdns_configuration_as_saved():
         assert data['domain'] == ['foobar']
 
 
-def test_06_Enable_dyns_service():
+def test_07_Enable_dyns_service():
     results = PUT('/service/id/dynamicdns/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
-def test_07_Check_to_see_if_dyndns_service_is_enabled_at_boot():
+def test_08_Check_to_see_if_dyndns_service_is_enabled_at_boot():
     results = GET('/service?service=dynamicdns')
     assert results.json()[0]['enable'] is True, results.text
 
 
 @noip_test_cfg
-def test_08_Starting_dyndns_service():
+def test_09_Starting_dyndns_service():
     results = POST('/service/start/',
                    {'service': 'dynamicdns',
                     'service-control': {'onetime': True}})
@@ -94,6 +101,6 @@ def test_08_Starting_dyndns_service():
 
 
 @noip_test_cfg
-def test_09_Checking_to_see_if_dyndns_service_is_running():
+def test_10_Checking_to_see_if_dyndns_service_is_running():
     results = GET('/service?service=dynamicdns')
     assert results.json()[0]['state'] == 'RUNNING', results.text
