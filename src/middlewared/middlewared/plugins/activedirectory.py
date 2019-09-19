@@ -276,7 +276,7 @@ class ActiveDirectory_LDAP(object):
                     port (TCP ports 389 or 3268 in AD DS, and a configuration-
                     specific port in AD LDS), and later sending an
                     LDAP_SERVER_START_TLS_OID extended operation [RFC2830]. In
-                    both cases, the DC will request (but not require) the
+                    both cases, the DC requests (but does not require) the
                     client's certificate as part of the SSL/TLS handshake
                     [RFC2246]. If the client presents a valid certificate to
                     the DC at that time, it can be used by the DC to
