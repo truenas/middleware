@@ -246,11 +246,6 @@ class UserService(CRUDService):
                         'Failed to create the home directory '
                         f'({data["home"]}) for user: {oe}'
                     )
-                if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
-                    raise CallError(
-                        f'The path for the home directory "({data["home"]})" '
-                        'must include a volume or dataset.'
-                    )
             except Exception:
                 if new_homedir:
                     shutil.rmtree(data['home'])
@@ -623,6 +618,15 @@ class UserService(CRUDService):
                     f'{schema}.home',
                     '"Home Directory" must begin with /mnt/ or set to '
                     '/nonexistent.'
+                )
+            elif not any(
+                data['home'] == i['path'] or data['home'].startswith(i['path'] + '/')
+                for i in await self.middleware.call('pool.query')
+            ):
+                verrors.add(
+                    f'{schema}.home',
+                    f'The path for the home directory "({data["home"]})" '
+                    'must include a volume or dataset.'
                 )
 
         if 'home_mode' in data:
