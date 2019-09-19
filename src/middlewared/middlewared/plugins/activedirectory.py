@@ -284,7 +284,7 @@ class ActiveDirectory_LDAP(object):
                     represented by the certificate. See MS-ADTS 5.1.1.2
 
                     See also RFC2829 7.1: Following the successful completion
-                    of TLS negotiation, the client will send an LDAP bind
+                    of TLS negotiation, the client sends an LDAP bind
                     request with the SASL "EXTERNAL" mechanism.
                     """
                     try:
