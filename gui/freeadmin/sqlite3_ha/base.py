@@ -256,14 +256,13 @@ class HASQLiteCursorWrapper(Database.Cursor):
             return
 
         try:
-            # FIXME: This is extremely time-consuming (failover.status)
-            from freenasUI.middleware.notifier import notifier
-            if not (
-                hasattr(notifier, 'failover_status') and
-                notifier().failover_status() == 'MASTER'
-            ):
-                return
-        except:
+            # FIXME: This is extremely time-consuming and will be removed soon
+            # when switching to sqlalchemy
+            with client as c:
+                if not c.call('failover.status') == 'MASTER':
+                    return
+        except Exception:
+            log.warning('Failed to check failover status', exc_info=True)
             return
 
         parse = sqlparse.parse(query)
