@@ -767,7 +767,7 @@ class ActiveDirectoryService(ConfigService):
         backends to store SID/uid/gid mapping tables. The correct setting
         depends on the environment in which the NAS is deployed.
 
-        The Active Directory service will be started after a configuration
+        The Active Directory service is started after a configuration
         update if the service was initially disabled, and the updated
         configuration sets `enable` to `True`. The Active Directory
         service is stopped if `enable` is changed to `False`. If the
