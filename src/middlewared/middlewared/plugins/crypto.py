@@ -1023,7 +1023,7 @@ class CertificateService(CRUDService):
                     f'DNS challenge {"completed" if status else "failed"} for {domain}'
                 )
 
-    @periodic(86400, run_on_start=False)
+    @periodic(86400)
     @private
     @job(lock='acme_cert_renewal')
     def renew_certs(self, job):
