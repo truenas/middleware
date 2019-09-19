@@ -803,6 +803,16 @@ class ActiveDirectory(DirectoryServiceBase):
         null=True,
         limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
     )
+    ad_validate_certificates = models.BooleanField(
+        verbose_name=_("Perform strict certificate validation"),
+        default=True,
+        help_text=_(
+            "Request certificate from remote LDAP server. If no certificate is provided "
+            "or a bad certificate is provided, immediately terminate LDAP session. "
+            "This parameter corresponds with the ldap.conf parameter TLS_REQCERT demand. "
+            "TLS_REQCERT allow is set if unchecked. "
+        )
+    )
     ad_verbose_logging = models.BooleanField(
         verbose_name=_("Verbose logging"),
         default=False
@@ -864,7 +874,7 @@ class ActiveDirectory(DirectoryServiceBase):
             "automatically cleared and all future operations carried out by the AD "
             "machine account, which has a restricted set of privileges in the AD domain."),
         blank=True,
-	null=True
+        null=True
     )
     ad_createcomputer = models.CharField(
         blank=True,
@@ -887,7 +897,7 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_dns_timeout = models.IntegerField(
         verbose_name=_("DNS timeout"),
         help_text=_("Timeout for AD DNS queries."),
-        default=60
+        default=10
     )
     ad_idmap_backend = models.CharField(
         verbose_name=_("Idmap backend"),
@@ -919,7 +929,7 @@ class ActiveDirectory(DirectoryServiceBase):
                     "CurrentControlSet\\Services\\NTDS\\Parameters\\"
                     "LDAPServerIntegrity\" on the Windows server side."
                     ),
-        default='plain'
+        default='sign'
     )
     ad_enable = models.BooleanField(
         verbose_name=_("Enable"),
@@ -1024,51 +1034,6 @@ class LDAP(DirectoryServiceBase):
         verbose_name=_("Allow Anonymous Binding"),
         default=False
     )
-    ldap_usersuffix = models.CharField(
-        verbose_name=_("User Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used for "
-            "users when these are added to the LDAP directory, e.g. "
-            "ou=Users"),
-        blank=True
-    )
-    ldap_groupsuffix = models.CharField(
-        verbose_name=_("Group Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used "
-            "for groups when these are added to the LDAP directory, e.g. "
-            "ou=Groups"),
-        blank=True
-    )
-    ldap_passwordsuffix = models.CharField(
-        verbose_name=_("Password Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used for "
-            "passwords when these are added to the LDAP directory, e.g. "
-            "ou=Passwords"),
-        blank=True
-    )
-    ldap_machinesuffix = models.CharField(
-        verbose_name=_("Machine Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used for "
-            "machines when these are added to the LDAP directory, e.g. "
-            "ou=Computers"),
-        blank=True
-    )
-    ldap_sudosuffix = models.CharField(
-        verbose_name=_("SUDO Suffix"),
-        max_length=120,
-        help_text=_(
-            "This parameter specifies the suffix that is used for "
-            "the SUDO configuration in the LDAP directory, e.g. "
-            "ou=SUDOers"),
-        blank=True
-    )
     ldap_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),
@@ -1098,6 +1063,16 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         null=True,
         limit_choices_to={'cert_certificate__isnull': False, 'cert_privatekey__isnull': False}
+    )
+    ldap_validate_certificates = models.BooleanField(
+        verbose_name=_("Perform strict certificate validation"),
+        default=True,
+        help_text=_(
+            "Request certificate from remote LDAP server. If no certificate is provided "
+            "or a bad certificate is provided, immediately terminate LDAP session. "
+            "This parameter corresponds with the ldap.conf parameter TLS_REQCERT demand. "
+            "TLS_REQCERT allow is set if unchecked. "
+        )
     )
     ldap_disable_freenas_cache = models.BooleanField(
         verbose_name=_("Disable LDAP user/group cache"),

@@ -60,20 +60,14 @@ ldap_func()
 	#	dump LDAP configuration
 	#
 	local IFS="|"
-	read hostname basedn binddn anonbind usersuffix \
-		groupsuffix passwordsuffix machinesuffix sudosuffix \
-		use_default_domain ssl has_samba_schema <<-__LDAP__
+	read hostname basedn binddn anonbind \
+		ssl has_samba_schema <<-__LDAP__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ldap_hostname,
 		ldap_basedn,
 		ldap_binddn,
 		ldap_anonbind,
-		ldap_usersuffix,
-		ldap_groupsuffix,
-		ldap_passwordsuffix,
-		ldap_machinesuffix,
-		ldap_sudosuffix,
 		ldap_ssl,
 		ldap_has_samba_schema
 
@@ -96,12 +90,6 @@ __LDAP__
 	Base DN:                ${basedn}
 	Bind DN:                ${binddn}
 	Anonymous Bind:         ${anonbind}
-	User Suffix:            ${usersuffix}
-	Group Suffix:           ${groupsuffix}
-	Password Suffix:        ${passwordsuffix}
-	Machine Suffix:         ${machinesuffix}
-	SUDO Suffix:            ${sudosuffix}
-	Use Default Domain:     ${use_default_domain}
 	SSL:                    ${ssl}
 	Samba Schema:           ${has_samba_schema}
 __EOF__
