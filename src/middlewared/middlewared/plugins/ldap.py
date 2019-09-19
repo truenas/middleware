@@ -472,7 +472,7 @@ class LDAPService(ConfigService):
 
         `kerberos_principal` kerberos principal to use for SASL GSSAPI
         authentication to the remote server. If `kerberos_realm` is specified
-        without a keytab, then the `binddn` and `bindpw` will be used to
+        without a keytab, then the `binddn` and `bindpw` are used to
         perform to obtain the ticket necessary for GSSAPI authentication.
 
         `timeout` specifies  a  timeout  (in  seconds) after which calls to
