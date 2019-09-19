@@ -404,7 +404,7 @@ class PluginService(CRUDService):
 
         return resource_list
 
-    @periodic(interval=86400, run_on_start=False)
+    @periodic(interval=86400)
     @private
     @accepts(
         Str('branch', null=True, default=None),
