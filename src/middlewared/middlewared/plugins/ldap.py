@@ -479,7 +479,7 @@ class LDAPService(ConfigService):
         synchronous LDAP APIs will abort if no response is received.
 
         `dns_timeout` specifies the timeout (in seconds) after which the
-        poll(2)/select(2) following a connect(2) returns in case of no activity.
+        poll(2)/select(2) following a connect(2) returns in case of no activity
         for openldap. For nslcd this specifies the time limit (in seconds) to
         use when connecting to the directory server. This directly impacts the
         length of time that the LDAP service will try before failing over to
