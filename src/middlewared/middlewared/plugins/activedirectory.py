@@ -1033,7 +1033,9 @@ class ActiveDirectoryService(ConfigService):
                     {'get': True}
                 )
                 self.middleware.call_sync('kerberos.realm.delete', realm['id'])
-                raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {kinit.sderr.decode()}")
+                raise CallError(
+                    f"kinit for domain [{ad['domainname']}] with password failed: {kinit.stderr.decode()}"
+                )
 
         dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
         if not dcs:

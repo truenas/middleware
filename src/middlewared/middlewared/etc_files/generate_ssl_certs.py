@@ -27,7 +27,7 @@ def write_certificates(certs, cacerts):
         shutil.copyfile('/usr/local/share/certs/ca-root-nss.crt',
                         '/etc/ssl/truenas_cacerts.pem')
     else:
-        with open('/etc/ssl/truenas_cacerts.pem', 'a+') as f:
+        with open('/etc/ssl/truenas_cacerts.pem', 'w') as f:
             f.write('## USER PROVIDED CA CERTIFICATES ##\n')
             for c in cacerts:
                 if cert['chain_list']:
