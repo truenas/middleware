@@ -710,7 +710,7 @@ class ActiveDirectoryService(ConfigService):
         `allow_dns_updates` during the domain join process, automatically
         generate DNS entries in the AD domain for the NAS. If this is disabled,
         then a domain administrator must manually add appropriate DNS entries
-        for the NAS. This is a recommended parameter for TrueNAS HA servers.
+        for the NAS. This parameter is recommended for TrueNAS HA servers.
 
         `disable_freenas_cache` disable active caching of AD users and groups.
         When disabled, only users cached in winbind's internal cache will be
