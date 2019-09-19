@@ -1587,8 +1587,8 @@ class CertificateService(CRUDService):
             ((self.middleware.call_sync('system.general.config'))['ui_certificate']['id'], 'WebUI'),
             ((self.middleware.call_sync('ftp.config'))['ssltls_certificate'], 'FTP'),
             ((self.middleware.call_sync('s3.config'))['certificate'], 'S3'),
-            ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav')
-            ((self.middleware.call_sync('activedirectory.config'))['certificate'], 'Active Directory')
+            ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav'),
+            ((self.middleware.call_sync('activedirectory.config'))['certificate'], 'Active Directory'),
             ((self.middleware.call_sync('ldap.config'))['certificate'], 'LDAP')
         ]:
             if service_cert_id == id:
