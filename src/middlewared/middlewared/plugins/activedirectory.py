@@ -732,7 +732,7 @@ class ActiveDirectoryService(ConfigService):
 
         `kerberos_principal` kerberos principal to use for AD-related
         operations outside of Samba. After intial domain join, this field will
-        be updated with the kerberos principal associated with the AD machine
+        updated with the kerberos principal associated with the AD machine
         account for the NAS.
 
         `nss_info` controls how Winbind retrieves Name Service Information to
