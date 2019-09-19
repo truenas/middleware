@@ -726,7 +726,7 @@ class ActiveDirectoryService(ConfigService):
         `kerberos_realm` in which the server is located. This parameter is
         automatically populated during the initial domain join. If the NAS has
         an AD site configured and that site has multiple kerberos servers, then
-        the kerberos realm will be automatically updated with a site-specific
+        the kerberos realm is automatically updated with a site-specific
         configuration to use those servers. Auto-detection is only performed
         during initial domain join.
 
