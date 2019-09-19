@@ -482,7 +482,7 @@ class LDAPService(ConfigService):
         poll(2)/select(2) following a connect(2) returns in case of no activity
         for openldap. For nslcd this specifies the time limit (in seconds) to
         use when connecting to the directory server. This directly impacts the
-        length of time that the LDAP service will try before failing over to
+        length of time that the LDAP service tries before failing over to
         a secondary LDAP URI.
 
         `idmap_backend` provides a plugin interface for Winbind to use varying
