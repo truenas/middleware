@@ -720,7 +720,7 @@ class ActiveDirectoryService(ConfigService):
         `site` AD site of which the NAS is a member. This parameter is auto-
         detected during the domain join process. If no AD site is configured
         for the subnet in which the NAS is configured, then this parameter
-        appear as 'Default-First-Site-Name'. Auto-detection is only performed
+        appears as 'Default-First-Site-Name'. Auto-detection is only performed
         during the initial domain join.
 
         `kerberos_realm` in which the server is located. This parameter will be
