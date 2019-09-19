@@ -854,7 +854,7 @@ class Middleware(LoadPluginsMixin):
 
         self.logger.debug('All plugins loaded')
 
-    def __setup_periodic_tasks(self):
+    def _setup_periodic_tasks(self):
         for service_name, service_obj in self.get_services().items():
             for task_name in dir(service_obj):
                 method = getattr(service_obj, task_name)
@@ -1351,7 +1351,8 @@ class Middleware(LoadPluginsMixin):
         await restful_api.register_resources()
         asyncio.ensure_future(self.jobs.run())
 
-        self.__setup_periodic_tasks()
+        if await self.call('system.state') == 'READY':
+            self._setup_periodic_tasks()
 
         # Start up middleware worker process pool
         self.__procpool._start_queue_management_thread()

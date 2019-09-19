@@ -446,6 +446,9 @@ class CoreService(Service):
             {'id': 'ready'}
         )
 
+        # Let's setup periodic tasks now
+        self.middleware._setup_periodic_tasks()
+
     @accepts(Int('id'))
     def job_abort(self, id):
         job = self.middleware.jobs.all()[id]
