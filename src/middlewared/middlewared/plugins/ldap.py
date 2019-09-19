@@ -454,7 +454,7 @@ class LDAPService(ConfigService):
         `anonbind` use anonymous authentication.
 
         `ssl` establish SSL/TLS-protected connections to the LDAP server(s).
-        GSSAPI signing will be disabled on SSL/TLS-protected connections if
+        GSSAPI signing is disabled on SSL/TLS-protected connections if
         kerberos authentication is used.
 
         `certificate` LDAPs client certificate to be used for certificate-
