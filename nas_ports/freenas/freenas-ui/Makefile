@@ -10,7 +10,6 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        FreeNAS UI
 
-PRODUCT?=
 USES=		python
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110@${PY_FLAVOR} \
@@ -46,10 +45,6 @@ checksum fetch:
 	echo ${.TARGET} not needed because building direct
 
 .include <bsd.port.pre.mk>
-
-.if ${PRODUCT} == "TrueNAS"
-RUN_DEPENDS+=	truenas-files>0:${PORTSDIR}/truenas/truenas-files
-.endif
 
 do-install:
 	${PYTHON_CMD} -m compileall ${WRKSRC}/
