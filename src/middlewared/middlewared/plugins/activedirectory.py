@@ -713,7 +713,7 @@ class ActiveDirectoryService(ConfigService):
         for the NAS. This parameter is recommended for TrueNAS HA servers.
 
         `disable_freenas_cache` disables active caching of AD users and groups.
-        When disabled, only users cached in winbind's internal cache will be
+        When disabled, only users cached in winbind's internal cache are
         visible in GUI dropdowns. Disabling active caching is recommended
         environments with a large amount of users.
 
