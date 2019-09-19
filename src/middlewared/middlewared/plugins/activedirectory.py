@@ -770,7 +770,7 @@ class ActiveDirectoryService(ConfigService):
         The Active Directory service will be started after a configuration
         update if the service was initially disabled, and the updated
         configuration sets `enable` to `True`. Likewise, the Active Directory
-        service will be stopped if `enable` is changed to `False`. If the
+        service is stopped if `enable` is changed to `False`. If the
         configuration is updated, but the initial `enable` state is `True`, and
         remains unchanged, then the samba server will only be restarted.
 
