@@ -700,7 +700,7 @@ class ActiveDirectoryService(ConfigService):
 
         `use_default_domain` controls whether domain users and groups have
         the pre-windows 2000 domain name prepended to the user account. When
-        enabled, the user will appear as "administrator" rather than
+        enabled, the user appears as "administrator" rather than
         "EXAMPLE\administrator"
 
         `allow_trusted_doms` enable support for trusted domains. If this
