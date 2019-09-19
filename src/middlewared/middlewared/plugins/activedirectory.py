@@ -775,7 +775,7 @@ class ActiveDirectoryService(ConfigService):
         remains unchanged, then the samba server will only be restarted.
 
         During the domain join, a kerberos keytab for the newly-created AD
-        machine account will be generated. It is used for all future
+        machine account is generated. It is used for all future
         LDAP / AD interaction and the user-provided credentials are removed.
         """
         verrors = ValidationErrors()
