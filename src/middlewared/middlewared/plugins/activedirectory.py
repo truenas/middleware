@@ -731,7 +731,7 @@ class ActiveDirectoryService(ConfigService):
         during initial domain join.
 
         `kerberos_principal` kerberos principal to use for AD-related
-        operations outside of Samba. After intial domain join, this field will
+        operations outside of Samba. After intial domain join, this field is
         updated with the kerberos principal associated with the AD machine
         account for the NAS.
 
