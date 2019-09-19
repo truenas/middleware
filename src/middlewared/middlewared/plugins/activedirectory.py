@@ -754,14 +754,17 @@ class ActiveDirectoryService(ConfigService):
         from Samba defaults to using GSSAPI signing unless it is tunnelled
         over LDAPs.
 
-        `createcomputer` Active Directory Organizational Unit in which to
-        create the NAS computer object during domain join.
+        `createcomputer` Active Directory Organizational Unit in which new
+        computer accounts are created.
 
-        If blank, then the default OU is used during computer account creation.
-        Precreate the computer account in a specific OU. The OU string read from
-        top to bottom without RDNs and delimited by a "/". For example,
-        "createcomputer=Computers/Servers/Unix. Backslashes "\" are used as an
-        escape character, and not as a separator.
+        The OU string is read from top to bottom without RDNs. Slashes ("/")
+        are used as delimiters, like `Computers/Servers/NAS`. The backslash
+        ("\\") is used to escape characters but not as a separator. Backslashes
+        are interpreted at multiple levels and might require doubling or even
+        quadrupling to take effect.
+
+        When this field is blank, new computer accounts are created in the
+        Active Directory default OU.
 
         `idmap_backend` provides a plugin interface for Winbind to use varying
         backends to store SID/uid/gid mapping tables. The correct setting
@@ -772,7 +775,7 @@ class ActiveDirectoryService(ConfigService):
         configuration sets `enable` to `True`. The Active Directory
         service is stopped if `enable` is changed to `False`. If the
         configuration is updated, but the initial `enable` state is `True`, and
-        remains unchanged, then the samba server will only be restarted.
+        remains unchanged, then the samba server is only restarted.
 
         During the domain join, a kerberos keytab for the newly-created AD
         machine account is generated. It is used for all future
