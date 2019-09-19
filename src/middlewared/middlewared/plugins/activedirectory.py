@@ -723,7 +723,7 @@ class ActiveDirectoryService(ConfigService):
         appears as 'Default-First-Site-Name'. Auto-detection is only performed
         during the initial domain join.
 
-        `kerberos_realm` in which the server is located. This parameter will be
+        `kerberos_realm` in which the server is located. This parameter is
         automatically populated during the initial domain join. If the NAS has
         an AD site configured and that site has multiple kerberos servers, then
         the kerberos realm will be automatically updated with a site-specific
