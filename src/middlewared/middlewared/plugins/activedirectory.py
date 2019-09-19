@@ -715,7 +715,7 @@ class ActiveDirectoryService(ConfigService):
         `disable_freenas_cache` disables active caching of AD users and groups.
         When disabled, only users cached in winbind's internal cache are
         visible in GUI dropdowns. Disabling active caching is recommended
-        environments with a large amount of users.
+        in environments with a large amount of users.
 
         `site` AD site of which the NAS is a member. This parameter is auto-
         detected during the domain join process. If no AD site is configured
