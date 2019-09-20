@@ -855,10 +855,19 @@ class JailService(CRUDService):
         jail_type = IOCJson(path).json_load()['type']
         iocage.update()
 
+        _, _, iocage = self.check_jail_existence(jail)
+        # If jail is running, we should ensure at the end that is reflected
+        status = self.query([['host_hostuuid', '=', jail]], {'get': True})['state'] == 'up'
+
         if jail_type == 'pluginv2':
             # Lame 11.2 hack to update the plugin version shown
+            if status:
+                iocage.stop()
             iocage.start()
             iocage.stop()
+
+        if status and jail_type == 'pluginv2':
+            iocage.start()
 
         return True
 
