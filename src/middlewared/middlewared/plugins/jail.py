@@ -225,7 +225,7 @@ class PluginService(CRUDService):
             'plugin_create',
             Str('plugin_name', required=True),
             Str('jail_name', required=True),
-            List('props', default=[], empty=False),
+            List('props', default=[]),
             Str('branch', default=None, null=True),
             Str('plugin_repository', empty=False),
         )
