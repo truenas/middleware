@@ -208,10 +208,7 @@ class ISCSIPortalService(CRUDService):
         if not data['listen']:
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
         else:
-            system_ips = [
-                ip['address'] for ip in await self.middleware.call('interface.ip_in_use')
-            ]
-            system_ips.extend(['0.0.0.0', '::'])
+            system_ips = await self.listen_ip_choices()
             new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
             for i in data['listen']:
                 filters = [
