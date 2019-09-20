@@ -613,21 +613,22 @@ class UserService(CRUDService):
         if 'home' in data:
             if ':' in data['home']:
                 verrors.add(f'{schema}.home', '"Home Directory" cannot contain colons (:).')
-            if not data['home'].startswith('/mnt/') and data['home'] != '/nonexistent':
-                verrors.add(
-                    f'{schema}.home',
-                    '"Home Directory" must begin with /mnt/ or set to '
-                    '/nonexistent.'
-                )
-            elif not any(
-                data['home'] == i['path'] or data['home'].startswith(i['path'] + '/')
-                for i in await self.middleware.call('pool.query')
-            ):
-                verrors.add(
-                    f'{schema}.home',
-                    f'The path for the home directory "({data["home"]})" '
-                    'must include a volume or dataset.'
-                )
+            if data['home'] != '/nonexistent':
+                if not data['home'].startswith('/mnt/'):
+                    verrors.add(
+                        f'{schema}.home',
+                        '"Home Directory" must begin with /mnt/ or set to '
+                        '/nonexistent.'
+                    )
+                elif not any(
+                    data['home'] == i['path'] or data['home'].startswith(i['path'] + '/')
+                    for i in await self.middleware.call('pool.query')
+                ):
+                    verrors.add(
+                        f'{schema}.home',
+                        f'The path for the home directory "({data["home"]})" '
+                        'must include a volume or dataset.'
+                    )
 
         if 'home_mode' in data:
             try:
