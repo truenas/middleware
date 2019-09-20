@@ -180,7 +180,7 @@ class ISCSIPortalService(CRUDService):
         """
         Returns possible choices for `listen.ip` attribute of portal create and update.
         """
-        choices = {'0.0.0.0': '0.0.0.0'}
+        choices = {'0.0.0.0': '0.0.0.0', '[::]': '[::]'}
         alua = (await self.middleware.call('iscsi.global.config'))['alua']
         if alua:
             # If ALUA is enabled we actually want to show the user the IPs of each node
