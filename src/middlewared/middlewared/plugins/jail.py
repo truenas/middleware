@@ -145,19 +145,22 @@ class PluginService(CRUDService):
     class Config:
         process_pool = True
 
-    OFFICIAL_REPOSITORIES = {
-        'IXSYSTEMS': {
-            'name': 'iXsystems',
-            'git_repository': 'https://github.com/freenas/iocage-ix-plugins.git',
-        }
-    }
-
     @accepts()
     async def official_repositories(self):
         """
         List officially supported plugin repositories.
         """
-        return self.OFFICIAL_REPOSITORIES
+        is_fn = await self.middleware.call('system.is_freenas')
+        return {
+            'IXSYSTEMS': {
+                'name': 'iXsystems',
+                'git_repository': f'https://github.com/{"freenas" if is_fn else "truenas"}/iocage-ix-plugins.git'
+            }
+        }
+
+    @private
+    def default_repo(self):
+        return self.middleware.call_sync('plugin.official_repositories')['IXSYSTEMS']['git_repository']
 
     @filterable
     def query(self, filters=None, options=None):
@@ -224,7 +227,7 @@ class PluginService(CRUDService):
             Str('jail_name', required=True),
             List('props', default=[], empty=False),
             Str('branch', default=None, null=True),
-            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+            Str('plugin_repository', empty=False),
         )
     )
     def do_create(self, data):
@@ -244,6 +247,7 @@ class PluginService(CRUDService):
         `branch` is the FreeNAS repository branch to use as the base for the `plugin_repository`. The default is to
         use the current system version. Example: 11.3-RELEASE.
         """
+        data['plugin_repository'] = data.get('plugin_repository') or self.default_repo()
         return self.middleware.call_sync('plugin._do_create', data)
 
     @private
@@ -326,16 +330,13 @@ class PluginService(CRUDService):
         Dict(
             'available_plugin_options',
             Bool('cache', default=True),
-            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+            Str('plugin_repository', empty=False),
             Str('branch'),
         )
     )
     @job(
         lock=lambda args: 'available_plugins_{}_{}'.format(
-            args[0].get('branch') if args else None,
-            args[0]['plugin_repository'] if args and args[0].get(
-                'plugin_repository'
-            ) else 'https://github.com/freenas/iocage-ix-plugins.git'
+            args[0].get('branch') if args else None, args[0].get('plugin_repository') if args else None
         )
     )
     def available(self, job, options):
@@ -344,6 +345,7 @@ class PluginService(CRUDService):
         """
         self.middleware.call_sync('jail.check_dataset_existence')
         branch = options.get('branch') or self.get_version()
+        options['plugin_repository'] = options.get('plugin_repository') or self.default_repo()
         iocage = ioc.IOCage(skip_jails=True)
         if options['cache']:
             with contextlib.suppress(KeyError):
@@ -408,15 +410,16 @@ class PluginService(CRUDService):
     @private
     @accepts(
         Str('branch', null=True, default=None),
-        Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+        Str('plugin_repository', null=True, default=None, empty=False),
     )
     @job(
         lock=lambda args: f'retrieve_plugin_versions_{args[0] if args else "None"}_'
-        f'{args[1] if len(args) == 2 else "https://github.com/freenas/iocage-ix-plugins.git"}'
+        f'{args[1] if len(args) == 2 else None}'
     )
     def retrieve_plugin_versions(self, job, branch, plugin_repository):
         # FIXME: Please fix the job arguments once job can correctly retrieve parameters from the schema layer
         branch = branch or self.get_version()
+        plugin_repository = plugin_repository or self.default_repo()
         try:
             pool = self.middleware.call_sync('jail.get_activated_pool')
         except CallError:
@@ -455,7 +458,7 @@ class PluginService(CRUDService):
             Bool('refresh', default=False),
             Str('plugin', required=True),
             Str('branch', default=None, null=True),
-            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git')
+            Str('plugin_repository', emtpy=False)
         )
     )
     def defaults(self, options):
@@ -464,6 +467,7 @@ class PluginService(CRUDService):
 
         When `refresh` is specified, `plugin_repository` is updated before retrieving plugin's default properties.
         """
+        options['plugin_repository'] = options.get('plugin_repository') or self.default_repo()
         index = self.retrieve_plugin_index(options)
         if options['plugin'] not in index:
             raise CallError(f'{options["plugin"]} not found')
@@ -473,9 +477,10 @@ class PluginService(CRUDService):
         }
 
     @accepts(
-        Str('repository', default='https://github.com/freenas/iocage-ix-plugins.git')
+        Str('repository', default=None, null=True, empty=False)
     )
     async def branches_choices(self, repository):
+        repository = repository or self.default_repo()
 
         cp = await run(['git', 'ls-remote', repository], check=False, encoding='utf8')
         if cp.returncode:
