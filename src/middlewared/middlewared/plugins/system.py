@@ -30,6 +30,7 @@ import uuid
 import warnings
 
 from licenselib.license import ContractType, Features, License
+from pathlib import Path
 
 
 SYSTEM_BOOT_ID = None
@@ -500,6 +501,7 @@ class SystemService(Service):
         with open(LICENSE_FILE, 'w+') as f:
             f.write(license)
 
+        Path('/data/truenas-eula-pending').touch(exist_ok=True)
         self.middleware.call_sync('etc.generate', 'rc')
 
         self.__product_type = None
