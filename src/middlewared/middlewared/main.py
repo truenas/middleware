@@ -822,6 +822,7 @@ class Middleware(LoadPluginsMixin):
             plugin, function = plugin__function
 
             beginning = [
+                'datastore',
                 # We need to run system plugin setup's function first because when system boots, the right
                 # timezone is not configured. See #72131
                 'system',

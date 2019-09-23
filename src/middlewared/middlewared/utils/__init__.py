@@ -11,7 +11,6 @@ import sys
 import subprocess
 import threading
 from datetime import datetime, timedelta
-from itertools import chain
 from functools import wraps
 from multiprocessing import Process, Queue, Value
 from threading import Lock
@@ -37,49 +36,6 @@ def bisect(condition, iterable):
             b.append(val)
 
     return a, b
-
-
-def django_modelobj_serialize(middleware, obj, extend=None, extend_context=None, extend_context_value=None,
-                              field_prefix=None, select=None):
-    from django.db.models.fields.related import ForeignKey, ManyToManyField
-    from freenasUI.contrib.IPAddressField import (
-        IPAddressField, IP4AddressField, IP6AddressField
-    )
-    data = {}
-    for field in chain(obj._meta.fields, obj._meta.many_to_many):
-        origname = field.name
-        if field_prefix and origname.startswith(field_prefix):
-            name = origname[len(field_prefix):]
-        else:
-            name = origname
-        if select and name not in select:
-            continue
-        try:
-            value = getattr(obj, origname)
-        except Exception as e:
-            # If foreign key does not exist set it to None
-            if isinstance(field, ForeignKey) and isinstance(e, field.rel.model.DoesNotExist):
-                data[name] = None
-                continue
-            raise
-        if isinstance(field, (
-            IPAddressField, IP4AddressField, IP6AddressField
-        )):
-            data[name] = str(value)
-        elif isinstance(field, ForeignKey):
-            data[name] = django_modelobj_serialize(middleware, value) if value is not None else value
-        elif isinstance(field, ManyToManyField):
-            data[name] = []
-            for o in value.all():
-                data[name].append(django_modelobj_serialize(middleware, o))
-        else:
-            data[name] = value
-    if extend:
-        if extend_context:
-            data = middleware.call_sync(extend, data, extend_context_value)
-        else:
-            data = middleware.call_sync(extend, data)
-    return data
 
 
 def Popen(args, **kwargs):

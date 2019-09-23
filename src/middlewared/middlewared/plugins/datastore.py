@@ -1,32 +1,15 @@
-from middlewared.service import CallError, Service, ValidationErrors
+from concurrent.futures import ThreadPoolExecutor
+import operator
+
+from sqlalchemy import and_, create_engine, func, select
+from sqlalchemy.sql import Alias
+
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
-from sqlite3 import OperationalError
-
-import os
-import sys
-from itertools import chain
-
-sys.path.append('/usr/local/www')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-import django
-from django.apps import apps
-if not apps.ready:
-    django.setup()
-
-from django.apps import apps
-from django.db import connection
-from django.db.models import Q
-from django.db.models.fields.related import ForeignKey, ManyToManyField
-
-# FIXME: django sqlite3_ha backend uses a thread to sync queries to the
-# standby node. That does not play very well with gevent+middleware
-# if that "thread" is still running and the originating connection closes.
-from freenasUI.freeadmin.sqlite3_ha import base as sqlite3_ha_base
-sqlite3_ha_base.execute_sync = True
-
-from middlewared.utils import django_modelobj_serialize
+from middlewared.service import CallError, private, Service
+from middlewared.sqlalchemy import Model
 from middlewared.service_exception import MatchNotFound
+
+from middlewared.plugins.config import FREENAS_DATABASE
 
 
 class DatastoreService(Service):
@@ -34,41 +17,68 @@ class DatastoreService(Service):
     class Config:
         private = True
 
-    def _filters_to_queryset(self, filters, field_prefix=None):
+    thread_pool = None
+    connection = None
+
+    @private
+    async def setup(self):
+        self.thread_pool = ThreadPoolExecutor(1)
+        self.connection = await self.middleware.run_in_executor(
+            self.thread_pool,
+            lambda: create_engine(f'sqlite:///{FREENAS_DATABASE}').connect()
+        )
+
+    @private
+    def fetchall(self, query, params=None):
+        cursor = self.connection.execute(query, params or [])
+        try:
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+
+    def _get_table(self, name):
+        return Model.metadata.tables[name.replace('.', '_')]
+
+    def _get_col(self, table, name, prefix=None):
+        # id is special
+        if name != 'id' and prefix:
+            name = prefix + name
+
+        if name not in table.c and f'{name}_id' in table.c:
+            name = f'{name}_id'
+
+        return table.c[name]
+
+    def _filters_to_queryset(self, filters, table, prefix=None):
         opmap = {
-            '=': 'exact',
-            '!=': 'exact',
-            '>': 'gt',
-            '>=': 'gte',
-            '<': 'lt',
-            '<=': 'lte',
-            '~': 'regex',
-            'in': 'in',
-            'nin': 'in',
-            '^': 'startswith',
-            '$': 'endswith',
+            '=': operator.eq,
+            '!=': operator.ne,
+            '>': operator.gt,
+            '>=': operator.ge,
+            '<': operator.lt,
+            '<=': operator.le,
+            '~': lambda col, value: col.op('regexp')(value),
+            'in': operator.contains,
+            'nin': lambda col, value: value not in col,
+            '^': lambda col, value: col.startswith(value),
+            '$': lambda col, value: col.endswith(value),
         }
 
         rv = []
         for f in filters:
             if not isinstance(f, (list, tuple)):
-                raise ValueError('Filter must be a list: {0}'.format(f))
+                raise ValueError('Filter must be a list or tuple: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
-                # id is special
-                if field_prefix and name != 'id':
-                    name = field_prefix + name
                 if op not in opmap:
-                    raise ValueError("Invalid operation: {0}".format(op))
-                q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
-                if op in ('!=', 'nin'):
-                    q.negate()
+                    raise ValueError('Invalid operation: {0}'.format(op))
+                q = opmap[op](self._get_col(table, name, prefix), value)
                 rv.append(q)
             elif len(f) == 2:
                 op, value = f
                 if op == 'OR':
                     or_value = None
-                    for value in self._filters_to_queryset(value, field_prefix=field_prefix):
+                    for value in self._filters_to_queryset(value, table, prefix):
                         if or_value is None:
                             or_value = value
                         else:
@@ -77,25 +87,78 @@ class DatastoreService(Service):
                 else:
                     raise ValueError('Invalid operation: {0}'.format(op))
             else:
-                raise ValueError("Invalid filter {0}".format(f))
+                raise ValueError('Invalid filter {0}'.format(f))
         return rv
 
-    def __get_model(self, name):
-        """Helper method to get Model for given name
-        e.g. network.interfaces -> Interfaces
-        """
-        app, model = name.split('.', 1)
-        return apps.get_model(app, model)
+    def _get_queryset_joins(self, table):
+        result = {}
+        for column in table.c:
+            if column.foreign_keys:
+                if len(column.foreign_keys) > 1:
+                    raise RuntimeError('Multiple foreign keys are not supported')
 
-    def __queryset_serialize(self, qs, extend, extend_context, field_prefix, select):
+                foreign_key = list(column.foreign_keys)[0]
+                alias = foreign_key.column.table.alias(foreign_key.name)
+
+                result[foreign_key] = alias
+                if foreign_key.column.table != (table.original if isinstance(table, Alias) else table):
+                    result.update(self._get_queryset_joins(alias))
+
+        return result
+
+    async def _queryset_serialize(self, qs, table, aliases, extend, extend_context, field_prefix, select):
         if extend_context:
-            extend_context_value = self.middleware.call_sync(extend_context)
+            extend_context_value = await self.middleware.call(extend_context)
         else:
             extend_context_value = None
+
+        result = []
         for i in qs:
-            yield django_modelobj_serialize(self.middleware, i, extend=extend, extend_context=extend_context,
-                                            extend_context_value=extend_context_value, field_prefix=field_prefix,
-                                            select=select)
+            result.append(await self._serialize(
+                i, table, aliases,
+                extend, extend_context, extend_context_value, field_prefix, select
+            ))
+
+        return result
+
+    async def _serialize(self, obj, table, aliases, extend, extend_context, extend_context_value, field_prefix, select):
+        data = self._serialize_row(obj, table, aliases, select)
+
+        data = {k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k: v
+                for k, v in data.items()}
+
+        if extend:
+            if extend_context:
+                data = await self.middleware.call(extend, data, extend_context_value)
+            else:
+                data = await self.middleware.call(extend, data)
+
+        return data
+
+    def _serialize_row(self, obj, table, aliases, select):
+        data = {}
+
+        for column in table.c:
+            if select and column.name not in select:
+                continue
+
+            if not column.foreign_keys:
+                data[column.name] = obj[column]
+
+        for foreign_key, alias in aliases.items():
+            column = foreign_key.parent
+
+            if column.table != table:
+                continue
+
+            if not column.name.endswith('_id'):
+                raise RuntimeError('Foreign key column must end with _id')
+
+            data[column.name[:-3]] = (
+                self._serialize_row(obj, alias, aliases, select) if obj[column] is not None else None
+            )
+
+        return data
 
     @accepts(
         Str('name'),
@@ -105,7 +168,6 @@ class DatastoreService(Service):
             Str('extend', default=None, null=True),
             Str('extend_context', default=None, null=True),
             Str('prefix', default=None, null=True),
-            Dict('extra', additional_attrs=True),
             List('order_by', default=[]),
             List('select', default=[]),
             Bool('count', default=False),
@@ -115,8 +177,9 @@ class DatastoreService(Service):
             register=True,
         ),
     )
-    def query(self, name, filters=None, options=None):
-        """Query for items in a given collection `name`.
+    async def query(self, name, filters=None, options=None):
+        """
+        Query for items in a given collection `name`.
 
         `filters` is a list which each entry can be in one of the following formats:
 
@@ -145,7 +208,7 @@ class DatastoreService(Service):
               "params": ["account.bsdusers", [ ["username", "=", "root" ] ], {"get": true}]
             }
         """
-        model = self.__get_model(name)
+        table = self._get_table(name)
         if options is None:
             options = {}
         else:
@@ -153,193 +216,125 @@ class DatastoreService(Service):
             # which might happen with "prefix"
             options = options.copy()
 
-        qs = model.objects.all()
+        aliases = None
+        if options['count']:
+            qs = select([func.count(table.c.id)])
+        else:
+            columns = list(table.c)
+            from_ = table
+            aliases = self._get_queryset_joins(table)
+            for foreign_key, alias in aliases.items():
+                columns.extend(list(alias.c))
+                from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
 
-        extra = options.get('extra')
-        if extra:
-            qs = qs.extra(**extra)
+            qs = select(columns).select_from(from_)
 
-        prefix = options.get('prefix')
+        prefix = options['prefix']
 
         if filters:
-            qs = qs.filter(*self._filters_to_queryset(filters, prefix))
+            qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix)))
 
-        order_by = options.get('order_by')
+        if options['count']:
+            return (await self.middleware.run_in_executor(self.thread_pool, self.fetchall, qs))[0][0]
+
+        order_by = options['order_by']
         if order_by:
-            if prefix:
-                # Do not change original order_by
-                order_by = order_by[:]
-                for i, order in enumerate(order_by):
-                    if order.startswith('-'):
-                        order_by[i] = '-' + prefix + order[1:]
-                    else:
-                        order_by[i] = prefix + order
+            # Do not change original order_by
+            order_by = order_by[:]
+            for i, order in enumerate(order_by):
+                if order.startswith('-'):
+                    order_by[i] = self._get_col(table, order[1:], prefix).desc()
+                else:
+                    order_by[i] = self._get_col(table, order, prefix)
             qs = qs.order_by(*order_by)
 
-        if options.get('count') is True:
-            return qs.count()
+        if options['limit']:
+            qs = qs.limit(options['limit'])
 
         result = []
-        for i in self.__queryset_serialize(
-            qs, options.get('extend'), options.get('extend_context'), options.get('prefix'), options.get('select'),
+        for i in await self._queryset_serialize(
+            await self.middleware.run_in_executor(self.thread_pool, self.fetchall, qs),
+            table, aliases, options['extend'], options['extend_context'], options['prefix'], options['select'],
         ):
             result.append(i)
 
-        if options.get('get') is True:
+        if options['get']:
             try:
                 return result[0]
             except IndexError:
                 raise MatchNotFound()
-        if options.get('limit'):
-            return result[:options['limit']]
 
         return result
 
     @accepts(Str('name'), Ref('query-options'))
-    def config(self, name, options=None):
+    async def config(self, name, options=None):
         """
         Get configuration settings object for a given `name`.
 
         This is a shortcut for `query(name, {"get": true})`.
         """
-        if options is None:
-            options = {}
         options['get'] = True
-        return self.query(name, None, options)
+        return await self.query(name, None, options)
 
-    def validate_data_keys(self, data, model, schema, prefix):
-        verrors = ValidationErrors()
-        fields = list(
-            map(
-                lambda f: f.name.replace(prefix or '', '', 1),
-                chain(model._meta.fields, model._meta.many_to_many)
-            )
-        )
-
-        # _id is a special condition in filter where the key in question can be a related descriptor in django
-        # i.e share_id - so we remove _id and check if the field is present in `fields` list
-        for key in filter(
-            lambda v: all(c not in fields for c in (v, v if not v.endswith('_id') else v[:-3])),
-            data
-        ):
-            verrors.add(
-                f'{schema}.{key}',
-                f'{key} field not recognized'
-            )
-
-        verrors.check()
-
-    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', null=True)))
-    def insert(self, name, data, options=None):
+    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
+    async def insert(self, name, data, options=None):
         """
         Insert a new entry to `name`.
         """
+        table = self._get_table(name)
         data = data.copy()
-        many_to_many_fields_data = {}
-        options = options or {}
-        prefix = options.get('prefix')
-        model = self.__get_model(name)
-        self.validate_data_keys(data, model, 'datastore_insert', prefix)
 
-        for field in chain(model._meta.fields, model._meta.many_to_many):
-            if prefix:
-                name = field.name.replace(prefix, '', 1)
-            else:
-                name = field.name
-            if name not in data:
-                continue
-            if isinstance(field, ForeignKey) and data[name] is not None:
-                data[name] = field.rel.to.objects.get(pk=data[name])
-            if isinstance(field, ManyToManyField):
-                many_to_many_fields_data[field.name] = data.pop(name)
-            else:
+        for column in table.c:
+            if column.foreign_keys:
+                if column.name[:-3] in data:
+                    data[column.name] = data[column.name[:-3]]
 
-                # field.name is with prefix (if there's one) - we update data dict accordingly with db field names
-                data[field.name] = data.pop(name)
+        insert = table.insert().values(**{options['prefix'] + k: v for k, v in data.items()})
+        result = await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, insert)
+        return result.inserted_primary_key[0]
 
-        obj = model(**data)
-        obj.save()
-
-        for k, v in list(many_to_many_fields_data.items()):
-            field = getattr(obj, k)
-            field.add(*v)
-
-        return obj.pk
-
-    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', null=True)))
-    def update(self, name, id, data, options=None):
+    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
+    async def update(self, name, id, data, options=None):
         """
         Update an entry `id` in `name`.
         """
+        table = self._get_table(name)
         data = data.copy()
-        many_to_many_fields_data = {}
-        options = options or {}
-        prefix = options.get('prefix')
-        model = self.__get_model(name)
-        self.validate_data_keys(data, model, 'datastore_update', prefix)
 
-        if isinstance(id, (list, tuple)):
-            obj = model.objects.filter(*self._filters_to_queryset(id))
-            if obj.count() != 1:
-                raise CallError(f'{obj.count()} found, expecting one.')
-            obj = obj[0]
-        else:
-            obj = model.objects.get(pk=id)
-        for field in chain(model._meta.fields, model._meta.many_to_many):
-            if prefix:
-                name = field.name.replace(prefix, '', 1)
-            else:
-                name = field.name
-            if name not in data:
-                continue
-            if isinstance(field, ForeignKey):
-                data[name] = field.rel.to.objects.get(pk=data[name]) if data[name] is not None else None
-            if isinstance(field, ManyToManyField):
-                many_to_many_fields_data[field.name] = data.pop(name)
-            else:
-                setattr(obj, field.name, data.pop(name))
+        for column in table.c:
+            if column.foreign_keys:
+                if column.name[:-3] in data:
+                    data[column.name] = data[column.name[:-3]]
 
-        obj.save()
-
-        for k, v in list(many_to_many_fields_data.items()):
-            field = getattr(obj, k)
-            field.clear()
-            field.add(*v)
-
-        return obj.pk
+        update = table.update().values(**{options['prefix'] + k: v for k, v in data.items()}).where(table.c.id == id)
+        result = await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, update)
+        if result.rowcount != 1:
+            raise RuntimeError('No rows were updated')
 
     @accepts(Str('name'), Any('id_or_filters'))
-    def delete(self, name, id_or_filters):
+    async def delete(self, name, id_or_filters):
         """
         Delete an entry `id` in `name`.
         """
-        model = self.__get_model(name)
+        table = self._get_table(name)
+
+        delete = table.delete()
         if isinstance(id_or_filters, list):
-            qs = model.objects.all()
-            qs.filter(*self._filters_to_queryset(id_or_filters, None)).delete()
+            delete = delete.where(and_(*self._filters_to_queryset(id_or_filters, table, '')))
         else:
-            model.objects.get(pk=id_or_filters).delete()
+            delete = delete.where(table.c.id == id_or_filters)
+        await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, delete)
         return True
 
-    def sql(self, query, params=None):
-        cursor = connection.cursor()
+    @private
+    async def sql(self, query, params=None):
         try:
-            if params is None:
-                res = cursor.executelocal(query)
-            else:
-                res = cursor.executelocal(query, params)
-            rv = [
-                dict([
-                    (res.description[i][0], value)
-                    for i, value in enumerate(row)
-                ])
-                for row in cursor.fetchall()
+            return [
+                dict(v)
+                for v in await self.middleware.run_in_executor(self.thread_pool, self.fetchall, query, params)
             ]
-        except OperationalError as err:
-            raise CallError(err)
-        finally:
-            cursor.close()
-        return rv
+        except Exception as e:
+            raise CallError(e)
 
     @accepts(List('queries'))
     def restore(self, queries):
@@ -387,3 +382,7 @@ class DatastoreService(Service):
             })
 
         return models
+
+
+async def setup(middleware):
+    await middleware.call("datastore.setup")
