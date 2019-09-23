@@ -326,6 +326,7 @@ class PluginService(CRUDService):
         await self._get_instance(id)
         return await self.middleware.call('jail.delete', id)
 
+    @periodic(interval=86400)
     @accepts(
         Dict(
             'available_plugin_options',
@@ -406,7 +407,6 @@ class PluginService(CRUDService):
 
         return resource_list
 
-    @periodic(interval=86400)
     @private
     @accepts(
         Str('branch', null=True, default=None),
