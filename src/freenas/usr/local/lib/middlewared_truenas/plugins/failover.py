@@ -1239,7 +1239,7 @@ class FailoverService(ConfigService):
         if not self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False):
             return False
         try:
-            assert self.call_remote('system.ping') == 'pong'
+            assert self.call_remote('core.ping') == 'pong'
         except Exception:
             return True
         local_version = self.middleware.call_sync('system.version')
