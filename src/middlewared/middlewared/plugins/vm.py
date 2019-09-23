@@ -684,12 +684,12 @@ class VMModel(sa.Model):
     shutdown_timeout = sa.Column(sa.Integer())
 
 
-class VmDeviceModel(sa.Model):
+class VMDeviceModel(sa.Model):
     __tablename__ = 'vm_device'
 
     id = sa.Column(sa.Integer(), primary_key=True)
     dtype = sa.Column(sa.String(50))
-    attributes = sa.Column(sa.Text())
+    attributes = sa.Column(sa.JSON())
     vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
     order = sa.Column(sa.Integer(), nullable=True)
 

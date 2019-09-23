@@ -412,7 +412,7 @@ class CloudCredentialModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(100))
     provider = sa.Column(sa.String(50))
-    attributes = sa.Column(sa.Text())
+    attributes = sa.Column(sa.JSON(encrypted=True))
 
 
 class CredentialsService(CRUDService):
@@ -529,7 +529,7 @@ class CloudSyncModel(sa.Model):
     description = sa.Column(sa.String(150))
     direction = sa.Column(sa.String(10))
     path = sa.Column(sa.String(255))
-    attributes = sa.Column(sa.Text())
+    attributes = sa.Column(sa.JSON())
     minute = sa.Column(sa.String(100))
     hour = sa.Column(sa.String(100))
     daymonth = sa.Column(sa.String(100))
@@ -546,8 +546,8 @@ class CloudSyncModel(sa.Model):
     post_script = sa.Column(sa.Text())
     pre_script = sa.Column(sa.Text())
     snapshot = sa.Column(sa.Boolean())
-    bwlimit = sa.Column(sa.Text())
-    exclude = sa.Column(sa.Text())
+    bwlimit = sa.Column(sa.JSON(type=list))
+    exclude = sa.Column(sa.JSON(type=list))
     transfers = sa.Column(sa.Integer(), nullable=True)
     follow_symlinks = sa.Column(sa.Boolean())
 

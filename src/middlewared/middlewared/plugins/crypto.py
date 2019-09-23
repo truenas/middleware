@@ -926,7 +926,7 @@ class CertificateModel(sa.Model):
     cert_CSR = sa.Column(sa.Text(), nullable=True)
     cert_signedby_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
     cert_acme_uri = sa.Column(sa.String(200), nullable=True)
-    cert_domains_authenticators = sa.Column(sa.Text(), nullable=True)
+    cert_domains_authenticators = sa.Column(sa.JSON(encrypted=True), nullable=True)
     cert_renew_days = sa.Column(sa.Integer(), nullable=True)
     cert_acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True, nullable=True)
     cert_revoked_date = sa.Column(sa.DateTime(), nullable=True)

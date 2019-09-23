@@ -330,7 +330,7 @@ class NetworkBridgeModel(sa.Model):
     __tablename__ = 'network_bridge'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    members = sa.Column(sa.Text())
+    members = sa.Column(sa.JSON(type=list))
     interface_id = sa.Column(sa.ForeignKey('network_interfaces.id'))
 
 

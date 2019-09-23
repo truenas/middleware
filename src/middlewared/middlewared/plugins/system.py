@@ -694,8 +694,8 @@ class SystemGeneralModel(sa.Model):
     __tablename__ = 'system_settings'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    stg_guiaddress = sa.Column(sa.Text())
-    stg_guiv6address = sa.Column(sa.Text())
+    stg_guiaddress = sa.Column(sa.JSON(type=list))
+    stg_guiv6address = sa.Column(sa.JSON(type=list))
     stg_guiport = sa.Column(sa.Integer())
     stg_guihttpsport = sa.Column(sa.Integer())
     stg_guihttpsredirect = sa.Column(sa.Boolean())
@@ -707,7 +707,7 @@ class SystemGeneralModel(sa.Model):
     stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
     stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
-    stg_guihttpsprotocols = sa.Column(sa.Text())
+    stg_guihttpsprotocols = sa.Column(sa.JSON(type=list))
 
 
 class SystemGeneralService(ConfigService):

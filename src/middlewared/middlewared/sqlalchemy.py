@@ -1,8 +1,13 @@
+import json
+
 from sqlalchemy import (
     Table, Column as _Column, ForeignKey, Index,
     Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text, Time,
 )  # noqa
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.types import UserDefinedType
+
+from middlewared.plugins.pwenc import encrypt, decrypt
 
 
 def django_ix(index, table):
@@ -59,3 +64,32 @@ class Column(_Column):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("nullable", False)
         super().__init__(*args, **kwargs)
+
+
+class JSON(UserDefinedType):
+    def __init__(self, type=dict, encrypted=False):
+        self.type = type
+        self.encrypted = encrypted
+
+    def get_col_spec(self, **kw):
+        return "TEXT"
+
+    def _bind_processor(self, value):
+        result = json.dumps(value or self.type())
+        if self.encrypted:
+            result = encrypt(result)
+        return result
+
+    def bind_processor(self, dialect):
+        return self._bind_processor
+
+    def _result_processor(self, value):
+        try:
+            if self.encrypted:
+                value = decrypt(value, _raise=True)
+            return json.loads(value)
+        except Exception:
+            return self.type()
+
+    def result_processor(self, dialect, coltype):
+        return self._result_processor

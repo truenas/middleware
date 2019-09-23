@@ -82,7 +82,7 @@ class UserModel(sa.Model):
     bsdusr_sudo = sa.Column(sa.Boolean())
     bsdusr_microsoft_account = sa.Column(sa.Boolean())
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
-    bsdusr_attributes = sa.Column(sa.Text())
+    bsdusr_attributes = sa.Column(sa.JSON())
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
 
 

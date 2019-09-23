@@ -19,7 +19,7 @@ class PeriodicSnapshotTaskModel(sa.Model):
     task_begin = sa.Column(sa.Time())
     task_end = sa.Column(sa.Time())
     task_enabled = sa.Column(sa.Boolean())
-    task_exclude = sa.Column(sa.Text())
+    task_exclude = sa.Column(sa.JSON(type=list))
     task_naming_schema = sa.Column(sa.String(150))
     task_minute = sa.Column(sa.String(100))
     task_hour = sa.Column(sa.String(100))

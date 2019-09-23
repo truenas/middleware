@@ -225,7 +225,7 @@ class KeychainCredentialModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
     type = sa.Column(sa.String(255))
-    attributes = sa.Column(sa.Text())
+    attributes = sa.Column(sa.JSON(encrypted=True))
 
 
 class KeychainCredentialService(CRUDService):

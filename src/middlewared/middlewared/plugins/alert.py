@@ -55,7 +55,7 @@ class AlertModel(sa.Model):
     key = sa.Column(sa.Text())
     datetime = sa.Column(sa.DateTime())
     text = sa.Column(sa.Text())
-    args = sa.Column(sa.Text())
+    args = sa.Column(sa.JSON())
     dismissed = sa.Column(sa.Boolean())
     uuid = sa.Column(sa.Text())
     klass = sa.Column(sa.Text())
@@ -727,7 +727,7 @@ class AlertServiceModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(120))
     type = sa.Column(sa.String(20))
-    attributes = sa.Column(sa.Text())
+    attributes = sa.Column(sa.JSON())
     enabled = sa.Column(sa.Boolean())
     level = sa.Column(sa.String(20))
 
@@ -925,7 +925,7 @@ class AlertClassesModel(sa.Model):
     __tablename__ = 'system_alertclasses'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    classes = sa.Column(sa.Text())
+    classes = sa.Column(sa.JSON())
 
 
 class AlertClassesService(ConfigService):

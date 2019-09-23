@@ -358,7 +358,7 @@ class TwoFactorAuthModel(sa.Model):
     secret = sa.Column(sa.String(16), nullable=True)
     window = sa.Column(sa.Integer())
     interval = sa.Column(sa.Integer())
-    services = sa.Column(sa.Text())
+    services = sa.Column(sa.JSON())
     enabled = sa.Column(sa.Boolean())
 
 
