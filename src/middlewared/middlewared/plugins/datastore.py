@@ -12,6 +12,19 @@ from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.config import FREENAS_DATABASE
 
 
+"""
+Mapping of tables to not to replicate to the remote side
+
+It accepts a fields key which will then exclude these fields and not the
+whole table.
+"""
+NO_SYNC_MAP = {
+    'system_failover': {
+        'fields': ['master'],
+    },
+}
+
+
 class DatastoreService(Service):
 
     class Config:
@@ -29,7 +42,14 @@ class DatastoreService(Service):
         )
 
     @private
-    def fetchall(self, query, params=None):
+    async def execute(self, *args):
+        return await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, *args)
+
+    @private
+    async def fetchall(self, *args):
+        return await self.middleware.run_in_executor(self.thread_pool, self._fetchall, *args)
+
+    def _fetchall(self, query, params=None):
         cursor = self.connection.execute(query, params or [])
         try:
             return cursor.fetchall()
@@ -235,7 +255,7 @@ class DatastoreService(Service):
             qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix)))
 
         if options['count']:
-            return (await self.middleware.run_in_executor(self.thread_pool, self.fetchall, qs))[0][0]
+            return (await self.fetchall(qs))[0][0]
 
         order_by = options['order_by']
         if order_by:
@@ -253,7 +273,7 @@ class DatastoreService(Service):
 
         result = []
         for i in await self._queryset_serialize(
-            await self.middleware.run_in_executor(self.thread_pool, self.fetchall, qs),
+            await self.fetchall(qs),
             table, aliases, options['extend'], options['extend_context'], options['prefix'], options['select'],
         ):
             result.append(i)
@@ -290,7 +310,7 @@ class DatastoreService(Service):
                     data[column.name] = data[column.name[:-3]]
 
         insert = table.insert().values(**{options['prefix'] + k: v for k, v in data.items()})
-        result = await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, insert)
+        result = await self.execute(insert)
         return result.inserted_primary_key[0]
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
@@ -307,7 +327,7 @@ class DatastoreService(Service):
                     data[column.name] = data[column.name[:-3]]
 
         update = table.update().values(**{options['prefix'] + k: v for k, v in data.items()}).where(table.c.id == id)
-        result = await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, update)
+        result = await self.execute(update)
         if result.rowcount != 1:
             raise RuntimeError('No rows were updated')
 
@@ -323,7 +343,7 @@ class DatastoreService(Service):
             delete = delete.where(and_(*self._filters_to_queryset(id_or_filters, table, '')))
         else:
             delete = delete.where(table.c.id == id_or_filters)
-        await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, delete)
+        await self.execute(delete)
         return True
 
     @private
@@ -331,52 +351,111 @@ class DatastoreService(Service):
         try:
             return [
                 dict(v)
-                for v in await self.middleware.run_in_executor(self.thread_pool, self.fetchall, query, params)
+                for v in await self.fetchall(query, params)
             ]
         except Exception as e:
             raise CallError(e)
 
     @accepts(List('queries'))
-    def restore(self, queries):
+    async def restore(self, queries):
         """
         Receives a list of SQL queries (usually a database dump)
         and executes it within a transaction.
         """
-        return connection.dump_recv(queries)
+
+        script = []
+        for table, in await self.fetchall("SELECT name FROM sqlite_master WHERE type = 'table'"):
+            # Skip in case table is supposed to sync
+            if table not in NO_SYNC_MAP:
+                continue
+
+            tbloptions = NO_SYNC_MAP.get(table)
+            fieldnames = tbloptions['fields']
+            for row in await self.fetchall('SELECT %s FROM %s' % (
+                "'UPDATE %s SET ' || %s || ' WHERE id = ' || id" % (
+                    table,
+                    " || ', ' || ".join([
+                        "'`%s` = ' || quote(`%s`)" % (f, f)
+                        for f in fieldnames
+                    ]),
+                ),
+                table,
+            )):
+                script.append(row[0])
+
+        await self.middleware.run_in_executor(self.thread_pool, self._restore, script + queries)
+
+        # with Journal() as j:
+        #     j.queries = []
+
+        return True
+
+    def _restore(self, script):
+        self.connection.execute("PRAGMA foreign_keys=OFF")
+        try:
+            transaction = self.connection.begin()
+            try:
+                for sql in script:
+                    self.connection.execute(sql)
+                transaction.commit()
+            except Exception:
+                transaction.rollback()
+                raise
+        finally:
+            self.connection.execute("PRAGMA foreign_keys=ON")
 
     @accepts()
-    def dump(self):
+    async def dump(self):
         """
         Dumps the database, returning a list of SQL commands.
         """
+
         # FIXME: This could return a few hundred KB of data,
         # we need to investigate a way of doing that in chunks.
-        return connection.dump()
+
+        script = []
+        for table, in await self.fetchall("SELECT name FROM sqlite_master WHERE type = 'table'"):
+            if table in NO_SYNC_MAP:
+                tbloptions = NO_SYNC_MAP.get(table)
+                if not tbloptions:
+                    continue
+
+            fieldnames = [i[1] for i in await self.fetchall("PRAGMA table_info('%s');" % table)]
+            script.append('DELETE FROM %s' % table)
+            for row in await self.fetchall('SELECT %s FROM %s' % (
+                "'INSERT INTO %s (%s) VALUES (' || %s ||')'" % (
+                    table,
+                    ', '.join(['`%s`' % f for f in fieldnames]),
+                    " || ',' || ".join(
+                        ['quote(`%s`)' % field for field in fieldnames]
+                    ),
+                ),
+                table,
+            )):
+                script.append(row[0])
+
+        return script
 
     @accepts()
     async def dump_json(self):
         models = []
-        for model in django.apps.apps.get_models():
-            if not model.__module__.startswith("freenasUI."):
-                continue
-
+        for table, in await self.fetchall("SELECT name FROM sqlite_master WHERE type = 'table'"):
             try:
-                entries = await self.middleware.call("datastore.sql", f"SELECT * FROM {model._meta.db_table}")
+                entries = await self.middleware.call("datastore.sql", f"SELECT * FROM {table}")
             except CallError as e:
                 self.logger.debug("%r", e)
                 continue
 
             models.append({
-                "table_name": model._meta.db_table,
-                "verbose_name": str(model._meta.verbose_name),
+                "table_name": table,
+                "verbose_name": table,
                 "fields": [
                     {
-                        "name": field.column,
-                        "verbose_name": str(field.verbose_name),
-                        "database_type": field.db_type(connection),
+                        "name": row[1],
+                        "verbose_name": row[1],
+                        "database_type": row[2],
                     }
-                    for field in model._meta.get_fields()
-                    if not field.is_relation
+                    for row in await self.fetchall("PRAGMA table_info('%s');" % table)
                 ],
                 "entries": entries,
             })
