@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 import operator
+import re
 
 from sqlalchemy import and_, create_engine, func, select
 from sqlalchemy.sql import Alias
@@ -25,6 +26,11 @@ NO_SYNC_MAP = {
 }
 
 
+def regexp(expr, item):
+    reg = re.compile(expr, re.I)
+    return reg.search(item) is not None
+
+
 class DatastoreService(Service):
 
     class Config:
@@ -39,6 +45,10 @@ class DatastoreService(Service):
         self.connection = await self.middleware.run_in_executor(
             self.thread_pool,
             lambda: create_engine(f'sqlite:///{FREENAS_DATABASE}').connect()
+        )
+        await self.middleware.run_in_executor(
+            self.thread_pool,
+            self.connection.connection.create_function, "REGEXP", 2, regexp
         )
 
     @private
@@ -78,8 +88,8 @@ class DatastoreService(Service):
             '<': operator.lt,
             '<=': operator.le,
             '~': lambda col, value: col.op('regexp')(value),
-            'in': operator.contains,
-            'nin': lambda col, value: value not in col,
+            'in': lambda col, value: col.in_(value),
+            'nin': lambda col, value: ~col.in_(value),
             '^': lambda col, value: col.startswith(value),
             '$': lambda col, value: col.endswith(value),
         }
