@@ -1251,7 +1251,6 @@ class FailoverService(ConfigService):
         local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
         if local_bootenv:
             remote_bootenv = self.call_remote('bootenv.query', [[
-                ('active', 'rin', 'R'),
                 ('id', '=', local_bootenv[0]['id']),
             ]])
             if remote_bootenv:
