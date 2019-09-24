@@ -599,8 +599,6 @@ class ActiveDirectoryService(ConfigService):
         foreign entries.
         kinit will fail if domain name is lower-case.
         """
-        ad['domainname'] = ad['domainname'].upper()
-
         for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
             if key in ad:
                 ad.pop(key)
@@ -785,6 +783,7 @@ class ActiveDirectoryService(ConfigService):
         old = await self.config()
         new = old.copy()
         new.update(data)
+        new['domainname'] = new['domainname'].upper()
         try:
             await self.update_netbios_data(old, new)
         except Exception as e:
