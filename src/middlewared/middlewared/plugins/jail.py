@@ -360,9 +360,10 @@ class PluginService(CRUDService):
                 ]
             )
             if plugin_avail_job:
-                self.middleware.call_sync(
-                    'core.job_wait', plugin_avail_job[0]['id'], job=True
+                wait_job = self.middleware.call_sync(
+                    'core.job_wait', plugin_avail_job[0]['id']
                 )
+                wait_job.wait_sync()
 
         iocage = ioc.IOCage(skip_jails=True)
         if options['cache']:
@@ -390,26 +391,22 @@ class PluginService(CRUDService):
                     ['arguments', '=', [branch, options['plugin_repository']]],
                 ]
             )
-            error = None
-            plugins_versions_data = {}
-            if plugins_versions_data_job:
-                try:
-                    plugins_versions_data = self.middleware.call_sync(
-                        'core.job_wait', plugins_versions_data_job[0]['id'], job=True
-                    )
-                except CallError as e:
-                    error = str(e)
-            else:
-                try:
-                    plugins_versions_data = self.middleware.call_sync(
-                        'plugin.retrieve_plugin_versions', branch, options['plugin_repository'], job=True
-                    )
-                except Exception as e:
-                    error = e
 
-            if error:
+            if plugins_versions_data_job:
+                plugins_versions_data_job = self.middleware.call_sync(
+                    'core.job_wait', plugins_versions_data_job[0]['id']
+                )
+            else:
+                plugins_versions_data_job = self.middleware.call_sync(
+                    'plugin.retrieve_plugin_versions', branch, options['plugin_repository']
+                )
+            plugins_versions_data_job.wait_sync()
+
+            if plugins_versions_data_job.error:
                 # Let's not make the failure fatal
-                self.middleware.logger.debug(f'Retrieving plugins version failed: {error}')
+                self.middleware.logger.debug(f'Retrieving plugins version failed: {plugins_versions_data_job.error}')
+            else:
+                plugins_versions_data = plugins_versions_data_job.result
 
         for plugin in resource_list:
             plugin.update({
@@ -770,9 +767,12 @@ class JailService(CRUDService):
             not os.path.isdir(f'{iocroot}/releases/{release}') and not template and not empty
         ):
             job.set_progress(50, f'{release} missing, calling fetch')
-            self.middleware.call_sync(
-                'jail.fetch', {"release": release, "https": https}, job=True
+            fetch_job = self.middleware.call_sync(
+                'jail.fetch', {"release": release, "https": https}
             )
+            fetch_job.wait_sync()
+            if fetch_job.error:
+                raise CallError(fetch_job.error)
 
         err, msg = iocage.create(
             release,
@@ -1013,9 +1013,11 @@ class JailService(CRUDService):
                     'plugin_name': name,
                     'props': options['props'],
                 })
-            return self.middleware.call_sync(
-                'core.job_wait', plugin_job, job=True
-            )
+            plugin_job.wait_sync()
+            if plugin_job.error:
+                raise CallError(plugin_job.error)
+
+            return plugin_job.result
         else:
             # We are fetching a release in this case
             iocage = ioc.IOCage(callback=progress_callback, silent=False)
@@ -1340,13 +1342,20 @@ class JailService(CRUDService):
         started = False
 
         if status:
-            self.middleware.call_sync('jail.stop', jail, job=True)
+            stop_job = self.middleware.call_sync('jail.stop', jail)
+            stop_job.wait_sync()
+            if stop_job.error:
+                raise CallError(stop_job.error)
+
             started = True
 
         IOCImage().export_jail(uuid, path, compression_algo=options['compression_algorithm'].lower())
 
         if started:
-            self.middleware.call_sync('jail.start', jail, job=True)
+            start_job = self.middleware.call_sync('jail.start', jail)
+            start_job.wait_sync()
+            if start_job.error:
+                raise CallError(start_job.error)
 
         return True
 
