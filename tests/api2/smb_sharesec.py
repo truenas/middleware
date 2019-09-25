@@ -12,7 +12,13 @@ dataset_url = dataset.replace('/', '%2F')
 share_path = "/mnt/" + dataset
 
 
-def test_01_creating_smb_sharesec_dataset():
+def test_01_get_smb_sharesec():
+    results = GET(f'/smb/sharesec/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+
+
+def test_02_creating_smb_sharesec_dataset():
     payload = {
         "name": dataset,
         "share_type": "SMB"
@@ -21,7 +27,7 @@ def test_01_creating_smb_sharesec_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_02_creating_a_smb_share_path():
+def test_03_creating_a_smb_share_path():
     global payload, results, smb_id
     payload = {
         "comment": "My Test SMB Share",
@@ -33,13 +39,13 @@ def test_02_creating_a_smb_share_path():
     smb_id = results.json()['id']
 
 
-def test_03_starting_cifs_service():
+def test_04_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_04_get_sharesec_id_with_share_name():
+def test_05_get_sharesec_id_with_share_name():
     global sharesec_id
     results = GET(f'/smb/sharesec/?share_name={share_name}')
     assert results.status_code == 200, results.text
@@ -48,7 +54,7 @@ def test_04_get_sharesec_id_with_share_name():
     sharesec_id = results.json()[0]['id']
 
 
-def test_05_set_smb_sharesec_setacl():
+def test_06_set_smb_sharesec_setacl():
     payload = {
         'share_name': share_name,
         'share_acl': [
@@ -63,7 +69,7 @@ def test_05_set_smb_sharesec_setacl():
     assert results.status_code == 200, results.text
 
 
-def test_06_set_smb_sharesec_update():
+def test_07_set_smb_sharesec_update():
     payload = {
         'share_acl': [
             {
@@ -78,29 +84,29 @@ def test_06_set_smb_sharesec_update():
     assert isinstance(results.json(), dict), results.text
 
 
-def test_07_get_smb_sharesec_by_id():
+def test_08_get_smb_sharesec_by_id():
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     print(results.text)
 
 
-def test_07_delete_share_acl():
+def test_09_delete_share_acl():
     results = DELETE(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
 
 
-def test_08_starting_cifs_service():
+def test_10_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_09_delete_cifs_share():
+def test_11_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_10_destroying_smb_sharesec_dataset():
+def test_12_destroying_smb_sharesec_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
