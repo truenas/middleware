@@ -37,6 +37,7 @@ from middlewared.client import Client, ejson
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, periodic, Service
 from middlewared.utils import start_daemon_thread
+from middlewared.utils.string import make_sentence
 from middlewared.worker import watch_parent
 
 INVALID_DATASETS = (
@@ -326,7 +327,7 @@ class ZettareplService(Service):
                     return
 
                 if isinstance(message, ReplicationTaskError):
-                    raise CallError(message.error)
+                    raise CallError(make_sentence(message.error))
         finally:
             channels.remove(channel)
 
@@ -541,13 +542,13 @@ class ZettareplService(Service):
                             self.definition_errors[f"periodic_snapshot_{error.task_id}"] = {
                                 "state": "ERROR",
                                 "datetime": datetime.utcnow(),
-                                "error": str(error),
+                                "error": make_sentence(str(error)),
                             }
                         if isinstance(error, ReplicationTaskDefinitionError):
                             self.definition_errors[f"replication_{error.task_id}"] = {
                                 "state": "ERROR",
                                 "datetime": datetime.utcnow(),
-                                "error": str(error),
+                                "error": make_sentence(str(error)),
                             }
 
                 # Periodic snapshot task
@@ -568,7 +569,7 @@ class ZettareplService(Service):
                     self.state[f"periodic_snapshot_{message.task_id}"] = {
                         "state": "ERROR",
                         "datetime": datetime.utcnow(),
-                        "error": message.error,
+                        "error": make_sentence(message.error),
                     }
 
                 # Replication task events
@@ -631,7 +632,7 @@ class ZettareplService(Service):
                     state = {
                         "state": "ERROR",
                         "datetime": datetime.utcnow(),
-                        "error": message.error,
+                        "error": make_sentence(message.error),
                     }
 
                     self.state[f"replication_{message.task_id}"] = state
