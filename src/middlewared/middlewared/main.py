@@ -1273,6 +1273,10 @@ class Middleware(LoadPluginsMixin):
             if e.args[0] != "Event loop is closed":
                 raise
 
+        # We use "_exit" specifically as otherwise process pool executor won't let middlewared process die because
+        # it is still active. We don't initiate a shutdown for it because it may hang forever for any reason
+        os._exit(0)
+
     def terminate(self):
         self.logger.info('Terminating')
         self.__loop.create_task(self.__terminate())
