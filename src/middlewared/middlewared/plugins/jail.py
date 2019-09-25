@@ -227,7 +227,8 @@ class PluginService(CRUDService):
             Str('plugin_repository', empty=False),
         )
     )
-    def do_create(self, data):
+    @job(lock=lambda args: f'plugin_create_{args[0]["jail_name"]}')
+    def do_create(self, job, data):
         """
         Create a Plugin.
 
@@ -245,11 +246,6 @@ class PluginService(CRUDService):
         use the current system version. Example: 11.3-RELEASE.
         """
         data['plugin_repository'] = data.get('plugin_repository') or self.default_repo()
-        return self.middleware.call_sync('plugin._do_create', data)
-
-    @private
-    @job(lock=lambda args: f'plugin_create_{args[0]["jail_name"]}')
-    def _do_create(self, job, data):
         self.middleware.call_sync('jail.check_dataset_existence')
         verrors = ValidationErrors()
         branch = data.pop('branch') or self.get_version()
@@ -707,7 +703,8 @@ class JailService(CRUDService):
             Bool('https', default=True)
         )
     )
-    async def do_create(self, options):
+    @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
+    async def do_create(self, job, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
         # create call BUT since jail creation may or may not involve
@@ -717,12 +714,6 @@ class JailService(CRUDService):
         # are not jobs as yet, so I settle on making this a wrapper around
         # the main job that calls this and return said job's id instead of
         # the created jail's id
-
-        return await self.middleware.call('jail.create_job', options)
-
-    @private
-    @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
-    def create_job(self, job, options):
         verrors = ValidationErrors()
         uuid = options["uuid"]
 
@@ -791,7 +782,7 @@ class JailService(CRUDService):
 
         job.set_progress(100, f'Created: {uuid}')
 
-        return True
+        return self.middleware.call_sync('jail._get_instance', uuid)
 
     @item_method
     @accepts(
