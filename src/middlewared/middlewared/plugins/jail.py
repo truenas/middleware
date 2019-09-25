@@ -142,9 +142,6 @@ def common_validation(middleware, options, update=False, jail=None, schema='opti
 
 class PluginService(CRUDService):
 
-    class Config:
-        process_pool = True
-
     @accepts()
     async def official_repositories(self):
         """
@@ -580,9 +577,6 @@ class PluginService(CRUDService):
 
 
 class JailService(CRUDService):
-
-    class Config:
-        process_pool = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
