@@ -235,7 +235,7 @@ class DatastoreService(Service):
             register=True,
         ),
     )
-    async def query(self, name, filters=None, options=None):
+    async def query(self, name, filters, options):
         """
         Query for items in a given collection `name`.
 
@@ -267,12 +267,10 @@ class DatastoreService(Service):
             }
         """
         table = self._get_table(name)
-        if options is None:
-            options = {}
-        else:
-            # We do not want to make changes to original options
-            # which might happen with "prefix"
-            options = options.copy()
+
+        # We do not want to make changes to original options
+        # which might happen with "prefix"
+        options = options.copy()
 
         aliases = None
         if options['count']:
@@ -335,7 +333,7 @@ class DatastoreService(Service):
         return await self.query(name, None, options)
 
     @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
-    async def insert(self, name, data, options=None):
+    async def insert(self, name, data, options):
         """
         Insert a new entry to `name`.
         """
@@ -352,7 +350,7 @@ class DatastoreService(Service):
         return (await self.fetchall('SELECT last_insert_rowid()'))[0][0]
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
-    async def update(self, name, id, data, options=None):
+    async def update(self, name, id, data, options):
         """
         Update an entry `id` in `name`.
         """
