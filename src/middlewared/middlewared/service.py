@@ -62,7 +62,7 @@ class throttle(object):
     Decorator to throttle calls to methods.
 
     If a condition is provided it must return a tuple (shortcut, key).
-    shortcut will immediatly bypass throttle if true.
+    shortcut will immediately bypass throttle if true.
     key is the key for the time of last calls dict, meaning methods can be throttled based
     on some key (possibly argument of the method).
     """

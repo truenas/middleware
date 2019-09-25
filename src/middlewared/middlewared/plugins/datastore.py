@@ -36,26 +36,26 @@ class DatastoreService(Service):
     class Config:
         private = True
 
-    thread_pool = None
+    thread_pool = ThreadPoolExecutor(1)
 
     engine = None
     connection = None
 
     @private
     async def setup(self):
-        self.thread_pool = ThreadPoolExecutor(1)
-        self.engine = await self.middleware.run_in_executor(
-            self.thread_pool,
-            lambda: create_engine(f'sqlite:///{FREENAS_DATABASE}'),
-        )
-        self.connection = await self.middleware.run_in_executor(
-            self.thread_pool,
-            lambda: self.engine.connect(),
-        )
-        await self.middleware.run_in_executor(
-            self.thread_pool,
-            self.connection.connection.create_function, "REGEXP", 2, regexp
-        )
+        await self.middleware.run_in_executor(self.thread_pool, self._setup)
+
+    def _setup(self):
+        if self.engine is not None:
+            self.engine.dispose()
+
+        if self.connection is not None:
+            self.connection.close()
+
+        self.engine = create_engine(f'sqlite:///{FREENAS_DATABASE}')
+
+        self.connection = self.engine.connect()
+        self.connection.connection.create_function("REGEXP", 2, regexp)
 
     @private
     async def execute(self, *args):
@@ -76,8 +76,11 @@ class DatastoreService(Service):
             else:
                 binds.append(value)
 
-        result = await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, sql, binds)
-        self.middleware.call_hook('datastore.post_execute_write', sql, binds)
+        return await self.middleware.run_in_executor(self.thread_pool, self._execute_write, sql, binds)
+
+    def _execute_write(self, sql, binds):
+        result = self.connection.execute(sql, binds)
+        self.middleware.call_hook_inline('datastore.post_execute_write', sql, binds)
         return result
 
     @private
@@ -392,86 +395,6 @@ class DatastoreService(Service):
             ]
         except Exception as e:
             raise CallError(e)
-
-    @accepts(List('queries'))
-    async def restore(self, queries):
-        """
-        Receives a list of SQL queries (usually a database dump)
-        and executes it within a transaction.
-        """
-
-        script = []
-        for table, in await self.fetchall("SELECT name FROM sqlite_master WHERE type = 'table'"):
-            # Skip in case table is supposed to sync
-            if table not in NO_SYNC_MAP:
-                continue
-
-            tbloptions = NO_SYNC_MAP.get(table)
-            fieldnames = tbloptions['fields']
-            for row in await self.fetchall('SELECT %s FROM %s' % (
-                "'UPDATE %s SET ' || %s || ' WHERE id = ' || id" % (
-                    table,
-                    " || ', ' || ".join([
-                        "'`%s` = ' || quote(`%s`)" % (f, f)
-                        for f in fieldnames
-                    ]),
-                ),
-                table,
-            )):
-                script.append(row[0])
-
-        await self.middleware.run_in_executor(self.thread_pool, self._restore, script + queries)
-
-        # with Journal() as j:
-        #     j.queries = []
-
-        return True
-
-    def _restore(self, script):
-        self.connection.execute("PRAGMA foreign_keys=OFF")
-        try:
-            transaction = self.connection.begin()
-            try:
-                for sql in script:
-                    self.connection.execute(sql)
-                transaction.commit()
-            except Exception:
-                transaction.rollback()
-                raise
-        finally:
-            self.connection.execute("PRAGMA foreign_keys=ON")
-
-    @accepts()
-    async def dump(self):
-        """
-        Dumps the database, returning a list of SQL commands.
-        """
-
-        # FIXME: This could return a few hundred KB of data,
-        # we need to investigate a way of doing that in chunks.
-
-        script = []
-        for table, in await self.fetchall("SELECT name FROM sqlite_master WHERE type = 'table'"):
-            if table in NO_SYNC_MAP:
-                tbloptions = NO_SYNC_MAP.get(table)
-                if not tbloptions:
-                    continue
-
-            fieldnames = [i[1] for i in await self.fetchall("PRAGMA table_info('%s');" % table)]
-            script.append('DELETE FROM %s' % table)
-            for row in await self.fetchall('SELECT %s FROM %s' % (
-                "'INSERT INTO %s (%s) VALUES (' || %s ||')'" % (
-                    table,
-                    ', '.join(['`%s`' % f for f in fieldnames]),
-                    " || ',' || ".join(
-                        ['quote(`%s`)' % field for field in fieldnames]
-                    ),
-                ),
-                table,
-            )):
-                script.append(row[0])
-
-        return script
 
     @accepts()
     async def dump_json(self):

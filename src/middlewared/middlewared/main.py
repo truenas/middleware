@@ -963,7 +963,7 @@ class Middleware(LoadPluginsMixin):
     def unregister_wsclient(self, client):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name, method, sync=True):
+    def register_hook(self, name, method, sync=True, inline=False):
         """
         Register a hook under `name`.
 
@@ -972,11 +972,30 @@ class Middleware(LoadPluginsMixin):
             name(str): name of the hook, e.g. service.hook_name
             method(callable): method to be called
             sync(bool): whether the method should be called in a sync way
+            inline(bool): whether the method should be called in executor's context synchronously
         """
+
+        if inline:
+            if asyncio.iscoroutinefunction(method):
+                raise RuntimeError('You can\'t register coroutine function as inline hook')
+
+            if not sync:
+                raise RuntimeError('Inline hooks are always called in a sync way')
+
         self.__hooks[name].append({
             'method': method,
+            'inline': inline,
             'sync': sync,
         })
+
+    def _call_hook_base(self, name, *args, **kwargs):
+        for hook in self.__hooks[name]:
+            try:
+                yield hook, hook['method'](self, *args, **kwargs)
+            except Exception:
+                self.logger.error(
+                    'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
+                )
 
     async def call_hook(self, name, *args, **kwargs):
         """
@@ -984,19 +1003,26 @@ class Middleware(LoadPluginsMixin):
         Args:
             name(str): name of the hook, e.g. service.hook_name
         """
-        for hook in self.__hooks[name]:
+        for hook, fut in self._call_hook_base(name, *args, **kwargs):
             try:
-                fut = hook['method'](self, *args, **kwargs)
-                if hook['sync']:
+                if hook['inline']:
+                    raise RuntimeError('Inline hooks should be called with call_hook_inline')
+                elif hook['sync']:
                     await fut
                 else:
                     asyncio.ensure_future(fut)
-
             except Exception:
-                self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
+                self.logger.error(
+                    'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
+                )
 
     def call_hook_sync(self, name, *args, **kwargs):
         return self.run_coroutine(self.call_hook(name, *args, **kwargs))
+
+    def call_hook_inline(self, name, *args, **kwargs):
+        for hook, fut in self._call_hook_base(name, *args, **kwargs):
+            if not hook['inline']:
+                raise RuntimeError('Only inline hooks can be called with call_hook_inline')
 
     def register_event_source(self, name, event_source):
         if not issubclass(event_source, EventSource):

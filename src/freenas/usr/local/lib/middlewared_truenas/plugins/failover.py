@@ -12,18 +12,18 @@ from lockfile import LockFile
 import logging
 import netif
 import os
+import pickle
+import queue
 import re
 import requests
 import shutil
 import socket
 import subprocess
-import sys
 import sysctl
 import tempfile
 import textwrap
 import time
 
-from collections import defaultdict
 from functools import partial
 
 from middlewared.client import Client, ClientException, CallTimeout
@@ -33,21 +33,14 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
+from middlewared.plugins.config import FREENAS_DATABASE
+from middlewared.plugins.datastore import DatastoreService
 from middlewared.plugins.system import SystemService
 from middlewared.utils import run
-
-# FIXME: temporary imports while license methods are still in django
-if '/usr/local/www' not in sys.path:
-    sys.path.append('/usr/local/www')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-import django
-django.setup()
-from freenasUI.freeadmin.sqlite3_ha.base import Journal
 
 BUFSIZE = 256
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
-SYNC_FILE = '/var/tmp/sync_failed'
 
 logger = logging.getLogger('failover')
 
@@ -666,14 +659,14 @@ class FailoverService(ConfigService):
 
         `reboot` as true will reboot the other controller after syncing.
         """
-        self.logger.debug('Syncing database to standby controller')
-        self.database_sync()
+        self.logger.debug('Sending database to standby controller')
+        self.middleware.call_sync('failover.send_database')
         self.logger.debug('Sending license and pwenc files')
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
         self.send_small_file('/root/.ssh/authorized_keys')
 
-        for path in ('/data/geli', '/data/ssh'):
+        for path in ('/data/geli',):
             if not os.path.exists(path) or not os.path.isdir(path):
                 continue
             for f in os.listdir(path):
@@ -693,6 +686,25 @@ class FailoverService(ConfigService):
         Sync database and files from the other controller.
         """
         self.middleware.call_sync('failover.call_remote', 'failover.sync_to_peer')
+
+    @private
+    async def send_database(self):
+        await self.middleware.run_in_executor(DatastoreService.thread_pool, self._send_database)
+
+    def _send_database(self):
+        # We are in the `DatastoreService` thread so until the end of this method an item that we put into `sql_queue`
+        # will be the last one and no one else is able to write neither to the database nor to the journal.
+
+        # Journal thread will see that this is special value and will clear journal.
+        sql_queue.put(None)
+
+        self.send_small_file(FREENAS_DATABASE, FREENAS_DATABASE + '.sync')
+        self.middleware.call_sync('failover.call_remote', 'failover.receive_database')
+
+    @private
+    def receive_database(self):
+        os.rename(FREENAS_DATABASE + '.sync', FREENAS_DATABASE)
+        self.middleware.call_sync('datastore.setup')
 
     @private
     def send_small_file(self, path, dest=None):
@@ -1000,20 +1012,6 @@ class FailoverService(ConfigService):
             await self.middleware.call('service.restart', 'failover')
 
     @private
-    @accepts()
-    def database_sync(self):
-        dump = self.middleware.call_sync('datastore.dump')
-        with Journal() as j:
-            restore = self.call_remote('datastore.restore', [dump])
-            if restore:
-                j.queries = []
-        return restore
-
-    @private
-    def database_sync_failed(self):
-        return os.path.exists(SYNC_FILE) or not Journal.is_empty()
-
-    @private
     def upgrade_version(self):
         return 1
 
@@ -1307,56 +1305,180 @@ async def hook_geli_passphrase(middleware, passphrase):
         await middleware.call('failover.encryption_clearkey')
 
 
-def journal_sync(middleware, retries):
-    with Journal() as j:
-        for q in list(j.queries):
-            query, params = q
+sql_queue = queue.Queue()
+
+
+class Journal:
+    path = '/data/ha-journal'
+
+    def __init__(self):
+        self.journal = []
+        if os.path.exists(self.path):
             try:
-                middleware.call_sync('failover.call_remote', 'datastore.sql', [query, params])
+                with open(self.path, 'rb') as f:
+                    self.journal = pickle.load(f)
+            except Exception:
+                logger.warning('Failed to read journal', exc_info=True)
+
+        self.persisted_journal = self.journal.copy()
+
+    def __bool__(self):
+        return bool(self.journal)
+
+    def __iter__(self):
+        for query, params in self.journal:
+            yield query, params
+
+    def peek(self):
+        return self.journal[0]
+
+    def shift(self):
+        self.journal = self.journal[1:]
+
+    def append(self, item):
+        self.journal.append(item)
+
+    def clear(self):
+        self.journal = []
+
+    def write(self):
+        if self.persisted_journal != self.journal:
+            self._write()
+            self.persisted_journal = self.journal.copy()
+
+    def _write(self):
+        tmp_file = f'{self.path}.tmp'
+
+        with open(tmp_file, 'wb') as f:
+            pickle.dump(self.journal, f)
+
+        os.rename(tmp_file, self.path)
+
+
+class JournalSync:
+    def __init__(self, middleware, sql_queue, journal):
+        self.middleware = middleware
+        self.sql_queue = sql_queue
+        self.journal = journal
+
+        self.failover_status = None
+        self._update_failover_status()
+
+        self.last_query_failed = False  # this only affects logging
+
+    def process(self):
+        if self.failover_status != 'MASTER':
+            for query, params in self.journal:
+                logger.warning('Node status %s but has query in journal: %s', self.failover_status, query)
+
+            self.journal.clear()
+
+        had_journal_items = bool(self.journal)
+        flush_succeeded = self._flush_journal()
+
+        if had_journal_items:
+            # We've spent some flushing journal, failover status might have changed
+            self._update_failover_status()
+
+        self._consume_queue_nonblocking()
+        self.journal.write()
+
+        # Avoid busy loop
+        if flush_succeeded:
+            # The other node is synchronized, we can wait until new query arrives
+            timeout = None
+        else:
+            # Retry in N seconds,
+            timeout = 5
+
+        try:
+            item = sql_queue.get(True, timeout)
+        except queue.Empty:
+            pass
+        else:
+            # We've spent some time waiting, failover status might have changed
+            self._update_failover_status()
+
+            self._handle_sql_queue_item(item)
+
+            # Consume other pending queries
+            self._consume_queue_nonblocking()
+
+        self.journal.write()
+
+    def _flush_journal(self):
+        while self.journal:
+            query, params = self.journal.peek()
+
+            try:
+                self.middleware.call_sync('failover.call_remote', 'datastore.sql', [query, params])
             except Exception as e:
                 if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
-                    middleware.logger.trace('Skipping journal sync, node down')
-                    break
+                    logger.trace('Skipping journal sync, node down')
+                else:
+                    if not self.last_query_failed:
+                        logger.exception('Failed to run query %s: %r', query, e)
+                        self.last_query_failed = True
 
-                retries[str(q)] += 1
-                if retries[str(q)] >= 2:
-                    # No need to warn/log multiple times the same thing
-                    continue
+                    self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
 
-                middleware.logger.exception('Failed to run query %s: %r', query, e)
-
-                try:
-                    if not os.path.exists(SYNC_FILE):
-                        open(SYNC_FILE, 'w').close()
-                except Exception:
-                    pass
-
-                break
+                return False
             else:
-                j.queries.remove(q)
+                self.last_query_failed = False
 
-        if len(list(j.queries)) == 0 and os.path.exists(SYNC_FILE):
+                self.middleware.call_sync('alert.oneshot_delete', 'FailoverSyncFailed', None)
+
+                self.journal.shift()
+
+        return True
+
+    def _consume_queue_nonblocking(self):
+        while True:
             try:
-                os.unlink(SYNC_FILE)
-            except Exception:
+                self._handle_sql_queue_item(self.sql_queue.get_nowait())
+            except queue.Empty:
+                break
+
+    def _handle_sql_queue_item(self, item):
+        if item is None:
+            # This is sent by `failover.send_database`
+            self.journal.clear()
+        else:
+            if self.failover_status == 'SINGLE':
                 pass
+            elif self.failover_status == 'MASTER':
+                self.journal.append(item)
+            else:
+                query, params = item
+                logger.warning('Node status %s but executed SQL query: %s', self.failover_status, query)
+
+    def _update_failover_status(self):
+        self.failover_status = self.middleware.call_sync('failover.status')
+
+
+def hook_datastore_execute_write(middleware, sql, params):
+    sql_queue.put((sql, params))
 
 
 async def journal_ha(middleware):
     """
-    This is a green thread reponsible for trying to sync the journal
+    This is a green thread responsible for trying to sync the journal
     file to the other node.
     Every SQL query that could not be synced is stored in the journal.
     """
-    retries = defaultdict(int)
+    await middleware.run_in_thread(journal_sync, middleware)
+
+
+def journal_sync(middleware):
     while True:
-        await asyncio.sleep(5)
-        if Journal.is_empty():
-            continue
         try:
-            await middleware.run_in_thread(journal_sync, middleware, retries)
+            journal = Journal()
+            journal_sync = JournalSync(middleware, sql_queue, journal)
+            while True:
+                journal_sync.process()
         except Exception:
-            middleware.logger.warn('Failed to sync journal', exc_info=True)
+            logger.warning('Failed to sync journal', exc_info=True)
+            time.sleep(5)
 
 
 def sync_internal_ips(middleware, iface, carp1_skew, carp2_skew, internal_ip):
@@ -1613,6 +1735,7 @@ def setup(middleware):
         at user will.'''))
     middleware.event_subscribe('system', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
+    middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
     middleware.register_hook('disk.post_geli_passphrase', hook_geli_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)

@@ -149,7 +149,7 @@ async def test__update_fk():
 
         await ds.update("account_bsdusers", 5, {"bsdusr_uid": 100, "bsdusr_group": 30})
 
-        ds.middleware.call_hook.assert_called_once_with(
+        ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "UPDATE account_bsdusers SET bsdusr_uid=?, bsdusr_group_id=? WHERE account_bsdusers.id = ?",
             [100, 30, 5],
@@ -315,7 +315,7 @@ async def test__encrypted_json_save():
 
         assert (await ds.sql("SELECT * FROM test_encryptedjson"))[0]["object"] == '!{"key": "value"}'
 
-        ds.middleware.call_hook.assert_called_once_with(
+        ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedjson (object) VALUES (?)",
             ['!{"key": "value"}']
