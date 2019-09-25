@@ -52,14 +52,16 @@ class AsigraService(SystemServiceService):
         # 6) Set asigra filesystem value as None which indicates that migration has been performed or not needed
 
         asigra_config = self.middleware.call_sync('asigra.config')
-        if not asigra_config['filesystem']:
+        system_asigra_path = os.path.join('/mnt', asigra_config['filesystem'] or '')
+        asigra_dataset = self.middleware.call_sync(
+            'pool.dataset.query', [['id', '=', asigra_config['filesystem']]]
+        )
+        if not asigra_dataset:
             self.middleware.logger.debug('No migration required for the current system.')
             return
+        else:
+            asigra_dataset = asigra_dataset[0]
 
-        system_asigra_path = os.path.join('/mnt', asigra_config['filesystem'])
-        asigra_dataset = self.middleware.call_sync(
-            'pool.dataset.query', [['id', '=', asigra_config['filesystem']]], {'get': True}
-        )
         if len([
             c for c in asigra_dataset['children']
             if c['id'] in (os.path.join(asigra_config['filesystem'], d) for d in ('files', 'database', 'upgrade'))
