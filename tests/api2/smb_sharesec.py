@@ -102,6 +102,11 @@ def test_09_get_smb_sharesec_getacl():
     assert isinstance(results.json(), dict), results.text
 
 
+def test_10_get_smb_sharesec_by_id():
+    results = GET(f"/smb/sharesec/synchronize_acls/")
+    assert results.status_code == 200, results.text
+
+
 def test_10_delete_share_acl():
     results = DELETE(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
