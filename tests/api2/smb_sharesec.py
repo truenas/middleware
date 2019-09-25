@@ -88,25 +88,36 @@ def test_08_get_smb_sharesec_by_id():
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    print(results.text)
 
 
-def test_09_delete_share_acl():
+def test_09_get_smb_sharesec_getacl():
+    payload = {
+        "share_name": share_name,
+        "options": {
+            "resolve_sids": True
+        }
+    }
+    results = POST(f"/smb/sharesec/getacl/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+def test_10_delete_share_acl():
     results = DELETE(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
 
 
-def test_10_starting_cifs_service():
+def test_11_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_11_delete_cifs_share():
+def test_12_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_12_destroying_smb_sharesec_dataset():
+def test_13_destroying_smb_sharesec_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
