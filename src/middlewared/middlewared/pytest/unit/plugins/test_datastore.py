@@ -133,6 +133,36 @@ async def test__fk_filter():
         ]
 
 
+@pytest.mark.asyncio
+async def test__inserted_primary_key():
+    async with datastore_test() as ds:
+        assert await ds.insert("account.bsdgroups", {"bsdgrp_gid": 5}) == 1
+        assert await ds.insert("account.bsdgroups", {"bsdgrp_gid": 10}) == 2
+
+
+@pytest.mark.asyncio
+async def test__update_fk():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (30, 3030)")
+        await ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
+
+        await ds.update("account_bsdusers", 5, {"bsdusr_uid": 100, "bsdusr_group": 30})
+
+        ds.middleware.call_hook.assert_called_once_with(
+            "datastore.post_execute_write",
+            "UPDATE account_bsdusers SET bsdusr_uid=?, bsdusr_group_id=? WHERE account_bsdusers.id = ?",
+            [100, 30, 5],
+        )
+
+
+@pytest.mark.asyncio
+async def test__bad_pk_update():
+    async with datastore_test() as ds:
+        with pytest.raises(RuntimeError):
+            assert await ds.update("account.bsdgroups", 1, {"bsdgrp_gid": 5})
+
+
 class NullableFkModel(Model):
     __tablename__ = 'test_nullablefk'
 
@@ -284,6 +314,12 @@ async def test__encrypted_json_save():
             await ds.insert("test.encryptedjson", {"object": {"key": "value"}})
 
         assert (await ds.sql("SELECT * FROM test_encryptedjson"))[0]["object"] == '!{"key": "value"}'
+
+        ds.middleware.call_hook.assert_called_once_with(
+            "datastore.post_execute_write",
+            "INSERT INTO test_encryptedjson (object) VALUES (?)",
+            ['!{"key": "value"}']
+        )
 
 
 class CustomPkModel(Model):

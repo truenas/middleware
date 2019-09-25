@@ -37,14 +37,20 @@ class DatastoreService(Service):
         private = True
 
     thread_pool = None
+
+    engine = None
     connection = None
 
     @private
     async def setup(self):
         self.thread_pool = ThreadPoolExecutor(1)
+        self.engine = await self.middleware.run_in_executor(
+            self.thread_pool,
+            lambda: create_engine(f'sqlite:///{FREENAS_DATABASE}'),
+        )
         self.connection = await self.middleware.run_in_executor(
             self.thread_pool,
-            lambda: create_engine(f'sqlite:///{FREENAS_DATABASE}').connect()
+            lambda: self.engine.connect(),
         )
         await self.middleware.run_in_executor(
             self.thread_pool,
@@ -54,6 +60,25 @@ class DatastoreService(Service):
     @private
     async def execute(self, *args):
         return await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, *args)
+
+    @private
+    async def execute_write(self, stmt):
+        compiled = stmt.compile(self.engine)
+
+        sql = compiled.string
+        binds = []
+        for param in compiled.positiontup:
+            bind = compiled.binds[param]
+            value = bind.value
+            bind_processor = compiled.binds[param].type.bind_processor(self.engine.dialect)
+            if bind_processor:
+                binds.append(bind_processor(value))
+            else:
+                binds.append(value)
+
+        result = await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, sql, binds)
+        self.middleware.call_hook('datastore.post_execute_write', sql, binds)
+        return result
 
     @private
     async def fetchall(self, *args):
@@ -320,11 +345,11 @@ class DatastoreService(Service):
         for column in table.c:
             if column.foreign_keys:
                 if column.name[:-3] in data:
-                    data[column.name] = data[column.name[:-3]]
+                    data[column.name] = data.pop(column.name[:-3])
 
         insert = table.insert().values(**{options['prefix'] + k: v for k, v in data.items()})
-        result = await self.execute(insert)
-        return result.inserted_primary_key[0]
+        await self.execute_write(insert)
+        return (await self.fetchall('SELECT last_insert_rowid()'))[0][0]
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
     async def update(self, name, id, data, options=None):
@@ -337,11 +362,11 @@ class DatastoreService(Service):
         for column in table.c:
             if column.foreign_keys:
                 if column.name[:-3] in data:
-                    data[column.name] = data[column.name[:-3]]
+                    data[column.name] = data.pop(column.name[:-3])
 
         pk = self._get_pk(table)
         update = table.update().values(**{options['prefix'] + k: v for k, v in data.items()}).where(pk == id)
-        result = await self.execute(update)
+        result = await self.execute_write(update)
         if result.rowcount != 1:
             raise RuntimeError('No rows were updated')
 
@@ -357,7 +382,7 @@ class DatastoreService(Service):
             delete = delete.where(and_(*self._filters_to_queryset(id_or_filters, table, '')))
         else:
             delete = delete.where(self._get_pk(table) == id_or_filters)
-        await self.execute(delete)
+        await self.execute_write(delete)
         return True
 
     @private
