@@ -757,7 +757,7 @@ class VMService(CRUDService):
             list(dict): with all attributes of the vnc device or an empty list.
         """
         vnc_devices = []
-        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm', '=', id)]):
             if device['dtype'] == 'VNC':
                 vnc = device['attributes']
                 vnc_devices.append(vnc)
@@ -802,7 +802,7 @@ class VMService(CRUDService):
             list: will return a list with all attached phisycal interfaces or otherwise False.
         """
         ifaces = []
-        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm', '=', id)]):
             if device['dtype'] == 'NIC':
                 if_attached = device['attributes'].get('nic_attach')
                 if if_attached:

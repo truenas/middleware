@@ -115,6 +115,24 @@ async def test__prefix_filter():
             assert await ds.query("account.bsdusers", [("bsdusr_uid", "=", 55)], {"prefix": "bsdusr_"})
 
 
+@pytest.mark.asyncio
+async def test__fk_filter():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        await ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
+
+        assert await ds.query("account.bsdusers", [("group", "=", 20)], {"prefix": "bsdusr_"}) == [
+            {
+                "id": 5,
+                "uid": 55,
+                "group": {
+                    "id": 20,
+                    "bsdgrp_gid": 2020,
+                },
+            }
+        ]
+
+
 class NullableFkModel(Model):
     __tablename__ = 'test_nullablefk'
 
@@ -123,7 +141,7 @@ class NullableFkModel(Model):
 
 
 @pytest.mark.asyncio
-async def test__relationship_load():
+async def test__null_fk_load():
     async with datastore_test() as ds:
         await ds.execute("INSERT INTO `test_nullablefk` VALUES (1, NULL)")
 
@@ -182,6 +200,21 @@ async def test__logic(filter, ids):
         await ds.execute("INSERT INTO test_integer VALUES (5, 5)")
 
         assert [row["id"] for row in await ds.query("test.integer", filter)] == ids
+
+
+@pytest.mark.parametrize("order_by,ids", [
+    (["integer", "id"], [1, 2, 3, 4]),
+    (["integer", "-id"], [1, 3, 2, 4]),
+])
+@pytest.mark.asyncio
+async def test__order_by(order_by, ids):
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_integer VALUES (1, 1)")
+        await ds.execute("INSERT INTO test_integer VALUES (2, 2)")
+        await ds.execute("INSERT INTO test_integer VALUES (3, 2)")
+        await ds.execute("INSERT INTO test_integer VALUES (4, 3)")
+
+        assert [row["id"] for row in await ds.query("test.integer", [], {"order_by": order_by})] == ids
 
 
 class JSONModel(Model):
@@ -299,5 +332,17 @@ async def test__custom_pk_delete():
         await ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
 
         await ds.delete("test.custompk", "ID1")
+
+        assert await ds.query("test.custompk", [], {"count": True}) == 1
+
+
+@pytest.mark.asyncio
+async def test__delete_by_filter():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID3', 'Other Test')")
+
+        await ds.delete("test.custompk", [("custom_name", "^", "Test")])
 
         assert await ds.query("test.custompk", [], {"count": True}) == 1
