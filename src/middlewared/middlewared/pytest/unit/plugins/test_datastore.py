@@ -251,3 +251,53 @@ async def test__encrypted_json_save():
             await ds.insert("test.encryptedjson", {"object": {"key": "value"}})
 
         assert (await ds.sql("SELECT * FROM test_encryptedjson"))[0]["object"] == '!{"key": "value"}'
+
+
+class CustomPkModel(Model):
+    __tablename__ = 'test_custompk'
+
+    custom_identifier = sa.Column(sa.String(42), primary_key=True)
+    custom_name = sa.Column(sa.String(120))
+
+
+@pytest.mark.asyncio
+async def test__custom_pk_query():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
+
+        result = await ds.query("test.custompk", [("identifier", "=", "ID1")], {"prefix": "custom_", "get": True})
+        assert result == {"identifier": "ID1", "name": "Test 1"}
+
+
+@pytest.mark.asyncio
+async def test__custom_pk_count():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID3', 'Other Test')")
+
+        assert await ds.query("test.custompk", [("name", "^", "Test")], {"prefix": "custom_", "count": True}) == 2
+
+
+@pytest.mark.asyncio
+async def test__custom_pk_update():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
+
+        await ds.update("test.custompk", "ID1", {"name": "Updated"}, {"prefix": "custom_"})
+
+        result = await ds.query("test.custompk", [("identifier", "=", "ID1")], {"prefix": "custom_", "get": True})
+        assert result == {"identifier": "ID1", "name": "Updated"}
+
+
+@pytest.mark.asyncio
+async def test__custom_pk_delete():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        await ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
+
+        await ds.delete("test.custompk", "ID1")
+
+        assert await ds.query("test.custompk", [], {"count": True}) == 1

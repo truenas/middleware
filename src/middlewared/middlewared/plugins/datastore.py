@@ -69,6 +69,9 @@ class DatastoreService(Service):
     def _get_table(self, name):
         return Model.metadata.tables[name.replace('.', '_')]
 
+    def _get_pk(self, table):
+        return [col for col in table.c if col.primary_key][0]
+
     def _get_col(self, table, name, prefix=None):
         # id is special
         if name != 'id' and prefix:
@@ -248,7 +251,7 @@ class DatastoreService(Service):
 
         aliases = None
         if options['count']:
-            qs = select([func.count(table.c.id)])
+            qs = select([func.count(self._get_pk(table))])
         else:
             columns = list(table.c)
             from_ = table
@@ -336,7 +339,8 @@ class DatastoreService(Service):
                 if column.name[:-3] in data:
                     data[column.name] = data[column.name[:-3]]
 
-        update = table.update().values(**{options['prefix'] + k: v for k, v in data.items()}).where(table.c.id == id)
+        pk = self._get_pk(table)
+        update = table.update().values(**{options['prefix'] + k: v for k, v in data.items()}).where(pk == id)
         result = await self.execute(update)
         if result.rowcount != 1:
             raise RuntimeError('No rows were updated')
@@ -352,7 +356,7 @@ class DatastoreService(Service):
         if isinstance(id_or_filters, list):
             delete = delete.where(and_(*self._filters_to_queryset(id_or_filters, table, '')))
         else:
-            delete = delete.where(table.c.id == id_or_filters)
+            delete = delete.where(self._get_pk(table) == id_or_filters)
         await self.execute(delete)
         return True
 
