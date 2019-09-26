@@ -14,10 +14,10 @@ from functions import POST, PUT
 
 from config import *
 
-Reason = "BRIDGEDOMAIN BRIDGEHOST BRIDGEDNS BRIDGEGW "
+Reason = "AD_DOMAIN BRIDGEHOST BRIDGEDNS BRIDGEGW "
 Reason += "are missing in ixautomation.conf"
 
-route_and_dns_cfg = pytest.mark.skipif(all(["BRIDGEDOMAIN" in locals(),
+route_and_dns_cfg = pytest.mark.skipif(all(["AD_DOMAIN" in locals(),
                                             "BRIDGEHOST" in locals(),
                                             "BRIDGEDNS" in locals(),
                                             "BRIDGEGW" in locals()
@@ -34,7 +34,7 @@ def test_01_configure_interface_dhcp():
 
 @route_and_dns_cfg
 def test_02_Setting_default_route_and_DNS():
-    payload = {"gc_domain": BRIDGEDOMAIN,
+    payload = {"gc_domain": AD_DOMAIN,
                "gc_hostname": BRIDGEHOST,
                "gc_ipv4gateway": BRIDGEGW,
                "gc_nameserver1": BRIDGEDNS}

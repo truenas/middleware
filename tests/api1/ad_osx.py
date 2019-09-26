@@ -19,12 +19,12 @@ DATASET = "ad-osx"
 SMB_NAME = "TestShare"
 SMB_PATH = f"/mnt/{pool_name}/{DATASET}"
 VOL_GROUP = "wheel"
-Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
+Reason = "BRIDGEHOST, AD_DOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
 Reason += "ixautomation.conf"
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
 ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                      "BRIDGEDOMAIN" in locals(),
+                                      "AD_DOMAIN" in locals(),
                                       "ADPASSWORD" in locals(),
                                       "ADUSERNAME" in locals(),
                                       "MOUNTPOINT" in locals()
@@ -47,7 +47,7 @@ def test_02_Enabling_Active_Directory():
     payload = {
         "ad_bindpw": ADPASSWORD,
         "ad_bindname": ADUSERNAME,
-        "ad_domainname": BRIDGEDOMAIN,
+        "ad_domainname": AD_DOMAIN,
         "ad_netbiosname": BRIDGEHOST,
         "ad_idmap_backend": "rid",
         "ad_enable": True

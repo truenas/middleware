@@ -304,7 +304,7 @@ def vm_start(vm_name):
 
 
 def ping_host(host, count):
-    process = run(['ping', '-c', count, host])
+    process = run(['ping', '-c', f'{count}', host])
     if process.returncode != 0:
         return False
     else:

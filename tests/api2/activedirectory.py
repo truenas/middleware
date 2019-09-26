@@ -8,7 +8,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name
 from config import *
-from functions import GET, POST, PUT, DELETE, SSH_TEST
+from functions import GET, POST, PUT, DELETE, SSH_TEST, ping_host
 
 ad_data_type = {
     'id': int,
@@ -52,13 +52,20 @@ SMB_NAME = "TestShare"
 SMB_PATH = f"/mnt/{dataset}"
 VOL_GROUP = "wheel"
 
-Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
+Reason = "BRIDGEHOST, AD_DOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
 Reason += "ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
+host_reason = 'ad host is down'
+ad_host_down = False
+
+if AD_DOMAIN in locals():
+    host_reason = f'{AD_DOMAIN} is down'
+    ad_host_up = ping_host(AD_DOMAIN) is False
+
 ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                      "BRIDGEDOMAIN" in locals(),
+                                      "AD_DOMAIN" in locals(),
                                       "ADPASSWORD" in locals(),
                                       "ADUSERNAME" in locals(),
                                       "MOUNTPOINT" in locals()
@@ -120,7 +127,7 @@ def test_07_enabling_activedirectory():
     payload = {
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
-        "domainname": BRIDGEDOMAIN,
+        "domainname": AD_DOMAIN,
         "netbiosname": BRIDGEHOST,
         "idmap_backend": "RID",
         "dns_timeout": 15,
@@ -354,7 +361,7 @@ def test_37_re_enable_activedirectory():
     payload = {
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
-        "domainname": BRIDGEDOMAIN,
+        "domainname": AD_DOMAIN,
         "netbiosname": BRIDGEHOST,
         "idmap_backend": "RID",
         "enable": True
