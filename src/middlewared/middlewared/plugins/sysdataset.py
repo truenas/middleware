@@ -294,7 +294,7 @@ class SystemDatasetService(ConfigService):
         return [(f'{pool}/.system', '')] + [
             (f'{pool}/.system/{i}', i) for i in [
                 'cores', 'samba4', f'syslog-{uuid}',
-                f'rrd-{uuid}', f'configs-{uuid}', 'webui',
+                f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services'
             ]
         ]
 
