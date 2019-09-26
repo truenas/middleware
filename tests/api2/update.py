@@ -184,9 +184,9 @@ def test_13_wait_for_FreeNAS_to_be_online():
     elif reboot is False:
         pytest.skip(f'Reboot is False skip')
     else:
-        while ping_host(ip) is not True:
+        while ping_host(ip, 1) is not True:
             sleep(5)
-        assert ping_host(ip) is True
+        assert ping_host(ip, 1) is True
     sleep(10)
 
 
