@@ -217,22 +217,62 @@ def test_23_get_smb_sharesec_by_id():
     assert results.status_code == 200, results.text
 
 
-def test_24_delete_share_acl():
+def test_24_delete_share_info_tdb():
+    cmd = 'rm /var/db/system/samba4/share_info.tdb'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_25_verify_share_info_tdb_is_deleted():
+    cmd = 'test -f /var/db/system/samba4/share_info.tdb'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is False, results['output']
+
+
+def test_26_verify_smb_sharesec_is_reseted():
+    results = GET(f"/smb/sharesec/id/{sharesec_id}")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    ae_result = results.json()['share_acl'][0]['ae_who_sid']
+    assert ae_result != 'S-1-5-32-546', results.text
+
+
+def test_27_restort_sharesec_with_flush_share_info():
+    cmd = 'midclt call smb.sharesec._flush_share_info'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_28_verify_smb_sharesec_is_restored():
+    results = GET(f"/smb/sharesec/id/{sharesec_id}")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    ae_result = results.json()['share_acl'][0]['ae_who_sid']
+    assert ae_result == 'S-1-5-32-546', results.text
+
+
+def test_29_verify_share_info_tdb_is_created():
+    cmd = 'test -f /var/db/system/samba4/share_info.tdb'
+    results = SSH_TEST(cmd, user, password, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_30_delete_share_acl():
     results = DELETE(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
 
 
-def test_25_starting_cifs_service():
+def test_31_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_26_delete_cifs_share():
+def test_32_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_27_destroying_smb_sharesec_dataset():
+def test_33_destroying_smb_sharesec_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
