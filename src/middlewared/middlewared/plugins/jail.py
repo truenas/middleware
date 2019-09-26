@@ -142,9 +142,6 @@ def common_validation(middleware, options, update=False, jail=None, schema='opti
 
 class PluginService(CRUDService):
 
-    class Config:
-        process_pool = True
-
     @accepts()
     async def official_repositories(self):
         """
@@ -230,7 +227,8 @@ class PluginService(CRUDService):
             Str('plugin_repository', empty=False),
         )
     )
-    def do_create(self, data):
+    @job(lock=lambda args: f'plugin_create_{args[0]["jail_name"]}')
+    def do_create(self, job, data):
         """
         Create a Plugin.
 
@@ -248,11 +246,6 @@ class PluginService(CRUDService):
         use the current system version. Example: 11.3-RELEASE.
         """
         data['plugin_repository'] = data.get('plugin_repository') or self.default_repo()
-        return self.middleware.call_sync('plugin._do_create', data)
-
-    @private
-    @job(lock=lambda args: f'plugin_create_{args[0]["jail_name"]}')
-    def _do_create(self, job, data):
         self.middleware.call_sync('jail.check_dataset_existence')
         verrors = ValidationErrors()
         branch = data.pop('branch') or self.get_version()
@@ -326,6 +319,7 @@ class PluginService(CRUDService):
         await self._get_instance(id)
         return await self.middleware.call('jail.delete', id)
 
+    @periodic(interval=86400)
     @accepts(
         Dict(
             'available_plugin_options',
@@ -336,7 +330,7 @@ class PluginService(CRUDService):
     )
     @job(
         lock=lambda args: 'available_plugins_{}_{}'.format(
-            args[0].get('branch') if args else None, args[0].get('plugin_repository') if args else None
+            (args or [{}])[0].get('branch'), (args or [{}])[0].get('plugin_repository')
         )
     )
     def available(self, job, options):
@@ -344,8 +338,29 @@ class PluginService(CRUDService):
         List available plugins which can be fetched for `plugin_repository`.
         """
         self.middleware.call_sync('jail.check_dataset_existence')
-        branch = options.get('branch') or self.get_version()
-        options['plugin_repository'] = options.get('plugin_repository') or self.default_repo()
+        default_branch = self.get_version()
+        default_repo = self.default_repo()
+        branch = options.get('branch') or default_branch
+        options['plugin_repository'] = options.get('plugin_repository') or default_repo
+        # If user passes no parameters we assume defaults for branch and repo which are evaluated dynamically,
+        # however if the same defaults are passed to the function, job locking can't have the latter call wait
+        # because it is unable to retrieve defaults from schema layer or access our dynamic defaults
+        # In this case we decide to wait for a job which might already be running with the specified branch/repo
+        if options['cache'] and branch == default_branch and options['plugin_repository'] == default_repo:
+            plugin_avail_job = self.middleware.call_sync(
+                'core.get_jobs', [
+                    ['method', '=', 'plugin.available'],
+                    ['state', 'in', ['RUNNING', 'WAITING']],
+                    ['arguments', '=', []],
+                    ['id', '!=', job.id]
+                ]
+            )
+            if plugin_avail_job:
+                wait_job = self.middleware.call_sync(
+                    'core.job_wait', plugin_avail_job[0]['id']
+                )
+                wait_job.wait_sync()
+
         iocage = ioc.IOCage(skip_jails=True)
         if options['cache']:
             with contextlib.suppress(KeyError):
@@ -372,26 +387,22 @@ class PluginService(CRUDService):
                     ['arguments', '=', [branch, options['plugin_repository']]],
                 ]
             )
-            error = None
-            plugins_versions_data = {}
-            if plugins_versions_data_job:
-                try:
-                    plugins_versions_data = self.middleware.call_sync(
-                        'core.job_wait', plugins_versions_data_job[0]['id'], job=True
-                    )
-                except CallError as e:
-                    error = str(e)
-            else:
-                try:
-                    plugins_versions_data = self.middleware.call_sync(
-                        'plugin.retrieve_plugin_versions', branch, options['plugin_repository'], job=True
-                    )
-                except Exception as e:
-                    error = e
 
-            if error:
+            if plugins_versions_data_job:
+                plugins_versions_data_job = self.middleware.call_sync(
+                    'core.job_wait', plugins_versions_data_job[0]['id']
+                )
+            else:
+                plugins_versions_data_job = self.middleware.call_sync(
+                    'plugin.retrieve_plugin_versions', branch, options['plugin_repository']
+                )
+            plugins_versions_data_job.wait_sync()
+
+            if plugins_versions_data_job.error:
                 # Let's not make the failure fatal
-                self.middleware.logger.debug(f'Retrieving plugins version failed: {error}')
+                self.middleware.logger.debug(f'Retrieving plugins version failed: {plugins_versions_data_job.error}')
+            else:
+                plugins_versions_data = plugins_versions_data_job.result
 
         for plugin in resource_list:
             plugin.update({
@@ -406,7 +417,6 @@ class PluginService(CRUDService):
 
         return resource_list
 
-    @periodic(interval=86400)
     @private
     @accepts(
         Str('branch', null=True, default=None),
@@ -561,9 +571,6 @@ class PluginService(CRUDService):
 
 class JailService(CRUDService):
 
-    class Config:
-        process_pool = True
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -696,7 +703,8 @@ class JailService(CRUDService):
             Bool('https', default=True)
         )
     )
-    async def do_create(self, options):
+    @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
+    async def do_create(self, job, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
         # create call BUT since jail creation may or may not involve
@@ -706,12 +714,6 @@ class JailService(CRUDService):
         # are not jobs as yet, so I settle on making this a wrapper around
         # the main job that calls this and return said job's id instead of
         # the created jail's id
-
-        return await self.middleware.call('jail.create_job', options)
-
-    @private
-    @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
-    def create_job(self, job, options):
         verrors = ValidationErrors()
         uuid = options["uuid"]
 
@@ -756,9 +758,12 @@ class JailService(CRUDService):
             not os.path.isdir(f'{iocroot}/releases/{release}') and not template and not empty
         ):
             job.set_progress(50, f'{release} missing, calling fetch')
-            self.middleware.call_sync(
-                'jail.fetch', {"release": release, "https": https}, job=True
+            fetch_job = self.middleware.call_sync(
+                'jail.fetch', {"release": release, "https": https}
             )
+            fetch_job.wait_sync()
+            if fetch_job.error:
+                raise CallError(fetch_job.error)
 
         err, msg = iocage.create(
             release,
@@ -777,7 +782,7 @@ class JailService(CRUDService):
 
         job.set_progress(100, f'Created: {uuid}')
 
-        return True
+        return self.middleware.call_sync('jail._get_instance', uuid)
 
     @item_method
     @accepts(
@@ -999,9 +1004,11 @@ class JailService(CRUDService):
                     'plugin_name': name,
                     'props': options['props'],
                 })
-            return self.middleware.call_sync(
-                'core.job_wait', plugin_job, job=True
-            )
+            plugin_job.wait_sync()
+            if plugin_job.error:
+                raise CallError(plugin_job.error)
+
+            return plugin_job.result
         else:
             # We are fetching a release in this case
             iocage = ioc.IOCage(callback=progress_callback, silent=False)
@@ -1329,13 +1336,20 @@ class JailService(CRUDService):
         started = False
 
         if status:
-            self.middleware.call_sync('jail.stop', jail, job=True)
+            stop_job = self.middleware.call_sync('jail.stop', jail)
+            stop_job.wait_sync()
+            if stop_job.error:
+                raise CallError(stop_job.error)
+
             started = True
 
         IOCImage().export_jail(uuid, path, compression_algo=options['compression_algorithm'].lower())
 
         if started:
-            self.middleware.call_sync('jail.start', jail, job=True)
+            start_job = self.middleware.call_sync('jail.start', jail)
+            start_job.wait_sync()
+            if start_job.error:
+                raise CallError(start_job.error)
 
         return True
 
