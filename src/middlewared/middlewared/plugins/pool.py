@@ -2585,6 +2585,11 @@ class PoolService(CRUDService):
         except Exception:
             self.logger.warn('Failed to configure syslogd', exc_info=True)
 
+        try:
+            self.middleware.call_sync('etc.generate', 'zerotier')
+        except Exception:
+            self.logger.warn('Failed to configure zerotier', exc_info=True)
+
         # Configure swaps after importing pools. devd events are not yet ready at this
         # stage of the boot process.
         self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
