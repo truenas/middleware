@@ -819,6 +819,7 @@ class FilesystemService(Service):
             a.apply(data['path'])
 
         if not options['recursive']:
+            os.chown(data['path'], uid, gid)
             return True
 
         self._winacl(data['path'], 'clone', uid, gid, options)
