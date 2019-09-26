@@ -12,6 +12,22 @@ dataset = f"{pool_name}/smb-sharesec"
 dataset_url = dataset.replace('/', '%2F')
 share_path = "/mnt/" + dataset
 
+Guests = {
+    "domain": "BUILTIN",
+    "name": "Guests",
+    "sidtype": "ALIAS"
+}
+Admins = {
+    "domain": "BUILTIN",
+    "name": "Administrators",
+    "sidtype": "ALIAS"
+}
+Users = {
+    "domain": "BUILTIN",
+    "name": "Users",
+    "sidtype": "ALIAS"
+}
+
 
 def test_01_get_smb_sharesec():
     results = GET(f'/smb/sharesec/')
@@ -53,10 +69,9 @@ def test_05_get_sharesec_id_with_share_name():
     assert isinstance(results.json(), list), results.text
     assert isinstance(results.json()[0], dict), results.text
     sharesec_id = results.json()[0]['id']
-    print(results.text)
 
 
-def test_06_set_smb_sharesec_setacl():
+def test_06_set_smb_sharesec_to_users():
     global payload
     payload = {
         'share_name': share_name,
@@ -77,16 +92,21 @@ def test_07_get_smb_sharesec_by_id():
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    print(results.text)
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_08_verify_smb_sharesec_(ae):
+def test_08_verify_share_acl_output_from_smb_sharesec_(ae):
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-def test_09_change_smb_sharesec_update():
+@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+def test_09_verify_ae_who_name_output_from_put_smb_sharesec_(who):
+    ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
+    assert ae_result == Users[who], results.text
+
+
+def test_10_change_smb_sharesec_to_admin():
     global payload, results
     payload = {
         'share_acl': [
@@ -103,26 +123,84 @@ def test_09_change_smb_sharesec_update():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_10_verify_output_from_put_smb_sharesec_(ae):
+def test_11_verify_share_acl_output_from_put_smb_sharesec_(ae):
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-def test_11_get_smb_sharesec_by_id():
+@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+def test_12_verify_admin_ae_who_name_output_from_put_smb_sharesec_(who):
+    ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
+    assert ae_result == Admins[who], results.text
+
+
+def test_13_get_smb_sharesec_by_id():
     global results
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    print(results.text)
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_12_verify_get_smb_sharesec_(ae):
+def test_14_verify_share_acl_output_from_get_smb_sharesec_(ae):
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-def test_13_get_smb_sharesec_getacl():
+@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+def test_15_verify_admin_ae_who_name_output_from_get_smb_sharesec_(who):
+    ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
+    assert ae_result == Admins[who], results.text
+
+
+def test_16_change_smb_sharesec_to_guests():
+    global payload, results
+    payload = {
+        'share_acl': [
+            {
+                'ae_who_sid': 'S-1-5-32-546',
+                'ae_perm': 'FULL',
+                'ae_type': 'ALLOWED'
+            }
+        ]
+    }
+    results = PUT(f"/smb/sharesec/id/{sharesec_id}/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+@pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
+def test_17_verify_share_acl_output_from_put_smb_sharesec_(ae):
+    ae_result = results.json()['share_acl'][0][ae]
+    assert ae_result == payload['share_acl'][0][ae], results.text
+
+
+@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+def test_18_verify_guest_ae_who_name_output_from_put_smb_sharesec_(who):
+    ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
+    assert ae_result == Guests[who], results.text
+
+
+def test_19_get_smb_sharesec_by_id():
+    global results
+    results = GET(f"/smb/sharesec/id/{sharesec_id}")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+@pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
+def test_20_verify_share_acl_output_from_get_smb_sharesec_(ae):
+    ae_result = results.json()['share_acl'][0][ae]
+    assert ae_result == payload['share_acl'][0][ae], results.text
+
+
+@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+def test_21_verify_guest_ae_who_name_output_from_get_smb_sharesec_(who):
+    ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
+    assert ae_result == Guests[who], results.text
+
+
+def test_22_get_smb_sharesec_getacl():
     payload = {
         "share_name": share_name,
         "options": {
@@ -134,27 +212,27 @@ def test_13_get_smb_sharesec_getacl():
     assert isinstance(results.json(), dict), results.text
 
 
-def test_14_get_smb_sharesec_by_id():
+def test_23_get_smb_sharesec_by_id():
     results = GET(f"/smb/sharesec/synchronize_acls/")
     assert results.status_code == 200, results.text
 
 
-def test_15_delete_share_acl():
+def test_24_delete_share_acl():
     results = DELETE(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
 
 
-def test_16_starting_cifs_service():
+def test_25_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_17_delete_cifs_share():
+def test_26_delete_cifs_share():
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_18_destroying_smb_sharesec_dataset():
+def test_27_destroying_smb_sharesec_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
