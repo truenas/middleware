@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 import sqlalchemy as sa

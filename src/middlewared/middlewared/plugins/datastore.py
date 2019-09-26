@@ -343,12 +343,8 @@ class DatastoreService(Service):
         table = self._get_table(name)
         data = data.copy()
 
-        for column in table.c:
-            if column.foreign_keys:
-                if column.name[:-3] in data:
-                    data[column.name] = data.pop(column.name[:-3])
-
-        insert = table.insert().values(**{options['prefix'] + k: v for k, v in data.items()})
+        insert = table.insert().values(**{self._get_col(table, k, options['prefix']).name: v
+                                          for k, v in data.items()})
         await self.execute_write(insert)
         return (await self.fetchall('SELECT last_insert_rowid()'))[0][0]
 
@@ -366,7 +362,8 @@ class DatastoreService(Service):
                     data[column.name] = data.pop(column.name[:-3])
 
         pk = self._get_pk(table)
-        update = table.update().values(**{options['prefix'] + k: v for k, v in data.items()}).where(pk == id)
+        update = table.update().values(**{self._get_col(table, k, options['prefix']).name: v
+                                          for k, v in data.items()}).where(pk == id)
         result = await self.execute_write(update)
         if result.rowcount != 1:
             raise RuntimeError('No rows were updated')
@@ -389,10 +386,7 @@ class DatastoreService(Service):
     @private
     async def sql(self, query, params=None):
         try:
-            return [
-                dict(v)
-                for v in await self.fetchall(query, params)
-            ]
+            await self.execute(query, params)
         except Exception as e:
             raise CallError(e)
 
