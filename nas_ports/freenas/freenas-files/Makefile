@@ -13,7 +13,8 @@ COMMENT=	miscellaneous files for FreeNAS
 PREFIX=/
 
 USES= 	python
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}snmp_passpersist>=1.3.0:net-mgmt/py-snmp_passpersist
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}snmp_passpersist>=1.3.0:net-mgmt/py-snmp_passpersist \
+		firmware>0:freenas/firmware
 
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
