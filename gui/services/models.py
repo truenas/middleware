@@ -1919,13 +1919,6 @@ class SMART(Model):
                     "email if the temperature is greater or equal than N "
                     "degrees Celsius. 0 to disable."),
     )
-    smart_email = models.CharField(
-        verbose_name=_("Email to report"),
-        max_length=255,
-        blank=True,
-        help_text=_("Destination email address. Separate email addresses "
-                    "with spaces."),
-    )
 
     class Meta:
         verbose_name = _("S.M.A.R.T.")

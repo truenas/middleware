@@ -1983,7 +1983,9 @@ class CertificateService(CRUDService):
             ((self.middleware.call_sync('s3.config'))['certificate'], 'S3'),
             ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav'),
             ((self.middleware.call_sync('openvpn.server.config'))['server_certificate'], 'OpenVPN Server'),
-            ((self.middleware.call_sync('openvpn.client.config'))['client_certificate'], 'OpenVPN Client')
+            ((self.middleware.call_sync('openvpn.client.config'))['client_certificate'], 'OpenVPN Client'),
+            ((self.middleware.call_sync('activedirectory.config'))['certificate'], 'Active Directory'),
+            ((self.middleware.call_sync('ldap.config'))['certificate'], 'LDAP')
         ]:
             if service_cert_id == id:
                 verrors.add(

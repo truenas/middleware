@@ -100,7 +100,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'nsswitch.conf'},
             {'type': 'mako', 'path': 'local/nslcd.conf',
                 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
-            {'type': 'mako', 'path': 'local/nss_ldap.conf'},
         ],
         'pam': [
             {'type': 'mako', 'path': os.path.join('pam.d', f)}

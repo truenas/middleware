@@ -201,7 +201,7 @@ class FilesystemService(Service):
     @private
     @accepts(
         Str('path'),
-        Str('content'),
+        Str('content', max_length=512000),
         Dict(
             'options',
             Bool('append', default=False),
@@ -213,8 +213,6 @@ class FilesystemService(Service):
         Simplified file receiving method for small files.
 
         `content` must be a base 64 encoded file content.
-
-        DISCLAIMER: DO NOT USE THIS FOR BIG FILES (> 500KB).
         """
         options = options or {}
         dirname = os.path.dirname(path)
@@ -559,7 +557,7 @@ class FilesystemService(Service):
         """
         inheritance_flags = ['FILE_INHERIT', 'DIRECTORY_INHERIT', 'NO_PROPAGATE_INHERIT', 'INHERIT_ONLY']
         for i in inheritance_flags:
-            if flags[i]:
+            if flags.get(i):
                 return True
 
         return False
@@ -821,6 +819,7 @@ class FilesystemService(Service):
             a.apply(data['path'])
 
         if not options['recursive']:
+            os.chown(data['path'], uid, gid)
             return True
 
         self._winacl(data['path'], 'clone', uid, gid, options)

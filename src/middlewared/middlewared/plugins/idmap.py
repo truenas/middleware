@@ -635,9 +635,9 @@ class IdmapLDAPService(CRUDService):
             ),
             Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
             Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Str('base_dn'),
-            Str('user_dn'),
-            Str('url'),
+            Str('ldap_base_dn'),
+            Str('ldap_user_dn'),
+            Str('ldap_url'),
             Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
             Int('certificate'),
             register=True

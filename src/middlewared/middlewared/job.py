@@ -203,8 +203,9 @@ class JobsDeque(object):
         self.__dict[job.id] = job
 
     def remove(self, job_id):
-        self.__dict[job_id].cleanup()
-        del self.__dict[job_id]
+        if job_id in self.__dict:
+            self.__dict[job_id].cleanup()
+            del self.__dict[job_id]
 
 
 class Job(object):

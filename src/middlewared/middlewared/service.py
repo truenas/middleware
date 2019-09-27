@@ -300,12 +300,12 @@ class SystemServiceService(ConfigService):
         )
 
     @private
-    async def _update_service(self, old, new):
+    async def _update_service(self, old, new, verb=None):
         await self.middleware.call('datastore.update',
                                    f'services.{self._config.service_model or self._config.service}', old['id'], new,
                                    {'prefix': self._config.datastore_prefix})
 
-        fut = self._service_change(self._config.service, self._config.service_verb)
+        fut = self._service_change(self._config.service, verb or self._config.service_verb)
         if self._config.service_verb_sync:
             await fut
         else:

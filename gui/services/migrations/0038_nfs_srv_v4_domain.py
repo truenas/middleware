@@ -11,7 +11,7 @@ import freenasUI.freeadmin.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0036_openvpn_models'),
+        ('services', '0037_openvpn_models'),
     ]
 
     operations = [

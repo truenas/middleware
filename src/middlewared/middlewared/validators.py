@@ -63,7 +63,7 @@ class Match:
             raise ValueError(self.explanation or f"Does not match {self.pattern}")
 
     def __deepcopy__(self, memo):
-        return Match(self.pattern, self.flags)
+        return Match(self.pattern, self.flags, self.explanation)
 
 
 class Or:

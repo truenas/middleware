@@ -12,7 +12,7 @@ job_results = None
 
 # default URL
 repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
-index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/master/INDEX'
+index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/11.3-RELEASE/INDEX'
 plugin_index = GET(index_url).json()
 plugin_list = list(plugin_index.keys())
 
@@ -71,15 +71,15 @@ def test_05_get_list_of_available_plugins_job_id():
 
 def test_06_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID, 120)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     job_results = job_status['results']
 
 
 @pytest.mark.parametrize('plugin', plugin_list)
 def test_07_verify_available_plugin_(plugin):
     assert isinstance(job_results['result'], list), str(job_results)
-    assert plugin in [p['plugin'] for p in job_results['result']]
+    assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
@@ -107,7 +107,7 @@ def test_09_add_rslsync_plugins():
 
 def test_10_verify_rslsync_plugin_job_is_successfull():
     job_status = wait_on_job(JOB_ID, 600)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_11_search_plugin_rslsync_id():
@@ -164,15 +164,15 @@ def test_17_get_list_of_available_plugins_without_cache():
 
 def test_18_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID, 120)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     job_results = job_status['results']
 
 
 @pytest.mark.parametrize('plugin', plugin_list)
 def test_19_verify_available_plugin_without_cache_(plugin):
     assert isinstance(job_results['result'], list), str(job_results)
-    assert plugin in [p['plugin'] for p in job_results['result']]
+    assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
 def test_20_stop_rslsync_jail():
@@ -188,7 +188,7 @@ def test_20_stop_rslsync_jail():
 
 def test_21_wait_for_rslsync_plugin_to_be_down():
     job_status = wait_on_job(JOB_ID, 15)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     results = GET('/plugin/id/rslsync/')
     assert results.json()['state'] == 'down', results.text
 
@@ -203,7 +203,7 @@ def test_22_start_rslsync_jail():
 
 def test_23_wait_for_rslsync_plugin_to_be_up():
     job_status = wait_on_job(JOB_ID, 15)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     results = GET('/plugin/id/rslsync/')
     assert results.json()['state'] == 'up', results.text
 
@@ -221,7 +221,7 @@ def test_24_stop_rslsync_jail_before_deleteing():
 
 def test_25_wait_for_rslsync_plugin_to_be_down():
     job_status = wait_on_job(JOB_ID, 15)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     results = GET('/plugin/id/rslsync/')
     assert results.json()['state'] == 'down', results.text
 
@@ -255,15 +255,15 @@ def test_29_get_list_of_available_plugins_job_id_on_custom_repos():
 
 def test_30_verify_list_of_available_plugins_job_id_is_successfull():
     global job_results
-    job_status = wait_on_job(JOB_ID, 120)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
+    job_status = wait_on_job(JOB_ID, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     job_results = job_status['results']
 
 
 @pytest.mark.parametrize('plugin', plugin_list2)
 def test_31_verify_available_plugin_(plugin):
     assert isinstance(job_results['result'], list), str(job_results)
-    assert plugin in [p['plugin'] for p in job_results['result']]
+    assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
@@ -292,7 +292,7 @@ def test_33_add_openvpn_plugins():
 
 def test_34_verify_openvpn_plugin_job_is_successfull():
     job_status = wait_on_job(JOB_ID, 600)
-    assert job_status['state'] == 'SUCCESS', job_status['results']
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_35_search_plugin_openvpn_id():

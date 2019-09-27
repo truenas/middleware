@@ -21,7 +21,7 @@ def remove_openvpn_from_services(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0035_remove_asigra'),
+        ('services', '0036_remove_smart_email'),
     ]
 
     operations = [

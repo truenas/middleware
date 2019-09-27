@@ -906,6 +906,9 @@ class PoolService(CRUDService):
         into their respectives vdevs.
         """
 
+        # Make sure all SED disks are unlocked
+        await self.middleware.call('disk.sed_unlock_all')
+
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
 
         enc_disks = []

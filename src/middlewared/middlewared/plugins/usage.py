@@ -78,7 +78,12 @@ class UsageService(Service):
             'hardware': {
                 'cpus': info['cores'],
                 'memory': info['physmem'],
-                'nics': len(network)
+                'nics': len(network),
+                'disks': [
+                    {k: disk[k]} for disk in await self.middleware.call('disk.query') for k in [
+                        'model',
+                    ]
+                ]
             }
         }
 

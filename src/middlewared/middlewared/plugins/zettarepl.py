@@ -24,7 +24,7 @@ from zettarepl.observer import (
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
-from zettarepl.snapshot.list import list_snapshots
+from zettarepl.snapshot.list import multilist_snapshots
 from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
@@ -37,6 +37,7 @@ from middlewared.client import Client, ejson
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, periodic, Service
 from middlewared.utils import start_daemon_thread
+from middlewared.utils.string import make_sentence
 from middlewared.worker import watch_parent
 
 
@@ -322,7 +323,7 @@ class ZettareplService(Service):
                     return
 
                 if isinstance(message, ReplicationTaskError):
-                    raise CallError(message.error)
+                    raise CallError(make_sentence(message.error))
         finally:
             channels.remove(channel)
 
@@ -352,10 +353,11 @@ class ZettareplService(Service):
         except Exception as e:
             raise CallError(repr(e))
 
-    async def count_eligible_manual_snapshots(self, dataset, naming_schemas, transport, ssh_credentials=None):
+    async def count_eligible_manual_snapshots(self, datasets, naming_schemas, transport, ssh_credentials=None):
         try:
             shell = await self._get_zettarepl_shell(transport, ssh_credentials)
-            snapshots = await self.middleware.run_in_thread(list_snapshots, shell, dataset, False)
+            snapshots = await self.middleware.run_in_thread(multilist_snapshots, shell, [(dataset, False)
+                                                                                         for dataset in datasets])
         except Exception as e:
             raise CallError(repr(e))
 
@@ -542,13 +544,13 @@ class ZettareplService(Service):
                             self.definition_errors[f"periodic_snapshot_{error.task_id}"] = {
                                 "state": "ERROR",
                                 "datetime": datetime.utcnow(),
-                                "error": str(error),
+                                "error": make_sentence(str(error)),
                             }
                         if isinstance(error, ReplicationTaskDefinitionError):
                             self.definition_errors[f"replication_{error.task_id}"] = {
                                 "state": "ERROR",
                                 "datetime": datetime.utcnow(),
-                                "error": str(error),
+                                "error": make_sentence(str(error)),
                             }
 
                 # Periodic snapshot task
@@ -569,7 +571,7 @@ class ZettareplService(Service):
                     self.state[f"periodic_snapshot_{message.task_id}"] = {
                         "state": "ERROR",
                         "datetime": datetime.utcnow(),
-                        "error": message.error,
+                        "error": make_sentence(message.error),
                     }
 
                 # Replication task events
@@ -632,7 +634,7 @@ class ZettareplService(Service):
                     state = {
                         "state": "ERROR",
                         "datetime": datetime.utcnow(),
-                        "error": message.error,
+                        "error": make_sentence(message.error),
                     }
 
                     self.state[f"replication_{message.task_id}"] = state

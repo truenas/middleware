@@ -7,7 +7,7 @@ import asyncio
 from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
-from middlewared.validators import Email, Range, Unique
+from middlewared.validators import Range
 from middlewared.service import CRUDService, filterable, filter_list, private, SystemServiceService, ValidationErrors
 from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -520,7 +520,6 @@ class SmartService(SystemServiceService):
     @private
     async def smart_extend(self, smart):
         smart["powermode"] = smart["powermode"].upper()
-        smart["email"] = smart["email"].split(",")
         return smart
 
     @accepts(Dict(
@@ -530,7 +529,6 @@ class SmartService(SystemServiceService):
         Int('difference'),
         Int('informational'),
         Int('critical'),
-        List('email', validators=[Unique()], items=[Str('email', validators=[Email()])]),
         update=True
     ))
     async def do_update(self, data):
@@ -543,14 +541,6 @@ class SmartService(SystemServiceService):
         `critical`, `informational` and `difference` are integer values on which alerts for SMART are configured if
         the disks temperature crosses the assigned threshold for each respective attribute. They default to 0 which
         indicates they are disabled.
-
-        Email of log level LOG_CRIT is issued when disk temperature crosses `critical`.
-
-        Email of log level LOG_INFO is issued when disk temperature crosses `informational`.
-
-        If temperature of a disk changes by `difference` degree Celsius since the last report, SMART reports this.
-
-        `email` is a list of valid emails to receive SMART alerts.
         """
         old = await self.config()
 
@@ -558,9 +548,12 @@ class SmartService(SystemServiceService):
         new.update(data)
 
         new["powermode"] = new["powermode"].lower()
-        new["email"] = ",".join([email.strip() for email in new["email"]])
 
-        await self._update_service(old, new)
+        verb = "reload"
+        if any(old[k] != new[k] for k in ["interval"]):
+            verb = "restart"
+
+        await self._update_service(old, new, verb)
 
         if new["powermode"] != old["powermode"]:
             await self.middleware.call("service.restart", "collectd", {"onetime": False})

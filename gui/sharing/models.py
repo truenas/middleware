@@ -131,7 +131,7 @@ class CIFS_Share(Model):
         verbose_name=_('VFS Objects'),
         max_length=255,
         blank=True,
-        default='ixnas,streams_xattr',
+        default=['ixnas', 'streams_xattr'],
         choices=list(choices.CIFS_VFS_OBJECTS())
     )
     cifs_vuid = models.CharField(
