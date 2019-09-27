@@ -38,6 +38,8 @@ CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
+RE_MEMWIDTH = re.compile(r'Total Width:\s*(\d*)')
+
 
 class SystemAdvancedService(ConfigService):
 
@@ -453,6 +455,9 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
+        ecc_results = RE_MEMWIDTH.findall((await run(['dmidecode', '-t', '17'])).stdout.decode())
+
         return {
             'version': self.version(),
             'buildtime': buildtime,
@@ -472,6 +477,7 @@ class SystemService(Service):
             'datetime': datetime.utcnow(),
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
+            'ecc_memory': all(dimm_module.strip() == '72' for dimm_module in (ecc_results or ['']))
         }
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
