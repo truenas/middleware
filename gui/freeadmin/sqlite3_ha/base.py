@@ -4,6 +4,7 @@ import os
 import threading
 
 from django.db.backends.sqlite3 import base as sqlite3base
+from freenasUI.middleware.client import client
 from lockfile import LockFile, LockTimeout
 import pickle as pickle
 import sqlparse
