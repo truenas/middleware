@@ -44,31 +44,27 @@ ad_object_list = [
         "enable"
 ]
 
-if "BRIDGEHOST" in locals():
-    MOUNTPOINT = f"/tmp/ad{BRIDGEHOST}"
+MOUNTPOINT = f"/tmp/ad-test"
 dataset = f"{pool_name}/ad-bsd"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestShare"
 SMB_PATH = f"/mnt/{dataset}"
 VOL_GROUP = "wheel"
 
-Reason = "BRIDGEHOST, AD_DOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
-Reason += "ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
+Reason = "AD_DOMAIN, ADPASSWORD, and ADUSERNAME are missing in config.py"
 
-host_reason = 'ad host is down'
-ad_host_down = False
+ad_host_up = False
+if 'AD_DOMAIN' in locals():
+    ad_host_up = ping_host(AD_DOMAIN, 5)
+    if ad_host_up is False:
+        Reason = f'{AD_DOMAIN} is down'
 
-if AD_DOMAIN in locals():
-    host_reason = f'{AD_DOMAIN} is down'
-    ad_host_up = ping_host(AD_DOMAIN) is False
-
-ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                      "AD_DOMAIN" in locals(),
+skip_ad_test = pytest.mark.skipif(all(["AD_DOMAIN" in locals(),
                                       "ADPASSWORD" in locals(),
                                       "ADUSERNAME" in locals(),
-                                      "MOUNTPOINT" in locals()
+                                      ad_host_up is True
                                       ]) is False, reason=Reason)
 
 
@@ -121,7 +117,7 @@ def test_06_Changing_permissions_on_dataset():
     assert results.status_code == 200, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_07_enabling_activedirectory():
     global payload, results
     payload = {
@@ -138,7 +134,7 @@ def test_07_enabling_activedirectory():
     assert results.status_code == 200, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_08_get_activedirectory_state():
     global results
     results = GET('/activedirectory/get_state/')
@@ -146,21 +142,21 @@ def test_08_get_activedirectory_state():
     assert results.json() == 'HEALTHY', results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_09_get_activedirectory_started():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_10_get_activedirectory_data():
     global results
     results = GET('/activedirectory/')
     assert results.status_code == 200, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 @pytest.mark.parametrize('data', ad_object_list)
 def test_11_verify_activedirectory_data_of_(data):
     if data == 'domainname':
@@ -248,7 +244,7 @@ def test_23_checking_to_see_if_nfs_service_is_running():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_24_creating_smb_mountpoint():
     results = SSH_TEST('mkdir -p "%s" && sync' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -256,7 +252,7 @@ def test_24_creating_smb_mountpoint():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_25_store_AD_credentials_in_a_file_for_mount_smbfs():
     cmd = 'echo "[TESTNAS:ADUSER]" > ~/.nsmbrc && '
     cmd += 'echo "password=12345678" >> ~/.nsmbrc'
@@ -265,7 +261,7 @@ def test_25_store_AD_credentials_in_a_file_for_mount_smbfs():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_26_mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W AD03 ' % ip
     cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
@@ -274,7 +270,7 @@ def test_26_mounting_SMB():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_27_creating_SMB_file():
     results = SSH_TEST('touch "%s/testfile"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -282,7 +278,7 @@ def test_27_creating_SMB_file():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_28_moving_SMB_file():
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -290,7 +286,7 @@ def test_28_moving_SMB_file():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_29_copying_SMB_file():
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -298,7 +294,7 @@ def test_29_copying_SMB_file():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_30_deleting_SMB_file_1_2():
     results = SSH_TEST('rm "%s/testfile"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -306,7 +302,7 @@ def test_30_deleting_SMB_file_1_2():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_31_deleting_SMB_file_2_2():
     results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -314,7 +310,7 @@ def test_31_deleting_SMB_file_2_2():
 
 
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_32_unmounting_SMB():
     results = SSH_TEST('umount "%s"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
@@ -323,14 +319,14 @@ def test_32_unmounting_SMB():
 
 # Delete tests
 @bsd_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_33_removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_34_leave_activedirectory():
     global payload, results
     payload = {
@@ -341,21 +337,21 @@ def test_34_leave_activedirectory():
     assert results.status_code == 200, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_35_get_activedirectory_state():
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_36_get_activedirectory_started_after_leaving_AD():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_37_re_enable_activedirectory():
     global payload, results
     payload = {
@@ -370,7 +366,7 @@ def test_37_re_enable_activedirectory():
     assert results.status_code == 200, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_38_get_activedirectory_state():
     global results
     results = GET('/activedirectory/get_state/')
@@ -378,21 +374,21 @@ def test_38_get_activedirectory_state():
     assert results.json() == 'HEALTHY', results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_39_get_activedirectory_started():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_40_get_activedirectory_data():
     global results
     results = GET('/activedirectory/')
     assert results.status_code == 200, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 @pytest.mark.parametrize('data', ad_object_list)
 def test_41_verify_activedirectory_data_of_(data):
     if data == 'domainname':
@@ -404,7 +400,7 @@ def test_41_verify_activedirectory_data_of_(data):
 # Testing OSX
 # Mount share on OSX system and create a test file
 @osx_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_42_Create_mount_point_for_SMB_on_OSX_system():
     results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -412,7 +408,7 @@ def test_42_Create_mount_point_for_SMB_on_OSX_system():
 
 
 @osx_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_43_Mount_SMB_share_on_OSX_system():
     cmd = 'mount -t smbfs "smb://%s:' % ADUSERNAME
     cmd += '%s@%s/%s" "%s"' % (ADPASSWORD, ip, SMB_NAME, MOUNTPOINT)
@@ -421,7 +417,7 @@ def test_43_Mount_SMB_share_on_OSX_system():
 
 
 @osx_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_44_Create_file_on_SMB_share_via_OSX_to_test_permissions():
     results = SSH_TEST('touch "%s/testfile.txt"' % MOUNTPOINT,
                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -430,7 +426,7 @@ def test_44_Create_file_on_SMB_share_via_OSX_to_test_permissions():
 
 # Move test file to a new location on the SMB share
 @osx_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_45_Moving_SMB_test_file_into_a_new_directory():
     cmd = 'mkdir -p "%s/tmp" && ' % MOUNTPOINT
     cmd += 'mv "%s/testfile.txt" ' % MOUNTPOINT
@@ -441,7 +437,7 @@ def test_45_Moving_SMB_test_file_into_a_new_directory():
 
 # Delete test file and test directory from SMB share
 @osx_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_46_Deleting_test_file_and_directory_from_SMB_share():
     cmd = 'rm -f "%s/tmp/testfile.txt" && ' % MOUNTPOINT
     cmd += 'rmdir "%s/tmp"' % MOUNTPOINT
@@ -450,7 +446,7 @@ def test_46_Deleting_test_file_and_directory_from_SMB_share():
 
 
 @osx_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_47_Verifying_that_test_file_directory_successfully_removed():
     cmd = 'find -- "%s/" -prune -type d -empty | grep -q .' % MOUNTPOINT
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -459,7 +455,7 @@ def test_47_Verifying_that_test_file_directory_successfully_removed():
 
 # Clean up mounted SMB share
 @osx_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_48_Unmount_SMB_share():
     results = SSH_TEST('umount -f "%s"' % MOUNTPOINT,
                        OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -468,7 +464,7 @@ def test_48_Unmount_SMB_share():
 
 # Delete tests
 @osx_host_cfg
-@ad_test_cfg
+@skip_ad_test
 def test_49_Removing_SMB_mountpoint():
     cmd = 'test -d "%s" && rmdir "%s" || exit 0' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -476,7 +472,7 @@ def test_49_Removing_SMB_mountpoint():
 
 
 # put all code to disable and delete under here
-@ad_test_cfg
+@skip_ad_test
 def test_50_disable_activedirectory():
     global payload, results
     payload = {
@@ -498,7 +494,7 @@ def test_52_get_activedirectory_started_after_disabling_AD():
     assert results.json() is False, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_53_re_enable_activedirectory():
     global payload, results
     payload = {
@@ -508,7 +504,7 @@ def test_53_re_enable_activedirectory():
     assert results.status_code == 200, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_54_get_activedirectory_state():
     global results
     results = GET('/activedirectory/get_state/')
@@ -516,14 +512,14 @@ def test_54_get_activedirectory_state():
     assert results.json() == 'HEALTHY', results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_55_get_activedirectory_started():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_56_leave_activedirectory():
     global payload, results
     payload = {
@@ -534,14 +530,14 @@ def test_56_leave_activedirectory():
     assert results.status_code == 200, results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_57_get_activedirectory_state():
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
-@ad_test_cfg
+@skip_ad_test
 def test_58_get_activedirectory_started_after_living():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
