@@ -173,6 +173,22 @@ async def test__bad_fk_insert():
             assert await ds.insert("account.bsdusers", {"bsdusr_uid": 100, "bsdusr_group": 30})
 
 
+@pytest.mark.asyncio
+async def test__bad_fk_load():
+    async with datastore_test() as ds:
+        await ds.execute("PRAGMA foreign_keys=OFF")
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        await ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 21)")
+
+        assert await ds.query("account.bsdusers", [], {"prefix": "bsdusr_"}) == [
+            {
+                "id": 5,
+                "uid": 55,
+                "group": None,
+            }
+        ]
+
+
 class NullableFkModel(Model):
     __tablename__ = 'test_nullablefk'
 

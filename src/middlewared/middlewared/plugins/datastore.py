@@ -221,7 +221,9 @@ class DatastoreService(Service):
                 raise RuntimeError('Foreign key column must end with _id')
 
             data[column.name[:-3]] = (
-                self._serialize_row(obj, alias, aliases, select) if obj[column] is not None else None
+                self._serialize_row(obj, alias, aliases, select)
+                if obj[column] is not None and obj[self._get_pk(alias)] is not None
+                else None
             )
 
         return data
