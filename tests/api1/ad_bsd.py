@@ -9,27 +9,30 @@ import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, SSH_TEST, DELETE
+from functions import PUT, POST, GET, SSH_TEST, DELETE, ping_host
 from auto_config import ip, pool_name
 from config import *
 
-if "BRIDGEHOST" in locals():
-    MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
 
+MOUNTPOINT = "/tmp/ad-bsd-test"
 DATASET = "ad-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = f"/mnt/{pool_name}/{DATASET}"
 VOL_GROUP = "wheel"
 
-Reason = "BRIDGEHOST, AD_DOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
-Reason += "ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
+Reason = "AD_DOMAIN, ADPASSWORD, and ADUSERNAME are missing in config.py"
 
-ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                      "AD_DOMAIN" in locals(),
+ad_host_up = False
+if 'AD_DOMAIN' in locals():
+    ad_host_up = ping_host(AD_DOMAIN, 5)
+    if ad_host_up is False:
+        Reason = f'{AD_DOMAIN} is down'
+
+ad_test_cfg = pytest.mark.skipif(all(["AD_DOMAIN" in locals(),
                                       "ADPASSWORD" in locals(),
                                       "ADUSERNAME" in locals(),
-                                      "MOUNTPOINT" in locals()
+                                      ad_host_up is True
                                       ]) is False, reason=Reason)
 
 bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
