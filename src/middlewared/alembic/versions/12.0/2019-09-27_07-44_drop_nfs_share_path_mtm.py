@@ -29,9 +29,10 @@ def upgrade():
                          conn.execute("SELECT path FROM sharing_nfs_share_path WHERE share_id = ?", [share_id])))
         conn.execute("UPDATE sharing_nfs_share SET nfs_paths = ? WHERE id = ?", [json.dumps(paths), share_id])
 
-    op.alter_column('sharing_nfs_share', 'nfs_paths',
-                    existing_type=sa.TEXT(),
-                    nullable=False)
+    with op.batch_alter_table('sharing_nfs_share', schema=None) as batch_op:
+        batch_op.alter_column('nfs_paths',
+               existing_type=sa.TEXT(),
+               nullable=False)
 
     op.drop_table('sharing_nfs_share_path')
     # ### end Alembic commands ###
