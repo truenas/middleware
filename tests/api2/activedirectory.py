@@ -62,10 +62,10 @@ if 'AD_DOMAIN' in locals():
         Reason = f'{AD_DOMAIN} is down'
 
 skip_ad_test = pytest.mark.skipif(all(["AD_DOMAIN" in locals(),
-                                      "ADPASSWORD" in locals(),
-                                      "ADUSERNAME" in locals(),
-                                      ad_host_up is True
-                                      ]) is False, reason=Reason)
+                                       "ADPASSWORD" in locals(),
+                                       "ADUSERNAME" in locals(),
+                                       ad_host_up is True
+                                       ]) is False, reason=Reason)
 
 
 bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
