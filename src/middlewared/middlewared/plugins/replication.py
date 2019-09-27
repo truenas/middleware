@@ -62,6 +62,9 @@ class ReplicationModel(sa.Model):
     repl_state = sa.Column(sa.Text())
     repl_properties = sa.Column(sa.Boolean())
 
+    repl_periodic_snapshot_tasks = sa.relationship('PeriodicSnapshotTaskModel',
+                                                   secondary=lambda: ReplicationPeriodicSnapshotTaskModel.__table__)
+
 
 class ReplicationPeriodicSnapshotTaskModel(sa.Model):
     __tablename__ = 'storage_replication_repl_periodic_snapshot_tasks'

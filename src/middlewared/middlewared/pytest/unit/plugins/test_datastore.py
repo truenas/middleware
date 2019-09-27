@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 from middlewared.plugins.datastore import DatastoreService
 from middlewared.sqlalchemy import JSON
@@ -382,3 +383,43 @@ async def test__delete_by_filter():
         await ds.delete("test.custompk", [("custom_name", "^", "Test")])
 
         assert await ds.query("test.custompk", [], {"count": True}) == 1
+
+
+class DiskModel(Model):
+    __tablename__ = 'storage_disk'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+
+
+class SMARTTestModel(Model):
+    __tablename__ = 'tasks_smarttest'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+
+    smarttest_disks = relationship('DiskModel', secondary=lambda: SMARTTestDiskModel.__table__)
+
+
+class SMARTTestDiskModel(Model):
+    __tablename__ = 'tasks_smarttest_smarttest_disks'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    smarttest_id = sa.Column(sa.Integer(), sa.ForeignKey('tasks_smarttest.id'))
+    disk_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_disk.id'))
+
+
+@pytest.mark.asyncio
+async def test__mtm_loader():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO storage_disk VALUES (10)")
+        await ds.execute("INSERT INTO storage_disk VALUES (20)")
+        await ds.execute("INSERT INTO storage_disk VALUES (30)")
+        await ds.execute("INSERT INTO tasks_smarttest VALUES (100)")
+        await ds.execute("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 10)")
+        await ds.execute("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 30)")
+
+        assert await ds.query("tasks.smarttest", [], {"prefix": "smarttest_"}) == [
+            {
+                "id": 100,
+                "disks": [{"id": 10}, {"id": 30}],
+            }
+        ]

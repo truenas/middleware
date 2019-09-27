@@ -113,6 +113,8 @@ class SmartTestModel(sa.Model):
     smarttest_dayweek = sa.Column(sa.String(100))
     smarttest_all_disks = sa.Column(sa.Boolean())
 
+    smarttest_disks = sa.relationship('DiskModel', secondary=lambda: SmartTestDiskModel.__table__)
+
 
 class SmartTestDiskModel(sa.Model):
     __tablename__ = 'tasks_smarttest_smarttest_disks'

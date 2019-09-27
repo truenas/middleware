@@ -1,8 +1,9 @@
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 import operator
 import re
 
-from sqlalchemy import and_, create_engine, func, select
+from sqlalchemy import and_, create_engine, func, inspect, select
 from sqlalchemy.sql import Alias
 
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
@@ -185,8 +186,7 @@ class DatastoreService(Service):
     async def _serialize(self, obj, table, aliases, extend, extend_context, extend_context_value, field_prefix, select):
         data = self._serialize_row(obj, table, aliases, select)
 
-        data = {k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k: v
-                for k, v in data.items()}
+        data = {self._strip_prefix(k, field_prefix): v for k, v in data.items()}
 
         if extend:
             if extend_context:
@@ -196,6 +196,9 @@ class DatastoreService(Service):
 
         return data
 
+    def _strip_prefix(self, k, field_prefix):
+        return k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k
+
     def _serialize_row(self, obj, table, aliases, select):
         data = {}
 
@@ -203,7 +206,8 @@ class DatastoreService(Service):
             if select and column.name not in select:
                 continue
 
-            if not column.foreign_keys:
+            # aliases == {} when we are loading without relationships, let's leave fk values in that case
+            if not column.foreign_keys or not aliases:
                 data[column.name] = obj[column]
 
         for foreign_key, alias in aliases.items():
@@ -221,11 +225,61 @@ class DatastoreService(Service):
 
         return data
 
+    async def _fetch_many_to_many(self, table, prefix, rows):
+        for model in Model._decl_class_registry.values():
+            if hasattr(model, "__tablename__") and model.__tablename__ == table.name:
+                break
+        else:
+            raise RuntimeError("Could not find model for table %s" % table.name)
+
+        pk = self._get_pk(table)
+        row_pk_name = self._strip_prefix(pk.name, prefix)
+        pk_values = [row[row_pk_name] for row in rows]
+
+        if pk_values:
+            for relationship_name, relationship in inspect(model).relationships.items():
+                # We can only join by single primary key
+                assert len(relationship.synchronize_pairs) == 1
+                assert len(relationship.secondary_synchronize_pairs) == 1
+
+                local_pk, relationship_local_pk = relationship.synchronize_pairs[0]
+                remote_pk, relationship_remote_pk = relationship.secondary_synchronize_pairs[0]
+
+                assert local_pk == pk
+
+                all_children_ids = set()
+                pk_to_children_ids = defaultdict(set)
+                for connection in await self.query(
+                    relationship.secondary.name.replace('_', '.', 1),
+                    [[relationship_local_pk.name, 'in', pk_values]],
+                    {'relationships': False}
+                ):
+                    child_id = connection[relationship_remote_pk.name]
+
+                    all_children_ids.add(child_id)
+                    pk_to_children_ids[connection[relationship_local_pk.name]].add(child_id)
+
+                all_children = {}
+                if all_children_ids:
+                    for child in await self.query(
+                        relationship.target.name.replace('_', '.', 1),
+                        [[remote_pk.name, 'in', all_children_ids]],
+                    ):
+                        all_children[child[remote_pk.name]] = child
+
+                for row in rows:
+                    row[self._strip_prefix(relationship_name, prefix)] = [
+                        all_children[child_id]
+                        for child_id in pk_to_children_ids[row[row_pk_name]]
+                        if child_id in all_children
+                    ]
+
     @accepts(
         Str('name'),
         List('query-filters', default=None, null=True, register=True),
         Dict(
             'query-options',
+            Bool('relationships', default=True),
             Str('extend', default=None, null=True),
             Str('extend_context', default=None, null=True),
             Str('prefix', default=None, null=True),
@@ -275,16 +329,17 @@ class DatastoreService(Service):
         # which might happen with "prefix"
         options = options.copy()
 
-        aliases = None
+        aliases = {}
         if options['count']:
             qs = select([func.count(self._get_pk(table))])
         else:
             columns = list(table.c)
             from_ = table
-            aliases = self._get_queryset_joins(table)
-            for foreign_key, alias in aliases.items():
-                columns.extend(list(alias.c))
-                from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
+            if options['relationships']:
+                aliases = self._get_queryset_joins(table)
+                for foreign_key, alias in aliases.items():
+                    columns.extend(list(alias.c))
+                    from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
 
             qs = select(columns).select_from(from_)
 
@@ -316,6 +371,10 @@ class DatastoreService(Service):
             table, aliases, options['extend'], options['extend_context'], options['prefix'], options['select'],
         ):
             result.append(i)
+
+        if options['relationships']:
+            # This will only fetch many-to-many relationships for primary table, not for joins, but that's enough
+            await self._fetch_many_to_many(table, prefix, result)
 
         if options['get']:
             try:

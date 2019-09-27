@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text, Time,
 )  # noqa
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship  # noqa
 from sqlalchemy.types import UserDefinedType
 
 from middlewared.plugins.pwenc import encrypt, decrypt
