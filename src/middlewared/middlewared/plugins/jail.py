@@ -30,6 +30,8 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list, run
 from middlewared.validators import IpInUse, MACAddr
 
+from pkg_resources import parse_version
+
 from collections import deque, Iterable
 
 BRANCH_REGEX = re.compile(r'\d+\.\d-RELEASE')
@@ -500,6 +502,64 @@ class PluginService(CRUDService):
             branch: {'official': bool(BRANCH_REGEX.match(branch))}
             for branch in re.findall(r'refs/heads/(.*)', cp.stdout)
         }
+
+    @periodic(interval=86400)
+    @private
+    @job(lock='plugin_updates')
+    def plugin_updates(self, job):
+        installed_plugins = self.query()
+        if not installed_plugins:
+            return
+
+        # There are 2 cases, one is where we check the version of the installed plugin with available, next is
+        # we check the plugin manifest version with the installed plugin's manifest. If any of the case is true,
+        # we raise an alert for the plugin update
+        git_repos = {}
+        for plugin in installed_plugins:
+            repo = plugin['plugin_repository']
+            if repo not in git_repos:
+                git_repos[repo] = self.middleware.call_sync('plugin.available', {'plugin_repository': repo})
+
+        for repo, job_obj in git_repos.items():
+            job_obj.wait_sync()
+            if job_obj.error:
+                self.middleware.logger.error(f'Failed to retrieve plugin versions for {repo}: {job_obj.error}')
+                git_repos[repo] = []
+            else:
+                git_repos[repo] = job_obj.result
+
+        for plugin in installed_plugins:
+            repo = plugin['plugin_repository']
+            plugin_dict = (list(filter(lambda d: d['name'] == plugin['plugin'], git_repos[repo])) or [{}])[0]
+            if not plugin_dict or any(
+                plugin_dict[k] == 'N/A' or plugin[k] == 'N/A' for k in ('version', 'revision', 'epoch')
+            ):
+                # We don't support update alerts for plugins without a valid port
+                continue
+
+            ioc_plugin = IOCPlugin(
+                plugin=plugin['plugin'], git_repository=repo, branch=self.get_version()
+            )
+            try:
+                plugin_git_manifest = ioc_plugin._load_plugin_json()
+            except Exception:
+                continue
+
+            try:
+                plugin_manifest = ioc_plugin._plugin_json_file()
+            except Exception:
+                plugin_manifest = {}
+
+            # We construct our version in the following manner
+            # epoch!manifest_version.version.revision
+            available_version = f'{plugin_dict["epoch"]}!{plugin_git_manifest["revision"]}.' \
+                                f'{plugin_dict["version"]}.{plugin_dict["revision"]}'
+            plugin_version = f'{plugin["epoch"]}!{plugin_manifest.get("revision", "0")}.' \
+                             f'{plugin["version"]}.{plugin["revision"]}'
+
+            if parse_version(plugin_version) < parse_version(available_version):
+                # Raise an alert please, this plugin needs an update
+                pass
 
     @private
     def get_version(self):
