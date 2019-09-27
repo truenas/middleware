@@ -190,6 +190,7 @@ class NFSShareModel(sa.Model):
     __tablename__ = 'sharing_nfs_share'
 
     id = sa.Column(sa.Integer(), primary_key=True)
+    nfs_paths = sa.Column(sa.JSON(type=list))
     nfs_comment = sa.Column(sa.String(120))
     nfs_network = sa.Column(sa.Text())
     nfs_hosts = sa.Column(sa.Text())
@@ -202,14 +203,6 @@ class NFSShareModel(sa.Model):
     nfs_mapall_group = sa.Column(sa.String(120), nullable=True)
     nfs_security = sa.Column(sa.String(200))
     nfs_enabled = sa.Column(sa.Boolean())
-
-
-class NFSSharePathModel(sa.Model):
-    __tablename__ = 'sharing_nfs_share_path'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    share_id = sa.Column(sa.Integer())
-    path = sa.Column(sa.String(255))
 
 
 class SharingNFSService(CRUDService):
@@ -263,21 +256,12 @@ class SharingNFSService(CRUDService):
             raise verrors
 
         await self.compress(data)
-        paths = data.pop("paths")
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
                 "prefix": self._config.datastore_prefix
             },
         )
-        for path in paths:
-            await self.middleware.call(
-                "datastore.insert", "sharing.nfs_share_path",
-                {
-                    "share_id": data["id"],
-                    "path": path,
-                },
-            )
         await self.extend(data)
 
         await self._service_change("nfs", "reload")
@@ -308,25 +292,13 @@ class SharingNFSService(CRUDService):
             raise verrors
 
         await self.compress(new)
-        paths = new.pop("paths")
         await self.middleware.call(
             "datastore.update", self._config.datastore, id, new,
             {
                 "prefix": self._config.datastore_prefix
             }
         )
-        await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
-        for path in paths:
-            await self.middleware.call(
-                "datastore.insert", "sharing.nfs_share_path",
-                {
-                    "share_id": id,
-                    "path": path,
-                },
-            )
-
         await self.extend(new)
-        new["paths"] = paths
 
         await self._service_change("nfs", "reload")
 

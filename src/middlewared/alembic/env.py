@@ -8,7 +8,7 @@ from sqlalchemy import pool
 from alembic import context
 
 import middlewared
-from middlewared.sqlalchemy import Model
+from middlewared.sqlalchemy import JSON, Model
 from middlewared.utils import load_modules
 
 # this is the Alembic Config object, which provides
@@ -40,6 +40,16 @@ def include_object(object, name, type_, reflected, compare_to):
         return True
 
 
+def render_item(type_, obj, autogen_context):
+    """Apply custom rendering for selected items."""
+
+    if isinstance(obj, JSON):
+        return "sa.TEXT()"
+
+    # default rendering for other objects
+    return False
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -59,6 +69,7 @@ def run_migrations_offline():
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         include_object=include_object,
+        render_item=render_item,
     )
 
     with context.begin_transaction():
@@ -83,6 +94,7 @@ def run_migrations_online():
             connection=connection,
             target_metadata=target_metadata,
             include_object=include_object,
+            render_item=render_item,
         )
 
         with context.begin_transaction():
