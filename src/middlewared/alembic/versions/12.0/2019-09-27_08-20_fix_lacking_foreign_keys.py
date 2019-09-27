@@ -28,9 +28,23 @@ def upgrade():
         batch_op.create_foreign_key(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_group_id_account_bsdgroups'), 'account_bsdgroups', ['bsdgrpmember_group_id'], ['id'])
         batch_op.create_foreign_key(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_user_id_account_bsdusers'), 'account_bsdusers', ['bsdgrpmember_user_id'], ['id'])
 
+    create_foreign_key(None, 'network_alias', 'network_interfaces', ['alias_interface_id'], ['id'])
+    with op.batch_alter_table('network_alias', schema=None) as batch_op:
+        batch_op.create_foreign_key(batch_op.f('fk_network_alias_alias_interface_id_network_interfaces'), 'network_interfaces', ['alias_interface_id'], ['id'], ondelete='CASCADE')
+
+    create_foreign_key(None, 'network_bridge', 'network_interfaces', ['interface_id'], ['id'])
+    with op.batch_alter_table('network_bridge', schema=None) as batch_op:
+        batch_op.drop_references('interface_id')
+        batch_op.create_foreign_key(batch_op.f('fk_network_bridge_interface_id_network_interfaces'), 'network_interfaces', ['interface_id'], ['id'], ondelete='CASCADE')
+
     create_foreign_key(None, 'network_lagginterface', 'network_interfaces', ['lagg_interface_id'], ['id'])
     with op.batch_alter_table('network_lagginterface', schema=None) as batch_op:
         batch_op.create_foreign_key(batch_op.f('fk_network_lagginterface_lagg_interface_id_network_interfaces'), 'network_interfaces', ['lagg_interface_id'], ['id'])
+
+    create_foreign_key(None, 'network_lagginterfacemembers', 'network_lagginterface', ['lagg_interfacegroup_id'], ['id'])
+    with op.batch_alter_table('network_lagginterfacemembers', schema=None) as batch_op:
+        batch_op.drop_references('lagg_interfacegroup_id')
+        batch_op.create_foreign_key(batch_op.f('fk_network_lagginterfacemembers_lagg_interfacegroup_id_network_lagginterface'), 'network_lagginterface', ['lagg_interfacegroup_id'], ['id'], ondelete='CASCADE')
 
     create_foreign_key(None, 'storage_encrypteddisk', 'storage_volume', ['encrypted_volume_id'], ['id'])
     with op.batch_alter_table('storage_encrypteddisk', schema=None) as batch_op:
@@ -61,8 +75,17 @@ def downgrade():
     with op.batch_alter_table('storage_encrypteddisk', schema=None) as batch_op:
         batch_op.drop_constraint(batch_op.f('fk_storage_encrypteddisk_encrypted_volume_id_storage_volume'), type_='foreignkey')
 
+    with op.batch_alter_table('network_lagginterfacemembers', schema=None) as batch_op:
+        batch_op.drop_constraint(batch_op.f('fk_network_lagginterfacemembers_lagg_interfacegroup_id_network_lagginterface'), type_='foreignkey')
+
     with op.batch_alter_table('network_lagginterface', schema=None) as batch_op:
         batch_op.drop_constraint(batch_op.f('fk_network_lagginterface_lagg_interface_id_network_interfaces'), type_='foreignkey')
+
+    with op.batch_alter_table('network_bridge', schema=None) as batch_op:
+        batch_op.drop_constraint(batch_op.f('fk_network_bridge_interface_id_network_interfaces'), type_='foreignkey')
+
+    with op.batch_alter_table('network_alias', schema=None) as batch_op:
+        batch_op.drop_constraint(batch_op.f('fk_network_alias_alias_interface_id_network_interfaces'), type_='foreignkey')
 
     with op.batch_alter_table('account_bsdgroupmembership', schema=None) as batch_op:
         batch_op.drop_constraint(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_user_id_account_bsdusers'), type_='foreignkey')

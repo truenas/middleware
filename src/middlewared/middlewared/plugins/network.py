@@ -316,7 +316,7 @@ class NetworkAliasModel(sa.Model):
     __tablename__ = 'network_alias'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    alias_interface_id = sa.Column(sa.Integer(), index=True)
+    alias_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'), index=True)
     alias_v4address = sa.Column(sa.String(42))
     alias_v4netmaskbit = sa.Column(sa.String(3))
     alias_v6address = sa.Column(sa.String(42))
@@ -331,7 +331,7 @@ class NetworkBridgeModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     members = sa.Column(sa.JSON(type=list))
-    interface_id = sa.Column(sa.ForeignKey('network_interfaces.id'))
+    interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
 
 
 class NetworkInterfaceModel(sa.Model):
@@ -370,7 +370,7 @@ class NetworkLaggInterfaceMemberModel(sa.Model):
     id = sa.Column(sa.Integer, primary_key=True)
     lagg_ordernum = sa.Column(sa.Integer())
     lagg_physnic = sa.Column(sa.String(120))
-    lagg_interfacegroup_id = sa.Column(sa.ForeignKey('network_lagginterface.id'), index=True)
+    lagg_interfacegroup_id = sa.Column(sa.ForeignKey('network_lagginterface.id', ondelete='CASCADE'), index=True)
 
 
 class NetworkVlanModel(sa.Model):
@@ -638,7 +638,10 @@ class InterfaceService(CRUDService):
         if not self._original_datastores:
             return
 
-        # Deleting interfaces should cascade to network.alias and network.lagginterface
+        # Deleting network.lagginterface because deleting network.interfaces won't cascade
+        # (but network.lagginterface will cascade to network.lagginterfacemembers)
+        await self.middleware.call('datastore.delete', 'network.lagginterface')
+        # Deleting interfaces should cascade to network.alias and network.bridge
         await self.middleware.call('datastore.delete', 'network.interfaces', [])
         await self.middleware.call('datastore.delete', 'network.vlan', [])
 
@@ -850,11 +853,6 @@ class InterfaceService(CRUDService):
                 )
                 lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
             except Exception:
-                for lagport_id in lagports_ids:
-                    with contextlib.suppress(Exception):
-                        await self.middleware.call(
-                            'datastore.delete', 'network.lagginterfacemembers', lagport_id
-                        )
                 if lag_id:
                     with contextlib.suppress(Exception):
                         await self.middleware.call(
@@ -1432,15 +1430,28 @@ class InterfaceService(CRUDService):
             if vlans:
                 raise CallError(f'The following VLANs depend on this interface: {vlans}')
 
-        # Currently Interfaces model takes care of cascade deleting LAG
+        await self.delete_network_interface(oid)
+
+        return oid
+
+    @private
+    async def delete_network_interface(self, oid):
+        for lagg in self.middleware.call(
+            'datastore.query', 'network.lagginterface', [('lagg_interface__int_interface', '=', oid)]
+        ):
+            await self.delete_network_interface(lagg['lagg_physnic'])
+            await self.middleware.call('datastore.delete', 'network.lagginterface', lagg['id'])
+
+        await self.middleware.call(
+            'datastore.delete', 'network.vlan', [('vlan_pint', '=', oid)]
+        )
+        await self.middleware.call(
+            'datastore.delete', 'network.vlan', [('vlan_vint', '=', oid)]
+        )
+
         await self.middleware.call(
             'datastore.delete', 'network.interfaces', [('int_interface', '=', oid)]
         )
-        if iface['type'] == 'VLAN':
-            await self.middleware.call(
-                'datastore.delete', 'network.vlan', [('vlan_vint', '=', oid)]
-            )
-        return oid
 
     @accepts()
     @pass_app

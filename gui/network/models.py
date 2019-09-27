@@ -302,14 +302,6 @@ class Interfaces(Model):
         super(Interfaces, self).__init__(*args, **kwargs)
         self._original_int_options = self.int_options
 
-    def delete(self):
-        for lagg in LAGGInterface.objects.filter(lagg_interface__id=self.id):
-            lagg.delete()
-        # Delete VLAN entries for this interface
-        VLAN.objects.filter(vlan_vint=self.int_interface).delete()
-        if self.id:
-            super(Interfaces, self).delete()
-
     def save(self, *args, **kwargs):
         if self.int_vip and not self.int_pass:
             self.int_pass = ''.join([
@@ -447,11 +439,6 @@ class VLAN(Model):
     def __str__(self):
         return self.vlan_vint
 
-    def delete(self):
-        vint = self.vlan_vint
-        super(VLAN, self).delete()
-        Interfaces.objects.filter(int_interface=vint).delete()
-
     class Meta:
         verbose_name = _("VLAN")
         verbose_name_plural = _("VLANs")
@@ -497,15 +484,6 @@ class LAGGInterface(Model):
             self.lagg_interface,
             self.lagg_protocol,
             interfaces)
-
-    def delete(self):
-        for member in self.lagginterfacemembers_set.all():
-            Interfaces.objects.filter(int_interface=member.lagg_physnic).delete()
-        super(LAGGInterface, self).delete()
-        VLAN.objects.filter(
-            vlan_pint=self.lagg_interface.int_interface
-        ).delete()
-        self.lagg_interface.delete()
 
 
 class LAGGInterfaceMembers(Model):
