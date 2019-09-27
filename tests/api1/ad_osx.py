@@ -42,6 +42,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 
 # Create tests
+@ad_test_cfg
 def test_01_creating_smb_dataset():
     results = POST(f"/storage/volume/{pool_name}/datasets/", {"name": DATASET})
     assert results.status_code == 201, results.text
@@ -74,6 +75,7 @@ def test_04_Checking_to_see_if_SMB_service_is_enabled():
     assert results.json()["srv_state"] == "RUNNING", results.text
 
 
+@ad_test_cfg
 def test_05_Enabling_SMB_service():
     payload = {"cifs_srv_description": "Test FreeNAS Server",
                "cifs_srv_guest": "nobody",
@@ -84,12 +86,14 @@ def test_05_Enabling_SMB_service():
 
 
 # Now start the service
+@ad_test_cfg
 def test_06_Starting_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": "true"})
     assert results.status_code == 200, results.text
     sleep(1)
 
 
+@ad_test_cfg
 def test_07_Changing_permissions_on_SMB_PATH():
     payload = {"mp_path": SMB_PATH,
                "mp_acl": "unix",
@@ -101,6 +105,7 @@ def test_07_Changing_permissions_on_SMB_PATH():
     assert results.status_code == 201, results.text
 
 
+@ad_test_cfg
 def test_08_Creating_a_SMB_share_on_SMB_PATH():
     payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
@@ -261,17 +266,20 @@ def test_26_Verify_Active_Directory_is_disabled():
     sleep(1)
 
 
+@ad_test_cfg
 def test_27_Stop_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": False})
     assert results.status_code == 200, results.text
     sleep(1)
 
 
+@ad_test_cfg
 def test_28_Verify_SMB_service_is_disabled():
     results = GET("/services/services/cifs/")
     assert results.json()["srv_state"] == "STOPPED", results.text
 
 
+@ad_test_cfg
 def test_29_Delete_cifs_share_on_SMB_PATH():
     payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
@@ -283,6 +291,7 @@ def test_29_Delete_cifs_share_on_SMB_PATH():
 
 
 # Check destroying a SMB dataset
+@ad_test_cfg
 def test_30_Destroying_SMB_dataset():
     results = DELETE(f"/storage/volume/{pool_name}/datasets/{DATASET}/")
     assert results.status_code == 204, results.text

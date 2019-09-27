@@ -79,34 +79,40 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
+@skip_ad_test
 def test_01_get_activedirectory_data():
     global results
     results = GET('/activedirectory/')
     assert results.status_code == 200, results.text
 
 
+@skip_ad_test
 @pytest.mark.parametrize('data', list(ad_data_type.keys()))
 def test_02_verify_activedirectory_data_type_of_the_object_value_of_(data):
     assert isinstance(results.json()[data], ad_data_type[data]), results.text
 
 
+@skip_ad_test
 def test_03_get_activedirectory_state():
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
+@skip_ad_test
 def test_04_get_activedirectory_started_before_starting_activedirectory():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
+@skip_ad_test
 def test_05_creating_ad_dataset_for_smb():
     results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
 
+@skip_ad_test
 def test_06_Changing_permissions_on_dataset():
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', {
         'acl': [],
@@ -165,6 +171,7 @@ def test_11_verify_activedirectory_data_of_(data):
         assert results.json()[data] == payload[data], results.text
 
 
+@skip_ad_test
 def test_12_setting_up_smb():
     global payload, results
     payload = {
@@ -175,22 +182,26 @@ def test_12_setting_up_smb():
     assert results.status_code == 200, results.text
 
 
+@skip_ad_test
 @pytest.mark.parametrize('data', ["description", "guest"])
 def test_13_verify_the_value_of_put_smb_object_value_of_(data):
     assert results.json()[data] == payload[data], results.text
 
 
+@skip_ad_test
 def test_14_get_smb_data():
     global results
     results = GET("/smb/")
     assert results.status_code == 200, results.text
 
 
+@skip_ad_test
 @pytest.mark.parametrize('data', ["description", "guest"])
 def test_15_verify_the_value_of_get_smb_object_(data):
     assert results.json()[data] == payload[data], results.text
 
 
+@skip_ad_test
 def test_16_creating_a_smb_share_on_smb_path():
     global payload, results, smb_id
     payload = {
@@ -205,32 +216,38 @@ def test_16_creating_a_smb_share_on_smb_path():
     smb_id = results.json()['id']
 
 
+@skip_ad_test
 @pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "vfsobjects"])
 def test_17_verify_the_value_of_the_created_sharing_smb_object_(data):
     assert results.json()[data] == payload[data], results.text
 
 
+@skip_ad_test
 def test_18_get_sharing_smb_from_id():
     global results
     results = GET(f"/sharing/smb/id/{smb_id}/")
     assert results.status_code == 200, results.text
 
 
+@skip_ad_test
 @pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "vfsobjects"])
 def test_19_verify_the_value_of_get_sharing_smb_object_(data):
     assert results.json()[data] == payload[data], results.text
 
 
+@skip_ad_test
 def test_20_enable_cifs_service():
     results = PUT("/service/id/cifs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
+@skip_ad_test
 def test_21_checking_to_see_if_clif_service_is_enabled():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is True, results.text
 
 
+@skip_ad_test
 def test_22_starting_cifs_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/restart/", payload)
@@ -238,6 +255,7 @@ def test_22_starting_cifs_service():
     sleep(1)
 
 
+@skip_ad_test
 def test_23_checking_to_see_if_nfs_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
@@ -482,12 +500,14 @@ def test_50_disable_activedirectory():
     assert results.status_code == 200, results.text
 
 
+@skip_ad_test
 def test_51_get_activedirectory_state():
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
+@skip_ad_test
 def test_52_get_activedirectory_started_after_disabling_AD():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
@@ -544,16 +564,19 @@ def test_58_get_activedirectory_started_after_living():
     assert results.json() is False, results.text
 
 
+@skip_ad_test
 def test_59_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
+@skip_ad_test
 def test_60_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
+@skip_ad_test
 def test_61_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
@@ -561,11 +584,13 @@ def test_61_stoping_clif_service():
     sleep(1)
 
 
+@skip_ad_test
 def test_62_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
+@skip_ad_test
 def test_63_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
