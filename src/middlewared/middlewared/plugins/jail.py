@@ -559,7 +559,7 @@ class PluginService(CRUDService):
 
             if parse_version(plugin_version) < parse_version(available_version):
                 # Raise an alert please, this plugin needs an update
-                pass
+                self.middleware.call_sync('alert.oneshot_create', 'PluginUpdate', plugin)
 
     @private
     def get_version(self):
