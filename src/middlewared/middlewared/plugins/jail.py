@@ -704,7 +704,7 @@ class JailService(CRUDService):
         )
     )
     @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
-    async def do_create(self, job, options):
+    def do_create(self, job, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
         # create call BUT since jail creation may or may not involve
