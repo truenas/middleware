@@ -1,11 +1,12 @@
 from logging.config import fileConfig
 import os
-import sys
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 
 from alembic import context
+from alembic.operations import ops
+from alembic.operations.base import BatchOperations, Operations
+from alembic.operations.batch import ApplyBatchImpl, BatchOperationsImpl
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
 
 import middlewared
 from middlewared.sqlalchemy import JSON, Model
@@ -31,6 +32,48 @@ list(load_modules("/usr/local/lib/middlewared_truenas/plugins"))
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+@Operations.register_operation("drop_references")
+@BatchOperations.register_operation("drop_references", "batch_drop_references")
+class DropReferencesOp(ops.MigrateOperation):
+    def __init__(
+        self,
+        field_name,
+        table_name,
+    ):
+        self.field_name = field_name
+        self.table_name = table_name
+
+    @classmethod
+    def drop_references(cls, operations):
+        raise RuntimeError()
+
+    @classmethod
+    def batch_drop_references(cls, operations, field_name):
+        op = cls(
+            field_name,
+            operations.impl.table_name,
+        )
+        return operations.invoke(op)
+
+
+@Operations.implementation_for(DropReferencesOp)
+def drop_references(operations, operation):
+    operations.impl.drop_references(
+        operation.field_name,
+    )
+
+
+def drop_references_impl(self, column_name):
+    for constraint in self.unnamed_constraints:
+        if isinstance(constraint, sa.ForeignKeyConstraint) and len(constraint.columns) == 1:
+            if list(constraint.columns)[0].name == column_name:
+                self.unnamed_constraints.remove(constraint)
+                break
+
+
+BatchOperationsImpl.drop_references = lambda self, column: self.batch.append(("drop_references", (column,), {}))
+ApplyBatchImpl.drop_references = drop_references_impl
 
 
 def include_object(object, name, type_, reflected, compare_to):
