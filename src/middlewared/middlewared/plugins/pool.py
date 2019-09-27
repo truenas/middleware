@@ -296,7 +296,7 @@ class EncryptedDiskModel(sa.Model):
     __tablename__ = 'storage_encrypteddisk'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    encrypted_volume_id = sa.Column(sa.Integer())
+    encrypted_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id'))
     encrypted_disk_id = sa.Column(sa.String(100), nullable=True)
     encrypted_provider = sa.Column(sa.String(120))
 
@@ -3413,7 +3413,7 @@ class PoolScrubModel(sa.Model):
     __tablename__ = 'storage_scrub'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    scrub_volume_id = sa.Column(sa.Integer())
+    scrub_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id'))
     scrub_threshold = sa.Column(sa.Integer())
     scrub_description = sa.Column(sa.String(200))
     scrub_minute = sa.Column(sa.String(100))

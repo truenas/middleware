@@ -121,8 +121,8 @@ class SmartTestDiskModel(sa.Model):
     )
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    smarttest_id = sa.Column(sa.Integer())
-    disk_id = sa.Column(sa.String(100))
+    smarttest_id = sa.Column(sa.Integer(), sa.ForeignKey('tasks_smarttest.id', ondelete='CASCADE'))
+    disk_id = sa.Column(sa.String(100), sa.ForeignKey('storage_disk.disk_identifier', ondelete='CASCADE'))
 
 
 class SMARTTestService(CRUDService):
