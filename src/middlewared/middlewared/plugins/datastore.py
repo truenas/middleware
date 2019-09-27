@@ -384,9 +384,9 @@ class DatastoreService(Service):
         return True
 
     @private
-    async def sql(self, query, params=None):
+    async def sql(self, *args):
         try:
-            await self.execute(query, params)
+            await self.execute(*args)
         except Exception as e:
             raise CallError(e)
 
