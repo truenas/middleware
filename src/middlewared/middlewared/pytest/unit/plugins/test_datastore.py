@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import pytest
 import sqlalchemy as sa
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -161,7 +162,15 @@ async def test__update_fk():
 async def test__bad_pk_update():
     async with datastore_test() as ds:
         with pytest.raises(RuntimeError):
+            await ds.execute("INSERT INTO `account_bsdgroups` VALUES (5, 50)")
             assert await ds.update("account.bsdgroups", 1, {"bsdgrp_gid": 5})
+
+
+@pytest.mark.asyncio
+async def test__bad_fk_insert():
+    async with datastore_test() as ds:
+        with pytest.raises(IntegrityError):
+            assert await ds.insert("account.bsdusers", {"bsdusr_uid": 100, "bsdusr_group": 30})
 
 
 class NullableFkModel(Model):
