@@ -485,7 +485,7 @@ class FailoverService(ConfigService):
         elif hardware == 'ULTIMATE':
             return ['igb1']
         elif hardware == 'BHYVE':
-            return ['em0']
+            return ['vtnet1']
         return []
 
     @private
