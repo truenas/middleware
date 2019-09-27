@@ -321,7 +321,6 @@ class PluginService(CRUDService):
         await self._get_instance(id)
         return await self.middleware.call('jail.delete', id)
 
-    @periodic(interval=86400)
     @accepts(
         Dict(
             'available_plugin_options',
@@ -504,6 +503,12 @@ class PluginService(CRUDService):
         }
 
     @periodic(interval=86400)
+    @private
+    def periodic_plugin_update(self):
+        plugin_available = self.middleware.call_sync('plugin.available')
+        plugin_available.wait_sync()
+        self.middleware.call_sync('plugin.plugin_updates')
+
     @private
     @job(lock='plugin_updates')
     def plugin_updates(self, job):
