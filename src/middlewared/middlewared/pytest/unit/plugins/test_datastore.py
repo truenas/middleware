@@ -50,6 +50,14 @@ class GroupMembershipModel(Model):
     bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id"), nullable=False)
 
 
+class UserCascadeModel(Model):
+    __tablename__ = 'account_bsdusers_cascade'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    bsdusr_uid = sa.Column(sa.Integer(), nullable=False)
+    bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id', ondelete='CASCADE'), nullable=False)
+
+
 @pytest.mark.asyncio
 async def test__relationship_load():
     async with datastore_test() as ds:
@@ -187,6 +195,27 @@ async def test__bad_fk_load():
                 "group": None,
             }
         ]
+
+
+@pytest.mark.asyncio
+async def test__delete_fk():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        await ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
+
+        with pytest.raises(IntegrityError):
+            await ds.delete("account.bsdgroups", 20)
+
+
+@pytest.mark.asyncio
+async def test__delete_fk_cascade():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        await ds.execute("INSERT INTO `account_bsdusers_cascade` VALUES (5, 55, 20)")
+
+        await ds.delete("account.bsdgroups", 20)
+
+        assert await ds.query("account.bsdgroups") == []
 
 
 class NullableFkModel(Model):
