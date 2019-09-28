@@ -164,7 +164,7 @@ class WebDAVModel(sa.Model):
     webdav_tcpportssl = sa.Column(sa.Integer())
     webdav_password = sa.Column(sa.String(120))
     webdav_htauth = sa.Column(sa.String(120))
-    webdav_certssl_id = sa.Column(sa.Integer(), nullable=True)
+    webdav_certssl_id = sa.Column(sa.ForeignKey('system_certificate.id'), nullable=True)
 
 
 class WebDAVService(SystemServiceService):

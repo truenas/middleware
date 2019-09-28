@@ -5,8 +5,7 @@ from alembic import context
 from alembic.operations import ops
 from alembic.operations.base import BatchOperations, Operations
 from alembic.operations.batch import ApplyBatchImpl, BatchOperationsImpl
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, ForeignKeyConstraint, pool
 
 import middlewared
 from middlewared.sqlalchemy import JSON, Model
@@ -32,6 +31,7 @@ list(load_modules("/usr/local/lib/middlewared_truenas/plugins"))
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
 
 @Operations.register_operation("drop_references")
 @BatchOperations.register_operation("drop_references", "batch_drop_references")
@@ -66,7 +66,7 @@ def drop_references(operations, operation):
 
 def drop_references_impl(self, column_name):
     for constraint in self.unnamed_constraints:
-        if isinstance(constraint, sa.ForeignKeyConstraint) and len(constraint.columns) == 1:
+        if isinstance(constraint, ForeignKeyConstraint) and len(constraint.columns) == 1:
             if list(constraint.columns)[0].name == column_name:
                 self.unnamed_constraints.remove(constraint)
                 break

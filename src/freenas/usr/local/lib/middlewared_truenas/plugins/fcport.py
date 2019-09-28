@@ -21,7 +21,7 @@ class FCPortModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     fc_port = sa.Column(sa.String(10))
-    fc_target_id = sa.Column(sa.Integer(), nullable=True, index=True)
+    fc_target_id = sa.Column(sa.ForeignKey('services_iscsitarget.id'), nullable=True, index=True)
 
 
 class FCPortService(CRUDService):

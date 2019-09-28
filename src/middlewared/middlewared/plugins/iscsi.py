@@ -178,7 +178,7 @@ class ISCSIPortalIModel(sa.Model):
     )
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_portalip_portal_id = sa.Column(sa.Integer(), index=True)
+    iscsi_target_portalip_portal_id = sa.Column(sa.ForeignKey('services_iscsitargetportal.id'), index=True)
     iscsi_target_portalip_ip = sa.Column(sa.CHAR(15))
     iscsi_target_portalip_port = sa.Column(sa.SmallInteger())
 
@@ -1152,9 +1152,10 @@ class iSCSITargetGroupModel(sa.Model):
     )
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_id = sa.Column(sa.Integer(), index=True)
-    iscsi_target_portalgroup_id = sa.Column(sa.Integer(), index=True)
-    iscsi_target_initiatorgroup_id = sa.Column(sa.Integer(), index=True, nullable=True)
+    iscsi_target_id = sa.Column(sa.ForeignKey('services_iscsitarget.id'), index=True)
+    iscsi_target_portalgroup_id = sa.Column(sa.ForeignKey('services_iscsitargetportal.id'), index=True)
+    iscsi_target_initiatorgroup_id = sa.Column(sa.ForeignKey('services_iscsitargetauthorizedinitiator.id',
+                                                             ondelete='SET NULL'), index=True, nullable=True)
     iscsi_target_authtype = sa.Column(sa.String(120))
     iscsi_target_authgroup = sa.Column(sa.Integer(), nullable=True)
     iscsi_target_initialdigest = sa.Column(sa.String(120))

@@ -296,8 +296,8 @@ class EncryptedDiskModel(sa.Model):
     __tablename__ = 'storage_encrypteddisk'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    encrypted_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id'))
-    encrypted_disk_id = sa.Column(sa.String(100), nullable=True)
+    encrypted_volume_id = sa.Column(sa.ForeignKey('storage_volume.id'))
+    encrypted_disk_id = sa.Column(sa.ForeignKey('storage_disk.disk_identifier', ondelete='SET NULL'), nullable=True)
     encrypted_provider = sa.Column(sa.String(120))
 
 
