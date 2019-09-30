@@ -33,7 +33,6 @@ from middlewared.service import (
 )
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.system import SystemService
-from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
 if '/usr/local/www' not in sys.path:
@@ -248,7 +247,8 @@ class FailoverService(ConfigService):
         'failover_update',
         Bool('disabled'),
         Int('timeout'),
-        Bool('master'),
+        Bool('master', null=True, default=None),
+        update=True,
     ))
     async def do_update(self, data):
         """
@@ -271,13 +271,11 @@ class FailoverService(ConfigService):
                 )
         verrors.check()
 
-        await self.middleware.call('datastore.update', 'failover.failover', new['id'], new)
+        # The node making the call is the one we want to make it MASTER by default
+        if new['master'] is None:
+            new['master'] = True
 
-        if await self.middleware.call('pool.query', [('status', '!=', 'OFFLINE')]):
-            cp = await run('fenced', '--force', check=False)
-            # 6 = Already running
-            if cp.returncode not in (0, 6):
-                raise CallError(f'fenced failed with exit code {cp.returncode}.')
+        await self.middleware.call('datastore.update', 'failover.failover', new['id'], new)
 
         try:
             await self.middleware.call('failover.call_remote', 'datastore.sql', [
@@ -287,6 +285,12 @@ class FailoverService(ConfigService):
             self.logger.warn('Failed to set master flag on standby node', exc_info=True)
 
         await self.middleware.call('service.restart', 'failover')
+
+        if old['disabled'] is False and new['disabled']:
+            if new['master']:
+                await self.middleware.call('failover.force_master')
+            else:
+                await self.middleware.call('failover.call_remote', 'failover.force_master')
 
         return await self.config()
 
