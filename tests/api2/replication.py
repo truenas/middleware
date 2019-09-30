@@ -219,7 +219,7 @@ def test_create_replication(credentials, periodic_snapshot_tasks, req, error):
     result = POST("/replication/", dict(BASE_REPLICATION, name=name, **req))
 
     if error:
-        assert result.status_code == 422
-        assert f"replication_create.{error}" in result.json()
+        assert result.status_code == 422, result.text
+        assert f"replication_create.{error}" in result.json(), result.text
     else:
         assert result.status_code == 200, result.text
