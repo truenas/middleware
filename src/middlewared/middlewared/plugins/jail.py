@@ -416,42 +416,6 @@ class PluginService(CRUDService):
         return resource_list
 
     @private
-    @accepts(
-        Str('branch', null=True, default=None),
-        Str('plugin_repository', null=True, default=None, empty=False),
-    )
-    @job(
-        lock=lambda args: f'retrieve_plugin_versions_{args[0] if args else "None"}_'
-        f'{args[1] if len(args) == 2 else None}'
-    )
-    def retrieve_plugin_versions(self, job, branch, plugin_repository):
-        # FIXME: Please fix the job arguments once job can correctly retrieve parameters from the schema layer
-        branch = branch or self.get_version()
-        plugin_repository = plugin_repository or self.default_repo()
-        try:
-            pool = self.middleware.call_sync('jail.get_activated_pool')
-        except CallError:
-            pool = None
-
-        if pool:
-            plugins = IOCPlugin(branch=branch, git_repository=plugin_repository).fetch_plugin_versions()
-        else:
-            with tempfile.TemporaryDirectory() as td:
-                try:
-                    IOCPlugin._clone_repo(branch, plugin_repository, td, depth=1)
-                except Exception:
-                    self.middleware.logger.error('Failed to clone iocage-ix-plugins repository.', exc_info=True)
-                    return {}
-                else:
-                    plugins_index_data = IOCPlugin.retrieve_plugin_index_data(td)
-                    plugins = IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
-
-        self.middleware.call_sync(
-            'cache.put', f'iocage_plugin_versions_{branch}_{plugin_repository}', plugins, 86400
-        )
-        return plugins
-
-    @private
     def retrieve_plugin_index(self, options):
         self.middleware.call_sync('jail.check_dataset_existence')
         branch = options['branch'] or self.get_version()
