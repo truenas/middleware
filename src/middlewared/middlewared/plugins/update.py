@@ -26,7 +26,6 @@ from freenasOS.Exceptions import (
 from freenasOS.Update import (
     ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
 )
-from freenasOS import MASTER_UPDATE_SERVER
 
 UPLOAD_LOCATION = '/var/tmp/firmware'
 UPLOAD_LABEL = 'updatemdu'
@@ -253,8 +252,9 @@ class UpdateService(Service):
         The format uses an dict/object as the value to allow new items to be added in the future
         and be backward compatible.
         """
+        update_server = Configuration.Configuration().UpdateServerMaster()
         r = requests.get(
-            f'{MASTER_UPDATE_SERVER}/trains_redir.json',
+            f'{update_server}/trains_redir.json',
             timeout=5,
         )
         rv = {}
