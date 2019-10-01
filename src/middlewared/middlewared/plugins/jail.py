@@ -4,7 +4,6 @@ import os
 import subprocess as su
 import libzfs
 import itertools
-import tempfile
 import pathlib
 import json
 import sqlite3
@@ -320,18 +319,21 @@ class PluginService(CRUDService):
         return await self.middleware.call('jail.delete', id)
 
     @private
-    def retrieve_index_plugins_data(self, branch, plugin_repository):
+    def retrieve_index_plugins_data(self, branch, plugin_repository, refresh=True):
         data = {'plugins': None, 'index': None}
-        with tempfile.TemporaryDirectory() as td:
-            try:
-                IOCPlugin._clone_repo(branch, plugin_repository, td)
-            except Exception:
-                self.middleware.logger.error(f'Failed to clone {plugin_repository}.', exc_info=True)
-            else:
-                data['plugins'] = IOCPlugin.retrieve_plugin_index_data(td)
-                if os.path.exists(os.path.join(td, 'INDEX')):
-                    with open(os.path.join(td, 'INDEX'), 'r') as f:
-                        data['index'] = json.loads(f.read())
+        iocage_tmp_dir = '/tmp/iocage/.plugins'
+        os.makedirs(iocage_tmp_dir, exist_ok=True)
+        plugin_dir = os.path.join(iocage_tmp_dir, self.convert_repository_to_path(plugin_repository))
+        try:
+            if refresh or not os.path.exists(plugin_dir):
+                IOCPlugin._clone_repo(branch, plugin_repository, plugin_dir)
+        except Exception:
+            self.middleware.logger.error(f'Failed to clone {plugin_repository}.', exc_info=True)
+        else:
+            data['plugins'] = IOCPlugin.retrieve_plugin_index_data(plugin_dir)
+            if os.path.exists(os.path.join(plugin_dir, 'INDEX')):
+                with open(os.path.join(plugin_dir, 'INDEX'), 'r') as f:
+                    data['index'] = json.loads(f.read())
 
         return data
 
@@ -391,7 +393,7 @@ class PluginService(CRUDService):
             resource_list = [
                 {
                     'plugin': plugin,
-                    **{k: d.get(k, '') for k in ('description', 'icon', 'name', 'license', 'official', 'plugin')}
+                    **{k: d.get(k, '') for k in ('description', 'icon', 'name', 'license', 'official')}
                 }
                 for plugin, d in cloned_repo['index'].items()
             ]
@@ -434,7 +436,7 @@ class PluginService(CRUDService):
         branch = options['branch'] or self.get_version()
 
         if not self.middleware.call_sync('jail.iocage_set_up'):
-            index = self.retrieve_index_plugins_data(branch, plugin_repository)
+            index = self.retrieve_index_plugins_data(branch, plugin_repository, options['refresh'])
             index = index['plugins'] or {}
         else:
             self.middleware.call_sync('jail.check_dataset_existence')
