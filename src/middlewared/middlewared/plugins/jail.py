@@ -415,15 +415,6 @@ class PluginService(CRUDService):
 
         return resource_list
 
-    @private
-    def retrieve_plugin_index(self, options):
-        self.middleware.call_sync('jail.check_dataset_existence')
-        branch = options['branch'] or self.get_version()
-        plugins = IOCPlugin(branch=branch, git_repository=options['plugin_repository'])
-        if not os.path.exists(plugins.git_destination) or options['refresh']:
-            plugins.pull_clone_git_repo()
-        return plugins.retrieve_plugin_index_data(plugins.git_destination)
-
     @accepts(
         Dict(
             'options',
