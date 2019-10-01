@@ -439,8 +439,19 @@ class PluginService(CRUDService):
 
         When `refresh` is specified, `plugin_repository` is updated before retrieving plugin's default properties.
         """
-        options['plugin_repository'] = options.get('plugin_repository') or self.default_repo()
-        index = self.retrieve_plugin_index(options)
+        plugin_repository = options.get('plugin_repository') or self.default_repo()
+        branch = options['branch'] or self.get_version()
+
+        if not self.middleware.call_sync('jail.iocage_set_up'):
+            index = self.retrieve_index_plugins_data(branch, plugin_repository)
+            index = index['plugins'] or {}
+        else:
+            self.middleware.call_sync('jail.check_dataset_existence')
+            plugins_obj = IOCPlugin(branch=branch, git_repository=plugin_repository)
+            if not os.path.exists(plugins_obj.git_destination) or options['refresh']:
+                plugins_obj.pull_clone_git_repo()
+            index = plugins_obj.retrieve_plugin_index_data(plugins_obj.git_destination)
+
         if options['plugin'] not in index:
             raise CallError(f'{options["plugin"]} not found')
         return {
