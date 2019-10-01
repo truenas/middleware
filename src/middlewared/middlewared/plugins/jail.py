@@ -832,6 +832,9 @@ class JailService(CRUDService):
 
         def progress_callback(content, exception):
             msg = content['message'].strip('\n')
+            if content['level'] == 'EXCEPTION':
+                raise exception(msg)
+
             msg_queue.append(msg)
             final_msg = '\n'.join(msg_queue)
 
