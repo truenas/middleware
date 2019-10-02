@@ -516,7 +516,8 @@ class ActiveDirectoryModel(sa.Model):
     ad_ldap_sasl_wrapping = sa.Column(sa.String(120))
     ad_enable = sa.Column(sa.Boolean())
     ad_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    ad_kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id'), index=True, nullable=True)
+    ad_kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id', ondelete='SET NULL'),
+                                     index=True, nullable=True)
     ad_kerberos_principal = sa.Column(sa.String(255))
     ad_createcomputer = sa.Column(sa.String(255))
 

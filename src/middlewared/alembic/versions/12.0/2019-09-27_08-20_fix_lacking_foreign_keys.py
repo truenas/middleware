@@ -32,6 +32,11 @@ def upgrade():
         batch_op.create_foreign_key(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_group_id_account_bsdgroups'), 'account_bsdgroups', ['bsdgrpmember_group_id'], ['id'])
         batch_op.create_foreign_key(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_user_id_account_bsdusers'), 'account_bsdusers', ['bsdgrpmember_user_id'], ['id'])
 
+    create_foreign_key_nullable(None, 'directoryservice_activedirectory', 'directoryservice_kerberosrealm', ['ad_kerberos_realm_id'], ['id'])
+    with op.batch_alter_table('directoryservice_activedirectory', schema=None) as batch_op:
+        batch_op.drop_references('ad_kerberos_realm_id')
+        batch_op.create_foreign_key(batch_op.f('fk_directoryservice_activedirectory_ad_kerberos_realm_id_directoryservice_kerberosrealm'), 'directoryservice_kerberosrealm', ['ad_kerberos_realm_id'], ['id'], ondelete='SET NULL')
+
     create_foreign_key(None, 'network_alias', 'network_interfaces', ['alias_interface_id'], ['id'])
     with op.batch_alter_table('network_alias', schema=None) as batch_op:
         batch_op.create_foreign_key(batch_op.f('fk_network_alias_alias_interface_id_network_interfaces'), 'network_interfaces', ['alias_interface_id'], ['id'], ondelete='CASCADE')
@@ -127,6 +132,9 @@ def downgrade():
 
     with op.batch_alter_table('network_alias', schema=None) as batch_op:
         batch_op.drop_constraint(batch_op.f('fk_network_alias_alias_interface_id_network_interfaces'), type_='foreignkey')
+
+    with op.batch_alter_table('directoryservice_activedirectory', schema=None) as batch_op:
+        batch_op.drop_constraint(batch_op.f('fk_directoryservice_activedirectory_ad_kerberos_realm_id_directoryservice_kerberosrealm'), type_='foreignkey')
 
     with op.batch_alter_table('account_bsdgroupmembership', schema=None) as batch_op:
         batch_op.drop_constraint(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_user_id_account_bsdusers'), type_='foreignkey')
