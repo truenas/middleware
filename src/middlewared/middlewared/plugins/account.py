@@ -970,9 +970,15 @@ class GroupService(CRUDService):
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 
-        if options['delete_users']:
-            for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])], {'prefix': 'bsdusr_'}):
+        nogroup = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', 'nogroup')],
+                                             {'prefix': 'bsdgrp_', 'get': True})
+        for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])],
+                                            {'prefix': 'bsdusr_'}):
+            if options['delete_users']:
                 await self.middleware.call('datastore.delete', 'account.bsdusers', i['id'])
+            else:
+                await self.middleware.call('datastore.update', 'account.bsdusers', i['id'], {'group': nogroup['id']},
+                                           {'prefix': 'bsdusr_'})
 
         await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
 
