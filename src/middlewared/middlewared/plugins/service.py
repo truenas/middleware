@@ -494,8 +494,10 @@ class ServiceService(CRUDService):
         await self._system('/bin/hostname ""')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'rc')
+        await self.middleware.call('mdnsadvertise.stop')
         await self._service("hostname", "start", quiet=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self._service("mdnsd", "restart", quiet=True, **kwargs)
+        await self.middleware.call('mdnsadvertise.start')
         await self._restart_collectd(**kwargs)
 
     async def _reload_resolvconf(self, **kwargs):
