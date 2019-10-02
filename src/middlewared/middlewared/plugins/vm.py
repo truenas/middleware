@@ -90,15 +90,15 @@ class VMSupervisor(object):
         os.makedirs('/var/log/vm', exist_ok=True)
         self.logger = self.manager.logger.getChild(f'vm_{vm["id"]}')
 
-        handler = middlewared.logger.ErrorProneRotatingFileHandler(
+        self.handler = middlewared.logger.ErrorProneRotatingFileHandler(
             f'/var/log/vm/{vm["name"]}_{vm["id"]}',
             maxBytes=10485760,
             backupCount=5,
         )
         self.middleware = self.manager.service.middleware
 
-        handler.setFormatter(logging.Formatter(self.middleware.log_format))
-        self.logger.addHandler(handler)  # main log + vm specific log
+        self.handler.setFormatter(logging.Formatter(self.middleware.log_format))
+        self.logger.addHandler(self.handler)  # main log + vm specific log
         self.logger.setLevel(self.middleware.debug_level)
 
         self.vm = vm
@@ -351,6 +351,7 @@ class VMSupervisor(object):
         self.logger.warn('===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}'.format(self.vm['name'], self.vm['id'], self.bhyve_error))
         # XXX: We need to catch the bhyvectl return error.
         await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        self.logger.removeHandler(self.handler)
         self.manager._vm.pop(self.vm['id'], None)
         await self.kill_bhyve_web()
         self.destroy_tap()
