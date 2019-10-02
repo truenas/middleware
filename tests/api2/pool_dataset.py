@@ -12,6 +12,8 @@ from auto_config import pool_name
 
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')
+zvol = f'{pool_name}/zvol1'
+zvol_url = zvol.replace('/', '%2F')
 
 default_acl = [
     {
@@ -142,4 +144,29 @@ def test_13_delete_dataset():
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )
+    assert result.status_code == 200, result.text
+
+
+def test_14_creating_zvol():
+    global results, payload
+    payload = {
+        "name": zvol,
+        'type': 'VOLUME',
+        "volsize": 163840,
+        "volblocksize": '16K'
+    }
+    results = POST(f"/pool/dataset/", payload)
+    assert results.status_code == 200, results.text
+
+
+@pytest.mark.parametrize('key', ['name', 'type', 'volsize'])
+def test_15_verify_output_(key):
+    if key == 'volsize':
+        assert results.json()[key]['parsed'] == payload[key], results.text
+    else:
+        assert results.json()[key] == payload[key], results.text
+
+
+def test_16_delete_zvol():
+    result = DELETE(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 200, result.text
