@@ -34,18 +34,10 @@ class EnclosureStatusAlertSource(AlertSource):
         for num, enc in enumerate(await self.middleware.call('enclosure.query')):
             healthy = True
             for ele in sum([e['elements'] for e in enc['elements']], []):
-                if ele['status'] == 'Unrecoverable':
-                    status = 'UNRECOVERABLE'
-                elif ele['status'] == 'Critical':
-                    if ele['name'] == 'Enclosure' and not (
-                        await self.middleware.call("datastore.query", "failover.failover")
-                    ):
-                        continue
-                    status = 'CRITICAL'
-                elif ele['status'] == 'Unrecoverable':
-                    status = 'UNRECOVERABLE'
-                elif ele['status'] == 'Noncritical':
-                    status = 'UNRECOVERABLE'
+                if ele['status'] in ['Critical', 'Noncritical', 'Unrecoverable']:
+                    pass
+                elif ele['status'] == 'Not Installed' and ele['name'] in ['Power Supply']:
+                    pass
                 else:
                     continue
 
@@ -66,7 +58,7 @@ class EnclosureStatusAlertSource(AlertSource):
                 healthy = False
                 alerts.append(Alert(
                     EnclosureUnhealthyAlertClass,
-                    args=[num, enc['name'], ele['name'], status],
+                    args=[num, enc['name'], ele['name'], ele['status']],
                 ))
                 # Log the element, see #10187
                 logger.warning(
