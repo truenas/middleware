@@ -91,5 +91,5 @@ block drop in quick proto udp from any to $ips\n''' % {
                 notify 100 {
                    match "system"   "CARP";
                    match "subsystem"      "[0-9]+@[0-9a-z]+";
-                   action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py \$subsystem \$type";
+                   action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py $subsystem $type";
                 };'''))
