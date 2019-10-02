@@ -477,3 +477,26 @@ async def test__mtm_loader():
                 "disks": [{"id": 10}, {"id": 30}],
             }
         ]
+
+
+class DefaultModel(Model):
+    __tablename__ = "test_default"
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    string = sa.Column(sa.String(100), default="DEFAULT")
+
+
+@pytest.mark.asyncio
+async def test__insert_default():
+    async with datastore_test() as ds:
+        await ds.insert("test.default", {})
+
+        assert (await ds.query("test.default", [], {"get": True}))["string"] == "DEFAULT"
+
+
+@pytest.mark.asyncio
+async def test__insert_default_has_value():
+    async with datastore_test() as ds:
+        await ds.insert("test.default", {"string": "VALUE"})
+
+        assert (await ds.query("test.default", [], {"get": True}))["string"] == "VALUE"

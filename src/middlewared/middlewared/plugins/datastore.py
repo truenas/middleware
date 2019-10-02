@@ -403,11 +403,13 @@ class DatastoreService(Service):
         Insert a new entry to `name`.
         """
         table = self._get_table(name)
-        data = data.copy()
 
-        insert = table.insert().values(**{self._get_col(table, k, options['prefix']).name: v
-                                          for k, v in data.items()})
-        await self.execute_write(insert)
+        data = {self._get_col(table, k, options['prefix']).name: v for k, v in data.items()}
+        for column in table.c:
+            if column.default is not None:
+                data.setdefault(column.name, column.default.arg)
+
+        await self.execute_write(table.insert().values(**data))
         return (await self.fetchall('SELECT last_insert_rowid()'))[0][0]
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
