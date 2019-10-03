@@ -46,8 +46,10 @@ class GroupMembershipModel(Model):
     __tablename__ = 'account_bsdgroupmembership'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id"), nullable=False)
-    bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id"), nullable=False)
+    bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id", ondelete="CASCADE"),
+                                      nullable=False)
+    bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id", ondelete="CASCADE"),
+                                     nullable=False)
 
 
 class UserCascadeModel(Model):
@@ -216,6 +218,14 @@ async def test__delete_fk_cascade():
         await ds.delete("account.bsdgroups", 20)
 
         assert await ds.query("account.bsdgroups") == []
+
+
+@pytest.mark.asyncio
+async def test__get_backrefs():
+    async with datastore_test() as ds:
+        assert await ds.get_backrefs("account.bsdgroups") == [
+            ("account.bsdusers", "bsdusr_group_id"),
+        ]
 
 
 class NullableFkModel(Model):

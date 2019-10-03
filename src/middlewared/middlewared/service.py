@@ -395,6 +395,60 @@ class CRUDService(ServiceChangeMixin, Service):
             verrors.add('.'.join(filter(None, [schema_name, field_name])),
                         f'Object with this {field_name} already exists')
 
+    @private
+    async def check_dependencies(self, id, ignored=None):
+        """
+        Raises EBUSY CallError if some datastores/services (except for `ignored`) reference object specified by id.
+        """
+        ignored = ignored or set()
+
+        services = {
+            service['config'].get('datastore'): (name, service)
+            for name, service in (await self.middleware.call('core.get_services')).items()
+            if service['config'].get('datastore')
+        }
+
+        dependencies = {}
+        for datastore, pk in await self.middleware.call('datastore.get_backrefs', self._config.datastore):
+            if datastore in ignored:
+                continue
+
+            if datastore in services:
+                service = {
+                    'name': services[datastore][0],
+                    'type': services[datastore][1]['type'],
+                }
+
+                if service['name'] in ignored:
+                    continue
+            else:
+                service = None
+
+            objects = await self.middleware.call('datastore.query', datastore, [(pk, '=', id)])
+            if objects:
+                if service is not None:
+                    if service['type'] == 'config':
+                        objects = None
+
+                    if service['type'] == 'crud':
+                        query_col = pk
+                        prefix = services[datastore][1]['config'].get('datastore_prefix')
+                        if prefix:
+                            if query_col.startswith(prefix):
+                                query_col = query_col[len(prefix):]
+
+                        objects = await self.middleware.call(f'{service["name"]}.query', [(query_col, '=', id)])
+
+                dependencies[datastore] = {
+                    'datastore': datastore,
+                    'service': service['name'] if service else None,
+                    'objects': objects,
+                }
+
+        if dependencies:
+            raise CallError('This object is being used by other objects', errno.EBUSY,
+                            {'dependencies': list(dependencies.values())})
+
 
 class CoreService(Service):
 
