@@ -409,7 +409,7 @@ class CRUDService(ServiceChangeMixin, Service):
         }
 
         dependencies = {}
-        for datastore, pk in await self.middleware.call('datastore.get_backrefs', self._config.datastore):
+        for datastore, fk in await self.middleware.call('datastore.get_backrefs', self._config.datastore):
             if datastore in ignored:
                 continue
 
@@ -424,26 +424,34 @@ class CRUDService(ServiceChangeMixin, Service):
             else:
                 service = None
 
-            objects = await self.middleware.call('datastore.query', datastore, [(pk, '=', id)])
+            objects = await self.middleware.call('datastore.query', datastore, [(fk, '=', id)])
             if objects:
-                if service is not None:
-                    if service['type'] == 'config':
-                        objects = None
-
-                    if service['type'] == 'crud':
-                        query_col = pk
-                        prefix = services[datastore][1]['config'].get('datastore_prefix')
-                        if prefix:
-                            if query_col.startswith(prefix):
-                                query_col = query_col[len(prefix):]
-
-                        objects = await self.middleware.call(f'{service["name"]}.query', [(query_col, '=', id)])
-
-                dependencies[datastore] = {
-                    'datastore': datastore,
-                    'service': service['name'] if service else None,
+                data = {
                     'objects': objects,
                 }
+                if service is not None:
+                    query_col = fk
+                    prefix = services[datastore][1]['config'].get('datastore_prefix')
+                    if prefix:
+                        if query_col.startswith(prefix):
+                            query_col = query_col[len(prefix):]
+
+                    if service['type'] == 'config':
+                        data = {
+                            'key': query_col,
+                        }
+
+                    if service['type'] == 'crud':
+                        data = {
+                            'objects': await self.middleware.call(
+                                f'{service["name"]}.query', [('id', 'in', [object['id'] for object in objects])],
+                            ),
+                        }
+
+                dependencies[datastore] = dict({
+                    'datastore': datastore,
+                    'service': service['name'] if service else None,
+                }, **data)
 
         if dependencies:
             raise CallError('This object is being used by other objects', errno.EBUSY,

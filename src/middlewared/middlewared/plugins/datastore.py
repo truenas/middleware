@@ -303,7 +303,7 @@ class DatastoreService(Service):
 
             entry: simple_filter | conjuntion
             simple_filter: '[' attribute_name, OPERATOR, value ']'
-            conjunction: '[' CONJUNTION, '[' simple_filter (',' simple_filter)* ']]'
+            conjunction: '[' CONJUNCTION, '[' simple_filter (',' simple_filter)* ']]'
 
             OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' | 'in' | 'nin')
             CONJUNCTION: 'OR'
