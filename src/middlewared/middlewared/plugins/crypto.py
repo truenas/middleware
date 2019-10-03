@@ -22,6 +22,7 @@ from contextlib import suppress
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 
@@ -158,7 +159,8 @@ class CryptoKeyService(Service):
         'BrainpoolP512R1',
         'BrainpoolP384R1',
         'BrainpoolP256R1',
-        'SECP256K1'
+        'SECP256K1',
+        'ed25519',
     ]
 
     backend_mappings = {
@@ -358,7 +360,7 @@ class CryptoKeyService(Service):
         else:
             cert_info = self.get_x509_subject(cert)
 
-            valid_algos = ('SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512')
+            valid_algos = ('SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512', 'ED25519')
             signature_algorithm = cert.get_signature_algorithm().decode()
             # Certs signed with RSA keys will have something like
             # sha256WithRSAEncryption
@@ -510,7 +512,7 @@ class CryptoKeyService(Service):
             'csr': True
         })
 
-        csr = csr.sign(key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend())
+        csr = csr.sign(key, self.retrieve_signing_algorithm(data, key), default_backend())
 
         return (
             csr.public_bytes(serialization.Encoding.PEM).decode(),
@@ -626,7 +628,7 @@ class CryptoKeyService(Service):
         cert = self.add_extensions(cert, data.get('cert_extensions'), key, issuer)
 
         cert = cert.sign(
-            ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
+            ca_key or key, self.retrieve_signing_algorithm(data, ca_key or key), default_backend()
         )
 
         return (
@@ -696,7 +698,7 @@ class CryptoKeyService(Service):
         )
 
         cert = cert.sign(
-            ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
+            ca_key or key, self.retrieve_signing_algorithm(data, ca_key or key), default_backend()
         )
 
         return (
@@ -742,10 +744,16 @@ class CryptoKeyService(Service):
         )
 
         new_cert = new_cert.sign(
-            ca_key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
+            ca_key, self.retrieve_signing_algorithm(data, ca_key), default_backend()
         )
 
         return new_cert.public_bytes(serialization.Encoding.PEM).decode()
+
+    def retrieve_signing_algorithm(self, data, signing_key):
+        if isinstance(signing_key, Ed25519PrivateKey):
+            return None
+        else:
+            return getattr(hashes, data.get('digest_algorithm') or 'SHA256')()
 
     def generate_builder(self, options):
         # We expect backend_mapping keys for crypto_subject_name attr in options and for crypto_issuer_name as well
@@ -804,10 +812,13 @@ class CryptoKeyService(Service):
         # https://stackoverflow.com/questions/48958304/pkcs1-and-pkcs8-format-for-rsa-private-key
 
         if options.get('type') == 'EC':
-            key = ec.generate_private_key(
-                getattr(ec, options.get('curve')),
-                default_backend()
-            )
+            if options['curve'] == 'ed25519':
+                key = Ed25519PrivateKey.generate()
+            else:
+                key = ec.generate_private_key(
+                    getattr(ec, options.get('curve')),
+                    default_backend()
+                )
         else:
             key = rsa.generate_private_key(
                 public_exponent=65537,
@@ -906,7 +917,7 @@ class CryptoKeyService(Service):
         ).add_extension(
             x509.CRLNumber(1), False
         ).sign(
-            private_key=private_key, algorithm=hashes.SHA256(),
+            private_key=private_key, algorithm=self.retrieve_signing_algorithm({}, private_key),
             backend=default_backend()
         )
 
@@ -1139,8 +1150,11 @@ class CertificateService(CRUDService):
         if cert['privatekey']:
             key_obj = await self.middleware.call('cryptokey.load_private_key', cert['privatekey'])
             if key_obj:
-                cert['key_length'] = key_obj.key_size
-                if isinstance(key_obj, ec.EllipticCurvePrivateKey):
+                if isinstance(key_obj, Ed25519PrivateKey):
+                    cert['key_length'] = 32
+                else:
+                    cert['key_length'] = key_obj.key_size
+                if isinstance(key_obj, (ec.EllipticCurvePrivateKey, Ed25519PrivateKey)):
                     cert['key_type'] = 'EC'
                 elif isinstance(key_obj, rsa.RSAPrivateKey):
                     cert['key_type'] = 'RSA'
