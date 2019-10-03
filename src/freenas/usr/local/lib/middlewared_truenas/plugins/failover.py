@@ -782,10 +782,10 @@ class FailoverService(ConfigService):
         """
         local_disks = set(v['ident'] for k, v in
             (await self.middleware.call('device.get_info', 'DISK')).items()
-            if not k.startswith('ada'))
+            if not k.startswith(('ada', 'vtbd')))
         remote_disks = set(v['ident'] for k, v in
             (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).items()
-            if not k.startswith('ada'))
+            if not k.startswith(('ada', 'vtbd')))
         return {
             'missing_local': sorted(remote_disks - local_disks),
             'missing_remote': sorted(local_disks - remote_disks),
