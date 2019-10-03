@@ -180,7 +180,7 @@ class ISCSIPortalService(CRUDService):
         """
         Returns possible choices for `listen.ip` attribute of portal create and update.
         """
-        choices = {'0.0.0.0': '0.0.0.0', '[::]': '[::]'}
+        choices = {'0.0.0.0': '0.0.0.0', '::': '::'}
         alua = (await self.middleware.call('iscsi.global.config'))['alua']
         if alua:
             # If ALUA is enabled we actually want to show the user the IPs of each node
@@ -434,7 +434,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        await self.validate(new, 'iscsi_auth_update', verrors, old)
+        await self.validate(new, 'iscsi_auth_update', verrors)
 
         if verrors:
             raise verrors
@@ -458,15 +458,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
 
     @private
-    async def validate(self, data, schema_name, verrors, old=None):
-
-        filters = [('tag', '=', data['tag'])]
-        if old:
-            filters.append(('id', '!=', old['id']))
-
-        if await self.middleware.call('iscsi.auth.query', filters):
-            verrors.add(f'{schema_name}.tag', f'Tag {data["tag"]!r} is already in use.')
-
+    async def validate(self, data, schema_name, verrors):
         secret = data.get('secret')
         peer_secret = data.get('peersecret')
         peer_user = data.get('peeruser', '')
