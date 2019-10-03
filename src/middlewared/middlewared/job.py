@@ -436,6 +436,9 @@ class Job(object):
             elif isinstance(evalue, ValidationErrors):
                 extra = list(evalue)
                 etype = 'VALIDATION'
+            elif isinstance(evalue, CallError):
+                etype = etype.__name__
+                extra = evalue.extra
             else:
                 etype = etype.__name__
                 extra = None
