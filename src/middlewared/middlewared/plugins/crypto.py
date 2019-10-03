@@ -1991,37 +1991,7 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        verrors = ValidationErrors()
-
-        # Let's make sure we don't delete a certificate which is being used by any service in the system
-        for service_cert_id, text in [
-            ((self.middleware.call_sync('system.general.config'))['ui_certificate']['id'], 'WebUI'),
-            ((self.middleware.call_sync('system.advanced.config'))['syslog_tls_certificate'], 'Syslog'),
-            ((self.middleware.call_sync('ftp.config'))['ssltls_certificate'], 'FTP'),
-            ((self.middleware.call_sync('s3.config'))['certificate'], 'S3'),
-            ((self.middleware.call_sync('webdav.config'))['certssl'], 'Webdav'),
-            ((self.middleware.call_sync('openvpn.server.config'))['server_certificate'], 'OpenVPN Server'),
-            ((self.middleware.call_sync('openvpn.client.config'))['client_certificate'], 'OpenVPN Client'),
-            ((self.middleware.call_sync('activedirectory.config')['certificate']), 'Active Directory'),
-            ((self.middleware.call_sync('ldap.config')['certificate']), 'LDAP'),
-        ]:
-            if service_cert_id == id:
-                verrors.add(
-                    'certificate_delete.id',
-                    f'Selected certificate is being used by {text} service'
-                )
-
-        for namespace, text in [
-            ('idmap.ldap', 'LDAP idmap'),
-            ('idmap.rfc2307', 'RFC2307 idmap'),
-        ]:
-            if self.middleware.call_sync(f'{namespace}.query', [['certificate', '=', id]]):
-                verrors.add(
-                    'certificate_delete.id',
-                    f'Selected certificate is being used by {text} service'
-                )
-
-        verrors.check()
+        self.middleware.call_sync('certificate.check_dependencies', id)
 
         certificate = self.middleware.call_sync('certificate._get_instance', id)
 
