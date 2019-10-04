@@ -55,7 +55,6 @@ define([
       'tftp': gettext('TFTP'),
       'ups': gettext('UPS'),
       'webdav': gettext('WebDAV'),
-      'netdata': gettext('Netdata'),
       'asigra': gettext('Asigra DS-System')
     }
 

@@ -162,7 +162,6 @@ def core(request):
             'ssh': ssh.get_edit_url(),
             'smartd': smart.get_edit_url(),
             'webdav': webdav.get_edit_url(),
-            'netdata': reverse('services_netdata'),
         }, **extra_services)),
         'disabled': json.dumps(disabled),
     })
@@ -313,12 +312,3 @@ def services_s3(request):
         's3_ui_url': s3_ui_url,
         's3_started': s3_started
     })
-
-
-def services_netdata(request):
-    started = notifier().started('netdata')
-    return render(request,
-                  'services/netdata.html',
-                  {
-                      'started': started
-                  })

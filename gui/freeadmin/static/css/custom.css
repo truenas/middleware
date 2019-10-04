@@ -558,11 +558,6 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.NetdataIcon {
-    background-image: url('/legacy/static/images/ui/tree/analytic_pie_chart.png');
-    width: 16px;
-    height: 16px;
-}
 .NISIcon {
     background-image:url('/legacy/static/images/ui/tree/nis.png');
     width:16px;

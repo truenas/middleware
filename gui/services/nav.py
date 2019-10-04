@@ -164,12 +164,3 @@ class S3View(TreeNode):
     type = u'object'
     view = u'services_s3'
     icon = u'S3Icon'
-
-
-class NetdataView(TreeNode):
-
-    gname = 'Netdata'
-    name = _('Netdata')
-    type = u'object'
-    view = u'services_netdata'
-    icon = u'NetdataIcon'

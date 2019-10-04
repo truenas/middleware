@@ -121,7 +121,6 @@ def services_config(middleware, context):
         # These services are handled by HA script
         # smartd #76242
         mapping.update({
-            'netdata': ['netdata'],
             'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
             'smartd': ['smartd_daemon'],
         })
