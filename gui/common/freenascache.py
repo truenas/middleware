@@ -99,7 +99,7 @@ class FreeNAS_BaseCache(object):
             os.makedirs(self.cachedir)
 
         flags = db.DB_CREATE | db.DB_THREAD | db.DB_INIT_LOCK | \
-            db.DB_INIT_MPOOL | db.DB_INIT_TXN
+            db.DB_INIT_MPOOL | db.DB_INIT_TXN | db.DB_INIT_LOG
 
         self.__dbenv = db.DBEnv()
         self.__dbenv.set_lk_detect(db.DB_LOCK_DEFAULT)
