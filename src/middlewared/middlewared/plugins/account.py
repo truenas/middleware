@@ -800,8 +800,8 @@ class GroupMembershipModel(sa.Model):
     __tablename__ = 'account_bsdgroupmembership'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id"))
-    bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id"))
+    bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id", ondelete="CASCADE"))
+    bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id", ondelete="CASCADE"))
 
 
 class GroupService(CRUDService):

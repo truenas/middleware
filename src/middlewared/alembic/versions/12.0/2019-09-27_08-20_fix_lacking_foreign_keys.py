@@ -29,8 +29,8 @@ def upgrade():
     create_foreign_key(None, 'account_bsdgroupmembership', 'account_bsdgroups', ['bsdgrpmember_group_id'], ['id'])
     create_foreign_key(None, 'account_bsdgroupmembership', 'account_bsdusers', ['bsdgrpmember_user_id'], ['id'])
     with op.batch_alter_table('account_bsdgroupmembership', schema=None) as batch_op:
-        batch_op.create_foreign_key(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_group_id_account_bsdgroups'), 'account_bsdgroups', ['bsdgrpmember_group_id'], ['id'])
-        batch_op.create_foreign_key(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_user_id_account_bsdusers'), 'account_bsdusers', ['bsdgrpmember_user_id'], ['id'])
+        batch_op.create_foreign_key(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_group_id_account_bsdgroups'), 'account_bsdgroups', ['bsdgrpmember_group_id'], ['id'], ondelete='CASCADE')
+        batch_op.create_foreign_key(batch_op.f('fk_account_bsdgroupmembership_bsdgrpmember_user_id_account_bsdusers'), 'account_bsdusers', ['bsdgrpmember_user_id'], ['id'], ondelete='CASCADE')
 
     create_foreign_key_nullable(None, 'directoryservice_activedirectory', 'directoryservice_kerberosrealm', ['ad_kerberos_realm_id'], ['id'])
     with op.batch_alter_table('directoryservice_activedirectory', schema=None) as batch_op:
