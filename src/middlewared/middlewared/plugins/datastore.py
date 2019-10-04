@@ -478,9 +478,12 @@ class DatastoreService(Service):
         return result
 
     @private
-    async def sql(self, *args):
+    async def sql(self, query, *args):
         try:
-            await self.execute(*args)
+            if query.strip().split()[0].upper() == 'SELECT':
+                return [dict(row) for row in await self.fetchall(query, *args)]
+            else:
+                await self.execute(query, *args)
         except Exception as e:
             raise CallError(e)
 
