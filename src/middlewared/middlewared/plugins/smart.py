@@ -182,7 +182,11 @@ class SmartService(SystemServiceService):
         new["powermode"] = new["powermode"].lower()
         new["email"] = ",".join([email.strip() for email in new["email"]])
 
-        await self._update_service(old, new)
+        verb = "reload"
+        if any(old[k] != new[k] for k in ["interval"]):
+            verb = "restart"
+
+        await self._update_service(old, new, verb)
 
         await self.smart_extend(new)
 
