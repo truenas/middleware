@@ -103,7 +103,6 @@ class ServiceService(CRUDService):
         'smartd': ServiceDefinition('smartd', 'smartd-daemon', '/var/run/smartd-daemon.pid'),
         'webshell': ServiceDefinition(None, '/var/run/webshell.pid'),
         'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
-        'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid'),
     }
 
     @filterable
@@ -987,14 +986,6 @@ class ServiceService(CRUDService):
         # tell the user anything useful.
         # Restarting rrdcached will make sure that we start/restart collectd as well
         asyncio.ensure_future(self.restart("rrdcached", kwargs))
-
-    async def _start_netdata(self, **kwargs):
-        await self.middleware.call('etc.generate', 'netdata')
-        await self._service('netdata', 'start', **kwargs)
-
-    async def _restart_netdata(self, **kwargs):
-        await self._service('netdata', 'stop')
-        await self._start_netdata(**kwargs)
 
     @private
     async def identify_process(self, name):
