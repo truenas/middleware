@@ -112,7 +112,7 @@ class DatastoreService(Service):
 
         return table.c[name]
 
-    def _filters_to_queryset(self, filters, table, prefix=None):
+    def _filters_to_queryset(self, filters, table, prefix, aliases):
         opmap = {
             '=': operator.eq,
             '!=': operator.ne,
@@ -133,15 +133,23 @@ class DatastoreService(Service):
                 raise ValueError('Filter must be a list or tuple: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
+
+                if '__' in name:
+                    fk, name = name.split('__', 1)
+                    col = self._get_col(aliases[list(self._get_col(table, fk, prefix).foreign_keys)[0]], name, '')
+                else:
+                    col = self._get_col(table, name, prefix)
+
                 if op not in opmap:
                     raise ValueError('Invalid operation: {0}'.format(op))
-                q = opmap[op](self._get_col(table, name, prefix), value)
+
+                q = opmap[op](col, value)
                 rv.append(q)
             elif len(f) == 2:
                 op, value = f
                 if op == 'OR':
                     or_value = None
-                    for value in self._filters_to_queryset(value, table, prefix):
+                    for value in self._filters_to_queryset(value, table, prefix, aliases):
                         if or_value is None:
                             or_value = value
                         else:
@@ -349,7 +357,7 @@ class DatastoreService(Service):
         prefix = options['prefix']
 
         if filters:
-            qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix)))
+            qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix, aliases)))
 
         if options['count']:
             return (await self.fetchall(qs))[0][0]
@@ -441,7 +449,7 @@ class DatastoreService(Service):
 
         delete = table.delete()
         if isinstance(id_or_filters, list):
-            delete = delete.where(and_(*self._filters_to_queryset(id_or_filters, table, '')))
+            delete = delete.where(and_(*self._filters_to_queryset(id_or_filters, table, '', {})))
         else:
             delete = delete.where(self._get_pk(table) == id_or_filters)
         await self.execute_write(delete)

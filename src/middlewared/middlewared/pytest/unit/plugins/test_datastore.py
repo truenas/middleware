@@ -88,6 +88,20 @@ async def test__relationship_load():
 
 
 @pytest.mark.asyncio
+async def test__filter_join():
+
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (10, 1010)")
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        await ds.execute("INSERT INTO `account_bsdusers` VALUES (4, 44, 10)")
+        await ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
+
+        result = await ds.query("account.bsdusers", [("bsdusr_group__bsdgrp_gid", "=", 2020)])
+        assert len(result) == 1
+        assert result[0]["id"] == 5
+
+
+@pytest.mark.asyncio
 async def test__prefix():
     async with datastore_test() as ds:
         await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
@@ -224,7 +238,7 @@ async def test__delete_fk_cascade():
 async def test__get_backrefs():
     async with datastore_test() as ds:
         assert await ds.get_backrefs("account.bsdgroups") == [
-            ("account.bsdusers", "bsdusr_group_id"),
+            ("account.bsdusers", "bsdusr_group"),
         ]
 
 
