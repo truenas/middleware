@@ -445,7 +445,8 @@ class iSCSITargetExtentService(CRUDService):
         if verrors:
             raise verrors
 
-        await self.save(data, 'iscsi_extent_update', verrors)
+        await self.save(new, 'iscsi_extent_update', verrors)
+
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
@@ -737,7 +738,12 @@ class iSCSITargetExtentService(CRUDService):
         else:
             data['path'] = disk
 
-            if disk.startswith('multipath'):
+            if not disk:
+                verrors.add(
+                    f'{schema_name}.disk',
+                    'This is required for DISK type extents'
+                )
+            elif disk.startswith('multipath'):
                 await self.middleware.call('notifier.unlabel_disk', disk)
                 await self.middleware.call(
                     'notifier.label_disk', f'extent_{disk}', disk
@@ -760,15 +766,16 @@ class iSCSITargetExtentService(CRUDService):
                                 f'{schema_name}.disk',
                                 f'Serial not found and glabel failed for {disk}:'
                                 f' {msg}')
-
-                            if verrors:
-                                raise verrors
-                        await self.middleware.call(
-                            'disk.sync', disk.replace('/dev/', '')
-                        )
+                        else:
+                            await self.middleware.call(
+                                'disk.sync', disk.replace('/dev/', '')
+                            )
                 except IndexError:
                     # It's not a disk, but a ZVOL
                     pass
+
+        if verrors:
+            raise verrors
 
     @private
     async def remove_extent_file(self, data):
