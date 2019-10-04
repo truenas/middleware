@@ -98,15 +98,15 @@ def test_09_reboot_system_to_enable_tunable():
 
 
 def test_10_wait_for_ping_to_be_down():
-    while ping_host(ip) is not False:
+    while ping_host(ip, 1) is not False:
         sleep(5)
-    assert ping_host(ip) is False
+    assert ping_host(ip, 1) is False
 
 
 def test_11_wait_for_ping_to_be_up():
-    while ping_host(ip) is not True:
+    while ping_host(ip, 1) is not True:
         sleep(5)
-    assert ping_host(ip) is True
+    assert ping_host(ip, 1) is True
     sleep(15)
 
 
@@ -168,9 +168,9 @@ def test_20_start_vm_bhyve_and_wait_for_freenas_to_be_online():
     if vm_name is not None and interface == 'vtnet0':
         assert vm_start(vm_name) is True
         sleep(1)
-        while ping_host(ip) is not True:
+        while ping_host(ip, 1) is not True:
             sleep(5)
-        assert ping_host(ip) is True
+        assert ping_host(ip, 1) is True
         sleep(15)
     else:
         pytest.skip('skip no vm_name')

@@ -9,27 +9,30 @@ import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, SSH_TEST, DELETE
+from functions import PUT, POST, GET, SSH_TEST, DELETE, ping_host
 from auto_config import ip, pool_name
 from config import *
 
-if "BRIDGEHOST" in locals():
-    MOUNTPOINT = "/tmp/ad-bsd" + BRIDGEHOST
 
+MOUNTPOINT = "/tmp/ad-bsd-test"
 DATASET = "ad-bsd"
 SMB_NAME = "TestShare"
 SMB_PATH = f"/mnt/{pool_name}/{DATASET}"
 VOL_GROUP = "wheel"
 
-Reason = "BRIDGEHOST, BRIDGEDOMAIN, ADPASSWORD, and ADUSERNAME are missing in "
-Reason += "ixautomation.conf"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
+Reason = "AD_DOMAIN, ADPASSWORD, and ADUSERNAME are missing in config.py"
 
-ad_test_cfg = pytest.mark.skipif(all(["BRIDGEHOST" in locals(),
-                                      "BRIDGEDOMAIN" in locals(),
+ad_host_up = False
+if 'AD_DOMAIN' in locals():
+    ad_host_up = ping_host(AD_DOMAIN, 5)
+    if ad_host_up is False:
+        Reason = f'{AD_DOMAIN} is down'
+
+ad_test_cfg = pytest.mark.skipif(all(["AD_DOMAIN" in locals(),
                                       "ADPASSWORD" in locals(),
                                       "ADUSERNAME" in locals(),
-                                      "MOUNTPOINT" in locals()
+                                      ad_host_up is True
                                       ]) is False, reason=Reason)
 
 bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
@@ -39,6 +42,7 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 
 
 # Create tests
+@ad_test_cfg
 def test_01_creating_smb_dataset():
     results = POST(f"/storage/volume/{pool_name}/datasets/", {"name": DATASET})
     assert results.status_code == 201, results.text
@@ -49,7 +53,7 @@ def test_02_enabling_active_directory():
     payload = {
         "ad_bindpw": ADPASSWORD,
         "ad_bindname": ADUSERNAME,
-        "ad_domainname": BRIDGEDOMAIN,
+        "ad_domainname": AD_DOMAIN,
         "ad_netbiosname": BRIDGEHOST,
         "ad_idmap_backend": "rid",
         "ad_enable": True
@@ -65,6 +69,7 @@ def test_03_checking_active_directory():
     sleep(1)
 
 
+@ad_test_cfg
 def test_04_enabling_smb_service():
     payload = {"cifs_srv_description": "Test FreeNAS Server",
                "cifs_srv_guest": "nobody",
@@ -75,6 +80,7 @@ def test_04_enabling_smb_service():
 
 
 # Now start the service
+@ad_test_cfg
 def test_05_Starting_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": True})
     assert results.status_code == 200, results.text
@@ -87,6 +93,7 @@ def test_06_checking_to_see_if_smb_service_is_enabled():
     assert results.json()["srv_state"] == "RUNNING", results.text
 
 
+@ad_test_cfg
 def test_07_Changing_permissions_on_SMB_PATH():
     payload = {"mp_path": SMB_PATH,
                "mp_acl": "unix",
@@ -98,6 +105,7 @@ def test_07_Changing_permissions_on_SMB_PATH():
     assert results.status_code == 201, results.text
 
 
+@ad_test_cfg
 def test_08_Creating_a_SMB_share_on_SMB_PATH():
     payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
@@ -271,17 +279,20 @@ def test_28_Verify_Active_Directory_is_disabled():
     sleep(1)
 
 
+@ad_test_cfg
 def test_29_Stop_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": False})
     assert results.status_code == 200, results.text
     sleep(1)
 
 
+@ad_test_cfg
 def test_30_Verify_SMB_service_is_disabled():
     results = GET("/services/services/cifs/")
     assert results.json()["srv_state"] == "STOPPED", results.text
 
 
+@ad_test_cfg
 def test_31_Delete_cifs_share_on_SMB_PATH():
     payload = {"cifs_comment": "My Test SMB Share",
                "cifs_path": SMB_PATH,
@@ -293,6 +304,7 @@ def test_31_Delete_cifs_share_on_SMB_PATH():
 
 
 # Check destroying a SMB dataset
+@ad_test_cfg
 def test_32_Destroying_SMB_dataset():
     results = DELETE(f"/storage/volume/{pool_name}/datasets/{DATASET}/")
     assert results.status_code == 204, results.text
