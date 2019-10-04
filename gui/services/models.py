@@ -38,7 +38,7 @@ from django.core.validators import (
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import (
-    Model, UserField, GroupField, PathField, DictField, ListField
+    Model, UserField, GroupField, PathField
 )
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.client import client
