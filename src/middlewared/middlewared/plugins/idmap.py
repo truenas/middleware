@@ -345,7 +345,7 @@ class IdmapDomaintobackendModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     idmap_dtb_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
-    idmap_dtb_idmap_backend = sa.Column(sa.String(120))
+    idmap_dtb_idmap_backend = sa.Column(sa.String(120), default='rid')
 
 
 class IdmapDomainBackendService(CRUDService):

@@ -109,8 +109,8 @@ class SmartTestModel(sa.Model):
     smarttest_desc = sa.Column(sa.String(120))
     smarttest_hour = sa.Column(sa.String(100))
     smarttest_daymonth = sa.Column(sa.String(100))
-    smarttest_month = sa.Column(sa.String(100))
-    smarttest_dayweek = sa.Column(sa.String(100))
+    smarttest_month = sa.Column(sa.String(100), default='*')
+    smarttest_dayweek = sa.Column(sa.String(100), default='*')
     smarttest_all_disks = sa.Column(sa.Boolean())
 
     smarttest_disks = sa.relationship('DiskModel', secondary=lambda: SmartTestDiskModel.__table__)
@@ -539,11 +539,11 @@ class SmartModel(sa.Model):
     __tablename__ = 'services_smart'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    smart_interval = sa.Column(sa.Integer())
-    smart_powermode = sa.Column(sa.String(60))
-    smart_difference = sa.Column(sa.Integer())
-    smart_informational = sa.Column(sa.Integer())
-    smart_critical = sa.Column(sa.Integer())
+    smart_interval = sa.Column(sa.Integer(), default=30)
+    smart_powermode = sa.Column(sa.String(60), default="never")
+    smart_difference = sa.Column(sa.Integer(), default=0)
+    smart_informational = sa.Column(sa.Integer(), default=0)
+    smart_critical = sa.Column(sa.Integer(), default=0)
     smart_email = sa.Column(sa.String(255))
 
 

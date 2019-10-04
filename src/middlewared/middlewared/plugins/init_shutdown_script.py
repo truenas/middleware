@@ -15,12 +15,12 @@ class InitShutdownScriptModel(sa.Model):
     __tablename__ = 'tasks_initshutdown'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    ini_type = sa.Column(sa.String(15))
+    ini_type = sa.Column(sa.String(15), default='command')
     ini_command = sa.Column(sa.String(300))
     ini_script = sa.Column(sa.String(255), nullable=True)
     ini_when = sa.Column(sa.String(15))
-    ini_enabled = sa.Column(sa.Boolean())
-    ini_timeout = sa.Column(sa.Integer())
+    ini_enabled = sa.Column(sa.Boolean(), default=True)
+    ini_timeout = sa.Column(sa.Integer(), default=10)
     ini_comment = sa.Column(sa.String(255))
     ini_script_text = sa.Column(sa.Text())
 

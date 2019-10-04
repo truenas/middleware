@@ -714,10 +714,10 @@ class ReportingModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     cpu_in_percentage = sa.Column(sa.Boolean())
-    graphite = sa.Column(sa.String(120))
-    graph_age = sa.Column(sa.Integer())
-    graph_points = sa.Column(sa.Integer())
-    graphite_separateinstances = sa.Column(sa.Boolean())
+    graphite = sa.Column(sa.String(120), default="")
+    graph_age = sa.Column(sa.Integer(), default=12)
+    graph_points = sa.Column(sa.Integer(), default=1200)
+    graphite_separateinstances = sa.Column(sa.Boolean(), default=False)
 
 
 class ReportingService(ConfigService):

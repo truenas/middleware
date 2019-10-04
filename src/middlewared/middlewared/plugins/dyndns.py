@@ -7,7 +7,7 @@ class DynDNSModel(sa.Model):
     __tablename__ = 'services_dynamicdns'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    ddns_provider = sa.Column(sa.String(120))
+    ddns_provider = sa.Column(sa.String(120), default='dyndns@3322.org')
     ddns_domain = sa.Column(sa.String(120))
     ddns_username = sa.Column(sa.String(120))
     ddns_password = sa.Column(sa.String(120))

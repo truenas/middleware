@@ -70,14 +70,14 @@ class UserModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     bsdusr_uid = sa.Column(sa.Integer())
-    bsdusr_username = sa.Column(sa.String(16))
+    bsdusr_username = sa.Column(sa.String(16), default='User &')
     bsdusr_unixhash = sa.Column(sa.String(128), default='*')
     bsdusr_smbhash = sa.Column(sa.String(128), default='*')
     bsdusr_home = sa.Column(sa.String(255))
-    bsdusr_shell = sa.Column(sa.String(120))
+    bsdusr_shell = sa.Column(sa.String(120), default='/bin/csh')
     bsdusr_full_name = sa.Column(sa.String(120))
     bsdusr_builtin = sa.Column(sa.Boolean(), default=False)
-    bsdusr_password_disabled = sa.Column(sa.Boolean())
+    bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_locked = sa.Column(sa.Boolean())
     bsdusr_sudo = sa.Column(sa.Boolean())
     bsdusr_microsoft_account = sa.Column(sa.Boolean())
@@ -793,7 +793,7 @@ class GroupModel(sa.Model):
     bsdgrp_gid = sa.Column(sa.Integer())
     bsdgrp_group = sa.Column(sa.String(120))
     bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
-    bsdgrp_sudo = sa.Column(sa.Boolean())
+    bsdgrp_sudo = sa.Column(sa.Boolean(), default=False)
 
 
 class GroupMembershipModel(sa.Model):

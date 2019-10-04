@@ -356,7 +356,7 @@ class TwoFactorAuthModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     otp_digits = sa.Column(sa.Integer())
     secret = sa.Column(sa.String(16), nullable=True)
-    window = sa.Column(sa.Integer())
+    window = sa.Column(sa.Integer(), default=0)
     interval = sa.Column(sa.Integer())
     services = sa.Column(sa.JSON())
     enabled = sa.Column(sa.Boolean())

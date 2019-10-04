@@ -190,7 +190,7 @@ class OpenVPNServerModel(sa.Model):
     __tablename__ = 'services_openvpnserver'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    port = sa.Column(sa.Integer())
+    port = sa.Column(sa.Integer(), default=1194)
     protocol = sa.Column(sa.String(4))
     device_type = sa.Column(sa.String(4))
     authentication_algorithm = sa.Column(sa.String(32), nullable=True)
@@ -462,10 +462,10 @@ class OpenVPNClientModel(sa.Model):
     __tablename__ = 'services_openvpnclient'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    port = sa.Column(sa.Integer())
+    port = sa.Column(sa.Integer(), default=1194)
     protocol = sa.Column(sa.String(4))
     device_type = sa.Column(sa.String(4))
-    nobind = sa.Column(sa.Boolean())
+    nobind = sa.Column(sa.Boolean(), default=True)
     authentication_algorithm = sa.Column(sa.String(32), nullable=True)
     tls_crypt_auth = sa.Column(sa.Text(), nullable=True)
     cipher = sa.Column(sa.String(32), nullable=True)

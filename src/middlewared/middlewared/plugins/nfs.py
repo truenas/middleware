@@ -20,19 +20,19 @@ class NFSModel(sa.Model):
     __tablename__ = 'services_nfs'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    nfs_srv_servers = sa.Column(sa.Integer())
+    nfs_srv_servers = sa.Column(sa.Integer(), default=4)
     nfs_srv_udp = sa.Column(sa.Boolean())
-    nfs_srv_allow_nonroot = sa.Column(sa.Boolean())
-    nfs_srv_v4 = sa.Column(sa.Boolean())
-    nfs_srv_v4_v3owner = sa.Column(sa.Boolean())
-    nfs_srv_v4_krb = sa.Column(sa.Boolean())
+    nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_v4 = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_v4_v3owner = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_v4_krb = sa.Column(sa.Boolean(), default=False)
     nfs_srv_bindip = sa.Column(sa.String(250))
     nfs_srv_mountd_port = sa.Column(sa.SmallInteger(), nullable=True)
     nfs_srv_rpcstatd_port = sa.Column(sa.SmallInteger(), nullable=True)
     nfs_srv_rpclockd_port = sa.Column(sa.SmallInteger(), nullable=True)
-    nfs_srv_16 = sa.Column(sa.Boolean())
-    nfs_srv_mountd_log = sa.Column(sa.Boolean())
-    nfs_srv_statd_lockd_log = sa.Column(sa.Boolean())
+    nfs_srv_16 = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_mountd_log = sa.Column(sa.Boolean(), default=True)
+    nfs_srv_statd_lockd_log = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_domain = sa.Column(sa.String(120))
 
 

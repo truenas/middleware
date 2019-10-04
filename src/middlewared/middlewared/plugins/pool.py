@@ -139,9 +139,9 @@ class PoolResilverModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     enabled = sa.Column(sa.Boolean())
-    begin = sa.Column(sa.Time())
+    begin = sa.Column(sa.Time(), default=time(hour=18))
     end = sa.Column(sa.Time())
-    weekday = sa.Column(sa.String(120))
+    weekday = sa.Column(sa.String(120), default='1,2,3,4,5,6,7')
 
 
 class PoolResilverService(ConfigService):
@@ -288,7 +288,7 @@ class PoolModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     vol_name = sa.Column(sa.String(120))
     vol_guid = sa.Column(sa.String(50))
-    vol_encrypt = sa.Column(sa.Integer())
+    vol_encrypt = sa.Column(sa.Integer(), default=0)
     vol_encryptkey = sa.Column(sa.String(50))
 
 
@@ -3414,14 +3414,14 @@ class PoolScrubModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     scrub_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id'))
-    scrub_threshold = sa.Column(sa.Integer())
+    scrub_threshold = sa.Column(sa.Integer(), default=35)
     scrub_description = sa.Column(sa.String(200))
-    scrub_minute = sa.Column(sa.String(100))
-    scrub_hour = sa.Column(sa.String(100))
-    scrub_daymonth = sa.Column(sa.String(100))
-    scrub_month = sa.Column(sa.String(100))
-    scrub_dayweek = sa.Column(sa.String(100))
-    scrub_enabled = sa.Column(sa.Boolean())
+    scrub_minute = sa.Column(sa.String(100), default="00")
+    scrub_hour = sa.Column(sa.String(100), default="00")
+    scrub_daymonth = sa.Column(sa.String(100), default="*")
+    scrub_month = sa.Column(sa.String(100), default='*')
+    scrub_dayweek = sa.Column(sa.String(100), default="7")
+    scrub_enabled = sa.Column(sa.Boolean(), default=True)
 
 
 class PoolScrubService(CRUDService):

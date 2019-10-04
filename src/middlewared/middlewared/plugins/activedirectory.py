@@ -511,7 +511,7 @@ class ActiveDirectoryModel(sa.Model):
     ad_site = sa.Column(sa.String(120), nullable=True)
     ad_timeout = sa.Column(sa.Integer())
     ad_dns_timeout = sa.Column(sa.Integer())
-    ad_idmap_backend = sa.Column(sa.String(120))
+    ad_idmap_backend = sa.Column(sa.String(120), default=datetime.time(hour=9))
     ad_nss_info = sa.Column(sa.String(120), nullable=True)
     ad_ldap_sasl_wrapping = sa.Column(sa.String(120))
     ad_enable = sa.Column(sa.Boolean())

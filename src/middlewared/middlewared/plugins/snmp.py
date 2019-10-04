@@ -12,15 +12,15 @@ class SNMPModel(sa.Model):
     snmp_contact = sa.Column(sa.String(120))
     snmp_traps = sa.Column(sa.Boolean())
     snmp_v3 = sa.Column(sa.Boolean())
-    snmp_community = sa.Column(sa.String(120))
+    snmp_community = sa.Column(sa.String(120), default='public')
     snmp_v3_username = sa.Column(sa.String(20))
-    snmp_v3_authtype = sa.Column(sa.String(3))
+    snmp_v3_authtype = sa.Column(sa.String(3), default='SHA')
     snmp_v3_password = sa.Column(sa.String(50))
     snmp_v3_privproto = sa.Column(sa.String(3), nullable=True)
     snmp_v3_privpassphrase = sa.Column(sa.String(100), nullable=True)
     snmp_options = sa.Column(sa.Text())
-    snmp_loglevel = sa.Column(sa.Integer())
-    snmp_zilstat = sa.Column(sa.Boolean())
+    snmp_loglevel = sa.Column(sa.Integer(), default=3)
+    snmp_zilstat = sa.Column(sa.Boolean(), default=False)
 
 
 class SNMPService(SystemServiceService):

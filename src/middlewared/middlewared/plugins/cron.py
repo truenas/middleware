@@ -13,17 +13,17 @@ class CronJobModel(sa.Model):
     __tablename__ = 'tasks_cronjob'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    cron_minute = sa.Column(sa.String(100))
-    cron_hour = sa.Column(sa.String(100))
-    cron_daymonth = sa.Column(sa.String(100))
-    cron_month = sa.Column(sa.String(100))
-    cron_dayweek = sa.Column(sa.String(100))
+    cron_minute = sa.Column(sa.String(100), default="00")
+    cron_hour = sa.Column(sa.String(100), default="*")
+    cron_daymonth = sa.Column(sa.String(100), default="*")
+    cron_month = sa.Column(sa.String(100), default='*')
+    cron_dayweek = sa.Column(sa.String(100), default="*")
     cron_user = sa.Column(sa.String(60))
     cron_command = sa.Column(sa.Text())
     cron_description = sa.Column(sa.String(200))
-    cron_enabled = sa.Column(sa.Boolean())
-    cron_stdout = sa.Column(sa.Boolean())
-    cron_stderr = sa.Column(sa.Boolean())
+    cron_enabled = sa.Column(sa.Boolean(), default=True)
+    cron_stdout = sa.Column(sa.Boolean(), default=True)
+    cron_stderr = sa.Column(sa.Boolean(), default=False)
 
 
 class CronJobService(CRUDService):

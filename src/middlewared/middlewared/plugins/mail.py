@@ -88,12 +88,12 @@ class MailModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     em_fromemail = sa.Column(sa.String(120))
     em_outgoingserver = sa.Column(sa.String(120))
-    em_port = sa.Column(sa.Integer())
-    em_security = sa.Column(sa.String(120))
+    em_port = sa.Column(sa.Integer(), default=25)
+    em_security = sa.Column(sa.String(120), default="plain")
     em_smtp = sa.Column(sa.Boolean())
     em_user = sa.Column(sa.String(120), nullable=True)
     em_pass = sa.Column(sa.String(120), nullable=True)
-    em_fromname = sa.Column(sa.String(120))
+    em_fromname = sa.Column(sa.String(120), default='')
 
 
 class MailService(ConfigService):

@@ -673,7 +673,7 @@ class VMModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(150))
     description = sa.Column(sa.String(250))
-    vcpus = sa.Column(sa.Integer())
+    vcpus = sa.Column(sa.Integer(), default=1)
     memory = sa.Column(sa.Integer())
     autostart = sa.Column(sa.Boolean())
     time = sa.Column(sa.String(5))
@@ -681,7 +681,7 @@ class VMModel(sa.Model):
     bootloader = sa.Column(sa.String(50))
     cores = sa.Column(sa.Integer())
     threads = sa.Column(sa.Integer())
-    shutdown_timeout = sa.Column(sa.Integer())
+    shutdown_timeout = sa.Column(sa.Integer(), default=90)
 
 
 class VMDeviceModel(sa.Model):

@@ -160,10 +160,10 @@ class WebDAVModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     webdav_protocol = sa.Column(sa.String(120))
-    webdav_tcpport = sa.Column(sa.Integer())
-    webdav_tcpportssl = sa.Column(sa.Integer())
-    webdav_password = sa.Column(sa.String(120))
-    webdav_htauth = sa.Column(sa.String(120))
+    webdav_tcpport = sa.Column(sa.Integer(), default=8080)
+    webdav_tcpportssl = sa.Column(sa.Integer(), default=8081)
+    webdav_password = sa.Column(sa.String(120), default="davtest")
+    webdav_htauth = sa.Column(sa.String(120), default='digest')
     webdav_certssl_id = sa.Column(sa.ForeignKey('system_certificate.id'), nullable=True)
 
 

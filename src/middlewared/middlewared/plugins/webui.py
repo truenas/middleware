@@ -13,7 +13,7 @@ class ImageModel(sa.Model):
     __tablename__ = 'system_filesystem'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    identifier = sa.Column(sa.String(255))
+    identifier = sa.Column(sa.String(255), default=False)
 
 
 class ImageService(CRUDService):

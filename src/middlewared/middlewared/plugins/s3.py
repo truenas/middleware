@@ -13,13 +13,13 @@ class S3Model(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     s3_bindip = sa.Column(sa.String(128))
-    s3_bindport = sa.Column(sa.SmallInteger())
-    s3_access_key = sa.Column(sa.String(128))
-    s3_secret_key = sa.Column(sa.String(128))
-    s3_mode = sa.Column(sa.String(120))
+    s3_bindport = sa.Column(sa.SmallInteger(), default=9000)
+    s3_access_key = sa.Column(sa.String(128), default='')
+    s3_secret_key = sa.Column(sa.String(128), default='')
+    s3_mode = sa.Column(sa.String(120), default="local")
     s3_disks = sa.Column(sa.String(255))
     s3_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    s3_browser = sa.Column(sa.Boolean())
+    s3_browser = sa.Column(sa.Boolean(), default=True)
 
 
 class S3Service(SystemServiceService):

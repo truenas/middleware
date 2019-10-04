@@ -37,7 +37,7 @@ class ISCSIGlobalModel(sa.Model):
     iscsi_basename = sa.Column(sa.String(120))
     iscsi_isns_servers = sa.Column(sa.Text())
     iscsi_pool_avail_threshold = sa.Column(sa.Integer(), nullable=True)
-    iscsi_alua = sa.Column(sa.Boolean())
+    iscsi_alua = sa.Column(sa.Boolean(), default=False)
 
 
 class ISCSIGlobalService(SystemServiceService):
@@ -163,9 +163,9 @@ class ISCSIPortalModel(sa.Model):
     __tablename__ = 'services_iscsitargetportal'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_portal_tag = sa.Column(sa.Integer())
+    iscsi_target_portal_tag = sa.Column(sa.Integer(), default=1)
     iscsi_target_portal_comment = sa.Column(sa.String(120))
-    iscsi_target_portal_discoveryauthmethod = sa.Column(sa.String(120))
+    iscsi_target_portal_discoveryauthmethod = sa.Column(sa.String(120), default='None')
     iscsi_target_portal_discoveryauthgroup = sa.Column(sa.Integer(), nullable=True)
 
 
@@ -180,7 +180,7 @@ class ISCSIPortalIModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_target_portalip_portal_id = sa.Column(sa.ForeignKey('services_iscsitargetportal.id'), index=True)
     iscsi_target_portalip_ip = sa.Column(sa.CHAR(15))
-    iscsi_target_portalip_port = sa.Column(sa.SmallInteger())
+    iscsi_target_portalip_port = sa.Column(sa.SmallInteger(), default=3260)
 
 
 class ISCSIPortalService(CRUDService):
@@ -414,11 +414,11 @@ class iSCSITargetAuthCredentialModel(sa.Model):
     __tablename__ = 'services_iscsitargetauthcredential'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_auth_tag = sa.Column(sa.Integer())
+    iscsi_target_auth_tag = sa.Column(sa.Integer(), default=1)
     iscsi_target_auth_user = sa.Column(sa.String(120))
-    iscsi_target_auth_secret = sa.Column(sa.String(120))
+    iscsi_target_auth_secret = sa.Column(sa.String(120), default=None)
     iscsi_target_auth_peeruser = sa.Column(sa.String(120))
-    iscsi_target_auth_peersecret = sa.Column(sa.String(120))
+    iscsi_target_auth_peersecret = sa.Column(sa.String(120), default=None)
 
 
 class iSCSITargetAuthCredentialService(CRUDService):
@@ -559,16 +559,16 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_serial = sa.Column(sa.String(16))
     iscsi_target_extent_type = sa.Column(sa.String(120))
     iscsi_target_extent_path = sa.Column(sa.String(120))
-    iscsi_target_extent_filesize = sa.Column(sa.String(120))
-    iscsi_target_extent_blocksize = sa.Column(sa.Integer())
-    iscsi_target_extent_pblocksize = sa.Column(sa.Boolean())
+    iscsi_target_extent_filesize = sa.Column(sa.String(120), default=0)
+    iscsi_target_extent_blocksize = sa.Column(sa.Integer(), default=512)
+    iscsi_target_extent_pblocksize = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_avail_threshold = sa.Column(sa.Integer(), nullable=True)
     iscsi_target_extent_comment = sa.Column(sa.String(120))
     iscsi_target_extent_naa = sa.Column(sa.String(34))
-    iscsi_target_extent_insecure_tpc = sa.Column(sa.Boolean())
-    iscsi_target_extent_xen = sa.Column(sa.Boolean())
-    iscsi_target_extent_rpm = sa.Column(sa.String(20))
-    iscsi_target_extent_ro = sa.Column(sa.Boolean())
+    iscsi_target_extent_insecure_tpc = sa.Column(sa.Boolean(), default=True)
+    iscsi_target_extent_xen = sa.Column(sa.Boolean(), default=False)
+    iscsi_target_extent_rpm = sa.Column(sa.String(20), default='SSD')
+    iscsi_target_extent_ro = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_legacy = sa.Column(sa.Boolean())
     iscsi_target_extent_enabled = sa.Column(sa.Boolean())
 
@@ -1009,9 +1009,9 @@ class iSCSITargetAuthorizedInitiatorModel(sa.Model):
     __tablename__ = 'services_iscsitargetauthorizedinitiator'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_initiator_tag = sa.Column(sa.Integer())
-    iscsi_target_initiator_initiators = sa.Column(sa.Text())
-    iscsi_target_initiator_auth_network = sa.Column(sa.Text())
+    iscsi_target_initiator_tag = sa.Column(sa.Integer(), default=1)
+    iscsi_target_initiator_initiators = sa.Column(sa.Text(), default="ALL")
+    iscsi_target_initiator_auth_network = sa.Column(sa.Text(), default="ALL")
     iscsi_target_initiator_comment = sa.Column(sa.String(120))
 
 
@@ -1138,7 +1138,7 @@ class iSCSITargetModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_target_name = sa.Column(sa.String(120))
     iscsi_target_alias = sa.Column(sa.String(120), nullable=True)
-    iscsi_target_mode = sa.Column(sa.String(20))
+    iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
 
 
 class iSCSITargetGroupModel(sa.Model):
@@ -1156,9 +1156,9 @@ class iSCSITargetGroupModel(sa.Model):
     iscsi_target_portalgroup_id = sa.Column(sa.ForeignKey('services_iscsitargetportal.id'), index=True)
     iscsi_target_initiatorgroup_id = sa.Column(sa.ForeignKey('services_iscsitargetauthorizedinitiator.id',
                                                              ondelete='SET NULL'), index=True, nullable=True)
-    iscsi_target_authtype = sa.Column(sa.String(120))
+    iscsi_target_authtype = sa.Column(sa.String(120), default="None")
     iscsi_target_authgroup = sa.Column(sa.Integer(), nullable=True)
-    iscsi_target_initialdigest = sa.Column(sa.String(120))
+    iscsi_target_initialdigest = sa.Column(sa.String(120), default="Auto")
 
 
 class iSCSITargetService(CRUDService):

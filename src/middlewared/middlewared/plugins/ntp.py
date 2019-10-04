@@ -10,11 +10,11 @@ class NTPModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     ntp_address = sa.Column(sa.String(120))
-    ntp_burst = sa.Column(sa.Boolean())
-    ntp_iburst = sa.Column(sa.Boolean())
-    ntp_prefer = sa.Column(sa.Boolean())
-    ntp_minpoll = sa.Column(sa.Integer())
-    ntp_maxpoll = sa.Column(sa.Integer())
+    ntp_burst = sa.Column(sa.Boolean(), default=False)
+    ntp_iburst = sa.Column(sa.Boolean(), default=True)
+    ntp_prefer = sa.Column(sa.Boolean(), default=False)
+    ntp_minpoll = sa.Column(sa.Integer(), default=6)
+    ntp_maxpoll = sa.Column(sa.Integer(), default=10)
 
 
 class NTPServerService(CRUDService):

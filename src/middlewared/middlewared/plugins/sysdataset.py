@@ -17,7 +17,7 @@ class SystemDatasetModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     sys_pool = sa.Column(sa.String(1024))
-    sys_syslog_usedataset = sa.Column(sa.Boolean())
+    sys_syslog_usedataset = sa.Column(sa.Boolean(), default=False)
     sys_uuid = sa.Column(sa.String(32))
     sys_uuid_b = sa.Column(sa.String(32), nullable=True)
 

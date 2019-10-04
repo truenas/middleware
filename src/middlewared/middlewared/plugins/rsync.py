@@ -50,7 +50,7 @@ class RsyncdModel(sa.Model):
     __tablename__ = 'services_rsyncd'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    rsyncd_port = sa.Column(sa.Integer())
+    rsyncd_port = sa.Column(sa.Integer(), default=873)
     rsyncd_auxiliary = sa.Column(sa.Text())
 
 
@@ -90,8 +90,8 @@ class RsyncModModel(sa.Model):
     rsyncmod_name = sa.Column(sa.String(120))
     rsyncmod_comment = sa.Column(sa.String(120))
     rsyncmod_path = sa.Column(sa.String(255))
-    rsyncmod_mode = sa.Column(sa.String(120))
-    rsyncmod_maxconn = sa.Column(sa.Integer())
+    rsyncmod_mode = sa.Column(sa.String(120), default="rw")
+    rsyncmod_maxconn = sa.Column(sa.Integer(), default=0)
     rsyncmod_user = sa.Column(sa.String(120))
     rsyncmod_group = sa.Column(sa.String(120))
     rsyncmod_hostsallow = sa.Column(sa.Text())
@@ -224,11 +224,11 @@ class RsyncTaskModel(sa.Model):
     rsync_remotehost = sa.Column(sa.String(120))
     rsync_remotemodule = sa.Column(sa.String(120))
     rsync_desc = sa.Column(sa.String(120))
-    rsync_minute = sa.Column(sa.String(100))
-    rsync_hour = sa.Column(sa.String(100))
-    rsync_daymonth = sa.Column(sa.String(100))
-    rsync_month = sa.Column(sa.String(100))
-    rsync_dayweek = sa.Column(sa.String(100))
+    rsync_minute = sa.Column(sa.String(100), default="00")
+    rsync_hour = sa.Column(sa.String(100), default="*")
+    rsync_daymonth = sa.Column(sa.String(100), default="*")
+    rsync_month = sa.Column(sa.String(100), default='*')
+    rsync_dayweek = sa.Column(sa.String(100), default="*")
     rsync_user = sa.Column(sa.String(60))
     rsync_recursive = sa.Column(sa.Boolean())
     rsync_times = sa.Column(sa.Boolean())
@@ -239,11 +239,11 @@ class RsyncTaskModel(sa.Model):
     rsync_preserveperm = sa.Column(sa.Boolean())
     rsync_preserveattr = sa.Column(sa.Boolean())
     rsync_extra = sa.Column(sa.Text())
-    rsync_enabled = sa.Column(sa.Boolean())
+    rsync_enabled = sa.Column(sa.Boolean(), default=True)
     rsync_mode = sa.Column(sa.String(20))
     rsync_remotepath = sa.Column(sa.String(255))
-    rsync_direction = sa.Column(sa.String(10))
-    rsync_remoteport = sa.Column(sa.SmallInteger())
+    rsync_direction = sa.Column(sa.String(10), default='PUSH')
+    rsync_remoteport = sa.Column(sa.SmallInteger(), default=22)
     rsync_delayupdates = sa.Column(sa.Boolean())
 
 

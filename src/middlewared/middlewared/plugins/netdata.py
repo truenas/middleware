@@ -13,9 +13,9 @@ class NetDataModel(sa.Model):
     __tablename__ = 'services_netdataglobalsettings'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    history = sa.Column(sa.Integer())
-    update_every = sa.Column(sa.Integer())
-    http_port_listen_backlog = sa.Column(sa.Integer())
+    history = sa.Column(sa.Integer(), default=86400)
+    update_every = sa.Column(sa.Integer(), default=1)
+    http_port_listen_backlog = sa.Column(sa.Integer(), default=100)
     bind = sa.Column(sa.JSON(type=list))
     port = sa.Column(sa.Integer())
     additional_params = sa.Column(sa.Text(), nullable=True)

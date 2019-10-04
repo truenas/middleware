@@ -14,7 +14,7 @@ class TunableModel(sa.Model):
     tun_value = sa.Column(sa.String(512))
     tun_type = sa.Column(sa.String(20))
     tun_comment = sa.Column(sa.String(100))
-    tun_enabled = sa.Column(sa.Boolean())
+    tun_enabled = sa.Column(sa.Boolean(), default=True)
     tun_var = sa.Column(sa.String(128))
 
 
