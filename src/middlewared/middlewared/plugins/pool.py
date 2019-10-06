@@ -2619,6 +2619,26 @@ class PoolService(CRUDService):
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
 
 
+class PoolDatasetUserPropService(CRUDService):
+
+    class Config:
+        namespace = 'pool.dataset.userprop'
+
+    @filterable
+    def query(self, filters=None, options=None):
+        """
+        Query all user properties for ZFS datasets.
+        """
+        return filter_list(
+            [
+                {k: d[k] for k in ('id', 'properties')} for d in
+                (self.middleware.call_sync('zfs.dataset.query', [], {
+                    'extra': {'user_properties': True, 'properties': []}
+                }))
+            ], filters, options
+        )
+
+
 class PoolDatasetService(CRUDService):
 
     attachment_delegates = []
