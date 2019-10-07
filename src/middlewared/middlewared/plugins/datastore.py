@@ -121,6 +121,15 @@ class DatastoreService(Service):
         if f'{name}_id' in table.c:
             return table.c[f'{name}_id']
 
+    def _get_relationships(self, table):
+        for model in Model._decl_class_registry.values():
+            if hasattr(model, "__tablename__") and model.__tablename__ == table.name:
+                break
+        else:
+            raise RuntimeError("Could not find model for table %s" % table.name)
+
+        return inspect(model).relationships
+
     def _filters_to_queryset(self, filters, table, prefix, aliases):
         opmap = {
             '=': operator.eq,
@@ -248,18 +257,12 @@ class DatastoreService(Service):
         return data
 
     async def _fetch_many_to_many(self, table, rows):
-        for model in Model._decl_class_registry.values():
-            if hasattr(model, "__tablename__") and model.__tablename__ == table.name:
-                break
-        else:
-            raise RuntimeError("Could not find model for table %s" % table.name)
-
         pk = self._get_pk(table)
         pk_values = [row[pk] for row in rows]
 
         relationships = [{} for row in rows]
         if pk_values:
-            for relationship_name, relationship in inspect(model).relationships.items():
+            for relationship_name, relationship in self._get_relationships(table).items():
                 # We can only join by single primary key
                 assert len(relationship.synchronize_pairs) == 1
                 assert len(relationship.secondary_synchronize_pairs) == 1
@@ -428,16 +431,21 @@ class DatastoreService(Service):
         """
         table = self._get_table(name)
 
-        data = {self._get_col(table, k, options['prefix']).name: v for k, v in data.items()}
+        insert, relationships = self._extract_relationships(table, options['prefix'], data)
+
         for column in table.c:
             if column.default is not None:
-                data.setdefault(column.name, column.default.arg)
+                insert.setdefault(column.name, column.default.arg)
             if not column.nullable:
                 if isinstance(column.type, (types.String, types.Text)):
-                    data.setdefault(column.name, '')
+                    insert.setdefault(column.name, '')
 
-        await self.execute_write(table.insert().values(**data))
-        return (await self.fetchall('SELECT last_insert_rowid()'))[0][0]
+        await self.execute_write(table.insert().values(**insert))
+        pk = (await self.fetchall('SELECT last_insert_rowid()'))[0][0]
+
+        await self._handle_relationships(pk, relationships)
+
+        return pk
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
     async def update(self, name, id, data, options):
@@ -452,12 +460,44 @@ class DatastoreService(Service):
                 if column.name[:-3] in data:
                     data[column.name] = data.pop(column.name[:-3])
 
-        pk = self._get_pk(table)
-        update = table.update().values(**{self._get_col(table, k, options['prefix']).name: v
-                                          for k, v in data.items()}).where(pk == id)
-        result = await self.execute_write(update)
-        if result.rowcount != 1:
-            raise RuntimeError('No rows were updated')
+        update, relationships = self._extract_relationships(table, options['prefix'], data)
+
+        if update:
+            result = await self.execute_write(table.update().values(**update).where(self._get_pk(table) == id))
+            if result.rowcount != 1:
+                raise RuntimeError('No rows were updated')
+
+        await self._handle_relationships(id, relationships)
+
+    def _extract_relationships(self, table, prefix, data):
+        relationships = self._get_relationships(table)
+
+        insert = {}
+        insert_relationships = []
+        for k, v in data.items():
+            relationship = relationships.get(prefix + k)
+            if relationship:
+                insert_relationships.append((relationship, v))
+            else:
+                insert[self._get_col(table, k, prefix).name] = v
+
+        return insert, insert_relationships
+
+    async def _handle_relationships(self, pk, relationships):
+        for relationship, values in relationships:
+            assert len(relationship.synchronize_pairs) == 1
+            assert len(relationship.secondary_synchronize_pairs) == 1
+
+            local_pk, relationship_local_pk = relationship.synchronize_pairs[0]
+            remote_pk, relationship_remote_pk = relationship.secondary_synchronize_pairs[0]
+
+            await self.execute_write(relationship_local_pk.table.delete().where(relationship_local_pk == pk))
+
+            for value in values:
+                await self.execute_write(relationship_local_pk.table.insert().values({
+                    relationship_local_pk.name: pk,
+                    relationship_remote_pk.name: value,
+                }))
 
     @accepts(Str('name'), Any('id_or_filters'))
     async def delete(self, name, id_or_filters):

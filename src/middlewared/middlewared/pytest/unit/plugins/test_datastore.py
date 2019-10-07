@@ -504,6 +504,43 @@ async def test__mtm_loader():
         ]
 
 
+@pytest.mark.asyncio
+async def test__mtm_insert():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO storage_disk VALUES (10)")
+        await ds.execute("INSERT INTO storage_disk VALUES (20)")
+        await ds.execute("INSERT INTO storage_disk VALUES (30)")
+
+        await ds.insert("tasks.smarttest", {"disks": [10, 30]}, {"prefix": "smarttest_"})
+
+        assert await ds.query("tasks.smarttest", [], {"prefix": "smarttest_"}) == [
+            {
+                "id": 1,
+                "disks": [{"id": 10}, {"id": 30}],
+            }
+        ]
+
+
+@pytest.mark.asyncio
+async def test__mtm_update():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO storage_disk VALUES (10)")
+        await ds.execute("INSERT INTO storage_disk VALUES (20)")
+        await ds.execute("INSERT INTO storage_disk VALUES (30)")
+        await ds.execute("INSERT INTO tasks_smarttest VALUES (100)")
+        await ds.execute("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 10)")
+        await ds.execute("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 30)")
+
+        await ds.update("tasks.smarttest", 100, {"disks": [20, 30]}, {"prefix": "smarttest_"})
+
+        assert await ds.query("tasks.smarttest", [], {"prefix": "smarttest_"}) == [
+            {
+                "id": 100,
+                "disks": [{"id": 20}, {"id": 30}],
+            }
+        ]
+
+
 class DefaultModel(Model):
     __tablename__ = "test_default"
 
