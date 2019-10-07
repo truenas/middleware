@@ -26,7 +26,7 @@ class NFSModel(sa.Model):
     nfs_srv_v4 = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_v3owner = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_krb = sa.Column(sa.Boolean(), default=False)
-    nfs_srv_bindip = sa.Column(sa.JSON(type=list))
+    nfs_srv_bindip = sa.Column(sa.MultiSelectField())
     nfs_srv_mountd_port = sa.Column(sa.SmallInteger(), nullable=True)
     nfs_srv_rpcstatd_port = sa.Column(sa.SmallInteger(), nullable=True)
     nfs_srv_rpclockd_port = sa.Column(sa.SmallInteger(), nullable=True)
@@ -201,7 +201,7 @@ class NFSShareModel(sa.Model):
     nfs_maproot_group = sa.Column(sa.String(120), nullable=True, default='')
     nfs_mapall_user = sa.Column(sa.String(120), nullable=True, default='')
     nfs_mapall_group = sa.Column(sa.String(120), nullable=True, default='')
-    nfs_security = sa.Column(sa.JSON(type=list))
+    nfs_security = sa.Column(sa.MultiSelectField())
     nfs_enabled = sa.Column(sa.Boolean(), default=True)
 
 

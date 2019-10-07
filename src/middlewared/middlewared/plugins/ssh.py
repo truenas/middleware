@@ -13,7 +13,7 @@ class SSHModel(sa.Model):
     __tablename__ = 'services_ssh'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    ssh_bindiface = sa.Column(sa.JSON(type=list), default='')
+    ssh_bindiface = sa.Column(sa.MultiSelectField())
     ssh_tcpport = sa.Column(sa.Integer(), default=22)
     ssh_rootlogin = sa.Column(sa.Boolean(), default=False)
     ssh_passwordauth = sa.Column(sa.Boolean(), default=False)

@@ -101,6 +101,32 @@ class JSON(UserDefinedType):
         return self._result_processor
 
 
+class MultiSelectField(UserDefinedType):
+    def get_col_spec(self, **kw):
+        return "TEXT"
+
+    def _bind_processor(self, value):
+        if value is None:
+            return None
+
+        return ",".join(value)
+
+    def bind_processor(self, dialect):
+        return self._bind_processor
+
+    def _result_processor(self, value):
+        if value:
+            try:
+                return value.split(",")
+            except Exception:
+                pass
+
+        return []
+
+    def result_processor(self, dialect, coltype):
+        return self._result_processor
+
+
 class Time(UserDefinedType):
     def get_col_spec(self, **kw):
         return "TIME"
