@@ -167,6 +167,20 @@ def test_15_verify_output_(key):
         assert results.json()[key] == payload[key], results.text
 
 
-def test_16_delete_zvol():
+def test_16_query_zvol_by_id():
+    global results
+    results = GET(f'/pool/dataset/id/{zvol_url}')
+    assert isinstance(results.json(), dict)
+
+
+@pytest.mark.parametrize('key', ['name', 'type', 'volsize'])
+def test_17_verify_the_query_zvol_output_(key):
+    if key == 'volsize':
+        assert results.json()[key]['parsed'] == payload[key], results.text
+    else:
+        assert results.json()[key] == payload[key], results.text
+
+
+def test_18_delete_zvol():
     result = DELETE(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 200, result.text
