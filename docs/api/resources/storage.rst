@@ -206,7 +206,7 @@ Datasets
    :json string dedup: dedup (on, off, inherit)
    :json string atime: access time (on, off, inherit)
    :json string readonly: read only (on, off, inherit)
-   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1M)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
    :json string quota: quota for this dataset and all children
    :json string refquota: quota for this dataset
@@ -269,7 +269,7 @@ Datasets
    :json string dedup: dedup (on, off, inherit)
    :json string atime: access time (on, off, inherit)
    :json string readonly: read only (on, off, inherit)
-   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1M)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
    :json string quota: quota for this dataset and all children
    :json string refquota: quota for this dataset
@@ -1309,7 +1309,7 @@ Create resource
    :json string dedup: dedup (on, off, inherit)
    :json string atime: access time (on, off, inherit)
    :json string readonly: read only (on, off, inherit)
-   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1M)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
    :json string quota: quota for this dataset and all children
    :json string refquota: quota for this dataset
@@ -1377,7 +1377,7 @@ Update resource
    :json string dedup: dedup (on, off, inherit)
    :json string atime: access time (on, off, inherit)
    :json string readonly: read only (on, off, inherit)
-   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1M)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
    :json string quota: quota for this dataset and all children
    :json string refquota: quota for this dataset
