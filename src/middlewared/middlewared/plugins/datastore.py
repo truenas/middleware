@@ -186,23 +186,25 @@ class DatastoreService(Service):
 
         return result
 
-    async def _queryset_serialize(self, qs, table, aliases, extend, extend_context, field_prefix, select):
+    async def _queryset_serialize(self, qs, table, aliases, relationships, extend, extend_context, field_prefix, select):
         if extend_context:
             extend_context_value = await self.middleware.call(extend_context)
         else:
             extend_context_value = None
 
         result = []
-        for i in qs:
+        for i, row in enumerate(qs):
             result.append(await self._serialize(
-                i, table, aliases,
+                row, table, aliases, relationships[i],
                 extend, extend_context, extend_context_value, field_prefix, select
             ))
 
         return result
 
-    async def _serialize(self, obj, table, aliases, extend, extend_context, extend_context_value, field_prefix, select):
+    async def _serialize(self, obj, table, aliases, relationships, extend, extend_context, extend_context_value,
+                         field_prefix, select):
         data = self._serialize_row(obj, table, aliases, select)
+        data.update(relationships)
 
         data = {self._strip_prefix(k, field_prefix): v for k, v in data.items()}
 
@@ -245,7 +247,7 @@ class DatastoreService(Service):
 
         return data
 
-    async def _fetch_many_to_many(self, table, prefix, rows):
+    async def _fetch_many_to_many(self, table, rows):
         for model in Model._decl_class_registry.values():
             if hasattr(model, "__tablename__") and model.__tablename__ == table.name:
                 break
@@ -253,9 +255,9 @@ class DatastoreService(Service):
             raise RuntimeError("Could not find model for table %s" % table.name)
 
         pk = self._get_pk(table)
-        row_pk_name = self._strip_prefix(pk.name, prefix)
-        pk_values = [row[row_pk_name] for row in rows]
+        pk_values = [row[pk] for row in rows]
 
+        relationships = [{} for row in rows]
         if pk_values:
             for relationship_name, relationship in inspect(model).relationships.items():
                 # We can only join by single primary key
@@ -287,12 +289,14 @@ class DatastoreService(Service):
                     ):
                         all_children[child[remote_pk.name]] = child
 
-                for row in rows:
-                    row[self._strip_prefix(relationship_name, prefix)] = [
+                for i, row in enumerate(rows):
+                    relationships[i][relationship_name] = [
                         all_children[child_id]
-                        for child_id in pk_to_children_ids[row[row_pk_name]]
+                        for child_id in pk_to_children_ids[row[pk]]
                         if child_id in all_children
                     ]
+
+        return relationships
 
     @accepts(
         Str('name'),
@@ -386,16 +390,18 @@ class DatastoreService(Service):
         if options['limit']:
             qs = qs.limit(options['limit'])
 
-        result = []
-        for i in await self._queryset_serialize(
-            await self.fetchall(qs),
-            table, aliases, options['extend'], options['extend_context'], options['prefix'], options['select'],
-        ):
-            result.append(i)
+        result = await self.fetchall(qs)
 
+        relationships = [{} for row in result]
         if options['relationships']:
             # This will only fetch many-to-many relationships for primary table, not for joins, but that's enough
-            await self._fetch_many_to_many(table, prefix, result)
+            relationships = await self._fetch_many_to_many(table, result)
+
+        result = await self._queryset_serialize(
+            result,
+            table, aliases, relationships, options['extend'], options['extend_context'], options['prefix'],
+            options['select'],
+        )
 
         if options['get']:
             try:
