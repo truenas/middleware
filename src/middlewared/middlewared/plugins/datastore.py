@@ -97,7 +97,7 @@ class DatastoreService(Service):
             cursor.close()
 
     def _get_table(self, name):
-        return Model.metadata.tables[name.replace('.', '_')]
+        return Model.metadata.tables[name.replace('.', '_').lower()]
 
     def _get_pk(self, table):
         return [col for col in table.c if col.primary_key][0]
