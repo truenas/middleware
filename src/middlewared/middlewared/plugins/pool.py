@@ -26,7 +26,7 @@ from middlewared.service_exception import ValidationError
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.shell import join_commandline
-from middlewared.validators import Range, Time
+from middlewared.validators import Match, Range, Time
 
 logger = logging.getLogger(__name__)
 
@@ -2637,6 +2637,41 @@ class PoolDatasetUserPropService(CRUDService):
                 }))
             ], filters, options
         )
+
+    async def __common_validation(self, dataset, data, schema, update=False):
+        verrors = ValidationErrors()
+        exists = data['name'] in dataset['properties']
+        if exists and not update:
+            verrors.add(
+                f'{schema}.property.name',
+                f'{data["name"]} exists in {dataset["id"]} user properties'
+            )
+
+        return verrors
+
+    @accepts(
+        Dict(
+            'dataset_user_prop_create',
+            Str('id', required=True, empty=False),
+            Dict(
+                'property',
+                Str('name', required=True, validators=[Match(r'.*:.*')]),
+                Str('value',required=True),
+            )
+        )
+    )
+    async def do_create(self, data):
+        dataset = await self._get_instance(data['id'])
+        verrors = await self.__common_validation(dataset, data['property'], 'dataset_user_prop_create')
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', data['id'], {
+                'properties': {data['property']['name']: {'value': data['property']['value']}}
+            }
+        )
+
+        return await self._get_instance(data['id'])
 
 
 class PoolDatasetService(CRUDService):
