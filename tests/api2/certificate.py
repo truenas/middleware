@@ -23,6 +23,7 @@ def test_02_delete_used_certificate():
     # 1. This really is a test for CRUDService.check_dependencies
     # 2. This idmap API usage looks terribly wrong
     results = POST('/idmap/domain/', {'name': '20191003'})
+    assert results.status_code == 200, results.text
     idmap_domain_id = results.json()['id']
     try:
         results = POST('/idmap/rfc2307/', {
@@ -40,6 +41,7 @@ def test_02_delete_used_certificate():
             'ldap_realm':'',
             'certificate': 1,
         })
+        assert results.status_code == 200, results.text
         idmap_rfc2307_id = results.json()['id']
         try:
             results = DELETE('/certificate/id/1/')
@@ -48,6 +50,7 @@ def test_02_delete_used_certificate():
 
             while True:
                 get_job = GET(f'/core/get_jobs/?id={job_id}')
+                assert get_job.status_code == 200, results.text
                 job_status = get_job.json()[0]
                 if job_status['state'] in ('RUNNING', 'WAITING'):
                     sleep(5)
@@ -67,7 +70,7 @@ def test_02_delete_used_certificate():
                                     'key': ['guicertificate'],
                                 },
                             ]
-                        },
+                        } and
                         job_status['exc_info']['extra']['dependencies'][0]['objects'][0]['id'] == idmap_rfc2307_id,
                     ), get_job.text
                     break
