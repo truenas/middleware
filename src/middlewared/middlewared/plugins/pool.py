@@ -2662,6 +2662,9 @@ class PoolDatasetUserPropService(CRUDService):
         )
     )
     async def do_create(self, data):
+        """
+        Create a user property for a given `id` dataset.
+        """
         dataset = await self._get_instance(data['id'])
         verrors = await self.__common_validation(dataset, data['property'], 'dataset_user_prop_create')
         verrors.check()
@@ -2683,6 +2686,9 @@ class PoolDatasetUserPropService(CRUDService):
         )
     )
     async def do_update(self, id, data):
+        """
+        Update `dataset_user_prop_update.name` user property for `id` dataset.
+        """
         dataset = await self._get_instance(id)
         verrors = await self.__common_validation(dataset, data, 'dataset_user_prop_update', True)
         verrors.check()
@@ -2700,17 +2706,19 @@ class PoolDatasetUserPropService(CRUDService):
         Dict(
             'dataset_user_prop_delete',
             Str('name', required=True),
-            Bool('recursive', default=False),
         )
     )
     async def do_delete(self, id, options):
+        """
+        Delete user property `dataset_user_prop_delete.name` for `id` dataset.
+        """
         dataset = await self._get_instance(id)
         verrors = await self.__common_validation(dataset, options, 'dataset_user_prop_delete', True)
         verrors.check()
 
         await self.middleware.call(
             'zfs.dataset.update', id, {
-                'properties': {options['name']: {'source': 'INHERIT', 'recursive': options['recursive']}}
+                'properties': {options['name']: {'source': 'INHERIT'}}
             }
         )
         return True
