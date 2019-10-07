@@ -1,8 +1,9 @@
+import datetime
 import json
 
 from sqlalchemy import (
     Table, Column as _Column, ForeignKey, Index,
-    Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text, Time,
+    Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text,
 )  # noqa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship  # noqa
@@ -95,6 +96,29 @@ class JSON(UserDefinedType):
             return json.loads(value)
         except Exception:
             return self.type()
+
+    def result_processor(self, dialect, coltype):
+        return self._result_processor
+
+
+class Time(UserDefinedType):
+    def get_col_spec(self, **kw):
+        return "TIME"
+
+    def _bind_processor(self, value):
+        if value is None:
+            return None
+
+        return value.isoformat()
+
+    def bind_processor(self, dialect):
+        return self._bind_processor
+
+    def _result_processor(self, value):
+        try:
+            return datetime.time(*map(int, value.split(":")))
+        except Exception:
+            return datetime.time()
 
     def result_processor(self, dialect, coltype):
         return self._result_processor

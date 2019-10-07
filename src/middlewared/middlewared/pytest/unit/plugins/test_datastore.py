@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import datetime
 from unittest.mock import patch
 
 import pytest
@@ -8,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 from middlewared.plugins.datastore import DatastoreService
-from middlewared.sqlalchemy import JSON
+from middlewared.sqlalchemy import JSON, Time
 
 from middlewared.pytest.unit.middleware import Middleware
 
@@ -546,3 +547,19 @@ async def test__already_has_prefix():
             "netbiosname": "localhost",
             "cifs_SID": "ABCDEF",
         }
+
+
+class TimeModel(Model):
+    __tablename__ = 'test_time'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    time = sa.Column(Time())
+
+
+@pytest.mark.asyncio
+async def test__time():
+    async with datastore_test() as ds:
+        await ds.insert("test.time", {"time": datetime.time(21, 30)})
+
+        assert (await ds.query("test.time", [], {"get": True}))["time"] == datetime.time(21, 30)
+        assert (await ds.sql("SELECT * FROM test_time"))[0]["time"] == "21:30:00"
