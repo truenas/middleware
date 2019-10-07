@@ -89,7 +89,7 @@ class SMBModel(sa.Model):
     cifs_srv_aio_rs = sa.Column(sa.Integer(), default=4096)
     cifs_srv_aio_ws = sa.Column(sa.Integer(), default=4096)
     cifs_srv_zeroconf = sa.Column(sa.Boolean(), default=True)
-    cifs_srv_bindip = sa.Column(sa.String(250), nullable=True)
+    cifs_srv_bindip = sa.Column(sa.JSON(type=list), nullable=True)
     cifs_SID = sa.Column(sa.String(120), nullable=True)
     cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
     cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)

@@ -20,7 +20,7 @@ class AFPModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     afp_srv_guest = sa.Column(sa.Boolean())
     afp_srv_guest_user = sa.Column(sa.String(120))
-    afp_srv_bindip = sa.Column(sa.String(255))
+    afp_srv_bindip = sa.Column(sa.JSON(type=list))
     afp_srv_connections_limit = sa.Column(sa.Integer())
     afp_srv_dbpath = sa.Column(sa.String(255), nullable=True)
     afp_srv_global_aux = sa.Column(sa.Text())
