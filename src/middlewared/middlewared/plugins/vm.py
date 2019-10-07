@@ -671,16 +671,16 @@ class VMModel(sa.Model):
     __tablename__ = 'vm_vm'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(150))
+    name = sa.Column(sa.String(150), default=6)
     description = sa.Column(sa.String(250))
     vcpus = sa.Column(sa.Integer(), default=1)
     memory = sa.Column(sa.Integer())
-    autostart = sa.Column(sa.Boolean())
-    time = sa.Column(sa.String(5))
+    autostart = sa.Column(sa.Boolean(), default=False)
+    time = sa.Column(sa.String(5), default='LOCAL')
     grubconfig = sa.Column(sa.Text(), nullable=True)
-    bootloader = sa.Column(sa.String(50))
-    cores = sa.Column(sa.Integer())
-    threads = sa.Column(sa.Integer())
+    bootloader = sa.Column(sa.String(50), default='UEFI')
+    cores = sa.Column(sa.Integer(), default=1)
+    threads = sa.Column(sa.Integer(), default=1)
     shutdown_timeout = sa.Column(sa.Integer(), default=90)
 
 
@@ -689,7 +689,7 @@ class VMDeviceModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     dtype = sa.Column(sa.String(50))
-    attributes = sa.Column(sa.JSON())
+    attributes = sa.Column(sa.JSON(), default=False)
     vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
     order = sa.Column(sa.Integer(), nullable=True)
 

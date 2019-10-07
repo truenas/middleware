@@ -17,7 +17,7 @@ class S3Model(sa.Model):
     s3_access_key = sa.Column(sa.String(128), default='')
     s3_secret_key = sa.Column(sa.String(128), default='')
     s3_mode = sa.Column(sa.String(120), default="local")
-    s3_disks = sa.Column(sa.String(255))
+    s3_disks = sa.Column(sa.String(255), default='')
     s3_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     s3_browser = sa.Column(sa.Boolean(), default=True)
 

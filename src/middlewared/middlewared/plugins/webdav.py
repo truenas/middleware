@@ -14,8 +14,8 @@ class WebDAVSharingModel(sa.Model):
     webdav_name = sa.Column(sa.String(120))
     webdav_comment = sa.Column(sa.String(120))
     webdav_path = sa.Column(sa.String(255))
-    webdav_ro = sa.Column(sa.Boolean())
-    webdav_perm = sa.Column(sa.Boolean())
+    webdav_ro = sa.Column(sa.Boolean(), default=False)
+    webdav_perm = sa.Column(sa.Boolean(), default=True)
 
 
 class WebDAVSharingService(CRUDService):

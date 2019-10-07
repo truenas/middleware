@@ -21,7 +21,7 @@ class NFSModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     nfs_srv_servers = sa.Column(sa.Integer(), default=4)
-    nfs_srv_udp = sa.Column(sa.Boolean())
+    nfs_srv_udp = sa.Column(sa.Boolean(), default=False)
     nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4 = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_v3owner = sa.Column(sa.Boolean(), default=False)
@@ -194,15 +194,15 @@ class NFSShareModel(sa.Model):
     nfs_comment = sa.Column(sa.String(120))
     nfs_network = sa.Column(sa.Text())
     nfs_hosts = sa.Column(sa.Text())
-    nfs_alldirs = sa.Column(sa.Boolean())
-    nfs_ro = sa.Column(sa.Boolean())
-    nfs_quiet = sa.Column(sa.Boolean())
-    nfs_maproot_user = sa.Column(sa.String(120), nullable=True)
-    nfs_maproot_group = sa.Column(sa.String(120), nullable=True)
-    nfs_mapall_user = sa.Column(sa.String(120), nullable=True)
-    nfs_mapall_group = sa.Column(sa.String(120), nullable=True)
+    nfs_alldirs = sa.Column(sa.Boolean(), default=False)
+    nfs_ro = sa.Column(sa.Boolean(), default=False)
+    nfs_quiet = sa.Column(sa.Boolean(), default=False)
+    nfs_maproot_user = sa.Column(sa.String(120), nullable=True, default='')
+    nfs_maproot_group = sa.Column(sa.String(120), nullable=True, default='')
+    nfs_mapall_user = sa.Column(sa.String(120), nullable=True, default='')
+    nfs_mapall_group = sa.Column(sa.String(120), nullable=True, default='')
     nfs_security = sa.Column(sa.JSON(type=list))
-    nfs_enabled = sa.Column(sa.Boolean())
+    nfs_enabled = sa.Column(sa.Boolean(), default=True)
 
 
 class SharingNFSService(CRUDService):

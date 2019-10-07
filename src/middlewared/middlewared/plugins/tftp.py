@@ -11,12 +11,12 @@ class TFTPModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     tftp_directory = sa.Column(sa.String(255))
-    tftp_newfiles = sa.Column(sa.Boolean())
+    tftp_newfiles = sa.Column(sa.Boolean(), default=False)
     tftp_port = sa.Column(sa.Integer(), default=21)
-    tftp_username = sa.Column(sa.String(120))
+    tftp_username = sa.Column(sa.String(120), default="nobody")
     tftp_umask = sa.Column(sa.String(120), default='022')
     tftp_options = sa.Column(sa.String(120))
-    tftp_host = sa.Column(sa.String(120))
+    tftp_host = sa.Column(sa.String(120), default="0.0.0.0")
 
 
 class TFTPService(SystemServiceService):

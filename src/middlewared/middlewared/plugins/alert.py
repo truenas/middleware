@@ -52,12 +52,12 @@ class AlertModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     node = sa.Column(sa.String(100))
     source = sa.Column(sa.Text())
-    key = sa.Column(sa.Text())
+    key = sa.Column(sa.Text(), default="http")
     datetime = sa.Column(sa.DateTime())
     text = sa.Column(sa.Text())
     args = sa.Column(sa.JSON())
     dismissed = sa.Column(sa.Boolean())
-    uuid = sa.Column(sa.Text())
+    uuid = sa.Column(sa.Text(), default='A')
     klass = sa.Column(sa.Text())
 
 
@@ -725,11 +725,11 @@ class AlertServiceModel(sa.Model):
     __tablename__ = 'system_alertservice'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(120))
-    type = sa.Column(sa.String(20))
-    attributes = sa.Column(sa.JSON())
-    enabled = sa.Column(sa.Boolean())
-    level = sa.Column(sa.String(20))
+    name = sa.Column(sa.String(120), default=6)
+    type = sa.Column(sa.String(20), default='Mail')
+    attributes = sa.Column(sa.JSON(), default=False)
+    enabled = sa.Column(sa.Boolean(), default=True)
+    level = sa.Column(sa.String(20), default='WARNING')
 
 
 class AlertServiceService(CRUDService):

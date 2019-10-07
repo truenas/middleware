@@ -86,7 +86,7 @@ class MailModel(sa.Model):
     __tablename__ = 'system_email'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    em_fromemail = sa.Column(sa.String(120))
+    em_fromemail = sa.Column(sa.String(120), default='')
     em_outgoingserver = sa.Column(sa.String(120))
     em_port = sa.Column(sa.Integer(), default=25)
     em_security = sa.Column(sa.String(120), default="plain")

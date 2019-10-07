@@ -89,7 +89,7 @@ class ServiceModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     srv_service = sa.Column(sa.String(120))
-    srv_enable = sa.Column(sa.Boolean())
+    srv_enable = sa.Column(sa.Boolean(), default=False)
 
 
 class ServiceService(CRUDService):

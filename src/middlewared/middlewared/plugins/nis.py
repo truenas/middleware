@@ -27,7 +27,7 @@ class NISModel(sa.Model):
     nis_servers = sa.Column(sa.String(8192))
     nis_secure_mode = sa.Column(sa.Boolean())
     nis_manycast = sa.Column(sa.Boolean())
-    nis_enable = sa.Column(sa.Boolean())
+    nis_enable = sa.Column(sa.Boolean(), default=False)
 
 
 class NISService(ConfigService):

@@ -92,7 +92,7 @@ class DiskModel(sa.Model):
     disk_identifier = sa.Column(sa.String(42), primary_key=True)
     disk_name = sa.Column(sa.String(120))
     disk_subsystem = sa.Column(sa.String(10), default='')
-    disk_number = sa.Column(sa.Integer())
+    disk_number = sa.Column(sa.Integer(), default=1)
     disk_serial = sa.Column(sa.String(30))
     disk_size = sa.Column(sa.String(20))
     disk_multipath_name = sa.Column(sa.String(30))
@@ -112,7 +112,7 @@ class DiskModel(sa.Model):
     disk_informational = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_model = sa.Column(sa.String(200), nullable=True, default=None)
     disk_rotationrate = sa.Column(sa.Integer(), nullable=True, default=None)
-    disk_type = sa.Column(sa.String(20))
+    disk_type = sa.Column(sa.String(20), default='UNKNOWN')
 
 
 class DiskService(CRUDService):

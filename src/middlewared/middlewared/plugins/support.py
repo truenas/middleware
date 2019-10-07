@@ -19,8 +19,8 @@ class SupportModel(sa.Model):
     __tablename__ = 'system_support'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    enabled = sa.Column(sa.Boolean(), nullable=True)
-    name = sa.Column(sa.String(200))
+    enabled = sa.Column(sa.Boolean(), nullable=True, default=True)
+    name = sa.Column(sa.String(200), default=6)
     title = sa.Column(sa.String(200))
     email = sa.Column(sa.String(200))
     phone = sa.Column(sa.String(200))

@@ -1,3 +1,4 @@
+from datetime import time
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
@@ -13,20 +14,20 @@ class PeriodicSnapshotTaskModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     task_dataset = sa.Column(sa.String(150))
-    task_recursive = sa.Column(sa.Boolean())
-    task_lifetime_value = sa.Column(sa.Integer())
-    task_lifetime_unit = sa.Column(sa.String(120))
-    task_begin = sa.Column(sa.Time())
-    task_end = sa.Column(sa.Time())
-    task_enabled = sa.Column(sa.Boolean())
+    task_recursive = sa.Column(sa.Boolean(), default=False)
+    task_lifetime_value = sa.Column(sa.Integer(), default=2)
+    task_lifetime_unit = sa.Column(sa.String(120), default='WEEK')
+    task_begin = sa.Column(sa.Time(), default=time(hour=9))
+    task_end = sa.Column(sa.Time(), default=time(hour=18))
+    task_enabled = sa.Column(sa.Boolean(), default=True)
     task_exclude = sa.Column(sa.JSON(type=list))
-    task_naming_schema = sa.Column(sa.String(150))
-    task_minute = sa.Column(sa.String(100))
-    task_hour = sa.Column(sa.String(100))
-    task_daymonth = sa.Column(sa.String(100))
-    task_month = sa.Column(sa.String(100))
-    task_dayweek = sa.Column(sa.String(100))
-    task_allow_empty = sa.Column(sa.Boolean())
+    task_naming_schema = sa.Column(sa.String(150), default='auto-%Y-%m-%d_%H-%M')
+    task_minute = sa.Column(sa.String(100), default="00")
+    task_hour = sa.Column(sa.String(100), default="*")
+    task_daymonth = sa.Column(sa.String(100), default="*")
+    task_month = sa.Column(sa.String(100), default='*')
+    task_dayweek = sa.Column(sa.String(100), default="*")
+    task_allow_empty = sa.Column(sa.Boolean(), default=True)
 
 
 class PeriodicSnapshotTaskService(CRUDService):

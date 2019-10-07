@@ -16,14 +16,14 @@ class NetDataModel(sa.Model):
     history = sa.Column(sa.Integer(), default=86400)
     update_every = sa.Column(sa.Integer(), default=1)
     http_port_listen_backlog = sa.Column(sa.Integer(), default=100)
-    bind = sa.Column(sa.JSON(type=list))
-    port = sa.Column(sa.Integer())
+    bind = sa.Column(sa.JSON(type=list), default=['0.0.0.0', '::'])
+    port = sa.Column(sa.Integer(), default=1194)
     additional_params = sa.Column(sa.Text(), nullable=True)
     alarms = sa.Column(sa.JSON())
     stream_mode = sa.Column(sa.String(10))
     api_key = sa.Column(sa.String(64), nullable=True)
     destination = sa.Column(sa.JSON(type=list), nullable=True)
-    allow_from = sa.Column(sa.JSON(type=list), nullable=True)
+    allow_from = sa.Column(sa.JSON(type=list), nullable=True, default=['*'])
 
 
 class NetDataService(SystemServiceService):

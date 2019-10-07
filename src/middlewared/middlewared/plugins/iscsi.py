@@ -569,8 +569,8 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_xen = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_rpm = sa.Column(sa.String(20), default='SSD')
     iscsi_target_extent_ro = sa.Column(sa.Boolean(), default=False)
-    iscsi_target_extent_legacy = sa.Column(sa.Boolean())
-    iscsi_target_extent_enabled = sa.Column(sa.Boolean())
+    iscsi_target_extent_legacy = sa.Column(sa.Boolean(), default=False)
+    iscsi_target_extent_enabled = sa.Column(sa.Boolean(), default=True)
 
 
 class iSCSITargetExtentService(CRUDService):

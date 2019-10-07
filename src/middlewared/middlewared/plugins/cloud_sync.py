@@ -410,9 +410,9 @@ class CloudCredentialModel(sa.Model):
     __tablename__ = 'system_cloudcredentials'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(100))
+    name = sa.Column(sa.String(100), default=6)
     provider = sa.Column(sa.String(50))
-    attributes = sa.Column(sa.JSON(encrypted=True))
+    attributes = sa.Column(sa.JSON(encrypted=True), default=False)
 
 
 class CredentialsService(CRUDService):
@@ -527,15 +527,15 @@ class CloudSyncModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     description = sa.Column(sa.String(150))
-    direction = sa.Column(sa.String(10))
+    direction = sa.Column(sa.String(10), default='PUSH')
     path = sa.Column(sa.String(255))
     attributes = sa.Column(sa.JSON())
-    minute = sa.Column(sa.String(100))
-    hour = sa.Column(sa.String(100))
-    daymonth = sa.Column(sa.String(100))
-    month = sa.Column(sa.String(100))
-    dayweek = sa.Column(sa.String(100))
-    enabled = sa.Column(sa.Boolean())
+    minute = sa.Column(sa.String(100), default="00")
+    hour = sa.Column(sa.String(100), default="*")
+    daymonth = sa.Column(sa.String(100), default="*")
+    month = sa.Column(sa.String(100), default='*')
+    dayweek = sa.Column(sa.String(100), default="*")
+    enabled = sa.Column(sa.Boolean(), default=True)
     credential_id = sa.Column(sa.ForeignKey('system_cloudcredentials.id'), index=True)
     transfer_mode = sa.Column(sa.String(20), default='sync')
     encryption = sa.Column(sa.Boolean())

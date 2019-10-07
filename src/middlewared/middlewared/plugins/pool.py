@@ -138,9 +138,9 @@ class PoolResilverModel(sa.Model):
     __tablename__ = 'storage_resilver'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    enabled = sa.Column(sa.Boolean())
+    enabled = sa.Column(sa.Boolean(), default=True)
     begin = sa.Column(sa.Time(), default=time(hour=18))
-    end = sa.Column(sa.Time())
+    end = sa.Column(sa.Time(), default=time(hour=9))
     weekday = sa.Column(sa.String(120), default='1,2,3,4,5,6,7')
 
 

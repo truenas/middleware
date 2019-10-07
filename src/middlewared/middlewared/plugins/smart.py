@@ -107,11 +107,11 @@ class SmartTestModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     smarttest_type = sa.Column(sa.String(2))
     smarttest_desc = sa.Column(sa.String(120))
-    smarttest_hour = sa.Column(sa.String(100))
-    smarttest_daymonth = sa.Column(sa.String(100))
+    smarttest_hour = sa.Column(sa.String(100), default='*')
+    smarttest_daymonth = sa.Column(sa.String(100), default='*')
     smarttest_month = sa.Column(sa.String(100), default='*')
     smarttest_dayweek = sa.Column(sa.String(100), default='*')
-    smarttest_all_disks = sa.Column(sa.Boolean())
+    smarttest_all_disks = sa.Column(sa.Boolean(), default=False)
 
     smarttest_disks = sa.relationship('DiskModel', secondary=lambda: SmartTestDiskModel.__table__)
 
