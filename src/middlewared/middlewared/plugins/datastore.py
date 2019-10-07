@@ -103,14 +103,23 @@ class DatastoreService(Service):
         return [col for col in table.c if col.primary_key][0]
 
     def _get_col(self, table, name, prefix=None):
-        # id is special
-        if name != 'id' and prefix:
-            name = prefix + name
+        col = self._get_col_by_django_name(table, name)
+        if col is not None:
+            return col
 
-        if name not in table.c and f'{name}_id' in table.c:
-            name = f'{name}_id'
+        if prefix:
+            col = self._get_col_by_django_name(table, prefix + name)
+            if col is not None:
+                return col
 
-        return table.c[name]
+        raise KeyError(name)
+
+    def _get_col_by_django_name(self, table, name):
+        if name in table.c:
+            return table.c[name]
+
+        if f'{name}_id' in table.c:
+            return table.c[f'{name}_id']
 
     def _filters_to_queryset(self, filters, table, prefix, aliases):
         opmap = {

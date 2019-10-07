@@ -138,7 +138,7 @@ async def test__prefix_filter():
         assert await ds.query("account.bsdusers", [("uid", "=", 56)], {"prefix": "bsdusr_"}) == []
 
         with pytest.raises(Exception):
-            assert await ds.query("account.bsdusers", [("bsdusr_uid", "=", 55)], {"prefix": "bsdusr_"})
+            assert await ds.query("account.bsdusers", [("uuid", "=", 55)], {"prefix": "bsdusr_"})
 
 
 @pytest.mark.asyncio
@@ -524,3 +524,25 @@ async def test__insert_default_has_value():
         await ds.insert("test.default", {"string": "VALUE"})
 
         assert (await ds.query("test.default", [], {"get": True}))["string"] == "VALUE"
+
+
+class SMBModel(Model):
+    __tablename__ = 'test_smb'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cifs_srv_netbiosname = sa.Column(sa.String(120))
+    cifs_SID = sa.Column(sa.String(120), nullable=True)
+
+
+@pytest.mark.asyncio
+async def test__already_has_prefix():
+    async with datastore_test() as ds:
+        await ds.insert("test.smb", {"cifs_srv_netbiosname": "", "cifs_SID": None})
+
+        await ds.update("test.smb", 1, {"netbiosname": "localhost", "cifs_SID": "ABCDEF"}, {"prefix": "cifs_srv_"})
+
+        assert (await ds.query("test.smb", [], {"prefix": "cifs_srv_", "get": True})) == {
+            "id": 1,
+            "netbiosname": "localhost",
+            "cifs_SID": "ABCDEF",
+        }
