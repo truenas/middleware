@@ -294,6 +294,7 @@ class DatastoreService(Service):
             Str('extend', default=None, null=True),
             Str('extend_context', default=None, null=True),
             Str('prefix', default=None, null=True),
+            Dict('extra', additional_attrs=True),
             List('order_by', default=[]),
             List('select', default=[]),
             Bool('count', default=False),
