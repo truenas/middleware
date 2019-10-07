@@ -236,7 +236,7 @@ class FailoverModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     disabled = sa.Column(sa.Boolean())
-    master = sa.Column(sa.Boolean())
+    master_node = sa.Column(sa.String(1))
     timeout = sa.Column(sa.Integer())
 
 
@@ -245,7 +245,13 @@ class FailoverService(ConfigService):
     HA_MODE = None
 
     class Config:
-        datastore = 'failover.failover'
+        datastore = 'system.failover'
+        datastore_extend = 'failover.failover_extend'
+
+    @private
+    async def failover_extend(self, data):
+        data['master'] = await self.middleware.call('failover.node') == data.pop('master_node')
+        return data
 
     @accepts(Dict(
         'failover_update',
@@ -260,10 +266,15 @@ class FailoverService(ConfigService):
         `disabled` as false will turn off HA.
         `master` sets the state of current node. Standby node will have the opposite value.
         """
-        old = await self.config()
+        master = data.pop('master', None)
+
+        old = await self.middleware.call('datastore.config', 'system.failover')
 
         new = old.copy()
         new.update(data)
+
+        if master is not None:
+            data['master_node'] = await self._master_node(master)
 
         verrors = ValidationErrors()
         if new['disabled'] is False:
@@ -274,7 +285,7 @@ class FailoverService(ConfigService):
                 )
         verrors.check()
 
-        await self.middleware.call('datastore.update', 'failover.failover', new['id'], new)
+        await self.middleware.call('datastore.update', 'system.failover', new['id'], new)
 
         if await self.middleware.call('pool.query', [('status', '!=', 'OFFLINE')]):
             cp = await run('fenced', '--force', check=False)
@@ -282,16 +293,24 @@ class FailoverService(ConfigService):
             if cp.returncode not in (0, 6):
                 raise CallError(f'fenced failed with exit code {cp.returncode}.')
 
-        try:
-            await self.middleware.call('failover.call_remote', 'datastore.sql', [
-                "UPDATE system_failover SET master = %s", [str(int(not new['disabled']))]
-            ])
-        except Exception:
-            self.logger.warn('Failed to set master flag on standby node', exc_info=True)
-
         await self.middleware.call('service.restart', 'failover')
 
         return await self.config()
+
+    async def _master_node(self, master):
+        node = await self.middleware.call('failover.node')
+        if node == 'A':
+            if master:
+                return 'A'
+            else:
+                return 'B'
+        elif node == 'B':
+            if master:
+                return 'B'
+            else:
+                return 'A'
+        else:
+            raise CallError('Unable to change node state in MANUAL mode')
 
     @accepts()
     def licensed(self):
@@ -992,23 +1011,25 @@ class FailoverService(ConfigService):
         if options is None:
             options = {}
 
-        failover = await self.middleware.call('datastore.config', 'failover.failover')
+        failover = await self.middleware.call('datastore.config', 'system.failover')
         if action == 'ENABLE':
             if failover['disabled'] is False:
                 # Already enabled
                 return False
-            failover.update({
+            update = {
                 'disabled': False,
-                'master': False,
-            })
-            await self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
+                'master_node': await self._master_node(False),
+            }
+            await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
             await self.middleware.call('service.restart', 'failover')
         elif action == 'DISABLE':
             if failover['disabled'] is True:
                 # Already disabled
                 return False
-            failover['master'] = True if options.get('active') else False
-            await self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
+            update = {
+                'master_node': await self._master_node(True if options.get('active') else False),
+            }
+            await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
             await self.middleware.call('service.restart', 'failover')
 
     @private

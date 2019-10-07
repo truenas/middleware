@@ -38,7 +38,7 @@ class EnclosureStatusAlertSource(AlertSource):
                     status = 'UNRECOVERABLE'
                 elif ele['status'] == 'Critical':
                     if ele['name'] == 'Enclosure' and not (
-                        await self.middleware.call("datastore.query", "failover.failover")
+                        await self.middleware.call("datastore.query", "system.failover")
                     ):
                         continue
                     status = 'CRITICAL'
