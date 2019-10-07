@@ -2641,11 +2641,12 @@ class PoolDatasetUserPropService(CRUDService):
     async def __common_validation(self, dataset, data, schema, update=False):
         verrors = ValidationErrors()
         exists = data['name'] in dataset['properties']
-        if exists and not update:
-            verrors.add(
-                f'{schema}.property.name',
-                f'{data["name"]} exists in {dataset["id"]} user properties'
-            )
+        if (exists and not update) or (not exists and update):
+            if update:
+                msg = f'{data["name"]} does not exist in {dataset["id"]} user properties'
+            else:
+                msg = f'{data["name"]} exists in {dataset["id"]} user properties'
+            verrors.add(f'{schema}.property.name', msg)
 
         return verrors
 
@@ -2672,6 +2673,27 @@ class PoolDatasetUserPropService(CRUDService):
         )
 
         return await self._get_instance(data['id'])
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_user_prop_update',
+            Str('name', required=True),
+            Str('value', required=True),
+        )
+    )
+    async def do_update(self, id, data):
+        dataset = await self._get_instance(id)
+        verrors = await self.__common_validation(dataset, data, 'dataset_user_prop_update', True)
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', id, {
+                'properties': {data['name']: {'value': data['value']}}
+            }
+        )
+
+        return await self._get_instance(id)
 
 
 class PoolDatasetService(CRUDService):
