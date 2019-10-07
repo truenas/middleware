@@ -2695,6 +2695,26 @@ class PoolDatasetUserPropService(CRUDService):
 
         return await self._get_instance(id)
 
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_user_prop_delete',
+            Str('name', required=True),
+            Bool('recursive', default=False),
+        )
+    )
+    async def do_delete(self, id, options):
+        dataset = await self._get_instance(id)
+        verrors = await self.__common_validation(dataset, options, 'dataset_user_prop_delete', True)
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', id, {
+                'properties': {options['name']: {'source': 'INHERIT', 'recursive': options['recursive']}}
+            }
+        )
+        return True
+
 
 class PoolDatasetService(CRUDService):
 
