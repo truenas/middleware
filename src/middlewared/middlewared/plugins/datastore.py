@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 import operator
 import re
 
-from sqlalchemy import and_, create_engine, func, inspect, select
+from sqlalchemy import and_, create_engine, func, inspect, select, types
 from sqlalchemy.sql import Alias
 
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
@@ -426,6 +426,9 @@ class DatastoreService(Service):
         for column in table.c:
             if column.default is not None:
                 data.setdefault(column.name, column.default.arg)
+            if not column.nullable:
+                if isinstance(column.type, (types.String, types.Text)):
+                    data.setdefault(column.name, '')
 
         await self.execute_write(table.insert().values(**data))
         return (await self.fetchall('SELECT last_insert_rowid()'))[0][0]

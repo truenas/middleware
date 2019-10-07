@@ -698,7 +698,7 @@ class SharingSMBModel(sa.Model):
     cifs_guestonly = sa.Column(sa.Boolean())
     cifs_hostsallow = sa.Column(sa.Text())
     cifs_hostsdeny = sa.Column(sa.Text())
-    cifs_vfsobjects = sa.Column(sa.String(255))
+    cifs_vfsobjects = sa.Column(sa.JSON(type=list))
     cifs_auxsmbconf = sa.Column(sa.Text())
     cifs_storage_task_id = sa.Column(sa.ForeignKey('storage_task.id'), index=True, nullable=True)
     cifs_abe = sa.Column(sa.Boolean())
