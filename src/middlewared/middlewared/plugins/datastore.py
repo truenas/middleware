@@ -14,19 +14,6 @@ from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.config import FREENAS_DATABASE
 
 
-"""
-Mapping of tables to not to replicate to the remote side
-
-It accepts a fields key which will then exclude these fields and not the
-whole table.
-"""
-NO_SYNC_MAP = {
-    'system_failover': {
-        'fields': ['master'],
-    },
-}
-
-
 def regexp(expr, item):
     reg = re.compile(expr, re.I)
     return reg.search(item) is not None
