@@ -197,14 +197,35 @@ class RsyncTaskService(CRUDService):
         datastore = 'tasks.rsync'
         datastore_prefix = 'rsync_'
         datastore_extend = 'rsynctask.rsync_task_extend'
+        datastore_extend_context = 'rsynctask.rsync_task_extend_context'
 
     @private
-    async def rsync_task_extend(self, data):
+    async def rsync_task_extend(self, data, context):
         data['extra'] = list(filter(None, re.split(r"\s+", data["extra"])))
         for field in ('mode', 'direction'):
             data[field] = data[field].upper()
         Cron.convert_db_format_to_schedule(data)
+        data['job'] = context['jobs'].get(data['id'])
         return data
+
+    @private
+    async def rsync_task_extend_context(self):
+        jobs = {}
+        for j in await self.middleware.call("core.get_jobs", [("method", "=", "rsynctask.run")],
+                                            {"order_by": ["id"]}):
+            try:
+                task_id = int(j["arguments"][0])
+            except (IndexError, ValueError):
+                continue
+
+            if task_id in jobs and jobs[task_id]["state"] == "RUNNING":
+                continue
+
+            jobs[task_id] = j
+
+        return {
+            "jobs": jobs,
+        }
 
     @private
     async def validate_rsync_task(self, data, schema):
@@ -578,10 +599,18 @@ class RsyncTaskService(CRUDService):
 
         if cp.returncode != 0:
             if not rsync['quiet']:
-                self.middleware.call_sync('alert.oneshot_create', 'RsyncFailed', rsync)
+                self.middleware.call_sync('alert.oneshot_create', 'RsyncFailed', {
+                    'id': rsync['id'],
+                    'direction': rsync['direction'],
+                    'path': rsync['path'],
+                })
 
             raise CallError(
                 f'rsync command returned {cp.returncode}. Check logs for further information.'
             )
         elif not rsync['quiet']:
-            self.middleware.call_sync('alert.oneshot_create', 'RsyncSuccess', rsync)
+            self.middleware.call_sync('alert.oneshot_create', 'RsyncSuccess', {
+                'id': rsync['id'],
+                'direction': rsync['direction'],
+                'path': rsync['path'],
+            })
