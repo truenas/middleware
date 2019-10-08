@@ -63,6 +63,9 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
+        'zerotier': [
+            {'type': 'py', 'path': 'zerotier'},
+        ],
         'user': [
             {'type': 'mako', 'path': 'group'},
             {'type': 'mako', 'path': 'master.passwd'},
@@ -97,7 +100,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'nsswitch.conf'},
             {'type': 'mako', 'path': 'local/nslcd.conf',
                 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
-            {'type': 'mako', 'path': 'local/nss_ldap.conf'},
         ],
         'pam': [
             {'type': 'mako', 'path': os.path.join('pam.d', f)}
@@ -228,7 +230,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure']
+    SKIP_LIST = ['system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure', 'zerotier']
 
     class Config:
         private = True

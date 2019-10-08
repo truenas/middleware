@@ -406,6 +406,14 @@ class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
         ))
 
 
+def lsjson_error_excerpt(error):
+    excerpt = error.split("\n")[0]
+    excerpt = re.sub(r"^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} ", "", excerpt)
+    excerpt = excerpt.replace("Failed to create file system for \"remote:\": ", "")
+    excerpt = excerpt.replace("ERROR : : error listing: ", "")
+    return excerpt
+
+
 class CloudCredentialModel(sa.Model):
     __tablename__ = 'system_cloudcredentials'
 
@@ -440,7 +448,7 @@ class CredentialsService(CRUDService):
             if proc.returncode == 0:
                 return {"valid": True}
             else:
-                return {"valid": False, "error": proc.stderr}
+                return {"valid": False, "error": proc.stderr, "excerpt": lsjson_error_excerpt(proc.stderr)}
 
     @accepts(Dict(
         "cloud_sync_credentials_create",
@@ -899,7 +907,7 @@ class CloudSyncService(CRUDService):
             if proc.returncode == 0:
                 return json.loads(proc.stdout)
             else:
-                raise CallError(proc.stderr)
+                raise CallError(proc.stderr, extra={"excerpt": lsjson_error_excerpt(proc.stderr)})
 
     @item_method
     @accepts(

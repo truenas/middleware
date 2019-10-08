@@ -641,7 +641,7 @@ class DiskService(CRUDService):
 
     @accepts(
         List('devices', items=[Str('device')]),
-        Str('passphrase', null=True, private=True),
+        Str('passphrase', null=True, default=None, private=True),
     )
     @job(pipes=['input'])
     def decrypt(self, job, devices, passphrase=None):
@@ -791,7 +791,7 @@ class DiskService(CRUDService):
         cp = await run(['smartctl', '-a'] + smartctl_args, check=False, stderr=subprocess.STDOUT,
                        encoding='utf8', errors='ignore')
         if (cp.returncode & 0b11) != 0:
-            self.logger.warning('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
+            self.logger.trace('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
             return None
 
         return get_temperature(cp.stdout)

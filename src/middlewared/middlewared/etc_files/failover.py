@@ -6,6 +6,7 @@
 
 from collections import defaultdict
 from subprocess import Popen, PIPE
+import itertools
 import json
 import os
 import shutil
@@ -51,10 +52,17 @@ def render(service, middleware):
     with open(failover_json, 'w+') as fh:
         fh.write(json.dumps(data))
 
+    ips = list(map(
+        lambda x: x['address'],
+        itertools.chain(*[
+            i['failover_virtual_aliases'] for i in interfaces
+        ]),
+    ))
+
     # Cook data['ips'] which will be empty in the single
     # head case.  Bug #16116
-    if not data['ips']:
-        data['ips'] = ['0.0.0.0']
+    if not ips:
+        ips = ['0.0.0.0']
 
     ssh = middleware.call_sync('ssh.config')
     general = middleware.call_sync('system.general.config')
@@ -70,7 +78,7 @@ block drop in quick proto udp from any to $ips\n''' % {
             'ssh': ssh['tcpport'],
             'http': general['ui_port'],
             'https': general['ui_httpsport'],
-            'ips': ', '.join(data['ips']),
+            'ips': ', '.join(ips),
         })
 
     Popen(['pfctl', '-f', '/etc/pf.conf.block'], stderr=PIPE, stdout=PIPE).communicate()
@@ -83,5 +91,5 @@ block drop in quick proto udp from any to $ips\n''' % {
                 notify 100 {
                    match "system"   "CARP";
                    match "subsystem"      "[0-9]+@[0-9a-z]+";
-                   action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py \$subsystem \$type";
+                   action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py $subsystem $type";
                 };'''))

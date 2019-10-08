@@ -719,14 +719,16 @@ class ReplicationService(CRUDService):
         return sorted(set(naming_schemas))
 
     @accepts(
-        Path("dataset", empty=False),
+        List("datasets", empty=False, items=[
+            Path("dataset", empty=False),
+        ]),
         List("naming_schema", empty=False, items=[
             Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])
         ]),
         Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
         Int("ssh_credentials", null=True, default=None),
     )
-    async def count_eligible_manual_snapshots(self, dataset, naming_schema, transport, ssh_credentials):
+    async def count_eligible_manual_snapshots(self, datasets, naming_schema, transport, ssh_credentials):
         """
         Count how many existing snapshots of `dataset` match `naming_schema`.
 
@@ -745,7 +747,7 @@ class ReplicationService(CRUDService):
                 ]
             }
         """
-        return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", dataset, naming_schema,
+        return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", datasets, naming_schema,
                                           transport, ssh_credentials)
 
     # Legacy pair support

@@ -96,8 +96,8 @@ def render(service, middleware):
                 'bind_dn': ldap['binddn'],
                 'bind_pw': ldap['bindpw'],
                 'server': ldap['hostname'],
-                'userbase': ldap['usersuffix'],
-                'groupbase': ldap['groupsuffix'],
+                'userbase': ldap['basedn'],
+                'groupbase': ldap['basedn'],
             })
 
         cf_contents.append("\tldap auth method = %s\n" % "simple")

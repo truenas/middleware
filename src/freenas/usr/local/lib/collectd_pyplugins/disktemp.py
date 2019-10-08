@@ -35,19 +35,29 @@ collectd.info('Loading "disktemp" python plugin')
 
 
 class DiskTemp(object):
+    initialized = False
+
     def init(self):
         collectd.info('Initializing "disktemp" plugin')
-        with Client() as c:
-            self.disks = [disk['devname'] for disk in c.call('disk.query', [['devname', '!=', None],
-                                                                            ['togglesmart', '=', True],
-                                                                            # Polling for disk temperature does
-                                                                            # not allow them to go to sleep
-                                                                            # automatically
-                                                                            ['hddstandby', '=', 'ALWAYS ON']])]
-            self.smartctl_args = c.call('disk.smartctl_args_for_devices', self.disks)
-            self.powermode = c.call('smart.config')['powermode']
+        try:
+            with Client() as c:
+                self.disks = [disk['devname'] for disk in c.call('disk.query', [['devname', '!=', None],
+                                                                                ['togglesmart', '=', True],
+                                                                                # Polling for disk temperature does
+                                                                                # not allow them to go to sleep
+                                                                                # automatically
+                                                                                ['hddstandby', '=', 'ALWAYS ON']])]
+                self.smartctl_args = c.call('disk.smartctl_args_for_devices', self.disks)
+                self.powermode = c.call('smart.config')['powermode']
+        except Exception:
+            collectd.error(traceback.format_exc())
+        else:
+            self.initialized = True
 
     def read(self):
+        if not self.initialized:
+            self.init()
+
         try:
             with Client() as c:
                 temperatures = c.call('disk.temperatures', self.disks, self.powermode, self.smartctl_args)

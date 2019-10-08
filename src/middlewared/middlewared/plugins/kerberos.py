@@ -256,7 +256,7 @@ class KerberosService(ConfigService):
                 if ad_kinit.returncode != 0:
                     raise CallError(f"kinit for domain [{ad['domainname']}] with principal [{ad['kerberos_principal']}] failed: {ad_kinit.stderr.decode()}")
             else:
-                principal = f'{ad["bindname"]}@{ad["domainname"]}'
+                principal = f'{ad["bindname"]}@{ad["domainname"].upper()}'
                 ad_kinit = await Popen(
                     ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE

@@ -39,6 +39,8 @@ CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
+RE_MEMWIDTH = re.compile(r'Total Width:\s*(\d*)')
+
 
 class SystemAdvancedModel(sa.Model):
     __tablename__ = 'system_advanced'
@@ -484,6 +486,9 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
+        ecc_results = RE_MEMWIDTH.findall((await run(['dmidecode', '-t', '17'])).stdout.decode())
+
         return {
             'version': self.version(),
             'buildtime': buildtime,
@@ -503,6 +508,7 @@ class SystemService(Service):
             'datetime': datetime.utcnow(),
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
+            'ecc_memory': all(dimm_module.strip() == '72' for dimm_module in (ecc_results or ['']))
         }
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
@@ -949,24 +955,22 @@ class SystemGeneralService(ConfigService):
         verrors = ValidationErrors()
 
         language = data.get('language')
-        if language:
-            system_languages = self.language_choices()
-            if language not in system_languages.keys():
-                verrors.add(
-                    f'{schema}.language',
-                    f'Specified "{language}" language not found, kindly correct it'
-                )
+        system_languages = self.language_choices()
+        if language not in system_languages.keys():
+            verrors.add(
+                f'{schema}.language',
+                f'Specified "{language}" language unknown. Please select a valid language.'
+            )
 
         # kbd map needs work
 
         timezone = data.get('timezone')
-        if timezone:
-            timezones = await self.timezone_choices()
-            if timezone not in timezones:
-                verrors.add(
-                    f'{schema}.timezone',
-                    'Please select a correct timezone'
-                )
+        timezones = await self.timezone_choices()
+        if timezone not in timezones:
+            verrors.add(
+                f'{schema}.timezone',
+                'Timezone not known. Please select a valid timezone.'
+            )
 
         ip_addresses = await self.middleware.call(
             'interface.ip_in_use'
@@ -1053,11 +1057,11 @@ class SystemGeneralService(ConfigService):
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
             Str('kbdmap'),
-            Str('language'),
+            Str('language', empty=False),
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
                                      'F_INFO', 'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
-            Str('timezone'),
+            Str('timezone', empty=False),
             Bool('crash_reporting', null=True),
             Bool('usage_collection', null=True),
             update=True,

@@ -27,7 +27,7 @@ import time
 from functools import partial
 
 from middlewared.client import Client, ClientException, CallTimeout
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, NOT_PROVIDED
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
@@ -36,7 +36,6 @@ from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore import DatastoreService
 from middlewared.plugins.system import SystemService
-from middlewared.utils import run
 
 BUFSIZE = 256
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
@@ -257,7 +256,8 @@ class FailoverService(ConfigService):
         'failover_update',
         Bool('disabled'),
         Int('timeout'),
-        Bool('master'),
+        Bool('master', null=True),
+        update=True,
     ))
     async def do_update(self, data):
         """
@@ -266,15 +266,19 @@ class FailoverService(ConfigService):
         `disabled` as false will turn off HA.
         `master` sets the state of current node. Standby node will have the opposite value.
         """
-        master = data.pop('master', None)
+        master = data.pop('master', NOT_PROVIDED)
 
         old = await self.middleware.call('datastore.config', 'system.failover')
 
         new = old.copy()
         new.update(data)
 
-        if master is not None:
-            data['master_node'] = await self._master_node(master)
+        if master is not NOT_PROVIDED:
+            if master is None:
+                # The node making the call is the one we want to make it MASTER by default
+                data['master_node'] = await self.middleware.call('failover.node')
+            else:
+                data['master_node'] = await self._master_node(master)
 
         verrors = ValidationErrors()
         if new['disabled'] is False:
@@ -287,13 +291,13 @@ class FailoverService(ConfigService):
 
         await self.middleware.call('datastore.update', 'system.failover', new['id'], new)
 
-        if await self.middleware.call('pool.query', [('status', '!=', 'OFFLINE')]):
-            cp = await run('fenced', '--force', check=False)
-            # 6 = Already running
-            if cp.returncode not in (0, 6):
-                raise CallError(f'fenced failed with exit code {cp.returncode}.')
-
         await self.middleware.call('service.restart', 'failover')
+
+        if old['disabled'] is False and new['disabled']:
+            if new['master']:
+                await self.middleware.call('failover.force_master')
+            else:
+                await self.middleware.call('failover.call_remote', 'failover.force_master')
 
         return await self.config()
 
@@ -507,7 +511,7 @@ class FailoverService(ConfigService):
         elif hardware == 'ULTIMATE':
             return ['igb1']
         elif hardware == 'BHYVE':
-            return ['em0']
+            return ['vtnet1']
         return []
 
     @private
@@ -797,14 +801,32 @@ class FailoverService(ConfigService):
 
     @private
     async def mismatch_disks(self):
-        local_disks = set(filter(
-            lambda x: x.startswith('da'),
-            (await self.middleware.call('device.get_info', 'DISK')).keys(),
-        ))
-        remote_disks = set(filter(
-            lambda x: x.startswith('da'),
-            (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).keys(),
-        ))
+        """
+        On HA systems, da#'s can be different
+        between controllers. This isn't common
+        but does occurr. An example being when
+        a customer powers off passive storage controller
+        for maintenance and also powers off an expansion shelf.
+        The active controller will reassign da#'s appropriately
+        depending on which shelf was powered off. When passive
+        storage controller comes back online, the da#'s will be
+        different than what's on the active controller because the
+        kernel reassigned those da#'s. This function now grabs
+        the serial numbers of each disk and calculates the difference
+        between the controllers. Instead of returning da#'s to alerts,
+        this returns serial numbers.
+        This accounts for 2 scenarios:
+         1. the quantity of disks are different between
+            controllers
+         2. the quantity of disks are the same between
+            controllers but serials do not match
+        """
+        local_disks = set(v['ident'] for k, v in
+            (await self.middleware.call('device.get_info', 'DISK')).items()
+            if not k.startswith(('ada', 'vtbd')))
+        remote_disks = set(v['ident'] for k, v in
+            (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).items()
+            if not k.startswith(('ada', 'vtbd')))
         return {
             'missing_local': sorted(remote_disks - local_disks),
             'missing_remote': sorted(local_disks - remote_disks),
@@ -1108,8 +1130,12 @@ class FailoverService(ConfigService):
 
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
-            remote.call('update.destroy_upload_location')
-            remote_path = remote.call('update.create_upload_location')
+            if legacy_upgrade:
+                namespace = 'notifier'
+            else:
+                namespace = 'update'
+            remote.call(f'{namespace}.destroy_upload_location')
+            remote_path = remote.call(f'{namespace}.create_upload_location')
 
             # Only send files to standby:
             # 1. Its a manual upgrade which means it needs to go through master first
@@ -1246,7 +1272,7 @@ class FailoverService(ConfigService):
         if not self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False):
             return False
         try:
-            assert self.call_remote('system.ping') == 'pong'
+            assert self.call_remote('core.ping') == 'pong'
         except Exception:
             return True
         local_version = self.middleware.call_sync('system.version')
@@ -1258,7 +1284,6 @@ class FailoverService(ConfigService):
         local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
         if local_bootenv:
             remote_bootenv = self.call_remote('bootenv.query', [[
-                ('active', 'rin', 'R'),
                 ('id', '=', local_bootenv[0]['id']),
             ]])
             if remote_bootenv:

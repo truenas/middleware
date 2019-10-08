@@ -1,11 +1,15 @@
 import asyncio
 import enum
 import errno
+import fcntl
 import grp
 import ldap
 import ldap.sasl
+import os
 import pwd
 import socket
+import struct
+import sys
 
 from ldap.controls import SimplePagedResultsControl
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
@@ -13,6 +17,8 @@ from middlewared.service import job, private, ConfigService, ValidationError
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+
+_int32 = struct.Struct('!i')
 
 
 class DSStatus(enum.Enum):
@@ -27,6 +33,93 @@ class SSL(enum.Enum):
     NOSSL = 'OFF'
     USESSL = 'ON'
     USETLS = 'START_TLS'
+
+
+class NlscdConst(enum.Enum):
+    NSLCD_CONF_PATH = '/usr/local/etc/nslcd.conf'
+    NSLCD_PIDFILE = '/var/run/nslcd.pid'
+    NSLCD_SOCKET = '/var/run/nslcd/nslcd.ctl'
+    NSLCD_VERSION = 0x00000002
+    NSLCD_ACTION_STATE_GET = 0x00010002
+    NSLCD_RESULT_BEGIN = 1
+    NSLCD_RESULT_END = 2
+
+
+class NslcdClient(object):
+    def __init__(self, action):
+        # set up the socket (store in class to avoid closing it)
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        fcntl.fcntl(self.sock, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+        # connect to nslcd
+        self.sock.connect(NlscdConst.NSLCD_SOCKET.value)
+        # self.sock.setblocking(1)
+        self.fp = os.fdopen(self.sock.fileno(), 'r+b', 0)
+        # write a request header with a request code
+        self.action = action
+        self.write_int32(NlscdConst.NSLCD_VERSION.value)
+        self.write_int32(action)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.close()
+
+    def write(self, value):
+        self.fp.write(value)
+
+    def write_int32(self, value):
+        self.write(_int32.pack(value))
+
+    def write_bytes(self, value):
+        self.write_int32(len(value))
+        self.write(value)
+
+    def read(self, size):
+        value = b''
+        while len(value) < size:
+            data = self.fp.read(size - len(value))
+            if not data:
+                raise IOError('NSLCD protocol cut short')
+            value += data
+        return value
+
+    def read_int32(self):
+        return _int32.unpack(self.read(_int32.size))[0]
+
+    def read_bytes(self):
+        return self.read(self.read_int32())
+
+    def read_string(self):
+        value = self.read_bytes()
+        if sys.version_info[0] >= 3:
+            value = value.decode('utf-8')
+        return value
+
+    def get_response(self):
+        # complete the request if required and check response header
+        if self.action:
+            # flush the stream
+            self.fp.flush()
+            # read and check response version number
+            if self.read_int32() != NlscdConst.NSLCD_VERSION.value:
+                raise IOError('NSLCD protocol error')
+            if self.read_int32() != self.action:
+                raise IOError('NSLCD protocol error')
+            # reset action to ensure that it is only the first time
+            self.action = None
+        # get the NSLCD_RESULT_* marker and return it
+        return self.read_int32()
+
+    def close(self):
+        if hasattr(self, 'fp'):
+            try:
+                self.fp.close()
+            except IOError:
+                pass
+
+    def __del__(self):
+        self.close()
 
 
 class LDAPQuery(object):
@@ -87,18 +180,35 @@ class LDAPQuery(object):
                 res = None
                 ldap.protocol_version = ldap.VERSION3
                 ldap.set_option(ldap.OPT_REFERRALS, 0)
-                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
+                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, self.ldap['dns_timeout'])
 
                 if SSL(self.ldap['ssl']) != SSL.NOSSL:
-                    ldap.set_option(ldap.OPT_X_TLS_ALLOW, 1)
+                    if self.ldap['certificate']:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_CERTFILE,
+                            f"/etc/certificates/{self.ldap['certificate']}.crt"
+                        )
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_KEYFILE,
+                            f"/etc/certificates/{self.ldap['certificate']}.key"
+                        )
+
                     ldap.set_option(
                         ldap.OPT_X_TLS_CACERTFILE,
-                        f"/etc/certificates/{self.ldap['certificate']['cert_name']}.crt"
+                        '/etc/ssl/truenas_cacerts.pem'
                     )
-                    ldap.set_option(
-                        ldap.OPT_X_TLS_REQUIRE_CERT,
-                        ldap.OPT_X_TLS_ALLOW
-                    )
+                    if self.ldap['validate_certificates']:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_REQUIRE_CERT,
+                            ldap.OPT_X_TLS_DEMAND
+                        )
+                    else:
+                        ldap.set_option(
+                            ldap.OPT_X_TLS_REQUIRE_CERT,
+                            ldap.OPT_X_TLS_ALLOW
+                        )
+
+                    ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
                 if SSL(self.ldap['ssl']) == SSL.USETLS:
                     try:
@@ -111,15 +221,27 @@ class LDAPQuery(object):
 
                 if self.ldap['anonbind']:
                     try:
-                        res = self._handle._handle.simple_bind_s()
+                        res = self._handle.simple_bind_s()
                         break
                     except Exception as e:
                         saved_simple_error = e
                         self.logger.debug('Anonymous bind failed: %s' % e)
                         continue
 
+                if self.ldap['certificate']:
+                    try:
+                        res = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
+                        if self.ad['verbose_logging']:
+                            self.logger.debug('Successfully bound to [%s] using client certificate.', uri)
+                        break
+                    except Exception as e:
+                        saved_simple_error = e
+                        self.logger.debug('SASL EXTERNAL bind failed.', exc_info=True)
+                        continue
+
                 if self.ldap['kerberos_principal']:
                     try:
+                        self._handle.set_option(ldap.OPT_X_SASL_NOCANON, 1)
                         self._handle.sasl_gssapi_bind_s()
                         res = True
                         break
@@ -266,11 +388,6 @@ class LDAPModel(sa.Model):
     ldap_binddn = sa.Column(sa.String(256))
     ldap_bindpw = sa.Column(sa.String(120))
     ldap_anonbind = sa.Column(sa.Boolean())
-    ldap_usersuffix = sa.Column(sa.String(120))
-    ldap_groupsuffix = sa.Column(sa.String(120))
-    ldap_passwordsuffix = sa.Column(sa.String(120))
-    ldap_machinesuffix = sa.Column(sa.String(120))
-    ldap_sudosuffix = sa.Column(sa.String(120))
     ldap_ssl = sa.Column(sa.String(120))
     ldap_timeout = sa.Column(sa.Integer())
     ldap_dns_timeout = sa.Column(sa.Integer())
@@ -282,6 +399,7 @@ class LDAPModel(sa.Model):
     ldap_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     ldap_kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id'), index=True, nullable=True)
     ldap_kerberos_principal = sa.Column(sa.String(255))
+    ldap_validate_certificates = sa.Column(sa.Boolean())
     ldap_disable_freenas_cache = sa.Column(sa.Boolean())
 
 
@@ -294,7 +412,7 @@ class LDAPService(ConfigService):
 
     @private
     async def ldap_extend(self, data):
-        data['hostname'] = data['hostname'].split()
+        data['hostname'] = data['hostname'].split(',')
         for key in ["ssl", "idmap_backend", "schema"]:
             data[key] = data[key].upper()
 
@@ -329,13 +447,9 @@ class LDAPService(ConfigService):
         Str('binddn'),
         Str('bindpw', private=True),
         Bool('anonbind', default=False),
-        Str('usersuffix'),
-        Str('groupsuffix'),
-        Str('passwordsuffix'),
-        Str('machinesuffix'),
-        Str('sudosuffix'),
         Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
         Int('certificate', null=True),
+        Bool('validate_certificates', default=True),
         Bool('disable_freenas_cache'),
         Int('timeout', default=30),
         Int('dns_timeout', default=5),
@@ -350,8 +464,62 @@ class LDAPService(ConfigService):
     ))
     async def do_update(self, data):
         """
-        Update LDAP Service Configuration.
+        `hostname` list of ip addresses or hostnames of LDAP servers with
+        which to communicate in order of preference. Failover only occurs
+        if the current LDAP server is unresponsive.
 
+        `basedn` specifies the default base DN to use when performing ldap
+        operations. The base must be specified as a Distinguished Name in LDAP
+        format.
+
+        `binddn` specifies the default bind DN to use when performing ldap
+        operations. The bind DN must be specified as a Distinguished Name in
+        LDAP format.
+
+        `anonbind` use anonymous authentication.
+
+        `ssl` establish SSL/TLS-protected connections to the LDAP server(s).
+        GSSAPI signing is disabled on SSL/TLS-protected connections if
+        kerberos authentication is used.
+
+        `certificate` LDAPs client certificate to be used for certificate-
+        based authentication.
+
+        `validate_certificates` specifies whether to perform checks on server
+        certificates in a TLS session. If enabled, TLS_REQCERT demand is set.
+        The server certificate is requested. If no certificate is provided or
+        if a bad certificate is provided, the session is immediately terminated.
+        If disabled, TLS_REQCERT allow is set. The server certificate is
+        requested, but all errors are ignored.
+
+        `kerberos_realm` in which the server is located. This parameter is
+        only required for SASL GSSAPI authentication to the remote LDAP server.
+
+        `kerberos_principal` kerberos principal to use for SASL GSSAPI
+        authentication to the remote server. If `kerberos_realm` is specified
+        without a keytab, then the `binddn` and `bindpw` are used to
+        perform to obtain the ticket necessary for GSSAPI authentication.
+
+        `timeout` specifies  a  timeout  (in  seconds) after which calls to
+        synchronous LDAP APIs will abort if no response is received.
+
+        `dns_timeout` specifies the timeout (in seconds) after which the
+        poll(2)/select(2) following a connect(2) returns in case of no activity
+        for openldap. For nslcd this specifies the time limit (in seconds) to
+        use when connecting to the directory server. This directly impacts the
+        length of time that the LDAP service tries before failing over to
+        a secondary LDAP URI.
+
+        `idmap_backend` provides a plugin interface for Winbind to use varying
+        backends to store SID/uid/gid mapping tables. The correct setting
+        depends on the environment in which the NAS is deployed. The default is
+        to use idmap_ldap with the same LDAP configuration as the main LDAP
+        service.
+
+        `has_samba_schema` determines whether to configure samba to use the
+        ldapsam passdb backend to provide SMB access to LDAP users. This feature
+        requires the presence of Samba LDAP schema extensions on the remote
+        LDAP server.
         """
         must_reload = False
         old = await self.config()
@@ -522,6 +690,18 @@ class LDAPService(ConfigService):
     async def __set_state(self, state):
         await self.middleware.call('cache.put', 'LDAP_State', state.name)
 
+    @private
+    def get_nslcd_status(self):
+        """
+        Returns internal nslcd state. nslcd will preferentially use the first LDAP server,
+        and only failover if the current LDAP server is unreachable.
+        """
+        with NslcdClient(NlscdConst.NSLCD_ACTION_STATE_GET.value) as ctx:
+            while ctx.get_response() == NlscdConst.NSLCD_RESULT_BEGIN.value:
+                nslcd_status = ctx.read_string()
+
+        return nslcd_status
+
     @accepts()
     async def get_state(self):
         """
@@ -612,7 +792,7 @@ class LDAPService(ConfigService):
     @job(lock='fill_ldap_cache')
     def fill_cache(self, job, force=False):
         user_next_index = group_next_index = 100000000
-        cache_data = {'users': [], 'groups': []}
+        cache_data = {'users': {}, 'groups': {}}
 
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
@@ -635,7 +815,7 @@ class LDAPService(ConfigService):
             if is_local_user:
                 continue
 
-            cache_data['users'].append({u.pw_name: {
+            cache_data['users'].update({u.pw_name: {
                 'id': user_next_index,
                 'uid': u.pw_uid,
                 'username': u.pw_name,
@@ -663,7 +843,7 @@ class LDAPService(ConfigService):
             if is_local_user:
                 continue
 
-            cache_data['groups'].append({g.gr_name: {
+            cache_data['groups'].update({g.gr_name: {
                 'id': group_next_index,
                 'gid': g.gr_gid,
                 'group': g.gr_name,

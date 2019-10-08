@@ -30,6 +30,8 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list, run
 from middlewared.validators import IpInUse, MACAddr
 
+from pkg_resources import parse_version
+
 from collections import deque, Iterable
 
 BRANCH_REGEX = re.compile(r'\d+\.\d-RELEASE')
@@ -142,22 +144,22 @@ def common_validation(middleware, options, update=False, jail=None, schema='opti
 
 class PluginService(CRUDService):
 
-    class Config:
-        process_pool = True
-
-    OFFICIAL_REPOSITORIES = {
-        'IXSYSTEMS': {
-            'name': 'iXsystems',
-            'git_repository': 'https://github.com/freenas/iocage-ix-plugins.git',
-        }
-    }
-
     @accepts()
     async def official_repositories(self):
         """
         List officially supported plugin repositories.
         """
-        return self.OFFICIAL_REPOSITORIES
+        is_fn = await self.middleware.call('system.is_freenas')
+        return {
+            'IXSYSTEMS': {
+                'name': 'iXsystems',
+                'git_repository': f'https://github.com/{"freenas" if is_fn else "truenas"}/iocage-ix-plugins.git'
+            }
+        }
+
+    @private
+    def default_repo(self):
+        return self.middleware.call_sync('plugin.official_repositories')['IXSYSTEMS']['git_repository']
 
     @filterable
     def query(self, filters=None, options=None):
@@ -222,12 +224,13 @@ class PluginService(CRUDService):
             'plugin_create',
             Str('plugin_name', required=True),
             Str('jail_name', required=True),
-            List('props', default=[], empty=False),
+            List('props', default=[]),
             Str('branch', default=None, null=True),
-            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+            Str('plugin_repository', empty=False),
         )
     )
-    def do_create(self, data):
+    @job(lock=lambda args: f'plugin_create_{args[0]["jail_name"]}')
+    def do_create(self, job, data):
         """
         Create a Plugin.
 
@@ -244,11 +247,7 @@ class PluginService(CRUDService):
         `branch` is the FreeNAS repository branch to use as the base for the `plugin_repository`. The default is to
         use the current system version. Example: 11.3-RELEASE.
         """
-        return self.middleware.call_sync('plugin._do_create', data)
-
-    @private
-    @job(lock=lambda args: f'plugin_create_{args[0]["jail_name"]}')
-    def _do_create(self, job, data):
+        data['plugin_repository'] = data.get('plugin_repository') or self.default_repo()
         self.middleware.call_sync('jail.check_dataset_existence')
         verrors = ValidationErrors()
         branch = data.pop('branch') or self.get_version()
@@ -326,16 +325,13 @@ class PluginService(CRUDService):
         Dict(
             'available_plugin_options',
             Bool('cache', default=True),
-            Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+            Str('plugin_repository', empty=False),
             Str('branch'),
         )
     )
     @job(
         lock=lambda args: 'available_plugins_{}_{}'.format(
-            args[0].get('branch') if args else None,
-            args[0]['plugin_repository'] if args and args[0].get(
-                'plugin_repository'
-            ) else 'https://github.com/freenas/iocage-ix-plugins.git'
+            (args or [{}])[0].get('branch'), (args or [{}])[0].get('plugin_repository')
         )
     )
     def available(self, job, options):
@@ -343,7 +339,29 @@ class PluginService(CRUDService):
         List available plugins which can be fetched for `plugin_repository`.
         """
         self.middleware.call_sync('jail.check_dataset_existence')
-        branch = options.get('branch') or self.get_version()
+        default_branch = self.get_version()
+        default_repo = self.default_repo()
+        branch = options.get('branch') or default_branch
+        options['plugin_repository'] = options.get('plugin_repository') or default_repo
+        # If user passes no parameters we assume defaults for branch and repo which are evaluated dynamically,
+        # however if the same defaults are passed to the function, job locking can't have the latter call wait
+        # because it is unable to retrieve defaults from schema layer or access our dynamic defaults
+        # In this case we decide to wait for a job which might already be running with the specified branch/repo
+        if options['cache'] and branch == default_branch and options['plugin_repository'] == default_repo:
+            plugin_avail_job = self.middleware.call_sync(
+                'core.get_jobs', [
+                    ['method', '=', 'plugin.available'],
+                    ['state', 'in', ['RUNNING', 'WAITING']],
+                    ['arguments', '=', []],
+                    ['id', '!=', job.id]
+                ]
+            )
+            if plugin_avail_job:
+                wait_job = self.middleware.call_sync(
+                    'core.job_wait', plugin_avail_job[0]['id']
+                )
+                wait_job.wait_sync()
+
         iocage = ioc.IOCage(skip_jails=True)
         if options['cache']:
             with contextlib.suppress(KeyError):
@@ -370,26 +388,22 @@ class PluginService(CRUDService):
                     ['arguments', '=', [branch, options['plugin_repository']]],
                 ]
             )
-            error = None
-            plugins_versions_data = {}
-            if plugins_versions_data_job:
-                try:
-                    plugins_versions_data = self.middleware.call_sync(
-                        'core.job_wait', plugins_versions_data_job[0]['id'], job=True
-                    )
-                except CallError as e:
-                    error = str(e)
-            else:
-                try:
-                    plugins_versions_data = self.middleware.call_sync(
-                        'plugin.retrieve_plugin_versions', branch, options['plugin_repository'], job=True
-                    )
-                except Exception as e:
-                    error = e
 
-            if error:
+            if plugins_versions_data_job:
+                plugins_versions_data_job = self.middleware.call_sync(
+                    'core.job_wait', plugins_versions_data_job[0]['id']
+                )
+            else:
+                plugins_versions_data_job = self.middleware.call_sync(
+                    'plugin.retrieve_plugin_versions', branch, options['plugin_repository']
+                )
+            plugins_versions_data_job.wait_sync()
+
+            if plugins_versions_data_job.error:
                 # Let's not make the failure fatal
-                self.middleware.logger.debug(f'Retrieving plugins version failed: {error}')
+                self.middleware.logger.debug(f'Retrieving plugins version failed: {plugins_versions_data_job.error}')
+            else:
+                plugins_versions_data = plugins_versions_data_job.result
 
         for plugin in resource_list:
             plugin.update({
@@ -404,19 +418,19 @@ class PluginService(CRUDService):
 
         return resource_list
 
-    @periodic(interval=86400)
     @private
     @accepts(
         Str('branch', null=True, default=None),
-        Str('plugin_repository', default='https://github.com/freenas/iocage-ix-plugins.git'),
+        Str('plugin_repository', null=True, default=None, empty=False),
     )
     @job(
         lock=lambda args: f'retrieve_plugin_versions_{args[0] if args else "None"}_'
-        f'{args[1] if len(args) == 2 else "https://github.com/freenas/iocage-ix-plugins.git"}'
+        f'{args[1] if len(args) == 2 else None}'
     )
     def retrieve_plugin_versions(self, job, branch, plugin_repository):
         # FIXME: Please fix the job arguments once job can correctly retrieve parameters from the schema layer
         branch = branch or self.get_version()
+        plugin_repository = plugin_repository or self.default_repo()
         try:
             pool = self.middleware.call_sync('jail.get_activated_pool')
         except CallError:
@@ -440,10 +454,44 @@ class PluginService(CRUDService):
         )
         return plugins
 
+    @private
+    def retrieve_plugin_index(self, options):
+        self.middleware.call_sync('jail.check_dataset_existence')
+        branch = options['branch'] or self.get_version()
+        plugins = IOCPlugin(branch=branch, git_repository=options['plugin_repository'])
+        if not os.path.exists(plugins.git_destination) or options['refresh']:
+            plugins.pull_clone_git_repo()
+        return plugins.retrieve_plugin_index_data(plugins.git_destination)
+
     @accepts(
-        Str('repository', default='https://github.com/freenas/iocage-ix-plugins.git')
+        Dict(
+            'options',
+            Bool('refresh', default=False),
+            Str('plugin', required=True),
+            Str('branch', default=None, null=True),
+            Str('plugin_repository', emtpy=False)
+        )
+    )
+    def defaults(self, options):
+        """
+        Retrieve default properties specified for `plugin` in the plugin's manifest.
+
+        When `refresh` is specified, `plugin_repository` is updated before retrieving plugin's default properties.
+        """
+        options['plugin_repository'] = options.get('plugin_repository') or self.default_repo()
+        index = self.retrieve_plugin_index(options)
+        if options['plugin'] not in index:
+            raise CallError(f'{options["plugin"]} not found')
+        return {
+            'plugin': options['plugin'],
+            'properties': {**IOCPlugin.DEFAULT_PROPS, **index[options['plugin']].get('properties', {})}
+        }
+
+    @accepts(
+        Str('repository', default=None, null=True, empty=False)
     )
     async def branches_choices(self, repository):
+        repository = repository or self.default_repo()
 
         cp = await run(['git', 'ls-remote', repository], check=False, encoding='utf8')
         if cp.returncode:
@@ -453,6 +501,70 @@ class PluginService(CRUDService):
             branch: {'official': bool(BRANCH_REGEX.match(branch))}
             for branch in re.findall(r'refs/heads/(.*)', cp.stdout)
         }
+
+    @periodic(interval=86400)
+    @private
+    def periodic_plugin_update(self):
+        plugin_available = self.middleware.call_sync('plugin.available')
+        plugin_available.wait_sync()
+        self.middleware.call_sync('plugin.plugin_updates')
+
+    @private
+    @job(lock='plugin_updates')
+    def plugin_updates(self, job):
+        installed_plugins = self.query()
+        if not installed_plugins:
+            return
+
+        # There are 2 cases, one is where we check the version of the installed plugin with available, next is
+        # we check the plugin manifest version with the installed plugin's manifest. If any of the case is true,
+        # we raise an alert for the plugin update
+        git_repos = {}
+        for plugin in installed_plugins:
+            repo = plugin['plugin_repository']
+            if repo not in git_repos:
+                git_repos[repo] = self.middleware.call_sync('plugin.available', {'plugin_repository': repo})
+
+        for repo, job_obj in git_repos.items():
+            job_obj.wait_sync()
+            if job_obj.error:
+                self.middleware.logger.error(f'Failed to retrieve plugin versions for {repo}: {job_obj.error}')
+                git_repos[repo] = []
+            else:
+                git_repos[repo] = job_obj.result
+
+        for plugin in installed_plugins:
+            repo = plugin['plugin_repository']
+            plugin_dict = (list(filter(lambda d: d['name'] == plugin['plugin'], git_repos[repo])) or [{}])[0]
+            if not plugin_dict or any(
+                plugin_dict[k] == 'N/A' or plugin[k] == 'N/A' for k in ('version', 'revision', 'epoch')
+            ):
+                # We don't support update alerts for plugins without a valid port
+                continue
+
+            ioc_plugin = IOCPlugin(
+                plugin=plugin['plugin'], git_repository=repo, branch=self.get_version()
+            )
+            try:
+                plugin_git_manifest = ioc_plugin._load_plugin_json()
+            except Exception:
+                continue
+
+            try:
+                plugin_manifest = ioc_plugin._plugin_json_file()
+            except Exception:
+                plugin_manifest = {}
+
+            # We construct our version in the following manner
+            # epoch!manifest_version.version.revision
+            available_version = f'{plugin_dict["epoch"]}!{plugin_git_manifest["revision"]}.' \
+                                f'{plugin_dict["version"]}.{plugin_dict["revision"]}'
+            plugin_version = f'{plugin["epoch"]}!{plugin_manifest.get("revision", "0")}.' \
+                             f'{plugin["version"]}.{plugin["revision"]}'
+
+            if parse_version(plugin_version) < parse_version(available_version):
+                # Raise an alert please, this plugin needs an update
+                self.middleware.call_sync('alert.oneshot_create', 'PluginUpdate', plugin)
 
     @private
     def get_version(self):
@@ -524,9 +636,6 @@ class PluginService(CRUDService):
 
 class JailService(CRUDService):
 
-    class Config:
-        process_pool = True
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -562,7 +671,7 @@ class JailService(CRUDService):
                 for jail in jail_dicts:
                     jail = list(jail.values())[0]
                     jail['id'] = jail['host_hostuuid']
-                    if jail['dhcp'] == 'on':
+                    if jail['dhcp']:
                         uuid = jail['host_hostuuid']
 
                         if jail['state'] == 'up':
@@ -659,7 +768,8 @@ class JailService(CRUDService):
             Bool('https', default=True)
         )
     )
-    async def do_create(self, options):
+    @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
+    async def do_create(self, job, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
         # create call BUT since jail creation may or may not involve
@@ -669,12 +779,6 @@ class JailService(CRUDService):
         # are not jobs as yet, so I settle on making this a wrapper around
         # the main job that calls this and return said job's id instead of
         # the created jail's id
-
-        return await self.middleware.call('jail.create_job', options)
-
-    @private
-    @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
-    def create_job(self, job, options):
         verrors = ValidationErrors()
         uuid = options["uuid"]
 
@@ -719,9 +823,12 @@ class JailService(CRUDService):
             not os.path.isdir(f'{iocroot}/releases/{release}') and not template and not empty
         ):
             job.set_progress(50, f'{release} missing, calling fetch')
-            self.middleware.call_sync(
-                'jail.fetch', {"release": release, "https": https}, job=True
+            fetch_job = self.middleware.call_sync(
+                'jail.fetch', {"release": release, "https": https}
             )
+            fetch_job.wait_sync()
+            if fetch_job.error:
+                raise CallError(fetch_job.error)
 
         err, msg = iocage.create(
             release,
@@ -740,7 +847,7 @@ class JailService(CRUDService):
 
         job.set_progress(100, f'Created: {uuid}')
 
-        return True
+        return self.middleware.call_sync('jail._get_instance', uuid)
 
     @item_method
     @accepts(
@@ -962,9 +1069,11 @@ class JailService(CRUDService):
                     'plugin_name': name,
                     'props': options['props'],
                 })
-            return self.middleware.call_sync(
-                'core.job_wait', plugin_job, job=True
-            )
+            plugin_job.wait_sync()
+            if plugin_job.error:
+                raise CallError(plugin_job.error)
+
+            return plugin_job.result
         else:
             # We are fetching a release in this case
             iocage = ioc.IOCage(callback=progress_callback, silent=False)
@@ -1247,6 +1356,9 @@ class JailService(CRUDService):
 
         def progress_callback(content, exception):
             msg = content['message'].strip('\n')
+            if content['level'] == 'EXCEPTION':
+                raise exception(msg)
+
             msg_queue.append(msg)
             final_msg = '\n'.join(msg_queue)
 
@@ -1289,13 +1401,20 @@ class JailService(CRUDService):
         started = False
 
         if status:
-            self.middleware.call_sync('jail.stop', jail, job=True)
+            stop_job = self.middleware.call_sync('jail.stop', jail)
+            stop_job.wait_sync()
+            if stop_job.error:
+                raise CallError(stop_job.error)
+
             started = True
 
         IOCImage().export_jail(uuid, path, compression_algo=options['compression_algorithm'].lower())
 
         if started:
-            self.middleware.call_sync('jail.start', jail, job=True)
+            start_job = self.middleware.call_sync('jail.start', jail)
+            start_job.wait_sync()
+            if start_job.error:
+                raise CallError(start_job.error)
 
         return True
 

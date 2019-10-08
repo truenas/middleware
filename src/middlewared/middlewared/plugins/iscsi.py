@@ -215,7 +215,7 @@ class ISCSIPortalService(CRUDService):
         """
         Returns possible choices for `listen.ip` attribute of portal create and update.
         """
-        choices = {'0.0.0.0': '0.0.0.0'}
+        choices = {'0.0.0.0': '0.0.0.0', '[::]': '[::]'}
         alua = (await self.middleware.call('iscsi.global.config'))['alua']
         if alua:
             # If ALUA is enabled we actually want to show the user the IPs of each node
@@ -233,6 +233,8 @@ class ISCSIPortalService(CRUDService):
 
         else:
             for i in await self.middleware.call('interface.query'):
+                for alias in i.get('failover_virtual_aliases') or []:
+                    choices[alias['address']] = alias['address']
                 for alias in i['aliases']:
                     choices[alias['address']] = alias['address']
         return choices
@@ -241,10 +243,7 @@ class ISCSIPortalService(CRUDService):
         if not data['listen']:
             verrors.add(f'{schema}.listen', 'At least one listen entry is required.')
         else:
-            system_ips = [
-                ip['address'] for ip in await self.middleware.call('interface.ip_in_use')
-            ]
-            system_ips.extend(['0.0.0.0', '::'])
+            system_ips = await self.listen_ip_choices()
             new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
             for i in data['listen']:
                 filters = [
@@ -633,6 +632,8 @@ class iSCSITargetExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
+        await self._service_change('iscsitarget', 'reload')
+
         return await self._get_instance(data['id'])
 
     @accepts(
@@ -672,6 +673,8 @@ class iSCSITargetExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
+        await self._service_change('iscsitarget', 'reload')
+
         return await self._get_instance(id)
 
     @accepts(
@@ -696,9 +699,12 @@ class iSCSITargetExtentService(CRUDService):
         for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]]):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
 
-        return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id
-        )
+        try:
+            return await self.middleware.call(
+                'datastore.delete', self._config.datastore, id
+            )
+        finally:
+            await self._service_change('iscsitarget', 'reload')
 
     @private
     async def validate(self, data):
@@ -732,6 +738,7 @@ class iSCSITargetExtentService(CRUDService):
         extent_type = data['type'].upper()
         extent_rpm = data['rpm'].upper()
 
+        data['disk'] = None
         if extent_type != 'FILE':
             # ZVOL and HAST are type DISK
             extent_type = 'DISK'
@@ -740,6 +747,8 @@ class iSCSITargetExtentService(CRUDService):
             disk = await self.middleware.call('disk.query', [['identifier', '=', data['path']]])
             if disk:
                 data['disk'] = disk[0]['name']
+            else:
+                data['disk'] = data['path']
         else:
             extent_size = data['filesize']
 
@@ -958,8 +967,6 @@ class iSCSITargetExtentService(CRUDService):
                 extent_size = data['filesize']
 
                 await run(['truncate', '-s', str(extent_size), path])
-
-            await self._service_change('iscsitarget', 'reload')
         else:
             data['path'] = disk
 
@@ -1611,7 +1618,6 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
         lun_ids = []
         for attachment in attachments:
             for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
-                await self.middleware.call('datastore.delete', 'services.iscsitargettoextent', te['id'])
                 lun_ids.append(te['lunid'])
 
             await self.middleware.call('datastore.update', 'services.iscsitargetextent', attachment['id'],
