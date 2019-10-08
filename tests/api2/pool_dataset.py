@@ -150,19 +150,21 @@ def test_13_delete_dataset():
 def test_14_creating_zvol():
     global results, payload
     payload = {
-        "name": zvol,
+        'name': zvol,
         'type': 'VOLUME',
-        "volsize": 163840,
-        "volblocksize": '16K'
+        'volsize': 163840,
+        'volblocksize': '16K'
     }
     results = POST(f"/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('key', ['name', 'type', 'volsize'])
+@pytest.mark.parametrize('key', ['name', 'type', 'volsize', 'volblocksize'])
 def test_15_verify_output_(key):
     if key == 'volsize':
         assert results.json()[key]['parsed'] == payload[key], results.text
+    elif key == 'volblocksize':
+        assert results.json()[key]['value'] == payload[key], results.text
     else:
         assert results.json()[key] == payload[key], results.text
 
@@ -173,14 +175,42 @@ def test_16_query_zvol_by_id():
     assert isinstance(results.json(), dict)
 
 
-@pytest.mark.parametrize('key', ['name', 'type', 'volsize'])
+@pytest.mark.parametrize('key', ['name', 'type', 'volsize', 'volblocksize'])
 def test_17_verify_the_query_zvol_output_(key):
     if key == 'volsize':
         assert results.json()[key]['parsed'] == payload[key], results.text
+    elif key == 'volblocksize':
+        assert results.json()[key]['value'] == payload[key], results.text
     else:
         assert results.json()[key] == payload[key], results.text
 
 
-def test_18_delete_zvol():
+def test_18_update_zvol():
+    global payload, results
+    payload = {
+        'volsize': 163840,
+        'comments': 'testing zvol'
+    }
+    result = PUT(f'/pool/dataset/id/{zvol_url}/', payload)
+    assert result.status_code == 200, result.text
+
+
+@pytest.mark.parametrize('key', ['volsize'])
+def test_19_verify_update_zvol_output_(key):
+    assert results.json()[key]['parsed'] == payload[key], results.text
+
+
+def test_20_query_zvol_changes_by_id():
+    global results
+    results = GET(f'/pool/dataset/id/{zvol_url}')
+    assert isinstance(results.json(), dict)
+
+
+@pytest.mark.parametrize('key', ['comments', 'volsize'])
+def test_21_verify_the_query_change_zvol_output_(key):
+    assert results.json()[key]['parsed'] == payload[key], results.text
+
+
+def test_22_delete_zvol():
     result = DELETE(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 200, result.text
