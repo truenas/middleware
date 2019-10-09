@@ -8,6 +8,7 @@ from alembic.operations.batch import ApplyBatchImpl, BatchOperationsImpl
 from sqlalchemy import engine_from_config, ForeignKeyConstraint, pool
 
 import middlewared
+from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.sqlalchemy import JSON, Model
 from middlewared.utils import load_modules
 
@@ -31,6 +32,7 @@ list(load_modules("/usr/local/lib/middlewared_truenas/plugins"))
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+DATABASE_URL = f"sqlite:///{os.environ.get('FREENAS_DATABASE', FREENAS_DATABASE)}"
 
 
 @Operations.register_operation("drop_references")
@@ -105,9 +107,8 @@ def run_migrations_offline():
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url,
+        url=DATABASE_URL,
         target_metadata=target_metadata,
         render_as_batch=True,
         literal_binds=True,
@@ -127,8 +128,10 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    ini_config = config.get_section(config.config_ini_section)
+    ini_config["sqlalchemy.url"] = DATABASE_URL
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        ini_config,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

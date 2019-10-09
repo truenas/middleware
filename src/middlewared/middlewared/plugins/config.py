@@ -181,6 +181,7 @@ class ConfigService(Service):
         factorydb = f'{FREENAS_DATABASE}.factory'
         if os.path.exists(factorydb):
             os.unlink(factorydb)
+
         cp = subprocess.run(
             ['migrate93', '-f', factorydb],
             capture_output=True,
@@ -188,13 +189,19 @@ class ConfigService(Service):
         if cp.returncode != 0:
             job.logs_fd.write(cp.stderr)
             raise CallError('Factory reset has failed.')
+
         cp = subprocess.run(
-            [
-                'python', '/usr/local/www/freenasUI/manage.py', 'migrate', '--noinput',
-                '--fake-initial',
-            ],
+            ['migrate113', '-f', factorydb],
             capture_output=True,
-            env={'FREENAS_FACTORY': '1', **os.environ},
+        )
+        if cp.returncode != 0:
+            job.logs_fd.write(cp.stderr)
+            raise CallError('Factory reset has failed.')
+
+        cp = subprocess.run(
+            ['migrate'],
+            env=dict(os.environ, FREENAS_DATABASE=factorydb),
+            capture_output=True,
         )
         if cp.returncode != 0:
             job.logs_fd.write(cp.stderr)

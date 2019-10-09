@@ -1,0 +1,3 @@
+#!/bin/sh
+LIBDIR=/usr/local/lib/migrate113/src
+exec /usr/local/bin/python $LIBDIR/main.py $*
