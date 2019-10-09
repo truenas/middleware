@@ -451,6 +451,12 @@ class ServiceService(CRUDService):
         await self._service("ix-ctld", "start", quiet=True, **kwargs)
         await self._service("ctld", "reload", **kwargs)
 
+    async def _started_collectd(self, **kwargs):
+        res = False
+        if not await self._system("/usr/local/etc/rc.d/collectd onestatus"):
+            res = True
+        return res, []
+
     async def _start_collectd(self, **kwargs):
         await self._service("ix-collectd", "start", quiet=True, **kwargs)
         await self._service("collectd", "restart", **kwargs)
