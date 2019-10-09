@@ -27,7 +27,7 @@ import time
 from functools import partial
 
 from middlewared.client import Client, ClientException, CallTimeout
-from middlewared.schema import accepts, Bool, Dict, Int, NOT_PROVIDED
+from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
