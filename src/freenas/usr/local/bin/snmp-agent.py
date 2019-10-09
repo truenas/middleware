@@ -3,9 +3,9 @@
 from collections import defaultdict
 import copy
 from datetime import datetime, timedelta
+from decimal import Decimal
 import os
 import subprocess
-import sys
 import threading
 import time
 
@@ -17,8 +17,199 @@ import sysctl
 
 from middlewared.client import Client
 
-sys.path.append("/usr/local/www")
-from freenasUI.tools.arc_summary import get_Kstat, get_arc_efficiency
+
+def get_Kstat():
+    Kstats = [
+        "hw.pagesize",
+        "hw.physmem",
+        "kern.maxusers",
+        "vm.kmem_map_free",
+        "vm.kmem_map_size",
+        "vm.kmem_size",
+        "vm.kmem_size_max",
+        "vm.kmem_size_min",
+        "vm.kmem_size_scale",
+        "vm.stats",
+        "vm.swap_total",
+        "vm.swap_reserved",
+        "kstat.zfs",
+        "vfs.zfs"
+    ]
+
+    Kstat = {}
+    for kstat in Kstats:
+        for s in sysctl.filter(kstat):
+            if isinstance(s.value, int):
+                Kstat[s.name] = Decimal(s.value)
+            elif isinstance(s.value, bytearray):
+                Kstat[s.name] = Decimal(int.from_bytes(s.value, "little"))
+
+    return Kstat
+
+
+def get_arc_efficiency(Kstat):
+    output = {}
+
+    if "vfs.zfs.version.spa" not in Kstat:
+        return
+
+    arc_hits = Kstat["kstat.zfs.misc.arcstats.hits"]
+    arc_misses = Kstat["kstat.zfs.misc.arcstats.misses"]
+    demand_data_hits = Kstat["kstat.zfs.misc.arcstats.demand_data_hits"]
+    demand_data_misses = Kstat["kstat.zfs.misc.arcstats.demand_data_misses"]
+    demand_metadata_hits = Kstat[
+        "kstat.zfs.misc.arcstats.demand_metadata_hits"
+    ]
+    demand_metadata_misses = Kstat[
+        "kstat.zfs.misc.arcstats.demand_metadata_misses"
+    ]
+    mfu_ghost_hits = Kstat["kstat.zfs.misc.arcstats.mfu_ghost_hits"]
+    mfu_hits = Kstat["kstat.zfs.misc.arcstats.mfu_hits"]
+    mru_ghost_hits = Kstat["kstat.zfs.misc.arcstats.mru_ghost_hits"]
+    mru_hits = Kstat["kstat.zfs.misc.arcstats.mru_hits"]
+    prefetch_data_hits = Kstat["kstat.zfs.misc.arcstats.prefetch_data_hits"]
+    prefetch_data_misses = Kstat[
+        "kstat.zfs.misc.arcstats.prefetch_data_misses"
+    ]
+    prefetch_metadata_hits = Kstat[
+        "kstat.zfs.misc.arcstats.prefetch_metadata_hits"
+    ]
+    prefetch_metadata_misses = Kstat[
+        "kstat.zfs.misc.arcstats.prefetch_metadata_misses"
+    ]
+
+    anon_hits = arc_hits - (
+        mfu_hits + mru_hits + mfu_ghost_hits + mru_ghost_hits
+    )
+    arc_accesses_total = (arc_hits + arc_misses)
+    demand_data_total = (demand_data_hits + demand_data_misses)
+    prefetch_data_total = (prefetch_data_hits + prefetch_data_misses)
+    real_hits = (mfu_hits + mru_hits)
+
+    output["total_accesses"] = fHits(arc_accesses_total)
+    output["cache_hit_ratio"] = {
+        'per': fPerc(arc_hits, arc_accesses_total),
+        'num': fHits(arc_hits),
+    }
+    output["cache_miss_ratio"] = {
+        'per': fPerc(arc_misses, arc_accesses_total),
+        'num': fHits(arc_misses),
+    }
+    output["actual_hit_ratio"] = {
+        'per': fPerc(real_hits, arc_accesses_total),
+        'num': fHits(real_hits),
+    }
+    output["data_demand_efficiency"] = {
+        'per': fPerc(demand_data_hits, demand_data_total),
+        'num': fHits(demand_data_total),
+    }
+
+    if prefetch_data_total > 0:
+        output["data_prefetch_efficiency"] = {
+            'per': fPerc(prefetch_data_hits, prefetch_data_total),
+            'num': fHits(prefetch_data_total),
+        }
+
+    if anon_hits > 0:
+        output["cache_hits_by_cache_list"] = {}
+        output["cache_hits_by_cache_list"]["anonymously_used"] = {
+            'per': fPerc(anon_hits, arc_hits),
+            'num': fHits(anon_hits),
+        }
+
+    output["most_recently_used"] = {
+        'per': fPerc(mru_hits, arc_hits),
+        'num': fHits(mru_hits),
+    }
+    output["most_frequently_used"] = {
+        'per': fPerc(mfu_hits, arc_hits),
+        'num': fHits(mfu_hits),
+    }
+    output["most_recently_used_ghost"] = {
+        'per': fPerc(mru_ghost_hits, arc_hits),
+        'num': fHits(mru_ghost_hits),
+    }
+    output["most_frequently_used_ghost"] = {
+        'per': fPerc(mfu_ghost_hits, arc_hits),
+        'num': fHits(mfu_ghost_hits),
+    }
+
+    output["cache_hits_by_data_type"] = {}
+    output["cache_hits_by_data_type"]["demand_data"] = {
+        'per': fPerc(demand_data_hits, arc_hits),
+        'num': fHits(demand_data_hits),
+    }
+    output["cache_hits_by_data_type"]["prefetch_data"] = {
+        'per': fPerc(prefetch_data_hits, arc_hits),
+        'num': fHits(prefetch_data_hits),
+    }
+    output["cache_hits_by_data_type"]["demand_metadata"] = {
+        'per': fPerc(demand_metadata_hits, arc_hits),
+        'num': fHits(demand_metadata_hits),
+    }
+    output["cache_hits_by_data_type"]["prefetch_metadata"] = {
+        'per': fPerc(prefetch_metadata_hits, arc_hits),
+        'num': fHits(prefetch_metadata_hits),
+    }
+
+    output["cache_misses_by_data_type"] = {}
+    output["cache_misses_by_data_type"]["demand_data"] = {
+        'per': fPerc(demand_data_misses, arc_misses),
+        'num': fHits(demand_data_misses),
+    }
+    output["cache_misses_by_data_type"]["prefetch_data"] = {
+        'per': fPerc(prefetch_data_misses, arc_misses),
+        'num': fHits(prefetch_data_misses),
+    }
+    output["cache_misses_by_data_type"]["demand_metadata"] = {
+        'per': fPerc(demand_metadata_misses, arc_misses),
+        'num': fHits(demand_metadata_misses),
+    }
+    output["cache_misses_by_data_type"]["prefetch_metadata"] = {
+        'per': fPerc(prefetch_metadata_misses, arc_misses),
+        'num': fHits(prefetch_metadata_misses),
+    }
+
+    return output
+
+
+def fHits(Hits=0, Decimal=2):
+    khits = (10 ** 3)
+    mhits = (10 ** 6)
+    bhits = (10 ** 9)
+    thits = (10 ** 12)
+    qhits = (10 ** 15)
+    Qhits = (10 ** 18)
+    shits = (10 ** 21)
+    Shits = (10 ** 24)
+
+    if Hits >= Shits:
+        return str("%0." + str(Decimal) + "f") % (Hits / Shits) + "S"
+    elif Hits >= shits:
+        return str("%0." + str(Decimal) + "f") % (Hits / shits) + "s"
+    elif Hits >= Qhits:
+        return str("%0." + str(Decimal) + "f") % (Hits / Qhits) + "Q"
+    elif Hits >= qhits:
+        return str("%0." + str(Decimal) + "f") % (Hits / qhits) + "q"
+    elif Hits >= thits:
+        return str("%0." + str(Decimal) + "f") % (Hits / thits) + "t"
+    elif Hits >= bhits:
+        return str("%0." + str(Decimal) + "f") % (Hits / bhits) + "b"
+    elif Hits >= mhits:
+        return str("%0." + str(Decimal) + "f") % (Hits / mhits) + "m"
+    elif Hits >= khits:
+        return str("%0." + str(Decimal) + "f") % (Hits / khits) + "k"
+    elif Hits == 0:
+        return str("%d" % 0)
+    else:
+        return str("%d" % Hits)
+
+
+def fPerc(lVal=0, rVal=0, Decimal=2):
+    if rVal > 0:
+        return str("%0." + str(Decimal) + "f") % (100 * (lVal / rVal)) + "%"
+    else:
+        return str("%0." + str(Decimal) + "f") % 100 + "%"
 
 
 def calculate_allocation_units(*args):
