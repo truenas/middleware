@@ -143,26 +143,28 @@ cfg_file.close()
 
 def get_tests():
     rv = []
+    sv = []
     ev = []
     skip_tests = []
 
     if api == '1.0':
         skip_tests = ['bootenv', 'alerts', 'smarttest']
         apidir = 'api1/'
-        rv = ['network', 'ssh', 'storage']
+        sv = ['network', 'ssh', 'storage']
     elif api == '2.0':
         skip_tests = ['volume']
         apidir = 'api2/'
-        rv = ['interfaces', 'network', 'ssh', 'pool', 'user']
+        sv = ['interfaces', 'network', 'ssh', 'pool', 'user']
         ev = ['update', 'delete_interfaces']
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
                 not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
-            if (filename not in skip_tests and filename not in rv and
+            if (filename not in skip_tests and filename not in sv and
                     filename not in ev):
                 rv.append(filename)
-    return rv + ev
+    rv.sort()
+    return sv + rv + ev
 
 
 if api == "1.0":
