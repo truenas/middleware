@@ -169,15 +169,10 @@ class PluginService(CRUDService):
         options = options or {}
         self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
-        resource_list = iocage.list('all', plugin=True)
+        resource_list = iocage.list('all', plugin=True, plugin_data=True)
         pool = IOCJson().json_get_value('pool')
         iocroot = IOCJson(pool).json_get_value('iocroot')
         plugin_dir_path = os.path.join(iocroot, '.plugins')
-        plugin_jails = {
-            j['host_hostuuid']: j for j in self.middleware.call_sync(
-                'jail.query', [['type', 'in', ['plugin', 'pluginv2']]]
-            )
-        }
 
         index_jsons = {}
         for repo in os.listdir(plugin_dir_path) if os.path.exists(plugin_dir_path) else []:
@@ -193,21 +188,18 @@ class PluginService(CRUDService):
                 k: v if v != '-' else None
                 for k, v in zip((
                     'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4',
-                    'ip6', 'template', 'admin_portal', 'doc_url'
+                    'ip6', 'template', 'admin_portal', 'doc_url', 'plugin', 'plugin_repository'
                 ), plugin)
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
             plugin_info = plugin_output.read_text().strip() if plugin_output.is_file() else None
 
-            plugin_name = plugin_jails[plugin_dict['name']]['plugin_name']
-            plugin_repo = self.convert_repository_to_path(plugin_jails[plugin_dict['name']]['plugin_repository'])
+            plugin_repo = self.convert_repository_to_path(plugin_dict['plugin_repository'])
             plugin_dict.update({
                 'id': plugin_dict['name'],
                 'plugin_info': plugin_info,
-                'plugin': plugin_name,
-                'plugin_repository': plugin_jails[plugin_dict['name']]['plugin_repository'],
                 **self.get_local_plugin_version(
-                    plugin_name,
+                    plugin_dict['plugin'],
                     index_jsons.get(plugin_repo), iocroot, plugin_dict['name']
                 )
             })
