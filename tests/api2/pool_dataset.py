@@ -108,7 +108,7 @@ def test_08_get_filesystem_getacl():
 
 
 @pytest.mark.parametrize('key', ['tag', 'type', 'perms', 'flags'])
-def test_09_verify_filesystem_getacl_(key):
+def test_09_verify_filesystem_getacl(key):
     assert results.json()['acl'][0][key] == default_acl[0][key], results.text
     assert results.json()['acl'][1][key] == default_acl[1][key], results.text
 
@@ -147,7 +147,12 @@ def test_13_delete_dataset():
     assert result.status_code == 200, result.text
 
 
-def test_14_creating_zvol():
+def test_14_verify_the_id_dataset_does_not_exist():
+    result = GET(f'/pool/dataset/id/{dataset_url}/')
+    assert result.status_code == 404, result.text
+
+
+def test_15_creating_zvol():
     global results, payload
     payload = {
         'name': zvol,
@@ -160,7 +165,7 @@ def test_14_creating_zvol():
 
 
 @pytest.mark.parametrize('key', ['name', 'type', 'volsize', 'volblocksize'])
-def test_15_verify_output_(key):
+def test_16_verify_output(key):
     if key == 'volsize':
         assert results.json()[key]['parsed'] == payload[key], results.text
     elif key == 'volblocksize':
@@ -169,14 +174,14 @@ def test_15_verify_output_(key):
         assert results.json()[key] == payload[key], results.text
 
 
-def test_16_query_zvol_by_id():
+def test_17_query_zvol_by_id():
     global results
     results = GET(f'/pool/dataset/id/{zvol_url}')
     assert isinstance(results.json(), dict)
 
 
 @pytest.mark.parametrize('key', ['name', 'type', 'volsize', 'volblocksize'])
-def test_17_verify_the_query_zvol_output_(key):
+def test_18_verify_the_query_zvol_output(key):
     if key == 'volsize':
         assert results.json()[key]['parsed'] == payload[key], results.text
     elif key == 'volblocksize':
@@ -185,7 +190,7 @@ def test_17_verify_the_query_zvol_output_(key):
         assert results.json()[key] == payload[key], results.text
 
 
-def test_18_update_zvol():
+def test_19_update_zvol():
     global payload, results
     payload = {
         'volsize': 163840,
@@ -196,21 +201,26 @@ def test_18_update_zvol():
 
 
 @pytest.mark.parametrize('key', ['volsize'])
-def test_19_verify_update_zvol_output_(key):
+def test_20_verify_update_zvol_output(key):
     assert results.json()[key]['parsed'] == payload[key], results.text
 
 
-def test_20_query_zvol_changes_by_id():
+def test_21_query_zvol_changes_by_id():
     global results
     results = GET(f'/pool/dataset/id/{zvol_url}')
     assert isinstance(results.json(), dict)
 
 
 @pytest.mark.parametrize('key', ['comments', 'volsize'])
-def test_21_verify_the_query_change_zvol_output_(key):
+def test_22_verify_the_query_change_zvol_output(key):
     assert results.json()[key]['parsed'] == payload[key], results.text
 
 
-def test_22_delete_zvol():
+def test_23_delete_zvol():
     result = DELETE(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 200, result.text
+
+
+def test_24_verify_the_id_zvol_does_not_exist():
+    result = GET(f'/pool/dataset/id/{zvol_url}/')
+    assert result.status_code == 404, result.text
