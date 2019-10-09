@@ -432,6 +432,12 @@ class ServiceService(CRUDService):
         await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "reload", **kwargs)
 
+    async def _started_collectd(self, **kwargs):
+        res = False
+        if not await self._system("/usr/local/etc/rc.d/collectd onestatus"):
+            res = True
+        return res, []
+
     async def _start_collectd(self, **kwargs):
         if not await self.started('rrdcached'):
             # Let's ensure that before we start collectd, rrdcached is always running
