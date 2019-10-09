@@ -36,15 +36,6 @@ def GET(testpath, **optional):
     return getit
 
 
-def GET_USER(username):
-    for uid in range(1, 10000):
-        results = GET("/account/users/%s/" % uid)
-        if results.json()["bsdusr_username"] == username:
-            userid = uid
-            break
-    return userid
-
-
 def POST(testpath, payload=None, **optional):
     if "api" in optional:
         api_v = optional.get('api', None)
