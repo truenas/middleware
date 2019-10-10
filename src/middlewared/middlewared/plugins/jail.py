@@ -147,12 +147,20 @@ class PluginService(CRUDService):
         List officially supported plugin repositories.
         """
         is_fn = await self.middleware.call('system.is_freenas')
-        return {
+        repos = {
             'IXSYSTEMS': {
                 'name': 'iXsystems',
                 'git_repository': f'https://github.com/{"freenas" if is_fn else "truenas"}/iocage-ix-plugins.git'
             }
         }
+        if is_fn:
+            repos.update({
+                'COMMUNITY': {
+                    'name': 'Community',
+                    'git_repository': 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
+                }
+            })
+        return repos
 
     @private
     def default_repo(self):
@@ -338,6 +346,10 @@ class PluginService(CRUDService):
         return data
 
     @periodic(interval=86400)
+    async def retrieve_versions_for_repos(self):
+        for repo in (await self.official_repositories()).values():
+            await self.middleware.call('plugin.available', {'plugin_repository': repo['git_repository']})
+
     @accepts(
         Dict(
             'available_plugin_options',
