@@ -36,5 +36,5 @@ async def render(service, middleware):
 
     for keytab in keytabs:
         db_keytabfile = base64.b64decode(keytab['file'].encode())
-        db_keytabname = keytab['name']
+        db_keytabname = keytab['id']
         await write_keytab(db_keytabname, db_keytabfile)
