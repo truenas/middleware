@@ -16,8 +16,6 @@ DISK = re.compile(r"\s*(?P<slot>[0-9]+)\s+(?P<enclosure>[0-9]+)\s+")
 
 
 async def annotate_devices_with_areca_enclosure(devices):
-    logger.trace = logger.error
-
     areca_devices = [device for device in devices.values() if device["driver"].startswith("arcmsr")]
 
     for device in areca_devices:

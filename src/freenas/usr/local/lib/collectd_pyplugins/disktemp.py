@@ -58,6 +58,9 @@ class DiskTemp(object):
         if not self.initialized:
             self.init()
 
+        if not self.initialized:
+            return
+
         try:
             with Client() as c:
                 temperatures = c.call('disk.temperatures', self.disks, self.powermode, self.smartctl_args)

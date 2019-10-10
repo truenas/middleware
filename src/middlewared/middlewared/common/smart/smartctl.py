@@ -1,3 +1,4 @@
+from asyncio import Lock
 import logging
 import re
 import subprocess
@@ -11,6 +12,8 @@ from .areca import annotate_devices_with_areca_enclosure
 logger = logging.getLogger(__name__)
 
 SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
+
+get_smartctl_args__areca_lock = Lock()
 
 
 async def get_smartctl_args(middleware, devices, disk):
@@ -34,8 +37,11 @@ async def get_smartctl_args(middleware, devices, disk):
 
     # Areca Controller support(at least the 12xx family, possibly others)
     if driver.startswith("arcmsr"):
-        if "enclosure" not in device:
-            await annotate_devices_with_areca_enclosure(devices)
+        # As we might be doing this in parallel, we don't want to have N `annotate_devices_with_areca_enclosure`
+        # calls doing the same thing.
+        async with get_smartctl_args__areca_lock:
+            if "enclosure" not in device:
+                await annotate_devices_with_areca_enclosure(devices)
 
         dev_id = lun_id + 1 + channel_no * 8
         dev = f"areca,{dev_id}"
