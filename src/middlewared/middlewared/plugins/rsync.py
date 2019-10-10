@@ -495,6 +495,7 @@ class RsyncTaskService(CRUDService):
         Update Rsync Task of `id`.
         """
         old = await self.query(filters=[('id', '=', id)], options={'get': True})
+        old.pop('job')
 
         new = old.copy()
         new.update(data)
