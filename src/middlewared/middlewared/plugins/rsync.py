@@ -96,10 +96,9 @@ class RsyncModService(CRUDService):
 
         for entity in ('user', 'group'):
             value = data.get(entity)
-            if value not in map(
-                lambda e: e[entity if entity == 'group' else 'username'],
-                await self.middleware.call(f'{entity}.query')
-            ):
+            try:
+                await self.middleware.call(f'{entity}.get_{entity}_object', value)
+            except Exception:
                 verrors.add(
                     f'{schema_name}.{entity}',
                     f'Please specify a valid {entity}'
