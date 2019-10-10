@@ -523,7 +523,6 @@ class PoolService(CRUDService):
     @accepts(Dict(
         'pool_create',
         Str('name', required=True),
-        Bool('encryption', default=False),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
         Dict(
             'topology',
@@ -560,8 +559,6 @@ class PoolService(CRUDService):
 
         `topology` is a object which requires at least one `data` entry.
         All of `data` entries (vdevs) require to be of the same type.
-
-        `encryption` when set to true means that the pool is encrypted.
 
         `deduplication` when set to ON or VERIFY makes sure that no block of data is duplicated in the pool. When
         VERIFY is specified, if two blocks have similar signatures, byte to byte comparison is performed to ensure that
@@ -626,14 +623,7 @@ class PoolService(CRUDService):
         if verrors:
             raise verrors
 
-        if data['encryption']:
-            enc_key = str(uuid.uuid4())
-            enc_keypath = os.path.join(GELI_KEYPATH, f'{enc_key}.key')
-        else:
-            enc_key = ''
-            enc_keypath = None
-
-        enc_disks = await self.__format_disks(job, disks, enc_keypath)
+        formatted_disks = await self.__format_disks(job, disks)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -680,8 +670,6 @@ class PoolService(CRUDService):
             pool = {
                 'name': data['name'],
                 'guid': z_pool['guid'],
-                'encrypt': int(data['encryption']),
-                'encryptkey': enc_key,
             }
             pool_id = await self.middleware.call(
                 'datastore.insert',
@@ -690,7 +678,7 @@ class PoolService(CRUDService):
                 {'prefix': 'vol_'},
             )
 
-            await self.__save_encrypteddisks(pool_id, enc_disks, disks_cache)
+            await self.__save_encrypteddisks(pool_id, formatted_disks, disks_cache)
 
             await self.middleware.call(
                 'datastore.insert',
@@ -925,7 +913,7 @@ class PoolService(CRUDService):
             )
         return disks_cache
 
-    async def __format_disks(self, job, disks, enc_keypath, passphrase=None):
+    async def __format_disks(self, job, disks, enc_keypath=None, passphrase=None):
         """
         Format all disks, putting all freebsd-zfs partitions created
         into their respectives vdevs.
