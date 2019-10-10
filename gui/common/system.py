@@ -92,8 +92,8 @@ def get_freenas_var_ds_config(f, var):
     ds_config = []
     if not os.path.exists(f):
         log.debug(
-           "Config file [%s]. Unable to get value for [%s].",
-           f, var
+            "Config file [%s]. Unable to get value for [%s].",
+            f, var
         )
         return False
 
