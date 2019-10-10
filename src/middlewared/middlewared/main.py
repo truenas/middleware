@@ -1001,9 +1001,20 @@ class Middleware(LoadPluginsMixin):
     async def run_in_thread(self, method, *args, **kwargs):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         try:
-            return await self.loop.run_in_executor(executor, functools.partial(method, *args, **kwargs))
+            result = await self.loop.run_in_executor(executor, self._run_in_thread_wrap, method, args, kwargs)
         finally:
             executor.shutdown(wait=False)
+
+        if isinstance(result, Exception):
+            raise result
+        else:
+            return result
+
+    def _run_in_thread_wrap(self, f, args, kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            return e
 
     def pipe(self):
         return Pipe(self)
