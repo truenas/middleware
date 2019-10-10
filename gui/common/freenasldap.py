@@ -631,7 +631,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                     if kp:
                         kwargs['kerberos_principal'] = kp
                         kwargs['keytab_principal'] = kp.principal_name
-                        kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.keytab_name
+                        kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.id
 
                 else:
                     if newkey not in kwargs:
@@ -1604,7 +1604,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                     if kp:
                         kwargs['kerberos_principal'] = kp
                         kwargs['keytab_principal'] = kp.principal_name
-                        kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.keytab_name
+                        kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.id
                         # self.flags |= FLAGS_SASL_GSSAPI
 
                 else:

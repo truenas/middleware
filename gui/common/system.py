@@ -88,8 +88,32 @@ def get_sw_year():
     return str(datetime.now().year)
 
 
+def get_freenas_var_ds_config(f, var):
+    """
+    False gets picked up in get_freenas_var()
+    and results in default value (if it exists)
+    being set.
+    """
+    ds_config = []
+    with open(f, 'r') as conf:
+        ds_config.extend(list(conf))
+
+    for entry in ds_config:
+        if entry.startswith(var):
+            return entry.lstrip(f'{var}=')[:-1]
+
+    return False
+
+
 def get_freenas_var_by_file(f, var):
     assert f and var
+    ds_config = [
+        '/etc/directoryservice/ActiveDirectory/config',
+        '/etc/directoryservice/LDAP/config'
+    ]
+
+    if f in ds_config:
+        return get_freenas_var_ds_config(f, var)
 
     pipe = os.popen('. "%s"; echo "${%s}"' % (f, var, ))
     try:
