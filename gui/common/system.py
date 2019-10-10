@@ -89,12 +89,14 @@ def get_sw_year():
 
 
 def get_freenas_var_ds_config(f, var):
-    """
-    False gets picked up in get_freenas_var()
-    and results in default value (if it exists)
-    being set.
-    """
     ds_config = []
+    if not os.path.exists(f):
+        log.debug(
+           "Config file [%s]. Unable to get value for [%s].",
+           f, var
+        )
+        return False
+
     with open(f, 'r') as conf:
         ds_config.extend(list(conf))
 
