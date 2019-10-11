@@ -677,17 +677,22 @@ class PoolService(CRUDService):
         if not os.path.isdir(cachefile_dir):
             os.makedirs(cachefile_dir)
 
-        job.set_progress(90, 'Creating ZFS Pool')
-        z_pool = await self.middleware.call('zfs.pool.create', {
-            'name': data['name'],
-            'vdevs': vdevs,
-            'options': options,
-            'fsoptions': fsoptions,
-        })
-
-        job.set_progress(95, 'Setting pool options')
         pool_id = None
         try:
+            await self.middleware.call(
+                'pool.dataset.insert_or_update', {'name': data['name'], 'encryption_key': encryption_dict.get('key')}
+            )
+
+            job.set_progress(90, 'Creating ZFS Pool')
+            z_pool = await self.middleware.call('zfs.pool.create', {
+                'name': data['name'],
+                'vdevs': vdevs,
+                'options': options,
+                'fsoptions': fsoptions,
+            })
+
+            job.set_progress(95, 'Setting pool options')
+
             # Inherit mountpoint after create because we set mountpoint on creation
             # making it a "local" source.
             await self.middleware.call('zfs.dataset.update', data['name'], {
@@ -724,6 +729,7 @@ class PoolService(CRUDService):
                 self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
+            await self.middleware.call('pool.dataset.delete_from_db', data['name'])
             raise e
 
         # There is really no point in waiting all these services to reload so do them
