@@ -55,7 +55,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}onedrivesdk>0:devel/py-onedrivesdk@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}fenced>0:truenas/py-fenced@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}alembic>0:databases/py-alembic@${PY_FLAVOR} \
-		${PYTHON_PKGNAMEPREFIX}sqlalchemy>0:databases/py-sqlalchemy13@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}sqlalchemy12>0:databases/py-sqlalchemy12@${PY_FLAVOR} \
 		avahi-app>0:net/avahi-app \
 		dmidecode>0:sysutils/dmidecode \
 		rclone>0:net/rclone \
