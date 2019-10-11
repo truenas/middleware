@@ -20,7 +20,7 @@ import psutil
 from libzfs import ZFSException
 from middlewared.job import JobProgressBuffer, Pipes
 from middlewared.schema import (
-    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any,
+    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
 )
 from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
@@ -2995,9 +2995,11 @@ class PoolDatasetService(CRUDService):
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
+        Ref('encryption'),
         register=True,
     ))
-    async def do_create(self, data):
+    @job(lock=lambda args: f'dataset_create{args[0]["name"]}', pipes=['encryption_key'], check_pipes=False)
+    async def do_create(self, job, data):
         """
         Creates a dataset/zvol.
 
@@ -3035,6 +3037,11 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             data['aclmode'] = 'RESTRICTED'
 
+        encryption_dict = await self.middleware.call(
+            'pool.dataset.validate_encryption_data', job, verrors,
+            data.pop('encryption'), 'pool_dataset_create.encryption',
+        )
+
         if verrors:
             raise verrors
 
@@ -3069,10 +3076,16 @@ class PoolDatasetService(CRUDService):
             name = real_name or i
             props[name] = data[i] if not transform else transform(data[i])
 
+        props.update(encryption_dict)
+
         await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
             'type': data['type'],
             'properties': props,
+        })
+
+        await self.insert_or_update({
+            'name': data['name'], 'encryption_key': encryption_dict.get('key')
         })
 
         data['id'] = data['name']
@@ -3097,6 +3110,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'share_type'}),  # This is something we should only do at create time
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
+        ('rm', {'name': 'encryption'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
         ('edit', _add_inherit('exec')),
         ('edit', _add_inherit('sync')),
