@@ -725,6 +725,10 @@ class CoreService(Service):
             pydevd.settrace(host=options['host'])
 
     @private
+    async def profile(self, method, params=None):
+        return await self.middleware.call(method, *(params or []), profile=True)
+
+    @private
     def threads_stacks(self):
         return get_threads_stacks()
 

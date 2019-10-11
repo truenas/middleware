@@ -11,6 +11,7 @@ from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
+from .utils.profile import profile_wrap
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -1148,8 +1149,11 @@ class Middleware(LoadPluginsMixin):
 
         return await self._call(message['method'], serviceobj, methodobj, params, app=app, io_thread=False)
 
-    async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None):
+    async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None, profile=False):
         serviceobj, methodobj = self._method_lookup(name)
+
+        if profile:
+            methodobj = profile_wrap(methodobj)
         return await self._call(
             name, serviceobj, methodobj, params,
             app=app, pipes=pipes, job_on_progress_cb=job_on_progress_cb, io_thread=True,
