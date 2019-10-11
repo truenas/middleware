@@ -81,7 +81,7 @@ class FailoverIsEnabledException(Exception):
 
 
 def ensure_failover_is_disabled():
-    if not notifier().is_freenas():
+    if not notifier().is_freenas() and notifier().failover_licensed():
         from freenasUI.failover.models import Failover
         qs = Failover.objects.all()
         if qs.exists():
