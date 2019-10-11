@@ -267,18 +267,18 @@ def test_31_verify_available_plugin_(plugin):
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_32_verify_available_plugins_openvpn_is_not_na_(prop):
+def test_32_verify_available_plugins_rslsync_is_not_na_(prop):
     for plugin_info in job_results['result']:
-        if 'openvpn' in plugin_info['plugin']:
+        if 'rslsync' in plugin_info['plugin']:
             break
     assert plugin_info[prop] != 'N/A', str(job_results)
 
 
-def test_33_add_openvpn_plugins():
+def test_33_add_rslsync_plugins():
     global JOB_ID
     payload = {
-        "plugin_name": "openvpn",
-        "jail_name": "openvpn",
+        "plugin_name": "rslsync",
+        "jail_name": "rslsync",
         'props': [
             'nat=1'
         ],
@@ -290,38 +290,38 @@ def test_33_add_openvpn_plugins():
     JOB_ID = results.json()
 
 
-def test_34_verify_openvpn_plugin_job_is_successfull():
+def test_34_verify_rslsync_plugin_job_is_successfull():
     job_status = wait_on_job(JOB_ID, 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_35_search_plugin_openvpn_id():
-    results = GET('/plugin/?id=openvpn')
+def test_35_search_plugin_rslsync_id():
+    results = GET('/plugin/?id=rslsync')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
-def test_36_verify_openvpn_plugin_id_exist():
-    results = GET('/plugin/id/openvpn/')
+def test_36_verify_rslsync_plugin_id_exist():
+    results = GET('/plugin/id/rslsync/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
-def test_37_verify_the_openvpn_jail_id_exist():
-    results = GET(f'/jail/id/openvpn/')
+def test_37_verify_the_rslsync_jail_id_exist():
+    results = GET(f'/jail/id/rslsync/')
     assert results.status_code == 200, results.text
 
 
-def test_38_delete_openvpn_jail():
+def test_38_delete_rslsync_jail():
     payload = {
         'force': True
     }
-    results = DELETE(f'/jail/id/openvpn/', payload)
+    results = DELETE(f'/jail/id/rslsync/', payload)
     assert results.status_code == 200, results.text
 
 
-def test_39_verify_the_openvpn_jail_id_is_delete():
-    results = GET(f'/jail/id/openvpn/')
+def test_39_verify_the_rslsync_jail_id_is_delete():
+    results = GET(f'/jail/id/rslsync/')
     assert results.status_code == 404, results.text
 
 
