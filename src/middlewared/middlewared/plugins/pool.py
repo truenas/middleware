@@ -1,11 +1,13 @@
 import asyncio
 import base64
 import contextlib
+import enum
 import errno
 import logging
 from datetime import datetime, time
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sysctl
@@ -37,6 +39,12 @@ RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULT
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
+
+
+class ZFSKeyFormat(enum.Enum):
+    HEX = 'HEX'
+    PASSPHRASE = 'PASSPHRASE'
+    RAW = 'RAW'
 
 
 class Inheritable(EnumMixin, Attribute):
@@ -525,6 +533,21 @@ class PoolService(CRUDService):
         Str('name', required=True),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
         Dict(
+            'encryption',
+            Bool('enabled', default=False),
+            Bool('generate_key', default=False),
+            Bool('key_file', default=False),
+            Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
+            Str(
+                'algorithm', default='AES-256-CCM', enum=[
+                    'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
+                ]
+            ),
+            Str('key_format', default='HEX', enum=list(ZFSKeyFormat.__members__)),
+            Str('passphrase', default=None, null=True, empty=False),
+            register=True
+        ),
+        Dict(
             'topology',
             List('data', items=[
                 Dict(
@@ -552,7 +575,7 @@ class PoolService(CRUDService):
         ),
         register=True,
     ))
-    @job(lock='pool_createupdate')
+    @job(lock='pool_createupdate', pipes=['encryption_key'], check_pipes=False)
     async def do_create(self, job, data):
         """
         Create a new ZFS Pool.
@@ -616,6 +639,11 @@ class PoolService(CRUDService):
         if not data['topology']['data']:
             verrors.add('pool_create.topology.data', 'At least one data vdev is required')
 
+        encryption_dict = await self.middleware.call(
+            'pool.dataset.validate_encryption_data', job, verrors,
+            data.pop('encryption'), 'pool_create.encryption',
+        )
+
         await self.__common_validation(verrors, data, 'pool_create')
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
         disks_cache = await self.__check_disks_availability(verrors, disks)
@@ -637,6 +665,7 @@ class PoolService(CRUDService):
             'compression': 'lz4',
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
+            **encryption_dict
         }
 
         dedup = data.get('deduplication')
@@ -2749,6 +2778,49 @@ class PoolDatasetService(CRUDService):
 
     class Config:
         namespace = 'pool.dataset'
+
+    @private
+    def validate_encryption_data(self, job, verrors, encryption_dict, schema):
+        opts = {}
+        if not encryption_dict['enabled']:
+            return opts
+
+        key_format = ZFSKeyFormat(encryption_dict['key_format'])
+        passphrase_key_format = key_format == ZFSKeyFormat.PASSPHRASE
+        if not encryption_dict['key_file'] and not passphrase_key_format and not encryption_dict['generate_key']:
+            verrors.add(
+                f'{schema}.key_format',
+                'Please provide a key file or select generate_key to automatically generate '
+                'a key when key_format is not PASSPHRASE'
+            )
+
+        if passphrase_key_format:
+            if encryption_dict['generate_key']:
+                verrors.add(
+                    f'{schema}.generate_key',
+                    'Must be disabled when key format is set to "PASSPHRASE".'
+                )
+        elif encryption_dict['passphrase']:
+            verrors.add(
+                f'{schema}.passphrase',
+                'Should not be provided when key format is not "PASSPHRASE"'
+            )
+
+        if not verrors:
+            key = encryption_dict['passphrase']
+            if encryption_dict['generate_key']:
+                key = getattr(secrets, f'token_{"hex" if key_format == ZFSKeyFormat.HEX else "bytes"}')(32)
+            elif not key:
+                job.check_pipe('encryption_key')
+                key = job.pipes.encryption_key.r.read()
+            opts = {
+                'keyformat': key_format.value.lower(),
+                'keylocation': 'prompt',
+                'encryption': encryption_dict['algorithm'].lower(),
+                'key': key,
+                **({'pbkdf2iters': encryption_dict['pbkdf2iters']} if passphrase_key_format else {}),
+            }
+        return opts
 
     @filterable
     def query(self, filters=None, options=None):
