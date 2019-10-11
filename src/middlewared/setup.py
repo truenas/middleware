@@ -45,7 +45,7 @@ setup(
         ],
         'middlewared': (
             get_assets('alembic') +
-            'alembic.ini',
+            ['alembic.ini'] +
             get_assets('assets') +
             get_assets('etc_files') +
             get_assets('migration')
