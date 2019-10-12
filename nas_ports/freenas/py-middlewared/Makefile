@@ -79,8 +79,6 @@ USE_RC_SUBR=	middlewared
 
 WRKSRC?=/usr/nas_source/middlewared
 
-SUB_FILES=	pkg-install
-
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
 

@@ -14,6 +14,7 @@ PREFIX=/
 
 USES= 	python
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}snmp_passpersist>=1.3.0:net-mgmt/py-snmp_passpersist \
+		${PYTHON_PKGNAMEPREFIX}middlewared>0:freenas/py-middlewared@${PY_FLAVOR} \
 		firmware>0:freenas/firmware
 
 # explicitly set this for the port build
@@ -22,6 +23,8 @@ PLIST_SUB=	MACHINE_ARCH=${MACHINE_ARCH}
 
 EXTRACT_ONLY=
 WRKSRC=/usr/nas_source
+
+SUB_FILES=	pkg-install
 
 # no checksum, we just used git!
 checksum fetch:
