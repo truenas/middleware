@@ -170,8 +170,7 @@ class PluginService(CRUDService):
         self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
         resource_list = iocage.list('all', plugin=True, plugin_data=True)
-        pool = IOCJson().json_get_value('pool')
-        iocroot = IOCJson(pool).json_get_value('iocroot')
+        iocroot = self.middleware.call_sync('jail.get_iocroot')
 
         for index, plugin in enumerate(resource_list):
             # "plugin" is a list which we will convert to a dictionary for readability
@@ -535,6 +534,8 @@ class JailService(CRUDService):
         if not self.iocage_set_up():
             return []
 
+        self.check_dataset_existence()
+
         if filters and len(filters) == 1 and list(
                 filters[0][:2]) == ['host_hostuuid', '=']:
             jail_identifier = filters[0][2]
@@ -835,7 +836,7 @@ class JailService(CRUDService):
     @private
     def check_dataset_existence(self):
         try:
-            IOCCheck(migrate=True)
+            IOCCheck(migrate=True, reset_cache=True)
         except ioc_exceptions.PoolNotActivated as e:
             raise CallError(e, errno=errno.ENOENT)
 
@@ -843,11 +844,7 @@ class JailService(CRUDService):
     def check_jail_existence(self, jail, skip=True, callback=None):
         """Wrapper for iocage's API, as a few commands aren't ported to it"""
         try:
-            if callback is not None:
-                iocage = ioc.IOCage(callback=callback,
-                                    skip_jails=skip, jail=jail)
-            else:
-                iocage = ioc.IOCage(skip_jails=skip, jail=jail)
+            iocage = ioc.IOCage(callback=callback, skip_jails=skip, jail=jail, reset_cache=True)
             jail, path = iocage.__check_jail_existence__()
         except RuntimeError:
             raise CallError(f"jail '{jail}' not found!")
@@ -858,7 +855,7 @@ class JailService(CRUDService):
     def get_activated_pool(self):
         """Returns the activated pool if there is one, or None"""
         try:
-            pool = ioc.IOCage(skip_jails=True).get('', pool=True)
+            pool = ioc.IOCage(skip_jails=True, reset_cache=True).get('', pool=True)
         except (RuntimeError, SystemExit) as e:
             raise CallError(f'Error occurred getting activated pool: {e}')
         except (ioc_exceptions.PoolNotActivated, FileNotFoundError):
@@ -1032,8 +1029,7 @@ class JailService(CRUDService):
 
     @private
     def get_iocroot(self):
-        pool = IOCJson().json_get_value("pool")
-        return IOCJson(pool).json_get_value("iocroot")
+        return IOCJson().json_get_value('iocroot')
 
     @accepts(
         Str("jail"),
@@ -1185,6 +1181,7 @@ class JailService(CRUDService):
     def clean(self, ds_type):
         """Cleans all iocage datasets of ds_type"""
 
+        ioc.IOCage.reset_cache()
         if ds_type == "JAIL":
             IOCClean().clean_jails()
         elif ds_type == "ALL":
@@ -1318,7 +1315,7 @@ class JailService(CRUDService):
 
         `path` is the directory where the exported jail lives. It defaults to the iocage images dataset.
         """
-
+        self.check_dataset_existence()
         path = options['path'] or os.path.join(self.get_iocroot(), 'images')
 
         IOCImage().import_jail(
@@ -1330,7 +1327,7 @@ class JailService(CRUDService):
     @private
     def start_on_boot(self):
         self.logger.debug('Starting jails on boot: PENDING')
-        ioc.IOCage(rc=True).start()
+        ioc.IOCage(rc=True, reset_cache=True).start()
         self.logger.debug('Starting jails on boot: SUCCESS')
 
         return True
@@ -1338,7 +1335,7 @@ class JailService(CRUDService):
     @private
     def stop_on_shutdown(self):
         self.logger.debug('Stopping jails on shutdown: PENDING')
-        ioc.IOCage(rc=True).stop()
+        ioc.IOCage(rc=True, reset_cache=True).stop()
         self.logger.debug('Stopping jails on shutdown: SUCCESS')
 
         return True
