@@ -669,6 +669,16 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to mount dataset', exc_info=True)
             raise CallError(f'Failed to mount dataset: {e}')
 
+    @accepts(Str('name'), Dict('options', Bool('force', default=False)))
+    def umount(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(name)
+                dataset.umount(force=options['force'])
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to umount dataset', exc_info=True)
+            raise CallError(f'Failed to umount dataset: {e}')
+
     @accepts(
         Str('dataset'),
         Dict(
