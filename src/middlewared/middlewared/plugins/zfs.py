@@ -570,6 +570,44 @@ class ZFSDatasetService(CRUDService):
             self.logger.error(f'Failed to unload key for {id}', exc_info=True)
             raise CallError(f'Failed to unload key for {id}: {e}')
 
+    @accepts(
+        Str('id'),
+        Dict(
+            'change_key_options',
+            Dict(
+                'encryption_properties',
+                Str('keyformat'),
+                Str('keylocation'),
+                Int('pbkdf2iters')
+            ),
+            Bool('load_key', default=True),
+            Any('key', default=None, null=True),
+        ),
+    )
+    def change_key(self, id, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                self.common_encryption_checks(ds)
+                ds.change_key(props=options['encryption_properties'], load_key=options['load_key'], key=options['key'])
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed to change key for {id}: {e}')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'change_encryption_root_options',
+            Bool('load_key', default=True),
+        )
+    )
+    def change_encryption_root(self, id, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                ds.change_key(load_key=options['load_key'], inherit=True)
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed to change encryption root for {id}: {e}')
+
     @accepts(Dict(
         'dataset_create',
         Str('name', required=True),
