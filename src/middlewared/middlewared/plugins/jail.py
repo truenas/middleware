@@ -177,23 +177,8 @@ class PluginService(CRUDService):
         options = options or {}
         self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
-        resource_list = iocage.list('all', plugin=True)
-        pool = IOCJson().json_get_value('pool')
-        iocroot = IOCJson(pool).json_get_value('iocroot')
-        plugin_dir_path = os.path.join(iocroot, '.plugins')
-        plugin_jails = {
-            j['host_hostuuid']: j for j in self.middleware.call_sync(
-                'jail.query', [['type', 'in', ['plugin', 'pluginv2']]]
-            )
-        }
-
-        index_jsons = {}
-        for repo in os.listdir(plugin_dir_path) if os.path.exists(plugin_dir_path) else []:
-            index_path = os.path.join(plugin_dir_path, repo, 'INDEX')
-            if os.path.exists(index_path):
-                with contextlib.suppress(json.decoder.JSONDecodeError):
-                    with open(index_path, 'r') as f:
-                        index_jsons[repo] = json.loads(f.read())
+        resource_list = iocage.list('all', plugin=True, plugin_data=True)
+        iocroot = self.middleware.call_sync('jail.get_iocroot')
 
         for index, plugin in enumerate(resource_list):
             # "plugin" is a list which we will convert to a dictionary for readability
@@ -201,22 +186,18 @@ class PluginService(CRUDService):
                 k: v if v != '-' else None
                 for k, v in zip((
                     'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4',
-                    'ip6', 'template', 'admin_portal', 'doc_url'
+                    'ip6', 'template', 'admin_portal', 'doc_url', 'plugin', 'plugin_repository', 'primary_pkg'
                 ), plugin)
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
             plugin_info = plugin_output.read_text().strip() if plugin_output.is_file() else None
 
-            plugin_name = plugin_jails[plugin_dict['name']]['plugin_name']
-            plugin_repo = self.convert_repository_to_path(plugin_jails[plugin_dict['name']]['plugin_repository'])
             plugin_dict.update({
                 'id': plugin_dict['name'],
                 'plugin_info': plugin_info,
-                'plugin': plugin_name,
-                'plugin_repository': plugin_jails[plugin_dict['name']]['plugin_repository'],
                 **self.get_local_plugin_version(
-                    plugin_name,
-                    index_jsons.get(plugin_repo), iocroot, plugin_dict['name']
+                    plugin_dict['plugin'],
+                    plugin_dict.pop('primary_pkg'), iocroot, plugin_dict['name']
                 )
             })
 
@@ -490,20 +471,18 @@ class PluginService(CRUDService):
         return version
 
     @private
-    def get_local_plugin_version(self, plugin, index_json, iocroot, jail_name):
+    def get_local_plugin_version(self, plugin, primary_pkg, iocroot, jail_name):
         """
         Checks the primary_pkg key in the INDEX with the pkg version
         inside the jail.
         """
         version = {k: 'N/A' for k in ('version', 'revision', 'epoch')}
 
-        if index_json is None:
+        primary_pkg = primary_pkg or plugin
+        if not primary_pkg:
             return version
 
         try:
-            base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
-            primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
-
             # Since these are plugins, we don't want to spin them up just to
             # check a pkg, directly accessing the db is best in this case.
             db_rows = self.read_plugin_pkg_db(
@@ -566,6 +545,8 @@ class JailService(CRUDService):
 
         if not self.iocage_set_up():
             return []
+
+        self.check_dataset_existence()
 
         if filters and len(filters) == 1 and list(
                 filters[0][:2]) == ['host_hostuuid', '=']:
@@ -867,7 +848,7 @@ class JailService(CRUDService):
     @private
     def check_dataset_existence(self):
         try:
-            IOCCheck(migrate=True)
+            IOCCheck(migrate=True, reset_cache=True)
         except ioc_exceptions.PoolNotActivated as e:
             raise CallError(e, errno=errno.ENOENT)
 
@@ -875,11 +856,7 @@ class JailService(CRUDService):
     def check_jail_existence(self, jail, skip=True, callback=None):
         """Wrapper for iocage's API, as a few commands aren't ported to it"""
         try:
-            if callback is not None:
-                iocage = ioc.IOCage(callback=callback,
-                                    skip_jails=skip, jail=jail)
-            else:
-                iocage = ioc.IOCage(skip_jails=skip, jail=jail)
+            iocage = ioc.IOCage(callback=callback, skip_jails=skip, jail=jail, reset_cache=True)
             jail, path = iocage.__check_jail_existence__()
         except RuntimeError:
             raise CallError(f"jail '{jail}' not found!")
@@ -890,7 +867,7 @@ class JailService(CRUDService):
     def get_activated_pool(self):
         """Returns the activated pool if there is one, or None"""
         try:
-            pool = ioc.IOCage(skip_jails=True).get('', pool=True)
+            pool = ioc.IOCage(skip_jails=True, reset_cache=True).get('', pool=True)
         except (RuntimeError, SystemExit) as e:
             raise CallError(f'Error occurred getting activated pool: {e}')
         except (ioc_exceptions.PoolNotActivated, FileNotFoundError):
@@ -1064,8 +1041,7 @@ class JailService(CRUDService):
 
     @private
     def get_iocroot(self):
-        pool = IOCJson().json_get_value("pool")
-        return IOCJson(pool).json_get_value("iocroot")
+        return IOCJson().json_get_value('iocroot')
 
     @accepts(
         Str("jail"),
@@ -1217,6 +1193,7 @@ class JailService(CRUDService):
     def clean(self, ds_type):
         """Cleans all iocage datasets of ds_type"""
 
+        ioc.IOCage.reset_cache()
         if ds_type == "JAIL":
             IOCClean().clean_jails()
         elif ds_type == "ALL":
@@ -1350,7 +1327,7 @@ class JailService(CRUDService):
 
         `path` is the directory where the exported jail lives. It defaults to the iocage images dataset.
         """
-
+        self.check_dataset_existence()
         path = options['path'] or os.path.join(self.get_iocroot(), 'images')
 
         IOCImage().import_jail(
@@ -1362,7 +1339,7 @@ class JailService(CRUDService):
     @private
     def start_on_boot(self):
         self.logger.debug('Starting jails on boot: PENDING')
-        ioc.IOCage(rc=True).start()
+        ioc.IOCage(rc=True, reset_cache=True).start()
         self.logger.debug('Starting jails on boot: SUCCESS')
 
         return True
@@ -1370,7 +1347,7 @@ class JailService(CRUDService):
     @private
     def stop_on_shutdown(self):
         self.logger.debug('Stopping jails on shutdown: PENDING')
-        ioc.IOCage(rc=True).stop()
+        ioc.IOCage(rc=True, reset_cache=True).stop()
         self.logger.debug('Stopping jails on shutdown: SUCCESS')
 
         return True
