@@ -1,9 +1,6 @@
 import threading
-import time
 import enum
-import os
 import pybonjour
-import select
 import socket
 import subprocess
 
@@ -42,84 +39,6 @@ class ServiceType(enum.Enum):
     SMB = ('_smb._tcp.', 445)
     TFTP = ('_tftp._udp.', 69)
     WEBDAV = ('_webdav._tcp.', 8080)
-
-
-class mDNSDaemonMonitor(threading.Thread):
-
-    instance = None
-
-    def __init__(self, middleware):
-        super(mDNSDaemonMonitor, self).__init__(daemon=True)
-        self.middleware = middleware
-        self.logger = self.middleware.logger
-        self.mdnsd_pidfile = "/var/run/mdnsd.pid"
-        self.mdnsd_piddir = "/var/run/"
-        self.mdnsd_running = threading.Event()
-        self.dns_sync = threading.Event()
-
-        if self.__class__.instance:
-            raise RuntimeError('Can only be instantiated a single time')
-        self.__class__.instance = self
-        self.start()
-
-    def run(self):
-        set_thread_name('mdnsd_monitor')
-        while True:
-            """
-            If the system has not completely booted yet we need to way at least
-            for DNS to be configured.
-
-            In case middlewared is started after boot, system.ready will be set after this plugin
-            is loaded, hence the dns_sync timeout.
-            """
-            if not self.middleware.call_sync('system.ready'):
-                if not self.dns_sync.wait(timeout=2):
-                    continue
-
-            pid = self.is_alive()
-            if not pid:
-                self.start_mdnsd()
-                time.sleep(2)
-                continue
-            kqueue = select.kqueue()
-            try:
-                kqueue.control([
-                    select.kevent(
-                        pid,
-                        filter=select.KQ_FILTER_PROC,
-                        flags=select.KQ_EV_ADD,
-                        fflags=select.KQ_NOTE_EXIT,
-                    )
-                ], 0, 0)
-            except ProcessLookupError:
-                continue
-            self.mdnsd_running.set()
-            self.middleware.call_sync('mdnsadvertise.restart')
-            kqueue.control(None, 1)
-            self.mdnsd_running.clear()
-            kqueue.close()
-
-    def is_alive(self):
-        if not os.path.exists(self.mdnsd_pidfile):
-            return False
-
-        try:
-            with open(self.mdnsd_pidfile, 'r') as f:
-                pid = int(f.read().strip())
-
-            os.kill(pid, 0)
-        except (FileNotFoundError, ProcessLookupError, ValueError):
-            return False
-        except Exception as e:
-            self.logger.debug('Failed to read mdnsd pidfile', exc_info=True)
-            return False
-
-        return pid
-
-    def start_mdnsd(self):
-        p = subprocess.Popen(["/usr/local/etc/rc.d/mdnsd", "onestart"])
-        p.wait()
-        return p.returncode == 0
 
 
 class mDNSServiceThread(threading.Thread):
@@ -402,7 +321,9 @@ class mDNSAdvertiseService(Service):
             if self.initialized:
                 return
 
-        if not mDNSDaemonMonitor.instance.mdnsd_running.wait(timeout=10):
+        mdnsd_status = subprocess.run(['/usr/sbin/service', 'mdnsd', 'status'])
+        if mdnsd_status.returncode != 0:
+            self.logger.debug('mDNSResponder is not started. Cannot start mDNS advertisements.')
             return
 
         service_info = self.middleware.call_sync('service.query')
@@ -446,10 +367,5 @@ class mDNSAdvertiseService(Service):
         self.start()
 
 
-async def dns_post_sync(middleware):
-    mDNSDaemonMonitor.instance.dns_sync.set()
-
-
 def setup(middleware):
-    mDNSDaemonMonitor(middleware)
-    middleware.register_hook('dns.post_sync', dns_post_sync)
+    mDNSAdvertiseService(middleware)
