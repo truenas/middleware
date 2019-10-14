@@ -680,7 +680,10 @@ class PoolService(CRUDService):
         pool_id = None
         try:
             await self.middleware.call(
-                'pool.dataset.insert_or_update', {'name': data['name'], 'encryption_key': encryption_dict.get('key')}
+                'pool.dataset.insert_or_update', {
+                    'name': data['name'], 'encryption_key': encryption_dict.get('key'),
+                    'key_format': encryption_dict.get('keyformat')
+                }
             )
 
             job.set_progress(90, 'Creating ZFS Pool')
@@ -2794,16 +2797,22 @@ class PoolDatasetService(CRUDService):
             Any('encryption_key', null=True, default=None),
             Int('id', default=None, null=True),
             Str('name', required=True, empty=False),
+            Str('key_format', required=True, null=True),
         )
     )
     async def insert_or_update(self, data):
+        key_format = data.pop('key_format') or ''
+        if not data['encryption_key'] or ZFSKeyFormat(
+            key_format.upper() or ZFSKeyFormat.PASSPHRASE.value
+        ) == ZFSKeyFormat.PASSPHRASE:
+            # We do not want to save passphrase keys - they are only known to the user
+            return
+
         ds_id = data.pop('id')
         ds = await self.middleware.call(
             'datastore.query', self.dataset_store,
             [['id', '=', ds_id]] if ds_id else [['name', '=', data['name']]]
         )
-        if not data['encryption_key']:
-            return
 
         data['encryption_key'] = await self.middleware.call('pwenc.encrypt', data['encryption_key'])
 
@@ -3085,7 +3094,8 @@ class PoolDatasetService(CRUDService):
         })
 
         await self.insert_or_update({
-            'name': data['name'], 'encryption_key': encryption_dict.get('key')
+            'name': data['name'], 'encryption_key': encryption_dict.get('key'),
+            'key_format': encryption_dict.get('keyformat')
         })
 
         data['id'] = data['name']
