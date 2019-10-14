@@ -12,7 +12,7 @@ import libzfs
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
-from middlewared.schema import Any, Dict, List, Str, Bool, accepts
+from middlewared.schema import Any, Dict, Int, List, Str, Bool, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
 )
@@ -503,10 +503,13 @@ class ZFSDatasetService(CRUDService):
         ]
 
     def common_load_dataset_checks(self, ds):
-        if not ds.encrypted:
-            raise CallError(f'{id} is not encrypted')
+        self.common_encryption_checks(ds)
         if ds.key_loaded:
             raise CallError(f'{id} key is already loaded')
+
+    def common_encryption_checks(self, ds):
+        if not ds.encrypted:
+            raise CallError(f'{id} is not encrypted')
 
     @accepts(
         Str('id'),
@@ -524,6 +527,7 @@ class ZFSDatasetService(CRUDService):
                 self.common_load_dataset_checks(ds)
                 ds.load_key(**options)
         except libzfs.ZFSException as e:
+            self.logger.error(f'Failed to load key for {id}', exc_info=True)
             raise CallError(f'Failed to load key for {id}: {e}')
 
     @accepts(
@@ -541,10 +545,30 @@ class ZFSDatasetService(CRUDService):
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
-                self.common_load_dataset_checks(ds)
+                self.common_encryption_checks(ds)
                 return ds.check_key(**options)
         except libzfs.ZFSException as e:
+            self.logger.error(f'Failed to check key for {id}', exc_info=True)
             raise CallError(f'Failed to check key for {id}: {e}')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'unload_key_options',
+            Bool('recursive', default=True),
+        )
+    )
+    def unload_key(self, id, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                self.common_encryption_checks(ds)
+                if not ds.key_loaded:
+                    raise CallError(f'{id}\'s key is not loaded')
+                ds.unload_key(**options)
+        except libzfs.ZFSException as e:
+            self.logger.error(f'Failed to unload key for {id}', exc_info=True)
+            raise CallError(f'Failed to unload key for {id}: {e}')
 
     @accepts(Dict(
         'dataset_create',
