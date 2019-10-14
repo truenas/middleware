@@ -12,7 +12,7 @@ import libzfs
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
-from middlewared.schema import Dict, List, Str, Bool, accepts
+from middlewared.schema import Any, Dict, List, Str, Bool, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
 )
@@ -501,6 +501,50 @@ class ZFSDatasetService(CRUDService):
             }
             for dataset in self.query()
         ]
+
+    def common_load_dataset_checks(self, ds):
+        if not ds.encrypted:
+            raise CallError(f'{id} is not encrypted')
+        if ds.key_loaded:
+            raise CallError(f'{id} key is already loaded')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'load_key_options',
+            Bool('recursive', default=True),
+            Any('key', default=None, null=True),
+            Str('key_location', default=None, null=True),
+        ),
+    )
+    def load_key(self, id, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                self.common_load_dataset_checks(ds)
+                ds.load_key(**options)
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed to load key for {id}: {e}')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'check_key',
+            Any('key', default=None, null=True),
+            Str('key_location', default=None, null=True),
+        )
+    )
+    def check_key(self, id, options):
+        """
+        Returns `true` if the `key` is valid, `false` otherwise.
+        """
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                self.common_load_dataset_checks(ds)
+                return ds.check_key(**options)
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed to check key for {id}: {e}')
 
     @accepts(Dict(
         'dataset_create',
