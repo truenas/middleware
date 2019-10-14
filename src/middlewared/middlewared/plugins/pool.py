@@ -3,6 +3,7 @@ import base64
 import contextlib
 import enum
 import errno
+import itertools
 import logging
 from datetime import datetime, time
 import os
@@ -2889,13 +2890,23 @@ class PoolDatasetService(CRUDService):
         return opts
 
     @private
-    def query_encrypted_datasets(self, name, recursive=False):
+    def query_encrypted_datasets(self, name, options=None):
         # Common function to retrieve encrypted datasets which ensures we do
         # this with as little processing as possible
-        recursive_op = lambda x, y: x.startswith(y) if recursive else lambda x, y: x == y
-        return filter(
-            lambda d: d['name'] == d['encryption_root'] and d['encrypted'] and recursive_op(d['name'], name),
-            self.query()
+        options = options or {}
+        recursive_op = lambda x, y: x.startswith(y) if options.get('recursive') else lambda x, y: x == y
+        db_results = self.encrypted_roots_query_db(
+            [['name', '^' if options.get('recursive') else '=', name], *options.get('db_filters', [])], True
+        ) if options.get('load_db') else {}
+
+        return map(
+            lambda d: (d['name'], db_results.get(d['name'])),
+            filter(
+                lambda d: d['name'] == d['encryption_root'] and d['encrypted'] and recursive_op(d['name'], name) and (
+                    d['key_loaded'] and options.get('key_loaded', True)
+                ),
+                self.query()
+            )
         )
 
     @accepts(
@@ -2908,7 +2919,7 @@ class PoolDatasetService(CRUDService):
     )
     def lock(self, id, options):
         # TODO: Add system dataset related checks
-        ds = self.middleware.call('pool.dataset._get_instance', id)
+        ds = self.middleware.call_sync('pool.dataset._get_instance', id)
         if ds['encrypted'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
             raise CallError('Only datasets which are encrypted with passphrase can be locked')
 
@@ -2919,11 +2930,13 @@ class PoolDatasetService(CRUDService):
             self.middleware.call_sync('zfs.dataset.umount', id, {'force': options['force_umount']})
 
         failed = []
-        for dataset in self.query_encrypted_datasets(id, options['recursive']):
+        for dataset, key in self.query_encrypted_datasets(
+            id, {'recursive': options['recursive'], 'key_loaded': True}
+        ):
             try:
-                self.middleware.call_sync('zfs.dataset.unload_key', dataset['name'], {'recursive': False})
+                self.middleware.call_sync('zfs.dataset.unload_key', dataset, {'recursive': False})
             except CallError:
-                failed.append(dataset['name'])
+                failed.append(dataset)
 
         if failed:
             raise CallError('\n'.join(f'Failed to lock {d}' for d in failed))
@@ -2932,39 +2945,66 @@ class PoolDatasetService(CRUDService):
         Str('id'),
         Dict(
             'unlock_options',
+            Bool('key_file', default=False),
             Bool('recursive', default=False),
-            Str('passphrase', required=True),
+            Str('passphrase'),
         )
     )
-    async def unlock(self, id, options):
-        ds = await self._get_instance(id)
+    @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['encryption_key'], check_pipes=False)
+    def unlock(self, job, id, options):
+        ds = self.middleware.call_sync('pool.dataset._get_instance', id)
         verrors = ValidationErrors()
+        key = None
+
         if not ds['locked']:
             verrors.add('id', f'{id} dataset is not locked')
-        elif ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
-            verrors.add('id', 'Only datasets with passphrase selected as key format can be unlocked')
-        elif not await self.middleware.call('pool.dataset.check_key', id, {'key': options['passphrase']}):
-            verrors.add('unlock_options.passphrase', 'Supplied passphrase is not valid')
+        else:
+            key_format = ZFSKeyFormat(ds['key_format']['value'])
+            if key_format != ZFSKeyFormat.PASSPHRASE:
+                if not options['key_file']:
+                    verrors.add('unlock_options.key_file', 'This field is required')
+                else:
+                    job.check_pipe('encryption_key')
+                    key = job.pipes.encryption_key.r.read()
+            elif not options.get('passphrase'):
+                verrors.add('unlock_options.passphrase', 'Passphrase is required for encrypted dataset')
+            else:
+                key = options['passphrase']
+
+            if key and not self.middleware.call_sync('zfs.dataset.check_key', id, {'key': key}):
+                verrors.add(
+                    f'unlock_options.{"passphrase" if key_format == ZFSKeyFormat.PASSPHRASE else "key_file"}',
+                    'Supplied key is not valid'
+                )
 
         verrors.check()
 
-        datasets = [{'name': id, 'encryption_key': options['passphrase']}]
+        datasets = {id: key}
         if options['recursive']:
-            datasets.extend((await self.list_encrypted_root_children(id)))
+            # This means we are going to find datasets
+            datasets.update(dict(self.query_encrypted_datasets(
+                id, dict(recursive=True, key_loaded=False, load_db=True, db_filters=[['name', '!=', id]])))
+            )
 
-        failed = []
-        for dataset in datasets:
+        failed = failed_mount = []
+        for name, key in filter(lambda d: d[1], datasets.items()):
+
             try:
-                await self.middleware.call(
-                    'zfs.dataset.load_key', dataset['name'], {'key': dataset['encryption_key'], 'recursive': False}
+                self.middleware.call_sync(
+                    'zfs.dataset.load_key', name, {'key': key, 'recursive': False}
                 )
             except CallError:
-                failed.append(dataset['name'])
+                failed.append(name)
+            else:
+                try:
+                    self.middleware.call_sync('zfs.dataset.mount', name, {'recursive': False})
+                except CallError:
+                    failed_mount.append(name)
 
-        if failed:
-            raise CallError('\n'.join(f'Failed to unlock {d}' for d in failed))
-
-        await self.middleware.call('zfs.dataset.mount', id, {'recursive': options['recursive']})
+        if failed or failed_mount:
+            raise CallError('\n'.join(itertools.chain(
+                (f'Failed to unlock {d}' for d in failed), (f'Failed to mount {d}' for d in failed_mount)
+            )))
 
     @filterable
     def query(self, filters=None, options=None):
@@ -2992,9 +3032,11 @@ class PoolDatasetService(CRUDService):
         making it match whatever pool.dataset.{create,update} uses as input.
         """
         def transform(dataset):
-            dataset['encrypted'] = dataset.pop('encryption') != 'off'
-            dataset['encryption_root'] = dataset.pop('encryptionroot') or None
-            dataset['key_loaded'] = dataset.pop('keystatus') == 'available'
+            if 'key_loaded' not in dataset:
+                # FIXME: This is a hack, please fix it in the right place
+                dataset['encrypted'] = dataset.pop('encryption') != 'off'
+                dataset['encryption_root'] = dataset.pop('encryptionroot') or None
+                dataset['key_loaded'] = dataset.pop('keystatus') == 'available'
 
             for orig_name, new_name, method in (
                 ('org.freenas:description', 'comments', None),
