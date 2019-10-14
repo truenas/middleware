@@ -2995,6 +2995,8 @@ class PoolDatasetService(CRUDService):
                     dataset[i]['value'] = method(dataset[i]['value'])
             del dataset['properties']
 
+            dataset['locked'] = dataset['encrypted'] and not dataset['key_loaded']
+
             rv = []
             for child in dataset['children']:
                 rv.append(transform(child))
