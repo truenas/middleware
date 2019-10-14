@@ -26,7 +26,7 @@ from middlewared.service_exception import ValidationError
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.shell import join_commandline
-from middlewared.validators import Range, Time
+from middlewared.validators import Match, Range, Time
 
 logger = logging.getLogger(__name__)
 
@@ -2617,6 +2617,111 @@ class PoolService(CRUDService):
         current_import_job = await self.get_current_import_disk_job()
         if current_import_job:
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
+
+
+class PoolDatasetUserPropService(CRUDService):
+
+    class Config:
+        namespace = 'pool.dataset.userprop'
+
+    @filterable
+    def query(self, filters=None, options=None):
+        """
+        Query all user properties for ZFS datasets.
+        """
+        return filter_list(
+            [
+                {k: d[k] for k in ('id', 'properties')} for d in
+                (self.middleware.call_sync('zfs.dataset.query', [], {
+                    'extra': {'user_properties': True, 'properties': []}
+                }))
+            ], filters, options
+        )
+
+    async def __common_validation(self, dataset, data, schema, update=False):
+        verrors = ValidationErrors()
+        exists = data['name'] in dataset['properties']
+        if (exists and not update) or (not exists and update):
+            if update:
+                msg = f'{data["name"]} does not exist in {dataset["id"]} user properties'
+            else:
+                msg = f'{data["name"]} exists in {dataset["id"]} user properties'
+            verrors.add(f'{schema}.property.name', msg)
+
+        return verrors
+
+    @accepts(
+        Dict(
+            'dataset_user_prop_create',
+            Str('id', required=True, empty=False),
+            Dict(
+                'property',
+                Str('name', required=True, validators=[Match(r'.*:.*')]),
+                Str('value',required=True),
+            )
+        )
+    )
+    async def do_create(self, data):
+        """
+        Create a user property for a given `id` dataset.
+        """
+        dataset = await self._get_instance(data['id'])
+        verrors = await self.__common_validation(dataset, data['property'], 'dataset_user_prop_create')
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', data['id'], {
+                'properties': {data['property']['name']: {'value': data['property']['value']}}
+            }
+        )
+
+        return await self._get_instance(data['id'])
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_user_prop_update',
+            Str('name', required=True),
+            Str('value', required=True),
+        )
+    )
+    async def do_update(self, id, data):
+        """
+        Update `dataset_user_prop_update.name` user property for `id` dataset.
+        """
+        dataset = await self._get_instance(id)
+        verrors = await self.__common_validation(dataset, data, 'dataset_user_prop_update', True)
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', id, {
+                'properties': {data['name']: {'value': data['value']}}
+            }
+        )
+
+        return await self._get_instance(id)
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_user_prop_delete',
+            Str('name', required=True),
+        )
+    )
+    async def do_delete(self, id, options):
+        """
+        Delete user property `dataset_user_prop_delete.name` for `id` dataset.
+        """
+        dataset = await self._get_instance(id)
+        verrors = await self.__common_validation(dataset, options, 'dataset_user_prop_delete', True)
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', id, {
+                'properties': {options['name']: {'source': 'INHERIT'}}
+            }
+        )
+        return True
 
 
 class PoolDatasetService(CRUDService):

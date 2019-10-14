@@ -563,11 +563,7 @@ class ZFSDatasetService(CRUDService):
                         prop = dataset.properties.get(k)
                         if prop:
                             if v.get('source') == 'INHERIT':
-                                if isinstance(prop, libzfs.ZFSUserProperty):
-                                    # Workaround because libzfs crashes when trying to inherit user property
-                                    subprocess.check_call(["zfs", "inherit", k, id])
-                                else:
-                                    prop.inherit()
+                                prop.inherit(recursive=v.get('recursive', False))
                             elif 'value' in v and (
                                 prop.value != v['value'] or prop.source.name == 'INHERITED'
                             ):
