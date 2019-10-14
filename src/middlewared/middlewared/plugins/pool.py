@@ -2830,7 +2830,7 @@ class PoolDatasetService(CRUDService):
             )
 
     @private
-    def encrypted_roots_query(self, filters=None, decrypt=False):
+    def encrypted_roots_query_db(self, filters=None, decrypt=False):
         filters = filters or []
         results = self.middleware.call_sync('datastore.query', self.dataset_store, filters)
 
@@ -2887,6 +2887,46 @@ class PoolDatasetService(CRUDService):
                 **({'pbkdf2iters': encryption_dict['pbkdf2iters']} if passphrase_key_format else {}),
             }
         return opts
+
+    @private
+    def query_encrypted_datasets(self, name, recursive=False):
+        # Common function to retrieve encrypted datasets which ensures we do
+        # this with as little processing as possible
+        recursive_op = lambda x, y: x.startswith(y) if recursive else lambda x, y: x == y
+        return filter(
+            lambda d: d['name'] == d['encryption_root'] and d['encrypted'] and recursive_op(d['name'], name),
+            self.query()
+        )
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'lock_options',
+            Bool('force_umount', default=False),
+            Bool('recursive', default=True),
+        )
+    )
+    def lock(self, id, options):
+        # TODO: Add system dataset related checks
+        ds = self.middleware.call('pool.dataset._get_instance', id)
+        if ds['encrypted'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
+            raise CallError('Only datasets which are encrypted with passphrase can be locked')
+
+        if not ds['key_loaded']:
+            raise CallError(f'Dataset {id} is already locked')
+
+        if ds['mountpoint']:
+            self.middleware.call_sync('zfs.dataset.umount', id, {'force': options['force_umount']})
+
+        failed = []
+        for dataset in self.query_encrypted_datasets(id, options['recursive']):
+            try:
+                self.middleware.call_sync('zfs.dataset.unload_key', dataset['name'], {'recursive': False})
+            except CallError:
+                failed.append(dataset['name'])
+
+        if failed:
+            raise CallError('\n'.join(f'Failed to lock {d}' for d in failed))
 
     @filterable
     def query(self, filters=None, options=None):
