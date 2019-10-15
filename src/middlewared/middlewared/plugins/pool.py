@@ -2986,6 +2986,10 @@ class PoolDatasetService(CRUDService):
                 id, dict(recursive=True, key_loaded=False, load_db=True, db_filters=[['name', '!=', id]])))
             )
 
+        self.unlock_datasets(datasets)
+
+    @private
+    def unlock_datasets(self, datasets):
         failed = failed_mount = []
         for name, key in filter(lambda d: d[1], datasets.items()):
 
