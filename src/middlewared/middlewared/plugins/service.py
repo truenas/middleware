@@ -895,7 +895,6 @@ class ServiceService(CRUDService):
     async def _reload_nfs(self, **kwargs):
         await self.middleware.call("etc.generate", "nfsd")
         await self.middleware.call("nfs.setup_v4")
-        await self._service("mountd", "reload", force=True, **kwargs)
 
     async def _restart_nfs(self, **kwargs):
         await self._stop_nfs(**kwargs)
