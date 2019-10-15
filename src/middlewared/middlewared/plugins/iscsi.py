@@ -739,6 +739,10 @@ class iSCSITargetExtentService(CRUDService):
         if extent_type == 'Disk':
             if not disk:
                 verrors.add(f'{schema_name}.disk', 'This field is required')
+            else:
+                available = [i['name'] for i in await self.middleware.call('disk.get_unused')]
+                if disk not in available:
+                    verrors.add(f'{schema_name}.disk', 'Disk in use or not found', errno.ENOENT)
         elif extent_type == 'ZVOL':
             if disk.startswith('zvol') and not os.path.exists(f'/dev/{disk}'):
                 verrors.add(f'{schema_name}.disk',
@@ -815,6 +819,7 @@ class iSCSITargetExtentService(CRUDService):
                     lid = 0
                 return f'{mac.strip()}{lid:02}'
             except Exception:
+                self.logger.error('Failed to generate serial, using a default', exc_info=True)
                 return '10000001'
         else:
             return serial
