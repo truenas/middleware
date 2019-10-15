@@ -3006,6 +3006,54 @@ class PoolDatasetService(CRUDService):
                 (f'Failed to unlock {d}' for d in failed), (f'Failed to mount {d}' for d in failed_mount)
             )))
 
+    @accepts(
+        Str('id'),
+        Dict(
+            'change_key_options',
+            Bool('key_file', default=False),
+            Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
+            Str('key_format', default=ZFSKeyFormat.HEX.value, enum=list(ZFSKeyFormat.__members__), required=True),
+            Str('passphrase'),
+        )
+    )
+    @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['encryption_key'], check_pipes=False)
+    async def change_key(self, job, id, options):
+        ds = await self._get_instance(id)
+        verrors = ValidationErrors()
+        if not ds['encrypted']:
+            verrors.add('id', 'Dataset is not encrypted')
+        elif not ds['key_loaded']:
+            verrors.add('id', 'Dataset must be unlocked before key can be changed')
+        verrors.check()
+
+        key = None
+        key_format = ZFSKeyFormat(options['key_format'])
+        if key_format == ZFSKeyFormat.PASSPHRASE and not options.get('passphrase'):
+            verrors.add('change_key_options.passphrase', 'This field is required when key format is PASSPHRASE')
+        elif key_format != ZFSKeyFormat.PASSPHRASE:
+            if not options.get('key_file'):
+                verrors.add('change_key_options.key_file', 'Must be enabled when key format is not PASSPHRASE')
+            else:
+                job.check_pipe('encryption_key')
+                key = job.pipes.encryption_key.r.read()
+        else:
+            key = options['passphrase']
+
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.change_key', id, {
+                'encryption_properties': {
+                    'keyformat': key_format.value.lower(), 'keylocation': 'prompt',
+                    **({'pbkdf2iters': options['pbkdf2iters']} if key_format == ZFSKeyFormat.PASSPHRASE else {}),
+                },
+                'key': key, 'load_key': False,
+            }
+        )
+
+        # TODO: Handle renames of datasets appropriately wrt encryption roots and db
+        await self.insert_or_update({'encryption_key': key, 'key_format': key_format.value, 'name': id})
+
     @filterable
     def query(self, filters=None, options=None):
         """
