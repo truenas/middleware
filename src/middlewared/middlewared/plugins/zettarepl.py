@@ -41,7 +41,8 @@ from middlewared.utils.string import make_sentence
 from middlewared.worker import watch_parent
 
 INVALID_DATASETS = (
-    re.compile(r"freenas-boot/?"),
+    re.compile(r"freenas-boot($|/)"),
+    re.compile(r"[^/]+/\.system($|/)")
 )
 
 
