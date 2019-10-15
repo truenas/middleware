@@ -68,7 +68,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             pass
 
         if (
-            standby_info and 'license' in standby_info and
+            standby_info and standby_info.get('license') and
             standby_info['system_serial'] != standby_info['license']['system_serial'] and
             standby_info['system_serial'] != standby_info['license']['system_serial_ha']
         ):
