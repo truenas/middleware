@@ -97,4 +97,4 @@ async def render(service, middleware):
             await run("service", "nfsd", "restart", check=False)
             await run("service", "gssd", "restart", check=False)
 
-    await run("service", "mountd", "forcereload", check=False)
+    await run("service", "mountd", "quietreload", check=False)
