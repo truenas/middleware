@@ -23,7 +23,7 @@ post-install()
                 /usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
         fi
 
-        env FREENAS_INSTALL=yes /usr/local/sbin/migrate113
+        env FREENAS_INSTALL=yes /usr/local/sbin/migrate113 -f /data/freenas-v1.db
         # Same as before
         if [ $? -ne 0 ]; then
                 /usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
