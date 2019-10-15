@@ -622,7 +622,7 @@ _gen_conf()
 	## Daemons
 	_bool_svcconfig netatalk_enable afp
 	_bool_svcconfig proftpd_enable ftp
-	if [ ${failover_licensed} -ne 1 ]; then
+	if [ "${failover_status}" != "BACKUP" ]; then
 		_bool_svcconfig nfs_server_enable nfs
 		_bool_svcconfig rpc_lockd_enable nfs
 		_bool_svcconfig rpc_statd_enable nfs
