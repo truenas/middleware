@@ -1636,7 +1636,11 @@ class InterfaceService(CRUDService):
                 iface.delete_member(member)
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
-        for interface in interfaces:
+        # Configure VLAN before BRIDGE so MTU is configured in correct order
+        for interface in sorted(
+            interfaces,
+            key=lambda x: 2 if x.startswith('bridge') else (1 if x.startswith('vlan') else 0)
+        ):
             try:
                 await self.sync_interface(interface, wait_dhcp, **sync_interface_opts[interface])
             except Exception:
