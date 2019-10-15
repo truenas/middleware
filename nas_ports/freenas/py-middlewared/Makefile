@@ -68,6 +68,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}setproctitle>0:devel/py-setproctitle@${PY_FLAVOR} \
 		freenas-pkgtools>0:freenas/freenas-pkgtools \
 		freenas-migrate93>0:freenas/freenas-migrate93 \
+		${PYTHON_PKGNAMEPREFIX}iocage>0:sysutils/iocage@${PY_FLAVOR} \
 		avahi-app>0:net/avahi-app \
 		dmidecode>0:sysutils/dmidecode \
 		rclone>0:net/rclone \
