@@ -344,13 +344,6 @@ class SharingNFSService(CRUDService):
 
             used_networks.add(network)
 
-        if not data["hosts"] and not data["networks"]:
-            if used_networks:
-                verrors.add(
-                    f"{schema_name}.networks",
-                    "Another NFS share already exports this dataset for some network"
-                )
-
     @private
     async def extend(self, data):
         data["paths"] = [path["path"]
