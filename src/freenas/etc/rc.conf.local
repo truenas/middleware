@@ -75,6 +75,7 @@ ftp_tls_enabled()
 _interface_config()
 {
 	local failover_licensed=${1}
+	local failover_status="${2}"
 	local saved_ifs="${IFS}"
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
@@ -200,7 +201,7 @@ _interface_config()
 			else
 				int_passopt=""
 			fi
-		if [ "${failover_status}" = "MASTER" ]; then
+			if [ "${failover_status}" = "MASTER" ]; then
 				carp1_skew="1"
 			fi
 			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
@@ -615,7 +616,7 @@ _gen_conf()
 	fi
 
 	# First, import network interface configuration.
-	_interface_config ${failover_licensed}
+	_interface_config ${failover_licensed} ${failover_status}
 	_host_config
 	_staticroute_config
 
