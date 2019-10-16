@@ -200,7 +200,7 @@ _interface_config()
 			else
 				int_passopt=""
 			fi
-		if [ ${failover_licensed} -eq 1 ]; then
+		if [ ${failover_status} = "MASTER" ]; then
 				carp1_skew="1"
 			fi
 			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
@@ -624,7 +624,7 @@ _gen_conf()
 	# 1. FreeNAS systems
 	# 2. TrueNAS single controller systems
 	# 3. ONLY TrueNAS MASTER controllers in HA systems
-	if [ $(failover_licensed) -eq 0 -o "${failover_status}" = "MASTER" ]; then
+	if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
 		_bool_svcconfig netatalk_enable afp
 		_bool_svcconfig proftpd_enable ftp
 		_bool_svcconfig nfs_server_enable nfs
