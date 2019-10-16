@@ -977,7 +977,7 @@ class ServiceService(CRUDService):
             return None
         if systemdataset['syslog']:
             await self.restart("syslogd", kwargs)
-        await self.restart("cifs", kwargs)
+        await self.restart("cifs", {'onetime': False})
 
         # Restarting rrdcached can take a long time. There is no
         # benefit in waiting for it, since even if it fails it will not
