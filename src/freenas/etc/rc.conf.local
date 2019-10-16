@@ -74,7 +74,7 @@ ftp_tls_enabled()
 
 _interface_config()
 {
-	local failover_licensed=${2}
+	local failover_licensed=${1}
 	local saved_ifs="${IFS}"
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
