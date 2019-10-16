@@ -16,16 +16,10 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, ValidationError
 from middlewared.service_exception import CallError
 from middlewared.utils import run
+from middlewared.plugins.directoryservices import DSStatus
+
 
 _int32 = struct.Struct('!i')
-
-
-class DSStatus(enum.Enum):
-    DISABLED = 0
-    FAULTED = 1
-    LEAVING = 2
-    JOINING = 3
-    HEALTHY = 4
 
 
 class SSL(enum.Enum):
@@ -616,8 +610,10 @@ class LDAPService(ConfigService):
 
     @private
     async def started(self):
+        """
+        Returns False if disabled, True if healthy, raises exception if faulted.
+        """
         if not (await self.config())['enable']:
-            await self.__set_state(DSStatus['DISABLED'])
             return False
 
         ldap = await self.config()
@@ -626,14 +622,10 @@ class LDAPService(ConfigService):
             await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),
                                    timeout=ldap['timeout'])
         except asyncio.TimeoutError:
-            await self.__set_state(DSStatus['FAULTED'])
             raise CallError(f'LDAP status check timed out after {ldap["timeout"]} seconds.', errno.ETIMEDOUT)
 
         except Exception as e:
-            await self.__set_state(DSStatus['FAULTED'])
             raise CallError(e)
-
-        await self.__set_state(DSStatus['HEALTHY'])
 
         return True
 
@@ -663,7 +655,11 @@ class LDAPService(ConfigService):
 
     @private
     async def __set_state(self, state):
-        await self.middleware.call('cache.put', 'LDAP_State', state.name)
+        return await self.middleware.call('directoryservices.set_state', {'ldap': state.name})
+
+    @accepts()
+    async def get_state(self):
+        return (await self.middleware.call('directoryservices.get_state'))['ldap']
 
     @private
     def get_nslcd_status(self):
@@ -676,30 +672,6 @@ class LDAPService(ConfigService):
                 nslcd_status = ctx.read_string()
 
         return nslcd_status
-
-    @accepts()
-    async def get_state(self):
-        """
-        `DISABLED` Directory Service is disabled.
-
-        `FAULTED` Directory Service is enabled, but not HEALTHY. Review logs and generated alert
-        messages to debug the issue causing the service to be in a FAULTED state.
-
-        `LEAVING` Directory Service is in process of stopping.
-
-        `JOINING` Directory Service is in process of starting.
-
-        `HEALTHY` Directory Service is enabled, and last status check has passed.
-        """
-        try:
-            return (await self.middleware.call('cache.get', 'LDAP_State'))
-        except KeyError:
-            try:
-                await self.started()
-            except Exception:
-                pass
-
-        return (await self.middleware.call('cache.get', 'LDAP_State'))
 
     @private
     async def nslcd_cmd(self, cmd):
@@ -745,6 +717,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.store_ldap_admin_password')
             await self.middleware.call('service.restart', 'cifs')
 
+        await self.__set_state(DSStatus['HEALTHY'])
         await self.middleware.call('ldap.fill_cache')
 
     @private
@@ -759,9 +732,9 @@ class LDAPService(ConfigService):
         if ldap['has_samba_schema']:
             await self.middleware.call('etc.generate', 'smb')
             await self.middleware.call('service.restart', 'cifs')
-        await self.middleware.call('cache.pop', 'LDAP_State')
         await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.nslcd_cmd('onestop')
+        await self.__set_state(DSStatus['DISABLED'])
 
     @private
     @job(lock='fill_ldap_cache')
