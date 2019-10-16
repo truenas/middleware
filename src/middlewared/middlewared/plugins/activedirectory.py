@@ -21,15 +21,8 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run, Popen
-from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
-
-
-class DSStatus(enum.Enum):
-    DISABLED = enum.auto()
-    FAULTED = MSG_WINBIND_OFFLINE
-    LEAVING = enum.auto()
-    JOINING = enum.auto()
-    HEALTHY = MSG_WINBIND_ONLINE
+from middlewared.plugins.directoryservices import DSStatus
+from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
 
 
 class neterr(enum.Enum):
@@ -849,31 +842,15 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def _set_state(self, state):
-        await self.middleware.call('cache.put', 'AD_State', state.name)
+        return await self.middleware.call('directoryservices.set_state', {'activedirectory': state.name})
 
     @accepts()
     async def get_state(self):
         """
-        `DISABLED` Directory Service is disabled.
-
-        `FAULTED` Directory Service is enabled, but not HEALTHY. Review logs and generated alert
-        messages to debug the issue causing the service to be in a FAULTED state.
-
-        `LEAVING` Directory Service is in process of stopping.
-
-        `JOINING` Directory Service is in process of starting.
-
-        `HEALTHY` Directory Service is enabled, and last status check has passed.
+        Wrapper function for 'directoryservices.get_state'. Returns only the state of the
+        Active Directory service.
         """
-        try:
-            return (await self.middleware.call('cache.get', 'AD_State'))
-        except KeyError:
-            try:
-                await self.started()
-            except Exception:
-                pass
-
-        return (await self.middleware.call('cache.get', 'AD_State'))
+        return (await self.middleware.call('directoryservices.get_state'))['activedirectory']
 
     @private
     async def start(self):
@@ -993,7 +970,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
-        await self.middleware.call('cache.pop', 'AD_State')
+        await self._set_state(DSStatus['DISABLED'])
 
     @private
     def validate_credentials(self, ad=None):
@@ -1124,14 +1101,12 @@ class ActiveDirectoryService(ConfigService):
         'winbind request timeout ='
         """
         if not (await self.config())['enable']:
-            await self._set_state(DSStatus['DISABLED'])
             return False
 
         netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
         if netlogon_ping.returncode != 0:
-            await self._set_state(DSStatus['FAULTED'])
             raise CallError(netlogon_ping.stderr.decode().strip('\n'))
-        await self._set_state(DSStatus['HEALTHY'])
+
         return True
 
     @private
