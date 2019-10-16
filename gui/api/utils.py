@@ -491,6 +491,9 @@ class DojoModelResource(ResourceMixin, ModelResource):
         """
         try:
             form.save()
+            if form._errors:
+                # This might happen for a form which does not raise validation errors for django compatibility
+                raise ValidationErrors([])
         except ValidationErrors as e:
             handle_middleware_validation(form, e)
             raise ImmediateHttpResponse(response=self.error_response(
