@@ -148,13 +148,13 @@ def get_tests():
     skip_tests = []
 
     if api == '1.0':
-        skip_tests = ['bootenv', 'jails', 'alerts', 'smarttest']
+        skip_tests = ['bootenv', 'jails', 'alerts', 'smarttest', 'network', 'storage']
         apidir = 'api1/'
-        rv = ['network', 'ssh', 'storage']
+        rv = ['ssh']
     elif api == '2.0':
-        skip_tests = []
+        skip_tests = ['interfaces', 'network', 'volume']
         apidir = 'api2/'
-        rv = ['interfaces', 'network', 'ssh', 'volume']
+        rv = ['ssh']
 
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
