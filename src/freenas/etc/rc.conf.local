@@ -74,7 +74,6 @@ ftp_tls_enabled()
 
 _interface_config()
 {
-	local failover_status="${1}"
 	local failover_licensed=${2}
 	local saved_ifs="${IFS}"
 	local IFS=\|
@@ -616,7 +615,7 @@ _gen_conf()
 	fi
 
 	# First, import network interface configuration.
-	_interface_config ${failover_status} ${failover_licensed}
+	_interface_config ${failover_licensed}
 	_host_config
 	_staticroute_config
 
