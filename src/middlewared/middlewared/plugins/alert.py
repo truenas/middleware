@@ -108,6 +108,32 @@ class AlertPolicy:
         return gone_alerts, new_alerts
 
 
+class AlertSerializer:
+    def __init__(self, middleware):
+        self.middleware = middleware
+
+        self.initialized = False
+        self.classes = None
+        self.nodes = None
+
+    async def serialize(self, alert):
+        if not self.initialized:
+            self.classes = (await self.middleware.call("alertclasses.config"))["classes"]
+            self.nodes = await self.middleware.call("alert.node_map")
+
+            self.initialized = True
+
+        return dict(
+            alert.__dict__,
+            id=alert.uuid,
+            node=self.nodes[alert.node],
+            klass=alert.klass.name,
+            level=self.classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
+            formatted=alert.formatted,
+            one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically
+        )
+
+
 class AlertService(Service):
     def __init__(self, middleware):
         super().__init__(middleware)
@@ -238,17 +264,10 @@ class AlertService(Service):
         List all types of alerts including active/dismissed currently in the system.
         """
 
-        classes = (await self.middleware.call("alertclasses.config"))["classes"]
-        nodes = await self.middleware.call("alert.node_map")
+        as_ = AlertSerializer(self.middleware)
 
         return [
-            dict(alert.__dict__,
-                 id=alert.uuid,
-                 node=nodes[alert.node],
-                 klass=alert.klass.name,
-                 level=classes.get(alert.klass.name, {}).get("level", alert.klass.level.name),
-                 formatted=alert.formatted,
-                 one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
+            await as_.serialize(alert)
             for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
         ]
 
@@ -300,8 +319,10 @@ class AlertService(Service):
         else:
             alert.dismissed = True
 
+        await self._send_alert_changed_event(alert)
+
     @accepts(Str("uuid"))
-    def restore(self, uuid):
+    async def restore(self, uuid):
         """
         Restore `id` alert which had been dismissed.
         """
@@ -311,6 +332,12 @@ class AlertService(Service):
             return
 
         alert.dismissed = False
+
+        await self._send_alert_changed_event(alert)
+
+    async def _send_alert_changed_event(self, alert):
+        as_ = AlertSerializer(self.middleware)
+        self.middleware.send_event('alert.list', 'CHANGED', id=alert.uuid, fields=await as_.serialize(alert))
 
     @periodic(60)
     @private
@@ -388,6 +415,12 @@ class AlertService(Service):
                         self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
 
             if policy_name == "IMMEDIATELY":
+                as_ = AlertSerializer(self.middleware)
+                for alert in gone_alerts:
+                    self.middleware.send_event('alert.list', 'CHANGED', id=alert.uuid, cleared=True)
+                for alert in new_alerts:
+                    self.middleware.send_event('alert.list', 'ADDED', id=alert.uuid, fields=await as_.serialize(alert))
+
                 for alert in new_alerts:
                     if alert.mail:
                         await self.middleware.call("mail.send", alert.mail)
@@ -962,4 +995,6 @@ class AlertDefaultSettingsService(Service):
 
 
 async def setup(middleware):
+    middleware.event_register("alert.list", "Sent on alert changes.")
+
     await middleware.call("alert.initialize")
