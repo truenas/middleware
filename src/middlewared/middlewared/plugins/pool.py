@@ -13,7 +13,6 @@ import shutil
 import subprocess
 import sysctl
 import tempfile
-import uuid
 
 import bsd
 import psutil
@@ -3014,6 +3013,7 @@ class PoolDatasetService(CRUDService):
         Str('id'),
         Dict(
             'change_key_options',
+            Bool('generate_key', default=False),
             Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
             Str('key_format', default=ZFSKeyFormat.HEX.value, enum=list(ZFSKeyFormat.__members__), required=True),
@@ -3030,33 +3030,29 @@ class PoolDatasetService(CRUDService):
             verrors.add('id', 'Dataset must be unlocked before key can be changed')
         verrors.check()
 
-        key = None
-        key_format = ZFSKeyFormat(options['key_format'])
-        if key_format == ZFSKeyFormat.PASSPHRASE and not options.get('passphrase'):
-            verrors.add('change_key_options.passphrase', 'This field is required when key format is PASSPHRASE')
-        elif key_format != ZFSKeyFormat.PASSPHRASE:
-            if not options.get('key_file'):
-                verrors.add('change_key_options.key_file', 'Must be enabled when key format is not PASSPHRASE')
-            else:
-                job.check_pipe('encryption_key')
-                key = job.pipes.encryption_key.r.read()
-        else:
-            key = options['passphrase']
+        encryption_dict = await self.middleware.call(
+            'pool.dataset.validate_encryption_data', job, verrors, {
+                'enabled': True, 'key_format': options['key_format'], 'passphrase': options.get('passphrase'),
+                'generate_key': options['generate_key'], 'key_file': options.get('key_file'),
+                'pbkdf2iters': options['pbkdf2iters'], 'algorithm': 'on',
+            }, 'change_key_options'
+        )
 
         verrors.check()
 
+        encryption_dict.pop('encryption')
+        key = encryption_dict.pop('key')
+
         await self.middleware.call(
             'zfs.dataset.change_key', id, {
-                'encryption_properties': {
-                    'keyformat': key_format.value.lower(), 'keylocation': 'prompt',
-                    **({'pbkdf2iters': options['pbkdf2iters']} if key_format == ZFSKeyFormat.PASSPHRASE else {}),
-                },
+                'encryption_properties': encryption_dict,
                 'key': key, 'load_key': False,
             }
         )
 
-        # TODO: Handle renames of datasets appropriately wrt encryption roots and db
-        await self.insert_or_update({'encryption_key': key, 'key_format': key_format.value, 'name': id})
+        # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
+        #  devd changes are in from the OS end
+        await self.insert_or_update({'encryption_key': key, 'key_format': options['key_format'], 'name': id})
 
     @filterable
     def query(self, filters=None, options=None):
