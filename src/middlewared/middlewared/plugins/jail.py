@@ -186,7 +186,8 @@ class PluginService(CRUDService):
                 k: v if v != '-' else None
                 for k, v in zip((
                     'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4',
-                    'ip6', 'template', 'admin_portal', 'doc_url', 'plugin', 'plugin_repository', 'primary_pkg'
+                    'ip6', 'template', 'admin_portal', 'doc_url', 'plugin',
+                    'plugin_repository', 'primary_pkg', 'category',
                 ), plugin)
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
@@ -386,7 +387,7 @@ class PluginService(CRUDService):
             resource_list = [
                 {
                     'plugin': plugin,
-                    **{k: d.get(k, '') for k in ('description', 'icon', 'name', 'license', 'official')}
+                    **{k: d.get(k, '') for k in ('description', 'icon', 'name', 'license', 'official', 'category')}
                 }
                 for plugin, d in cloned_repo['index'].items()
             ]
