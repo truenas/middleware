@@ -2137,7 +2137,12 @@ class notifier(metaclass=HookMetaclass):
         self.start("ix-syslogd")
         self.start("ix-warden")
         # FIXME: do not restart collectd again
-        self.restart("system_datasets")
+        sys_dataset_confgured = False
+        with client as c:
+            sys_dataset_configured = c.call('systemdataset.config')['pool']
+
+        if not sys_dataset_configured:
+            self.restart("system_datasets")
 
         return volume
 
