@@ -846,6 +846,10 @@ class ActiveDirectoryService(ConfigService):
 
     @accepts()
     async def get_state(self):
+        """
+        Wrapper function for 'directoryservices.get_state'. Returns only the state of the
+        Active Directory service.
+        """
         return (await self.middleware.call('directoryservices.get_state'))['activedirectory']
 
     @private

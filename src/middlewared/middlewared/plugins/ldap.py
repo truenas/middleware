@@ -659,6 +659,10 @@ class LDAPService(ConfigService):
 
     @accepts()
     async def get_state(self):
+        """
+        Wrapper function for 'directoryservices.get_state'. Returns only the state of the
+        LDAP service.
+        """
         return (await self.middleware.call('directoryservices.get_state'))['ldap']
 
     @private

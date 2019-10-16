@@ -80,6 +80,10 @@ class NISService(ConfigService):
 
     @accepts()
     async def get_state(self):
+        """
+        Wrapper function for 'directoryservices.get_state'. Returns only the state of the
+        NIS service.
+        """
         return (await self.middleware.call('directoryservices.get_state'))['nis']
 
     @private
