@@ -3054,6 +3054,22 @@ class PoolDatasetService(CRUDService):
         #  devd changes are in from the OS end
         await self.insert_or_update({'encryption_key': key, 'key_format': options['key_format'], 'name': id})
 
+    @accepts(Str('id'))
+    async def inherit_parent_encryption_properties(self, id):
+        ds = await self._get_instance(id)
+        if not ds['encrypted']:
+            raise CallError(f'Dataset {id} is not encrypted')
+        elif not ds['encryption_root'] != id:
+            raise CallError(f'Dataset {id} is not an encryption root')
+        elif ds['locked']:
+            raise CallError('Dataset must be unlocked to perform this operation')
+        elif '/' not in id:
+            raise CallError('This operation is not valid for root datasets')
+        elif not (await self._get_instance(id.rsplit('/', 1)[0]))['encrypted']:
+            raise CallError('This operation requires parent dataset to be encrypted')
+
+        await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
+
     @filterable
     def query(self, filters=None, options=None):
         """
