@@ -74,8 +74,8 @@ ftp_tls_enabled()
 
 _interface_config()
 {
-	local failover_status="${1}"
-	local failover_licensed=${2}
+	local failover_licensed=${1}
+	local failover_status="${2}"
 	local saved_ifs="${IFS}"
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
@@ -580,7 +580,8 @@ _watchdogd_config()
 _asigra_config()
 {
 	local failover_licensed=$1
-	if [ ${failover_licensed} -eq 0 ]; then
+	local failover_status="$2"
+	if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
 		_bool_svcconfig postgresql_enable asigra
 		_bool_svcconfig dssystem_enable asigra
 	fi
@@ -614,41 +615,44 @@ _gen_conf()
 		failover_status="$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
 	fi
 
-	## First, import network interface configuration.
-	_interface_config ${failover_status} ${failover_licensed}
+	# First, import network interface configuration.
+	_interface_config ${failover_licensed} ${failover_status}
 	_host_config
 	_staticroute_config
 
-	## Daemons
-	_bool_svcconfig netatalk_enable afp
-	_bool_svcconfig proftpd_enable ftp
-	if [ ${failover_licensed} -ne 1 ]; then
+	# JIRA NAS-103496
+	# These daemons should be configured to start in the following scenarios:
+	# 1. FreeNAS systems
+	# 2. TrueNAS single controller systems
+	# 3. ONLY TrueNAS MASTER controllers in HA systems
+	if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
+		_bool_svcconfig netatalk_enable afp
+		_bool_svcconfig proftpd_enable ftp
 		_bool_svcconfig nfs_server_enable nfs
 		_bool_svcconfig rpc_lockd_enable nfs
 		_bool_svcconfig rpc_statd_enable nfs
 		_bool_svcconfig mountd_enable nfs
 		_bool_svcconfig nfsd_enable nfs
 		_bool_svcconfig rpcbind_enable nfs
-	fi
-	_bool_svcconfig rsyncd_enable rsync
-	_bool_svcconfig snmpd_enable snmp
-	_bool_svcconfig snmp_agent_enable snmp
-	_bool_svcconfig openssh_enable ssh
-	_bool_svcconfig inetd_enable tftp
-	_bool_svcconfig inadyn_enable dynamicdns
-	_bool_svcconfig ladvd_enable lldp
-	_bool_svcconfig ctld_enable iscsitarget
-	_bool_svcconfig apache24_enable webdav
-
-	# Let TrueNAS HA code manage smartd and netdata services
-	# Redmine 76242
-	# JIRA NAS-101789
-	if [ ${failover_licensed} -ne 1 ]; then
+		_bool_svcconfig rsyncd_enable rsync
+		_bool_svcconfig snmpd_enable snmp
+		_bool_svcconfig snmp_agent_enable snmp
+		_bool_svcconfig inetd_enable tftp
+		_bool_svcconfig inadyn_enable dynamicdns
 		_bool_svcconfig smartd_daemon_enable smartd
 		_bool_svcconfig netdata_enable netdata
+		_bool_svcconfig apache24_enable webdav
 	fi
 
-	_bool_svcconfig samba_server_enable cifs
+	# These daemons should be configured to start in the following scenarios:
+	# 1. FreeNAS systems
+	# 2. TrueNAS single controller systems
+	# 3. On BOTH controllers in TrueNAS HA systems
+	_bool_svcconfig openssh_enable ssh # We want SSH on both controllers
+	_bool_svcconfig ladvd_enable lldp # This is a network identification daemon so run it on both controllers
+	_bool_svcconfig ctld_enable iscsitarget # Customer could have ALUA configured which requires ctld running on both controllers
+	_bool_svcconfig samba_server_enable cifs # samba has logic in other places to handle HA systems 
+
 	if ! dirsrv_enabled domaincontroller ; then
 		_bool_svcconfig smbd_enable cifs
 		_bool_svcconfig nmbd_enable cifs
@@ -659,7 +663,7 @@ _gen_conf()
 		_nis_config
 	fi
 
-	_asigra_config ${failover_licensed}
+	_asigra_config ${failover_licensed} ${failover_status}
 	_snmp_config
 
 	_ldap_config
@@ -676,7 +680,7 @@ _gen_conf()
 		# NFS service is enabled
 		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" = 1 ]; then
 			# NFSv4 is enabled
-			if [ ${failover_licensed} -ne 1 ]; then
+			if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
 				echo "nfsv4_server_enable=\"YES\""
 			fi
 			if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_v3owner FROM services_nfs")" = 1 ]; then
@@ -686,7 +690,7 @@ _gen_conf()
 				sysctl vfs.nfsd.enable_stringtouid=1 > /dev/null
 				sysctl vfs.nfs.enable_uidtostring=1 > /dev/null
 			else
-				if [ ${failover_licensed} -ne 1 ]; then
+				if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
 					echo "nfsuserd_enable=\"YES\""
 				fi
 				sysctl vfs.nfsd.enable_stringtouid=0 > /dev/null
@@ -700,7 +704,7 @@ _gen_conf()
 			# NFSv4 is not enabled
 			if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_16 FROM services_nfs")" = 1 ]; then
 				# we use nfsuserd to support more than 16 groups
-				if [ ${failover_licensed} -ne 1 ]; then
+				if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
 					echo "nfsuserd_enable=\"YES\""
 				fi
 				echo "nfsuserd_flags=\"-manage-gids\""
@@ -710,7 +714,7 @@ _gen_conf()
 
 		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" = 1 ]; then
 			# NFSv4 is kerberos only
-			if [ ${failover_licensed} -ne 1 ]; then
+			if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
 				echo "gssd_enable=\"YES\""
 			fi
 		else
@@ -721,7 +725,7 @@ _gen_conf()
 				# Keytabs found.  Turn on kerberos support for NFS
 				# Note that in this case kerberos won't be *required* for NFS
 				# but it will work.
-				if [ ${failover_licensed} -ne 1 ]; then
+				if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
 					echo "gssd_enable=\"YES\""
 				fi
 			fi
@@ -740,7 +744,7 @@ _gen_conf()
 		else
 			echo "failover_enable=\"NO\""
 		fi
-		if [ "${failover_status}" != "BACKUP" ]; then
+		if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]; then
 			echo "collectd_enable=\"YES\""
 			echo "rrdcached_enable=\"YES\""
 		fi
@@ -849,7 +853,7 @@ _gen_conf()
 		fi
 	done
 
-	if [ ${failover_licensed} -ne 1 ]
+	if [ ${failover_licensed} -eq 0 -o "${failover_status}" = "MASTER" ]
 	then
 		echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
 			tr \\\n \  `\""
