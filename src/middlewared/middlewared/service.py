@@ -582,6 +582,9 @@ class CoreService(Service):
                     'job': hasattr(method, '_job'),
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
                     'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
+                    'require_pipes': hasattr(method, '_job') and method._job['check_pipes'] and any(
+                        i in method._job['pipes'] for i in ('input', 'output')
+                    ),
                 }
         return data
 
