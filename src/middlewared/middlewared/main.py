@@ -31,6 +31,7 @@ import concurrent.futures.thread
 import errno
 import functools
 import inspect
+import itertools
 import linecache
 import multiprocessing
 import os
@@ -1198,7 +1199,15 @@ class Middleware(LoadPluginsMixin):
         return fut.result()
 
     def get_events(self):
-        return self.__events
+        return itertools.chain(
+            self.__events, map(
+                lambda n: (
+                    n[0], {
+                        'description': inspect.getdoc(n[1]), 'wildcard_subscription': False,
+                    }
+                ), self.__event_sources.items()
+            )
+        )
 
     def event_subscribe(self, name, handler):
         """

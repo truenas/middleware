@@ -597,6 +597,7 @@ class CoreService(Service):
         for name, attrs in self.middleware.get_events():
             events[name] = {
                 'description': attrs['description'],
+                'wildcard_subscription': attrs['wildcard_subscription'],
             }
         return events
 
