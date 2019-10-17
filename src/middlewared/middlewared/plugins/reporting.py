@@ -1,31 +1,25 @@
-from collections import defaultdict
 import copy
 import errno
 import glob
 import itertools
 import json
-import math
 import netif
 import os
 import psutil
-import queue
 import re
-import select
 import shutil
-import socketserver
 import statistics
 import subprocess
 import sysctl
 import tarfile
 import textwrap
-import threading
 import time
 
 from middlewared.event import EventSource
 from middlewared.i18n import _
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, filterable, private
-from middlewared.utils import filter_list, run, start_daemon_thread
+from middlewared.utils import filter_list, run
 from middlewared.validators import Range
 
 RE_COLON = re.compile('(.+):(.+)$')
