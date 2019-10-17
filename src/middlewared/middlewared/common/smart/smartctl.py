@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
 
-get_smartctl_args__areca_lock = Lock()
+areca_lock = Lock()
 
 
 async def get_smartctl_args(middleware, devices, disk):
@@ -39,7 +39,7 @@ async def get_smartctl_args(middleware, devices, disk):
     if driver.startswith("arcmsr"):
         # As we might be doing this in parallel, we don't want to have N `annotate_devices_with_areca_enclosure`
         # calls doing the same thing.
-        async with get_smartctl_args__areca_lock:
+        async with areca_lock:
             if "enclosure" not in device:
                 await annotate_devices_with_areca_enclosure(devices)
 
@@ -84,8 +84,23 @@ async def get_smartctl_args(middleware, devices, disk):
         return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"]
 
     args = [f"/dev/{disk}"]
-    p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
+    p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
     if "Unknown USB bridge" in p.stdout:
         args = args + ["-d", "sat"]
 
     return args
+
+
+async def smartctl(args, **kwargs):
+    lock = None
+    if any(arg.startswith("/dev/arcmsr") for arg in args):
+        lock = areca_lock
+
+    try:
+        if lock is not None:
+            await lock.acquire()
+
+        return await run(["smartctl"] + args, **kwargs)
+    finally:
+        if lock is not None:
+            lock.release()
