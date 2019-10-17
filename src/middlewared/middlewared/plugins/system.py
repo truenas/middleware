@@ -1097,6 +1097,12 @@ async def devd_zfs_hook(middleware, data):
 
 class SystemHealthEventSource(EventSource):
 
+    """
+    Notifies of current system health which include statistics about consumption of memory and CPU, pools and
+    if updates are available. An integer `delay` argument can be specified to determine the delay
+    on when the periodic event should be generated.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._check_update = None
