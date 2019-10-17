@@ -387,6 +387,11 @@ class ZettareplService(Service):
                     source_shell = remote_shell
                     target_shell = local_shell
 
+                target_datasets = set(list_datasets(target_shell))
+                datasets = {source_dataset: target_dataset
+                            for source_dataset, target_dataset in datasets.items()
+                            if target_dataset in target_datasets}
+
                 source_snapshots = group_snapshots_by_datasets(await self.middleware.run_in_thread(
                     multilist_snapshots, source_shell, [(dataset, False) for dataset in datasets.keys()]
                 ))
