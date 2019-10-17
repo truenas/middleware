@@ -158,6 +158,9 @@
                 <li class="sidebar-brand">
                     <a href="#websocket_events">Websocket Events</a>
                 </li>
+                <li class="sidebar-brand">
+                    <a href="#jobs">Jobs</a>
+                </li>
             </ul>
         </div>
         <!-- /#sidebar-wrapper -->
@@ -227,6 +230,10 @@
                   {{ attrs.description|markdown|safe }}
                 {% endif %}
                 {% endfor %}
+               </span>
+
+               <span id="jobs">
+               {{ jobs|markdown|safe }}
                </span>
 
              </div>
