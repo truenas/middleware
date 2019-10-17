@@ -580,8 +580,8 @@ class CoreService(Service):
                     'filterable': hasattr(method, '_filterable'),
                     'require_websocket': hasattr(method, '_pass_app'),
                     'job': hasattr(method, '_job'),
-                    'downloadable': hasattr(method, '_job') and method._job['pipes'] == ['output'],
-
+                    'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
+                    'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
                 }
         return data
 
