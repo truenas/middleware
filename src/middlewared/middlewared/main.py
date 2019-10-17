@@ -961,6 +961,9 @@ class Middleware(LoadPluginsMixin):
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
+    def get_wsclients(self):
+        return self.__wsclients
+
     def register_wsclient(self, client):
         self.__wsclients[client.session_id] = client
 

@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import socket
 import sys
 import threading
 import time
@@ -397,6 +398,24 @@ class CRUDService(ServiceChangeMixin, Service):
 
 
 class CoreService(Service):
+
+    @filterable
+    def sessions(self, filters=None, options=None):
+        """
+        Get currently open websocket sessions.
+        """
+        return filter_list([
+            {
+                'id': i.session_id,
+                'socket_type': socket.AddressFamily(
+                    i.request.transport.get_extra_info('socket').family
+                ).name,
+                'address': i.request.transport.get_extra_info('sockname'),
+                'authenticated': i.authenticated,
+                'call_count': i._softhardsemaphore.counter,
+            }
+            for i in self.middleware.get_wsclients().values()
+        ], filters, options)
 
     @filterable
     def get_jobs(self, filters=None, options=None):
