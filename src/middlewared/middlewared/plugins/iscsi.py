@@ -810,7 +810,7 @@ class iSCSITargetExtentService(CRUDService):
                                                    ['name', 'rnin', 'vnet'],
                                                    ['name', 'rnin', 'bridge']])
                        )[0]
-                mac = nic['link_address'].replace(':', '')
+                mac = nic['state']['link_address'].replace(':', '')
 
                 ltg = await self.query()
                 if len(ltg) > 0:
