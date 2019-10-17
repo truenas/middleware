@@ -18,7 +18,7 @@ import cam
 from lxml import etree
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args
+from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
@@ -694,20 +694,20 @@ class DiskService(CRUDService):
     async def toggle_smart_off(self, devname):
         args = await self.__get_smartctl_args(devname)
         if args:
-            await run('smartctl', '--smart=off', *args, check=False)
+            await smartctl(args + ['--smart=off'], check=False)
 
     @private
     async def toggle_smart_on(self, devname):
         args = await self.__get_smartctl_args(devname)
         if args:
-            await run('smartctl', '--smart=on', *args, check=False)
+            await smartctl(args + ['--smart=on'], check=False)
 
     @private
     async def serial_from_device(self, name):
         args = await self.__get_smartctl_args(name)
         if args:
-            p1 = await Popen(['smartctl', '-i'] + args, stdout=subprocess.PIPE)
-            output = (await p1.communicate())[0].decode()
+            p1 = await smartctl(args + ['-i'], stdout=subprocess.PIPE)
+            output = p1.stdout.decode()
             search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
             if search:
                 return search.group('serial')
@@ -755,14 +755,14 @@ class DiskService(CRUDService):
         ))
 
     async def __get_temperature(self, disk, smartctl_args):
-        if disk.startswith('da'):
+        if disk.startswith('da') and not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
             try:
                 return await self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
             except Exception:
                 pass
 
-        cp = await run(['smartctl', '-a'] + smartctl_args, check=False, stderr=subprocess.STDOUT,
-                       encoding='utf8', errors='ignore')
+        cp = await smartctl(smartctl_args + ['-a'], check=False, stderr=subprocess.STDOUT,
+                            encoding='utf8', errors='ignore')
         if (cp.returncode & 0b11) != 0:
             self.logger.trace('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
             return None
@@ -1834,11 +1834,11 @@ class DiskService(CRUDService):
     @private
     async def sata_dom_lifetime_left(self, devname):
         try:
-            smartctl = (await run('smartctl', '-A', devname, encoding="utf8", errors="ignore")).stdout
+            output = (await smartctl(['-A', devname], encoding="utf8", errors="ignore")).stdout
         except subprocess.CalledProcessError:
             return None
 
-        m = RE_SATA_DOM_LIFETIME.search(smartctl)
+        m = RE_SATA_DOM_LIFETIME.search(output)
         if m:
             aec = int(m.group(1))
             return max(1.0 - aec / 3000, 0)
