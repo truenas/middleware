@@ -1,31 +1,25 @@
-from collections import defaultdict
 import copy
 import errno
 import glob
 import itertools
 import json
-import math
 import netif
 import os
 import psutil
-import queue
 import re
-import select
 import shutil
-import socketserver
 import statistics
 import subprocess
 import sysctl
 import tarfile
 import textwrap
-import threading
 import time
 
 from middlewared.event import EventSource
 from middlewared.i18n import _
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, filterable, private
-from middlewared.utils import filter_list, run, start_daemon_thread
+from middlewared.utils import filter_list, run
 from middlewared.validators import Range
 
 RE_COLON = re.compile('(.+):(.+)$')
@@ -36,8 +30,6 @@ RE_RRDPLUGIN = re.compile(r'^(?P<name>.+)Plugin$')
 RE_SPACES = re.compile(r'\s{2,}')
 RRD_BASE_PATH = '/var/db/collectd/rrd/localhost'
 RRD_PLUGINS = {}
-RRD_TYPE_QUEUES_EVENT = defaultdict(lambda: defaultdict(set))
-RRD_TYPE_QUEUES_EVENT_LOCK = threading.Lock()
 
 
 def get_members(tar, prefix):
@@ -997,62 +989,6 @@ class ReportingService(ConfigService):
                 rv.append(rrd.export(ident, starttime, endtime, aggregate=query['aggregate']))
         return rv
 
-    @private
-    def get_plugin_and_rrd_types(self, name_idents):
-        rv = []
-        for name, identifier in name_idents:
-            rrd = self.__rrds[name]
-            rv.append(((name, identifier), rrd.plugin, rrd.get_rrd_types(identifier)))
-        return rv
-
-
-class GraphiteServer(socketserver.TCPServer):
-    allow_reuse_address = True
-
-
-class GraphiteHandler(socketserver.BaseRequestHandler):
-    def handle(self):
-        last = b''
-        while True:
-            data = b''
-            # Try to read a batch of updates at once, instead of breaking per message size
-            while True:
-                if not select.select([self.request.fileno()], [], [], 0.1)[0] and data != b'':
-                    break
-                msg = self.request.recv(1428)
-                if msg == b'':
-                    break
-                data += msg
-            if data == b'':
-                break
-            if last:
-                data = last + data
-                last = b''
-            lines = (last + data).split(b'\r\n')
-            if lines[-1] != b'':
-                last = lines[-1]
-            nameident_queues = defaultdict(set)
-            nameident_timestamps = defaultdict(set)
-            for line in lines[:-1]:
-                line, value, timestamp = line.split(b' ')
-                timestamp = int(timestamp)
-                name = line.split(b'.', 1)[1].decode()
-                with RRD_TYPE_QUEUES_EVENT_LOCK:
-                    if name in RRD_TYPE_QUEUES_EVENT:
-                        queues = RRD_TYPE_QUEUES_EVENT[name]
-                        nameident_queues.update(queues)
-                        for nameident in queues.keys():
-                            nameident_timestamps[nameident].add(timestamp)
-            for nameident, queues in nameident_queues.items():
-                for q in queues:
-                    q.put((nameident, nameident_timestamps.get(nameident)))
-
-
-def collectd_graphite(middleware):
-    with GraphiteServer(('127.0.0.1', 2003), GraphiteHandler) as server:
-        server.middleware = middleware
-        server.serve_forever()
-
 
 class RealtimeEventSource(EventSource):
 
@@ -1134,71 +1070,5 @@ class RealtimeEventSource(EventSource):
             time.sleep(2)
 
 
-class ReportingEventSource(EventSource):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.queue = queue.Queue()
-        self.queue_reverse = []
-
-    def run(self):
-        try:
-            arg = json.loads(self.arg)
-        except Exception:
-            self.middleware.logger.debug(
-                'Failed to subscribe to reporting.get_data', exc_info=True,
-            )
-            return
-
-        plugin_rrd_types = self.middleware.call_sync(
-            'reporting.get_plugin_and_rrd_types', [(i['name'], i['identifier']) for i in arg]
-        )
-
-        for name_ident, plugin, rrd_types in plugin_rrd_types:
-            for rrd_type in rrd_types:
-                name = f'{plugin}.{rrd_type[0]}.{rrd_type[1]}'
-                with RRD_TYPE_QUEUES_EVENT_LOCK:
-                    queues = RRD_TYPE_QUEUES_EVENT[name][name_ident]
-                    queues.add(self.queue)
-                    self.queue_reverse.append(queues)
-
-        while not self._cancel.is_set():
-            nameident, timestamps = self.queue.get()
-            if not timestamps:
-                self.middleware.logger.debug('Timetamps not found for %r', nameident)
-                timestamps = [int(time.time())]
-            name, ident = nameident
-            # 10 is subtracted because rrdtool needs the full 10 seconds step to return
-            # not null data for the period. That means we are actually returning the previous
-            # step (read delaying stats by at least 10 seconds)
-            start = math.floor(min(timestamps) / 10) * 10 - 10
-            end = math.ceil(max(timestamps) / 10) * 10 - 10
-            if start == end:
-                start -= 10
-            try:
-                data = self.middleware.call_sync(
-                    'reporting.get_data',
-                    [{
-                        'name': name,
-                        'identifier': ident,
-                    }],
-                    {'start': start, 'end': end, 'aggregate': False},
-                )
-                self.send_event('ADDED', fields=data[0])
-            except Exception:
-                self.middleware.logger.debug(
-                    'Failed to send reporting event for {name!r}:{ident!r}', exc_info=True,
-                )
-
-    def on_finish(self):
-        """
-        We need to remove queue from RRD_TYPE_QUEUES_EVENT
-        """
-        for q in self.queue_reverse:
-            q.remove(self.queue)
-
-
 def setup(middleware):
-    start_daemon_thread(target=collectd_graphite, args=[middleware])
-    middleware.register_event_source('reporting.get_data', ReportingEventSource)
     middleware.register_event_source('reporting.realtime', RealtimeEventSource)
