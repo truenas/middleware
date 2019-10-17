@@ -48,7 +48,7 @@ def websocket():
                 'name': name,
                 'methods': c.call('core.get_methods', name)
             })
-        events = c.call('core.get_events')
+        events = render_template('websocket/events.md', **{'events': c.call('core.get_events')})
 
     protocol = render_template('websocket/protocol.md')
     jobs = render_template('websocket/jobs.md')
