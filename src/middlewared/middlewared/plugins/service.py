@@ -1068,7 +1068,8 @@ class ServiceService(CRUDService):
             return None
         if systemdataset['syslog']:
             await self.restart("syslogd", kwargs)
-        await self.restart("cifs", kwargs)
+        # hard-code onetime to avoid starting Samba if it's disabled
+        await self.restart("cifs", {'onetime': False})
         if systemdataset['rrd']:
             # Restarting collectd may take a long time and there is no
             # benefit in waiting for it since even if it fails it wont
