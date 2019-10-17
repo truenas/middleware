@@ -167,6 +167,12 @@ class OpenAPIResource(object):
         method = self.rest._methods.get(methodname)
         if method:
             desc = method.get('description')
+            if method.get('downloadable') or method.get('uploadable'):
+                job_desc = f'\n\nA file can be {"downloaded from" if method.get("downloadable") else "uploaded to"} ' \
+                           'this end point. This end point is special, please refer to Jobs section in ' \
+                           'Websocket API documentation for details.'
+                desc = (desc or '') + job_desc
+
             if desc:
                 opobject['description'] = desc
 
