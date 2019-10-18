@@ -26,17 +26,17 @@ async def test__get_smartctl_args__nvd_ioctl_failed():
 
 
 @pytest.mark.parametrize("enclosure,dev", [
-    (None, "areca,811"),
-    (2, "areca,811/2"),
+    (811, "areca,811"),
+    ("811/2", "areca,811/2"),
 ])
 @pytest.mark.asyncio
 async def test__get_smartctl_args__arcmsr(enclosure, dev):
-    async def annotate_devices_with_areca_enclosure(devices):
+    async def annotate_devices_with_areca_dev_id(devices):
         for v in devices.values():
-            v["enclosure"] = enclosure
+            v["areca_dev_id"] = enclosure
 
-    with patch("middlewared.common.smart.smartctl.annotate_devices_with_areca_enclosure",
-               annotate_devices_with_areca_enclosure):
+    with patch("middlewared.common.smart.smartctl.annotate_devices_with_areca_dev_id",
+               annotate_devices_with_areca_dev_id):
         assert await get_smartctl_args(None, {"ada0": {
             "driver": "arcmsrX",
             "controller_id": 1000,
@@ -136,7 +136,7 @@ async def test_get_disk__unknown_usb_bridge():
             "lun_id": 10,
         }}, "ada0") == ["/dev/ada0", "-d", "sat"]
 
-        run.assert_called_once_with(["smartctl", "-i", "/dev/ada0"], stderr=subprocess.STDOUT, check=False,
+        run.assert_called_once_with(["smartctl", "/dev/ada0", "-i"], stderr=subprocess.STDOUT, check=False,
                                     encoding="utf8", errors="ignore")
 
 

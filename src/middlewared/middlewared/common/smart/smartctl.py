@@ -7,7 +7,7 @@ from nvme import get_nsid
 
 from middlewared.utils import run
 
-from .areca import annotate_devices_with_areca_enclosure
+from .areca import annotate_devices_with_areca_dev_id
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,6 @@ async def get_smartctl_args(middleware, devices, disk):
     driver = device["driver"]
     controller_id = device["controller_id"]
     channel_no = device["channel_no"]
-    lun_id = device["lun_id"]
 
     # Areca Controller support(at least the 12xx family, possibly others)
     if driver.startswith("arcmsr"):
@@ -41,16 +40,9 @@ async def get_smartctl_args(middleware, devices, disk):
         # calls doing the same thing.
         async with areca_lock:
             if "enclosure" not in device:
-                await annotate_devices_with_areca_enclosure(devices)
+                await annotate_devices_with_areca_dev_id(devices)
 
-        dev_id = lun_id + 1 + channel_no * 8
-        dev = f"areca,{dev_id}"
-
-        enclosure = device["enclosure"]
-        if enclosure is not None:
-            dev += f"/{enclosure}"
-
-        return [f"/dev/arcmsr{controller_id}", "-d", dev]
+        return [f"/dev/arcmsr{controller_id}", "-d", f"areca,{device['areca_dev_id']}"]
 
     # Highpoint Rocket Raid 27xx controller
     if driver == "rr274x_3x":
