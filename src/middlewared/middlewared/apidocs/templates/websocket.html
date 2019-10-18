@@ -133,6 +133,46 @@
         margin-right: 0;
     }
 }
+
+.tool_tip {
+  position: relative;
+  display: inline-block;
+  border: 1px solid black;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.tool_tip .tooltip_text {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: 150%;
+  left: 50%;
+  margin-left: -60px;
+  width: 200px;
+}
+
+.tool_tip .tooltip_text::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -40px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent black transparent;
+}
+
+.tool_tip:hover .tooltip_text {
+  visibility: visible;
+}
+
     </style>
   </head>
   <body>
@@ -158,6 +198,9 @@
                 <li class="sidebar-brand">
                     <a href="#websocket_events">Websocket Events</a>
                 </li>
+                <li class="sidebar-brand">
+                    <a href="#jobs">Jobs</a>
+                </li>
             </ul>
         </div>
         <!-- /#sidebar-wrapper -->
@@ -180,7 +223,24 @@
               {% for mname, method in service.methods.items() %}
                <table class="table">
                  <thead>
-                   <tr><th>{{ mname }}</th></tr>
+                   <tr><th>
+                       {{ mname }}
+                       {% if method.job %}
+                            <div class="tool_tip" style="margin-left: 20px;">Job
+                                <span class="tooltip_text">
+                                    This endpoint is a Job. Please refer to the <a href="#jobs">Jobs</a> section for details.
+                                    {% if method.downloadable %}
+                                    <br>
+                                    A file can be downloaded from this endpoint. Please refer to the <a href="#jobs">Jobs</a> section to download a file.
+                                    {% endif %}
+                                    {% if method.uploadable %}
+                                    <br>
+                                    A file can be uploaded to this endpoint. Please refer to the <a href="#jobs">Jobs</a> section to upload a file.
+                                    {% endif %}
+                                </span>
+                            </div>
+                       {% endif %}
+                   </th></tr>
                    {% if method.accepts %}
                    <tr><th>
                      Arguments:
@@ -216,17 +276,11 @@
                </span>
 
                <span id="websocket_events">
-                <h2>Websocket Events</h2>
+                {{ events|markdown|safe }}
+               </span>
 
-                <hr />
-
-                {% for name, attrs in events.items() %}
-                <h3>{{ name }}</h3>
-                <hr />
-                {% if attrs.description %}
-                  {{ attrs.description|markdown|safe }}
-                {% endif %}
-                {% endfor %}
+               <span id="jobs">
+               {{ jobs|markdown|safe }}
                </span>
 
              </div>

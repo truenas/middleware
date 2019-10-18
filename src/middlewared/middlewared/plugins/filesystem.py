@@ -848,6 +848,15 @@ class FilesystemService(Service):
 
 class FileFollowTailEventSource(EventSource):
 
+    """
+    Retrieve last `no_of_lines` specified as an integer argument for a specific `path` and then
+    any new lines as they are added. Specified argument has the format `path:no_of_lines` ( `/var/log/messages:3` ).
+
+    `no_of_lines` is optional and if it is not specified it defaults to `3`.
+
+    However `path` is required for this.
+    """
+
     def run(self):
         if ':' in self.arg:
             path, lines = self.arg.rsplit(':', 1)

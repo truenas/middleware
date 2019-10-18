@@ -992,6 +992,10 @@ class ReportingService(ConfigService):
 
 class RealtimeEventSource(EventSource):
 
+    """
+    Retrieve real time statistics for CPU, network and memory.
+    """
+
     @staticmethod
     def get_cpu_usages(cp_diff):
         cp_total = sum(cp_diff)

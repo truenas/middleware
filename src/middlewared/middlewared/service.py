@@ -599,8 +599,11 @@ class CoreService(Service):
                     'filterable': hasattr(method, '_filterable'),
                     'require_websocket': hasattr(method, '_pass_app'),
                     'job': hasattr(method, '_job'),
-                    'downloadable': hasattr(method, '_job') and method._job['pipes'] == ['output'],
-
+                    'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
+                    'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
+                    'require_pipes': hasattr(method, '_job') and method._job['check_pipes'] and any(
+                        i in method._job['pipes'] for i in ('input', 'output')
+                    ),
                 }
         return data
 
@@ -613,6 +616,7 @@ class CoreService(Service):
         for name, attrs in self.middleware.get_events():
             events[name] = {
                 'description': attrs['description'],
+                'wildcard_subscription': attrs['wildcard_subscription'],
             }
         return events
 

@@ -17,7 +17,7 @@ class Events(object):
 
     def __iter__(self):
         for k, v in self.__events.items():
-            yield k, {'description': v}
+            yield k, {'description': v, 'wildcard_subscription': True}
 
 
 class EventSource(object):
