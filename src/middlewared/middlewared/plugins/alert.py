@@ -52,12 +52,12 @@ class AlertModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     node = sa.Column(sa.String(100))
     source = sa.Column(sa.Text())
-    key = sa.Column(sa.Text(), default="http")
+    key = sa.Column(sa.Text())
     datetime = sa.Column(sa.DateTime())
     text = sa.Column(sa.Text())
     args = sa.Column(sa.JSON())
     dismissed = sa.Column(sa.Boolean())
-    uuid = sa.Column(sa.Text(), default='A')
+    uuid = sa.Column(sa.Text())
     klass = sa.Column(sa.Text())
 
 

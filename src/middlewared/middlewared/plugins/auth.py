@@ -354,11 +354,11 @@ class TwoFactorAuthModel(sa.Model):
     __tablename__ = 'system_twofactorauthentication'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    otp_digits = sa.Column(sa.Integer())
+    otp_digits = sa.Column(sa.Integer(), default=6)
     secret = sa.Column(sa.String(16), nullable=True, default=None)
     window = sa.Column(sa.Integer(), default=0)
     interval = sa.Column(sa.Integer(), default=30)
-    services = sa.Column(sa.JSON())
+    services = sa.Column(sa.JSON(), default={})
     enabled = sa.Column(sa.Boolean(), default=True)
 
 

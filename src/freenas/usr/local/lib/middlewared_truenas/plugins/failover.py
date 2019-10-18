@@ -234,9 +234,9 @@ class FailoverModel(sa.Model):
     __tablename__ = 'system_failover'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    disabled = sa.Column(sa.Boolean())
+    disabled = sa.Column(sa.Boolean(), default=False)
     master_node = sa.Column(sa.String(1))
-    timeout = sa.Column(sa.Integer())
+    timeout = sa.Column(sa.Integer(), default=0)
 
 
 class FailoverService(ConfigService):

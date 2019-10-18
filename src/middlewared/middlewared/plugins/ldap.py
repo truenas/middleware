@@ -399,7 +399,7 @@ class LDAPModel(sa.Model):
     ldap_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     ldap_kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id'), index=True, nullable=True)
     ldap_kerberos_principal = sa.Column(sa.String(255))
-    ldap_validate_certificates = sa.Column(sa.Boolean())
+    ldap_validate_certificates = sa.Column(sa.Boolean(), default=True)
     ldap_disable_freenas_cache = sa.Column(sa.Boolean())
 
 

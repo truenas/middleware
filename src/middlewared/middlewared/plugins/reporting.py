@@ -713,7 +713,7 @@ class ReportingModel(sa.Model):
     __tablename__ = 'system_reporting'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    cpu_in_percentage = sa.Column(sa.Boolean())
+    cpu_in_percentage = sa.Column(sa.Boolean(), default=False)
     graphite = sa.Column(sa.String(120), default="")
     graph_age = sa.Column(sa.Integer(), default=12)
     graph_points = sa.Column(sa.Integer(), default=1200)
