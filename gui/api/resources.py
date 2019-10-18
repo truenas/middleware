@@ -351,6 +351,8 @@ class DiskResourceMixin(object):
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         try:
             return super(DiskResourceMixin, self).obj_update(bundle, skip_errors=skip_errors, **kwargs)
+        except ImmediateHttpResponse:
+            raise
         except Exception:
             raise ImmediateHttpResponse(response=HttpNotFound())
 
