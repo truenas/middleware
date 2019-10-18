@@ -502,7 +502,7 @@ class DatastoreService(Service):
         return True
 
     @private
-    async def get_backrefs(self, name):
+    def get_backrefs(self, name):
         """
         Returns list of (datastore_name, column_name) for all tables that reference this table
         without being ON DELETE CASCADE / ON DELETE SET NULL.

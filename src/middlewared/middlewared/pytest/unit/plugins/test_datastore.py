@@ -238,7 +238,7 @@ async def test__delete_fk_cascade():
 @pytest.mark.asyncio
 async def test__get_backrefs():
     async with datastore_test() as ds:
-        assert await ds.get_backrefs("account.bsdgroups") == [
+        assert ds.get_backrefs("account.bsdgroups") == [
             ("account.bsdusers", "bsdusr_group"),
         ]
 

@@ -1375,6 +1375,9 @@ class Journal:
         for query, params in self.journal:
             yield query, params
 
+    def __len__(self):
+        return len(self.journal)
+
     def peek(self):
         return self.journal[0]
 
@@ -1414,8 +1417,8 @@ class JournalSync:
 
     def process(self):
         if self.failover_status != 'MASTER':
-            for query, params in self.journal:
-                logger.warning('Node status %s but has query in journal: %s', self.failover_status, query)
+            if self.journal:
+                logger.warning('Node status %s but has %d queries in journal', self.failover_status, len(self.journal))
 
             self.journal.clear()
 
