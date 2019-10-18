@@ -407,10 +407,17 @@ class CoreService(Service):
         return filter_list([
             {
                 'id': i.session_id,
-                'socket_type': socket.AddressFamily(
+                'socket_family': socket.AddressFamily(
                     i.request.transport.get_extra_info('socket').family
                 ).name,
-                'address': i.request.transport.get_extra_info('sockname'),
+                'address': (
+                    (
+                        i.request.headers.get('X-Real-Remote-Addr'),
+                        i.request.headers.get('X-Real-Remote-Port')
+                    ) if i.request.headers.get('X-Real-Remote-Addr') else (
+                        i.request.transport.get_extra_info("peername")
+                    )
+                ),
                 'authenticated': i.authenticated,
                 'call_count': i._softhardsemaphore.counter,
             }
