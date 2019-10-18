@@ -502,6 +502,15 @@ class ActiveDirectoryForm(ModelForm):
             bindpw = self.instance.ad_bindpw
             cdata['ad_bindpw'] = bindpw
 
+        """
+        The AD configuration file takes precedence over newly-added
+        parameters. It must be removed before validating passwords.
+        """
+        try:
+            os.unlink('/etc/directoryservice/ActiveDirectory/config')
+        except FileNotFoundError:
+            pass
+
         if cdata.get("ad_enable") is False:
             return cdata
 
