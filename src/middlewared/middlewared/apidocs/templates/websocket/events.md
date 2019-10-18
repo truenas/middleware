@@ -160,8 +160,8 @@ The event response shows that system has registered the job and the job is waiti
 
 ### Websocket Client Unsubscription
 
-Once the client has consumed the information required and no more updates are required,
-An event can be unsubscribed in this case.
+After the client has consumed the information required and no more updates are required,
+an event can be unsubscribed as shown here:
 
 Request:
 
@@ -171,6 +171,6 @@ Request:
         "msg": "unsub"
     }
 
-No response is sent by the server for this call. With this example, we are un-subscribing
-from the `reporting.realtime` event we subscribed to above. The `id` is the same value
-which we sent when subscribing to the event.
+The server does not send a response for this call. This example unsubscribes
+from the `reporting.realtime` event that was subscribed to above. The `id` is the same value
+sent when subscribing to the event.
