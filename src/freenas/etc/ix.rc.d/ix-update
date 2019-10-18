@@ -18,7 +18,6 @@ db_update_real()
 {
 	echo "Applying database schema changes"
 
-	touch /tmp/.sqlite3_ha_skip
 	if [ $(echo "SELECT name FROM sqlite_master WHERE name = 'alembic_version'" | sqlite3 /data/freenas-v1.db) = "" ];
 	then
         /usr/local/sbin/migrate93 -f /data/freenas-v1.db
@@ -34,18 +33,15 @@ db_update_real()
         fi
         /usr/local/bin/migrate113 > $UPDATE_FAILED_LOG 2>&1
         if [ $? -ne 0 ]; then
-            rm -f /tmp/.sqlite3_ha_skip
             echo "manage.py migrate failed"
             return 1
         fi
     fi
 	/usr/local/sbin/migrate > $UPDATE_FAILED_LOG 2>&1
 	if [ $? -ne 0 ]; then
-		rm -f /tmp/.sqlite3_ha_skip
 		echo "alembic migrate failed"
 		return 1
 	fi
-	rm -f /tmp/.sqlite3_ha_skip
 	rm -f $UPDATE_FAILED_LOG
 	return 0
 }
