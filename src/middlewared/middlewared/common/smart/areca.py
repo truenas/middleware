@@ -7,19 +7,19 @@ from middlewared.utils import run
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["annotate_devices_with_areca_enclosure"]
+__all__ = ["annotate_devices_with_areca_dev_id"]
 
 FIRMWARE_VERSION = re.compile(r"Firmware Version\s*: V([0-9.]+)")
 V_1_51 = version.parse("1.51")
 
-DISK = re.compile(r"\s*(?P<slot>[0-9]+)\s+(?P<enclosure>[0-9]+)\s+")
+DISK = re.compile(r"\s*(?P<dev_id>[0-9]+)\s+(?P<enclosure>[0-9]+)\s+(Slot#|SLOT )(?P<slot>[0-9]+)")
 
 
-async def annotate_devices_with_areca_enclosure(devices):
+async def annotate_devices_with_areca_dev_id(devices):
     areca_devices = [device for device in devices.values() if device["driver"].startswith("arcmsr")]
 
     for device in areca_devices:
-        device["enclosure"] = None
+        device["areca_dev_id"] = device["lun_id"] + 1 + device["channel_no"] * 8
 
     try:
         sys_info = await run("areca-cli", "sys", "info", encoding="utf-8")
@@ -37,17 +37,13 @@ async def annotate_devices_with_areca_enclosure(devices):
             if m is None:
                 continue
 
-            slot = int(m.group("slot"))
+            dev_id = int(m.group("dev_id"))
             enclosure = int(m.group("enclosure"))
+            slot = int(m.group("slot"))
 
             for device in areca_devices:
-                channel_no = device["channel_no"]
-                lun_id = device["lun_id"]
-
-                dev_id = lun_id + 1 + channel_no * 8
-
-                if dev_id == slot:
-                    device["enclosure"] = enclosure
+                if device["areca_dev_id"] == dev_id:
+                    device["areca_dev_id"] = f"{slot}/{enclosure}"
                     break
     except Exception:
         logger.trace("Error in annotate_devices_with_areca_enclosure", exc_info=True)
