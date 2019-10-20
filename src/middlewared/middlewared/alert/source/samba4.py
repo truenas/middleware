@@ -13,7 +13,7 @@ class NoSystemPoolConfiguredAlertClass(AlertClass):
 class SambaDatasetAutoMigrationCantBeDoneAlertClass(AlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
-    title = "Samba Auto-Bigration to System Dataset Failed"
+    title = "Samba Auto-Migration to System Dataset Failed"
     text = (
         "Multiple legacy Samba4 datasets detected. Auto-migration "
         "to /mnt/%s/.system/samba4 cannot be done. Please perform "
