@@ -2907,12 +2907,20 @@ class PoolDatasetService(CRUDService):
             key = db_results.get(ds['name']) if not passphrase else None
             return ds['name'], {'encryption_key': key, **ds} if options.get('full_output') else key
 
+        def check_key(ds):
+            if ds['key_loaded'] and key_loaded:
+                return True
+            elif not ds['key_loaded'] and not key_loaded:
+                return True
+            else:
+                return False
+
         return map(
             normalize,
             filter(
                 lambda d: d['name'] == d['encryption_root'] and d['encrypted'] and recursive_op(
                     d['name'], name
-                ) and (int(d['key_loaded'] and key_loaded) + (1 if not key_loaded else 0)),
+                ) and check_key(d),
                 self.query()
             )
         )
