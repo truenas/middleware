@@ -24,7 +24,7 @@ from middlewared.schema import (
     accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
 )
 from middlewared.service import (
-    ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
+    ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors, periodic
 )
 from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
@@ -2929,6 +2929,25 @@ class PoolDatasetService(CRUDService):
                 self.query()
             )
         )
+
+    @periodic(86400)
+    @private
+    @job('sync_encrypted_pool_dataset_keys')
+    def sync_db_keys(self, job):
+        db_datasets = self.encrypted_roots_query_db(decrypt=True)
+        to_remove = []
+        check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
+            (name, {'key': db_datasets[name]}) for name in db_datasets
+        ])
+        check_key_job.wait_sync()
+        if check_key_job.error:
+            raise CallError(f'Failed to sync database keys: {check_key_job.error}')
+
+        for dataset, status in zip(db_datasets, check_key_job.result):
+            if not status['result']:
+                to_remove.append(dataset)
+
+        self.middleware.call_sync('datastore.delete', self.dataset_store, [['name', 'in', to_remove]])
 
     @accepts(
         Str('id'),
