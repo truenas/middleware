@@ -2922,32 +2922,41 @@ class PoolDatasetService(CRUDService):
         Dict(
             'lock_options',
             Bool('force_umount', default=False),
-            Bool('recursive', default=True),
+            Bool('recursive', default=False),
         )
     )
     def lock(self, id, options):
         # TODO: Add system dataset related checks
+        # TODO:Ask William if we should mount encrypted root children of `id`, they would be unmounted
+        #  as well because of how `umount` works, we would like to mount them again
         ds = self.middleware.call_sync('pool.dataset._get_instance', id)
-        if ds['encrypted'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
-            raise CallError('Only datasets which are encrypted with passphrase can be locked')
+        if not options['recursive']:
+            if ds['encrypted'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
+                raise CallError('Only datasets which are encrypted with passphrase can be locked')
 
-        if not ds['key_loaded']:
-            raise CallError(f'Dataset {id} is already locked')
+            if not ds['key_loaded']:
+                raise CallError(f'Dataset {id} is already locked')
 
-        if ds['mountpoint']:
-            self.middleware.call_sync('zfs.dataset.umount', id, {'force': options['force_umount']})
+        datasets = [
+            ds[0] for ds in self.query_encrypted_datasets(
+                id, {'recursive': options['recursive'], 'key_loaded': True, 'full_output': True}
+            )
+            if ZFSKeyFormat(ds[1]['key_format']['value']) == ZFSKeyFormat.PASSPHRASE
+        ]
 
         failed = []
-        for dataset, key in self.query_encrypted_datasets(
-            id, {'recursive': options['recursive'], 'key_loaded': True}
+        for dataset, status in zip(
+            datasets, self.execute_zfs_plugin_bulk(
+                'unload_key', lambda d: {'umount': True, 'force_umount': options['force_umount']}, datasets,
+            ),
         ):
-            try:
-                self.middleware.call_sync('zfs.dataset.unload_key', dataset, {'recursive': False})
-            except CallError:
-                failed.append(dataset)
+            if status['error']:
+                failed.append((dataset, status['error']))
 
         if failed:
             raise CallError('\n'.join(f'Failed to lock {d}' for d in failed))
+
+        return True
 
     @accepts(
         Str('id'),
@@ -3005,7 +3014,7 @@ class PoolDatasetService(CRUDService):
         for status, db_data in zip(
             self.execute_zfs_plugin_bulk(
                 f'{"load" if load_key else "check"}_key', lambda d: {
-                    'key': d['key'], **({'mount': True} if load_key else {})
+                    'key': datasets[d]['key'], **({'mount': True} if load_key else {})
                 }, datasets
             ),
             datasets.items()
@@ -3059,7 +3068,7 @@ class PoolDatasetService(CRUDService):
         ):
             jobs.append(self.middleware.call_sync(
                 'zfs.dataset.bulk_process', method_name, [
-                    (ds, func(datasets[ds]))
+                    (ds, func(ds))
                     for ds in itertools.islice(datasets, start, start + size)
                 ]
             ))
