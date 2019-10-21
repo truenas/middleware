@@ -111,6 +111,7 @@ def services_config(middleware, context):
         2. TrueNAS single controller systems
         3. ONLY TrueNAS MASTER controllers in HA systems
     """
+    mapping = {}
     if not context['failover_licensed'] or context['failover_status'] == 'MASTER':
         mapping = {
             'afp': ['netatalk'],
