@@ -2986,6 +2986,7 @@ class PoolDatasetService(CRUDService):
         # TODO:Ask William if we should mount encrypted root children of `id`, they would be unmounted
         #  as well because of how `umount` works, we would like to mount them again
         ds = self.middleware.call_sync('pool.dataset._get_instance', id)
+
         if not options['recursive']:
             if ds['encrypted'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
                 raise CallError('Only datasets which are encrypted with passphrase can be locked')
