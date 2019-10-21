@@ -392,14 +392,18 @@ class FilesystemService(Service):
     @accepts(Str('path'))
     def acl_is_trivial(self, path):
         """
-        ACL is trivial if it can be fully expressed as a file mode without losing
-        any access rules. This is intended to be used as a check before allowing
-        users to chmod() through the webui
+        Returns True if the ACL can be fully expressed as a file mode without losing
+        any access rules, or if the path does not support NFSv4 ACLs (for example
+        a path on a tmpfs filesystem).
         """
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
-        a = acl.ACL(file=path)
-        return a.is_trivial
+
+        has_nfs4_acl_support = os.pathconf(path, 64)
+        if not has_nfs4_acl_support:
+            return True
+
+        return acl.ACL(file=path).is_trivial
 
     @accepts(
         Dict(
