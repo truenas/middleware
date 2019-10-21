@@ -1339,6 +1339,10 @@ class JailService(CRUDService):
 
     @private
     def start_on_boot(self):
+        if not self.iocage_set_up():
+            return
+
+        self.check_dataset_existence()
         self.logger.debug('Starting jails on boot: PENDING')
         ioc.IOCage(rc=True, reset_cache=True).start()
         self.logger.debug('Starting jails on boot: SUCCESS')
