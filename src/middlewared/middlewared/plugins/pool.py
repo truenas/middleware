@@ -2612,6 +2612,11 @@ class PoolService(CRUDService):
                         'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
                     )
 
+                unlock_job = self.middleware.call_sync('pool.dataset.unlock', pool['name'])
+                unlock_job.wait_sync()
+                if unlock_job.error:
+                    self.logger.error(f'Unlocking encrypted datasets failed for {pool["name"]}: {unlock_job.error}')
+
         finally:
             proc.kill()
             proc.wait()
