@@ -515,12 +515,14 @@ class ZFSDatasetService(CRUDService):
         Str('id'),
         Dict(
             'load_key_options',
-            Bool('recursive', default=True),
+            Bool('mount', default=False),
+            Bool('recursive', default=False),
             Any('key', default=None, null=True),
             Str('key_location', default=None, null=True),
         ),
     )
     def load_key(self, id, options):
+        mount_ds = options.pop('mount')
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
@@ -529,6 +531,28 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             self.logger.error(f'Failed to load key for {id}', exc_info=True)
             raise CallError(f'Failed to load key for {id}: {e}')
+        else:
+            if mount_ds:
+                self.mount(id, {'recursive': options['recursive']})
+
+    @accepts(Str('name'), List('params', default=[]))
+    @job()
+    def bulk_process(self, job, name, params):
+        f = getattr(self, name, None)
+        if not f:
+            raise CallError(f'{name} method not found in zfs.dataset')
+
+        statuses = []
+        for i in params:
+            result = error = None
+            try:
+                result = f(*i)
+            except Exception as e:
+                error = str(e)
+            finally:
+                statuses.append({'result': result, 'error': error})
+
+        return statuses
 
     @accepts(
         Str('id'),
