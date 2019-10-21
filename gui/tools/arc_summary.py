@@ -853,6 +853,7 @@ def get_l2arc_summary(Kstat):
         output["l2_arc_evicts"] = {}
         output["l2_arc_evicts"]['lock_retries'] = fHits(l2_evict_lock_retry)
         output["l2_arc_evicts"]['reading'] = fHits(l2_evict_reading)
+        output["l2_arc_evicts"]['total'] = (l2_evict_lock_retry + l2_evict_reading)
 
         output['l2_arc_breakdown'] = {}
         output['l2_arc_breakdown']['value'] = fHits(l2_access_total)
@@ -933,7 +934,7 @@ def _l2arc_summary(Kstat):
         ))
         sys.stdout.write("\n")
 
-        if int(arc["l2_arc_evicts"]['lock_retries']) + int(arc["l2_arc_evicts"]["reading"]) > 0:
+        if arc["l2_arc_evicts"]['total'] > 0:
             sys.stdout.write("L2 ARC Evicts:\n")
             sys.stdout.write("\tLock Retries:\t\t\t\t%s\n" % arc["l2_arc_evicts"]['lock_retries'])
             sys.stdout.write("\tUpon Reading:\t\t\t\t%s\n" % arc["l2_arc_evicts"]["reading"])
