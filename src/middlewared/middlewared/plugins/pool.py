@@ -3,6 +3,7 @@ import base64
 import contextlib
 import enum
 import errno
+import io
 import itertools
 import logging
 from datetime import datetime, time
@@ -2949,6 +2950,30 @@ class PoolDatasetService(CRUDService):
 
         self.middleware.call_sync('datastore.delete', self.dataset_store, [['name', 'in', to_remove]])
 
+    @accepts(Str('id'))
+    @job(lock='dataset_export_keys', pipes=['output'])
+    def export_keys(self, job, id):
+        self.middleware.call_sync('pool.dataset._get_instance', id)
+        self.sync_db_keys()
+        datasets = self.encrypted_roots_query_db([['name', '^', id]], decrypt=True)
+        tar_path = tempfile.NamedTemporaryFile(delete=False)
+        tar_path.close()
+        tar_path = tar_path.name
+        try:
+            with tarfile.open(tar_path, 'w:xz') as tar:
+                for ds in datasets:
+                    db_key = datasets[ds]
+                    key = io.BytesIO(db_key if isinstance(db_key, bytes) else db_key.encode())
+                    info = tarfile.TarInfo(name=ds)
+                    info.size = len(db_key)
+                    tar.addfile(tarinfo=info, fileobj=key)
+
+            with open(tar_path, 'rb') as f:
+                shutil.copyfileobj(f, job.pipes.output.w)
+        finally:
+            if os.path.exists(tar_path or ''):
+                os.unlink(tar_path)
+
     @accepts(
         Str('id'),
         Dict(
@@ -2958,7 +2983,6 @@ class PoolDatasetService(CRUDService):
         )
     )
     def lock(self, id, options):
-        # TODO: Add system dataset related checks
         # TODO:Ask William if we should mount encrypted root children of `id`, they would be unmounted
         #  as well because of how `umount` works, we would like to mount them again
         ds = self.middleware.call_sync('pool.dataset._get_instance', id)
@@ -3189,7 +3213,7 @@ class PoolDatasetService(CRUDService):
                     tar.extractall(path=temp_dir)
 
                 for key_file in os.listdir(temp_dir):
-                    with open(os.path.join(temp_dir, key_file)) as f:
+                    with open(os.path.join(temp_dir, key_file), 'rb') as f:
                         data[key_file] = f.read()
             except tarfile.ReadError:
                 with open(key_file, 'rb') as f:
