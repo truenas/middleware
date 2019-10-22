@@ -591,7 +591,7 @@ class FailoverService(ConfigService):
             SINGLE
         """
         interfaces = await self.middleware.call('interface.query')
-        if not any(filter(lambda x: x.get('failover_virtual_aliases'), interfaces)):
+        if not any(filter(lambda x: x['state']['carp_config'], interfaces)):
             return 'SINGLE'
 
         pools = await self.middleware.call('pool.query')
@@ -1669,6 +1669,9 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         ha_configured = False
 
     if ha_configured:
+        # If HA is already configured just sync network
+        middleware.logger.debug('[HA] Configuring network on standby node')
+        await middleware.call('failover.call_remote', 'interface.sync')
         return
 
     middleware.logger.info('[HA] Setting up')
@@ -1678,10 +1681,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 
     middleware.logger.debug('[HA] Configuring network on standby node')
     await middleware.call('failover.call_remote', 'interface.sync')
-    try:
-        await middleware.call('failover.call_remote', 'route.sync')
-    except Exception as e:
-        middleware.logger.warn('Failed to sync routes on standby node: %s', e)
 
     middleware.logger.debug('[HA] Restarting devd to enable failover')
     await middleware.call('failover.call_remote', 'service.restart', ['failover'])
