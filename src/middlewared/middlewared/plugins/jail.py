@@ -1002,6 +1002,8 @@ class JailService(CRUDService):
                 iocage.start(used_ports=[6000] + list(range(1025)))
             except Exception as e:
                 raise CallError(str(e))
+        else:
+            raise CallError(f'{jail} is already running')
 
         return True
 
@@ -1017,6 +1019,8 @@ class JailService(CRUDService):
                 iocage.stop(force=force)
             except Exception as e:
                 raise CallError(str(e))
+        else:
+            raise CallError(f'{jail} is not running')
 
             return True
 
