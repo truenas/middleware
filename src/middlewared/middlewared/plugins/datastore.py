@@ -401,14 +401,14 @@ class DatastoreService(Service):
         return result
 
     @accepts(Str('name'), Ref('query-options'))
-    async def config(self, name, options=None):
+    async def config(self, name, options):
         """
         Get configuration settings object for a given `name`.
 
         This is a shortcut for `query(name, {"get": true})`.
         """
         options['get'] = True
-        return await self.query(name, None, options)
+        return await self.query(name, [], options)
 
     @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
     async def insert(self, name, data, options):
