@@ -290,7 +290,7 @@ class DatastoreService(Service):
 
     @accepts(
         Str('name'),
-        List('query-filters', default=None, null=True, register=True),
+        List('query-filters', default=[], register=True),
         Dict(
             'query-options',
             Bool('relationships', default=True),
@@ -303,7 +303,6 @@ class DatastoreService(Service):
             Bool('count', default=False),
             Bool('get', default=False),
             Int('limit', default=0),
-            null=True,
             register=True,
         ),
     )
