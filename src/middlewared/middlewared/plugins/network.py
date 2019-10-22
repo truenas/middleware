@@ -1666,6 +1666,10 @@ class InterfaceService(CRUDService):
             if not interfaces:
                 dhclient_running = dhclient_status(name)[0]
                 if not dhclient_running:
+                    # Make sure interface is UP before starting dhclient
+                    # NAS-103577
+                    if netif.InterfaceFlags.UP not in iface.flags:
+                        iface.up()
                     dhclient_aws.append(asyncio.ensure_future(
                         self.dhclient_start(name, wait_dhcp)
                     ))
