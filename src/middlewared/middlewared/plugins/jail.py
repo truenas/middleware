@@ -1459,6 +1459,8 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def query(self, path, enabled):
         results = []
+        if not await self.middleware.call('jail.iocage_set_up'):
+            return results
         pool_name = os.path.relpath(path, '/mnt').split('/')[0]
         try:
             activated_pool = await self.middleware.call('jail.get_activated_pool')
