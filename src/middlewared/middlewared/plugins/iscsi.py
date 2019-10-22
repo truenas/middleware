@@ -415,9 +415,9 @@ class iSCSITargetAuthCredentialModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_target_auth_tag = sa.Column(sa.Integer(), default=1)
     iscsi_target_auth_user = sa.Column(sa.String(120))
-    iscsi_target_auth_secret = sa.Column(sa.String(120), default=None)
+    iscsi_target_auth_secret = sa.Column(sa.String(120))
     iscsi_target_auth_peeruser = sa.Column(sa.String(120))
-    iscsi_target_auth_peersecret = sa.Column(sa.String(120), default=None)
+    iscsi_target_auth_peersecret = sa.Column(sa.String(120))
 
 
 class iSCSITargetAuthCredentialService(CRUDService):
