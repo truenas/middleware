@@ -22,6 +22,7 @@ class LDAPBindAlertSource(AlertSource):
         try:
             await self.middleware.call("ldap.started")
         except Exception as e:
+            await self.middleware.call('ldap.set_state', 'FAULTED')
             return Alert(
                 LDAPBindAlertClass,
                 {'ldaperr': str(e)},

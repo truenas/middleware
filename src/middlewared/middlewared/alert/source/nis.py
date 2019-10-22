@@ -22,6 +22,7 @@ class NISBindAlertSource(AlertSource):
         try:
             await self.middleware.call("nis.started")
         except Exception as e:
+            await self.middleware.call('nis.set_state', 'FAULTED')
             return Alert(
                 NISBindAlertClass,
                 {'niserr': str(e)},
