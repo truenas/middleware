@@ -3916,11 +3916,7 @@ class PoolDatasetService(CRUDService):
         return result
 
     def __attachments_path(self, dataset):
-        if dataset['type'] == 'FILESYSTEM':
-            return dataset['mountpoint']
-
-        if dataset['type'] == 'VOLUME':
-            return os.path.join('/mnt', dataset['name'])
+        return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
 
     @item_method
     @accepts(Str('id', required=True))
