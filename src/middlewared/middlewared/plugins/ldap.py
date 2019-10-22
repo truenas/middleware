@@ -654,7 +654,7 @@ class LDAPService(ConfigService):
         return ret
 
     @private
-    async def __set_state(self, state):
+    async def set_state(self, state):
         return await self.middleware.call('directoryservices.set_state', {'ldap': state.name})
 
     @accepts()
@@ -721,14 +721,14 @@ class LDAPService(ConfigService):
             await self.middleware.call('smb.store_ldap_admin_password')
             await self.middleware.call('service.restart', 'cifs')
 
-        await self.__set_state(DSStatus['HEALTHY'])
+        await self.set_state(DSStatus['HEALTHY'])
         await self.middleware.call('ldap.fill_cache')
 
     @private
     async def stop(self):
         ldap = await self.config()
         await self.middleware.call('datastore.update', self._config.datastore, ldap['id'], {'ldap_enable': False})
-        await self.__set_state(DSStatus['LEAVING'])
+        await self.set_state(DSStatus['LEAVING'])
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
@@ -738,7 +738,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.nslcd_cmd('onestop')
-        await self.__set_state(DSStatus['DISABLED'])
+        await self.set_state(DSStatus['DISABLED'])
 
     @private
     @job(lock='fill_ldap_cache')
