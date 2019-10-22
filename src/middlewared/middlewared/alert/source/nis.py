@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.plugins.directoryservices import DSStatus
 
 
 class NISBindAlertClass(AlertClass):
@@ -22,6 +23,7 @@ class NISBindAlertSource(AlertSource):
         try:
             await self.middleware.call("nis.started")
         except Exception as e:
+            await self.middleware.call('nis.set_state', DSStatus['FAULTED'])
             return Alert(
                 NISBindAlertClass,
                 {'niserr': str(e)},

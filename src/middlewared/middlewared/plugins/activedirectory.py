@@ -841,7 +841,7 @@ class ActiveDirectoryService(ConfigService):
         return await self.config()
 
     @private
-    async def _set_state(self, state):
+    async def set_state(self, state):
         return await self.middleware.call('directoryservices.set_state', {'activedirectory': state.name})
 
     @accepts()
@@ -869,7 +869,7 @@ class ActiveDirectoryService(ConfigService):
         if state in [DSStatus['JOINING'], DSStatus['LEAVING']]:
             raise CallError(f'Active Directory Service has status of [{state}]. Wait until operation completes.', errno.EBUSY)
 
-        await self._set_state(DSStatus['JOINING'])
+        await self.set_state(DSStatus['JOINING'])
         if ad['verbose_logging']:
             self.logger.debug('Starting Active Directory service for [%s]', ad['domainname'])
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': True})
@@ -949,20 +949,20 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
-            await self._set_state(DSStatus['HEALTHY'])
+            await self.set_state(DSStatus['HEALTHY'])
             await self.middleware.call('admonitor.start')
             await self.middleware.call('activedirectory.get_cache')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
         else:
-            await self._set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'])
             self.logger.debug('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
 
     @private
     async def stop(self):
         ad = await self.config()
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': False})
-        await self._set_state(DSStatus['LEAVING'])
+        await self.set_state(DSStatus['LEAVING'])
         await self.middleware.call('admonitor.stop')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('kerberos.stop')
@@ -970,7 +970,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
-        await self._set_state(DSStatus['DISABLED'])
+        await self.set_state(DSStatus['DISABLED'])
 
     @private
     def validate_credentials(self, ad=None):
@@ -1123,7 +1123,7 @@ class ActiveDirectoryService(ConfigService):
                 'ads', 'join', ad['domainname']], check=False)
 
         if netads.returncode != 0:
-            await self._set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'])
             raise CallError(f'Failed to join [{ad["domainname"]}]: [{netads.stdout.decode().strip()}]')
 
     @private
@@ -1537,7 +1537,7 @@ class WBStatusThread(threading.Thread):
                 'State of domain [%s] transistioned to [%s]',
                 m['forest_name'], DSStatus(m['winbind_message'])
             )
-            self.middleware.call_sync('activedirectory._set_state', DSStatus(m['winbind_message']))
+            self.middleware.call_sync('activedirectory.set_state', DSStatus(m['winbind_message']))
             if new_state == DSStatus.FAULTED.value:
                 self.middleware.call_sync(
                     "alert.oneshot_create",
