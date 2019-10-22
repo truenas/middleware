@@ -1393,13 +1393,13 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def query(self, path, enabled):
         results = []
-        pool_name = os.path.relpath(path, '/mnt').split('/')[0]
+        query_dataset = os.path.relpath(path, '/mnt')
         try:
             activated_pool = await self.middleware.call('jail.get_activated_pool')
         except Exception:
             pass
         else:
-            if activated_pool == pool_name:
+            if query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
                 for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
                     results.append({'id': j['host_hostuuid']})
 
