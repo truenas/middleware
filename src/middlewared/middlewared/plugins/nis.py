@@ -75,7 +75,7 @@ class NISService(ConfigService):
         return await self.config()
 
     @private
-    async def __set_state(self, state):
+    async def set_state(self, state):
         return await self.middleware.call('directoryservices.set_state', {'nis': state.name})
 
     @accepts()
@@ -101,7 +101,7 @@ class NISService(ConfigService):
         if state in ['EXITING', 'JOINING']:
             raise CallError(f'Current state of NIS service is: [{state}]. Wait until operation completes.', errno.EBUSY)
 
-        await self.__set_state(DSStatus['JOINING'])
+        await self.set_state(DSStatus['JOINING'])
         await self.middleware.call('datastore.update', 'directoryservice.nis', nis['id'], {'nis_enable': True})
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'pam')
@@ -109,15 +109,15 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         setnisdomain = await run(['/bin/domainname', nis['domain']], check=False)
         if setnisdomain.returncode != 0:
-            await self.__set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'])
             raise CallError(f'Failed to set NIS Domain to [{nis["domain"]}]: {setnisdomain.stderr.decode()}')
 
         ypbind = await run(['/usr/sbin/service', 'ypbind', 'onestart'], check=False)
         if ypbind.returncode != 0:
-            await self.__set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'])
             raise CallError(f'ypbind failed: {ypbind.stderr.decode()}')
 
-        await self.__set_state(DSStatus['HEALTHY'])
+        await self.set_state(DSStatus['HEALTHY'])
         self.logger.debug(f'NIS service successfully started. Setting state to HEALTHY.')
         await self.middleware.call('nis.fill_cache')
         return True
@@ -128,15 +128,9 @@ class NISService(ConfigService):
         The return code from ypwhich is not a reliable health indicator. For example, RPC failure will return 0.
         There are edge cases where ypwhich can hang when NIS is misconfigured.
         """
-        nis = await self.config()
         ypwhich = await run(['/usr/bin/ypwhich'], check=False)
-        if ypwhich.returncode != 0:
-            if nis['enable']:
-                await self.__set_state(DSStatus['FAULTED'])
-                self.logger.debug(f'NIS status check returned [{ypwhich.stderr.decode().strip()}]. Setting state to FAULTED.')
-            return False
+
         if ypwhich.stderr:
-            await self.__set_state(DSStatus['FAULTED'])
             raise CallError(f'NIS status check returned [{ypwhich.stderr.decode().strip()}]. Setting state to FAULTED.')
         return True
 
