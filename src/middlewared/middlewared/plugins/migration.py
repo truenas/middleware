@@ -22,7 +22,7 @@ class MigrationModel(sa.Model):
     __tablename__ = 'system_migration'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(255), default=6)
+    name = sa.Column(sa.String(255))
 
 
 class MigrationService(Service):

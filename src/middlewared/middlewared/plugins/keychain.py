@@ -223,9 +223,9 @@ class KeychainCredentialModel(sa.Model):
     __tablename__ = 'system_keychaincredential'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(255), default=6)
-    type = sa.Column(sa.String(255), default='Mail')
-    attributes = sa.Column(sa.JSON(encrypted=True), default=False)
+    name = sa.Column(sa.String(255))
+    type = sa.Column(sa.String(255))
+    attributes = sa.Column(sa.JSON(encrypted=True))
 
 
 class KeychainCredentialService(CRUDService):

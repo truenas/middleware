@@ -418,9 +418,9 @@ class CloudCredentialModel(sa.Model):
     __tablename__ = 'system_cloudcredentials'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(100), default=6)
+    name = sa.Column(sa.String(100))
     provider = sa.Column(sa.String(50))
-    attributes = sa.Column(sa.JSON(encrypted=True), default=False)
+    attributes = sa.Column(sa.JSON(encrypted=True))
 
 
 class CredentialsService(CRUDService):

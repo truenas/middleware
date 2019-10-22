@@ -8,7 +8,7 @@ class KeyValueModel(sa.Model):
     __tablename__ = 'system_keyvalue'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    key = sa.Column(sa.String(255), default="http")
+    key = sa.Column(sa.String(255))
     value = sa.Column(sa.Text())
 
 

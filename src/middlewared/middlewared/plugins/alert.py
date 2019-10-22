@@ -725,11 +725,11 @@ class AlertServiceModel(sa.Model):
     __tablename__ = 'system_alertservice'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(120), default=6)
-    type = sa.Column(sa.String(20), default='Mail')
-    attributes = sa.Column(sa.JSON(), default=False)
-    enabled = sa.Column(sa.Boolean(), default=True)
-    level = sa.Column(sa.String(20), default='WARNING')
+    name = sa.Column(sa.String(120))
+    type = sa.Column(sa.String(20))
+    attributes = sa.Column(sa.JSON())
+    enabled = sa.Column(sa.Boolean())
+    level = sa.Column(sa.String(20))
 
 
 class AlertServiceService(CRUDService):

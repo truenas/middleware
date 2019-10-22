@@ -671,7 +671,7 @@ class VMModel(sa.Model):
     __tablename__ = 'vm_vm'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(150), default=6)
+    name = sa.Column(sa.String(150))
     description = sa.Column(sa.String(250))
     vcpus = sa.Column(sa.Integer(), default=1)
     memory = sa.Column(sa.Integer())
@@ -689,7 +689,7 @@ class VMDeviceModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     dtype = sa.Column(sa.String(50))
-    attributes = sa.Column(sa.JSON(), default=False)
+    attributes = sa.Column(sa.JSON())
     vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
     order = sa.Column(sa.Integer(), nullable=True)
 
