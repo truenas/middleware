@@ -2914,9 +2914,7 @@ class PoolDatasetService(CRUDService):
             return ds['name'], {'encryption_key': key, **ds} if options.get('full_output') else key
 
         def check_key(ds):
-            if ds['key_loaded'] and key_loaded:
-                return True
-            elif not ds['key_loaded'] and not key_loaded:
+            if options.get('all') or (ds['key_loaded'] and key_loaded) or (not ds['key_loaded'] and not key_loaded):
                 return True
             else:
                 return False
@@ -3388,6 +3386,20 @@ class PoolDatasetService(CRUDService):
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
             data['aclmode'] = 'RESTRICTED'
+
+        if data['encryption']['enabled'] and ZFSKeyFormat(data['encryption']['key_format']) != ZFSKeyFormat.PASSPHRASE:
+            # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
+            # because we don't allow children to be unlocked while parent is locked
+            parent_encryption_root = (await self._get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
+            if (
+                parent_encryption_root and ZFSKeyFormat(
+                    (await self._get_instance(parent_encryption_root))['key_format']['value']
+                ) == ZFSKeyFormat.PASSPHRASE
+            ):
+                verrors.add(
+                    'pool_dataset_create.encryption.enabled',
+                    'HEX/RAW keys encrypted children of a PASSPHRASE encrypted dataset are not allowed.'
+                )
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', job, verrors,
