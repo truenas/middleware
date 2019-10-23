@@ -18,27 +18,30 @@ db_update_real()
 {
 	echo "Applying database schema changes"
 
-	touch /tmp/.sqlite3_ha_skip
-	/usr/local/sbin/migrate93 -f /data/freenas-v1.db
-	NEW_MIGRATION_APPLIED=$(echo "select count(*) from django_migrations where app = 'network' and name = '0007_globalconfiguration_gc_hostname_virtual';" | /usr/local/bin/sqlite3 /data/freenas-v1.db)
-	OLD_MIGRATION_APPLIED=$(echo "select count(*) from django_migrations where app = 'network' and name = '0004_auto_20170703_1224';" | /usr/local/bin/sqlite3 /data/freenas-v1.db)
-	if [ "$NEW_MIGRATION_APPLIED" -eq "1" -a "$OLD_MIGRATION_APPLIED" -eq "0" ];
+	if [ $(echo "SELECT name FROM sqlite_master WHERE name = 'alembic_version'" | sqlite3 /data/freenas-v1.db) = "" ];
 	then
-		echo "delete from django_migrations where app = 'network' and name = '0007_globalconfiguration_gc_hostname_virtual';" | /usr/local/bin/sqlite3 /data/freenas-v1.db
-		echo 'CREATE TABLE "network_globalconfiguration_" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "gc_hostname" varchar(120) NOT NULL, "gc_hostname_b" varchar(120) NULL, "gc_domain" varchar(120) NOT NULL, "gc_ipv4gateway" varchar(42) NOT NULL, "gc_ipv6gateway" varchar(42) NOT NULL, "gc_nameserver1" varchar(42) NOT NULL, "gc_nameserver2" varchar(42) NOT NULL, "gc_nameserver3" varchar(42) NOT NULL, "gc_httpproxy" varchar(255) NOT NULL, "gc_netwait_enabled" bool NOT NULL, "gc_netwait_ip" varchar(300) NOT NULL, "gc_hosts" text NOT NULL);' | /usr/local/bin/sqlite3 /data/freenas-v1.db
-		echo "INSERT INTO network_globalconfiguration_ SELECT id, gc_hostname, gc_hostname_b, gc_domain, gc_ipv4gateway, gc_ipv6gateway, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_httpproxy, gc_netwait_enabled, gc_netwait_ip, gc_hosts FROM network_globalconfiguration;" | /usr/local/bin/sqlite3 /data/freenas-v1.db
-		echo "DROP TABLE network_globalconfiguration;" | /usr/local/bin/sqlite3 /data/freenas-v1.db
-		echo "ALTER TABLE network_globalconfiguration_ RENAME TO network_globalconfiguration;" | /usr/local/bin/sqlite3 /data/freenas-v1.db
-	fi
-	yes | /usr/local/bin/python \
-	    /usr/local/www/freenasUI/manage.py migrate --fake-initial > \
-		$UPDATE_FAILED_LOG 2>&1
+        /usr/local/sbin/migrate93 -f /data/freenas-v1.db
+        NEW_MIGRATION_APPLIED=$(echo "select count(*) from django_migrations where app = 'network' and name = '0007_globalconfiguration_gc_hostname_virtual';" | /usr/local/bin/sqlite3 /data/freenas-v1.db)
+        OLD_MIGRATION_APPLIED=$(echo "select count(*) from django_migrations where app = 'network' and name = '0004_auto_20170703_1224';" | /usr/local/bin/sqlite3 /data/freenas-v1.db)
+        if [ "$NEW_MIGRATION_APPLIED" -eq "1" -a "$OLD_MIGRATION_APPLIED" -eq "0" ];
+        then
+            echo "delete from django_migrations where app = 'network' and name = '0007_globalconfiguration_gc_hostname_virtual';" | /usr/local/bin/sqlite3 /data/freenas-v1.db
+            echo 'CREATE TABLE "network_globalconfiguration_" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "gc_hostname" varchar(120) NOT NULL, "gc_hostname_b" varchar(120) NULL, "gc_domain" varchar(120) NOT NULL, "gc_ipv4gateway" varchar(42) NOT NULL, "gc_ipv6gateway" varchar(42) NOT NULL, "gc_nameserver1" varchar(42) NOT NULL, "gc_nameserver2" varchar(42) NOT NULL, "gc_nameserver3" varchar(42) NOT NULL, "gc_httpproxy" varchar(255) NOT NULL, "gc_netwait_enabled" bool NOT NULL, "gc_netwait_ip" varchar(300) NOT NULL, "gc_hosts" text NOT NULL);' | /usr/local/bin/sqlite3 /data/freenas-v1.db
+            echo "INSERT INTO network_globalconfiguration_ SELECT id, gc_hostname, gc_hostname_b, gc_domain, gc_ipv4gateway, gc_ipv6gateway, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_httpproxy, gc_netwait_enabled, gc_netwait_ip, gc_hosts FROM network_globalconfiguration;" | /usr/local/bin/sqlite3 /data/freenas-v1.db
+            echo "DROP TABLE network_globalconfiguration;" | /usr/local/bin/sqlite3 /data/freenas-v1.db
+            echo "ALTER TABLE network_globalconfiguration_ RENAME TO network_globalconfiguration;" | /usr/local/bin/sqlite3 /data/freenas-v1.db
+        fi
+        /usr/local/bin/migrate113 > $UPDATE_FAILED_LOG 2>&1
+        if [ $? -ne 0 ]; then
+            echo "manage.py migrate failed"
+            return 1
+        fi
+    fi
+	/usr/local/sbin/migrate > $UPDATE_FAILED_LOG 2>&1
 	if [ $? -ne 0 ]; then
-		rm -f /tmp/.sqlite3_ha_skip
-		echo "manage.py migrate failed"
+		echo "alembic migrate failed"
 		return 1
 	fi
-	rm -f /tmp/.sqlite3_ha_skip
 	rm -f $UPDATE_FAILED_LOG
 	return 0
 }
@@ -125,7 +128,7 @@ db_update()
 	rm -f $NEED_UPDATE_SENTINEL
 	rm -f $CD_UPGRADE_SENTINEL
 
-	midclt call etc.generate loader
+	midclt call etc.generate loader > /dev/null
 
 	echo "Database upgrade complete.  Rebooting."
 	cd /

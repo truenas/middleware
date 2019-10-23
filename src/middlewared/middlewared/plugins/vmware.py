@@ -8,9 +8,21 @@ import uuid
 from middlewared.async_validators import resolve_hostname
 from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
+import middlewared.sqlalchemy as sa
 
 from pyVim import connect, task as VimTask
 from pyVmomi import vim, vmodl
+
+
+class VMWareModel(sa.Model):
+    __tablename__ = 'storage_vmwareplugin'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    hostname = sa.Column(sa.String(200))
+    username = sa.Column(sa.String(200))
+    password = sa.Column(sa.String(200))
+    filesystem = sa.Column(sa.String(200))
+    datastore = sa.Column(sa.String(200))
 
 
 class VMWareService(CRUDService):

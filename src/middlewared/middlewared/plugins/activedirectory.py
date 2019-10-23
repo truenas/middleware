@@ -20,6 +20,7 @@ from middlewared.plugins.smb import SMBCmd
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
 from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
 
@@ -550,6 +551,34 @@ class ActiveDirectory_LDAP(object):
             return ipv6_site
 
         return None
+
+
+class ActiveDirectoryModel(sa.Model):
+    __tablename__ = 'directoryservice_activedirectory'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ad_domainname = sa.Column(sa.String(120))
+    ad_bindname = sa.Column(sa.String(120))
+    ad_bindpw = sa.Column(sa.String(120))
+    ad_ssl = sa.Column(sa.String(120))
+    ad_validate_certificates = sa.Column(sa.Boolean())
+    ad_verbose_logging = sa.Column(sa.Boolean())
+    ad_allow_trusted_doms = sa.Column(sa.Boolean())
+    ad_use_default_domain = sa.Column(sa.Boolean())
+    ad_allow_dns_updates = sa.Column(sa.Boolean())
+    ad_disable_freenas_cache = sa.Column(sa.Boolean())
+    ad_site = sa.Column(sa.String(120), nullable=True)
+    ad_timeout = sa.Column(sa.Integer())
+    ad_dns_timeout = sa.Column(sa.Integer())
+    ad_idmap_backend = sa.Column(sa.String(120))
+    ad_nss_info = sa.Column(sa.String(120), nullable=True)
+    ad_ldap_sasl_wrapping = sa.Column(sa.String(120))
+    ad_enable = sa.Column(sa.Boolean())
+    ad_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    ad_kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id', ondelete='SET NULL'),
+                                     index=True, nullable=True)
+    ad_kerberos_principal = sa.Column(sa.String(255))
+    ad_createcomputer = sa.Column(sa.String(255))
 
 
 class ActiveDirectoryService(ConfigService):

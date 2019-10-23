@@ -23,6 +23,7 @@ from middlewared.service import (
     ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
 )
 from middlewared.service_exception import ValidationError
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.shell import join_commandline
@@ -131,6 +132,16 @@ async def mount(device, path, fs_type, fs_options, options):
 
 class ScrubError(CallError):
     pass
+
+
+class PoolResilverModel(sa.Model):
+    __tablename__ = 'storage_resilver'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    enabled = sa.Column(sa.Boolean(), default=True)
+    begin = sa.Column(sa.Time(), default=time(hour=18))
+    end = sa.Column(sa.Time(), default=time(hour=9))
+    weekday = sa.Column(sa.String(120), default='1,2,3,4,5,6,7')
 
 
 class PoolResilverService(ConfigService):
@@ -269,6 +280,25 @@ class MountFsContextManager:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if await is_mounted(self.middleware, self.path):
             await self.middleware.run_in_thread(bsd.unmount, self.path)
+
+
+class PoolModel(sa.Model):
+    __tablename__ = 'storage_volume'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    vol_name = sa.Column(sa.String(120))
+    vol_guid = sa.Column(sa.String(50))
+    vol_encrypt = sa.Column(sa.Integer(), default=0)
+    vol_encryptkey = sa.Column(sa.String(50))
+
+
+class EncryptedDiskModel(sa.Model):
+    __tablename__ = 'storage_encrypteddisk'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    encrypted_volume_id = sa.Column(sa.ForeignKey('storage_volume.id'))
+    encrypted_disk_id = sa.Column(sa.ForeignKey('storage_disk.disk_identifier', ondelete='SET NULL'), nullable=True)
+    encrypted_provider = sa.Column(sa.String(120))
 
 
 class PoolService(CRUDService):
@@ -3490,6 +3520,21 @@ class PoolDatasetService(CRUDService):
     @private
     def register_attachment_delegate(self, delegate):
         self.attachment_delegates.append(delegate)
+
+
+class PoolScrubModel(sa.Model):
+    __tablename__ = 'storage_scrub'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    scrub_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id'))
+    scrub_threshold = sa.Column(sa.Integer(), default=35)
+    scrub_description = sa.Column(sa.String(200))
+    scrub_minute = sa.Column(sa.String(100), default="00")
+    scrub_hour = sa.Column(sa.String(100), default="00")
+    scrub_daymonth = sa.Column(sa.String(100), default="*")
+    scrub_month = sa.Column(sa.String(100), default='*')
+    scrub_dayweek = sa.Column(sa.String(100), default="7")
+    scrub_enabled = sa.Column(sa.Boolean(), default=True)
 
 
 class PoolScrubService(CRUDService):

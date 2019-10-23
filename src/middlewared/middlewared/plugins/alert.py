@@ -30,6 +30,7 @@ from middlewared.service import (
     job, periodic, private,
 )
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.validators import validate_attributes
 from middlewared.utils import bisect, load_modules, load_classes
 
@@ -40,6 +41,24 @@ ALERT_SOURCES = {}
 ALERT_SERVICES_FACTORIES = {}
 
 AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
+
+
+class AlertModel(sa.Model):
+    __tablename__ = 'system_alert'
+    __table_args__ = (
+        sa.Index('system_alert_node_f77e0d77_uniq', 'node', 'klass', 'key', unique=True),
+    )
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    node = sa.Column(sa.String(100))
+    source = sa.Column(sa.Text())
+    key = sa.Column(sa.Text())
+    datetime = sa.Column(sa.DateTime())
+    text = sa.Column(sa.Text())
+    args = sa.Column(sa.JSON())
+    dismissed = sa.Column(sa.Boolean())
+    uuid = sa.Column(sa.Text())
+    klass = sa.Column(sa.Text())
 
 
 class AlertSourceRunFailedAlertClass(AlertClass):
@@ -702,6 +721,17 @@ class AlertService(Service):
         self.alert_source_last_run[alert_source.name] = datetime.min
 
 
+class AlertServiceModel(sa.Model):
+    __tablename__ = 'system_alertservice'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(120))
+    type = sa.Column(sa.String(20))
+    attributes = sa.Column(sa.JSON())
+    enabled = sa.Column(sa.Boolean())
+    level = sa.Column(sa.String(20))
+
+
 class AlertServiceService(CRUDService):
     class Config:
         datastore = "system.alertservice"
@@ -889,6 +919,13 @@ class AlertServiceService(CRUDService):
             return False
 
         return True
+
+
+class AlertClassesModel(sa.Model):
+    __tablename__ = 'system_alertclasses'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    classes = sa.Column(sa.JSON())
 
 
 class AlertClassesService(ConfigService):

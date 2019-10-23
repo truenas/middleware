@@ -15,7 +15,7 @@ from middlewared.client import Client
 
 def main(command, quiet):
     client = Client()
-    failover = client.call('datastore.query', 'failover.failover')
+    failover = client.call('datastore.query', 'system.failover')
     fo_exists = len(failover) > 0
     if fo_exists:
         failover = failover[0]
@@ -67,7 +67,7 @@ def main(command, quiet):
         if failover['disabled'] is True:
             try:
                 client.call('failover.call_remote', 'failover.control', ['ENABLE'])
-                client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': False})
+                client.call('datastore.update', 'system.failover', failover['id'], {'disabled': False})
                 print("Failover enabled.")
                 sys.exit(0)
             except Exception as e:
@@ -97,9 +97,13 @@ def main(command, quiet):
                 except:
                     ret = False
             if ret is not False:
-                client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': True, 'master': True if status == "master" else False})
+                client.call('failover.control', {
+                    'action': 'DISABLE',
+                    'options': {
+                        'active': status == 'master',
+                    }
+                })
                 print("Failover disabled.")
-                client.call('service.restart', 'failover')
                 sys.exit(0)
             else:
                 print("Unable to contact remote node.  Failover not disabled.")

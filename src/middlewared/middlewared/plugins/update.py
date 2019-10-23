@@ -1,6 +1,7 @@
 from bsd import geom
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, CallError, Service
+import middlewared.sqlalchemy as sa
 
 from datetime import datetime
 import enum
@@ -234,6 +235,14 @@ def parse_changelog(changelog, start='', end=''):
             break
 
     return changelog
+
+
+class UpdateModel(sa.Model):
+    __tablename__ = 'system_update'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    upd_autocheck = sa.Column(sa.Boolean(), default=True)
+    upd_train = sa.Column(sa.String(50))
 
 
 class UpdateService(Service):

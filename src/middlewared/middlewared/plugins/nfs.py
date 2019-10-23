@@ -11,8 +11,29 @@ from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import private, CRUDService, SystemServiceService, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
+
+
+class NFSModel(sa.Model):
+    __tablename__ = 'services_nfs'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    nfs_srv_servers = sa.Column(sa.Integer(), default=4)
+    nfs_srv_udp = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_v4 = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_v4_v3owner = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_v4_krb = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_bindip = sa.Column(sa.MultiSelectField())
+    nfs_srv_mountd_port = sa.Column(sa.SmallInteger(), nullable=True)
+    nfs_srv_rpcstatd_port = sa.Column(sa.SmallInteger(), nullable=True)
+    nfs_srv_rpclockd_port = sa.Column(sa.SmallInteger(), nullable=True)
+    nfs_srv_16 = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_mountd_log = sa.Column(sa.Boolean(), default=True)
+    nfs_srv_statd_lockd_log = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_v4_domain = sa.Column(sa.String(120))
 
 
 class NFSService(SystemServiceService):
@@ -165,6 +186,25 @@ class NFSService(SystemServiceService):
                                stderr=subprocess.DEVNULL)
 
 
+class NFSShareModel(sa.Model):
+    __tablename__ = 'sharing_nfs_share'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    nfs_paths = sa.Column(sa.JSON(type=list))
+    nfs_comment = sa.Column(sa.String(120))
+    nfs_network = sa.Column(sa.Text())
+    nfs_hosts = sa.Column(sa.Text())
+    nfs_alldirs = sa.Column(sa.Boolean(), default=False)
+    nfs_ro = sa.Column(sa.Boolean(), default=False)
+    nfs_quiet = sa.Column(sa.Boolean(), default=False)
+    nfs_maproot_user = sa.Column(sa.String(120), nullable=True, default='')
+    nfs_maproot_group = sa.Column(sa.String(120), nullable=True, default='')
+    nfs_mapall_user = sa.Column(sa.String(120), nullable=True, default='')
+    nfs_mapall_group = sa.Column(sa.String(120), nullable=True, default='')
+    nfs_security = sa.Column(sa.MultiSelectField())
+    nfs_enabled = sa.Column(sa.Boolean(), default=True)
+
+
 class SharingNFSService(CRUDService):
     class Config:
         namespace = "sharing.nfs"
@@ -216,21 +256,12 @@ class SharingNFSService(CRUDService):
             raise verrors
 
         await self.compress(data)
-        paths = data.pop("paths")
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
                 "prefix": self._config.datastore_prefix
             },
         )
-        for path in paths:
-            await self.middleware.call(
-                "datastore.insert", "sharing.nfs_share_path",
-                {
-                    "share_id": data["id"],
-                    "path": path,
-                },
-            )
         await self.extend(data)
 
         await self._service_change("nfs", "reload")
@@ -261,25 +292,13 @@ class SharingNFSService(CRUDService):
             raise verrors
 
         await self.compress(new)
-        paths = new.pop("paths")
         await self.middleware.call(
             "datastore.update", self._config.datastore, id, new,
             {
                 "prefix": self._config.datastore_prefix
             }
         )
-        await self.middleware.call("datastore.delete", "sharing.nfs_share_path", [["share_id", "=", id]])
-        for path in paths:
-            await self.middleware.call(
-                "datastore.insert", "sharing.nfs_share_path",
-                {
-                    "share_id": id,
-                    "path": path,
-                },
-            )
-
         await self.extend(new)
-        new["paths"] = paths
 
         await self._service_change("nfs", "reload")
 
@@ -442,9 +461,6 @@ class SharingNFSService(CRUDService):
 
     @private
     async def extend(self, data):
-        data["paths"] = [path["path"]
-                         for path in await self.middleware.call("datastore.query", "sharing.nfs_share_path",
-                                                                [["share_id", "=", data["id"]]])]
         data["networks"] = data.pop("network").split()
         data["hosts"] = data["hosts"].split()
         data["security"] = [s.upper() for s in data["security"]]

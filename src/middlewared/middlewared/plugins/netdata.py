@@ -5,7 +5,25 @@ import re
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.validators import IpAddress, Port, Unique, UUID, validate_attributes
+
+
+class NetDataModel(sa.Model):
+    __tablename__ = 'services_netdataglobalsettings'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    history = sa.Column(sa.Integer(), default=86400)
+    update_every = sa.Column(sa.Integer(), default=1)
+    http_port_listen_backlog = sa.Column(sa.Integer(), default=100)
+    bind = sa.Column(sa.JSON(type=list), default=['0.0.0.0', '::'])
+    port = sa.Column(sa.Integer(), default=1194)
+    additional_params = sa.Column(sa.Text(), nullable=True)
+    alarms = sa.Column(sa.JSON(), default={})
+    stream_mode = sa.Column(sa.String(10), default='NONE')
+    api_key = sa.Column(sa.String(64), nullable=True)
+    destination = sa.Column(sa.JSON(type=list), nullable=True)
+    allow_from = sa.Column(sa.JSON(type=list), nullable=True, default=['*'])
 
 
 class NetDataService(SystemServiceService):

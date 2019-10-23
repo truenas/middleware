@@ -36,37 +36,18 @@ import subprocess
 import time
 
 import ipaddr
+import sqlite3
 
 # Only root can run it.
 if os.geteuid() != 0:
     exit("This command must be run with root privileges.")
 
-WWW_PATH = "/usr/local/www"
-FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
-NETWORK_PATH = os.path.join(FREENAS_PATH, "network")
-
 FREENAS_DATA_PATH = "/data"
 FREENAS_DB = os.path.join(FREENAS_DATA_PATH, "freenas-v1.db")
-
-sys.path.append(WWW_PATH)
-sys.path.append(FREENAS_PATH)
-sys.path.append(NETWORK_PATH)
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-import django
-django.setup()
-
-from django.utils.translation import ugettext as _
 
 _ = lambda s: s
 
 from middlewared.client import Client
-from freenasUI.choices import NICChoices, LAGGType
-from freenasUI.common.system import get_sw_version
-from freenasUI.network.models import GlobalConfiguration, Interfaces, \
-	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
-from freenasUI.system.models import Support
 
 from requests.packages.urllib3 import poolmanager
 from requests.packages.urllib3.connectionpool import HTTPSConnectionPool
@@ -598,14 +579,8 @@ Acceptable formats are 255.255.255.0,
         return True
 
 def reset_root_pw(*args):
-    from freenasUI.account.models import bsdUsers
-    qs = bsdUsers.objects.filter(bsdusr_uid=0)
-    if not qs.exists():
-        return None
-    user = qs[0]
-
     print()
-    print(_("Changing password for %s") % user.bsdusr_username)
+    print(_("Changing password for root"))
     print()
 
     if not args:
@@ -625,11 +600,16 @@ def reset_root_pw(*args):
     if p1:
         try:
             with Client() as c:
-                c.call("user.update", user.id, {"password": p1})
+                user_id = c.call("user.query", [["username", "=", "root"]], {"get": True})["id"]
+                c.call("user.update", user_id, {"password": p1})
         except (FileNotFoundError, ConnectionRefusedError):
             from middlewared.plugins.account import crypted_password
-            user.bsdusr_unixhash = crypted_password(p1)
-            user.save()
+            conn = sqlite3.connect(FREENAS_DB)
+            c = conn.cursor()
+            c.execute("UPDATE account_bsdusers SET bsdusr_unixhash = ? WHERE bsdusr_username = 'root'",
+                      (crypted_password(p1),))
+            conn.commit()
+            conn.close()
         print()
         print(_('Password successfully changed.'))
         print()

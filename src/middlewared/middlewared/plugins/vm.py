@@ -4,6 +4,7 @@ from middlewared.schema import accepts, Error, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import (
     item_method, pass_app, private, CRUDService, CallError, ValidationErrors, job
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Nid, Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
@@ -666,6 +667,33 @@ class VNC(Device):
         self.web_process = None
 
 
+class VMModel(sa.Model):
+    __tablename__ = 'vm_vm'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(150))
+    description = sa.Column(sa.String(250))
+    vcpus = sa.Column(sa.Integer(), default=1)
+    memory = sa.Column(sa.Integer())
+    autostart = sa.Column(sa.Boolean(), default=False)
+    time = sa.Column(sa.String(5), default='LOCAL')
+    grubconfig = sa.Column(sa.Text(), nullable=True)
+    bootloader = sa.Column(sa.String(50), default='UEFI')
+    cores = sa.Column(sa.Integer(), default=1)
+    threads = sa.Column(sa.Integer(), default=1)
+    shutdown_timeout = sa.Column(sa.Integer(), default=90)
+
+
+class VMDeviceModel(sa.Model):
+    __tablename__ = 'vm_device'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    dtype = sa.Column(sa.String(50))
+    attributes = sa.Column(sa.JSON())
+    vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
+    order = sa.Column(sa.Integer(), nullable=True)
+
+
 class VMService(CRUDService):
 
     class Config:
@@ -729,7 +757,7 @@ class VMService(CRUDService):
             list(dict): with all attributes of the vnc device or an empty list.
         """
         vnc_devices = []
-        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm', '=', id)]):
             if device['dtype'] == 'VNC':
                 vnc = device['attributes']
                 vnc_devices.append(vnc)
@@ -774,7 +802,7 @@ class VMService(CRUDService):
             list: will return a list with all attached phisycal interfaces or otherwise False.
         """
         ifaces = []
-        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm', '=', id)]):
             if device['dtype'] == 'NIC':
                 if_attached = device['attributes'].get('nic_attach')
                 if if_attached:

@@ -9,6 +9,7 @@ from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import CRUDService, filterable, filter_list, private, SystemServiceService, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -98,6 +99,32 @@ def parse_smart_selftest_results(stdout):
             tests.append(test)
 
         return tests
+
+
+class SmartTestModel(sa.Model):
+    __tablename__ = 'tasks_smarttest'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    smarttest_type = sa.Column(sa.String(2))
+    smarttest_desc = sa.Column(sa.String(120))
+    smarttest_hour = sa.Column(sa.String(100), default='*')
+    smarttest_daymonth = sa.Column(sa.String(100), default='*')
+    smarttest_month = sa.Column(sa.String(100), default='*')
+    smarttest_dayweek = sa.Column(sa.String(100), default='*')
+    smarttest_all_disks = sa.Column(sa.Boolean(), default=False)
+
+    smarttest_disks = sa.relationship('DiskModel', secondary=lambda: SmartTestDiskModel.__table__)
+
+
+class SmartTestDiskModel(sa.Model):
+    __tablename__ = 'tasks_smarttest_smarttest_disks'
+    __table_args__ = (
+        sa.Index('tasks_smarttest_smarttest_disks_smarttest_id__disk_id', 'smarttest_id', 'disk_id', unique=True),
+    )
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    smarttest_id = sa.Column(sa.Integer(), sa.ForeignKey('tasks_smarttest.id', ondelete='CASCADE'))
+    disk_id = sa.Column(sa.String(100), sa.ForeignKey('storage_disk.disk_identifier', ondelete='CASCADE'))
 
 
 class SMARTTestService(CRUDService):
@@ -506,6 +533,17 @@ class SMARTTestService(CRUDService):
             [],
             {"get": get},
         )
+
+
+class SmartModel(sa.Model):
+    __tablename__ = 'services_smart'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    smart_interval = sa.Column(sa.Integer(), default=30)
+    smart_powermode = sa.Column(sa.String(60), default="never")
+    smart_difference = sa.Column(sa.Integer(), default=0)
+    smart_informational = sa.Column(sa.Integer(), default=0)
+    smart_critical = sa.Column(sa.Integer(), default=0)
 
 
 class SmartService(SystemServiceService):

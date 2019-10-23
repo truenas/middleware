@@ -12,6 +12,7 @@ import ctypes
 import errno
 import os
 import pickle
+import pprint
 import socket
 import ssl
 import sys
@@ -269,7 +270,7 @@ class Job(object):
         if job['state'] != 'SUCCESS':
             if job['exc_info'] and job['exc_info']['type'] == 'VALIDATION':
                 raise ValidationErrors(job['exc_info']['extra'])
-            raise ClientException(job['error'], trace={'formatted': job['exception']})
+            raise ClientException(job['error'], trace={'formatted': job['exception']}, extra=job['exc_info']['extra'])
         return job['result']
 
 
@@ -650,6 +651,8 @@ def main():
                             print(e.error, file=sys.stderr)
                         if e.trace:
                             print(e.trace['formatted'], file=sys.stderr)
+                        if e.extra:
+                            pprint.pprint(e.extra, stream=sys.stderr)
                     sys.exit(1)
         except (FileNotFoundError, ConnectionRefusedError):
             print('Failed to run middleware call. Daemon not running?', file=sys.stderr)

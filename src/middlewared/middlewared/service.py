@@ -62,7 +62,7 @@ class throttle(object):
     Decorator to throttle calls to methods.
 
     If a condition is provided it must return a tuple (shortcut, key).
-    shortcut will immediatly bypass throttle if true.
+    shortcut will immediately bypass throttle if true.
     key is the key for the time of last calls dict, meaning methods can be throttled based
     on some key (possibly argument of the method).
     """
@@ -394,6 +394,68 @@ class CRUDService(ServiceChangeMixin, Service):
         if instance:
             verrors.add('.'.join(filter(None, [schema_name, field_name])),
                         f'Object with this {field_name} already exists')
+
+    @private
+    async def check_dependencies(self, id, ignored=None):
+        """
+        Raises EBUSY CallError if some datastores/services (except for `ignored`) reference object specified by id.
+        """
+        ignored = ignored or set()
+
+        services = {
+            service['config'].get('datastore'): (name, service)
+            for name, service in (await self.middleware.call('core.get_services')).items()
+            if service['config'].get('datastore')
+        }
+
+        dependencies = {}
+        for datastore, fk in await self.middleware.call('datastore.get_backrefs', self._config.datastore):
+            if datastore in ignored:
+                continue
+
+            if datastore in services:
+                service = {
+                    'name': services[datastore][0],
+                    'type': services[datastore][1]['type'],
+                }
+
+                if service['name'] in ignored:
+                    continue
+            else:
+                service = None
+
+            objects = await self.middleware.call('datastore.query', datastore, [(fk, '=', id)])
+            if objects:
+                data = {
+                    'objects': objects,
+                }
+                if service is not None:
+                    query_col = fk
+                    prefix = services[datastore][1]['config'].get('datastore_prefix')
+                    if prefix:
+                        if query_col.startswith(prefix):
+                            query_col = query_col[len(prefix):]
+
+                    if service['type'] == 'config':
+                        data = {
+                            'key': query_col,
+                        }
+
+                    if service['type'] == 'crud':
+                        data = {
+                            'objects': await self.middleware.call(
+                                f'{service["name"]}.query', [('id', 'in', [object['id'] for object in objects])],
+                            ),
+                        }
+
+                dependencies[datastore] = dict({
+                    'datastore': datastore,
+                    'service': service['name'] if service else None,
+                }, **data)
+
+        if dependencies:
+            raise CallError('This object is being used by other objects', errno.EBUSY,
+                            {'dependencies': list(dependencies.values())})
 
 
 class CoreService(Service):

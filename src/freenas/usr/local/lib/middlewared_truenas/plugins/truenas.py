@@ -14,6 +14,7 @@ from licenselib.license import ContractType
 
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import Service, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
@@ -33,6 +34,16 @@ user_attrs = [
     Str('zip'),
     Str('country'),
 ]
+
+
+class TruenasCustomerInformationModel(sa.Model):
+    __tablename__ = 'truenas_customerinformation'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    data = sa.Column(sa.Text())
+    updated_at = sa.Column(sa.DateTime())
+    sent_at = sa.Column(sa.DateTime(), nullable=True)
+    form_dismissed = sa.Column(sa.Boolean())
 
 
 class TrueNASService(Service):

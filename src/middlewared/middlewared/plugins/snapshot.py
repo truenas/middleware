@@ -1,10 +1,33 @@
+from datetime import time
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
 from middlewared.validators import ReplicationSnapshotNamingSchema
+
+
+class PeriodicSnapshotTaskModel(sa.Model):
+    __tablename__ = 'storage_task'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    task_dataset = sa.Column(sa.String(150))
+    task_recursive = sa.Column(sa.Boolean(), default=False)
+    task_lifetime_value = sa.Column(sa.Integer(), default=2)
+    task_lifetime_unit = sa.Column(sa.String(120), default='WEEK')
+    task_begin = sa.Column(sa.Time(), default=time(hour=9))
+    task_end = sa.Column(sa.Time(), default=time(hour=18))
+    task_enabled = sa.Column(sa.Boolean(), default=True)
+    task_exclude = sa.Column(sa.JSON(type=list))
+    task_naming_schema = sa.Column(sa.String(150), default='auto-%Y-%m-%d_%H-%M')
+    task_minute = sa.Column(sa.String(100), default="00")
+    task_hour = sa.Column(sa.String(100), default="*")
+    task_daymonth = sa.Column(sa.String(100), default="*")
+    task_month = sa.Column(sa.String(100), default='*')
+    task_dayweek = sa.Column(sa.String(100), default="*")
+    task_allow_empty = sa.Column(sa.Boolean(), default=True)
 
 
 class PeriodicSnapshotTaskService(CRUDService):

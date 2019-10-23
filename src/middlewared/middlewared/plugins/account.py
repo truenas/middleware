@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Email
 
@@ -62,6 +63,27 @@ def crypted_password(cleartext):
 def nt_password(cleartext):
     nthash = hashlib.new('md4', cleartext.encode('utf-16le')).digest()
     return binascii.hexlify(nthash).decode().upper()
+
+
+class UserModel(sa.Model):
+    __tablename__ = 'account_bsdusers'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    bsdusr_uid = sa.Column(sa.Integer())
+    bsdusr_username = sa.Column(sa.String(16), default='User &')
+    bsdusr_unixhash = sa.Column(sa.String(128), default='*')
+    bsdusr_smbhash = sa.Column(sa.String(128), default='*')
+    bsdusr_home = sa.Column(sa.String(255), default="/nonexistent")
+    bsdusr_shell = sa.Column(sa.String(120), default='/bin/csh')
+    bsdusr_full_name = sa.Column(sa.String(120))
+    bsdusr_builtin = sa.Column(sa.Boolean(), default=False)
+    bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
+    bsdusr_locked = sa.Column(sa.Boolean(), default=False)
+    bsdusr_sudo = sa.Column(sa.Boolean(), default=False)
+    bsdusr_microsoft_account = sa.Column(sa.Boolean())
+    bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
+    bsdusr_attributes = sa.Column(sa.JSON(), default=None)
+    bsdusr_email = sa.Column(sa.String(254), nullable=True)
 
 
 class UserService(CRUDService):
@@ -769,6 +791,24 @@ class UserService(CRUDService):
         await self.middleware.call('filesystem.setperm', {'path': keysfile, 'mode': str(600)})
 
 
+class GroupModel(sa.Model):
+    __tablename__ = 'account_bsdgroups'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    bsdgrp_gid = sa.Column(sa.Integer())
+    bsdgrp_group = sa.Column(sa.String(120))
+    bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
+    bsdgrp_sudo = sa.Column(sa.Boolean(), default=False)
+
+
+class GroupMembershipModel(sa.Model):
+    __tablename__ = 'account_bsdgroupmembership'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id", ondelete="CASCADE"))
+    bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id", ondelete="CASCADE"))
+
+
 class GroupService(CRUDService):
 
     class Config:
@@ -935,9 +975,15 @@ class GroupService(CRUDService):
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 
-        if options['delete_users']:
-            for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])], {'prefix': 'bsdusr_'}):
+        nogroup = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', 'nogroup')],
+                                             {'prefix': 'bsdgrp_', 'get': True})
+        for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])],
+                                            {'prefix': 'bsdusr_'}):
+            if options['delete_users']:
                 await self.middleware.call('datastore.delete', 'account.bsdusers', i['id'])
+            else:
+                await self.middleware.call('datastore.update', 'account.bsdusers', i['id'], {'group': nogroup['id']},
+                                           {'prefix': 'bsdusr_'})
 
         await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
 

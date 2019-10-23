@@ -1,5 +1,23 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import SystemServiceService, private, ValidationErrors
+import middlewared.sqlalchemy as sa
+
+
+class DynDNSModel(sa.Model):
+    __tablename__ = 'services_dynamicdns'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ddns_provider = sa.Column(sa.String(120), default='dyndns@3322.org')
+    ddns_domain = sa.Column(sa.String(120))
+    ddns_username = sa.Column(sa.String(120))
+    ddns_password = sa.Column(sa.String(120))
+    ddns_checkip_ssl = sa.Column(sa.Boolean())
+    ddns_checkip_server = sa.Column(sa.String(150))
+    ddns_checkip_path = sa.Column(sa.String(150))
+    ddns_ssl = sa.Column(sa.Boolean())
+    ddns_custom_ddns_server = sa.Column(sa.String(150))
+    ddns_custom_ddns_path = sa.Column(sa.String(150))
+    ddns_period = sa.Column(sa.Integer())
 
 
 class DynDNSService(SystemServiceService):

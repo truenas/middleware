@@ -12,8 +12,16 @@ import subprocess
 
 from middlewared.schema import accepts
 from middlewared.service import CallError, SystemServiceService, job
+import middlewared.sqlalchemy as sa
 
 ASIGRA_DSOPDIR = '/usr/local/www/asigra'
+
+
+class AsigraModel(sa.Model):
+    __tablename__ = 'services_asigra'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    filesystem = sa.Column(sa.String(255))
 
 
 class AsigraService(SystemServiceService):

@@ -11,6 +11,7 @@ class Middleware(dict):
         self.__schemas = Schemas()
 
         self.call_hook = CoroutineMock()
+        self.call_hook_inline = Mock()
 
     async def _call(self, name, serviceobj, method, args):
         to_resolve = [getattr(serviceobj, attr) for attr in dir(serviceobj) if attr != 'query']
@@ -19,6 +20,12 @@ class Middleware(dict):
 
     async def call(self, name, *args):
         return self[name](*args)
+
+    def call_sync(self, name, *args):
+        return self[name](*args)
+
+    async def run_in_executor(self, executor, method, *args, **kwargs):
+        return method(*args, **kwargs)
 
     async def run_in_thread(self, method, *args, **kwargs):
         return method(*args, **kwargs)

@@ -9,9 +9,25 @@ import time
 from middlewared.pipe import Pipes
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen
 
 ADDRESS = 'support-proxy.ixsystems.com'
+
+
+class SupportModel(sa.Model):
+    __tablename__ = 'system_support'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    enabled = sa.Column(sa.Boolean(), nullable=True, default=True)
+    name = sa.Column(sa.String(200))
+    title = sa.Column(sa.String(200))
+    email = sa.Column(sa.String(200))
+    phone = sa.Column(sa.String(200))
+    secondary_name = sa.Column(sa.String(200))
+    secondary_title = sa.Column(sa.String(200))
+    secondary_email = sa.Column(sa.String(200))
+    secondary_phone = sa.Column(sa.String(200))
 
 
 class SupportService(ConfigService):

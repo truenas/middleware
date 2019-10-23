@@ -3,6 +3,7 @@ from middlewared.service import (CallError, ConfigService, CRUDService, Service,
 from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Ref, Str,
                                 ValidationErrors, accepts)
+import middlewared.sqlalchemy as sa
 from middlewared.validators import Match, Range
 
 import asyncio
@@ -22,6 +23,26 @@ import urllib.request
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
+
+
+class NetworkConfigurationModel(sa.Model):
+    __tablename__ = 'network_globalconfiguration'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    gc_hostname = sa.Column(sa.String(120), default='nas')
+    gc_hostname_b = sa.Column(sa.String(120), nullable=True)
+    gc_domain = sa.Column(sa.String(120), default='local')
+    gc_ipv4gateway = sa.Column(sa.String(42), default='')
+    gc_ipv6gateway = sa.Column(sa.String(42), default='')
+    gc_nameserver1 = sa.Column(sa.String(42), default='')
+    gc_nameserver2 = sa.Column(sa.String(42), default='')
+    gc_nameserver3 = sa.Column(sa.String(42), default='')
+    gc_httpproxy = sa.Column(sa.String(255))
+    gc_netwait_enabled = sa.Column(sa.Boolean(), default=False)
+    gc_netwait_ip = sa.Column(sa.String(300))
+    gc_hosts = sa.Column(sa.Text(), default='')
+    gc_domains = sa.Column(sa.Text(), default='')
+    gc_hostname_virtual = sa.Column(sa.String(120), nullable=True)
 
 
 class NetworkConfigurationService(ConfigService):
@@ -291,6 +312,78 @@ def dhclient_leases(interface):
             return f.read()
 
 
+class NetworkAliasModel(sa.Model):
+    __tablename__ = 'network_alias'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    alias_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'), index=True)
+    alias_v4address = sa.Column(sa.String(42), default='')
+    alias_v4netmaskbit = sa.Column(sa.String(3), default='')
+    alias_v6address = sa.Column(sa.String(42), default='')
+    alias_v6netmaskbit = sa.Column(sa.String(3), default='')
+    alias_vip = sa.Column(sa.String(42), default='')
+    alias_v4address_b = sa.Column(sa.String(42), default='')
+    alias_v6address_b = sa.Column(sa.String(42), default='')
+
+
+class NetworkBridgeModel(sa.Model):
+    __tablename__ = 'network_bridge'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    members = sa.Column(sa.JSON(type=list), default=[])
+    interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
+
+
+class NetworkInterfaceModel(sa.Model):
+    __tablename__ = 'network_interfaces'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    int_interface = sa.Column(sa.String(300))
+    int_name = sa.Column(sa.String(120))
+    int_dhcp = sa.Column(sa.Boolean(), default=False)
+    int_ipv4address = sa.Column(sa.String(42), default='')
+    int_ipv4address_b = sa.Column(sa.String(42), default='')
+    int_v4netmaskbit = sa.Column(sa.String(3), default='')
+    int_ipv6auto = sa.Column(sa.Boolean(), default=False)
+    int_ipv6address = sa.Column(sa.String(42), default='')
+    int_v6netmaskbit = sa.Column(sa.String(4), default='')
+    int_vip = sa.Column(sa.String(42), nullable=True)
+    int_vhid = sa.Column(sa.Integer(), nullable=True)
+    int_pass = sa.Column(sa.String(100))
+    int_critical = sa.Column(sa.Boolean(), default=False)
+    int_group = sa.Column(sa.Integer(), nullable=True)
+    int_options = sa.Column(sa.String(120))
+    int_mtu = sa.Column(sa.Integer(), nullable=True)
+
+
+class NetworkLaggInterfaceModel(sa.Model):
+    __tablename__ = 'network_lagginterface'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id'))
+    lagg_protocol = sa.Column(sa.String(120))
+
+
+class NetworkLaggInterfaceMemberModel(sa.Model):
+    __tablename__ = 'network_lagginterfacemembers'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    lagg_ordernum = sa.Column(sa.Integer())
+    lagg_physnic = sa.Column(sa.String(120))
+    lagg_interfacegroup_id = sa.Column(sa.ForeignKey('network_lagginterface.id', ondelete='CASCADE'), index=True)
+
+
+class NetworkVlanModel(sa.Model):
+    __tablename__ = 'network_vlan'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    vlan_vint = sa.Column(sa.String(120))
+    vlan_pint = sa.Column(sa.String(300))
+    vlan_tag = sa.Column(sa.Integer())
+    vlan_description = sa.Column(sa.String(120))
+    vlan_pcp = sa.Column(sa.Integer(), nullable=True)
+
+
 class InterfaceService(CRUDService):
 
     class Config:
@@ -545,7 +638,10 @@ class InterfaceService(CRUDService):
         if not self._original_datastores:
             return
 
-        # Deleting interfaces should cascade to network.alias and network.lagginterface
+        # Deleting network.lagginterface because deleting network.interfaces won't cascade
+        # (but network.lagginterface will cascade to network.lagginterfacemembers)
+        await self.middleware.call('datastore.delete', 'network.lagginterface')
+        # Deleting interfaces should cascade to network.alias and network.bridge
         await self.middleware.call('datastore.delete', 'network.interfaces', [])
         await self.middleware.call('datastore.delete', 'network.vlan', [])
 
@@ -770,11 +866,6 @@ class InterfaceService(CRUDService):
                 )
                 lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
             except Exception:
-                for lagport_id in lagports_ids:
-                    with contextlib.suppress(Exception):
-                        await self.middleware.call(
-                            'datastore.delete', 'network.lagginterfacemembers', lagport_id
-                        )
                 if lag_id:
                     with contextlib.suppress(Exception):
                         await self.middleware.call(
@@ -1352,15 +1443,28 @@ class InterfaceService(CRUDService):
             if vlans:
                 raise CallError(f'The following VLANs depend on this interface: {vlans}')
 
-        # Currently Interfaces model takes care of cascade deleting LAG
+        await self.delete_network_interface(oid)
+
+        return oid
+
+    @private
+    async def delete_network_interface(self, oid):
+        for lagg in self.middleware.call(
+            'datastore.query', 'network.lagginterface', [('lagg_interface__int_interface', '=', oid)]
+        ):
+            await self.delete_network_interface(lagg['lagg_physnic'])
+            await self.middleware.call('datastore.delete', 'network.lagginterface', lagg['id'])
+
+        await self.middleware.call(
+            'datastore.delete', 'network.vlan', [('vlan_pint', '=', oid)]
+        )
+        await self.middleware.call(
+            'datastore.delete', 'network.vlan', [('vlan_vint', '=', oid)]
+        )
+
         await self.middleware.call(
             'datastore.delete', 'network.interfaces', [('int_interface', '=', oid)]
         )
-        if iface['type'] == 'VLAN':
-            await self.middleware.call(
-                'datastore.delete', 'network.vlan', [('vlan_vint', '=', oid)]
-            )
-        return oid
 
     @accepts()
     @pass_app
@@ -2097,6 +2201,15 @@ class RouteService(Service):
                         if ipaddress.ip_address(ipv4_gateway) in ipv4_nic.network:
                             return True
         return False
+
+
+class StaticRouteModel(sa.Model):
+    __tablename__ = 'network_staticroute'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    sr_destination = sa.Column(sa.String(120))
+    sr_gateway = sa.Column(sa.String(42))
+    sr_description = sa.Column(sa.String(120))
 
 
 class StaticRouteService(CRUDService):

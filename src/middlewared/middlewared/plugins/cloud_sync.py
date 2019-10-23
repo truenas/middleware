@@ -4,6 +4,7 @@ from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import load_modules, load_classes, Popen, run
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_attributes
@@ -413,6 +414,15 @@ def lsjson_error_excerpt(error):
     return excerpt
 
 
+class CloudCredentialModel(sa.Model):
+    __tablename__ = 'system_cloudcredentials'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(100))
+    provider = sa.Column(sa.String(50))
+    attributes = sa.Column(sa.JSON(encrypted=True))
+
+
 class CredentialsService(CRUDService):
 
     class Config:
@@ -518,6 +528,36 @@ class CredentialsService(CRUDService):
 
         if verrors:
             raise verrors
+
+
+class CloudSyncModel(sa.Model):
+    __tablename__ = 'tasks_cloudsync'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    description = sa.Column(sa.String(150))
+    direction = sa.Column(sa.String(10), default='PUSH')
+    path = sa.Column(sa.String(255))
+    attributes = sa.Column(sa.JSON())
+    minute = sa.Column(sa.String(100), default="00")
+    hour = sa.Column(sa.String(100), default="*")
+    daymonth = sa.Column(sa.String(100), default="*")
+    month = sa.Column(sa.String(100), default='*')
+    dayweek = sa.Column(sa.String(100), default="*")
+    enabled = sa.Column(sa.Boolean(), default=True)
+    credential_id = sa.Column(sa.ForeignKey('system_cloudcredentials.id'), index=True)
+    transfer_mode = sa.Column(sa.String(20), default='sync')
+    encryption = sa.Column(sa.Boolean())
+    filename_encryption = sa.Column(sa.Boolean(), default=True)
+    encryption_password = sa.Column(sa.String(256))
+    encryption_salt = sa.Column(sa.String(256))
+    args = sa.Column(sa.Text())
+    post_script = sa.Column(sa.Text())
+    pre_script = sa.Column(sa.Text())
+    snapshot = sa.Column(sa.Boolean())
+    bwlimit = sa.Column(sa.JSON(type=list))
+    exclude = sa.Column(sa.JSON(type=list))
+    transfers = sa.Column(sa.Integer(), nullable=True)
+    follow_symlinks = sa.Column(sa.Boolean())
 
 
 class CloudSyncService(CRUDService):

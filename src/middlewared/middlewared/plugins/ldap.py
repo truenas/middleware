@@ -15,6 +15,7 @@ from ldap.controls import SimplePagedResultsControl
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, ValidationError
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 
 _int32 = struct.Struct('!i')
@@ -376,6 +377,30 @@ class LDAPQuery(object):
         filter = '(objectclass=*)'
         results = self._search(dn, ldap.SCOPE_SUBTREE, filter)
         return self.parse_results(results)
+
+
+class LDAPModel(sa.Model):
+    __tablename__ = 'directoryservice_ldap'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ldap_hostname = sa.Column(sa.String(120))
+    ldap_basedn = sa.Column(sa.String(120))
+    ldap_binddn = sa.Column(sa.String(256))
+    ldap_bindpw = sa.Column(sa.String(120))
+    ldap_anonbind = sa.Column(sa.Boolean())
+    ldap_ssl = sa.Column(sa.String(120))
+    ldap_timeout = sa.Column(sa.Integer())
+    ldap_dns_timeout = sa.Column(sa.Integer())
+    ldap_idmap_backend = sa.Column(sa.String(120))
+    ldap_has_samba_schema = sa.Column(sa.Boolean())
+    ldap_auxiliary_parameters = sa.Column(sa.Text())
+    ldap_schema = sa.Column(sa.String(120))
+    ldap_enable = sa.Column(sa.Boolean())
+    ldap_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    ldap_kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id'), index=True, nullable=True)
+    ldap_kerberos_principal = sa.Column(sa.String(255))
+    ldap_validate_certificates = sa.Column(sa.Boolean(), default=True)
+    ldap_disable_freenas_cache = sa.Column(sa.Boolean())
 
 
 class LDAPService(ConfigService):

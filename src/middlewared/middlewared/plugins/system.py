@@ -5,6 +5,7 @@ from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version
 from middlewared.validators import Range
 
@@ -39,6 +40,36 @@ FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
 RE_MEMWIDTH = re.compile(r'Total Width:\s*(\d*)')
+
+
+class SystemAdvancedModel(sa.Model):
+    __tablename__ = 'system_advanced'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    adv_consolemenu = sa.Column(sa.Boolean(), default=False)
+    adv_serialconsole = sa.Column(sa.Boolean(), default=False)
+    adv_serialport = sa.Column(sa.String(120), default="0x2f8")
+    adv_serialspeed = sa.Column(sa.String(120), default="9600")
+    adv_powerdaemon = sa.Column(sa.Boolean(), default=False)
+    adv_swapondrive = sa.Column(sa.Integer(), default=2)
+    adv_consolemsg = sa.Column(sa.Boolean(), default=True)
+    adv_traceback = sa.Column(sa.Boolean(), default=True)
+    adv_advancedmode = sa.Column(sa.Boolean(), default=False)
+    adv_autotune = sa.Column(sa.Boolean(), default=False)
+    adv_debugkernel = sa.Column(sa.Boolean(), default=False)
+    adv_uploadcrash = sa.Column(sa.Boolean(), default=True)
+    adv_anonstats = sa.Column(sa.Boolean(), default=True)
+    adv_anonstats_token = sa.Column(sa.Text())
+    adv_motd = sa.Column(sa.Text(), default='Welcome')
+    adv_boot_scrub = sa.Column(sa.Integer(), default=7)
+    adv_fqdn_syslog = sa.Column(sa.Boolean(), default=False)
+    adv_sed_user = sa.Column(sa.String(120), default="user")
+    adv_sed_passwd = sa.Column(sa.String(120))
+    adv_legacy_ui = sa.Column(sa.Boolean(), default=False)
+    adv_sysloglevel = sa.Column(sa.String(120), default="f_info")
+    adv_syslogserver = sa.Column(sa.String(120), default='')
+    adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
+    adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
 
 
 class SystemAdvancedService(ConfigService):
@@ -663,6 +694,26 @@ class SystemService(Service):
             with open(debug_job.result, 'rb') as f:
                 shutil.copyfileobj(f, job.pipes.output.w)
         job.pipes.output.w.close()
+
+
+class SystemGeneralModel(sa.Model):
+    __tablename__ = 'system_settings'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    stg_guiaddress = sa.Column(sa.JSON(type=list), default=['0.0.0.0'])
+    stg_guiv6address = sa.Column(sa.JSON(type=list), default=['::'])
+    stg_guiport = sa.Column(sa.Integer(), default=80)
+    stg_guihttpsport = sa.Column(sa.Integer(), default=443)
+    stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
+    stg_language = sa.Column(sa.String(120), default="en")
+    stg_kbdmap = sa.Column(sa.String(120))
+    stg_timezone = sa.Column(sa.String(120), default="America/Los_Angeles")
+    stg_wizardshown = sa.Column(sa.Boolean(), default=False)
+    stg_pwenc_check = sa.Column(sa.String(100))
+    stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
+    stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
+    stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
 
 
 class SystemGeneralService(ConfigService):

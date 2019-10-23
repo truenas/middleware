@@ -3,6 +3,7 @@ import errno
 import os
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import CallError, CRUDService, job, Service, private, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.validators import Range
 
@@ -250,6 +251,14 @@ class IdmapService(Service):
                 await self.middleware.call('idmap.domain.create', {'name': c[0], 'dns_domain_name': c[1]})
 
 
+class IdmapDomainModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_domain'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_domain_name = sa.Column(sa.String(120))
+    idmap_domain_dns_domain_name = sa.Column(sa.String(255), nullable=True)
+
+
 class IdmapDomainService(CRUDService):
     class Config:
         datastore = 'directoryservice.idmap_domain'
@@ -329,6 +338,14 @@ class IdmapDomainService(CRUDService):
         if data['id'] <= dstype['DS_TYPE_DEFAULT_DOMAIN'].value:
             verrors.add('id', f'Modifying system idmap domain [{data["name"]}] is not permitted.')
         return verrors
+
+
+class IdmapDomaintobackendModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_domaintobackend'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_dtb_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+    idmap_dtb_idmap_backend = sa.Column(sa.String(120), default='rid')
 
 
 class IdmapDomainBackendService(CRUDService):
@@ -446,6 +463,18 @@ class IdmapDomainBackendService(CRUDService):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
 
+class IdmapADModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_ad'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_ad_range_low = sa.Column(sa.Integer())
+    idmap_ad_range_high = sa.Column(sa.Integer())
+    idmap_ad_schema_mode = sa.Column(sa.String(120))
+    idmap_ad_unix_nss_info = sa.Column(sa.Boolean())
+    idmap_ad_unix_primary_group = sa.Column(sa.Boolean())
+    idmap_ad_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+
+
 class IdmapADService(CRUDService):
     class Config:
         datastore = 'directoryservice.idmap_ad'
@@ -536,6 +565,18 @@ class IdmapADService(CRUDService):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
 
+class DirectoryserviceIdmapAutoridModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_autorid'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_autorid_range_low = sa.Column(sa.Integer())
+    idmap_autorid_range_high = sa.Column(sa.Integer())
+    idmap_autorid_rangesize = sa.Column(sa.Integer())
+    idmap_autorid_readonly = sa.Column(sa.Boolean())
+    idmap_autorid_ignore_builtin = sa.Column(sa.Boolean())
+    idmap_autorid_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+
+
 class IdmapAutoridService(CRUDService):
     class Config:
         datastore = 'directoryservice.idmap_autorid'
@@ -615,6 +656,20 @@ class IdmapAutoridService(CRUDService):
         Delete idmap to backend mapping by id
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+
+
+class IdmapLDAPModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_ldap'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_ldap_range_low = sa.Column(sa.Integer())
+    idmap_ldap_range_high = sa.Column(sa.Integer())
+    idmap_ldap_ldap_base_dn = sa.Column(sa.String(120))
+    idmap_ldap_ldap_user_dn = sa.Column(sa.String(120))
+    idmap_ldap_ldap_url = sa.Column(sa.String(255))
+    idmap_ldap_ssl = sa.Column(sa.String(120))
+    idmap_ldap_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    idmap_ldap_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
 
 
 class IdmapLDAPService(CRUDService):
@@ -700,6 +755,15 @@ class IdmapLDAPService(CRUDService):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
 
+class IdmapNSSModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_nss'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_nss_range_low = sa.Column(sa.Integer())
+    idmap_nss_range_high = sa.Column(sa.Integer())
+    idmap_nss_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+
+
 class IdmapNSSService(CRUDService):
     class Config:
         datastore = 'directoryservice.idmap_nss'
@@ -776,6 +840,27 @@ class IdmapNSSService(CRUDService):
         Delete idmap to backend mapping by id
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+
+
+class IdmapRFC2307Model(sa.Model):
+    __tablename__ = 'directoryservice_idmap_rfc2307'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_rfc2307_range_low = sa.Column(sa.Integer())
+    idmap_rfc2307_range_high = sa.Column(sa.Integer())
+    idmap_rfc2307_ldap_server = sa.Column(sa.String(120))
+    idmap_rfc2307_bind_path_user = sa.Column(sa.String(120))
+    idmap_rfc2307_bind_path_group = sa.Column(sa.String(120))
+    idmap_rfc2307_user_cn = sa.Column(sa.Boolean())
+    idmap_rfc2307_cn_realm = sa.Column(sa.Boolean())
+    idmap_rfc2307_ldap_domain = sa.Column(sa.String(120))
+    idmap_rfc2307_ldap_url = sa.Column(sa.String(255))
+    idmap_rfc2307_ldap_user_dn = sa.Column(sa.String(120))
+    idmap_rfc2307_ldap_user_dn_password = sa.Column(sa.String(120))
+    idmap_rfc2307_ldap_realm = sa.Column(sa.String(120))
+    idmap_rfc2307_ssl = sa.Column(sa.String(120))
+    idmap_rfc2307_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    idmap_rfc2307_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
 
 
 class IdmapRFC2307Service(CRUDService):
@@ -896,6 +981,15 @@ class IdmapRFC2307Service(CRUDService):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
 
+class IdmapRIDModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_rid'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_rid_range_low = sa.Column(sa.Integer())
+    idmap_rid_range_high = sa.Column(sa.Integer())
+    idmap_rid_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+
+
 class IdmapRIDService(CRUDService):
     class Config:
         datastore = 'directoryservice.idmap_rid'
@@ -972,6 +1066,16 @@ class IdmapRIDService(CRUDService):
         Delete idmap to backend mapping by id
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+
+
+class IdmapScriptModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_script'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_script_range_low = sa.Column(sa.Integer())
+    idmap_script_range_high = sa.Column(sa.Integer())
+    idmap_script_script = sa.Column(sa.String(255))
+    idmap_script_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
 
 
 class IdmapScriptService(CRUDService):
@@ -1052,6 +1156,15 @@ class IdmapScriptService(CRUDService):
         Delete idmap to backend mapping by id
         """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+
+
+class IdmapTDBModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_tdb'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_tdb_range_low = sa.Column(sa.Integer())
+    idmap_tdb_range_high = sa.Column(sa.Integer())
+    idmap_tdb_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
 
 
 class IdmapTDBService(CRUDService):

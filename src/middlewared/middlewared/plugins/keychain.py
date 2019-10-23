@@ -14,6 +14,7 @@ from middlewared.service_exception import CallError
 from middlewared.schema import (Bool, Dict, Int, Patch, Str,
                                 ValidationErrors, accepts)
 from middlewared.service import CRUDService, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.validators import validate_attributes, URL
 
@@ -216,6 +217,15 @@ async def get_ssh_key_pair_with_private_key(middleware, id):
 
 def process_ssh_keyscan_output(output):
     return [" ".join(line.split()[1:]) for line in output.split("\n") if line and not line.startswith("# ")][-1]
+
+
+class KeychainCredentialModel(sa.Model):
+    __tablename__ = 'system_keychaincredential'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(255))
+    type = sa.Column(sa.String(255))
+    attributes = sa.Column(sa.JSON(encrypted=True))
 
 
 class KeychainCredentialService(CRUDService):

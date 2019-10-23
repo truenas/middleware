@@ -1,0 +1,61 @@
+#!/bin/sh
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin::/usr/local/sbin:/usr/local/bin
+
+pre-install()
+{
+}
+
+post-install()
+{
+        set -x
+
+        echo "Making freenas initial database"
+        if [ ! -d /data ]; then
+                rm -fr /data
+                mkdir -p /data
+        fi
+
+        env FREENAS_INSTALL=yes /usr/local/sbin/migrate93 -f /data/freenas-v1.db
+        # Lets be evil here and kill pkg(8) if this fails
+        # because pkg does not check return code of POST-INSTALL script
+        if [ $? -ne 0 ]; then
+                /usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
+        fi
+
+        env FREENAS_INSTALL=yes /usr/local/sbin/migrate113 -f /data/freenas-v1.db
+        # Same as before
+        if [ $? -ne 0 ]; then
+                /usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
+        fi
+
+        env FREENAS_INSTALL=yes /usr/local/sbin/migrate
+        # Same as before
+        if [ $? -ne 0 ]; then
+                /usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
+        fi
+
+        cp /data/freenas-v1.db /data/factory-v1.db
+}
+
+backupwarning()
+{
+}
+
+case $2 in
+PRE-INSTALL)
+        pre-install
+        exit 0
+        ;;
+POST-INSTALL)
+        post-install
+        exit 0
+        ;;
+BACKUPWARNING)
+        backupwarning
+        exit 0
+        ;;
+*)
+        exit 1
+        ;;
+esac

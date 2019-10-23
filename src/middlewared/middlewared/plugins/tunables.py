@@ -3,7 +3,19 @@ import re
 from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
 from middlewared.service import CRUDService, private
+import middlewared.sqlalchemy as sa
 from middlewared.validators import Match
+
+
+class TunableModel(sa.Model):
+    __tablename__ = 'system_tunable'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    tun_value = sa.Column(sa.String(512))
+    tun_type = sa.Column(sa.String(20), default='loader')
+    tun_comment = sa.Column(sa.String(100))
+    tun_enabled = sa.Column(sa.Boolean(), default=True)
+    tun_var = sa.Column(sa.String(128))
 
 
 class TunableService(CRUDService):
