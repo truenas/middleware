@@ -2613,7 +2613,9 @@ class PoolService(CRUDService):
                         'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
                     )
 
-                unlock_job = self.middleware.call_sync('pool.dataset.unlock', pool['name'])
+                unlock_job = self.middleware.call_sync(
+                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False}
+                )
                 unlock_job.wait_sync()
                 if unlock_job.error:
                     self.logger.error(f'Unlocking encrypted datasets failed for {pool["name"]}: {unlock_job.error}')
@@ -3002,6 +3004,7 @@ class PoolDatasetService(CRUDService):
         Dict(
             'unlock_options',
             Bool('key_file', default=False),
+            Bool('toggle_attachments', default=True),
             Bool('recursive', default=False),
             List(
                 'datasets', items=[
@@ -3013,14 +3016,14 @@ class PoolDatasetService(CRUDService):
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
     def unlock(self, job, id, options):
         verrors = ValidationErrors()
-        ds = self.middleware.call_sync('pool.dataset._get_instance', id)
+        dataset = self.middleware.call_sync('pool.dataset._get_instance', id)
         keys_supplied = {}
 
         if options.get('key_file'):
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
         keys_supplied.update({d['name']: d['passphrase'] for d in options.get('datasets', [])})
 
-        if not ds['locked']:
+        if not dataset['locked']:
             verrors.add('id', f'{id} dataset is not locked')
         else:
             if not bool(self.encrypted_roots_query_db([['name', '=', id]])) and id not in keys_supplied:
@@ -3058,7 +3061,16 @@ class PoolDatasetService(CRUDService):
         if failed:
             raise CallError('\n'.join(failed))
 
+        if options['toggle_attachments']:
+            self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset), True)
+
         return True
+
+    @private
+    @job(lock=lambda args: f'toggle_attachments_{args[0]}')
+    async def toggle_attachments(self, path, enabled=True):
+        for delegate in self.attachment_delegates:
+            delegate.toggle((await delegate.query(path, enabled)), enabled)
 
     @accepts(
         Str('id'),
