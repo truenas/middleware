@@ -1,10 +1,10 @@
 import asyncio
 import base64
+import bsd
 import contextlib
 import enum
 import errno
 import io
-import itertools
 import logging
 from datetime import datetime, time
 import os
@@ -15,9 +15,9 @@ import subprocess
 import sysctl
 import tarfile
 import tempfile
-
-import bsd
 import psutil
+
+from collections import defaultdict
 
 from libzfs import ZFSException
 from middlewared.job import JobProgressBuffer, Pipes
@@ -3050,22 +3050,28 @@ class PoolDatasetService(CRUDService):
             for name in datasets if name.startswith(id) and datasets[name]['key'] and datasets[name]['locked']
         ]
 
-        unlock_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'load_key', to_unlock)
-        unlock_job.wait_sync()
-        if unlock_job.error:
-            raise CallError(f'Failed to unlock: {unlock_job.error}')
+        failed = defaultdict(lambda: dict({'error': None, 'skipped': []}))
+        unlocked = []
+        for name in sorted(
+            filter(lambda n: n.startswith(id) and datasets[n]['key'] and datasets[n]['locked'], datasets),
+            key=lambda v: v.count('/')
+        ):
+            for i in range(1, name.count('/')):
+                if name.rsplit('/', i)[0] in failed:
+                    failed[name.rsplit('/', i)[0]]['skipped'].append(name)
+                    continue
 
-        failed = [
-            f'Failed to unlock {n[0]}: {status["error"]}' for n, status in zip(to_unlock, unlock_job.result)
-            if status['error']
-        ]
-        if failed:
-            raise CallError('\n'.join(failed))
+            try:
+                self.middleware.call_sync('zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': True})
+            except CallError as e:
+                failed[name]['error'] = str(e)
+            else:
+                unlocked.append(name)
 
-        if options['toggle_attachments']:
+        if options['toggle_attachments'] and not failed:
             self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset), True)
 
-        return True
+        return {'unlocked': unlocked, 'failed': failed}
 
     @private
     @job(lock=lambda args: f'toggle_attachments_{args[0]}')
