@@ -50,6 +50,10 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_network_lagginterfacemembers_lagg_interfacegroup_id'), ['lagg_interfacegroup_id'], unique=False)
         batch_op.drop_index('network_lagginterfacemembers_14f52ba0')
 
+    with op.batch_alter_table('services_fibrechanneltotarget', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_services_fibrechanneltotarget_fc_target_id'), ['fc_target_id'], unique=False)
+        batch_op.drop_index('services_fiberchanneltotarget_1d6856ca')
+
     with op.batch_alter_table('services_ftp', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_services_ftp_ftp_ssltls_certificate_id'), ['ftp_ssltls_certificate_id'], unique=False)
         batch_op.drop_index('services_ftp_f897b229')
@@ -206,6 +210,10 @@ def downgrade():
     with op.batch_alter_table('services_ftp', schema=None) as batch_op:
         batch_op.create_index('services_ftp_f897b229', ['ftp_ssltls_certificate_id'], unique=False)
         batch_op.drop_index(batch_op.f('ix_services_ftp_ftp_ssltls_certificate_id'))
+
+    with op.batch_alter_table('services_fibrechanneltotarget', schema=None) as batch_op:
+        batch_op.create_index('services_fiberchanneltotarget_1d6856ca', ['fc_target_id'], unique=False)
+        batch_op.drop_index(batch_op.f('ix_services_fibrechanneltotarget_fc_target_id'))
 
     with op.batch_alter_table('network_lagginterfacemembers', schema=None) as batch_op:
         batch_op.create_index('network_lagginterfacemembers_14f52ba0', ['lagg_interfacegroup_id'], unique=False)
