@@ -26,7 +26,7 @@ def get_context(middleware):
 
 
 def collectd_config(middleware, context):
-    if context['is_freenas'] or context['failover_status'] != 'BACKUP':
+    if not context['failover_licensed'] or context['failover_status'] == 'MASTER':
         yield 'collectd_daemon_enable="YES"'
         yield 'rrdcached_enable="YES"'
 
@@ -40,19 +40,20 @@ def collectd_config(middleware, context):
 
 
 def geli_config(middleware, context):
-    if context['failover_licensed']:
+    if not context['failover_licensed'] or context['failover_status'] == 'MASTER':
+        providers = []
+        for ed in middleware.call_sync(
+            'datastore.query',
+            'storage.encrypteddisk',
+            [('encrypted_volume__vol_encrypt', '=', 1)],
+        ):
+            providers.append(ed['encrypted_provider'])
+            provider = ed['encrypted_provider'].replace('/', '_').replace('-', '_')
+            key = f'/data/geli/{ed["encrypted_volume"]["vol_encryptkey"]}.key'
+            yield f'geli_{provider}_flags="-p -k {key}"'
+        yield f'geli_devices="{" ".join(providers)}"'
+    else:
         return []
-    providers = []
-    for ed in middleware.call_sync(
-        'datastore.query',
-        'storage.encrypteddisk',
-        [('encrypted_volume__vol_encrypt', '=', 1)],
-    ):
-        providers.append(ed['encrypted_provider'])
-        provider = ed['encrypted_provider'].replace('/', '_').replace('-', '_')
-        key = f'/data/geli/{ed["encrypted_volume"]["vol_encryptkey"]}.key'
-        yield f'geli_{provider}_flags="-p -k {key}"'
-    yield f'geli_devices="{" ".join(providers)}"'
 
 
 def host_config(middleware, context):
@@ -102,31 +103,44 @@ def lldp_config(middleware, context):
 
 def services_config(middleware, context):
     services = middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'})
-    mapping = {
-        'afp': ['netatalk'],
-        'cifs': ['samba_server', 'smbd', 'nmbd', 'winbindd'],
-        'dynamicdns': ['inadyn'],
-        'ftp': ['proftpd'],
+
+    """
+    JIRA NAS-103496
+    These daemons should be configured to start in the following scenarios:
+        1. FreeNAS systems
+        2. TrueNAS single controller systems
+        3. ONLY TrueNAS MASTER controllers in HA systems
+    """
+    mapping = {}
+    if not context['failover_licensed'] or context['failover_status'] == 'MASTER':
+        mapping = {
+            'afp': ['netatalk'],
+            'dynamicdns': ['inadyn'],
+            'ftp': ['proftpd'],
+            'openvpn_client': ['openvpn_client'],
+            'openvpn_server': ['openvpn_server'],
+            's3': ['minio'],
+            'rsync': ['rsyncd'],
+            'snmp': ['snmpd', 'snmp_agent'],
+            'tftp': ['inetd'],
+            'webdav': ['apache24'],
+            'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
+            'smartd': ['smartd_daemon']
+        }
+
+    """
+    JIRA NAS-103496
+    These daemons should be configured to start in the following scenarios:
+        1. FreeNAS systems
+        2. TrueNAS single controller systems
+        3. On BOTH controllers in TrueNAS HA systems
+    """
+    mapping.update({
         'iscsitarget': ['ctld'],
         'lldp': ['ladvd'],
-        's3': ['minio'],
-        'openvpn_client': ['openvpn_client'],
-        'openvpn_server': ['openvpn_server'],
-        'rsync': ['rsyncd'],
-        'snmp': ['snmpd', 'snmp_agent'],
         'ssh': ['openssh'],
-        'tftp': ['inetd'],
-        'webdav': ['apache24'],
-    }
-
-    if context['failover_licensed'] is False:
-        # These services are handled by HA script
-        # smartd #76242
-        mapping.update({
-            'netdata': ['netdata'],
-            'nfs': ['nfs_server', 'rpc_lockd', 'rpc_statd', 'mountd', 'nfsd', 'rpcbind'],
-            'smartd': ['smartd_daemon'],
-        })
+        'cifs': ['samba_server', 'smbd', 'nmbd', 'winbindd']
+    })
 
     for service in services:
         rcs_enable = mapping.get(service['service'])
@@ -162,7 +176,10 @@ def nfs_config(middleware, context):
     if nfs['udp']:
         nfs_server_flags.append('-u')
 
-    # Make sure IPs bind to NFS are in the interfaces (exist!) #16044
+    """
+    Make sure the IPs exist before we try to bind the NFS service to them
+    Redmine 16044
+    """
     if nfs['bindip']:
         found = False
         for iface in middleware.call_sync('interface.query'):
@@ -193,7 +210,7 @@ def nfs_config(middleware, context):
     yield f'rpc_lockd_flags="{" ".join(lockd_flags)}"'
     yield f'mountd_flags="{" ".join(mountd_flags)}"'
 
-    if context['failover_licensed'] is False:
+    if not context['failover_licensed'] or context['failover_status'] == 'MASTER':
         enabled = middleware.call_sync(
             'datastore.query', 'services.services', [
                 ('srv_service', '=', 'nfs'), ('srv_enable', '=', True),

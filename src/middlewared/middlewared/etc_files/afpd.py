@@ -36,7 +36,7 @@ def render(service, middleware):
     afp_config = "/usr/local/etc/afp.conf"
     cf_contents = []
 
-    afp = Struct(middleware.call_sync('datastore.query', 'services.afp', None, {'get': True}))
+    afp = Struct(middleware.call_sync('datastore.query', 'services.afp', [], {'get': True}))
 
     cf_contents.append("[Global]\n")
     uam_list = ['uams_dhx.so', 'uams_dhx2.so']
@@ -44,14 +44,16 @@ def render(service, middleware):
         uam_list.append('uams_guest.so')
         cf_contents.append('\tguest account = %s\n' % afp.afp_srv_guest_user)
     # uams_gss.so bails out with an error if kerberos isn't configured
-    if middleware.call_sync('datastore.query', 'directoryservice.kerberoskeytab', None, {'count': True}) > 0:
+    if middleware.call_sync('datastore.query', 'directoryservice.kerberoskeytab', [], {'count': True}) > 0:
         uam_list.append('uams_gss.so')
     cf_contents.append('\tuam list = %s\n' % (" ").join(uam_list))
 
     if afp.afp_srv_bindip:
-        cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
         ifaces = get_interface(afp.afp_srv_bindip)
-        cf_contents.append("\tafp interfaces = %s\n" % ' '.join(ifaces))
+        if ifaces:
+            cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
+            cf_contents.append("\tafp interfaces = %s\n" % ' '.join(ifaces))
+
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
     cf_contents.append("\tafpstats = yes\n")

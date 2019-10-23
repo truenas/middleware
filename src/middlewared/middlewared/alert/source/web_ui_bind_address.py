@@ -10,7 +10,7 @@ class WebUiBindAddressAlertClass(AlertClass):
 
 class WebUiBindAddressAlertSource(AlertSource):
     async def check(self):
-        settings = await self.middleware.call("datastore.query", "system.settings", None, {"get": True})
+        settings = await self.middleware.call("datastore.query", "system.settings", [], {"get": True})
         addresses = settings["stg_guiaddress"]
         alerts = []
         with open("/usr/local/etc/nginx/nginx.conf") as f:

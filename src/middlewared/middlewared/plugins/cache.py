@@ -175,20 +175,15 @@ class DSCache(Service):
         users and groups will simply not appear in query results (UI features).
 
         """
-        ds_enabled = {}
         res = []
+        ds_state = await self.middleware.call('directoryservices.get_state')
 
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'groupname'])
 
-        for ds in ['activedirectory', 'ldap', 'nis']:
-            ds_enabled.update({
-                str(ds): True if await self.middleware.call(f'{ds}.get_state') != 'DISABLED' else False
-            })
-
         res.extend((await self.middleware.call(f'{objtype.lower()[:-1]}.query', filters, options)))
 
-        for dstype, enabled in ds_enabled.items():
-            if enabled:
+        for dstype, state in ds_state.items():
+            if state != 'DISABLED':
                 """
                 Avoid iteration here if possible.  Use keys if single filter "=" and x in x=y is a
                 username or groupname.

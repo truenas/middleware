@@ -1,4 +1,5 @@
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 import logging
 import multiprocessing
@@ -10,6 +11,7 @@ import setproctitle
 import signal
 import threading
 import time
+import types
 
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
@@ -21,10 +23,11 @@ from zettarepl.observer import (
     ReplicationTaskScheduled, ReplicationTaskStart, ReplicationTaskSnapshotProgress, ReplicationTaskSnapshotSuccess,
     ReplicationTaskSuccess, ReplicationTaskError
 )
+from zettarepl.replication.task.dataset import get_target_dataset
 from zettarepl.scheduler.clock import Clock
 from zettarepl.scheduler.scheduler import Scheduler
 from zettarepl.scheduler.tz_clock import TzClock
-from zettarepl.snapshot.list import multilist_snapshots
+from zettarepl.snapshot.list import multilist_snapshots, group_snapshots_by_datasets
 from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
 from zettarepl.transport.local import LocalShell
@@ -39,6 +42,11 @@ from middlewared.service import CallError, periodic, Service
 from middlewared.utils import start_daemon_thread
 from middlewared.utils.string import make_sentence
 from middlewared.worker import watch_parent
+
+INVALID_DATASETS = (
+    re.compile(r"freenas-boot($|/)"),
+    re.compile(r"[^/]+/\.system($|/)")
+)
 
 
 def lifetime_timedelta(value, unit):
@@ -66,6 +74,17 @@ def timedelta_iso8601(timedelta):
 
 def lifetime_iso8601(value, unit):
     return timedelta_iso8601(lifetime_timedelta(value, unit))
+
+
+def replication_task_exclude(source_datasets, recursive, exclude):
+    if recursive:
+        exclude = list(exclude)
+        for ds in source_datasets:
+            # Exclude all possible FreeNAS system datasets
+            if "/" not in ds:
+                exclude.append(f"{ds}/.system")
+
+    return exclude
 
 
 def zettarepl_schedule(schedule):
@@ -329,8 +348,8 @@ class ZettareplService(Service):
 
     async def list_datasets(self, transport, ssh_credentials=None):
         try:
-            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
-            datasets = await self.middleware.run_in_thread(list_datasets, shell)
+            async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
+                datasets = await self.middleware.run_in_thread(list_datasets, shell)
         except Exception as e:
             raise CallError(repr(e))
 
@@ -348,16 +367,17 @@ class ZettareplService(Service):
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
         try:
-            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
-            return await self.middleware.run_in_thread(create_dataset, shell, dataset)
+            async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
+                return await self.middleware.run_in_thread(create_dataset, shell, dataset)
         except Exception as e:
             raise CallError(repr(e))
 
     async def count_eligible_manual_snapshots(self, datasets, naming_schemas, transport, ssh_credentials=None):
         try:
-            shell = await self._get_zettarepl_shell(transport, ssh_credentials)
-            snapshots = await self.middleware.run_in_thread(multilist_snapshots, shell, [(dataset, False)
-                                                                                         for dataset in datasets])
+            async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
+                snapshots = await self.middleware.run_in_thread(
+                    multilist_snapshots, shell, [(dataset, False) for dataset in datasets]
+                )
         except Exception as e:
             raise CallError(repr(e))
 
@@ -367,6 +387,46 @@ class ZettareplService(Service):
             "total": len(snapshots),
             "eligible": len(parsed),
         }
+
+    async def target_unmatched_snapshots(self, direction, source_datasets, target_dataset, transport, ssh_credentials):
+        fake_replication_task = types.SimpleNamespace()
+        fake_replication_task.source_datasets = source_datasets
+        fake_replication_task.target_dataset = target_dataset
+        datasets = {source_dataset: get_target_dataset(fake_replication_task, source_dataset)
+                    for source_dataset in source_datasets}
+
+        try:
+            local_shell = LocalShell()
+            async with self._get_zettarepl_shell(transport, ssh_credentials) as remote_shell:
+                if direction == "PUSH":
+                    source_shell = local_shell
+                    target_shell = remote_shell
+                else:
+                    source_shell = remote_shell
+                    target_shell = local_shell
+
+                target_datasets = set(list_datasets(target_shell))
+                datasets = {source_dataset: target_dataset
+                            for source_dataset, target_dataset in datasets.items()
+                            if target_dataset in target_datasets}
+
+                source_snapshots = group_snapshots_by_datasets(await self.middleware.run_in_thread(
+                    multilist_snapshots, source_shell, [(dataset, False) for dataset in datasets.keys()]
+                ))
+                target_snapshots = group_snapshots_by_datasets(await self.middleware.run_in_thread(
+                    multilist_snapshots, target_shell, [(dataset, False) for dataset in datasets.values()]
+                ))
+        except Exception as e:
+            raise CallError(repr(e))
+
+        errors = {}
+        for source_dataset, target_dataset in datasets.items():
+            unmatched_snapshots = list(set(target_snapshots.get(target_dataset, [])) -
+                                       set(source_snapshots.get(source_dataset, [])))
+            if unmatched_snapshots:
+                errors[target_dataset] = unmatched_snapshots
+
+        return errors
 
     async def get_definition(self):
         timezone = (await self.middleware.call("system.general.config"))["timezone"]
@@ -425,7 +485,9 @@ class ZettareplService(Service):
                 "source-dataset": replication_task["source_datasets"],
                 "target-dataset": replication_task["target_dataset"],
                 "recursive": replication_task["recursive"],
-                "exclude": replication_task["exclude"],
+                "exclude": replication_task_exclude(replication_task["source_datasets"],
+                                                    replication_task["recursive"],
+                                                    replication_task["exclude"]),
                 "properties": replication_task["properties"],
                 "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
                 "auto": replication_task["auto"],
@@ -475,10 +537,15 @@ class ZettareplService(Service):
 
         return definition
 
+    @asynccontextmanager
     async def _get_zettarepl_shell(self, transport, ssh_credentials):
         transport_definition = await self._define_transport(transport, ssh_credentials)
         transport = create_transport(transport_definition)
-        return transport.shell(transport)
+        shell = transport.shell(transport)
+        try:
+            yield shell
+        finally:
+            await self.middleware.run_in_thread(shell.close)
 
     async def _define_transport(self, transport, ssh_credentials=None, netcat_active_side=None,
                                 netcat_active_side_listen_address=None, netcat_active_side_port_min=None,

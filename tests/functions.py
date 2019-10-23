@@ -30,15 +30,6 @@ def GET(testpath, **optional):
     return getit
 
 
-def GET_USER(username):
-    for uid in range(1, 10000):
-        results = GET("/account/users/%s/" % uid)
-        if results.json()["bsdusr_username"] == username:
-            userid = uid
-            break
-    return userid
-
-
 def POST(testpath, payload=None, **optional):
     if optional.pop("anonymous", False):
         auth = None
@@ -241,8 +232,8 @@ def vm_start(vm_name):
         return True
 
 
-def ping_host(host):
-    process = run(['ping', '-c', '1', host])
+def ping_host(host, count):
+    process = run(['ping', '-c', f'{count}', host])
     if process.returncode != 0:
         return False
     else:

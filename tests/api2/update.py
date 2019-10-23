@@ -8,9 +8,33 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, vm_state, vm_start, ping_host
-from auto_config import vm_name, interface, ip
+from functions import GET, POST, SSH_TEST, vm_state, vm_start, ping_host
+from auto_config import vm_name, interface, ip, user, password
 from time import sleep, time
+
+url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
+
+
+def test_00_get_update_conf_for_internals_and_nightly():
+    version = GET("/system/info/").json()['version']
+    freenas = GET("/system/is_freenas/").json()
+    if freenas is True:
+        update_conf = 'freenas-update.conf'
+    else:
+        update_conf = 'truenas-update.conf'
+    fetch_cmd = f'fetch {url}{update_conf}'
+    mv_cmd = f'mv {update_conf} /data/update.conf'
+    if 'INTERNAL' in version:
+        results = SSH_TEST(fetch_cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+        results = SSH_TEST(mv_cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+    elif freenas is False:
+        results = SSH_TEST(fetch_cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+        results = SSH_TEST(mv_cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+    assert True
 
 
 def test_01_get_initial_FreeNAS_version():
@@ -184,9 +208,9 @@ def test_13_wait_for_FreeNAS_to_be_online():
     elif reboot is False:
         pytest.skip(f'Reboot is False skip')
     else:
-        while ping_host(ip) is not True:
+        while ping_host(ip, 1) is not True:
             sleep(5)
-        assert ping_host(ip) is True
+        assert ping_host(ip, 1) is True
     sleep(10)
 
 

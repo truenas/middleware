@@ -2,6 +2,7 @@ from datetime import timedelta
 import logging
 from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, SimpleOneShotAlertClass
 from middlewared.alert.schedule import CrontabSchedule, IntervalSchedule
+from middlewared.plugins.directoryservices import DSStatus
 
 log = logging.getLogger("activedirectory_check_alertmod")
 
@@ -38,6 +39,7 @@ class ActiveDirectoryDomainHealthAlertSource(AlertSource):
         try:
             await self.middleware.call("activedirectory.validate_domain")
         except Exception as e:
+            await self.middleware.call("activedirectory.set_state", DSStatus['FAULTED'])
             return Alert(
                 ActiveDirectoryDomainHealthAlertClass,
                 {'verrs': str(e)},
@@ -56,6 +58,7 @@ class ActiveDirectoryDomainBindAlertSource(AlertSource):
         try:
             await self.middleware.call("activedirectory.started")
         except Exception as e:
+            await self.middleware.call("activedirectory.set_state", DSStatus['FAULTED'])
             return Alert(
                 ActiveDirectoryDomainBindAlertClass,
                 {'wberr': str(e)},

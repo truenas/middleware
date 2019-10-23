@@ -7,10 +7,10 @@ import pytest
 from middlewared.common.smart.smartctl import get_smartctl_args
 from middlewared.pytest.unit.middleware import Middleware
 
+
 @pytest.mark.asyncio
 async def test__get_smartctl_args__disk_nonexistent():
     assert await get_smartctl_args(None, {}, "ada0") is None
-
 
 
 @pytest.mark.asyncio
@@ -25,15 +25,25 @@ async def test__get_smartctl_args__nvd_ioctl_failed():
         assert await get_smartctl_args(Middleware(), {}, "nvd0") is None
 
 
+@pytest.mark.parametrize("enclosure,dev", [
+    (None, "areca,811"),
+    (2, "areca,811/2"),
+])
 @pytest.mark.asyncio
-async def test__get_smartctl_args__arcmsr():
-    assert await get_smartctl_args(None, {"ada0": {
-        "driver": "arcmsrX",
-        "controller_id": 1000,
-        "bus": 0,
-        "channel_no": 100,
-        "lun_id": 10,
-    }}, "ada0") == ["/dev/arcmsr1000", "-d", "areca,811"]
+async def test__get_smartctl_args__arcmsr(enclosure, dev):
+    async def annotate_devices_with_areca_enclosure(devices):
+        for v in devices.values():
+            v["enclosure"] = enclosure
+
+    with patch("middlewared.common.smart.smartctl.annotate_devices_with_areca_enclosure",
+               annotate_devices_with_areca_enclosure):
+        assert await get_smartctl_args(None, {"ada0": {
+            "driver": "arcmsrX",
+            "controller_id": 1000,
+            "bus": 0,
+            "channel_no": 100,
+            "lun_id": 10,
+        }}, "ada0") == ["/dev/arcmsr1000", "-d", dev]
 
 
 @pytest.mark.asyncio

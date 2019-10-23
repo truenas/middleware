@@ -11,6 +11,7 @@ from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
+from .utils.profile import profile_wrap
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -30,6 +31,7 @@ import concurrent.futures.thread
 import errno
 import functools
 import inspect
+import itertools
 import linecache
 import multiprocessing
 import os
@@ -960,6 +962,9 @@ class Middleware(LoadPluginsMixin):
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
+    def get_wsclients(self):
+        return self.__wsclients
+
     def register_wsclient(self, client):
         self.__wsclients[client.session_id] = client
 
@@ -1174,8 +1179,11 @@ class Middleware(LoadPluginsMixin):
 
         return await self._call(message['method'], serviceobj, methodobj, params, app=app, io_thread=False)
 
-    async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None):
+    async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None, profile=False):
         serviceobj, methodobj = self._method_lookup(name)
+
+        if profile:
+            methodobj = profile_wrap(methodobj)
         return await self._call(
             name, serviceobj, methodobj, params,
             app=app, pipes=pipes, job_on_progress_cb=job_on_progress_cb, io_thread=True,
@@ -1220,7 +1228,15 @@ class Middleware(LoadPluginsMixin):
         return fut.result()
 
     def get_events(self):
-        return self.__events
+        return itertools.chain(
+            self.__events, map(
+                lambda n: (
+                    n[0], {
+                        'description': inspect.getdoc(n[1]), 'wildcard_subscription': False,
+                    }
+                ), self.__event_sources.items()
+            )
+        )
 
     def event_subscribe(self, name, handler):
         """

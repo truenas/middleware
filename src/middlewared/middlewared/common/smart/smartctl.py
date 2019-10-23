@@ -1,3 +1,4 @@
+from asyncio import Lock
 import logging
 import re
 import subprocess
@@ -6,9 +7,13 @@ from nvme import get_nsid
 
 from middlewared.utils import run
 
+from .areca import annotate_devices_with_areca_enclosure
+
 logger = logging.getLogger(__name__)
 
 SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
+
+areca_lock = Lock()
 
 
 async def get_smartctl_args(middleware, devices, disk):
@@ -32,8 +37,20 @@ async def get_smartctl_args(middleware, devices, disk):
 
     # Areca Controller support(at least the 12xx family, possibly others)
     if driver.startswith("arcmsr"):
+        # As we might be doing this in parallel, we don't want to have N `annotate_devices_with_areca_enclosure`
+        # calls doing the same thing.
+        async with areca_lock:
+            if "enclosure" not in device:
+                await annotate_devices_with_areca_enclosure(devices)
+
         dev_id = lun_id + 1 + channel_no * 8
-        return [f"/dev/arcmsr{controller_id}", "-d", f"areca,{dev_id}"]
+        dev = f"areca,{dev_id}"
+
+        enclosure = device["enclosure"]
+        if enclosure is not None:
+            dev += f"/{enclosure}"
+
+        return [f"/dev/arcmsr{controller_id}", "-d", dev]
 
     # Highpoint Rocket Raid 27xx controller
     if driver == "rr274x_3x":
@@ -67,8 +84,23 @@ async def get_smartctl_args(middleware, devices, disk):
         return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"]
 
     args = [f"/dev/{disk}"]
-    p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
+    p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
     if "Unknown USB bridge" in p.stdout:
         args = args + ["-d", "sat"]
 
     return args
+
+
+async def smartctl(args, **kwargs):
+    lock = None
+    if any(arg.startswith("/dev/arcmsr") for arg in args):
+        lock = areca_lock
+
+    try:
+        if lock is not None:
+            await lock.acquire()
+
+        return await run(["smartctl"] + args, **kwargs)
+    finally:
+        if lock is not None:
+            lock.release()

@@ -4,7 +4,6 @@ import os
 import subprocess as su
 import libzfs
 import itertools
-import tempfile
 import pathlib
 import json
 import sqlite3
@@ -150,12 +149,20 @@ class PluginService(CRUDService):
         List officially supported plugin repositories.
         """
         is_fn = await self.middleware.call('system.is_freenas')
-        return {
+        repos = {
             'IXSYSTEMS': {
                 'name': 'iXsystems',
                 'git_repository': f'https://github.com/{"freenas" if is_fn else "truenas"}/iocage-ix-plugins.git'
             }
         }
+        if is_fn:
+            repos.update({
+                'COMMUNITY': {
+                    'name': 'Community',
+                    'git_repository': 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
+                }
+            })
+        return repos
 
     @private
     def default_repo(self):
@@ -172,23 +179,8 @@ class PluginService(CRUDService):
         options = options or {}
         self.middleware.call_sync('jail.check_dataset_existence')  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
-        resource_list = iocage.list('all', plugin=True)
-        pool = IOCJson().json_get_value('pool')
-        iocroot = IOCJson(pool).json_get_value('iocroot')
-        plugin_dir_path = os.path.join(iocroot, '.plugins')
-        plugin_jails = {
-            j['host_hostuuid']: j for j in self.middleware.call_sync(
-                'jail.query', [['type', 'in', ['plugin', 'pluginv2']]]
-            )
-        }
-
-        index_jsons = {}
-        for repo in os.listdir(plugin_dir_path) if os.path.exists(plugin_dir_path) else []:
-            index_path = os.path.join(plugin_dir_path, repo, 'INDEX')
-            if os.path.exists(index_path):
-                with contextlib.suppress(json.decoder.JSONDecodeError):
-                    with open(index_path, 'r') as f:
-                        index_jsons[repo] = json.loads(f.read())
+        resource_list = iocage.list('all', plugin=True, plugin_data=True)
+        iocroot = self.middleware.call_sync('jail.get_iocroot')
 
         for index, plugin in enumerate(resource_list):
             # "plugin" is a list which we will convert to a dictionary for readability
@@ -196,22 +188,19 @@ class PluginService(CRUDService):
                 k: v if v != '-' else None
                 for k, v in zip((
                     'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4',
-                    'ip6', 'template', 'admin_portal', 'doc_url'
+                    'ip6', 'template', 'admin_portal', 'doc_url', 'plugin',
+                    'plugin_repository', 'primary_pkg', 'category',
                 ), plugin)
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
             plugin_info = plugin_output.read_text().strip() if plugin_output.is_file() else None
 
-            plugin_name = plugin_jails[plugin_dict['name']]['plugin_name']
-            plugin_repo = self.convert_repository_to_path(plugin_jails[plugin_dict['name']]['plugin_repository'])
             plugin_dict.update({
                 'id': plugin_dict['name'],
                 'plugin_info': plugin_info,
-                'plugin': plugin_name,
-                'plugin_repository': plugin_jails[plugin_dict['name']]['plugin_repository'],
                 **self.get_local_plugin_version(
-                    plugin_name,
-                    index_jsons.get(plugin_repo), iocroot, plugin_dict['name']
+                    plugin_dict['plugin'],
+                    plugin_dict.pop('primary_pkg'), iocroot, plugin_dict['name']
                 )
             })
 
@@ -321,6 +310,30 @@ class PluginService(CRUDService):
         await self._get_instance(id)
         return await self.middleware.call('jail.delete', id)
 
+    @private
+    def retrieve_index_plugins_data(self, branch, plugin_repository, refresh=True):
+        data = {'plugins': None, 'index': None}
+        iocage_tmp_dir = '/tmp/iocage/.plugins'
+        os.makedirs(iocage_tmp_dir, exist_ok=True)
+        plugin_dir = os.path.join(iocage_tmp_dir, self.convert_repository_to_path(plugin_repository))
+        try:
+            if refresh or not os.path.exists(plugin_dir):
+                IOCPlugin._clone_repo(branch, plugin_repository, plugin_dir)
+        except Exception:
+            self.middleware.logger.error(f'Failed to clone {plugin_repository}.', exc_info=True)
+        else:
+            data['plugins'] = IOCPlugin.retrieve_plugin_index_data(plugin_dir)
+            if os.path.exists(os.path.join(plugin_dir, 'INDEX')):
+                with open(os.path.join(plugin_dir, 'INDEX'), 'r') as f:
+                    data['index'] = json.loads(f.read())
+
+        return data
+
+    @periodic(interval=86400)
+    async def retrieve_versions_for_repos(self):
+        for repo in (await self.official_repositories()).values():
+            await self.middleware.call('plugin.available', {'plugin_repository': repo['git_repository']})
+
     @accepts(
         Dict(
             'available_plugin_options',
@@ -338,11 +351,10 @@ class PluginService(CRUDService):
         """
         List available plugins which can be fetched for `plugin_repository`.
         """
-        self.middleware.call_sync('jail.check_dataset_existence')
         default_branch = self.get_version()
         default_repo = self.default_repo()
         branch = options.get('branch') or default_branch
-        options['plugin_repository'] = options.get('plugin_repository') or default_repo
+        plugin_repository = options['plugin_repository'] = options.get('plugin_repository') or default_repo
         # If user passes no parameters we assume defaults for branch and repo which are evaluated dynamically,
         # however if the same defaults are passed to the function, job locking can't have the latter call wait
         # because it is unable to retrieve defaults from schema layer or access our dynamic defaults
@@ -362,48 +374,31 @@ class PluginService(CRUDService):
                 )
                 wait_job.wait_sync()
 
-        iocage = ioc.IOCage(skip_jails=True)
         if options['cache']:
             with contextlib.suppress(KeyError):
                 return self.middleware.call_sync(
                     'cache.get', f'iocage_remote_plugins_{branch}_{options["plugin_repository"]}'
                 )
 
-        resource_list = iocage.fetch(
-            list=True, plugins=True, header=False, branch=branch, git_repository=options['plugin_repository']
-        )
+        if not self.middleware.call_sync('jail.iocage_set_up'):
+            cloned_repo = self.retrieve_index_plugins_data(branch, plugin_repository)
+            if any(not cloned_repo[k] for k in ('plugins', 'index')):
+                return []
 
-        plugins_versions_data = {}
-        if options['cache']:
-            with contextlib.suppress(KeyError):
-                plugins_versions_data = self.middleware.call_sync(
-                    'cache.get', f'iocage_plugin_versions_{branch}_{options["plugin_repository"]}'
-                )
-
-        if not plugins_versions_data:
-            plugins_versions_data_job = self.middleware.call_sync(
-                'core.get_jobs', [
-                    ['method', '=', 'plugin.retrieve_plugin_versions'],
-                    ['state', '=', 'RUNNING'],
-                    ['arguments', '=', [branch, options['plugin_repository']]],
-                ]
+            plugins_versions_data = IOCPlugin.fetch_plugin_versions_from_plugin_index(cloned_repo['plugins'])
+            resource_list = [
+                {
+                    'plugin': plugin,
+                    **{k: d.get(k, '') for k in ('description', 'icon', 'name', 'license', 'official', 'category')}
+                }
+                for plugin, d in cloned_repo['index'].items()
+            ]
+        else:
+            self.middleware.call_sync('jail.check_dataset_existence')
+            plugins_versions_data = IOCPlugin(branch=branch, git_repository=plugin_repository).fetch_plugin_versions()
+            resource_list = ioc.IOCage(skip_jails=True).fetch(
+                list=True, plugins=True, header=False, branch=branch, git_repository=options['plugin_repository']
             )
-
-            if plugins_versions_data_job:
-                plugins_versions_data_job = self.middleware.call_sync(
-                    'core.job_wait', plugins_versions_data_job[0]['id']
-                )
-            else:
-                plugins_versions_data_job = self.middleware.call_sync(
-                    'plugin.retrieve_plugin_versions', branch, options['plugin_repository']
-                )
-            plugins_versions_data_job.wait_sync()
-
-            if plugins_versions_data_job.error:
-                # Let's not make the failure fatal
-                self.middleware.logger.debug(f'Retrieving plugins version failed: {plugins_versions_data_job.error}')
-            else:
-                plugins_versions_data = plugins_versions_data_job.result
 
         for plugin in resource_list:
             plugin.update({
@@ -417,51 +412,6 @@ class PluginService(CRUDService):
         )
 
         return resource_list
-
-    @private
-    @accepts(
-        Str('branch', null=True, default=None),
-        Str('plugin_repository', null=True, default=None, empty=False),
-    )
-    @job(
-        lock=lambda args: f'retrieve_plugin_versions_{args[0] if args else "None"}_'
-        f'{args[1] if len(args) == 2 else None}'
-    )
-    def retrieve_plugin_versions(self, job, branch, plugin_repository):
-        # FIXME: Please fix the job arguments once job can correctly retrieve parameters from the schema layer
-        branch = branch or self.get_version()
-        plugin_repository = plugin_repository or self.default_repo()
-        try:
-            pool = self.middleware.call_sync('jail.get_activated_pool')
-        except CallError:
-            pool = None
-
-        if pool:
-            plugins = IOCPlugin(branch=branch, git_repository=plugin_repository).fetch_plugin_versions()
-        else:
-            with tempfile.TemporaryDirectory() as td:
-                try:
-                    IOCPlugin._clone_repo(branch, plugin_repository, td, depth=1)
-                except Exception:
-                    self.middleware.logger.error('Failed to clone iocage-ix-plugins repository.', exc_info=True)
-                    return {}
-                else:
-                    plugins_index_data = IOCPlugin.retrieve_plugin_index_data(td)
-                    plugins = IOCPlugin.fetch_plugin_versions_from_plugin_index(plugins_index_data)
-
-        self.middleware.call_sync(
-            'cache.put', f'iocage_plugin_versions_{branch}_{plugin_repository}', plugins, 86400
-        )
-        return plugins
-
-    @private
-    def retrieve_plugin_index(self, options):
-        self.middleware.call_sync('jail.check_dataset_existence')
-        branch = options['branch'] or self.get_version()
-        plugins = IOCPlugin(branch=branch, git_repository=options['plugin_repository'])
-        if not os.path.exists(plugins.git_destination) or options['refresh']:
-            plugins.pull_clone_git_repo()
-        return plugins.retrieve_plugin_index_data(plugins.git_destination)
 
     @accepts(
         Dict(
@@ -478,8 +428,19 @@ class PluginService(CRUDService):
 
         When `refresh` is specified, `plugin_repository` is updated before retrieving plugin's default properties.
         """
-        options['plugin_repository'] = options.get('plugin_repository') or self.default_repo()
-        index = self.retrieve_plugin_index(options)
+        plugin_repository = options.get('plugin_repository') or self.default_repo()
+        branch = options['branch'] or self.get_version()
+
+        if not self.middleware.call_sync('jail.iocage_set_up'):
+            index = self.retrieve_index_plugins_data(branch, plugin_repository, options['refresh'])
+            index = index['plugins'] or {}
+        else:
+            self.middleware.call_sync('jail.check_dataset_existence')
+            plugins_obj = IOCPlugin(branch=branch, git_repository=plugin_repository)
+            if not os.path.exists(plugins_obj.git_destination) or options['refresh']:
+                plugins_obj.pull_clone_git_repo()
+            index = plugins_obj.retrieve_plugin_index_data(plugins_obj.git_destination)
+
         if options['plugin'] not in index:
             raise CallError(f'{options["plugin"]} not found')
         return {
@@ -577,20 +538,18 @@ class PluginService(CRUDService):
         return version
 
     @private
-    def get_local_plugin_version(self, plugin, index_json, iocroot, jail_name):
+    def get_local_plugin_version(self, plugin, primary_pkg, iocroot, jail_name):
         """
         Checks the primary_pkg key in the INDEX with the pkg version
         inside the jail.
         """
         version = {k: 'N/A' for k in ('version', 'revision', 'epoch')}
 
-        if index_json is None:
+        primary_pkg = primary_pkg or plugin
+        if not primary_pkg:
             return version
 
         try:
-            base_plugin = plugin.rsplit('_', 1)[0]  # May have multiple
-            primary_pkg = index_json[base_plugin].get('primary_pkg') or plugin
-
             # Since these are plugins, we don't want to spin them up just to
             # check a pkg, directly accessing the db is best in this case.
             db_rows = self.read_plugin_pkg_db(
@@ -653,6 +612,8 @@ class JailService(CRUDService):
 
         if not self.iocage_set_up():
             return []
+
+        self.check_dataset_existence()
 
         if filters and len(filters) == 1 and list(
                 filters[0][:2]) == ['host_hostuuid', '=']:
@@ -769,7 +730,7 @@ class JailService(CRUDService):
         )
     )
     @job(lock=lambda args: f'jail_create:{args[0]["uuid"]}')
-    async def do_create(self, job, options):
+    def do_create(self, job, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
         # create call BUT since jail creation may or may not involve
@@ -954,7 +915,7 @@ class JailService(CRUDService):
     @private
     def check_dataset_existence(self):
         try:
-            IOCCheck(migrate=True)
+            IOCCheck(migrate=True, reset_cache=True)
         except ioc_exceptions.PoolNotActivated as e:
             raise CallError(e, errno=errno.ENOENT)
 
@@ -962,11 +923,7 @@ class JailService(CRUDService):
     def check_jail_existence(self, jail, skip=True, callback=None):
         """Wrapper for iocage's API, as a few commands aren't ported to it"""
         try:
-            if callback is not None:
-                iocage = ioc.IOCage(callback=callback,
-                                    skip_jails=skip, jail=jail)
-            else:
-                iocage = ioc.IOCage(skip_jails=skip, jail=jail)
+            iocage = ioc.IOCage(callback=callback, skip_jails=skip, jail=jail, reset_cache=True)
             jail, path = iocage.__check_jail_existence__()
         except RuntimeError:
             raise CallError(f"jail '{jail}' not found!")
@@ -977,7 +934,7 @@ class JailService(CRUDService):
     def get_activated_pool(self):
         """Returns the activated pool if there is one, or None"""
         try:
-            pool = ioc.IOCage(skip_jails=True).get('', pool=True)
+            pool = ioc.IOCage(skip_jails=True, reset_cache=True).get('', pool=True)
         except (RuntimeError, SystemExit) as e:
             raise CallError(f'Error occurred getting activated pool: {e}')
         except (ioc_exceptions.PoolNotActivated, FileNotFoundError):
@@ -1151,8 +1108,7 @@ class JailService(CRUDService):
 
     @private
     def get_iocroot(self):
-        pool = IOCJson().json_get_value("pool")
-        return IOCJson(pool).json_get_value("iocroot")
+        return IOCJson().json_get_value('iocroot')
 
     @accepts(
         Str("jail"),
@@ -1304,6 +1260,7 @@ class JailService(CRUDService):
     def clean(self, ds_type):
         """Cleans all iocage datasets of ds_type"""
 
+        ioc.IOCage.reset_cache()
         if ds_type == "JAIL":
             IOCClean().clean_jails()
         elif ds_type == "ALL":
@@ -1437,7 +1394,7 @@ class JailService(CRUDService):
 
         `path` is the directory where the exported jail lives. It defaults to the iocage images dataset.
         """
-
+        self.check_dataset_existence()
         path = options['path'] or os.path.join(self.get_iocroot(), 'images')
 
         IOCImage().import_jail(
@@ -1449,7 +1406,7 @@ class JailService(CRUDService):
     @private
     def start_on_boot(self):
         self.logger.debug('Starting jails on boot: PENDING')
-        ioc.IOCage(rc=True).start()
+        ioc.IOCage(rc=True, reset_cache=True).start()
         self.logger.debug('Starting jails on boot: SUCCESS')
 
         return True
@@ -1457,7 +1414,7 @@ class JailService(CRUDService):
     @private
     def stop_on_shutdown(self):
         self.logger.debug('Stopping jails on shutdown: PENDING')
-        ioc.IOCage(rc=True).stop()
+        ioc.IOCage(rc=True, reset_cache=True).stop()
         self.logger.debug('Stopping jails on shutdown: SUCCESS')
 
         return True

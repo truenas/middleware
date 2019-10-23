@@ -14,5 +14,5 @@ class HubicRcloneRemote(BaseRcloneRemote):
     rclone_type = "hubic"
 
     credentials_schema = [
-        Str("token", title="Access Token", required=True),
+        Str("token", title="Access Token", required=True, max_length=None),
     ]

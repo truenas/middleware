@@ -1,5 +1,4 @@
 import asyncio
-import enum
 import errno
 import pwd
 import grp
@@ -9,14 +8,7 @@ from middlewared.service import job, private, ConfigService
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-
-
-class DSStatus(enum.Enum):
-    DISABLED = 0
-    FAULTED = 1
-    LEAVING = 2
-    JOINING = 3
-    HEALTHY = 4
+from middlewared.plugins.directoryservices import DSStatus
 
 
 class NISModel(sa.Model):
@@ -95,32 +87,16 @@ class NISService(ConfigService):
         return await self.config()
 
     @private
-    async def __set_state(self, state):
-        await self.middleware.call('cache.put', 'NIS_State', state.name)
+    async def set_state(self, state):
+        return await self.middleware.call('directoryservices.set_state', {'nis': state.name})
 
-    @private
+    @accepts()
     async def get_state(self):
         """
-        `DISABLED` Directory Service is disabled.
-
-        `FAULTED` Directory Service is enabled, but not HEALTHY. Review logs and generated alert
-        messages to debug the issue causing the service to be in a FAULTED state.
-
-        `LEAVING` Directory Service is in process of stopping.
-
-        `JOINING` Directory Service is in process of starting.
-
-        `HEALTHY` Directory Service is enabled, and last status check has passed.
+        Wrapper function for 'directoryservices.get_state'. Returns only the state of the
+        NIS service.
         """
-        try:
-            return (await self.middleware.call('cache.get', 'NIS_State'))
-        except KeyError:
-            try:
-                await self.started()
-            except Exception:
-                pass
-
-        return (await self.middleware.call('cache.get', 'NIS_State'))
+        return (await self.middleware.call('directoryservices.get_state'))['nis']
 
     @private
     async def start(self):
@@ -137,7 +113,7 @@ class NISService(ConfigService):
         if state in ['EXITING', 'JOINING']:
             raise CallError(f'Current state of NIS service is: [{state}]. Wait until operation completes.', errno.EBUSY)
 
-        await self.__set_state(DSStatus['JOINING'])
+        await self.set_state(DSStatus['JOINING'])
         await self.middleware.call('datastore.update', 'directoryservice.nis', nis['id'], {'nis_enable': True})
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'pam')
@@ -145,15 +121,15 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         setnisdomain = await run(['/bin/domainname', nis['domain']], check=False)
         if setnisdomain.returncode != 0:
-            await self.__set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'])
             raise CallError(f'Failed to set NIS Domain to [{nis["domain"]}]: {setnisdomain.stderr.decode()}')
 
         ypbind = await run(['/usr/sbin/service', 'ypbind', 'onestart'], check=False)
         if ypbind.returncode != 0:
-            await self.__set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'])
             raise CallError(f'ypbind failed: {ypbind.stderr.decode()}')
 
-        await self.__set_state(DSStatus['HEALTHY'])
+        await self.set_state(DSStatus['HEALTHY'])
         self.logger.debug(f'NIS service successfully started. Setting state to HEALTHY.')
         await self.middleware.call('nis.fill_cache')
         return True
@@ -164,15 +140,9 @@ class NISService(ConfigService):
         The return code from ypwhich is not a reliable health indicator. For example, RPC failure will return 0.
         There are edge cases where ypwhich can hang when NIS is misconfigured.
         """
-        nis = await self.config()
         ypwhich = await run(['/usr/bin/ypwhich'], check=False)
-        if ypwhich.returncode != 0:
-            if nis['enable']:
-                await self.__set_state(DSStatus['FAULTED'])
-                self.logger.debug(f'NIS status check returned [{ypwhich.stderr.decode().strip()}]. Setting state to FAULTED.')
-            return False
+
         if ypwhich.stderr:
-            await self.__set_state(DSStatus['FAULTED'])
             raise CallError(f'NIS status check returned [{ypwhich.stderr.decode().strip()}]. Setting state to FAULTED.')
         return True
 
@@ -180,15 +150,12 @@ class NISService(ConfigService):
     async def started(self):
         ret = False
         if not (await self.config())['enable']:
-            await self.__set_state(DSStatus['DISABLED'])
             return ret
         try:
             ret = await asyncio.wait_for(self.__ypwhich(), timeout=5.0)
         except asyncio.TimeoutError:
             raise CallError('nis.started check timed out after 5 seconds.')
 
-        if ret:
-            await self.__set_state(DSStatus['HEALTHY'])
         return ret
 
     @private
@@ -218,7 +185,7 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
-        await self.middleware.call('cache.pop', 'NIS_cache')
+        await self.__set_state(DSStatus['DISABLED'])
         self.logger.debug(f'NIS service successfully stopped. Setting state to DISABLED.')
         return True
 

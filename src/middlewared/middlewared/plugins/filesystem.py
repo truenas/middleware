@@ -17,7 +17,7 @@ from middlewared.utils import filter_list
 
 
 class ACLDefault(enum.Enum):
-    OPEN = [
+    OPEN = {'visible': True, 'acl': [
         {
             'tag': 'owner@',
             'id': None,
@@ -39,8 +39,8 @@ class ACLDefault(enum.Enum):
             'flags': {'BASIC': 'INHERIT'},
             'type': 'ALLOW'
         }
-    ]
-    RESTRICTED = [
+    ]}
+    RESTRICTED = {'visible': True, 'acl': [
         {
             'tag': 'owner@',
             'id': None,
@@ -55,8 +55,8 @@ class ACLDefault(enum.Enum):
             'flags': {'BASIC': 'INHERIT'},
             'type': 'ALLOW'
         },
-    ]
-    HOME = [
+    ]}
+    HOME = {'visible': True, 'acl': [
         {
             'tag': 'owner@',
             'id': None,
@@ -78,8 +78,8 @@ class ACLDefault(enum.Enum):
             'flags': {'BASIC': 'NOINHERIT'},
             'type': 'ALLOW'
         },
-    ]
-    DOMAIN_HOME = [
+    ]}
+    DOMAIN_HOME = {'visible': False, 'acl': [
         {
             'tag': 'owner@',
             'id': None,
@@ -105,7 +105,7 @@ class ACLDefault(enum.Enum):
             'flags': {'BASIC': 'NOINHERIT'},
             'type': 'ALLOW'
         }
-    ]
+    ]}
 
 
 class FilesystemService(Service):
@@ -124,6 +124,7 @@ class FilesystemService(Service):
           mode(int): file mode/permission
           uid(int): user id of entry owner
           gid(int): group id of entry onwer
+          acl(bool): extended ACL is present on file
         """
         if not os.path.exists(path):
             raise CallError(f'Directory {path} does not exist', errno.ENOENT)
@@ -153,11 +154,12 @@ class FilesystemService(Service):
                 data.update({
                     'size': stat.st_size,
                     'mode': stat.st_mode,
+                    'acl': False if self.acl_is_trivial(data["realpath"]) else True,
                     'uid': stat.st_uid,
                     'gid': stat.st_gid,
                 })
             except FileNotFoundError:
-                data.update({'size': None, 'mode': None, 'uid': None, 'gid': None})
+                data.update({'size': None, 'mode': None, 'acl': None, 'uid': None, 'gid': None})
             rv.append(data)
         return filter_list(rv, filters=filters or [], options=options or {})
 
@@ -390,14 +392,18 @@ class FilesystemService(Service):
     @accepts(Str('path'))
     def acl_is_trivial(self, path):
         """
-        ACL is trivial if it can be fully expressed as a file mode without losing
-        any access rules. This is intended to be used as a check before allowing
-        users to chmod() through the webui
+        Returns True if the ACL can be fully expressed as a file mode without losing
+        any access rules, or if the path does not support NFSv4 ACLs (for example
+        a path on a tmpfs filesystem).
         """
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
-        a = acl.ACL(file=path)
-        return a.is_trivial
+
+        has_nfs4_acl_support = os.pathconf(path, 64)
+        if not has_nfs4_acl_support:
+            return True
+
+        return acl.ACL(file=path).is_trivial
 
     @accepts(
         Dict(
@@ -427,6 +433,7 @@ class FilesystemService(Service):
         If `traverse` and `recursive` are specified, then the chown
         operation will traverse filesystem mount points.
         """
+        job.set_progress(0, 'Preparing to change owner.')
         if not os.path.exists(data['path']):
             raise CallError(f"Path {data['path']} not found.", errno.ENOENT)
 
@@ -438,9 +445,12 @@ class FilesystemService(Service):
         options = data['options']
 
         if not options['recursive']:
+            job.set_progress(100, 'Finished changing owner.')
             os.chown(data['path'], uid, gid)
         else:
+            job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
             self._winacl(data['path'], 'chown', uid, gid, options)
+            job.set_progress(100, 'Finished changing owner.')
 
     @accepts(
         Dict(
@@ -484,6 +494,7 @@ class FilesystemService(Service):
         expressed as a file mode without losing any access rules.
 
         """
+        job.set_progress(0, 'Preparing to set permissions.')
         options = data['options']
         mode = data.get('mode', None)
 
@@ -516,17 +527,25 @@ class FilesystemService(Service):
             os.chown(data['path'], uid, gid)
 
         if not options['recursive']:
+            job.set_progress(100, 'Finished setting permissions.')
             return
 
         action = 'clone' if mode else 'strip'
+        job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
         self._winacl(data['path'], action, uid, gid, options)
+        job.set_progress(100, 'Finished setting permissions.')
 
     @accepts()
     async def default_acl_choices(self):
         """
         Get list of default ACL types.
         """
-        return [x.name for x in ACLDefault]
+        acl_choices = []
+        for x in ACLDefault:
+            if x.value['visible']:
+                acl_choices.append(x.name)
+
+        return acl_choices
 
     @accepts(
         Str('acl_type', default='OPEN', enum=[x.name for x in ACLDefault])
@@ -539,6 +558,8 @@ class FilesystemService(Service):
         """
         acl = []
         admin_group = (await self.middleware.call('smb.config'))['admin_group']
+        if acl_type == 'HOME' and (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+            acl_type = 'DOMAIN_HOME'
         if admin_group:
             acl.append({
                 'tag': 'GROUP',
@@ -547,7 +568,7 @@ class FilesystemService(Service):
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
             })
-        acl.extend(ACLDefault[acl_type].value)
+        acl.extend((ACLDefault[acl_type].value)['acl'])
 
         return acl
 
@@ -765,6 +786,7 @@ class FilesystemService(Service):
         expectations regarding permissions inheritance. This entry is removed from NT ACL returned
         to SMB clients when 'ixnas' samba VFS module is enabled.
         """
+        job.set_progress(0, 'Preparing to set acl.')
         options = data['options']
         dacl = data.get('dacl', [])
         if not os.path.exists(data['path']):
@@ -820,12 +842,24 @@ class FilesystemService(Service):
 
         if not options['recursive']:
             os.chown(data['path'], uid, gid)
-            return True
+            job.set_progress(100, 'Finished setting ACL.')
+            return
 
+        job.set_progress(10, f'Recursively setting ACL on {data["path"]}.')
         self._winacl(data['path'], 'clone', uid, gid, options)
+        job.set_progress(100, 'Finished setting ACL.')
 
 
 class FileFollowTailEventSource(EventSource):
+
+    """
+    Retrieve last `no_of_lines` specified as an integer argument for a specific `path` and then
+    any new lines as they are added. Specified argument has the format `path:no_of_lines` ( `/var/log/messages:3` ).
+
+    `no_of_lines` is optional and if it is not specified it defaults to `3`.
+
+    However `path` is required for this.
+    """
 
     def run(self):
         if ':' in self.arg:

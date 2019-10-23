@@ -7,6 +7,11 @@ import time
 
 class TrueViewStatusEventSource(EventSource):
 
+    """
+    Retrieve True View Statistics. An integer `delay` argument can be specified to determine the delay
+    on when the periodic event should be generated.
+    """
+
     def run(self):
 
         try:

@@ -151,11 +151,6 @@ class EtcService(Service):
         'system_dataset': [
             {'type': 'py', 'path': 'system_setup'}
         ],
-        'netdata': [
-            {'type': 'mako', 'path': 'local/netdata/netdata.conf'},
-            {'type': 'mako', 'path': 'local/netdata/stream.conf'},
-            {'type': 'py', 'path': 'local/netdata/alarms'}
-        ],
         'inetd': [
             {'type': 'py', 'path': 'inetd_conf'}
         ],

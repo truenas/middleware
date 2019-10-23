@@ -73,6 +73,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		git-lite>0:devel/git-lite \
 		avahi-app>0:net/avahi-app \
 		dmidecode>0:sysutils/dmidecode \
+		${PYTHON_PKGNAMEPREFIX}packaging>0:devel/py-packaging@${PY_FLAVOR} \
 		rclone>0:net/rclone \
 		ifstat>0:net/ifstat \
 		pyvmomi>0:net/py-pyvmomi \

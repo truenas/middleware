@@ -4,8 +4,7 @@ import re
 import subprocess
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.common.smart.smartctl import get_smartctl_args
-from middlewared.utils import run
+from middlewared.common.smart.smartctl import get_smartctl_args, smartctl
 from middlewared.utils.asyncio_ import asyncio_map
 
 logger = logging.getLogger(__name__)
@@ -21,7 +20,7 @@ async def annotate_disk_for_smart(middleware, devices, disk):
 
 
 async def ensure_smart_enabled(args):
-    p = await run(["smartctl", "-i"] + args, stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
+    p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
     if not re.search("SMART.*abled", p.stdout):
         logger.debug("SMART is not supported on %r", args)
         return False
@@ -29,7 +28,7 @@ async def ensure_smart_enabled(args):
     if re.search("SMART.*Enabled", p.stdout):
         return True
 
-    p = await run(["smartctl", "-s", "on"] + args, stderr=subprocess.STDOUT, check=False)
+    p = await smartctl(args + ["-s", "on"], stderr=subprocess.STDOUT, check=False)
     if p.returncode == 0:
         return True
     else:
@@ -97,7 +96,7 @@ def get_smartd_schedule_piece(value, min, max, enum=None):
 
 
 async def render(service, middleware):
-    smart_config = await middleware.call("datastore.query", "services.smart", None, {"get": True})
+    smart_config = await middleware.call("datastore.query", "services.smart", [], {"get": True})
 
     disks = await middleware.call("datastore.sql", """
         SELECT *

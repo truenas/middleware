@@ -215,7 +215,7 @@ class ISCSIPortalService(CRUDService):
         """
         Returns possible choices for `listen.ip` attribute of portal create and update.
         """
-        choices = {'0.0.0.0': '0.0.0.0', '[::]': '[::]'}
+        choices = {'0.0.0.0': '0.0.0.0', '::': '::'}
         alua = (await self.middleware.call('iscsi.global.config'))['alua']
         if alua:
             # If ALUA is enabled we actually want to show the user the IPs of each node
@@ -480,7 +480,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        await self.validate(new, 'iscsi_auth_update', verrors, old)
+        await self.validate(new, 'iscsi_auth_update', verrors)
 
         if verrors:
             raise verrors
@@ -504,15 +504,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
 
     @private
-    async def validate(self, data, schema_name, verrors, old=None):
-
-        filters = [('tag', '=', data['tag'])]
-        if old:
-            filters.append(('id', '!=', old['id']))
-
-        if await self.middleware.call('iscsi.auth.query', filters):
-            verrors.add(f'{schema_name}.tag', f'Tag {data["tag"]!r} is already in use.')
-
+    async def validate(self, data, schema_name, verrors):
         secret = data.get('secret')
         peer_secret = data.get('peersecret')
         peer_user = data.get('peeruser', '')
@@ -815,6 +807,10 @@ class iSCSITargetExtentService(CRUDService):
         if extent_type == 'Disk':
             if not disk:
                 verrors.add(f'{schema_name}.disk', 'This field is required')
+            else:
+                available = [i['name'] for i in await self.middleware.call('disk.get_unused')]
+                if disk not in available:
+                    verrors.add(f'{schema_name}.disk', 'Disk in use or not found', errno.ENOENT)
         elif extent_type == 'ZVOL':
             if disk.startswith('zvol') and not os.path.exists(f'/dev/{disk}'):
                 verrors.add(f'{schema_name}.disk',
@@ -882,7 +878,7 @@ class iSCSITargetExtentService(CRUDService):
                                                    ['name', 'rnin', 'vnet'],
                                                    ['name', 'rnin', 'bridge']])
                        )[0]
-                mac = nic['link_address'].replace(':', '')
+                mac = nic['state']['link_address'].replace(':', '')
 
                 ltg = await self.query()
                 if len(ltg) > 0:
@@ -891,6 +887,7 @@ class iSCSITargetExtentService(CRUDService):
                     lid = 0
                 return f'{mac.strip()}{lid:02}'
             except Exception:
+                self.logger.error('Failed to generate serial, using a default', exc_info=True)
                 return '10000001'
         else:
             return serial

@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import socket
 import sys
 import threading
 import time
@@ -461,6 +462,31 @@ class CRUDService(ServiceChangeMixin, Service):
 class CoreService(Service):
 
     @filterable
+    def sessions(self, filters=None, options=None):
+        """
+        Get currently open websocket sessions.
+        """
+        return filter_list([
+            {
+                'id': i.session_id,
+                'socket_family': socket.AddressFamily(
+                    i.request.transport.get_extra_info('socket').family
+                ).name,
+                'address': (
+                    (
+                        i.request.headers.get('X-Real-Remote-Addr'),
+                        i.request.headers.get('X-Real-Remote-Port')
+                    ) if i.request.headers.get('X-Real-Remote-Addr') else (
+                        i.request.transport.get_extra_info("peername")
+                    )
+                ),
+                'authenticated': i.authenticated,
+                'call_count': i._softhardsemaphore.counter,
+            }
+            for i in self.middleware.get_wsclients().values()
+        ], filters, options)
+
+    @filterable
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
         jobs = filter_list([
@@ -642,8 +668,11 @@ class CoreService(Service):
                     'filterable': hasattr(method, '_filterable'),
                     'require_websocket': hasattr(method, '_pass_app'),
                     'job': hasattr(method, '_job'),
-                    'downloadable': hasattr(method, '_job') and method._job['pipes'] == ['output'],
-
+                    'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
+                    'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
+                    'require_pipes': hasattr(method, '_job') and method._job['check_pipes'] and any(
+                        i in method._job['pipes'] for i in ('input', 'output')
+                    ),
                 }
         return data
 
@@ -656,6 +685,7 @@ class CoreService(Service):
         for name, attrs in self.middleware.get_events():
             events[name] = {
                 'description': attrs['description'],
+                'wildcard_subscription': attrs['wildcard_subscription'],
             }
         return events
 
@@ -785,6 +815,10 @@ class CoreService(Service):
             import pydevd
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
+
+    @private
+    async def profile(self, method, params=None):
+        return await self.middleware.call(method, *(params or []), profile=True)
 
     @private
     def threads_stacks(self):

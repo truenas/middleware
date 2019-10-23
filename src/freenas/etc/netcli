@@ -60,6 +60,9 @@ class FailoverIsEnabledException(Exception):
 def ensure_failover_is_disabled():
     with Client() as c:
         is_freenas = c.call('system.is_freenas')
+        failover_licensed = False
+        if not is_freenas:
+            failover_licensed = c.call('failover.licensed')
     if not is_freenas:
         from freenasUI.failover.models import Failover
         qs = Failover.objects.all()
