@@ -3023,11 +3023,12 @@ class PoolDatasetService(CRUDService):
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
         keys_supplied.update({d['name']: d['passphrase'] for d in options.get('datasets', [])})
 
-        if not dataset['locked']:
-            verrors.add('id', f'{id} dataset is not locked')
-        else:
-            if not bool(self.encrypted_roots_query_db([['name', '=', id]])) and id not in keys_supplied:
-                verrors.add('unlock_options.datasets', f'Please specify key for {id}')
+        if '/' in id:
+            if not dataset['locked']:
+                verrors.add('id', f'{id} dataset is not locked')
+            else:
+                if not bool(self.encrypted_roots_query_db([['name', '=', id]])) and id not in keys_supplied:
+                    verrors.add('unlock_options.datasets', f'Please specify key for {id}')
 
         verrors.check()
 
