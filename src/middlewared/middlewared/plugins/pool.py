@@ -1970,6 +1970,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('service.reload', 'disk')
         await self.middleware.call_hook('pool.post_import_pool', pool)
+        await self.middleware.call('pool.dataset.sync_db_keys', [['name', '^', pool['name']]])
 
         return True
 
@@ -2243,6 +2244,10 @@ class PoolService(CRUDService):
                         e,
                         exc_info=True,
                     )
+            else:
+                await self.middleware.call(
+                    'datastore.delete', PoolDatasetService.dataset_store, [['name', '^', pool['name']]]
+                )
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
