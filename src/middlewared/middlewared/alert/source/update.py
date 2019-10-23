@@ -52,7 +52,7 @@ class HasUpdateAlertSource(ThreadedAlertSource):
 
     def check_sync(self):
         try:
-            self.middleware.call_sync("datastore.query", "system.update", None, {"get": True})
+            self.middleware.call_sync("datastore.query", "system.update", [], {"get": True})
         except IndexError:
             self.middleware.call_sync("datastore.insert", "system.update", {
                 "upd_autocheck": True,

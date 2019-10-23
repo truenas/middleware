@@ -110,7 +110,7 @@ def main(middleware):
     cf_contents_shadow.clear()
 
     gconf = Struct(middleware.call_sync('datastore.query', 'services.iSCSITargetGlobalConfiguration',
-                                        None, {'get': True}))
+                                        [], {'get': True}))
     if gconf.iscsi_alua:
         node = middleware.call_sync('failover.node')
 

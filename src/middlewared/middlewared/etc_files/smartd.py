@@ -97,7 +97,7 @@ def get_smartd_schedule_piece(value, min, max, enum=None):
 
 
 async def render(service, middleware):
-    smart_config = await middleware.call("datastore.query", "services.smart", None, {"get": True})
+    smart_config = await middleware.call("datastore.query", "services.smart", [], {"get": True})
 
     disks = await middleware.call("datastore.sql", """
         SELECT *
