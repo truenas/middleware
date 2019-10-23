@@ -2977,39 +2977,21 @@ class PoolDatasetService(CRUDService):
         Dict(
             'lock_options',
             Bool('force_umount', default=False),
-            Bool('recursive', default=False),
         )
     )
-    def lock(self, id, options):
-        # TODO:Ask William if we should mount encrypted root children of `id`, they would be unmounted
-        #  as well because of how `umount` works, we would like to mount them again
-        ds = self.middleware.call_sync('pool.dataset._get_instance', id)
+    async def lock(self, id, options):
+        ds = await self._get_instance(id)
 
-        if not options['recursive']:
-            if ds['encrypted'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
-                raise CallError('Only datasets which are encrypted with passphrase can be locked')
+        if not ds['encrypted']:
+            raise CallError(f'{id} is not encrypted')
+        elif ds['encrypted'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
+            raise CallError('Only datasets which are encrypted with passphrase can be locked')
+        elif not ds['key_loaded']:
+            raise CallError(f'Dataset {id} is already locked')
 
-            if not ds['key_loaded']:
-                raise CallError(f'Dataset {id} is already locked')
-
-        datasets = [
-            ds[0] for ds in self.query_encrypted_datasets(
-                id, {'recursive': options['recursive'], 'key_loaded': True, 'full_output': True}
-            )
-            if ZFSKeyFormat(ds[1]['key_format']['value']) == ZFSKeyFormat.PASSPHRASE
-        ]
-
-        failed = []
-        for dataset, status in zip(
-            datasets, self.execute_zfs_plugin_bulk(
-                'unload_key', lambda d: {'umount': True, 'force_umount': options['force_umount']}, datasets,
-            ),
-        ):
-            if status['error']:
-                failed.append((dataset, status['error']))
-
-        if failed:
-            raise CallError('\n'.join(f'Failed to lock {d}' for d in failed))
+        await self.middleware.call(
+            'zfs.dataset.unload_key', {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
+        )
 
         return True
 
