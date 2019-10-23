@@ -700,7 +700,8 @@ class InterfaceService(CRUDService):
         if self._rollback_timer:
             self._rollback_timer.cancel()
         self._rollback_timer = None
-        await self.__check_failover_disabled()
+        # We do not check for failover disabled in here because we may be reverting
+        # the first time HA is being set up and this was already checked during commit.
         await self.__restore_datastores()
         await self.sync()
 
@@ -1768,7 +1769,11 @@ class InterfaceService(CRUDService):
                 iface.delete_member(member)
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
-        for interface in interfaces:
+        # Configure VLAN before BRIDGE so MTU is configured in correct order
+        for interface in sorted(
+            interfaces,
+            key=lambda x: 2 if x.startswith('bridge') else (1 if x.startswith('vlan') else 0)
+        ):
             try:
                 await self.sync_interface(interface, wait_dhcp, **sync_interface_opts[interface])
             except Exception:
@@ -1793,6 +1798,10 @@ class InterfaceService(CRUDService):
             if not interfaces:
                 dhclient_running = dhclient_status(name)[0]
                 if not dhclient_running:
+                    # Make sure interface is UP before starting dhclient
+                    # NAS-103577
+                    if netif.InterfaceFlags.UP not in iface.flags:
+                        iface.up()
                     dhclient_aws.append(asyncio.ensure_future(
                         self.dhclient_start(name, wait_dhcp)
                     ))
@@ -1821,6 +1830,12 @@ class InterfaceService(CRUDService):
 
         if wait_dhcp and dhclient_aws:
             await asyncio.wait(dhclient_aws, timeout=30)
+
+        try:
+            # We may need to set up routes again as they may have been removed while changing IPs
+            await self.middleware.call('route.sync')
+        except Exception:
+            self.logger.info('Failed to sync routes', exc_info=True)
 
         await self.middleware.call_hook('interface.post_sync')
 

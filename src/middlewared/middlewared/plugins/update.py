@@ -8,6 +8,7 @@ import enum
 import errno
 import os
 import re
+import requests
 import shutil
 import subprocess
 import sys
@@ -247,6 +248,29 @@ class UpdateModel(sa.Model):
 
 class UpdateService(Service):
 
+    def _get_redir_trains(self):
+        """
+        The expect trains redirection JSON format is the following:
+
+        {
+            "SOURCE_TRAIN_NAME": {
+                "redirect": "NAME_NEW_TRAIN"
+            }
+        }
+
+        The format uses an dict/object as the value to allow new items to be added in the future
+        and be backward compatible.
+        """
+        update_server = Configuration.Configuration().UpdateServerMaster()
+        r = requests.get(
+            f'{update_server}/trains_redir.json',
+            timeout=5,
+        )
+        rv = {}
+        for k, v in r.json().items():
+            rv[k] = v['redirect']
+        return rv
+
     @accepts()
     def get_trains(self):
         """
@@ -257,6 +281,12 @@ class UpdateService(Service):
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
 
+        try:
+            redir_trains = self._get_redir_trains()
+        except Exception:
+            self.logger.warn('Failed to retrieve trains redirection', exc_info=True)
+            redir_trains = {}
+
         selected = None
         trains = {}
         for name, descr in (conf.AvailableTrains() or {}).items():
@@ -265,12 +295,17 @@ class UpdateService(Service):
                 train = Train.Train(name, descr)
             if not selected and data['upd_train'] == train.Name():
                 selected = data['upd_train']
+            if name in redir_trains:
+                continue
             trains[train.Name()] = {
                 'description': descr,
                 'sequence': train.LastSequence(),
             }
         if not data['upd_train'] or not selected:
             selected = conf.CurrentTrain()
+
+        if selected in redir_trains:
+            selected = redir_trains[selected]
         return {
             'trains': trains,
             'current': conf.CurrentTrain(),
@@ -379,7 +414,12 @@ class UpdateService(Service):
                     'failover.call_remote', 'update.check_available', [attrs],
                 )
 
-        train = (attrs or {}).get('train') or self.middleware.call_sync('update.get_trains')['selected']
+        trains = self.middleware.call_sync('update.get_trains')
+        train = (attrs or {}).get('train')
+        if not train:
+            train = trains['selected']
+        elif train not in trains['trains']:
+            raise CallError('Invalid train name.', errno.ENOENT)
 
         handler = CheckUpdateHandler()
         manifest = CheckForUpdates(

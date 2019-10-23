@@ -5,7 +5,7 @@ from itertools import chain
 import asyncio
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args
+from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import CRUDService, filterable, filter_list, private, SystemServiceService, ValidationErrors
@@ -23,7 +23,7 @@ async def annotate_disk_smart_tests(middleware, devices, disk):
 
     args = await get_smartctl_args(middleware, devices, disk["disk"])
     if args:
-        p = await run(["smartctl", "-l", "selftest"] + args, check=False, encoding="utf8")
+        p = await smartctl(args + ["-l", "selftest"], check=False, encoding="utf8")
         tests = parse_smart_selftest_results(p.stdout)
         if tests is not None:
             return dict(tests=tests, **disk)

@@ -750,6 +750,43 @@ class ReplicationService(CRUDService):
         return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", datasets, naming_schema,
                                           transport, ssh_credentials)
 
+    @accepts(
+        Str("direction", enum=["PUSH", "PULL"], required=True),
+        List("source_datasets", items=[Path("dataset", empty=False)], required=True, empty=False),
+        Path("target_dataset", required=True, empty=False),
+        Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+        Int("ssh_credentials", null=True, default=None),
+    )
+    async def target_unmatched_snapshots(self, direction, source_datasets, target_dataset, transport, ssh_credentials):
+        """
+        Check if target has any snapshots that do not exist on source.
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "replication.target_unmatched_snapshots",
+                "params": [
+                    "PUSH",
+                    ["repl/work", "repl/games"],
+                    "backup",
+                    "SSH",
+                    4
+                ]
+            }
+
+        Returns
+
+            {
+                "backup/work": ["auto-2019-10-15_13-00", "auto-2019-10-15_09-00"],
+                "backup/games": ["auto-2019-10-15_13-00"],
+            }
+        """
+        return await self.middleware.call("zettarepl.target_unmatched_snapshots", direction, source_datasets,
+                                          target_dataset, transport, ssh_credentials)
+
     # Legacy pair support
     @private
     @accepts(Dict(

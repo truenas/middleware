@@ -712,7 +712,8 @@ class PoolService(CRUDService):
         # in background.
         async def restart_services():
             await self.middleware.call('service.reload', 'disk')
-            await self.middleware.call('service.restart', 'system_datasets')
+            if (await self.middleware.call('systemdataset.config'))['pool'] == 'freenas-boot':
+                await self.middleware.call('service.restart', 'system_datasets')
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
 
@@ -901,17 +902,11 @@ class PoolService(CRUDService):
             dict - disk.query for all disks
         """
         disks_cache = dict(map(
-            lambda x: (x['name'], x),
+            lambda x: (x['devname'], x),
             await self.middleware.call(
-                'disk.query', [('name', 'in', list(disks.keys()))]
+                'disk.query', [('devname', 'in', list(disks.keys()))]
             )
         ))
-        disks_cache.update(dict(map(
-            lambda x: (x['multipath_name'], x),
-            await self.middleware.call(
-                'disk.query', [('multipath_name', 'in', list(disks.keys()))]
-            )
-        )))
 
         disks_set = set(disks.keys())
         disks_not_in_cache = disks_set - set(disks_cache.keys())

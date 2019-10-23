@@ -15,7 +15,7 @@ from config import *
 
 BRIDGEGWReason = "BRIDGEGW not in ixautomation.conf"
 BRIDGENETMASKReason = "BRIDGENETMASK not in ixautomation.conf"
-Reason = "BRIDGEDOMAIN BRIDGEDNS are missing in ixautomation.conf"
+Reason = "AD_DOMAIN BRIDGEDNS are missing in ixautomation.conf"
 
 dns_cfg = pytest.mark.skipif("BRIDGEDNS" not in locals(), reason=Reason)
 

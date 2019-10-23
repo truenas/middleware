@@ -49,9 +49,11 @@ def render(service, middleware):
     cf_contents.append('\tuam list = %s\n' % (" ").join(uam_list))
 
     if afp.afp_srv_bindip:
-        cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
         ifaces = get_interface(afp.afp_srv_bindip)
-        cf_contents.append("\tafp interfaces = %s\n" % ' '.join(ifaces))
+        if ifaces:
+            cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
+            cf_contents.append("\tafp interfaces = %s\n" % ' '.join(ifaces))
+
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
     cf_contents.append("\tafpstats = yes\n")

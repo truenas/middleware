@@ -112,7 +112,6 @@ class ServiceService(CRUDService):
         'upsmon': ServiceDefinition('upsmon', '/var/db/nut/upsmon.pid'),
         'smartd': ServiceDefinition('smartd', 'smartd-daemon', '/var/run/smartd-daemon.pid'),
         'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
-        'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid'),
         'openvpn_server': ServiceDefinition('openvpn', '/var/run/openvpn_server.pid'),
         'openvpn_client': ServiceDefinition('openvpn', '/var/run/openvpn_client.pid')
     }
@@ -1032,25 +1031,13 @@ class ServiceService(CRUDService):
             return None
         if systemdataset['syslog']:
             await self.restart("syslogd", kwargs)
-        await self.restart("cifs", kwargs)
+        await self.restart("cifs", {'onetime': False})
 
         # Restarting rrdcached can take a long time. There is no
         # benefit in waiting for it, since even if it fails it will not
         # tell the user anything useful.
         # Restarting rrdcached will make sure that we start/restart collectd as well
         asyncio.ensure_future(self.restart("rrdcached", kwargs))
-
-    async def _start_netdata(self, **kwargs):
-        await self.middleware.call('etc.generate', 'netdata')
-        await self._service('netdata', 'start', **kwargs)
-
-    async def _restart_netdata(self, **kwargs):
-        await self._service('netdata', 'stop')
-        await self._start_netdata(**kwargs)
-
-    async def _restart_failover(self, **kwargs):
-        await self.middleware.call('etc.generate', 'failover')
-        await self._service('devd', 'restart', **kwargs)
 
     @private
     async def identify_process(self, name):
