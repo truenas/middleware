@@ -2919,7 +2919,7 @@ class PoolDatasetService(CRUDService):
             else:
                 return False
 
-        return map(
+        return dict(map(
             normalize,
             filter(
                 lambda d: d['name'] == d['encryption_root'] and d['encrypted'] and recursive_op(
@@ -2927,13 +2927,13 @@ class PoolDatasetService(CRUDService):
                 ) and check_key(d),
                 self.query()
             )
-        )
+        ))
 
     @periodic(86400)
     @private
-    @job('sync_encrypted_pool_dataset_keys')
-    def sync_db_keys(self, job):
-        db_datasets = self.encrypted_roots_query_db(decrypt=True)
+    @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args[0]}')
+    def sync_db_keys(self, job, filters=None):
+        db_datasets = self.encrypted_roots_query_db(filters=filters, decrypt=True)
         to_remove = []
         check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
             (name, {'key': db_datasets[name]}) for name in db_datasets
@@ -2952,7 +2952,9 @@ class PoolDatasetService(CRUDService):
     @job(lock='dataset_export_keys', pipes=['output'])
     def export_keys(self, job, id):
         self.middleware.call_sync('pool.dataset._get_instance', id)
-        self.sync_db_keys()
+        sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', [['name', '^', id]])
+        sync_job.wait_sync()
+
         datasets = self.encrypted_roots_query_db([['name', '^', id]], decrypt=True)
         tar_path = tempfile.NamedTemporaryFile(delete=False)
         tar_path.close()
@@ -3010,70 +3012,53 @@ class PoolDatasetService(CRUDService):
     )
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
     def unlock(self, job, id, options):
-        return self._unlock(job, id, {'unlock': True, **options})
-
-    def _unlock(self, job, id, options):
-        ds = self.middleware.call_sync('pool.dataset._get_instance', id)
         verrors = ValidationErrors()
-        recursive = options.get('recursive')
+        ds = self.middleware.call_sync('pool.dataset._get_instance', id)
         keys_supplied = {}
 
         if options.get('key_file'):
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
         keys_supplied.update({d['name']: d['passphrase'] for d in options.get('datasets', [])})
 
-        if not recursive:
-            if not ds['locked']:
-                verrors.add('id', f'{id} dataset is not locked')
-            else:
-                key_format = ZFSKeyFormat(ds['key_format']['value'])
-                key_present = bool(self.encrypted_roots_query_db([['name', '=', id]]))
-                if key_format != ZFSKeyFormat.PASSPHRASE:
-                    if not options['key_file'] and not key_present:
-                        verrors.add('unlock_options.key_file', 'This field is required')
-                elif id not in keys_supplied:
-                    verrors.add('unlock_options.datasets', 'Passphrase is required for encrypted dataset')
+        if not ds['locked']:
+            verrors.add('id', f'{id} dataset is not locked')
+        else:
+            if not bool(self.encrypted_roots_query_db([['name', '=', id]])) and id not in keys_supplied:
+                verrors.add('unlock_options.datasets', f'Please specify key for {id}')
 
         verrors.check()
 
-        datasets = {
-            ds[0]: {'key': keys_supplied.get(ds[0]) or ds[1]['encryption_key'], **ds[1]}
-            for ds in self.query_encrypted_datasets(
-                id, {
-                    'recursive': options['recursive'], 'load_db': True, 'full_output': True, 'key_loaded': False
-                }
-            )
-        }
+        locked_datasets = []
+        datasets = self.query_encrypted_datasets(
+            id.split('/', 1)[0], {'recursive': True, 'load_db': True, 'full_output': True, 'key_loaded': False}
+        )
+        for name, ds in datasets.items():
+            datasets[name] = {'key': keys_supplied.get(name) or ds['encryption_key'], **ds}
+            if ds['locked'] and id != name and id.startswith(name):
+                # This ensures that `id` has locked parents and they should be unlocked first
+                locked_datasets.append(name)
 
-        load_key = options['unlock']
-        results = []
-        errors = []
-        for status, db_data in zip(
-            self.execute_zfs_plugin_bulk(
-                f'{"load" if load_key else "check"}_key', lambda d: {
-                    'key': datasets[d]['key'], **({'mount': True} if load_key else {})
-                }, datasets
-            ),
-            datasets.items()
-        ):
-            ds_name, data = db_data
-            key_format = ZFSKeyFormat(data['key_format']['value'])
-            ds = {
-                'name': ds_name, 'key_format': key_format.value,
-                'key_present': bool(data['encryption_key']),
-                'valid_key': bool(status['error'] if load_key else status['result']),
-            }
-            ds['unlocked'] = ds['valid_key'] if load_key else False
-            if status['error']:
-                errors.append((ds_name, status['error']))
-            results.append(ds)
+        if locked_datasets:
+            raise CallError(f'{id} has locked parents {",".join(locked_datasets)} which must be unlocked first')
 
-        if errors:
-            raise CallError('\n'.join(
-                f'Failed to {"unlock" if load_key else "check key for"} {d[0]}: {d[1]}' for d in errors)
-            )
+        to_unlock = [
+            (name, {'key': datasets[name]['key'], 'mount': True})
+            for name in datasets if name.startswith(id) and datasets[name]['key'] and datasets[name]['locked']
+        ]
 
-        return True if load_key else results
+        unlock_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'load_key', to_unlock)
+        unlock_job.wait_sync()
+        if unlock_job.error:
+            raise CallError(f'Failed to unlock: {unlock_job.error}')
+
+        failed = [
+            f'Failed to unlock {n[0]}: {status["error"]}' for n, status in zip(to_unlock, unlock_job.result)
+            if status['error']
+        ]
+        if failed:
+            raise CallError('\n'.join(failed))
+
+        return True
 
     @accepts(
         Str('id'),
@@ -3089,33 +3074,36 @@ class PoolDatasetService(CRUDService):
     )
     @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
     def encryption_summary(self, job, id, options):
-        return self._unlock(job, id, {'recursive': True, 'unlock': False, **options})
+        keys_supplied = {}
 
-    @private
-    def execute_zfs_plugin_bulk(self, method_name, func, datasets, slices=3):
-        total_datasets = len(datasets)
-        jobs = []
+        if options.get('key_file'):
+            keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
+        keys_supplied.update({d['name']: d['passphrase'] for d in options.get('datasets', [])})
 
-        for start, size in filter(
-            lambda i: i[0] < total_datasets,
-            zip(
-                [i * (total_datasets // slices) + min(i, total_datasets % slices) for i in range(slices)],
-                [(total_datasets // slices) + (1 if i < (total_datasets % slices) else 0) for i in range(slices)],
-            )
-        ):
-            jobs.append(self.middleware.call_sync(
-                'zfs.dataset.bulk_process', method_name, [
-                    (ds, func(ds))
-                    for ds in itertools.islice(datasets, start, start + size)
-                ]
-            ))
+        datasets = self.query_encrypted_datasets(
+            id, {'recursive': True, 'load_db': True, 'full_output': True, 'all': True}
+        )
 
-        for j in jobs:
-            j.wait_sync()
-            if j.error:
-                raise CallError(j.error)
-            for status in j.result:
-                yield status
+        to_check = [
+            (name, {'key': keys_supplied.get(name) or ds['encryption_key']})
+            for name, ds in datasets.items()
+        ]
+        check_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', to_check)
+        check_job.wait_sync()
+        if check_job.error:
+            raise CallError(f'Failed to retrieve encryption summary for {id}: {check_job.error}')
+
+        results = []
+        for ds_data, status in zip(to_check, check_job.result):
+            ds_name = ds_data[0]
+            data = datasets[ds_name]
+            results.append({
+                'name': ds_name, 'key_format': ZFSKeyFormat(data['key_format']['value']).value,
+                'key_present': bool(data['encryption_key']),
+                'valid_key': bool(status['result']), 'locked': data['locked']
+            })
+
+        return results
 
     @accepts(
         Str('id'),
