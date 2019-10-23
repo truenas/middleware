@@ -2886,8 +2886,16 @@ class PoolDatasetService(CRUDService):
             if encryption_dict['generate_key']:
                 key = getattr(secrets, f'token_{"hex" if key_format == ZFSKeyFormat.HEX else "bytes"}')(32)
             elif not key:
-                job.check_pipe('encryption_key')
-                key = job.pipes.encryption_key.r.read()
+                job.check_pipe('input')
+                key = job.pipes.input.r.read().strip()
+                # We would like to ensure key matches specified key format
+                if key_format == ZFSKeyFormat.HEX:
+                    try:
+                        key.decode()
+                    except UnicodeDecodeError:
+                        verrors.add(f'{schema}.key_file', 'Unable to decode HEX key')
+                        return {}
+
             opts = {
                 'keyformat': key_format.value.lower(),
                 'keylocation': 'prompt',
