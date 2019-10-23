@@ -578,7 +578,7 @@ class PoolService(CRUDService):
         ),
         register=True,
     ))
-    @job(lock='pool_createupdate', pipes=['encryption_key'], check_pipes=False)
+    @job(lock='pool_createupdate', pipes=['input'], check_pipes=False)
     async def do_create(self, job, data):
         """
         Create a new ZFS Pool.
@@ -679,7 +679,7 @@ class PoolService(CRUDService):
         if not os.path.isdir(cachefile_dir):
             os.makedirs(cachefile_dir)
 
-        pool_id = None
+        pool_id = z_pool = None
         try:
             await self.middleware.call(
                 'pool.dataset.insert_or_update', {
@@ -728,13 +728,16 @@ class PoolService(CRUDService):
             )
         except Exception as e:
             # Something wrong happened, we need to rollback and destroy pool.
-            try:
-                await self.middleware.call('zfs.pool.delete', data['name'])
-            except Exception:
-                self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
+            if z_pool:
+                try:
+                    await self.middleware.call('zfs.pool.delete', data['name'])
+                except Exception:
+                    self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
-            await self.middleware.call('pool.dataset.delete_from_db', data['name'])
+            await self.middleware.call(
+                'datastore.delete', PoolDatasetService.dataset_store, [['name', '=', data['name']]]
+            )
             raise e
 
         # There is really no point in waiting all these services to reload so do them
@@ -2621,11 +2624,15 @@ class PoolService(CRUDService):
                     )
 
                 unlock_job = self.middleware.call_sync(
-                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False}
+                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False, 'recursive': True}
                 )
                 unlock_job.wait_sync()
-                if unlock_job.error:
-                    self.logger.error(f'Unlocking encrypted datasets failed for {pool["name"]}: {unlock_job.error}')
+                if unlock_job.error or unlock_job.result['failed']:
+                    fd = ','.join(unlock_job.result['failed']) if not unlock_job.error else ''
+                    self.logger.error(
+                        f'Unlocking encrypted datasets failed for {pool["name"]} pool'
+                        f'{f": {unlock_job.error}" if unlock_job.error else f" with following datasets {fd}"}'
+                    )
 
         finally:
             proc.kill()
@@ -2847,19 +2854,12 @@ class PoolDatasetService(CRUDService):
 
     @private
     def encrypted_roots_query_db(self, filters=None, decrypt=False):
-        filters = filters or []
-        results = self.middleware.call_sync('datastore.query', self.dataset_store, filters)
-
         return {
             d['name']: d['encryption_key'] if not decrypt else self.middleware.call_sync(
                 'pwenc.decrypt', d['encryption_key'], False, False
             )
-            for d in results
+            for d in self.middleware.call_sync('datastore.query', self.dataset_store, filters or [])
         }
-
-    @private
-    async def delete_from_db(self, name):
-        return await self.middleware.call('datastore.delete', self.dataset_store, [['name', '=', name]])
 
     @private
     def validate_encryption_data(self, job, verrors, encryption_dict, schema):
@@ -2882,6 +2882,8 @@ class PoolDatasetService(CRUDService):
                     f'{schema}.generate_key',
                     'Must be disabled when key format is set to "PASSPHRASE".'
                 )
+            elif not encryption_dict['passphrase']:
+                verrors.add(f'{schema}.passphrase', 'Passphrase is required when key format is PASSPHRASE')
         elif encryption_dict['passphrase']:
             verrors.add(
                 f'{schema}.passphrase',
@@ -2914,8 +2916,7 @@ class PoolDatasetService(CRUDService):
 
     @private
     def query_encrypted_datasets(self, name, options=None):
-        # Common function to retrieve encrypted datasets which ensures we do
-        # this with as little processing as possible
+        # Common function to retrieve encrypted datasets
         options = options or {}
         recursive_op = (
             (lambda x, y: f'{x}/'.startswith(f'{y}/')) if options.get('recursive') else (lambda x, y: x == y)
@@ -2931,10 +2932,7 @@ class PoolDatasetService(CRUDService):
             return ds['name'], {'encryption_key': key, **ds} if options.get('full_output') else key
 
         def check_key(ds):
-            if options.get('all') or (ds['key_loaded'] and key_loaded) or (not ds['key_loaded'] and not key_loaded):
-                return True
-            else:
-                return False
+            return options.get('all') or (ds['key_loaded'] and key_loaded) or (not ds['key_loaded'] and not key_loaded)
 
         return dict(map(
             normalize,
@@ -2948,7 +2946,7 @@ class PoolDatasetService(CRUDService):
 
     @periodic(86400)
     @private
-    @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args[0]}')
+    @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
     def sync_db_keys(self, job, filters=None):
         db_datasets = self.encrypted_roots_query_db(filters=filters, decrypt=True)
         to_remove = []
@@ -2960,7 +2958,7 @@ class PoolDatasetService(CRUDService):
             raise CallError(f'Failed to sync database keys: {check_key_job.error}')
 
         for dataset, status in zip(db_datasets, check_key_job.result):
-            if not status['result']:
+            if not status['result'] or status['error']:
                 to_remove.append(dataset)
 
         self.middleware.call_sync('datastore.delete', self.dataset_store, [['name', 'in', to_remove]])
@@ -2973,10 +2971,9 @@ class PoolDatasetService(CRUDService):
         sync_job.wait_sync()
 
         datasets = self.encrypted_roots_query_db([['name', '^', id]], decrypt=True)
-        tar_path = tempfile.NamedTemporaryFile(delete=False)
-        tar_path.close()
-        tar_path = tar_path.name
+        tar_path = None
         try:
+            tar_path = tempfile.mkstemp()[1]
             with tarfile.open(tar_path, 'w:xz') as tar:
                 for ds in datasets:
                     db_key = datasets[ds]
@@ -3003,13 +3000,15 @@ class PoolDatasetService(CRUDService):
 
         if not ds['encrypted']:
             raise CallError(f'{id} is not encrypted')
-        elif ds['encrypted'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
-            raise CallError('Only datasets which are encrypted with passphrase can be locked')
-        elif not ds['key_loaded']:
+        elif ds['locked']:
             raise CallError(f'Dataset {id} is already locked')
+        elif ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
+            raise CallError('Only datasets which are encrypted with passphrase can be locked')
+        elif id == (await self.middleware.call('systemdataset.config'))['pool']:
+            raise CallError(f'Please move system dataset to another pool before locking {id}')
 
         await self.middleware.call(
-            'zfs.dataset.unload_key', {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
+            'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
         )
 
         return True
@@ -3049,7 +3048,9 @@ class PoolDatasetService(CRUDService):
 
         locked_datasets = []
         datasets = self.query_encrypted_datasets(
-            id.split('/', 1)[0], {'recursive': True, 'load_db': True, 'full_output': True, 'key_loaded': False}
+            id.split('/', 1)[0], {
+                'recursive': True, 'load_db': True, 'full_output': True, 'key_loaded': False
+            }
         )
         for name, ds in datasets.items():
             datasets[name] = {'key': keys_supplied.get(name) or ds['encryption_key'], **ds}
@@ -3060,31 +3061,42 @@ class PoolDatasetService(CRUDService):
         if locked_datasets:
             raise CallError(f'{id} has locked parents {",".join(locked_datasets)} which must be unlocked first')
 
-        to_unlock = [
-            (name, {'key': datasets[name]['key'], 'mount': True})
-            for name in datasets if name.startswith(id) and datasets[name]['key'] and datasets[name]['locked']
-        ]
-
         failed = defaultdict(lambda: dict({'error': None, 'skipped': []}))
         unlocked = []
         for name in sorted(
-            filter(lambda n: n.startswith(id) and datasets[n]['key'] and datasets[n]['locked'], datasets),
+            filter(
+                lambda n: n and n.startswith(id) and datasets[n]['locked'],
+                (datasets if options['recursive'] else [datasets.get(id)])
+            ),
             key=lambda v: v.count('/')
         ):
+            if not datasets[name]['key']:
+                failed[name]['error'] = 'Missing key'
+                continue
+
+            skip = False
             for i in range(1, name.count('/')):
-                if name.rsplit('/', i)[0] in failed:
-                    failed[name.rsplit('/', i)[0]]['skipped'].append(name)
-                    continue
+                check = name.rsplit('/', i)[0]
+                if check in failed:
+                    failed[check]['skipped'].append(name)
+                    skip = True
+                    break
+
+            if skip:
+                continue
 
             try:
-                self.middleware.call_sync('zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': True})
+                self.middleware.call_sync(
+                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': True, 'recursive': True}
+                )
             except CallError as e:
-                failed[name]['error'] = str(e)
+                failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
             else:
                 unlocked.append(name)
 
         if options['toggle_attachments'] and not failed:
-            self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset), True)
+            j = self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset), True)
+            j.wait_sync()
 
         return {'unlocked': unlocked, 'failed': failed}
 
@@ -3150,13 +3162,13 @@ class PoolDatasetService(CRUDService):
             Str('passphrase'),
         )
     )
-    @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['encryption_key'], check_pipes=False)
+    @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
     async def change_key(self, job, id, options):
         ds = await self._get_instance(id)
         verrors = ValidationErrors()
         if not ds['encrypted']:
             verrors.add('id', 'Dataset is not encrypted')
-        elif not ds['key_loaded']:
+        elif ds['locked']:
             verrors.add('id', 'Dataset must be unlocked before key can be changed')
         elif ds['encryption_root'] != id:
             verrors.add('id', 'Only encrypted roots can change keys')
@@ -3366,7 +3378,7 @@ class PoolDatasetService(CRUDService):
         Bool('inherit_encryption', default=True),
         register=True,
     ))
-    @job(lock=lambda args: f'dataset_create{args[0]["name"]}', pipes=['encryption_key'], check_pipes=False)
+    @job(lock=lambda args: f'dataset_create{args[0]["name"]}', pipes=['input'], check_pipes=False)
     async def do_create(self, job, data):
         """
         Creates a dataset/zvol.
