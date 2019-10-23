@@ -3,6 +3,7 @@ import ctypes
 import ctypes.util
 import imp
 import inspect
+import itertools
 import os
 import pwd
 import queue
@@ -401,22 +402,36 @@ class cache_with_autorefresh(object):
         return wrapper
 
 
-def load_modules(directory):
+def load_modules(directory, base=None, depth=0):
+    if base is None:
+        base = '.'.join(
+            ['middlewared'] +
+            os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/')
+        )
+
     for f in sorted(os.listdir(directory)):
+        path = os.path.join(directory, f)
+        if os.path.isdir(path):
+            if depth > 0:
+                yield from load_modules(path, f'{base}.{f}', depth - 1)
+
+            continue
+
         if not f.endswith('.py'):
             continue
-        f = f[:-3]
-        name = '.'.join(
-            ['middlewared'] +
-            os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/') +
-            [f]
-        )
-        if name in sys.modules:
-            yield sys.modules[name]
+        name = f[:-3]
+
+        if name == '__init__':
+            mod_name = base
         else:
-            fp, pathname, description = imp.find_module(f, [directory])
+            mod_name = f'{base}.{name}'
+
+        if mod_name in sys.modules:
+            yield sys.modules[mod_name]
+        else:
+            fp, pathname, description = imp.find_module(name, [directory])
             try:
-                yield imp.load_module(name, fp, pathname, description)
+                yield imp.load_module(mod_name, fp, pathname, description)
             finally:
                 if fp:
                     fp.close()
@@ -436,15 +451,16 @@ def load_classes(module, base, blacklist):
 
 class LoadPluginsMixin(object):
 
-    def __init__(self, overlay_dirs):
+    def __init__(self, overlay_dirs=None):
         self.overlay_dirs = overlay_dirs or []
         self._schemas = Schemas()
         self._services = {}
         self._services_aliases = {}
 
     def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None):
-        from middlewared.service import Service, CRUDService, ConfigService, SystemServiceService
+        from middlewared.service import Service, CompoundService, CRUDService, ConfigService, SystemServiceService
 
+        services = []
         main_plugins_dir = os.path.realpath(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             '..',
@@ -457,17 +473,25 @@ class LoadPluginsMixin(object):
             if not os.path.exists(plugins_dir):
                 raise ValueError(f'plugins dir not found: {plugins_dir}')
 
-            for mod in load_modules(plugins_dir):
+            for mod in load_modules(plugins_dir, depth=1):
                 if on_module_begin:
                     on_module_begin(mod)
 
-                for cls in load_classes(mod, Service, (
-                    ConfigService, CRUDService, SystemServiceService)
-                ):
-                    self.add_service(cls(self))
+                services.extend(load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)))
 
                 if on_module_end:
                     on_module_end(mod)
+
+        key = lambda service: service._config.namespace
+        for name, parts in itertools.groupby(sorted(services, key=key), key=key):
+            parts = list(parts)
+
+            if len(parts) == 1:
+                service = parts[0](self)
+            else:
+                service = CompoundService(self, [part(self) for part in parts])
+
+            self.add_service(service)
 
         if on_modules_loaded:
             on_modules_loaded()

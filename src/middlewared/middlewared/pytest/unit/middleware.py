@@ -1,4 +1,7 @@
+import asyncio
+
 from asynctest import CoroutineMock, Mock
+
 from middlewared.utils import filter_list
 from middlewared.schema import Schemas, resolve_methods
 
@@ -19,7 +22,10 @@ class Middleware(dict):
         return await method(*args)
 
     async def call(self, name, *args):
-        return self[name](*args)
+        result = self[name](*args)
+        if asyncio.iscoroutine(result):
+            result = await result
+        return result
 
     def call_sync(self, name, *args):
         return self[name](*args)

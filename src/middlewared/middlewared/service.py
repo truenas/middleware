@@ -246,6 +246,33 @@ class ServiceChangeMixin:
                 )
 
 
+class CompoundService(Service):
+    def __init__(self, middleware, parts):
+        super().__init__(middleware)
+
+        for part in parts[1:]:
+            if self._part_config(part) != self._part_config(parts[0]):
+                raise RuntimeError('Service parts configs for %r and %r do not match', part, parts[0])
+
+        self._config = parts[0]._config
+
+        self.parts = parts
+
+        for part in self.parts:
+            for name in dir(part):
+                if name.startswith('_'):
+                    continue
+
+                meth = getattr(part, name)
+                if not callable(meth):
+                    continue
+
+                setattr(self, name, meth)
+
+    def _part_config(self, part):
+        return {k: v for k, v in part._config.__dict__.items() if not k.startswith('__')}
+
+
 class ConfigService(ServiceChangeMixin, Service):
     """
     Config service abstract class
