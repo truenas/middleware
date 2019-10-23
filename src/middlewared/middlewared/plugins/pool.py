@@ -3369,19 +3369,28 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             data['aclmode'] = 'RESTRICTED'
 
-        if data['encryption']['enabled'] and ZFSKeyFormat(data['encryption']['key_format']) != ZFSKeyFormat.PASSPHRASE:
-            # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
-            # because we don't allow children to be unlocked while parent is locked
-            parent_encryption_root = (await self._get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
+        if data['encryption']['enabled']:
             if (
-                parent_encryption_root and ZFSKeyFormat(
-                    (await self._get_instance(parent_encryption_root))['key_format']['value']
-                ) == ZFSKeyFormat.PASSPHRASE
-            ):
+                await self.middleware.call('pool.query', [['name', '=', data['name'].split('/')[0]]], {'get': True})
+            )['encrypt']:
                 verrors.add(
                     'pool_dataset_create.encryption.enabled',
-                    'HEX/RAW keys encrypted children of a PASSPHRASE encrypted dataset are not allowed.'
+                    'Encrypted datasets cannot be created on a GELI encrypted pool.'
                 )
+
+            if ZFSKeyFormat(data['encryption']['key_format']) != ZFSKeyFormat.PASSPHRASE:
+                # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
+                # because we don't allow children to be unlocked while parent is locked
+                parent_encryption_root = (await self._get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
+                if (
+                    parent_encryption_root and ZFSKeyFormat(
+                        (await self._get_instance(parent_encryption_root))['key_format']['value']
+                    ) == ZFSKeyFormat.PASSPHRASE
+                ):
+                    verrors.add(
+                        'pool_dataset_create.encryption.enabled',
+                        'HEX/RAW keys encrypted children of a PASSPHRASE encrypted dataset are not allowed.'
+                    )
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', job, verrors,
