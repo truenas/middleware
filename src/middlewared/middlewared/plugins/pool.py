@@ -2735,6 +2735,14 @@ class PoolDatasetUserPropService(CRUDService):
         return True
 
 
+class PoolDatasetModel(sa.Model):
+    __tablename__ = 'storage_dataset'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(255))
+    encryption_key = sa.Column(sa.Text(), nullable=True)
+
+
 class PoolDatasetService(CRUDService):
 
     attachment_delegates = []
