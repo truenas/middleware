@@ -1,7 +1,5 @@
-from collections import defaultdict
-from datetime import datetime, time
+from datetime import time
 import os
-import pickle
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
@@ -84,25 +82,9 @@ class ReplicationService(CRUDService):
 
     @private
     async def extend_context(self):
-        legacy_result, legacy_result_datetime = await self.middleware.run_in_thread(self._legacy_extend_context)
-
         return {
             "state": await self.middleware.call("zettarepl.get_state"),
-            "legacy_result": legacy_result,
-            "legacy_result_datetime": legacy_result_datetime,
         }
-
-    def _legacy_extend_context(self):
-        try:
-            with open("/tmp/.repl-result", "rb") as f:
-                data = f.read()
-                legacy_result = pickle.loads(data)
-                legacy_result_datetime = datetime.fromtimestamp(os.stat("/tmp/.repl-result").st_mtime)
-        except Exception:
-            legacy_result = defaultdict(dict)
-            legacy_result_datetime = None
-
-        return legacy_result, legacy_result_datetime
 
     @private
     async def extend(self, data, context):
@@ -123,34 +105,9 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
-        if data["transport"] == "LEGACY":
-            if data["id"] in context["legacy_result"]:
-                legacy_result = context["legacy_result"][data["id"]]
-
-                msg = legacy_result.get("msg")
-                if msg == "Running":
-                    state = "RUNNING"
-                elif msg in ["Succeeded", "Up to date"]:
-                    state = "FINISHED"
-                else:
-                    state = "ERROR"
-
-                data["state"] = {
-                    "datetime": context["legacy_result_datetime"],
-                    "state": state,
-                    "last_snapshot": legacy_result.get("last_snapshot"),
-                }
-
-                if state == "ERROR":
-                    data["state"]["error"] = msg
-            else:
-                data["state"] = {
-                    "state": "PENDING",
-                }
-        else:
-            data["state"] = context["state"].get(f"replication_task_{data['id']}", {
-                "state": "PENDING",
-            })
+        data["state"] = context["state"].get(f"replication_task_{data['id']}", {
+            "state": "PENDING",
+        })
 
         return data
 
@@ -172,7 +129,7 @@ class ReplicationService(CRUDService):
             "replication_create",
             Str("name", required=True),
             Str("direction", enum=["PUSH", "PULL"], required=True),
-            Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+            Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
             Int("ssh_credentials", null=True, default=None),
             Str("netcat_active_side", enum=["LOCAL", "REMOTE"], null=True, default=None),
             Str("netcat_active_side_listen_address", null=True, default=None),
@@ -241,7 +198,6 @@ class ReplicationService(CRUDService):
             to be open on `netcat_active_side`
             `ssh_credentials` is also required for control connection
           * `LOCAL` replicates to or from localhost
-          * `LEGACY` uses legacy replication engine prior to FreeNAS 11.3
         * `source_datasets` is a non-empty list of datasets to replicate snapshots from
         * `target_dataset` is a dataset to put snapshots into. It must exist on target side
         * `recursive` and `exclude` have the same meaning as for Periodic Snapshot Task
@@ -453,9 +409,6 @@ class ReplicationService(CRUDService):
             if not task["enabled"]:
                 raise CallError("Task is not enabled")
 
-            if task["transport"] == "LEGACY":
-                raise CallError("You can't run legacy replication manually")
-
         await self.middleware.call("zettarepl.run_replication_task", id, really_run, job)
 
     async def _validate(self, data, id=None):
@@ -474,7 +427,7 @@ class ReplicationService(CRUDService):
             if data["naming_schema"]:
                 verrors.add("naming_schema", "This field has no sense for push replication")
 
-            if data["transport"] != "LEGACY" and not snapshot_tasks and not data["also_include_naming_schema"]:
+            if not snapshot_tasks and not data["also_include_naming_schema"]:
                 verrors.add(
                     "periodic_snapshot_tasks", "You must at least either bind a periodic snapshot task or provide "
                                                "\"Also Include Naming Schema\" for push replication task"
@@ -485,7 +438,7 @@ class ReplicationService(CRUDService):
                     verrors.add("schedule", "Push replication can't be bound to periodic snapshot task and have "
                                             "schedule at the same time")
             else:
-                if data["auto"] and not data["periodic_snapshot_tasks"] and data["transport"] != "LEGACY":
+                if data["auto"] and not data["periodic_snapshot_tasks"]:
                     verrors.add("auto", "Push replication that runs automatically must be either "
                                         "bound to periodic snapshot task or have schedule")
 
@@ -552,29 +505,6 @@ class ReplicationService(CRUDService):
                                                "SSH_CREDENTIALS")
                 except CallError as e:
                     verrors.add("ssh_credentials", str(e))
-
-        if data["transport"] == "LEGACY":
-            for should_be_true in ["auto", "allow_from_scratch"]:
-                if not data[should_be_true]:
-                    verrors.add(should_be_true, "Legacy replication does not support disabling this option")
-
-            for should_be_false in ["exclude", "periodic_snapshot_tasks", "naming_schema", "also_include_naming_schema",
-                                    "only_matching_schedule", "dedup", "large_block", "embed", "compressed"]:
-                if data[should_be_false]:
-                    verrors.add(should_be_false, "Legacy replication does not support this option")
-
-            if data["direction"] != "PUSH":
-                verrors.add("direction", "Only push application is allowed for Legacy transport")
-
-            if len(data["source_datasets"]) != 1:
-                verrors.add("source_datasets", "You can only have one source dataset for legacy replication")
-
-            if data["retention_policy"] not in ["SOURCE", "NONE"]:
-                verrors.add("retention_policy", "Only \"source\" and \"none\" retention policies are supported by "
-                                                "legacy replication")
-
-            if data["retries"] != 1:
-                verrors.add("retries", "This value should be 1 for legacy replication")
 
         # Common for all directions and transports
 
@@ -655,7 +585,7 @@ class ReplicationService(CRUDService):
 
         return verrors, snapshot_tasks
 
-    @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+    @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
              Int("ssh_credentials", null=True, default=None))
     async def list_datasets(self, transport, ssh_credentials=None):
         """
@@ -680,7 +610,7 @@ class ReplicationService(CRUDService):
         return await self.middleware.call("zettarepl.list_datasets", transport, ssh_credentials)
 
     @accepts(Str("dataset", required=True),
-             Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+             Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
              Int("ssh_credentials", null=True, default=None))
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
         """
@@ -725,7 +655,7 @@ class ReplicationService(CRUDService):
         List("naming_schema", empty=False, items=[
             Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])
         ]),
-        Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+        Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
         Int("ssh_credentials", null=True, default=None),
     )
     async def count_eligible_manual_snapshots(self, datasets, naming_schema, transport, ssh_credentials):
