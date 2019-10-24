@@ -31,7 +31,7 @@ db_update_real()
             echo "DROP TABLE network_globalconfiguration;" | /usr/local/bin/sqlite3 /data/freenas-v1.db
             echo "ALTER TABLE network_globalconfiguration_ RENAME TO network_globalconfiguration;" | /usr/local/bin/sqlite3 /data/freenas-v1.db
         fi
-        /usr/local/bin/migrate113 > $UPDATE_FAILED_LOG 2>&1
+        /usr/local/sbin/migrate113 > $UPDATE_FAILED_LOG 2>&1
         if [ $? -ne 0 ]; then
             echo "manage.py migrate failed"
             return 1
