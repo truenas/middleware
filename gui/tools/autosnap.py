@@ -441,6 +441,7 @@ if len(mp_to_task_map) > 0:
             vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
             for vm in vm_view.view:
                 if vm.summary.runtime.powerState != 'poweredOn':
+                    log.debug("VM: %s is not powered on. Skip creating a vmware aware snapshot.", vm.name)
                     continue
                 if doesVMDependOnDataStore(vm, vmsnapobj.datastore):
                     try:
