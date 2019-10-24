@@ -3156,6 +3156,29 @@ class PoolDatasetService(CRUDService):
             verrors.add('id', 'Dataset is not encrypted')
         elif not ds['key_loaded']:
             verrors.add('id', 'Dataset must be unlocked before key can be changed')
+        elif ds['encryption_root'] != id:
+            verrors.add('id', 'Only encrypted roots can change keys')
+
+        if not verrors and ZFSKeyFormat(options['key_format']) == ZFSKeyFormat.PASSPHRASE:
+            if any(
+                d['name'] == d['encryption_root']
+                for d in await self.middleware.run_in_thread(
+                    self.query, [
+                        ['id', '!=', id], ['id', '^', id], ['encrypted', '=', True],
+                        ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
+                    ]
+                )
+            ):
+                verrors.add(
+                    'change_key_options.key_format',
+                    f'{id} has children which are encrypted with HEX/RAW keys. It is not allowed to '
+                    'have HEX/RAW encrypted roots as children for PASSPHRASE encrypted datasets.'
+                )
+            elif id == (await self.middleware.call('systemdataset.config'))['pool']:
+                verrors.add(
+                    'id', f'{id} contains system dataset. Please move system dataset before changing key_format'
+                )
+
         verrors.check()
 
         encryption_dict = await self.middleware.call(
