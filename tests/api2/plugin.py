@@ -9,12 +9,19 @@ from functions import GET, POST, DELETE, wait_on_job
 
 JOB_ID = None
 job_results = None
+is_freenas = GET("/system/is_freenas/").json()
 
 # default URL
-repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
-index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/11.3-RELEASE/INDEX'
-plugin_index = GET(index_url).json()
-plugin_list = list(plugin_index.keys())
+if is_freenas is True:
+    repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
+    index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/11.3-RELEASE/INDEX'
+    plugin_index = GET(index_url).json()
+    plugin_list = list(plugin_index.keys())
+else:
+    repos_url = 'https://github.com/truenas/iocage-ix-plugins.git'
+    index_url = 'https://raw.githubusercontent.com/truenas/iocage-ix-plugins/master/INDEX'
+    plugin_index = GET(index_url).json()
+    plugin_list = list(plugin_index.keys())
 
 # custom URL
 repos_url2 = 'https://github.com/ericbsd/iocage-ix-plugins.git'
