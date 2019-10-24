@@ -16,6 +16,7 @@ status_cmd=":"
 update_scripts() {
     # If there are update-related scripts, run themm, clean up, and reboot
     if [ -d /update-scripts ]; then
+	export PATH=$PATH:/usr/local/bin:/usr/local/sbin
 	echo "Running upgrade scripts..."
 	mount -uw /
 	# fdescfs required for faster python
