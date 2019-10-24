@@ -13,7 +13,7 @@ import sys
 
 from ldap.controls import SimplePagedResultsControl
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService, ValidationError
+from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus
@@ -403,6 +403,32 @@ class LDAPService(ConfigService):
         return data
 
     @private
+    async def common_validate(self, new, old, verrors):
+        if not new["enable"]:
+            return
+
+        if not new["bindpw"] and not new["kerberos_principal"] and not new["anonbind"]:
+            verrors.add(
+                "ldap_update.binddn",
+                "Bind credentials or kerberos keytab are required for an authenticated bind."
+            )
+        if new["bindpw"] and new["kerberos_principal"]:
+            verrors.add(
+                "ldap_update.kerberos_principal",
+                "Simultaneous keytab and password authentication are not permitted."
+            )
+        if not new["basedn"]:
+            verrors.add(
+                "ldap_update.basedn",
+                "The basedn parameter is required."
+            )
+        if not new["hostname"]:
+            verrors.add(
+                "ldap_update.hostname",
+                "The LDAP hostname parameter is required."
+            )
+
+    @private
     async def ldap_validate(self, ldap):
         port = 636 if SSL(ldap['ssl']) == SSL.USESSL else 389
         for h in ldap['hostname']:
@@ -490,10 +516,15 @@ class LDAPService(ConfigService):
         requires the presence of Samba LDAP schema extensions on the remote
         LDAP server.
         """
+        verrors = ValidationErrors()
         must_reload = False
         old = await self.config()
         new = old.copy()
         new.update(data)
+        await self.common_validate(new, old, verrors)
+        if verrors:
+            raise verrors
+
         if old != new:
             must_reload = True
             if new['enable']:
@@ -613,10 +644,21 @@ class LDAPService(ConfigService):
         """
         Returns False if disabled, True if healthy, raises exception if faulted.
         """
-        if not (await self.config())['enable']:
+        verrors = ValidationErrors()
+        ldap = await self.config()
+        if not ldap['enable']:
             return False
 
-        ldap = await self.config()
+        await self.common_validate(ldap, ldap, verrors)
+        if verrors:
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.ldap',
+                ldap['id'],
+                {'ldap_enable': False}
+            )
+            cerrors = ' '.join(v.errmsg for v in verrors.errors)
+            raise CallError(cerrors, errno.EINVAL)
 
         try:
             await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),

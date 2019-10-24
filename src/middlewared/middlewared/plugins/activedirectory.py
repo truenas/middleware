@@ -634,6 +634,27 @@ class ActiveDirectoryService(ConfigService):
             )
         return
 
+    @private
+    async def common_validate(self, new, old, verrors):
+        if not new["enable"]:
+            return
+
+        if not new["bindpw"] and not new["kerberos_principal"]:
+            verrors.add(
+                "activedirectory_update.bindname",
+                "Bind credentials or kerberos keytab are required to join an AD domain."
+            )
+        if new["bindpw"] and new["kerberos_principal"]:
+            verrors.add(
+                "activedirectory_update.kerberos_principal",
+                "Simultaneous keytab and password authentication are not permitted."
+            )
+        if not new["domainname"]:
+            verrors.add(
+                "activedirectory_update.domainname",
+                "AD domain name is required."
+            )
+
     @accepts(Dict(
         'activedirectory_update',
         Str('domainname', required=True),
@@ -782,30 +803,27 @@ class ActiveDirectoryService(ConfigService):
         except Exception as e:
             raise ValidationError('activedirectory_update.netbiosname', str(e))
 
-        if new['enable']:
-            if not new["bindpw"] and not new["kerberos_principal"]:
-                raise ValidationError(
-                    "activedirectory_update.bindname",
-                    "Bind credentials or kerberos keytab are required to join an AD domain."
-                )
-            if new["bindpw"] and new["kerberos_principal"]:
-                raise ValidationError(
-                    "activedirectory_update.kerberos_principal",
-                    "Simultaneous keytab and password authentication are not permitted."
-                )
+        await self.common_validate(new, old, verrors)
+
+        if verrors:
+            raise verrors
 
         if new['enable'] and not old['enable']:
             try:
                 await self.middleware.run_in_thread(self.validate_credentials, new)
             except Exception as e:
-                verrors.add("activedirectory_update.bindpw", f"Failed to validate bind credentials: {e}")
+                raise ValidationError(
+                    "activedirectory_update.bindpw",
+                    f"Failed to validate bind credentials: {e}"
+                )
+
             try:
                 await self.middleware.run_in_thread(self.validate_domain, new)
             except Exception as e:
-                verrors.add("activedirectory_update", f"Failed to validate domain configuration: {e}")
-
-        if verrors:
-            raise verrors
+                raise ValidationError(
+                    "activedirectory_update",
+                    f"Failed to validate domain configuration: {e}"
+                )
 
         new = await self.ad_compress(new)
         await self.middleware.call(
@@ -1100,8 +1118,21 @@ class ActiveDirectoryService(ConfigService):
         Default winbind request timeout is 60 seconds, and can be adjusted by the smb4.conf parameter
         'winbind request timeout ='
         """
-        if not (await self.config())['enable']:
+        verrors = ValidationErrors()
+        config = await self.config()
+        if not config['enable']:
             return False
+
+        await self.common_validate(config, config, verrors)
+        if verrors:
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.activedirectory',
+                config['id'],
+                {'ad_enable': False}
+            )
+            cerrors = ' '.join(v.errmsg for v in verrors.errors)
+            raise CallError(cerrors, errno.EINVAL)
 
         netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
         if netlogon_ping.returncode != 0:
