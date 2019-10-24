@@ -3238,14 +3238,10 @@ class PoolDatasetService(CRUDService):
             if len(f) == 3:
                 if f[0] in ('id', 'name', 'pool', 'type'):
                     zfsfilters.append(f)
-        datasets = self.middleware.call_sync(
-            'zfs.dataset.query', zfsfilters, {'extra': {
-                'top_level_properties': [
-                    'mountpoint', 'encryption', 'encryptionroot', 'keystatus'
-                ]
-            }}
+
+        return filter_list(
+            self.__transform(self.middleware.call_sync('zfs.dataset.query', zfsfilters)), filters, options
         )
-        return filter_list(self.__transform(datasets), filters, options)
 
     def __transform(self, datasets):
         """
@@ -3253,12 +3249,6 @@ class PoolDatasetService(CRUDService):
         making it match whatever pool.dataset.{create,update} uses as input.
         """
         def transform(dataset):
-            if 'key_loaded' not in dataset:
-                # FIXME: This is a hack, please fix it in the right place
-                dataset['encrypted'] = dataset.pop('encryption') != 'off'
-                dataset['encryption_root'] = dataset.pop('encryptionroot') or None
-                dataset['key_loaded'] = dataset.pop('keystatus') == 'available'
-
             for orig_name, new_name, method in (
                 ('org.freenas:description', 'comments', None),
                 ('org.freenas:quota_warning', 'quota_warning', None),
