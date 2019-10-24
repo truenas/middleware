@@ -3363,6 +3363,7 @@ class PoolDatasetService(CRUDService):
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         Ref('encryption'),
+        Bool('inherit_encryption', default=True),
         register=True,
     ))
     @job(lock=lambda args: f'dataset_create{args[0]["name"]}', pipes=['encryption_key'], check_pipes=False)
@@ -3404,6 +3405,10 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             data['aclmode'] = 'RESTRICTED'
 
+        encryption_dict = {}
+        if not data.pop('inherit_encryption'):
+            encryption_dict = {'encryption': 'off'}
+
         if data['encryption']['enabled']:
             if (
                 await self.middleware.call('pool.query', [['name', '=', data['name'].split('/')[0]]], {'get': True})
@@ -3430,7 +3435,7 @@ class PoolDatasetService(CRUDService):
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', job, verrors,
             data.pop('encryption'), 'pool_dataset_create.encryption',
-        )
+        ) or encryption_dict
 
         if verrors:
             raise verrors
