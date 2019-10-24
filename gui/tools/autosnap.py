@@ -412,7 +412,7 @@ if len(mp_to_task_map) > 0:
             # are going to be creating VMWare snaps, if one gets left dangling this will
             # help determine where it came from.
             snap_msg = snapshot_message()
-            vmsnapdescription = str(datetime.now()).split('.')[0] + snap_msg 
+            vmsnapdescription = str(datetime.now()).split('.')[0] + snap_msg
 
             # Data structures that will be used to keep track of VMs that are snapped,
             # as wel as VMs we tried to snap and failed, and VMs we realized we couldn't
