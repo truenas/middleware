@@ -85,10 +85,7 @@ class SystemAdvancedService(ConfigService):
         """
         Get available choices for `serialport`.
         """
-        if(
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.hardware') == 'ECHOSTREAM'
-        ):
+        if await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
             ports = {'0x3f8': '0x3f8'}
         else:
             pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
@@ -286,7 +283,7 @@ class SystemAdvancedService(ConfigService):
 
     @private
     def autotune(self, conf='loader'):
-        if self.middleware.call_sync('system.is_freenas'):
+        if self.middleware.call_sync('system.product_type') == 'CORE':
             kernel_reserved = 1073741824
             userland_reserved = 2417483648
         else:
@@ -305,29 +302,42 @@ class SystemService(Service):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__is_freenas = None
+        self.__product_type = None
 
     @no_auth_required
     @accepts()
     async def is_freenas(self):
         """
-        Returns `true` if running system is a FreeNAS or `false` if something else.
+        FreeNAS is now TrueNAS CORE.
+
+        DEPRECATED: Use `system.product_type`
         """
-        if self.__is_freenas is None:
+        return (await self.product_type()) == 'CORE'
+
+    @no_auth_required
+    @accepts()
+    async def product_type(self):
+        """
+        Returns the type of the product.
+
+        CORE - TrueNAS Core, community version
+        ENTERPRISE - TrueNAS Enterprise, appliance version
+        """
+        if self.__product_type is None:
             license = await self.middleware.run_in_thread(self._get_license)
-            self.__is_freenas = True if (
+            self.__product_type = 'CORE' if (
                 not license or
                 license['model'].lower().startswith('freenas')
-            ) else False
-        return self.__is_freenas
+            ) else 'ENTERPRISE'
+        return self.__product_type
 
     @no_auth_required
     @accepts()
     async def product_name(self):
         """
-        Returns name of the product we are using (FreeNAS or something else).
+        Returns name of the product we are using.
         """
-        return "FreeNAS" if await self.middleware.call("system.is_freenas") else "TrueNAS"
+        return "TrueNAS"
 
     @no_auth_required
     @accepts()
@@ -454,7 +464,7 @@ class SystemService(Service):
 
         self.middleware.call_sync('etc.generate', 'rc')
 
-        self.__is_freenas = None
+        self.__product_type = None
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update'), wait=False,
         )
@@ -516,10 +526,10 @@ class SystemService(Service):
         """
         Returns whether the `feature` is enabled or not
         """
-        is_freenas = await self.middleware.call('system.is_freenas')
-        if name == 'FIBRECHANNEL' and is_freenas:
+        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
+        if name == 'FIBRECHANNEL' and is_core:
             return False
-        elif is_freenas:
+        elif is_core:
             return True
         license = await self.middleware.run_in_thread(self._get_license)
         if license and name in license['features']:
@@ -631,8 +641,7 @@ class SystemService(Service):
         )
 
         standby_debug = None
-        is_freenas = self.middleware.call_sync('system.is_freenas')
-        if not is_freenas and self.middleware.call_sync('failover.licensed'):
+        if self.middleware.call_sync('failover.licensed'):
             try:
                 standby_debug = self.middleware.call_sync(
                     'failover.call_remote', 'system.debug_generate', [], {'job': True}
@@ -745,13 +754,14 @@ class SystemGeneralService(ConfigService):
                 {'get': True}
             )
 
+        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
         data['crash_reporting_is_set'] = data['crash_reporting'] is not None
         if data['crash_reporting'] is None:
-            data['crash_reporting'] = await self.middleware.call("system.is_freenas")
+            data['crash_reporting'] = is_core
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
-            data['usage_collection'] = await self.middleware.call("system.is_freenas")
+            data['usage_collection'] = is_core
 
         data.pop('pwenc_check')
 
@@ -1185,7 +1195,7 @@ class SystemGeneralService(ConfigService):
     def __get_urls(self, aliases, addrs, ipv6=False):
 
         skip_internal = False
-        if not self.middleware.call_sync('system.is_freenas'):
+        if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
             skip_internal = True
 
         urls = []
