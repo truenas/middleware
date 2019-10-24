@@ -5,6 +5,7 @@ PROMPT="%n@%m[%40<...<%~%<<]# "
 
 setopt APPEND_HISTORY
 
+bindkey "^[[A" up-line-or-search
 bindkey "^[[F" end-of-line
 bindkey "^[[H" beginning-of-line
 bindkey "^[[3~" delete-char
