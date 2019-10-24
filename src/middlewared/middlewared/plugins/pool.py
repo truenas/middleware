@@ -741,7 +741,9 @@ class PoolService(CRUDService):
         # in background.
         async def restart_services():
             await self.middleware.call('service.reload', 'disk')
-            if (await self.middleware.call('systemdataset.config'))['pool'] == 'freenas-boot':
+            if (
+                await self.middleware.call('systemdataset.config')
+            )['pool'] == await self.middleware.call('boot.pool_name'):
                 await self.middleware.call('service.restart', 'system_datasets')
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
