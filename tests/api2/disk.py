@@ -25,7 +25,7 @@ def test_01_verifying_that_the_installer_created_all_disk():
 
 @pytest.mark.parametrize('disk', disk_list)
 def test_02_looking_for_disk(disk):
-    results = GET('/disk/')
+    results = GET(f'/disk?name={disk}')
     assert results.status_code == 200, results.text
     assert results.json()[0]['name'] == disk
 
@@ -41,16 +41,16 @@ def test_03_looking_subsystem(disk):
 def test_04_looking_number(disk):
     results = GET(f'/disk?name={disk}')
     assert results.status_code == 200, results.text
-    assert results.json()[0]['number'] == re.sub("\D", "", disk)
+    assert results.json()[0]['number'] == int(re.sub("\D", "", disk))
 
 
 @pytest.mark.parametrize('disk', disk_list)
 def test_05_looking_disk0_identifier_and_serial_match(disk):
     results = GET(f'/disk?name={disk}')
     assert results.status_code == 200, results.text
-    identifier_serial = results.json()[0]['identifier'][8:]
+    identifier_serial = results.json()[0]['identifier']
     serial = results.json()[0]['serial']
-    assert identifier_serial == serial
+    assert serial in identifier_serial, results.text
 
 
 def test_06_get_for_disk1_id():
@@ -60,7 +60,7 @@ def test_06_get_for_disk1_id():
     DISK_ID = results.json()[0]['identifier']
 
 
-def test_14_update_disk_description():
+def test_07_update_disk_description():
     updated_description = 'Updated description'
     results = PUT(
         f'/disk/id/{DISK_ID}/', {
@@ -71,7 +71,7 @@ def test_14_update_disk_description():
     assert results.json()['description'] == updated_description, results.text
 
 
-def test_15_update_disk_password():
+def test_08_update_disk_password():
     new_passwd = 'freenas'
     results = PUT(
         f'/disk/id/{DISK_ID}', {
@@ -82,25 +82,25 @@ def test_15_update_disk_password():
     assert results.json()['passwd'] == new_passwd
 
 
-def test_16_get_encrypted_disks():
+def test_09_get_encrypted_disks():
     # TODO: create a volume with encryption enabled and then test the
     # encrypted disk. Will complete as soon as we have implementation of pool
     # create in middlewared
     pass
 
 
-def test_17_get_decrypted_disks():
+def test_10_get_decrypted_disks():
     # TODO: Complete after test 05
     pass
 
 
-def test_18_get_unused_disks():
+def test_11_get_unused_disks():
     results = POST('/disk/get_unused/', False)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
 
 
-def test_19_perform_wipe_on_unused_disk():
+def test_12_perform_wipe_on_unused_disk():
     unused_disks = POST('/disk/get_unused/', False)
     if len(unused_disks.json()) > 0:
         print('in if')
