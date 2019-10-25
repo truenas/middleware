@@ -2,7 +2,6 @@ import asyncio
 import contextlib
 import os
 import subprocess as su
-import libzfs
 import itertools
 import pathlib
 import json
@@ -1174,21 +1173,14 @@ class JailService(CRUDService):
     @accepts(Str("pool"))
     def activate(self, pool):
         """Activates a pool for iocage usage, and deactivates the rest."""
-        zfs = libzfs.ZFS(history=True, history_prefix="<iocage>")
-        pools = zfs.pools
-        prop = "org.freebsd.ioc:active"
-        activated = False
-
-        for _pool in pools:
-            if _pool.name == pool:
-                ds = zfs.get_dataset(_pool.name)
-                ds.properties[prop] = libzfs.ZFSUserProperty("yes")
-                activated = True
-            else:
-                ds = zfs.get_dataset(_pool.name)
-                ds.properties[prop] = libzfs.ZFSUserProperty("no")
-
-        return activated
+        pool = self.middleware.call_sync('pool.query', [['name', '=', pool]], {'get': True})
+        iocage = ioc.IOCage()
+        try:
+            iocage.activate(pool['name'])
+        except Exception as e:
+            raise CallError(f'Failed to activate {pool["name"]}: {e}')
+        else:
+            return True
 
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
     def clean(self, ds_type):
