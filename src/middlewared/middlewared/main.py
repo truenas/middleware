@@ -1088,7 +1088,6 @@ class Middleware(LoadPluginsMixin):
         self, name, serviceobj, methodobj, params=None, app=None, pipes=None,
         job_on_progress_cb=None, io_thread=True,
     ):
-
         args = []
         if hasattr(methodobj, '_pass_app'):
             args.append(app)
