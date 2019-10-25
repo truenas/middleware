@@ -34,7 +34,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
-from middlewared.plugins.datastore import DatastoreService
+from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.plugins.system import SystemService
 
 BUFSIZE = 256
