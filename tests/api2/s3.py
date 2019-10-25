@@ -7,7 +7,7 @@ import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, PUT
+from functions import GET, POST, PUT, DELETE
 from auto_config import ip, pool_name
 
 
@@ -82,3 +82,8 @@ def test_06_stop_iSCSI_service():
 def test_07_verify_s3_is_not_running():
     results = GET("/service/?service=s3")
     assert results.json()[0]["state"] == "STOPPED", results.text
+
+
+def test_08_delete_s3_dataset():
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
+    assert results.status_code == 200, results.text
