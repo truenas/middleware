@@ -590,6 +590,19 @@ class PoolService(CRUDService):
         VERIFY is specified, if two blocks have similar signatures, byte to byte comparison is performed to ensure that
         the blocks are identical. This should be used in special circumstances as it carries a significant overhead.
 
+        `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
+
+        `encryption_options` specify configuration for encryption of root dataset for `name` pool.
+        `encryption_options.passphrase` must be specified if `encryption_options.key_format` is set to "PASSPHRASE".
+        Otherwise a key for "RAW"/"HEX" `encryption_options.key_format` can be specified with uploading it. Please
+        refer to websocket documentation for details on how the key can be uploaded. When a key is to be uploaded,
+        `encryption_options.key_file` must be enabled.
+        `encryption_options.generate_key` when enabled automatically generates the key for "RAW"/"HEX" key formats.
+
+        It should be noted that "RAW"/"HEX" keys are stored by the system for automatic locking/unlocking
+        on import/export of encrypted datasets. If that is not desired, "PASSPHRASE" should be used for
+        `encryption_options.key_format`.
+
         Example of `topology`:
 
             {
@@ -2973,6 +2986,12 @@ class PoolDatasetService(CRUDService):
     @accepts(Str('id'))
     @job(lock='dataset_export_keys', pipes=['output'])
     def export_keys(self, job, id):
+        """
+        Export keys for `id` and it's children which are stored in the system. The exported file is a compressed
+        tarfile containing files named after the encrypted dataset and containing the keys for them.
+
+        Please refer to websocket documentation for downloading the file.
+        """
         self.middleware.call_sync('pool.dataset._get_instance', id)
         sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', [['name', '^', id]])
         sync_job.wait_sync()
@@ -3003,6 +3022,9 @@ class PoolDatasetService(CRUDService):
         )
     )
     async def lock(self, id, options):
+        """
+        Locks `id` dataset. It will un-mount the dataset and it's children before locking.
+        """
         ds = await self._get_instance(id)
 
         if not ds['encrypted']:
@@ -3036,6 +3058,19 @@ class PoolDatasetService(CRUDService):
     )
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
     def unlock(self, job, id, options):
+        """
+        Unlock `id` dataset.
+
+        If `id` dataset is not encrypted an exception will be raised. There is one exception for this case where
+        if `id` specified is a root dataset and `unlock_options.recursive` is specified, in this case encryption
+        validation will not be performed for `id`. This allows to unlock encrypted children for `id`'s pool.
+
+        For datasets which are encrypted with passphrase, the passphrase for the datasets should be specified with
+        `unlock_options.datasets`.
+
+        Uploading a tarfile which contains encrypted dataset's keys is allowed and can be specified with
+        `unlock_options.key_file`. The format is similar to what is used for exporting encrypted datasets keys.
+        """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset._get_instance', id)
         keys_supplied = {}
@@ -3047,6 +3082,8 @@ class PoolDatasetService(CRUDService):
         if '/' in id or not options['recursive']:
             if not dataset['locked']:
                 verrors.add('id', f'{id} dataset is not locked')
+            elif not dataset['encryption_root'] != id:
+                verrors.add('id', 'Only encryption roots can be unlocked')
             else:
                 if not bool(self.encrypted_roots_query_db([['name', '=', id]])) and id not in keys_supplied:
                     verrors.add('unlock_options.datasets', f'Please specify key for {id}')
@@ -3127,6 +3164,29 @@ class PoolDatasetService(CRUDService):
     )
     @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
     def encryption_summary(self, job, id, options):
+        """
+        Retrieve summary of all encrypted roots under `id`.
+
+        Keys/passphrase can be supplied to check if the keys are valid.
+
+        Example output:
+        [
+            {
+                "name": "hex",
+                "key_format": "HEX",
+                "key_present": true,
+                "valid_key": true,
+                "locked": false
+            },
+            {
+                "name": "hex/p",
+                "key_format": "PASSPHRASE",
+                "key_present": false,
+                "valid_key": false,
+                "locked": true
+            }
+        ]
+        """
         keys_supplied = {}
 
         if options.get('key_file'):
@@ -3171,6 +3231,12 @@ class PoolDatasetService(CRUDService):
     )
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
     async def change_key(self, job, id, options):
+        """
+        Change encryption properties for `id` encrypted dataset.
+
+        Changing `key_format` to "PASSPHRASE" is not allowed if `id` has encrypted roots as children which are
+        encrypted with "HEX"/"RAW" key formats or `id` is a root dataset and hosts the system dataset.
+        """
         ds = await self._get_instance(id)
         verrors = ValidationErrors()
         if not ds['encrypted']:
@@ -3230,6 +3296,10 @@ class PoolDatasetService(CRUDService):
 
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):
+        """
+        Allows to inherit parent's encryption root discarding it's current encryption settings. It should be noted
+        this can only be done where `id` has an encrypted parent and `id` itself is an encryption root.
+        """
         ds = await self._get_instance(id)
         if not ds['encrypted']:
             raise CallError(f'Dataset {id} is not encrypted')
@@ -3239,10 +3309,32 @@ class PoolDatasetService(CRUDService):
             raise CallError('Dataset must be unlocked to perform this operation')
         elif '/' not in id:
             raise CallError('This operation is not valid for root datasets')
-        elif not (await self._get_instance(id.rsplit('/', 1)[0]))['encrypted']:
-            raise CallError('This operation requires parent dataset to be encrypted')
+        else:
+            parent = (await self._get_instance(id.rsplit('/', 1)[0]))
+            if not parent['encrypted']:
+                raise CallError('This operation requires parent dataset to be encrypted')
+            else:
+                parent_encrypted_root = (await self._get_instance(parent['encryption_root']))
+                if ZFSKeyFormat(parent_encrypted_root['key_format']['value']) == ZFSKeyFormat.PASSPHRASE.value:
+                    if any(
+                            d['name'] == d['encryption_root']
+                            for d in await self.middleware.run_in_thread(
+                                self.query, [
+                                    ['id', '^', f'{id}/'], ['encrypted', '=', True],
+                                    ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
+                                ]
+                            )
+                    ):
+                        raise CallError(
+                            f'{id} has children which are encrypted with HEX/RAW keys. It is not allowed to '
+                            'have HEX/RAW encrypted roots as children when parent encrypted root is encrypted'
+                            'with PASSPHRASE key format.'
+                        )
 
         await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
+        await self.middleware.call(
+            'pool.dataset.sync_db_keys', ['OR', [['name', '=', id], ['name', '^', f'{id}/']]]
+        )
 
     @private
     def _retrieve_keys_from_compressed_file(self, job, ds_name):
@@ -3395,6 +3487,23 @@ class PoolDatasetService(CRUDService):
 
         `volsize` is required for type=VOLUME and is supposed to be a multiple of the block size.
         `sparse` and `volblocksize` are only used for type=VOLUME.
+
+        `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
+        There are 2 cases where ZFS encryption is not allowed for a dataset:
+        1) Pool in question is GELI encrypted.
+        2) If the parent dataset is encrypted with "PASSPHRASE" key format and `name` is being created either with
+           "RAW"/"HEX" `encryption_options.key_format`.
+
+        `encryption_options` specify configuration for encryption of root dataset for `name` pool.
+        `encryption_options.passphrase` must be specified if `encryption_options.key_format` is set to "PASSPHRASE".
+        Otherwise a key for "RAW"/"HEX" `encryption_options.key_format` can be specified with uploading it. Please
+        refer to websocket documentation for details on how the key can be uploaded. When a key is to be uploaded,
+        `encryption_options.key_file` must be enabled.
+        `encryption_options.generate_key` when enabled automatically generates the key for "RAW"/"HEX" key formats.
+
+        It should be noted that "RAW"/"HEX" keys are stored by the system for automatic locking/unlocking
+        on import/export of encrypted datasets. If that is not desired, "PASSPHRASE" should be used for
+        `encryption_options.key_format`.
 
         .. examples(websocket)::
 
