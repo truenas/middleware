@@ -155,7 +155,7 @@ def get_tests():
         skip_tests = ['interfaces', 'network', 'delete_interfaces']
         apidir = 'api2/'
         sv = ['ssh', 'pool', 'user']
-        ev = ['update']
+        ev = ['update', 'delete_user']
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
                 not filename.startswith('__init__'):
