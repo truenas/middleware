@@ -957,16 +957,12 @@ def accepts(*schema):
                 args, kwargs = clean_and_validate_args(args, kwargs)
                 return f(*args, **kwargs)
 
-        nf.__name__ = f.__name__
-        nf.__doc__ = f.__doc__
-        # Copy private attrs to new function so decorators can work on top of it
-        # e.g. _pass_app
-        for i in dir(f):
-            if i.startswith('__'):
-                continue
-            if i.startswith('_'):
-                setattr(nf, i, getattr(f, i))
+        from middlewared.utils.type import copy_function_metadata
+        copy_function_metadata(f, nf)
         nf.accepts = list(schema)
+        nf.wraps = f
+        nf.wrap = wrap
 
         return nf
+
     return wrap

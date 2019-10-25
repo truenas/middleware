@@ -810,7 +810,10 @@ class Middleware(LoadPluginsMixin):
         def on_module_end(mod):
             if not hasattr(mod, 'setup'):
                 return
-            setup_plugin = mod.__name__.rsplit('.', 1)[-1]
+
+            mod_name = mod.__name__.split('.')
+            setup_plugin = mod_name[mod_name.index('plugins') + 1]
+
             setup_funcs.append((setup_plugin, mod.setup))
 
         def on_modules_loaded():
@@ -1090,7 +1093,6 @@ class Middleware(LoadPluginsMixin):
         self, name, serviceobj, methodobj, params=None, app=None, pipes=None,
         job_on_progress_cb=None, io_thread=True,
     ):
-
         args = []
         if hasattr(methodobj, '_pass_app'):
             args.append(app)

@@ -20,6 +20,7 @@ from middlewared.utils.debug import get_threads_stacks
 from middlewared.logger import Logger
 from middlewared.job import Job
 from middlewared.pipe import Pipes
+from middlewared.utils.type import copy_function_metadata
 
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
@@ -247,6 +248,35 @@ class ServiceChangeMixin:
                 )
 
 
+class CompoundService(Service):
+    def __init__(self, middleware, parts):
+        super().__init__(middleware)
+
+        for part in parts[1:]:
+            if self._part_config(part) != self._part_config(parts[0]):
+                raise RuntimeError(f'Service parts configs for {part} and {parts[0]} do not match')
+
+        self._config = parts[0]._config
+
+        self.parts = parts
+
+        for part in self.parts:
+            for name in dir(part):
+                if name.startswith('_'):
+                    continue
+
+                meth = getattr(part, name)
+                if not callable(meth):
+                    continue
+
+                setattr(self, name, meth)
+
+    def _part_config(self, part):
+        # datastore fields are related to CRUDService only, allow not repeating them for other parts
+        return {k: v for k, v in part._config.__dict__.items()
+                if not k.startswith('__') and not k.startswith('datastore')}
+
+
 class ConfigService(ServiceChangeMixin, Service):
     """
     Config service abstract class
@@ -457,6 +487,48 @@ class CRUDService(ServiceChangeMixin, Service):
         if dependencies:
             raise CallError('This object is being used by other objects', errno.EBUSY,
                             {'dependencies': list(dependencies.values())})
+
+
+class ServicePartBaseMeta(ServiceBase):
+    def __new__(cls, name, bases, attrs):
+        klass = super().__new__(cls, name, bases, attrs)
+
+        if name == "ServicePartBase":
+            return klass
+
+        if len(bases) == 1 and bases[0].__name__ == "ServicePartBase":
+            return klass
+
+        for base in bases:
+            if any(b.__name__ == "ServicePartBase" for b in base.__bases__):
+                break
+        else:
+            raise RuntimeError(f"Could not find ServicePartBase among bases of these classes: {bases!r}")
+
+        for name, original_method in inspect.getmembers(base, predicate=inspect.isfunction):
+            new_method = attrs.get(name)
+            if new_method is None:
+                raise RuntimeError(f"{klass!r} does not define method {name!r} that is defined in it's base {base!r}")
+
+            if hasattr(original_method, "wraps"):
+                original_argspec = inspect.getfullargspec(original_method.wraps)
+            else:
+                original_argspec = inspect.getfullargspec(original_method)
+            if original_argspec != inspect.getfullargspec(new_method):
+                raise RuntimeError(f"Signature for method {name!r} does not match between {klass!r} and it's base " 
+                                   f"{base!r}")
+
+            copy_function_metadata(original_method, new_method)
+
+            if hasattr(original_method, "wrap"):
+                new_method = original_method.wrap(new_method)
+                setattr(klass, name, new_method)
+
+        return klass
+
+
+class ServicePartBase(metaclass=ServicePartBaseMeta):
+    pass
 
 
 class CoreService(Service):

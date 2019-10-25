@@ -8,10 +8,17 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from middlewared.plugins.datastore import DatastoreService
 from middlewared.sqlalchemy import JSON, Time
 
+import middlewared.plugins.datastore  # noqa
+import middlewared.plugins.datastore.connection  # noqa
+import middlewared.plugins.datastore.schema  # noqa
+import middlewared.plugins.datastore.util  # noqa
+
+from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
+
+DatastoreService = load_compound_service("datastore")
 
 Model = declarative_base()
 
@@ -19,13 +26,24 @@ Model = declarative_base()
 @asynccontextmanager
 async def datastore_test():
     m = Middleware()
-    with patch("middlewared.plugins.datastore.FREENAS_DATABASE", ":memory:"):
-        with patch("middlewared.plugins.datastore.Model", Model):
-            ds = DatastoreService(m)
-            await ds.setup()
-            Model.metadata.create_all(bind=ds.connection)
+    with patch("middlewared.plugins.datastore.connection.FREENAS_DATABASE", ":memory:"):
+        with patch("middlewared.plugins.datastore.schema.Model", Model):
+            with patch("middlewared.plugins.datastore.util.Model", Model):
+                ds = DatastoreService(m)
+                await ds.setup()
 
-            yield ds
+                for part in ds.parts:
+                    if hasattr(part, "connection"):
+                        Model.metadata.create_all(bind=part.connection)
+                        break
+                else:
+                    raise RuntimeError("Could not find part that provides connection")
+
+                m["datastore.execute"] = ds.execute
+                m["datastore.execute_write"] = ds.execute_write
+                m["datastore.fetchall"] = ds.fetchall
+
+                yield ds
 
 
 class UserModel(Model):
