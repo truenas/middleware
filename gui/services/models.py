@@ -665,7 +665,7 @@ class iSCSITargetExtent(Model):
         return str(self.iscsi_target_extent_name)
 
     def get_device(self):
-        if self.iscsi_target_extent_type not in ("Disk", "ZVOL"):
+        if self.iscsi_target_extent_type not in ('Disk',):
             return self.iscsi_target_extent_path
         else:
             try:
