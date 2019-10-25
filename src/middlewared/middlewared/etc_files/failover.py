@@ -90,12 +90,11 @@ block drop in quick proto udp from any to $ips\n''' % {
 
     Popen(['pfctl', '-f', pf_block], stderr=PIPE, stdout=PIPE).communicate()
 
-    if middleware.call_sync('failover.licensed'):
-        # TODO: use devd hook in failover plugin
-        with open('/etc/devd.conf', 'a') as f:
-            f.write(textwrap.dedent(r'''
-                notify 100 {
-                   match "system"   "CARP";
-                   match "subsystem"      "[0-9]+@[0-9a-z]+";
-                   action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py $subsystem $type";
-                };'''))
+    # TODO: use devd hook in failover plugin
+    with open('/etc/devd.conf', 'a') as f:
+        f.write(textwrap.dedent(r'''
+            notify 100 {
+               match "system"   "CARP";
+               match "subsystem"      "[0-9]+@[0-9a-z]+";
+               action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py $subsystem $type";
+            };'''))
