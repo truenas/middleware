@@ -3037,7 +3037,7 @@ class PoolDatasetService(CRUDService):
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
         keys_supplied.update({d['name']: d['passphrase'] for d in options.get('datasets', [])})
 
-        if '/' in id:
+        if '/' in id or not options['recursive']:
             if not dataset['locked']:
                 verrors.add('id', f'{id} dataset is not locked')
             else:
@@ -3519,6 +3519,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('rm', {'name': 'encryption'}),  # Create time only attribute
+        ('rm', {'name': 'inherit_encryption'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
         ('edit', _add_inherit('exec')),
         ('edit', _add_inherit('sync')),

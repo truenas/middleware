@@ -684,7 +684,8 @@ class JailService(CRUDService):
             {'extra': {'properties': [], 'flat': False}}
         )
         return not (not datasets or not any(
-            d['name'].endswith('/iocage') for root_dataset in datasets for d in root_dataset['children']
+            d['name'].endswith('/iocage') and (not d['encrypted'] or (d['encrypted'] and d['key_loaded']))
+            for root_dataset in datasets for d in root_dataset['children']
         ))
 
     @accepts()
