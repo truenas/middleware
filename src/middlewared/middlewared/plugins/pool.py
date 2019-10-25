@@ -534,10 +534,10 @@ class PoolService(CRUDService):
     @accepts(Dict(
         'pool_create',
         Str('name', required=True),
+        Bool('encryption', default=False),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
         Dict(
-            'encryption',
-            Bool('enabled', default=False),
+            'encryption_options',
             Bool('generate_key', default=False),
             Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
@@ -644,7 +644,7 @@ class PoolService(CRUDService):
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', job, verrors,
-            data.pop('encryption'), 'pool_create.encryption',
+            {'enabled': data.pop('encryption'), **data.pop('encryption_options')}, 'pool_create.encryption_options',
         )
 
         await self.__common_validation(verrors, data, 'pool_create')
@@ -679,15 +679,8 @@ class PoolService(CRUDService):
         if not os.path.isdir(cachefile_dir):
             os.makedirs(cachefile_dir)
 
-        pool_id = z_pool = None
+        pool_id = z_pool = encrypted_dataset_pk = None
         try:
-            await self.middleware.call(
-                'pool.dataset.insert_or_update', {
-                    'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-                    'key_format': encryption_dict.get('keyformat')
-                }
-            )
-
             job.set_progress(90, 'Creating ZFS Pool')
             z_pool = await self.middleware.call('zfs.pool.create', {
                 'name': data['name'],
@@ -718,6 +711,13 @@ class PoolService(CRUDService):
                 {'prefix': 'vol_'},
             )
 
+            encrypted_dataset_pk = await self.middleware.call(
+                'pool.dataset.insert_or_update_encrypted_record', {
+                    'name': data['name'], 'encryption_key': encryption_dict.get('key'),
+                    'key_format': encryption_dict.get('keyformat')
+                }
+            )
+
             await self.__save_encrypteddisks(pool_id, formatted_disks, disks_cache)
 
             await self.middleware.call(
@@ -735,9 +735,8 @@ class PoolService(CRUDService):
                     self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
-            await self.middleware.call(
-                'datastore.delete', PoolDatasetService.dataset_store, [['name', '=', data['name']]]
-            )
+            if encrypted_dataset_pk:
+                await self.middleware.call('datastore.delete', PoolDatasetService.dataset_store, encrypted_dataset_pk)
             raise e
 
         # There is really no point in waiting all these services to reload so do them
@@ -1975,7 +1974,9 @@ class PoolService(CRUDService):
 
         await self.middleware.call('service.reload', 'disk')
         await self.middleware.call_hook('pool.post_import_pool', pool)
-        await self.middleware.call('pool.dataset.sync_db_keys', [['name', '^', pool['name']]])
+        await self.middleware.call(
+            'pool.dataset.sync_db_keys', ['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]
+        )
 
         return True
 
@@ -2628,10 +2629,10 @@ class PoolService(CRUDService):
                 )
                 unlock_job.wait_sync()
                 if unlock_job.error or unlock_job.result['failed']:
-                    fd = ','.join(unlock_job.result['failed']) if not unlock_job.error else ''
+                    failed = ', '.join(unlock_job.result['failed']) if not unlock_job.error else ''
                     self.logger.error(
                         f'Unlocking encrypted datasets failed for {pool["name"]} pool'
-                        f'{f": {unlock_job.error}" if unlock_job.error else f" with following datasets {fd}"}'
+                        f'{f": {unlock_job.error}" if unlock_job.error else f" with following datasets {failed}"}'
                     )
 
         finally:
@@ -2797,8 +2798,8 @@ class PoolDatasetUserPropService(CRUDService):
         return True
 
 
-class PoolDatasetModel(sa.Model):
-    __tablename__ = 'storage_dataset'
+class PoolDatasetEncryptionModel(sa.Model):
+    __tablename__ = 'storage_datasetencryption'
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
@@ -2808,7 +2809,7 @@ class PoolDatasetModel(sa.Model):
 class PoolDatasetService(CRUDService):
 
     attachment_delegates = []
-    dataset_store = 'storage.dataset'
+    dataset_store = 'storage.datasetencryption'
 
     class Config:
         namespace = 'pool.dataset'
@@ -2823,7 +2824,7 @@ class PoolDatasetService(CRUDService):
             Str('key_format', required=True, null=True),
         )
     )
-    async def insert_or_update(self, data):
+    async def insert_or_update_encrypted_record(self, data):
         key_format = data.pop('key_format') or ''
         if not data['encryption_key'] or ZFSKeyFormat(
             key_format.upper() or ZFSKeyFormat.PASSPHRASE.value
@@ -2839,6 +2840,7 @@ class PoolDatasetService(CRUDService):
 
         data['encryption_key'] = await self.middleware.call('pwenc.encrypt', data['encryption_key'])
 
+        pk = ds[0]['id'] if ds else None
         if ds:
             await self.middleware.call(
                 'datastore.update',
@@ -2846,11 +2848,13 @@ class PoolDatasetService(CRUDService):
                 ds[0]['id'], data
             )
         else:
-            await self.middleware.call(
+            pk = await self.middleware.call(
                 'datastore.insert',
                 self.dataset_store,
                 data
             )
+
+        return pk
 
     @private
     def encrypted_roots_query_db(self, filters=None, decrypt=False):
@@ -2893,10 +2897,10 @@ class PoolDatasetService(CRUDService):
         if not verrors:
             key = encryption_dict['passphrase']
             if encryption_dict['generate_key']:
-                key = getattr(secrets, f'token_{"hex" if key_format == ZFSKeyFormat.HEX else "bytes"}')(32)
+                key = getattr(secrets, f'token_{"hex" if key_format == ZFSKeyFormat.HEX else "bytes"}')(32)[:32]
             elif not key:
                 job.check_pipe('input')
-                key = job.pipes.input.r.read().strip()
+                key = job.pipes.input.r.read(32)
                 # We would like to ensure key matches specified key format
                 if key_format == ZFSKeyFormat.HEX:
                     try:
@@ -2923,7 +2927,10 @@ class PoolDatasetService(CRUDService):
         )
         key_loaded = options.get('key_loaded', True)
         db_results = self.encrypted_roots_query_db(
-            [['name', '^' if options.get('recursive') else '=', name], *(options.get('db_filters', []))], True
+            [
+                ['name', '=', name], *(['name', '^', f'{name}/'] if options.get('recursive') else []),
+                *(options.get('db_filters', []))
+            ], True
         ) if options.get('load_db') else {}
 
         def normalize(ds):
@@ -2955,7 +2962,7 @@ class PoolDatasetService(CRUDService):
         ])
         check_key_job.wait_sync()
         if check_key_job.error:
-            raise CallError(f'Failed to sync database keys: {check_key_job.error}')
+            self.middleware.logger.error(f'Failed to sync database keys: {check_key_job.error}')
 
         for dataset, status in zip(db_datasets, check_key_job.result):
             if not status['result'] or status['error']:
@@ -3178,7 +3185,7 @@ class PoolDatasetService(CRUDService):
                 d['name'] == d['encryption_root']
                 for d in await self.middleware.run_in_thread(
                     self.query, [
-                        ['id', '!=', id], ['id', '^', id], ['encrypted', '=', True],
+                        ['id', '^', f'{id}/'], ['encrypted', '=', True],
                         ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
                     ]
                 )
@@ -3217,7 +3224,9 @@ class PoolDatasetService(CRUDService):
 
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end
-        await self.insert_or_update({'encryption_key': key, 'key_format': options['key_format'], 'name': id})
+        await self.insert_or_update_encrypted_record(
+            {'encryption_key': key, 'key_format': options['key_format'], 'name': id}
+        )
 
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):
@@ -3374,7 +3383,8 @@ class PoolDatasetService(CRUDService):
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
-        Ref('encryption'),
+        Ref('encryption_options'),
+        Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
         register=True,
     ))
@@ -3421,12 +3431,12 @@ class PoolDatasetService(CRUDService):
         if not data.pop('inherit_encryption'):
             encryption_dict = {'encryption': 'off'}
 
-        if data['encryption']['enabled']:
+        if data['encryption']:
             if (
                 await self.middleware.call('pool.query', [['name', '=', data['name'].split('/')[0]]], {'get': True})
             )['encrypt']:
                 verrors.add(
-                    'pool_dataset_create.encryption.enabled',
+                    'pool_dataset_create.encryption',
                     'Encrypted datasets cannot be created on a GELI encrypted pool.'
                 )
 
@@ -3440,13 +3450,14 @@ class PoolDatasetService(CRUDService):
                     ) == ZFSKeyFormat.PASSPHRASE
                 ):
                     verrors.add(
-                        'pool_dataset_create.encryption.enabled',
+                        'pool_dataset_create.encryption',
                         'HEX/RAW keys encrypted children of a PASSPHRASE encrypted dataset are not allowed.'
                     )
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', job, verrors,
-            data.pop('encryption'), 'pool_dataset_create.encryption',
+            {'enabled': data.pop('encryption'), **data.pop('encryption_options')},
+            'pool_dataset_create.encryption_options',
         ) or encryption_dict
 
         if verrors:
@@ -3491,7 +3502,7 @@ class PoolDatasetService(CRUDService):
             'properties': props,
         })
 
-        await self.insert_or_update({
+        await self.insert_or_update_encrypted_record({
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
             'key_format': encryption_dict.get('keyformat')
         })
@@ -3519,6 +3530,7 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('rm', {'name': 'encryption'}),  # Create time only attribute
+        ('rm', {'name': 'encryption_options'}),  # Create time only attribute
         ('rm', {'name': 'inherit_encryption'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
         ('edit', _add_inherit('exec')),

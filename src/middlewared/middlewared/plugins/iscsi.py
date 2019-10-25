@@ -813,11 +813,12 @@ class iSCSITargetExtentService(CRUDService):
                     verrors.add(f'{schema_name}.disk', 'Disk in use or not found', errno.ENOENT)
         elif extent_type == 'ZVOL':
             if disk.startswith('zvol'):
-                zvol = await self.middleware.call('pool.dataset.query', [['id', '=', disk.split('zvol/', 1)[-1]]])
+                zvol_name = disk.split('zvol/', 1)[-1]
+                zvol = await self.middleware.call('pool.dataset.query', [['id', '=', zvol_name]])
                 if not zvol:
-                    verrors.add(f'{schema_name}.disk', f'ZVOL {disk} does not exist')
+                    verrors.add(f'{schema_name}.disk', f'ZVOL {zvol_name} does not exist')
                 elif zvol[0]['locked']:
-                    verrors.add(f'{schema_name}.disk', f'ZVOL {disk} is locked')
+                    verrors.add(f'{schema_name}.disk', f'ZVOL {zvol_name} is locked')
         elif extent_type == 'File':
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')

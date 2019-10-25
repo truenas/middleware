@@ -515,7 +515,7 @@ class ZFSDatasetService(CRUDService):
         Str('id'),
         Dict(
             'load_key_options',
-            Bool('mount', default=False),
+            Bool('mount', default=True),
             Bool('recursive', default=False),
             Any('key', default=None, null=True),
             Str('key_location', default=None, null=True),
