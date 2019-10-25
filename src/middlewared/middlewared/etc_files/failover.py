@@ -17,10 +17,17 @@ from middlewared.utils import filter_list
 
 def render(service, middleware):
     failover_json = '/tmp/failover.json'
+    pf_block = '/etc/pf.conf.block'
     try:
         os.unlink(failover_json)
     except OSError:
         pass
+
+    shutil.copy('/conf/base/etc/devd.conf', '/etc/devd.conf')
+
+    if not middleware.call_sync('failover.licensed'):
+        open(pf_block, 'w+').close()
+        return
 
     failovercfg = middleware.call_sync('failover.config')
     pools = middleware.call_sync('pool.query')
@@ -67,7 +74,7 @@ def render(service, middleware):
     ssh = middleware.call_sync('ssh.config')
     general = middleware.call_sync('system.general.config')
 
-    with open('/etc/pf.conf.block', 'w+') as f:
+    with open(pf_block, 'w+') as f:
         f.write('set block-policy drop\n')
         f.write('''
 ips = '{ %(ips)s }'
@@ -81,15 +88,13 @@ block drop in quick proto udp from any to $ips\n''' % {
             'ips': ', '.join(ips),
         })
 
-    Popen(['pfctl', '-f', '/etc/pf.conf.block'], stderr=PIPE, stdout=PIPE).communicate()
+    Popen(['pfctl', '-f', pf_block], stderr=PIPE, stdout=PIPE).communicate()
 
-    shutil.copy('/conf/base/etc/devd.conf', '/etc/devd.conf')
-    if middleware.call_sync('failover.licensed'):
-        # TODO: use devd hook in failover plugin
-        with open('/etc/devd.conf', 'a') as f:
-            f.write(textwrap.dedent(r'''
-                notify 100 {
-                   match "system"   "CARP";
-                   match "subsystem"      "[0-9]+@[0-9a-z]+";
-                   action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py $subsystem $type";
-                };'''))
+    # TODO: use devd hook in failover plugin
+    with open('/etc/devd.conf', 'a') as f:
+        f.write(textwrap.dedent(r'''
+            notify 100 {
+               match "system"   "CARP";
+               match "subsystem"      "[0-9]+@[0-9a-z]+";
+               action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py $subsystem $type";
+            };'''))
