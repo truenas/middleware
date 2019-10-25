@@ -788,10 +788,7 @@ class iSCSITargetExtentForm(MiddlewareModelForm, ModelForm):
                 self.fields['iscsi_target_extent_type'].initial = 'Disk'
             if not self._api:
                 self.fields['iscsi_target_extent_disk'].choices = disk_choices
-            if self.instance.iscsi_target_extent_type in ('ZVOL', 'HAST'):
-                self.fields['iscsi_target_extent_disk'].initial = disk_choices
-            else:
-                self.fields['iscsi_target_extent_disk'].initial = self.instance.get_device()[5:]
+            self.fields['iscsi_target_extent_disk'].initial = self.instance.get_device()
             self._path = self.instance.iscsi_target_extent_path
             self._name = self.instance.iscsi_target_extent_name
         elif not self._api:
