@@ -80,6 +80,34 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
 
 
 @skip_ad_test
+def test_01_looking_put_network_configuration_output_(dkeys):
+    global nameserver1, nameserver2
+    results = GET("/network/configuration/")
+    assert results.status_code == 200, results.text
+    nameserver1 = results.json()['nameserver1']
+    nameserver2 = results.json()['nameserver2']
+
+
+@skip_ad_test
+def test_02_configure_setting_domain_hostname_and_dns():
+    global payload
+    payload = {
+        "nameserver1": ADNameServer,
+        "nameserver2": nameserver1,
+        "nameserver3": nameserver2
+    }
+    global results
+    results = PUT("/network/configuration/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+
+
+@skip_ad_test
+def test_03_looking_put_network_configuration_output_(dkeys):
+    assert results.json()[dkeys] == payload[dkeys], results.text
+
+
+@skip_ad_test
 def test_01_get_activedirectory_data():
     global results
     results = GET('/activedirectory/')
@@ -593,4 +621,17 @@ def test_62_checking_if_cifs_is_stop():
 @skip_ad_test
 def test_63_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
+    assert results.status_code == 200, results.text
+
+
+@skip_ad_test
+def test_66_configure_setting_domain_hostname_and_dns():
+    global payload
+    payload = {
+        "nameserver1": nameserver1,
+        "nameserver2": nameserver2,
+        "nameserver3": ""
+    }
+    global results
+    results = PUT("/network/configuration/", payload)
     assert results.status_code == 200, results.text
