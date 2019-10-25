@@ -296,7 +296,7 @@ class EncryptedDiskModel(sa.Model):
     __tablename__ = 'storage_encrypteddisk'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    encrypted_volume_id = sa.Column(sa.ForeignKey('storage_volume.id'))
+    encrypted_volume_id = sa.Column(sa.ForeignKey('storage_volume.id', ondelete='CASCADE'))
     encrypted_disk_id = sa.Column(sa.ForeignKey('storage_disk.disk_identifier', ondelete='SET NULL'), nullable=True)
     encrypted_provider = sa.Column(sa.String(120))
 
@@ -1888,7 +1888,7 @@ class PoolService(CRUDService):
             encrypt = 0
 
         pool_name = data.get('name') or pool['name']
-        scrub_id = pool_id = None
+        pool_id = None
         try:
             pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
                 'vol_name': pool_name,
@@ -1902,9 +1902,9 @@ class PoolService(CRUDService):
                 with open(pool['encryptkey_path'], 'wb') as f:
                     f.write(key.read())
 
-            scrub_id = (await self.middleware.call('pool.scrub.create', {
+            await self.middleware.call('pool.scrub.create', {
                 'pool': pool_id,
-            }))['id']
+            })
 
             await self.middleware.call('zfs.pool.import_pool', pool['guid'], {
                 'altroot': '/mnt',
@@ -1922,8 +1922,6 @@ class PoolService(CRUDService):
 
             await self.middleware.call('pool.sync_encrypted', pool_id)
         except Exception:
-            if scrub_id:
-                await self.middleware.call('pool.scrub.delete', scrub_id)
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
             if passfile:
@@ -3521,7 +3519,7 @@ class PoolScrubModel(sa.Model):
     __tablename__ = 'storage_scrub'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    scrub_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id'))
+    scrub_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id', ondelete='CASCADE'))
     scrub_threshold = sa.Column(sa.Integer(), default=35)
     scrub_description = sa.Column(sa.String(200))
     scrub_minute = sa.Column(sa.String(100), default="00")
