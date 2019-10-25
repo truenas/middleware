@@ -5,6 +5,7 @@ import imp
 import inspect
 import itertools
 import os
+import platform
 import pwd
 import queue
 import re
@@ -16,7 +17,6 @@ from functools import wraps
 from multiprocessing import Process, Queue, Value
 from threading import Lock
 
-from middlewared.platform import PLATFORM
 from middlewared.schema import Schemas
 from middlewared.service_exception import MatchNotFound
 
@@ -423,8 +423,7 @@ def load_modules(directory, base=None, depth=0):
         name = f[:-3]
 
         if any(name.endswith(f'_{suffix}') for suffix in ('base', 'freebsd', 'linux')):
-            platform = name.rsplit('_', 1)[-1]
-            if platform != PLATFORM:
+            if name.rsplit('_', 1)[-1] != platform.system().lower():
                 continue
 
         if name == '__init__':

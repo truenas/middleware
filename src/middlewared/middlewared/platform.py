@@ -1,1 +1,0 @@
-PLATFORM = "freebsd"
