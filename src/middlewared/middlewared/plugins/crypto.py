@@ -139,11 +139,17 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
 
     key_type = data.get('key_type')
     if key_type:
-        if key_type != 'EC' and not data.get('key_length'):
-            verrors.add(
-                f'{schema_name}.key_length',
-                'RSA-based keys require an entry in this field.'
-            )
+        if key_type != 'EC':
+            if not data.get('key_length'):
+                verrors.add(
+                    f'{schema_name}.key_length',
+                    'RSA-based keys require an entry in this field.'
+                )
+            if not data.get('digest_algorithm'):
+                verrors.add(
+                    f'{schema_name}.digest_algorithm',
+                    'This field is required.'
+                )
 
     if not verrors and data.get('cert_extensions'):
         verrors.extend(
@@ -1827,7 +1833,6 @@ class CertificateService(CRUDService):
     @accepts(
         Patch(
             'certificate_create', 'certificate_create_internal',
-            ('edit', _set_required('digest_algorithm')),
             ('edit', _set_required('lifetime')),
             ('edit', _set_required('country')),
             ('edit', _set_required('state')),
@@ -2561,7 +2566,6 @@ class CertificateAuthorityService(CRUDService):
     @accepts(
         Patch(
             'ca_create', 'ca_create_internal',
-            ('edit', _set_required('digest_algorithm')),
             ('edit', _set_required('lifetime')),
             ('edit', _set_required('country')),
             ('edit', _set_required('state')),
