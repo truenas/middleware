@@ -2638,7 +2638,7 @@ class PoolService(CRUDService):
                     )
 
                 unlock_job = self.middleware.call_sync(
-                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False, 'recursive': True}
+                    'pool.dataset.unlock', pool['name'], {'restart_related_attachments': False, 'recursive': True}
                 )
                 unlock_job.wait_sync()
                 if unlock_job.error or unlock_job.result['failed']:
@@ -3001,9 +3001,10 @@ class PoolDatasetService(CRUDService):
         datasets = self.encrypted_roots_query_db(
             ['OR', [['name', '=', id], ['name', '^', f'{id}/']]], decrypt=True
         )
-        tar_path = None
+        temp_dir = None
         try:
-            tar_path = tempfile.mkstemp()[1]
+            temp_dir = tempfile.mkdtemp()
+            tar_path = os.path.join(temp_dir, 'keys')
             with tarfile.open(tar_path, 'w:xz') as tar:
                 for ds in datasets:
                     db_key = datasets[ds]
@@ -3015,8 +3016,7 @@ class PoolDatasetService(CRUDService):
             with open(tar_path, 'rb') as f:
                 shutil.copyfileobj(f, job.pipes.output.w)
         finally:
-            if os.path.exists(tar_path or ''):
-                os.unlink(tar_path)
+            shutil.rmtree(temp_dir or '', ignore_errors=True)
 
     @accepts(
         Str('id'),
@@ -3051,12 +3051,12 @@ class PoolDatasetService(CRUDService):
         Dict(
             'unlock_options',
             Bool('key_file', default=False),
-            Bool('toggle_attachments', default=True),
+            Bool('restart_related_attachments', default=True),
             Bool('recursive', default=False),
             List(
                 'datasets', items=[
                     Dict('dataset', Str('name', required=True), Str('passphrase', required=True)),
-                ]
+                ], default=[],
             ),
         )
     )
@@ -3079,9 +3079,9 @@ class PoolDatasetService(CRUDService):
         dataset = self.middleware.call_sync('pool.dataset._get_instance', id)
         keys_supplied = {}
 
-        if options.get('key_file'):
+        if options['key_file']:
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
-        keys_supplied.update({d['name']: d['passphrase'] for d in options.get('datasets', [])})
+        keys_supplied.update({d['name']: d['passphrase'] for d in options['datasets']})
 
         if '/' in id or not options['recursive']:
             if not dataset['locked']:
@@ -3142,15 +3142,17 @@ class PoolDatasetService(CRUDService):
             else:
                 unlocked.append(name)
 
-        if options['toggle_attachments'] and not failed:
-            j = self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset), True)
+        if options['restart_related_attachments'] and not failed:
+            j = self.middleware.call_sync(
+                'pool.dataset.restart_related_attachments', self.__attachments_path(dataset), True
+            )
             j.wait_sync()
 
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
-    @job(lock=lambda args: f'toggle_attachments_{args[0]}')
-    async def toggle_attachments(self, path, enabled=True):
+    @job(lock=lambda args: f'restart_related_attachments_{args[0]}')
+    async def restart_related_attachments(self, path, enabled=True):
         for delegate in self.attachment_delegates:
             delegate.toggle((await delegate.query(path, enabled)), enabled)
 
@@ -3162,7 +3164,7 @@ class PoolDatasetService(CRUDService):
             List(
                 'datasets', items=[
                     Dict('dataset', Str('name', required=True), Str('passphrase', required=True)),
-                ]
+                ], default=[],
             ),
         )
     )
@@ -3193,9 +3195,9 @@ class PoolDatasetService(CRUDService):
         """
         keys_supplied = {}
 
-        if options.get('key_file'):
+        if options['key_file']:
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
-        keys_supplied.update({d['name']: d['passphrase'] for d in options.get('datasets', [])})
+        keys_supplied.update({d['name']: d['passphrase'] for d in options['datasets']})
 
         datasets = self.query_encrypted_datasets(
             id, {'recursive': True, 'load_db': True, 'full_output': True, 'all': True}
