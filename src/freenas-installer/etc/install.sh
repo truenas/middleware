@@ -987,7 +987,7 @@ menu_install()
 	chown -R www:www /tmp/data/data
     fi
 
-    local OS=FreeNAS
+    local OS=TrueNAS
 
     # Tell it to look in /.mount for the packages.
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
