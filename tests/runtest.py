@@ -200,7 +200,7 @@ elif api == "2.0":
     for i in get_tests():
         if testName is not None and testName != i:
             continue
-        call(["py.test-3.6", "-vs", "--junitxml",
+        call(["py.test-3.6", "-v", "--junitxml",
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
         ) + [f"api2/{i}.py"])
