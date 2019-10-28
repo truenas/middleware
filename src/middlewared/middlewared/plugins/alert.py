@@ -77,11 +77,6 @@ class AlertService(Service):
     async def initialize(self, load=True):
         is_freenas = await self.middleware.call("system.is_freenas")
 
-        self.node = "A"
-        if not is_freenas:
-            if await self.middleware.call("notifier.failover_node") == "B":
-                self.node = "B"
-
         self.alerts = defaultdict(lambda: defaultdict(dict))
         if load:
             for alert in await self.middleware.call("datastore.query", "system.alert"):
@@ -369,7 +364,7 @@ class AlertService(Service):
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
 
-            alerts_a = list(self.alerts["A"][alert_source.name].values())
+            alerts_a = list(self.alerts[master_node][alert_source.name].values())
             locked = False
             if self.blocked_sources[alert_source.name]:
                 self.logger.debug("Not running alert source %r because it is blocked", alert_source.name)
@@ -387,7 +382,7 @@ class AlertService(Service):
             alerts_b = []
             if run_on_backup_node and alert_source.run_on_backup_node:
                 try:
-                    alerts_b = list(self.alerts["B"][alert_source.name].values())
+                    alerts_b = list(self.alerts[backup_node][alert_source.name].values())
                     try:
                         if not locked:
                             alerts_b = await self.middleware.call("failover.call_remote", "alert.run_source",
@@ -431,8 +426,8 @@ class AlertService(Service):
                 else:
                     alert.dismissed = existing_alert.dismissed
 
-            self.alerts["A"][alert_source.name] = {alert.key: alert for alert in alerts_a}
-            self.alerts["B"][alert_source.name] = {alert.key: alert for alert in alerts_b}
+            self.alerts[master_node][alert_source.name] = {alert.key: alert for alert in alerts_a}
+            self.alerts[backup_node][alert_source.name] = {alert.key: alert for alert in alerts_b}
 
     @private
     async def run_source(self, source_name):
