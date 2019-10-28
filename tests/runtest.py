@@ -40,6 +40,7 @@ Optional option
     --test <test name>         - Test name (Network, ALL)
     --api <version number>     - API version number (1.0, 2.0)
     --vm-name <VM_NAME>        - Name the the Bhyve VM
+    --ha                       - Runtest for HA
     """ % argv[0]
 
 # if have no argument stop
@@ -47,7 +48,15 @@ if len(argv) == 1:
     print(error_msg)
     exit()
 
-option_list = ["api=", "ip=", "password=", "interface=", 'test=', "vm-name="]
+option_list = [
+    "api=",
+    "ip=",
+    "password=",
+    "interface=",
+    'test=',
+    "vm-name=",
+    "ha"
+]
 
 # look if all the argument are there.
 try:
@@ -76,6 +85,8 @@ for output, arg in myopts:
         testexpr = arg
     elif output in ('--vm-name'):
         vm_name = f"'{arg}'"
+    elif output == '--ha':
+        ha = True
 
 if ('ip' not in locals() and
         'password' not in locals() and
@@ -87,6 +98,8 @@ if ('ip' not in locals() and
 if 'vm_name' not in locals():
     vm_name = None
 
+if 'ha' not in locals():
+    ha = False
 
 # if interface == "vtnet0":
 #     disk = 'disk0 = "vtbd0"\ndisk1 = "vtbd1"\ndisk2 = "vtbd2"'
@@ -117,6 +130,7 @@ localHome = "{localHome}"
 {disk}
 keyPath = "{keyPath}"
 pool_name = "tank"
+ha = {ha}
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -152,10 +166,17 @@ def get_tests():
         apidir = 'api1/'
         sv = ['network', 'ssh', 'storage']
     elif api == '2.0':
-        skip_tests = ['interfaces', 'network', 'delete_interfaces']
+        if ha is True:
+            skip_tests = ['interfaces', 'network', 'delete_interfaces']
+        else:
+            skip_tests = []
         apidir = 'api2/'
-        sv = ['ssh', 'pool', 'user']
-        ev = ['update', 'delete_user']
+        if ha is True:
+            sv = ['ssh', 'pool', 'user']
+            ev = ['update', 'delete_user']
+        else:
+            sv = ['ssh', 'interfaces', 'network', 'pool', 'user']
+            ev = ['update', 'delete_interfaces', 'delete_user']
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
                 not filename.startswith('__init__'):
@@ -179,7 +200,7 @@ elif api == "2.0":
     for i in get_tests():
         if testName is not None and testName != i:
             continue
-        call(["py.test-3.6", "-v", "--junitxml",
+        call(["py.test-3.6", "-vs", "--junitxml",
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
         ) + [f"api2/{i}.py"])
