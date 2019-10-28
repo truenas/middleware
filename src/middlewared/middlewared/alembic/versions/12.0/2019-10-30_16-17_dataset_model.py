@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        'storage_dataset',
+        'storage_encrypteddataset',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=False),
         sa.Column('encryption_key', sa.Text(), nullable=True),
@@ -27,4 +27,4 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('storage_dataset')
+    op.drop_table('storage_encrypteddataset')

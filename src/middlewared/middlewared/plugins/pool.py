@@ -2263,10 +2263,6 @@ class PoolService(CRUDService):
                         e,
                         exc_info=True,
                     )
-            else:
-                await self.middleware.call(
-                    'datastore.delete', PoolDatasetService.dataset_store, [['name', '^', pool['name']]]
-                )
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
@@ -2282,6 +2278,10 @@ class PoolService(CRUDService):
                 self.logger.warn('Failed to remove pointoint %s: %s', pool['path'], e)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
+        await self.middleware.call(
+            'datastore.delete', PoolDatasetService.dataset_store,
+            ['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]],
+        )
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
@@ -2812,7 +2812,7 @@ class PoolDatasetUserPropService(CRUDService):
 
 
 class PoolDatasetEncryptionModel(sa.Model):
-    __tablename__ = 'storage_datasetencryption'
+    __tablename__ = 'storage_encrypteddataset'
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
@@ -2822,7 +2822,7 @@ class PoolDatasetEncryptionModel(sa.Model):
 class PoolDatasetService(CRUDService):
 
     attachment_delegates = []
-    dataset_store = 'storage.datasetencryption'
+    dataset_store = 'storage.encrypteddataset'
 
     class Config:
         namespace = 'pool.dataset'
@@ -2993,10 +2993,14 @@ class PoolDatasetService(CRUDService):
         Please refer to websocket documentation for downloading the file.
         """
         self.middleware.call_sync('pool.dataset._get_instance', id)
-        sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', [['name', '^', id]])
+        sync_job = self.middleware.call_sync(
+            'pool.dataset.sync_db_keys', ['OR', [['name', '=', id], ['name', '^', f'{id}/']]]
+        )
         sync_job.wait_sync()
 
-        datasets = self.encrypted_roots_query_db([['name', '^', id]], decrypt=True)
+        datasets = self.encrypted_roots_query_db(
+            ['OR', [['name', '=', id], ['name', '^', f'{id}/']]], decrypt=True
+        )
         tar_path = None
         try:
             tar_path = tempfile.mkstemp()[1]
@@ -3317,13 +3321,13 @@ class PoolDatasetService(CRUDService):
                 parent_encrypted_root = (await self._get_instance(parent['encryption_root']))
                 if ZFSKeyFormat(parent_encrypted_root['key_format']['value']) == ZFSKeyFormat.PASSPHRASE.value:
                     if any(
-                            d['name'] == d['encryption_root']
-                            for d in await self.middleware.run_in_thread(
-                                self.query, [
-                                    ['id', '^', f'{id}/'], ['encrypted', '=', True],
-                                    ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
-                                ]
-                            )
+                        d['name'] == d['encryption_root']
+                        for d in await self.middleware.run_in_thread(
+                            self.query, [
+                                ['id', '^', f'{id}/'], ['encrypted', '=', True],
+                                ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
+                            ]
+                        )
                     ):
                         raise CallError(
                             f'{id} has children which are encrypted with HEX/RAW keys. It is not allowed to '
