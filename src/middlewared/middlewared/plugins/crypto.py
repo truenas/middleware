@@ -333,9 +333,9 @@ class CryptoKeyService(Service):
                 'A valid private key is required, with a passphrase if one has been set.'
             )
         elif (
-            'create' in schema_name and private_key_obj.key_size < 1024 and not isinstance(
-                private_key_obj, ec.EllipticCurvePrivateKey
-            )
+            'create' in schema_name and not isinstance(
+                private_key_obj, (ec.EllipticCurvePrivateKey, Ed25519PrivateKey),
+            ) and private_key_obj.key_size < 1024
         ):
             # When a cert/ca is being created, disallow keys with size less then 1024
             # Update is allowed for now for keeping compatibility with very old cert/keys
