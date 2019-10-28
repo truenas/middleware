@@ -79,27 +79,27 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 
-@skip_ad_test
-def test_01_get_nameserver1_and_nameserver2():
-    global nameserver1, nameserver2
-    results = GET("/network/configuration/")
-    assert results.status_code == 200, results.text
-    nameserver1 = results.json()['nameserver1']
-    nameserver2 = results.json()['nameserver2']
+# @skip_ad_test
+# def test_01_get_nameserver1_and_nameserver2():
+#     global nameserver1, nameserver2
+#     results = GET("/network/configuration/")
+#     assert results.status_code == 200, results.text
+#     nameserver1 = results.json()['nameserver1']
+#     nameserver2 = results.json()['nameserver2']
 
 
-@skip_ad_test
-def test_02_set_nameserver_for_ad():
-    global payload
-    payload = {
-        "nameserver1": ADNameServer,
-        "nameserver2": nameserver1,
-        "nameserver3": nameserver2
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+# @skip_ad_test
+# def test_02_set_nameserver_for_ad():
+#     global payload
+#     payload = {
+#         "nameserver1": ADNameServer,
+#         "nameserver2": nameserver1,
+#         "nameserver3": nameserver2
+#     }
+#     global results
+#     results = PUT("/network/configuration/", payload)
+#     assert results.status_code == 200, results.text
+#     assert isinstance(results.json(), dict), results.text
 
 
 @skip_ad_test
@@ -619,14 +619,14 @@ def test_65_destroying_ad_dataset_for_smb():
     assert results.status_code == 200, results.text
 
 
-@skip_ad_test
-def test_66_configure_setting_domain_hostname_and_dns():
-    global payload
-    payload = {
-        "nameserver1": nameserver1,
-        "nameserver2": nameserver2,
-        "nameserver3": ""
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
+# @skip_ad_test
+# def test_66_configure_setting_domain_hostname_and_dns():
+#     global payload
+#     payload = {
+#         "nameserver1": nameserver1,
+#         "nameserver2": nameserver2,
+#         "nameserver3": ""
+#     }
+#     global results
+#     results = PUT("/network/configuration/", payload)
+#     assert results.status_code == 200, results.text
