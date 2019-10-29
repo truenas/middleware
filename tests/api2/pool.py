@@ -75,6 +75,7 @@ def test_04_get_pool_id_info(pool_data):
     global pool_info
     pool_info = results
 
+
 @skip_for_ha
 @pytest.mark.parametrize('pool_keys', ["name", "topology:data:disks"])
 def test_05_looking_pool_info_of_(pool_keys):
