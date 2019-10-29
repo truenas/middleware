@@ -1,4 +1,5 @@
 import errno
+import os
 import socket
 import ssl
 
@@ -112,18 +113,21 @@ class VMWareService(CRUDService):
             new,
         )
 
+        await self.middleware.run_in_thread(self._cleanup_legacy_alerts)
+
         return await self._get_instance(id)
 
     @accepts(
         Int('id')
     )
     async def do_delete(self, id):
-
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
             id
         )
+
+        await self.middleware.run_in_thread(self._cleanup_legacy_alerts)
 
         return response
 
@@ -234,3 +238,10 @@ class VMWareService(CRUDService):
             }
             vms[vm.config.uuid] = data
         return vms
+
+    def _cleanup_legacy_alerts(self):
+        for f in ("/var/tmp/.vmwaresnap_fails", "/var/tmp/.vmwarelogin_fails", "/var/tmp/.vmwaresnapdelete_fails"):
+            try:
+                os.unlink(f)
+            except Exception:
+                pass
