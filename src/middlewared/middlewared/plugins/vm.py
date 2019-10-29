@@ -2037,7 +2037,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
         vms_attached = []
         vms = {
             vm['id']: vm for vm in await self.middleware.call(
-                'vm.query', [('status.state', '=' if enabled else '!=', 'RUNNING')]
+                'vm.query', [('status.state', '!=' if enabled else '=', 'RUNNING')]
             )
         }
         for device in await self.middleware.call('datastore.query', 'vm.device'):
