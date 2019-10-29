@@ -378,9 +378,9 @@ class FileApplication(object):
             60, lambda: asyncio.ensure_future(self._cleanup_job(job_id)))
 
     async def _cleanup_cancel(self, job_id):
-        job = self.jobs.pop(job_id, None)
-        if job:
-            job.cancel()
+        job_cleanup = self.jobs.pop(job_id, None)
+        if job_cleanup:
+            job_cleanup.cancel()
 
     async def _cleanup_job(self, job_id):
         if job_id not in self.jobs:
