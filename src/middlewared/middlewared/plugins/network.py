@@ -1450,7 +1450,7 @@ class InterfaceService(CRUDService):
 
     @private
     async def delete_network_interface(self, oid):
-        for lagg in self.middleware.call(
+        for lagg in await self.middleware.call(
             'datastore.query', 'network.lagginterface', [('lagg_interface__int_interface', '=', oid)]
         ):
             await self.delete_network_interface(lagg['lagg_physnic'])
