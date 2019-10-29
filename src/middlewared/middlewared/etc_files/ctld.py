@@ -368,8 +368,7 @@ def main(middleware):
         cur_lunid = 0
         for t2e in middleware.call_sync('datastore.query', 'services.iscsitargettoextent',
                                         [('iscsi_target', '=', target.id)],
-                                        {'extra': {'select': {'null_first': 'iscsi_lunid IS NULL'}},
-                                         'order_by': ['null_first', 'iscsi_lunid']}):
+                                        {'order_by': ['nulls_last:iscsi_lunid']}):
             t2e = Struct(t2e)
 
             if t2e.iscsi_lunid is None:
