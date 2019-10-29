@@ -477,7 +477,11 @@ if len(mp_to_task_map) > 0:
                             snapvmskips[vmsnapobj].append(vm.config.uuid)
                     except Exception as e:
                         log.warn("Snapshot of VM %s failed", vm.name, exc_info=True)
-                        snapvmfails[vmsnapobj].append((vm.config.uuid, vm.name, str(e)))
+                        if hasattr(e, 'msg'):
+                            str_e = e.msg
+                        else:
+                            str_e = str(e)
+                        snapvmfails[vmsnapobj].append((vm.config.uuid, vm.name, str_e))
                     snapvms[vmsnapobj].append(vm.config.uuid)
             connect.Disconnect(si)
         # At this point we've completed snapshotting VMs.
