@@ -360,16 +360,13 @@ class RsyncTaskService(CRUDService):
                     remote_username = username
 
                 try:
-                    with (await asyncio.wait_for(asyncssh.connect(
-                            remote_host,
-                            port=remote_port,
-                            username=remote_username,
-                            client_keys=key_files,
-                            known_hosts=None
-                    ), timeout=5)) as conn:
-
+                    async with await asyncio.wait_for(
+                        asyncssh.connect(
+                            remote_host, port=remote_port, username=remote_username,
+                            client_keys=key_files, known_hosts=None
+                        ), timeout=5,
+                    ) as conn:
                         await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
-
                 except asyncio.TimeoutError:
 
                     verrors.add(
