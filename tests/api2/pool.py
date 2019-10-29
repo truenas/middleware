@@ -7,7 +7,7 @@ import time
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, send_file
-from auto_config import ip, user, password, pool_name, disk1, disk2, ha
+from auto_config import ip, user, password, pool_name, ha
 
 dataset = f"{pool_name}/test_pool"
 dataset_url = dataset.replace('/', '%2F')
@@ -17,6 +17,9 @@ IMAGES = {}
 
 Reason = 'Skip for HA'
 skip_for_ha = pytest.mark.skipif(ha, reason=Reason)
+nas_disk = GET('/boot/get_disks/').json()
+disk_list = list(POST('/device/get_info/', 'DISK').json().keys())
+disk_pool = list(set(disk_list) - set(nas_disk))
 
 
 @pytest.fixture(scope='module')
@@ -51,7 +54,7 @@ def test_02_creating_a_pool():
         "encryption": False,
         "topology": {
             "data": [
-                {"type": "STRIPE", "disks": [disk1, disk2]}
+                {"type": "STRIPE", "disks": disk_pool}
             ],
         }
     }
