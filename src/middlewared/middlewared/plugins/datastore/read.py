@@ -3,6 +3,9 @@ import re
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.sql import Alias
+from sqlalchemy.sql.elements import UnaryExpression
+from sqlalchemy.sql.expression import nullsfirst, nullslast
+from sqlalchemy.sql.operators import desc_op, nullsfirst_op, nullslast_op
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import Service
@@ -104,10 +107,43 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             # Do not change original order_by
             order_by = order_by[:]
             for i, order in enumerate(order_by):
+                if order.startswith('nulls_first:'):
+                    wrapper = nullsfirst
+                    order = order[len('nulls_first:'):]
+                elif order.startswith('nulls_last:'):
+                    wrapper = nullslast
+                    order = order[len('nulls_last:'):]
+                else:
+                    wrapper = lambda x: x  # noqa
+
                 if order.startswith('-'):
                     order_by[i] = self._get_col(table, order[1:], prefix).desc()
                 else:
                     order_by[i] = self._get_col(table, order, prefix)
+
+                order_by[i] = wrapper(order_by[i])
+
+            # FIXME: remove this after switching to SQLite 3.30
+            changed = True
+            while changed:
+                changed = False
+                for i, v in enumerate(order_by):
+                    if isinstance(v, UnaryExpression) and v.modifier in (nullsfirst_op, nullslast_op):
+                        if isinstance(v.element, UnaryExpression) and v.element.modifier == desc_op:
+                            root_element = v.element.element
+                        else:
+                            root_element = v.element
+
+                        order_by = order_by[:i] + [
+                            {
+                                nullsfirst_op: root_element != None,  # noqa
+                                nullslast_op: root_element == None,  # noqa
+                            }[v.modifier],
+                            v.element,
+                        ] + order_by[i + 1:]
+                        changed = True
+                        break
+
             qs = qs.order_by(*order_by)
 
         if options['limit']:

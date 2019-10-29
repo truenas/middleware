@@ -618,3 +618,26 @@ async def test__time():
 
         assert (await ds.query("test.time", [], {"get": True}))["time"] == datetime.time(21, 30)
         assert (await ds.sql("SELECT * FROM test_time"))[0]["time"] == "21:30:00"
+
+
+class NullModel(Model):
+    __tablename__ = 'test_null'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    value = sa.Column(sa.Integer(), nullable=True)
+
+
+@pytest.mark.parametrize("order_by,result", [
+    (["value"], [2, 3, 1]),
+    (["-value"], [1, 3, 2]),
+    (["nulls_last:value"], [3, 1, 2]),
+    (["nulls_first:-value"], [2, 1, 3]),
+])
+@pytest.mark.asyncio
+async def test__null_order_by(order_by, result):
+    async with datastore_test() as ds:
+        await ds.insert("test.null", {"value": 3})
+        await ds.insert("test.null", {"value": None})
+        await ds.insert("test.null", {"value": 1})
+
+        assert [row["id"] for row in await ds.query("test.null", [], {"order_by": order_by})] == result
