@@ -463,8 +463,8 @@ class OpenVPNClientModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     port = sa.Column(sa.Integer(), default=1194)
-    protocol = sa.Column(sa.String(4))
-    device_type = sa.Column(sa.String(4))
+    protocol = sa.Column(sa.String(4), default='UDP')
+    device_type = sa.Column(sa.String(4), default='TUN')
     nobind = sa.Column(sa.Boolean(), default=True)
     authentication_algorithm = sa.Column(sa.String(32), nullable=True)
     tls_crypt_auth = sa.Column(sa.Text(), nullable=True)
