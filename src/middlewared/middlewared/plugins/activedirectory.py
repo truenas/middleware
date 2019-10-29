@@ -1353,6 +1353,10 @@ class ActiveDirectoryService(ConfigService):
         self.middleware.call_sync('cache.pop', 'AD_cache')
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
+        id_type_both_backends = [
+            'rid',
+            'autorid'
+        ]
         if not ad['disable_freenas_cache']:
             """
             These calls populate the winbindd cache
@@ -1386,12 +1390,14 @@ class ActiveDirectoryService(ConfigService):
                     'domain': smb['workgroup'],
                     'low_id': d['backend_data']['range_low'],
                     'high_id': d['backend_data']['range_high'],
+                    'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
                 })
             elif d['domain']['idmap_domain_name'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
                 known_domains.append({
                     'domain': d['domain']['idmap_domain_name'],
                     'low_id': d['backend_data']['range_low'],
                     'high_id': d['backend_data']['range_high'],
+                    'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
                 })
 
         for line in netlist.stdout.decode().splitlines():
@@ -1431,7 +1437,8 @@ class ActiveDirectoryService(ConfigService):
                                 'attributes': {},
                                 'groups': [],
                                 'sshpubkey': None,
-                                'local': False
+                                'local': False,
+                                'id_type_both': d['id_type_both']
                             }})
                             user_next_index += 1
                             break
@@ -1453,25 +1460,22 @@ class ActiveDirectoryService(ConfigService):
                         should not be fatal here.
                         """
                         try:
-                            pwd.getpwuid(cached_gid)
-                            break
+                            group_data = grp.getgrgid(cached_gid)
                         except KeyError:
-                            try:
-                                group_data = grp.getgrgid(cached_gid)
-                            except KeyError:
-                                break
-
-                            cache_data['groups'].update({group_data.gr_name: {
-                                'id': group_next_index,
-                                'gid': group_data.gr_gid,
-                                'group': group_data.gr_name,
-                                'builtin': False,
-                                'sudo': False,
-                                'users': [],
-                                'local': False,
-                            }})
-                            group_next_index += 1
                             break
+
+                        cache_data['groups'].update({group_data.gr_name: {
+                            'id': group_next_index,
+                            'gid': group_data.gr_gid,
+                            'group': group_data.gr_name,
+                            'builtin': False,
+                            'sudo': False,
+                            'users': [],
+                            'local': False,
+                            'id_type_both': d['id_type_both']
+                        }})
+                        group_next_index += 1
+                        break
 
         if not cache_data.get('users'):
             return
