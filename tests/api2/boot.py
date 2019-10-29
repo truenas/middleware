@@ -9,7 +9,6 @@ from time import time, sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET
-from auto_config import disk0
 
 
 def test_01_get_boot_disks():
@@ -17,7 +16,6 @@ def test_01_get_boot_disks():
     assert results.status_code == 200, results.text
     disks = results.json()
     assert isinstance(disks, list) is True, results.text
-    assert disks[0] == disk0, results.text
 
 
 def test_02_get_boot_state():
