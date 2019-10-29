@@ -1076,12 +1076,6 @@ require([
         var service_key = registry.byId("id_service_key").domNode.parentNode.parentNode;
         var client_name = registry.byId("id_client_name").domNode.parentNode.parentNode;
 
-        // HipChat
-        var hfrom = registry.byId("id_hfrom").domNode.parentNode.parentNode;
-        var base_url = registry.byId("id_base_url").domNode.parentNode.parentNode;
-        var room_id = registry.byId("id_room_id").domNode.parentNode.parentNode;
-        var auth_token = registry.byId("id_auth_token").domNode.parentNode.parentNode;
-
         // OpsGenie
         var api_key = registry.byId("id_api_key").domNode.parentNode.parentNode;
         var api_url = registry.byId("id_api_url").domNode.parentNode.parentNode;
@@ -1120,10 +1114,6 @@ require([
         domStyle.set(team, "display", "none");
         domStyle.set(service_key, "display", "none");
         domStyle.set(client_name, "display", "none");
-        domStyle.set(hfrom, "display", "none");
-        domStyle.set(base_url, "display", "none");
-        domStyle.set(room_id, "display", "none");
-        domStyle.set(auth_token, "display", "none");
         domStyle.set(api_key, "display", "none");
         domStyle.set(api_url, "display", "none");
         domStyle.set(region, "display", "none");
@@ -1163,12 +1153,6 @@ require([
         } else if(type.get('value') == 'PagerDuty') {
             domStyle.set(service_key, "display", "table-row");
             domStyle.set(client_name, "display", "table-row");
-        } else if(type.get('value') == 'HipChat') {
-            domStyle.set(hfrom, "display", "table-row");
-            domStyle.set(cluster_name, "display", "table-row");
-            domStyle.set(base_url, "display", "table-row");
-            domStyle.set(room_id, "display", "table-row");
-            domStyle.set(auth_token, "display", "table-row");
         } else if(type.get('value') == 'OpsGenie') {
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(api_key, "display", "table-row");

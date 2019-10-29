@@ -1542,33 +1542,6 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         required=False,
     )
 
-    # HipChat
-    hfrom = forms.CharField(
-        max_length=20,
-        label=_("From"),
-        help_text=_("The name to send notification"),
-        required=False,
-    )
-    base_url = forms.CharField(
-        max_length=255,
-        initial="https://api.hipchat.com/v2/",
-        label=_("URL"),
-        help_text=_("HipChat base url"),
-        required=False,
-    )
-    room_id = forms.CharField(
-        max_length=50,
-        label=_("Room"),
-        help_text=_("The room to post to"),
-        required=False,
-    )
-    auth_token = forms.CharField(
-        max_length=255,
-        label=_("Token"),
-        help_text=_("Authentication token"),
-        required=False,
-    )
-
     # OpsGenie
     api_key = forms.CharField(
         max_length=255,
@@ -1699,7 +1672,6 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
 
     types_fields = {
         'AWSSNS': ['region', 'topic_arn', 'aws_access_key_id', 'aws_secret_access_key'],
-        'HipChat': ['hfrom', 'cluster_name', 'base_url', 'room_id', 'auth_token'],
         'InfluxDB': ['host', 'username', 'password', 'database', 'series_name'],
         'Mattermost': ['cluster_name', 'url', 'username', 'password', 'team', 'channel'],
         'Mail': ['email'],
