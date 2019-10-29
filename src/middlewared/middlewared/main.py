@@ -377,7 +377,14 @@ class FileApplication(object):
         self.jobs[job_id] = self.middleware.loop.call_later(
             60, lambda: asyncio.ensure_future(self._cleanup_job(job_id)))
 
+    async def _cleanup_cancel(self, job_id):
+        job = self.jobs.pop(job_id, None)
+        if job:
+            job.cancel()
+
     async def _cleanup_job(self, job_id):
+        if job_id not in self.jobs:
+            return
         self.jobs[job_id].cancel()
         del self.jobs[job_id]
 
@@ -439,9 +446,10 @@ class FileApplication(object):
                 asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
 
         try:
+            await self._cleanup_cancel(job_id)
             await self.middleware.run_in_thread(do_copy)
         finally:
-            await self._cleanup_job(job_id)
+            await job.pipes.close()
 
         await resp.drain()
         return resp
