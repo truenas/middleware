@@ -500,16 +500,6 @@ if len(mp_to_task_map) > 0:
                     with open(VMWARE_FAILS, 'wb') as f:
                         pickle.dump(fails, f)
 
-                send_mail(
-                    subject="VMware Snapshot failed! (%s)" % snapname,
-                    text="""
-Hello,
-    The following VM failed to snapshot %s:
-%s
-""" % (snapname, '    \n'.join(fails[snapname])),
-                    channel='snapvmware'
-                )
-
         # At this point we have finished sending alerts out
 
         # If there were no failures and we successfully took some VMWare snapshots
@@ -593,15 +583,6 @@ Hello,
                     with open(VMWARESNAPDELETE_FAILS, 'wb') as f:
                         pickle.dump(fails, f)
 
-                send_mail(
-                    subject="VMware Snapshot deletion failed! (%s)" % snapname,
-                    text="""
-Hello,
-    The following VM snapshot(s) failed to delete %s:
-%s
-""" % (snapname, '    \n'.join(snapdeletefails)),
-                    channel='snapvmware'
-                )
             connect.Disconnect(si)
 
     MNTLOCK.lock()
