@@ -3143,18 +3143,19 @@ class PoolDatasetService(CRUDService):
                 unlocked.append(name)
 
         if options['restart_related_attachments'] and not failed:
-            j = self.middleware.call_sync(
-                'pool.dataset.restart_related_attachments', self.__attachments_path(dataset), True
-            )
+            j = self.middleware.call_sync('pool.dataset.restart_related_attachments', self.__attachments_path(dataset))
             j.wait_sync()
 
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
     @job(lock=lambda args: f'restart_related_attachments_{args[0]}')
-    async def restart_related_attachments(self, path, enabled=True):
+    async def restart_related_attachments(self, path):
         for delegate in self.attachment_delegates:
-            delegate.toggle((await delegate.query(path, enabled)), enabled)
+            if delegate.name in ('jail', 'vm'):
+                delegate.toggle((await delegate.query(path, False)), True)
+            else:
+                delegate.toggle([], True)
 
     @accepts(
         Str('id'),
