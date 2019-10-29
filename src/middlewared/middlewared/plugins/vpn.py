@@ -191,8 +191,8 @@ class OpenVPNServerModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     port = sa.Column(sa.Integer(), default=1194)
-    protocol = sa.Column(sa.String(4))
-    device_type = sa.Column(sa.String(4))
+    protocol = sa.Column(sa.String(4), default='UDP')
+    device_type = sa.Column(sa.String(4), default='TUN')
     authentication_algorithm = sa.Column(sa.String(32), nullable=True)
     tls_crypt_auth = sa.Column(sa.Text(), nullable=True)
     cipher = sa.Column(sa.String(32), nullable=True)
@@ -202,7 +202,7 @@ class OpenVPNServerModel(sa.Model):
     root_ca_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
     server = sa.Column(sa.String(45))
     topology = sa.Column(sa.String(16), nullable=True)
-    netmask = sa.Column(sa.Integer())
+    netmask = sa.Column(sa.Integer(), default=24)
 
 
 class OpenVPNServerService(SystemServiceService):
@@ -463,8 +463,8 @@ class OpenVPNClientModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     port = sa.Column(sa.Integer(), default=1194)
-    protocol = sa.Column(sa.String(4))
-    device_type = sa.Column(sa.String(4))
+    protocol = sa.Column(sa.String(4), default='UDP')
+    device_type = sa.Column(sa.String(4), default='TUN')
     nobind = sa.Column(sa.Boolean(), default=True)
     authentication_algorithm = sa.Column(sa.String(32), nullable=True)
     tls_crypt_auth = sa.Column(sa.Text(), nullable=True)
