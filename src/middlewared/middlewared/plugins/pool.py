@@ -3358,9 +3358,9 @@ class PoolDatasetService(CRUDService):
                 with tarfile.open(key_file, mode='r:xz') as tar:
                     tar.extractall(path=temp_dir)
 
-                for key_file in os.listdir(temp_dir):
-                    with open(os.path.join(temp_dir, key_file), 'rb') as f:
-                        data[key_file] = f.read()
+                for k_file in os.listdir(temp_dir):
+                    with open(os.path.join(temp_dir, k_file), 'rb') as f:
+                        data[k_file] = f.read()
             except tarfile.ReadError:
                 with open(key_file, 'rb') as f:
                     data[ds_name] = f.read()
