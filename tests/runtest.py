@@ -101,13 +101,6 @@ if 'vm_name' not in locals():
 if 'ha' not in locals():
     ha = False
 
-# if interface == "vtnet0":
-#     disk = 'disk0 = "vtbd0"\ndisk1 = "vtbd1"\ndisk2 = "vtbd2"'
-# if api == "1.0":
-#     disk = 'disk0 = "da0"\ndisk1 = "da1"\ndisk2 = "da2"'
-# else:
-disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
-
 # create random hostname and random fake domain
 digit = ''.join(random.choices(string.digits, k=2))
 hostname = f'test{digit}'
@@ -127,7 +120,6 @@ api2_url = 'http://' + ip + '/api/v2.0'
 interface = "{interface}"
 ntpServer = "10.20.20.122"
 localHome = "{localHome}"
-{disk}
 keyPath = "{keyPath}"
 pool_name = "tank"
 ha = {ha}
