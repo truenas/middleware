@@ -87,6 +87,41 @@ class IPMISELAlertSource(AlertSource):
 
     dismissed_datetime_kv_key = "alert:ipmi_sel:dismissed_datetime"
 
+    # https://github.com/openbmc/ipmitool/blob/master/include/ipmitool/ipmi_sel.h#L297
+
+    IPMI_SENSORS = (
+        "Redundancy State",
+        "Temperature",
+        "Voltage",
+        "Current",
+        "Fan",
+        "Physical Security",
+        "Platform Security",
+        "Processor",
+        "Power Supply",
+        "Memory",
+        "System Firmware Error",
+        "Critical Interrupt",
+        "Management Subsystem Health",
+        "Battery",
+    )
+
+    IPMI_EVENTS_WHITELIST = (
+        ("Power Unit", "Soft-power control failure"),
+        ("Power Unit", "Failure detected"),
+        ("Power Unit", "Predictive failure"),
+        ("Event Logging Disabled", "Log full"),
+        ("Event Logging Disabled", "Log almost full"),
+        ("System Event", "Undetermined system hardware failure"),
+        ("Cable/Interconnect", "Config Error"),
+    )
+
+    IPMI_EVENTS_BLACKLIST = (
+        ("Redundancy State", "Fully Redundant"),
+        ("Processor", "Presence detected"),
+        ("Power Supply", "Presence detected"),
+    )
+
     async def check(self):
         if not has_ipmi():
             return
@@ -98,6 +133,20 @@ class IPMISELAlertSource(AlertSource):
         alerts = []
 
         records = parse_ipmitool_output(output)
+
+        records = [
+            record for record in records
+            if (
+                (
+                    any(record.sensor.startswith(f"{sensor} #0x")
+                        for sensor in self.IPMI_SENSORS) or
+                    any(record.sensor.startswith(f"{sensor} #0x") and record.event == event
+                        for sensor, event in self.IPMI_EVENTS_WHITELIST)
+                ) and
+                not any(record.sensor.startswith(f"{sensor} #0x") and record.event == event
+                        for sensor, event in self.IPMI_EVENTS_BLACKLIST)
+            )
+        ]
 
         if records:
             if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
