@@ -46,7 +46,7 @@ class ConfigService(Service):
             bundle = True
             files = CONFIG_FILES.copy()
             if not options['secretseed']:
-                files['secretseed'] = None
+                files['pwenc_secret'] = None
             if not options['pool_keys'] or not os.path.exists(files['geli']) or not os.listdir(files['geli']):
                 files['geli'] = None
 
