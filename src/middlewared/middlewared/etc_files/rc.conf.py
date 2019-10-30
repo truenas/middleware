@@ -354,20 +354,21 @@ def tunable_config(middleware, context):
 
 
 def vmware_config(middleware, context):
-    try:
-        subprocess.run(
-            ['vmware-checkvm'],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True,
-        )
-    except subprocess.CalledProcessError:
-        yield 'vmware_guestd_enable="NO"'
-    except Exception:
-        middleware.logger.warn('Failed to run vmware-checkvm', exc_info=True)
-        return []
-    else:
-        yield 'vmware_guestd_enable="YES"'
+    if context['is_freenas']:
+        try:
+            subprocess.run(
+                ['vmware-checkvm'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=True,
+            )
+        except subprocess.CalledProcessError:
+            yield 'vmware_guestd_enable="NO"'
+        except Exception:
+            middleware.logger.warn('Failed to run vmware-checkvm', exc_info=True)
+            return []
+        else:
+            yield 'vmware_guestd_enable="YES"'
 
 
 def _bmc_watchdog_is_broken():
