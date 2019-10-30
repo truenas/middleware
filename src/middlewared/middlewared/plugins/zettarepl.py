@@ -432,8 +432,7 @@ class ZettareplService(Service):
         timezone = (await self.middleware.call("system.general.config"))["timezone"]
 
         periodic_snapshot_tasks = {}
-        for periodic_snapshot_task in await self.middleware.call("pool.snapshottask.query", [["enabled", "=", True],
-                                                                                             ["legacy", "=", False]]):
+        for periodic_snapshot_task in await self.middleware.call("pool.snapshottask.query", [["enabled", "=", True]]):
             periodic_snapshot_tasks[f"task_{periodic_snapshot_task['id']}"] = {
                 "dataset": periodic_snapshot_task["dataset"],
 
@@ -451,25 +450,10 @@ class ZettareplService(Service):
             }
 
         replication_tasks = {}
-        legacy_periodic_snapshot_tasks_ids = {
-            periodic_snapshot_task["id"]
-            for periodic_snapshot_task in await self.middleware.call("pool.snapshottask.query", [["legacy", "=", True]])
-        }
-        for replication_task in await self.middleware.call("replication.query", [["transport", "!=", "LEGACY"],
-                                                                                 ["enabled", "=", True]]):
+        for replication_task in await self.middleware.call("replication.query", [["enabled", "=", True]]):
             my_periodic_snapshot_tasks = [f"task_{periodic_snapshot_task['id']}"
-                                          for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
-                                          if periodic_snapshot_task["id"] not in legacy_periodic_snapshot_tasks_ids]
+                                          for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]]
             my_schedule = replication_task["schedule"]
-
-            # All my periodic snapshot tasks are legacy
-            if (
-                    replication_task["direction"] == "PUSH" and
-                    replication_task["auto"] and
-                    replication_task["periodic_snapshot_tasks"] and
-                    not my_periodic_snapshot_tasks
-            ):
-                my_schedule = replication_task["periodic_snapshot_tasks"][0]["schedule"]
 
             definition = {
                 "direction": replication_task["direction"].lower(),
@@ -507,11 +491,6 @@ class ZettareplService(Service):
                 definition["naming-schema"] = replication_task["naming_schema"]
             if replication_task["also_include_naming_schema"]:
                 definition["also-include-naming-schema"] = replication_task["also_include_naming_schema"]
-            # Use snapshots created by legacy periodic snapshot tasks
-            for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]:
-                if periodic_snapshot_task["id"] in legacy_periodic_snapshot_tasks_ids:
-                    definition.setdefault("also-include-naming-schema", [])
-                    definition["also-include-naming-schema"].append(periodic_snapshot_task["naming_schema"])
             if my_schedule is not None:
                 definition["schedule"] = zettarepl_schedule(my_schedule)
             if replication_task["restrict_schedule"] is not None:
@@ -551,7 +530,7 @@ class ZettareplService(Service):
                                 netcat_active_side_listen_address=None, netcat_active_side_port_min=None,
                                 netcat_active_side_port_max=None, netcat_passive_side_connect_address=None):
 
-        if transport in ["SSH", "SSH+NETCAT", "LEGACY"]:
+        if transport in ["SSH", "SSH+NETCAT"]:
             if ssh_credentials is None:
                 raise CallError(f"You should pass SSH credentials for {transport} transport")
 
