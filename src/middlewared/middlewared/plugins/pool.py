@@ -2890,7 +2890,7 @@ class PoolDatasetService(CRUDService):
             verrors.add(
                 f'{schema}.key_format',
                 'Please provide a key file or select generate_key to automatically generate '
-                'a key when key_format is not PASSPHRASE'
+                'a key when key_format is not "PASSPHRASE"'
             )
 
         if passphrase_key_format:
@@ -2900,7 +2900,7 @@ class PoolDatasetService(CRUDService):
                     'Must be disabled when key format is set to "PASSPHRASE".'
                 )
             elif not encryption_dict['passphrase']:
-                verrors.add(f'{schema}.passphrase', 'Passphrase is required when key format is PASSPHRASE')
+                verrors.add(f'{schema}.passphrase', 'Passphrase is required when key format is "PASSPHRASE"')
         elif encryption_dict['passphrase']:
             verrors.add(
                 f'{schema}.passphrase',
@@ -2919,7 +2919,7 @@ class PoolDatasetService(CRUDService):
                     try:
                         key.decode()
                     except UnicodeDecodeError:
-                        verrors.add(f'{schema}.key_file', 'Unable to decode HEX key')
+                        verrors.add(f'{schema}.key_file', 'Unable to decode "HEX" key')
                         return {}
 
             opts = {
@@ -2987,7 +2987,7 @@ class PoolDatasetService(CRUDService):
     @job(lock='dataset_export_keys', pipes=['output'])
     def export_keys(self, job, id):
         """
-        Export keys for `id` and it's children which are stored in the system. The exported file is a compressed
+        Export keys for `id` and its children which are stored in the system. The exported file is a compressed
         tarfile containing files named after the encrypted dataset and containing the keys for them.
 
         Please refer to websocket documentation for downloading the file.
@@ -3027,7 +3027,7 @@ class PoolDatasetService(CRUDService):
     )
     async def lock(self, id, options):
         """
-        Locks `id` dataset. It will un-mount the dataset and it's children before locking.
+        Locks `id` dataset. It will unmount the dataset and its children before locking.
         """
         ds = await self._get_instance(id)
 
@@ -3065,15 +3065,15 @@ class PoolDatasetService(CRUDService):
         """
         Unlock `id` dataset.
 
-        If `id` dataset is not encrypted an exception will be raised. There is one exception for this case where
-        if `id` specified is a root dataset and `unlock_options.recursive` is specified, in this case encryption
-        validation will not be performed for `id`. This allows to unlock encrypted children for `id`'s pool.
+        If `id` dataset is not encrypted an exception will be raised. There is one exception:
+        when `id` is a root dataset and `unlock_options.recursive` is specified, encryption
+        validation will not be performed for `id`. This allow unlocking encrypted children the `id` pool.
 
-        For datasets which are encrypted with passphrase, the passphrase for the datasets should be specified with
+        For datasets which are encrypted with a passphrase, include the passphrase with
         `unlock_options.datasets`.
 
-        Uploading a tarfile which contains encrypted dataset's keys is allowed and can be specified with
-        `unlock_options.key_file`. The format is similar to what is used for exporting encrypted datasets keys.
+        Uploading a tarfile which contains encrypted dataset keys can be specified with
+        `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
         """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset._get_instance', id)
@@ -3241,8 +3241,10 @@ class PoolDatasetService(CRUDService):
         """
         Change encryption properties for `id` encrypted dataset.
 
-        Changing `key_format` to "PASSPHRASE" is not allowed if `id` has encrypted roots as children which are
-        encrypted with "HEX"/"RAW" key formats or `id` is a root dataset and hosts the system dataset.
+        Changing `key_format` to "PASSPHRASE" is not allowed if:
+
+        1) It has encrypted roots as children which are encrypted with "HEX" or "RAW" key formats
+        2) If it is a root dataset where the system dataset is located
         """
         ds = await self._get_instance(id)
         verrors = ValidationErrors()
@@ -3270,7 +3272,9 @@ class PoolDatasetService(CRUDService):
                 )
             elif id == (await self.middleware.call('systemdataset.config'))['pool']:
                 verrors.add(
-                    'id', f'{id} contains system dataset. Please move system dataset before changing key_format'
+                    'id',
+                    f'{id} contains the system dataset. Please move the system dataset to a '
+                    'different pool before changing key_format.'
                 )
 
         verrors.check()
@@ -3304,8 +3308,8 @@ class PoolDatasetService(CRUDService):
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):
         """
-        Allows to inherit parent's encryption root discarding it's current encryption settings. It should be noted
-        this can only be done where `id` has an encrypted parent and `id` itself is an encryption root.
+        Allows inheriting parent's encryption root discarding its current encryption settings. This
+        can only be done where `id` has an encrypted parent and `id` itself is an encryption root.
         """
         ds = await self._get_instance(id)
         if not ds['encrypted']:
@@ -3319,7 +3323,7 @@ class PoolDatasetService(CRUDService):
         else:
             parent = (await self._get_instance(id.rsplit('/', 1)[0]))
             if not parent['encrypted']:
-                raise CallError('This operation requires parent dataset to be encrypted')
+                raise CallError('This operation requires the parent dataset to be encrypted')
             else:
                 parent_encrypted_root = (await self._get_instance(parent['encryption_root']))
                 if ZFSKeyFormat(parent_encrypted_root['key_format']['value']) == ZFSKeyFormat.PASSPHRASE.value:
