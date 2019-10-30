@@ -189,7 +189,7 @@ class PluginService(CRUDService):
                 for k, v in zip((
                     'jid', 'name', 'boot', 'state', 'type', 'release', 'ip4',
                     'ip6', 'template', 'admin_portal', 'doc_url', 'plugin',
-                    'plugin_repository', 'primary_pkg', 'category',
+                    'plugin_repository', 'primary_pkg', 'category', 'maintainer',
                 ), plugin)
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
