@@ -902,6 +902,7 @@ _gen_conf()
 			echo "vmware_guestd_enable=\"YES\""
 		else
 			echo "vmware_guestd_enable=\"NO\""
+		fi
 	fi
 }
 
