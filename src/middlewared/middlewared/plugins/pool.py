@@ -2976,6 +2976,7 @@ class PoolDatasetService(CRUDService):
         check_key_job.wait_sync()
         if check_key_job.error:
             self.middleware.logger.error(f'Failed to sync database keys: {check_key_job.error}')
+            return
 
         for dataset, status in zip(db_datasets, check_key_job.result):
             if not status['result'] or status['error']:
@@ -3001,11 +3002,12 @@ class PoolDatasetService(CRUDService):
         datasets = self.encrypted_roots_query_db(
             ['OR', [['name', '=', id], ['name', '^', f'{id}/']]], decrypt=True
         )
-        temp_dir = None
+        temp_path = None
         try:
-            temp_dir = tempfile.mkdtemp()
-            tar_path = os.path.join(temp_dir, 'keys')
-            with tarfile.open(tar_path, 'w:xz') as tar:
+            temp_path = tempfile.NamedTemporaryFile()
+            temp_path.close()
+            temp_path = temp_path.name
+            with tarfile.open(temp_path, 'w:xz') as tar:
                 for ds in datasets:
                     db_key = datasets[ds]
                     key = io.BytesIO(db_key if isinstance(db_key, bytes) else db_key.encode())
@@ -3013,10 +3015,11 @@ class PoolDatasetService(CRUDService):
                     info.size = len(db_key)
                     tar.addfile(tarinfo=info, fileobj=key)
 
-            with open(tar_path, 'rb') as f:
+            with open(temp_path, 'rb') as f:
                 shutil.copyfileobj(f, job.pipes.output.w)
         finally:
-            shutil.rmtree(temp_dir or '', ignore_errors=True)
+            if os.path.exists(temp_path or ''):
+                os.unlink(temp_path)
 
     @accepts(
         Str('id'),
@@ -3055,7 +3058,7 @@ class PoolDatasetService(CRUDService):
             Bool('recursive', default=False),
             List(
                 'datasets', items=[
-                    Dict('dataset', Str('name', required=True), Str('passphrase', required=True)),
+                    Dict('dataset', Str('name', required=True), Str('passphrase', required=True, empty=False)),
                 ], default=[],
             ),
         )
@@ -3173,7 +3176,7 @@ class PoolDatasetService(CRUDService):
             Bool('key_file', default=False),
             List(
                 'datasets', items=[
-                    Dict('dataset', Str('name', required=True), Str('passphrase', required=True)),
+                    Dict('dataset', Str('name', required=True), Str('passphrase', required=True, empty=False)),
                 ], default=[],
             ),
         )
@@ -3242,7 +3245,7 @@ class PoolDatasetService(CRUDService):
             Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
             Str('key_format', default=ZFSKeyFormat.HEX.value, enum=list(ZFSKeyFormat.__members__), required=True),
-            Str('passphrase'),
+            Str('passphrase', empty=False),
         )
     )
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)

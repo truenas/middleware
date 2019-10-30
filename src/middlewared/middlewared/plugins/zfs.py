@@ -621,6 +621,7 @@ class ZFSDatasetService(CRUDService):
                 self.common_encryption_checks(ds)
                 ds.change_key(props=options['encryption_properties'], load_key=options['load_key'], key=options['key'])
         except libzfs.ZFSException as e:
+            self.logger.error(f'Failed to change key for {id}', exc_info=True)
             raise CallError(f'Failed to change key for {id}: {e}')
 
     @accepts(
