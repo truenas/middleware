@@ -895,10 +895,14 @@ _gen_conf()
 	# FreeNAS 9.10 uses zfsd
 	echo "zfsd_enable=\"YES\""
 
-	if $(/usr/local/bin/vmware-checkvm > /dev/null); then
-		echo "vmware_guestd_enable=\"YES\""
-	else
-		echo "vmware_guestd_enable=\"NO\""
+	# let's make sure we don't enable this on truenas for now
+	# Jira NAS-103678
+	if is_freenas; then
+        	if $(/usr/local/bin/vmware-checkvm > /dev/null); then
+			echo "vmware_guestd_enable=\"YES\""
+		else
+			echo "vmware_guestd_enable=\"NO\""
+		fi
 	fi
 }
 
