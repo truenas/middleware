@@ -16,7 +16,11 @@ from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.pool import GELI_KEYPATH
 
-CONFIG_FILES = {'pwenc_secret': PWENC_FILE_SECRET, 'geli': GELI_KEYPATH}
+CONFIG_FILES = {
+    'pwenc_secret': PWENC_FILE_SECRET,
+    'geli': GELI_KEYPATH,
+    'root_authorized_keys': '/root/.ssh/authorized_keys',
+}
 FREENAS_DATABASE = '/data/freenas-v1.db'
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
@@ -28,18 +32,24 @@ class ConfigService(Service):
         'configsave',
         Bool('secretseed', default=False),
         Bool('pool_keys', default=False),
+        Bool('root_authorized_keys', default=False),
     ))
     @job(pipes=["output"])
     async def save(self, job, options):
         """
-        Provide configuration file.
+        Create a bundle of security-sensitive information. These options select which information
+        is included in the bundle:
 
-        `secretseed` will include the password secret seed in the bundle.
+        `secretseed`: include password secret seed.
 
-        `pool_keys` when set will include the geli encryption keys in the bundle.
+        `pool_keys`: include GELI encryption keys.
+
+        `root_authorized_keys`: include "authorized_keys" file for the root user.
+
+        If none of these options are set, the bundle is not generated and the database file is provided.
         """
 
-        if not options['secretseed'] and not options['pool_keys']:
+        if all(not options[k] for k in options):
             bundle = False
             filename = FREENAS_DATABASE
         else:
@@ -47,6 +57,8 @@ class ConfigService(Service):
             files = CONFIG_FILES.copy()
             if not options['secretseed']:
                 files['secretseed'] = None
+            if not options['root_authorized_keys'] or not os.path.exists(files['root_authorized_keys']):
+                files['root_authorized_keys'] = None
             if not options['pool_keys'] or not os.path.exists(files['geli']) or not os.listdir(files['geli']):
                 files['geli'] = None
 
