@@ -1672,6 +1672,7 @@ class PoolService(CRUDService):
         if options['recoverykey']:
             job.check_pipe("input")
             with tempfile.NamedTemporaryFile(mode='wb+', dir='/tmp/') as f:
+                os.chmod(f.name, 0o600)
                 await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, f)
                 await self.middleware.run_in_thread(f.flush)
                 failed = await self.middleware.call('disk.geli_attach', pool, None, f.name)
@@ -1926,7 +1927,7 @@ class PoolService(CRUDService):
             encrypt = 2
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
+                os.chmod(passfile, 0o600)
                 f.write(data['passphrase'])
         elif key:
             encrypt = 1
@@ -3007,6 +3008,7 @@ class PoolDatasetService(CRUDService):
             temp_path = tempfile.NamedTemporaryFile()
             temp_path.close()
             temp_path = temp_path.name
+            os.chmod(temp_path, 0o600)
             with tarfile.open(temp_path, 'w:xz') as tar:
                 for ds in datasets:
                     db_key = datasets[ds]
@@ -3367,10 +3369,12 @@ class PoolDatasetService(CRUDService):
         try:
             with tempfile.NamedTemporaryFile(delete=False, mode='wb') as f:
                 key_file = f.name
+                os.chmod(key_file, 0o600)
                 shutil.copyfileobj(job.pipes.input.r, f)
 
             try:
                 temp_dir = tempfile.mkdtemp()
+                os.chmod(temp_dir, 0o600)
                 with tarfile.open(key_file, mode='r:xz') as tar:
                     tar.extractall(path=temp_dir)
 
