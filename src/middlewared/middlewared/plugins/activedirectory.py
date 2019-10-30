@@ -946,6 +946,7 @@ class ActiveDirectoryService(ConfigService):
         if ret == neterr.NOTJOINED:
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join()
+            await self._register_virthostname(ad, smb, smb_ha_mode)
             if smb_ha_mode != 'LEGACY':
                 kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
                 if kt_id:
@@ -954,7 +955,7 @@ class ActiveDirectoryService(ConfigService):
                         'datastore.update',
                         'directoryservice.activedirectory',
                         ad['id'],
-                        {'ad_bindpw': '', 'ad_kerberos_principal': f'{smb["netbiosname"].upper()}$@{ad["domainname"]}'}
+                        {'ad_bindpw': '', 'ad_kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'}
                     )
                     ad = await self.config()
 
@@ -1142,6 +1143,28 @@ class ActiveDirectoryService(ConfigService):
             raise CallError(netlogon_ping.stderr.decode().strip('\n'))
 
         return True
+
+    @private
+    async def _register_virthostname(self, ad, smb, smb_ha_mode):
+        """
+        This co-routine performs virtual hostname aware
+        dynamic DNS updates after joining AD to register
+        CARP addresses.
+        """
+        if not ad['allow_dns_updates'] or smb_ha_mode == 'STANDALONE':
+            return
+
+        vhost = (await self.middleware.call('network.configuration.config'))['hostname_virtual']
+        carp_ips = set(await self.middleware.call('failover.get_ips'))
+        smb_bind_ips = set(smb['bindip']) if smb['bindip'] else carp_ips
+        to_register = carp_ips & smb_bind_ips
+        hostname = f'{vhost}.{ad["domainname"]}'
+        cmd = [SMBCmd.NET.value, '-k', 'ads', 'dns', 'register', hostname]
+        cmd.extend(to_register)
+        netdns = await run(cmd, check=False)
+        if netdns.returncode != 0:
+            self.logger.debug("hostname: %s, ips: %s, text: %s",
+                              hostname, to_register, netdns.stderr.decode())
 
     @private
     async def _net_ads_join(self):
