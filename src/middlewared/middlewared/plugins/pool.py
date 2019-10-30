@@ -3146,6 +3146,15 @@ class PoolDatasetService(CRUDService):
             j = self.middleware.call_sync('pool.dataset.restart_related_attachments', self.__attachments_path(dataset))
             j.wait_sync()
 
+        if unlocked:
+            for unlocked_dataset in filter(lambda d: d not in keys_supplied, unlocked):
+                ds = datasets[unlocked_dataset]
+                self.middleware.call_sync(
+                    'pool.dataset.insert_or_update_encrypted_record', {
+                        'encryption_key': ds['key'], 'key_format': ds['key_format']['value'], 'name': unlocked_dataset
+                    }
+                )
+
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
