@@ -193,7 +193,6 @@ class UsageService(Service):
                 {'platform': platform},
                 {'usage_version': usage_version},
                 {'version': version},
-                {'legacy_ui_enabled': (await self.middleware.call('system.advanced.config'))['legacy_ui']},
                 {'system': [
                     {
                         'users': users, 'snapshots': snapshots, 'zvols': zvols,
