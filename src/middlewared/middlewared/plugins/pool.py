@@ -545,7 +545,6 @@ class PoolService(CRUDService):
                     'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
                 ]
             ),
-            Str('key_format', default='KEY', enum=[ZFSKeyFormat.PASSPHRASE.value, 'KEY']),
             Str('passphrase', default=None, null=True, empty=False),
             Str('key', default=None, null=True, validators=[Range(min=64, max=64)]),
             register=True
@@ -2883,30 +2882,24 @@ class PoolDatasetService(CRUDService):
         if not encryption_dict['enabled']:
             return opts
 
-        passphrase_key_format = encryption_dict['key_format'].lower() != 'key'
-        key_format = ZFSKeyFormat.PASSPHRASE if passphrase_key_format else ZFSKeyFormat.HEX
         key = encryption_dict['key']
         passphrase = encryption_dict['passphrase']
+        passphrase_key_format = bool(encryption_dict['passphrase'])
 
         if passphrase_key_format:
-            if encryption_dict['generate_key']:
-                verrors.add(
-                    f'{schema}.generate_key',
-                    'Must be disabled when key format is set to "PASSPHRASE".'
-                )
-            elif not passphrase:
-                verrors.add(f'{schema}.passphrase', 'Passphrase is required when key format is "PASSPHRASE"')
+            for f in filter(lambda k: encryption_dict[k], ('key', 'key_file', 'generate_key')):
+                verrors.add(f'{schema}.{f}', 'Must be disabled when dataset is to be encrypted with passphrase.')
         else:
-            if passphrase:
-                verrors.add(f'{schema}.passphrase', 'Must not be specified when key format is not "PASSPHRASE"')
-            if not key and not encryption_dict['key_file'] and not encryption_dict['generate_key']:
+            provided_opts = [k for k in ('key', 'key_file', 'generate_key') if encryption_dict[k]]
+            if not provided_opts:
                 verrors.add(
-                    f'{schema}.key_format',
-                    'Please provide a key, key file or select generate_key to automatically generate '
-                    'a key when key_format is not "PASSPHRASE"'
+                    f'{schema}.key',
+                    'Please provide a key or select generate_key to automatically generate '
+                    'a key when passphrase is not provided.'
                 )
-            if key and encryption_dict['generate_key']:
-                verrors.add(f'{schema}.key', 'Must not be specified when automatic generation of key is desired')
+            elif len(provided_opts) > 1:
+                for k in provided_opts:
+                    verrors.add(f'{schema}.{k}', f'Only one of {", ".join(provided_opts)} must be provided.')
 
         if not verrors:
             key = key or passphrase
@@ -2923,7 +2916,7 @@ class PoolDatasetService(CRUDService):
                     return {}
 
             opts = {
-                'keyformat': key_format.value.lower(),
+                'keyformat': (ZFSKeyFormat.PASSPHRASE if passphrase_key_format else ZFSKeyFormat.HEX).value.lower(),
                 'keylocation': 'prompt',
                 'encryption': encryption_dict['algorithm'].lower(),
                 'key': key,
@@ -3262,7 +3255,6 @@ class PoolDatasetService(CRUDService):
             Bool('generate_key', default=False),
             Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
-            Str('key_format', enum=[ZFSKeyFormat.PASSPHRASE.value, 'KEY'], required=True),
             Str('passphrase', empty=False, default=None, null=True),
             Str('key', validators=[Range(min=64, max=64)], default=None, null=True),
         )
@@ -3272,9 +3264,9 @@ class PoolDatasetService(CRUDService):
         """
         Change encryption properties for `id` encrypted dataset.
 
-        Changing `key_format` to "PASSPHRASE" is not allowed if:
+        Changing dataset encryption to use passphrase instead of a key is not allowed if:
 
-        1) It has encrypted roots as children which are encrypted with "HEX" or "RAW" key formats
+        1) It has encrypted roots as children which are encrypted with a key
         2) If it is a root dataset where the system dataset is located
         """
         ds = await self._get_instance(id)
@@ -3286,7 +3278,7 @@ class PoolDatasetService(CRUDService):
         elif ds['encryption_root'] != id:
             verrors.add('id', 'Only encrypted roots can change keys')
 
-        if not verrors and options['key_format'] != 'KEY':
+        if not verrors and options['passphrase']:
             if any(
                 d['name'] == d['encryption_root']
                 for d in await self.middleware.run_in_thread(
@@ -3297,7 +3289,7 @@ class PoolDatasetService(CRUDService):
                 )
             ):
                 verrors.add(
-                    'change_key_options.key_format',
+                    'change_key_options.passphrase',
                     f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
                     'roots which are encrypted with a key as children for passphrase encrypted datasets.'
                 )
@@ -3312,7 +3304,7 @@ class PoolDatasetService(CRUDService):
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', job, verrors, {
-                'enabled': True, 'key_format': options['key_format'], 'passphrase': options['passphrase'],
+                'enabled': True, 'passphrase': options['passphrase'],
                 'generate_key': options['generate_key'], 'key_file': options['key_file'],
                 'pbkdf2iters': options['pbkdf2iters'], 'algorithm': 'on', 'key': options['key'],
             }, 'change_key_options'
@@ -3333,7 +3325,7 @@ class PoolDatasetService(CRUDService):
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end
         await self.insert_or_update_encrypted_record(
-            {'encryption_key': key, 'key_format': options['key_format'], 'name': id}
+            {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
         )
 
     @accepts(Str('id'))
@@ -3580,7 +3572,7 @@ class PoolDatasetService(CRUDService):
                     'Encrypted datasets cannot be created on a GELI encrypted pool.'
                 )
 
-            if data['encryption_options']['key_format'] == 'KEY':
+            if not data['encryption_options']['passphrase']:
                 # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
                 # because we don't allow children to be unlocked while parent is locked
                 parent_encryption_root = (await self._get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
@@ -3591,7 +3583,7 @@ class PoolDatasetService(CRUDService):
                 ):
                     verrors.add(
                         'pool_dataset_create.encryption',
-                        'HEX/RAW keys encrypted children of a PASSPHRASE encrypted dataset are not allowed.'
+                        'Passphrase encrypted datasets cannot have children encrypted with a key.'
                     )
 
         encryption_dict = await self.middleware.call(
