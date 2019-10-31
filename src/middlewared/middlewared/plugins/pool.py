@@ -2638,7 +2638,7 @@ class PoolService(CRUDService):
                     )
 
                 unlock_job = self.middleware.call_sync(
-                    'pool.dataset.unlock', pool['name'], {'restart_related_attachments': False, 'recursive': True}
+                    'pool.dataset.unlock', pool['name'], {'start_related_attachments': False, 'recursive': True}
                 )
                 unlock_job.wait_sync()
                 if unlock_job.error or unlock_job.result['failed']:
@@ -3034,7 +3034,7 @@ class PoolDatasetService(CRUDService):
         Dict(
             'unlock_options',
             Bool('key_file', default=False),
-            Bool('restart_related_attachments', default=True),
+            Bool('start_related_attachments', default=True),
             Bool('recursive', default=False),
             List(
                 'datasets', items=[
@@ -3112,7 +3112,7 @@ class PoolDatasetService(CRUDService):
         unlocked = []
         for name in sorted(
             filter(
-                lambda n: n and n.startswith(id) and datasets[n]['locked'],
+                lambda n: n and f'{n}/'.startswith(f'{id}/') and datasets[n]['locked'],
                 (datasets if options['recursive'] else [id])
             ),
             key=lambda v: v.count('/')
@@ -3141,8 +3141,8 @@ class PoolDatasetService(CRUDService):
             else:
                 unlocked.append(name)
 
-        if options['restart_related_attachments'] and not failed:
-            j = self.middleware.call_sync('pool.dataset.restart_related_attachments', self.__attachments_path(dataset))
+        if options['start_related_attachments'] and not failed:
+            j = self.middleware.call_sync('pool.dataset.start_related_attachments', self.__attachments_path(dataset))
             j.wait_sync()
 
         if unlocked:
@@ -3157,13 +3157,13 @@ class PoolDatasetService(CRUDService):
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
-    @job(lock=lambda args: f'restart_related_attachments_{args[0]}')
-    async def restart_related_attachments(self, path):
+    @job(lock=lambda args: f'start_related_attachments_{args[0]}')
+    async def start_related_attachments(self, job, path):
         for delegate in self.attachment_delegates:
             if delegate.name in ('jail', 'vm'):
-                delegate.toggle((await delegate.query(path, False)), True)
+                await delegate.toggle((await delegate.query(path, False)), True)
             else:
-                delegate.toggle([], True)
+                await delegate.toggle([], True)
 
     @accepts(
         Str('id'),
@@ -3275,8 +3275,6 @@ class PoolDatasetService(CRUDService):
             verrors.add('id', 'Dataset is not encrypted')
         elif ds['locked']:
             verrors.add('id', 'Dataset must be unlocked before key can be changed')
-        elif ds['encryption_root'] != id:
-            verrors.add('id', 'Only encrypted roots can change keys')
 
         if not verrors and options['passphrase']:
             if any(
@@ -3327,6 +3325,8 @@ class PoolDatasetService(CRUDService):
         await self.insert_or_update_encrypted_record(
             {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
         )
+        if options['passphrase'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
+            await self.middleware.call('pool.dataset.sync_db_keys', id)
 
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):
@@ -3337,18 +3337,18 @@ class PoolDatasetService(CRUDService):
         ds = await self._get_instance(id)
         if not ds['encrypted']:
             raise CallError(f'Dataset {id} is not encrypted')
-        elif not ds['encryption_root'] != id:
+        elif ds['encryption_root'] != id:
             raise CallError(f'Dataset {id} is not an encryption root')
         elif ds['locked']:
             raise CallError('Dataset must be unlocked to perform this operation')
         elif '/' not in id:
             raise CallError('Root datasets do not have a parent and cannot inherit encryption settings')
         else:
-            parent = (await self._get_instance(id.rsplit('/', 1)[0]))
+            parent = await self._get_instance(id.rsplit('/', 1)[0])
             if not parent['encrypted']:
                 raise CallError('This operation requires the parent dataset to be encrypted')
             else:
-                parent_encrypted_root = (await self._get_instance(parent['encryption_root']))
+                parent_encrypted_root = await self._get_instance(parent['encryption_root'])
                 if ZFSKeyFormat(parent_encrypted_root['key_format']['value']) == ZFSKeyFormat.PASSPHRASE.value:
                     if any(
                         d['name'] == d['encryption_root']
