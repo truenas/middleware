@@ -547,7 +547,7 @@ class PoolService(CRUDService):
                     'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
                 ]
             ),
-            Str('key_format', default='HEX', enum=[ZFSKeyFormat.PASSPHRASE.value, ZFSKeyFormat.HEX.value]),
+            Str('key_format', default='KEY', enum=[ZFSKeyFormat.PASSPHRASE.value, 'KEY']),
             Str('passphrase', default=None, null=True, empty=False),
             Str('key', default=None, null=True, validators=[Range(min=64, max=64)]),
             register=True
@@ -595,15 +595,17 @@ class PoolService(CRUDService):
         `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
 
         `encryption_options` specify configuration for encryption of root dataset for `name` pool.
-        `encryption_options.passphrase` must be specified if `encryption_options.key_format` is set to "PASSPHRASE".
-        Otherwise a key for "RAW"/"HEX" `encryption_options.key_format` can be specified with uploading it. Please
-        refer to websocket documentation for details on how the key can be uploaded. When a key is to be uploaded,
-        `encryption_options.key_file` must be enabled.
-        `encryption_options.generate_key` when enabled automatically generates the key for "RAW"/"HEX" key formats.
+        `encryption_options.passphrase` must be specified if encryption for root dataset is desired with a passphrase
+        as a key.
+        Otherwise a hex encoded key can be specified by either uploading it or specifying `encryption_options.key`.
+        Please refer to websocket documentation for details on how the key can be uploaded. When a key is to
+        be uploaded, `encryption_options.key_file` must be enabled.
+        `encryption_options.generate_key` when enabled automatically generates the key to be used
+        for dataset encryption.
 
-        It should be noted that "RAW"/"HEX" keys are stored by the system for automatic locking/unlocking
-        on import/export of encrypted datasets. If that is not desired, "PASSPHRASE" should be used for
-        `encryption_options.key_format`.
+        It should be noted that keys are stored by the system for automatic locking/unlocking
+        on import/export of encrypted datasets. If that is not desired, dataset should be created
+        with a passphrase as a key.
 
         Example of `topology`:
 
@@ -2883,8 +2885,8 @@ class PoolDatasetService(CRUDService):
         if not encryption_dict['enabled']:
             return opts
 
-        key_format = ZFSKeyFormat(encryption_dict['key_format'])
-        passphrase_key_format = key_format == ZFSKeyFormat.PASSPHRASE
+        passphrase_key_format = encryption_dict['key_format'].lower() != 'key'
+        key_format = ZFSKeyFormat.PASSPHRASE if passphrase_key_format else ZFSKeyFormat.HEX
         key = encryption_dict['key']
         passphrase = encryption_dict['passphrase']
 
@@ -3262,7 +3264,7 @@ class PoolDatasetService(CRUDService):
             Bool('generate_key', default=False),
             Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
-            Str('key_format', enum=[ZFSKeyFormat.PASSPHRASE.value, ZFSKeyFormat.HEX.value], required=True),
+            Str('key_format', enum=[ZFSKeyFormat.PASSPHRASE.value, 'KEY'], required=True),
             Str('passphrase', empty=False, default=None, null=True),
             Str('key', validators=[Range(min=64, max=64)], default=None, null=True),
         )
@@ -3286,7 +3288,7 @@ class PoolDatasetService(CRUDService):
         elif ds['encryption_root'] != id:
             verrors.add('id', 'Only encrypted roots can change keys')
 
-        if not verrors and ZFSKeyFormat(options['key_format']) == ZFSKeyFormat.PASSPHRASE:
+        if not verrors and options['key_format'] != 'KEY':
             if any(
                 d['name'] == d['encryption_root']
                 for d in await self.middleware.run_in_thread(
@@ -3298,8 +3300,8 @@ class PoolDatasetService(CRUDService):
             ):
                 verrors.add(
                     'change_key_options.key_format',
-                    f'{id} has children which are encrypted with HEX/RAW keys. It is not allowed to '
-                    'have HEX/RAW encrypted roots as children for PASSPHRASE encrypted datasets.'
+                    f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
+                    'roots which are encrypted with a key as children for passphrase encrypted datasets.'
                 )
             elif id == (await self.middleware.call('systemdataset.config'))['pool']:
                 verrors.add(
@@ -3350,7 +3352,7 @@ class PoolDatasetService(CRUDService):
         elif ds['locked']:
             raise CallError('Dataset must be unlocked to perform this operation')
         elif '/' not in id:
-            raise CallError('This operation is not valid for root datasets')
+            raise CallError('Root datasets do not have a parent and cannot inherit encryption settings')
         else:
             parent = (await self._get_instance(id.rsplit('/', 1)[0]))
             if not parent['encrypted']:
@@ -3368,9 +3370,8 @@ class PoolDatasetService(CRUDService):
                         )
                     ):
                         raise CallError(
-                            f'{id} has children which are encrypted with HEX/RAW keys. It is not allowed to '
-                            'have HEX/RAW encrypted roots as children when parent encrypted root is encrypted'
-                            'with PASSPHRASE key format.'
+                            f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
+                            'roots which are encrypted with a key as children for passphrase encrypted datasets.'
                         )
 
         await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
@@ -3515,19 +3516,21 @@ class PoolDatasetService(CRUDService):
         `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
         There are 2 cases where ZFS encryption is not allowed for a dataset:
         1) Pool in question is GELI encrypted.
-        2) If the parent dataset is encrypted with "PASSPHRASE" key format and `name` is being created either with
-           "RAW"/"HEX" `encryption_options.key_format`.
+        2) If the parent dataset is encrypted with a passphrase and `name` is being created
+           with a key for encrypting the dataset.
 
-        `encryption_options` specify configuration for encryption of root dataset for `name` pool.
-        `encryption_options.passphrase` must be specified if `encryption_options.key_format` is set to "PASSPHRASE".
-        Otherwise a key for "RAW"/"HEX" `encryption_options.key_format` can be specified with uploading it. Please
-        refer to websocket documentation for details on how the key can be uploaded. When a key is to be uploaded,
-        `encryption_options.key_file` must be enabled.
-        `encryption_options.generate_key` when enabled automatically generates the key for "RAW"/"HEX" key formats.
+        `encryption_options` specifies configuration for encryption of dataset for `name` pool.
+        `encryption_options.passphrase` must be specified if encryption for dataset is desired with a passphrase
+        as a key.
+        Otherwise a hex encoded key can be specified by either uploading it or specifying `encryption_options.key`.
+        Please refer to websocket documentation for details on how the key can be uploaded. When a key is to
+        be uploaded, `encryption_options.key_file` must be enabled.
+        `encryption_options.generate_key` when enabled automatically generates the key to be used
+        for dataset encryption.
 
-        It should be noted that "RAW"/"HEX" keys are stored by the system for automatic locking/unlocking
-        on import/export of encrypted datasets. If that is not desired, "PASSPHRASE" should be used for
-        `encryption_options.key_format`.
+        It should be noted that keys are stored by the system for automatic locking/unlocking
+        on import/export of encrypted datasets. If that is not desired, dataset should be created
+        with a passphrase as a key.
 
         .. examples(websocket)::
 
@@ -3579,7 +3582,7 @@ class PoolDatasetService(CRUDService):
                     'Encrypted datasets cannot be created on a GELI encrypted pool.'
                 )
 
-            if ZFSKeyFormat(data['encryption_options']['key_format']) != ZFSKeyFormat.PASSPHRASE:
+            if data['encryption_options']['key_format'] == 'KEY':
                 # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
                 # because we don't allow children to be unlocked while parent is locked
                 parent_encryption_root = (await self._get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
