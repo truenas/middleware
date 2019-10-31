@@ -545,8 +545,8 @@ class PoolService(CRUDService):
                     'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
                 ]
             ),
-            Str('passphrase', default=None, null=True, empty=False),
-            Str('key', default=None, null=True, validators=[Range(min=64, max=64)]),
+            Str('passphrase', default=None, null=True, empty=False, private=True),
+            Str('key', default=None, null=True, validators=[Range(min=64, max=64)], private=True),
             register=True
         ),
         Dict(
@@ -3041,8 +3041,8 @@ class PoolDatasetService(CRUDService):
                     Dict(
                         'dataset',
                         Str('name', required=True, empty=False),
-                        Str('key', validators=[Range(min=64, max=64)]),
-                        Str('passphrase', empty=False),
+                        Str('key', validators=[Range(min=64, max=64)], private=True),
+                        Str('passphrase', empty=False, private=True),
                     )
                 ], default=[],
             ),
@@ -3175,8 +3175,8 @@ class PoolDatasetService(CRUDService):
                     Dict(
                         'dataset',
                         Str('name', required=True, empty=False),
-                        Str('key', validators=[Range(min=64, max=64)]),
-                        Str('passphrase', empty=False),
+                        Str('key', validators=[Range(min=64, max=64)], private=True),
+                        Str('passphrase', empty=False, private=True),
                     )
                 ], default=[],
             ),
@@ -3255,8 +3255,8 @@ class PoolDatasetService(CRUDService):
             Bool('generate_key', default=False),
             Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
-            Str('passphrase', empty=False, default=None, null=True),
-            Str('key', validators=[Range(min=64, max=64)], default=None, null=True),
+            Str('passphrase', empty=False, default=None, null=True, private=True),
+            Str('key', validators=[Range(min=64, max=64)], default=None, null=True, private=True),
         )
     )
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
