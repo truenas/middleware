@@ -621,9 +621,11 @@ class CoreService(Service):
         for k, v in list(self.middleware.get_services().items()):
             if v._config.private is True:
                 continue
-            if isinstance(v, CRUDService):
+            if isinstance(v, CRUDService) or (isinstance(v, CompoundService) and any(isinstance(part, CRUDService)
+                                                                                     for part in v.parts)):
                 _typ = 'crud'
-            elif isinstance(v, ConfigService):
+            elif isinstance(v, ConfigService) or (isinstance(v, CompoundService) and any(isinstance(part, ConfigService)
+                                                                                         for part in v.parts)):
                 _typ = 'config'
             else:
                 _typ = 'service'
