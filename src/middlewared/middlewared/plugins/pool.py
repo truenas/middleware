@@ -546,8 +546,9 @@ class PoolService(CRUDService):
                     'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
                 ]
             ),
-            Str('key_format', default='HEX', enum=list(ZFSKeyFormat.__members__)),
+            Str('key_format', default='HEX', enum=[ZFSKeyFormat.PASSPHRASE.value, ZFSKeyFormat.HEX.value]),
             Str('passphrase', default=None, null=True, empty=False),
+            Str('key', default=None, null=True, validators=[Range(min=64, max=64)]),
             register=True
         ),
         Dict(
@@ -2883,12 +2884,8 @@ class PoolDatasetService(CRUDService):
 
         key_format = ZFSKeyFormat(encryption_dict['key_format'])
         passphrase_key_format = key_format == ZFSKeyFormat.PASSPHRASE
-        if not encryption_dict['key_file'] and not passphrase_key_format and not encryption_dict['generate_key']:
-            verrors.add(
-                f'{schema}.key_format',
-                'Please provide a key file or select generate_key to automatically generate '
-                'a key when key_format is not "PASSPHRASE"'
-            )
+        key = encryption_dict['key']
+        passphrase = encryption_dict['passphrase']
 
         if passphrase_key_format:
             if encryption_dict['generate_key']:
@@ -2896,28 +2893,33 @@ class PoolDatasetService(CRUDService):
                     f'{schema}.generate_key',
                     'Must be disabled when key format is set to "PASSPHRASE".'
                 )
-            elif not encryption_dict['passphrase']:
+            elif not passphrase:
                 verrors.add(f'{schema}.passphrase', 'Passphrase is required when key format is "PASSPHRASE"')
-        elif encryption_dict['passphrase']:
-            verrors.add(
-                f'{schema}.passphrase',
-                'Should not be provided when key format is not "PASSPHRASE"'
-            )
+        else:
+            if passphrase:
+                verrors.add(f'{schema}.passphrase', 'Must not be specified when key format is not "PASSPHRASE"')
+            if not key and not encryption_dict['key_file'] and not encryption_dict['generate_key']:
+                verrors.add(
+                    f'{schema}.key_format',
+                    'Please provide a key, key file or select generate_key to automatically generate '
+                    'a key when key_format is not "PASSPHRASE"'
+                )
+            if key and encryption_dict['generate_key']:
+                verrors.add(f'{schema}.key', 'Must not be specified when automatic generation of key is desired')
 
         if not verrors:
-            key = encryption_dict['passphrase']
+            key = key or passphrase
             if encryption_dict['generate_key']:
-                key = getattr(secrets, f'token_{"hex" if key_format == ZFSKeyFormat.HEX else "bytes"}')(32)
+                key = secrets.token_hex(32)
             elif not key:
                 job.check_pipe('input')
-                key = job.pipes.input.r.read(32 if key_format == ZFSKeyFormat.RAW else 64)
+                key = job.pipes.input.r.read(64)
                 # We would like to ensure key matches specified key format
-                if key_format == ZFSKeyFormat.HEX:
-                    try:
-                        key.decode()
-                    except UnicodeDecodeError:
-                        verrors.add(f'{schema}.key_file', 'Unable to decode "HEX" key')
-                        return {}
+                try:
+                    key = key.decode()
+                except UnicodeDecodeError:
+                    verrors.add(f'{schema}.key_file', 'Please specify a valid key')
+                    return {}
 
             opts = {
                 'keyformat': key_format.value.lower(),
@@ -3049,7 +3051,12 @@ class PoolDatasetService(CRUDService):
             Bool('recursive', default=False),
             List(
                 'datasets', items=[
-                    Dict('dataset', Str('name', required=True), Str('passphrase', required=True, empty=False)),
+                    Dict(
+                        'dataset',
+                        Str('name', required=True, empty=False),
+                        Str('key', validators=[Range(min=64, max=64)]),
+                        Str('passphrase', empty=False),
+                    )
                 ], default=[],
             ),
         )
@@ -3075,7 +3082,14 @@ class PoolDatasetService(CRUDService):
 
         if options['key_file']:
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
-        keys_supplied.update({d['name']: d['passphrase'] for d in options['datasets']})
+
+        for i, ds in enumerate(options['datasets']):
+            if all(ds.get(k) for k in ('key', 'passphrase')):
+                verrors.add(
+                    f'unlock_options.datasets.{i}.dataset.key',
+                    f'Must not be specified when unlock_options.datasets.{i}.dataset.passphrase is supplied.'
+                )
+            keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
 
         if '/' in id or not options['recursive']:
             if not dataset['locked']:
@@ -3091,10 +3105,18 @@ class PoolDatasetService(CRUDService):
         locked_datasets = []
         datasets = self.query_encrypted_datasets(id.split('/', 1)[0], {'key_loaded': False})
         for name, ds in datasets.items():
-            datasets[name] = {'key': keys_supplied.get(name) or ds['encryption_key'], **ds}
+            ds_key = keys_supplied.get(name) or ds['encryption_key']
             if ds['locked'] and id != name and id.startswith(name):
                 # This ensures that `id` has locked parents and they should be unlocked first
                 locked_datasets.append(name)
+            elif ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
+                # This is hex encoded right now - we want to change it back to raw
+                try:
+                    ds_key = bytes.fromhex(ds_key)
+                except ValueError:
+                    ds_key = None
+
+            datasets[name] = {'key': ds_key, **ds}
 
         if locked_datasets:
             raise CallError(f'{id} has locked parents {",".join(locked_datasets)} which must be unlocked first')
@@ -3138,10 +3160,10 @@ class PoolDatasetService(CRUDService):
 
         if unlocked:
             for unlocked_dataset in filter(lambda d: d in keys_supplied, unlocked):
-                ds = datasets[unlocked_dataset]
                 self.middleware.call_sync(
                     'pool.dataset.insert_or_update_encrypted_record', {
-                        'encryption_key': ds['key'], 'key_format': ds['key_format']['value'], 'name': unlocked_dataset
+                        'encryption_key': keys_supplied[unlocked_dataset], 'name': unlocked_dataset,
+                        'key_format': datasets[unlocked_dataset]['key_format']['value'],
                     }
                 )
 
@@ -3163,7 +3185,12 @@ class PoolDatasetService(CRUDService):
             Bool('key_file', default=False),
             List(
                 'datasets', items=[
-                    Dict('dataset', Str('name', required=True), Str('passphrase', required=True, empty=False)),
+                    Dict(
+                        'dataset',
+                        Str('name', required=True, empty=False),
+                        Str('key', validators=[Range(min=64, max=64)]),
+                        Str('passphrase', empty=False),
+                    )
                 ], default=[],
             ),
         )
@@ -3194,17 +3221,29 @@ class PoolDatasetService(CRUDService):
         ]
         """
         keys_supplied = {}
-
+        verrors = ValidationErrors()
         if options['key_file']:
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
-        keys_supplied.update({d['name']: d['passphrase'] for d in options['datasets']})
 
+        for i, ds in enumerate(options['datasets']):
+            if all(ds.get(k) for k in ('key', 'passphrase')):
+                verrors.add(
+                    f'unlock_options.datasets.{i}.dataset.key',
+                    f'Must not be specified when unlock_options.datasets.{i}.dataset.passphrase is supplied.'
+                )
+            keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
+
+        verrors.check()
         datasets = self.query_encrypted_datasets(id, {'all': True})
 
-        to_check = [
-            (name, {'key': keys_supplied.get(name) or ds['encryption_key']})
-            for name, ds in datasets.items()
-        ]
+        to_check = []
+        for name, ds in datasets.items():
+            ds_key = keys_supplied.get(name) or ds['encryption_key']
+            if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
+                with contextlib.suppress(ValueError):
+                    ds_key = bytes.fromhex(ds_key)
+            to_check.append((name, {'key': ds_key}))
+
         check_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', to_check)
         check_job.wait_sync()
         if check_job.error:
@@ -3216,7 +3255,7 @@ class PoolDatasetService(CRUDService):
             data = datasets[ds_name]
             results.append({
                 'name': ds_name, 'key_format': ZFSKeyFormat(data['key_format']['value']).value,
-                'key_present': bool(data['encryption_key']),
+                'key_present_in_database': bool(data['encryption_key']),
                 'valid_key': bool(status['result']), 'locked': data['locked']
             })
 
@@ -3229,8 +3268,9 @@ class PoolDatasetService(CRUDService):
             Bool('generate_key', default=False),
             Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
-            Str('key_format', default=ZFSKeyFormat.HEX.value, enum=list(ZFSKeyFormat.__members__), required=True),
-            Str('passphrase', empty=False),
+            Str('key_format', enum=[ZFSKeyFormat.PASSPHRASE.value, ZFSKeyFormat.HEX.value], required=True),
+            Str('passphrase', empty=False, default=None, null=True),
+            Str('key', validators=[Range(min=64, max=64)], default=None, null=True),
         )
     )
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
@@ -3278,9 +3318,9 @@ class PoolDatasetService(CRUDService):
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', job, verrors, {
-                'enabled': True, 'key_format': options['key_format'], 'passphrase': options.get('passphrase'),
-                'generate_key': options['generate_key'], 'key_file': options.get('key_file'),
-                'pbkdf2iters': options['pbkdf2iters'], 'algorithm': 'on',
+                'enabled': True, 'key_format': options['key_format'], 'passphrase': options['passphrase'],
+                'generate_key': options['generate_key'], 'key_file': options['key_file'],
+                'pbkdf2iters': options['pbkdf2iters'], 'algorithm': 'on', 'key': options['key'],
             }, 'change_key_options'
         )
 
