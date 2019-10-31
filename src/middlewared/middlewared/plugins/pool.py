@@ -2911,10 +2911,10 @@ class PoolDatasetService(CRUDService):
         if not verrors:
             key = encryption_dict['passphrase']
             if encryption_dict['generate_key']:
-                key = getattr(secrets, f'token_{"hex" if key_format == ZFSKeyFormat.HEX else "bytes"}')(32)[:32]
+                key = getattr(secrets, f'token_{"hex" if key_format == ZFSKeyFormat.HEX else "bytes"}')(32)
             elif not key:
                 job.check_pipe('input')
-                key = job.pipes.input.r.read(32)
+                key = job.pipes.input.r.read(32 if key_format == ZFSKeyFormat.RAW else 64)
                 # We would like to ensure key matches specified key format
                 if key_format == ZFSKeyFormat.HEX:
                     try:
@@ -2936,21 +2936,13 @@ class PoolDatasetService(CRUDService):
     def query_encrypted_datasets(self, name, options=None):
         # Common function to retrieve encrypted datasets
         options = options or {}
-        recursive_op = (
-            (lambda x, y: f'{x}/'.startswith(f'{y}/')) if options.get('recursive') else (lambda x, y: x == y)
-        )
         key_loaded = options.get('key_loaded', True)
-        db_results = self.encrypted_roots_query_db(
-            [
-                ['name', '=', name], *(['name', '^', f'{name}/'] if options.get('recursive') else []),
-                *(options.get('db_filters', []))
-            ], True
-        ) if options.get('load_db') else {}
+        db_results = self.encrypted_roots_query_db([['OR', [['name', '=', name], ['name', '^', f'{name}/']]]], True)
 
         def normalize(ds):
             passphrase = ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.PASSPHRASE
             key = db_results.get(ds['name']) if not passphrase else None
-            return ds['name'], {'encryption_key': key, **ds} if options.get('full_output') else key
+            return ds['name'], {'encryption_key': key, **ds}
 
         def check_key(ds):
             return options.get('all') or (ds['key_loaded'] and key_loaded) or (not ds['key_loaded'] and not key_loaded)
@@ -2958,9 +2950,8 @@ class PoolDatasetService(CRUDService):
         return dict(map(
             normalize,
             filter(
-                lambda d: d['name'] == d['encryption_root'] and d['encrypted'] and recursive_op(
-                    d['name'], name
-                ) and check_key(d),
+                lambda d: d['name'] == d['encryption_root'] and d['encrypted']
+                and f'{d["name"]}/'.startswith(f'{name}/') and check_key(d),
                 self.query()
             )
         ))
@@ -3100,11 +3091,7 @@ class PoolDatasetService(CRUDService):
         verrors.check()
 
         locked_datasets = []
-        datasets = self.query_encrypted_datasets(
-            id.split('/', 1)[0], {
-                'recursive': True, 'load_db': True, 'full_output': True, 'key_loaded': False
-            }
-        )
+        datasets = self.query_encrypted_datasets(id.split('/', 1)[0], {'key_loaded': False})
         for name, ds in datasets.items():
             datasets[name] = {'key': keys_supplied.get(name) or ds['encryption_key'], **ds}
             if ds['locked'] and id != name and id.startswith(name):
@@ -3214,9 +3201,7 @@ class PoolDatasetService(CRUDService):
             keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
         keys_supplied.update({d['name']: d['passphrase'] for d in options['datasets']})
 
-        datasets = self.query_encrypted_datasets(
-            id, {'recursive': True, 'load_db': True, 'full_output': True, 'all': True}
-        )
+        datasets = self.query_encrypted_datasets(id, {'all': True})
 
         to_check = [
             (name, {'key': keys_supplied.get(name) or ds['encryption_key']})

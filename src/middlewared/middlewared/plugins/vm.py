@@ -2035,13 +2035,13 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def query(self, path, enabled):
         vms_attached = []
-        vms = {
+        ignored_vms = {
             vm['id']: vm for vm in await self.middleware.call(
                 'vm.query', [('status.state', '!=' if enabled else '=', 'RUNNING')]
             )
         }
         for device in await self.middleware.call('datastore.query', 'vm.device'):
-            if (device['dtype'] not in ('DISK', 'RAW')) or device['vm']['id'] in vms:
+            if (device['dtype'] not in ('DISK', 'RAW')) or device['vm']['id'] in ignored_vms:
                 continue
 
             disk = device['attributes'].get('path', None)
