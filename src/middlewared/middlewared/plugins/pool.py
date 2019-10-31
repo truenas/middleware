@@ -2910,8 +2910,8 @@ class PoolDatasetService(CRUDService):
                 key = job.pipes.input.r.read(64)
                 # We would like to ensure key matches specified key format
                 try:
-                    key = key.decode()
-                except UnicodeDecodeError:
+                    key = hex(int(key, 16))[2:]
+                except ValueError:
                     verrors.add(f'{schema}.key_file', 'Please specify a valid key')
                     return {}
 
