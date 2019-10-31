@@ -3083,7 +3083,7 @@ class PoolDatasetService(CRUDService):
             if all(ds.get(k) for k in ('key', 'passphrase')):
                 verrors.add(
                     f'unlock_options.datasets.{i}.dataset.key',
-                    f'Must not be specified when unlock_options.datasets.{i}.dataset.passphrase is supplied.'
+                    f'Must not be specified when passphrase for {ds["name"]} is supplied'
                 )
             keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
 
@@ -3225,7 +3225,7 @@ class PoolDatasetService(CRUDService):
             if all(ds.get(k) for k in ('key', 'passphrase')):
                 verrors.add(
                     f'unlock_options.datasets.{i}.dataset.key',
-                    f'Must not be specified when unlock_options.datasets.{i}.dataset.passphrase is supplied.'
+                    f'Must not be specified when passphrase for {ds["name"]} is supplied'
                 )
             keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
 
