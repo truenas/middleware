@@ -1988,9 +1988,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('service.reload', 'disk')
         await self.middleware.call_hook('pool.post_import_pool', pool)
-        await self.middleware.call(
-            'pool.dataset.sync_db_keys', ['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]
-        )
+        await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
 
         return True
 
@@ -2959,8 +2957,10 @@ class PoolDatasetService(CRUDService):
     @periodic(86400)
     @private
     @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
-    def sync_db_keys(self, job, filters=None):
-        db_datasets = self.encrypted_roots_query_db(filters=filters, decrypt=True)
+    def sync_db_keys(self, job, name=None):
+        db_datasets = self.encrypted_roots_query_db(
+            ['OR', [['name', '=', name], ['name', '^', f'{name}/']]] if name else None, True
+        )
         to_remove = []
         check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
             (name, {'key': db_datasets[name]}) for name in db_datasets
@@ -2986,9 +2986,7 @@ class PoolDatasetService(CRUDService):
         Please refer to websocket documentation for downloading the file.
         """
         self.middleware.call_sync('pool.dataset._get_instance', id)
-        sync_job = self.middleware.call_sync(
-            'pool.dataset.sync_db_keys', ['OR', [['name', '=', id], ['name', '^', f'{id}/']]]
-        )
+        sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', id)
         sync_job.wait_sync()
 
         datasets = self.encrypted_roots_query_db(
@@ -3342,9 +3340,7 @@ class PoolDatasetService(CRUDService):
                         )
 
         await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
-        await self.middleware.call(
-            'pool.dataset.sync_db_keys', ['OR', [['name', '=', id], ['name', '^', f'{id}/']]]
-        )
+        await self.middleware.call('pool.dataset.sync_db_keys', id)
 
     @private
     def _retrieve_keys_from_compressed_file(self, job, ds_name):
