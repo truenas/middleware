@@ -27,6 +27,7 @@
 # $FreeBSD$
 #####################################################################
 
+import copy
 import getpass
 import os
 import re
@@ -34,6 +35,7 @@ import signal
 import sys
 import subprocess
 import time
+import traceback
 
 import ipaddr
 import sqlite3
@@ -52,6 +54,273 @@ from middlewared.client import Client
 from requests.packages.urllib3 import poolmanager
 from requests.packages.urllib3.connectionpool import HTTPSConnectionPool
 
+LAGGType = (
+    ('failover', 'Failover'),
+    ('lacp', 'LACP'),
+    ('loadbalance', 'Load Balance'),
+    ('roundrobin', 'Round Robin'),
+    ('none', 'None'),
+)
+
+
+class NICChoices(object):
+    """Populate a list of NIC choices"""
+    def __init__(self, nolagg=False, novlan=False, noloopback=True, notap=True,
+                 exclude_configured=True, include_vlan_parent=False,
+                 exclude_unconfigured_vlan_parent=False,
+                 with_alias=False, nobridge=True, noepair=True, include_lagg_parent=True):
+
+        self.nolagg = nolagg
+        self.novlan = novlan
+        self.noloopback = noloopback
+        self.notap = notap
+        self.exclude_configured = exclude_configured
+        self.include_vlan_parent = include_vlan_parent
+        self.exclude_unconfigured_vlan_parent = exclude_unconfigured_vlan_parent
+        self.with_alias = with_alias
+        self.nobridge = nobridge
+        self.noepair = noepair
+        self.include_lagg_parent = include_lagg_parent
+
+    def __iter__(self):
+        pipe = os.popen("/sbin/ifconfig -l")
+        self._NIClist = pipe.read().strip().split(' ')
+        self._NIClist = [y for y in self._NIClist if y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0')]
+        if self.noloopback is False:
+            self._NIClist.append('lo0')
+
+        # Remove internal interfaces for failover
+        with Client() as c:
+            if not c.call('system.is_freenas'):
+                for iface in c.call('failover.internal_interfaces'):
+                    if iface in self._NIClist:
+                        self._NIClist.remove(iface)
+
+        conn = sqlite3.connect('/data/freenas-v1.db')
+        c = conn.cursor()
+        # Remove interfaces that are parent devices of a lagg
+        # Database queries are wrapped in try/except as this is run
+        # before the database is created during syncdb and the queries
+        # will fail
+        if self.include_lagg_parent:
+            try:
+                c.execute("SELECT lagg_physnic FROM network_lagginterfacemembers")
+            except sqlite3.OperationalError:
+                pass
+            else:
+                for interface in c:
+                    if interface[0] in self._NIClist:
+                        self._NIClist.remove(interface[0])
+
+        if self.nolagg:
+            # vlan devices are not valid parents of laggs
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("lagg")]
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
+        if self.novlan:
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
+        else:
+            # This removes devices that are parents of vlans.  We don't
+            # remove these devices if we are adding a vlan since multiple
+            # vlan devices may share the same parent.
+            # The exception to this case is when we are getting the NIC
+            # list for the GUI, in which case we want the vlan parents
+            # as they may have a valid config on them.
+            if not self.include_vlan_parent or self.exclude_unconfigured_vlan_parent:
+                try:
+                    c.execute("SELECT vlan_pint FROM network_vlan")
+                except sqlite3.OperationalError:
+                    pass
+                else:
+                    for interface in c:
+                        if interface[0] in self._NIClist:
+                            self._NIClist.remove(interface[0])
+
+            if self.exclude_unconfigured_vlan_parent:
+                # Add the configured VLAN parents back in
+                try:
+                    c.execute("SELECT vlan_pint FROM network_vlan "
+                              "INNER JOIN network_interfaces ON "
+                              "network_vlan.vlan_pint=network_interfaces.int_interface "
+                              "WHERE network_interfaces.int_interface IS NOT NULL "
+                              "AND ((network_interfaces.int_ipv4address != '' "
+                              "AND network_interfaces.int_ipv4address IS NOT NULL) "
+                              "OR network_interfaces.int_dhcp = 1)")
+                except sqlite3.OperationalError:
+                    pass
+                else:
+                    for interface in c:
+                        if interface[0] not in self._NIClist:
+                            self._NIClist.append(interface[0])
+
+        if self.with_alias:
+            try:
+                sql = """
+                    SELECT
+                        int_interface
+
+                    FROM
+                        network_interfaces as ni
+
+                    INNER JOIN
+                        network_alias as na
+                    ON
+                        na.alias_interface_id = ni.id
+                """
+                c.execute(sql)
+
+            except sqlite3.OperationalError:
+                pass
+
+            else:
+                aliased_nics = [x[0] for x in c]
+                niclist = copy.deepcopy(self._NIClist)
+                for interface in niclist:
+                    if interface not in aliased_nics:
+                        self._NIClist.remove(interface)
+
+        if self.exclude_configured:
+            try:
+                # Exclude any configured interfaces
+                c.execute("SELECT int_interface FROM network_interfaces")
+            except sqlite3.OperationalError:
+                pass
+            else:
+                for interface in c:
+                    if interface[0] in self._NIClist:
+                        self._NIClist.remove(interface[0])
+
+        if self.nobridge:
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("bridge")]
+
+        if self.noepair:
+            niclist = copy.deepcopy(self._NIClist)
+            for nic in niclist:
+                if nic.startswith('epair') or nic.startswith('vnet'):
+                    self._NIClist.remove(nic)
+
+        if self.notap:
+            taplist = copy.deepcopy(self._NIClist)
+            for nic in taplist:
+                if nic.startswith('tap'):
+                    self._NIClist.remove(nic)
+
+        self.max_choices = len(self._NIClist)
+
+        return iter((i, i) for i in self._NIClist)
+
+
+class DjangoModelMeta(type):
+    @property
+    def objects(cls):
+        return DjangoModelManager(cls)
+
+
+class DjangoModel(metaclass=DjangoModelMeta):
+    datastore = NotImplementedError
+
+    def __init__(self, **kwargs):
+        self.row = kwargs
+
+    def __getattr__(self, item):
+        try:
+            return self.row[item]
+        except KeyError:
+            return None
+
+    def __setattr__(self, key, value):
+        if key in ['row']:
+            self.__dict__[key] = value
+        else:
+            self.row[key] = value
+
+    def save(self):
+        data = self.row.copy()
+
+        for k, v in data.items():
+            if isinstance(v, DjangoModel):
+                if v.id is None:
+                    v.save()
+
+                data[k] = v.id
+
+        with Client() as c:
+            if 'id' in self.row:
+                c.call('datastore.update', self.datastore, self.row['id'], data)
+            else:
+                self.row['id'] = c.call('datastore.insert', self.datastore, data)
+
+    def delete(self):
+        with Client() as c:
+            c.call('datastore.delete', self.datastore, self.row['id'])
+
+
+class DjangoModelManager:
+    def __init__(self, cls):
+        self.cls = cls
+
+    def all(self):
+        return self.filter()
+
+    def create(self, **kwargs):
+        self.cls(**kwargs).save()
+
+    def filter(self, **kwargs):
+        with Client() as c:
+            return DjangoModelResultSet([
+                self.cls(**row)
+                for row in c.call('datastore.query', self.cls.datastore, [[k, '=', v] for k, v in kwargs.items()])
+            ])
+
+
+class DjangoModelResultSet:
+    def __init__(self, objects):
+        self.objects = objects
+
+    def exists(self):
+        return bool(self.objects)
+
+    def __bool__(self):
+        return bool(self.objects)
+
+    def __getitem__(self, item):
+        return self.objects[item]
+
+    def __iter__(self):
+        return iter(self.objects)
+
+
+def produce_django_model(ds):
+    class Model(DjangoModel):
+        datastore = ds
+
+    return Model
+
+
+LAGGInterfaceMembers = produce_django_model("network.lagginterfacemembers")
+VLAN = produce_django_model("network.vlan")
+GlobalConfiguration = produce_django_model("network.globalconfiguration")
+StaticRoute = produce_django_model("network.staticroute")
+Support = produce_django_model("system.support")
+
+
+class Interfaces(DjangoModel):
+    datastore = "network.interfaces"
+
+    def __str__(self):
+        if not self.int_name:
+            return self.int_interface
+        return str(self.int_name)
+
+
+class LAGGInterface(DjangoModel):
+    datastore = "network.lagginterface"
+
+    def __init__(self, **kwargs):
+        if 'lagg_interface' in kwargs and isinstance(kwargs['lagg_interface'], dict):
+            kwargs['lagg_interface'] = Interfaces(**kwargs['lagg_interface'])
+
+        super().__init__(**kwargs)
+
 
 class FailoverIsEnabledException(Exception):
     pass
@@ -59,16 +328,12 @@ class FailoverIsEnabledException(Exception):
 
 def ensure_failover_is_disabled():
     with Client() as c:
-        is_freenas = c.call('system.is_freenas')
-        failover_licensed = False
-        if not is_freenas:
-            failover_licensed = c.call('failover.licensed')
-    if not is_freenas:
-        from freenasUI.failover.models import Failover
-        qs = Failover.objects.all()
-        if qs.exists():
-            if not qs[0].disabled:
-                raise FailoverIsEnabledException()
+        if (
+                not c.call('system.is_freenas') and
+                c.call('failover.licensed') and
+                not c.call('failover.config')['disabled']
+        ):
+            raise FailoverIsEnabledException()
 
 
 # Custom class to avoid warning about unverified SSL, see #16474
@@ -1331,4 +1596,5 @@ if __name__ == '__main__':
         except SystemExit as e:
             sys.exit(e.code)
         except Exception:
+            traceback.print_exc()
             exit(1)
