@@ -122,7 +122,7 @@ class SystemDatasetService(ConfigService):
                 verrors.add(
                     'sysdataset_update.pool',
                     'The system dataset cannot be placed on a pool '
-                    'which has root dataset encrypted with PASSPHRASE or is locked.'
+                    'which has the root dataset encrypted with a passphrase or is locked.'
                 )
         elif not new['pool']:
             for pool in await self.middleware.call(
