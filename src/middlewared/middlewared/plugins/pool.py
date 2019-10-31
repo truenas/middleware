@@ -1599,6 +1599,7 @@ class PoolService(CRUDService):
         if options['recoverykey']:
             job.check_pipe("input")
             with tempfile.NamedTemporaryFile(mode='wb+', dir='/tmp/') as f:
+                os.chmod(f.name, 0o600)
                 await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, f)
                 await self.middleware.run_in_thread(f.flush)
                 failed = await self.middleware.call('disk.geli_attach', pool, None, f.name)
@@ -1846,7 +1847,7 @@ class PoolService(CRUDService):
             encrypt = 2
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
+                os.chmod(passfile, 0o600)
                 f.write(data['passphrase'])
         elif key:
             encrypt = 1
