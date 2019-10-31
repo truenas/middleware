@@ -1474,12 +1474,6 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         help_text=_("Password"),
         required=False,
     )
-    cluster_name = forms.CharField(
-        max_length=255,
-        label=_("Cluster name"),
-        help_text=_("The name of the cluster"),
-        required=False,
-    )
     url = forms.CharField(
         max_length=255,
         label=_("Webhook URL"),
@@ -1673,11 +1667,11 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
     types_fields = {
         'AWSSNS': ['region', 'topic_arn', 'aws_access_key_id', 'aws_secret_access_key'],
         'InfluxDB': ['host', 'username', 'password', 'database', 'series_name'],
-        'Mattermost': ['cluster_name', 'url', 'username', 'password', 'team', 'channel'],
+        'Mattermost': ['url', 'username', 'password', 'team', 'channel'],
         'Mail': ['email'],
-        'OpsGenie': ['cluster_name', 'api_key', 'api_url'],
+        'OpsGenie': ['api_key', 'api_url'],
         'PagerDuty': ['service_key', 'client_name'],
-        'Slack': ['cluster_name', 'url', 'channel', 'username', 'icon_url'],
+        'Slack': ['url', 'channel', 'username', 'icon_url'],
         'SNMPTrap': ['host', 'port', 'v3', 'community', 'v3_username', 'v3_authkey', 'v3_privkey', 'v3_authprotocol',
                      'v3_privprotocol'],
         'VictorOps': ['api_key', 'routing_key'],
