@@ -148,7 +148,7 @@ class SystemDatasetService(ConfigService):
                 except Exception as e:
                     self.logger.debug('Failed to reboot passive storage controller after system dataset change: %s', e)
 
-        return config
+        return await self.config()
 
     @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
     @private
