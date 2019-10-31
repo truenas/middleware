@@ -4,7 +4,6 @@ import bsd
 import contextlib
 import enum
 import errno
-import io
 import json
 import logging
 from datetime import datetime, time
@@ -14,7 +13,6 @@ import secrets
 import shutil
 import subprocess
 import sysctl
-import tarfile
 import tempfile
 import psutil
 
