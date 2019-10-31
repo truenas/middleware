@@ -1054,7 +1054,6 @@ require([
         var type = registry.byId("id_type");
 
         // Common fields between all API
-        var cluster_name = registry.byId("id_cluster_name").domNode.parentNode.parentNode;
         var username = registry.byId("id_username").domNode.parentNode.parentNode;
         var password = registry.byId("id_password").domNode.parentNode.parentNode;
         var enabled = registry.byId("id_enabled").domNode.parentNode.parentNode;
@@ -1103,7 +1102,6 @@ require([
         var v3_privprotocol = registry.byId("id_v3_privprotocol").domNode.parentNode.parentNode;
 
         domStyle.set(_url, "display", "none");
-        domStyle.set(cluster_name, "display", "none");
         domStyle.set(username, "display", "none");
         domStyle.set(password, "display", "none");
         domStyle.set(host, "display", "none");
@@ -1138,13 +1136,11 @@ require([
             domStyle.set(database, "display", "table-row");
             domStyle.set(series_name, "display", "table-row");
         } else if(type.get('value') == 'Slack') {
-            domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(_url, "display", "table-row");
             domStyle.set(channel, "display", "table-row");
             domStyle.set(username, "display", "table-row");
             domStyle.set(icon_url, "display", "table-row");
         } else if(type.get('value') == 'Mattermost') {
-            domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(_url, "display", "table-row");
             domStyle.set(username, "display", "table-row");
             domStyle.set(password, "display", "table-row");
@@ -1154,7 +1150,6 @@ require([
             domStyle.set(service_key, "display", "table-row");
             domStyle.set(client_name, "display", "table-row");
         } else if(type.get('value') == 'OpsGenie') {
-            domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(api_key, "display", "table-row");
             domStyle.set(api_url, "display", "table-row");
         } else if(type.get('value') == 'AWSSNS') {

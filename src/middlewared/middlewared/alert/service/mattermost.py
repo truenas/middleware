@@ -10,7 +10,6 @@ class MattermostAlertService(ThreadedAlertService):
 
     schema = Dict(
         "mattermost_attributes",
-        Str("cluster_name", default=""),
         Str("url", required=True, empty=False),
         Str("username", required=True, empty=False),
         Str("password", default=""),
