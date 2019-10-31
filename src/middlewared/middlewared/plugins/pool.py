@@ -5,6 +5,7 @@ import contextlib
 import enum
 import errno
 import io
+import json
 import logging
 from datetime import datetime, time
 import os
@@ -2871,7 +2872,7 @@ class PoolDatasetService(CRUDService):
     def encrypted_roots_query_db(self, filters=None, decrypt=False):
         return {
             d['name']: d['encryption_key'] if not decrypt else self.middleware.call_sync(
-                'pwenc.decrypt', d['encryption_key'], False, False
+                'pwenc.decrypt', d['encryption_key']
             )
             for d in self.middleware.call_sync('datastore.query', self.dataset_store, filters or [])
         }
@@ -2994,17 +2995,10 @@ class PoolDatasetService(CRUDService):
         )
         temp_path = None
         try:
-            temp_path = tempfile.NamedTemporaryFile()
-            temp_path.close()
-            temp_path = temp_path.name
-            os.chmod(temp_path, 0o600)
-            with tarfile.open(temp_path, 'w:xz') as tar:
-                for ds in datasets:
-                    db_key = datasets[ds]
-                    key = io.BytesIO(db_key if isinstance(db_key, bytes) else db_key.encode())
-                    info = tarfile.TarInfo(name=ds)
-                    info.size = len(db_key)
-                    tar.addfile(tarinfo=info, fileobj=key)
+            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+                temp_path = f.name
+                os.chmod(temp_path, 0o600)
+                f.write(json.dumps(datasets))
 
             with open(temp_path, 'rb') as f:
                 shutil.copyfileobj(f, job.pipes.output.w)
@@ -3081,7 +3075,7 @@ class PoolDatasetService(CRUDService):
         keys_supplied = {}
 
         if options['key_file']:
-            keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
+            keys_supplied = self._retrieve_keys_from_file(job)
 
         for i, ds in enumerate(options['datasets']):
             if all(ds.get(k) for k in ('key', 'passphrase')):
@@ -3223,7 +3217,7 @@ class PoolDatasetService(CRUDService):
         keys_supplied = {}
         verrors = ValidationErrors()
         if options['key_file']:
-            keys_supplied = self._retrieve_keys_from_compressed_file(job, id)
+            keys_supplied = self._retrieve_keys_from_file(job)
 
         for i, ds in enumerate(options['datasets']):
             if all(ds.get(k) for k in ('key', 'passphrase')):
@@ -3383,33 +3377,15 @@ class PoolDatasetService(CRUDService):
         await self.middleware.call('pool.dataset.sync_db_keys', id)
 
     @private
-    def _retrieve_keys_from_compressed_file(self, job, ds_name):
+    def _retrieve_keys_from_file(self, job):
         job.check_pipe('input')
-        temp_dir = key_file = None
-        data = {}
         try:
-            with tempfile.NamedTemporaryFile(delete=False, mode='wb') as f:
-                key_file = f.name
-                os.chmod(key_file, 0o600)
-                shutil.copyfileobj(job.pipes.input.r, f)
+            data = json.loads(job.pipes.input.r.read(10240))
+        except json.JSONDecodeError:
+            raise CallError('Input file must be a valid JSON file')
 
-            try:
-                temp_dir = tempfile.mkdtemp()
-                os.chmod(temp_dir, 0o600)
-                with tarfile.open(key_file, mode='r:xz') as tar:
-                    tar.extractall(path=temp_dir)
-
-                for k_file in os.listdir(temp_dir):
-                    with open(os.path.join(temp_dir, k_file), 'rb') as f:
-                        data[k_file] = f.read()
-            except tarfile.ReadError:
-                with open(key_file, 'rb') as f:
-                    data[ds_name] = f.read()
-        finally:
-            if os.path.exists(key_file or ''):
-                os.unlink(key_file)
-            if os.path.exists(temp_dir or ''):
-                shutil.rmtree(temp_dir, ignore_errors=True)
+        if not isinstance(data, dict) or any(not isinstance(v, str) for v in data.values()):
+            raise CallError('Please specify correct format for input file')
 
         return data
 
