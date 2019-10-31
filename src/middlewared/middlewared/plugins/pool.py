@@ -591,7 +591,7 @@ class PoolService(CRUDService):
 
         `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
 
-        `encryption_options` specify configuration for encryption of root dataset for `name` pool.
+        `encryption_options` specifies configuration for encryption of root dataset for `name` pool.
         `encryption_options.passphrase` must be specified if encryption for root dataset is desired with a passphrase
         as a key.
         Otherwise a hex encoded key can be specified by either uploading it or specifying `encryption_options.key`.
@@ -2974,8 +2974,8 @@ class PoolDatasetService(CRUDService):
     @job(lock='dataset_export_keys', pipes=['output'])
     def export_keys(self, job, id):
         """
-        Export keys for `id` and its children which are stored in the system. The exported file is a compressed
-        tarfile containing files named after the encrypted dataset and containing the keys for them.
+        Export keys for `id` and its children which are stored in the system. The exported file is a JSON file
+        which has a dictionary containing dataset names as keys and their keys as the value.
 
         Please refer to websocket documentation for downloading the file.
         """
@@ -3060,7 +3060,7 @@ class PoolDatasetService(CRUDService):
         For datasets which are encrypted with a passphrase, include the passphrase with
         `unlock_options.datasets`.
 
-        Uploading a tarfile which contains encrypted dataset keys can be specified with
+        Uploading a json file which contains encrypted dataset keys can be specified with
         `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
         """
         verrors = ValidationErrors()
@@ -3560,10 +3560,13 @@ class PoolDatasetService(CRUDService):
             )
 
         encryption_dict = {}
-        if not data.pop('inherit_encryption'):
+        inherit_encryption_properties = data.pop('inherit_encryption')
+        if not inherit_encryption_properties:
             encryption_dict = {'encryption': 'off'}
 
         if data['encryption']:
+            if inherit_encryption_properties:
+                verrors.add('pool_dataset_create.inherit_encryption', 'Must be disabled when encryption is enabled.')
             if (
                 await self.middleware.call('pool.query', [['name', '=', data['name'].split('/')[0]]], {'get': True})
             )['encrypt']:
