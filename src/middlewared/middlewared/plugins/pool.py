@@ -2279,7 +2279,7 @@ class PoolService(CRUDService):
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
             'datastore.delete', PoolDatasetService.dataset_store,
-            ['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]],
+            [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
 
         # scrub needs to be regenerated in crontab
@@ -2837,10 +2837,8 @@ class PoolDatasetService(CRUDService):
         )
     )
     async def insert_or_update_encrypted_record(self, data):
-        key_format = data.pop('key_format') or ''
-        if not data['encryption_key'] or ZFSKeyFormat(
-            key_format.upper() or ZFSKeyFormat.PASSPHRASE.value
-        ) == ZFSKeyFormat.PASSPHRASE:
+        key_format = data.pop('key_format') or ZFSKeyFormat.PASSPHRASE.value
+        if not data['encryption_key'] or ZFSKeyFormat(key_format.upper()) == ZFSKeyFormat.PASSPHRASE:
             # We do not want to save passphrase keys - they are only known to the user
             return
 
@@ -2959,7 +2957,7 @@ class PoolDatasetService(CRUDService):
     @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
     def sync_db_keys(self, job, name=None):
         db_datasets = self.encrypted_roots_query_db(
-            ['OR', [['name', '=', name], ['name', '^', f'{name}/']]] if name else None, True
+            [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else None, True
         )
         to_remove = []
         check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
@@ -2990,7 +2988,7 @@ class PoolDatasetService(CRUDService):
         sync_job.wait_sync()
 
         datasets = self.encrypted_roots_query_db(
-            ['OR', [['name', '=', id], ['name', '^', f'{id}/']]], decrypt=True
+            [['OR', [['name', '=', id], ['name', '^', f'{id}/']]]], decrypt=True
         )
         temp_path = None
         try:
@@ -3031,6 +3029,8 @@ class PoolDatasetService(CRUDService):
             raise CallError(f'Dataset {id} is already locked')
         elif ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
             raise CallError('Only datasets which are encrypted with passphrase can be locked')
+        elif id != ds['encryption_root']:
+            raise CallError(f'Please lock {ds["encryption_root"]}. Only encryption roots can be locked.')
         elif id == (await self.middleware.call('systemdataset.config'))['pool']:
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
@@ -3080,7 +3080,7 @@ class PoolDatasetService(CRUDService):
         if '/' in id or not options['recursive']:
             if not dataset['locked']:
                 verrors.add('id', f'{id} dataset is not locked')
-            elif not dataset['encryption_root'] != id:
+            elif dataset['encryption_root'] != id:
                 verrors.add('id', 'Only encryption roots can be unlocked')
             else:
                 if not bool(self.encrypted_roots_query_db([['name', '=', id]])) and id not in keys_supplied:
@@ -3104,16 +3104,12 @@ class PoolDatasetService(CRUDService):
         for name in sorted(
             filter(
                 lambda n: n and n.startswith(id) and datasets[n]['locked'],
-                (datasets if options['recursive'] else [datasets.get(id)])
+                (datasets if options['recursive'] else [id])
             ),
             key=lambda v: v.count('/')
         ):
-            if not datasets[name]['key']:
-                failed[name]['error'] = 'Missing key'
-                continue
-
             skip = False
-            for i in range(1, name.count('/')):
+            for i in range(name.count('/') + 1):
                 check = name.rsplit('/', i)[0]
                 if check in failed:
                     failed[check]['skipped'].append(name)
@@ -3121,6 +3117,10 @@ class PoolDatasetService(CRUDService):
                     break
 
             if skip:
+                continue
+
+            if not datasets[name]['key']:
+                failed[name]['error'] = 'Missing key'
                 continue
 
             try:
@@ -3137,7 +3137,7 @@ class PoolDatasetService(CRUDService):
             j.wait_sync()
 
         if unlocked:
-            for unlocked_dataset in filter(lambda d: d not in keys_supplied, unlocked):
+            for unlocked_dataset in filter(lambda d: d in keys_supplied, unlocked):
                 ds = datasets[unlocked_dataset]
                 self.middleware.call_sync(
                     'pool.dataset.insert_or_update_encrypted_record', {
@@ -3544,6 +3544,12 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             data['aclmode'] = 'RESTRICTED'
 
+        if (await self._get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
+            verrors.add(
+                'pool_dataset_create.name',
+                f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
+            )
+
         encryption_dict = {}
         if not data.pop('inherit_encryption'):
             encryption_dict = {'encryption': 'off'}
@@ -3557,7 +3563,7 @@ class PoolDatasetService(CRUDService):
                     'Encrypted datasets cannot be created on a GELI encrypted pool.'
                 )
 
-            if ZFSKeyFormat(data['encryption']['key_format']) != ZFSKeyFormat.PASSPHRASE:
+            if ZFSKeyFormat(data['encryption_options']['key_format']) != ZFSKeyFormat.PASSPHRASE:
                 # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
                 # because we don't allow children to be unlocked while parent is locked
                 parent_encryption_root = (await self._get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']

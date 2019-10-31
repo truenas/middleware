@@ -536,8 +536,8 @@ class ZFSDatasetService(CRUDService):
             if mount_ds:
                 self.mount(id, {'recursive': recursive})
 
-    @accepts(Str('name'), List('params', default=[]))
-    @job(transient=True)
+    @accepts(Str('name'), List('params', default=[], private=True))
+    @job()
     def bulk_process(self, job, name, params):
         f = getattr(self, name, None)
         if not f:
