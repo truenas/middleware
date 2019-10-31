@@ -1064,12 +1064,9 @@ require([
         var database = registry.byId("id_database").domNode.parentNode.parentNode;
         var series_name = registry.byId("id_series_name").domNode.parentNode.parentNode;
 
-        // Slack
+        // Mattermost
         var channel = registry.byId("id_channel").domNode.parentNode.parentNode;
         var icon_url = registry.byId("id_icon_url").domNode.parentNode.parentNode;
-
-        // Mattermost
-        var team = registry.byId("id_team").domNode.parentNode.parentNode;
 
         // PagerDuty
         var service_key = registry.byId("id_service_key").domNode.parentNode.parentNode;
@@ -1109,7 +1106,6 @@ require([
         domStyle.set(series_name, "display", "none");
         domStyle.set(channel, "display", "none");
         domStyle.set(icon_url, "display", "none");
-        domStyle.set(team, "display", "none");
         domStyle.set(service_key, "display", "none");
         domStyle.set(client_name, "display", "none");
         domStyle.set(api_key, "display", "none");
@@ -1137,15 +1133,11 @@ require([
             domStyle.set(series_name, "display", "table-row");
         } else if(type.get('value') == 'Slack') {
             domStyle.set(_url, "display", "table-row");
-            domStyle.set(channel, "display", "table-row");
-            domStyle.set(username, "display", "table-row");
-            domStyle.set(icon_url, "display", "table-row");
         } else if(type.get('value') == 'Mattermost') {
             domStyle.set(_url, "display", "table-row");
             domStyle.set(username, "display", "table-row");
-            domStyle.set(password, "display", "table-row");
-            domStyle.set(team, "display", "table-row");
             domStyle.set(channel, "display", "table-row");
+            domStyle.set(icon_url, "display", "table-row");
         } else if(type.get('value') == 'PagerDuty') {
             domStyle.set(service_key, "display", "table-row");
             domStyle.set(client_name, "display", "table-row");

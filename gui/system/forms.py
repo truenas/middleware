@@ -1500,7 +1500,7 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         required=False,
     )
 
-    # Slack
+    # Mattermost
     channel = forms.CharField(
         max_length=255,
         label=_("Channel"),
@@ -1511,14 +1511,6 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
         max_length=255,
         label=_("Icon URL"),
         help_text=_("URL of a custom image for notification icons. This overrides the default if set in the Incoming Webhook settings."),
-        required=False,
-    )
-
-    # Mattermost
-    team = forms.CharField(
-        max_length=255,
-        label=_("Team"),
-        help_text=_("The mattermost team"),
         required=False,
     )
 
@@ -1667,11 +1659,11 @@ class AlertServiceForm(MiddlewareModelForm, ModelForm):
     types_fields = {
         'AWSSNS': ['region', 'topic_arn', 'aws_access_key_id', 'aws_secret_access_key'],
         'InfluxDB': ['host', 'username', 'password', 'database', 'series_name'],
-        'Mattermost': ['url', 'username', 'password', 'team', 'channel'],
+        'Mattermost': ['url', 'username', 'channel', 'icon_url'],
         'Mail': ['email'],
         'OpsGenie': ['api_key', 'api_url'],
         'PagerDuty': ['service_key', 'client_name'],
-        'Slack': ['url', 'channel', 'username', 'icon_url'],
+        'Slack': ['url'],
         'SNMPTrap': ['host', 'port', 'v3', 'community', 'v3_username', 'v3_authkey', 'v3_privkey', 'v3_authprotocol',
                      'v3_privprotocol'],
         'VictorOps': ['api_key', 'routing_key'],
