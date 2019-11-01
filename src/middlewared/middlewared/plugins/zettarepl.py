@@ -36,9 +36,9 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import Zettarepl
 
-from middlewared.client import Client, ejson
+from middlewared.client import Client
 from middlewared.logger import setup_logging
-from middlewared.service import CallError, periodic, Service
+from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
 from middlewared.utils.string import make_sentence
 from middlewared.worker import watch_parent
@@ -229,10 +229,6 @@ class ZettareplService(Service):
         self.command_queue = None
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
-        self.state = {}
-        self.definition_errors = {}
-        self.last_snapshot = {}
-        self.serializable_state = defaultdict(dict)
         self.replication_jobs_channels = defaultdict(list)
         self.queue = None
         self.process = None
@@ -240,30 +236,6 @@ class ZettareplService(Service):
 
     def is_running(self):
         return self.process is not None and self.process.is_alive()
-
-    def get_state(self):
-        jobs = {}
-        for j in self.middleware.call_sync("core.get_jobs", [("method", "=", "replication.run")], {"order_by": ["id"]}):
-            try:
-                task_id = int(j["arguments"][0])
-            except (IndexError, ValueError):
-                continue
-
-            jobs[f"replication_task_{task_id}"] = j
-
-        state = {
-            k: (
-                dict(v, job=jobs.get(k), last_snapshot=self.last_snapshot.get(k))
-                if k.startswith("replication_task_")
-                else dict(v)
-            )
-            for k, v in self.state.items()
-        }
-
-        for k, v in self.definition_errors.items():
-            state.setdefault(k, {}).update(v)
-
-        return state
 
     def start(self, definition=None):
         if definition is None:
@@ -584,55 +556,57 @@ class ZettareplService(Service):
                 # Global events
 
                 if isinstance(message, DefinitionErrors):
-                    self.definition_errors = {}
+                    definition_errors = {}
                     for error in message.errors:
                         if isinstance(error, PeriodicSnapshotTaskDefinitionError):
-                            self.definition_errors[f"periodic_snapshot_{error.task_id}"] = {
+                            definition_errors[f"periodic_snapshot_{error.task_id}"] = {
                                 "state": "ERROR",
                                 "datetime": datetime.utcnow(),
                                 "error": make_sentence(str(error)),
                             }
                         if isinstance(error, ReplicationTaskDefinitionError):
-                            self.definition_errors[f"replication_{error.task_id}"] = {
+                            definition_errors[f"replication_{error.task_id}"] = {
                                 "state": "ERROR",
                                 "datetime": datetime.utcnow(),
                                 "error": make_sentence(str(error)),
                             }
 
+                    self.middleware.call_sync("zettarepl.set_definition_errors", definition_errors)
+
                 # Periodic snapshot task
 
                 if isinstance(message, PeriodicSnapshotTaskStart):
-                    self.state[f"periodic_snapshot_{message.task_id}"] = {
+                    self.middleware.call_sync("zettarepl.set_state", f"periodic_snapshot_{message.task_id}", {
                         "state": "RUNNING",
                         "datetime": datetime.utcnow(),
-                    }
+                    })
 
                 if isinstance(message, PeriodicSnapshotTaskSuccess):
-                    self.state[f"periodic_snapshot_{message.task_id}"] = {
+                    self.middleware.call_sync("zettarepl.set_state", f"periodic_snapshot_{message.task_id}", {
                         "state": "FINISHED",
                         "datetime": datetime.utcnow(),
-                    }
+                    })
 
                 if isinstance(message, PeriodicSnapshotTaskError):
-                    self.state[f"periodic_snapshot_{message.task_id}"] = {
+                    self.middleware.call_sync("zettarepl.set_state", f"periodic_snapshot_{message.task_id}", {
                         "state": "ERROR",
                         "datetime": datetime.utcnow(),
                         "error": make_sentence(message.error),
-                    }
+                    })
 
                 # Replication task events
 
                 if isinstance(message, ReplicationTaskScheduled):
-                    self.state[f"replication_{message.task_id}"] = {
+                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "WAITING",
                         "datetime": datetime.utcnow(),
-                    }
+                    })
 
                 if isinstance(message, ReplicationTaskStart):
-                    self.state[f"replication_{message.task_id}"] = {
+                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "RUNNING",
                         "datetime": datetime.utcnow(),
-                    }
+                    })
 
                     # Start fake job if none are already running
                     if not self.replication_jobs_channels[message.task_id]:
@@ -643,7 +617,7 @@ class ZettareplService(Service):
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskSnapshotProgress):
-                    self.state[f"replication_{message.task_id}"] = {
+                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "RUNNING",
                         "datetime": datetime.utcnow(),
                         "progress": {
@@ -652,39 +626,33 @@ class ZettareplService(Service):
                             "current": message.current,
                             "total": message.total,
                         }
-                    }
+                    })
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskSnapshotSuccess):
-                    last_snapshot = f"{message.dataset}@{message.snapshot}"
-                    self.last_snapshot[f"replication_{message.task_id}"] = last_snapshot
-                    self.serializable_state[int(message.task_id.split("_")[1])]["last_snapshot"] = last_snapshot
+                    self.middleware.call_sync("zettarepl.set_last_snapshot", f"replication_{message.task_id}",
+                                              f"{message.dataset}@{message.snapshot}")
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskSuccess):
-                    state = {
+                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "FINISHED",
                         "datetime": datetime.utcnow(),
-                    }
-                    self.state[f"replication_{message.task_id}"] = state
-                    self.serializable_state[int(message.task_id.split("_")[1])]["state"] = state
+                    })
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskError):
-                    state = {
+                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "ERROR",
                         "datetime": datetime.utcnow(),
                         "error": make_sentence(message.error),
-                    }
-
-                    self.state[f"replication_{message.task_id}"] = state
-                    self.serializable_state[int(message.task_id.split("_")[1])]["state"] = state
+                    })
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
@@ -693,22 +661,8 @@ class ZettareplService(Service):
                 self.logger.warning("Unhandled exception in observer_queue_reader", exc_info=True)
 
     async def terminate(self):
-        await self.flush_state()
+        await self.middleware.call("zettarepl.flush_state")
         await self.middleware.run_in_thread(self.stop)
-
-    async def load_state(self):
-        for replication in await self.middleware.call("datastore.query", "storage.replication"):
-            state = ejson.loads(replication["repl_state"])
-            if "last_snapshot" in state:
-                self.last_snapshot[f"replication_task_{replication['id']}"] = state["last_snapshot"]
-            if "state" in state:
-                self.state[f"replication_task_{replication['id']}"] = state["state"]
-
-    @periodic(3600)
-    async def flush_state(self):
-        for task_id, state in self.serializable_state.items():
-            await self.middleware.call("datastore.update", "storage.replication", task_id,
-                                       {"repl_state": ejson.dumps(state)})
 
 
 async def setup(middleware):
