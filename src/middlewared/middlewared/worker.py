@@ -2,8 +2,6 @@
 from middlewared.client import Client
 
 import asyncio
-import concurrent.futures
-import functools
 import inspect
 import os
 import select
@@ -11,11 +9,13 @@ import setproctitle
 import threading
 from . import logger
 from .utils import LoadPluginsMixin
+from .utils.io_thread_pool_executor import IoThreadPoolExecutor
+from .utils.run_in_thread import RunInThreadMixin
 
 MIDDLEWARE = None
 
 
-class FakeMiddleware(LoadPluginsMixin):
+class FakeMiddleware(LoadPluginsMixin, RunInThreadMixin):
     """
     Implements same API from real middleware
     """
@@ -26,18 +26,8 @@ class FakeMiddleware(LoadPluginsMixin):
         self.logger = logger.Logger('worker')
         self.logger.getLogger()
         self.logger.configure_logging('console')
-
-    async def run_in_thread(self, method, *args, **kwargs):
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-        try:
-            return await asyncio.get_event_loop().run_in_executor(
-                executor, functools.partial(method, *args, **kwargs)
-            )
-        finally:
-            # We need this because default behavior of PoolExecutor with
-            # context manager is to shutdown(wait=True) which would block
-            # the worker until thread finishes.
-            executor.shutdown(wait=False)
+        self.loop = asyncio.get_event_loop()
+        self.run_in_thread_executor = IoThreadPoolExecutor('IoThread', 1)
 
     async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False, job=None):
         try:
