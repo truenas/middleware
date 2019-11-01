@@ -8,7 +8,7 @@ from .schema import Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .service_exception import adapt_exception
 from .utils import start_daemon_thread, LoadPluginsMixin
-from .utils.debug import get_threads_stacks
+from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 from .utils.profile import profile_wrap
@@ -96,55 +96,9 @@ class Application(object):
             tb_frame = cur_tb.tb_frame
             cur_tb = cur_tb.tb_next
 
-            if not isinstance(tb_frame, types.FrameType):
-                continue
-
-            cur_frame = {
-                'filename': tb_frame.f_code.co_filename,
-                'lineno': tb_frame.f_lineno,
-                'method': tb_frame.f_code.co_name,
-                'line': linecache.getline(tb_frame.f_code.co_filename, tb_frame.f_lineno),
-            }
-
-            argspec = None
-            varargspec = None
-            keywordspec = None
-            _locals = {}
-
-            try:
-                arginfo = inspect.getargvalues(tb_frame)
-                argspec = arginfo.args
-                if arginfo.varargs is not None:
-                    varargspec = arginfo.varargs
-                    temp_varargs = list(arginfo.locals[varargspec])
-                    for i, arg in enumerate(temp_varargs):
-                        temp_varargs[i] = '***'
-
-                    arginfo.locals[varargspec] = tuple(temp_varargs)
-
-                if arginfo.keywords is not None:
-                    keywordspec = arginfo.keywords
-
-                _locals.update(list(arginfo.locals.items()))
-
-            except Exception:
-                self.logger.critical('Error while extracting arguments from frames.', exc_info=True)
-
-            if argspec:
-                cur_frame['argspec'] = argspec
-            if varargspec:
-                cur_frame['varargspec'] = varargspec
-            if keywordspec:
-                cur_frame['keywordspec'] = keywordspec
-            if _locals:
-                try:
-                    cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
-                except Exception:
-                    # repr() may fail since it may be one of the reasons
-                    # of the exception
-                    cur_frame['locals'] = {}
-
-            frames.append(cur_frame)
+            cur_frame = get_frame_details(tb_frame, self.logger)
+            if cur_frame:
+                frames.append(cur_frame)
 
         return {
             'class': klass.__name__,

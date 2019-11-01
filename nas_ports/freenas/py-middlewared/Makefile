@@ -30,6 +30,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}libzfs>0:devel/py-libzfs@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}netsnmpagent>0:net/py-netsnmpagent@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}pydevd>0:devel/py-pydevd@${PY_FLAVOR} \
+		${PYTHON_PKGNAMEPREFIX}remote-pdb>0:devel/py-remote-pdb@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}zeroconf>0:net/py-zeroconf@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}influxdb>0:databases/py-influxdb@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}asyncssh>0:security/py-asyncssh@${PY_FLAVOR} \
