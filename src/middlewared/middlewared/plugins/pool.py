@@ -2638,7 +2638,7 @@ class PoolService(CRUDService):
                     )
 
                 unlock_job = self.middleware.call_sync(
-                    'pool.dataset.unlock', pool['name'], {'start_related_attachments': False, 'recursive': True}
+                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False, 'recursive': True}
                 )
                 unlock_job.wait_sync()
                 if unlock_job.error or unlock_job.result['failed']:
@@ -3034,7 +3034,7 @@ class PoolDatasetService(CRUDService):
         Dict(
             'unlock_options',
             Bool('key_file', default=False),
-            Bool('start_related_attachments', default=True),
+            Bool('toggle_attachments', default=True),
             Bool('recursive', default=False),
             List(
                 'datasets', items=[
@@ -3141,8 +3141,8 @@ class PoolDatasetService(CRUDService):
             else:
                 unlocked.append(name)
 
-        if options['start_related_attachments'] and not failed:
-            j = self.middleware.call_sync('pool.dataset.start_related_attachments', self.__attachments_path(dataset))
+        if options['toggle_attachments'] and not failed:
+            j = self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset))
             j.wait_sync()
 
         if unlocked:
@@ -3157,8 +3157,8 @@ class PoolDatasetService(CRUDService):
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
-    @job(lock=lambda args: f'start_related_attachments_{args[0]}')
-    async def start_related_attachments(self, job, path):
+    @job(lock=lambda args: f'toggle_attachments_{args[0]}')
+    async def toggle_attachments(self, job, path):
         for delegate in self.attachment_delegates:
             if delegate.name in ('jail', 'vm'):
                 await delegate.toggle((await delegate.query(path, False)), True)
