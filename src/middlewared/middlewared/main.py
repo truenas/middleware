@@ -12,6 +12,7 @@ from .utils.debug import get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 from .utils.profile import profile_wrap
+from .utils.run_in_thread import RunInThreadMixin
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -760,7 +761,7 @@ class ShellApplication(object):
         await self.middleware.run_in_thread(t_worker.join)
 
 
-class Middleware(LoadPluginsMixin):
+class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
@@ -784,10 +785,10 @@ class Middleware(LoadPluginsMixin):
         self.startup_seq_path = startup_seq_path
         self.app = None
         self.loop = None
+        self.run_in_thread_executor = IoThreadPoolExecutor('IoThread', 20)
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__io_threadpool = IoThreadPoolExecutor('IoThread', 20)
         self.__ws_threadpool = concurrent.futures.ThreadPoolExecutor(
             initializer=lambda: set_thread_name('threadpool_ws'),
             max_workers=10,
@@ -1061,9 +1062,6 @@ class Middleware(LoadPluginsMixin):
                 if i == retries - 1:
                     raise
                 self.__init_procpool()
-
-    async def run_in_thread(self, method, *args, **kwargs):
-        return await self.loop.run_in_executor(self.__io_threadpool, functools.partial(method, *args, **kwargs))
 
     def pipe(self):
         return Pipe(self)
