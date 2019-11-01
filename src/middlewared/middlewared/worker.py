@@ -76,6 +76,10 @@ class FakeMiddleware(LoadPluginsMixin):
         with Client(py_exceptions=True) as c:
             return c.call('core.call_hook', name, args, kwargs)
 
+    def send_event(self, name, event_type, **kwargs):
+        with Client(py_exceptions=True) as c:
+            return c.call('core.event_send', name, event_type, kwargs)
+
 
 class FakeJob(object):
 
