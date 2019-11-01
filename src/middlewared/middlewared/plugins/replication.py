@@ -774,5 +774,14 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
         await self.middleware.call('zettarepl.update_tasks')
 
 
+async def on_zettarepl_state_changed(middleware, id, fields):
+    if id.startswith('replication_task_'):
+        task_id = int(id.split('_')[-1])
+        middleware.send_event('replication.query', 'CHANGED', id=task_id, fields={'state': fields})
+
+
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', ReplicationFSAttachmentDelegate(middleware))
+
+    middleware.event_register('replication.query', 'Replication task state')
+    middleware.register_hook('zettarepl.state_change', on_zettarepl_state_changed)

@@ -1272,7 +1272,7 @@ class Middleware(LoadPluginsMixin):
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
-            asyncio.ensure_future(handler(self, event_type, kwargs))
+            asyncio.run_coroutine_threadsafe(handler(self, event_type, kwargs), loop=self.loop)
 
     def pdb(self):
         import pdb
