@@ -32,7 +32,6 @@ import errno
 import functools
 import inspect
 import itertools
-import linecache
 import multiprocessing
 import os
 import pickle
