@@ -359,7 +359,7 @@ class TwoFactorAuthModel(sa.Model):
     window = sa.Column(sa.Integer(), default=0)
     interval = sa.Column(sa.Integer(), default=30)
     services = sa.Column(sa.JSON(), default={})
-    enabled = sa.Column(sa.Boolean(), default=True)
+    enabled = sa.Column(sa.Boolean(), default=False)
 
 
 class TwoFactorAuthService(ConfigService):
