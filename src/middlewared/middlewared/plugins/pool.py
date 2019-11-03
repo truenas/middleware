@@ -2648,6 +2648,12 @@ class PoolService(CRUDService):
                         f'{f": {unlock_job.error}" if unlock_job.error else f" with following datasets {failed}"}'
                     )
 
+                # Child unencrypted datasets of root dataset would be mounted if root dataset is still locked,
+                # we don't want that
+                if self.middleware.call_sync('pool.dataset._get_instance', pool['name'])['locked']:
+                    with contextlib.suppress(CallError):
+                        self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
+
         finally:
             proc.kill()
             proc.wait()
@@ -2911,6 +2917,8 @@ class PoolDatasetService(CRUDService):
                 # We would like to ensure key matches specified key format
                 try:
                     key = hex(int(key, 16))[2:]
+                    if len(key) != 64:
+                        raise ValueError('Invalid key')
                 except ValueError:
                     verrors.add(f'{schema}.key_file', 'Please specify a valid key')
                     return {}
