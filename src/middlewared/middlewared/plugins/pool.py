@@ -2952,9 +2952,9 @@ class PoolDatasetService(CRUDService):
     @private
     @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
     def sync_db_keys(self, job, name=None):
-        db_datasets = self.encrypted_roots_query_db(
-            [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else None, True
-        )
+        filters = [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else []
+        db_datasets = self.encrypted_roots_query_db(filters, True)
+        encrypted_roots = {d['name']: d for d in self.query(filters) if d['name'] == d['encryption_root']}
         to_remove = []
         check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
             (name, {'key': db_datasets[name]}) for name in db_datasets
@@ -2965,8 +2965,13 @@ class PoolDatasetService(CRUDService):
             return
 
         for dataset, status in zip(db_datasets, check_key_job.result):
-            if not status['result'] or status['error']:
+            if not status['result']:
                 to_remove.append(dataset)
+            elif status['error']:
+                if dataset not in encrypted_roots:
+                    to_remove.append(dataset)
+                else:
+                    self.middleware.logger.error(f'Failed to check encryption status for {dataset}: {status["error"]}')
 
         self.middleware.call_sync('datastore.delete', self.dataset_store, [['name', 'in', to_remove]])
 
