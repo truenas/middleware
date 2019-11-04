@@ -9,8 +9,6 @@ jobs:
   - python: nightly
 
 install:
-    - sudo apt-get -qq update
-    - sudo apt-get -y install git
     - pip3 install flake8
 
 script: .travis/flake8.sh
