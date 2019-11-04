@@ -1,12 +1,16 @@
 language: python
 dist: bionic
-python:
- - 3.8
- - nightly
+python: 3.8
 
 jobs:
   allow_failures:
   - python: nightly
+  include:
+  - name: Python 3.8 x64
+  - name: Python 3.8 Arm
+    arch: arm64
+  - name: Python Nightly x64
+    python: nightly
 
 install:
     - pip3 install flake8
