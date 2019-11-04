@@ -650,15 +650,17 @@ class LDAPService(ConfigService):
             return False
 
         await self.common_validate(ldap, ldap, verrors)
-        if verrors:
+        try:
+            verrors.check()
+        except Exception:
             await self.middleware.call(
                 'datastore.update',
                 'directoryservice.ldap',
                 ldap['id'],
                 {'ldap_enable': False}
             )
-            cerrors = ' '.join(v.errmsg for v in verrors.errors)
-            raise CallError(cerrors, errno.EINVAL)
+            raise CallError('Automatically disabling LDAP service due to invalid configuration.',
+                            errno.EINVAL)
 
         try:
             await asyncio.wait_for(self.middleware.call('ldap.get_root_DSE', ldap),
