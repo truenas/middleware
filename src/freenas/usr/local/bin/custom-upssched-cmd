@@ -22,13 +22,14 @@ ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 "SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 while eval read $f; do
 
+if [ "${ups_mode}" = "master" ]; then
+	ident="${ups_identifier}"
+else
+	ident="${ups_identifier}@${ups_remotehost}:${ups_remoteport}"
+fi
+
 case $1 in
 	"SHUTDOWN")
-		if [ "${ups_mode}" = "master" ]; then
-			ident="${ups_identifier}"
-		else
-			ident="${ups_identifier}@${ups_remotehost}:${ups_remoteport}"
-		fi
 		if [ -n "$(upsc $ident | grep "ups.status.*OL")" ]; then
 			logger -t upssched-cmd "Shutdown not initiated as ups.status indicates ${ident} is ONLINE (OL)"
 		else
@@ -38,7 +39,7 @@ case $1 in
 		;;
 	"EMAIL"|"COMMBAD"|"COMMOK")
 		if [ "${ups_emailnotify}" -eq 1 ]; then
-			echo "$NOTIFYTYPE - $UPSNAME" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
+			echo "$NOTIFYTYPE - $ident" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
 		fi
 		;;
 	*)
