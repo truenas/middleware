@@ -1,7 +1,12 @@
 language: python
 dist: bionic
 python:
-    - 3.6
+ - 3.8
+ - nightly
+
+jobs:
+  allow_failures:
+  - python: nightly
 
 install:
     - sudo apt-get -qq update
