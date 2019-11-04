@@ -1124,15 +1124,17 @@ class ActiveDirectoryService(ConfigService):
             return False
 
         await self.common_validate(config, config, verrors)
-        if verrors:
+
+        try:
+            verrors.check()
+        except Exception as e:
             await self.middleware.call(
                 'datastore.update',
                 'directoryservice.activedirectory',
                 config['id'],
                 {'ad_enable': False}
             )
-            cerrors = ' '.join(v.errmsg for v in verrors.errors)
-            raise CallError(cerrors, errno.EINVAL)
+            raise CallError(e) 
 
         netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
         if netlogon_ping.returncode != 0:
