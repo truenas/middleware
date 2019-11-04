@@ -684,7 +684,8 @@ class JailService(CRUDService):
             {'extra': {'properties': [], 'flat': False}}
         )
         return not (not datasets or not any(
-            d['name'].endswith('/iocage') for root_dataset in datasets for d in root_dataset['children']
+            d['name'].endswith('/iocage') and (not d['encrypted'] or (d['encrypted'] and d['key_loaded']))
+            for root_dataset in datasets for d in root_dataset['children']
         ))
 
     @accepts()
@@ -1459,6 +1460,8 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def query(self, path, enabled):
         results = []
+        if not await self.middleware.call('jail.iocage_set_up'):
+            return results
         pool_name = os.path.relpath(path, '/mnt').split('/')[0]
         try:
             activated_pool = await self.middleware.call('jail.get_activated_pool')

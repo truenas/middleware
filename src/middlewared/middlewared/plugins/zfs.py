@@ -12,7 +12,7 @@ import libzfs
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
-from middlewared.schema import Dict, List, Str, Bool, accepts
+from middlewared.schema import Any, Dict, Int, List, Str, Bool, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
 )
@@ -502,6 +502,143 @@ class ZFSDatasetService(CRUDService):
             for dataset in self.query()
         ]
 
+    def common_load_dataset_checks(self, ds):
+        self.common_encryption_checks(ds)
+        if ds.key_loaded:
+            raise CallError(f'{id} key is already loaded')
+
+    def common_encryption_checks(self, ds):
+        if not ds.encrypted:
+            raise CallError(f'{id} is not encrypted')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'load_key_options',
+            Bool('mount', default=True),
+            Bool('recursive', default=False),
+            Any('key', default=None, null=True),
+            Str('key_location', default=None, null=True),
+        ),
+    )
+    def load_key(self, id, options):
+        mount_ds = options.pop('mount')
+        recursive = options.pop('recursive')
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                self.common_load_dataset_checks(ds)
+                ds.load_key(**options)
+        except libzfs.ZFSException as e:
+            self.logger.error(f'Failed to load key for {id}', exc_info=True)
+            raise CallError(f'Failed to load key for {id}: {e}')
+        else:
+            if mount_ds:
+                self.mount(id, {'recursive': recursive})
+
+    @accepts(Str('name'), List('params', default=[], private=True))
+    @job()
+    def bulk_process(self, job, name, params):
+        f = getattr(self, name, None)
+        if not f:
+            raise CallError(f'{name} method not found in zfs.dataset')
+
+        statuses = []
+        for i in params:
+            result = error = None
+            try:
+                result = f(*i)
+            except Exception as e:
+                error = str(e)
+            finally:
+                statuses.append({'result': result, 'error': error})
+
+        return statuses
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'check_key',
+            Any('key', default=None, null=True),
+            Str('key_location', default=None, null=True),
+        )
+    )
+    def check_key(self, id, options):
+        """
+        Returns `true` if the `key` is valid, `false` otherwise.
+        """
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                self.common_encryption_checks(ds)
+                return ds.check_key(**options)
+        except libzfs.ZFSException as e:
+            self.logger.error(f'Failed to check key for {id}', exc_info=True)
+            raise CallError(f'Failed to check key for {id}: {e}')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'unload_key_options',
+            Bool('recursive', default=False),
+            Bool('force_umount', default=False),
+            Bool('umount', default=False),
+        )
+    )
+    def unload_key(self, id, options):
+        force = options.pop('force_umount')
+        if options.pop('umount') and self.middleware.call_sync('zfs.dataset._get_instance', id)['mountpoint']:
+            self.umount(id, {'force': force})
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                self.common_encryption_checks(ds)
+                if not ds.key_loaded:
+                    raise CallError(f'{id}\'s key is not loaded')
+                ds.unload_key(**options)
+        except libzfs.ZFSException as e:
+            self.logger.error(f'Failed to unload key for {id}', exc_info=True)
+            raise CallError(f'Failed to unload key for {id}: {e}')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'change_key_options',
+            Dict(
+                'encryption_properties',
+                Str('keyformat'),
+                Str('keylocation'),
+                Int('pbkdf2iters')
+            ),
+            Bool('load_key', default=True),
+            Any('key', default=None, null=True),
+        ),
+    )
+    def change_key(self, id, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                self.common_encryption_checks(ds)
+                ds.change_key(props=options['encryption_properties'], load_key=options['load_key'], key=options['key'])
+        except libzfs.ZFSException as e:
+            self.logger.error(f'Failed to change key for {id}', exc_info=True)
+            raise CallError(f'Failed to change key for {id}: {e}')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'change_encryption_root_options',
+            Bool('load_key', default=True),
+        )
+    )
+    def change_encryption_root(self, id, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                ds = zfs.get_dataset(id)
+                ds.change_key(load_key=options['load_key'], inherit=True)
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed to change encryption root for {id}: {e}')
+
     @accepts(Dict(
         'dataset_create',
         Str('name', required=True),
@@ -624,6 +761,16 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             self.logger.error('Failed to mount dataset', exc_info=True)
             raise CallError(f'Failed to mount dataset: {e}')
+
+    @accepts(Str('name'), Dict('options', Bool('force', default=False)))
+    def umount(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(name)
+                dataset.umount(force=options['force'])
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to umount dataset', exc_info=True)
+            raise CallError(f'Failed to umount dataset: {e}')
 
     @accepts(
         Str('dataset'),
