@@ -1127,14 +1127,15 @@ class ActiveDirectoryService(ConfigService):
 
         try:
             verrors.check()
-        except Exception as e:
+        except Exception:
             await self.middleware.call(
                 'datastore.update',
                 'directoryservice.activedirectory',
                 config['id'],
                 {'ad_enable': False}
             )
-            raise CallError(e) 
+            raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
+                            errno.EINVAL)
 
         netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
         if netlogon_ping.returncode != 0:
