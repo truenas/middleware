@@ -2050,6 +2050,7 @@ class InterfaceService(CRUDService):
             Bool('ipv6', default=True),
             Bool('loopback', default=False),
             Bool('any', default=False),
+            Bool('static', default=False),
         )
     )
     def ip_in_use(self, choices=None):
@@ -2059,6 +2060,8 @@ class InterfaceService(CRUDService):
         `loopback` will return loopback interface addresses.
 
         `any` will return wildcard addresses (0.0.0.0 and ::).
+
+        `static` when enabled will ensure we only return static ip's configured.
 
         Returns a list of dicts - eg -
 
@@ -2082,6 +2085,16 @@ class InterfaceService(CRUDService):
         if not choices['loopback']:
             ignore_nics.append('lo')
         ignore_nics = tuple(ignore_nics)
+        static_ips = {}
+        if choices['static']:
+            failover_licensed = self.middleware.call_sync('failover.licensed')
+            for i in self.middleware.call_sync('interface.query'):
+                if failover_licensed:
+                    for alias in i.get('failover_virtual_aliases') or []:
+                        static_ips[alias['address']] = alias['address']
+                else:
+                    for alias in i['aliases']:
+                        static_ips[alias['address']] = alias['address']
 
         if choices['any']:
             if choices['ipv4']:
@@ -2102,7 +2115,7 @@ class InterfaceService(CRUDService):
         for iface in list(netif.list_interfaces().values()):
             if not iface.orig_name.startswith(ignore_nics):
                 aliases_list = iface.__getstate__()['aliases']
-                for alias_dict in aliases_list:
+                for alias_dict in filter(lambda d: not choices['static'] or d['address'] in static_ips, aliases_list):
 
                     if choices['ipv4'] and alias_dict['type'] == 'INET':
                         list_of_ip.append(alias_dict)
