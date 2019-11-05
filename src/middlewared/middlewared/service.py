@@ -489,6 +489,13 @@ class CRUDService(ServiceChangeMixin, Service):
                             {'dependencies': list(dependencies.values())})
 
 
+def is_service_class(service, klass):
+    return (
+        isinstance(service, klass) or
+        (isinstance(service, CompoundService) and any(isinstance(part, klass) for part in service.parts))
+    )
+
+
 class ServicePartBaseMeta(ServiceBase):
     def __new__(cls, name, bases, attrs):
         klass = super().__new__(cls, name, bases, attrs)
@@ -621,11 +628,9 @@ class CoreService(Service):
         for k, v in list(self.middleware.get_services().items()):
             if v._config.private is True:
                 continue
-            if isinstance(v, CRUDService) or (isinstance(v, CompoundService) and any(isinstance(part, CRUDService)
-                                                                                     for part in v.parts)):
+            if is_service_class(v, CRUDService):
                 _typ = 'crud'
-            elif isinstance(v, ConfigService) or (isinstance(v, CompoundService) and any(isinstance(part, ConfigService)
-                                                                                         for part in v.parts)):
+            elif is_service_class(v, ConfigService):
                 _typ = 'config'
             else:
                 _typ = 'service'
@@ -658,7 +663,7 @@ class CoreService(Service):
                 # For CRUD.do_{update,delete} they need to be accounted
                 # as "item_method", since they are just wrapped.
                 item_method = None
-                if isinstance(svc, CRUDService):
+                if is_service_class(svc, CRUDService):
                     """
                     For CRUD the create/update/delete are special.
                     The real implementation happens in do_create/do_update/do_delete
@@ -672,7 +677,7 @@ class CoreService(Service):
                             item_method = True
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
-                elif isinstance(svc, ConfigService):
+                elif is_service_class(svc, ConfigService):
                     """
                     For Config the update is special.
                     The real implementation happens in do_update
