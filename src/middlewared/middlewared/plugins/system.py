@@ -753,6 +753,28 @@ class SystemGeneralService(ConfigService):
         return data
 
     @accepts()
+    async def ui_address_choices(self):
+        """
+        Returns UI ipv4 address choices.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'ipv4': True, 'ipv6': False, 'any': True, 'static': True}
+            )
+        }
+
+    @accepts()
+    async def ui_v6address_choices(self):
+        """
+        Returns UI ipv6 address choices.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'ipv4': False, 'ipv6': True, 'any': True, 'static': True}
+            )
+        }
+
+    @accepts()
     def ui_httpsprotocols_choices(self):
         """
         Returns available HTTPS protocols.
