@@ -52,7 +52,7 @@ class DiskService(Service):
         List('args', items=[Str('arg')]),
         Dict(
             'options',
-             Bool('silent', default=False)
+            Bool('silent', default=False),
         ),
     )
     @private
