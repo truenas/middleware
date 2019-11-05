@@ -310,16 +310,23 @@ class AlertService(Service):
         if issubclass(alert.klass, DismissableAlertClass):
             related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (alert.node, alert.klass),
                                                       self.alerts)
-            self.alerts = (
-                unrelated_alerts +
-                await alert.klass(self.middleware).dismiss(related_alerts, alert)
-            )
+            left_alerts = await alert.klass(self.middleware).dismiss(related_alerts, alert)
+            for deleted_alert in related_alerts:
+                if deleted_alert not in left_alerts:
+                    self._delete_on_dismiss(deleted_alert)
         elif issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically:
-            self.alerts = [a for a in self.alerts if a.uuid != uuid]
+            self._delete_on_dismiss(alert)
         else:
             alert.dismissed = True
+            await self._send_alert_changed_event(alert)
 
-        await self._send_alert_changed_event(alert)
+    def _delete_on_dismiss(self, alert):
+        self.alerts.remove(alert)
+
+        for policy in self.policies.values():
+            policy.last_key_value_alerts.pop(alert.uuid, None)
+
+        self._send_alert_deleted_event(alert)
 
     @accepts(Str("uuid"))
     async def restore(self, uuid):
@@ -338,6 +345,9 @@ class AlertService(Service):
     async def _send_alert_changed_event(self, alert):
         as_ = AlertSerializer(self.middleware)
         self.middleware.send_event('alert.list', 'CHANGED', id=alert.uuid, fields=await as_.serialize(alert))
+
+    def _send_alert_deleted_event(self, alert):
+        self.middleware.send_event('alert.list', 'CHANGED', id=alert.uuid, cleared=True)
 
     @periodic(60)
     @private
@@ -372,9 +382,7 @@ class AlertService(Service):
                         AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
                         AlertLevel[alert_service_desc["level"]].value and
 
-                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name and
-
-                        not (issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically)
+                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
                     )
                 ]
                 service_new_alerts = [
@@ -417,7 +425,7 @@ class AlertService(Service):
             if policy_name == "IMMEDIATELY":
                 as_ = AlertSerializer(self.middleware)
                 for alert in gone_alerts:
-                    self.middleware.send_event('alert.list', 'CHANGED', id=alert.uuid, cleared=True)
+                    self._send_alert_deleted_event(alert)
                 for alert in new_alerts:
                     self.middleware.send_event('alert.list', 'ADDED', id=alert.uuid, fields=await as_.serialize(alert))
 
