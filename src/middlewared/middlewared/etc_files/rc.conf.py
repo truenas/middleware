@@ -306,7 +306,7 @@ def s3_config(middleware, context):
 
 def smart_config(middleware, context):
     smart = middleware.call_sync('smart.config')
-    yield f'smart_daemon_flags="-i {smart["interval"] * 60}"'
+    yield f'smartd_daemon_flags="-i {smart["interval"] * 60}"'
 
 
 def snmp_config(middleware, context):
