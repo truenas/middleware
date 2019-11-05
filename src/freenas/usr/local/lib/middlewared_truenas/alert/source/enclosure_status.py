@@ -15,7 +15,7 @@ class EnclosureUnhealthyAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "Enclosure Status Is Not Healthy"
-    text = "Enclosure %d (%s): %s is %s."
+    text = "Enclosure %d (%s): %s is %s (%s)."
 
     products = ("ENTERPRISE",)
 
@@ -64,17 +64,14 @@ class EnclosureStatusAlertSource(AlertSource):
                 healthy = False
                 alerts.append(Alert(
                     EnclosureUnhealthyAlertClass,
-                    args=[num, enc['name'], ele['name'], ele['status']],
+                    args=[
+                        num,
+                        enc['name'],
+                        f"{ele['name']} {hex(ele['slot'])} (ele['descriptor'])",
+                        ele['status'],
+                        ele['value_raw']
+                    ],
                 ))
-                # Log the element, see #10187
-                logger.warning(
-                    'Element %s: %s, status: %s (%s), descriptor: %s',
-                    hex(ele['slot']),
-                    ele['name'],
-                    ele['status'],
-                    ele['value_raw'],
-                    ele['descriptor'],
-                )
 
             if healthy:
                 alerts.append(Alert(
