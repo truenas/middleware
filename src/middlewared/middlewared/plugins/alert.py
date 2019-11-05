@@ -727,12 +727,15 @@ class AlertService(Service):
 
         related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
                                                   self.alerts)
-        self.alerts = (
-            unrelated_alerts +
-            await klass(self.middleware).delete(related_alerts, query)
-        )
+        left_alerts = await klass(self.middleware).delete(related_alerts, query)
+        deleted = False
+        for deleted_alert in related_alerts:
+            if deleted_alert not in left_alerts:
+                self.alerts.remove(deleted_alert)
+                deleted = True
 
-        await self.middleware.call("alert.send_alerts")
+        if deleted:
+            await self.middleware.call("alert.send_alerts")
 
     @private
     def alert_source_clear_run(self, name):
