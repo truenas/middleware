@@ -47,7 +47,6 @@ class DiskTemp(object):
                                                                                 # not allow them to go to sleep
                                                                                 # automatically
                                                                                 ['hddstandby', '=', 'ALWAYS ON']])]
-                self.smartctl_args = c.call('disk.smartctl_args_for_devices', self.disks)
                 self.powermode = c.call('smart.config')['powermode']
         except Exception:
             collectd.error(traceback.format_exc())
@@ -63,7 +62,7 @@ class DiskTemp(object):
 
         try:
             with Client() as c:
-                temperatures = c.call('disk.temperatures', self.disks, self.powermode, self.smartctl_args)
+                temperatures = c.call('disk.temperatures', self.disks, self.powermode)
 
             for disk, temp in temperatures.items():
                 if temp is not None:

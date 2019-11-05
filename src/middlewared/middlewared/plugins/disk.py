@@ -3,7 +3,6 @@ import base64
 from collections import defaultdict
 from datetime import datetime, timedelta
 import errno
-import functools
 import glob
 import os
 import re
@@ -14,12 +13,9 @@ import tempfile
 from xml.etree import ElementTree
 
 from bsd import geom, getswapinfo
-import cam
 from lxml import etree
 
-from middlewared.common.camcontrol import camcontrol_list
-from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import job, private, CallError, CRUDService
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
@@ -41,49 +37,12 @@ RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
-RE_SATA_DOM_LIFETIME = re.compile(r'^164\s+.*\s+([0-9]+)$', re.M)
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 RAWTYPE = {
     'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
     'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
 }
-
-
-def get_temperature(stdout):
-    # ataprint.cpp
-
-    data = {}
-    for s in re.findall(r'^((190|194) .+)', stdout, re.M):
-        s = s[0].split()
-        try:
-            data[s[1]] = int(s[9])
-        except (IndexError, ValueError):
-            pass
-    for k in ['Temperature_Celsius', 'Temperature_Internal', 'Drive_Temperature',
-              'Temperature_Case', 'Case_Temperature', 'Airflow_Temperature_Cel']:
-        if k in data:
-            return data[k]
-
-    reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
-    if reg:
-        return int(reg.group(0).split()[9])
-
-    # nvmeprint.cpp
-
-    reg = re.search(r'Temperature:\s+([0-9]+) Celsius', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
-
-    reg = re.search(r'Temperature Sensor [0-9]+:\s+([0-9]+) Celsius', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
-
-    # scsiprint.cpp
-
-    reg = re.search(r'Current Drive Temperature:\s+([0-9]+) C', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
 
 
 class DiskModel(sa.Model):
@@ -240,10 +199,11 @@ class DiskService(CRUDService):
         ):
 
             if new['togglesmart']:
-                await self.toggle_smart_on(new['name'])
+                await self.middleware.call('disk.toggle_smart_on', new['name'])
             else:
-                await self.toggle_smart_off(new['name'])
+                await self.middleware.call('disk.toggle_smart_off', new['name'])
 
+            await self.middleware.call('disk.update_smartctl_args_for_disks')
             await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
 
@@ -673,28 +633,10 @@ class DiskService(CRUDService):
 
         return partitions
 
-    async def __get_smartctl_args(self, devname):
-        devices = await camcontrol_list()
-        return await get_smartctl_args(self.middleware, devices, devname)
-
-    @private
-    async def toggle_smart_off(self, devname):
-        args = await self.__get_smartctl_args(devname)
-        if args:
-            await smartctl(args + ['--smart=off'], check=False)
-
-    @private
-    async def toggle_smart_on(self, devname):
-        args = await self.__get_smartctl_args(devname)
-        if args:
-            await smartctl(args + ['--smart=on'], check=False)
-
     @private
     async def serial_from_device(self, name):
-        args = await self.__get_smartctl_args(name)
-        if args:
-            p1 = await smartctl(args + ['-i'], stdout=subprocess.PIPE)
-            output = p1.stdout.decode()
+        output = await self.middleware.call('disk.smartctl', name, ['-i'], {'silent': True})
+        if output:
             search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
             if search:
                 return search.group('serial')
@@ -705,56 +647,6 @@ class DiskService(CRUDService):
             return g.provider.config['ident']
 
         return None
-
-    @accepts(
-        List('names', items=[Str('name')]),
-        Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
-        Dict('smartctl_args', additional_attrs=True, hidden=True),
-    )
-    async def temperatures(self, names, powermode, smartctl_args):
-        """
-        Returns temperatures for a list of device `names` using specified S.M.A.R.T. `powermode`.
-        """
-
-        if not smartctl_args:
-            smartctl_args = await self.smartctl_args_for_devices(names)
-
-        smartctl_args = {k: ['-n', powermode.lower()] + v for k, v in smartctl_args.items() if v is not None}
-
-        available_names = list(smartctl_args.keys())
-
-        result = dict(zip(
-            available_names,
-            await asyncio_map(lambda name: self.__get_temperature(name, smartctl_args[name]), available_names, 8),
-        ))
-
-        for name in names:
-            result.setdefault(name, None)
-
-        return result
-
-    @private
-    async def smartctl_args_for_devices(self, names):
-        devices = await camcontrol_list()
-        return dict(zip(
-            names,
-            await asyncio_map(functools.partial(get_smartctl_args, self.middleware, devices), names, 8)
-        ))
-
-    async def __get_temperature(self, disk, smartctl_args):
-        if disk.startswith('da') and not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
-            try:
-                return await self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
-            except Exception:
-                pass
-
-        cp = await smartctl(smartctl_args + ['-a'], check=False, stderr=subprocess.STDOUT,
-                            encoding='utf8', errors='ignore')
-        if (cp.returncode & 0b11) != 0:
-            self.logger.trace('Failed to run smartctl for %r (%r): %s', disk, smartctl_args, cp.stdout)
-            return None
-
-        return get_temperature(cp.stdout)
 
     @private
     @accepts(Str('name'))
@@ -970,6 +862,7 @@ class DiskService(CRUDService):
         else:
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
+        await self.middleware.call('disk.update_smartctl_args_for_disks')
         if await self.middleware.call('service.started', 'collectd'):
             await self.middleware.call('service.restart', 'collectd')
         await self._service_change('smartd', 'restart')
@@ -1093,6 +986,7 @@ class DiskService(CRUDService):
                     await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
         if changed:
+            await self.middleware.call('disk.update_smartctl_args_for_disks')
             if await self.middleware.call('service.started', 'collectd'):
                 await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
@@ -1817,18 +1711,6 @@ class DiskService(CRUDService):
                 asyncio.ensure_future(run('camcontrol', 'idle', dev, '-t', str(idle), check=False))
 
             asyncio.ensure_future(camcontrol_idle())
-
-    @private
-    async def sata_dom_lifetime_left(self, devname):
-        try:
-            output = (await smartctl(['-A', devname], encoding="utf8", errors="ignore")).stdout
-        except subprocess.CalledProcessError:
-            return None
-
-        m = RE_SATA_DOM_LIFETIME.search(output)
-        if m:
-            aec = int(m.group(1))
-            return max(1.0 - aec / 3000, 0)
 
 
 def new_swap_name():
