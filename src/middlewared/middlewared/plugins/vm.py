@@ -1880,12 +1880,17 @@ class VMDeviceService(CRUDService):
                         f'Parent dataset {parentzvol} does not exist.',
                         errno.ENOENT
                     )
-                if not verrors and create_zvol and await self.middleware.call(
-                    'pool.dataset.query', [['id', '=', device['attributes']['zvol_name']]]
-                ):
+                zvol = await self.middleware.call(
+                    'pool.dataset.query', [['id', '=', device['attributes'].get('zvol_name')]]
+                )
+                if not verrors and create_zvol and zvol:
                     verrors.add(
                         'attributes.zvol_name',
                         f'{device["attributes"]["zvol_name"]} already exists.'
+                    )
+                elif zvol and zvol[0]['locked']:
+                    verrors.add(
+                        'attributes.zvol_name', f'{zvol[0]["id"]} is locked.'
                     )
             elif not path:
                 verrors.add('attributes.path', 'Disk path is required.')
@@ -2030,8 +2035,13 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def query(self, path, enabled):
         vms_attached = []
+        ignored_vms = {
+            vm['id']: vm for vm in await self.middleware.call(
+                'vm.query', [('status.state', '!=' if enabled else '=', 'RUNNING')]
+            )
+        }
         for device in await self.middleware.call('datastore.query', 'vm.device'):
-            if device['dtype'] not in ('DISK', 'RAW'):
+            if (device['dtype'] not in ('DISK', 'RAW')) or device['vm']['id'] in ignored_vms:
                 continue
 
             disk = device['attributes'].get('path', None)

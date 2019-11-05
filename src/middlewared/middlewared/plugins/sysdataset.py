@@ -113,13 +113,28 @@ class SystemDatasetService(ConfigService):
                     f'Pool "{new["pool"]}" has an encryption passphrase set. '
                     'The system dataset cannot be placed on this pool.'
                 )
+            elif await self.middleware.call(
+                'pool.dataset.query', [
+                    ['name', '=', new['pool']], ['encrypted', '=', True],
+                    ['OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]]
+                ]
+            ):
+                verrors.add(
+                    'sysdataset_update.pool',
+                    'The system dataset cannot be placed on a pool '
+                    'which has the root dataset encrypted with a passphrase or is locked.'
+                )
         elif not new['pool']:
             for pool in await self.middleware.call(
                 'pool.query', [
                     ['encrypt', '!=', 2]
                 ]
             ):
-                if data.get('pool_exclude') == pool['name']:
+                if data.get('pool_exclude') == pool['name'] or await self.middleware.call('pool.dataset.query', [
+                    ['name', '=', pool['name']], [
+                        'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
+                    ]
+                ]):
                     continue
                 new['pool'] = pool['name']
                 break
@@ -205,7 +220,11 @@ class SystemDatasetService(ConfigService):
             for p in await self.middleware.call(
                 'pool.query', [('encrypt', '!=', '2')], {'order_by': ['encrypt']}
             ):
-                if exclude_pool and p['name'] == exclude_pool:
+                if (exclude_pool and p['name'] == exclude_pool) or await self.middleware.call('pool.dataset.query', [
+                    ['name', '=', p['name']], [
+                        'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
+                    ]
+                ]):
                     continue
                 if p['is_decrypted']:
                     pool = p
