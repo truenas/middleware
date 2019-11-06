@@ -17,11 +17,11 @@ class FreeNASBMCAlertClass(AlertClass):
         "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details.",
     )
 
-    freenas_only = True
+    products = ("CORE",)
 
 
 class FreeNASBMCAlertSource(ThreadedAlertSource):
-    freenas_only = True
+    products = ("CORE",)
 
     def check_sync(self):
         systemname = subprocess.run(

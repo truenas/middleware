@@ -15,9 +15,12 @@ class USBStorageAlertClass(AlertClass):
     text = ("A USB storage device named %s has been connected to this system. Please remove that USB device to "
             "prevent problems with system boot or HA failover.")
 
+    products = ("ENTERPRISE",)
+    hardware = True
+
 
 class USBStorageAlertSource(ThreadedAlertSource):
-    hardware = True
+    products = ("ENTERPRISE",)
 
     def check_sync(self):
         proc = Popen('camcontrol devlist -v | grep -m1 -A1 umass', stdout=PIPE, stderr=PIPE, shell=True)

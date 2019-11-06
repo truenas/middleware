@@ -17,8 +17,12 @@ class FCHBANotPresentAlertClass(AlertClass):
     title = "FC HBA Is not Present"
     text = "HBA for FC port %(port)s configured for target %(target)r is not present."
 
+    products = ("ENTERPRISE",)
+
 
 class FCHBANotPresentAlertSource(ThreadedAlertSource):
+    products = ("ENTERPRISE",)
+
     def check_sync(self):
         ports = set()
         for e in (

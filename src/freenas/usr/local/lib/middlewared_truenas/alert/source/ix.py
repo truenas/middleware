@@ -13,8 +13,11 @@ class IxAlertClass(AlertClass):
     title = "iXsystems alert"
     text = "%s"
 
+    products = ("ENTERPRISE",)
+
 
 class IxAlertSource(AlertSource):
+    products = ("ENTERPRISE",)
     run_on_backup_node = False
 
     async def check(self):

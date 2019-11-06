@@ -46,7 +46,7 @@ class AlertClass(metaclass=AlertClassMeta):
     text = None
 
     exclude_from_list = False
-    freenas_only = False
+    products = ("CORE", "ENTERPRISE")
     hardware = False
 
     def __init__(self, middleware):
@@ -109,6 +109,7 @@ alert_category_names = {
     AlertCategory.DIRECTORY_SERVICE: "Directory Service",
     AlertCategory.HA: "High-Availability",
     AlertCategory.HARDWARE: "Hardware",
+    AlertCategory.PLUGINS: "Plugins",
     AlertCategory.NETWORK: "Network",
     AlertCategory.REPORTING: "Reporting",
     AlertCategory.SHARING: "Sharing",
@@ -176,7 +177,7 @@ class Alert:
 class AlertSource:
     schedule = IntervalSchedule(timedelta())
 
-    freenas_only = False
+    products = ("CORE", "ENTERPRISE")
     failover_related = False
     run_on_backup_node = True
 

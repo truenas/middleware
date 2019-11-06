@@ -177,9 +177,6 @@ class AlertService(Service):
         for sources_dir in sources_dirs:
             for module in load_modules(sources_dir):
                 for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
-                    if not is_freenas and cls.freenas_only:
-                        continue
-
                     source = cls(self.middleware)
                     ALERT_SOURCES[source.name] = source
 
@@ -237,13 +234,13 @@ class AlertService(Service):
     @accepts()
     async def list_categories(self):
         """
-        List all types of alert sources which the system can issue.
+        List all types of alerts which the system can issue.
         """
 
-        is_freenas = await self.middleware.call("system.is_freenas")
+        product_type = await self.middleware.call("system.product_type")
 
         classes = [alert_class for alert_class in AlertClass.classes
-                   if not alert_class.exclude_from_list and not (not is_freenas and alert_class.freenas_only)]
+                   if product_type in alert_class.products and not alert_class.exclude_from_list]
 
         return [
             {
@@ -498,9 +495,10 @@ class AlertService(Service):
     async def __run_alerts(self):
         master_node = "A"
         backup_node = "B"
+        product_type = await self.middleware.call("system.product_type")
         run_on_backup_node = False
         run_failover_related = False
-        if not await self.middleware.call("system.is_freenas"):
+        if product_type == "ENTERPRISE":
             if await self.middleware.call("failover.licensed"):
                 master_node = await self.middleware.call("failover.node")
                 try:
@@ -523,10 +521,13 @@ class AlertService(Service):
                 await self.unblock_source(k)
 
         for alert_source in ALERT_SOURCES.values():
-            if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
+            if product_type not in alert_source.products:
                 continue
 
             if alert_source.failover_related and not run_failover_related:
+                continue
+
+            if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()

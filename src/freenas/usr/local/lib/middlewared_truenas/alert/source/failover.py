@@ -22,12 +22,16 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
     title = "Failover Internal Interface Not Found"
     text = "Failover internal interface not found. Contact support."
 
+    products = ("ENTERPRISE",)
+
 
 class TrueNASVersionsMismatchAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "TrueNAS Versions Mismatch In Failover"
     text = "TrueNAS versions mismatch in failover. Update both controllers to the same version."
+
+    products = ("ENTERPRISE",)
 
 
 class FailoverAccessDeniedAlertClass(AlertClass):
@@ -36,12 +40,16 @@ class FailoverAccessDeniedAlertClass(AlertClass):
     title = "Failover Access Denied"
     text = "Failover access denied. Please reconfigure it."
 
+    products = ("ENTERPRISE",)
+
 
 class FailoverStatusCheckFailedAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Failed to Check Failover Status with the Other Controller"
     text = "Failed to check failover status with the other controller: %s."
+
+    products = ("ENTERPRISE",)
 
 
 class FailoverFailedAlertClass(AlertClass):
@@ -50,12 +58,16 @@ class FailoverFailedAlertClass(AlertClass):
     title = "Failover Failed"
     text = "Failover failed: %s."
 
+    products = ("ENTERPRISE",)
+
 
 class ExternalFailoverLinkStatusAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Could not Determine External Failover Link Status"
     text = "Could not determine external failover link status, check cabling."
+
+    products = ("ENTERPRISE",)
 
 
 class InternalFailoverLinkStatusAlertClass(AlertClass):
@@ -64,12 +76,16 @@ class InternalFailoverLinkStatusAlertClass(AlertClass):
     title = "Could not Determine Internal Failover Link Status"
     text = "Could not determine internal failover link status. Automatic failover disabled."
 
+    products = ("ENTERPRISE",)
+
 
 class CARPStatesDoNotAgreeAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Controllers CARP States Do Not Agree"
     text = "Controllers CARP states do not agree: %(error)s."
+
+    products = ("ENTERPRISE",)
 
 
 class CTLHALinkAlertClass(AlertClass):
@@ -78,6 +94,8 @@ class CTLHALinkAlertClass(AlertClass):
     title = "CTL HA link Is not Connected"
     text = "CTL HA link is not connected."
 
+    products = ("ENTERPRISE",)
+
 
 class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
     category = AlertCategory.HA
@@ -85,8 +103,11 @@ class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
     title = "No Escrowed Passphrase for Failover"
     text = "No escrowed passphrase for failover. Automatic failover disabled."
 
+    products = ("ENTERPRISE",)
+
 
 class FailoverAlertSource(ThreadedAlertSource):
+    products = ("ENTERPRISE",)
     failover_related = True
     run_on_backup_node = False
 

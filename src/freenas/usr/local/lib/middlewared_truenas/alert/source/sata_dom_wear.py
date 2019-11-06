@@ -15,6 +15,8 @@ class SATADOMWearWarningAlertClass(AlertClass):
     title = "SATA DOM Lifetime: Less Than 20% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
 
+    products = ("ENTERPRISE",)
+
 
 class SATADOMWearCriticalAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
@@ -22,9 +24,13 @@ class SATADOMWearCriticalAlertClass(AlertClass):
     title = "SATA DOM Lifetime: Less Than 10% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
 
+    products = ("ENTERPRISE",)
+
 
 class SATADOMWearAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
+
+    products = ("ENTERPRISE",)
 
     async def check(self):
         alerts = []

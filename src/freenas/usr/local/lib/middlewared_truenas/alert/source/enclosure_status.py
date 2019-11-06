@@ -17,6 +17,8 @@ class EnclosureUnhealthyAlertClass(AlertClass):
     title = "Enclosure Status Is Not Healthy"
     text = "Enclosure %d (%s): %s is %s."
 
+    products = ("ENTERPRISE",)
+
 
 class EnclosureHealthyAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
@@ -24,8 +26,11 @@ class EnclosureHealthyAlertClass(AlertClass):
     title = "Enclosure Status Is Healthy"
     text = "Enclosure %d (%s): is healthy."
 
+    products = ("ENTERPRISE",)
+
 
 class EnclosureStatusAlertSource(AlertSource):
+    products = ("ENTERPRISE",)
     run_on_backup_node = False
 
     async def check(self):

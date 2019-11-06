@@ -30,6 +30,8 @@ class SensorAlertClass(AlertClass):
     title = "Sensor Value Is Outside of Working Range"
     text = "Sensor %(name)s is %(relative)s %(level)s value: %(value)d %(description)s"
 
+    products = ("ENTERPRISE",)
+
 
 class PowerSupplyAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
@@ -37,8 +39,12 @@ class PowerSupplyAlertClass(AlertClass):
     title = "Power Supply Failed"
     text = "Power supply %(number)s failed: %(errors)s."
 
+    products = ("ENTERPRISE",)
+
 
 class SensorsAlertSource(AlertSource):
+    products = ("ENTERPRISE",)
+
     async def check(self):
         baseboard_manufacturer = (
             (await run(["dmidecode", "-s", "baseboard-manufacturer"], check=False)).stdout.decode(errors="ignore")

@@ -20,12 +20,16 @@ class LicenseAlertClass(AlertClass):
     title = "TrueNAS License Issue"
     text = "%s"
 
+    products = ("ENTERPRISE",)
+
 
 class LicenseIsExpiringAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "TrueNAS License Is Expiring"
     text = "%s"
+
+    products = ("ENTERPRISE",)
 
 
 class LicenseHasExpiredAlertClass(AlertClass):
@@ -34,8 +38,11 @@ class LicenseHasExpiredAlertClass(AlertClass):
     title = "TrueNAS License Has Expired"
     text = "%s"
 
+    products = ("ENTERPRISE",)
+
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
+    products = ("ENTERPRISE",)
     run_on_backup_node = False
 
     def check_sync(self):

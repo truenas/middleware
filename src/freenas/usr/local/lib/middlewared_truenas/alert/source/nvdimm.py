@@ -22,6 +22,8 @@ class NVDIMMAlertClass(AlertClass):
     title = "There Is An Issue With NVDIMM"
     text = "NVDIMM %(i)d %(k)s is %(value)s."
 
+    products = ("ENTERPRISE",)
+
 
 class NVDIMMLifetimeWarningAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
@@ -29,12 +31,16 @@ class NVDIMMLifetimeWarningAlertClass(AlertClass):
     title = "NVDIMM Lifetime Is Less Than 20%"
     text = "NVDIMM %(i)d %(name)s Lifetime is %(value)d%%."
 
+    products = ("ENTERPRISE",)
+
 
 class NVDIMMLifetimeCriticalAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "NVDIMM Lifetime Is Less Than 10%"
     text = "NVDIMM %(i)d %(name)s Lifetime is %(value)d%%."
+
+    products = ("ENTERPRISE",)
 
 
 def parse_sysctl(s):
@@ -83,6 +89,8 @@ def produce_nvdimm_alerts(i, critical_health, nvdimm_health, es_health):
 
 class NVDIMMAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
+
+    products = ("ENTERPRISE",)
 
     def check_sync(self):
         alerts = []
