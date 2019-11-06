@@ -41,8 +41,8 @@ def test_04_get_available_FreeBSD_release():
     results = POST('/jail/releases_choices/', True)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    assert '11.2-RELEASE' in results.json(), results.text
-    RELEASE = '11.2-RELEASE'
+    assert '11.3-RELEASE' in results.json(), results.text
+    RELEASE = '11.3-RELEASE'
 
 
 def test_05_fetch_FreeBSD():
@@ -106,7 +106,7 @@ def test_09_verify_creation_of_jail():
 def test_10_verify_iocage_list_with_ssh():
     if freeze is True:
         pytest.skip(freeze_msg)
-    cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.2-RELEASE'
+    cmd1 = f'iocage list | grep {JAIL_NAME} | grep -q 11.3-RELEASE'
     results = SSH_TEST(cmd1, user, password, ip)
     cmd2 = 'iocage list'
     results2 = SSH_TEST(cmd2, user, password, ip)
@@ -217,7 +217,6 @@ def test_17_verify_jail_stopped():
         time.sleep(1)
     else:
         assert results.json()['state'] == 'down', results.text
-
 
 
 def test_18_export_jail():

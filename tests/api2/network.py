@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import hostname, domain
+from auto_config import hostname, domain, gateway
 from functions import GET, PUT
 from config import *
 
@@ -20,13 +20,11 @@ Reason = "AD_DOMAIN BRIDGEDNS are missing in ixautomation.conf"
 dns_cfg = pytest.mark.skipif("BRIDGEDNS" not in locals(), reason=Reason)
 
 
-def test_01_get_default_routes():
+def test_01_get_default_network_general_summary():
     results = GET("/network/general/summary/")
     assert results.status_code == 200
     assert isinstance(results.json(), dict), results.text
     assert isinstance(results.json()['default_routes'], list), results.text
-    global gateway
-    gateway = results.json()['default_routes'][0]
 
 
 @dns_cfg

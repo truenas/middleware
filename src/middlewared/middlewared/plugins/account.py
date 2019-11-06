@@ -118,6 +118,8 @@ class UserService(CRUDService):
     async def user_compress(self, user):
         if 'local' in user:
             user.pop('local')
+        if 'id_type_both' in user:
+            user.pop('id_type_both')
         return user
 
     @filterable
@@ -152,7 +154,7 @@ class UserService(CRUDService):
             'datastore.query', self._config.datastore, [], datastore_options
         )
         for entry in result:
-            entry.update({'local': True})
+            entry.update({'local': True, 'id_type_both': False})
         return await self.middleware.run_in_thread(
             filter_list, result, filters, options
         )
@@ -827,6 +829,8 @@ class GroupService(CRUDService):
     async def group_compress(self, group):
         if 'local' in group:
             group.pop('local')
+        if 'id_type_both' in group:
+            group.pop('id_type_both')
         return group
 
     @filterable
@@ -861,7 +865,7 @@ class GroupService(CRUDService):
             'datastore.query', self._config.datastore, [], datastore_options
         )
         for entry in result:
-            entry.update({'local': True})
+            entry.update({'local': True, 'id_type_both': False})
         return await self.middleware.run_in_thread(
             filter_list, result, filters, options
         )

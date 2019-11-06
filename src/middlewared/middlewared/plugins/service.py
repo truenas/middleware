@@ -581,6 +581,7 @@ class ServiceService(CRUDService):
         await self._service('ntpd', 'restart', **kwargs)
 
     async def _start_smartd(self, **kwargs):
+        await self.middleware.call("etc.generate", "rc")
         await self.middleware.call("etc.generate", "smartd")
         await self._service("smartd-daemon", "start", **kwargs)
 
@@ -619,6 +620,7 @@ class ServiceService(CRUDService):
         return False, []
 
     async def _reload_smartd(self, **kwargs):
+        await self.middleware.call("etc.generate", "rc")
         await self.middleware.call("etc.generate", "smartd")
 
         pid = await self.middleware.run_in_thread(self._initializing_smartd_pid)
@@ -630,6 +632,7 @@ class ServiceService(CRUDService):
         await self._service("smartd-daemon", "start", **kwargs)
 
     async def _restart_smartd(self, **kwargs):
+        await self.middleware.call("etc.generate", "rc")
         await self.middleware.call("etc.generate", "smartd")
 
         pid = await self.middleware.run_in_thread(self._initializing_smartd_pid)

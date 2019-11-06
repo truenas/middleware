@@ -954,35 +954,25 @@ class SharingSMBService(CRUDService):
         Returns a list of valid virtual file system module choices which can be used with SMB Shares to enable virtual
         file system modules.
         """
-        vfs_modules_path = '/usr/local/lib/shared-modules/vfs'
-        vfs_modules = []
-        vfs_exclude = {
-            'acl_tdb',
-            'acl_xattr',
-            'aio_fork',
-            'aio_pthread',
-            'cacheprime',
-            'commit',
-            'expand_msdfs',
-            'linux_xfs_sgid',
-            'netatalk',
-            'posix_eadb',
-            'recycle',
-            'shadow_copy',
+        vfs_modules = [
+            'audit',
+            'catia',
+            'crossrename',
+            'dirsort',
+            'fruit',
+            'full_audit',
+            'ixnas',
+            'media_harmony',
+            'noacl',
+            'offline',
+            'preopen',
+            'shell_snap',
+            'streams_xattr',
             'shadow_copy2',
-            'streams_depot',
-            'syncops',
-            'xattr_tdb'
-        }
-
-        if os.path.exists(vfs_modules_path):
-            vfs_modules.extend(
-                filter(lambda m: m not in vfs_exclude,
-                       map(lambda f: f.rpartition('.')[0],
-                           os.listdir(vfs_modules_path)))
-            )
-        else:
-            vfs_modules.extend(['streams_xattr'])
+            'winmsa',
+            'zfs_space',
+            'zfsacl'
+        ]
 
         return vfs_modules
 

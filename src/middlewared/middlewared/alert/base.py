@@ -220,6 +220,12 @@ class AlertService:
 
         self.logger = logging.getLogger(self.__class__.__name__)
 
+        # If we remove some attributes, it should not be an error if they are still left in the database
+        schema = self.schema.copy()
+        schema.additional_attrs = True
+        # Set defaults for new attributes
+        self.attributes = schema.clean(self.attributes)
+
     @classmethod
     def name(cls):
         return cls.__name__.replace("AlertService", "")

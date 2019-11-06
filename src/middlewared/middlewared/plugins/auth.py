@@ -193,7 +193,7 @@ def is_internal_session(session):
     if session.origin == "UNIX_SOCKET":
         return True
 
-    host, port = session.origin.split(":", 1)
+    host, port = session.origin.rsplit(":", 1)
     host = host.strip("[]")
     port = int(port)
 
