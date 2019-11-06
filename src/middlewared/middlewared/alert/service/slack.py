@@ -10,11 +10,7 @@ class SlackAlertService(ThreadedAlertService):
 
     schema = Dict(
         "slack_attributes",
-        Str("cluster_name", default=""),
         Str("url", required=True, empty=False),
-        Str("channel", default=""),
-        Str("username", default=""),
-        Str("icon_url", default=""),
         strict=True,
     )
 
@@ -23,9 +19,6 @@ class SlackAlertService(ThreadedAlertService):
             self.attributes["url"],
             headers={"Content-type": "application/json"},
             data=json.dumps({
-                "channel": self.attributes["channel"],
-                "username": self.attributes["username"],
-                "icon_url": self.attributes["icon_url"],
                 "text": self._format_alerts(alerts, gone_alerts, new_alerts),
             }),
             timeout=15,

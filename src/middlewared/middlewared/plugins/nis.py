@@ -61,7 +61,8 @@ class NISService(ConfigService):
 
         `manycast` when enabled sets ypbind(8) to bind to the server that responds the fastest.
 
-        `enable` when true disables the configuration of the NIS service.
+        `enable` enables and starts the NIS service. The NIS service is disabled when this
+        value is changed to False.
         """
         must_reload = False
         old = await self.config()

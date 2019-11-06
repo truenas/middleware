@@ -12,11 +12,12 @@ import socket
 import sys
 import threading
 import time
+import traceback
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
-from middlewared.utils.debug import get_threads_stacks
+from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.logger import Logger
 from middlewared.job import Job
 from middlewared.pipe import Pipes
@@ -565,6 +566,24 @@ class CoreService(Service):
             for i in self.middleware.get_wsclients().values()
         ], filters, options)
 
+    @private
+    def get_tasks(self):
+        for task in asyncio.all_tasks(loop=self.middleware.loop):
+            formatted = None
+            frame = None
+            frames = []
+            for frame in task.get_stack():
+                cur_frame = get_frame_details(frame, self.logger)
+                if cur_frame:
+                    frames.append(cur_frame)
+
+            if frame:
+                formatted = traceback.format_stack(frame)
+            yield {
+                'stack': formatted,
+                'frames': frames,
+            }
+
     @filterable
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
@@ -850,7 +869,7 @@ class CoreService(Service):
         return True
 
     @accepts(
-        Str('engine', enum=['PTVS', 'PYDEV']),
+        Str('engine', enum=['PTVS', 'PYDEV', 'REMOTE_PDB']),
         Dict(
             'options',
             Str('secret'),
@@ -859,6 +878,7 @@ class CoreService(Service):
             Str('host'),
             Bool('wait_attach', default=False),
             Str('local_path'),
+            Bool('threaded', default=False),
         ),
     )
     async def debug(self, engine, options):
@@ -868,12 +888,20 @@ class CoreService(Service):
         engines:
           - PTVS: Python Visual Studio
           - PYDEV: Python Dev (Eclipse/PyCharm)
+          - REMOTE_PDB: Remote vanilla PDB (over TCP sockets)
 
         options:
           - secret: password for PTVS
           - host: required for PYDEV, hostname of local computer (developer workstation)
           - local_path: required for PYDEV, path for middlewared source in local computer (e.g. /home/user/freenas/src/middlewared/middlewared
+          - threaded: run debugger in a new thread instead of event loop
         """
+        if options['threaded']:
+            asyncio.ensure_future(self.middleware.run_in_thread(self.__debug, engine, options))
+        else:
+            self.__debug(engine, options)
+
+    def __debug(self, engine, options):
         if engine == 'PTVS':
             import ptvsd
             if 'secret' not in options:
@@ -894,6 +922,9 @@ class CoreService(Service):
             import pydevd
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
+        elif engine == 'REMOTE_PDB':
+            from remote_pdb import RemotePdb
+            RemotePdb(options['bind_address'], options['bind_port']).set_trace()
 
     @private
     async def profile(self, method, params=None):

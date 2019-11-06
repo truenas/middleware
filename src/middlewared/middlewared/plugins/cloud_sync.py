@@ -110,9 +110,9 @@ class RcloneConfig:
 
 
 def get_remote_path(provider, attributes):
-    remote_path = attributes["folder"].rstrip()
+    remote_path = attributes["folder"].rstrip("/")
     if provider.buckets:
-        remote_path = f"{attributes['bucket']}/{remote_path}"
+        remote_path = f"{attributes['bucket']}/{remote_path.lstrip('/')}"
     return remote_path
 
 

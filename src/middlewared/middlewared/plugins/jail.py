@@ -2,7 +2,6 @@ import asyncio
 import contextlib
 import os
 import subprocess as su
-import libzfs
 import itertools
 import pathlib
 import json
@@ -1069,6 +1068,8 @@ class JailService(CRUDService):
                 iocage.start(used_ports=[6000] + list(range(1025)))
             except Exception as e:
                 raise CallError(str(e))
+        else:
+            raise CallError(f'{jail} is already running')
 
         return True
 
@@ -1084,6 +1085,8 @@ class JailService(CRUDService):
                 iocage.stop(force=force)
             except Exception as e:
                 raise CallError(str(e))
+        else:
+            raise CallError(f'{jail} is not running')
 
             return True
 
@@ -1241,21 +1244,14 @@ class JailService(CRUDService):
     @accepts(Str("pool"))
     def activate(self, pool):
         """Activates a pool for iocage usage, and deactivates the rest."""
-        zfs = libzfs.ZFS(history=True, history_prefix="<iocage>")
-        pools = zfs.pools
-        prop = "org.freebsd.ioc:active"
-        activated = False
-
-        for _pool in pools:
-            if _pool.name == pool:
-                ds = zfs.get_dataset(_pool.name)
-                ds.properties[prop] = libzfs.ZFSUserProperty("yes")
-                activated = True
-            else:
-                ds = zfs.get_dataset(_pool.name)
-                ds.properties[prop] = libzfs.ZFSUserProperty("no")
-
-        return activated
+        pool = self.middleware.call_sync('pool.query', [['name', '=', pool]], {'get': True})
+        iocage = ioc.IOCage()
+        try:
+            iocage.activate(pool['name'])
+        except Exception as e:
+            raise CallError(f'Failed to activate {pool["name"]}: {e}')
+        else:
+            return True
 
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
     def clean(self, ds_type):
@@ -1406,8 +1402,12 @@ class JailService(CRUDService):
 
     @private
     def start_on_boot(self):
+        if not self.iocage_set_up():
+            return
+
+        self.check_dataset_existence()
         self.logger.debug('Starting jails on boot: PENDING')
-        ioc.IOCage(rc=True, reset_cache=True).start()
+        ioc.IOCage(rc=True, reset_cache=True).start(ignore_exception=True)
         self.logger.debug('Starting jails on boot: SUCCESS')
 
         return True
@@ -1460,15 +1460,17 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def query(self, path, enabled):
         results = []
+
         if not await self.middleware.call('jail.iocage_set_up'):
             return results
-        pool_name = os.path.relpath(path, '/mnt').split('/')[0]
+
+        query_dataset = os.path.relpath(path, '/mnt')
         try:
             activated_pool = await self.middleware.call('jail.get_activated_pool')
         except Exception:
             pass
         else:
-            if activated_pool == pool_name:
+            if query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
                 for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
                     results.append({'id': j['host_hostuuid']})
 

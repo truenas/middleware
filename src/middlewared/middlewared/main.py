@@ -8,10 +8,11 @@ from .schema import Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .service_exception import adapt_exception
 from .utils import start_daemon_thread, LoadPluginsMixin
-from .utils.debug import get_threads_stacks
+from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 from .utils.profile import profile_wrap
+from .utils.run_in_thread import RunInThreadMixin
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -32,7 +33,6 @@ import errno
 import functools
 import inspect
 import itertools
-import linecache
 import multiprocessing
 import os
 import pickle
@@ -95,55 +95,9 @@ class Application(object):
             tb_frame = cur_tb.tb_frame
             cur_tb = cur_tb.tb_next
 
-            if not isinstance(tb_frame, types.FrameType):
-                continue
-
-            cur_frame = {
-                'filename': tb_frame.f_code.co_filename,
-                'lineno': tb_frame.f_lineno,
-                'method': tb_frame.f_code.co_name,
-                'line': linecache.getline(tb_frame.f_code.co_filename, tb_frame.f_lineno),
-            }
-
-            argspec = None
-            varargspec = None
-            keywordspec = None
-            _locals = {}
-
-            try:
-                arginfo = inspect.getargvalues(tb_frame)
-                argspec = arginfo.args
-                if arginfo.varargs is not None:
-                    varargspec = arginfo.varargs
-                    temp_varargs = list(arginfo.locals[varargspec])
-                    for i, arg in enumerate(temp_varargs):
-                        temp_varargs[i] = '***'
-
-                    arginfo.locals[varargspec] = tuple(temp_varargs)
-
-                if arginfo.keywords is not None:
-                    keywordspec = arginfo.keywords
-
-                _locals.update(list(arginfo.locals.items()))
-
-            except Exception:
-                self.logger.critical('Error while extracting arguments from frames.', exc_info=True)
-
-            if argspec:
-                cur_frame['argspec'] = argspec
-            if varargspec:
-                cur_frame['varargspec'] = varargspec
-            if keywordspec:
-                cur_frame['keywordspec'] = keywordspec
-            if _locals:
-                try:
-                    cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
-                except Exception:
-                    # repr() may fail since it may be one of the reasons
-                    # of the exception
-                    cur_frame['locals'] = {}
-
-            frames.append(cur_frame)
+            cur_frame = get_frame_details(tb_frame, self.logger)
+            if cur_frame:
+                frames.append(cur_frame)
 
         return {
             'class': klass.__name__,
@@ -376,7 +330,14 @@ class FileApplication(object):
         self.jobs[job_id] = self.middleware.loop.call_later(
             60, lambda: asyncio.ensure_future(self._cleanup_job(job_id)))
 
+    async def _cleanup_cancel(self, job_id):
+        job_cleanup = self.jobs.pop(job_id, None)
+        if job_cleanup:
+            job_cleanup.cancel()
+
     async def _cleanup_job(self, job_id):
+        if job_id not in self.jobs:
+            return
         self.jobs[job_id].cancel()
         del self.jobs[job_id]
 
@@ -438,9 +399,10 @@ class FileApplication(object):
                 asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
 
         try:
+            await self._cleanup_cancel(job_id)
             await self.middleware.run_in_thread(do_copy)
         finally:
-            await self._cleanup_job(job_id)
+            await job.pipes.close()
 
         await resp.drain()
         return resp
@@ -751,7 +713,7 @@ class ShellApplication(object):
         await self.middleware.run_in_thread(t_worker.join)
 
 
-class Middleware(LoadPluginsMixin):
+class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
@@ -775,10 +737,10 @@ class Middleware(LoadPluginsMixin):
         self.startup_seq_path = startup_seq_path
         self.app = None
         self.loop = None
+        self.run_in_thread_executor = IoThreadPoolExecutor('IoThread', 20)
         self.__thread_id = threading.get_ident()
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
-        self.__io_threadpool = IoThreadPoolExecutor('IoThread', 20)
         self.__ws_threadpool = concurrent.futures.ThreadPoolExecutor(
             initializer=lambda: set_thread_name('threadpool_ws'),
             max_workers=10,
@@ -1082,9 +1044,6 @@ class Middleware(LoadPluginsMixin):
                 if i == retries - 1:
                     raise
                 self.__init_procpool()
-
-    async def run_in_thread(self, method, *args, **kwargs):
-        return await self.loop.run_in_executor(self.__io_threadpool, functools.partial(method, *args, **kwargs))
 
     def pipe(self):
         return Pipe(self)

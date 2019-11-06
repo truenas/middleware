@@ -5,7 +5,7 @@ from mock import Mock, patch
 import pytest
 
 from middlewared.common.camcontrol import camcontrol_list
-from middlewared.common.smart.areca import annotate_devices_with_areca_enclosure
+from middlewared.common.smart.areca import annotate_devices_with_areca_dev_id
 
 CAMCONTROL = textwrap.dedent("""\
     scbus0 on ahcich0 bus 0:
@@ -63,42 +63,42 @@ CAMCONTROL = textwrap.dedent("""\
 DISK_INFO = textwrap.dedent("""\
       # Enc# Slot#   ModelName                        Capacity  Usage
     ===============================================================================
-      1  99  Slot#1  N.A.                                0.0GB  N.A.
-      2  99  Slot#2  N.A.                                0.0GB  N.A.
-      3  99  Slot#3  N.A.                                0.0GB  N.A.
-      4  99  Slot#4  N.A.                                0.0GB  N.A.
-      5  99  Slot#5  N.A.                                0.0GB  N.A.
-      6  99  Slot#6  N.A.                                0.0GB  N.A.
-      7  99  Slot#7  N.A.                                0.0GB  N.A.
-      8  99  Slot#8  N.A.                                0.0GB  N.A.
-      9  50  SLOT 01 TOSHIBA HDWE140                  4000.8GB  JBOD
-     10  51  SLOT 02 TOSHIBA HDWE140                  4000.8GB  JBOD
-     11  52  SLOT 03 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     12  53  SLOT 04 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     13  54  SLOT 05 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     14  55  SLOT 06 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     15  56  SLOT 07 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     16  57  SLOT 08 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     17  58  SLOT 09 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     18  59  SLOT 10 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     19  60  SLOT 11 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     20  61  SLOT 12 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     21  99  SLOT 13 N.A.                                0.0GB  N.A.
-     22  62  SLOT 14 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     23  99  SLOT 15 N.A.                                0.0GB  N.A.
-     24  63  SLOT 16 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
-     25  99  SLOT 17 N.A.                                0.0GB  N.A.
-     26  99  SLOT 18 N.A.                                0.0GB  N.A.
-     27  99  SLOT 19 N.A.                                0.0GB  N.A.
-     28  99  SLOT 20 N.A.                                0.0GB  N.A.
-     29  99  SLOT 21 N.A.                                0.0GB  N.A.
-     30  99  SLOT 22 N.A.                                0.0GB  N.A.
-     31  99  SLOT 23 N.A.                                0.0GB  N.A.
-     32  64  SLOT 24 SanDisk SSD PLUS 120GB(SED)       120.0GB  JBOD
-     33  99  EXTP 01 N.A.                                0.0GB  N.A.
-     34  99  EXTP 02 N.A.                                0.0GB  N.A.
-     35  99  EXTP 03 N.A.                                0.0GB  N.A.
-     36  99  EXTP 04 N.A.                                0.0GB  N.A.
+      1  01  Slot#1  N.A.                                0.0GB  N.A.
+      2  01  Slot#2  N.A.                                0.0GB  N.A.
+      3  01  Slot#3  N.A.                                0.0GB  N.A.
+      4  01  Slot#4  N.A.                                0.0GB  N.A.
+      5  01  Slot#5  N.A.                                0.0GB  N.A.
+      6  01  Slot#6  N.A.                                0.0GB  N.A.
+      7  01  Slot#7  N.A.                                0.0GB  N.A.
+      8  01  Slot#8  N.A.                                0.0GB  N.A.
+      9  02  SLOT 01 TOSHIBA HDWE140                  4000.8GB  JBOD
+     10  02  SLOT 02 TOSHIBA HDWE140                  4000.8GB  JBOD
+     11  02  SLOT 03 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     12  02  SLOT 04 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     13  02  SLOT 05 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     14  02  SLOT 06 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     15  02  SLOT 07 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     16  02  SLOT 08 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     17  02  SLOT 09 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     18  02  SLOT 10 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     19  02  SLOT 11 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     20  02  SLOT 12 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     21  02  SLOT 13 N.A.                                0.0GB  N.A.
+     22  02  SLOT 14 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     23  02  SLOT 15 N.A.                                0.0GB  N.A.
+     24  02  SLOT 16 WDC WD60EFRX-68L0BN1             6001.2GB  JBOD
+     25  02  SLOT 17 N.A.                                0.0GB  N.A.
+     26  02  SLOT 18 N.A.                                0.0GB  N.A.
+     27  02  SLOT 19 N.A.                                0.0GB  N.A.
+     28  02  SLOT 20 N.A.                                0.0GB  N.A.
+     29  02  SLOT 21 N.A.                                0.0GB  N.A.
+     30  02  SLOT 22 N.A.                                0.0GB  N.A.
+     31  02  SLOT 23 N.A.                                0.0GB  N.A.
+     32  02  SLOT 24 SanDisk SSD PLUS 120GB            120.0GB  JBOD
+     33  02  EXTP 01 N.A.                                0.0GB  N.A.
+     34  02  EXTP 02 N.A.                                0.0GB  N.A.
+     35  02  EXTP 03 N.A.                                0.0GB  N.A.
+     36  02  EXTP 04 N.A.                                0.0GB  N.A.
     ===============================================================================
     GuiErrMsg<0x00>: Success.
 """)
@@ -128,10 +128,14 @@ async def test__annotate_devices_with_areca_enclosure__ok():
         devices = await camcontrol_list()
 
     mock = CoroutineMock(side_effect=lambda *args, **kwargs: Mock(stdout={"disk": DISK_INFO, "sys": SYS_INFO}[args[1]]))
-    with patch("middlewared.common.smart.areca.run", mock):
-        await annotate_devices_with_areca_enclosure(devices)
+    with patch("middlewared.common.smart.areca.logger", mock):
+        with patch("middlewared.common.smart.areca.run", mock):
+            await annotate_devices_with_areca_dev_id(devices)
 
-    assert all(devices[f"da{i}"]["enclosure"] == 50 + i for i in range(0, 15))
+    dev_ids = [
+        '1/2', '2/2', '3/2', '4/2', '5/2', '6/2', '7/2', '8/2', '9/2', '10/2', '11/2', '12/2', '14/2', '16/2', '24/2'
+    ]
+    assert all(devices[f"da{i}"]["areca_dev_id"] == dev_ids[i] for i in range(0, 15))
 
 
 @pytest.mark.asyncio
@@ -142,7 +146,8 @@ async def test__annotate_devices_with_areca_enclosure__old_firmware():
 
     OLD_INFO = SYS_INFO.replace("V1.56 2019-02-20", "V1.49 2012-02-20")
     mock = CoroutineMock(side_effect=lambda *args, **kwargs: Mock(stdout={"disk": DISK_INFO, "sys": OLD_INFO}[args[1]]))
-    with patch("middlewared.common.smart.areca.run", mock):
-        await annotate_devices_with_areca_enclosure(devices)
+    with patch("middlewared.common.smart.areca.logger", mock):
+        with patch("middlewared.common.smart.areca.run", mock):
+            await annotate_devices_with_areca_dev_id(devices)
 
-    assert all(devices[f"da{i}"]["enclosure"] is None for i in range(0, 15))
+    assert all(isinstance(devices[f"da{i}"]["areca_dev_id"], int) for i in range(0, 15))

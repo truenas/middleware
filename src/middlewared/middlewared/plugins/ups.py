@@ -67,6 +67,7 @@ class UPSService(SystemServiceService):
         ports = [x for x in glob.glob('/dev/cua*') if x.find('.') == -1]
         ports.extend(glob.glob('/dev/ugen*'))
         ports.extend(glob.glob('/dev/uhid*'))
+        ports.append('auto')
         return ports
 
     @accepts()

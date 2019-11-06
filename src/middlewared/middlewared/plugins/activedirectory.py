@@ -663,6 +663,27 @@ class ActiveDirectoryService(ConfigService):
             )
         return
 
+    @private
+    async def common_validate(self, new, old, verrors):
+        if not new["enable"]:
+            return
+
+        if not new["bindpw"] and not new["kerberos_principal"]:
+            verrors.add(
+                "activedirectory_update.bindname",
+                "Bind credentials or kerberos keytab are required to join an AD domain."
+            )
+        if new["bindpw"] and new["kerberos_principal"]:
+            verrors.add(
+                "activedirectory_update.kerberos_principal",
+                "Simultaneous keytab and password authentication are not permitted."
+            )
+        if not new["domainname"]:
+            verrors.add(
+                "activedirectory_update.domainname",
+                "AD domain name is required."
+            )
+
     @accepts(Dict(
         'activedirectory_update',
         Str('domainname', required=True),
@@ -811,30 +832,27 @@ class ActiveDirectoryService(ConfigService):
         except Exception as e:
             raise ValidationError('activedirectory_update.netbiosname', str(e))
 
-        if new['enable']:
-            if not new["bindpw"] and not new["kerberos_principal"]:
-                raise ValidationError(
-                    "activedirectory_update.bindname",
-                    "Bind credentials or kerberos keytab are required to join an AD domain."
-                )
-            if new["bindpw"] and new["kerberos_principal"]:
-                raise ValidationError(
-                    "activedirectory_update.kerberos_principal",
-                    "Simultaneous keytab and password authentication are not permitted."
-                )
+        await self.common_validate(new, old, verrors)
+
+        if verrors:
+            raise verrors
 
         if new['enable'] and not old['enable']:
             try:
                 await self.middleware.run_in_thread(self.validate_credentials, new)
             except Exception as e:
-                verrors.add("activedirectory_update.bindpw", f"Failed to validate bind credentials: {e}")
+                raise ValidationError(
+                    "activedirectory_update.bindpw",
+                    f"Failed to validate bind credentials: {e}"
+                )
+
             try:
                 await self.middleware.run_in_thread(self.validate_domain, new)
             except Exception as e:
-                verrors.add("activedirectory_update", f"Failed to validate domain configuration: {e}")
-
-        if verrors:
-            raise verrors
+                raise ValidationError(
+                    "activedirectory_update",
+                    f"Failed to validate domain configuration: {e}"
+                )
 
         new = await self.ad_compress(new)
         await self.middleware.call(
@@ -957,6 +975,7 @@ class ActiveDirectoryService(ConfigService):
         if ret == neterr.NOTJOINED:
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join()
+            await self._register_virthostname(ad, smb, smb_ha_mode)
             if smb_ha_mode != 'LEGACY':
                 kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
                 if kt_id:
@@ -965,7 +984,7 @@ class ActiveDirectoryService(ConfigService):
                         'datastore.update',
                         'directoryservice.activedirectory',
                         ad['id'],
-                        {'ad_bindpw': '', 'ad_kerberos_principal': f'{smb["netbiosname"].upper()}$@{ad["domainname"]}'}
+                        {'ad_bindpw': '', 'ad_kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'}
                     )
                     ad = await self.config()
 
@@ -1129,14 +1148,52 @@ class ActiveDirectoryService(ConfigService):
         Default winbind request timeout is 60 seconds, and can be adjusted by the smb4.conf parameter
         'winbind request timeout ='
         """
-        if not (await self.config())['enable']:
+        verrors = ValidationErrors()
+        config = await self.config()
+        if not config['enable']:
             return False
+
+        await self.common_validate(config, config, verrors)
+
+        try:
+            verrors.check()
+        except Exception:
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.activedirectory',
+                config['id'],
+                {'ad_enable': False}
+            )
+            raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
+                            errno.EINVAL)
 
         netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
         if netlogon_ping.returncode != 0:
             raise CallError(netlogon_ping.stderr.decode().strip('\n'))
 
         return True
+
+    @private
+    async def _register_virthostname(self, ad, smb, smb_ha_mode):
+        """
+        This co-routine performs virtual hostname aware
+        dynamic DNS updates after joining AD to register
+        CARP addresses.
+        """
+        if not ad['allow_dns_updates'] or smb_ha_mode == 'STANDALONE':
+            return
+
+        vhost = (await self.middleware.call('network.configuration.config'))['hostname_virtual']
+        carp_ips = set(await self.middleware.call('failover.get_ips'))
+        smb_bind_ips = set(smb['bindip']) if smb['bindip'] else carp_ips
+        to_register = carp_ips & smb_bind_ips
+        hostname = f'{vhost}.{ad["domainname"]}'
+        cmd = [SMBCmd.NET.value, '-k', 'ads', 'dns', 'register', hostname]
+        cmd.extend(to_register)
+        netdns = await run(cmd, check=False)
+        if netdns.returncode != 0:
+            self.logger.debug("hostname: %s, ips: %s, text: %s",
+                              hostname, to_register, netdns.stderr.decode())
 
     @private
     async def _net_ads_join(self):
@@ -1382,6 +1439,10 @@ class ActiveDirectoryService(ConfigService):
         self.middleware.call_sync('cache.pop', 'AD_cache')
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
+        id_type_both_backends = [
+            'rid',
+            'autorid'
+        ]
         if not ad['disable_freenas_cache']:
             """
             These calls populate the winbindd cache
@@ -1415,12 +1476,14 @@ class ActiveDirectoryService(ConfigService):
                     'domain': smb['workgroup'],
                     'low_id': d['backend_data']['range_low'],
                     'high_id': d['backend_data']['range_high'],
+                    'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
                 })
             elif d['domain']['idmap_domain_name'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
                 known_domains.append({
                     'domain': d['domain']['idmap_domain_name'],
                     'low_id': d['backend_data']['range_low'],
                     'high_id': d['backend_data']['range_high'],
+                    'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
                 })
 
         for line in netlist.stdout.decode().splitlines():
@@ -1460,7 +1523,8 @@ class ActiveDirectoryService(ConfigService):
                                 'attributes': {},
                                 'groups': [],
                                 'sshpubkey': None,
-                                'local': False
+                                'local': False,
+                                'id_type_both': d['id_type_both']
                             }})
                             user_next_index += 1
                             break
@@ -1482,25 +1546,22 @@ class ActiveDirectoryService(ConfigService):
                         should not be fatal here.
                         """
                         try:
-                            pwd.getpwuid(cached_gid)
-                            break
+                            group_data = grp.getgrgid(cached_gid)
                         except KeyError:
-                            try:
-                                group_data = grp.getgrgid(cached_gid)
-                            except KeyError:
-                                break
-
-                            cache_data['groups'].update({group_data.gr_name: {
-                                'id': group_next_index,
-                                'gid': group_data.gr_gid,
-                                'group': group_data.gr_name,
-                                'builtin': False,
-                                'sudo': False,
-                                'users': [],
-                                'local': False,
-                            }})
-                            group_next_index += 1
                             break
+
+                        cache_data['groups'].update({group_data.gr_name: {
+                            'id': group_next_index,
+                            'gid': group_data.gr_gid,
+                            'group': group_data.gr_name,
+                            'builtin': False,
+                            'sudo': False,
+                            'users': [],
+                            'local': False,
+                            'id_type_both': d['id_type_both']
+                        }})
+                        group_next_index += 1
+                        break
 
         if not cache_data.get('users'):
             return

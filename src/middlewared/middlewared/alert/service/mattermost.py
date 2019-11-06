@@ -10,12 +10,10 @@ class MattermostAlertService(ThreadedAlertService):
 
     schema = Dict(
         "mattermost_attributes",
-        Str("cluster_name", default=""),
         Str("url", required=True, empty=False),
         Str("username", required=True, empty=False),
-        Str("password", default=""),
-        Str("team", default=""),
-        Str("channel", required=True, empty=False),
+        Str("channel", default=""),
+        Str("icon_url", default=""),
         strict=True,
     )
 
@@ -24,8 +22,9 @@ class MattermostAlertService(ThreadedAlertService):
             self.attributes["url"],
             headers={"Content-type": "application/json"},
             data=json.dumps({
-                "channel": self.attributes["channel"],
                 "username": self.attributes["username"],
+                "channel": self.attributes["channel"],
+                "icon_url": self.attributes["icon_url"],
                 "text": self._format_alerts(alerts, gone_alerts, new_alerts),
             }),
             timeout=15,
