@@ -12,6 +12,8 @@ class DisksAreNotPresentOnBackupNodeAlertClass(AlertClass):
     title = "Disks Missing on Passive Storage Controller"
     text = "Disks with serial %(serials)s present on active storage controller but missing on passive storage controller."
 
+    products = ("ENTERPRISE",)
+
 
 class DisksAreNotPresentOnMasterNodeAlertClass(AlertClass):
     category = AlertCategory.HA
@@ -19,8 +21,11 @@ class DisksAreNotPresentOnMasterNodeAlertClass(AlertClass):
     title = "Disks Missing on Active Storage Controller"
     text = "Disks with serial %(serials)s present on passive storage controller but missing on active storage controller."
 
+    products = ("ENTERPRISE",)
+
 
 class FailoverDisksAlertSource(AlertSource):
+    products = ("ENTERPRISE",)
     failover_related = True
     run_on_backup_node = False
 

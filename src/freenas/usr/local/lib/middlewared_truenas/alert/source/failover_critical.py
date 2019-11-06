@@ -16,12 +16,16 @@ class NoCriticalFailoverInterfaceFoundAlertClass(AlertClass):
     title = "No Interfaces Are Marked Critical For Failover"
     text = "No network interfaces are marked critical for failover."
 
+    products = ("ENTERPRISE",)
+
 
 class CriticalFailoverInterfaceNotFoundAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Interface Is Critical for Failover but Is Not Present"
     text = "Interface %r is critical for failover but is not present in this system."
+
+    products = ("ENTERPRISE",)
 
 
 class CriticalFailoverInterfaceCARPNotConfiguredAlertClass(AlertClass):
@@ -30,12 +34,16 @@ class CriticalFailoverInterfaceCARPNotConfiguredAlertClass(AlertClass):
     title = "Interface Is Critical for Failover but Does Not Have a CARP VHID"
     text = "Interface %r is critical for failover but does not have a CARP virtual host ID (vhid)."
 
+    products = ("ENTERPRISE",)
+
 
 class CriticalFailoverInterfaceCARPInvalidStateAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Interface Is Critical for Failover but CARP State Is Not Master or Backup"
     text = "Interface %r is critical for failover but CARP is not in a master or backup state."
+
+    products = ("ENTERPRISE",)
 
 
 class CriticalFailoverInterfaceInvalidVHIDAlertClass(AlertClass):
@@ -44,6 +52,8 @@ class CriticalFailoverInterfaceInvalidVHIDAlertClass(AlertClass):
     title = "Interface VHID Does Not Match Database"
     text = "Interface %(interface)r is configured with VHID %(vhid_real)d but should be VHID %(vhid)d."
 
+    products = ("ENTERPRISE",)
+
 
 class FailedToVerifyCriticalFailoverInterfaceAlertClass(AlertClass):
     category = AlertCategory.HA
@@ -51,8 +61,11 @@ class FailedToVerifyCriticalFailoverInterfaceAlertClass(AlertClass):
     title = "Cannot Ping the Passive Storage Controller from the Active Storage Controller"
     text = "Failed to ping passive storage controller interface %r from the active storage controller."
 
+    products = ("ENTERPRISE",)
+
 
 class FailoverCriticalAlertSource(ThreadedAlertSource):
+    products = ("ENTERPRISE",)
     failover_related = True
     run_on_backup_node = False
 

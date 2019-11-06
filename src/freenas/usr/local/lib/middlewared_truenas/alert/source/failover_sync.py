@@ -16,3 +16,5 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "controller. Use Sync to Peer on the System/Failover page to "
         "perform a manual sync."
     )
+
+    products = ("ENTERPRISE",)

@@ -14,8 +14,12 @@ class FailoverIpAlertClass(AlertClass):
     text = ("Network interface %(interface)s is marked critical for failover, but is missing following required "
             "IP addresses: %(addresses)s")
 
+    products = ("ENTERPRISE",)
+
 
 class FailoverIpAlertSource(AlertSource):
+    products = ("ENTERPRISE",)
+
     async def check(self):
         interfaces = await self.middleware.call("datastore.query", "network.interfaces")
         alerts = []
