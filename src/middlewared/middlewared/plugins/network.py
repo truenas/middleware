@@ -1957,14 +1957,14 @@ class InterfaceService(CRUDService):
                     'type': 'INET',
                     'address': '0.0.0.0',
                     'netmask': 0,
-                    'brodcast': '255.255.255.255',
+                    'broadcast': '255.255.255.255',
                 })
             if choices['ipv6']:
                 list_of_ip.append({
                     'type': 'INET6',
                     'address': '::',
                     'netmask': 0,
-                    'brodcast': 'ff02::1',
+                    'broadcast': 'ff02::1',
                 })
 
         for iface in list(netif.list_interfaces().values()):
