@@ -263,7 +263,7 @@ class FailoverService(ConfigService):
         """
         Update failover state.
 
-        `disabled` as false will turn off HA.
+        `disabled` when true indicates that HA is disabled.
         `master` sets the state of current node. Standby node will have the opposite value.
         """
         master = data.pop('master', NOT_PROVIDED)
@@ -285,7 +285,7 @@ class FailoverService(ConfigService):
             if not await self.middleware.call('interface.query', [('failover_critical', '=', True)]):
                 verrors.add(
                     'failover_update.disabled',
-                    'You need at least one critical interface to disable failover.',
+                    'You need at least one critical interface to enable failover.',
                 )
         verrors.check()
 
