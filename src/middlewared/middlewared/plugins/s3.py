@@ -29,6 +29,16 @@ class S3Service(SystemServiceService):
         datastore_prefix = "s3_"
         datastore_extend = "s3.config_extend"
 
+    async def bindip_choices(self):
+        """
+        Return ip choices for S3 service to use.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'static': True, 'any': True}
+            )
+        }
+
     @private
     async def config_extend(self, s3):
         s3['storage_path'] = s3.pop('disks', None)
@@ -102,6 +112,9 @@ class S3Service(SystemServiceService):
             verrors.extend((await self.middleware.call(
                 'certificate.cert_services_validation', new['certificate'], 's3_update.certificate', False
             )))
+
+        if new['bindip'] not in await self.bindip_choices():
+            verrors.add('s3_update.bindip', 'Please provide a valid ip address')
 
         if verrors:
             raise verrors
