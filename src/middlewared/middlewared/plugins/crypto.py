@@ -1038,6 +1038,13 @@ class CertificateService(CRUDService):
         """
         return self.PROFILES
 
+    @accepts()
+    async def country_choices(self):
+        """
+        Returns country choices for creating a certificate/csr.
+        """
+        return await self.middleware.call('system.general.country_choices')
+
     @private
     async def cert_extend(self, cert):
         """Extend certificate with some useful attributes."""
