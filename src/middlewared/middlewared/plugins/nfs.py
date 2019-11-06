@@ -54,6 +54,17 @@ class NFSService(SystemServiceService):
         nfs["16"] = nfs.pop("userd_manage_gids")
         return nfs
 
+    @accepts()
+    async def bindip_choices(self):
+        """
+        Returns ip choices for NFS service to use
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'static': True, 'any': True}
+            )
+        }
+
     @accepts(Dict(
         'nfs_update',
         Int('servers', validators=[Range(min=1, max=256)]),
@@ -131,6 +142,11 @@ class NFSService(SystemServiceService):
                         "Enabling kerberos authentication on TrueNAS HA requires setting the virtual hostname and "
                         "domain"
                     )
+
+        bindip_choices = await self.bindip_choices()
+        for i, bindip in enumerate(new['bindip']):
+            if bindip not in bindip_choices:
+                verrors.add(f'nfs_update.bindip.{i}', 'Please provide a valid ip address')
 
         if not new["v4"] and new["v4_v3owner"]:
             verrors.add("nfs_update.v4_v3owner", "This option requires enabling NFSv4")
