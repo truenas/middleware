@@ -753,6 +753,28 @@ class SystemGeneralService(ConfigService):
         return data
 
     @accepts()
+    async def ui_address_choices(self):
+        """
+        Returns UI ipv4 address choices.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'ipv4': True, 'ipv6': False, 'any': True, 'static': True}
+            )
+        }
+
+    @accepts()
+    async def ui_v6address_choices(self):
+        """
+        Returns UI ipv6 address choices.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'ipv4': False, 'ipv6': True, 'any': True, 'static': True}
+            )
+        }
+
+    @accepts()
     def ui_httpsprotocols_choices(self):
         """
         Returns available HTTPS protocols.
@@ -967,19 +989,12 @@ class SystemGeneralService(ConfigService):
                 'Timezone not known. Please select a valid timezone.'
             )
 
-        ip_addresses = await self.middleware.call(
-            'interface.ip_in_use'
-        )
-        ip4_addresses_list = [alias_dict['address'] for alias_dict in ip_addresses if alias_dict['type'] == 'INET']
-        ip6_addresses_list = [alias_dict['address'] for alias_dict in ip_addresses if alias_dict['type'] == 'INET6']
+        ip4_addresses_list = await self.ui_address_choices()
+        ip6_addresses_list = await self.ui_v6address_choices()
 
         ip4_addresses = data.get('ui_address')
         for ip4_address in ip4_addresses:
-            if (
-                ip4_address and
-                ip4_address != '0.0.0.0' and
-                ip4_address not in ip4_addresses_list
-            ):
+            if ip4_address not in ip4_addresses_list:
                 verrors.add(
                     f'{schema}.ui_address',
                     f'{ip4_address} ipv4 address is not associated with this machine'
@@ -987,11 +1002,7 @@ class SystemGeneralService(ConfigService):
 
         ip6_addresses = data.get('ui_v6address')
         for ip6_address in ip6_addresses:
-            if (
-                ip6_address and
-                ip6_address != '::' and
-                ip6_address not in ip6_addresses_list
-            ):
+            if ip6_address not in ip6_addresses_list:
                 verrors.add(
                     f'{schema}.ui_v6address',
                     f'{ip6_address} ipv6 address is not associated with this machine'
