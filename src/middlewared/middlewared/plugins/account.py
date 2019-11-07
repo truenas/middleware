@@ -318,7 +318,7 @@ class UserService(CRUDService):
 
             data['sshpubkey'] = sshpubkey
             try:
-                await self.__update_sshpubkey(data['home'], data, group['group'])
+                await self.update_sshpubkey(data['home'], data, group['group'])
             except PermissionError as e:
                 self.logger.warn('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
@@ -414,12 +414,17 @@ class UserService(CRUDService):
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
         try:
-            await self.__update_sshpubkey(
+            update_sshpubkey_args = (
                 home_old if home_copy else user['home'], user, group['bsdgrp_group'],
             )
+            await self.update_sshpubkey(*update_sshpubkey_args)
         except PermissionError as e:
             self.logger.warn('Failed to update authorized keys', exc_info=True)
             raise CallError(f'Failed to update authorized keys: {e}')
+        else:
+            if user['uid'] == 0:
+                if await self.middleware.call('failover.licensed'):
+                    await self.middleware.call('failover.call_remote', 'user.update_sshpubkey', update_sshpubkey_args)
 
         if home_copy:
             def do_home_copy():
@@ -743,7 +748,8 @@ class UserService(CRUDService):
                 {'prefix': 'bsdgrpmember_'}
             )
 
-    async def __update_sshpubkey(self, homedir, user, group):
+    @private
+    async def update_sshpubkey(self, homedir, user, group):
         if 'sshpubkey' not in user:
             return
         if not os.path.isdir(homedir):
