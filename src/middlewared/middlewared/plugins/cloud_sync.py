@@ -643,6 +643,8 @@ class CloudSyncService(CRUDService):
         if data["snapshot"]:
             if data["direction"] != "PUSH":
                 verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
+            if data["transfer_mode"] == "MOVE":
+                verrors.add(f"{name}.snapshot", "This option can not be used for MOVE transfer mode")
 
     @private
     async def _validate_folder(self, verrors, name, data):
