@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, FilePresenceAlertSource
+from middlewared.alert.base import AlertSource, AlertClass, AlertCategory, AlertLevel, FilePresenceAlertSource
 
 
 class NFSBindAlertClass(AlertClass):
