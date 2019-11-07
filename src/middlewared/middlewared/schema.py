@@ -85,7 +85,7 @@ class Attribute(object):
         return self.private
 
     def dump(self, value):
-        if self.has_private():
+        if self.private:
             return "********"
 
         return value
@@ -472,6 +472,11 @@ class List(EnumMixin, Attribute):
 
     def has_private(self):
         return self.private or any(item.has_private() for item in self.items)
+
+    def dump(self, value):
+        if self.has_private():
+            return '********'
+        return value
 
     def validate(self, value):
         if value is None:
