@@ -24,9 +24,9 @@ def main(command, quiet):
         if ret == "MASTER":
             print("Node status: Active")
         elif ret == "BACKUP":
-            print("Node status: Passive")
+            print("Node status: Standby")
         elif ret == "ELECTING":
-            print("Node status: Electing master node")
+            print("Node status: Electing active node")
         elif ret == "IMPORTING":
             print("Node status: Transitioning to Active")
         elif ret == "ERROR":
@@ -36,7 +36,7 @@ def main(command, quiet):
                 print("Node status: Not an HA node")
             sys.exit(0)
         elif ret == "UNKNOWN" and fo_exists:
-            print("Node status: Passive (Master node unreachable)")
+            print("Node status: Standby (Active node unreachable)")
 
         if fo_exists:
             ret = client.call('failover.disabled_reasons')
@@ -47,7 +47,7 @@ def main(command, quiet):
             elif 'DISAGREE_CARP' in ret:
                 print("Failover status: Unavailable (nodes CARP states do not agree)")
             elif 'NO_LICENSE' in ret:
-                print("Failover status: Unavailable (passive storage controller has no license)")
+                print("Failover status: Unavailable (standby storage controller has no license)")
             elif 'NO_FAILOVER' in ret:
                 print("Failover status: Administratively Disabled")
             elif 'NO_PONG' in ret:
@@ -114,7 +114,7 @@ def main(command, quiet):
     elif command == "takeover":
         ret = client.call('failover.status')
         if ret != "BACKUP":
-            print("Cannot takeover volume, not passive")
+            print("Cannot takeover volume, not standby")
             sys.exit(5)
         print("This will likely cause the active node to reboot.")
         while True:

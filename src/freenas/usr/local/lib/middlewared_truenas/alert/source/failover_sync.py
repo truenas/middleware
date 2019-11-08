@@ -12,7 +12,7 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     level = AlertLevel.CRITICAL
     title = "Automatic Sync to Peer Failed"
     text = (
-        "Failed to sync configuration information to passive storage "
+        "Failed to sync configuration information to standby storage "
         "controller. Use Sync to Peer on the System/Failover page to "
         "perform a manual sync."
     )

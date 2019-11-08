@@ -823,7 +823,7 @@ class DiskService(CRUDService):
         """
         Syncs a disk `name` with the database cache.
         """
-        # Skip sync disks on backup node
+        # Skip sync disks on standby node
         if (
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('failover.licensed') and
@@ -877,7 +877,7 @@ class DiskService(CRUDService):
         """
         Synchronyze all disks with the cache in database.
         """
-        # Skip sync disks on backup node
+        # Skip sync disks on standby node
         if (
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('failover.licensed') and

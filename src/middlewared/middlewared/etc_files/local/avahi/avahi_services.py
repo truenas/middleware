@@ -288,7 +288,7 @@ def remove_service_configs(middleware):
 def get_hostname(middleware):
     """
     Return virtual hostname if the server is HA and this is the active controller.
-    Return None if this is the passive controller.
+    Return None if this is the standby controller.
     In all other cases return the hostname_local.
     This is to ensure that the correct hostname is used for mdns advertisements.
     """

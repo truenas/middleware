@@ -58,8 +58,8 @@ class CriticalFailoverInterfaceInvalidVHIDAlertClass(AlertClass):
 class FailedToVerifyCriticalFailoverInterfaceAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "Cannot Ping the Passive Storage Controller from the Active Storage Controller"
-    text = "Failed to ping passive storage controller interface %r from the active storage controller."
+    title = "Cannot Ping the Standby Storage Controller from the Active Storage Controller"
+    text = "Failed to ping standby storage controller interface %r from the active storage controller."
 
     products = ("ENTERPRISE",)
 
