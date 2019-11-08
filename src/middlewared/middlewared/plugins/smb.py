@@ -33,7 +33,7 @@ RE_SHAREACLENTRY = re.compile(r"^ACL:(?P<ae_who_sid>.+):(?P<ae_type>.+)\/0x0\/(?
 class SMBHAMODE(enum.IntEnum):
     """
     'standalone' - Not an HA system.
-    'legacy' - Two samba instances simultaneously running on active and passive controllers with no shared state.
+    'legacy' - Two samba instances simultaneously running on active and standby controllers with no shared state.
     'unified' - Single set of state files migrating between controllers. Single netbios name.
     """
     STANDALONE = 0

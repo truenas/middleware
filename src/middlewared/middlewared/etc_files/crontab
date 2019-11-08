@@ -12,7 +12,7 @@ ${system_crontab}
 
 45 3 * * * root /usr/local/bin/midclt call pool.scrub.run ${boot_pool} ${system_advanced['boot_scrub']} > /dev/null 2>&1
 
-## Don't run these on TrueNAS HA passive controllers
+## Don't run these on TrueNAS HA standby controllers
 ## Redmine 55908
 % if middleware.call_sync("system.is_freenas") or middleware.call_sync("failover.status") != "BACKUP":
     % for job in middleware.call_sync("cronjob.query", [["enabled", "=", True]]):

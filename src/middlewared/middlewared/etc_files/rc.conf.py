@@ -109,7 +109,7 @@ def services_config(middleware, context):
     These daemons should be configured to start in the following scenarios:
         1. FreeNAS systems
         2. TrueNAS single controller systems
-        3. ONLY TrueNAS MASTER controllers in HA systems
+        3. ONLY TrueNAS ACTIVE controllers in HA systems
     """
     mapping = {}
     if not context['failover_licensed'] or context['failover_status'] == 'MASTER':

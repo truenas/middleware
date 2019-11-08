@@ -173,7 +173,7 @@ class SystemDatasetService(ConfigService):
                 try:
                     await self.middleware.call('failover.call_remote', 'system.reboot')
                 except Exception as e:
-                    self.logger.debug('Failed to reboot passive storage controller after system dataset change: %s', e)
+                    self.logger.debug('Failed to reboot standby storage controller after system dataset change: %s', e)
 
         return await self.config()
 
