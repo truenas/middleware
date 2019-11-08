@@ -12,6 +12,7 @@ import errno
 import hashlib
 import os
 import random
+import shlex
 import shutil
 import string
 import subprocess
@@ -402,14 +403,15 @@ class UserService(CRUDService):
         if home_copy:
             def do_home_copy():
                 try:
-                    subprocess.run(f"/usr/bin/su - {user['username']} -c '/bin/cp -a {home_old}/ {user['home']}/'", shell=True, check=True)
+                    command = f"/bin/cp -a {shlex.quote(home_old) + '/'} {shlex.quote(user['home'] + '/')}"
+                    subprocess.run(["/usr/bin/su", "-", user["username"], "-c", command], check=True)
                 except subprocess.CalledProcessError as e:
                     self.logger.warn(f"Failed to copy homedir: {e}")
                 set_home_mode()
 
             asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
         elif has_home:
-            set_home_mode()
+            asyncio.ensure_future(self.middleware.run_in_thread(set_home_mode))
 
         user.pop('sshpubkey', None)
         await self.__set_password(user)
