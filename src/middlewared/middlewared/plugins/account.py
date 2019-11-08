@@ -830,7 +830,7 @@ class GroupService(CRUDService):
 
         `users` is a list of user ids (`id` attribute from `user.query`).
         """
-
+        allow_duplicate_gid = data['allow_duplicate_gid']
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_create')
         verrors.check()
@@ -851,7 +851,18 @@ class GroupService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        await self.middleware.call('smb.groupmap_add', data['name'])
+        try:
+            await self.middleware.call('smb.groupmap_add', data['name'])
+        except Exception as e:
+            """
+            Samba's group mapping database does not allow duplicate gids.
+            Unfortunately, we don't get a useful error message at -d 0.
+            """
+            if not allow_duplicate_gid:
+                raise e
+            else:
+                self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
+                                  data['name'], data['gid'])
 
         return pk
 
