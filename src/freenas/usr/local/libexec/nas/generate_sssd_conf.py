@@ -689,8 +689,18 @@ def add_ldap_section(client, sc):
 
     ldap_save = ldap
     ldap = Struct(client.call('notifier.directoryservice', 'LDAP'))
+    want_ssl = True if ldap.ssl != 'off' else False
+    want_gssapi = want_ssl
+    force_gssapi = True if get_freenas_var_by_file("/etc/directoryservice/rc.DS_Common", "FREENAS_LDAP_FORCE_GSSAPI") == "0" else False
 
-    if ldap.keytab_file and ldap.keytab_principal:
+    if force_gssapi:
+        want_gssapi = True
+
+    if ldap.keytab_file and ldap.keytab_principal and want_gssapi:
+        """
+        Perform GSSAPI bind to the LDAP ID provider
+        and use krb5 auth provider.
+        """
         ldap_section.auth_provider = 'krb5'
         ldap_section.chpass_provider = 'krb5'
         ldap_section.ldap_sasl_mech = 'GSSAPI'
@@ -700,7 +710,24 @@ def add_ldap_section(client, sc):
         ldap_section.krb5_realm = ldap.krb_realm
         ldap_section.krb5_canonicalize = 'false'
 
+    elif ldap.keytab_file and ldap.keytab_principal:
+        """
+        Perform simple bind to LDAP ID provider
+        and use krb5 auth provider.
+        """
+        ldap_section.ldap_default_bind_dn = ldap.binddn
+        ldap_section.ldap_default_authtok_type = 'password'
+        ldap_section.ldap_default_authtok = ldap.bindpw
+        ldap_section.auth_provider = 'krb5'
+        ldap_section.chpass_provider = 'krb5'
+        ldap_section.krb5_server = ldap.krb_kdc
+        ldap_section.krb5_realm = ldap.krb_realm
+        ldap_section.krb5_canonicalize = 'false'
+
     else:
+        """
+        No kerberos
+        """
         ldap_section.ldap_default_bind_dn = ldap.binddn
         ldap_section.ldap_default_authtok_type = 'password'
         ldap_section.ldap_default_authtok = ldap.bindpw
@@ -861,6 +888,19 @@ def get_ldap_cookie(client):
         cookie = parts[0]
 
     return cookie
+
+
+def get_freenas_var_by_file(f, var):
+    """
+    method lifted from system.py
+    """
+    pipe = os.popen('. "%s"; echo "${%s}"' % (f, var, ))
+    try:
+        val = pipe.readlines()[-1].rstrip()
+    finally:
+        pipe.close()
+
+    return val
 
 
 def get_directoryservice_cookie(client):

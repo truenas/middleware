@@ -134,13 +134,31 @@ ldap_status()
 		local res=1
 		local ldapsearch=/usr/local/bin/ldapsearch
 		local options=
+		local allow_gssapi_bind=0
+		local default_ssl="off"
+		local force_gssapi="${FREENAS_LDAP_FORCE_GSSAPI:-1}"
 
-		if [ "${ldap_ssl}" = "start_tls" ]
+		if [ "${ldap_ssl:-$default_ssl}" = "start_tls" ]
 		then
+			allow_gssapi_bind=1
 			options="-Z"
+
+		elif [ "${ldap_ssl:-$default_ssl}" = "ssl" ]
+		then
+			allow_gssapi_bind=1
 		fi
 
-		if [ -n "${realm}" -a -n "${principal}" ]
+		if [ "${ldap_anonbind}" = "1" ]
+		then
+			allow_gssapi_bind=1
+		fi
+
+		if [ "force_gssapi" = "0" ]
+		then
+			allow_gssapi_bind=0
+		fi
+
+		if [ -n "${realm}" -a -n "${principal}" -a -n "${allow_gssapi_bind}" ]
 		then
 			local temp=$(mktemp /tmp/tmp.XXXXXX)
 			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)

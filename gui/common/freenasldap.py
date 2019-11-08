@@ -90,7 +90,8 @@ FREENAS_LDAP_REFERRALS = get_freenas_var("FREENAS_LDAP_REFERRALS", 0)
 
 FREENAS_LDAP_PAGESIZE = get_freenas_var("FREENAS_LDAP_PAGESIZE", 1024)
 
-DS_DEBUG = False
+FORCE_GSSAPI = True if get_freenas_var_by_file("/etc/directoryservice/rc.DS_Common", "FREENAS_LDAP_FORCE_GSSAPI") == "0" else False
+DS_DEBUG = True if get_freenas_var_by_file("/etc/directoryservice/rc.DS_Common", "FREENAS_LDAP_DEBUG") == "0" else False
 
 ldap.protocol_version = FREENAS_LDAP_VERSION
 ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
@@ -650,7 +651,46 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
 
-        if self.kerberos_realm or self.keytab_principal:
+        """
+        While Active Directory permits SASL binds to be performed
+        on an SSL/TLS-protected connection, it does not permit the
+        use of SASL-layer encryption/integrity verification
+        mechanisms on such a connection. While this restriction is
+        present in Active Directory on Windows 2000 Server
+        operating system and later, versions prior to Windows
+        Server 2008 operating system can fail to reject an LDAP
+        bind that is requesting SASL-layer encryption/integrity
+        verification mechanisms when that bind request is sent on a
+        SSL/TLS-protected connection. See MS-ADTS 5.1.1.1.2
+
+        Samba AD Domain controllers also require the following
+        smb.conf parameter in order to permit SASL_GSSAPI on an SSL/
+        TLS-protected connection:
+
+        'ldap server require strong auth = allow_sasl_over_tls'
+
+        This means that LDAP server support for SASL_GSSAPI on an SSL/
+        TLS-protected connection is unpredictable / undefined.
+
+        Add workaround if this combination is _required_ for environment
+        by setting FREENAS_LDAP_FORCE_GSSAPI to 0 in
+        /etc/directoryservice/rc.DS_Common.
+        """
+
+        want_ssl = True if kwargs['ssl'] in [FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS] else False
+        env_is_kerberized = True if self.kerberos_realm or self.keytab_principal else False
+        want_gssapi = want_ssl
+        if kwargs.get('anonbind', False):
+            want_gssapi = False
+
+        if DS_DEBUG:
+            log.debug("want_ssl: %s, want_gssapi: %s, env_is_kerberized: %s, force_gssapi: %s",
+                      want_ssl, want_gssapi, env_is_kerberized, FORCE_GSSAPI)
+
+        if FORCE_GSSAPI:
+            want_gssapi = True
+
+        if env_is_kerberized and want_gssapi:
             self.get_kerberos_ticket()
             self.flags |= FLAGS_SASL_GSSAPI
 
