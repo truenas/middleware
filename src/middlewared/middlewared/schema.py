@@ -81,6 +81,9 @@ class Attribute(object):
                 raise Error(self.name, 'attribute required')
         return value
 
+    def has_private(self):
+        return self.private
+
     def dump(self, value):
         if self.private:
             return "********"
@@ -467,10 +470,12 @@ class List(EnumMixin, Attribute):
                     raise Error(self.name, 'Item#{0} is not valid per list types: {1}'.format(index, found))
         return value
 
-    def dump(self, value):
-        if self.private or (self.items and any(item.private for item in self.items)):
-            return "********"
+    def has_private(self):
+        return self.private or any(item.has_private() for item in self.items)
 
+    def dump(self, value):
+        if self.has_private():
+            return '********'
         return value
 
     def validate(self, value):
@@ -573,6 +578,9 @@ class Dict(Attribute):
                     if not attr.has_default:
                         raise ValueError(f"Attribute {attr.name} is not required and does not have default value, "
                                          f"this is forbidden in strict mode")
+
+    def has_private(self):
+        return self.private or any(i.has_private() for i in self.attrs.values())
 
     def clean(self, data):
         data = super().clean(data)

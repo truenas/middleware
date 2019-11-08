@@ -331,6 +331,14 @@ def test__schema_dict_mixed_args(value, expected, msg):
         assert dictargs(self, value) == expected
 
 
+@pytest.mark.parametrize('items,value', [
+    ([List('b', items=[List('c', private=True)])], [[['a']]]),
+    ([Dict('b', Str('c', private=True))], [{'c': 'secret'}])
+])
+def test__schema_list_private_items(items, value):
+    assert List('a', items=items).dump(value) == '********'
+
+
 def test__schema_list_empty():
 
     @accepts(List('data', empty=False))
