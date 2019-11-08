@@ -11,3 +11,5 @@ class NFSBindAlertClass(AlertClass):
 class NFSBindAlertSource(FilePresenceAlertSource):
     path = "/tmp/.nfsbindip_notfound"
     klass = NFSBindAlertClass
+
+    run_on_backup_node = False

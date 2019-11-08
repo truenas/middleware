@@ -2005,7 +2005,7 @@ class InterfaceService(CRUDService):
             except Exception:
                 self.logger.warn(f'Failed to set interface {name} description', exc_info=True)
 
-        if netif.InterfaceFlags.UP not in iface.flags:
+        if netif.InterfaceFlags.UP not in iface.flags and 'down' not in data['int_options'].split():
             iface.up()
 
         # If dhclient is not running and dhcp is configured, lets start it
