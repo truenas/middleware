@@ -679,7 +679,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         want_ssl = True if kwargs['ssl'] in [FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS] else False
         env_is_kerberized = True if self.kerberos_realm or self.keytab_principal else False
-        want_gssapi = want_ssl
+        want_gssapi = not want_ssl
         if kwargs.get('anonbind', False):
             want_gssapi = False
 
