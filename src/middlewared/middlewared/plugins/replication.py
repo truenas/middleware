@@ -59,6 +59,7 @@ class ReplicationModel(sa.Model):
     repl_name = sa.Column(sa.String(120))
     repl_state = sa.Column(sa.Text(), default="{}")
     repl_properties = sa.Column(sa.Boolean(), default=True)
+    repl_replicate = sa.Column(sa.Boolean())
 
     repl_periodic_snapshot_tasks = sa.relationship('PeriodicSnapshotTaskModel',
                                                    secondary=lambda: ReplicationPeriodicSnapshotTaskModel.__table__)
@@ -140,7 +141,8 @@ class ReplicationService(CRUDService):
             Path("target_dataset", required=True, empty=False),
             Bool("recursive", required=True),
             List("exclude", items=[Path("dataset", empty=False)], default=[]),
-            Bool('properties', default=True),
+            Bool("properties", default=True),
+            Bool("replicate", default=False),
             List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
                  validators=[Unique()]),
             List("naming_schema", items=[
@@ -528,6 +530,16 @@ class ReplicationService(CRUDService):
         for i, v in enumerate(data["exclude"]):
             if not any(v.startswith(ds + "/") for ds in data["source_datasets"]):
                 verrors.add(f"exclude.{i}", "This dataset is not a child of any of source datasets")
+
+        if data["replicate"]:
+            if not data["recursive"]:
+                verrors.add("recursive", "This option is required for full filesystem replication")
+
+            if data["exclude"]:
+                verrors.add("exclude", "This option is not supported for full filesystem replication")
+
+            if not data["properties"]:
+                verrors.add("properties", "This option is required for full filesystem replication")
 
         if data["schedule"]:
             if not data["auto"]:
