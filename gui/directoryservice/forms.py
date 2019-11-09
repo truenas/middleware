@@ -1073,18 +1073,22 @@ class KerberosKeytabCreateForm(ModelForm):
         out = out.splitlines()
         if not out:
             return False
-
+        principal_list = []
         for line in out:
             line = line.strip()
             if not line:
                 continue
             m = regex.match(line)
             if m:
+                if m.group(4) in principal_list:
+                    continue
+
+                principal_list.append(m.group(4))
                 try:
                     kp = models.KerberosPrincipal()
                     kp.principal_keytab = keytab
                     kp.principal_version = int(m.group(1))
-                    kp.principal_encryption = m.group(2)
+                    kp.principal_encryption = "autoselect"
                     kp.principal_name = m.group(4)
                     kp.principal_timestamp = m.group(5)
                     kp.save()
