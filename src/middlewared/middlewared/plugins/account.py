@@ -853,13 +853,13 @@ class GroupService(CRUDService):
 
         try:
             await self.middleware.call('smb.groupmap_add', data['name'])
-        except Exception as e:
+        except Exception:
             """
             Samba's group mapping database does not allow duplicate gids.
             Unfortunately, we don't get a useful error message at -d 0.
             """
             if not allow_duplicate_gid:
-                raise e
+                raise
             else:
                 self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
                                   data['name'], data['gid'])
