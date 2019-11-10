@@ -772,10 +772,9 @@ class ZFSSnapshot(CRUDService):
                     ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
-            return True
         except libzfs.ZFSException as err:
-            self.logger.error(f"{err}")
-            return False
+            self.logger.error(f'Failed to snapshot {dataset}@{name}: {err}')
+            raise CallError(f'Failed to snapshot {dataset}@{name}: {err}')
         finally:
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
