@@ -57,6 +57,7 @@ from freenasUI.common.system import send_mail
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.storage.models import VMWarePlugin
 from freenasUI.tools.replication_adapter import query_model
+from freenasUI.middleware.notifier import notifier
 
 from lockfile import LockFile
 
