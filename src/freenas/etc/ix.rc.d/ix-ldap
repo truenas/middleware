@@ -161,7 +161,7 @@ ldap_status()
 			do_gssapi_bind=0
 		fi
 
-		if [ -n "${realm}" -a -n "${principal}" -a -n "${do_gssapi_bind}" ]
+		if [ -n "${realm}" -a -n "${principal}" -a "${do_gssapi_bind}" == 0 ]
 		then
 			local temp=$(mktemp /tmp/tmp.XXXXXX)
 			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)
