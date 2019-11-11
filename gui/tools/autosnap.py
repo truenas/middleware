@@ -93,6 +93,12 @@ def snapinfodict2datetime(snapinfo):
     minute = int(snapinfo['minute'])
     return datetime(year, month, day, hour, minute)
 
+def snapshot_message():
+    _n = notifier()
+    message = " FreeNAS Created Snapshot"
+    if not _n.is_freenas():
+        message = " TrueNAS Created Snapshot"
+    return message
 
 def snap_expired(snapinfo, snaptime):
     snapinfo_expirationtime = snapinfodict2datetime(snapinfo)
@@ -407,7 +413,8 @@ if len(mp_to_task_map) > 0:
             # Generate a helpful description that is visible on the VMWare side.  Since we
             # are going to be creating VMWare snaps, if one gets left dangling this will
             # help determine where it came from.
-            vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
+            snap_msg = snapshot_message()
+            vmsnapdescription = str(datetime.now()).split('.')[0] + snap_msg 
 
             # Data structures that will be used to keep track of VMs that are snapped,
             # as wel as VMs we tried to snap and failed, and VMs we realized we couldn't
