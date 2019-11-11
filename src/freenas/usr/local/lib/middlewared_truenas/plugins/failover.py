@@ -1670,8 +1670,9 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 
     if ha_configured:
         # If HA is already configured just sync network
-        middleware.logger.debug('[HA] Configuring network on standby node')
-        await middleware.call('failover.call_remote', 'interface.sync')
+        if await middleware.call('failover.status') == 'MASTER':
+            middleware.logger.debug('[HA] Configuring network on standby node')
+            await middleware.call('failover.call_remote', 'interface.sync')
         return
 
     middleware.logger.info('[HA] Setting up')
