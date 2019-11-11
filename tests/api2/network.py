@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import hostname, domain, gateway
+from auto_config import hostname, domain
 from functions import GET, PUT
 from config import *
 

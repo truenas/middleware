@@ -10,22 +10,13 @@ import random
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface, ip
-from functions import GET, PUT, POST, DELETE
+from auto_config import interface, ip, user, password
+from functions import GET, PUT, POST, SSH_TEST
 
 aliases = {'address': ip}
 
 # Create a random IP
 vlan1_ip = f"192.168.0.{random.randint(10, 250)}"
-
-
-def test_00_store_default_routes_as_gateway_for_network_testing():
-    results = GET("/network/general/summary/")
-    assert results.status_code == 200
-    gateway = results.json()['default_routes'][0]
-    cfg_file = open("auto_config.py", 'a')
-    cfg_file.writelines(f'gateway = "{gateway}"\n')
-    cfg_file.close()
 
 
 def test_01_get_interface_name():
