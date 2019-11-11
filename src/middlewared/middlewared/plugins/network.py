@@ -1531,12 +1531,13 @@ class InterfaceService(CRUDService):
         interfaces = self.middleware.call_sync('interface.query')
         choices = {i['name']: i['description'] or i['name'] for i in interfaces}
         for interface in interfaces:
+            if interface['description'] and interface['description'] != interface['name']:
+                choices[interface['name']] = f'{interface["name"]}: {interface["description"]}'
+
             for exclude in options['exclude']:
                 if interface['name'].startswith(exclude):
                     choices.pop(interface['name'], None)
                     continue
-            if interface['description'] and interface['description'] != interface['name']:
-                choices[interface['name']] = f'{interface["name"]}: {interface["description"]}'
             if not options['lag_ports']:
                 if interface['type'] == 'LINK_AGGREGATION':
                     for port in interface['lag_ports']:
