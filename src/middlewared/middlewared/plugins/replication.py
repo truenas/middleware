@@ -295,13 +295,13 @@ class ReplicationService(CRUDService):
         proc = await Popen([
             "/usr/bin/ssh-keyscan",
             "-p", str(port),
-            "-T", "2",
+            "-T", "10",
             str(host),
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         key, errmsg = await proc.communicate()
         if proc.returncode != 0 or not key:
             if not errmsg:
-                errmsg = 'ssh key scan failed for unknown reason'
+                errmsg = "SSH timeout"
             else:
                 errmsg = errmsg.decode()
             raise CallError(errmsg)
