@@ -538,7 +538,6 @@ class PoolService(CRUDService):
         Dict(
             'encryption_options',
             Bool('generate_key', default=False),
-            Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
             Str(
                 'algorithm', default='AES-256-CCM', enum=[
@@ -657,8 +656,9 @@ class PoolService(CRUDService):
             verrors.add('pool_create.topology.data', 'At least one data vdev is required')
 
         encryption_dict = await self.middleware.call(
-            'pool.dataset.validate_encryption_data', job, verrors,
-            {'enabled': data.pop('encryption'), **data.pop('encryption_options')}, 'pool_create.encryption_options',
+            'pool.dataset.validate_encryption_data', job, verrors, {
+                'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False,
+            }, 'pool_create.encryption_options',
         )
 
         await self.__common_validation(verrors, data, 'pool_create')
@@ -3604,7 +3604,7 @@ class PoolDatasetService(CRUDService):
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', job, verrors,
-            {'enabled': data.pop('encryption'), **data.pop('encryption_options')},
+            {'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False},
             'pool_dataset_create.encryption_options',
         ) or encryption_dict
 
