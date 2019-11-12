@@ -593,9 +593,7 @@ class PoolService(CRUDService):
         `encryption_options` specifies configuration for encryption of root dataset for `name` pool.
         `encryption_options.passphrase` must be specified if encryption for root dataset is desired with a passphrase
         as a key.
-        Otherwise a hex encoded key can be specified by either uploading it or specifying `encryption_options.key`.
-        Please refer to websocket documentation for details on how the key can be uploaded. When a key is to
-        be uploaded, `encryption_options.key_file` must be enabled.
+        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
         `encryption_options.generate_key` when enabled automatically generates the key to be used
         for dataset encryption.
 
@@ -3524,9 +3522,7 @@ class PoolDatasetService(CRUDService):
         `encryption_options` specifies configuration for encryption of dataset for `name` pool.
         `encryption_options.passphrase` must be specified if encryption for dataset is desired with a passphrase
         as a key.
-        Otherwise a hex encoded key can be specified by either uploading it or specifying `encryption_options.key`.
-        Please refer to websocket documentation for details on how the key can be uploaded. When a key is to
-        be uploaded, `encryption_options.key_file` must be enabled.
+        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
         `encryption_options.generate_key` when enabled automatically generates the key to be used
         for dataset encryption.
 
