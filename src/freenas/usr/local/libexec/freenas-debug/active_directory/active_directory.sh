@@ -40,32 +40,8 @@ active_directory_func()
 	local pamfiles
 	local onoff
 	local enabled="DISABLED"
-	local mon_onoff
-	local mon_enabled="DISABLED"
 	local cifs_onoff
 
-	#
-	#	First, check if the AD Monitoring service is enabled.
-	#
-	mon_onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_enable_monitor
-	FROM
-		directoryservice_activedirectory
-	ORDER BY
-		-id
-	LIMIT 1
-	")
-		
-	mon_enabled="DISABLED"
-	if [ "${mon_onoff}" = "1" ]
-	then
-		mon_enabled="ENABLED"
-	fi
-
-	section_header "Active Directory Monitoring"
-	echo "Active Directory Monitoring is ${mon_enabled}"
-	section_footer
 
 	#
 	#	Second, check if the Active Directory is enabled.
@@ -124,9 +100,9 @@ active_directory_func()
 	#	Next, dump Active Directory configuration
 	#
 	local IFS="|"
-	read domainname bindname ssl \
-		allow_trusted_doms use_default_domain \
-		dcname gcname timeout dns_timeout <<-__AD__
+	read domainname bindname ssl allow_trusted_doms use_default_domain \
+		validate_certs cert krb_realm krb_princ create_computer \
+		sasl_wrapping timeout dns_timeout <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ad_domainname,
@@ -134,8 +110,12 @@ active_directory_func()
 		ad_ssl,
 		ad_allow_trusted_doms,
 		ad_use_default_domain,
-		ad_dcname,
-		ad_gcname,
+		ad_validate_certificates,
+		ad_certificate_id,
+		ad_kerberos_realm_id,
+		ad_kerberos_principal,
+		ad_createcomputer,
+		ad_ldap_sasl_wrapping,
 		ad_timeout,
 		ad_dns_timeout
 
@@ -158,10 +138,14 @@ __AD__
 	Bind name:              ${bindname}
 	Trusted domains:        ${allow_trusted_doms}
 	SSL:                    ${ssl}
+	Cert:                   ${cert}
+	Validate_certs:         ${validate_certs}
+	Kerberos_realm:         ${krb_realm}
+	Kerberos_principal:     ${krb_princ}
+	Default_computer_OU:    ${create_computer}
+	LDAP_SASL_Wrapping:     ${sasl_wrapping}
 	Timeout:                ${timeout}
 	DNS Timeout:            ${dns_timeout}
-	Domain controller:      ${dcname}
-	Global Catalog Server:  ${gcname}
 __EOF__
 	section_footer
 
@@ -186,6 +170,10 @@ __EOF__
 	sc "${SAMBA_CONF}"
 	section_footer
 
+	section_header "${SAMBA_SHARE_CONF}"
+	sc "${SAMBA_SHARE_CONF}"
+	section_footer
+
 	#
 	#	List kerberos tickets
 	#
@@ -194,18 +182,21 @@ __EOF__
 	section_footer
 
 	#
-	#	Dump generated AD config file
+	#	List kerberos keytab entries
 	#
-	section_header "${AD_CONFIG_FILE}"
-	sc "${AD_CONFIG_FILE}"
+	section_header "Kerberos Principals - 'ktutil'"
+	ktutil list
 	section_footer
 
 	#
-	#	Dump Active Directory domain info
+	#	Dump Active Directory Domain Information
 	#
-	section_header "Active Directory Domain Info - 'net ads info'"
-	net ads info
+	if [ "${enabled}" = "ENABLED" ]
+	then
+	section_header "Active Directory Domain Info - 'midclt call activedirectory.domain_info'"
+	midclt call activedirectory.domain_info | jq
 	section_footer
+	fi
 
 	#
 	#	Dump wbinfo information
@@ -231,8 +222,8 @@ __EOF__
 	section_header "Active Directory domain info - 'wbinfo --domain-info=$(wbinfo --own-domain)'"
 	wbinfo --domain-info="$(wbinfo --own-domain)"
 	section_footer
-	section_header "Active Directory DC name - 'wbinfo --dsgetdcname=$(wbinfo --own-domain)'"
-	wbinfo --dsgetdcname="$(wbinfo --own-domain)"
+	section_header "Active Directory DC name - 'wbinfo --dsgetdcname=${domainname}'"
+	wbinfo --dsgetdcname="${domainname}"
 	section_footer
 	section_header "Active Directory DC info - 'wbinfo --dc-info=$(wbinfo --own-domain)'"
 	wbinfo --dc-info="$(wbinfo --own-domain)"
@@ -247,4 +238,23 @@ __EOF__
 	wbinfo -g | head -50
 	section_footer
 
+	#
+	#	Dump results of testjoin
+	#
+	if [ "${enabled}" = "ENABLED" ]
+	then
+	section_header "Active Directory Join Status net -d 5 -k ads testjoin"
+	net -d 5 -k ads testjoin
+	section_footer
+	fi
+
+	#
+	#	Dump results clockskew check
+	#
+	if [ "${enabled}" = "ENABLED" ]
+	then
+	section_header "Active Directory clockskew - midclt call activedirectory.check_clockskew"
+	midclt call activedirectory.check_clockskew | jq
+	section_footer
+	fi
 }
