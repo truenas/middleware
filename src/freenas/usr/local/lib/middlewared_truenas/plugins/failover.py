@@ -664,6 +664,9 @@ class FailoverService(ConfigService):
         """
         Force this controller to become MASTER.
         """
+        # Skip if we are already MASTER
+        if self.middleware.call_sync('failover.status') == 'MASTER':
+            return False
         cp = subprocess.run(['fenced', '--force'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
         if cp.returncode not in (0, 6):
             return False
