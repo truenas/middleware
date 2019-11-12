@@ -61,13 +61,14 @@ class DiskModel(sa.Model):
     disk_smartoptions = sa.Column(sa.String(120))
     disk_expiretime = sa.Column(sa.DateTime(), nullable=True)
     disk_enclosure_slot = sa.Column(sa.Integer(), nullable=True)
-    disk_passwd = sa.Column(sa.String(120))
+    disk_passwd = sa.Column(sa.EncryptedText())
     disk_critical = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_difference = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_informational = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_model = sa.Column(sa.String(200), nullable=True, default=None)
     disk_rotationrate = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_type = sa.Column(sa.String(20), default='UNKNOWN')
+    disk_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 class DiskService(CRUDService):

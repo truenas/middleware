@@ -2973,6 +2973,7 @@ class PoolDatasetEncryptionModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
     encryption_key = sa.Column(sa.Text(), nullable=True)
+    kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 class PoolDatasetService(CRUDService):
