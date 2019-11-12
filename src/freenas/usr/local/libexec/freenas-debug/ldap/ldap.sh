@@ -61,6 +61,7 @@ ldap_func()
 	#
 	local IFS="|"
 	read hostname basedn binddn anonbind \
+		cert validate_certs krb_realm krb_princ \
 		ssl has_samba_schema <<-__LDAP__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -68,6 +69,10 @@ ldap_func()
 		ldap_basedn,
 		ldap_binddn,
 		ldap_anonbind,
+		ldap_certificate_id,
+		ldap_validate_certificates,
+		ldap_kerberos_realm_id,
+		ldap_kerberos_principal,
 		ldap_ssl,
 		ldap_has_samba_schema
 
@@ -91,6 +96,10 @@ __LDAP__
 	Bind DN:                ${binddn}
 	Anonymous Bind:         ${anonbind}
 	SSL:                    ${ssl}
+	Cert:			${cert}
+	Validate Certificates	${validate_certs}
+	Kerberos realm		${krb_realm}
+	Kerberos principal	${krb_princ}
 	Samba Schema:           ${has_samba_schema}
 __EOF__
 	section_footer
@@ -115,6 +124,10 @@ __EOF__
 	section_header "${SAMBA_CONF}"
 	sc "${SAMBA_CONF}"
 	section_footer
+
+        section_header "${SAMBA_SHARE_CONF}"
+        sc "${SAMBA_SHARE_CONF}"
+        section_footer
 	#
 	#	List kerberos tickets
 	#
@@ -142,4 +155,15 @@ __EOF__
 	section_header "${LDAP_CONFIG_FILE}"
 	sc "${LDAP_CONFIG_FILE}"
 	section_footer
+
+	#
+	#	Dump nslcd state
+	#
+	if [ "${enabled}" = "ENABLED" ]
+	then
+	section_header "NSLCD health check - midclt call ldap.get_nslcd_status"
+	midclt call ldap.get_nslcd_status | jq
+	section_footer
+	fi
+
 }

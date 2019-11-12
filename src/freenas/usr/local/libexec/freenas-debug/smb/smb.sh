@@ -78,6 +78,10 @@ smb_func()
 	sc "${SAMBA_CONF}"
 	section_footer
 
+	section_header "${SAMBA_SHARE_CONF}"
+	sc "${SAMBA_SHARE_CONF}"
+	section_footer
+
 	local IFS="|"
 
 	#
@@ -134,4 +138,7 @@ smb_func()
 	sharesec --view-all
 	section_footer
 
+	section_header "Local users in passdb.tdb"
+	pdbedit -Lv
+	section_footer
 }
