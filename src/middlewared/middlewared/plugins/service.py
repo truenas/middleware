@@ -681,6 +681,10 @@ class ServiceService(CRUDService):
     async def _start_ssl(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssl')
 
+    async def _start_kmip(self, **kwargs):
+        await self._start_ssl(**kwargs)
+        await self.middleware.call('etc.generate', 'kmip')
+
     async def _start_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
         await self._service("minio", "start", quiet=True, **kwargs)
