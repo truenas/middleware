@@ -102,7 +102,7 @@ def get_freenas_var_ds_config(f, var):
 
     for entry in ds_config:
         if entry.startswith(var):
-            return entry.lstrip(f'{var}=')[:-1]
+            return entry[len(var) + 1:-1]
 
     return False
 
