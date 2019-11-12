@@ -276,7 +276,7 @@ def dhclient_status(interface):
     Returns:
         tuple(bool, pid): if dhclient is running follow its pid.
     """
-    pidfile = '/var/run/dhclient.{}.pid'.format(interface)
+    pidfile = '/var/run/dhclient/dhclient.{}.pid'.format(interface)
     pid = None
     if os.path.exists(pidfile):
         with open(pidfile, 'r') as f:
