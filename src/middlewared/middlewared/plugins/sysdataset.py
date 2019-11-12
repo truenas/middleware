@@ -287,21 +287,29 @@ class SystemDatasetService(ConfigService):
         """
         createdds = False
         datasets = [i[0] for i in self.__get_datasets(pool, uuid)]
-        datasets_prop = {i['id']: i['properties'].get('mountpoint') for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])}
+        datasets_prop = {
+            i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
+        }
         for dataset in datasets:
-            mountpoint = datasets_prop.get(dataset)
-            if mountpoint and mountpoint['value'] != 'legacy':
-                await self.middleware.call(
-                    'zfs.dataset.update',
-                    dataset,
-                    {'properties': {'mountpoint': {'value': 'legacy'}}},
-                )
-            elif not mountpoint:
+            dataset_quota = {'quota': '1G'} if dataset.endswith('/cores') else {}
+            if dataset not in datasets_prop:
                 await self.middleware.call('zfs.dataset.create', {
                     'name': dataset,
-                    'properties': {'mountpoint': 'legacy'},
+                    'properties': {'mountpoint': 'legacy', **dataset_quota},
                 })
                 createdds = True
+            else:
+                update_props_dict = {}
+                if datasets_prop[dataset]['mountpoint']['value'] != 'legacy':
+                    update_props_dict['mountpoint'] = {'value': 'legacy'}
+                if dataset_quota and datasets_prop[dataset]['quota']['value'] != '1G':
+                    update_props_dict['quota'] = {'value': '1G'}
+                if update_props_dict:
+                    await self.middleware.call(
+                        'zfs.dataset.update',
+                        dataset,
+                        {'properties': update_props_dict},
+                    )
         return createdds
 
     async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
