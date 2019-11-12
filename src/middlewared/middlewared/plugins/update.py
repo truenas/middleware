@@ -248,6 +248,22 @@ class UpdateModel(sa.Model):
 
 class UpdateService(Service):
 
+    @accepts()
+    async def get_auto_download(self):
+        """
+        Returns if update auto-download is enabled.
+        """
+        return (await self.middleware.call('datastore.config', 'system.update'))['upd_autocheck']
+
+    @accepts(Bool('autocheck'))
+    async def set_auto_download(self, autocheck):
+        """
+        Sets if update auto-download is enabled.
+        """
+        config = await self.middleware.call('datastore.config', 'system.update')
+        await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
+        await self.middleware.call('service.restart', 'cron')
+
     def _get_redir_trains(self):
         """
         The expect trains redirection JSON format is the following:
