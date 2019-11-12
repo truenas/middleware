@@ -2436,6 +2436,12 @@ class UpdateForm(ModelForm):
         self._conf.LoadTrainsConfig()
         self.fields['curtrain'].initial = self._conf.CurrentTrain()
 
+    def save(self, *args, **kwargs):
+        try:
+            return super().save(*args, **kwargs)
+        finally:
+            notifier().restart("cron")
+
 
 class CertificateAuthorityEditForm(MiddlewareModelForm, ModelForm):
 
