@@ -88,6 +88,8 @@ class ReplicationService(CRUDService):
                 "state": "PENDING",
             })
 
+        data["job"] = data["state"].pop("job", None)
+
         return data
 
     @private
@@ -328,7 +330,8 @@ class ReplicationService(CRUDService):
         periodic_snapshot_tasks = new["periodic_snapshot_tasks"]
         await self.compress(new)
 
-        new.pop('state', None)
+        new.pop("state", None)
+        new.pop("job", None)
 
         await self.middleware.call(
             "datastore.update",
