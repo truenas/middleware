@@ -1274,9 +1274,7 @@ class VMDeviceService(CRUDService):
         """
         Available choices for NIC Attach attribute.
         """
-        return self.middleware.call_sync('interface.choices', {
-            'exclude': ['bridge', 'epair', 'tap', 'vnet'],
-        })
+        return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
 
     @accepts()
     def vnc_bind_choices(self):
