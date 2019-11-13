@@ -489,7 +489,7 @@ class ZFSDatasetService(CRUDService):
             {
                 k: v for k, v in dataset['properties'].items()
                 if k in [
-                    "name", "quota", "used", "refquota", "usedbydataset", "mounted", "mountpoint",
+                    "name", "quota", "available", "refquota", "usedbydataset", "mounted", "mountpoint",
                     "org.freenas:quota_warning", "org.freenas:quota_critical",
                     "org.freenas:refquota_warning", "org.freenas:refquota_critical"
                 ]
