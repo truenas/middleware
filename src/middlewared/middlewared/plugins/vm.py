@@ -17,6 +17,7 @@ import errno
 import enum
 import functools
 import ipaddress
+import itertools
 import libvirt
 import math
 import netif
@@ -164,8 +165,26 @@ class VMSupervisor:
         if len([d for d in self.devices if isinstance(d, VNC)]) > 1:
             raise CallError('Only one VNC device per VM is supported')
 
+        successful = []
+        errors = []
         for device in self.devices:
-            device.pre_start_vm()
+            try:
+                device.pre_start_vm()
+            except Exception as e:
+                errors.append(f'Failed to setup {device.data["dtype"]} device: {e}')
+                for d in itertools.chain([device], successful):
+                    try:
+                        d.pre_start_vm_rollback()
+                    except Exception as d_error:
+                        errors.append(
+                            f'Failed to rollback pre start changes for {d.data["dtype"]} device: {d_error}'
+                        )
+                break
+            else:
+                successful.append(device)
+
+        if errors:
+            raise CallError('\n'.join(errors))
 
         try:
             self.update_domain(vm_data, update_devices=False)
@@ -618,7 +637,7 @@ class NIC(Device):
         return create_element(
             'interface', type='bridge', attribute_dict={
                 'children': [
-                    create_element('source', bridge=self.bridge),
+                    create_element('source', bridge=self.bridge or ''),
                     create_element('model', type='virtio' if self.data['attributes']['type'] == 'VIRTIO' else 'e1000'),
                     create_element(
                         'mac', address=self.data['attributes']['mac'] if
