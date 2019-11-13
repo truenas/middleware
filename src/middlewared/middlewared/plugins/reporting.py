@@ -680,9 +680,22 @@ class NFSStatPlugin(RRDBase):
     )
 
 
-class UPSBatteryChargePlugin(RRDBase):
+class UPSBase(object):
 
-    plugin = 'nut-ups'
+    plugin = 'nut'
+
+    def get_identifiers(self):
+        ups_identifier = self.middleware.call_sync('ups.config')['identifier']
+
+        if all(os.path.exists(os.path.join(self._base_path, f'{self.plugin}-{ups_identifier}', f'{_type}.rrd'))
+               for _type, dsname, transform, in self.rrd_types):
+            return [ups_identifier]
+
+        return []
+
+
+class UPSBatteryChargePlugin(UPSBase, RRDBase):
+
     title = 'UPS Battery Statistics'
     vertical_label = 'Percent'
     rrd_types = (
@@ -690,9 +703,8 @@ class UPSBatteryChargePlugin(RRDBase):
     )
 
 
-class UPSRemainingBatteryPlugin(RRDBase):
+class UPSRemainingBatteryPlugin(UPSBase, RRDBase):
 
-    plugin = 'nut-ups'
     title = 'UPS Battery Time Remaining Statistics'
     vertical_label = 'Seconds'
     rrd_types = (
