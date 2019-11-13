@@ -538,7 +538,6 @@ class PoolService(CRUDService):
         Dict(
             'encryption_options',
             Bool('generate_key', default=False),
-            Bool('key_file', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
             Str(
                 'algorithm', default='AES-256-CCM', enum=[
@@ -577,7 +576,7 @@ class PoolService(CRUDService):
         ),
         register=True,
     ))
-    @job(lock='pool_createupdate', pipes=['input'], check_pipes=False)
+    @job(lock='pool_createupdate')
     async def do_create(self, job, data):
         """
         Create a new ZFS Pool.
@@ -594,9 +593,7 @@ class PoolService(CRUDService):
         `encryption_options` specifies configuration for encryption of root dataset for `name` pool.
         `encryption_options.passphrase` must be specified if encryption for root dataset is desired with a passphrase
         as a key.
-        Otherwise a hex encoded key can be specified by either uploading it or specifying `encryption_options.key`.
-        Please refer to websocket documentation for details on how the key can be uploaded. When a key is to
-        be uploaded, `encryption_options.key_file` must be enabled.
+        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
         `encryption_options.generate_key` when enabled automatically generates the key to be used
         for dataset encryption.
 
@@ -657,8 +654,9 @@ class PoolService(CRUDService):
             verrors.add('pool_create.topology.data', 'At least one data vdev is required')
 
         encryption_dict = await self.middleware.call(
-            'pool.dataset.validate_encryption_data', job, verrors,
-            {'enabled': data.pop('encryption'), **data.pop('encryption_options')}, 'pool_create.encryption_options',
+            'pool.dataset.validate_encryption_data', None, verrors, {
+                'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False,
+            }, 'pool_create.encryption_options',
         )
 
         await self.__common_validation(verrors, data, 'pool_create')
@@ -2911,7 +2909,7 @@ class PoolDatasetService(CRUDService):
             key = key or passphrase
             if encryption_dict['generate_key']:
                 key = secrets.token_hex(32)
-            elif not key:
+            elif not key and job:
                 job.check_pipe('input')
                 key = job.pipes.input.r.read(64)
                 # We would like to ensure key matches specified key format
@@ -3508,8 +3506,7 @@ class PoolDatasetService(CRUDService):
         Bool('inherit_encryption', default=True),
         register=True,
     ))
-    @job(lock=lambda args: f'dataset_create{args[0]["name"]}', pipes=['input'], check_pipes=False)
-    async def do_create(self, job, data):
+    async def do_create(self, data):
         """
         Creates a dataset/zvol.
 
@@ -3525,9 +3522,7 @@ class PoolDatasetService(CRUDService):
         `encryption_options` specifies configuration for encryption of dataset for `name` pool.
         `encryption_options.passphrase` must be specified if encryption for dataset is desired with a passphrase
         as a key.
-        Otherwise a hex encoded key can be specified by either uploading it or specifying `encryption_options.key`.
-        Please refer to websocket documentation for details on how the key can be uploaded. When a key is to
-        be uploaded, `encryption_options.key_file` must be enabled.
+        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
         `encryption_options.generate_key` when enabled automatically generates the key to be used
         for dataset encryption.
 
@@ -3603,8 +3598,8 @@ class PoolDatasetService(CRUDService):
                     )
 
         encryption_dict = await self.middleware.call(
-            'pool.dataset.validate_encryption_data', job, verrors,
-            {'enabled': data.pop('encryption'), **data.pop('encryption_options')},
+            'pool.dataset.validate_encryption_data', None, verrors,
+            {'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False},
             'pool_dataset_create.encryption_options',
         ) or encryption_dict
 
