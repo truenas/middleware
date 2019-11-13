@@ -85,9 +85,10 @@ class VMSupervisor:
         self.domain = self.stop_devices_thread = None
         self.update_domain()
 
-    def update_domain(self, vm_data=None):
+    def update_domain(self, vm_data=None, update_devices=True):
         # This can be called to update domain to reflect any changes introduced to the VM
-        self.update_vm_data(vm_data)
+        if update_devices:
+            self.update_vm_data(vm_data)
         try:
             self.domain = self.connection.lookupByName(self.libvirt_domain_name)
         except libvirt.libvirtError:
@@ -167,7 +168,7 @@ class VMSupervisor:
             device.pre_start_vm()
 
         try:
-            self.update_domain(vm_data)
+            self.update_domain(vm_data, update_devices=False)
             if self.domain.create() < 0:
                 raise CallError(f'Failed to boot {self.vm_data["name"]} domain')
         except (libvirt.libvirtError, CallError) as e:
@@ -563,7 +564,7 @@ class NIC(Device):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.bridge = None
+        self.bridge = self.bridge_created = None
 
     @staticmethod
     def random_mac():
@@ -601,11 +602,17 @@ class NIC(Device):
             else:
                 bridge = netif.get_interface(netif.create_interface('bridge'))
                 bridge.add_member(nic_attach)
+                self.bridge_created = True
 
         if netif.InterfaceFlags.UP not in bridge.flags:
             bridge.up()
 
         self.bridge = bridge.name
+
+    def pre_start_vm_rollback(self, *args, **kwargs):
+        if self.bridge_created and self.bridge in netif.list_interfaces():
+            netif.destroy_interface(self.bridge)
+            self.bridge = self.bridge_created = None
 
     def xml(self, *args, **kwargs):
         return create_element(
