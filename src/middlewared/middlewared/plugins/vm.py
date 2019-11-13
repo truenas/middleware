@@ -87,11 +87,7 @@ class VMSupervisor:
 
     def update_domain(self, vm_data=None):
         # This can be called to update domain to reflect any changes introduced to the VM
-        self.vm_data = vm_data or self.vm_data
-        self.devices = [
-            getattr(sys.modules[__name__], device['dtype'])(device, self.middleware)
-            for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
-        ]
+        self.update_vm_data(vm_data)
         try:
             self.domain = self.connection.lookupByName(self.libvirt_domain_name)
         except libvirt.libvirtError:
@@ -145,11 +141,18 @@ class VMSupervisor:
 
         return retrieved_item
 
+    def update_vm_data(self, vm_data=None):
+        self.vm_data = vm_data or self.vm_data
+        self.devices = [
+            getattr(sys.modules[__name__], device['dtype'])(device, self.middleware)
+            for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
+        ]
+
     def start(self, vm_data=None):
         if self.domain.isActive():
             raise CallError(f'{self.libvirt_domain_name} domain is already active')
 
-        self.update_domain(vm_data)
+        self.update_vm_data(vm_data)
 
         # Let's ensure that we are able to boot a GRUB based VM
         if self.vm_data['bootloader'] == 'GRUB' and not any(
@@ -164,6 +167,7 @@ class VMSupervisor:
             device.pre_start_vm()
 
         try:
+            self.update_domain(vm_data)
             if self.domain.create() < 0:
                 raise CallError(f'Failed to boot {self.vm_data["name"]} domain')
         except (libvirt.libvirtError, CallError) as e:
@@ -557,6 +561,10 @@ class NIC(Device):
         Str('mac', default=None, null=True),
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bridge = None
+
     @staticmethod
     def random_mac():
         mac_address = [
@@ -566,37 +574,44 @@ class NIC(Device):
 
     def pre_start_vm(self, *args, **kwargs):
         nic_attach = self.data['attributes']['nic_attach']
-        if not nic_attach:
-            try:
-                nic_attach = netif.RoutingTable().default_route_ipv4.interface
-                nic = netif.get_interface(nic_attach)
-            except Exception as e:
-                raise CallError(f'Unable to retrieve default interface: {e}')
+        interfaces = netif.list_interfaces()
+        bridge = None
+        if nic_attach and nic_attach not in interfaces:
+            raise CallError(f'{nic_attach} not found.')
+        elif nic_attach and nic_attach.startswith('bridge'):
+            bridge = interfaces[nic_attach]
         else:
-            nic = netif.get_interface(nic_attach)
+            if not nic_attach:
+                try:
+                    nic_attach = netif.RoutingTable().default_route_ipv4.interface
+                    nic = netif.get_interface(nic_attach)
+                except Exception as e:
+                    raise CallError(f'Unable to retrieve default interface: {e}')
+            else:
+                nic = netif.get_interface(nic_attach)
 
-        # If for some reason the main iface is down, we need to up it.
-        nic_status = netif.InterfaceFlags.UP in nic.flags
-        if nic_status is False:
-            nic.up()
+            if netif.InterfaceFlags.UP not in nic.flags:
+                nic.up()
 
-        try:
-            bridge_nic = netif.get_interface(VM_BRIDGE)
-        except KeyError:
-            bridge_nic = netif.get_interface(netif.create_interface('bridge'))
-            bridge_nic.rename(VM_BRIDGE)
+        if not bridge:
+            for iface in filter(lambda v: v.startswith('bridge'), interfaces):
+                if nic_attach in interfaces[iface].members:
+                    bridge = interfaces[iface]
+                    break
+            else:
+                bridge = netif.get_interface(netif.create_interface('bridge'))
+                bridge.add_member(nic_attach)
 
-        if nic_attach not in bridge_nic.members:
-            bridge_nic.add_member(nic_attach)
+        if netif.InterfaceFlags.UP not in bridge.flags:
+            bridge.up()
 
-        if netif.InterfaceFlags.UP not in bridge_nic.flags:
-            bridge_nic.up()
+        self.bridge = bridge.name
 
     def xml(self, *args, **kwargs):
         return create_element(
             'interface', type='bridge', attribute_dict={
                 'children': [
-                    create_element('source', bridge=VM_BRIDGE),
+                    create_element('source', bridge=self.bridge),
                     create_element('model', type='virtio' if self.data['attributes']['type'] == 'VIRTIO' else 'e1000'),
                     create_element(
                         'mac', address=self.data['attributes']['mac'] if
