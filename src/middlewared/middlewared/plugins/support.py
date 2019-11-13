@@ -7,10 +7,11 @@ import subprocess
 import time
 
 from middlewared.pipe import Pipes
-from middlewared.schema import Bool, Dict, Int, Str, accepts
+from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen
+from middlewared.validators import Email
 
 ADDRESS = 'support-proxy.ixsystems.com'
 
@@ -163,7 +164,8 @@ class SupportService(ConfigService):
         Str('environment', max_length=None),
         Str('phone'),
         Str('name'),
-        Str('email'),
+        Str('email', validators=[Email()]),
+        List('cc', items=[Str('email', validators=[Email()])])
     ))
     @job()
     async def new_ticket(self, job, data):
