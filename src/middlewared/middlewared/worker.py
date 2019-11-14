@@ -4,9 +4,7 @@ from middlewared.client import Client
 import asyncio
 import inspect
 import os
-import select
 import setproctitle
-import threading
 from . import logger
 from .utils import LoadPluginsMixin
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
