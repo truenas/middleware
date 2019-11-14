@@ -1,8 +1,8 @@
 import platform
 
 if platform.system().lower() == "freebsd":
-    from .freebsd import *
+    from .freebsd import *  # noqa
 
 
 if platform.system().lower() == "linux":
-    from .linux import *
+    from .linux import *  # noqa
