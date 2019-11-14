@@ -40,8 +40,8 @@ from middlewared.client import Client
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
+from middlewared.utils.os_ import osc
 from middlewared.utils.string import make_sentence
-from middlewared.worker import watch_parent
 
 INVALID_DATASETS = (
     re.compile(r"freenas-boot($|/)"),
@@ -125,7 +125,7 @@ class ZettareplProcess:
 
     def __call__(self):
         setproctitle.setproctitle('middlewared (zettarepl)')
-        start_daemon_thread(target=watch_parent)
+        osc.die_with_parent()
         if logging.getLevelName(self.debug_level) == logging.TRACE:
             # If we want TRACE then we want all debug from zettarepl
             default_level = logging.DEBUG
