@@ -183,6 +183,7 @@ class UPSService(SystemServiceService):
         `toemail` is a list of valid email id's on which notification emails are sent.
         """
         config = await self.config()
+        config.pop('complete_identifier')
         old_config = config.copy()
         config.update(data)
         verros, config = await self.validate_data(config, 'ups_update')
