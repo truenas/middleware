@@ -13,10 +13,18 @@ try:
 except ImportError:
     closefrom = None
 
+try:
+    import prctl
+except ImportError:
+    pass
+
 import os
 import platform
 import resource
+import select
+import signal
 import sys
+import threading
 
 
 class OS(object):
@@ -38,11 +46,45 @@ class OS(object):
         if bsd_set_thread_name:
             bsd_set_thread_name(name)
 
+    def die_with_parent(self):
+        raise NotImplementedError
+
     def get_app_version(self):
         raise NotImplementedError
 
 
 class FreeBSD(OS):
+
+    def die_with_parent(self):
+        def watch_parent():
+            """
+            Thread to watch for the parent pid.
+            If this process has been orphaned it means middlewared process has crashed
+            and there is nothing left to do here other than commit suicide!
+            """
+            kqueue = select.kqueue()
+
+            try:
+                kqueue.control([
+                    select.kevent(
+                        os.getppid(),
+                        filter=select.KQ_FILTER_PROC,
+                        flags=select.KQ_EV_ADD,
+                        fflags=select.KQ_NOTE_EXIT,
+                    )
+                ], 0, 0)
+            except ProcessLookupError:
+                os._exit(1)
+
+            while True:
+                ppid = os.getppid()
+                if ppid == 1:
+                    break
+                kqueue.control(None, 1)
+
+            os._exit(1)
+
+        threading.Thread(target=watch_parent, daemon=True).start()
 
     def get_app_version(self):
         if '/usr/local/lib' not in sys.path:
@@ -67,6 +109,9 @@ class FreeBSD(OS):
 
 
 class Linux(OS):
+
+    def die_with_parent(self):
+        prctl.set_pdeathsig(signal.SIGKILL)
 
     def get_app_version(self):
         cache = apt.Cache()

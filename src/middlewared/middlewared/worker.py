@@ -4,12 +4,11 @@ from middlewared.client import Client
 import asyncio
 import inspect
 import os
-import select
 import setproctitle
-import threading
 from . import logger
 from .utils import LoadPluginsMixin
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
+from .utils.os_ import osc
 from .utils.run_in_thread import RunInThreadMixin
 
 MIDDLEWARE = None
@@ -106,35 +105,6 @@ def main_worker(*call_args):
     return res
 
 
-def watch_parent():
-    """
-    Thread to watch for the parent pid.
-    If this process has been orphaned it means middlewared process has crashed
-    and there is nothing left to do here other than commit suicide!
-    """
-    kqueue = select.kqueue()
-
-    try:
-        kqueue.control([
-            select.kevent(
-                os.getppid(),
-                filter=select.KQ_FILTER_PROC,
-                flags=select.KQ_EV_ADD,
-                fflags=select.KQ_NOTE_EXIT,
-            )
-        ], 0, 0)
-    except ProcessLookupError:
-        os._exit(1)
-
-    while True:
-        ppid = os.getppid()
-        if ppid == 1:
-            break
-        kqueue.control(None, 1)
-
-    os._exit(1)
-
-
 def worker_init(overlay_dirs, debug_level, log_handler):
     global MIDDLEWARE
     MIDDLEWARE = FakeMiddleware(overlay_dirs)
@@ -142,5 +112,5 @@ def worker_init(overlay_dirs, debug_level, log_handler):
     MIDDLEWARE._load_plugins()
     os.environ['MIDDLEWARED_LOADING'] = 'False'
     setproctitle.setproctitle('middlewared (worker)')
-    threading.Thread(target=watch_parent, daemon=True).start()
+    osc.die_with_parent()
     logger.setup_logging('worker', debug_level, log_handler)
