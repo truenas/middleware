@@ -225,12 +225,7 @@ class UPSService(SystemServiceService):
     )
     async def upssched_event(self, notify_type):
         config = await self.config()
-
-        if config['mode'] == 'MASTER':
-            upsc_identifier = f'{config["identifier"]}@localhost:{config["remoteport"]}'
-        else:
-            upsc_identifier = f'{config["identifier"]}@{config["remotehost"]}:{config["remoteport"]}'
-
+        upsc_identifier = config['complete_identifier']
         if notify_type.lower() == 'shutdown':
             # Before we start FSD with upsmon, lets ensure that ups is not ONLINE (OL).
             # There are cases where battery/charger issues can result in ups.status being "OL LB" at the
