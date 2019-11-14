@@ -389,6 +389,19 @@ class FilesystemService(Service):
         if winacl.returncode != 0:
             CallError(f"Winacl {action} on path {path} failed with error: [{winacl.stderr.decode().strip()}]")
 
+    def _common_perm_path_validate(self, path):
+        if not os.path.exists(path):
+            raise CallError(f"Path not found: {path}",
+                            errno.ENOENT)
+
+        if not os.path.realpath(path).startswith('/mnt/'):
+            raise CallError(f"Changing permissions on paths outside of /mnt is not permitted: {path}",
+                            errno.EPERM)
+
+        if os.path.realpath(path) in [x['path'] for x in self.middleware.call_sync('pool.query')]:
+            raise CallError(f"Changing permissions of root level dataset is not permitted: {path}",
+                            errno.EPERM)
+
     @accepts(Str('path'))
     def acl_is_trivial(self, path):
         """
@@ -434,11 +447,8 @@ class FilesystemService(Service):
         operation will traverse filesystem mount points.
         """
         job.set_progress(0, 'Preparing to change owner.')
-        if not os.path.exists(data['path']):
-            raise CallError(f"Path {data['path']} not found.", errno.ENOENT)
 
-        if not os.path.realpath(data['path']).startswith('/mnt/'):
-            raise CallError(f"Changing ownership on path {data['path']} is not permitted.", errno.EPERM)
+        self._common_perm_path_validate(data['path'])
 
         uid = -1 if data['uid'] is None else data['uid']
         gid = -1 if data['gid'] is None else data['gid']
@@ -501,16 +511,13 @@ class FilesystemService(Service):
         uid = -1 if data['uid'] is None else data['uid']
         gid = -1 if data['gid'] is None else data['gid']
 
-        if not os.path.exists(data['path']):
-            raise CallError('Path not found.', errno.ENOENT)
-
-        if not os.path.realpath(data['path']).startswith('/mnt/'):
-            raise CallError(f"Changing permission on path {data['path']} is not permitted.", errno.EPERM)
+        self._common_perm_path_validate(data['path'])
 
         acl_is_trivial = self.middleware.call_sync('filesystem.acl_is_trivial', data['path'])
         if not acl_is_trivial and not options['stripacl']:
             raise CallError(
-                f'Non-trivial ACL present on [{data["path"]}]. Option "stripacl" required to change permission.'
+                f'Non-trivial ACL present on [{data["path"]}]. Option "stripacl" required to change permission.',
+                errno.EINVAL
             )
 
         if mode is not None:
@@ -789,11 +796,8 @@ class FilesystemService(Service):
         job.set_progress(0, 'Preparing to set acl.')
         options = data['options']
         dacl = data.get('dacl', [])
-        if not os.path.exists(data['path']):
-            raise CallError('Path not found.', errno.ENOENT)
 
-        if not os.path.realpath(data['path']).startswith('/mnt/'):
-            raise CallError(f"Changing ACL on path {data['path']} is not permitted.", errno.EPERM)
+        self._common_perm_path_validate(data['path'])
 
         if dacl and options['stripacl']:
             raise CallError('Setting ACL and stripping ACL are not permitted simultaneously.', errno.EINVAL)
