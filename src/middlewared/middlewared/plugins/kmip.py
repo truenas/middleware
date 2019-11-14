@@ -93,6 +93,19 @@ class KMIPService(ConfigService):
             self.destroy_key(uid, conn)
 
     @private
+    @accepts(Str('uid'), Dict('conn_data', additional_attrs=True))
+    def retrieve_secret_data(self, uid, conn_data=None):
+        with self.connection(conn_data) as conn:
+            try:
+                obj = conn.get(uid)
+            except KmipOperationFailure as e:
+                raise CallError(f'Failed to retrieve secret data: {e}')
+            else:
+                if not isinstance(obj, SecretData):
+                    raise CallError('Retrieved managed object is not secret data')
+                return obj.value.decode()
+
+    @private
     def test_connection(self, data=None):
         try:
             with self.connection(data) as conn:
