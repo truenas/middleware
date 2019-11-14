@@ -640,7 +640,7 @@ class InterfaceService(CRUDService):
 
         # Deleting network.lagginterface because deleting network.interfaces won't cascade
         # (but network.lagginterface will cascade to network.lagginterfacemembers)
-        await self.middleware.call('datastore.delete', 'network.lagginterface')
+        await self.middleware.call('datastore.delete', 'network.lagginterface', [])
         # Deleting interfaces should cascade to network.alias and network.bridge
         await self.middleware.call('datastore.delete', 'network.interfaces', [])
         await self.middleware.call('datastore.delete', 'network.vlan', [])
