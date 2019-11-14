@@ -10,7 +10,7 @@ import syslog
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 from middlewared.utils import run
-from middlewared.validators import Email, Range
+from middlewared.validators import Email, Range, Port
 
 
 DRIVER_BIN_DIR = '/usr/local/libexec/nut'
@@ -143,7 +143,7 @@ class UPSService(SystemServiceService):
             Bool('powerdown'),
             Bool('rmonitor'),
             Int('nocommwarntime', null=True),
-            Int('remoteport'),
+            Int('remoteport', validators=[Port()]),
             Int('shutdowntimer'),
             Int('hostsync', validators=[Range(min=0)]),
             Str('description'),
