@@ -31,6 +31,8 @@ class UPSService(SystemServiceService):
         data['mode'] = data['mode'].upper()
         data['shutdown'] = data['shutdown'].upper()
         data['toemail'] = [v for v in data['toemail'].split(';') if v]
+        host = 'localhost' if data['mode'] == 'MASTER' else data['remotehost']
+        data['complete_identifier'] = f'{data["identifier"]}@{host}:{data["remoteport"]}'
         return data
 
     @accepts()
