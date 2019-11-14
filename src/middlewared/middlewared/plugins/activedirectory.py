@@ -22,7 +22,7 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
 from middlewared.plugins.directoryservices import DSStatus
-from middlewared.utils.os_ import osc
+import middlewared.utils.osc as osc
 from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
 
 

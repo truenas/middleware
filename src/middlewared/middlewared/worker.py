@@ -10,7 +10,7 @@ import threading
 from . import logger
 from .utils import LoadPluginsMixin
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
-from .utils.os_ import osc
+import middlewared.utils.osc as osc
 from .utils.run_in_thread import RunInThreadMixin
 
 MIDDLEWARE = None

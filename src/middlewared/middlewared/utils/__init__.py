@@ -17,9 +17,9 @@ from functools import wraps
 from multiprocessing import Process, Queue, Value
 from threading import Lock
 
-from .os_ import osc
 from middlewared.schema import Schemas
 from middlewared.service_exception import MatchNotFound
+import middlewared.utils.osc as osc
 
 BUILDTIME = None
 VERSION = None

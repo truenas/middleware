@@ -5,7 +5,7 @@ import queue
 import random
 import threading
 
-from .os_ import osc
+import middlewared.utils.osc as osc
 
 logger = logging.getLogger(__name__)
 

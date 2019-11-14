@@ -40,7 +40,7 @@ from middlewared.client import Client
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils import start_daemon_thread
-from middlewared.utils.os_ import osc
+import middlewared.utils.osc as osc
 from middlewared.utils.string import make_sentence
 
 INVALID_DATASETS = (
