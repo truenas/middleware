@@ -54,22 +54,25 @@ class KMIPService(ConfigService):
     @private
     def register_secret_data(self, key, conn_data=None):
         with self.connection(conn_data) as conn:
-            secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD)
+            return self.__register_secret_data(key, conn)
+
+    def __register_secret_data(self, key, conn):
+        secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD)
+        try:
+            uid = conn.register(secret_data)
+        except KmipOperationFailure as e:
+            raise CallError(f'Failed to register key with KMIP server: {e}')
+        else:
             try:
-                uid = conn.register(secret_data)
+                conn.activate(uid)
             except KmipOperationFailure as e:
-                raise CallError(f'Failed to register key with KMIP server: {e}')
-            else:
+                error = f'Failed to activate key: {e}'
                 try:
-                    conn.activate(uid)
-                except KmipOperationFailure as e:
-                    error = f'Failed to activate key: {e}'
-                    try:
-                        self.destroy_key(uid, conn)
-                    except CallError as ce:
-                        error += f'\nFailed to destroy created key: {ce}'
-                    raise CallError(error)
-                return uid
+                    self.destroy_key(uid, conn)
+                except CallError as ce:
+                    error += f'\nFailed to destroy created key: {ce}'
+                raise CallError(error)
+            return uid
 
     @private
     def revoke_key(self, uid, conn):
@@ -96,14 +99,17 @@ class KMIPService(ConfigService):
     @accepts(Str('uid'), Dict('conn_data', additional_attrs=True))
     def retrieve_secret_data(self, uid, conn_data=None):
         with self.connection(conn_data) as conn:
-            try:
-                obj = conn.get(uid)
-            except KmipOperationFailure as e:
-                raise CallError(f'Failed to retrieve secret data: {e}')
-            else:
-                if not isinstance(obj, SecretData):
-                    raise CallError('Retrieved managed object is not secret data')
-                return obj.value.decode()
+            return self.__retrieve_secret_data(uid, conn)
+
+    def __retrieve_secret_data(self, uid, conn):
+        try:
+            obj = conn.get(uid)
+        except KmipOperationFailure as e:
+            raise CallError(f'Failed to retrieve secret data: {e}')
+        else:
+            if not isinstance(obj, SecretData):
+                raise CallError('Retrieved managed object is not secret data')
+            return obj.value.decode()
 
     @private
     def test_connection(self, data=None):
