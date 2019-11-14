@@ -57,11 +57,40 @@ class KMIPService(ConfigService):
             secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD)
             try:
                 uid = conn.register(secret_data)
-                conn.activate(uid)
-            except KmipOperationFailure:
-                raise CallError(f'Failed to register key with KMIP server.')
+            except KmipOperationFailure as e:
+                raise CallError(f'Failed to register key with KMIP server: {e}')
             else:
+                try:
+                    conn.activate(uid)
+                except KmipOperationFailure as e:
+                    error = f'Failed to activate key: {e}'
+                    try:
+                        self.destroy_key(uid, conn)
+                    except CallError as ce:
+                        error += f'\nFailed to destroy created key: {ce}'
+                    raise CallError(error)
                 return uid
+
+    @private
+    def revoke_key(self, uid, conn):
+        try:
+            conn.revoke(enums.RevocationReasonCode.CESSATION_OF_OPERATION, uid)
+        except KmipOperationFailure as e:
+            raise CallError(f'Failed to revoke key: {e}')
+
+    @private
+    def destroy_key(self, uid, conn):
+        try:
+            conn.destroy(uid)
+        except KmipOperationFailure as e:
+            raise CallError(f'Failed to destroy key: {e}')
+
+    @private
+    @accepts(Str('uid'), Dict('conn_data', additional_attrs=True))
+    def revoke_and_destroy_key(self, uid, conn_data=None):
+        with self.connection(conn_data) as conn:
+            self.revoke_key(uid, conn)
+            self.destroy_key(uid, conn)
 
     @private
     def test_connection(self, data=None):
