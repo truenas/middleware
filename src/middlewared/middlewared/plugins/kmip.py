@@ -3,11 +3,15 @@ from middlewared.service import (
 )
 from middlewared.validators import Port
 
+from kmip.core import enums
 from kmip.pie.client import ProxyKmipClient
+from kmip.pie.exceptions import ClientConnectionFailure, ClientConnectionNotOpen, KmipOperationFailure
+from kmip.pie.objects import SecretData
 
 import middlewared.sqlalchemy as sa
 
 import contextlib
+import socket
 
 
 class KMIPModel(sa.Model):
@@ -38,11 +42,26 @@ class KMIPService(ConfigService):
         if not cert or not ca:
             raise CallError('Certificate/CA not setup correctly')
 
-        with ProxyKmipClient(
-            hostname=config['server'], port=config['port'], cert=cert[0]['certificate_path'],
-            key=cert[0]['privatekey_path'], ca=ca[0]['certificate_path']
-        ) as conn:
-            yield conn
+        try:
+            with ProxyKmipClient(
+                hostname=config['server'], port=config['port'], cert=cert[0]['certificate_path'],
+                key=cert[0]['privatekey_path'], ca=ca[0]['certificate_path']
+            ) as conn:
+                yield conn
+        except (ClientConnectionFailure, ClientConnectionNotOpen, socket.timeout):
+            raise CallError(f'Failed to connect to {config["server"]}:{config["port"]}')
+
+    @private
+    def register_secret_data(self, key, conn_data=None):
+        with self.connection(conn_data) as conn:
+            secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD)
+            try:
+                uid = conn.register(secret_data)
+                conn.activate(uid)
+            except KmipOperationFailure:
+                raise CallError(f'Failed to register key with KMIP server.')
+            else:
+                return uid
 
     @private
     def test_connection(self, data=None):
