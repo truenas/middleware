@@ -11,7 +11,7 @@ from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
-from .utils.os_ import osc
+import middlewared.utils.osc as osc
 from .utils.profile import profile_wrap
 from .utils.run_in_thread import RunInThreadMixin
 from .webui_auth import WebUIAuth
