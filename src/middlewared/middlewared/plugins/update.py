@@ -500,6 +500,7 @@ class UpdateService(Service):
         'update',
         Str('train', required=False),
         Bool('reboot', default=False),
+        Bool('save_iocage_config', default=True),
         required=False,
     ))
     @job(lock='update', process=True)
@@ -532,6 +533,9 @@ class UpdateService(Service):
 
         new_manifest = Manifest.Manifest(require_signature=True)
         new_manifest.LoadPath('{}/MANIFEST'.format(location))
+
+        if attrs.get('save_iocage_config'):
+            await self.middleware.call('jail.save_configs')
 
         Update.ApplyUpdate(
             location,
@@ -577,9 +581,9 @@ class UpdateService(Service):
 
         return bool(update)
 
-    @accepts(Str('path'))
+    @accepts(Str('path'), Dict('options', Bool('save_iocage_config', default=True),))
     @job(lock='updatemanual', process=True)
-    def manual(self, job, path):
+    def manual(self, job, path, options):
         """
         Apply manual update of file `path`.
         """
@@ -588,6 +592,8 @@ class UpdateService(Service):
             try:
                 job.set_progress(30, 'Extracting file')
                 ExtractFrozenUpdate(path, dest_extracted, verbose=True)
+                if options['save_iocage_config']:
+                    self.middleware.call_sync('jail.save_configs')
                 job.set_progress(50, 'Applying update')
                 ApplyUpdate(dest_extracted)
             except Exception as e:
@@ -608,6 +614,7 @@ class UpdateService(Service):
     @accepts(Dict(
         'updatefile',
         Str('destination', null=True),
+        Bool('save_iocage_config', default=True),
     ))
     @job(lock='updatemanual', pipes=['input'])
     async def file(self, job, options):
@@ -650,6 +657,8 @@ class UpdateService(Service):
                 except Exception as e:
                     raise CallError(str(e))
 
+            if options['save_iocage_config']:
+                await self.middleware.call('jail.save_configs')
             await self.middleware.run_in_thread(do_update)
 
             job.set_progress(95, 'Cleaning up')
