@@ -114,17 +114,17 @@ class IdmapService(Service):
                 data[key] = data[key].lower()
 
         if 'id' in data['domain'] and data['domain']['id']:
-            data['domain'] = data['domain']['id']
-        elif 'idmap_domain_name' in data['domain'] and data['domain']['idmap_domain_name']:
             domain_info = await self.middleware.call(
-                'idmap.domain.query', [('domain', '=', data['domain']['idmap_domain_name'])]
+                'idmap.domain.query', [('id', '=', data['domain']['id'])]
             )
-            data['domain'] = domain_info[0]['id']
+            data['domain'] = domain_info[0]['name']
+        elif 'idmap_domain_name' in data['domain'] and data['domain']['idmap_domain_name']:
+            data['domain'] = data['domain']['idmap_domain_name']
         else:
             domain_info = await self.middleware.call(
                 'idmap.domain.query', [('domain', '=', data['domain']['idmap_domain_dns_domain_name'].upper())]
             )
-            data['domain'] = domain_info[0]['id']
+            data['domain'] = domain_info[0]['name']
 
         return data
 
