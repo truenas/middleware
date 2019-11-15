@@ -335,9 +335,10 @@ class AlertService(Service):
         run_failover_related = False
         if not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("notifier.failover_licensed"):
-                master_node = await self.middleware.call("failover.node")
+                if await self.middleware.call("failover.node") == "B":
+                    master_node = "B"
+                    backup_node = "A"
                 try:
-                    backup_node = await self.middleware.call("failover.call_remote", "failover.node")
                     remote_version = await self.middleware.call("failover.call_remote", "system.version")
                     remote_system_state = await self.middleware.call("failover.call_remote", "system.state")
                     remote_failover_status = await self.middleware.call("failover.call_remote",
