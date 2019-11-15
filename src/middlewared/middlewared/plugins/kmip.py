@@ -1,5 +1,6 @@
 from middlewared.service import (
-    accepts, Bool, CallError, ConfigService, Dict, Int, private, Str, ValidationErrors
+    accepts, Bool, CallError, ConfigService, Dict, Int,
+    job, List, private, Str, ValidationErrors
 )
 from middlewared.validators import Port
 
@@ -50,6 +51,61 @@ class KMIPService(ConfigService):
                 yield conn
         except (ClientConnectionFailure, ClientConnectionNotOpen, socket.timeout):
             raise CallError(f'Failed to connect to {config["server"]}:{config["port"]}')
+
+    @private
+    def retrieve_zfs_keys_pending_sync(self, ids=None):
+        return self.middleware.call_sync(
+            'datastore.query', self.middleware.call_sync('pool.dataset.dataset_datastore'), [
+                ['kmip_sync', '=', True], [['id', 'in' if ids else 'nin', ids or []]]
+            ]
+        )
+
+    @private
+    def sync_zfs_keys_from_db_to_server(self, ids=None):
+        zfs_datastore = self.middleware.call_sync('pool.dataset.dataset_datastore')
+        datasets = self.retrieve_zfs_keys_pending_sync(ids)
+        failed = []
+        with self.connection() as conn:
+            for ds in datasets:
+                if ds['kmip_uid']:
+                    # This needs to be revoked and destroyed
+                    try:
+                        self.revoke_key(ds['kmip_uid'], conn)
+                    except Exception as e:
+                        self.middleware.logger.debug(f'Failed to revoke old KMIP key for {ds["name"]}: {e}')
+                    try:
+                        self.destroy_key(ds['kmip_uid'], conn)
+                    except Exception as e:
+                        self.middleware.logger.debug(f'Failed to destroy old KMIP key for {ds["name"]}: {e}')
+
+                try:
+                    uid = self.__register_secret_data(
+                        self.middleware.call_sync('pwenc.decrypt', ds['encryption_key']), conn
+                    )
+                except Exception as e:
+                    failed.append((ds['name'], f'Failed to register key for {ds["name"]}: {e}'))
+                else:
+                    self.middleware.call_sync(
+                        'datastore.update', zfs_datastore, ds['id'], {
+                            'encryption_key': None, 'kmip_uid': uid, 'kmip_sync': False
+                        }
+                    )
+
+        return failed
+
+    @private
+    @accepts(List('ids', null=True, default=[]))
+    @job(lock=lambda args: f'sync_zfs_keys_{args[0]}')
+    def sync_zfs_keys(self, job, ids=None):
+        config = self.middleware.call_sync('kmip.config')
+        if self.test_connection()['error']:
+            # TODO: Raise alert for connection failure
+            return
+        # TODO: Raise alerts for failed
+        if config['enabled']:
+            failed = self.sync_zfs_keys_from_db_to_server(ids)
+        else:
+            pass
 
     @private
     def register_secret_data(self, key, conn_data=None):
