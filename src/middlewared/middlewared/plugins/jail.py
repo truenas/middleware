@@ -1361,6 +1361,9 @@ class JailService(CRUDService):
 
     @accepts()
     def save_configs(self):
+        """
+        Save current jail/template json configuration files to Boot Environments
+        """
         if not self.iocage_set_up():
             return
         self.check_dataset_existence()
