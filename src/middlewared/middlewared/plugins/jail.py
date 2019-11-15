@@ -1,11 +1,13 @@
 import asyncio
 import contextlib
+import datetime as dt
 import os
 import subprocess as su
 import itertools
 import pathlib
 import json
 import sqlite3
+import shutil
 import errno
 import re
 
@@ -1356,6 +1358,41 @@ class JailService(CRUDService):
     @private
     async def terminate(self):
         await SHUTDOWN_LOCK.acquire()
+
+    @accepts()
+    def save_configs(self):
+        if not self.iocage_set_up():
+            return
+        self.check_dataset_existence()
+        jail_root = self.get_iocroot()
+        iocage_backup_dir = '/usr/local/var/backups/iocage'
+        os.makedirs(iocage_backup_dir, exist_ok=True)
+        new_dir = os.path.join(iocage_backup_dir, f'iocage-config-backup-{dt.datetime.now().isoformat()}')
+        os.makedirs(new_dir)
+        config_files = {}
+        for ds in ('jails', 'templates'):
+            for jail in os.listdir(os.path.join(jail_root, ds)):
+                error = True
+                if os.path.exists(os.path.join(jail_root, ds, jail, 'config.json')):
+                    with contextlib.suppress(json.JSONDecodeError):
+                        with open(os.path.join(jail_root, ds, jail, 'config.json'), 'r') as f:
+                            json.loads(f.read())
+                        error = False
+                        config_files[jail] = os.path.join(jail_root, ds, jail, 'config.json')
+
+                if error:
+                    self.middleware.logger.debug(f'Unable to backup config file for {jail}')
+
+        try:
+            with open(os.path.join(jail_root, 'defaults.json'), 'r') as f:
+                json.loads(f.read())
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.middleware.logger.debug(f'Failed to backup defaults.json: {e}')
+        else:
+            config_files[f'defaults-iocage-{dt.datetime.now().isoformat()}'] = os.path.join(jail_root, 'defaults.json')
+
+        for jail, path in config_files.items():
+            shutil.copy(path, os.path.join(new_dir, f'{jail}.json'))
 
 
 async def jail_pool_pre_lock(middleware, pool):
