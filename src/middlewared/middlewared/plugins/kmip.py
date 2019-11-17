@@ -79,15 +79,7 @@ class KMIPService(ConfigService):
                 destroy_successful = True
                 if ds['kmip_uid']:
                     # This needs to be revoked and destroyed
-                    try:
-                        self.revoke_key(ds['kmip_uid'], conn)
-                    except Exception as e:
-                        self.middleware.logger.debug(f'Failed to revoke old KMIP key for {ds["name"]}: {e}')
-                    try:
-                        self.destroy_key(ds['kmip_uid'], conn)
-                    except Exception as e:
-                        self.middleware.logger.debug(f'Failed to destroy old KMIP key for {ds["name"]}: {e}')
-                        destroy_successful = False
+                    destroy_successful = self.__revoke_and_destroy_key(ds, conn)
 
                 try:
                     uid = self.__register_secret_data(
@@ -118,14 +110,22 @@ class KMIPService(ConfigService):
         with self.connection() as conn:
             for ds in datasets:
                 try:
-                    key = self.__retrieve_secret_data(ds['kmip_uid'], conn)
+                    if ds['name'] in self.zfs_keys and self.middleware.call_sync(
+                        'zfs.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
+                    ):
+                        key = self.zfs_keys[ds['name']]
+                    else:
+                        key = self.__retrieve_secret_data(ds['kmip_uid'], conn)
                 except Exception as e:
                     failed.append((ds['name'], f'Failed to retrieve key for {ds["name"]}: {e}'))
                     update_data = {'kmip_sync': True} if not ds['kmip_sync'] else {}
                 else:
                     update_data = {'encryption_key': key, 'kmip_uid': None, 'kmip_sync': False}
+
                 if update_data:
                     self.middleware.call_sync('datastore.update', zfs_datastore, ds['id'], update_data)
+                    if update_data.get('encryption_key'):
+                        self.__revoke_and_destroy_key(ds, conn)
 
         return failed
 
@@ -136,6 +136,8 @@ class KMIPService(ConfigService):
         config = self.middleware.call_sync('kmip.config')
         if not self.test_connection_and_alert():
             return
+        sync_keys_in_db = self.middleware.call_sync('pool.dataset.sync_db_keys')
+        sync_keys_in_db.wait_sync()
         # TODO: Raise alerts for failed
         if config['enabled']:
             failed = self.sync_zfs_keys_from_db_to_server(ids)
@@ -148,6 +150,20 @@ class KMIPService(ConfigService):
         if not self.test_connection_and_alert():
             return
         self.sync_zfs_keys()
+
+    @private
+    def __revoke_and_destroy_key(self, ds, conn):
+        try:
+            self.revoke_key(ds['kmip_uid'], conn)
+        except Exception as e:
+            self.middleware.logger.debug(f'Failed to revoke old KMIP key for {ds["name"]}: {e}')
+        try:
+            self.destroy_key(ds['kmip_uid'], conn)
+        except Exception as e:
+            self.middleware.logger.debug(f'Failed to destroy old KMIP key for {ds["name"]}: {e}')
+            return False
+        else:
+            return True
 
     @private
     def test_connection_and_alert(self):
