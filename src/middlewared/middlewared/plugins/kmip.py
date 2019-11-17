@@ -34,6 +34,10 @@ class KMIPService(ConfigService):
         datastore = 'system_kmip'
         datastore_extend = 'kmip.kmip_extend'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.zfs_keys = {}
+
     @contextlib.contextmanager
     def connection(self, data=None):
         config = self.middleware.call_sync('kmip.config')
@@ -67,6 +71,7 @@ class KMIPService(ConfigService):
         failed = []
         with self.connection() as conn:
             for ds in datasets:
+                self.zfs_keys[ds['name']] = ds['encryption_key']
                 if ds['kmip_uid']:
                     # This needs to be revoked and destroyed
                     try:
@@ -259,3 +264,38 @@ class KMIPService(ConfigService):
         await self.middleware.call('service.start', 'kmip')
 
         return await self.config()
+
+    @private
+    def initialize_zfs_keys(self):
+        for ds in self.middleware.call_sync(
+            'datastore.query', self.middleware.call_sync('pool.dataset.dataset_datastore')
+        ):
+            if ds['encryption_key']:
+                self.zfs_keys[ds['name']] = self.middleware.call_sync('pwenc.decrypt', ds['encryption_key'])
+            elif ds['kmip_uid']:
+                try:
+                    key = self.retrieve_secret_data(ds['kmip_uid'])
+                except Exception:
+                    self.middleware.logger.debug(f'Failed to retrieve key for {ds["name"]}')
+                else:
+                    self.zfs_keys[ds['name']] = key
+
+    @private
+    def initialize_keys(self):
+        self.initialize_zfs_keys()
+
+    @private
+    async def retrieve_zfs_keys(self):
+        return self.zfs_keys
+
+
+async def __event_system(middleware, event_type, args):
+    if args['id'] != 'ready':
+        return
+
+    if (await middleware.call('kmip.config'))['enabled']:
+        await middleware.call('kmip.initialize_zfs_keys')
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system', __event_system)
