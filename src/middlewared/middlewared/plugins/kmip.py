@@ -1,6 +1,6 @@
 from middlewared.service import (
     accepts, Bool, CallError, ConfigService, Dict, Int,
-    job, List, private, Str, ValidationErrors
+    job, List, periodic, private, Str, ValidationErrors
 )
 from middlewared.validators import Port
 
@@ -60,7 +60,7 @@ class KMIPService(ConfigService):
     def retrieve_zfs_keys_pending_sync(self, ids=None):
         return self.middleware.call_sync(
             'datastore.query', self.middleware.call_sync('pool.dataset.dataset_datastore'), [
-                ['kmip_sync', '=', True], [['id', 'in' if ids else 'nin', ids or []]]
+                ['kmip_sync', '=', True], ['id', 'in' if ids else 'nin', ids or []]
             ]
         )
 
@@ -131,6 +131,11 @@ class KMIPService(ConfigService):
             failed = self.sync_zfs_keys_from_db_to_server(ids)
         else:
             failed = self.sync_zfs_keys_from_server_to_db(ids)
+
+    @periodic(interval=86400)
+    @job(lock='sync_kmip_keys')
+    def sync_keys(self, job):
+        self.sync_zfs_keys()
 
     @private
     def register_secret_data(self, key, conn_data=None):
@@ -203,6 +208,10 @@ class KMIPService(ConfigService):
             return {'error': False, 'exception': None}
 
     @private
+    def kmip_sync_pending(self):
+        return bool(self.retrieve_zfs_keys_pending_sync())
+
+    @private
     async def kmip_extend(self, data):
         for k in filter(lambda v: data[v], ('certificate', 'certificate_authority')):
             data[k] = data[k]['id']
@@ -255,6 +264,13 @@ class KMIPService(ConfigService):
             if result['error']:
                 verrors.add('kmip_update.server', f'Unable to connect to KMIP server: {result["exception"]}.')
 
+        if old['enabled'] != new['enabled'] and self.kmip_sync_pending():
+            verrors.add(
+                'kmip_update.enabled',
+                'KMIP sync is pending, please make sure database and KMIP server '
+                'are in sync before proceeding with this operation.'
+            )
+
         verrors.check()
 
         await self.middleware.call(
@@ -262,6 +278,8 @@ class KMIPService(ConfigService):
         )
 
         await self.middleware.call('service.start', 'kmip')
+        if new['enabled']:
+            await self.middleware.call('kmip.initialize_keys')
 
         return await self.config()
 
@@ -281,7 +299,8 @@ class KMIPService(ConfigService):
                     self.zfs_keys[ds['name']] = key
 
     @private
-    def initialize_keys(self):
+    @job(lock='initialize_kmip_keys')
+    def initialize_keys(self, job):
         self.initialize_zfs_keys()
 
     @private
