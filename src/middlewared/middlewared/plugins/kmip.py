@@ -94,6 +94,26 @@ class KMIPService(ConfigService):
         return failed
 
     @private
+    def sync_zfs_keys_from_server_to_db(self, ids=None):
+        zfs_datastore = self.middleware.call_sync('pool.dataset.dataset_datastore')
+        datasets = self.retrieve_zfs_keys_pending_sync(ids)
+        failed = []
+        with self.connection() as conn:
+            for ds in datasets:
+                try:
+                    key = self.__retrieve_secret_data(ds['kmip_uid'], conn)
+                except Exception as e:
+                    failed.append((ds['name'], f'Failed to retrieve key for {ds["name"]}: {e}'))
+                else:
+                    self.middleware.call_sync(
+                        'datastore.update', zfs_datastore, ds['id'], {
+                            'encryption_key': key, 'kmip_uid': None, 'kmip_sync': False
+                        }
+                    )
+
+        return failed
+
+    @private
     @accepts(List('ids', null=True, default=[]))
     @job(lock=lambda args: f'sync_zfs_keys_{args[0]}')
     def sync_zfs_keys(self, job, ids=None):
@@ -105,7 +125,7 @@ class KMIPService(ConfigService):
         if config['enabled']:
             failed = self.sync_zfs_keys_from_db_to_server(ids)
         else:
-            pass
+            failed = self.sync_zfs_keys_from_server_to_db(ids)
 
     @private
     def register_secret_data(self, key, conn_data=None):
