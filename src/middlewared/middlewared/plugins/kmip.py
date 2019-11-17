@@ -74,31 +74,41 @@ class KMIPService(ConfigService):
         zfs_datastore = self.middleware.call_sync('pool.dataset.dataset_datastore')
         datasets = self.middleware.call_sync(
             'datastore.query', self.middleware.call_sync('pool.dataset.dataset_datastore'), [
-                ['encryption_key', '!=', None], ['id', 'in' if ids else 'nin', ids or []]
+                ['id', 'in' if ids else 'nin', ids or []]
             ]
         )
+        existing_datasets = {ds['name']: ds for ds in self.middleware.call_sync('pool.dataset.query')}
         failed = []
         with self.connection() as conn:
-            for ds in datasets:
-                self.zfs_keys[ds['name']] = ds['encryption_key']
+            for ds in filter(lambda d: d['name'] in existing_datasets, datasets):
+                if not ds['encryption_key']:
+                    # We want to make sure we have the KMIP server's keys and in-memory keys in sync
+                    try:
+                        if ds['name'] in self.zfs_keys and self.middleware.call(
+                            'zfs.dataset.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
+                        ):
+                            continue
+                        else:
+                            key = self.__retrieve_secret_data(ds['kmip_uid'], conn)
+                    except Exception as e:
+                        self.middleware.logger.debug(f'Failed to retrieve key for {ds["name"]}: {e}')
+                    else:
+                        self.zfs_keys[ds['name']] = key
+                        continue
+                self.zfs_keys[ds['name']] = self.middleware.call_sync('pwenc.decrypt', ds['encryption_key'])
                 destroy_successful = True
                 if ds['kmip_uid']:
                     # This needs to be revoked and destroyed
                     destroy_successful = self.__revoke_and_destroy_key(ds, conn)
-
                 try:
-                    uid = self.__register_secret_data(
-                        self.middleware.call_sync('pwenc.decrypt', ds['encryption_key']), conn
-                    )
+                    uid = self.__register_secret_data(self.zfs_keys[ds['name']], conn)
                 except Exception as e:
                     failed.append((ds['name'], f'Failed to register key for {ds["name"]}: {e}'))
                     update_data = {'kmip_uid': None} if destroy_successful else {}
                 else:
                     update_data = {'encryption_key': None, 'kmip_uid': uid}
-
                 if update_data:
                     self.middleware.call_sync('datastore.update', zfs_datastore, ds['id'], update_data)
-
         return failed
 
     @private
@@ -109,12 +119,13 @@ class KMIPService(ConfigService):
                 ['kmip_uid', '!=', None], ['id', 'in' if ids else 'nin', ids or []]
             ]
         )
+        existing_datasets = {ds['name']: ds for ds in self.middleware.call_sync('pool.dataset.query')}
         failed = []
         with self.connection() as conn:
-            for ds in datasets:
+            for ds in filter(lambda d: d['name'] in existing_datasets, datasets):
                 try:
                     if ds['name'] in self.zfs_keys and self.middleware.call_sync(
-                        'zfs.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
+                        'zfs.dataset.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
                     ):
                         key = self.zfs_keys[ds['name']]
                     else:
@@ -122,23 +133,22 @@ class KMIPService(ConfigService):
                 except Exception as e:
                     failed.append((ds['name'], f'Failed to retrieve key for {ds["name"]}: {e}'))
                 else:
-                    update_data = {'encryption_key': key, 'kmip_uid': None}
+                    update_data = {'encryption_key': self.middleware.call_sync('pwenc.encrypt', key), 'kmip_uid': None}
                     self.middleware.call_sync('datastore.update', zfs_datastore, ds['id'], update_data)
+                    self.zfs_keys.pop(ds['name'], None)
                     self.__revoke_and_destroy_key(ds, conn)
-
+        self.zfs_keys = {k: v for k, v in self.zfs_keys.items() if k in existing_datasets}
         return failed
 
     @private
     @accepts(List('ids', null=True, default=[]))
-    @job(lock=lambda args: f'sync_zfs_keys_{args[0]}')
+    @job(lock=lambda args: f'sync_zfs_keys_{args}')
     def sync_zfs_keys(self, job, ids=None):
         config = self.middleware.call_sync('kmip.config')
         if not self.test_connection_and_alert():
             return
-        sync_keys_in_db = self.middleware.call_sync('pool.dataset.sync_db_keys')
-        sync_keys_in_db.wait_sync()
         # TODO: Raise alerts for failed
-        if config['enabled']:
+        if config['enabled'] and config['manage_zfs_keys']:
             failed = self.sync_zfs_keys_from_db_to_server(ids)
         else:
             failed = self.sync_zfs_keys_from_server_to_db(ids)
@@ -148,7 +158,7 @@ class KMIPService(ConfigService):
     def sync_keys(self, job):
         if not self.test_connection_and_alert():
             return
-        self.sync_zfs_keys()
+        self.middleware.call_sync('kmip.sync_zfs_keys')
 
     @private
     def __revoke_and_destroy_key(self, ds, conn):
@@ -294,17 +304,17 @@ class KMIPService(ConfigService):
         elif not ca:
             verrors.add('kmip_update.certificate_authority', 'Please specify a valid id.')
 
-        if new.pop('validate', True) and not verrors:
+        if new['enabled'] and new.pop('validate', True) and not verrors:
             result = await self.middleware.run_in_thread(self.test_connection, new)
             if result['error']:
                 verrors.add('kmip_update.server', f'Unable to connect to KMIP server: {result["exception"]}.')
 
+        sync_error = 'KMIP sync is pending, please make sure database and KMIP server ' \
+                     'are in sync before proceeding with this operation.'
         if old['enabled'] != new['enabled'] and await self.kmip_sync_pending():
-            verrors.add(
-                'kmip_update.enabled',
-                'KMIP sync is pending, please make sure database and KMIP server '
-                'are in sync before proceeding with this operation.'
-            )
+            verrors.add('kmip_update.enabled', sync_error)
+        elif old['manage_zfs_keys'] != new['manage_zfs_keys'] and await self.zfs_keys_pending_sync():
+            verrors.add('kmip_update.manage_zfs_keys', sync_error)
 
         verrors.check()
 
@@ -313,8 +323,10 @@ class KMIPService(ConfigService):
         )
 
         await self.middleware.call('service.start', 'kmip')
-        if new['enabled']:
+        if new['enabled'] and old['enabled'] != new['enabled']:
             await self.middleware.call('kmip.initialize_keys')
+        if any(old[k] != new[k] for k in ('enabled', 'manage_zfs_keys', 'manage_sed_keys')):
+            await self.middleware.call('kmip.sync_keys')
 
         return await self.config()
 
@@ -336,7 +348,9 @@ class KMIPService(ConfigService):
     @private
     @job(lock='initialize_kmip_keys')
     def initialize_keys(self, job):
-        self.initialize_zfs_keys()
+        kmip_config = self.middleware.call_sync('kmip.config')
+        if kmip_config['manage_zfs_keys']:
+            self.initialize_zfs_keys()
 
     @private
     async def retrieve_zfs_keys(self):
@@ -348,8 +362,10 @@ async def __event_system(middleware, event_type, args):
         return
 
     if (await middleware.call('kmip.config'))['enabled']:
-        await middleware.call('kmip.initialize_zfs_keys')
+        await middleware.call('kmip.initialize_keys')
 
 
 async def setup(middleware):
     middleware.event_subscribe('system', __event_system)
+    if await middleware.call('system.ready'):
+        await middleware.call('kmip.initialize_keys')
