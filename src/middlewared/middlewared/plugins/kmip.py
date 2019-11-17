@@ -57,12 +57,17 @@ class KMIPService(ConfigService):
             raise CallError(f'Failed to connect to {config["server"]}:{config["port"]}')
 
     @private
-    def retrieve_zfs_keys_pending_sync(self, ids=None):
-        return self.middleware.call_sync(
-            'datastore.query', self.middleware.call_sync('pool.dataset.dataset_datastore'), [
-                ['kmip_sync', '=', True], ['id', 'in' if ids else 'nin', ids or []]
-            ]
-        )
+    async def zfs_keys_pending_sync(self):
+        config = await self.config()
+        for ds in await self.middleware.call(
+            'datastore.query', await self.middleware.call('pool.dataset.dataset_datastore')
+        ):
+            if config['enabled'] and ds['encryption_key']:
+                return True
+            elif not config['enabled'] and ds['kmip_uid']:
+                return True
+        else:
+            return False
 
     @private
     def sync_zfs_keys_from_db_to_server(self, ids=None):
@@ -87,11 +92,9 @@ class KMIPService(ConfigService):
                     )
                 except Exception as e:
                     failed.append((ds['name'], f'Failed to register key for {ds["name"]}: {e}'))
-                    update_data = {
-                        'kmip_sync': True, **({'kmip_uid': None} if destroy_successful else {})
-                    } if not ds['kmip_sync'] else {}
+                    update_data = {'kmip_uid': None} if destroy_successful else {}
                 else:
-                    update_data = {'encryption_key': None, 'kmip_uid': uid, 'kmip_sync': False}
+                    update_data = {'encryption_key': None, 'kmip_uid': uid}
 
                 if update_data:
                     self.middleware.call_sync('datastore.update', zfs_datastore, ds['id'], update_data)
@@ -118,14 +121,10 @@ class KMIPService(ConfigService):
                         key = self.__retrieve_secret_data(ds['kmip_uid'], conn)
                 except Exception as e:
                     failed.append((ds['name'], f'Failed to retrieve key for {ds["name"]}: {e}'))
-                    update_data = {'kmip_sync': True} if not ds['kmip_sync'] else {}
                 else:
-                    update_data = {'encryption_key': key, 'kmip_uid': None, 'kmip_sync': False}
-
-                if update_data:
+                    update_data = {'encryption_key': key, 'kmip_uid': None}
                     self.middleware.call_sync('datastore.update', zfs_datastore, ds['id'], update_data)
-                    if update_data.get('encryption_key'):
-                        self.__revoke_and_destroy_key(ds, conn)
+                    self.__revoke_and_destroy_key(ds, conn)
 
         return failed
 
@@ -244,8 +243,8 @@ class KMIPService(ConfigService):
             return {'error': False, 'exception': None}
 
     @private
-    def kmip_sync_pending(self):
-        return bool(self.retrieve_zfs_keys_pending_sync())
+    async def kmip_sync_pending(self):
+        return await self.zfs_keys_pending_sync()
 
     @private
     async def kmip_extend(self, data):
@@ -300,7 +299,7 @@ class KMIPService(ConfigService):
             if result['error']:
                 verrors.add('kmip_update.server', f'Unable to connect to KMIP server: {result["exception"]}.')
 
-        if old['enabled'] != new['enabled'] and self.kmip_sync_pending():
+        if old['enabled'] != new['enabled'] and await self.kmip_sync_pending():
             verrors.add(
                 'kmip_update.enabled',
                 'KMIP sync is pending, please make sure database and KMIP server '
