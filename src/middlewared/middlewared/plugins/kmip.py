@@ -145,7 +145,7 @@ class KMIPService(ConfigService):
     @job(lock=lambda args: f'sync_zfs_keys_{args}')
     def sync_zfs_keys(self, job, ids=None):
         config = self.middleware.call_sync('kmip.config')
-        if not self.middleware.call_sync('kmip.kmip_sync_pending') or not self.test_connection_and_alert():
+        if not self.middleware.call_sync('kmip.zfs_keys_pending_sync') or not self.test_connection_and_alert():
             return
         if config['enabled'] and config['manage_zfs_keys']:
             failed = self.sync_zfs_keys_from_db_to_server(ids)
@@ -159,7 +159,7 @@ class KMIPService(ConfigService):
     @periodic(interval=86400)
     @job(lock='sync_kmip_keys')
     def sync_keys(self, job):
-        if not self.middleware.call_sync('kmip.zfs_keys_pending_sync') or not self.test_connection_and_alert():
+        if not self.middleware.call_sync('kmip.kmip_sync_pending') or not self.test_connection_and_alert():
             return
         self.middleware.call_sync('kmip.sync_zfs_keys')
 
@@ -276,6 +276,7 @@ class KMIPService(ConfigService):
         Dict(
             'kmip_update',
             Bool('enabled'),
+            Bool('force_clear'),
             Bool('manage_sed_disks'),
             Bool('manage_zfs_keys'),
             Bool('validate'),
@@ -319,12 +320,14 @@ class KMIPService(ConfigService):
             if result['error']:
                 verrors.add('kmip_update.server', f'Unable to connect to KMIP server: {result["exception"]}.')
 
+        force_clear = new.pop('force_clear', False)
         sync_error = 'KMIP sync is pending, please make sure database and KMIP server ' \
                      'are in sync before proceeding with this operation.'
         if old['enabled'] != new['enabled'] and await self.kmip_sync_pending():
-            verrors.add('kmip_update.enabled', sync_error)
-        elif old['manage_zfs_keys'] != new['manage_zfs_keys'] and await self.zfs_keys_pending_sync():
-            verrors.add('kmip_update.manage_zfs_keys', sync_error)
+            if force_clear:
+                await self.clear_sync_pending_keys()
+            else:
+                verrors.add('kmip_update.enabled', sync_error)
 
         verrors.check()
 
