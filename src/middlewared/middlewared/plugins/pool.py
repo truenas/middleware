@@ -3029,12 +3029,13 @@ class PoolDatasetService(CRUDService):
         return pk
 
     @private
-    def encrypted_roots_query_db(self, filters=None):
+    @accepts(Ref('query-filters'))
+    def query_encrypted_roots_keys(self, filters=None):
         # We query database first - if we are able to find an encryption key, we assume it's the correct one.
         # If we are unable to find the key in database, we see if we have it in memory with the KMIP server, if not,
         # there are 2 ways this can go, we don't retrieve the key or the user can sync KMIP keys and we will have it
         # with the KMIP service again through which we can retrieve them
-        datasets = self.middleware.call_sync('datastore.query', self.dataset_store, filters or [])
+        datasets = self.middleware.call_sync('datastore.query', self.dataset_store, filters)
         zfs_keys = self.middleware.call_sync('kmip.retrieve_zfs_keys')
         keys = {}
         for ds in datasets:
@@ -3103,7 +3104,7 @@ class PoolDatasetService(CRUDService):
         # Common function to retrieve encrypted datasets
         options = options or {}
         key_loaded = options.get('key_loaded', True)
-        db_results = self.encrypted_roots_query_db([['OR', [['name', '=', name], ['name', '^', f'{name}/']]]])
+        db_results = self.query_encrypted_roots_keys([['OR', [['name', '=', name], ['name', '^', f'{name}/']]]])
 
         def normalize(ds):
             passphrase = ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.PASSPHRASE
@@ -3127,7 +3128,7 @@ class PoolDatasetService(CRUDService):
     @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
     def sync_db_keys(self, job, name=None):
         filters = [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else []
-        db_datasets = self.encrypted_roots_query_db(filters)
+        db_datasets = self.query_encrypted_roots_keys(filters)
         encrypted_roots = {d['name']: d for d in self.query(filters) if d['name'] == d['encryption_root']}
         to_remove = []
         check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
@@ -3162,7 +3163,7 @@ class PoolDatasetService(CRUDService):
         sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', id)
         sync_job.wait_sync()
 
-        datasets = self.encrypted_roots_query_db([['OR', [['name', '=', id], ['name', '^', f'{id}/']]]])
+        datasets = self.query_encrypted_roots_keys([['OR', [['name', '=', id], ['name', '^', f'{id}/']]]])
         temp_path = None
         try:
             with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
@@ -3261,7 +3262,7 @@ class PoolDatasetService(CRUDService):
             elif dataset['encryption_root'] != id:
                 verrors.add('id', 'Only encryption roots can be unlocked')
             else:
-                if not bool(self.encrypted_roots_query_db([['name', '=', id]])) and id not in keys_supplied:
+                if not bool(self.query_encrypted_roots_keys([['name', '=', id]])) and id not in keys_supplied:
                     verrors.add('unlock_options.datasets', f'Please specify key for {id}')
 
         verrors.check()
