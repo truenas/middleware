@@ -21,7 +21,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run, Popen
-from middlewared.plugins.directoryservices import DSStatus
+from middlewared.plugins.directoryservices import DSStatus, SSL
 from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
 
 
@@ -40,12 +40,6 @@ class SRV(enum.Enum):
     KPASSWD = '_kpasswd._tcp.'
     LDAP = '_ldap._tcp.'
     PDC = '_ldap._tcp.pdc._msdcs.'
-
-
-class SSL(enum.Enum):
-    NOSSL = 'OFF'
-    USESSL = 'ON'
-    USESTARTTLS = 'START_TLS'
 
 
 class ActiveDirectory_DNS(object):
@@ -601,6 +595,34 @@ class ActiveDirectoryService(ConfigService):
                 ad[key] = ad[key].lower()
 
         return ad
+
+    @accepts()
+    async def idmap_backend_choices(self):
+        """
+        Returns list of available idmap backends.
+        """
+        return await self.middleware.call('directoryservices.idmap_backend_choices', 'ACTIVEDIRECTORY')
+
+    @accepts()
+    async def nss_info_choices(self):
+        """
+        Returns list of available LDAP schema choices.
+        """
+        return await self.middleware.call('directoryservices.nss_info_choices', 'ACTIVEDIRECTORY')
+
+    @accepts()
+    async def ssl_choices(self):
+        """
+        Returns list of SSL choices.
+        """
+        return await self.middleware.call('directoryservices.ssl_choices', 'ACTIVEDIRECTORY')
+
+    @accepts()
+    async def sasl_wrapping_choices(self):
+        """
+        Returns list of sasl wrapping choices.
+        """
+        return await self.middleware.call('directoryservices.sasl_wrapping_choices', 'ACTIVEDIRECTORY')
 
     @private
     async def update_netbios_data(self, old, new):
