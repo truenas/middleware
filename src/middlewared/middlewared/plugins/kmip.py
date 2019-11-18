@@ -253,6 +253,20 @@ class KMIPService(ConfigService):
         return await self.zfs_keys_pending_sync()
 
     @private
+    async def clear_sync_pending_zfs_keys(self):
+        config = await self.config()
+        zfs_datastore = await self.middleware.call('pool.dataset.dataset_datastore')
+        clear_ids = [
+            ds['id'] for ds in await self.middleware.call('datastore.query', zfs_datastore)
+            if any(not config[k] for k in ('enabled', 'manage_zfs_keys')) and ds['kmip_uid']
+        ]
+        await self.middleware.call('datastore.delete', zfs_datastore, [['id', 'in', clear_ids]])
+
+    @accepts()
+    async def clear_sync_pending_keys(self):
+        await self.clear_sync_pending_zfs_keys()
+
+    @private
     async def kmip_extend(self, data):
         for k in filter(lambda v: data[v], ('certificate', 'certificate_authority')):
             data[k] = data[k]['id']
