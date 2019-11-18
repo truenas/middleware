@@ -39,6 +39,7 @@ class KMIPService(ConfigService):
         self.zfs_keys = {}
 
     @contextlib.contextmanager
+    @private
     def connection(self, data=None):
         config = self.middleware.call_sync('kmip.config')
         config.update(data or {})
@@ -62,12 +63,11 @@ class KMIPService(ConfigService):
         for ds in await self.middleware.call(
             'datastore.query', await self.middleware.call('pool.dataset.dataset_datastore')
         ):
-            if config['enabled'] and ds['encryption_key']:
+            if config['enabled'] and config['manage_zfs_keys'] and ds['encryption_key']:
                 return True
-            elif not config['enabled'] and ds['kmip_uid']:
+            elif any(not config[k] for k in ('enabled', 'manage_zfs_keys')) and ds['kmip_uid']:
                 return True
-        else:
-            return False
+        return False
 
     @private
     def sync_zfs_keys_from_db_to_server(self, ids=None):
@@ -102,8 +102,8 @@ class KMIPService(ConfigService):
                     destroy_successful = self.__revoke_and_destroy_key(ds, conn)
                 try:
                     uid = self.__register_secret_data(self.zfs_keys[ds['name']], conn)
-                except Exception as e:
-                    failed.append((ds['name'], f'Failed to register key for {ds["name"]}: {e}'))
+                except Exception:
+                    failed.append(ds['name'])
                     update_data = {'kmip_uid': None} if destroy_successful else {}
                 else:
                     update_data = {'encryption_key': None, 'kmip_uid': uid}
@@ -130,8 +130,8 @@ class KMIPService(ConfigService):
                         key = self.zfs_keys[ds['name']]
                     else:
                         key = self.__retrieve_secret_data(ds['kmip_uid'], conn)
-                except Exception as e:
-                    failed.append((ds['name'], f'Failed to retrieve key for {ds["name"]}: {e}'))
+                except Exception:
+                    failed.append(ds['name'])
                 else:
                     update_data = {'encryption_key': self.middleware.call_sync('pwenc.encrypt', key), 'kmip_uid': None}
                     self.middleware.call_sync('datastore.update', zfs_datastore, ds['id'], update_data)
@@ -145,18 +145,21 @@ class KMIPService(ConfigService):
     @job(lock=lambda args: f'sync_zfs_keys_{args}')
     def sync_zfs_keys(self, job, ids=None):
         config = self.middleware.call_sync('kmip.config')
-        if not self.test_connection_and_alert():
+        if not self.middleware.call_sync('kmip.kmip_sync_pending') or not self.test_connection_and_alert():
             return
-        # TODO: Raise alerts for failed
         if config['enabled'] and config['manage_zfs_keys']:
             failed = self.sync_zfs_keys_from_db_to_server(ids)
         else:
             failed = self.sync_zfs_keys_from_server_to_db(ids)
+        if failed:
+            self.middleware.call_sync(
+                'alert.oneshot_create', ' KMIPZFSDatasetsSyncFailure', {'datasets': ','.join(failed)}
+            )
 
     @periodic(interval=86400)
     @job(lock='sync_kmip_keys')
     def sync_keys(self, job):
-        if not self.test_connection_and_alert():
+        if not self.middleware.call_sync('kmip.zfs_keys_pending_sync') or not self.test_connection_and_alert():
             return
         self.middleware.call_sync('kmip.sync_zfs_keys')
 
@@ -176,16 +179,16 @@ class KMIPService(ConfigService):
 
     @private
     def test_connection_and_alert(self):
-        if self.test_connection()['error']:
-            # TODO: Raise alert for connection failure
+        result = self.test_connection()
+        if result['error']:
+            config = self.middleware.call_sync('kmip.config')
+            self.middleware.call_sync(
+                'alert.oneshot_create', 'KMIPConnectionFailed',
+                {'server': config['server'], 'error': result['exception']}
+            )
             return False
         else:
             return True
-
-    @private
-    def register_secret_data(self, key, conn_data=None):
-        with self.connection(conn_data) as conn:
-            return self.__register_secret_data(key, conn)
 
     def __register_secret_data(self, key, conn):
         secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD)
@@ -221,13 +224,6 @@ class KMIPService(ConfigService):
 
     @private
     @accepts(Str('uid'), Dict('conn_data', additional_attrs=True))
-    def revoke_and_destroy_key(self, uid, conn_data=None):
-        with self.connection(conn_data) as conn:
-            self.revoke_key(uid, conn)
-            self.destroy_key(uid, conn)
-
-    @private
-    @accepts(Str('uid'), Dict('conn_data', additional_attrs=True))
     def retrieve_secret_data(self, uid, conn_data=None):
         with self.connection(conn_data) as conn:
             return self.__retrieve_secret_data(uid, conn)
@@ -245,7 +241,7 @@ class KMIPService(ConfigService):
     @private
     def test_connection(self, data=None):
         try:
-            with self.connection(data) as conn:
+            with self.connection(data):
                 pass
         except Exception as e:
             return {'error': True, 'exception': str(e)}
@@ -304,7 +300,7 @@ class KMIPService(ConfigService):
         elif not ca:
             verrors.add('kmip_update.certificate_authority', 'Please specify a valid id.')
 
-        if new['enabled'] and new.pop('validate', True) and not verrors:
+        if new.pop('validate', True) and new['enabled'] and not verrors:
             result = await self.middleware.run_in_thread(self.test_connection, new)
             if result['error']:
                 verrors.add('kmip_update.server', f'Unable to connect to KMIP server: {result["exception"]}.')
