@@ -97,7 +97,7 @@ class RsyncModService(CRUDService):
         for entity in ('user', 'group'):
             value = data.get(entity)
             try:
-                await self.middleware.call(f'{entity}.get_{entity}_object', value)
+                await self.middleware.call(f'{entity}.get_{entity}_obj', {f'{entity}name': value})
             except Exception:
                 verrors.add(
                     f'{schema_name}.{entity}',
