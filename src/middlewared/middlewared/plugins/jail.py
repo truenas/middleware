@@ -989,6 +989,12 @@ class JailService(CRUDService):
 
         return True
 
+    @accepts(Dict('props', additional_attrs=True))
+    def update_defaults(self, props):
+        iocage = ioc.IOCage(jail='default', reset_cache=True)
+        for prop in props:
+            iocage.set(f'{prop}={props[prop]}')
+
     @accepts(Str('jail'))
     @job(lock=lambda args: f'jail_start:{args[0]}')
     def start(self, job, jail):
