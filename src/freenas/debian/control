@@ -1,0 +1,15 @@
+Source: truenas-files
+Section: admin
+Priority: optional
+Maintainer: William Grzybowski <william@grzy.org>
+Build-Depends: debhelper-compat (= 12)
+Standards-Version: 4.4.0
+Homepage: http://www.truenas.com
+
+Package: truenas-files
+Architecture: any
+Depends: python3-all, ${misc:Depends}, ${shlibs:Depends}
+Description: Extra files for TrueNAS
+ This package is supposed to hold all the extra files required
+ to build TrueNAS, including utilities, extra plugins and whatever else
+ the software can relies on.

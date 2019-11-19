@@ -1,0 +1,11 @@
+dir-in-usr-local
+file-in-usr-local
+shell-script-fails-syntax-check
+wrong-path-for-interpreter
+python-script-but-no-python-dep
+interpreter-in-usr-local
+statically-linked-binary
+unstripped-binary-or-object
+embedded-library
+missing-dependency-on-libc
+dir-or-file-in-home
