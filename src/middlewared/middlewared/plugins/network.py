@@ -1710,7 +1710,16 @@ class InterfaceService(CRUDService):
         except Exception:
             self.logger.info('Failed to sync routes', exc_info=True)
 
+        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
+            await self.nic_capabilities_check()
+
         await self.middleware.call_hook('interface.post_sync')
+
+    @private
+    async def nic_capabilities_check(self):
+        nics = await self.jail_checks()
+        for nic in nics:
+            await self.disable_capabilities(nic, nics[nic])
 
     @private
     async def jail_checks(self, jails=None):
