@@ -256,7 +256,8 @@ class PluginService(CRUDService):
 
         self.middleware.call_sync(
             'jail.start_failover_checks', {
-                'id': jail_name, 'host_hostuuid': jail_name, **IOCPlugin.DEFAULT_PROPS, **{
+                'id': jail_name, 'host_hostuuid': jail_name,
+                **self.middleware.call_sync('jail.default_configuration'), **IOCPlugin.DEFAULT_PROPS, **{
                     v.split('=')[0]: v.split('=')[-1] for v in data['props']
                 }
             }
@@ -704,7 +705,7 @@ class JailService(CRUDService):
                 raise verrors
 
             self.start_failover_checks({
-                'id': uuid, 'host_hostuuid': uuid, 'vnet': 0, 'nat': 0, **{
+                'id': uuid, 'host_hostuuid': uuid, **self.middleware.call_sync('jail.default_configuration'), **{
                     v.split('=')[0]: v.split('=')[-1] for v in options['props']
                 }
             })
@@ -1050,11 +1051,16 @@ class JailService(CRUDService):
 
     @private
     def start_failover_checks(self, jail_config):
+        jail_config = {
+            k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
+        }
+        if jail_config.get('dhcp'):
+            jail_config['vnet'] = 1
         if (
             (jail_config['vnet'] or jail_config['nat']) and not self.middleware.call_sync('system.is_freenas')
             and self.middleware.call_sync('failover.licensed')
         ):
-            failover_enabled = not self.middleware.call_sync('failover.jail_config')['disabled']
+            failover_enabled = not self.middleware.call_sync('failover.config')['disabled']
             to_disable_nics = self.middleware.call_sync('interface.jail_checks', [jail_config])
             if to_disable_nics:
                 if failover_enabled:
@@ -1071,7 +1077,6 @@ class JailService(CRUDService):
         status, _ = IOCList.list_get_jid(uuid)
 
         if not status:
-            self.start_failover_checks(self.middleware.call_sync('jail._get_instance', jail))
             try:
                 iocage.start(used_ports=[6000] + list(range(1025)))
             except Exception as e:
