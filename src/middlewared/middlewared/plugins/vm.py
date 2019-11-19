@@ -1205,6 +1205,11 @@ class VMService(CRUDService):
 
         return vnc_web
 
+    @private
+    async def start_on_boot(self):
+        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
+            await self.middleware.call('vm.start', vm['id'])
+
 
 class VMDeviceService(CRUDService):
 
@@ -1264,7 +1269,7 @@ class VMDeviceService(CRUDService):
             nics = await self.middleware.call('interface.vm_checks', [vm_device])
             if nics:
                 if failover_enabled:
-                    raise CallError('Failover must be disabled before attempting to create VM NIC device')
+                    raise CallError('Failover must be disabled before attempting to create/update VM NIC device')
                 else:
                     for nic in nics:
                         await self.middleware.call('interface.disable_capabilities', nic, nics[nic])
@@ -1631,8 +1636,10 @@ async def __event_system_ready(middleware, event_type, args):
     global ZFS_ARC_MAX_INITIAL
     ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc_max')[0].value
 
-    for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
-        await middleware.call('vm.start', vm['id'])
+    if not await middleware.call('system.is_freenas') and await middleware.call('failover.licensed'):
+        return
+
+    await middleware.call('vm.start_on_boot')
 
 
 class VMFSAttachmentDelegate(FSAttachmentDelegate):
