@@ -1042,14 +1042,6 @@ class JailService(CRUDService):
         return self.retrieve_default_iface() if iface == 'none' else iface
 
     @private
-    def disable_iface_capabilities_for_vnet(self):
-        return ['TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6']
-
-    @private
-    def disable_iface_capabilities_for_nat(self):
-        return ['TSO4', 'TSO6', 'VLAN_HWTSO']
-
-    @private
     def start_failover_checks(self, jail_config):
         jail_config = {
             k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
@@ -1064,7 +1056,7 @@ class JailService(CRUDService):
             to_disable_nics = self.middleware.call_sync('interface.jail_checks', [jail_config])
             if to_disable_nics:
                 if failover_enabled:
-                    raise CallError(f'Failover must be disabled before starting {jail_config["id"]}')
+                    raise CallError(f'Failover must be disabled before creating/updating {jail_config["id"]}')
                 else:
                     for nic in to_disable_nics:
                         self.middleware.call_sync('interface.disable_capabilities', nic, to_disable_nics[nic])
@@ -1418,10 +1410,12 @@ class JailService(CRUDService):
         if not self.iocage_set_up():
             return
 
+        self.check_dataset_existence()
         if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
             self.update_defaults({'nat_backed': 'ipfw'})
+            # We start Jail/VM(s) during carp state change hook
+            return
 
-        self.check_dataset_existence()
         self.logger.debug('Starting jails on boot: PENDING')
         ioc.IOCage(rc=True, reset_cache=True).start(ignore_exception=True)
         self.logger.debug('Starting jails on boot: SUCCESS')

@@ -1718,15 +1718,21 @@ class InterfaceService(CRUDService):
     @private
     async def nic_capabilities_check(self):
         nics = await self.jail_checks()
-        nics.update(await self.vm_checks())
+        for nic, to_disable in (await self.vm_checks()).items():
+            if nic in nics:
+                old = set(nics[nic])
+                old.update(to_disable)
+                nics[nic] = list(old)
+            else:
+                nics[nic] = to_disable
         for nic in nics:
             await self.disable_capabilities(nic, nics[nic])
 
     @private
     async def vm_checks(self, vm_devices=None):
-        vm_nics = defaultdict(set)
+        vm_nics = defaultdict(list)
         system_ifaces = {i['name']: i for i in await self.middleware.run_in_thread(self.query)}
-        conflicts = await self.middleware.call('jail.disable_iface_capabilities_for_vnet')
+        conflicts = {'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'}
         for vm_device in await self.middleware.call(
             'vm.device.query', [
                 ['dtype', '=', 'NIC'], [
@@ -1734,10 +1740,10 @@ class InterfaceService(CRUDService):
                 ]
             ]
         ) if not vm_devices else vm_devices:
-            nic = vm_device['attributes']['nic_attach'] or netif.RoutingTable().default_route_ipv4.interface
-            if nic in system_ifaces and set(system_ifaces[nic]['state']['capabilities']) & set(conflicts):
-                vm_nics[nic].update(conflicts)
-        return {k: list(v) for k, v in vm_nics.items()}
+            nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
+            if nic in system_ifaces and set(system_ifaces[nic]['state']['capabilities']) & conflicts:
+                vm_nics[nic] = list(conflicts)
+        return vm_nics
 
     @private
     async def jail_checks(self, jails=None):
@@ -1750,11 +1756,11 @@ class InterfaceService(CRUDService):
                 f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface',
                 jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
             )
-            if nic and nic in system_ifaces:
-                conflicts = await self.middleware.call(
-                    f'jail.disable_iface_capabilities_for_{"nat" if jail["nat"] else "vnet"}'
-                )
-                needs_update = set(system_ifaces[nic]['state']['capabilities']) & set(conflicts)
+            if nic in system_ifaces:
+                conflicts = {'TSO4', 'TSO6', 'VLAN_HWTSO'} if jail['nat'] else {
+                    'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'
+                }
+                needs_update = set(system_ifaces[nic]['state']['capabilities']) & conflicts
                 if not jail['nat']:
                     bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
                     if not bridges or not bridges[0]:
