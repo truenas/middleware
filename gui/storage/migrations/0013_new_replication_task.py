@@ -11,7 +11,11 @@ import freenasUI.freeadmin.models.fields
 
 
 def process_ssh_keyscan_output(output):
-    return [" ".join(line.split()[1:]) for line in output.split("\n") if line and not line.startswith("# ")][-1]
+    keys = [" ".join(line.split()[1:]) for line in output.split("\n") if line and not line.startswith("# ")]
+    if keys:
+        return keys[-1]
+    else:
+        return ""
 
 
 def is_child(child: str, parent: str):
