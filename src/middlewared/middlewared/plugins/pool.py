@@ -2946,7 +2946,8 @@ class PoolDatasetService(CRUDService):
         ),
     )
     @item_method
-    async def permission(self, id, data):
+    @job(lock="dataset_permission_change")
+    async def permission(self, job, id, data):
         """
         Set permissions for a dataset `id`. Permissions may be specified as
         either a posix `mode` or an nfsv4 `acl`. Setting mode will fail if the
@@ -2979,6 +2980,7 @@ class PoolDatasetService(CRUDService):
         mode = data.get('mode', None)
         options = data.get('options', {})
         acl = data.get('acl', [])
+        pjob = None
 
         verrors = ValidationErrors()
         if user:
@@ -3015,7 +3017,7 @@ class PoolDatasetService(CRUDService):
             specified in `data`. Perform a simple chown.
             """
             options.pop('stripacl', None)
-            await self.middleware.call('filesystem.chown', {
+            pjob = await self.middleware.call('filesystem.chown', {
                 'path': path,
                 'uid': uid,
                 'gid': gid,
@@ -3023,7 +3025,7 @@ class PoolDatasetService(CRUDService):
             })
 
         elif acl:
-            await self.middleware.call('filesystem.setacl', {
+            pjob = await self.middleware.call('filesystem.setacl', {
                 'path': path,
                 'dacl': acl,
                 'uid': uid,
@@ -3042,14 +3044,24 @@ class PoolDatasetService(CRUDService):
             If `mode` is set, then the ACL is removed from the file
             and the new `mode` is applied.
             """
-            await self.middleware.call('filesystem.setperm', {
+            pjob = await self.middleware.call('filesystem.setperm', {
                 'path': path,
                 'mode': mode,
                 'uid': uid,
                 'gid': gid,
                 'options': options
             })
+        else:
+            """
+            This should never occur, but fail safely to avoid undefined
+            or unintended behavior.
+            """
+            raise CallError(f"Unexpected parameter combination: {data}",
+                            errno.EINVAL)
 
+        await pjob.wait()
+        if pjob.error:
+            raise CallError(pjob.error)
         return data
 
     @accepts(Str('pool'))
