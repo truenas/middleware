@@ -111,6 +111,7 @@ class DatastoreService(Service):
             Bool('count', default=False),
             Bool('get', default=False),
             Int('limit', default=0),
+            Int('offset', default=0),
             default=None,
             null=True,
             register=True,
@@ -180,6 +181,12 @@ class DatastoreService(Service):
         if options.get('count') is True:
             return qs.count()
 
+        if options.get('offset'):
+            qs = qs[options['offset']:]
+
+        if options.get('limit'):
+            qs = qs[:options['limit']]
+
         result = []
         for i in self.__queryset_serialize(
             qs, options.get('extend'), options.get('extend_context'), options.get('prefix'), options.get('select'),
@@ -191,8 +198,6 @@ class DatastoreService(Service):
                 return result[0]
             except IndexError:
                 raise MatchNotFound()
-        if options.get('limit'):
-            return result[:options['limit']]
 
         return result
 
