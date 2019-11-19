@@ -1730,14 +1730,11 @@ class InterfaceService(CRUDService):
         for vm_device in await self.middleware.call(
             'vm.device.query', [
                 ['dtype', '=', 'NIC'], [
-                    'OR', [['attributes.attach_iface', '=', None], ['attributes.attach_iface', '!^', 'bridge']]
+                    'OR', [['attributes.nic_attach', '=', None], ['attributes.nic_attach', '!^', 'bridge']]
                 ]
             ]
         ) if not vm_devices else vm_devices:
-            if vm_device['attributes']['attach_iface']:
-                nic = vm_device['attributes']['attach_iface']
-            else:
-                nic = netif.RoutingTable().default_route_ipv4.interface
+            nic = vm_device['attributes']['nic_attach'] or netif.RoutingTable().default_route_ipv4.interface
             if nic in system_ifaces and set(system_ifaces[nic]['state']['capabilities']) & set(conflicts):
                 vm_nics[nic].update(conflicts)
         return vm_nics
