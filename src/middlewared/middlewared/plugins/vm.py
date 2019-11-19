@@ -1258,6 +1258,18 @@ class VMDeviceService(CRUDService):
         datastore_extend = 'vm.device.extend_device'
 
     @private
+    async def nic_check(self, vm_device):
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+            failover_enabled = not await self.middleware.call('failover.jail_config')['disabled']
+            nics = await self.middleware.call('interface.vm_checks', [vm_device])
+            if nics:
+                if failover_enabled:
+                    raise CallError('Failover must be disabled before attempting to create VM NIC device')
+                else:
+                    for nic in nics:
+                        await self.middleware.call('interface.disable_capabilities', nic, nics[nic])
+
+    @private
     async def create_resource(self, device, old=None):
         return (
             (device['dtype'] == 'DISK' and device['attributes'].get('create_zvol')) or (
@@ -1584,6 +1596,7 @@ class VMDeviceService(CRUDService):
             elif not await self.disk_uniqueness_integrity_check(device, vm_instance):
                 verrors.add('attributes.path', f'{vm_instance["name"]} has "{path}" already configured')
         elif device.get('dtype') == 'NIC':
+            await self.nic_check(device)
             nic = device['attributes'].get('nic_attach')
             if nic:
                 nic_choices = await self.middleware.call('vm.device.nic_attach_choices')
