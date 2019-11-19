@@ -1713,6 +1713,47 @@ class InterfaceService(CRUDService):
         await self.middleware.call_hook('interface.post_sync')
 
     @private
+    async def jail_checks(self, jails=None):
+        jail_nics = defaultdict(set)
+        configured_nics = self.bridge_members()
+        system_ifaces = {i['name']: i for i in await self.middleware.run_in_thread(self.query)}
+        for jail in await self.middleware.call(
+            'jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]
+        ) if not jails else jails:
+            nic = await self.middleware.call(
+                f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface', jail['vnet_default_interface']
+            )
+            if nic and nic in system_ifaces:
+                if not jail['nat']:
+                    bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
+                    if not bridges or not bridges[0]:
+                        continue
+                    if nic in configured_nics and bridges[0] == configured_nics[nic]:
+                        # It's already configured
+                        continue
+                conflicts = await self.middleware.call(
+                    f'jail.disable_iface_capabilities_for_{"nat" if jail["nat"] else "vnet"}'
+                )
+                if set(system_ifaces[nic]['state']['capabilities']) & set(conflicts):
+                    jail_nics[nic].update(conflicts)
+        return jail_nics
+
+    @private
+    @accepts(Str('iface'), List('capabilities'))
+    async def disable_capabilities(self, iface, capabilities):
+        await self._get_instance(iface)
+        iface = netif.get_interface(iface)
+        iface.capabilities = {c for c in iface.capabilities if c.name not in capabilities}
+
+    @private
+    def bridge_members(self):
+        members = {}
+        for iface in filter(lambda i: isinstance(i, netif.BridgeInterface), netif.list_interfaces().values()):
+            for member in iface.members:
+                members[member] = iface.name
+        return members
+
+    @private
     def alias_to_addr(self, alias):
         addr = netif.InterfaceAddress()
         ip = ipaddress.ip_interface('{}/{}'.format(alias['address'], alias['netmask']))
