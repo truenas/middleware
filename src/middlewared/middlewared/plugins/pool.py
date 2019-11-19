@@ -3046,10 +3046,6 @@ class PoolDatasetService(CRUDService):
         return keys
 
     @private
-    def dataset_datastore(self):
-        return self.dataset_store
-
-    @private
     def validate_encryption_data(self, job, verrors, encryption_dict, schema):
         opts = {}
         if not encryption_dict['enabled']:
