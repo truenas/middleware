@@ -254,6 +254,14 @@ class PluginService(CRUDService):
 
         verrors.check()
 
+        self.middleware.call_sync(
+            'jail.start_failover_checks', {
+                'id': jail_name, 'host_hostuuid': jail_name, **IOCPlugin.DEFAULT_PROPS, **{
+                    v.split('=')[0]: v.split('=')[-1] for v in data['props']
+                }
+            }
+        )
+
         job.set_progress(20, 'Initial validation complete')
 
         def progress_callback(content, exception):
@@ -995,6 +1003,58 @@ class JailService(CRUDService):
         for prop in props:
             iocage.set(f'{prop}={props[prop]}')
 
+    @private
+    def retrieve_default_iface(self):
+        default_ifaces = ioc_common.get_host_gateways()
+        if default_ifaces['ipv4']['interface']:
+            return default_ifaces['ipv4']['interface']
+        elif default_ifaces['ipv6']['interface']:
+            return default_ifaces['ipv6']['interface']
+
+    @private
+    def retrieve_vnet_interface(self, iface):
+        if iface == 'auto':
+            return self.retrieve_default_iface()
+        elif iface != 'none':
+            return iface
+        else:
+            return None
+
+    @private
+    def retrieve_vnet_bridge(self, interfaces):
+        bridges = []
+        for interface in interfaces.split(','):
+            if interface.split(':')[-1] not in bridges:
+                bridges.append(interface.split(':')[-1])
+        return bridges
+
+    @private
+    def retrieve_nat_interface(self, iface):
+        return self.retrieve_default_iface() if iface == 'none' else iface
+
+    @private
+    def disable_iface_capabilities_for_vnet(self):
+        return ['TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6']
+
+    @private
+    def disable_iface_capabilities_for_nat(self):
+        return ['TSO4', 'TSO6', 'VLAN_HWTSO']
+
+    @private
+    def start_failover_checks(self, jail_config):
+        if (
+            (jail_config['vnet'] or jail_config['nat']) and not self.middleware.call_sync('system.is_freenas')
+            and self.middleware.call_sync('failover.licensed')
+        ):
+            failover_enabled = not self.middleware.call_sync('failover.jail_config')['disabled']
+            to_disable_nics = self.middleware.call_sync('interface.jail_checks', [jail_config])
+            if to_disable_nics:
+                if failover_enabled:
+                    raise CallError(f'Failover must be disabled before starting {jail_config["id"]}')
+                else:
+                    for nic in to_disable_nics:
+                        self.middleware.call_sync('interface.disable_capabilities', nic, to_disable_nics[nic])
+
     @accepts(Str('jail'))
     @job(lock=lambda args: f'jail_start:{args[0]}')
     def start(self, job, jail):
@@ -1003,6 +1063,7 @@ class JailService(CRUDService):
         status, _ = IOCList.list_get_jid(uuid)
 
         if not status:
+            self.start_failover_checks(self.middleware.call_sync('jail._get_instance', jail))
             try:
                 iocage.start(used_ports=[6000] + list(range(1025)))
             except Exception as e:
@@ -1343,6 +1404,9 @@ class JailService(CRUDService):
     def start_on_boot(self):
         if not self.iocage_set_up():
             return
+
+        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
+            self.update_defaults({'nat_backed': 'ipfw'})
 
         self.check_dataset_existence()
         self.logger.debug('Starting jails on boot: PENDING')
