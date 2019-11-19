@@ -703,6 +703,12 @@ class JailService(CRUDService):
             if verrors:
                 raise verrors
 
+            self.start_failover_checks({
+                'id': uuid, 'host_hostuuid': uuid, 'vnet': 0, 'nat': 0, **{
+                    v.split('=')[0]: v.split('=')[-1] for v in options['props']
+                }
+            })
+
             job.set_progress(20, 'Initial validation complete')
 
         iocage = ioc.IOCage(skip_jails=True)
@@ -823,6 +829,8 @@ class JailService(CRUDService):
 
         if verrors:
             raise verrors
+
+        self.start_failover_checks({**jail, **options})
 
         for prop, val in options.items():
             p = f"{prop}={val}"
