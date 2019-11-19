@@ -1737,18 +1737,18 @@ class InterfaceService(CRUDService):
             nic = vm_device['attributes']['nic_attach'] or netif.RoutingTable().default_route_ipv4.interface
             if nic in system_ifaces and set(system_ifaces[nic]['state']['capabilities']) & set(conflicts):
                 vm_nics[nic].update(conflicts)
-        return vm_nics
+        return {k: list(v) for k, v in vm_nics.items()}
 
     @private
     async def jail_checks(self, jails=None):
         jail_nics = defaultdict(set)
-        configured_nics = self.bridge_members()
         system_ifaces = {i['name']: i for i in await self.middleware.run_in_thread(self.query)}
         for jail in await self.middleware.call(
             'jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]
         ) if not jails else jails:
             nic = await self.middleware.call(
-                f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface', jail['vnet_default_interface']
+                f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface',
+                jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
             )
             if nic and nic in system_ifaces:
                 conflicts = await self.middleware.call(
@@ -1759,12 +1759,9 @@ class InterfaceService(CRUDService):
                     bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
                     if not bridges or not bridges[0]:
                         continue
-                    if nic in configured_nics and bridges[0] == configured_nics[nic] and not needs_update:
-                        # It's already configured
-                        continue
                 if needs_update:
                     jail_nics[nic].update(conflicts)
-        return jail_nics
+        return {k: list(v) for k, v in jail_nics.items()}
 
     @private
     @accepts(Str('iface'), List('capabilities'))
@@ -1772,14 +1769,6 @@ class InterfaceService(CRUDService):
         await self._get_instance(iface)
         iface = netif.get_interface(iface)
         iface.capabilities = {c for c in iface.capabilities if c.name not in capabilities}
-
-    @private
-    def bridge_members(self):
-        members = {}
-        for iface in filter(lambda i: isinstance(i, netif.BridgeInterface), netif.list_interfaces().values()):
-            for member in iface.members:
-                members[member] = iface.name
-        return members
 
     @private
     def alias_to_addr(self, alias):
