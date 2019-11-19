@@ -508,11 +508,11 @@ class bsdGroupsForm(ModelForm):
                     self.initial['bsdgrp_gid'] = c.call('group.get_next_gid')
             except Exception:
                 pass
-            self.fields['allow'] = forms.BooleanField(
-                label=_("Allow repeated GIDs"),
-                initial=False,
-                required=False,
-            )
+        self.fields['allow'] = forms.BooleanField(
+            label=_("Allow repeated GIDs"),
+            initial=False,
+            required=False,
+        )
 
     def clean_bsdgrp_group(self):
         bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
@@ -539,10 +539,10 @@ class bsdGroupsForm(ModelForm):
 
         if self.instance.id is None:
             args = ['group.create']
-            data['allow_duplicate_gid'] = data.pop('allow', False)
         else:
-            data.pop('allow', None)
             args = ['group.update', self.instance.id]
+
+        data['allow_duplicate_gid'] = data.pop('allow', False)
 
         with client as c:
             pk = c.call(*args, data)
