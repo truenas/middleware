@@ -1049,8 +1049,9 @@ class JailService(CRUDService):
         if jail_config.get('dhcp'):
             jail_config['vnet'] = 1
         if (
-            (jail_config['vnet'] or jail_config['nat']) and not self.middleware.call_sync('system.is_freenas')
-            and self.middleware.call_sync('failover.licensed')
+            not self.middleware.call_sync('system.is_freenas') and (
+                jail_config['vnet'] or jail_config['nat']
+            ) and self.middleware.call_sync('failover.licensed')
         ):
             failover_enabled = not self.middleware.call_sync('failover.config')['disabled']
             to_disable_nics = self.middleware.call_sync('interface.jail_checks', [jail_config])
@@ -1060,6 +1061,9 @@ class JailService(CRUDService):
                 else:
                     for nic in to_disable_nics:
                         self.middleware.call_sync('interface.disable_capabilities', nic, to_disable_nics[nic])
+                        self.middleware.call_sync(
+                            'failover.call_remote', 'interface.disable_capabilities', [nic, to_disable_nics[nic]]
+                        )
 
     @accepts(Str('jail'))
     @job(lock=lambda args: f'jail_start:{args[0]}')

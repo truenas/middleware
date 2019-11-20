@@ -1273,6 +1273,9 @@ class VMDeviceService(CRUDService):
                 else:
                     for nic in nics:
                         await self.middleware.call('interface.disable_capabilities', nic, nics[nic])
+                        await self.middleware.call(
+                            'failover.call_remote', 'interface.disable_capabilities', [nic, nics[nic]]
+                        )
 
     @private
     async def create_resource(self, device, old=None):
