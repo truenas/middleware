@@ -197,7 +197,7 @@ class LDAPQuery(object):
 
                     ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
-                if SSL(self.ldap['ssl']) == SSL.USETLS:
+                if SSL(self.ldap['ssl']) == SSL.USESTARTTLS:
                     try:
                         self._handle.start_tls_s()
 
