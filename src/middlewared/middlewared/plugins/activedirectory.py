@@ -970,6 +970,18 @@ class ActiveDirectoryService(ConfigService):
             await self._net_ads_join()
             await self._register_virthostname(ad, smb, smb_ha_mode)
             if smb_ha_mode != 'LEGACY':
+                """
+                Manipulating the SPN entries must be done with elevated privileges. Add NFS service
+                principals while we have these on-hand. Once added, force a refresh of the system
+                keytab so that the NFS principal will be available for gssd.
+                """
+                must_update_trust_pw = await self._net_ads_setspn([
+                    f'nfs/{ad["netbiosname"].upper()}.{ad["domainname"]}',
+                    f'nfs/{ad["netbiosname"].upper()}'
+                ])
+                if must_update_trust_pw:
+                    await self.change_trust_account_pw()
+
                 kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
                 if kt_id:
                     self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
@@ -982,6 +994,7 @@ class ActiveDirectoryService(ConfigService):
                     ad = await self.config()
 
             ret = neterr.JOINED
+
             await self.middleware.call('idmap.get_or_create_idmap_by_domain', 'DS_TYPE_ACTIVEDIRECTORY')
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.middleware.call('activedirectory.set_ntp_servers')
@@ -1222,6 +1235,53 @@ class ActiveDirectoryService(ConfigService):
                 return neterr.FAULT
 
         return neterr.JOINED
+
+    @private
+    async def _net_ads_setspn(self, spn_list):
+        for spn in spn_list:
+            netads = await run([
+                SMBCmd.NET.value, '-k', 'ads', 'setspn',
+                'add', spn
+            ], check=False)
+            if netads.returncode != 0:
+                self.logger.debug('Failed to set spn entry [%s]: %s',
+                                  spn, netads.stderr.decode().strip())
+                return False
+
+        return True
+
+    @accepts()
+    async def get_spn_list(self):
+        """
+        Return list of kerberos SPN entries registered for the server's Active
+        Directory computer account. This may not reflect the state of the
+        server's current kerberos keytab.
+        """
+        spnlist = []
+        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'setspn', 'list'], check=False)
+        if netads.returncode != 0:
+            raise CallError(
+                f"Failed to generate SPN list: [{netads.stderr.decode().strip()}]"
+            )
+
+        for spn in netads.stdout.decode().splitlines():
+            if len(spn.split('/')) != 2:
+                continue
+            spnlist.append(spn.strip())
+
+        return spnlist
+
+    @accepts()
+    async def change_trust_account_pw(self):
+        """
+        Force an update of the AD machine account password. This can be used to
+        refresh the Kerberos principals in the server's system keytab.
+        """
+        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'changetrustpw'], check=False)
+        if netads.returncode != 0:
+            raise CallError(
+                f"Failed to update trust password: [{netads.stderr.decode().strip()}]"
+            )
 
     @accepts()
     async def domain_info(self):

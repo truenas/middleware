@@ -725,6 +725,19 @@ class KerberosKeytabService(CRUDService):
 
         return keytab_entries
 
+    @accepts()
+    async def system_keytab_list(self):
+        """
+        Returns content of system keytab (/etc/krb5.keytab).
+        """
+        kt_list = await self._ktutil_list()
+        parsed = []
+        for entry in kt_list:
+            entry['date'] = time.mktime(entry['date'])
+            parsed.append(entry)
+
+        return parsed
+
     @private
     async def _get_nonsamba_principals(self, keytab_list):
         """
