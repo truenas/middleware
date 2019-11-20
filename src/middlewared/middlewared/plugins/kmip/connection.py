@@ -38,12 +38,17 @@ class KMIPServerMixin:
         except KmipOperationFailure as e:
             raise CallError(f'Failed to revoke key: {e}')
 
-    def _revoke_and_destroy_key(self, uid, conn):
-        with contextlib.suppress(Exception):
+    def _revoke_and_destroy_key(self, uid, conn, logger=None):
+        try:
             self._revoke_key(uid, conn)
+        except Exception as e:
+            if logger:
+                logger.debug(f'Failed to revoke key for {uid}: {e}')
         try:
             self._destroy_key(uid, conn)
-        except Exception:
+        except Exception as e:
+            if logger:
+                logger.debug(f'Failed to destroy key for {uid}: {e}')
             return False
         else:
             return True

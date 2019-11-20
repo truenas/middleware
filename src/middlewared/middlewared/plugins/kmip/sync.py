@@ -45,7 +45,9 @@ class KMIPService(ConfigService, KMIPServerMixin):
     async def zfs_keys_pending_sync(self):
         config = await self.config()
         for ds in await self.middleware.call('datastore.query', 'storage.encrypteddataset'):
-            if config['enabled'] and config['manage_zfs_keys'] and ds['encryption_key']:
+            if config['enabled'] and config['manage_zfs_keys'] and (
+                ds['encryption_key'] or ds['name'] not in self.zfs_keys
+            ):
                 return True
             elif any(not config[k] for k in ('enabled', 'manage_zfs_keys')) and ds['kmip_uid']:
                 return True
@@ -59,11 +61,11 @@ class KMIPService(ConfigService, KMIPServerMixin):
         check_kmip_uid = any(not config[k] for k in ('enabled', 'manage_zfs_keys'))
         check_db_key = config['enabled'] and config['manage_sed_disks']
         for disk in disks:
-            if check_db_key and disk['passwd']:
+            if check_db_key and (disk['passwd'] or disk['identifier'] not in self.disks_keys):
                 return True
             elif check_kmip_uid and disk['kmip_uid']:
                 return True
-        if check_db_key and adv_config['sed_passwd']:
+        if check_db_key and (adv_config['sed_passwd'] or not self.global_sed_key):
             return True
         elif check_kmip_uid and adv_config['kmip_uid']:
             return True
@@ -101,7 +103,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
                 destroy_successful = False
                 if ds['kmip_uid']:
                     # This needs to be revoked and destroyed
-                    destroy_successful = self._revoke_and_destroy_key(ds['kmip_uid'], conn)
+                    destroy_successful = self._revoke_and_destroy_key(ds['kmip_uid'], conn, self.middleware.logger)
                     if not destroy_successful:
                         self.middleware.logger.debug(f'Failed to destroy key from KMIP Server for {ds["name"]}')
                 try:
@@ -141,7 +143,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
                 self.zfs_keys.pop(ds['name'], None)
                 if connection_successful:
                     with self._connection(self.connection_config()) as conn:
-                        self._revoke_and_destroy_key(ds['kmip_uid'], conn)
+                        self._revoke_and_destroy_key(ds['kmip_uid'], conn, self.middleware.logger)
         self.zfs_keys = {k: v for k, v in self.zfs_keys.items() if k in existing_datasets}
         return failed
 
@@ -192,7 +194,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
                 destroy_successful = False
                 if disk['kmip_uid']:
                     # This needs to be revoked and destroyed
-                    destroy_successful = self._revoke_and_destroy_key(disk['kmip_uid'], conn)
+                    destroy_successful = self._revoke_and_destroy_key(disk['kmip_uid'], conn, self.middleware.logger)
                     if not destroy_successful:
                         self.middleware.logger.debug(f'Failed to destroy key from KMIP Server for {disk["identifier"]}')
                 try:
@@ -249,7 +251,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
                 self.disks_keys.pop(disk['identifier'], None)
                 if connection_successful:
                     with self._connection(self.connection_config()) as conn:
-                        self._revoke_and_destroy_key(disk['kmip_uid'], conn)
+                        self._revoke_and_destroy_key(disk['kmip_uid'], conn, self.middleware.logger)
         adv_config = self.middleware.call_sync('system.advanced.config')
         if adv_config['kmip_uid']:
             key = None
@@ -269,7 +271,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
                 )
                 if connection_successful:
                     with self._connection(self.connection_config()) as conn:
-                        self._revoke_and_destroy_key(adv_config['kmip_uid'], conn)
+                        self._revoke_and_destroy_key(adv_config['kmip_uid'], conn, self.middleware.logger)
         return failed
 
     @job(lock=lambda args: f'kmip_sync_sed_keys_{args}')
