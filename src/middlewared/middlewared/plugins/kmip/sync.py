@@ -57,7 +57,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
         disks = await self.middleware.call('disk.query')
         config = await self.config()
         check_kmip_uid = any(not config[k] for k in ('enabled', 'manage_zfs_keys'))
-        check_db_key = config['enabled'] and config['manage_sed_keys']
+        check_db_key = config['enabled'] and config['manage_sed_disks']
         for disk in disks:
             if check_db_key and disk['passwd']:
                 return True
@@ -278,7 +278,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
             return
         config = self.middleware.call_sync('kmip.config')
         conn_successful = self.test_connection(raise_alert=True)
-        if config['enabled'] and config['manage_sed_keys']:
+        if config['enabled'] and config['manage_sed_disks']:
             if conn_successful:
                 failed = self.push_sed_keys(ids)
             else:
