@@ -1,4 +1,4 @@
-"""empty message
+"""Remove legacy UI field
 
 Revision ID: 7f8be1364037
 Revises: a87f7ecc4e88
