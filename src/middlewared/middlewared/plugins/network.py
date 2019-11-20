@@ -1717,7 +1717,10 @@ class InterfaceService(CRUDService):
 
     @private
     async def nic_capabilities_check(self):
-        nics = await self.jail_checks()
+        if await self.middleware.call('failover.status') == 'MASTER':
+            nics = await self.jail_checks()
+        else:
+            nics = await self.middleware.call('failover.call_remote', 'interface.jail_checks')
         for nic, to_disable in (await self.vm_checks()).items():
             if nic in nics:
                 old = set(nics[nic])
