@@ -1453,7 +1453,8 @@ async def setup(middleware):
     else:
         autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
 
-        await firstboot(middleware)
+        if os.path.exists('/usr/local/sbin/beadm'):
+            await firstboot(middleware)
 
         if autotune_rv == 2:
             await run('shutdown', '-r', 'now', check=False)
