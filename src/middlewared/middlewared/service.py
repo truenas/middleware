@@ -14,6 +14,7 @@ import threading
 import time
 import traceback
 
+import middlewared.main
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
@@ -540,6 +541,17 @@ class ServicePartBase(metaclass=ServicePartBaseMeta):
 
 
 class CoreService(Service):
+
+    @accepts(Str('id'), Int('cols'), Int('rows'))
+    async def resize_shell(self, id, cols, rows):
+        """
+        Resize terminal session (/websocket/shell) to cols x rows
+        """
+        shell = middlewared.main.ShellApplication.shells.get(id)
+        if shell is None:
+            raise CallError('Shell does not exist', errno.ENOENT)
+
+        shell.resize(cols, rows)
 
     @filterable
     def sessions(self, filters=None, options=None):

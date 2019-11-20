@@ -25,10 +25,12 @@ from collections import defaultdict
 import argparse
 import asyncio
 import binascii
+from collections import namedtuple
 import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
 import errno
+import fcntl
 import functools
 import inspect
 import itertools
@@ -40,6 +42,7 @@ import queue
 import select
 import setproctitle
 import signal
+import struct
 import sys
 import termios
 import threading
@@ -505,6 +508,9 @@ class FileApplication(object):
         return resp
 
 
+ShellResize = namedtuple("ShellResize", ["cols", "rows"])
+
+
 class ShellWorkerThread(threading.Thread):
     """
     Worker thread responsible for forking and running the shell
@@ -519,6 +525,9 @@ class ShellWorkerThread(threading.Thread):
         self.jail = jail
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
+
+    def resize(self, cols, rows):
+        self.input_queue.put(ShellResize(cols, rows))
 
     def run(self):
 
@@ -571,7 +580,10 @@ class ShellWorkerThread(threading.Thread):
             while True:
                 try:
                     get = self.input_queue.get(timeout=1)
-                    os.write(master_fd, get)
+                    if isinstance(get, ShellResize):
+                        fcntl.ioctl(master_fd, termios.TIOCSWINSZ, struct.pack("HHHH", get.rows, get.cols, 0, 0))
+                    else:
+                        os.write(master_fd, get)
                 except queue.Empty:
                     # If we timeout waiting in input query lets make sure
                     # the shell process is still alive
@@ -606,10 +618,12 @@ class ShellWorkerThread(threading.Thread):
 
 
 class ShellConnectionData(object):
+    id = None
     t_worker = None
 
 
 class ShellApplication(object):
+    shells = {}
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -619,6 +633,7 @@ class ShellApplication(object):
         await ws.prepare(request)
 
         conndata = ShellConnectionData()
+        conndata.id = str(uuid.uuid4())
 
         try:
             await self.run(ws, request, conndata)
@@ -626,6 +641,7 @@ class ShellApplication(object):
             if conndata.t_worker:
                 await self.worker_kill(conndata.t_worker)
         finally:
+            self.shells.pop(conndata.id, None)
             return ws
 
     async def run(self, ws, request, conndata):
@@ -667,11 +683,14 @@ class ShellApplication(object):
                 authenticated = True
                 await ws.send_json({
                     'msg': 'connected',
+                    'id': conndata.id,
                 })
 
                 jail = data.get('jail')
                 conndata.t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), jail=jail)
                 conndata.t_worker.start()
+
+                self.shells[conndata.id] = conndata.t_worker
 
         # If connection was not authenticated, return earlier
         if not authenticated:
