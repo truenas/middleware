@@ -275,7 +275,14 @@ class SystemAdvancedService(ConfigService):
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 
+            if original_data['sed_passwd'] != config_data['sed_passwd']:
+                await self.middleware.call('kmip.sync_sed_keys')
+
         return await self.config()
+
+    @accepts()
+    async def sed_global_password(self):
+        return (await self.config())['sed_passwd'] or await self.middleware.call('kmip.sed_global_password')
 
     @private
     def autotune(self, conf='loader'):

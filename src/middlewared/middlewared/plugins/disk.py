@@ -17,7 +17,7 @@ try:
 except ImportError:
     geom = getswapinfo = None
 
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -113,6 +113,18 @@ class DiskService(CRUDService):
             disk['enclosure_slot'] = None
         del disk['enclosure']
 
+    @accepts(List('filters', default=[]))
+    async def query_passwords(self, filters):
+        disks = await self.middleware.call(
+            'datastore.query', self._config.datastore, filters, {'prefix': self._config.datastore_prefix}
+        )
+        disks_keys = await self.middleware.call('kmip.retrieve_sed_disks_keys')
+        for disk in disks:
+            kmip_uid = disk.pop('kmip_uid')
+            if kmip_uid and disk['identifier'] in disks_keys:
+                disk['passwd'] = disks_keys[disk['identifier']]
+        return disks
+
     @accepts(
         Str('id'),
         Dict(
@@ -204,11 +216,9 @@ class DiskService(CRUDService):
             await self.middleware.call('disk.power_management', new['name'])
 
         if any(
-                new[key] != old[key]
-                for key in ['togglesmart', 'smartoptions', 'hddstandby', 'hddstandby_force', 'critical', 'difference',
-                            'informational']
+            new[key] != old[key]
+            for key in ['togglesmart', 'smartoptions', 'hddstandby', 'critical', 'difference', 'informational']
         ):
-
             if new['togglesmart']:
                 await self.middleware.call('disk.toggle_smart_on', new['name'])
             else:
@@ -220,13 +230,10 @@ class DiskService(CRUDService):
             await self._service_change('smartd', 'restart')
             await self._service_change('snmp', 'restart')
 
-        updated_data = await self.query(
-            [('identifier', '=', id)],
-            {'get': True}
-        )
-        updated_data['id'] = id
+        if old['passwd'] != new['passwd']:
+            await self.middleware.call('kmip.sync_sed_keys', [id])
 
-        return updated_data
+        return await self._get_instance(id)
 
     @private
     def get_name(self, disk):
