@@ -37,11 +37,11 @@ class EventSource(object):
         try:
             self.run()
         except Exception:
-            self.middleware.warn('EventSource %r run() failed', self.name, exc_info=True)
+            self.middleware.logger.warning('EventSource %r run() failed', self.name, exc_info=True)
         try:
             self.on_finish()
         except Exception:
-            self.middleware.warn('EventSource %r on_finish() failed', self.name, exc_info=True)
+            self.middleware.logger.warning('EventSource %r on_finish() failed', self.name, exc_info=True)
         asyncio.run_coroutine_threadsafe(self.app.unsubscribe(self.ident), self.app.loop)
 
     def run(self):
