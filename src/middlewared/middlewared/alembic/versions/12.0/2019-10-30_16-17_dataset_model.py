@@ -1,4 +1,4 @@
-"""empty message
+"""Encrypted dataset model
 
 Revision ID: 7e8f7f07153e
 Revises: 7f8be1364037

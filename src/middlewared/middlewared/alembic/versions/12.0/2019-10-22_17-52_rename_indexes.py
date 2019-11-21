@@ -76,18 +76,6 @@ def upgrade():
         batch_op.drop_index('services_iscsitargettoextent_74972900')
         batch_op.drop_index('services_iscsitargettoextent_8c3551d7')
 
-    with op.batch_alter_table('services_openvpnclient', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_services_openvpnclient_client_certificate_id'), ['client_certificate_id'], unique=False)
-        batch_op.create_index(batch_op.f('ix_services_openvpnclient_root_ca_id'), ['root_ca_id'], unique=False)
-        batch_op.drop_index('services_openvpnclient_337326e2')
-        batch_op.drop_index('services_openvpnclient_86125d3c')
-
-    with op.batch_alter_table('services_openvpnserver', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_services_openvpnserver_root_ca_id'), ['root_ca_id'], unique=False)
-        batch_op.create_index(batch_op.f('ix_services_openvpnserver_server_certificate_id'), ['server_certificate_id'], unique=False)
-        batch_op.drop_index('services_openvpnserver_86125d3c')
-        batch_op.drop_index('services_openvpnserver_94e62f0b')
-
     with op.batch_alter_table('services_s3', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_services_s3_s3_certificate_id'), ['s3_certificate_id'], unique=False)
         batch_op.drop_index('services_s3_3f8aa88e')
@@ -103,10 +91,6 @@ def upgrade():
     with op.batch_alter_table('system_acmeregistrationbody', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_system_acmeregistrationbody_acme_id'), ['acme_id'], unique=False)
         batch_op.drop_index('system_acmeregistrationbody_1ece6752')
-
-    with op.batch_alter_table('system_advanced', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_system_advanced_adv_syslog_tls_certificate_id'), ['adv_syslog_tls_certificate_id'], unique=False)
-        batch_op.drop_index('system_advanced_64258e8d')
 
     with op.batch_alter_table('system_certificate', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_system_certificate_cert_acme_id'), ['cert_acme_id'], unique=False)
@@ -157,10 +141,6 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_system_certificate_cert_signedby_id'))
         batch_op.drop_index(batch_op.f('ix_system_certificate_cert_acme_id'))
 
-    with op.batch_alter_table('system_advanced', schema=None) as batch_op:
-        batch_op.create_index('system_advanced_64258e8d', ['adv_syslog_tls_certificate_id'], unique=False)
-        batch_op.drop_index(batch_op.f('ix_system_advanced_adv_syslog_tls_certificate_id'))
-
     with op.batch_alter_table('system_acmeregistrationbody', schema=None) as batch_op:
         batch_op.create_index('system_acmeregistrationbody_1ece6752', ['acme_id'], unique=False)
         batch_op.drop_index(batch_op.f('ix_system_acmeregistrationbody_acme_id'))
@@ -176,18 +156,6 @@ def downgrade():
     with op.batch_alter_table('services_s3', schema=None) as batch_op:
         batch_op.create_index('services_s3_3f8aa88e', ['s3_certificate_id'], unique=False)
         batch_op.drop_index(batch_op.f('ix_services_s3_s3_certificate_id'))
-
-    with op.batch_alter_table('services_openvpnserver', schema=None) as batch_op:
-        batch_op.create_index('services_openvpnserver_94e62f0b', ['server_certificate_id'], unique=False)
-        batch_op.create_index('services_openvpnserver_86125d3c', ['root_ca_id'], unique=False)
-        batch_op.drop_index(batch_op.f('ix_services_openvpnserver_server_certificate_id'))
-        batch_op.drop_index(batch_op.f('ix_services_openvpnserver_root_ca_id'))
-
-    with op.batch_alter_table('services_openvpnclient', schema=None) as batch_op:
-        batch_op.create_index('services_openvpnclient_86125d3c', ['root_ca_id'], unique=False)
-        batch_op.create_index('services_openvpnclient_337326e2', ['client_certificate_id'], unique=False)
-        batch_op.drop_index(batch_op.f('ix_services_openvpnclient_root_ca_id'))
-        batch_op.drop_index(batch_op.f('ix_services_openvpnclient_client_certificate_id'))
 
     with op.batch_alter_table('services_iscsitargettoextent', schema=None) as batch_op:
         batch_op.create_index('services_iscsitargettoextent_8c3551d7', ['iscsi_extent_id'], unique=False)
