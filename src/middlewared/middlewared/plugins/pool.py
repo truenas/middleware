@@ -857,7 +857,9 @@ class PoolService(CRUDService):
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
             if encrypted_dataset_pk:
-                await self.middleware.call('datastore.delete', PoolDatasetService.dataset_store, encrypted_dataset_pk)
+                await self.middleware.call(
+                    'pool.dataset.delete_encrypted_datasets_from_db', [['id', '=', encrypted_dataset_pk]]
+                )
             raise e
 
         # There is really no point in waiting all these services to reload so do them
@@ -2429,7 +2431,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
-            'datastore.delete', PoolDatasetService.dataset_store,
+            'pool.dataset.delete_encrypted_datasets_from_db',
             [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
 
@@ -3144,7 +3146,27 @@ class PoolDatasetService(CRUDService):
                 else:
                     self.middleware.logger.error(f'Failed to check encryption status for {dataset}: {status["error"]}')
 
-        self.middleware.call_sync('datastore.delete', self.dataset_store, [['name', 'in', to_remove]])
+        self.middleware.call_sync('pool.dataset.delete_encrypted_datasets_from_db', [['name', 'in', to_remove]])
+
+    @private
+    async def delete_encrypted_datasets_from_db(self, filters):
+        datasets = await self.middleware.call('datastore.query', self.dataset_store, filters)
+        kmip_conn_active = await self.middleware.call('kmip.test_connection')
+        for ds in datasets:
+            if ds['kmip_uid'] and kmip_conn_active:
+                err = False
+                if kmip_conn_active:
+                    try:
+                        await self.middleware.call()
+                    except Exception as e:
+                        err = str(e)
+                else:
+                    err = 'Failed to connect to KMIP Server'
+                if err:
+                    self.middleware.logger.debug(
+                        f'Failed to remove encryption key from KMIP server for {ds["name"]}: {err}'
+                    )
+            await self.middleware.call('datastore.delete', self.dataset_store, ds['id'])
 
     @accepts(Str('id'))
     @job(lock='dataset_export_keys', pipes=['output'])
@@ -4058,10 +4080,12 @@ class PoolDatasetService(CRUDService):
                 if attachments:
                     await delegate.delete(attachments)
 
-        return await self.middleware.call('zfs.dataset.delete', id, {
+        result = await self.middleware.call('zfs.dataset.delete', id, {
             'force': options['force'],
             'recursive': options['recursive'],
         })
+        await self.delete_encrypted_datasets_from_db([['name', '=', id]])
+        return result
 
     @item_method
     @accepts(Str('id'))
