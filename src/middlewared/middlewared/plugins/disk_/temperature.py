@@ -3,7 +3,7 @@ import re
 import cam
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
-from middlewared.service import accepts, List, Service, Str
+from middlewared.service import accepts, List, private, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -44,11 +44,26 @@ def get_temperature(stdout):
 
 
 class DiskService(Service):
+    @private
+    async def disks_for_temperature_monitoring(self):
+        return [
+            disk['devname']
+            for disk in await self.middleware.call('disk.query', [['devname', '!=', None],
+                                                                  ['togglesmart', '=', True],
+                                                                  # Polling for disk temperature does
+                                                                  # not allow them to go to sleep
+                                                                  # automatically
+                                                                  ['hddstandby', '=', 'ALWAYS ON']])
+        ]
+
     @accepts(
         Str('name'),
         Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
     )
     async def temperature(self, name, powermode):
+        """
+        Returns temperature for device `name` using specified S.M.A.R.T. `powermode`.
+        """
         if name.startswith('da') and False:
             smartctl_args = await self.middleware.call('disk.smartctl_args', name) or []
             if not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
@@ -70,7 +85,8 @@ class DiskService(Service):
     )
     async def temperatures(self, names, powermode):
         """
-        Returns temperatures for a list of device `names` using specified S.M.A.R.T. `powermode`.
+        Returns temperatures for a list of devices (runs in parallel).
+        See `disk.temperature` documentation for more details.
         """
         result = dict(zip(
             names,

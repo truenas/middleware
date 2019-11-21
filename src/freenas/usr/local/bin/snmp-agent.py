@@ -450,6 +450,52 @@ class CpuTempThread(threading.Thread):
             time.sleep(self.interval)
 
 
+class DiskTempThread(threading.Thread):
+    def __init__(self, interval):
+        super().__init__()
+
+        self.daemon = True
+
+        self.interval = interval
+        self.temperatures = {}
+
+        self.initialized = False
+        self.disks = []
+        self.powermode = None
+
+    def run(self):
+        while True:
+            if not self.initialized:
+                try:
+                    with Client() as c:
+                        self.disks = c.call("disk.disks_for_temperature_monitoring")
+                        self.powermode = c.call("smart.config")["powermode"]
+                except Exception as e:
+                    print(f"Failed to query disks for temperature monitoring: {e!r}")
+                else:
+                    self.initialized = True
+
+            if not self.initialized:
+                time.sleep(self.interval)
+                continue
+
+            if not self.disks:
+                return
+
+            try:
+                with Client() as c:
+                    self.temperatures = {
+                        disk: temperature
+                        for disk, temperature in c.call("disk.temperatures", self.disks, self.powermode).items()
+                        if temperature is not None
+                    }
+            except Exception as e:
+                print(f"Failed to collect disks temperatures: {e!r}")
+                self.temperatures = {}
+
+            time.sleep(self.interval)
+
+
 if __name__ == "__main__":
     with Client() as c:
         config = c.call("snmp.config")
@@ -470,6 +516,9 @@ if __name__ == "__main__":
 
     cpu_temp_thread = CpuTempThread(10)
     cpu_temp_thread.start()
+
+    disk_temp_thread = DiskTempThread(300)
+    disk_temp_thread.start()
 
     agent.start()
 
@@ -554,9 +603,13 @@ if __name__ == "__main__":
                 row.setRowCell(6, agent.Integer32(available))
 
             temp_sensors_table.clear()
+            temperatures = []
             for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
+                temperatures.append((f"CPU{i}", temp))
+            temperatures.extend(list(disk_temp_thread.temperatures.items()))
+            for i, (name, temp) in enumerate(temperatures):
                 row = temp_sensors_table.addRow([agent.Integer32(i + 1)])
-                row.setRowCell(2, agent.DisplayString(f"CPU{i}"))
+                row.setRowCell(2, agent.DisplayString(name))
                 row.setRowCell(3, agent.Unsigned32(temp))
 
             last_update_at = datetime.utcnow()

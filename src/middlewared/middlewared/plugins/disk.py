@@ -206,6 +206,7 @@ class DiskService(CRUDService):
             await self.middleware.call('disk.update_smartctl_args_for_disks')
             await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
+            await self._service_change('snmp', 'restart')
 
         updated_data = await self.query(
             [('identifier', '=', id)],
@@ -866,6 +867,7 @@ class DiskService(CRUDService):
         if await self.middleware.call('service.started', 'collectd'):
             await self.middleware.call('service.restart', 'collectd')
         await self._service_change('smartd', 'restart')
+        await self._service_change('snmp', 'restart')
 
         if not await self.middleware.call('system.is_freenas'):
             await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
@@ -990,6 +992,7 @@ class DiskService(CRUDService):
             if await self.middleware.call('service.started', 'collectd'):
                 await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
+            await self._service_change('snmp', 'restart')
 
         return "OK"
 
