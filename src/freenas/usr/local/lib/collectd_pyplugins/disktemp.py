@@ -41,12 +41,7 @@ class DiskTemp(object):
         collectd.info('Initializing "disktemp" plugin')
         try:
             with Client() as c:
-                self.disks = [disk['devname'] for disk in c.call('disk.query', [['devname', '!=', None],
-                                                                                ['togglesmart', '=', True],
-                                                                                # Polling for disk temperature does
-                                                                                # not allow them to go to sleep
-                                                                                # automatically
-                                                                                ['hddstandby', '=', 'ALWAYS ON']])]
+                self.disks = c.call('disk.disks_for_temperature_monitoring')
                 self.powermode = c.call('smart.config')['powermode']
         except Exception:
             collectd.error(traceback.format_exc())
@@ -58,6 +53,9 @@ class DiskTemp(object):
             self.init()
 
         if not self.initialized:
+            return
+
+        if not self.disks:
             return
 
         try:
