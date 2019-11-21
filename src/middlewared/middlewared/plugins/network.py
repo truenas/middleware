@@ -1366,6 +1366,10 @@ class InterfaceService(CRUDService):
             await self.middleware.call(
                 'datastore.delete', 'network.vlan', [('vlan_vint', '=', oid)]
             )
+
+        # Let's finally delete the interface
+        netif.destroy_interface(iface['name'])
+
         return oid
 
     @accepts()
