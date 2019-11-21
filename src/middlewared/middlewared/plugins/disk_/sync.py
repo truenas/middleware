@@ -98,6 +98,13 @@ class DiskService(Service, ServiceChangeMixin):
                         'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]
                     ):
                         await self.middleware.call('iscsi.extent.delete', extent['id'])
+                    if disk['disk_kmip_uid']:
+                        try:
+                            await self.middleware.call('kmip.delete_kmip_secret_data', disk['disk_kmip_uid'])
+                        except Exception as e:
+                            self.middleware.logger.debug(
+                                f'Failed to remove password from KMIP server for {disk["disk_identifier"]}: {e}'
+                            )
                     await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
                     changed = True
                 continue
