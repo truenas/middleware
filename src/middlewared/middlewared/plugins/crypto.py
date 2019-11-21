@@ -2127,7 +2127,8 @@ class CertificateAuthorityService(CRUDService):
 async def setup(middlewared):
     failure = False
     try:
-        system_cert = (await middlewared.call('system.general.config'))['ui_certificate']
+        system_general_config = await middlewared.call('system.general.config')
+        system_cert = system_general_config['ui_certificate']
         certs = await middlewared.call('certificate.query')
     except Exception as e:
         failure = True
@@ -2159,8 +2160,11 @@ async def setup(middlewared):
                 middlewared.logger.debug('Default certificate for System created')
             else:
                 id = [c['id'] for c in certs if c['name'] == 'freenas_default'][0]
+                await middlewared.call('certificate.cert_services_validation', id, 'certificate')
 
-            await middlewared.call('system.general.update', {'ui_certificate': id})
+            await middlewared.call(
+                'datastore.update', 'system.settings', system_general_config['id'], {'stg_guicertificate': id}
+            )
         except Exception as e:
             failure = True
             middlewared.logger.debug(f'Failed to set certificate for system.general plugin: {e}')
