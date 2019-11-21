@@ -142,8 +142,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
                 self.middleware.call_sync('datastore.update', 'storage.encrypteddataset', ds['id'], update_data)
                 self.zfs_keys.pop(ds['name'], None)
                 if connection_successful:
-                    with self._connection(self.connection_config()) as conn:
-                        self._revoke_and_destroy_key(ds['kmip_uid'], conn, self.middleware.logger)
+                    self.delete_kmip_secret_data(ds['kmip_uid'])
         self.zfs_keys = {k: v for k, v in self.zfs_keys.items() if k in existing_datasets}
         return failed
 
@@ -250,8 +249,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
                 )
                 self.disks_keys.pop(disk['identifier'], None)
                 if connection_successful:
-                    with self._connection(self.connection_config()) as conn:
-                        self._revoke_and_destroy_key(disk['kmip_uid'], conn, self.middleware.logger)
+                    self.delete_kmip_secret_data(disk['kmip_uid'])
         adv_config = self.middleware.call_sync('system.advanced.config')
         if adv_config['kmip_uid']:
             key = None
@@ -270,8 +268,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
                     adv_config['id'], {'adv_sed_passwd': key, 'adv_kmip_uid': None}
                 )
                 if connection_successful:
-                    with self._connection(self.connection_config()) as conn:
-                        self._revoke_and_destroy_key(adv_config['kmip_uid'], conn, self.middleware.logger)
+                    self.delete_kmip_secret_data(adv_config['kmip_uid'])
         return failed
 
     @job(lock=lambda args: f'kmip_sync_sed_keys_{args}')
@@ -308,6 +305,11 @@ class KMIPService(ConfigService, KMIPServerMixin):
     @accepts()
     async def clear_sync_pending_keys(self):
         await self.clear_sync_pending_zfs_keys()
+
+    @private
+    def delete_kmip_secret_data(self, uid):
+        with self._connection(self.connection_config()) as conn:
+            return self._revoke_and_destroy_key(uid, conn, self.middleware.logger)
 
     @private
     def initialize_zfs_keys(self, connection_success):
