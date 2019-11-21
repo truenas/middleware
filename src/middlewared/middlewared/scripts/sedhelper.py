@@ -26,7 +26,7 @@ def setup(password, disk=None):
         if disk:
             disk_filter.append(('name', '=', disk))
 
-        disks = c.call('disk.query', disk_filter)
+        disks = c.call('disk.query_passwords', disk_filter)
         boot_disks = c.call('boot.get_disks')
         disks = list(filter(lambda d: d['name'] not in boot_disks, disks))
 
@@ -34,8 +34,8 @@ def setup(password, disk=None):
             print(f'Disk {disk} not found')
             return
 
-        advconfig = c.call('system.advanced.config')
-        if advconfig['sed_passwd'] != password and not (disk and disks[0]['passwd'] == password):
+        global_sed_password = c.call('system.advanced.sed_global_password')
+        if global_sed_password != password and not (disk and disks[0]['passwd'] == password):
             print('Given password does not match saved one')
             return
 

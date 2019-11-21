@@ -114,15 +114,14 @@ class DiskService(CRUDService):
         del disk['enclosure']
 
     @accepts(List('filters', default=[]))
-    async def query_passwords(self, filters):
+    async def query_passwords(self, filters=None):
         disks = await self.middleware.call(
             'datastore.query', self._config.datastore, filters, {'prefix': self._config.datastore_prefix}
         )
         disks_keys = await self.middleware.call('kmip.retrieve_sed_disks_keys')
         for disk in disks:
             kmip_uid = disk.pop('kmip_uid')
-            if kmip_uid and disk['identifier'] in disks_keys:
-                disk['passwd'] = disks_keys[disk['identifier']]
+            disk['passwd'] = disks_keys[disk['identifier']] if kmip_uid and disk['identifier'] in disks_keys else ''
         return disks
 
     @accepts(
@@ -684,10 +683,12 @@ class DiskService(CRUDService):
     @private
     async def sed_unlock_all(self):
         advconfig = await self.middleware.call('system.advanced.config')
-        disks = await self.middleware.call('disk.query')
+        disks = await self.middleware.call('disk.query_passwords')
 
         # If no SED password was found we can stop here
-        if not advconfig.get('sed_passwd') and not any([d['passwd'] for d in disks]):
+        if not await self.middleware.call('system.advanced.sed_global_password') and not any(
+            [d['passwd'] for d in disks]
+        ):
             return
 
         result = await asyncio_map(lambda disk: self.sed_unlock(disk['name'], disk, advconfig), disks, 16)
@@ -707,10 +708,10 @@ class DiskService(CRUDService):
         # We need two states to tell apart when disk was successfully unlocked
         locked = None
         unlocked = None
-        password = _advconfig.get('sed_passwd')
+        password = await self.middleware.call('system.advanced.sed_global_password')
 
         if disk is None:
-            disk = await self.middleware.call('disk.query', [('name', '=', disk_name)])
+            disk = await self.middleware.call('disk.query_passwords', [('name', '=', disk_name)])
             if disk and disk[0]['passwd']:
                 password = disk[0]['passwd']
         elif disk.get('passwd'):
