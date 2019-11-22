@@ -1460,6 +1460,23 @@ class VMDeviceService(CRUDService):
             except OSError:
                 raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
 
+    async def enable_capabilities_for_nic(self, vm_device):
+        if vm_device['dtype'] == 'NIC' and not self.middleware.call_sync(
+            'system.is_freenas'
+        ) and self.middleware.call_sync('failover.licensed') and self.middleware.call_sync(
+            'failover.config'
+        )['disabled']:
+            try:
+                nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
+            except Exception:
+                nic = None
+            if (nic or '').startswith('bridge'):
+                return
+            nics = await self.nic_capability_checks()
+            iface = self.middleware.call_sync('interface.query', [['name', '=', nic]])
+            if iface and not iface[0]['disable_offload_capabilities'] and nic not in nics:
+                self.middleware.call_sync('interface.enable_capabilities', nic)
+
     @accepts(
         Int('id'),
         Dict(
@@ -1472,9 +1489,14 @@ class VMDeviceService(CRUDService):
         """
         Delete a VM device of `id`.
         """
-        await self.delete_resource(options, (await self._get_instance(id)))
+        vm_device = await self._get_instance(id)
+        await self.delete_resource(options, vm_device)
 
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
+        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+        await self.enable_capabilities_for_nic(vm_device)
+
+        return result
 
     async def __reorder_devices(self, id, vm_id, order):
         if order is None:
