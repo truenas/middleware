@@ -1717,9 +1717,10 @@ class InterfaceService(CRUDService):
 
     @private
     async def nic_capabilities_check(self):
-        nics = await self.jail_checks(
+        nics = await self.middleware.call(
+            'jail.nic_capability_checks',
             None if await self.middleware.call('failover.status') == 'MASTER' else await self.middleware.call(
-                'failover.call_remote', 'jail.query'
+                'failover.call_remote', 'jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]
             )
         )
         for nic, to_disable in (await self.vm_checks()).items():
@@ -1748,30 +1749,6 @@ class InterfaceService(CRUDService):
             if nic in system_ifaces and set(system_ifaces[nic]['state']['capabilities']) & conflicts:
                 vm_nics[nic] = list(conflicts)
         return vm_nics
-
-    @private
-    async def jail_checks(self, jails=None):
-        jail_nics = defaultdict(set)
-        system_ifaces = {i['name']: i for i in await self.middleware.run_in_thread(self.query)}
-        for jail in await self.middleware.call(
-            'jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]
-        ) if not jails else jails:
-            nic = await self.middleware.call(
-                f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface',
-                jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
-            )
-            if nic in system_ifaces:
-                conflicts = {'TSO4', 'TSO6', 'VLAN_HWTSO'} if jail['nat'] else {
-                    'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'
-                }
-                needs_update = set(system_ifaces[nic]['state']['capabilities']) & conflicts
-                if not jail['nat']:
-                    bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
-                    if not bridges or not bridges[0]:
-                        continue
-                if needs_update:
-                    jail_nics[nic].update(conflicts)
-        return {k: list(v) for k, v in jail_nics.items()}
 
     @private
     @accepts(Str('iface'), List('capabilities'))
