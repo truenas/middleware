@@ -1493,17 +1493,16 @@ async def __event_system(middleware, event_type, args):
     # We need to call a method in Jail service to make sure it runs in the
     # process pool because of py-libzfs thread safety issue with iocage and middlewared
     if args['id'] == 'ready' and await middleware.call('jail.iocage_set_up'):
-        if not await middleware.call_sync('system.is_freenas') and await middleware.call_sync(
-            'failover.licensed'
-        ) and await middleware.call('failover.status') == 'MASTER':
+        if not await middleware.call_sync('system.is_freenas'):
             await middleware.call('jail.check_dataset_existence')
             await middleware.call('jail.update_defaults', {'nat_backend': 'ipfw'})
             # We start Jail/VM(s) during carp state change hook
-        else:
-            try:
-                await middleware.call('jail.start_on_boot')
-            except ioc_exceptions.PoolNotActivated:
-                pass
+            if await middleware.call_sync('failover.licensed'):
+                return
+        try:
+            await middleware.call('jail.start_on_boot')
+        except ioc_exceptions.PoolNotActivated:
+            pass
     elif args['id'] == 'shutdown' and await middleware.call('jail.iocage_set_up'):
         async with SHUTDOWN_LOCK:
             await middleware.call('jail.stop_on_shutdown')
