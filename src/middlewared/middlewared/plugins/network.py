@@ -396,6 +396,7 @@ class InterfaceService(CRUDService):
             'description': config['int_name'],
             'options': config['int_options'],
             'mtu': config['int_mtu'],
+            'disable_offload_capabilities': config['int_disable_offload_capabilities'],
         })
 
         if not is_freenas:
@@ -819,6 +820,9 @@ class InterfaceService(CRUDService):
                         )
                 raise
 
+        if data.get('disable_offload_capabilities'):
+            await self.middleware.call('interface.enable_capabilities', name)
+
         return await self._get_instance(name)
 
     async def _get_next(self, prefix, start=0):
@@ -900,6 +904,11 @@ class InterfaceService(CRUDService):
                     (
                         'Bridge interface must start with "bridge" followed by an unique number.'
                     ),
+                )
+            if data.get('disable_offload_capabilities'):
+                verrors.add(
+                    f'{schema_name}.disable_offload_capabilities',
+                    'Offloading capabilities is not supported for bridge interfaces'
                 )
             for i, member in enumerate(data.get('bridge_members') or []):
                 if member not in ifaces:
@@ -1332,6 +1341,12 @@ class InterfaceService(CRUDService):
                     )
             raise
 
+        if new['disable_offload_capabilities'] != iface['disable_offload_capabilities']:
+            if new['disable_offload_capabilities']:
+                await self.middleware.call('interface.disable_capabilities', iface['name'])
+            elif not any(await self.middleware.call(f'{srv}.nic_capability_checks' for srv in ('jail', 'vm'))):
+                await self.middleware.call('interface.enable_capabilities', iface['name'])
+
         return await self._get_instance(new['name'])
 
     @accepts(Str('id'))
@@ -1526,10 +1541,20 @@ class InterfaceService(CRUDService):
 
         await self.middleware.call_hook('interface.pre_sync')
 
+        disable_capabilities_ifaces = {
+            i['name'] for i in await self.middleware.call(
+                'interface.query', [['disable_offload_capabilities', '=', True]]
+            )
+        }
         interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
         parent_interfaces = []
         sync_interface_opts = defaultdict(dict)
+
+        for physical_iface in await self.middleware.call(
+            'interface.query', [['type', '=', 'PHYSICAL'], ['disable_offload_capabilities', '=', True]]
+        ):
+            await self.middleware.call('interface.disable_capabilities', physical_iface['name'])
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
@@ -1543,6 +1568,9 @@ class InterfaceService(CRUDService):
             except KeyError:
                 netif.create_interface(name)
                 iface = netif.get_interface(name)
+
+            if name in disable_capabilities_ifaces:
+                await self.middleware.call('interface.disable_capabilities', name)
 
             protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
             if iface.protocol != protocol:
@@ -1595,6 +1623,9 @@ class InterfaceService(CRUDService):
             except KeyError:
                 netif.create_interface(vlan['vlan_vint'])
                 iface = netif.get_interface(vlan['vlan_vint'])
+
+            if vlan['vlan_vint'] in disable_capabilities_ifaces:
+                await self.middleware.call('interface.disable_capabilities', vlan['vlan_vint'])
 
             if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag'] or iface.pcp != vlan['vlan_pcp']:
                 iface.unconfigure()
