@@ -978,7 +978,15 @@ class VMService(CRUDService):
         if isinstance(status, dict):
             if status.get('state') == 'RUNNING':
                 await self.stop(id)
-        return await self.middleware.call('datastore.delete', 'vm.vm', id)
+        nic_devices = [
+            device for device in await self.middleware.call(
+                'vm.device.query', [['vm', '=', id], ['dtype', '=', 'NIC']]
+            )
+        ]
+        result = await self.middleware.call('datastore.delete', 'vm.vm', id)
+        for device in nic_devices:
+            await self.middleware.call('vm.device.enable_capabilities_for_nic', device)
+        return result
 
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit')))
