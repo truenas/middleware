@@ -675,6 +675,7 @@ class InterfaceService(CRUDService):
         Str('name'),
         Str('description', null=True),
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
+        Bool('disable_offload_capabilities', default=False),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
         List('aliases', unique=True, items=[
@@ -1738,7 +1739,28 @@ class InterfaceService(CRUDService):
             await self.middleware.run_in_thread(self.disable_capabilities, nic, nics[nic])
 
     @private
-    @accepts(Str('iface'), List('capabilities'))
+    @accepts(Str('iface'), List('capabilities', default=netif.InterfaceCapability.__members__))
+    def enable_capabilities(self, iface, capabilities):
+        enabled = []
+        iface = netif.get_interface(iface)
+        for capability in map(lambda c: netif.InterfaceCapability(c), capabilities):
+            current = iface.capabilities
+            if capability in current:
+                continue
+            try:
+                iface.capabilities = current | {capability}
+            except OSError:
+                pass
+            else:
+                enabled.append(capability.name)
+        if enabled:
+            self.middleware.logger.debug(f'Enabled {",".join(enabled)} capabilities for {iface}')
+
+    @private
+    @accepts(
+        Str('iface'),
+        List('capabilities', default=['TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6', 'VLAN_HWTSO'])
+    )
     def disable_capabilities(self, iface, capabilities):
         self.middleware.call_sync('interface._get_instance', iface)
         iface = netif.get_interface(iface)
