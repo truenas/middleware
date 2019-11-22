@@ -1008,6 +1008,9 @@ class JailService(CRUDService):
 
     @accepts(Dict('props', additional_attrs=True))
     def update_defaults(self, props):
+        """
+        Update default properties for iocage which will remain true for all jails moving on i.e nat_backend
+        """
         iocage = ioc.IOCage(jail='default', reset_cache=True)
         for prop in props:
             iocage.set(f'{prop}={props[prop]}')
@@ -1072,27 +1075,33 @@ class JailService(CRUDService):
 
     @private
     def start_failover_checks(self, jail_config):
-        jail_config = {
-            k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
-        }
-        if jail_config.get('dhcp'):
-            jail_config['vnet'] = 1
-        if (
-            not self.middleware.call_sync('system.is_freenas') and (
-                jail_config['vnet'] or jail_config['nat']
-            ) and self.middleware.call_sync('failover.licensed')
-        ):
+        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
+            jail_config = {
+                k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
+            }
+            if jail_config.get('dhcp'):
+                jail_config['vnet'] = 1
+            if not (jail_config['vnet'] or jail_config['nat']):
+                return
             failover_enabled = not self.middleware.call_sync('failover.config')['disabled']
             to_disable_nics = self.middleware.call_sync('jail.nic_capability_checks', [jail_config])
             if to_disable_nics:
                 if failover_enabled:
-                    raise CallError(f'Failover must be disabled before creating/updating {jail_config["id"]}')
+                    raise CallError(
+                        f'Failover must be disabled before creating/updating {jail_config["id"]} '
+                        f'because of the following nics: {",".join(to_disable_nics)}'
+                    )
                 else:
                     for nic in to_disable_nics:
                         self.middleware.call_sync('interface.disable_capabilities', nic, to_disable_nics[nic])
-                        self.middleware.call_sync(
-                            'failover.call_remote', 'interface.disable_capabilities', [nic, to_disable_nics[nic]]
-                        )
+                        try:
+                            self.middleware.call_sync(
+                                'failover.call_remote', 'interface.disable_capabilities', [nic, to_disable_nics[nic]]
+                            )
+                        except Exception as e:
+                            self.middleware.logger.debug(
+                                f'Failed to disable capabilities for {nic} on remote node: {e}'
+                            )
 
     @accepts(Str('jail'))
     @job(lock=lambda args: f'jail_start:{args[0]}')
@@ -1494,7 +1503,7 @@ async def __event_system(middleware, event_type, args):
                 await middleware.call('jail.start_on_boot')
             except ioc_exceptions.PoolNotActivated:
                 pass
-    elif args['id'] == 'shutdown':
+    elif args['id'] == 'shutdown' and await middleware.call('jail.iocage_set_up'):
         async with SHUTDOWN_LOCK:
             await middleware.call('jail.stop_on_shutdown')
 
