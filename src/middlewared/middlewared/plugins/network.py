@@ -1719,7 +1719,7 @@ class InterfaceService(CRUDService):
                 'failover.call_remote', 'jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]
             )
         )
-        for nic, to_disable in (await self.vm_checks()).items():
+        for nic, to_disable in (await self.middleware.call('vm.device.nic_capability_checks')).items():
             if nic in nics:
                 old = set(nics[nic])
                 old.update(to_disable)
@@ -1728,23 +1728,6 @@ class InterfaceService(CRUDService):
                 nics[nic] = to_disable
         for nic in nics:
             await self.disable_capabilities(nic, nics[nic])
-
-    @private
-    async def vm_checks(self, vm_devices=None):
-        vm_nics = defaultdict(list)
-        system_ifaces = {i['name']: i for i in await self.middleware.run_in_thread(self.query)}
-        conflicts = {'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'}
-        for vm_device in await self.middleware.call(
-            'vm.device.query', [
-                ['dtype', '=', 'NIC'], [
-                    'OR', [['attributes.nic_attach', '=', None], ['attributes.nic_attach', '!^', 'bridge']]
-                ]
-            ]
-        ) if not vm_devices else vm_devices:
-            nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
-            if nic in system_ifaces and set(system_ifaces[nic]['state']['capabilities']) & conflicts:
-                vm_nics[nic] = list(conflicts)
-        return vm_nics
 
     @private
     @accepts(Str('iface'), List('capabilities'))
