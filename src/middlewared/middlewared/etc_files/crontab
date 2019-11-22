@@ -39,9 +39,11 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
         /usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1
     % endif
 
+    % if middleware.call_sync("datastore.query", "system.update", [["upd_autocheck", "=", True]]):
 ${random.randint(0, 59)} \
 ${random.randint(1, 4)} \
 * * * root /usr/local/bin/midclt call update.download > /dev/null 2>&1
+    % endif
 
 @weekly root /usr/local/sbin/update-smart-drivedb > /dev/null 2>&1
 % endif

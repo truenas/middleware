@@ -47,10 +47,7 @@ class QuotaAlertSource(ThreadedAlertSource):
         datasets = sorted(datasets, key=lambda ds: ds["name"])
 
         for dataset in datasets:
-            for quota_property, used_property in [
-                ("quota", "used"),
-                ("refquota", "usedbydataset"),
-            ]:
+            for quota_property in ["quota", "refquota"]:
                 try:
                     quota_value = int(dataset[quota_property]["rawvalue"])
                 except (AttributeError, KeyError, ValueError):
@@ -59,11 +56,15 @@ class QuotaAlertSource(ThreadedAlertSource):
                 if quota_value == 0:
                     continue
 
-                used = int(dataset[used_property]["rawvalue"])
-                try:
-                    used_fraction = 100 * used / quota_value
-                except ZeroDivisionError:
-                    used_fraction = 100
+                if quota_property == "quota":
+                    # We can't use "used" property since it includes refreservation
+                    used = quota_value - int(dataset["available"]["rawvalue"])
+                elif quota_property == "refquota":
+                    used = int(dataset["usedbydataset"]["rawvalue"])
+                else:
+                    raise RuntimeError()
+
+                used_fraction = 100 * used / quota_value
 
                 critical_threshold = dataset[f"org.freenas:{quota_property}_critical"]
                 warning_threshold = dataset[f"org.freenas:{quota_property}_warning"]

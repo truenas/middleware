@@ -281,6 +281,9 @@ def filter_list(_list, filters=None, options=None):
         except IndexError:
             raise MatchNotFound()
 
+    if options.get('offset'):
+        rv = rv[options['offset']:]
+
     if options.get('limit'):
         return rv[:options['limit']]
 

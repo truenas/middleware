@@ -1467,6 +1467,11 @@ class InterfaceService(CRUDService):
             'datastore.delete', 'network.interfaces', [('int_interface', '=', oid)]
         )
 
+        # Let's finally delete the interface
+        netif.destroy_interface(iface['name'])
+
+        return oid
+
     @accepts()
     @pass_app
     async def websocket_local_ip(self, app):
@@ -2221,7 +2226,7 @@ class RouteService(Service):
             Returns:
                 bool: True if the gateway is reachable or otherwise False.
         """
-        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
+        ignore_nics = ('lo', 'tap', 'epair')
         for if_name, iface in list(netif.list_interfaces().items()):
             if not if_name.startswith(ignore_nics):
                 for nic_address in iface.addresses:

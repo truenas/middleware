@@ -3,6 +3,7 @@ from bsd import kld
 from middlewared.schema import Bool, Dict, Int, IPAddr, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list, run
+from middlewared.validators import Netmask
 
 import errno
 import os
@@ -70,9 +71,9 @@ class IPMIService(CRUDService):
 
     @accepts(Int('channel'), Dict(
         'ipmi',
-        IPAddr('ipaddress'),
-        Str('netmask'),
-        IPAddr('gateway'),
+        IPAddr('ipaddress', v6=False),
+        Str('netmask', validators=[Netmask(ipv6=False, prefix_length=False)]),
+        IPAddr('gateway', v6=False),
         Str('password', private=True),
         Bool('dhcp'),
         Int('vlan', null=True),

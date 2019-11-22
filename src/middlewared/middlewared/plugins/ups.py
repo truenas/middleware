@@ -11,7 +11,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.validators import Email, Range
+from middlewared.validators import Email, Range, Port
 
 
 DRIVER_BIN_DIR = '/usr/local/libexec/nut'
@@ -60,6 +60,8 @@ class UPSService(SystemServiceService):
         data['mode'] = data['mode'].upper()
         data['shutdown'] = data['shutdown'].upper()
         data['toemail'] = [v for v in data['toemail'].split(';') if v]
+        host = 'localhost' if data['mode'] == 'MASTER' else data['remotehost']
+        data['complete_identifier'] = f'{data["identifier"]}@{host}:{data["remoteport"]}'
         return data
 
     @accepts()
@@ -171,7 +173,7 @@ class UPSService(SystemServiceService):
             Bool('powerdown'),
             Bool('rmonitor'),
             Int('nocommwarntime', null=True),
-            Int('remoteport'),
+            Int('remoteport', validators=[Port()]),
             Int('shutdowntimer'),
             Int('hostsync', validators=[Range(min=0)]),
             Str('description'),
@@ -211,6 +213,7 @@ class UPSService(SystemServiceService):
         `toemail` is a list of valid email id's on which notification emails are sent.
         """
         config = await self.config()
+        config.pop('complete_identifier')
         old_config = config.copy()
         config.update(data)
         verros, config = await self.validate_data(config, 'ups_update')
@@ -253,12 +256,7 @@ class UPSService(SystemServiceService):
     )
     async def upssched_event(self, notify_type):
         config = await self.config()
-
-        if config['mode'] == 'MASTER':
-            upsc_identifier = f'{config["identifier"]}@localhost:{config["remoteport"]}'
-        else:
-            upsc_identifier = f'{config["identifier"]}@{config["remotehost"]}:{config["remoteport"]}'
-
+        upsc_identifier = config['complete_identifier']
         if notify_type.lower() == 'shutdown':
             # Before we start FSD with upsmon, lets ensure that ups is not ONLINE (OL).
             # There are cases where battery/charger issues can result in ups.status being "OL LB" at the

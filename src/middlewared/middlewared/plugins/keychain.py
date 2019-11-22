@@ -507,10 +507,15 @@ class KeychainCredentialService(CRUDService):
         proc = await run(["ssh-keyscan", "-p", str(data["port"]), "-T", str(data["connect_timeout"]), data["host"]],
                          check=False, encoding="utf8")
         if proc.returncode == 0:
-            try:
-                return process_ssh_keyscan_output(proc.stdout)
-            except Exception:
-                raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}")
+            if proc.stdout:
+                try:
+                    return process_ssh_keyscan_output(proc.stdout)
+                except Exception:
+                    raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}") from None
+            elif proc.stderr:
+                raise CallError(f"ssh-keyscan failed: {proc.stderr!r}")
+            else:
+                raise CallError("SSH timeout")
         else:
             raise CallError(f"ssh-keyscan failed: {(proc.stdout + proc.stderr)!r}")
 

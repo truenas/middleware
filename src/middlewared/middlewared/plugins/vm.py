@@ -600,6 +600,18 @@ class NIC(Device):
             raise CallError(f'{nic_attach} not found.')
         elif nic_attach and nic_attach.startswith('bridge'):
             bridge = interfaces[nic_attach]
+
+        interfaces = netif.list_interfaces()
+        if attach_iface and attach_iface not in interfaces:
+            raise CallError(f'Unable to find {attach_iface} interface.')
+        elif attach_iface and attach_iface.startswith('bridge'):
+            bridge = interfaces[attach_iface]
+            self.set_iface_mtu(bridge, tap)
+            bridge.add_member(tapname)
+            if netif.InterfaceFlags.UP not in bridge.flags:
+                bridge.up()
+            return
+
         else:
             if not nic_attach:
                 try:
@@ -1470,11 +1482,9 @@ class VMService(CRUDService):
                 continue
             break
 
-        if not await self.middleware.call('zfs.snapshot.create', {
+        await self.middleware.call('zfs.snapshot.create', {
             'dataset': zvol, 'name': snapshot_name,
-        }):
-            raise CallError(f'Failed to snapshot {zvol_snapshot}.')
-
+        })
         created_snaps.append(zvol_snapshot)
 
         clone_suffix = name

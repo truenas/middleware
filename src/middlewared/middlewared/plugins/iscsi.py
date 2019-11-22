@@ -396,6 +396,7 @@ class ISCSIPortalService(CRUDService):
         """
         Delete iSCSI Portal `id`.
         """
+        await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
 
         for i, portal in enumerate(await self.middleware.call('iscsi.portal.query', [], {'order_by': ['tag']})):
@@ -499,6 +500,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         """
         Delete iSCSI Authorized Access of `id`.
         """
+        await self._get_instance(id)
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -1099,6 +1101,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         """
         Delete iSCSI initiator of `id`.
         """
+        await self._get_instance(id)
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -1417,6 +1420,7 @@ class iSCSITargetService(CRUDService):
 
         Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
         """
+        await self._get_instance(id)
         for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id]]):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
 
@@ -1519,6 +1523,7 @@ class iSCSITargetToExtentService(CRUDService):
         """
         Delete Associated Target of `id`.
         """
+        await self._get_instance(id)
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )

@@ -163,13 +163,8 @@ class AlertService(Service):
         self.blocked_failover_alerts_until = 0
 
     @private
-    async def initialize(self, load=True):
+    async def load(self):
         is_freenas = await self.middleware.call("system.is_freenas")
-
-        self.node = "A"
-        if not is_freenas:
-            if await self.middleware.call("failover.node") == "B":
-                self.node = "B"
 
         main_sources_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "alert", "source")
         sources_dirs = [os.path.join(overlay_dir, "alert", "source") for overlay_dir in self.middleware.overlay_dirs]
@@ -188,6 +183,15 @@ class AlertService(Service):
             for module in load_modules(services_dir):
                 for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
                     ALERT_SERVICES_FACTORIES[cls.name()] = cls
+
+    @private
+    async def initialize(self, load=True):
+        is_freenas = await self.middleware.call("system.is_freenas")
+
+        self.node = "A"
+        if not is_freenas:
+            if await self.middleware.call("failover.node") == "B":
+                self.node = "B"
 
         self.alerts = []
         if load:
@@ -508,9 +512,10 @@ class AlertService(Service):
         run_failover_related = False
         if product_type == "ENTERPRISE":
             if await self.middleware.call("failover.licensed"):
-                master_node = await self.middleware.call("failover.node")
+                if await self.middleware.call("failover.node") == "B":
+                    master_node = "B"
+                    backup_node = "A"
                 try:
-                    backup_node = await self.middleware.call("failover.call_remote", "failover.node")
                     remote_version = await self.middleware.call("failover.call_remote", "system.version")
                     remote_system_state = await self.middleware.call("failover.call_remote", "system.state")
                     remote_failover_status = await self.middleware.call("failover.call_remote",
@@ -1046,4 +1051,5 @@ class AlertDefaultSettingsService(Service):
 async def setup(middleware):
     middleware.event_register("alert.list", "Sent on alert changes.")
 
+    await middleware.call("alert.load")
     await middleware.call("alert.initialize")

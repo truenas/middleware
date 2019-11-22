@@ -17,16 +17,10 @@ from middlewared.service import job, private, ConfigService, ValidationError, Va
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.plugins.directoryservices import DSStatus
+from middlewared.plugins.directoryservices import DSStatus, SSL
 
 
 _int32 = struct.Struct('!i')
-
-
-class SSL(enum.Enum):
-    NOSSL = 'OFF'
-    USESSL = 'ON'
-    USETLS = 'START_TLS'
 
 
 class NlscdConst(enum.Enum):
@@ -204,7 +198,7 @@ class LDAPQuery(object):
 
                     ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
-                if SSL(self.ldap['ssl']) == SSL.USETLS:
+                if SSL(self.ldap['ssl']) == SSL.USESTARTTLS:
                     try:
                         self._handle.start_tls_s()
 
@@ -426,6 +420,27 @@ class LDAPService(ConfigService):
             data.pop('bindpw')
 
         return data
+
+    @accepts()
+    async def idmap_backend_choices(self):
+        """
+        Returns list of available idmap backends.
+        """
+        return await self.middleware.call('directoryservices.idmap_backend_choices', 'LDAP')
+
+    @accepts()
+    async def schema_choices(self):
+        """
+        Returns list of available LDAP schema choices.
+        """
+        return await self.middleware.call('directoryservices.nss_info_choices', 'LDAP')
+
+    @accepts()
+    async def ssl_choices(self):
+        """
+        Returns list of SSL choices.
+        """
+        return await self.middleware.call('directoryservices.ssl_choices', 'LDAP')
 
     @private
     async def common_validate(self, new, old, verrors):

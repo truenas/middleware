@@ -60,6 +60,7 @@
 #	Samba settings
 #
 : ${SAMBA_CONF:="/usr/local/etc/smb4.conf"}
+: ${SAMBA_SHARE_CONF:="/usr/local/etc/smb4_share.conf"}
 
 
 

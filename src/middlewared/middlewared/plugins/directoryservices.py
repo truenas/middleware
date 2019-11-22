@@ -18,6 +18,36 @@ class DSType(enum.Enum):
     NIS = 'nis'
 
 
+class SSL(enum.Enum):
+    NOSSL = 'OFF'
+    USESSL = 'ON'
+    USESTARTTLS = 'START_TLS'
+
+
+class SASL_Wrapping(enum.Enum):
+    PLAIN = 'PLAIN'
+    SIGN = 'SIGN'
+    SEAL = 'SEAL'
+
+
+class NSS_Info(enum.Enum):
+    SFU = ('SFU', [DSType.AD])
+    SFU20 = ('SFU20', [DSType.AD])
+    RFC2307 = ('RFC2307', [DSType.AD, DSType.LDAP])
+    RFC2307BIS = ('RFC2307BIS', [DSType.LDAP])
+
+
+class IDMAP_Backend(enum.Enum):
+    AD = ('AD', [DSType.AD])
+    AUTORID = ('AUTORID', [DSType.AD])
+    LDAP = ('LDAP', [DSType.AD, DSType.LDAP])
+    NSS = ('NSS', [DSType.AD])
+    RFC2307 = ('RFC2307', [DSType.AD, DSType.LDAP])
+    RID = ('RID', [DSType.AD])
+    SCRIPT = ('SCRIPT', [DSType.AD])
+    TDB = ('TDB', [DSType.AD])
+
+
 class DirectoryServices(Service):
     class Config:
         service = "directoryservices"
@@ -61,6 +91,44 @@ class DirectoryServices(Service):
         ds_state.update(new)
         self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state)
         return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
+
+    @private
+    async def dstype_choices(self):
+        return [x.value.upper() for x in list(DSType)]
+
+    @private
+    async def ssl_choices(self, dstype):
+        return [] if DSType(dstype.lower()) == DSType.NIS else [x.value for x in list(SSL)]
+
+    @private
+    async def sasl_wrapping_choices(self, dstype):
+        return [] if DSType(dstype.lower()) == DSType.NIS else [x.value for x in list(SASL_Wrapping)]
+
+    @private
+    async def nss_info_choices(self, dstype):
+        ds = DSType(dstype.lower())
+        ret = []
+        if ds == DSType.NIS:
+            return ret
+
+        for x in list(NSS_Info):
+            if ds in x.value[1]:
+                ret.append(x.value[0])
+
+        return ret
+
+    @private
+    async def idmap_backend_choices(self, dstype):
+        ds = DSType(dstype.lower())
+        ret = []
+        if ds == DSType.NIS:
+            return ret
+
+        for x in list(IDMAP_Backend):
+            if ds in x.value[1]:
+                ret.append(x.value[0])
+
+        return ret
 
 
 def setup(middleware):

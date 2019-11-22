@@ -37,6 +37,31 @@ class IpAddress:
             raise ValueError('Not a valid IP address')
 
 
+class Netmask:
+    def __init__(self, ipv4=True, ipv6=True, prefix_length=True):
+        self.ipv4 = ipv4
+        self.ipv6 = ipv6
+        self.prefix_length = prefix_length
+
+    def __call__(self, value):
+        if not self.prefix_length and value.isdigit():
+            raise ValueError('Please specify expanded netmask i.e 255.255.255.128.')
+
+        ip = '1.1.1.1'
+        if self.ipv4 and self.ipv6 and value.isdigit():
+            if int(value) > 32:
+                ip = '2001:db8::'
+        elif self.ipv6 and not self.ipv4:
+            # ipaddress module does not currently support ipv6 expanded netmasks
+            # TODO: Convert expanded netmasks to prefix lengths for ipv6 till ipaddress adds support
+            ip = '2001:db8::'
+
+        try:
+            ipaddress.ip_network(f'{ip}/{value}', strict=False)
+        except ValueError:
+            raise ValueError('Not a valid netmask')
+
+
 class Time:
     def __call__(self, value):
         try:

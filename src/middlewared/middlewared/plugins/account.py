@@ -759,6 +759,7 @@ class UserService(CRUDService):
 
         sshpath = f'{homedir}/.ssh'
         keysfile = f'{sshpath}/authorized_keys'
+        gid = -1
 
         pubkey = user.get('sshpubkey') or ''
         pubkey = pubkey.strip()
@@ -787,11 +788,17 @@ class UserService(CRUDService):
         # Make extra sure to enforce correct mode on .ssh directory.
         # stripping the ACL will allow subsequent chmod calls to succeed even if
         # dataset aclmode is restricted.
+        try:
+            gid = (await self.middleware.call('group.get_group_obj', {'groupname': group}))['gr_gid']
+        except Exception:
+            # leaving gid at -1 avoids altering the GID value.
+            self.logger.debug("Failed to convert %s to gid", group, exc_info=True)
+
         await self.middleware.call('filesystem.setperm', {
             'path': sshpath,
             'mode': str(700),
             'uid': user['uid'],
-            'gid': group,
+            'gid': gid,
             'options': {'recursive': True, 'stripacl': True}
         })
 
@@ -897,7 +904,7 @@ class GroupService(CRUDService):
 
         `users` is a list of user ids (`id` attribute from `user.query`).
         """
-
+        allow_duplicate_gid = data['allow_duplicate_gid']
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_create')
         verrors.check()
@@ -918,7 +925,18 @@ class GroupService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        await self.middleware.call('smb.groupmap_add', data['name'])
+        try:
+            await self.middleware.call('smb.groupmap_add', data['name'])
+        except Exception:
+            """
+            Samba's group mapping database does not allow duplicate gids.
+            Unfortunately, we don't get a useful error message at -d 0.
+            """
+            if not allow_duplicate_gid:
+                raise
+            else:
+                self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
+                                  data['name'], data['gid'])
 
         return pk
 
