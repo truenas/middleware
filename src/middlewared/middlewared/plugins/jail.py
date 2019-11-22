@@ -1053,9 +1053,10 @@ class JailService(CRUDService):
         """
         jail_nics = defaultdict(set)
         system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
-        for jail in await self.middleware.call(
-            'jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]
-        ) if not jails else jails:
+        params = ['jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]]
+        if await self.middleware.call('failover.status') != 'MASTER':
+            params = params.insert(0, 'failover.call_remote')
+        for jail in await self.middleware.call(*params) if not jails else jails:
             nic = await self.middleware.call(
                 f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface',
                 jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
