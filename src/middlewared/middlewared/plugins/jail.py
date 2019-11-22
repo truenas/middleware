@@ -855,11 +855,25 @@ class JailService(CRUDService):
     )
     def do_delete(self, jail, options):
         """Takes a jail and destroys it."""
+        jail_config = self.middleware.call_sync('jail._get_instance', jail)
         _, _, iocage = self.check_jail_existence(jail)
 
         # TODO: Port children checking, release destroying.
         iocage.destroy_jail(force=options.get('force'))
 
+        if (jail_config['nat'] or jail_config['vnet']) and not self.middleware.call_sync(
+            'system.is_freenas'
+        ) and self.middleware.call_sync('failover.licensed') and self.middleware.call_sync(
+            'failover.config'
+        )['disabled']:
+            nics = self.middleware.call_sync('jail.nic_capability_checks')
+            if jail_config['nat']:
+                nic = self.retrieve_nat_interface(jail_config['nat_interface'])
+            else:
+                nic = self.retrieve_vnet_interface(jail_config['vnet_default_interface'])
+            iface = self.middleware.call_sync('interface.query', [['name', '=', nic]])
+            if iface and not iface[0]['disable_offload_capabilities'] and nic not in nics:
+                self.middleware.call_sync('interface.enable_capabilities', nic)
         return True
 
     @private
