@@ -1344,8 +1344,32 @@ class InterfaceService(CRUDService):
         if new['disable_offload_capabilities'] != iface['disable_offload_capabilities']:
             if new['disable_offload_capabilities']:
                 await self.middleware.call('interface.disable_capabilities', iface['name'])
-            elif not any(await self.middleware.call(f'{srv}.nic_capability_checks' for srv in ('jail', 'vm'))):
-                await self.middleware.call('interface.enable_capabilities', iface['name'])
+                try:
+                    await self.middleware.call(
+                        'failover.call_remote', 'interface.disable_capabilities', [iface['name']]
+                    )
+                except Exception as e:
+                    self.middleware.logger.debug(
+                        f'Failed to disable capabilities for {iface["name"]} on remote node: {e}'
+                    )
+            else:
+                enabled = await self.middleware.call('system.is_freenas')
+                if not enabled:
+                    enabled = not await self.middleware.call('failover.licensed')
+                    if not enabled and not any(
+                        await self.middleware.call(f'{srv}.nic_capability_checks' for srv in ('jail', 'vm'))
+                    ):
+                        enabled = True
+                if enabled:
+                    await self.middleware.call('interface.enable_capabilities', iface['name'])
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote', 'interface.enable_capabilities', [iface['name']]
+                        )
+                    except Exception as e:
+                        self.middleware.logger.debug(
+                            f'Failed to enable capabilities for {iface["name"]} on remote node: {e}'
+                        )
 
         return await self._get_instance(new['name'])
 
@@ -1766,11 +1790,11 @@ class InterfaceService(CRUDService):
             await self.middleware.run_in_thread(self.disable_capabilities, nic, nics[nic])
 
     @private
-    @accepts(Str('iface'), List('capabilities', default=netif.InterfaceCapability.__members__))
+    @accepts(Str('iface'), List('capabilities', default=[c for c in netif.InterfaceCapability.__members__]))
     def enable_capabilities(self, iface, capabilities):
         enabled = []
         iface = netif.get_interface(iface)
-        for capability in map(lambda c: netif.InterfaceCapability(c), capabilities):
+        for capability in map(lambda c: getattr(netif.InterfaceCapability, c), capabilities):
             current = iface.capabilities
             if capability in current:
                 continue

@@ -846,6 +846,28 @@ class JailService(CRUDService):
 
         return True
 
+    @private
+    def enable_capabilities_for_nic(self, jail_config):
+        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync(
+            'failover.licensed'
+        ) and self.middleware.call_sync('failover.config')['disabled']:
+            nics = self.middleware.call_sync('jail.nic_capability_checks')
+            if jail_config['nat']:
+                nic = self.retrieve_nat_interface(jail_config['nat_interface'])
+            else:
+                nic = self.retrieve_vnet_interface(jail_config['vnet_default_interface'])
+            iface = self.middleware.call_sync(
+                'interface.query', [['name', '=', nic], ['disable_offload_capabilities', '=', False]]
+            )
+            if iface and nic not in nics:
+                self.middleware.call_sync('interface.enable_capabilities', nic)
+                try:
+                    self.middleware.call_sync('failover.call_remote', 'interface.enable_capabilities', [nic])
+                except Exception as e:
+                    self.middleware.logger.debug(
+                        f'Failed to enable capabilities for {nic} on remote node: {e}'
+                    )
+
     @accepts(
         Str('jail'),
         Dict(
@@ -860,20 +882,8 @@ class JailService(CRUDService):
 
         # TODO: Port children checking, release destroying.
         iocage.destroy_jail(force=options.get('force'))
-
-        if (jail_config['nat'] or jail_config['vnet']) and not self.middleware.call_sync(
-            'system.is_freenas'
-        ) and self.middleware.call_sync('failover.licensed') and self.middleware.call_sync(
-            'failover.config'
-        )['disabled']:
-            nics = self.middleware.call_sync('jail.nic_capability_checks')
-            if jail_config['nat']:
-                nic = self.retrieve_nat_interface(jail_config['nat_interface'])
-            else:
-                nic = self.retrieve_vnet_interface(jail_config['vnet_default_interface'])
-            iface = self.middleware.call_sync('interface.query', [['name', '=', nic]])
-            if iface and not iface[0]['disable_offload_capabilities'] and nic not in nics:
-                self.middleware.call_sync('interface.enable_capabilities', nic)
+        if jail_config['nat'] or jail_config['vnet']:
+            self.enable_capabilities_for_nic(jail_config)
         return True
 
     @private
