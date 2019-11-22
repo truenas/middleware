@@ -1146,7 +1146,7 @@ class FailoverService(ConfigService):
             else:
                 namespace = 'update'
             remote.call(f'{namespace}.destroy_upload_location')
-            remote_path = remote.call(f'{namespace}.create_upload_location')
+            remote_path = remote.call(f'{namespace}.create_upload_location') or '/var/tmp/firmware'
 
             # Only send files to standby:
             # 1. Its a manual upgrade which means it needs to go through master first
