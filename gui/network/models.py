@@ -276,6 +276,10 @@ class Interfaces(Model):
         default=False,
         verbose_name=_("Critical for Failover"),
     )
+    int_disable_offload_capabilities = models.BooleanField(
+        default=False,
+        verbose_name=_('Disable offload capabilities'),
+    )
     int_group = models.IntegerField(
         verbose_name=_('Group'),
         choices=[(i, i) for i in range(1, 33)],
