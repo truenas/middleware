@@ -1269,13 +1269,21 @@ class VMDeviceService(CRUDService):
             nics = await self.nic_capability_checks([vm_device])
             if nics:
                 if failover_enabled:
-                    raise CallError('Failover must be disabled before attempting to create/update VM NIC device')
+                    raise CallError(
+                        'Failover must be disabled before attempting to create/update VM NIC device '
+                        f'because of the following nics: {",".join(nics)}'
+                    )
                 else:
                     for nic in nics:
                         await self.middleware.call('interface.disable_capabilities', nic, nics[nic])
-                        await self.middleware.call(
-                            'failover.call_remote', 'interface.disable_capabilities', [nic, nics[nic]]
-                        )
+                        try:
+                            await self.middleware.call(
+                                'failover.call_remote', 'interface.disable_capabilities', [nic, nics[nic]]
+                            )
+                        except Exception as e:
+                            self.middleware.logger.debug(
+                                f'Failed to disable capabilities for {nic} on remote node: {e}'
+                            )
 
     @private
     async def nic_capability_checks(self, vm_devices=None):
@@ -1629,12 +1637,13 @@ class VMDeviceService(CRUDService):
             elif not await self.disk_uniqueness_integrity_check(device, vm_instance):
                 verrors.add('attributes.path', f'{vm_instance["name"]} has "{path}" already configured')
         elif device.get('dtype') == 'NIC':
-            await self.nic_check(device)
             nic = device['attributes'].get('nic_attach')
             if nic:
                 nic_choices = await self.middleware.call('vm.device.nic_attach_choices')
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
+            if not verrors:
+                await self.nic_check(device)
         elif device.get('dtype') == 'VNC':
             if vm_instance['bootloader'] != 'UEFI':
                 verrors.add('dtype', 'VNC only works with UEFI bootloader.')

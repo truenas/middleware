@@ -1711,12 +1711,21 @@ class InterfaceService(CRUDService):
             self.logger.info('Failed to sync routes', exc_info=True)
 
         if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
-            await self.nic_capabilities_check()
+            await self.disable_evil_nic_capabilities()
 
         await self.middleware.call_hook('interface.post_sync')
 
     @private
-    async def nic_capabilities_check(self):
+    async def disable_evil_nic_capabilities(self):
+        """
+        When certain NIC's are added to a bridge or other members are added to a bridge when these NIC's are already
+        on the bridge, bridge brings all interfaces into lowest common denominator which results in a network hiccup.
+        This hiccup in case of failover makes backup node come ONLINE as master as there's a hiccup in the
+        master/backup communication. This scenario is common to vnet/nat based jails and VM's, this method checks
+        if the user has such VM's or jails which can bring forward this case and disables certain capabilities for
+        the affected NIC's so that the user is not affected by the interruption which is caused when these NIC's
+        experience a hiccup in the network traffic.
+        """
         nics = await self.middleware.call(
             'jail.nic_capability_checks',
             None if await self.middleware.call('failover.status') == 'MASTER' else await self.middleware.call(
@@ -1731,13 +1740,17 @@ class InterfaceService(CRUDService):
             else:
                 nics[nic] = to_disable
         for nic in nics:
-            await self.disable_capabilities(nic, nics[nic])
+            await self.middleware.run_in_thread(self.disable_capabilities, nic, nics[nic])
 
     @private
     @accepts(Str('iface'), List('capabilities'))
-    async def disable_capabilities(self, iface, capabilities):
-        await self._get_instance(iface)
+    def disable_capabilities(self, iface, capabilities):
+        self.middleware.call_sync('interface._get_instance', iface)
         iface = netif.get_interface(iface)
+        self.middleware.logger.debug(
+            f'Disabling {",".join([c.name for c in iface.capabilities if c.name in capabilities])} '
+            f'capabilities for {iface}'
+        )
         iface.capabilities = {c for c in iface.capabilities if c.name not in capabilities}
 
     @private
