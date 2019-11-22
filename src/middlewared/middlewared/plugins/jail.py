@@ -28,7 +28,7 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list, run
 from middlewared.validators import IpInUse, MACAddr
 
-from collections import deque, Iterable
+from collections import defaultdict, deque, Iterable
 
 BRANCH_REGEX = re.compile(r'\d+\.\d-RELEASE')
 
@@ -1042,6 +1042,35 @@ class JailService(CRUDService):
         return self.retrieve_default_iface() if iface == 'none' else iface
 
     @private
+    async def nic_capability_checks(self, jails=None):
+        """
+        For vnet/nat based jails, when jail is started, if NIC has certain capabilities set, we experience a hiccup
+        in the network traffic which for failover can result in backup node coming online. This method returns
+        interfaces which will be affected by this based on the jails user has.
+        """
+        jail_nics = defaultdict(set)
+        system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
+        for jail in await self.middleware.call(
+            'jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]
+        ) if not jails else jails:
+            nic = await self.middleware.call(
+                f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface',
+                jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
+            )
+            if nic in system_ifaces:
+                conflicts = {'TSO4', 'TSO6', 'VLAN_HWTSO'} if jail['nat'] else {
+                    'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'
+                }
+                needs_update = set(system_ifaces[nic]['state']['capabilities']) & conflicts
+                if not jail['nat']:
+                    bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
+                    if not bridges or not bridges[0]:
+                        continue
+                if needs_update:
+                    jail_nics[nic].update(conflicts)
+        return {k: list(v) for k, v in jail_nics.items()}
+
+    @private
     def start_failover_checks(self, jail_config):
         jail_config = {
             k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
@@ -1054,7 +1083,7 @@ class JailService(CRUDService):
             ) and self.middleware.call_sync('failover.licensed')
         ):
             failover_enabled = not self.middleware.call_sync('failover.config')['disabled']
-            to_disable_nics = self.middleware.call_sync('interface.jail_checks', [jail_config])
+            to_disable_nics = self.middleware.call_sync('jail.nic_capability_checks', [jail_config])
             if to_disable_nics:
                 if failover_enabled:
                     raise CallError(f'Failover must be disabled before creating/updating {jail_config["id"]}')
