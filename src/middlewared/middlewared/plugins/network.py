@@ -1726,12 +1726,7 @@ class InterfaceService(CRUDService):
         the affected NIC's so that the user is not affected by the interruption which is caused when these NIC's
         experience a hiccup in the network traffic.
         """
-        nics = await self.middleware.call(
-            'jail.nic_capability_checks',
-            None if await self.middleware.call('failover.status') == 'MASTER' else await self.middleware.call(
-                'failover.call_remote', 'jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]
-            )
-        )
+        nics = await self.middleware.call('jail.nic_capability_checks')
         for nic, to_disable in (await self.middleware.call('vm.device.nic_capability_checks')).items():
             if nic in nics:
                 old = set(nics[nic])
