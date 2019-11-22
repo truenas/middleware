@@ -1469,11 +1469,11 @@ class VMDeviceService(CRUDService):
                 raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
 
     async def enable_capabilities_for_nic(self, vm_device):
-        if vm_device['dtype'] == 'NIC' and not self.middleware.call_sync(
+        if vm_device['dtype'] == 'NIC' and not await self.middleware.call(
             'system.is_freenas'
-        ) and self.middleware.call_sync('failover.licensed') and self.middleware.call_sync(
+        ) and await self.middleware.call('failover.licensed') and (await self.middleware.call(
             'failover.config'
-        )['disabled']:
+        ))['disabled']:
             try:
                 nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
             except Exception:
@@ -1481,9 +1481,17 @@ class VMDeviceService(CRUDService):
             if (nic or '').startswith('bridge'):
                 return
             nics = await self.nic_capability_checks()
-            iface = self.middleware.call_sync('interface.query', [['name', '=', nic]])
-            if iface and not iface[0]['disable_offload_capabilities'] and nic not in nics:
-                self.middleware.call_sync('interface.enable_capabilities', nic)
+            iface = await self.middleware.call(
+                'interface.query', [['name', '=', nic], ['disable_offload_capabilities', '=', False]]
+            )
+            if iface and nic not in nics:
+                await self.middleware.call('interface.enable_capabilities', nic)
+                try:
+                    await self.middleware.call('failover.call_remote', 'interface.enable_capabilities', [nic])
+                except Exception as e:
+                    self.middleware.logger.debug(
+                        f'Failed to enable capabilities for {nic} on remote node: {e}'
+                    )
 
     @accepts(
         Int('id'),
