@@ -1266,7 +1266,7 @@ class VMDeviceService(CRUDService):
     async def nic_check(self, vm_device):
         if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
             failover_enabled = not (await self.middleware.call('failover.config'))['disabled']
-            nics = await self.middleware.call('interface.vm_checks', [vm_device])
+            nics = await self.nic_capability_checks([vm_device])
             if nics:
                 if failover_enabled:
                     raise CallError('Failover must be disabled before attempting to create/update VM NIC device')
@@ -1276,6 +1276,31 @@ class VMDeviceService(CRUDService):
                         await self.middleware.call(
                             'failover.call_remote', 'interface.disable_capabilities', [nic, nics[nic]]
                         )
+
+    @private
+    async def nic_capability_checks(self, vm_devices=None):
+        """
+        For NIC devices, if VM is started and NIC is added to a bridge, if desired nic_attach NIC has certain
+        capabilities set, we experience a hiccup in the network traffic which for failover can result in backup node
+        coming online. This method returns interfaces which will be affected by this.
+        """
+        vm_nics = {}
+        system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
+        conflicts = {'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'}
+        for vm_device in await self.middleware.call(
+            'vm.device.query', [
+                ['dtype', '=', 'NIC'], [
+                    'OR', [['attributes.nic_attach', '=', None], ['attributes.nic_attach', '!^', 'bridge']]
+                ]
+            ]
+        ) if not vm_devices else vm_devices:
+            try:
+                nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
+            except Exception:
+                nic = None
+            if nic in system_ifaces and set(system_ifaces[nic]['state']['capabilities']) & conflicts:
+                vm_nics[nic] = list(conflicts)
+        return vm_nics
 
     @private
     async def create_resource(self, device, old=None):
