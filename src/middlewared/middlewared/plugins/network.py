@@ -1078,6 +1078,7 @@ class InterfaceService(CRUDService):
             'group': data.get('failover_group'),
             'options': data.get('options', ''),
             'mtu': data.get('mtu') or None,
+            'disable_offload_capabilities': data.get('disable_offload_capabilities') or False,
         }
 
     async def __create_interface_datastore(self, data, attrs):
@@ -1341,35 +1342,38 @@ class InterfaceService(CRUDService):
                     )
             raise
 
-        if new['disable_offload_capabilities'] != iface['disable_offload_capabilities']:
+        if new.get('disable_offload_capabilities') != iface.get('disable_offload_capabilities'):
+            failover_licensed = not await self.middleware.call('system.is_freenas') and await self.middleware.call(
+                'failover.licensed'
+            )
             if new['disable_offload_capabilities']:
                 await self.middleware.call('interface.disable_capabilities', iface['name'])
-                try:
-                    await self.middleware.call(
-                        'failover.call_remote', 'interface.disable_capabilities', [iface['name']]
-                    )
-                except Exception as e:
-                    self.middleware.logger.debug(
-                        f'Failed to disable capabilities for {iface["name"]} on remote node: {e}'
-                    )
-            else:
-                enabled = await self.middleware.call('system.is_freenas')
-                if not enabled:
-                    enabled = not await self.middleware.call('failover.licensed')
-                    if not enabled and not any(
-                        await self.middleware.call(f'{srv}.nic_capability_checks' for srv in ('jail', 'vm'))
-                    ):
-                        enabled = True
-                if enabled:
-                    await self.middleware.call('interface.enable_capabilities', iface['name'])
+                if failover_licensed:
                     try:
                         await self.middleware.call(
-                            'failover.call_remote', 'interface.enable_capabilities', [iface['name']]
+                            'failover.call_remote', 'interface.disable_capabilities', [iface['name']]
                         )
                     except Exception as e:
                         self.middleware.logger.debug(
-                            f'Failed to enable capabilities for {iface["name"]} on remote node: {e}'
+                            f'Failed to disable capabilities for {iface["name"]} on remote node: {e}'
                         )
+            else:
+                enabled = not failover_licensed
+                if not enabled and not await self.middleware.call(
+                    'jail.nic_capability_checks', None, False
+                ) and not await self.middleware.call('vm.device.nic_capability_checks', None, False):
+                    enabled = True
+                if enabled:
+                    await self.middleware.call('interface.enable_capabilities', iface['name'])
+                    if failover_licensed:
+                        try:
+                            await self.middleware.call(
+                                'failover.call_remote', 'interface.enable_capabilities', [iface['name']]
+                            )
+                        except Exception as e:
+                            self.middleware.logger.debug(
+                                f'Failed to enable capabilities for {iface["name"]} on remote node: {e}'
+                            )
 
         return await self._get_instance(new['name'])
 
@@ -1768,6 +1772,10 @@ class InterfaceService(CRUDService):
         await self.middleware.call_hook('interface.post_sync')
 
     @private
+    async def nic_capabilities(self):
+        return [c for c in netif.InterfaceCapability.__members__]
+
+    @private
     async def disable_evil_nic_capabilities(self):
         """
         When certain NIC's are added to a bridge or other members are added to a bridge when these NIC's are already
@@ -1815,11 +1823,10 @@ class InterfaceService(CRUDService):
     def disable_capabilities(self, iface, capabilities):
         self.middleware.call_sync('interface._get_instance', iface)
         iface = netif.get_interface(iface)
-        self.middleware.logger.debug(
-            f'Disabling {",".join([c.name for c in iface.capabilities if c.name in capabilities])} '
-            f'capabilities for {iface}'
-        )
+        disabled_capabilities = [c.name for c in iface.capabilities if c.name in capabilities]
         iface.capabilities = {c for c in iface.capabilities if c.name not in capabilities}
+        if disabled_capabilities:
+            self.middleware.logger.debug(f'Disabling {",".join(disabled_capabilities)} capabilities for {iface}')
 
     @private
     def alias_to_addr(self, alias):

@@ -844,6 +844,12 @@ class JailService(CRUDService):
         if name:
             iocage.rename(name)
 
+        new = self.middleware.call_sync('jail._get_instance', name or jail['id'])
+        if any(new[k] != jail[k] and not new[k] for k in ('vnet', 'nat')) and not self.middleware.call_sync(
+            'system.is_freenas'
+        ) and self.middleware.call_sync('failover.licensed'):
+            # We do this to to re-enable capabilities
+            self.enable_capabilities_for_nic(jail)
         return True
 
     @private
@@ -851,7 +857,7 @@ class JailService(CRUDService):
         if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync(
             'failover.licensed'
         ) and self.middleware.call_sync('failover.config')['disabled']:
-            nics = self.middleware.call_sync('jail.nic_capability_checks')
+            nics = self.middleware.call_sync('jail.nic_capability_checks', None, False)
             if jail_config['nat']:
                 nic = self.retrieve_nat_interface(jail_config['nat_interface'])
             else:
@@ -859,10 +865,16 @@ class JailService(CRUDService):
             iface = self.middleware.call_sync(
                 'interface.query', [['name', '=', nic], ['disable_offload_capabilities', '=', False]]
             )
-            if iface and nic not in nics:
-                self.middleware.call_sync('interface.enable_capabilities', nic)
+            if iface:
+                enable = [
+                    c for c in self.middleware.call_sync('interface.nic_capabilities')
+                    if c not in nics.get(nic, []) and c not in iface[0]['state']['capabilities']
+                ]
+                if not enable:
+                    return
+                self.middleware.call_sync('interface.enable_capabilities', nic, enable)
                 try:
-                    self.middleware.call_sync('failover.call_remote', 'interface.enable_capabilities', [nic])
+                    self.middleware.call_sync('failover.call_remote', 'interface.enable_capabilities', [nic, enable])
                 except Exception as e:
                     self.middleware.logger.debug(
                         f'Failed to enable capabilities for {nic} on remote node: {e}'
@@ -1069,7 +1081,7 @@ class JailService(CRUDService):
         return self.retrieve_default_iface() if iface == 'none' else iface
 
     @private
-    async def nic_capability_checks(self, jails=None):
+    async def nic_capability_checks(self, jails=None, check_system_iface=True):
         """
         For vnet/nat based jails, when jail is started, if NIC has certain capabilities set, we experience a hiccup
         in the network traffic which for failover can result in backup node coming online. This method returns
@@ -1078,9 +1090,9 @@ class JailService(CRUDService):
         jail_nics = defaultdict(set)
         system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
         params = ['jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]]
-        if await self.middleware.call('failover.status') != 'MASTER':
+        if await self.middleware.call('failover.status') == 'BACKUP':
             params = ['failover.call_remote', params[0], [params[1]]]
-        for jail in await self.middleware.call(*params) if not jails else jails:
+        for jail in (await self.middleware.call(*params) if not jails else jails):
             nic = await self.middleware.call(
                 f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface',
                 jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
@@ -1089,12 +1101,11 @@ class JailService(CRUDService):
                 conflicts = {'TSO4', 'TSO6', 'VLAN_HWTSO'} if jail['nat'] else {
                     'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'
                 }
-                needs_update = set(system_ifaces[nic]['state']['capabilities']) & conflicts
                 if not jail['nat']:
                     bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
                     if not bridges or not bridges[0]:
                         continue
-                if needs_update:
+                if not check_system_iface or set(system_ifaces[nic]['state']['capabilities']) & conflicts:
                     jail_nics[nic].update(conflicts)
         return {k: list(v) for k, v in jail_nics.items()}
 
