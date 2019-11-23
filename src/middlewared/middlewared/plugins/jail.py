@@ -845,9 +845,13 @@ class JailService(CRUDService):
             iocage.rename(name)
 
         new = self.middleware.call_sync('jail._get_instance', name or jail['id'])
-        if any(new[k] != jail[k] and not new[k] for k in ('vnet', 'nat')) and not self.middleware.call_sync(
-            'system.is_freenas'
-        ) and self.middleware.call_sync('failover.licensed'):
+        if (
+            any(new[k] != jail[k] for k in ('vnet', 'nat')) or (
+                (new['vnet'] and new['vnet_default_interface'] != jail['vnet_default_interface']) or (
+                    new['nat'] and new['nat_interface'] != jail['nat_interface']
+                )
+            )
+        ) and not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
             # We do this to to re-enable capabilities
             self.enable_capabilities_for_nic(jail)
         return True
