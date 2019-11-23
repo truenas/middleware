@@ -1294,7 +1294,7 @@ class VMDeviceService(CRUDService):
                             )
 
     @private
-    async def nic_capability_checks(self, vm_devices=None):
+    async def nic_capability_checks(self, vm_devices=None, check_system_iface=True):
         """
         For NIC devices, if VM is started and NIC is added to a bridge, if desired nic_attach NIC has certain
         capabilities set, we experience a hiccup in the network traffic which for failover can result in backup node
@@ -1314,7 +1314,9 @@ class VMDeviceService(CRUDService):
                 nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
             except Exception:
                 nic = None
-            if nic in system_ifaces and set(system_ifaces[nic]['state']['capabilities']) & conflicts:
+            if nic in system_ifaces and (
+                not check_system_iface or set(system_ifaces[nic]['state']['capabilities']) & conflicts
+            ):
                 vm_nics[nic] = list(conflicts)
         return vm_nics
 
@@ -1446,6 +1448,7 @@ class VMDeviceService(CRUDService):
 
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
+        await self.enable_capabilities_for_nic(device)
 
         return await self._get_instance(id)
 
@@ -1480,7 +1483,7 @@ class VMDeviceService(CRUDService):
                 nic = None
             if (nic or '').startswith('bridge'):
                 return
-            nics = await self.nic_capability_checks()
+            nics = await self.nic_capability_checks(None, False)
             iface = await self.middleware.call(
                 'interface.query', [['name', '=', nic], ['disable_offload_capabilities', '=', False]]
             )
