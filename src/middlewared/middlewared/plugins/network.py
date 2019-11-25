@@ -1227,6 +1227,16 @@ class InterfaceService(CRUDService):
         await self._common_validation(
             verrors, 'interface_update', new, iface['type'], update=iface
         )
+        failover_licensed = not await self.middleware.call('system.is_freenas') and await self.middleware.call(
+            'failover.licensed'
+        )
+        if failover_licensed and iface.get('disable_offload_capabilities') != new.get('disable_offload_capabilities'):
+            if not new['disable_offload_capabilities']:
+                if iface['name'] in await self.to_disable_evil_nic_capabilities(False):
+                    verrors.add(
+                        'interface_update.disable_offload_capabilities',
+                        f'Capabilities for {oid} cannot be enabled as there are Jail/VM(s) which need them disabled.'
+                    )
         verrors.check()
 
         await self.__save_datastores()
@@ -1359,23 +1369,16 @@ class InterfaceService(CRUDService):
                         )
             else:
                 capabilities = await self.nic_capabilities()
+                await self.middleware.call('interface.enable_capabilities', iface['name'], capabilities)
                 if failover_licensed:
-                    nics = await self.to_disable_evil_nic_capabilities(False)
-                    capabilities = [
-                        c for c in capabilities
-                        if c not in nics.get(iface['name'], []) and c not in iface['state']['capabilities']
-                    ]
-                if capabilities:
-                    await self.middleware.call('interface.enable_capabilities', iface['name'], capabilities)
-                    if failover_licensed:
-                        try:
-                            await self.middleware.call(
-                                'failover.call_remote', 'interface.enable_capabilities', [iface['name'], capabilities]
-                            )
-                        except Exception as e:
-                            self.middleware.logger.debug(
-                                f'Failed to enable capabilities for {iface["name"]} on remote node: {e}'
-                            )
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote', 'interface.enable_capabilities', [iface['name'], capabilities]
+                        )
+                    except Exception as e:
+                        self.middleware.logger.debug(
+                            f'Failed to enable capabilities for {iface["name"]} on remote node: {e}'
+                        )
 
         return await self._get_instance(new['name'])
 
