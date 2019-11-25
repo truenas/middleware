@@ -232,7 +232,7 @@ class DiskService(CRUDService):
         if old['passwd'] != new['passwd']:
             await self.middleware.call('kmip.sync_sed_keys', [id])
 
-        return await self.query([['identifier', '=', id]])
+        return await self.query([['identifier', '=', id]], {'get': True})
 
     @private
     def get_name(self, disk):

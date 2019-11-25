@@ -99,7 +99,7 @@ class KMIPService(ConfigService):
         await self.middleware.call('service.start', 'kmip')
         if new['enabled'] and old['enabled'] != new['enabled']:
             await self.middleware.call('kmip.initialize_keys')
-        if any(old[k] != new[k] for k in ('enabled', 'manage_zfs_keys', 'manage_sed_keys')):
+        if any(old[k] != new[k] for k in ('enabled', 'manage_zfs_keys', 'manage_sed_disks')):
             await self.middleware.call('kmip.sync_keys')
 
         return await self.config()

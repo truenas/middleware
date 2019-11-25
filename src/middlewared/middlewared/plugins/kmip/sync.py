@@ -295,16 +295,37 @@ class KMIPService(ConfigService, KMIPServerMixin):
 
     @private
     async def clear_sync_pending_zfs_keys(self):
-        config = await self.config()
-        clear_ids = [
-            ds['id'] for ds in await self.middleware.call('datastore.query', 'storage.encrypteddataset')
-            if any(not config[k] for k in ('enabled', 'manage_zfs_keys')) and ds['kmip_uid']
-        ]
-        await self.middleware.call('datastore.delete', 'storage.encrypteddataset', [['id', 'in', clear_ids]])
+        await self.middleware.call(
+            'datastore.delete', 'storage.encrypteddataset', [[
+                'id', 'in', [
+                    ds['id'] for ds in await self.middleware.call(
+                        'datastore.query', 'storage.encrypteddataset', [['kmip_uid', '!=', None]]
+                    )
+                ]
+            ]]
+        )
+        self.zfs_keys = {}
+
+    @private
+    async def clear_sync_pending_sed_keys(self):
+        for disk in await self.middleware.call(
+            'datastore.query', 'storage.disk', [['kmip_uid', '!=', None]], {'prefix': 'disk_'}
+        ):
+            await self.middleware.call('datastore.update', 'storage.disk', disk['identifier'], {'disk_kmip_uid': None})
+        adv_config = await self.middleware.call('datastore.config', 'system.advanced')
+        if adv_config['adv_kmip_uid']:
+            await self.middleware.call('datastore.update', 'system.advanced', adv_config['id'], {'adv_kmip_uid': None})
+        self.global_sed_key = ''
+        self.disks_keys = {}
 
     @accepts()
     async def clear_sync_pending_keys(self):
-        await self.clear_sync_pending_zfs_keys()
+        config = await self.config()
+        clear = not config['enabled']
+        if clear or not config['manage_zfs_keys']:
+            await self.clear_sync_pending_zfs_keys()
+        if clear or not config['manage_sed_disks']:
+            await self.clear_sync_pending_sed_keys()
 
     @private
     def delete_kmip_secret_data(self, uid):

@@ -3153,11 +3153,11 @@ class PoolDatasetService(CRUDService):
         datasets = await self.middleware.call('datastore.query', self.dataset_store, filters)
         kmip_conn_active = await self.middleware.call('kmip.test_connection')
         for ds in datasets:
-            if ds['kmip_uid'] and kmip_conn_active:
+            if ds['kmip_uid']:
                 err = False
                 if kmip_conn_active:
                     try:
-                        await self.middleware.call()
+                        await self.middleware.call('kmip.delete_kmip_secret_data', ds['kmip_uid'])
                     except Exception as e:
                         err = str(e)
                 else:
