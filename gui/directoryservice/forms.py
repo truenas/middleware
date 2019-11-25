@@ -432,6 +432,9 @@ class KerberosKeytabCreateForm(ModelForm):
                     encoded = base64.b64encode(keytab_contents).decode()
                 os.unlink(filename)
 
+        with client as c:
+            c.call('kerberos.keytab.legacy_validate', encoded)
+
         return encoded
 
     def save(self):
