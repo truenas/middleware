@@ -859,8 +859,7 @@ class JailService(CRUDService):
     @private
     def enable_capabilities_for_nic(self, jail_config):
         if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
-            nics = self.middleware.call_sync('jail.nic_capability_checks', None, False)
-            nics.update(self.middleware.call_sync('vm.device.nic_capability_checks', None, False))
+            nics = self.middleware.call_sync('interface.to_disable_evil_nic_capabilities', False)
             if jail_config['nat']:
                 nic = self.retrieve_nat_interface(jail_config['nat_interface'])
             else:
@@ -1090,8 +1089,8 @@ class JailService(CRUDService):
     @private
     async def nic_capability_checks(self, jails=None, check_system_iface=True):
         """
-        For vnet/nat based jails, when jail is started, if NIC has certain capabilities set, we experience a hiccup
-        in the network traffic which for failover can result in backup node coming online. This method returns
+        For vnet/nat based jails, when jail is started, if NIC has certain capabilities set, we experience a
+        hiccup in the network traffic which can cause a failover to occur. This method returns
         interfaces which will be affected by this based on the jails user has.
         """
         jail_nics = defaultdict(set)
@@ -1105,7 +1104,7 @@ class JailService(CRUDService):
                 jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
             )
             if nic in system_ifaces:
-                conflicts = {'TSO4', 'TSO6', 'VLAN_HWTSO'} if jail['nat'] else {
+                conflicts = {'LRO', 'TSO4', 'TSO6', 'VLAN_HWTSO'} if jail['nat'] else {
                     'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'
                 }
                 if not jail['nat']:
