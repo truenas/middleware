@@ -252,16 +252,19 @@ class PluginService(CRUDService):
         else:
             verrors = common_validation(self.middleware, data, schema='plugin_create')
 
-        verrors.check()
-
         self.middleware.call_sync(
-            'jail.start_failover_checks', {
+            'jail.failover_checks', {
                 'id': jail_name, 'host_hostuuid': jail_name,
-                **self.middleware.call_sync('jail.default_configuration'), **IOCPlugin.DEFAULT_PROPS, **{
+                **self.middleware.call_sync('jail.default_configuration'),
+                **self.defaults({
+                    'plugin': plugin_name, 'plugin_repository': plugin_repository, 'branch': branch, 'refresh': True
+                })['properties'],
+                **{
                     v.split('=')[0]: v.split('=')[-1] for v in data['props']
                 }
-            }
+            }, verrors, 'plugin_create'
         )
+        verrors.check()
 
         job.set_progress(20, 'Initial validation complete')
 
@@ -701,15 +704,12 @@ class JailService(CRUDService):
 
             verrors = common_validation(self.middleware, options)
 
-            if verrors:
-                raise verrors
-
-            self.start_failover_checks({
+            self.failover_checks({
                 'id': uuid, 'host_hostuuid': uuid, **self.middleware.call_sync('jail.default_configuration'), **{
                     v.split('=')[0]: v.split('=')[-1] for v in options['props']
                 }
-            })
-
+            }, verrors, 'options')
+            verrors.check()
             job.set_progress(20, 'Initial validation complete')
 
         iocage = ioc.IOCage(skip_jails=True)
@@ -825,13 +825,10 @@ class JailService(CRUDService):
         verrors = common_validation(self.middleware, options, True, jail)
 
         if name is not None and plugin:
-            verrors.add('options.plugin',
-                        'Cannot be true while trying to rename')
+            verrors.add('options.plugin', 'Cannot be true while trying to rename')
 
-        if verrors:
-            raise verrors
-
-        self.start_failover_checks({**jail, **options})
+        self.failover_checks({**jail, **options}, verrors, 'options')
+        verrors.check()
 
         for prop, val in options.items():
             p = f"{prop}={val}"
@@ -1117,7 +1114,7 @@ class JailService(CRUDService):
         return {k: list(v) for k, v in jail_nics.items()}
 
     @private
-    def start_failover_checks(self, jail_config):
+    def failover_checks(self, jail_config, verrors, schema):
         if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
             jail_config = {
                 k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
@@ -1126,25 +1123,14 @@ class JailService(CRUDService):
                 jail_config['vnet'] = 1
             if not (jail_config['vnet'] or jail_config['nat']):
                 return
-            failover_enabled = not self.middleware.call_sync('failover.config')['disabled']
             to_disable_nics = self.middleware.call_sync('jail.nic_capability_checks', [jail_config])
             if to_disable_nics:
-                if failover_enabled:
-                    raise CallError(
-                        f'Failover must be disabled before creating/updating {jail_config["id"]} '
-                        f'because of the following nics: {",".join(to_disable_nics)}', errno.EPERM
-                    )
-                else:
-                    for nic in to_disable_nics:
-                        self.middleware.call_sync('interface.disable_capabilities', nic, to_disable_nics[nic])
-                        try:
-                            self.middleware.call_sync(
-                                'failover.call_remote', 'interface.disable_capabilities', [nic, to_disable_nics[nic]]
-                            )
-                        except Exception as e:
-                            self.middleware.logger.debug(
-                                f'Failed to disable capabilities for {nic} on remote node: {e}'
-                            )
+                option = 'nat' if jail_config['nat'] else 'vnet'
+                verrors.add(
+                    f'{schema}.{option}',
+                    f'Capabilities must be disabled for {",".join(to_disable_nics)} interface(s) '
+                    f'in Network->Interfaces section before enabling {option}'
+                )
 
     @accepts(Str('jail'))
     @job(lock=lambda args: f'jail_start:{args[0]}')
