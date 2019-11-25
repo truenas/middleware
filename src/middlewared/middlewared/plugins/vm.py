@@ -1282,7 +1282,7 @@ class VMDeviceService(CRUDService):
                 if failover_enabled:
                     raise CallError(
                         'Failover must be disabled before attempting to create/update VM NIC device '
-                        f'because of the following nics: {",".join(nics)}'
+                        f'because of the following nics: {",".join(nics)}', errno.EPERM
                     )
                 else:
                     for nic in nics:
@@ -1498,7 +1498,8 @@ class VMDeviceService(CRUDService):
                     return
                 if not (await self.middleware.call('failover.config'))['disabled']:
                     raise CallError(
-                        f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled'
+                        f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled',
+                        errno.EPERM
                     )
                 await self.middleware.call('interface.enable_capabilities', nic, enable)
                 try:

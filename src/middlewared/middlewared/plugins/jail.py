@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import errno
 import os
 import subprocess as su
 import itertools
@@ -876,7 +877,8 @@ class JailService(CRUDService):
                     return
                 if not self.middleware.call_sync('failover.config')['disabled']:
                     raise CallError(
-                        f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled'
+                        f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled',
+                        errno.EPERM
                     )
                 self.middleware.call_sync('interface.enable_capabilities', nic, enable)
                 try:
@@ -1131,7 +1133,7 @@ class JailService(CRUDService):
                 if failover_enabled:
                     raise CallError(
                         f'Failover must be disabled before creating/updating {jail_config["id"]} '
-                        f'because of the following nics: {",".join(to_disable_nics)}'
+                        f'because of the following nics: {",".join(to_disable_nics)}', errno.EPERM
                     )
                 else:
                     for nic in to_disable_nics:
