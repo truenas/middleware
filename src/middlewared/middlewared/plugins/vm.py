@@ -1216,7 +1216,10 @@ class VMService(CRUDService):
     @private
     async def start_on_boot(self):
         for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
-            await self.middleware.call('vm.start', vm['id'])
+            try:
+                await self.middleware.call('vm.start', vm['id'])
+            except Exception as e:
+                self.middleware.logger.debug(f'Failed to start VM {vm["name"]}: {e}')
 
 
 class VMDeviceService(CRUDService):
