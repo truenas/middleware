@@ -1302,7 +1302,7 @@ class VMDeviceService(CRUDService):
         """
         vm_nics = {}
         system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
-        conflicts = {'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'}
+        conflicts = {'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6', 'LRO'}
         for vm_device in await self.middleware.call(
             'vm.device.query', [
                 ['dtype', '=', 'NIC'], [

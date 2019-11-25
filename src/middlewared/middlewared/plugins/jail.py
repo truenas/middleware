@@ -1105,7 +1105,7 @@ class JailService(CRUDService):
             )
             if nic in system_ifaces:
                 conflicts = {'LRO', 'TSO4', 'TSO6', 'VLAN_HWTSO'} if jail['nat'] else {
-                    'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6'
+                    'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6', 'LRO',
                 }
                 if not jail['nat']:
                     bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
