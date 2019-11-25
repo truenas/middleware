@@ -1475,26 +1475,31 @@ class VMDeviceService(CRUDService):
     async def enable_capabilities_for_nic(self, vm_device):
         if vm_device['dtype'] == 'NIC' and not await self.middleware.call(
             'system.is_freenas'
-        ) and await self.middleware.call('failover.licensed') and (await self.middleware.call(
-            'failover.config'
-        ))['disabled']:
+        ) and await self.middleware.call('failover.licensed'):
             try:
                 nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
             except Exception:
                 nic = None
             if (nic or '').startswith('bridge'):
                 return
-            nics = await self.nic_capability_checks(None, False)
-            nics.update((await self.middleware.call('jail.nic_capability_checks', None, False)))
+            nics = await self.middleware.call('interface.to_disable_evil_nic_capabilities', False)
             iface = await self.middleware.call(
                 'interface.query', [['name', '=', nic], ['disable_offload_capabilities', '=', False]]
             )
-            if iface and nic not in nics:
-                if not self.middleware.call_sync('failover.config')['disabled']:
-                    raise CallError(f'Failed to enable capabilities for {nic} as failover is enabled')
-                await self.middleware.call('interface.enable_capabilities', nic)
+            if iface:
+                enable = [
+                    c for c in await self.middleware.call('interface.nic_capabilities')
+                    if c not in nics.get(nic, []) and c not in iface[0]['state']['capabilities']
+                ]
+                if not enable:
+                    return
+                if not (await self.middleware.call('failover.config'))['disabled']:
+                    raise CallError(
+                        f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled'
+                    )
+                await self.middleware.call('interface.enable_capabilities', nic,  enable)
                 try:
-                    await self.middleware.call('failover.call_remote', 'interface.enable_capabilities', [nic])
+                    await self.middleware.call('failover.call_remote', 'interface.enable_capabilities', [nic, enable])
                 except Exception as e:
                     self.middleware.logger.debug(
                         f'Failed to enable capabilities for {nic} on remote node: {e}'
