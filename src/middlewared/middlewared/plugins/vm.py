@@ -1286,10 +1286,10 @@ class VMDeviceService(CRUDService):
                     )
                 else:
                     for nic in nics:
-                        await self.middleware.call('interface.disable_capabilities', nic, nics[nic])
+                        await self.middleware.call('interface.disable_capabilities', nic)
                         try:
                             await self.middleware.call(
-                                'failover.call_remote', 'interface.disable_capabilities', [nic, nics[nic]]
+                                'failover.call_remote', 'interface.disable_capabilities', [nic]
                             )
                         except Exception as e:
                             self.middleware.logger.debug(
@@ -1303,9 +1303,8 @@ class VMDeviceService(CRUDService):
         capabilities set, we experience a hiccup in the network traffic which for failover can result in backup node
         coming online. This method returns interfaces which will be affected by this.
         """
-        vm_nics = {}
+        vm_nics = []
         system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
-        conflicts = {'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6', 'LRO'}
         for vm_device in await self.middleware.call(
             'vm.device.query', [
                 ['dtype', '=', 'NIC'], [
@@ -1318,9 +1317,9 @@ class VMDeviceService(CRUDService):
             except Exception:
                 nic = None
             if nic in system_ifaces and (
-                not check_system_iface or set(system_ifaces[nic]['state']['capabilities']) & conflicts
+                not check_system_iface or not system_ifaces[nic]['disable_offload_capabilities']
             ):
-                vm_nics[nic] = list(conflicts)
+                vm_nics.append(nic)
         return vm_nics
 
     @private
