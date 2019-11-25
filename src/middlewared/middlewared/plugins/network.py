@@ -1365,7 +1365,7 @@ class InterfaceService(CRUDService):
                         )
                     except Exception as e:
                         self.middleware.logger.debug(
-                            f'Failed to disable capabilities for {iface["name"]} on remote node: {e}'
+                            f'Failed to disable capabilities for {iface["name"]} on standby storage controller: {e}'
                         )
             else:
                 capabilities = await self.nic_capabilities()
@@ -1377,7 +1377,7 @@ class InterfaceService(CRUDService):
                         )
                     except Exception as e:
                         self.middleware.logger.debug(
-                            f'Failed to enable capabilities for {iface["name"]} on remote node: {e}'
+                            f'Failed to enable capabilities for {iface["name"]} on standby storage controller: {e}'
                         )
 
         return await self._get_instance(new['name'])
@@ -1775,9 +1775,6 @@ class InterfaceService(CRUDService):
         except Exception:
             self.logger.info('Failed to sync routes', exc_info=True)
 
-        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
-            await self.disable_evil_nic_capabilities()
-
         await self.middleware.call_hook('interface.post_sync')
 
     @private
@@ -1785,7 +1782,7 @@ class InterfaceService(CRUDService):
         return [c for c in netif.InterfaceCapability.__members__]
 
     @private
-    async def disable_evil_nic_capabilities(self):
+    async def to_disable_evil_nic_capabilities(self, check_iface=True):
         """
         When certain NIC's are added to a bridge or other members are added to a bridge when these NIC's are already
         on the bridge, bridge brings all interfaces into lowest common denominator which results in a network hiccup.
@@ -1795,11 +1792,6 @@ class InterfaceService(CRUDService):
         the affected NIC's so that the user is not affected by the interruption which is caused when these NIC's
         experience a hiccup in the network traffic.
         """
-        for nic in await self.to_disable_evil_nic_capabilities():
-            await self.middleware.call('interface.disable_capabilities', nic)
-
-    @private
-    async def to_disable_evil_nic_capabilities(self, check_iface=True):
         nics = set(await self.middleware.call('jail.nic_capability_checks', None, check_iface))
         nics.update(await self.middleware.call('vm.device.nic_capability_checks', None, check_iface))
         return list(nics)
