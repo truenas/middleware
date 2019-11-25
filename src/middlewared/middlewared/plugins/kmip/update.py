@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.service import accepts, ConfigService, private, ValidationErrors
+from middlewared.service import accepts, CallError, ConfigService, private, ValidationErrors
 from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Port
 
@@ -36,6 +36,7 @@ class KMIPService(ConfigService):
             Bool('force_clear'),
             Bool('manage_sed_disks'),
             Bool('manage_zfs_keys'),
+            Bool('change_server'),
             Bool('validate'),
             Int('certificate', null=True),
             Int('certificate_authority', null=True),
@@ -77,8 +78,12 @@ class KMIPService(ConfigService):
             if not await self.middleware.call('kmip.test_connection', new):
                 verrors.add('kmip_update.server', f'Unable to connect to {new["server"]} KMIP server.')
 
+        change_server = new.pop('change_server', False)
+        if change_server and new['server'] == old['server']:
+            verrors.add('kmip_update.change_server', 'Please update server field to reflect the new server.')
+
         force_clear = new.pop('force_clear', False)
-        clear_keys = False
+        clear_keys = force_clear if change_server else False
         sync_error = 'KMIP sync is pending, please make sure database and KMIP server ' \
                      'are in sync before proceeding with this operation.'
         if old['enabled'] != new['enabled'] and await self.middleware.call('kmip.kmip_sync_pending'):
@@ -92,6 +97,26 @@ class KMIPService(ConfigService):
         if clear_keys:
             await self.middleware.call('kmip.clear_sync_pending_keys')
 
+        if change_server:
+            # We will first migrate all the keys to local database - once done with that,
+            # we will proceed with pushing it to the new server - we should have the old server
+            # old server -> db
+            # db -> new server
+            # First can be skipped if old server is not reachable and we want to clear keys
+            if await self.middleware.call('kmip.kmip_sync_pending'):
+                try:
+                    await self.middleware.call(
+                        'datastore.update', self._config.datastore, old['id'], {
+                            'manage_zfs_keys': False, 'manage_sed_disks': False
+                        }
+                    )
+                    await self.middleware.call('kmip.sync_keys')
+                except Exception:
+                    await self.middleware.call('datastore.update', self._config.datastore, old['id'], old)
+
+            if await self.middleware.call('kmip.kmip_sync_pending'):
+                raise CallError(sync_error)
+
         await self.middleware.call(
             'datastore.update', self._config.datastore, old['id'], new,
         )
@@ -99,7 +124,7 @@ class KMIPService(ConfigService):
         await self.middleware.call('service.start', 'kmip')
         if new['enabled'] and old['enabled'] != new['enabled']:
             await self.middleware.call('kmip.initialize_keys')
-        if any(old[k] != new[k] for k in ('enabled', 'manage_zfs_keys', 'manage_sed_disks')):
+        if any(old[k] != new[k] for k in ('enabled', 'manage_zfs_keys', 'manage_sed_disks')) or change_server:
             await self.middleware.call('kmip.sync_keys')
 
         return await self.config()
