@@ -159,12 +159,12 @@ class NISService(ConfigService):
             if state in ['LEAVING', 'JOINING']:
                 raise CallError(f'Current state of NIS service is: [{state}]. Wait until operation completes.', errno.EBUSY)
 
-        await self.__set_state(DSStatus['LEAVING'])
+        await self.set_state(DSStatus['LEAVING'])
         await self.middleware.call('datastore.update', 'directoryservice.nis', nis['id'], {'nis_enable': False})
 
         ypbind = await run(['/usr/sbin/service', 'ypbind', 'onestop'], check=False)
         if ypbind.returncode != 0:
-            await self.__set_state(DSStatus['FAULTED'])
+            await self.set_state(DSStatus['FAULTED'])
             errmsg = ypbind.stderr.decode().strip()
             if 'ypbind not running' not in errmsg:
                 raise CallError(f'ypbind failed to stop: [{ypbind.stderr.decode().strip()}]')
@@ -174,7 +174,7 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
-        await self.__set_state(DSStatus['DISABLED'])
+        await self.set_state(DSStatus['DISABLED'])
         self.logger.debug(f'NIS service successfully stopped. Setting state to DISABLED.')
         return True
 
