@@ -5,8 +5,7 @@ from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
-from .service import CallError, CallException, ValidationError, ValidationErrors
-from .service_exception import adapt_exception
+from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit

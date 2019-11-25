@@ -12,8 +12,7 @@ from .client import ejson as json
 from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
-from .service import CallError, ValidationError, ValidationErrors
-from .service_exception import adapt_exception, MatchNotFound
+from .service_exception import adapt_exception, CallError, ValidationError, ValidationErrors, MatchNotFound
 
 
 async def authenticate(middleware, req):
