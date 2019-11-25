@@ -852,7 +852,6 @@ class JailService(CRUDService):
     )
     def do_delete(self, jail, options):
         """Takes a jail and destroys it."""
-        jail_config = self.middleware.call_sync('jail._get_instance', jail)
         _, _, iocage = self.check_jail_existence(jail)
 
         # TODO: Port children checking, release destroying.
@@ -1050,10 +1049,10 @@ class JailService(CRUDService):
         """
         jail_nics = []
         system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
-        params = ['jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]]
-        if await self.middleware.call('failover.status') == 'BACKUP':
-            params = ['failover.call_remote', params[0], [params[1]]]
-        for jail in (await self.middleware.call(*params) if not jails else jails):
+        for jail in (
+            await self.middleware.call('jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]])
+            if not jails else jails
+        ):
             nic = await self.middleware.call(
                 f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface',
                 jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
