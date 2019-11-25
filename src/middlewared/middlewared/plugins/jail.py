@@ -7,7 +7,6 @@ import itertools
 import pathlib
 import json
 import sqlite3
-import errno
 import re
 
 import iocage_lib.iocage as ioc
