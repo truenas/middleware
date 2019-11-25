@@ -1497,7 +1497,7 @@ class VMDeviceService(CRUDService):
                     raise CallError(
                         f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled'
                     )
-                await self.middleware.call('interface.enable_capabilities', nic,  enable)
+                await self.middleware.call('interface.enable_capabilities', nic, enable)
                 try:
                     await self.middleware.call('failover.call_remote', 'interface.enable_capabilities', [nic, enable])
                 except Exception as e:
