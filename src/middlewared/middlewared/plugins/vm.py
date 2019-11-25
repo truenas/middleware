@@ -1471,6 +1471,7 @@ class VMDeviceService(CRUDService):
             except OSError:
                 raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
 
+    @private
     async def enable_capabilities_for_nic(self, vm_device):
         if vm_device['dtype'] == 'NIC' and not await self.middleware.call(
             'system.is_freenas'
@@ -1484,10 +1485,13 @@ class VMDeviceService(CRUDService):
             if (nic or '').startswith('bridge'):
                 return
             nics = await self.nic_capability_checks(None, False)
+            nics.update((await self.middleware.call('jail.nic_capability_checks', None, False)))
             iface = await self.middleware.call(
                 'interface.query', [['name', '=', nic], ['disable_offload_capabilities', '=', False]]
             )
             if iface and nic not in nics:
+                if not self.middleware.call_sync('failover.config')['disabled']:
+                    raise CallError(f'Failed to enable capabilities for {nic} as failover is enabled')
                 await self.middleware.call('interface.enable_capabilities', nic)
                 try:
                     await self.middleware.call('failover.call_remote', 'interface.enable_capabilities', [nic])

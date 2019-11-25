@@ -858,10 +858,9 @@ class JailService(CRUDService):
 
     @private
     def enable_capabilities_for_nic(self, jail_config):
-        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync(
-            'failover.licensed'
-        ) and self.middleware.call_sync('failover.config')['disabled']:
+        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
             nics = self.middleware.call_sync('jail.nic_capability_checks', None, False)
+            nics.update(self.middleware.call_sync('vm.device.nic_capability_checks', None, False))
             if jail_config['nat']:
                 nic = self.retrieve_nat_interface(jail_config['nat_interface'])
             else:
@@ -876,6 +875,10 @@ class JailService(CRUDService):
                 ]
                 if not enable:
                     return
+                if not self.middleware.call_sync('failover.config')['disabled']:
+                    raise CallError(
+                        f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled'
+                    )
                 self.middleware.call_sync('interface.enable_capabilities', nic, enable)
                 try:
                     self.middleware.call_sync('failover.call_remote', 'interface.enable_capabilities', [nic, enable])
