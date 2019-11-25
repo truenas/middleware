@@ -1358,17 +1358,19 @@ class InterfaceService(CRUDService):
                             f'Failed to disable capabilities for {iface["name"]} on remote node: {e}'
                         )
             else:
-                enabled = not failover_licensed
-                if not enabled and not await self.middleware.call(
-                    'jail.nic_capability_checks', None, False
-                ) and not await self.middleware.call('vm.device.nic_capability_checks', None, False):
-                    enabled = True
-                if enabled:
-                    await self.middleware.call('interface.enable_capabilities', iface['name'])
+                capabilities = await self.nic_capabilities()
+                if failover_licensed:
+                    nics = await self.to_disable_evil_nic_capabilities(False)
+                    capabilities = [
+                        c for c in capabilities
+                        if c not in nics.get(iface['name'], []) and c not in iface['state']['capabilities']
+                    ]
+                if capabilities:
+                    await self.middleware.call('interface.enable_capabilities', iface['name'], capabilities)
                     if failover_licensed:
                         try:
                             await self.middleware.call(
-                                'failover.call_remote', 'interface.enable_capabilities', [iface['name']]
+                                'failover.call_remote', 'interface.enable_capabilities', [iface['name'], capabilities]
                             )
                         except Exception as e:
                             self.middleware.logger.debug(
