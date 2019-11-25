@@ -2,17 +2,20 @@ import asyncio
 import base64
 import datetime
 import enum
+import io
 import os
+import shutil
 import subprocess
 import time
 from middlewared.schema import accepts, Dict, Int, List, Patch, Str
-from middlewared.service import CallError, ConfigService, CRUDService, periodic, private, ValidationErrors
+from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 from middlewared.utils import run, Popen
 
 
 class keytab(enum.Enum):
     SYSTEM = '/etc/krb5.keytab'
     SAMBA = '/var/db/system/samba4/private/samba.keytab'
+    TEST = '/var/db/system/test.keytab'
 
 
 class KRB_AppDefaults(enum.Enum):
@@ -597,7 +600,6 @@ class KerberosKeytabService(CRUDService):
             raise verrors
 
         data = await self.kerberos_keytab_compress(data)
-        self.logger.debug(f'got here: {data}')
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -663,6 +665,31 @@ class KerberosKeytabService(CRUDService):
                 'Failed to start kerberos service after deleting keytab entry: %s' % e
             )
 
+    @accepts(Dict(
+        'keytab_data',
+        Str('name', required=True),
+    ))
+    @job(lock='upload_keytab', pipes=['input'], check_pipes=False)
+    async def upload_keytab(self, job, data):
+        """
+        Upload a keytab file. This method expects the keytab file to be uploaded using
+        the /_upload/ endpoint.
+        """
+        job.check_pipe("input")
+        ktmem = io.BytesIO()
+        await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, ktmem)
+        b64kt = base64.b64encode(ktmem.getvalue())
+        return await self.middleware.call('kerberos.keytab.create',
+                                          {'name': data['name'], 'file': b64kt.decode()})
+
+    @private
+    async def legacy_validate(self, keytab):
+        err = await self._validate({'file': keytab})
+        try:
+            err.check()
+        except Exception as e:
+            raise CallError(e)
+
     @private
     async def _cleanup_kerberos_principals(self):
         principal_choices = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
@@ -694,9 +721,20 @@ class KerberosKeytabService(CRUDService):
         """
         verrors = ValidationErrors()
         try:
-            base64.b64decode(data['file'])
+            decoded = base64.b64decode(data['file'])
         except Exception as e:
             verrors.add("kerberos.keytab_create", f"Keytab is a not a properly base64-encoded string: [{e}]")
+            return verrors
+
+        with open(keytab['TEST'].value, "wb") as f:
+            f.write(decoded)
+
+        ktutil = await run(["/usr/sbin/ktutil", "-k", keytab['TEST'].value, "list"], check=False)
+        if ktutil.returncode != 0:
+            verrors.add("kerberos.keytab_create", f"Failed to validate keytab: [{ktutil.stderr.decode().strip()}]")
+
+        os.unlink(keytab['TEST'].value)
+
         return verrors
 
     @private
