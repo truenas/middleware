@@ -58,16 +58,15 @@ class KMIPService(ConfigService, KMIPServerMixin):
         adv_config = await self.middleware.call('system.advanced.config')
         disks = await self.middleware.call('disk.query')
         config = await self.config()
-        check_kmip_uid = any(not config[k] for k in ('enabled', 'manage_zfs_keys'))
         check_db_key = config['enabled'] and config['manage_sed_disks']
         for disk in disks:
             if check_db_key and (disk['passwd'] or disk['identifier'] not in self.disks_keys):
                 return True
-            elif check_kmip_uid and disk['kmip_uid']:
+            elif not check_db_key and disk['kmip_uid']:
                 return True
         if check_db_key and (adv_config['sed_passwd'] or not self.global_sed_key):
             return True
-        elif check_kmip_uid and adv_config['kmip_uid']:
+        elif not check_db_key and adv_config['kmip_uid']:
             return True
         return False
 
@@ -262,7 +261,6 @@ class KMIPService(ConfigService, KMIPServerMixin):
                 except Exception:
                     failed.append('Global SED Key')
             if key:
-                # TODO: Validate need of encrypting/decrypted global sed password
                 self.middleware.call_sync(
                     'datastore.update', 'system.advanced',
                     adv_config['id'], {'adv_sed_passwd': key, 'adv_kmip_uid': None}

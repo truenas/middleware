@@ -17,8 +17,8 @@ try:
 except ImportError:
     geom = getswapinfo = None
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, CallError, CRUDService
+from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
@@ -94,6 +94,8 @@ class DiskService(CRUDService):
         else:
             disk['devname'] = disk['name']
         self._expand_enclosure(disk)
+        disk.pop('passwd')
+        disk.pop('kmip_uid')
         return disk
 
     def _expand_enclosure(self, disk):
@@ -113,15 +115,17 @@ class DiskService(CRUDService):
             disk['enclosure_slot'] = None
         del disk['enclosure']
 
-    @accepts(List('filters', default=[]))
-    async def query_passwords(self, filters=None):
+    @filterable
+    async def query_passwords(self, filters=None, options=None):
         disks = await self.middleware.call(
-            'datastore.query', self._config.datastore, filters, {'prefix': self._config.datastore_prefix}
+            'datastore.query', self._config.datastore, filters, {
+                'prefix': self._config.datastore_prefix, **{options or {}}
+            }
         )
         disks_keys = await self.middleware.call('kmip.retrieve_sed_disks_keys')
         for disk in disks:
-            kmip_uid = disk.pop('kmip_uid')
-            disk['passwd'] = disks_keys[disk['identifier']] if kmip_uid and disk['identifier'] in disks_keys else ''
+            disk.pop('kmip_uid')
+            disk['passwd'] = disk['passwd'] or disks_keys.get(disk['identifier'], '')
         return disks
 
     @accepts(
@@ -172,12 +176,7 @@ class DiskService(CRUDService):
         If temperature of a disk changes by `difference` degree Celsius since the last report, SMART reports this.
         """
 
-        old = await self.middleware.call(
-            'datastore.query',
-            self._config.datastore,
-            [('identifier', '=', id)],
-            {'prefix': self._config.datastore_prefix, 'get': True}
-        )
+        old = await self.query_passwords([[['identifier', '=', id]]], {'get': True})
         old.pop('enabled', None)
         self._expand_enclosure(old)
         new = old.copy()

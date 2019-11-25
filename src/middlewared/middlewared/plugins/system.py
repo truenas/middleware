@@ -114,6 +114,8 @@ class SystemAdvancedService(ConfigService):
         if data['syslog_tls_certificate']:
             data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
 
+        data.pop('sed_passwd')
+
         return data
 
     async def __validate_fields(self, schema, data):
@@ -202,6 +204,7 @@ class SystemAdvancedService(ConfigService):
         When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
         """
         config_data = await self.config()
+        config_data['sed_passwd'] = await self.sed_global_password()
         original_data = config_data.copy()
         config_data.update(data)
 
@@ -282,7 +285,9 @@ class SystemAdvancedService(ConfigService):
 
     @accepts()
     async def sed_global_password(self):
-        return (await self.config())['sed_passwd'] or await self.middleware.call('kmip.sed_global_password')
+        return (await self.middleware.call(
+            'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
+        ))['sed_passwd'] or await self.middleware.call('kmip.sed_global_password')
 
     @private
     def autotune(self, conf='loader'):
