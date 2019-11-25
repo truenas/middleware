@@ -841,48 +841,7 @@ class JailService(CRUDService):
         if name:
             iocage.rename(name)
 
-        new = self.middleware.call_sync('jail._get_instance', name or jail['id'])
-        if (
-            any(new[k] != jail[k] for k in ('vnet', 'nat')) or (
-                (new['vnet'] and new['vnet_default_interface'] != jail['vnet_default_interface']) or (
-                    new['nat'] and new['nat_interface'] != jail['nat_interface']
-                )
-            )
-        ) and not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
-            # We do this to to re-enable capabilities
-            self.enable_capabilities_for_nic(jail)
         return True
-
-    @private
-    def enable_capabilities_for_nic(self, jail_config):
-        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
-            nics = self.middleware.call_sync('interface.to_disable_evil_nic_capabilities', False)
-            if jail_config['nat']:
-                nic = self.retrieve_nat_interface(jail_config['nat_interface'])
-            else:
-                nic = self.retrieve_vnet_interface(jail_config['vnet_default_interface'])
-            iface = self.middleware.call_sync(
-                'interface.query', [['name', '=', nic], ['disable_offload_capabilities', '=', False]]
-            )
-            if iface:
-                enable = [
-                    c for c in self.middleware.call_sync('interface.nic_capabilities')
-                    if c not in nics.get(nic, []) and c not in iface[0]['state']['capabilities']
-                ]
-                if not enable:
-                    return
-                if not self.middleware.call_sync('failover.config')['disabled']:
-                    raise CallError(
-                        f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled',
-                        errno.EPERM
-                    )
-                self.middleware.call_sync('interface.enable_capabilities', nic, enable)
-                try:
-                    self.middleware.call_sync('failover.call_remote', 'interface.enable_capabilities', [nic, enable])
-                except Exception as e:
-                    self.middleware.logger.debug(
-                        f'Failed to enable capabilities for {nic} on remote node: {e}'
-                    )
 
     @accepts(
         Str('jail'),
@@ -898,8 +857,6 @@ class JailService(CRUDService):
 
         # TODO: Port children checking, release destroying.
         iocage.destroy_jail(force=options.get('force'))
-        if jail_config['nat'] or jail_config['vnet']:
-            self.enable_capabilities_for_nic(jail_config)
         return True
 
     @private

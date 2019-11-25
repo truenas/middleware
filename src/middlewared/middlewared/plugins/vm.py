@@ -978,15 +978,7 @@ class VMService(CRUDService):
         if isinstance(status, dict):
             if status.get('state') == 'RUNNING':
                 await self.stop(id)
-        nic_devices = [
-            device for device in await self.middleware.call(
-                'vm.device.query', [['vm', '=', id], ['dtype', '=', 'NIC']]
-            )
-        ]
-        result = await self.middleware.call('datastore.delete', 'vm.vm', id)
-        for device in nic_devices:
-            await self.middleware.call('vm.device.enable_capabilities_for_nic', device)
-        return result
+        return await self.middleware.call('datastore.delete', 'vm.vm', id)
 
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit')))
@@ -1450,7 +1442,6 @@ class VMDeviceService(CRUDService):
 
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
-        await self.enable_capabilities_for_nic(device)
 
         return await self._get_instance(id)
 
@@ -1473,41 +1464,6 @@ class VMDeviceService(CRUDService):
             except OSError:
                 raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
 
-    @private
-    async def enable_capabilities_for_nic(self, vm_device):
-        if vm_device['dtype'] == 'NIC' and not await self.middleware.call(
-            'system.is_freenas'
-        ) and await self.middleware.call('failover.licensed'):
-            try:
-                nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
-            except Exception:
-                nic = None
-            if (nic or '').startswith('bridge'):
-                return
-            nics = await self.middleware.call('interface.to_disable_evil_nic_capabilities', False)
-            iface = await self.middleware.call(
-                'interface.query', [['name', '=', nic], ['disable_offload_capabilities', '=', False]]
-            )
-            if iface:
-                enable = [
-                    c for c in await self.middleware.call('interface.nic_capabilities')
-                    if c not in nics.get(nic, []) and c not in iface[0]['state']['capabilities']
-                ]
-                if not enable:
-                    return
-                if not (await self.middleware.call('failover.config'))['disabled']:
-                    raise CallError(
-                        f'Failed to enable {",".join(enable)} capabilities for {nic} as failover is enabled',
-                        errno.EPERM
-                    )
-                await self.middleware.call('interface.enable_capabilities', nic, enable)
-                try:
-                    await self.middleware.call('failover.call_remote', 'interface.enable_capabilities', [nic, enable])
-                except Exception as e:
-                    self.middleware.logger.debug(
-                        f'Failed to enable capabilities for {nic} on remote node: {e}'
-                    )
-
     @accepts(
         Int('id'),
         Dict(
@@ -1520,13 +1476,8 @@ class VMDeviceService(CRUDService):
         """
         Delete a VM device of `id`.
         """
-        vm_device = await self._get_instance(id)
-        await self.delete_resource(options, vm_device)
-
+        await self.delete_resource(options, await self._get_instance(id))
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
-
-        await self.enable_capabilities_for_nic(vm_device)
-
         return result
 
     async def __reorder_devices(self, id, vm_id, order):
