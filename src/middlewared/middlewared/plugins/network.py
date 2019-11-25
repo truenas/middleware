@@ -1795,7 +1795,7 @@ class InterfaceService(CRUDService):
             else:
                 nics[nic] = to_disable
         for nic in nics:
-            await self.middleware.run_in_thread(self.disable_capabilities, nic, nics[nic])
+            await self.middleware.call('interface.disable_capabilities', nic, nics[nic])
 
     @private
     @accepts(Str('iface'), List('capabilities', default=[c for c in netif.InterfaceCapability.__members__]))
