@@ -28,7 +28,7 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list, run
 from middlewared.validators import IpInUse, MACAddr
 
-from collections import defaultdict, deque, Iterable
+from collections import deque, Iterable
 
 BRANCH_REGEX = re.compile(r'\d+\.\d-RELEASE')
 
@@ -1082,7 +1082,7 @@ class JailService(CRUDService):
                 option = 'nat' if jail_config['nat'] else 'vnet'
                 verrors.add(
                     f'{schema}.{option}',
-                    f'Capabilities must be disabled for {",".join(to_disable_nics)} interface(s) '
+                    f'Capabilities must be disabled for {",".join(to_disable_nics)} interface '
                     f'in Network->Interfaces section before enabling {option}'
                 )
 
