@@ -821,7 +821,7 @@ class InterfaceService(CRUDService):
                 raise
 
         if data.get('disable_offload_capabilities'):
-            await self.middleware.call('interface.enable_capabilities', name)
+            await self.middleware.call('interface.disable_capabilities', name)
 
         return await self._get_instance(name)
 
