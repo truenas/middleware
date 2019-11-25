@@ -1791,23 +1791,14 @@ class InterfaceService(CRUDService):
         the affected NIC's so that the user is not affected by the interruption which is caused when these NIC's
         experience a hiccup in the network traffic.
         """
-        nics = await self.to_disable_evil_nic_capabilities()
-        for nic in nics:
-            await self.middleware.call('interface.disable_capabilities', nic, nics[nic])
+        for nic in await self.to_disable_evil_nic_capabilities():
+            await self.middleware.call('interface.disable_capabilities', nic)
 
     @private
     async def to_disable_evil_nic_capabilities(self, check_iface=True):
-        nics = await self.middleware.call('jail.nic_capability_checks', None, check_iface)
-        for nic, to_disable in (
-            await self.middleware.call('vm.device.nic_capability_checks', None, check_iface)
-        ).items():
-            if nic in nics:
-                old = set(nics[nic])
-                old.update(to_disable)
-                nics[nic] = list(old)
-            else:
-                nics[nic] = to_disable
-        return nics
+        nics = set(await self.middleware.call('jail.nic_capability_checks', None, check_iface))
+        nics.update(await self.middleware.call('vm.device.nic_capability_checks', None, check_iface))
+        return list(nics)
 
     @private
     @accepts(Str('iface'), List('capabilities', default=[c for c in netif.InterfaceCapability.__members__]))

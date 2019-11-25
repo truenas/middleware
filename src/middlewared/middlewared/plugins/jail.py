@@ -1091,7 +1091,7 @@ class JailService(CRUDService):
         hiccup in the network traffic which can cause a failover to occur. This method returns
         interfaces which will be affected by this based on the jails user has.
         """
-        jail_nics = defaultdict(set)
+        jail_nics = []
         system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
         params = ['jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]]]
         if await self.middleware.call('failover.status') == 'BACKUP':
@@ -1102,16 +1102,13 @@ class JailService(CRUDService):
                 jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
             )
             if nic in system_ifaces:
-                conflicts = {'LRO', 'TSO4', 'TSO6', 'VLAN_HWTSO'} if jail['nat'] else {
-                    'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6', 'LRO',
-                }
                 if not jail['nat']:
                     bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
                     if not bridges or not bridges[0]:
                         continue
-                if not check_system_iface or set(system_ifaces[nic]['state']['capabilities']) & conflicts:
-                    jail_nics[nic].update(conflicts)
-        return {k: list(v) for k, v in jail_nics.items()}
+                if not check_system_iface or not system_ifaces[nic]['disable_offload_capabilities']:
+                    jail_nics.append(nic)
+        return jail_nics
 
     @private
     def failover_checks(self, jail_config, verrors, schema):
