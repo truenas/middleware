@@ -229,20 +229,20 @@ class TrueNASService(Service):
         """
         return await self.middleware.call('keyvalue.get', 'truenas:production', False)
 
-    @accepts(Bool('production'), Bool('send_debug', default=False))
-    async def set_production(self, production, send_debug):
+    @accepts(Bool('production'), Bool('attach_debug', default=False))
+    async def set_production(self, production, attach_debug):
         """
         Sets system production state and optionally sends initial debug.
         """
         was_production = await self.is_production()
         await self.middleware.call('keyvalue.set', 'truenas:production', production)
 
-        if not was_production and production and send_debug:
+        if not was_production and production:
             serial = (await self.middleware.call('system.info'))["system_serial"]
             await self.middleware.call('support.new_ticket', {
                 "title": f"System has been just put into production ({serial})",
                 "body": "This system has been just put into production",
-                "attach_debug": True,
+                "attach_debug": attach_debug,
                 "category": "Installation/Setup",
                 "criticality": "Inquiry",
                 "environment": "Production",
