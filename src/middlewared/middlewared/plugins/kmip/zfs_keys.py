@@ -1,12 +1,9 @@
-from middlewared.service import ConfigService, job, private
+from middlewared.service import job, private, Service
 
 from .connection import KMIPServerMixin
 
 
-class KMIPService(ConfigService, KMIPServerMixin):
-    class Config:
-        datastore = 'system_kmip'
-        datastore_extend = 'kmip.kmip_extend'
+class KMIPService(Service, KMIPServerMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -19,7 +16,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
 
     @private
     async def zfs_keys_pending_sync(self):
-        config = await self.config()
+        config = await self.middleware.call('kmip.config')
         for ds in await self.middleware.call('datastore.query', self.datasets_datastore):
             if config['enabled'] and config['manage_zfs_keys'] and (
                 ds['encryption_key'] or ds['name'] not in self.zfs_keys

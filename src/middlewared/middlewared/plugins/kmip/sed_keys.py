@@ -1,12 +1,9 @@
-from middlewared.service import ConfigService, job, private
+from middlewared.service import job, private, Service
 
 from .connection import KMIPServerMixin
 
 
-class KMIPService(ConfigService, KMIPServerMixin):
-    class Config:
-        datastore = 'system_kmip'
-        datastore_extend = 'kmip.kmip_extend'
+class KMIPService(Service, KMIPServerMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,7 +26,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
     async def sed_keys_pending_sync(self):
         adv_config = await self.system_advanced_config()
         disks = await self.query_disks()
-        config = await self.config()
+        config = await self.middleware.call('kmip.config')
         check_db_key = config['enabled'] and config['manage_sed_disks']
         for disk in disks:
             if check_db_key and (disk['passwd'] or disk['identifier'] not in self.disks_keys):

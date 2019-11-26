@@ -1,12 +1,9 @@
-from middlewared.service import accepts, CallError, ConfigService, job, periodic, private
+from middlewared.service import accepts, CallError, job, periodic, private, Service
 
 from .connection import KMIPServerMixin
 
 
-class KMIPService(ConfigService, KMIPServerMixin):
-    class Config:
-        datastore = 'system_kmip'
-        datastore_extend = 'kmip.kmip_extend'
+class KMIPService(Service, KMIPServerMixin):
 
     @private
     def connection_config(self, data=None):
@@ -53,7 +50,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
 
     @accepts()
     async def clear_sync_pending_keys(self):
-        config = await self.config()
+        config = await self.middleware.call('kmip.config')
         clear = not config['enabled']
         if clear or not config['manage_zfs_keys']:
             await self.middleware.call('kmip.clear_sync_pending_zfs_keys')
@@ -68,7 +65,7 @@ class KMIPService(ConfigService, KMIPServerMixin):
     @private
     @job(lock='initialize_kmip_keys')
     async def initialize_keys(self, job):
-        kmip_config = await self.config()
+        kmip_config = await self.middleware.call('kmip.config')
         if kmip_config['enabled']:
             connection_success = await self.middleware.call('kmip.test_connection')
             if kmip_config['manage_zfs_keys']:

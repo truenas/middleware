@@ -16,7 +16,7 @@ class KMIPServerMixin:
         data = data or {}
         mapping = {'hostname': 'server', 'port': 'port', 'cert': 'cert', 'key': 'cert_key', 'ca': 'ca'}
         try:
-            with ProxyKmipClient(**{k: data[v] for k, v in mapping.items() if data.get(k)}) as conn:
+            with ProxyKmipClient(**{k: data[v] for k, v in mapping.items() if data.get(v)}) as conn:
                 yield conn
         except (ClientConnectionFailure, ClientConnectionNotOpen, socket.timeout) as e:
             raise CallError(f'Failed to connect to KMIP Server: {e}')
