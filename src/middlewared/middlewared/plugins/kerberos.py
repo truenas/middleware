@@ -669,13 +669,12 @@ class KerberosKeytabService(CRUDService):
         'keytab_data',
         Str('name', required=True),
     ))
-    @job(lock='upload_keytab', pipes=['input'], check_pipes=False)
+    @job(lock='upload_keytab', pipes=['input'], check_pipes=True)
     async def upload_keytab(self, job, data):
         """
         Upload a keytab file. This method expects the keytab file to be uploaded using
         the /_upload/ endpoint.
         """
-        job.check_pipe("input")
         ktmem = io.BytesIO()
         await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, ktmem)
         b64kt = base64.b64encode(ktmem.getvalue())
