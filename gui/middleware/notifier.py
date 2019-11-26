@@ -1338,6 +1338,9 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(path, bytes):
             path = path.decode('utf-8')
 
+        if not os.path.realpath(path).startswith('/mnt'):
+            raise MiddlewareError("mp_change_permissions - path not permitted: %s" % path)
+
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)

@@ -327,14 +327,14 @@ class SharingSMBService(CRUDService):
         List('vfsobjects', default=['zfs_space', 'zfsacl', 'streams_xattr']),
         Int('storage_task'),
         Str('auxsmbconf'),
-        Bool('default_permissions'),
+        Bool('default_permissions', default=False),
         register=True
     ))
     async def do_create(self, data):
         verrors = ValidationErrors()
         path = data['path']
 
-        default_perms = data.pop('default_permissions', True)
+        default_perms = data.pop('default_permissions', False)
 
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
