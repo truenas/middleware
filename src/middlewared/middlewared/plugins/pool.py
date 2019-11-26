@@ -3151,7 +3151,10 @@ class PoolDatasetService(CRUDService):
     @private
     async def delete_encrypted_datasets_from_db(self, filters):
         datasets = await self.middleware.call('datastore.query', self.dataset_store, filters)
-        kmip_conn_active = await self.middleware.call('kmip.test_connection')
+        if (await self.middleware.call('kmip.config'))['enabled']:
+            kmip_conn_active = await self.middleware.call('kmip.test_connection')
+        else:
+            kmip_conn_active = False
         for ds in datasets:
             if ds['kmip_uid']:
                 err = False

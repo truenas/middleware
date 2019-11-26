@@ -23,7 +23,10 @@ class KMIPService(ConfigService, KMIPServerMixin):
 
     @private
     def test_connection(self, data=None, raise_alert=False):
-        result = self._test_connection(self.connection_config(data))
+        try:
+            result = self._test_connection(self.connection_config(data))
+        except CallError as e:
+            result = {'error': True, 'exception': str(e)}
         if result['error']:
             if raise_alert:
                 config = self.middleware.call_sync('kmip.config')
