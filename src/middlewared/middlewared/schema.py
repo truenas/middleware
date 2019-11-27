@@ -962,6 +962,7 @@ def accepts(*schema):
             if i.startswith('_'):
                 setattr(nf, i, getattr(f, i))
         nf.accepts = list(schema)
+        nf.wraps = f
 
         return nf
     return wrap
