@@ -479,6 +479,11 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run_call(midclt, 'etc.generate', 'rc')
             run_call(midclt, 'etc.generate', 'system_dataset')
 
+            # Write the certs to disk based on what is written in db.
+            run_call(midclt, 'etc.generate', 'ssl')
+            # Now we restart the appropriate services to ensure it's using correct certs.
+            run_call(midclt, 'service.restart', 'http')
+
             # TODO: This needs investigation.  Why is part of the LDAP
             # stack restarted?  Maybe homedir handling that
             # requires the volume to be imported?
@@ -494,8 +499,6 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 
             # 0 for Active node
             run('/sbin/sysctl kern.cam.ctl.ha_role=0')
-
-            run_call(midclt, 'etc.generate', 'ssl')  # TODO: Why is this being restarted?
 
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
             ret = c.fetchone()
