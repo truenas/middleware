@@ -2,7 +2,7 @@ import datetime
 import enum
 import errno
 import grp
-import ipaddr
+import ipaddress
 import json
 import ldap
 import ldap.sasl
@@ -430,7 +430,7 @@ class ActiveDirectory_LDAP(object):
 
             # Note should/can we do the same skip as done for `network`
             # the site_dn none too?
-            st = ipaddr.IPNetwork(network)
+            st = ipaddress.ip_network(network)
 
             if st.version == 4:
                 ipv4_subnet_info_lst.append({'site_dn': site_dn, 'network': st})
@@ -509,7 +509,7 @@ class ActiveDirectory_LDAP(object):
                 if alias['type'] == 'INET':
                     if ipv4_site is not None:
                         continue
-                    ipv4_addr_obj = ipaddr.IPAddress(alias['address'], version=4)
+                    ipv4_addr_obj = ipaddress.ip_address(alias['address'])
                     for subnet in subnets['ipv4_subnet_info']:
                         if ipv4_addr_obj in subnet['network']:
                             sinfo = self._get_sites(distinguishedname=subnet['site_dn'])[0]
@@ -520,7 +520,7 @@ class ActiveDirectory_LDAP(object):
                 if alias['type'] == 'INET6':
                     if ipv6_site is not None:
                         continue
-                    ipv6_addr_obj = ipaddr.IPAddress(alias['address'], version=6)
+                    ipv6_addr_obj = ipaddress.ip_address(alias['address'])
                     for subnet in subnets['ipv6_subnet_info']:
                         if ipv6_addr_obj in subnet['network']:
                             sinfo = self._get_sites(distinguishedname=subnet['site_dn'])[0]
