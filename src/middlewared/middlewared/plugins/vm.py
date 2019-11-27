@@ -1271,6 +1271,7 @@ class VMService(CRUDService):
         Dict(
             'vm_delete',
             Bool('zvols', default=False),
+            Bool('force', default=False),
         ),
     )
     def do_delete(self, id, data):
@@ -1280,7 +1281,7 @@ class VMService(CRUDService):
         status = self.status(id)
         if status.get('state') == 'RUNNING':
             self.poweroff(id)
-        elif status.get('state') == 'ERROR':
+        elif status.get('state') == 'ERROR' and not data.get('force'):
             raise CallError('Unable to retrieve VM status. Failed to destroy VM')
 
         if data['zvols']:
