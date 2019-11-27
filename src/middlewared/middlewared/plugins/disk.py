@@ -117,6 +117,9 @@ class DiskService(CRUDService):
 
     @filterable
     async def query_passwords(self, filters=None, options=None):
+        """
+        Query disks SED passwords with `query-filters` and `query-options`.
+        """
         disks = await self.middleware.call(
             'datastore.query', self._config.datastore, filters, {**options, 'prefix': self._config.datastore_prefix}
         )

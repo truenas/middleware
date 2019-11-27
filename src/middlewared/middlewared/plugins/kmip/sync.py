@@ -35,8 +35,12 @@ class KMIPService(Service, KMIPServerMixin):
         else:
             return True
 
-    @private
+    @accepts()
     async def kmip_sync_pending(self):
+        """
+        Returns true or false based on if there are keys which are to be synced from local database to remote KMIP
+        server or vice versa.
+        """
         return await self.middleware.call('kmip.zfs_keys_pending_sync') or await self.middleware.call(
             'kmip.sed_keys_pending_sync'
         )
@@ -44,6 +48,9 @@ class KMIPService(Service, KMIPServerMixin):
     @periodic(interval=86400)
     @accepts()
     async def sync_keys(self):
+        """
+        Sync ZFS/SED keys between KMIP Server and TN database.
+        """
         if not await self.middleware.call('kmip.kmip_sync_pending'):
             return
         await self.middleware.call('kmip.sync_zfs_keys')
@@ -51,6 +58,12 @@ class KMIPService(Service, KMIPServerMixin):
 
     @accepts()
     async def clear_sync_pending_keys(self):
+        """
+        Clear all keys which are pending to be synced between KMIP server and TN database.
+
+        For ZFS/SED keys, we remove the UID from local database with which we are able to retrieve ZFS/SED keys.
+        It should be used with caution.
+        """
         config = await self.middleware.call('kmip.config')
         clear = not config['enabled']
         if clear or not config['manage_zfs_keys']:

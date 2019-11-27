@@ -285,6 +285,9 @@ class SystemAdvancedService(ConfigService):
 
     @accepts()
     async def sed_global_password(self):
+        """
+        Returns configured global SED password.
+        """
         return (await self.middleware.call(
             'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
         ))['sed_passwd'] or await self.middleware.call('kmip.sed_global_password')

@@ -119,11 +119,13 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     async def clear_sync_pending_zfs_keys(self):
-        await self.middleware.call(
-            'datastore.delete', self.datasets_datastore, [[
-                'id', 'in', [ds['id'] for ds in await self.query_datasets([['kmip_uid', '!=', None]])]
-            ]]
-        )
+        to_remove = []
+        for ds in await self.query_datasets([['kmip_uid', '!=', None]]):
+            if ds['encryption_key']:
+                await self.middleware.call('datastore.update', self.datasets_datastore, {'kmip_uid': None})
+            else:
+                to_remove.append(ds['id'])
+        await self.middleware.call('datastore.delete', self.datasets_datastore, [['id', 'in', to_remove]])
         self.zfs_keys = {}
 
     @private

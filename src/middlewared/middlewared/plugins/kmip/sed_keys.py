@@ -153,6 +153,7 @@ class KMIPService(Service, KMIPServerMixin):
         return failed
 
     @job(lock=lambda args: f'kmip_sync_sed_keys_{args}')
+    @private
     def sync_sed_keys(self, job, ids=None, force=False):
         if not force and not self.middleware.call_sync('kmip.sed_keys_pending_sync'):
             return

@@ -47,6 +47,31 @@ class KMIPService(ConfigService):
     )
     @job(lock='kmip_update')
     async def do_update(self, job, data):
+        """
+        Update KMIP Server Configuration.
+
+        System currently authenticates connection with remote KMIP Server with a TLS handshake. `certificate` and
+        `certificate_authority` determine the certs which will be used to initiate the TLS handshake with `server`.
+
+        `validate` is enabled by default. When enabled, system will test connection to `server` making sure
+        it's reachable.
+
+        `manage_zfs_keys`/`manage_sed_disks` when enabled will sync keys from local database to remote KMIP server.
+        When disabled, if there are any keys left to be retrieved from the KMIP server,
+        it will sync them back to local database.
+
+        `enabled` if true, cannot be set to disabled if there are existing keys pending to be synced. However users
+        can still perform this action by enabling `force_clear`.
+
+        `change_server` is a boolean field which allows users to migrate data between two KMIP servers. System
+        will first migrate keys from old KMIP server to local database and then migrate the keys from local database
+        to new KMIP server. If it is unable to retrieve all the keys from old server, this will fail. Users can bypass
+        this by enabling `force_clear`.
+
+        `force_clear` is a boolean option which when enabled will in this case remove all
+        pending keys to be synced from database. It should be used with extreme caution as users may end up with
+        not having ZFS dataset or SED disks keys leaving them locked forever. It is disabled by default.
+        """
         old = await self.config()
         new = old.copy()
         new.update(data)
