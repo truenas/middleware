@@ -1035,6 +1035,8 @@ class VMService(CRUDService):
         shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
         """
+        if not self.libvirt_connection:
+            await self.wait_for_libvirtd(10)
         self.ensure_libvirt_connection()
 
         verrors = ValidationErrors()
@@ -1273,6 +1275,7 @@ class VMService(CRUDService):
     )
     def do_delete(self, id, data):
         """Delete a VM."""
+        vm = self.middleware.call_sync('vm._get_instance', id)
         self.ensure_libvirt_connection()
         status = self.status(id)
         if status.get('state') == 'RUNNING':
@@ -1294,7 +1297,6 @@ class VMService(CRUDService):
                 )[-1]
                 self.middleware.call_sync('zfs.dataset.delete', disk_name)
 
-        vm = self.middleware.call_sync('vm._get_instance', id)
         if vm['name'] in self.vms:
             self.vms.pop(vm['name']).undefine_domain()
         else:
@@ -1321,8 +1323,8 @@ class VMService(CRUDService):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
-        self.ensure_libvirt_connection()
         vm = self.middleware.call_sync('vm._get_instance', id)
+        self.ensure_libvirt_connection()
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
 
@@ -1372,8 +1374,8 @@ class VMService(CRUDService):
         `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
         not already stopped within the specified `shutdown_timeout`.
         """
-        self.ensure_libvirt_connection()
         vm_data = self.middleware.call_sync('vm._get_instance', id)
+        self.ensure_libvirt_connection()
         vm = self.vms[vm_data['name']]
 
         if options['force']:
@@ -1389,16 +1391,17 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'))
     def poweroff(self, id):
+        vm_data = self.middleware.call_sync('vm._get_instance', id)
         self.ensure_libvirt_connection()
-        self.vms[self.middleware.call_sync('vm._get_instance', id)['name']].poweroff()
+        self.vms[vm_data['name']].poweroff()
 
     @item_method
     @accepts(Int('id'))
     @job(lock=lambda args: f'restart_vm_{args[0]}')
     def restart(self, job, id):
         """Restart a VM."""
-        self.ensure_libvirt_connection()
         vm = self.middleware.call_sync('vm._get_instance', id)
+        self.ensure_libvirt_connection()
         self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
 
     async def _teardown_guest_vmemory(self, id):
@@ -1637,7 +1640,8 @@ class VMService(CRUDService):
 
     @private
     def initialize_vms(self, timeout=10):
-        self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
+        if self.middleware.call_sync('vm.query'):
+            self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
 
         # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
