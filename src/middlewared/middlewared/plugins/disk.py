@@ -118,9 +118,7 @@ class DiskService(CRUDService):
     @filterable
     async def query_passwords(self, filters=None, options=None):
         disks = await self.middleware.call(
-            'datastore.query', self._config.datastore, filters, {
-                'prefix': self._config.datastore_prefix, **{options or {}}
-            }
+            'datastore.query', self._config.datastore, filters, {**options, 'prefix': self._config.datastore_prefix}
         )
         disks_keys = await self.middleware.call('kmip.retrieve_sed_disks_keys')
         for disk in disks:

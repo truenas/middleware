@@ -138,8 +138,8 @@ class KMIPService(Service, KMIPServerMixin):
         return failed
 
     @job(lock=lambda args: f'kmip_sync_sed_keys_{args}')
-    def sync_sed_keys(self, job, ids=None):
-        if not self.middleware.call_sync('kmip.sed_keys_pending_sync'):
+    def sync_sed_keys(self, job, ids=None, force=False):
+        if not force and not self.middleware.call_sync('kmip.sed_keys_pending_sync'):
             return
         config = self.middleware.call_sync('kmip.config')
         conn_successful = self.middleware.call_sync('kmip.test_connection', None, True)
@@ -150,6 +150,7 @@ class KMIPService(Service, KMIPServerMixin):
                 return
         else:
             failed = self.pull_sed_keys()
+        ret_failed = failed.copy()
         if failed:
             if 'Global SED Key' in failed:
                 failed.remove('Global SED Key')
@@ -158,6 +159,7 @@ class KMIPService(Service, KMIPServerMixin):
                 self.middleware.call_sync(
                     'alert.oneshot_create', 'KMIPSEDDisksSyncFailure', {'disks': ','.join(failed)}
                 )
+        return ret_failed
 
     @private
     async def clear_sync_pending_sed_keys(self):

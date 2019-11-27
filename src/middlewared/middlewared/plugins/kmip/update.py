@@ -76,11 +76,13 @@ class KMIPService(ConfigService):
 
         if new.pop('validate', True) and new['enabled'] and not verrors:
             if not await self.middleware.call('kmip.test_connection', new):
-                verrors.add('kmip_update.server', f'Unable to connect to {new["server"]} KMIP server.')
+                verrors.add('kmip_update.server', f'Unable to connect to {new["server"]}:{new["port"]} KMIP server.')
 
         change_server = new.pop('change_server', False)
         if change_server and new['server'] == old['server']:
             verrors.add('kmip_update.change_server', 'Please update server field to reflect the new server.')
+        if change_server and not new['enabled']:
+            verrors.add('kmip_update.enabled', 'Must be enabled when change server is enabled.')
 
         force_clear = new.pop('force_clear', False)
         clear_keys = force_clear if change_server else False
@@ -103,16 +105,29 @@ class KMIPService(ConfigService):
             # old server -> db
             # db -> new server
             # First can be skipped if old server is not reachable and we want to clear keys
-            if await self.middleware.call('kmip.kmip_sync_pending'):
-                try:
-                    await self.middleware.call(
-                        'datastore.update', self._config.datastore, old['id'], {
-                            'manage_zfs_keys': False, 'manage_sed_disks': False
-                        }
-                    )
-                    await self.middleware.call('kmip.sync_keys')
-                except Exception:
-                    await self.middleware.call('datastore.update', self._config.datastore, old['id'], old)
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, old['id'], {
+                    'manage_zfs_keys': False, 'manage_sed_disks': False
+                }
+            )
+            sync_jobs = [
+                (await self.middleware.call(f'kmip.{i}', True)) for i in ('sync_zfs_keys', 'sync_sed_keys')
+            ]
+            errors = []
+            for sync_job in sync_jobs:
+                await sync_job.wait()
+                if sync_job.error:
+                    errors.append(sync_job.error)
+                elif sync_job.result:
+                    errors.append(f'Failed to sync {",".join(sync_job.result)}')
+
+            if errors:
+                await self.middleware.call('datastore.update', self._config.datastore, old['id'], old)
+                # We do this because it's possible a few datasets/disks got synced to db and few didn't - this is
+                # to push all the data of interest back to the KMIP server from db
+                await self.middleware.call('kmip.sync_keys')
+                errors = '\n'.join(errors)
+                raise CallError(f'Failed to sync keys from {old["server"]} to host: {errors}')
 
             if await self.middleware.call('kmip.kmip_sync_pending'):
                 raise CallError(sync_error)

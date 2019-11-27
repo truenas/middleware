@@ -69,7 +69,7 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def pull_zfs_keys(self):
-        datasets = self.middleware.call('kmip.query_datasets', [['kmip_uid', '!=', None]])
+        datasets = self.middleware.call_sync('kmip.query_datasets', [['kmip_uid', '!=', None]])
         existing_datasets = {ds['name']: ds for ds in self.middleware.call_sync('pool.dataset.query')}
         failed = []
         connection_successful = self.middleware.call_sync('kmip.test_connection')
@@ -97,8 +97,8 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     @job(lock=lambda args: f'kmip_sync_zfs_keys_{args}')
-    def sync_zfs_keys(self, job, ids=None):
-        if not self.middleware.call_sync('kmip.zfs_keys_pending_sync'):
+    def sync_zfs_keys(self, job, ids=None, force=False):
+        if not force and not self.middleware.call_sync('kmip.zfs_keys_pending_sync'):
             return
         config = self.middleware.call_sync('kmip.config')
         conn_successful = self.middleware.call_sync('kmip.test_connection', None, True)
@@ -113,6 +113,7 @@ class KMIPService(Service, KMIPServerMixin):
             self.middleware.call_sync(
                 'alert.oneshot_create', 'KMIPZFSDatasetsSyncFailure', {'datasets': ','.join(failed)}
             )
+        return failed
 
     @private
     async def clear_sync_pending_zfs_keys(self):

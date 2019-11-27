@@ -42,6 +42,7 @@ class KMIPService(Service, KMIPServerMixin):
         )
 
     @periodic(interval=86400)
+    @accepts()
     async def sync_keys(self):
         if not await self.middleware.call('kmip.kmip_sync_pending'):
             return
@@ -67,7 +68,9 @@ class KMIPService(Service, KMIPServerMixin):
     async def initialize_keys(self, job):
         kmip_config = await self.middleware.call('kmip.config')
         if kmip_config['enabled']:
-            connection_success = await self.middleware.call('kmip.test_connection')
+            connection_success = await self.middleware.call(
+                'kmip.test_connection', None, kmip_config['manage_zfs_keys'] or kmip_config['manage_sed_disks']
+            )
             if kmip_config['manage_zfs_keys']:
                 await self.middleware.call('kmip.initialize_zfs_keys', connection_success)
             if kmip_config['manage_sed_disks']:
