@@ -75,7 +75,9 @@ class KMIPService(Service, KMIPServerMixin):
         connection_successful = self.middleware.call_sync('kmip.test_connection')
         for ds in filter(lambda d: d['name'] in existing_datasets, datasets):
             try:
-                if ds['name'] in self.zfs_keys and self.middleware.call_sync(
+                if ds['encryption_key']:
+                    key = ds['encryption_key']
+                elif ds['name'] in self.zfs_keys and self.middleware.call_sync(
                     'zfs.dataset.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
                 ):
                     key = self.zfs_keys[ds['name']]
@@ -83,7 +85,7 @@ class KMIPService(Service, KMIPServerMixin):
                     with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
                         key = self._retrieve_secret_data(ds['kmip_uid'], conn)
                 else:
-                    continue
+                    raise Exception('Failed to sync dataset')
             except Exception:
                 failed.append(ds['name'])
             else:

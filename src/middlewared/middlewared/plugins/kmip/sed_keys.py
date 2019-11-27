@@ -110,13 +110,15 @@ class KMIPService(Service, KMIPServerMixin):
         connection_successful = self.middleware.call_sync('kmip.test_connection')
         for disk in self.middleware.call_sync('kmip.query_disks', [['kmip_uid', '!=', None]]):
             try:
-                if self.disks_keys.get(disk['identifier']):
+                if disk['passwd']:
+                    key = disk['passwd']
+                elif self.disks_keys.get(disk['identifier']):
                     key = self.disks_keys[disk['identifier']]
                 elif connection_successful:
                     with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
                         key = self._retrieve_secret_data(disk['kmip_uid'], conn)
                 else:
-                    continue
+                    raise Exception('Failed to sync disk')
             except Exception:
                 failed.append(disk['identifier'])
             else:
@@ -130,7 +132,9 @@ class KMIPService(Service, KMIPServerMixin):
         adv_config = self.middleware.call_sync('kmip.system_advanced_config')
         if adv_config['kmip_uid']:
             key = None
-            if self.global_sed_key:
+            if adv_config['sed_passwd']:
+                key = adv_config['sed_passwd']
+            elif self.global_sed_key:
                 key = self.global_sed_key
             elif connection_successful:
                 try:
