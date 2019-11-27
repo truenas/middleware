@@ -20,6 +20,7 @@ from collections import defaultdict
 
 from libzfs import ZFSException
 from middlewared.job import JobProgressBuffer, Pipes
+from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
     accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
 )
@@ -3726,8 +3727,7 @@ class PoolDatasetService(CRUDService):
         if verrors:
             raise verrors
 
-        props = {}
-        for i, real_name, transform, inheritable in (
+        properties_definitions = (
             ('aclmode', None, str.lower, True),
             ('atime', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
@@ -3748,7 +3748,10 @@ class PoolDatasetService(CRUDService):
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
             ('volsize', None, lambda x: str(x), False),
-        ):
+        )
+
+        props = {}
+        for i, real_name, transform, inheritable in properties_definitions:
             if i not in data:
                 continue
             name = real_name or i
@@ -3757,7 +3760,12 @@ class PoolDatasetService(CRUDService):
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
-        rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+        try:
+            rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+        except ZFSSetPropertyError as e:
+            verrors = ValidationErrors()
+            verrors.add_child('pool_dataset_update', self.__handle_zfs_set_property_error(e, properties_definitions))
+            raise verrors
 
         if data['type'] == 'VOLUME' and 'volsize' in data:
             if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
@@ -3826,6 +3834,13 @@ class PoolDatasetService(CRUDService):
                             f'{schema}.volsize',
                             'Volume size should be a multiple of volume block size'
                         )
+
+    def __handle_zfs_set_property_error(self, e, properties_definitions):
+        zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
+        api_name = zfs_name_to_api_name.get(e.property) or e.property
+        verrors = ValidationErrors()
+        verrors.add(api_name, e.error)
+        return verrors
 
     @accepts(Str('id'), Dict(
         'dataset_delete',
