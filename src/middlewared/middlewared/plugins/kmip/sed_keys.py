@@ -14,6 +14,10 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     async def query_disks(self, filters=None, options=None):
+        filters = filters or []
+        for f in filters:
+            if len(f) == 3 and f[0] == 'id':
+                f[0] = 'identifier'
         return await self.middleware.call(
             'datastore.query', self.disks_datastore, filters or [], {'prefix': 'disk_', **(options or {})}
         )
@@ -81,7 +85,13 @@ class KMIPService(Service, KMIPServerMixin):
                     failed.append('Global SED Key')
                 else:
                     self.global_sed_key = key
-            elif adv_config['sed_passwd'] and not adv_config['kmip_uid']:
+            elif adv_config['sed_passwd']:
+                if adv_config['kmip_uid']:
+                    if not self._revoke_and_destroy_key(adv_config['kmip_uid'], conn, self.middleware.logger):
+                        self.middleware.logger.debug(f'Failed to destroy key from KMIP Server for SED Global password')
+                    self.middleware.call_sync(
+                        'datastore.update', self.sys_adv_datastore, adv_config['id'], {'adv_kmip_uid': None}
+                    )
                 self.global_sed_key = adv_config['sed_passwd']
                 try:
                     uid = self._register_secret_data(self.global_sed_key, conn)
