@@ -64,9 +64,9 @@ class KMIPService(Service, KMIPServerMixin):
                 destroy_successful = False
                 if disk['kmip_uid']:
                     # This needs to be revoked and destroyed
-                    destroy_successful = self._revoke_and_destroy_key(disk['kmip_uid'], conn, self.middleware.logger)
-                    if not destroy_successful:
-                        self.middleware.logger.debug(f'Failed to destroy key from KMIP Server for {disk["identifier"]}')
+                    destroy_successful = self._revoke_and_destroy_key(
+                        disk['kmip_uid'], conn, self.middleware.logger, disk['identifier']
+                    )
                 try:
                     uid = self._register_secret_data(self.disks_keys[disk['identifier']], conn)
                 except Exception:
@@ -87,8 +87,9 @@ class KMIPService(Service, KMIPServerMixin):
                     self.global_sed_key = key
             elif adv_config['sed_passwd']:
                 if adv_config['kmip_uid']:
-                    if not self._revoke_and_destroy_key(adv_config['kmip_uid'], conn, self.middleware.logger):
-                        self.middleware.logger.debug(f'Failed to destroy key from KMIP Server for SED Global password')
+                    self._revoke_and_destroy_key(
+                        adv_config['kmip_uid'], conn, self.middleware.logger, 'SED Global Password'
+                    )
                     self.middleware.call_sync(
                         'datastore.update', self.sys_adv_datastore, adv_config['id'], {'adv_kmip_uid': None}
                     )
