@@ -206,3 +206,9 @@ def test_create_replication(credentials, periodic_snapshot_tasks, req, error):
         assert f"replication_create.{error}" in result.json(), result.text
     else:
         assert result.status_code == 200, result.text
+
+        result = POST(f"/replication/id/{result['id']}/restore/", {
+            "name": f"restore {name}",
+            "target_dataset": "data/restore",
+        })
+        assert result.status_code == 200, result.text
