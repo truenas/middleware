@@ -1303,7 +1303,11 @@ class VMService(CRUDService):
         else:
             VMSupervisor(vm, self.libvirt_connection, self.middleware).undefine_domain()
 
-        return self.middleware.call_sync('datastore.delete', 'vm.vm', id)
+        result = self.middleware.call_sync('datastore.delete', 'vm.vm', id)
+        if not self.middleware.call_sync('vm.query'):
+            self.close_libvirt_connection()
+            self.vms = {}
+        return result
 
     @private
     def ensure_libvirt_connection(self):
