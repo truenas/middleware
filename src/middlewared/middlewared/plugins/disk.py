@@ -121,9 +121,12 @@ class DiskService(CRUDService):
             'datastore.query', self._config.datastore, filters, {**options, 'prefix': self._config.datastore_prefix}
         )
         disks_keys = await self.middleware.call('kmip.retrieve_sed_disks_keys')
-        for disk in disks:
+        for disk in ([disks] if not isinstance(disks, list) else disks):
             disk.pop('kmip_uid')
-            disk['passwd'] = disk['passwd'] or disks_keys.get(disk['identifier'], '')
+            if disk['passwd']:
+                disk['passwd'] = await self.middleware.call('pwenc.decrypt', disk['passwd'])
+            else:
+                disk['passwd'] = disks_keys.get(disk['identifier'], '')
         return disks
 
     @accepts(
@@ -174,7 +177,7 @@ class DiskService(CRUDService):
         If temperature of a disk changes by `difference` degree Celsius since the last report, SMART reports this.
         """
 
-        old = await self.query_passwords([[['identifier', '=', id]]], {'get': True})
+        old = await self.query_passwords([['identifier', '=', id]], {'get': True})
         old.pop('enabled', None)
         self._expand_enclosure(old)
         new = old.copy()
