@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('network', '0010_auto_20181114_1129'),
+        ('services', '0037_remove_netdata'),
     ]
 
     operations = [
