@@ -88,9 +88,13 @@ class VMSupervisor:
         if not self.connection or not self.connection.isAlive():
             raise CallError(f'Failed to connect to libvirtd for {self.vm_data["name"]}')
 
-        self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
+        self.libvirt_domain_name = self.domain_name(self.vm_data)
         self.domain = self.stop_devices_thread = None
         self.update_domain()
+
+    @staticmethod
+    def domain_name(vm_data):
+        return f'{vm_data["id"]}_{vm_data["name"]}'
 
     def update_domain(self, vm_data=None, update_devices=True):
         # This can be called to update domain to reflect any changes introduced to the VM
@@ -1624,7 +1628,10 @@ class VMService(CRUDService):
         try:
             if not await self.middleware.call('service.started', 'libvirtd'):
                 await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
+            # We want to do this before initializing libvirt connection
+            libvirt.virEventRegisterDefaultImpl()
             self.libvirt_connection = libvirt.open(LIBVIRT_URI)
+            await self.middleware.call('vm.setup_libvirt_events')
         except (asyncio.TimeoutError, libvirt.libvirtError):
             self.middleware.logger.error('Failed to connect to libvirtd')
 
@@ -1653,6 +1660,68 @@ class VMService(CRUDService):
             start_vm,
             (await self.middleware.call('vm.query', [('autostart', '=', True)])), 16
         )
+
+    @private
+    def setup_libvirt_events(self):
+        def callback(conn, dom, event, detail, opaque):
+            """
+            0: 'DEFINED',
+            1: 'UNDEFINED',
+            2: 'STARTED',
+            3: 'SUSPENDED',
+            4: 'RESUMED',
+            5: 'STOPPED',
+            6: 'SHUTDOWN',
+            7: 'PMSUSPENDED'
+            Above is event mapping for internal reference
+            """
+            vms = {VMSupervisor.domain_name(d): d for d in self.middleware.call_sync('vm.query')}
+            if dom.name() not in vms:
+                emit_type = 'REMOVED'
+            elif event == 0:
+                emit_type = 'ADDED'
+            else:
+                emit_type = 'CHANGED'
+
+            vm_state_mapping = {
+                0: 'NOSTATE',
+                1: 'RUNNING',
+                2: 'BLOCKED',
+                3: 'PAUSED',
+                4: 'SHUTDOWN',
+                5: 'SHUTOFF',
+                6: 'CRASHED',
+                7: 'PMSUSPENDED',
+            }
+            try:
+                if event == 1:
+                    if emit_type == 'REMOVED':
+                        state = 'NOSTATE'
+                    else:
+                        # We undefine/define domain numerous times based on if vm has any new changes
+                        # registered, this is going to reflect that
+                        state = 'UPDATING CONFIGURATION'
+                else:
+                    state = vm_state_mapping.get(dom.state()[0], 'UNKNOWN')
+            except libvirt.libvirtError:
+                state = 'UNKNOWN'
+
+            if dom.name().split('_')[0].isdigit():
+                self.middleware.send_event(
+                    'vm.query', emit_type, id=int(dom.name().split('_')[0]), fields={'state': state}
+                )
+            else:
+                self.middleware.logger.debug(f'Received libvirtd event with unknown domain name {dom.name()}')
+
+        def event_loop_execution():
+            while True:
+                libvirt.virEventRunDefaultImpl()
+
+        event_thread = threading.Thread(target=event_loop_execution, name='libvirt_event_loop')
+        event_thread.setDaemon(True)
+        event_thread.start()
+        self.libvirt_connection.domainEventRegister(callback, None)
+        self.libvirt_connection.setKeepAlive(5, 3)
 
 
 class VMDeviceService(CRUDService):
@@ -2171,6 +2240,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
 
 async def setup(middleware):
+    middleware.event_register('vm.query', 'Sent on VM state changes.')
     global ZFS_ARC_MAX_INITIAL
     if sysctl:
         ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
