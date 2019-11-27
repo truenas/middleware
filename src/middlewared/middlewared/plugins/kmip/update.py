@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.service import accepts, CallError, ConfigService, private, ValidationErrors
+from middlewared.service import accepts, CallError, ConfigService, job, private, ValidationErrors
 from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Port
 
@@ -45,7 +45,8 @@ class KMIPService(ConfigService):
             update=True
         )
     )
-    async def do_update(self, data):
+    @job(lock='kmip_update')
+    async def do_update(self, job, data):
         old = await self.config()
         new = old.copy()
         new.update(data)
@@ -96,8 +97,11 @@ class KMIPService(ConfigService):
 
         verrors.check()
 
+        job.set_progress(30, 'Initial Validation complete')
+
         if clear_keys:
             await self.middleware.call('kmip.clear_sync_pending_keys')
+            job.set_progress(50, 'Cleared keys pending sync')
 
         if change_server:
             # We will first migrate all the keys to local database - once done with that,
@@ -105,11 +109,13 @@ class KMIPService(ConfigService):
             # old server -> db
             # db -> new server
             # First can be skipped if old server is not reachable and we want to clear keys
+            job.set_progress(55, 'Starting migration from existing server to new server')
             await self.middleware.call(
                 'datastore.update', self._config.datastore, old['id'], {
                     'manage_zfs_keys': False, 'manage_sed_disks': False
                 }
             )
+            job.set_progress(60, 'Syncing keys from existing server to local database')
             sync_jobs = [
                 (await self.middleware.call(f'kmip.{i}', True)) for i in ('sync_zfs_keys', 'sync_sed_keys')
             ]
@@ -132,6 +138,8 @@ class KMIPService(ConfigService):
             if await self.middleware.call('kmip.kmip_sync_pending'):
                 raise CallError(sync_error)
 
+            job.set_progress(80, 'Successfully synced keys from existing server to local database')
+
         await self.middleware.call(
             'datastore.update', self._config.datastore, old['id'], new,
         )
@@ -140,6 +148,7 @@ class KMIPService(ConfigService):
         if new['enabled'] and old['enabled'] != new['enabled']:
             await self.middleware.call('kmip.initialize_keys')
         if any(old[k] != new[k] for k in ('enabled', 'manage_zfs_keys', 'manage_sed_disks')) or change_server:
+            job.set_progress(90, 'Starting sync between local database and configured KMIP server')
             await self.middleware.call('kmip.sync_keys')
 
         return await self.config()
