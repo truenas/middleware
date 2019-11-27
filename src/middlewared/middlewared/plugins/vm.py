@@ -1627,7 +1627,7 @@ class VMService(CRUDService):
         async def libvirtd_started(middleware):
             await middleware.call('service.start', 'libvirtd')
             while not await middleware.call('service.started', 'libvirtd'):
-                time.sleep(2)
+                await asyncio.sleep(2)
 
         try:
             if not await self.middleware.call('service.started', 'libvirtd'):
