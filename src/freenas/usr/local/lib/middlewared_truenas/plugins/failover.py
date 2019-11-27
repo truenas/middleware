@@ -299,7 +299,7 @@ class FailoverService(ConfigService):
 
         await self.middleware.call('service.restart', 'failover')
 
-        if old['disabled'] is False and new['disabled']:
+        if new['disabled']:
             if new['master']:
                 await self.middleware.call('failover.force_master')
             else:
