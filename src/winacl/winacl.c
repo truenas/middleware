@@ -49,6 +49,7 @@
 #define	WA_PHYSICAL		0x00000020	/* do not follow symlinks */
 #define	WA_STRIP		0x00000040	/* strip ACL */
 #define	WA_CHOWN		0x00000080	/* only chown */
+#define	WA_TRIAL		0x00000100	/* trial run */
 
 #define	WA_OP_SET	(WA_CLONE|WA_STRIP|WA_CHOWN)
 #define	WA_OP_CHECK(flags, bit) ((flags & ~bit) & WA_OP_SET)
@@ -62,7 +63,9 @@ struct inherited_acls{
 struct windows_acl_info {
 	char *source;
 	char *path;
+	char *chroot;
 	acl_t source_acl;
+	dev_t root_dev;
 	struct inherited_acls acls[MAX_ACL_DEPTH];
 	uid_t uid;
 	gid_t gid;
@@ -154,10 +157,12 @@ new_windows_acl_info(void)
 
 	w->source = NULL;
 	w->path = NULL;
+	w->chroot = NULL;
 	w->source_acl = NULL;
 	w->uid = -1;
 	w->gid = -1;
 	w->flags = 0;
+	w->root_dev = 0;
 
 	return (w);
 }
@@ -197,14 +202,15 @@ usage(char *path)
 	fprintf(stderr,
 		"Usage: %s [OPTIONS] ...\n"
 		"Where option is:\n"
-		"    -a <clone|reset|strip|chown> # action to perform\n"
+		"    -a <clone|strip|chown>       # action to perform\n"
 		"    -O <owner>                   # change owner\n"
 		"    -G <group>                   # change group\n"
+		"    -c <path>                    # chroot path\n"
 		"    -s <source>                  # source (if cloning ACL). If none specified then ACL taken from -p\n"
 		"    -p <path>                    # path to set\n"
-		"    -l                           # do not traverse symlinks\n"
 		"    -r                           # recursive\n"
 		"    -v                           # verbose\n"
+		"    -t                           # trial run - makes no changes\n"
 		"    -x                           # traverse filesystem mountpoints\n",
 		path
 	);
@@ -325,17 +331,12 @@ static int
 set_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 {
 	char *path;
-	char *buf;
 	acl_t acl_new;
 	int acl_depth = 0;
 
-	if (fts_entry == NULL) 
-		path = w->path;
-	else
-		path = fts_entry->fts_accpath;
-
-	if (w->flags & WA_VERBOSE)
-		fprintf(stdout, "%s\n", path);
+	if (w->flags & WA_VERBOSE) {
+		fprintf(stdout, "%s\n", fts_entry->fts_path);
+	}
 
 	/* don't set inherited flag on root dir. This is required for zfsacl:map_dacl_protected */
 	if (fts_entry->fts_level == FTS_ROOTLEVEL) {
@@ -352,7 +353,7 @@ set_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 	}
 
 	/* write out the acl to the file */
-	if (acl_set_file(path, ACL_TYPE_NFS4, acl_new) < 0) {
+	if (acl_set_file(fts_entry->fts_accpath, ACL_TYPE_NFS4, acl_new) < 0) {
 		warn("%s: acl_set_file() failed", path);
 		return (-1);
 	}
@@ -399,9 +400,6 @@ set_acls(struct windows_acl_info *w)
 	if ((w->flags & WA_TRAVERSE) == 0 ) {
 		options |= FTS_XDEV;
 	}
-	if ((w->flags & WA_PHYSICAL) == 0) {
-		options |= FTS_LOGICAL;	
-	}
 
 	if ((tree = fts_open(paths, options, fts_compare)) == NULL)
 		err(EX_OSERR, "fts_open");
@@ -429,6 +427,15 @@ set_acls(struct windows_acl_info *w)
 		switch (entry->fts_info) {
 			case FTS_D:
 			case FTS_F:
+				if (w->root_dev == entry->fts_statp->st_dev) {
+					warnx("%s: path resides in boot pool", entry->fts_path);
+					return -1;
+				}
+				if (w->flags & WA_TRIAL) {
+					fprintf(stdout, "depth: %ld, name: %s, full_path: %s\n",
+						entry->fts_level, entry->fts_name, entry->fts_path);
+					break;
+				}
 				if (w->flags & WA_STRIP) {
 					rval = strip_acl(w, entry);
 				}
@@ -708,6 +715,7 @@ main(int argc, char **argv)
 	acl_t	source_acl;
 	char *p = argv[0];
 	ch = ret = 0;
+	struct stat st;
 
 	if (argc < 2) {
 		usage(argv[0]);
@@ -715,7 +723,7 @@ main(int argc, char **argv)
 
 	w = new_windows_acl_info();
 
-	while ((ch = getopt(argc, argv, "a:O:G:s:p:lrvx")) != -1) {
+	while ((ch = getopt(argc, argv, "a:O:G:c:s:p:rtvx")) != -1) {
 		switch (ch) {
 			case 'a': {
 				int action = get_action(optarg);
@@ -737,12 +745,12 @@ main(int argc, char **argv)
 				break;
 			}
 
-			case 's':
-				setarg(&w->source, optarg);
+			case 'c':
+				setarg(&w->chroot, optarg);
 				break;
 
-			case 'l':
-				w->flags |= WA_PHYSICAL;
+			case 's':
+				setarg(&w->source, optarg);
 				break;
 
 			case 'p':
@@ -751,6 +759,10 @@ main(int argc, char **argv)
 
 			case 'r':
 				w->flags |= WA_RECURSIVE;
+				break;
+
+			case 't':
+				w->flags |= WA_TRIAL;
 				break;
 
 			case 'v':
@@ -770,6 +782,25 @@ main(int argc, char **argv)
 	/* set the source to the destination if we lack -s */
 	if (w->source == NULL) {
 		w->source = w->path;
+	}
+
+	if (stat("/", &st) < 0) {
+		warn("%s: stat() failed.", "/");
+		return (1);
+	}
+	w->root_dev = st.st_dev;
+
+	if (w->chroot != NULL) {
+		ret = chdir(w->chroot);
+		if (ret == -1) {
+			warn("%s: chdir() failed.", w->chroot);
+			return (1);
+		}
+		ret = chroot(w->chroot);
+		if (ret == -1) {
+			warn("%s: chroot() failed.", w->chroot);
+			return (1);
+		}
 	}
 
 	if (access(w->source, F_OK) < 0) {
