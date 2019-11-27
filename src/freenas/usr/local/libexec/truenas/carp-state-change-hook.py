@@ -554,13 +554,15 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run_call(midclt, 'service.restart', 'syslogd', {'sync': False})
 
             for i in (
-                'smartd', 'netdata', 'asigra', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp',
-                'webdav',
+                'smartd', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp', 'webdav',
             ):
                 c.execute(f'SELECT srv_enable FROM services_services WHERE srv_service = "{i}"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
                     run_call(midclt, 'service.restart', i, {'sync': False})
+
+            run_call(midclt, 'jail.start_on_boot')
+            run_call(midclt, 'vm.start_on_boot')
 
             midclt.close()
 
@@ -734,8 +736,10 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                 run('/usr/sbin/service watchdogd quietstart')
                 run_call(midclt, 'etc.generate', 'cron')
                 run_call(midclt, 'service.stop', 'smartd', {'sync': False})
-                run_call(midclt, 'service.stop', 'netdata', {'sync': False})
                 run_call(midclt, 'service.stop', 'collectd', {'sync': False})
+                run_call(midclt, 'jail.stop_on_shutdown')
+                for vm in (run_call(midclt, 'vm.query', [['status.state', '=', 'RUNNING']]) or []):
+                    run_call(midclt, 'vm.poweroff', vm['id'], True)
                 run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
 
             for i in (
