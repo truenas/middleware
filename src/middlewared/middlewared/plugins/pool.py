@@ -543,13 +543,13 @@ class PoolService(CRUDService):
     @job(lock=lambda args: f'pool_attach_{args[0]}')
     async def attach(self, job, oid, options):
         """
-        Attach `new_disk` to `target_vev` of `oid` pool. We don't allow pools to have different types
-        of vdevs in topology, so attach would fail if the new operation causes this to happen.
-
-        For existing mirror vdevs, this extends the mirrored vdev making it a n-way mirror vdev, and
-        for striped vdevs, this operation converts it to a VDEV.
-
         If the `oid` pool is passphrase GELI encrypted, `passphrase` must be specified for this operation to succeed.
+
+        `new_disk` is the devname of the new disk to be attached.
+
+        `target_vdev` is the GUID of the vdev where the disk needs to be attached. In case of STRIPED vdev, this
+        is the STRIPED disk GUID which will be converted to mirror. If `target_vdev` is mirror, it will be coverted
+        into a n-way mirror.
         """
         pool = await self._get_instance(oid)
         verrors = ValidationErrors()
@@ -601,13 +601,24 @@ class PoolService(CRUDService):
             if passphrase_path:
                 passf.close()
 
+        devname = disks[options['new_disk']]['vdev'][0]
         extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], None, [
-            {'target': guid, 'type': 'DISK', 'path': disks[options['new_disk']]['vdev'][0]}
+            {'target': guid, 'type': 'DISK', 'path': devname}
         ])
-        await job.wrap(extend_job)
+        try:
+            await job.wrap(extend_job)
+        except CallError as e:
+            if pool['encrypt'] > 0:
+                try:
+                    # If replace has failed lets detach geli to not keep disk busy
+                    await self.middleware.call('disk.geli_detach_single', devname)
+                except Exception:
+                    self.logger.warn(f'Failed to geli detach {devname}', exc_info=True)
+            raise e
 
         disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
         await self.__save_encrypteddisks(oid, enc_disks, {disk['devname']: disk})
+        await self.middleware.call('disk.swaps_configure')
 
     @accepts(Dict(
         'pool_create',
