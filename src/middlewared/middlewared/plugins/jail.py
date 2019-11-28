@@ -988,6 +988,8 @@ class JailService(CRUDService):
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
     def rc_action(self, action):
         """Does specified action on rc enabled (boot=on) jails"""
+        if not self.iocage_set_up():
+            return
         iocage = ioc.IOCage(rc=True)
 
         try:
@@ -1285,6 +1287,8 @@ class JailService(CRUDService):
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
     def clean(self, ds_type):
         """Cleans all iocage datasets of ds_type"""
+        if not self.iocage_set_up():
+            return
 
         ioc.IOCage.reset_cache()
         if ds_type == "JAIL":
@@ -1443,6 +1447,9 @@ class JailService(CRUDService):
 
     @private
     def stop_on_shutdown(self):
+        if not self.iocage_set_up():
+            return
+
         self.logger.debug('Stopping jails on shutdown: PENDING')
         ioc.IOCage(rc=True, reset_cache=True).stop()
         self.logger.debug('Stopping jails on shutdown: SUCCESS')
