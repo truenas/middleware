@@ -531,6 +531,76 @@ class PoolService(CRUDService):
             pool['is_decrypted'] = True
         return pool
 
+    @accepts(
+        Int('oid'),
+        Dict(
+            'pool_attach',
+            Str('target_vdev', reuired=True),
+            Str('new_disk', reuired=True),
+            Str('passphrase'),
+        )
+    )
+    @job()
+    async def attach(self, job, oid, options):
+        pool = await self._get_instance(oid)
+        topology = pool['topology']
+        verrors = ValidationErrors()
+        topology_type = vdev = None
+        for i in topology:
+            if topology_type:
+                break
+            for v in topology[i]:
+                if v['guid'] == options['target_vdev']:
+                    topology_type = i
+                    vdev = v
+                    break
+        else:
+            verrors.add('pool_attach.target_vdev', 'Unable to locate VDEV')
+            verrors.check()
+        if topology_type in ('cache', 'spares'):
+            verrors.add('pool_attach.target_vdev', f'Attaching disks to {topology_type} not allowed.')
+        elif topology_type == 'data':
+            # We would like to make sure here that we don't have inconsistent vdev types across data
+            if vdev['type'].startswith('RAIDZ'):
+                verrors.add('pool_attach.target_vdev', 'Attaching disk to RAIDZ vdev is not allowed.')
+            elif vdev['type'] == 'STRIPE' and len(pool['topology'][topology_type]) > 1:
+                verrors.add(
+                    'pool_attach.target_vdev',
+                    'You are not allowed to have a pool with different data vdev types'
+                )
+
+        if pool['encrypt'] == 2:
+            if not options.get('passphrase'):
+                verrors.add('pool_attach.passphrase', 'Passphrase is required for encrypted pool.')
+            elif not await self.middleware.call('disk.geli_testkey', pool, options['passphrase']):
+                verrors.add('pool_attach.passphrase', 'Passphrase is not valid.')
+
+        # Let's validate new disk now
+        await self.__check_disks_availability(verrors, {options['new_disk']: options['new_disk']}, 'pool_attach')
+        verrors.check()
+
+        disks = {options['new_disk']: {'create_swap': topology_type in ('data', 'spare'), 'vdev': []}}
+        passphrase_path = None
+        if options.get('passphrase'):
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(options['passphrase'])
+            passf.flush()
+            passphrase_path = passf.name
+        try:
+            enc_disks = await self.__format_disks(job, disks, pool['encryptkey_path'], passphrase_path)
+        finally:
+            if passphrase_path:
+                passf.close()
+
+        extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], None, [
+            {'target': vdev['children'][0]['guid'], 'type': 'DISK', 'path': disks[options['new_disk']]['vdev'][0]}
+        ])
+        await job.wrap(extend_job)
+
+        disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
+        await self.__save_encrypteddisks(oid, enc_disks, {disk['devname']: disk})
+
     @accepts(Dict(
         'pool_create',
         Str('name', required=True),
