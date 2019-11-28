@@ -1510,7 +1510,9 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
         except Exception:
             pass
         else:
-            if query_dataset.startswith(os.path.join(activated_pool or '', 'iocage')):
+            if not activated_pool:
+                return results
+            if query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
                 for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
                     results.append({'id': j['host_hostuuid']})
 
