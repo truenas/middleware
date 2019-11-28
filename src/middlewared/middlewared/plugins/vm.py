@@ -1307,6 +1307,7 @@ class VMService(CRUDService):
         if not self.middleware.call_sync('vm.query'):
             self.close_libvirt_connection()
             self.vms = {}
+            await self.middleware.call('service.stop', 'libvirtd')
         return result
 
     @private
