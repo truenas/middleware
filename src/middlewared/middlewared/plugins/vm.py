@@ -755,7 +755,7 @@ class VMService(CRUDService):
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
         self.vms = {}
-        self.libvirt_connection = self.libvirt_event_loop_thread = self.libvirt_event_loop_thread_condition = None
+        self.libvirt_connection = None
 
     @accepts()
     def flags(self):
@@ -1612,10 +1612,6 @@ class VMService(CRUDService):
 
     @private
     def close_libvirt_connection(self):
-        if self.libvirt_event_loop_thread:
-            self.libvirt_event_loop_thread_condition = False
-            self.libvirt_event_loop_thread.join(2.0)
-            self.libvirt_event_loop_thread = None
         if self.libvirt_connection:
             with contextlib.suppress(libvirt.libvirtError):
                 self.libvirt_connection.close()
@@ -1727,13 +1723,12 @@ class VMService(CRUDService):
                 self.middleware.logger.debug(f'Received libvirtd event with unknown domain name {dom.name()}')
 
         def event_loop_execution():
-            self.libvirt_event_loop_thread_condition = True
-            while self.libvirt_event_loop_thread_condition:
+            while self.libvirt_connection:
                 libvirt.virEventRunDefaultImpl()
 
-        self.libvirt_event_loop_thread = threading.Thread(target=event_loop_execution, name='libvirt_event_loop')
-        self.libvirt_event_loop_thread.setDaemon(True)
-        self.libvirt_event_loop_thread.start()
+        event_thread = threading.Thread(target=event_loop_execution, name='libvirt_event_loop')
+        event_thread.setDaemon(True)
+        event_thread.start()
         self.libvirt_connection.domainEventRegister(callback, None)
         self.libvirt_connection.setKeepAlive(5, 3)
 
