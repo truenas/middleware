@@ -48,12 +48,21 @@ class DiskService(Service):
     async def disks_for_temperature_monitoring(self):
         return [
             disk['devname']
-            for disk in await self.middleware.call('disk.query', [['devname', '!=', None],
-                                                                  ['togglesmart', '=', True],
-                                                                  # Polling for disk temperature does
-                                                                  # not allow them to go to sleep
-                                                                  # automatically
-                                                                  ['hddstandby', '=', 'ALWAYS ON']])
+            for disk in await self.middleware.call(
+                'disk.query',
+                [
+                    ['devname', '!=', None],
+                    ['togglesmart', '=', True],
+                    # Polling for disk temperature does not allow them to go to sleep automatically unless
+                    # hddstandby_force is used
+                    [
+                        'OR', [
+                            ['hddstandby', '=', 'ALWAYS ON'],
+                            ['hddstandby_force', '=', True],
+                        ],
+                    ]
+                ]
+            )
         ]
 
     @accepts(
