@@ -297,7 +297,7 @@ class CompoundService(Service):
 
         for part in self.parts:
             for name in dir(part):
-                if name.startswith('_'):
+                if name.startswith('__'):
                     continue
 
                 meth = getattr(part, name)

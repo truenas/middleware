@@ -1277,8 +1277,8 @@ class VMService(CRUDService):
         status = self.status(id)
         if status.get('state') == 'RUNNING':
             self.poweroff(id)
-            # We like to wait at least 7 seconds to have the last vm complete it's post vm actions which
-            # might require interaction with it's domain
+            # We would like to wait at least 7 seconds to have the vm
+            # complete it's post vm actions which might require interaction with it's domain
             time.sleep(7)
         elif status.get('state') == 'ERROR' and not data.get('force'):
             raise CallError('Unable to retrieve VM status. Failed to destroy VM')
