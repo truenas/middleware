@@ -543,8 +543,11 @@ class PoolService(CRUDService):
     @job()
     async def attach(self, job, oid, options):
         pool = await self._get_instance(oid)
-        topology = pool['topology']
         verrors = ValidationErrors()
+        if not pool['is_decrypted']:
+            verrors.add('oid', 'Pool must be unlocked for this action.')
+            verrors.check()
+        topology = pool['topology']
         topology_type = vdev = None
         for i in topology:
             if topology_type:
