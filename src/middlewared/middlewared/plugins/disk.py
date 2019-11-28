@@ -17,6 +17,7 @@ from lxml import etree
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import job, private, CallError, CRUDService
+from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -59,6 +60,7 @@ class DiskModel(sa.Model):
     disk_description = sa.Column(sa.String(120))
     disk_transfermode = sa.Column(sa.String(120), default="Auto")
     disk_hddstandby = sa.Column(sa.String(120), default="Always On")
+    disk_hddstandby_force = sa.Column(sa.Boolean(), default=False)
     disk_advpowermgmt = sa.Column(sa.String(120), default="Disabled")
     disk_acousticlevel = sa.Column(sa.String(120), default="Disabled")
     disk_togglesmart = sa.Column(sa.Boolean(), default=True)
@@ -131,6 +133,7 @@ class DiskService(CRUDService):
             Str('hddstandby', enum=[
                 'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
             ]),
+            Bool('hddstandby_force'),
             Str('passwd', private=True),
             Str('smartoptions'),
             Int('critical', null=True),
@@ -174,6 +177,18 @@ class DiskService(CRUDService):
         new = old.copy()
         new.update(data)
 
+        verrors = ValidationErrors()
+
+        if new['hddstandby_force']:
+            if new['hddstandby'] == 'ALWAYS ON':
+                verrors.add(
+                    'disk_update.hddstandby_force',
+                    'This option does not have sense when HDD Standby is not set'
+                )
+
+        if verrors:
+            raise verrors
+
         if old['passwd'] != new['passwd'] and new['passwd']:
             new['passwd'] = await self.middleware.call('pwenc.encrypt', new['passwd'])
 
@@ -195,7 +210,8 @@ class DiskService(CRUDService):
 
         if any(
                 new[key] != old[key]
-                for key in ['togglesmart', 'smartoptions', 'hddstandby', 'critical', 'difference', 'informational']
+                for key in ['togglesmart', 'smartoptions', 'hddstandby', 'hddstandby_force', 'critical', 'difference',
+                            'informational']
         ):
 
             if new['togglesmart']:
@@ -203,6 +219,7 @@ class DiskService(CRUDService):
             else:
                 await self.middleware.call('disk.toggle_smart_off', new['name'])
 
+            await self.middleware.call('disk.update_hddstandby_force')
             await self.middleware.call('disk.update_smartctl_args_for_disks')
             await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
@@ -863,6 +880,7 @@ class DiskService(CRUDService):
         else:
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
+        await self.middleware.call('disk.update_hddstandby_force')
         await self.middleware.call('disk.update_smartctl_args_for_disks')
         if await self.middleware.call('service.started', 'collectd'):
             await self.middleware.call('service.restart', 'collectd')
@@ -988,6 +1006,7 @@ class DiskService(CRUDService):
                     await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
         if changed:
+            await self.middleware.call('disk.update_hddstandby_force')
             await self.middleware.call('disk.update_smartctl_args_for_disks')
             if await self.middleware.call('service.started', 'collectd'):
                 await self.middleware.call('service.restart', 'collectd')
