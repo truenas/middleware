@@ -542,6 +542,15 @@ class PoolService(CRUDService):
     )
     @job()
     async def attach(self, job, oid, options):
+        """
+        Attach `new_disk` to `target_vev` of `oid` pool. We don't allow pools to have different types
+        of vdevs in topology, so attach would fail if the new operation causes this to happen.
+
+        For existing mirror vdevs, this extends the mirrored vdev making it a n-way mirror vdev, and
+        for striped vdevs, this operation converts it to a VDEV.
+
+        If the `oid` pool is passphrase GELI encrypted, `passphrase` must be specified for this operation to succeed.
+        """
         pool = await self._get_instance(oid)
         verrors = ValidationErrors()
         if not pool['is_decrypted']:
