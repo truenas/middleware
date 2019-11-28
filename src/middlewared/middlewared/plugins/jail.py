@@ -578,7 +578,7 @@ class JailService(CRUDService):
                     jail = list(jail.values())[0]
                     jail['id'] = jail['host_hostuuid']
                     if jail['dhcp']:
-                        uuid = jail['host_hostuuid']
+                        uuid = jail['host_hostuuid'].replace('.', '_')
 
                         if jail['state'] == 'up':
                             interface = jail['interfaces'].split(',')[0].split(
@@ -602,7 +602,7 @@ class JailService(CRUDService):
                             jail['jid'] = su.check_output(
                                 [
                                     'jls', '-j',
-                                    f'ioc-{jail["host_hostuuid"]}',
+                                    f'ioc-{jail["host_hostuuid"].replace(".", "_")}',
                                     'jid'
                                 ]
                             ).decode().strip()
