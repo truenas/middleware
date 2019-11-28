@@ -21,7 +21,7 @@ def upgrade():
     with op.batch_alter_table('storage_replication', schema=None) as batch_op:
         batch_op.add_column(sa.Column('repl_replicate', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE storage_replication SET repl_replicate = FALSE")
+    op.execute("UPDATE storage_replication SET repl_replicate = 0")
 
     with op.batch_alter_table('storage_replication', schema=None) as batch_op:
         batch_op.alter_column('repl_replicate',
