@@ -1679,7 +1679,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             if device['dtype'] not in ('DISK', 'RAW'):
                 continue
 
-            disk = device['attributes'].get('path', None)
+            disk = device['attributes'].get('path')
             if not disk:
                 continue
 
