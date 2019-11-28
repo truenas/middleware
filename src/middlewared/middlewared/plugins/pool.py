@@ -573,13 +573,8 @@ class PoolService(CRUDService):
             verrors.add('pool_attach.target_vdev', f'Attaching disks to {topology_type} not allowed.')
         elif topology_type == 'data':
             # We would like to make sure here that we don't have inconsistent vdev types across data
-            if vdev['type'].startswith('RAIDZ'):
-                verrors.add('pool_attach.target_vdev', 'Attaching disk to RAIDZ vdev is not allowed.')
-            elif vdev['type'] == 'STRIPE' and len(pool['topology'][topology_type]) > 1:
-                verrors.add(
-                    'pool_attach.target_vdev',
-                    'You are not allowed to have a pool with different data vdev types'
-                )
+            if vdev['type'] not in ('DISK', 'MIRROR'):
+                verrors.add('pool_attach.target_vdev', f'Attaching disk to {vdev["type"]} vdev is not allowed.')
 
         if pool['encrypt'] == 2:
             if not options.get('passphrase'):
@@ -591,6 +586,7 @@ class PoolService(CRUDService):
         await self.__check_disks_availability(verrors, {options['new_disk']: options['new_disk']}, 'pool_attach')
         verrors.check()
 
+        guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
         disks = {options['new_disk']: {'create_swap': topology_type in ('data', 'spare'), 'vdev': []}}
         passphrase_path = None
         if options.get('passphrase'):
@@ -606,7 +602,7 @@ class PoolService(CRUDService):
                 passf.close()
 
         extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], None, [
-            {'target': vdev['children'][0]['guid'], 'type': 'DISK', 'path': disks[options['new_disk']]['vdev'][0]}
+            {'target': guid, 'type': 'DISK', 'path': disks[options['new_disk']]['vdev'][0]}
         ])
         await job.wrap(extend_job)
 
