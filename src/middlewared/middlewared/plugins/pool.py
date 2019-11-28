@@ -540,7 +540,7 @@ class PoolService(CRUDService):
             Str('passphrase'),
         )
     )
-    @job()
+    @job(lock=lambda args: f'pool_attach_{args[0]}')
     async def attach(self, job, oid, options):
         """
         Attach `new_disk` to `target_vev` of `oid` pool. We don't allow pools to have different types
@@ -587,7 +587,7 @@ class PoolService(CRUDService):
         verrors.check()
 
         guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
-        disks = {options['new_disk']: {'create_swap': topology_type in ('data', 'spare'), 'vdev': []}}
+        disks = {options['new_disk']: {'create_swap': topology_type == 'data', 'vdev': []}}
         passphrase_path = None
         if options.get('passphrase'):
             passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
