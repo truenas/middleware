@@ -879,6 +879,8 @@ class JailService(CRUDService):
     @accepts()
     def get_activated_pool(self):
         """Returns the activated pool if there is one, or None"""
+        if not self.iocage_set_up():
+            return None
         try:
             pool = ioc.IOCage(skip_jails=True, reset_cache=True).get('', pool=True)
         except (RuntimeError, SystemExit) as e:
@@ -1501,7 +1503,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
         except Exception:
             pass
         else:
-            if query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
+            if query_dataset.startswith(os.path.join(activated_pool or '', 'iocage')):
                 for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
                     results.append({'id': j['host_hostuuid']})
 
