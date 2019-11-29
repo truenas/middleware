@@ -1454,7 +1454,7 @@ class JailService(CRUDService):
             return
 
         self.logger.debug('Stopping jails on shutdown: PENDING')
-        ioc.IOCage(rc=True, reset_cache=True).stop()
+        ioc.IOCage(jail='ALL', reset_cache=True).stop(force=True, ignore_exception=True)
         self.logger.debug('Stopping jails on shutdown: SUCCESS')
 
         return True
