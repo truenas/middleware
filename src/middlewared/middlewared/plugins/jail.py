@@ -1525,7 +1525,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
     async def delete(self, attachments):
         for attachment in attachments:
             try:
-                await self.middleware.call('jail.stop', attachment['id'])
+                await self.middleware.call('jail.stop', attachment['id'], True)
             except Exception:
                 self.middleware.logger.warning('Unable to jail.stop %r', attachment['id'], exc_info=True)
 
