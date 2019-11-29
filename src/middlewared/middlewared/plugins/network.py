@@ -484,6 +484,7 @@ class InterfaceService(CRUDService):
             'description': config['int_name'],
             'options': config['int_options'],
             'mtu': config['int_mtu'],
+            'disable_offload_capabilities': config['int_disable_offload_capabilities'],
         })
 
         if not is_freenas:
@@ -766,6 +767,7 @@ class InterfaceService(CRUDService):
         Str('name'),
         Str('description', null=True),
         Str('type', enum=['BRIDGE', 'LINK_AGGREGATION', 'VLAN'], required=True),
+        Bool('disable_offload_capabilities', default=False),
         Bool('ipv4_dhcp', default=False),
         Bool('ipv6_auto', default=False),
         List('aliases', unique=True, items=[
@@ -904,6 +906,9 @@ class InterfaceService(CRUDService):
                         )
                 raise
 
+        if data.get('disable_offload_capabilities'):
+            await self.middleware.call('interface.disable_capabilities', name)
+
         return await self._get_instance(name)
 
     async def _get_next(self, prefix, start=0):
@@ -985,6 +990,11 @@ class InterfaceService(CRUDService):
                     (
                         'Bridge interface must start with "bridge" followed by an unique number.'
                     ),
+                )
+            if data.get('disable_offload_capabilities'):
+                verrors.add(
+                    f'{schema_name}.disable_offload_capabilities',
+                    'Offloading capabilities is not supported for bridge interfaces'
                 )
             for i, member in enumerate(data.get('bridge_members') or []):
                 if member not in ifaces:
@@ -1154,6 +1164,7 @@ class InterfaceService(CRUDService):
             'group': data.get('failover_group'),
             'options': data.get('options', ''),
             'mtu': data.get('mtu') or None,
+            'disable_offload_capabilities': data.get('disable_offload_capabilities') or False,
         }
 
     async def __create_interface_datastore(self, data, attrs):
@@ -1302,6 +1313,16 @@ class InterfaceService(CRUDService):
         await self._common_validation(
             verrors, 'interface_update', new, iface['type'], update=iface
         )
+        failover_licensed = not await self.middleware.call('system.is_freenas') and await self.middleware.call(
+            'failover.licensed'
+        )
+        if failover_licensed and iface.get('disable_offload_capabilities') != new.get('disable_offload_capabilities'):
+            if not new['disable_offload_capabilities']:
+                if iface['name'] in await self.to_disable_evil_nic_capabilities(False):
+                    verrors.add(
+                        'interface_update.disable_offload_capabilities',
+                        f'Capabilities for {oid} cannot be enabled as there are Jail/VM(s) which need them disabled.'
+                    )
         verrors.check()
 
         await self.__save_datastores()
@@ -1416,6 +1437,34 @@ class InterfaceService(CRUDService):
                         'datastore.delete', 'network.interfaces', interface_id
                     )
             raise
+
+        if new.get('disable_offload_capabilities') != iface.get('disable_offload_capabilities'):
+            failover_licensed = not await self.middleware.call('system.is_freenas') and await self.middleware.call(
+                'failover.licensed'
+            )
+            if new['disable_offload_capabilities']:
+                await self.middleware.call('interface.disable_capabilities', iface['name'])
+                if failover_licensed:
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote', 'interface.disable_capabilities', [iface['name']]
+                        )
+                    except Exception as e:
+                        self.middleware.logger.debug(
+                            f'Failed to disable capabilities for {iface["name"]} on standby storage controller: {e}'
+                        )
+            else:
+                capabilities = await self.nic_capabilities()
+                await self.middleware.call('interface.enable_capabilities', iface['name'], capabilities)
+                if failover_licensed:
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote', 'interface.enable_capabilities', [iface['name'], capabilities]
+                        )
+                    except Exception as e:
+                        self.middleware.logger.debug(
+                            f'Failed to enable capabilities for {iface["name"]} on standby storage controller: {e}'
+                        )
 
         return await self._get_instance(new['name'])
 
@@ -1658,10 +1707,20 @@ class InterfaceService(CRUDService):
 
         await self.middleware.call_hook('interface.pre_sync')
 
+        disable_capabilities_ifaces = {
+            i['name'] for i in await self.middleware.call(
+                'interface.query', [['disable_offload_capabilities', '=', True]]
+            )
+        }
         interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
         parent_interfaces = []
         sync_interface_opts = defaultdict(dict)
+
+        for physical_iface in await self.middleware.call(
+            'interface.query', [['type', '=', 'PHYSICAL'], ['disable_offload_capabilities', '=', True]]
+        ):
+            await self.middleware.call('interface.disable_capabilities', physical_iface['name'])
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
@@ -1675,6 +1734,9 @@ class InterfaceService(CRUDService):
             except KeyError:
                 netif.create_interface(name)
                 iface = netif.get_interface(name)
+
+            if name in disable_capabilities_ifaces:
+                await self.middleware.call('interface.disable_capabilities', name)
 
             protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
             if iface.protocol != protocol:
@@ -1727,6 +1789,9 @@ class InterfaceService(CRUDService):
             except KeyError:
                 netif.create_interface(vlan['vlan_vint'])
                 iface = netif.get_interface(vlan['vlan_vint'])
+
+            if vlan['vlan_vint'] in disable_capabilities_ifaces:
+                await self.middleware.call('interface.disable_capabilities', vlan['vlan_vint'])
 
             if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag'] or iface.pcp != vlan['vlan_pcp']:
                 iface.unconfigure()
@@ -1844,6 +1909,58 @@ class InterfaceService(CRUDService):
             self.logger.info('Failed to sync routes', exc_info=True)
 
         await self.middleware.call_hook('interface.post_sync')
+
+    @private
+    async def nic_capabilities(self):
+        return [c for c in netif.InterfaceCapability.__members__]
+
+    @private
+    async def to_disable_evil_nic_capabilities(self, check_iface=True):
+        """
+        When certain NIC's are added to a bridge or other members are added to a bridge when these NIC's are already
+        on the bridge, bridge brings all interfaces into lowest common denominator which results in a network hiccup.
+        This hiccup in case of failover makes backup node come ONLINE as master as there's a hiccup in the
+        master/backup communication. This scenario is common to vnet/nat based jails and VM's, this method checks
+        if the user has such VM's or jails which can bring forward this case and disables certain capabilities for
+        the affected NIC's so that the user is not affected by the interruption which is caused when these NIC's
+        experience a hiccup in the network traffic.
+        """
+        nics = set(await self.middleware.call('jail.nic_capability_checks', None, check_iface))
+        nics.update(await self.middleware.call('vm.device.nic_capability_checks', None, check_iface))
+        return list(nics)
+
+    @private
+    @accepts(Str('iface'), List('capabilities', default=[c for c in netif.InterfaceCapability.__members__]))
+    def enable_capabilities(self, iface, capabilities):
+        enabled = []
+        iface = netif.get_interface(iface)
+        for capability in map(lambda c: getattr(netif.InterfaceCapability, c), capabilities):
+            current = iface.capabilities
+            if capability in current:
+                continue
+            try:
+                iface.capabilities = current | {capability}
+            except OSError:
+                pass
+            else:
+                enabled.append(capability.name)
+        if enabled:
+            self.middleware.logger.debug(f'Enabled {",".join(enabled)} capabilities for {iface}')
+
+    @private
+    @accepts(
+        Str('iface'),
+        List('capabilities', default=[
+            'TXCSUM', 'TXCSUM_IPV6', 'RXCSUM', 'RXCSUM_IPV6', 'TSO4', 'TSO6', 'VLAN_HWTSO', 'LRO',
+        ])
+    )
+    def disable_capabilities(self, iface, capabilities):
+        self.middleware.call_sync('interface._get_instance', iface)
+        iface = netif.get_interface(iface)
+        disabled_capabilities = [c.name for c in iface.capabilities if c.name in capabilities]
+        iface.capabilities = {c for c in iface.capabilities if c.name not in capabilities}
+        if disabled_capabilities:
+            self.middleware.logger.debug(f'Disabling {",".join(disabled_capabilities)} capabilities for {iface}')
 
     @private
     def alias_to_addr(self, alias):

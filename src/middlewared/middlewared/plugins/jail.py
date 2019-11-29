@@ -1,12 +1,12 @@
 import asyncio
 import contextlib
+import errno
 import os
 import subprocess as su
 import itertools
 import pathlib
 import json
 import sqlite3
-import errno
 import re
 
 import iocage_lib.iocage as ioc
@@ -254,6 +254,18 @@ class PluginService(CRUDService):
         else:
             verrors = common_validation(self.middleware, data, schema='plugin_create')
 
+        self.middleware.call_sync(
+            'jail.failover_checks', {
+                'id': jail_name, 'host_hostuuid': jail_name,
+                **self.middleware.call_sync('jail.default_configuration'),
+                **self.defaults({
+                    'plugin': plugin_name, 'plugin_repository': plugin_repository, 'branch': branch, 'refresh': True
+                })['properties'],
+                **{
+                    v.split('=')[0]: v.split('=')[-1] for v in data['props']
+                }
+            }, verrors, 'plugin_create'
+        )
         verrors.check()
 
         job.set_progress(20, 'Initial validation complete')
@@ -759,9 +771,12 @@ class JailService(CRUDService):
 
             verrors = common_validation(self.middleware, options)
 
-            if verrors:
-                raise verrors
-
+            self.failover_checks({
+                'id': uuid, 'host_hostuuid': uuid, **self.middleware.call_sync('jail.default_configuration'), **{
+                    v.split('=')[0]: v.split('=')[-1] for v in options['props']
+                }
+            }, verrors, 'options')
+            verrors.check()
             job.set_progress(20, 'Initial validation complete')
 
         iocage = ioc.IOCage(skip_jails=True)
@@ -877,11 +892,10 @@ class JailService(CRUDService):
         verrors = common_validation(self.middleware, options, True, jail)
 
         if name is not None and plugin:
-            verrors.add('options.plugin',
-                        'Cannot be true while trying to rename')
+            verrors.add('options.plugin', 'Cannot be true while trying to rename')
 
-        if verrors:
-            raise verrors
+        self.failover_checks({**jail, **options}, verrors, 'options')
+        verrors.check()
 
         for prop, val in options.items():
             p = f"{prop}={val}"
@@ -909,7 +923,6 @@ class JailService(CRUDService):
 
         # TODO: Port children checking, release destroying.
         iocage.destroy_jail(force=options.get('force'))
-
         return True
 
     @private
@@ -933,6 +946,8 @@ class JailService(CRUDService):
     @accepts()
     def get_activated_pool(self):
         """Returns the activated pool if there is one, or None"""
+        if not self.iocage_set_up():
+            return None
         try:
             pool = ioc.IOCage(skip_jails=True, reset_cache=True).get('', pool=True)
         except (RuntimeError, SystemExit) as e:
@@ -1042,6 +1057,8 @@ class JailService(CRUDService):
     @accepts(Str("action", enum=["START", "STOP", "RESTART"]))
     def rc_action(self, action):
         """Does specified action on rc enabled (boot=on) jails"""
+        if not self.iocage_set_up():
+            return
         iocage = ioc.IOCage(rc=True)
 
         try:
@@ -1055,6 +1072,89 @@ class JailService(CRUDService):
             raise CallError(str(e))
 
         return True
+
+    @accepts(Dict('props', additional_attrs=True))
+    def update_defaults(self, props):
+        """
+        Update default properties for iocage which will remain true for all jails moving on i.e nat_backend
+        """
+        iocage = ioc.IOCage(jail='default', reset_cache=True)
+        for prop in props:
+            iocage.set(f'{prop}={props[prop]}')
+
+    @private
+    def retrieve_default_iface(self):
+        default_ifaces = ioc_common.get_host_gateways()
+        if default_ifaces['ipv4']['interface']:
+            return default_ifaces['ipv4']['interface']
+        elif default_ifaces['ipv6']['interface']:
+            return default_ifaces['ipv6']['interface']
+
+    @private
+    def retrieve_vnet_interface(self, iface):
+        if iface == 'auto':
+            return self.retrieve_default_iface()
+        elif iface != 'none':
+            return iface
+        else:
+            return None
+
+    @private
+    def retrieve_vnet_bridge(self, interfaces):
+        bridges = []
+        for interface in interfaces.split(','):
+            if interface.split(':')[-1] not in bridges:
+                bridges.append(interface.split(':')[-1])
+        return bridges
+
+    @private
+    def retrieve_nat_interface(self, iface):
+        return self.retrieve_default_iface() if iface == 'none' else iface
+
+    @private
+    async def nic_capability_checks(self, jails=None, check_system_iface=True):
+        """
+        For vnet/nat based jails, when jail is started, if NIC has certain capabilities set, we experience a
+        hiccup in the network traffic which can cause a failover to occur. This method returns
+        interfaces which will be affected by this based on the jails user has.
+        """
+        jail_nics = []
+        system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
+        for jail in (
+            await self.middleware.call('jail.query', [['OR', [['vnet', '=', 1], ['nat', '=', 1]]]])
+            if not jails else jails
+        ):
+            nic = await self.middleware.call(
+                f'jail.retrieve_{"nat" if jail["nat"] else "vnet"}_interface',
+                jail['nat_interface' if jail['nat'] else 'vnet_default_interface']
+            )
+            if nic in system_ifaces:
+                if not jail['nat']:
+                    bridges = await self.middleware.call('jail.retrieve_vnet_bridge', jail['interfaces'])
+                    if not bridges or not bridges[0]:
+                        continue
+                if not check_system_iface or not system_ifaces[nic]['disable_offload_capabilities']:
+                    jail_nics.append(nic)
+        return jail_nics
+
+    @private
+    def failover_checks(self, jail_config, verrors, schema):
+        if not self.middleware.call_sync('system.is_freenas') and self.middleware.call_sync('failover.licensed'):
+            jail_config = {
+                k: ioc_common.check_truthy(v) if k in IOCJson.truthy_props else v for k, v in jail_config.items()
+            }
+            if jail_config.get('dhcp'):
+                jail_config['vnet'] = 1
+            if not (jail_config['vnet'] or jail_config['nat']):
+                return
+            to_disable_nics = self.middleware.call_sync('jail.nic_capability_checks', [jail_config])
+            if to_disable_nics:
+                option = 'nat' if jail_config['nat'] else 'vnet'
+                verrors.add(
+                    f'{schema}.{option}',
+                    f'Capabilities must be disabled for {",".join(to_disable_nics)} interface '
+                    f'in Network->Interfaces section before enabling {option}'
+                )
 
     @accepts(Str('jail'))
     @job(lock=lambda args: f'jail_start:{args[0]}')
@@ -1256,6 +1356,8 @@ class JailService(CRUDService):
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
     def clean(self, ds_type):
         """Cleans all iocage datasets of ds_type"""
+        if not self.iocage_set_up():
+            return
 
         ioc.IOCage.reset_cache()
         if ds_type == "JAIL":
@@ -1414,6 +1516,9 @@ class JailService(CRUDService):
 
     @private
     def stop_on_shutdown(self):
+        if not self.iocage_set_up():
+            return
+
         self.logger.debug('Stopping jails on shutdown: PENDING')
         ioc.IOCage(rc=True, reset_cache=True).stop()
         self.logger.debug('Stopping jails on shutdown: SUCCESS')
@@ -1444,12 +1549,18 @@ async def __event_system(middleware, event_type, args):
     """
     # We need to call a method in Jail service to make sure it runs in the
     # process pool because of py-libzfs thread safety issue with iocage and middlewared
-    if args['id'] == 'ready':
+    if args['id'] == 'ready' and await middleware.call('jail.iocage_set_up'):
+        if not await middleware.call('system.is_freenas'):
+            await middleware.call('jail.check_dataset_existence')
+            await middleware.call('jail.update_defaults', {'nat_backend': 'ipfw'})
+            # We start Jail/VM(s) during carp state change hook
+            if await middleware.call('failover.licensed'):
+                return
         try:
             await middleware.call('jail.start_on_boot')
         except ioc_exceptions.PoolNotActivated:
             pass
-    elif args['id'] == 'shutdown':
+    elif args['id'] == 'shutdown' and await middleware.call('jail.iocage_set_up'):
         async with SHUTDOWN_LOCK:
             await middleware.call('jail.stop_on_shutdown')
 
@@ -1470,6 +1581,8 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
         except Exception:
             pass
         else:
+            if not activated_pool:
+                return results
             if query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
                 for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
                     results.append({'id': j['host_hostuuid']})

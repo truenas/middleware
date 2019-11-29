@@ -10,7 +10,7 @@ import sysctl
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
-from middlewared.service import private, CRUDService, SystemServiceService, ValidationErrors
+from middlewared.service import private, CRUDService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
@@ -147,6 +147,28 @@ class NFSService(SystemServiceService):
         for i, bindip in enumerate(new['bindip']):
             if bindip not in bindip_choices:
                 verrors.add(f'nfs_update.bindip.{i}', 'Please provide a valid ip address')
+
+        if new["v4"] and new["v4_krb"] and await self.middleware.call('activedirectory.get_state') != "DISABLED":
+            """
+            In environments with kerberized NFSv4 enabled, we need to tell winbindd to not prefix
+            usernames with the short form of the AD domain. Directly update the db and regenerate
+            the smb.conf to avoid having a service disruption due to restarting the samba server.
+            """
+            if await self.middleware.call('smb.get_smb_ha_mode') == 'LEGACY':
+                raise ValidationError(
+                    'nfs_update.v4_krb',
+                    'Enabling kerberos authentication on TrueNAS HA requires '
+                    'the system dataset to be located on a data pool.'
+                )
+            ad = await self.middleware.call('activedirectory.config')
+            await self.middleware.call(
+                'datastore.update',
+                'directoryservice.activedirectory',
+                ad['id'],
+                {'ad_use_default_domain': True}
+            )
+            await self.middleware.call('etc.generate', 'smb')
+            await self.middleware.call('service.reload', 'cifs')
 
         if not new["v4"] and new["v4_v3owner"]:
             verrors.add("nfs_update.v4_v3owner", "This option requires enabling NFSv4")

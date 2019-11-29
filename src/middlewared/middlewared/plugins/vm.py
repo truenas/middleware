@@ -1634,6 +1634,20 @@ class VMService(CRUDService):
                 # Whatever happens, we don't want middlewared not booting
                 self.vms[vm_data['name']] = VMSupervisor(vm_data, self.libvirt_connection, self.middleware)
 
+    @private
+    async def start_on_boot(self):
+
+        async def start_vm(vm):
+            try:
+                await self.middleware.call('vm.start', vm['id'])
+            except Exception as e:
+                self.middleware.logger.debug(f'Failed to start VM {vm["name"]}: {e}')
+
+        await asyncio_map(
+            start_vm,
+            (await self.middleware.call('vm.query', [('autostart', '=', True)])), 16
+        )
+
 
 class VMDeviceService(CRUDService):
 
@@ -1649,6 +1663,43 @@ class VMDeviceService(CRUDService):
         namespace = 'vm.device'
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
+
+    @private
+    async def failover_nic_check(self, vm_device, verrors, schema):
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+            nics = await self.nic_capability_checks([vm_device])
+            if nics:
+                verrors.add(
+                    f'{schema}.nic_attach',
+                    f'Capabilities must be disabled for {",".join(nics)} interface '
+                    'in Network->Interfaces section before using this device with VM.'
+                )
+
+    @private
+    async def nic_capability_checks(self, vm_devices=None, check_system_iface=True):
+        """
+        For NIC devices, if VM is started and NIC is added to a bridge, if desired nic_attach NIC has certain
+        capabilities set, we experience a hiccup in the network traffic which can cause a failover to occur.
+        This method returns interfaces which will be affected by this.
+        """
+        vm_nics = []
+        system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
+        for vm_device in await self.middleware.call(
+            'vm.device.query', [
+                ['dtype', '=', 'NIC'], [
+                    'OR', [['attributes.nic_attach', '=', None], ['attributes.nic_attach', '!^', 'bridge']]
+                ]
+            ]
+        ) if not vm_devices else vm_devices:
+            try:
+                nic = vm_device['attributes'].get('nic_attach') or netif.RoutingTable().default_route_ipv4.interface
+            except Exception:
+                nic = None
+            if nic in system_ifaces and (
+                not check_system_iface or not system_ifaces[nic]['disable_offload_capabilities']
+            ):
+                vm_nics.append(nic)
+        return vm_nics
 
     @private
     async def create_resource(self, device, old=None):
@@ -1812,8 +1863,7 @@ class VMDeviceService(CRUDService):
         """
         Delete a VM device of `id`.
         """
-        await self.delete_resource(options, (await self._get_instance(id)))
-
+        await self.delete_resource(options, await self._get_instance(id))
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
@@ -1987,6 +2037,7 @@ class VMDeviceService(CRUDService):
                 nic_choices = await self.middleware.call('vm.device.nic_attach_choices')
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
+            await self.failover_nic_check(device, verrors, 'attributes')
         elif device.get('dtype') == 'VNC':
             if vm_instance:
                 if vm_instance['bootloader'] != 'UEFI':
@@ -2033,9 +2084,6 @@ async def __event_system_ready(middleware, event_type, args):
     Method called when system is ready, supposed to start VMs
     flagged that way.
     """
-    async def start_vm(mw, vm):
-        await mw.call('vm.start', vm['id'])
-
     async def stop_vm(mw, vm):
         stop_job = await mw.call('vm.stop', vm['id'], {'force_after_timeout': True})
         await stop_job.wait()
@@ -2048,10 +2096,10 @@ async def __event_system_ready(middleware, event_type, args):
 
         await middleware.call('vm.initialize_vms')
 
-        await asyncio_map(
-            functools.partial(start_vm, middleware),
-            (await middleware.call('vm.query', [('autostart', '=', True)])), 16
-        )
+        if not await middleware.call('system.is_freenas') and await middleware.call('failover.licensed'):
+            return
+
+        await middleware.call('vm.start_on_boot')
     elif args['id'] == 'shutdown':
         async with SHUTDOWN_LOCK:
             await asyncio_map(
