@@ -559,13 +559,13 @@ class PoolService(CRUDService):
         topology = pool['topology']
         topology_type = vdev = None
         for i in topology:
-            if topology_type:
-                break
             for v in topology[i]:
                 if v['guid'] == options['target_vdev']:
                     topology_type = i
                     vdev = v
                     break
+            if topology_type:
+                break
         else:
             verrors.add('pool_attach.target_vdev', 'Unable to locate VDEV')
             verrors.check()
