@@ -1935,7 +1935,7 @@ class InterfaceService(CRUDService):
 
     @private
     @accepts(Str('iface'), List('capabilities', default=(
-        [c for c in netif.InterfaceCapability.__members__]
+        [c for c in netif.InterfaceCapability.__members__] if netif else []
     )))
     def enable_capabilities(self, iface, capabilities):
         enabled = []
