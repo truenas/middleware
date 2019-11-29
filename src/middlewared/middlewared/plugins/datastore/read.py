@@ -39,6 +39,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             List('select', default=[]),
             Bool('count', default=False),
             Bool('get', default=False),
+            Int('offset', default=0),
             Int('limit', default=0),
             register=True,
         ),
@@ -145,6 +146,9 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                         break
 
             qs = qs.order_by(*order_by)
+
+        if options['offset']:
+            qs = qs.offset(options['offset'])
 
         if options['limit']:
             qs = qs.limit(options['limit'])
