@@ -806,7 +806,7 @@ class PoolService(CRUDService):
 
         await self.__common_validation(verrors, data, 'pool_update', old=pool)
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        disks_cache = await self.__check_disks_availability(verrors, disks)
+        disks_cache = await self.__check_disks_availability(verrors, disks, 'pool_update')
 
         if verrors:
             raise verrors
@@ -939,7 +939,7 @@ class PoolService(CRUDService):
 
         return disks, vdevs
 
-    async def __check_disks_availability(self, verrors, disks):
+    async def __check_disks_availability(self, verrors, disks, schema='pool_create'):
         """
         Makes sure the disks are present in the system and not reserved
         by anything else (boot, pool, iscsi, etc).
@@ -958,7 +958,7 @@ class PoolService(CRUDService):
         disks_not_in_cache = disks_set - set(disks_cache.keys())
         if disks_not_in_cache:
             verrors.add(
-                'pool_create.topology',
+                f'{schema}.topology',
                 f'The following disks were not found in system: {"," .join(disks_not_in_cache)}.'
             )
 
@@ -966,7 +966,7 @@ class PoolService(CRUDService):
         disks_reserved = disks_set - (disks_set - set(disks_reserved))
         if disks_reserved:
             verrors.add(
-                'pool_create.topology',
+                f'{schema}.topology',
                 f'The following disks are already in use: {"," .join(disks_reserved)}.'
             )
         return disks_cache

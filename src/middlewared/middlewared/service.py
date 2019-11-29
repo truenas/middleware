@@ -71,37 +71,70 @@ class throttle(object):
     on some key (possibly argument of the method).
     """
 
-    def __init__(self, seconds=0, condition=None, exc_class=RuntimeError):
+    def __init__(self, seconds=0, condition=None, exc_class=RuntimeError, max_waiters=10):
+        self.max_waiters = max_waiters
         self.exc_class = exc_class
         self.condition = condition
         self.throttle_period = seconds
         self.last_calls = defaultdict(lambda: 0)
+        self.last_calls_lock = None
+
+    def _should_throttle(self, *args, **kwargs):
+        if self.condition:
+            allowed, key = self.condition(*args, **kwargs)
+            if allowed:
+                return False, None
+        else:
+            key = None
+
+        return not self._register_call(key), key
+
+    def _register_call(self, key):
+        now = time.monotonic()
+        time_since_last_call = now - self.last_calls[key]
+        if time_since_last_call > self.throttle_period:
+            self.last_calls[key] = now
+            return True
+        else:
+            return False
 
     def __call__(self, fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            now = time.monotonic()
-            key = None
-            if self.condition:
-                allowed, key = self.condition(*args, **kwargs)
-                if allowed:
-                    self.last_calls[key] = now
+        if asyncio.iscoroutinefunction(fn):
+            @wraps(fn)
+            async def async_wrapper(*args, **kwargs):
+                should_throttle, key = self._should_throttle(*args, **kwargs)
+                if not should_throttle:
+                    return await fn(*args, **kwargs)
+
+                while True:
+                    if self._register_call(key):
+                        break
+
+                    await asyncio.sleep(0.5)
+
+                return await fn(*args, **kwargs)
+
+            return async_wrapper
+        else:
+            self.last_calls_lock = threading.Lock()
+
+            @wraps(fn)
+            def wrapper(*args, **kwargs):
+                with self.last_calls_lock:
+                    should_throttle, key = self._should_throttle(*args, **kwargs)
+                if not should_throttle:
                     return fn(*args, **kwargs)
 
-            time_since_last_call = now - self.last_calls[key]
+                while True:
+                    with self.last_calls_lock:
+                        if self._register_call(key):
+                            break
 
-            if time_since_last_call > self.throttle_period:
-                self.last_calls[key] = now
+                    time.sleep(0.5)
+
                 return fn(*args, **kwargs)
-            raise self.exc_class(f'{fn!r} called too many times')
 
-        @wraps(fn)
-        async def async_wrapper(*args, **kwargs):
-            return await wrapper(*args, **kwargs)
-
-        if asyncio.iscoroutinefunction(fn):
-            return async_wrapper
-        return wrapper
+            return wrapper
 
 
 def threaded(pool):
