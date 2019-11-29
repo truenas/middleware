@@ -1,7 +1,7 @@
 # $FreeBSD$
 
 PORTNAME=	freenas-migrate113
-PORTVERSION=	20191129
+PORTVERSION=	2019112901
 CATEGORIES=	freenas
 VALID_CATEGORIES+=	freenas
 
@@ -12,7 +12,7 @@ RUN_DEPENDS=	python>0:${PORTSDIR}/lang/python
 
 USES=		python
 USE_GITHUB=	yes
-GH_TUPLE+=	freenas:freenas-migrate113:a109b3e256637481d188632498ae21308931017e
+GH_TUPLE+=	freenas:freenas-migrate113:c9e5b7871f790257ee0d81c74c45ddf55f33f4ff
 
 NO_BUILD=	yes
 
@@ -20,6 +20,7 @@ NO_BUILD=	yes
 
 do-install:
 	${MKDIR} ${STAGEDIR}${PREFIX}/lib/migrate113
+	cd ${WRKSRC} && ${COPYTREE_SHARE} django ${STAGEDIR}${PREFIX}/lib/migrate113/
 	cd ${WRKSRC} && ${COPYTREE_SHARE} freenasUI ${STAGEDIR}${PREFIX}/lib/migrate113/
 	cd ${WRKSRC} && ${COPYTREE_SHARE} src ${STAGEDIR}${PREFIX}/lib/migrate113/
 	${INSTALL_SCRIPT} ${WRKSRC}/sbin/migrate113 ${STAGEDIR}${PREFIX}/sbin/
