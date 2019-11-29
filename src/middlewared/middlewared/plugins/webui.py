@@ -1,6 +1,6 @@
 import os
 
-from django.db.utils import IntegrityError
+from sqlalchemy.exc import IntegrityError
 
 from middlewared.pipe import Pipes
 from middlewared.schema import Dict, Int, Str, accepts

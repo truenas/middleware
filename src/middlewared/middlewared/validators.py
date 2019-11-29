@@ -1,3 +1,4 @@
+from datetime import time
 import ipaddress
 import re
 from urllib.parse import urlparse
@@ -5,18 +6,14 @@ import uuid
 
 from zettarepl.snapshot.task.naming_schema import validate_snapshot_naming_schema
 
-from datetime import time
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
 
 
 class Email:
     def __call__(self, value):
         if value is None:
             return
-        try:
-            validate_email(value)
-        except ValidationError:
+        if not EMAIL_REGEX.match(value):
             raise ValueError("Not a valid E-Mail address")
 
 

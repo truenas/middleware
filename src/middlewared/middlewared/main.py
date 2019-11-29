@@ -1467,8 +1467,6 @@ def main():
     logger.setup_logging('middleware', args.debug_level, args.log_handler)
 
     setproctitle.setproctitle('middlewared')
-    # Workaround to tell django to not set up logging on its own
-    os.environ['MIDDLEWARED'] = str(os.getpid())
 
     if args.pidfile:
         with open(pidpath, "w") as _pidfile:
