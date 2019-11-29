@@ -8,12 +8,11 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=	dev@ixsystems.com
 COMMENT=	Tool to upgrade to 11.3 database
 
-RUN_DEPENDS=	python>0:${PORTSDIR}/lang/python \
-		${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110@${PY_FLAVOR}
+RUN_DEPENDS=	python>0:${PORTSDIR}/lang/python
 
 USES=		python
 USE_GITHUB=	yes
-GH_TUPLE+=	freenas:freenas-migrate113:01280df22fa68c99ee0e5d647da2d70bb6764fde
+GH_TUPLE+=	freenas:freenas-migrate113:a109b3e256637481d188632498ae21308931017e
 
 NO_BUILD=	yes
 
