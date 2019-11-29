@@ -607,14 +607,14 @@ class PoolService(CRUDService):
         ])
         try:
             await job.wrap(extend_job)
-        except CallError as e:
+        except CallError:
             if pool['encrypt'] > 0:
                 try:
                     # If replace has failed lets detach geli to not keep disk busy
                     await self.middleware.call('disk.geli_detach_single', devname)
                 except Exception:
                     self.logger.warn(f'Failed to geli detach {devname}', exc_info=True)
-            raise e
+            raise
 
         disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
         await self.__save_encrypteddisks(oid, enc_disks, {disk['devname']: disk})
