@@ -1284,6 +1284,7 @@ class JailService(CRUDService):
         except Exception as e:
             raise CallError(f'Failed to activate {pool["name"]}: {e}')
         else:
+            self.check_dataset_existence()
             return True
 
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
