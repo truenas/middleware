@@ -49,7 +49,7 @@ BUFSIZE = 65536
 LIBVIRT_URI = 'bhyve+unix:///system'
 LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
 SHUTDOWN_LOCK = asyncio.Lock()
-VM_BRIDGE = 'virbr0'
+LIBVIRT_LOCK = asyncio.Lock()
 ZFS_ARC_MAX_INITIAL = None
 
 ZVOL_CLONE_SUFFIX = '_clone'
@@ -1031,8 +1031,9 @@ class VMService(CRUDService):
         shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
         """
-        if not self.libvirt_connection:
-            await self.wait_for_libvirtd(10)
+        async with LIBVIRT_LOCK:
+            if not self.libvirt_connection:
+                await self.wait_for_libvirtd(10)
         self.ensure_libvirt_connection()
 
         verrors = ValidationErrors()
@@ -1270,44 +1271,49 @@ class VMService(CRUDService):
             Bool('force', default=False),
         ),
     )
-    def do_delete(self, id, data):
+    async def do_delete(self, id, data):
         """Delete a VM."""
-        vm = self.middleware.call_sync('vm._get_instance', id)
-        self.ensure_libvirt_connection()
-        status = self.status(id)
-        if status.get('state') == 'RUNNING':
-            self.poweroff(id)
-            # We would like to wait at least 7 seconds to have the vm
-            # complete it's post vm actions which might require interaction with it's domain
-            time.sleep(7)
-        elif status.get('state') == 'ERROR' and not data.get('force'):
-            raise CallError('Unable to retrieve VM status. Failed to destroy VM')
+        async with LIBVIRT_LOCK:
+            vm = await self._get_instance(id)
+            self.ensure_libvirt_connection()
+            status = await self.middleware.call('vm.status', id)
+            if status.get('state') == 'RUNNING':
+                await self.middleware.call('vm.poweroff', id)
+                # We would like to wait at least 7 seconds to have the vm
+                # complete it's post vm actions which might require interaction with it's domain
+                await asyncio.sleep(7)
+            elif status.get('state') == 'ERROR' and not data.get('force'):
+                raise CallError('Unable to retrieve VM status. Failed to destroy VM')
 
-        if data['zvols']:
-            devices = self.middleware.call_sync('vm.device.query', [
-                ('vm', '=', id), ('dtype', '=', 'DISK')
-            ])
+            if data['zvols']:
+                devices = await self.middleware.call('vm.device.query', [
+                    ('vm', '=', id), ('dtype', '=', 'DISK')
+                ])
 
-            for zvol in devices:
-                if not zvol['attributes']['path'].startswith('/dev/zvol/'):
-                    continue
+                for zvol in devices:
+                    if not zvol['attributes']['path'].startswith('/dev/zvol/'):
+                        continue
 
-                disk_name = zvol['attributes']['path'].rsplit(
-                    '/dev/zvol/'
-                )[-1]
-                self.middleware.call_sync('zfs.dataset.delete', disk_name)
+                    disk_name = zvol['attributes']['path'].rsplit(
+                        '/dev/zvol/'
+                    )[-1]
+                    await self.middleware.call('zfs.dataset.delete', disk_name)
 
+            await self.middleware.call('vm.undefine_vm', vm)
+
+            result = await self.middleware.call('datastore.delete', 'vm.vm', id)
+            if not await self.middleware.call('vm.query'):
+                await self.middleware.call('vm.close_libvirt_connection')
+                self.vms = {}
+                await self.middleware.call('service.stop', 'libvirtd')
+            return result
+
+    @private
+    def undefine_vm(self, vm):
         if vm['name'] in self.vms:
             self.vms.pop(vm['name']).undefine_domain()
         else:
             VMSupervisor(vm, self.libvirt_connection, self.middleware).undefine_domain()
-
-        result = self.middleware.call_sync('datastore.delete', 'vm.vm', id)
-        if not self.middleware.call_sync('vm.query'):
-            self.close_libvirt_connection()
-            self.vms = {}
-            self.middleware.call_sync('service.stop', 'libvirtd')
-        return result
 
     @private
     def ensure_libvirt_connection(self):
