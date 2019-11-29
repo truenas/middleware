@@ -1521,7 +1521,7 @@ class InterfaceService(CRUDService):
         )
 
         # Let's finally delete the interface
-        netif.destroy_interface(iface['name'])
+        netif.destroy_interface(oid)
 
         return oid
 
@@ -1934,7 +1934,9 @@ class InterfaceService(CRUDService):
         return list(nics)
 
     @private
-    @accepts(Str('iface'), List('capabilities', default=[c for c in netif.InterfaceCapability.__members__]))
+    @accepts(Str('iface'), List('capabilities', default=(
+        [c for c in netif.InterfaceCapability.__members__]
+    )))
     def enable_capabilities(self, iface, capabilities):
         enabled = []
         iface = netif.get_interface(iface)
