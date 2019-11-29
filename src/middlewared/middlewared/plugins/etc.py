@@ -1,14 +1,18 @@
 from mako import exceptions
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
-from middlewared.utils.exceptions import FileShouldNotExist
 from middlewared.utils.io import write_if_changed
 
 import asyncio
 import grp
 import imp
 import os
+import platform
 import pwd
+
+
+class FileShouldNotExist(Exception):
+    pass
 
 
 class MakoRenderer(object):
@@ -31,7 +35,11 @@ class MakoRenderer(object):
                 tmpl = lookup.get_template(name)
 
                 # Render the template
-                return tmpl.render(middleware=self.service.middleware, FileShouldNotExist=FileShouldNotExist)
+                return tmpl.render(
+                    middleware=self.service.middleware,
+                    FileShouldNotExist=FileShouldNotExist,
+                    platform=platform.system(),
+                )
 
             return await self.service.middleware.run_in_thread(do)
         except FileShouldNotExist:
@@ -94,7 +102,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'dhclient.conf'},
         ],
         'nfsd': [
-            {'type': 'py', 'path': 'nfsd'},
+            {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD'},
         ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
@@ -251,8 +259,15 @@ class EtcService(Service):
             if renderer is None:
                 raise ValueError(f'Unknown type: {entry["type"]}')
 
+            if 'platform' in entry and entry['platform'] != platform.system():
+                continue
+
             path = os.path.join(self.files_dir, entry['path'])
-            outfile = f'/etc/{entry["path"]}'
+            entry_path = entry['path']
+            if platform.system() == 'Linux':
+                if entry_path.startswith('local/'):
+                    entry_path = entry_path[len('local/'):]
+            outfile = f'/etc/{entry_path}'
             try:
                 rendered = await renderer.render(path)
             except FileShouldNotExist:
