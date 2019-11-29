@@ -354,6 +354,7 @@ class NetworkInterfaceModel(sa.Model):
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_options = sa.Column(sa.String(120))
     int_mtu = sa.Column(sa.Integer(), nullable=True)
+    int_disable_offload_capabilities = sa.Column(sa.Boolean(), default=False)
 
 
 class NetworkLaggInterfaceModel(sa.Model):
