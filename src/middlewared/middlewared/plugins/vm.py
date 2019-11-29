@@ -1034,7 +1034,7 @@ class VMService(CRUDService):
         async with LIBVIRT_LOCK:
             if not self.libvirt_connection:
                 await self.wait_for_libvirtd(10)
-        self.ensure_libvirt_connection()
+        await self.middleware.call('vm.ensure_libvirt_connection')
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
@@ -1275,7 +1275,7 @@ class VMService(CRUDService):
         """Delete a VM."""
         async with LIBVIRT_LOCK:
             vm = await self._get_instance(id)
-            self.ensure_libvirt_connection()
+            await self.middleware.call('vm.ensure_libvirt_connection')
             status = await self.middleware.call('vm.status', id)
             if status.get('state') == 'RUNNING':
                 await self.middleware.call('vm.poweroff', id)
