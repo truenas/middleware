@@ -496,7 +496,7 @@ class SystemService(Service):
             'cores': psutil.cpu_count(logical=True),
             'loadavg': os.getloadavg(),
             'uptime': uptime,
-            'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
+            'uptime_seconds': time.time() - psutil.boot_time(),
             'system_serial': serial,
             'system_product': product,
             'license': await self.middleware.run_in_thread(self._get_license),
