@@ -469,10 +469,9 @@ class SystemService(Service):
             buildtime = datetime.fromtimestamp(int(buildtime)),
 
         uptime = (await (await Popen(
-            "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
-            stdout=subprocess.PIPE,
-            shell=True,
-        )).communicate())[0].decode().strip()
+            ['env', '-u', 'TZ', 'uptime'], stdout=subprocess.PIPE
+        )).communicate())[0].decode().split(',')
+        uptime = ', '.join([uptime[i].strip() for i in range(2)])
 
         serial = await self._system_serial()
 
