@@ -331,6 +331,10 @@ def sw_version_is_stable():
     return version['stable']
 
 
+def cpu_model():
+    return osc.cpu_model()
+
+
 def is_empty(val):
     """
     A small utility function that check if the provided string is either None, '',
