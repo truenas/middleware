@@ -1053,10 +1053,10 @@ class VMService(CRUDService):
 
         await self.middleware.run_in_thread(
             lambda vms, vd, con, mw: vms.update({vd['name']: VMSupervisor(vd, con, mw)}),
-            self.vms, (await self._get_instance(vm_id)), self.libvirt_connection, self.middleware
+            self.vms, (await self.get_instance(vm_id)), self.libvirt_connection, self.middleware
         )
 
-        return await self._get_instance(vm_id)
+        return await self.get_instance(vm_id)
 
     @private
     async def safe_devices_updates(self, devices):
@@ -1226,7 +1226,7 @@ class VMService(CRUDService):
         3) Devices that do not have an `id` attribute are created and attached to `id` VM.
         """
 
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -1251,11 +1251,11 @@ class VMService(CRUDService):
 
         await self.middleware.call('datastore.update', 'vm.vm', id, new)
 
-        vm_data = await self._get_instance(id)
+        vm_data = await self.get_instance(id)
         if new['name'] != old['name']:
             await self.middleware.call('vm.rename_domain', old, vm_data)
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @private
     def rename_domain(self, old, new):
@@ -1274,7 +1274,7 @@ class VMService(CRUDService):
     async def do_delete(self, id, data):
         """Delete a VM."""
         async with LIBVIRT_LOCK:
-            vm = await self._get_instance(id)
+            vm = await self.get_instance(id)
             await self.middleware.call('vm.ensure_libvirt_connection')
             status = await self.middleware.call('vm.status', id)
             if status.get('state') == 'RUNNING':
@@ -1334,7 +1334,7 @@ class VMService(CRUDService):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
-        vm = self.middleware.call_sync('vm._get_instance', id)
+        vm = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
@@ -1385,7 +1385,7 @@ class VMService(CRUDService):
         `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
         not already stopped within the specified `shutdown_timeout`.
         """
-        vm_data = self.middleware.call_sync('vm._get_instance', id)
+        vm_data = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
         vm = self.vms[vm_data['name']]
 
@@ -1402,7 +1402,7 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'))
     def poweroff(self, id):
-        vm_data = self.middleware.call_sync('vm._get_instance', id)
+        vm_data = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
         self.vms[vm_data['name']].poweroff()
 
@@ -1411,7 +1411,7 @@ class VMService(CRUDService):
     @job(lock=lambda args: f'restart_vm_{args[0]}')
     def restart(self, job, id):
         """Restart a VM."""
-        vm = self.middleware.call_sync('vm._get_instance', id)
+        vm = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
         self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
 
@@ -1532,7 +1532,7 @@ class VMService(CRUDService):
         `name` is an optional parameter for the cloned VM.
         If not provided it will append the next number available to the VM name.
         """
-        vm = await self._get_instance(id)
+        vm = await self.get_instance(id)
 
         origin_name = vm['name']
         del vm['id']
@@ -1835,7 +1835,7 @@ class VMDeviceService(CRUDService):
         )
         await self.__reorder_devices(id, data['vm'], data['order'])
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'), Patch(
         'vmdevice_create',
@@ -1848,7 +1848,7 @@ class VMDeviceService(CRUDService):
 
         Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
         """
-        device = await self._get_instance(id)
+        device = await self.get_instance(id)
         new = device.copy()
         new.update(data)
 
@@ -1858,7 +1858,7 @@ class VMDeviceService(CRUDService):
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @private
     async def delete_resource(self, options, device):
@@ -1891,7 +1891,7 @@ class VMDeviceService(CRUDService):
         """
         Delete a VM device of `id`.
         """
-        await self.delete_resource(options, await self._get_instance(id))
+        await self.delete_resource(options, await self.get_instance(id))
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
@@ -1955,7 +1955,7 @@ class VMDeviceService(CRUDService):
         # vm_instance should be provided at all times when handled by VMService, if VMDeviceService is interacting,
         # then it means the device is configured with a VM and we can retrieve the VM's data from db
         if not vm_instance:
-            vm_instance = await self.middleware.call('vm._get_instance', device['vm'])
+            vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
 
         verrors = ValidationErrors()
         schema = self.DEVICE_ATTRS.get(device['dtype'])
