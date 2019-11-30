@@ -501,9 +501,7 @@ class SystemService(Service):
             'system_serial': serial,
             'system_product': product,
             'license': await self.middleware.run_in_thread(self._get_license),
-            'boottime': datetime.fromtimestamp(
-                struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
-            ),
+            'boottime': datetime.fromtimestamp(psutil.boot_time()),
             'datetime': datetime.utcnow(),
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
