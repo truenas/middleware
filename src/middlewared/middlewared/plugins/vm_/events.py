@@ -7,11 +7,7 @@ from middlewared.service import private, Service
 class VMService(Service):
 
     @private
-    def libvirt_connection(self):
-        return self.middleware.call_sync('vm.retrieve_libvirt_connection')
-
-    @private
-    def setup_libvirt_events(self):
+    def setup_libvirt_events(self, libvirt_connection):
         def callback(conn, dom, event, detail, opaque):
             """
             0: 'DEFINED',
@@ -62,11 +58,11 @@ class VMService(Service):
                 self.middleware.logger.debug('Received libvirtd event with unknown domain name %s', dom.name())
 
         def event_loop_execution():
-            while self.libvirt_connection():
+            while libvirt_connection.isAlive():
                 libvirt.virEventRunDefaultImpl()
 
         event_thread = threading.Thread(target=event_loop_execution, name='libvirt_event_loop')
         event_thread.setDaemon(True)
         event_thread.start()
-        self.libvirt_connection().domainEventRegister(callback, None)
-        self.libvirt_connection().setKeepAlive(5, 3)
+        libvirt_connection.domainEventRegister(callback, None)
+        libvirt_connection.setKeepAlive(5, 3)

@@ -1645,7 +1645,7 @@ class VMService(CRUDService):
             # We want to do this before initializing libvirt connection
             libvirt.virEventRegisterDefaultImpl()
             self.libvirt_connection = libvirt.open(LIBVIRT_URI)
-            await self.middleware.call('vm.setup_libvirt_events')
+            await self.middleware.call('vm.setup_libvirt_events', self.libvirt_connection)
         except (asyncio.TimeoutError, libvirt.libvirtError):
             self.middleware.logger.error('Failed to connect to libvirtd')
 
@@ -1675,10 +1675,6 @@ class VMService(CRUDService):
             start_vm,
             (await self.middleware.call('vm.query', [('autostart', '=', True)])), 16
         )
-
-    @private
-    def retrieve_libvirt_connection(self):
-        return self.libvirt_connection
 
 
 class VMDeviceService(CRUDService):
