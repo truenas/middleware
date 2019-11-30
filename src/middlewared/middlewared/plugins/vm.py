@@ -746,7 +746,7 @@ class VMService(CRUDService):
     class Config:
         namespace = 'vm'
         datastore = 'vm.vm'
-        datastore_extend = 'vm._extend_vm'
+        datastore_extend = 'vm.extend_vm'
 
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
@@ -790,7 +790,8 @@ class VMService(CRUDService):
             return True
         return False
 
-    async def _extend_vm(self, vm):
+    @private
+    async def extend_vm(self, vm):
         vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
         vm['status'] = await self.middleware.call('vm.status', vm['id'])
         return vm
