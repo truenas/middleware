@@ -494,7 +494,7 @@ class SystemService(Service):
             'hostname': socket.gethostname(),
             'physmem': sysctl.filter('hw.physmem')[0].value,
             'model': cpu_model(),
-            'cores': sysctl.filter('hw.ncpu')[0].value,
+            'cores': psutil.cpu_count(logical=True),
             'loadavg': os.getloadavg(),
             'uptime': uptime,
             'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
