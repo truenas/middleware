@@ -6,7 +6,7 @@ from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, cpu_model
+from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, get_cpu_model
 from middlewared.validators import Range
 
 import csv
@@ -492,7 +492,7 @@ class SystemService(Service):
             'buildtime': buildtime,
             'hostname': socket.gethostname(),
             'physmem': psutil.virtual_memory().total,
-            'model': cpu_model(),
+            'model': get_cpu_model(),
             'cores': psutil.cpu_count(logical=True),
             'loadavg': os.getloadavg(),
             'uptime': uptime,

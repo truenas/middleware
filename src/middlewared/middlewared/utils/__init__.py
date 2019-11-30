@@ -331,8 +331,8 @@ def sw_version_is_stable():
     return version['stable']
 
 
-def cpu_model():
-    return osc.cpu_model()
+def get_cpu_model():
+    return osc.get_cpu_model()
 
 
 def is_empty(val):
