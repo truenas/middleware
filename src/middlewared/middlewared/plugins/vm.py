@@ -49,7 +49,7 @@ BUFSIZE = 65536
 LIBVIRT_URI = 'bhyve+unix:///system'
 LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
 SHUTDOWN_LOCK = asyncio.Lock()
-VM_BRIDGE = 'virbr0'
+LIBVIRT_LOCK = asyncio.Lock()
 ZFS_ARC_MAX_INITIAL = None
 
 ZVOL_CLONE_SUFFIX = '_clone'
@@ -746,7 +746,7 @@ class VMService(CRUDService):
     class Config:
         namespace = 'vm'
         datastore = 'vm.vm'
-        datastore_extend = 'vm._extend_vm'
+        datastore_extend = 'vm.extend_vm'
 
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
@@ -790,7 +790,8 @@ class VMService(CRUDService):
             return True
         return False
 
-    async def _extend_vm(self, vm):
+    @private
+    async def extend_vm(self, vm):
         vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
         vm['status'] = await self.middleware.call('vm.status', vm['id'])
         return vm
@@ -1031,7 +1032,10 @@ class VMService(CRUDService):
         shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
         """
-        self.ensure_libvirt_connection()
+        async with LIBVIRT_LOCK:
+            if not self.libvirt_connection:
+                await self.wait_for_libvirtd(10)
+        await self.middleware.call('vm.ensure_libvirt_connection')
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
@@ -1050,10 +1054,10 @@ class VMService(CRUDService):
 
         await self.middleware.run_in_thread(
             lambda vms, vd, con, mw: vms.update({vd['name']: VMSupervisor(vd, con, mw)}),
-            self.vms, (await self._get_instance(vm_id)), self.libvirt_connection, self.middleware
+            self.vms, (await self.get_instance(vm_id)), self.libvirt_connection, self.middleware
         )
 
-        return await self._get_instance(vm_id)
+        return await self.get_instance(vm_id)
 
     @private
     async def safe_devices_updates(self, devices):
@@ -1223,7 +1227,7 @@ class VMService(CRUDService):
         3) Devices that do not have an `id` attribute are created and attached to `id` VM.
         """
 
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
 
@@ -1248,11 +1252,11 @@ class VMService(CRUDService):
 
         await self.middleware.call('datastore.update', 'vm.vm', id, new)
 
-        vm_data = await self._get_instance(id)
+        vm_data = await self.get_instance(id)
         if new['name'] != old['name']:
             await self.middleware.call('vm.rename_domain', old, vm_data)
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @private
     def rename_domain(self, old, new):
@@ -1265,38 +1269,52 @@ class VMService(CRUDService):
         Dict(
             'vm_delete',
             Bool('zvols', default=False),
+            Bool('force', default=False),
         ),
     )
-    def do_delete(self, id, data):
+    async def do_delete(self, id, data):
         """Delete a VM."""
-        self.ensure_libvirt_connection()
-        status = self.status(id)
-        if status.get('state') == 'RUNNING':
-            self.poweroff(id)
-        elif status.get('state') == 'ERROR':
-            raise CallError('Unable to retrieve VM status. Failed to destroy VM')
+        async with LIBVIRT_LOCK:
+            vm = await self.get_instance(id)
+            await self.middleware.call('vm.ensure_libvirt_connection')
+            status = await self.middleware.call('vm.status', id)
+            if status.get('state') == 'RUNNING':
+                await self.middleware.call('vm.poweroff', id)
+                # We would like to wait at least 7 seconds to have the vm
+                # complete it's post vm actions which might require interaction with it's domain
+                await asyncio.sleep(7)
+            elif status.get('state') == 'ERROR' and not data.get('force'):
+                raise CallError('Unable to retrieve VM status. Failed to destroy VM')
 
-        if data['zvols']:
-            devices = self.middleware.call_sync('vm.device.query', [
-                ('vm', '=', id), ('dtype', '=', 'DISK')
-            ])
+            if data['zvols']:
+                devices = await self.middleware.call('vm.device.query', [
+                    ('vm', '=', id), ('dtype', '=', 'DISK')
+                ])
 
-            for zvol in devices:
-                if not zvol['attributes']['path'].startswith('/dev/zvol/'):
-                    continue
+                for zvol in devices:
+                    if not zvol['attributes']['path'].startswith('/dev/zvol/'):
+                        continue
 
-                disk_name = zvol['attributes']['path'].rsplit(
-                    '/dev/zvol/'
-                )[-1]
-                self.middleware.call_sync('zfs.dataset.delete', disk_name)
+                    disk_name = zvol['attributes']['path'].rsplit(
+                        '/dev/zvol/'
+                    )[-1]
+                    await self.middleware.call('zfs.dataset.delete', disk_name)
 
-        vm = self.middleware.call_sync('vm._get_instance', id)
+            await self.middleware.call('vm.undefine_vm', vm)
+
+            result = await self.middleware.call('datastore.delete', 'vm.vm', id)
+            if not await self.middleware.call('vm.query'):
+                await self.middleware.call('vm.close_libvirt_connection')
+                self.vms = {}
+                await self.middleware.call('service.stop', 'libvirtd')
+            return result
+
+    @private
+    def undefine_vm(self, vm):
         if vm['name'] in self.vms:
             self.vms.pop(vm['name']).undefine_domain()
         else:
             VMSupervisor(vm, self.libvirt_connection, self.middleware).undefine_domain()
-
-        return self.middleware.call_sync('datastore.delete', 'vm.vm', id)
 
     @private
     def ensure_libvirt_connection(self):
@@ -1317,8 +1335,8 @@ class VMService(CRUDService):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
+        vm = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
-        vm = self.middleware.call_sync('vm._get_instance', id)
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
 
@@ -1368,8 +1386,8 @@ class VMService(CRUDService):
         `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
         not already stopped within the specified `shutdown_timeout`.
         """
+        vm_data = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
-        vm_data = self.middleware.call_sync('vm._get_instance', id)
         vm = self.vms[vm_data['name']]
 
         if options['force']:
@@ -1385,16 +1403,17 @@ class VMService(CRUDService):
     @item_method
     @accepts(Int('id'))
     def poweroff(self, id):
+        vm_data = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
-        self.vms[self.middleware.call_sync('vm._get_instance', id)['name']].poweroff()
+        self.vms[vm_data['name']].poweroff()
 
     @item_method
     @accepts(Int('id'))
     @job(lock=lambda args: f'restart_vm_{args[0]}')
     def restart(self, job, id):
         """Restart a VM."""
+        vm = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
-        vm = self.middleware.call_sync('vm._get_instance', id)
         self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
 
     async def _teardown_guest_vmemory(self, id):
@@ -1514,7 +1533,7 @@ class VMService(CRUDService):
         `name` is an optional parameter for the cloned VM.
         If not provided it will append the next number available to the VM name.
         """
-        vm = await self._get_instance(id)
+        vm = await self.get_instance(id)
 
         origin_name = vm['name']
         del vm['id']
@@ -1619,18 +1638,22 @@ class VMService(CRUDService):
         async def libvirtd_started(middleware):
             await middleware.call('service.start', 'libvirtd')
             while not await middleware.call('service.started', 'libvirtd'):
-                time.sleep(2)
+                await asyncio.sleep(2)
 
         try:
             if not await self.middleware.call('service.started', 'libvirtd'):
                 await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
+            # We want to do this before initializing libvirt connection
+            libvirt.virEventRegisterDefaultImpl()
             self.libvirt_connection = libvirt.open(LIBVIRT_URI)
+            await self.middleware.call('vm.setup_libvirt_events', self.libvirt_connection)
         except (asyncio.TimeoutError, libvirt.libvirtError):
             self.middleware.logger.error('Failed to connect to libvirtd')
 
     @private
     def initialize_vms(self, timeout=10):
-        self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
+        if self.middleware.call_sync('vm.query'):
+            self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
 
         # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
@@ -1813,7 +1836,7 @@ class VMDeviceService(CRUDService):
         )
         await self.__reorder_devices(id, data['vm'], data['order'])
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'), Patch(
         'vmdevice_create',
@@ -1826,7 +1849,7 @@ class VMDeviceService(CRUDService):
 
         Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
         """
-        device = await self._get_instance(id)
+        device = await self.get_instance(id)
         new = device.copy()
         new.update(data)
 
@@ -1836,7 +1859,7 @@ class VMDeviceService(CRUDService):
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @private
     async def delete_resource(self, options, device):
@@ -1869,7 +1892,7 @@ class VMDeviceService(CRUDService):
         """
         Delete a VM device of `id`.
         """
-        await self.delete_resource(options, await self._get_instance(id))
+        await self.delete_resource(options, await self.get_instance(id))
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
@@ -1933,7 +1956,7 @@ class VMDeviceService(CRUDService):
         # vm_instance should be provided at all times when handled by VMService, if VMDeviceService is interacting,
         # then it means the device is configured with a VM and we can retrieve the VM's data from db
         if not vm_instance:
-            vm_instance = await self.middleware.call('vm._get_instance', device['vm'])
+            vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
 
         verrors = ValidationErrors()
         schema = self.DEVICE_ATTRS.get(device['dtype'])
@@ -2171,6 +2194,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
 
 async def setup(middleware):
+    middleware.event_register('vm.query', 'Sent on VM state changes.')
     global ZFS_ARC_MAX_INITIAL
     if sysctl:
         ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
