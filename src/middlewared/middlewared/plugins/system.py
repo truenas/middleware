@@ -17,7 +17,6 @@ import re
 import requests
 import shutil
 import socket
-import struct
 import subprocess
 try:
     import sysctl
@@ -492,7 +491,7 @@ class SystemService(Service):
             'version': self.version(),
             'buildtime': buildtime,
             'hostname': socket.gethostname(),
-            'physmem': sysctl.filter('hw.physmem')[0].value,
+            'physmem': psutil.virtual_memory().total,
             'model': cpu_model(),
             'cores': psutil.cpu_count(logical=True),
             'loadavg': os.getloadavg(),

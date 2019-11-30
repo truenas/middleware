@@ -15,5 +15,5 @@ RE_CPU_MODEL = re.compile(r'Model name:\s*(.*)')
 def cpu_model():
     cp = subprocess.Popen('lscpu', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = cp.communicate()
-    model = RE_CPU_MODEL.findall(stdout)
+    model = RE_CPU_MODEL.findall(stdout.decode())
     return model[0].strip() if model else None
