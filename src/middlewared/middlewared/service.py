@@ -221,7 +221,7 @@ class ServiceBase(type):
 
         config_attrs = {
             'datastore': None,
-            'datastore_prefix': None,
+            'datastore_prefix': '',
             'datastore_extend': None,
             'datastore_extend_context': None,
             'datastore_filters': None,
