@@ -76,8 +76,8 @@ class EtcService(Service):
         ],
         'user': [
             {'type': 'mako', 'path': 'group'},
-            {'type': 'mako', 'path': 'master.passwd'},
-            {'type': 'py', 'path': 'pwd_db'},
+            {'type': 'mako', 'path': 'master.passwd', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
         ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
@@ -90,16 +90,16 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'crontab'},
         ],
         'ctld': [
-            {'type': 'py', 'path': 'ctld'},
+            {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD'},
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
         'loader': [
-            {'type': 'py', 'path': 'loader'},
+            {'type': 'py', 'path': 'loader', 'platform': 'FreeBSD'},
         ],
         'network': [
-            {'type': 'mako', 'path': 'dhclient.conf'},
+            {'type': 'mako', 'path': 'dhclient.conf', 'platform': 'FreeBSD'},
         ],
         'nfsd': [
             {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD'},
@@ -124,10 +124,10 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/proftpd'},
         ],
         'rc': [
-            {'type': 'py', 'path': 'rc.conf'},
+            {'type': 'py', 'path': 'rc.conf', 'platform': 'FreeBSD'},
         ],
         'sysctl': [
-            {'type': 'py', 'path': 'sysctl_config'}
+            {'type': 'py', 'path': 'sysctl_config', 'platform': 'FreeBSD'},
         ],
         's3': [
             {'type': 'py', 'path': 'local/minio/certificates'},
@@ -150,8 +150,8 @@ class EtcService(Service):
             {'type': 'py', 'path': 'failover'},
         ],
         'fstab': [
-            {'type': 'mako', 'path': 'fstab'},
-            {'type': 'py', 'path': 'fstab_configure'}
+            {'type': 'mako', 'path': 'fstab', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'fstab_configure', 'platform': 'FreeBSD'}
         ],
         'collectd': [
             {'type': 'mako', 'path': 'local/collectd.conf'}
@@ -160,7 +160,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'system_setup'}
         ],
         'inetd': [
-            {'type': 'py', 'path': 'inetd_conf'}
+            {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
         ],
         'motd': [
             {'type': 'mako', 'path': 'motd'}
@@ -222,8 +222,8 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'mail/aliases'}
         ],
         'ttys': [
-            {'type': 'mako', 'path': 'ttys'},
-            {'type': 'py', 'path': 'ttys_config'}
+            {'type': 'mako', 'path': 'ttys', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'ttys_config', 'platform': 'FreeBSD'}
         ],
         'openvpn_server': [
             {'type': 'mako', 'path': 'local/openvpn/server/openvpn_server.conf'}
