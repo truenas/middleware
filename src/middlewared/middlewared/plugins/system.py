@@ -6,7 +6,7 @@ from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version
+from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
 from middlewared.validators import Range
 
 import csv
@@ -17,7 +17,6 @@ import re
 import requests
 import shutil
 import socket
-import struct
 import subprocess
 try:
     import sysctl
@@ -469,10 +468,9 @@ class SystemService(Service):
             buildtime = datetime.fromtimestamp(int(buildtime)),
 
         uptime = (await (await Popen(
-            "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
-            stdout=subprocess.PIPE,
-            shell=True,
-        )).communicate())[0].decode().strip()
+            ['env', '-u', 'TZ', 'uptime'], stdout=subprocess.PIPE
+        )).communicate())[0].decode().split(',')
+        uptime = ', '.join([uptime[i].strip() for i in range(2)])
 
         serial = await self._system_serial()
 
@@ -493,18 +491,16 @@ class SystemService(Service):
             'version': self.version(),
             'buildtime': buildtime,
             'hostname': socket.gethostname(),
-            'physmem': sysctl.filter('hw.physmem')[0].value,
-            'model': sysctl.filter('hw.model')[0].value,
-            'cores': sysctl.filter('hw.ncpu')[0].value,
+            'physmem': psutil.virtual_memory().total,
+            'model': osc.get_cpu_model(),
+            'cores': psutil.cpu_count(logical=True),
             'loadavg': os.getloadavg(),
             'uptime': uptime,
-            'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
+            'uptime_seconds': time.time() - psutil.boot_time(),
             'system_serial': serial,
             'system_product': product,
             'license': await self.middleware.run_in_thread(self._get_license),
-            'boottime': datetime.fromtimestamp(
-                struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
-            ),
+            'boottime': datetime.fromtimestamp(psutil.boot_time()),
             'datetime': datetime.utcnow(),
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
