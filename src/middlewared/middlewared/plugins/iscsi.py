@@ -401,11 +401,10 @@ class ISCSIPortalService(CRUDService):
         """
         await self._get_instance(id)
         await self.middleware.call(
-            'datastore.delete', 'services.iscsitargetgroups', [[
-                'id', 'in', [g['id'] for g in await self.middleware.call(
-                    'datastore.query', 'services.iscsitargetgroups', [('iscsi_target_portalgroup', '=', id)]
-                )]
-            ]]
+            'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target_portalgroup', '=', id]]
+        )
+        await self.middleware.call(
+            'datastore.delete', 'services.iscsitargetportalip', [['iscsi_target_portalip_portal', '=', id]]
         )
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
 
