@@ -4209,9 +4209,10 @@ class PoolDatasetService(CRUDService):
 
         `used_percentage` - the percentage of the user or group quota consumed.
         """
+        dataset = (await self._get_instance(id))['name']
         quota_list = []
         quota_get = await run(
-            ['zfs', f'{type.lower()}space', '-H', '-n', '-p', '-o', 'name,used,quota', id],
+            ['zfs', f'{type.lower()}space', '-H', '-n', '-p', '-o', 'name,used,quota', dataset],
             check=False
         )
         if quota_get.returncode != 0:
@@ -4293,16 +4294,31 @@ class PoolDatasetService(CRUDService):
         the user or group quota.
         """
         MAX_QUOTAS = 100
+        dataset = (await self._get_instance(id))['name']
+        verrors = ValidationErrors()
         if len(data) > MAX_QUOTAS:
-            raise ValidationError(
-                'pool.dataset.set_userspace_quota.',
+            verrors.add(
+                'pool.dataset.set_userquota.',
                 f'The number of userspace quotas that may be set in single API call is limited to {MAX_QUOTAS}.'
             )
 
         cmd = ['zfs', 'set']
         for q in data:
-            cmd.append(f'{q["type"].lower()}quota@{q["id"]}={q["quota"]}')
-        cmd.append(id)
+            type = q["type"].lower()
+            if not q["id"].isdigit():
+                try:
+                    await self.middleware.call(f'{type}.get_{type}_obj',
+                                               {f'{type}name': q["id"]})
+                except Exception:
+                    verrors.add(
+                        f'pool.dataset.set_userquota',
+                        f'{q["type"]} {q["id"]} is not valid.'
+                    )
+
+            cmd.append(f'{type}quota@{q["id"]}={q["quota"]}')
+
+        cmd.append(dataset)
+        verrors.check()
         quota_set = await run(cmd, check=False)
         if quota_set.returncode != 0:
             raise CallError(f'Failed to set userspace quota on {id}: [{quota_set.stderr.decode()}]')
