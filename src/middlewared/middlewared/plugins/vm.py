@@ -1302,6 +1302,9 @@ class VMService(CRUDService):
 
             await self.middleware.call('vm.undefine_vm', vm)
 
+            # We remove vm devices first
+            for device in vm['devices']:
+                await self.middleware.call('vm.device.delete', device['id'])
             result = await self.middleware.call('datastore.delete', 'vm.vm', id)
             if not await self.middleware.call('vm.query'):
                 await self.middleware.call('vm.close_libvirt_connection')
