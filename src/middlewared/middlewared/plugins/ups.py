@@ -81,7 +81,7 @@ class UPSService(SystemServiceService):
         Returns choices of UPS drivers supported by the system.
         """
         ups_choices = {}
-        driver_list = '/conf/base/usr__local__etc/nut/driver.list'
+        driver_list = '/conf/base/etc/local/nut/driver.list'
         if os.path.exists(driver_list):
             with open(driver_list, 'rb') as f:
                 d = f.read().decode('utf8', 'ignore')
