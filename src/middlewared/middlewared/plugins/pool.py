@@ -4184,7 +4184,7 @@ class PoolDatasetService(CRUDService):
 
     @accepts(
         Str('id', required=True),
-        Str('type', enum=['USER', 'GROUP']),
+        Str('quota_type', enum=['USER', 'GROUP']),
         Ref('query-filters'),
         Ref('query-options'),
     )
@@ -4220,7 +4220,7 @@ class PoolDatasetService(CRUDService):
         List('quotas', items=[
             Dict(
                 'quota_entry',
-                Str('type', enum=['USER', 'GROUP'], required=True),
+                Str('quota_type', enum=['USER', 'GROUP'], required=True),
                 Str('id', required=True),
                 Int('quota', required=True),
             )
@@ -4261,7 +4261,7 @@ class PoolDatasetService(CRUDService):
 
         quota_list = []
         for q in data:
-            quota_type = q["type"].lower()
+            quota_type = q["quota_type"].lower()
             if not q["id"].isdigit():
                 try:
                     await self.middleware.call(f'{quota_type}.get_{quota_type}_obj',

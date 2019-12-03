@@ -541,7 +541,7 @@ class ZFSDatasetService(CRUDService):
                 continue
 
             entry = {
-                'type': quota_type,
+                'quota_type': quota_type.upper(),
                 'id': int(m[0]),
                 'name': None,
                 'quota': int(m[2]),
