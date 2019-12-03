@@ -47,7 +47,6 @@ GELI_KEYPATH = '/data/geli'
 RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
-RE_USERSPACE = re.compile(r'^(?P<uid>\d+)\t(?P<used>\d+)\t(?P<quota>\d+)$')
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
@@ -4190,10 +4189,11 @@ class PoolDatasetService(CRUDService):
         Ref('query-options'),
     )
     @item_method
-    async def get_userspace_quota(self, id, type, filters, options):
+    async def get_userquota(self, id, type, filters, options):
         """
         Returns a list of the specified `type` of  quotas on the ZFS dataset `id`.
-        Supports `query-filters` and `query-options`.
+        Supports `query-filters` and `query-options`. used_bytes and used_percentage
+        may not instantly update as space is used.
 
         Each quota entry has the following fields:
 
@@ -4205,30 +4205,36 @@ class PoolDatasetService(CRUDService):
 
         `quota` - the quota size in bytes.
 
-        `used` - the amount of bytes the user has written to the dataset.
+        `used_bytes` - the amount of bytes the user has written to the dataset.
+
+        `used_percentage` - the percentage of the user or group quota consumed.
         """
         quota_list = []
-        userquota = await run(
+        quota_get = await run(
             ['zfs', f'{type.lower()}space', '-H', '-n', '-p', '-o', 'name,used,quota', id],
             check=False
         )
-        if userquota.returncode != 0:
-            raise CallError('Failed to get userquota for %s: [%s]',
-                            id, userquota.stderr.decode())
+        if quota_get.returncode != 0:
+            raise CallError(
+                f'Failed to get {type.lower()} quota for {id}: [{quota_get.stderr.decode()}]'
+            )
 
-        for quota in userquota.stdout.decode().splitlines():
-            entry = {
-                'id': None,
-                'name': None,
-                'quota': 0,
-                'used': 0,
-            }
-            m = RE_USERSPACE.match(quota)
-            if m is None:
-                self.logger.debug('Invalid userspace quota: %s', quota)
+        for quota in quota_get.stdout.decode().splitlines():
+            m = quota.split('\t')
+            if len(m) != 3:
+                self.logger.debug('Invalid %s quota: %s', type.lower(), quota)
                 continue
 
-            entry.update(m.groupdict())
+            entry = {
+                'type': type,
+                'id': int(m[0]),
+                'name': None,
+                'quota': int(m[2]),
+                'used_bytes': int(m[1]),
+                'used_percent': 0,
+            }
+            if entry['quota'] > 0:
+                entry['used_percent'] = entry['used_bytes']/entry['quota'] * 100
 
             try:
                 if type == 'USER':
@@ -4243,7 +4249,8 @@ class PoolDatasetService(CRUDService):
                     )['gr_name']
 
             except Exception:
-                self.logger.debug('Unable to resolve uid %d to name', entry['id'])
+                self.logger.debug('Unable to resolve %s id %d to name',
+                                  type.lower(), entry['id'])
                 pass
 
             quota_list.append(entry)
@@ -4254,34 +4261,36 @@ class PoolDatasetService(CRUDService):
         Str('id', required=True),
         List('quotas', items=[
             Dict(
-                'userspace_quota',
+                'quota_entry',
                 Str('type', enum=['USER', 'GROUP'], required=True),
                 Str('id', required=True),
                 Int('quota', required=True),
             )
         ], default=[{
-            'type': 'USER",
-            'id': 0,
+            'type': 'USER',
+            'id': '0',
             'quota': 0
         }])
     )
     @item_method
-    async def set_userspace_quota(self, id, data):
+    async def set_userquota(self, id, data):
         """
-        Set userspace (user or group) quotas on the specified ZFS dataset.
+        Set a user or group quota on the specified ZFS dataset. The quota limits
+        the amount of disk space consumed by files that are owned by the specified
+        users or groups.
 
         `id` the name of the target ZFS dataset.
 
-        `quotas` specifies a list of `userspace_quotas` to apply to dataset.
+        `quotas` specifies a list of `quota_entry` entries to apply to dataset.
 
-        `userspace_quota` entries have the following required parameters:
+        `quota_entry` entries have the following required parameters:
 
         `type`: specifies whether the quota applies to a user or a group.
 
         `id`: the uid, gid, or name to which the quota applies.
 
         `quota`: the quota size in bytes. Setting a value of `0` will remove
-        the userspace quota.
+        the user or group quota.
         """
         MAX_QUOTAS = 100
         if len(data) > MAX_QUOTAS:
