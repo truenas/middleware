@@ -549,7 +549,7 @@ class ZFSDatasetService(CRUDService):
                 'used_percent': 0,
             }
             if entry['quota'] > 0:
-                entry['used_percent'] = entry['used_bytes']/entry['quota'] * 100
+                entry['used_percent'] = entry['used_bytes'] / entry['quota'] * 100
 
             try:
                 if quota_type == 'USER':

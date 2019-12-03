@@ -4276,8 +4276,7 @@ class PoolDatasetService(CRUDService):
                 try:
                     await self.middleware.call(f'{quota_type}.get_{quota_type}_obj',
                                                {id_type: q["id"]})
-                except Exception as e:
-                    self.logger.debug(e)
+                except Exception:
                     verrors.add(
                         f'pool.dataset.set_userquota',
                         f'{quota_type} {q["id"]} is not valid.'
@@ -4286,8 +4285,8 @@ class PoolDatasetService(CRUDService):
             quota_list.append(f'{quota_type}quota@{q["id"]}={q["quota"]}')
 
         verrors.check()
-        quota_set = await self.middleware.call('zfs.dataset.set_user_or_group_quota',
-                                               dataset, quota_list)
+        await self.middleware.call('zfs.dataset.set_user_or_group_quota',
+                                   dataset, quota_list)
 
     @accepts(Str('pool'))
     async def recommended_zvol_blocksize(self, pool):
