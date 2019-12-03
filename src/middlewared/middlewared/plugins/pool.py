@@ -4255,12 +4255,12 @@ class PoolDatasetService(CRUDService):
         verrors = ValidationErrors()
         if len(data) > MAX_QUOTAS:
             verrors.add(
-                'pool.dataset.set_userquota.',
-                f'The number of userspace quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
+                'quotas',
+                f'The number of user or group quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
             )
 
         quota_list = []
-        for q in data:
+        for i, q in enumerate(data):
             quota_type = q["quota_type"].lower()
             if not q["id"].isdigit():
                 try:
@@ -4268,7 +4268,7 @@ class PoolDatasetService(CRUDService):
                                                {f'{quota_type}name': q["id"]})
                 except Exception:
                     verrors.add(
-                        f'pool.dataset.set_userquota',
+                        f'quotas.{i}.id',
                         f'{quota_type} {q["id"]} is not valid.'
                     )
             else:
@@ -4278,7 +4278,7 @@ class PoolDatasetService(CRUDService):
                                                {id_type: q["id"]})
                 except Exception:
                     verrors.add(
-                        f'pool.dataset.set_userquota',
+                        f'quotas.{i}.id',
                         f'{quota_type} {q["id"]} is not valid.'
                     )
 
