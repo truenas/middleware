@@ -9,7 +9,12 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST, DELETE
-from auto_config import disk0, disk1, disk2, pool_name
+from auto_config import pool_name
+
+# hard coded since it will be deprecated in 12.0
+disk0 = "ada0"
+disk1 = "ada1"
+disk2 = "ada2"
 
 disk_list = [disk0, disk1, disk2]
 
