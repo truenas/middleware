@@ -48,7 +48,6 @@ RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 RE_USERSPACE = re.compile(r'^(?P<uid>\d+)\t(?P<used>\d+)\t(?P<quota>\d+)$')
-RE_GROUPSPACE = re.compile(r'^(?P<gid>\d+)\t(?P<used>\d+)\t(?P<quota>\d+)$')
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
@@ -4186,18 +4185,31 @@ class PoolDatasetService(CRUDService):
 
     @accepts(
         Str('id', required=True),
+        Str('type', enum=['USER', 'GROUP']),
         Ref('query-filters'),
         Ref('query-options'),
     )
     @item_method
-    async def get_userquota(self, id, filters, options):
+    async def get_userspace_quota(self, id, type, filters, options):
         """
-        Returns a list of user quotas on the ZFS dataset `id`. Supports
-        `query-filters` and `query-options`.
+        Returns a list of the specified `type` of  quotas on the ZFS dataset `id`.
+        Supports `query-filters` and `query-options`.
+
+        Each quota entry has the following fields:
+
+        `id` - the uid or gid to which the quota applies.
+
+        `name` - the user or group name to which the quota applies. Value will be
+        null if the id in the quota could not be resolved to a user or group. This
+        indicates that the user or group does not exist on the server.
+
+        `quota` - the quota size in bytes.
+
+        `used` - the amount of bytes the user has written to the dataset.
         """
         quota_list = []
         userquota = await run(
-            ['zfs', 'userspace', '-H', '-n', '-p', '-o', 'name,used,quota', id],
+            ['zfs', f'{type.lower()}space', '-H', '-n', '-p', '-o', 'name,used,quota', id],
             check=False
         )
         if userquota.returncode != 0:
@@ -4206,8 +4218,8 @@ class PoolDatasetService(CRUDService):
 
         for quota in userquota.stdout.decode().splitlines():
             entry = {
-                'uid': None,
-                'username': None,
+                'id': None,
+                'name': None,
                 'quota': 0,
                 'used': 0,
             }
@@ -4219,59 +4231,19 @@ class PoolDatasetService(CRUDService):
             entry.update(m.groupdict())
 
             try:
-                entry['username'] = (
-                    await self.middleware.call('user.get_user_obj', {'uid': entry['uid']})
-                )['pw_name']
+                if type == 'USER':
+                    entry['name'] = (
+                        await self.middleware.call('user.get_user_obj',
+                                                   {'uid': entry['id']})
+                    )['pw_name']
+                else:
+                    entry['name'] = (
+                        await self.middleware.call('group.get_group_obj',
+                                                   {'gid': entry['id']})
+                    )['gr_name']
 
             except Exception:
-                self.logger.debug('Unable to resolve uid %d to name', entry['uid'])
-                pass
-
-            quota_list.append(entry)
-
-        return filter_list(quota_list, filters, options)
-
-    @accepts(
-        Str('id', required=True),
-        Ref('query-filters'),
-        Ref('query-options'),
-    )
-    @item_method
-    async def get_groupquota(self, id, filters, options):
-        """
-        Returns a list of group quotas on the ZFS dataset `id`. Supports
-        `query-filters` and `query-options`.
-        """
-        quota_list = []
-        groupquota = await run(
-            ['zfs', 'groupspace', '-H', '-n', '-p', '-o', 'name,used,quota', id],
-            check=False
-        )
-        if groupquota.returncode != 0:
-            raise CallError('Failed to get groupquota for %s: [%s]',
-                            id, groupquota.stderr.decode())
-
-        for quota in groupquota.stdout.decode().splitlines():
-            entry = {
-                'gid': None,
-                'groupname': None,
-                'quota': 0,
-                'used': 0,
-            }
-            m = RE_GROUPSPACE.match(quota)
-            if m is None:
-                self.logger.debug('Invalid groupspace quota: %s', quota)
-                continue
-
-            entry.update(m.groupdict())
-
-            try:
-                entry['groupname'] = (
-                    await self.middleware.call('group.get_group_obj', {'gid': entry['gid']})
-                )['gr_name']
-
-            except Exception:
-                self.logger.debug('Unable to resolve gid %d to name', entry['gid'])
+                self.logger.debug('Unable to resolve uid %d to name', entry['id'])
                 pass
 
             quota_list.append(entry)
@@ -4285,35 +4257,46 @@ class PoolDatasetService(CRUDService):
                 'userspace_quota',
                 Str('type', enum=['USER', 'GROUP'], required=True),
                 Str('id', required=True),
-                Str('quota', required=True),
+                Int('quota', required=True),
             )
-        ])
+        ], default=[{
+            'type': 'USER",
+            'id': 0,
+            'quota': 0
+        }])
     )
     @item_method
     async def set_userspace_quota(self, id, data):
         """
         Set userspace (user or group) quotas on the specified ZFS dataset.
 
-        `id` name of ZFS dataset
+        `id` the name of the target ZFS dataset.
 
-        `quotas` list of `userspace_quota` to apply to dataset.
+        `quotas` specifies a list of `userspace_quotas` to apply to dataset.
 
-        userspace_quota entries have the following parameters:
+        `userspace_quota` entries have the following required parameters:
 
-        `type`: whether it's a user or group quota.
+        `type`: specifies whether the quota applies to a user or a group.
 
-        `id`: the uid or gid to which the quota applies.
+        `id`: the uid, gid, or name to which the quota applies.
 
-        `quota`: the quota size in bytes.
+        `quota`: the quota size in bytes. Setting a value of `0` will remove
+        the userspace quota.
         """
+        MAX_QUOTAS = 100
+        if len(data) > MAX_QUOTAS:
+            raise ValidationError(
+                'pool.dataset.set_userspace_quota.',
+                f'The number of userspace quotas that may be set in single API call is limited to {MAX_QUOTAS}.'
+            )
+
         cmd = ['zfs', 'set']
         for q in data:
             cmd.append(f'{q["type"].lower()}quota@{q["id"]}={q["quota"]}')
         cmd.append(id)
         quota_set = await run(cmd, check=False)
         if quota_set.returncode != 0:
-            raise CallError('Failed to set userspace quota on %s: [%s]',
-                            id, quota_set.stderr.decode())
+            raise CallError(f'Failed to set userspace quota on {id}: [{quota_set.stderr.decode()}]')
 
     @accepts(Str('pool'))
     async def recommended_zvol_blocksize(self, pool):
