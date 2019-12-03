@@ -35,7 +35,7 @@ class BootEnvService(CRUDService):
             if len(fields) > 5 and fields[5] != '-':
                 name = fields[5]
             be = {
-                'id': fields[0],
+                'id': name,
                 'realname': fields[0],
                 'name': name,
                 'active': fields[1],
@@ -141,19 +141,19 @@ class BootEnvService(CRUDService):
             Bool('keep', default=False),
         )
     )
-    def set_attribute(self, oid, attrs):
+    async def set_attribute(self, oid, attrs):
         """
         Sets attributes boot environment `id`.
 
         Currently only `keep` attribute is allowed.
         """
-        boot_pool = self.middleware.call_sync('boot.pool_name')
-        dsname = f'{boot_pool}/ROOT/{oid}'
-        ds = self.middleware.call_sync('zfs.dataset.query', [('id', '=', dsname)])
+        boot_pool = await self.middleware.call('boot.pool_name')
+        boot_env = await self.get_instance(oid)
+        dsname = f'{boot_pool}/ROOT/{boot_env["realname"]}'
+        ds = await self.middleware.call('zfs.dataset.query', [('id', '=', dsname)])
         if not ds:
             raise CallError(f'BE {oid!r} does not exist.', errno.ENOENT)
-        ds = ds[0]
-        self.middleware.call_sync('zfs.dataset.update', dsname, {
+        await self.middleware.call('zfs.dataset.update', dsname, {
             'properties': {'beadm:keep': {'value': str(attrs['keep'])}},
         })
         return True
