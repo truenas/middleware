@@ -7,13 +7,19 @@ import time
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, send_file
-from auto_config import ip, user, password, pool_name, disk1, disk2
+from auto_config import ip, user, password, pool_name, ha
 
 dataset = f"{pool_name}/test_pool"
 dataset_url = dataset.replace('/', '%2F')
 dataset_path = os.path.join("/mnt", dataset)
 
 IMAGES = {}
+
+Reason = 'Skip for HA'
+skip_for_ha = pytest.mark.skipif(ha, reason=Reason)
+nas_disk = GET('/boot/get_disks/').json()
+disk_list = list(POST('/device/get_info/', 'DISK').json().keys())
+disk_pool = list(set(disk_list) - set(nas_disk))
 
 
 @pytest.fixture(scope='module')
@@ -40,6 +46,7 @@ def test_01_get_pool():
     assert isinstance(results.json(), list), results.text
 
 
+@skip_for_ha
 def test_02_creating_a_pool():
     global payload
     payload = {
@@ -47,7 +54,7 @@ def test_02_creating_a_pool():
         "encryption": False,
         "topology": {
             "data": [
-                {"type": "STRIPE", "disks": [disk1, disk2]}
+                {"type": "STRIPE", "disks": disk_pool}
             ],
         }
     }
@@ -72,6 +79,7 @@ def test_04_get_pool_id_info(pool_data):
     pool_info = results
 
 
+@skip_for_ha
 @pytest.mark.parametrize('pool_keys', ["name", "topology:data:disks"])
 def test_05_looking_pool_info_of_(pool_keys):
     results = pool_info
@@ -89,13 +97,13 @@ def test_05_looking_pool_info_of_(pool_keys):
         assert payload[pool_keys] == results.json()[pool_keys], results.text
 
 
-def test_05_create_dataset():
+def test_06_create_dataset():
     result = POST("/pool/dataset/", {"name": dataset})
     assert result.status_code == 200, result.text
 
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
-def test_06_setup_function(image):
+def test_07_setup_function(image):
     zf = os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz")
     destination = f"/tmp/{image}.gz"
     send_results = send_file(zf, destination, user, None, ip)
@@ -111,7 +119,7 @@ def test_06_setup_function(image):
     IMAGES[image] = mdconfig_results['output'].strip()
 
 
-def test_07_import_msdosfs():
+def test_08_import_msdosfs():
     payload = {
         "device": f"/dev/{IMAGES['msdosfs']}s1",
         "fs_type": "msdosfs",
@@ -124,13 +132,13 @@ def test_07_import_msdosfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_08_look_if_Directory_slash_File():
+def test_09_look_if_Directory_slash_File():
     cmd = f'test -f {dataset_path}/Directory/File'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_09_import_nonascii_msdosfs_fails():
+def test_10_import_nonascii_msdosfs_fails():
     payload = {
         "device": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
@@ -147,13 +155,13 @@ def test_09_import_nonascii_msdosfs_fails():
     assert job["error"] == "rsync failed with exit code 23", job
 
 
-def test_10_look_if_Directory_slash_File():
+def test_11_look_if_Directory_slash_File():
     cmd = f'test -f {dataset_path}/Directory/File'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_11_import_nonascii_msdosfs():
+def test_12_import_nonascii_msdosfs():
     payload = {
         "device": f"/dev/{IMAGES['msdosfs-nonascii']}s1",
         "fs_type": "msdosfs",
@@ -166,13 +174,13 @@ def test_11_import_nonascii_msdosfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_12_look_if_Каталог_slash_Файл():
+def test_13_look_if_Каталог_slash_Файл():
     cmd = f'test -f {dataset_path}/Каталог/Файл'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_13_import_ntfs():
+def test_14_import_ntfs():
     payload = {
         "device": f"/dev/{IMAGES['ntfs']}s1",
         "fs_type": "ntfs",
@@ -187,14 +195,14 @@ def test_13_import_ntfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_14_look_if_Каталог_slash_Файл():
+def test_15_look_if_Каталог_slash_Файл():
     cmd = f'test -f {dataset_path}/Каталог/Файл'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
-def test_15_stop_image_with_mdconfig(image):
+def test_16_stop_image_with_mdconfig(image):
     cmd = f"mdconfig -d -u {IMAGES[image]}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

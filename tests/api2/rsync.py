@@ -96,3 +96,9 @@ def test_13_Check_that_the_API_reports_rsync_task_as_deleted(rsynctask_dict):
     id = rsynctask_dict['id']
     results = GET(f'/rsynctask?id={id}')
     assert results.json() == [], results.text
+
+
+def test_14_remove_root_ssh_key():
+    cmd = 'rm /root/.ssh/id_rsa*'
+    results = SSH_TEST(cmd, user, None, ip)
+    assert results['result'] is True, results['output']
