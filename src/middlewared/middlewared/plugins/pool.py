@@ -4182,6 +4182,112 @@ class PoolDatasetService(CRUDService):
             raise CallError(pjob.error)
         return data
 
+    @accepts(
+        Str('id', required=True),
+        Str('quota_type', enum=['USER', 'GROUP']),
+        Ref('query-filters'),
+        Ref('query-options'),
+    )
+    @item_method
+    async def get_user_or_group_quota(self, id, quota_type, filters, options):
+        """
+        Return a list of the specified `type` of  quotas on the ZFS dataset `id`.
+        Support `query-filters` and `query-options`. used_bytes and used_percentage
+        may not instantly update as space is used.
+
+        Each quota entry has these fields:
+
+        `id` - the uid or gid to which the quota applies.
+
+        `name` - the user or group name to which the quota applies. Value is
+        null if the id in the quota cannot be resolved to a user or group. This
+        indicates that the user or group does not exist on the server.
+
+        `quota` - the quota size in bytes.
+
+        `used_bytes` - the amount of bytes the user has written to the dataset.
+
+        `used_percentage` - the percentage of the user or group quota consumed.
+        """
+        dataset = (await self._get_instance(id))['name']
+        quota_list = await self.middleware.call(
+            'zfs.dataset.get_user_or_group_quota', dataset, quota_type.lower()
+        )
+        return filter_list(quota_list, filters, options)
+
+    @accepts(
+        Str('id', required=True),
+        List('quotas', items=[
+            Dict(
+                'quota_entry',
+                Str('quota_type', enum=['USER', 'GROUP'], required=True),
+                Str('id', required=True),
+                Int('quota', required=True),
+            )
+        ], default=[{
+            'quota_type': 'USER',
+            'id': '0',
+            'quota': 0
+        }])
+    )
+    @item_method
+    async def set_user_or_group_quota(self, id, data):
+        """
+        Set a user or group quota on the specified ZFS dataset. The quota limits
+        the amount of disk space consumed by files that are owned by the specified
+        users or groups.
+
+        `id` the name of the target ZFS dataset.
+
+        `quotas` specifies a list of `quota_entry` entries to apply to dataset.
+
+        `quota_entry` entries have these required parameters:
+
+        `type`: specifies whether the quota applies to a user or a group.
+
+        `id`: the uid, gid, or name to which the quota applies.
+
+        `quota`: the quota size in bytes. Setting a value of `0` removes
+        the user or group quota.
+        """
+        MAX_QUOTAS = 100
+        dataset = (await self._get_instance(id))['name']
+        verrors = ValidationErrors()
+        if len(data) > MAX_QUOTAS:
+            verrors.add(
+                'quotas',
+                f'The number of user or group quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
+            )
+
+        quota_list = []
+        for i, q in enumerate(data):
+            quota_type = q["quota_type"].lower()
+            if not q["id"].isdigit():
+                try:
+                    await self.middleware.call(f'{quota_type}.get_{quota_type}_obj',
+                                               {f'{quota_type}name': q["id"]})
+                except Exception:
+                    verrors.add(
+                        f'quotas.{i}.id',
+                        f'{quota_type} {q["id"]} is not valid.'
+                    )
+            else:
+                id_type = 'uid' if quota_type == 'user' else 'gid'
+                try:
+                    await self.middleware.call(f'{quota_type}.get_{quota_type}_obj',
+                                               {id_type: q["id"]})
+                except Exception:
+                    verrors.add(
+                        f'quotas.{i}.id',
+                        f'{quota_type} {q["id"]} is not valid.'
+                    )
+
+            quota_list.append(f'{quota_type}quota@{q["id"]}={q["quota"]}')
+
+        verrors.check()
+        await self.middleware.call('zfs.dataset.set_user_or_group_quota',
+                                   dataset, quota_list)
+
     @accepts(Str('pool'))
     async def recommended_zvol_blocksize(self, pool):
         """

@@ -521,6 +521,65 @@ class ZFSDatasetService(CRUDService):
         if not ds.encrypted:
             raise CallError(f'{id} is not encrypted')
 
+    def get_user_or_group_quota(self, ds, quota_type):
+        quota_list = []
+        quota_get = subprocess.run(
+            ['zfs', f'{quota_type}space', '-H', '-n', '-p', '-o', 'name,used,quota', ds],
+            capture_output=True,
+            check=False,
+        )
+        if quota_get.returncode != 0:
+            raise CallError(
+                f'Failed to get {quota_type} quota for {ds}: [{quota_get.stderr.decode()}]'
+            )
+
+        for quota in quota_get.stdout.decode().splitlines():
+            m = quota.split('\t')
+            if len(m) != 3:
+                self.logger.debug('Invalid %s quota: %s',
+                                  quota_type.lower(), quota)
+                continue
+
+            entry = {
+                'quota_type': quota_type.upper(),
+                'id': int(m[0]),
+                'name': None,
+                'quota': int(m[2]),
+                'used_bytes': int(m[1]),
+                'used_percent': 0,
+            }
+            if entry['quota'] > 0:
+                entry['used_percent'] = entry['used_bytes'] / entry['quota'] * 100
+
+            try:
+                if quota_type == 'USER':
+                    entry['name'] = (
+                        self.middleware.call_sync('user.get_user_obj',
+                                                  {'uid': entry['id']})
+                    )['pw_name']
+                else:
+                    entry['name'] = (
+                        self.middleware.call_sync('group.get_group_obj',
+                                                  {'gid': entry['id']})
+                    )['gr_name']
+
+            except Exception:
+                self.logger.debug('Unable to resolve %s id %d to name',
+                                  quota_type.lower(), entry['id'])
+                pass
+
+            quota_list.append(entry)
+
+        return quota_list
+
+    def set_user_or_group_quota(self, ds, quota_list):
+        cmd = ['zfs', 'set']
+        cmd.extend(quota_list)
+        cmd.append(ds)
+        quota_set = subprocess.run(cmd, check=False)
+        if quota_set.returncode != 0:
+            raise CallError(f'Failed to set userspace quota on {ds}: [{quota_set.stderr.decode()}]')
+
     @accepts(
         Str('id'),
         Dict(
