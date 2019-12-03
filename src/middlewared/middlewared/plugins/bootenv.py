@@ -35,7 +35,7 @@ class BootEnvService(CRUDService):
             if len(fields) > 5 and fields[5] != '-':
                 name = fields[5]
             be = {
-                'id': fields[0],
+                'id': name,
                 'realname': fields[0],
                 'name': name,
                 'active': fields[1],
