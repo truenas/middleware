@@ -4225,7 +4225,7 @@ class PoolDatasetService(CRUDService):
                 Int('quota', required=True),
             )
         ], default=[{
-            'type': 'USER',
+            'quota_type': 'USER',
             'id': '0',
             'quota': 0
         }])
