@@ -400,6 +400,12 @@ class ISCSIPortalService(CRUDService):
         Delete iSCSI Portal `id`.
         """
         await self._get_instance(id)
+        await self.middleware.call(
+            'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target_portalgroup', '=', id]]
+        )
+        await self.middleware.call(
+            'datastore.delete', 'services.iscsitargetportalip', [['iscsi_target_portalip_portal', '=', id]]
+        )
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
 
         for i, portal in enumerate(await self.middleware.call('iscsi.portal.query', [], {'order_by': ['tag']})):
@@ -1427,6 +1433,9 @@ class iSCSITargetService(CRUDService):
         for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id]]):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
 
+        await self.middleware.call(
+            'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target', '=', id]]
+        )
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self._service_change('iscsitarget', 'reload')
         return rv
