@@ -4191,16 +4191,16 @@ class PoolDatasetService(CRUDService):
     @item_method
     async def get_userquota(self, id, type, filters, options):
         """
-        Returns a list of the specified `type` of  quotas on the ZFS dataset `id`.
-        Supports `query-filters` and `query-options`. used_bytes and used_percentage
+        Return a list of the specified `type` of  quotas on the ZFS dataset `id`.
+        Support `query-filters` and `query-options`. used_bytes and used_percentage
         may not instantly update as space is used.
 
-        Each quota entry has the following fields:
+        Each quota entry has these fields:
 
         `id` - the uid or gid to which the quota applies.
 
-        `name` - the user or group name to which the quota applies. Value will be
-        null if the id in the quota could not be resolved to a user or group. This
+        `name` - the user or group name to which the quota applies. Value is
+        null if the id in the quota cannot be resolved to a user or group. This
         indicates that the user or group does not exist on the server.
 
         `quota` - the quota size in bytes.
@@ -4284,13 +4284,13 @@ class PoolDatasetService(CRUDService):
 
         `quotas` specifies a list of `quota_entry` entries to apply to dataset.
 
-        `quota_entry` entries have the following required parameters:
+        `quota_entry` entries have these required parameters:
 
         `type`: specifies whether the quota applies to a user or a group.
 
         `id`: the uid, gid, or name to which the quota applies.
 
-        `quota`: the quota size in bytes. Setting a value of `0` will remove
+        `quota`: the quota size in bytes. Setting a value of `0` removes
         the user or group quota.
         """
         MAX_QUOTAS = 100
@@ -4299,7 +4299,7 @@ class PoolDatasetService(CRUDService):
         if len(data) > MAX_QUOTAS:
             verrors.add(
                 'pool.dataset.set_userquota.',
-                f'The number of userspace quotas that may be set in single API call is limited to {MAX_QUOTAS}.'
+                f'The number of userspace quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
             )
 
         cmd = ['zfs', 'set']
