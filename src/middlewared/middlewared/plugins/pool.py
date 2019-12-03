@@ -4269,7 +4269,18 @@ class PoolDatasetService(CRUDService):
                 except Exception:
                     verrors.add(
                         f'pool.dataset.set_userquota',
-                        f'{q["quota_type"]} {q["id"]} is not valid.'
+                        f'{quota_type} {q["id"]} is not valid.'
+                    )
+            else:
+                id_type = 'uid' if quota_type == 'user' else 'gid'
+                try:
+                    await self.middleware.call(f'{quota_type}.get_{quota_type}_obj',
+                                               {id_type: q["id"]})
+                except Exception as e:
+                    self.logger.debug(e)
+                    verrors.add(
+                        f'pool.dataset.set_userquota',
+                        f'{quota_type} {q["id"]} is not valid.'
                     )
 
             quota_list.append(f'{quota_type}quota@{q["id"]}={q["quota"]}')
