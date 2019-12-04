@@ -63,7 +63,7 @@ class CIFS_ShareForm(MiddlewareModelForm, ModelForm):
             self.fields['cifs_default_permissions'].initial = False
             self._original_cifs_vfsobjects = self.instance.cifs_vfsobjects
         else:
-            self.fields['cifs_default_permissions'].initial = True
+            self.fields['cifs_default_permissions'].initial = False
             self._original_cifs_vfsobjects = []
 
         key_order(self, 4, 'cifs_default_permissions', instance=True)
