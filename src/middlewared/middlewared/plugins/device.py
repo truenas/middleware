@@ -5,11 +5,6 @@ import socket
 from middlewared.schema import accepts, Str
 from middlewared.service import Service
 
-try:
-    from bsd import devinfo, geom
-except ImportError:
-    devinfo = geom = None
-
 DEVD_SOCKETFILE = '/var/run/devd.pipe'
 
 
@@ -22,44 +17,7 @@ class DeviceService(Service):
 
         Currently only SERIAL is supported.
         """
-        return await getattr(self, f'_get_{_type.lower()}')()
-
-    async def _get_serial(self):
-        ports = []
-        for devices in devinfo.DevInfo().resource_managers['I/O ports'].values():
-            for dev in devices:
-                if not dev.name.startswith('uart'):
-                    continue
-                ports.append({
-                    'name': dev.name,
-                    'description': dev.desc,
-                    'drivername': dev.drivername,
-                    'location': dev.location,
-                    'start': hex(dev.start),
-                    'size': dev.size
-                })
-        return ports
-
-    async def _get_disk(self):
-        await self.middleware.run_in_thread(geom.scan)
-        disks = {}
-        klass = geom.class_by_name('DISK')
-        if not klass:
-            return disks
-        for g in klass.geoms:
-            # Skip cd*
-            if g.name.startswith('cd'):
-                continue
-            disk = {
-                'name': g.name,
-                'mediasize': g.provider.mediasize,
-                'sectorsize': g.provider.sectorsize,
-                'stripesize': g.provider.stripesize,
-            }
-            if g.provider.config:
-                disk.update(g.provider.config)
-            disks[g.name] = disk
-        return disks
+        return await self.middleware.call(f'device.get_{_type.lower()}')
 
 
 async def devd_loop(middleware):
