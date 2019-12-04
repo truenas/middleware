@@ -671,55 +671,6 @@ class DiskService(CRUDService):
         return None
 
     @private
-    @accepts(Str('name'))
-    async def device_to_identifier(self, name):
-        """
-        Given a device `name` (e.g. da0) returns an unique identifier string
-        for this device.
-        This identifier is in the form of {type}string, "type" can be one of
-        the following:
-          - serial_lunid - for disk serial concatenated with the lunid
-          - serial - disk serial
-          - uuid - uuid of a ZFS GPT partition
-          - label - label name from geom label
-          - devicename - name of the device if any other could not be used/found
-
-        Returns:
-            str - identifier
-        """
-        await self.middleware.run_in_thread(geom.scan)
-
-        g = geom.geom_by_name('DISK', name)
-        if g and g.provider.config.get('ident'):
-            serial = g.provider.config['ident']
-            lunid = g.provider.config.get('lunid')
-            if lunid:
-                return f'{{serial_lunid}}{serial}_{lunid}'
-            return f'{{serial}}{serial}'
-
-        serial = await self.serial_from_device(name)
-        if serial:
-            return f'{{serial}}{serial}'
-
-        klass = geom.class_by_name('PART')
-        if klass:
-            for g in klass.geoms:
-                for p in g.providers:
-                    if p.name == name:
-                        if p.config['rawtype'] == RAWTYPE['freebsd-zfs']:
-                            return f'{{uuid}}{p.config["rawuuid"]}'
-
-        g = geom.geom_by_name('LABEL', name)
-        if g:
-            return f'{{label}}{g.provider.name}'
-
-        g = geom.geom_by_name('DEV', name)
-        if g:
-            return f'{{devicename}}{name}'
-
-        return ''
-
-    @private
     @accepts(Str('identifier'))
     def identifier_to_device(self, ident):
 

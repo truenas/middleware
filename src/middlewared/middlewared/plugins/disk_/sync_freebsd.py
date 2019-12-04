@@ -6,6 +6,12 @@ from middlewared.service import private, Service, ServiceChangeMixin
 from .sync_base import DiskSyncBase
 
 
+RAWTYPE = {
+    'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
+    'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
+}
+
+
 class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
 
     async def __disk_data(self, disk, name):
@@ -206,3 +212,36 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
             await self.middleware.call('service.restart', 'collectd')
         await self._service_change('smartd', 'restart')
         await self._service_change('snmp', 'restart')
+
+    async def device_to_identifier(self, name):
+        await self.middleware.run_in_thread(geom.scan)
+
+        g = geom.geom_by_name('DISK', name)
+        if g and g.provider.config.get('ident'):
+            serial = g.provider.config['ident']
+            lunid = g.provider.config.get('lunid')
+            if lunid:
+                return f'{{serial_lunid}}{serial}_{lunid}'
+            return f'{{serial}}{serial}'
+
+        serial = await self.serial_from_device(name)
+        if serial:
+            return f'{{serial}}{serial}'
+
+        klass = geom.class_by_name('PART')
+        if klass:
+            for g in klass.geoms:
+                for p in g.providers:
+                    if p.name == name:
+                        if p.config['rawtype'] == RAWTYPE['freebsd-zfs']:
+                            return f'{{uuid}}{p.config["rawuuid"]}'
+
+        g = geom.geom_by_name('LABEL', name)
+        if g:
+            return f'{{label}}{g.provider.name}'
+
+        g = geom.geom_by_name('DEV', name)
+        if g:
+            return f'{{devicename}}{name}'
+
+        return ''
