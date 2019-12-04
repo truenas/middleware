@@ -268,6 +268,7 @@ class ISCSIPortalService(CRUDService):
         """
         Delete iSCSI Portal `id`.
         """
+        await self._get_instance(id)
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
         # service is currently restarted by datastore/django model
 
@@ -333,6 +334,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        await self._get_instance(id)
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -841,6 +843,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        await self._get_instance(id)
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
@@ -1105,6 +1108,7 @@ class iSCSITargetService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        await self._get_instance(id)
         rv = await self.middleware.call(
             'datastore.delete', self._config.datastore, id)
         await self._service_change('iscsitarget', 'reload')
@@ -1180,6 +1184,7 @@ class iSCSITargetToExtentService(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
+        await self._get_instance(id)
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
