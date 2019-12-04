@@ -1567,7 +1567,7 @@ class VolumeImportResource(DojoResource):
     def get_list(self, request, **kwargs):
         self.is_authenticated(request)
         with client as c:
-            vols = c.call('pool.import_find')
+            vols = c.call('pool.import_find', job=True)
         for vol in vols:
             vol['id'] = '%s|%s' % (vol['name'], vol['guid'])
         return self.create_response(request, vols)
