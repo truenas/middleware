@@ -3538,6 +3538,8 @@ class PoolDatasetService(CRUDService):
                 ('volblocksize', None, None),
                 ('keyformat', 'key_format', lambda o: o.upper() if o != 'none' else None),
                 ('encryption', 'encryption_algorithm', lambda o: o.upper() if o != 'off' else None),
+                ('used', None, None),
+                ('available', None, None),
             ):
                 if orig_name not in dataset['properties']:
                     continue
