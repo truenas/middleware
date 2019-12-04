@@ -14,13 +14,13 @@ LDAP_STATUS_ALERT="/tmp/.ldap_status_alert"
 
 generate_ldapconf()
 {
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate ldap > /dev/null
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate ldap 2> /dev/null
 }
 
 generate_nss_ldapconf()
 {
 	rm -f /usr/local/etc/ldap.conf
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate nss > /dev/null
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate nss 2> /dev/null
 	ln -sf /usr/local/etc/nss_ldap.conf /usr/local/etc/ldap.conf
 }
 
@@ -134,13 +134,34 @@ ldap_status()
 		local res=1
 		local ldapsearch=/usr/local/bin/ldapsearch
 		local options=
+		local do_gssapi_bind=0
+		local default_ssl="off"
+		local force_gssapi="${FREENAS_LDAP_FORCE_GSSAPI:-1}"
 
-		if [ "${ldap_ssl}" = "start_tls" ]
+		# Do GSSAPI bind if SSL and Anonymous binding or
+		# disabled and we have a keytab + realm or
+		# if we have a keytab+realm and FORCE_GSSAPI is set.
+		if [ "${ldap_ssl:-$default_ssl}" = "start_tls" ]
 		then
+			do_gssapi_bind=1
 			options="-Z"
+
+		elif [ "${ldap_ssl:-$default_ssl}" = "on" ]
+		then
+			do_gssapi_bind=1
 		fi
 
-		if [ -n "${realm}" -a -n "${principal}" ]
+		if [ "${ldap_anonbind}" = "1" ]
+		then
+			do_gssapi_bind=1
+		fi
+
+		if [ "${force_gssapi}" = "0" ]
+		then
+			do_gssapi_bind=0
+		fi
+
+		if [ -n "${realm}" -a -n "${principal}" -a "${do_gssapi_bind}" -eq 0 ]
 		then
 			local temp=$(mktemp /tmp/tmp.XXXXXX)
 			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)

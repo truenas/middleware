@@ -28,6 +28,8 @@
 : ${MIDCLT="/usr/local/bin/midclt"}
 : ${JQ="/usr/local/bin/jq"}
 : ${DEFAULT_SYS_DATASET="freenas-boot"}
+: ${FREENAS_LDAP_FORCE_GSSAPI="1"}
+: ${FREENAS_LDAP_DEBUG="1"}
 
 is_unified_standby()
 {
