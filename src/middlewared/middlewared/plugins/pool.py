@@ -2582,6 +2582,8 @@ class PoolDatasetService(CRUDService):
                 ('sparse', None, None),
                 ('volsize', None, None),
                 ('volblocksize', None, None),
+                ('used', None, None),
+                ('available', None, None),
             ):
                 if orig_name not in dataset['properties']:
                     continue
