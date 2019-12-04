@@ -1,13 +1,17 @@
+import os
 import re
 
 from bsd import geom
 from datetime import datetime, timedelta
+from lxml import etree
+from xml.etree import ElementTree
 
 from middlewared.service import private, Service, ServiceChangeMixin
 
 from .sync_base import DiskSyncBase
 
 RE_SERIAL_NUMBER = re.compile(r'Serial Number:\s+(?P<serial>.+)', re.I)
+RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 RAWTYPE = {
     'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
@@ -248,6 +252,69 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
             return f'{{devicename}}{name}'
 
         return ''
+
+    def identifier_to_device(self, ident):
+
+        if not ident:
+            return None
+
+        search = RE_IDENTIFIER.search(ident)
+        if not search:
+            return None
+
+        geom.scan()
+
+        tp = search.group('type')
+        # We need to escape single quotes to html entity
+        value = search.group('value').replace("'", '%27')
+
+        if tp == 'uuid':
+            search = geom.class_by_name('PART').xml.find(
+                f'.//config[rawuuid = "{value}"]/../../name'
+            )
+            if search is not None and not search.text.startswith('label'):
+                return search.text
+
+        elif tp == 'label':
+            search = geom.class_by_name('LABEL').xml.find(
+                f'.//provider[name = "{value}"]/../name'
+            )
+            if search is not None:
+                return search.text
+
+        elif tp == 'serial':
+            search = geom.class_by_name('DISK').xml.find(
+                f'.//provider/config[ident = "{value}"]/../../name'
+            )
+            if search is not None:
+                return search.text
+            # Builtin xml xpath do not understand normalize-space
+            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
+            search = search.xpath(
+                './/provider/config['
+                f'normalize-space(ident) = normalize-space("{value}")'
+                ']/../../name'
+            )
+            if len(search) > 0:
+                return search[0].text
+            disks = self.middleware.call_sync('disk.query', [('serial', '=', value)])
+            if disks:
+                return disks[0]['name']
+
+        elif tp == 'serial_lunid':
+            # Builtin xml xpath do not understand concat
+            search = etree.fromstring(ElementTree.tostring(geom.class_by_name('DISK').xml))
+            search = search.xpath(
+                f'.//provider/config[concat(ident,"_",lunid) = "{value}"]/../../name'
+            )
+            if len(search) > 0:
+                return search[0].text
+
+        elif tp == 'devicename':
+            if os.path.exists(f'/dev/{value}'):
+                return value
+        else:
+            raise NotImplementedError(f'Unknown type {tp!r}')
 
     async def serial_from_device(self, name):
         output = await self.middleware.call('disk.smartctl', name, ['-i'], {'cache': False, 'silent': True})

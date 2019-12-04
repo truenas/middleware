@@ -47,3 +47,8 @@ class DiskSyncBase(ServicePartBase):
     @private
     async def serial_from_device(self, name):
         raise NotImplementedError()
+
+    @private
+    @accepts(Str('identifier'))
+    def identifier_to_device(self, ident):
+        raise NotImplementedError()
