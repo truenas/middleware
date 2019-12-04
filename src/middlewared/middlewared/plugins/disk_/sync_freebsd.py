@@ -1,3 +1,5 @@
+import re
+
 from bsd import geom
 from datetime import datetime, timedelta
 
@@ -5,6 +7,7 @@ from middlewared.service import private, Service, ServiceChangeMixin
 
 from .sync_base import DiskSyncBase
 
+RE_SERIAL_NUMBER = re.compile(r'Serial Number:\s+(?P<serial>.+)', re.I)
 
 RAWTYPE = {
     'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
@@ -34,7 +37,7 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
             disk['disk_model'] = g.provider.config['descr'] or None
 
         if not disk.get('disk_serial'):
-            disk['disk_serial'] = await self.middleware.call('disk.serial_from_device', name) or ''
+            disk['disk_serial'] = await self.serial_from_device(name) or ''
         reg = self.RE_DISK_NAME.search(name)
         if reg:
             disk['disk_subsystem'] = reg.group(1)
@@ -175,7 +178,7 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
                     if g.provider.mediasize:
                         disk['disk_size'] = g.provider.mediasize
                 if not disk.get('disk_serial'):
-                    serial = disk['disk_serial'] = await self.middleware.call('disk.serial_from_device', name) or ''
+                    serial = disk['disk_serial'] = await self.serial_from_device(name) or ''
                 if serial:
                     if serial in serials:
                         # Probably dealing with multipath here, do not add another
@@ -245,3 +248,17 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
             return f'{{devicename}}{name}'
 
         return ''
+
+    async def serial_from_device(self, name):
+        output = await self.middleware.call('disk.smartctl', name, ['-i'], {'cache': False, 'silent': True})
+        if output:
+            search = RE_SERIAL_NUMBER.search(output)
+            if search:
+                return search.group('serial')
+
+        await self.middleware.run_in_thread(geom.scan)
+        g = geom.geom_by_name('DISK', name)
+        if g and g.provider.config.get('ident'):
+            return g.provider.config['ident']
+
+        return None

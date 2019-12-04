@@ -43,3 +43,7 @@ class DiskSyncBase(ServicePartBase):
         Returns:
             str - identifier
         """
+
+    @private
+    async def serial_from_device(self, name):
+        raise NotImplementedError()

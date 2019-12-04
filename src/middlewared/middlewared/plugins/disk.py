@@ -656,21 +656,6 @@ class DiskService(CRUDService):
         return partitions
 
     @private
-    async def serial_from_device(self, name):
-        output = await self.middleware.call('disk.smartctl', name, ['-i'], {'cache': False, 'silent': True})
-        if output:
-            search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
-            if search:
-                return search.group('serial')
-
-        await self.middleware.run_in_thread(geom.scan)
-        g = geom.geom_by_name('DISK', name)
-        if g and g.provider.config.get('ident'):
-            return g.provider.config['ident']
-
-        return None
-
-    @private
     @accepts(Str('identifier'))
     def identifier_to_device(self, ident):
 
