@@ -658,7 +658,11 @@ class ZFSQuotaService(Service):
         if quota_value == 0:
             return
 
-        used = int(properties[used_property]["rawvalue"])
+        if used_property == "used":
+            used = quota_value - int(properties["available"]["rawvalue"])
+        else:
+            used = int(properties[used_property]["rawvalue"])
+
         try:
             percent_used = 100 * used / quota_value
         except ZeroDivisionError:
