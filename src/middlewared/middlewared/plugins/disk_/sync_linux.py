@@ -1,3 +1,5 @@
+import blkid
+
 from middlewared.service import Service, ServiceChangeMixin
 from middlewared.utils import run
 
@@ -20,7 +22,20 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
         return None
 
     async def device_to_identifier(self, name):
-        raise NotImplementedError()
+        serial = await self.serial_from_device(name)
+        if serial:
+            return f'{{serial}}{serial}'
+
+        try:
+            block_device = blkid.BlockDevice(f'/dev/{name}').__getstate__()
+        except blkid.BlkidException:
+            return ''
+
+        if block_device['uuid']:
+            return f'{{uuid}}{block_device["uuid"]}'
+        if block_device['label']:
+            return f'{{label}}{block_device["label"]}'
+        return f'{{devicename}}{name}'
 
     async def identifier_to_device(self, ident):
         raise NotImplementedError()
