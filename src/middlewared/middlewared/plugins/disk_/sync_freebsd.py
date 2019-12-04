@@ -10,7 +10,6 @@ from middlewared.service import private, Service, ServiceChangeMixin
 
 from .sync_base import DiskSyncBase
 
-RE_SERIAL_NUMBER = re.compile(r'Serial Number:\s+(?P<serial>.+)', re.I)
 RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 RAWTYPE = {
@@ -319,7 +318,7 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
     async def serial_from_device(self, name):
         output = await self.middleware.call('disk.smartctl', name, ['-i'], {'cache': False, 'silent': True})
         if output:
-            search = RE_SERIAL_NUMBER.search(output)
+            search = self.RE_SERIAL_NUMBER.search(output)
             if search:
                 return search.group('serial')
 
