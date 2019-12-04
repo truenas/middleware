@@ -659,7 +659,7 @@ class DiskService(CRUDService):
 
     @private
     async def serial_from_device(self, name):
-        output = await self.middleware.call('disk.smartctl', name, ['-i'], {'silent': True})
+        output = await self.middleware.call('disk.smartctl', name, ['-i'], {'cache': False, 'silent': True})
         if output:
             search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
             if search:

@@ -24,7 +24,6 @@ class DiskService(Service):
                         'disk.query',
                         [
                             ['devname', '!=', None],
-                            ['togglesmart', '=', True],
                         ],
                     )
                 ]
@@ -52,13 +51,19 @@ class DiskService(Service):
         List('args', items=[Str('arg')]),
         Dict(
             'options',
+            Bool('cache', default=True),
             Bool('silent', default=False),
         ),
     )
     @private
     async def smartctl(self, disk, args, options):
         try:
-            smartctl_args = await self.middleware.call('disk.smartctl_args', disk)
+            if options['cache']:
+                smartctl_args = await self.middleware.call('disk.smartctl_args', disk)
+            else:
+                devices = await camcontrol_list()
+                smartctl_args = await get_smartctl_args(self.middleware, devices, disk)
+
             if smartctl_args is None:
                 raise CallError(f'S.M.A.R.T. is unavailable for disk {disk}')
 
