@@ -72,6 +72,7 @@ struct windows_acl_info {
 	acl_t facl;
 	uid_t uid;
 	gid_t gid;
+	dev_t root_dev;
 	int	flags;
 	int index;
 };
@@ -168,6 +169,7 @@ new_windows_acl_info(void)
 	w->gid = -1;
 	w->flags = 0;
 	w->index = -1;
+	w->root_dev = 0;
 
 	return (w);
 }
@@ -609,7 +611,7 @@ set_windows_acls(struct windows_acl_info *w)
 
 	paths[0] = w->path;
 	paths[1] = NULL;
-	options = FTS_LOGICAL|FTS_NOSTAT;
+	options = FTS_LOGICAL;
 
 	if ((tree = fts_open(paths, options, fts_compare)) == NULL)
 		err(EX_OSERR, "fts_open");
@@ -623,10 +625,11 @@ set_windows_acls(struct windows_acl_info *w)
 		else {
 			switch (entry->fts_info) {
 				case FTS_D:
-					set_windows_acl(w, entry, 0);
-					break;	
-
 				case FTS_F:
+					if (w->root_dev == entry->fts_statp->st_dev) {
+						warnx("%s: path resides in boot pool", entry->fts_path);
+						return -1;
+					}
 					set_windows_acl(w, entry, 0);
 					break;	
 
@@ -739,6 +742,7 @@ main(int argc, char **argv)
 	struct 	windows_acl_info *w;
 	acl_t	source_acl;
 	char *p = argv[0];
+	struct stat st;
 
 	if (argc < 2)
 		usage(argv[0]);
@@ -845,6 +849,12 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (stat("/", &st) < 0) {
+		warn("%s: stat() failed.", "/");
+		return -1;
+	}
+	w->root_dev = st.st_dev;
+
 	/* set the source to the destination if we lack -s */
 	if (w->source == NULL) {
 		w->source = w->path;
@@ -866,7 +876,7 @@ main(int argc, char **argv)
 	}
 
 	usage_check(w);
-	set_windows_acls(w);
+	ret = set_windows_acls(w);
 	free_windows_acl_info(w);
-	return (0);
+	return ret;
 }
