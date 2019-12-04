@@ -35,7 +35,7 @@ async def get_smartctl_args(disk, device):
     if driver.startswith("ciss"):
         return [f"/dev/{driver}{controller_id}", "-d", f"cciss,{channel_no}"]
 
-    if driver.startswith("twa"):
+    if driver.startswith(("twa", "twe", "tws")):
         p = await run(["/usr/local/sbin/tw_cli", f"/c{controller_id}", "show"], encoding="utf8")
 
         units = {}
