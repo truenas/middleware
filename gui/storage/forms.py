@@ -779,14 +779,14 @@ class VolumeAutoImportForm(Form):
     def _volume_choices(cls):
         volchoices = {}
         with client as c:
-            for p in c.call('pool.import_find'):
+            for p in c.call('pool.import_find', job=True):
                 volchoices[f'{p["name"]}|{p["guid"]}'] = f'{p["name"]} [id={p["guid"]}]'
         return list(volchoices.items())
 
     def clean(self):
         cleaned_data = self.cleaned_data
         with client as c:
-            pools = c.call('pool.import_find')
+            pools = c.call('pool.import_find', job=True)
         volume_name, guid = cleaned_data.get('volume_id', '|').split('|', 1)
         for pool in pools:
             if pool['name'] == volume_name:

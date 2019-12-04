@@ -1792,7 +1792,8 @@ class PoolService(CRUDService):
         sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
 
     @accepts()
-    async def import_find(self):
+    @job()
+    async def import_find(self, job):
         """
         Get a list of pools available for import with the following details:
         name, guid, status, hostname.
