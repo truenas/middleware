@@ -1,4 +1,5 @@
 import blkid
+import subprocess
 
 from .device_info_base import DeviceInfoBase
 from middlewared.service import Service
@@ -19,4 +20,11 @@ class DeviceService(Service, DeviceInfoBase):
                 k: v for k, v in block_device.__getstate__().items()
                 if k not in ('partitions_data', 'io_limits')
             }
+
+            cp = subprocess.Popen(
+                ['lsblk', '--nodeps', '-no', 'serial', block_device.path],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            stdout, stderr = cp.communicate()
+            disks[block_device.name]['ident'] = stdout.strip() if stdout else None
         return disks
