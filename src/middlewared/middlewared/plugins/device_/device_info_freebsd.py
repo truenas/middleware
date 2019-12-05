@@ -21,6 +21,14 @@ class DeviceService(Service, DeviceInfoBase):
                 'mediasize': g.provider.mediasize,
                 'sectorsize': g.provider.sectorsize,
                 'stripesize': g.provider.stripesize,
+                'fwheads': None,
+                'fwsectors': None,
+                'rotationrate': None,
+                'ident': None,
+                'lunid': None,
+                'descr': None,
+                'subsystem': None,
+                'number': None,
             }
             if g.provider.config:
                 disk.update(g.provider.config)
@@ -30,6 +38,11 @@ class DeviceService(Service, DeviceInfoBase):
                     search = self.RE_SERIAL_NUMBER.search(output)
                     if search:
                         disk['ident'] = search.group('serial')
+
+            reg = self.RE_DISK_NAME.search(g.name)
+            if reg:
+                disk['subsystem'] = reg.group(1)
+                disk['number'] = int(reg.group(2))
 
             disks[g.name] = disk
         return disks
