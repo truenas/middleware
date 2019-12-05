@@ -1167,7 +1167,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             app=app, pipes=pipes, job_on_progress_cb=job_on_progress_cb, io_thread=True,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None):
+    def call_sync(self, name, *params, job_on_progress_cb=None, wait=True):
         """
         Synchronous method call to be used from another thread.
         """
@@ -1181,7 +1181,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             self._call(
                 name, serviceobj, methodobj, params,
                 io_thread=True, job_on_progress_cb=job_on_progress_cb,
-            )
+            ),
+            wait=wait,
         )
 
     def run_coroutine(self, coro, wait=True):
