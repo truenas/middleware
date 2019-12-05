@@ -34,11 +34,10 @@ class DiskService(Service, DiskIdentifyBase):
 
         klass = geom.class_by_name('PART')
         if klass:
-            for g in klass.geoms:
+            for g in filter(lambda v: v.name == name, klass.geoms):
                 for p in g.providers:
-                    if p.name == name:
-                        if p.config['rawtype'] == RAWTYPE['freebsd-zfs']:
-                            return f'{{uuid}}{p.config["rawuuid"]}'
+                    if p.config['rawtype'] == RAWTYPE['freebsd-zfs']:
+                        return f'{{uuid}}{p.config["rawuuid"]}'
 
         g = geom.geom_by_name('LABEL', name)
         if g:
