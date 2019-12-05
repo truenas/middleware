@@ -1,9 +1,11 @@
-from middlewared.service import Service, ServiceChangeMixin
+import blkid
+
+from middlewared.service import Service
 
 from .identify_base import DiskIdentifyBase
 
 
-class DiskService(Service, DiskIdentifyBase, ServiceChangeMixin):
+class DiskService(Service, DiskIdentifyBase):
 
     async def device_to_identifier(self, name):
         disks = await self.middleware.call('device.get_disks')
@@ -12,13 +14,21 @@ class DiskService(Service, DiskIdentifyBase, ServiceChangeMixin):
         else:
             block_device = disks[name]
 
-        if block_device['ident']:
-            return f'{{serial}}{block_device["ident"]}'
-        # FIXME: Verify uuid/label mappings with freebsd version please
-        if block_device['uuid']:
-            return f'{{uuid}}{block_device["uuid"]}'
-        if block_device['label']:
-            return f'{{label}}{block_device["label"]}'
+        if block_device['serial']:
+            return f'{{serial}}{block_device["serial"]}'
+
+        dev = blkid.BlockDevice(f'/dev/{name}')
+        if dev.partitions_exist:
+            for partition in dev.partition_data()['partitions']:
+                if partition['partition_type'] not in [
+                    '6a898cc3-1dd2-11b2-99a6-080020736631',
+                    '516e7cba-6ecf-11d6-8ff8-00022d09712b',
+                ]:
+                    # ^^^ https://salsa.debian.org/debian/gdisk/blob/master/parttypes.cc for valid zfs types
+                    # TODO: Let's please have a central location for all of these
+                    continue
+                return f'{{uuid}}{partition["part_uuid"]}'
+
         return f'{{devicename}}{name}'
 
     async def identifier_to_device(self, ident):
