@@ -12,9 +12,9 @@ class DeviceInfoBase(ServicePartBase):
     RE_DISK_NAME = RE_DISK_NAME
 
     @private
-    async def get_serial(self):
+    async def get_serials(self):
         raise NotImplementedError()
 
     @private
-    async def get_disk(self):
+    async def get_disks(self):
         raise NotImplementedError()

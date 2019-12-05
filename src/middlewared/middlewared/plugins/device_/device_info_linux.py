@@ -7,10 +7,10 @@ from middlewared.service import Service
 
 class DeviceService(Service, DeviceInfoBase):
 
-    async def get_serial(self):
+    async def get_serials(self):
         raise NotImplementedError()
 
-    def get_disk(self):
+    def get_disks(self):
         disks = {}
         for block_device in filter(
             lambda b: b.name not in ('sr0',),

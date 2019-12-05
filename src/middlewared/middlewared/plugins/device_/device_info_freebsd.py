@@ -6,7 +6,7 @@ from middlewared.service import Service
 
 class DeviceService(Service, DeviceInfoBase):
 
-    async def get_disk(self):
+    async def get_disks(self):
         await self.middleware.run_in_thread(geom.scan)
         disks = {}
         klass = geom.class_by_name('DISK')
@@ -47,7 +47,7 @@ class DeviceService(Service, DeviceInfoBase):
             disks[g.name] = disk
         return disks
 
-    async def get_serial(self):
+    async def get_serials(self):
         ports = []
         for devices in devinfo.DevInfo().resource_managers['I/O ports'].values():
             for dev in devices:

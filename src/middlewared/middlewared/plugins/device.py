@@ -17,7 +17,7 @@ class DeviceService(Service):
 
         Currently only SERIAL is supported.
         """
-        return await self.middleware.call(f'device.get_{_type.lower()}')
+        return await self.middleware.call(f'device.get_{_type.lower()}s')
 
 
 async def devd_loop(middleware):
