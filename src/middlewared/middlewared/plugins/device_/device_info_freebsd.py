@@ -21,22 +21,13 @@ class DeviceService(Service, DeviceInfoBase):
             # Skip cd*
             if g.name.startswith('cd'):
                 continue
-            disk = {
+            disk = self.disk_default.copy()
+            disk.update({
                 'name': g.name,
                 'mediasize': g.provider.mediasize,
                 'sectorsize': g.provider.sectorsize,
                 'stripesize': g.provider.stripesize,
-                'fwheads': None,
-                'fwsectors': None,
-                'rotationrate': None,
-                'ident': '',
-                'lunid': None,
-                'descr': None,
-                'subsystem': '',
-                'number': 1,  # Database defaults
-                'model': None,
-                'type': 'UNKNOWN',
-            }
+            })
             if g.provider.config:
                 disk.update(g.provider.config)
                 if disk['rotationrate'] is not None:
