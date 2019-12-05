@@ -1,5 +1,3 @@
-import blkid
-
 from middlewared.service import Service, ServiceChangeMixin
 
 from .sync_base import DiskSyncBase
@@ -41,9 +39,3 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
             (b for b in (await self.middleware.call('device.get_disks')).values() if b[mapping[tp]] == value), None
         )
         return disk['name'] if disk else None
-
-    async def sync_all(self, job):
-        raise NotImplementedError()
-
-    async def sync(self, name):
-        raise NotImplementedError()

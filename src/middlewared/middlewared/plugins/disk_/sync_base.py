@@ -1,27 +1,16 @@
 import re
 
 from middlewared.schema import accepts, Str
-from middlewared.service import job, private, ServicePartBase, ServiceChangeMixin
+from middlewared.service import private, ServicePartBase
 
-RE_DISKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_SMART_SERIAL_NUMBER = re.compile(r'Serial Number:\s+(?P<serial>.+)', re.I)
 RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 
 class DiskSyncBase(ServicePartBase):
 
-    DISK_EXPIRECACHE_DAYS = 7
-    RE_DISK_NAME = RE_DISKNAME
     RE_SERIAL_NUMBER = RE_SMART_SERIAL_NUMBER
     RE_IDENTIFIER = RE_IDENTIFIER
-
-    @private
-    @accepts()
-    @job(lock='disk.sync_all')
-    async def sync_all(self, job):
-        """
-        Synchronize all disks with the cache in database.
-        """
 
     @private
     @accepts(Str('name'))
