@@ -24,14 +24,29 @@ class DeviceService(Service, DeviceInfoBase):
                 'fwheads': None,
                 'fwsectors': None,
                 'rotationrate': None,
-                'ident': None,
+                'ident': '',
                 'lunid': None,
                 'descr': None,
-                'subsystem': None,
-                'number': None,
+                'subsystem': '',
+                'number': 1,  # Database defaults
+                'model': None,
+                'type': 'UNKNOWN',
             }
             if g.provider.config:
                 disk.update(g.provider.config)
+                if disk['rotationrate'] is not None:
+                    disk['rotationrate'] = int(disk['rotationrate']) if disk['rotationrate'].isdigit() else None
+                if disk['descr'] is not None and not disk['descr']:
+                    disk['descr'] = None
+                disk['model'] = disk['descr']
+
+                if disk['rotationrate'] is not None:
+                    if disk['rotationrate'] == 0:
+                        disk['rotationrate'] = None
+                        disk['type'] = 'SSD'
+                    else:
+                        disk['type'] = 'HDD'
+
             if not disk['ident']:
                 output = await self.middleware.call('disk.smartctl', g.name, ['-i'], {'cache': False, 'silent': True})
                 if output:
@@ -39,10 +54,17 @@ class DeviceService(Service, DeviceInfoBase):
                     if search:
                         disk['ident'] = search.group('serial')
 
+            if not disk['ident']:
+                disk['ident'] = ''
+
             reg = self.RE_DISK_NAME.search(g.name)
             if reg:
                 disk['subsystem'] = reg.group(1)
                 disk['number'] = int(reg.group(2))
+
+            # We still keep ident/mediasize to not break previous api users
+            disk['serial'] = disk['ident']
+            disk['size'] = disk['mediasize']
 
             disks[g.name] = disk
         return disks

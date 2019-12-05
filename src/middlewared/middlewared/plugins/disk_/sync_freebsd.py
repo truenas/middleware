@@ -7,7 +7,7 @@ from xml.etree import ElementTree
 
 from middlewared.service import Service
 
-from .sync_base import DiskSyncBase, DiskSyncMixin
+from .sync_base import DiskSyncBase
 
 
 RAWTYPE = {
@@ -16,7 +16,7 @@ RAWTYPE = {
 }
 
 
-class DiskService(Service, DiskSyncBase, DiskSyncMixin):
+class DiskService(Service, DiskSyncBase):
 
     async def __disk_data(self, disk, name):
         g = geom.geom_by_name('DISK', name)
@@ -44,51 +44,6 @@ class DiskService(Service, DiskSyncBase, DiskSyncMixin):
             disk['disk_subsystem'] = reg.group(1)
             disk['disk_number'] = int(reg.group(2))
         return g
-
-    async def sync(self, name):
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.licensed') and
-            await self.middleware.call('failover.status') == 'BACKUP'
-        ):
-            return
-
-        # Do not sync geom classes like multipath/hast/etc
-        if name.find('/') != -1:
-            return
-
-        disks = list((await self.middleware.call('device.get_info', 'DISK')).keys())
-
-        # Abort if the disk is not recognized as an available disk
-        if name not in disks:
-            return
-        ident = await self.middleware.call('disk.device_to_identifier', name)
-        qs = await self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', ident)],
-                                        {'order_by': ['disk_expiretime']})
-        if ident and qs:
-            disk = qs[0]
-            new = False
-        else:
-            new = True
-            qs = await self.middleware.call('datastore.query', 'storage.disk', [('disk_name', '=', name)])
-            for i in qs:
-                i['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
-                await self.middleware.call('datastore.update', 'storage.disk', i['disk_identifier'], i)
-            disk = {'disk_identifier': ident}
-        disk.update({'disk_name': name, 'disk_expiretime': None})
-
-        await self.middleware.run_in_thread(geom.scan)
-        await self.__disk_data(disk, name)
-
-        if not new:
-            await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
-        else:
-            disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
-
-        await self.restart_services_after_sync()
-
-        if not await self.middleware.call('system.is_freenas'):
-            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
     async def sync_all(self, job):
         # Skip sync disks on standby node
@@ -205,7 +160,7 @@ class DiskService(Service, DiskSyncBase, DiskSyncMixin):
                     await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
         if changed:
-            await self.restart_services_after_sync()
+            await self.middleware.call('disk.restart_services_after_sync')
         return 'OK'
 
     async def device_to_identifier(self, name):

@@ -25,13 +25,6 @@ class DiskSyncBase(ServicePartBase):
 
     @private
     @accepts(Str('name'))
-    async def sync(self, name):
-        """
-        Syncs a disk `name` with the database cache.
-        """
-
-    @private
-    @accepts(Str('name'))
     async def device_to_identifier(self, name):
         """
         Given a device `name` (e.g. da0) returns an unique identifier string
@@ -52,15 +45,3 @@ class DiskSyncBase(ServicePartBase):
     @accepts(Str('identifier'))
     def identifier_to_device(self, ident):
         raise NotImplementedError()
-
-
-class DiskSyncMixin(ServiceChangeMixin):
-
-    @private
-    async def restart_services_after_sync(self):
-        await self.middleware.call('disk.update_hddstandby_force')
-        await self.middleware.call('disk.update_smartctl_args_for_disks')
-        if await self.middleware.call('service.started', 'collectd'):
-            await self.middleware.call('service.restart', 'collectd')
-        await self._service_change('smartd', 'restart')
-        await self._service_change('snmp', 'restart')
