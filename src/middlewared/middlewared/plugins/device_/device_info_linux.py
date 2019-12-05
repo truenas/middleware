@@ -26,5 +26,5 @@ class DeviceService(Service, DeviceInfoBase):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
             stdout, stderr = cp.communicate()
-            disks[block_device.name]['ident'] = stdout.strip() if stdout else None
+            disks[block_device.name]['ident'] = stdout.strip().decode() if stdout else None
         return disks

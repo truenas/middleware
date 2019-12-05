@@ -1,5 +1,4 @@
 import os
-import re
 
 from bsd import geom
 from datetime import datetime, timedelta
@@ -10,7 +9,6 @@ from middlewared.service import private, Service, ServiceChangeMixin
 
 from .sync_base import DiskSyncBase
 
-RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 RAWTYPE = {
     'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
@@ -257,7 +255,7 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
         if not ident:
             return None
 
-        search = RE_IDENTIFIER.search(ident)
+        search = self.RE_IDENTIFIER.search(ident)
         if not search:
             return None
 
