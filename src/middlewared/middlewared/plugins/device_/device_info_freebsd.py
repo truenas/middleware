@@ -24,6 +24,13 @@ class DeviceService(Service, DeviceInfoBase):
             }
             if g.provider.config:
                 disk.update(g.provider.config)
+            if not disk['ident']:
+                output = await self.middleware.call('disk.smartctl', g.name, ['-i'], {'cache': False, 'silent': True})
+                if output:
+                    search = self.RE_SERIAL_NUMBER.search(output)
+                    if search:
+                        disk['ident'] = search.group('serial')
+
             disks[g.name] = disk
         return disks
 
