@@ -52,14 +52,17 @@ class ReplicationService(CRUDService):
         progressfile = f'/tmp/.repl_progress_{data["id"]}'
         if os.path.exists(progressfile):
             with open(progressfile, 'r') as f:
-                pid = int(f.read())
-            title = await self.middleware.call('notifier.get_proc_title', pid)
-            if title:
-                reg = re.search(r'sending (\S+) \((\d+)%', title)
-                if reg:
-                    data['status'] = f'Sending {reg.groups()[0]}s {reg.groups()[1]}s'
-                else:
-                    data['status'] = 'Sending'
+                pid = f.read().strip()
+
+            if len(pid) > 0:
+                pid = int(pid)
+                title = await self.middleware.call('notifier.get_proc_title', pid)
+                if title:
+                    reg = re.search(r'sending (\S+) \((\d+)%', title)
+                    if reg:
+                        data['status'] = f'Sending {reg.groups()[0]}s {reg.groups()[1]}s'
+                    else:
+                        data['status'] = 'Sending'
 
         if 'status' not in data:
             data['status'] = data['lastresult'].get('msg')
