@@ -2,6 +2,9 @@ from collections import defaultdict
 from datetime import datetime
 import os
 import pickle
+import re
+
+import psutil
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
@@ -11,6 +14,8 @@ from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema,
 
 
 class ReplicationService(CRUDService):
+
+    ZFS_SEND_REGEX = re.compile(r"zfs: sending (?P<snapshot>.+) \([0-9]+%: (?P<current>[0-9]+)/(?P<total>[0-9]+)\)")
 
     class Config:
         datastore = "storage.replication"
@@ -83,6 +88,33 @@ class ReplicationService(CRUDService):
                 data["state"] = {
                     "state": "PENDING",
                 }
+
+            progressfile = f"/tmp/.repl_progress_{data['id']}"
+            if os.path.exists(progressfile):
+                with open(progressfile, "r") as f:
+                    pid = f.read().strip()
+
+                try:
+                    pid = int(pid)
+                except ValueError:
+                    pass
+                else:
+                    try:
+                        title = " ".join(await self.middleware.run_in_thread(
+                            lambda: psutil.Process(pid).cmdline()
+                        ))
+                    except psutil.NoSuchProcess:
+                        pass
+                    else:
+                        m = self.ZFS_SEND_REGEX.match(title)
+                        if m:
+                            dataset, snapshot = m.group("snapshot").split("@")
+                            data["state"]["progress"] = {
+                                "dataset": dataset,
+                                "snapshot": snapshot,
+                                "current": int(m.group("current")),
+                                "total": int(m.group("total")),
+                            }
         else:
             data["state"] = context["state"].get(f"replication_task_{data['id']}", {
                 "state": "PENDING",
