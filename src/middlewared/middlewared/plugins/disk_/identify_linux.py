@@ -41,11 +41,19 @@ class DiskService(Service, DiskIdentifyBase):
 
         tp = search.group('type')
         value = search.group('value')
-        mapping = {'uuid': 'uuid', 'label': 'label', 'devicename': 'name', 'serial_lunid': 'ident', 'serial': 'ident'}
+        mapping = {'uuid': 'uuid', 'devicename': 'name', 'serial_lunid': 'serial', 'serial': 'serial'}
         if tp not in mapping:
             raise NotImplementedError(f'Unknown type {tp!r}')
-
-        disk = next(
-            (b for b in (await self.middleware.call('device.get_disks')).values() if b[mapping[tp]] == value), None
-        )
-        return disk['name'] if disk else None
+        elif tp == 'uuid':
+            for block_device in filter(
+                lambda b: b.name not in ('sr0',) and b.partitions_exist,
+                blkid.list_block_devices()
+            ):
+                for partition in block_device.partition_data()['partitions']:
+                    if partition['part_uuid'] == value:
+                        return block_device.name
+        else:
+            disk = next(
+                (b for b in (await self.middleware.call('device.get_disks')).values() if b[mapping[tp]] == value), None
+            )
+            return disk['name'] if disk else None
