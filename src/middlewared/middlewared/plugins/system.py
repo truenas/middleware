@@ -507,13 +507,6 @@ class SystemService(Service):
             'ecc_memory': all(dimm_module.strip() == '72' for dimm_module in (ecc_results or ['']))
         }
 
-    @accepts()
-    async def platform_is_linux(self):
-        """
-        Returns true if platform is linux based, false otherwise
-        """
-        return osc.platform_name == 'LINUX'
-
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
     async def feature_enabled(self, name):
         """

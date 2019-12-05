@@ -4,6 +4,7 @@ import dateutil.tz
 import glob
 import io
 import os
+import platform
 import re
 import syslog
 
@@ -81,7 +82,7 @@ class UPSService(SystemServiceService):
         Returns choices of UPS drivers supported by the system.
         """
         ups_choices = {}
-        if self.middleware.call_sync('system.platform_is_linux'):
+        if platform.system().lower() == 'linux':
             driver_list = '/usr/share/nut/driver.list'
         else:
             driver_list = '/conf/base/etc/local/nut/driver.list'
