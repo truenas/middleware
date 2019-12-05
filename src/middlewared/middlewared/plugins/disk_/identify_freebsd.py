@@ -6,7 +6,7 @@ from xml.etree import ElementTree
 
 from middlewared.service import Service
 
-from .sync_base import DiskSyncBase
+from .identify_base import DiskIdentifyBase
 
 
 RAWTYPE = {
@@ -15,7 +15,7 @@ RAWTYPE = {
 }
 
 
-class DiskService(Service, DiskSyncBase):
+class DiskService(Service, DiskIdentifyBase):
 
     async def device_to_identifier(self, name):
         await self.middleware.run_in_thread(geom.scan)

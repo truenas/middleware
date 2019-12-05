@@ -7,7 +7,7 @@ RE_SMART_SERIAL_NUMBER = re.compile(r'Serial Number:\s+(?P<serial>.+)', re.I)
 RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 
-class DiskSyncBase(ServicePartBase):
+class DiskIdentifyBase(ServicePartBase):
 
     RE_SERIAL_NUMBER = RE_SMART_SERIAL_NUMBER
     RE_IDENTIFIER = RE_IDENTIFIER

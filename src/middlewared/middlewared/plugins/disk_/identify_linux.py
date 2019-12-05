@@ -1,9 +1,9 @@
 from middlewared.service import Service, ServiceChangeMixin
 
-from .sync_base import DiskSyncBase
+from .identify_base import DiskIdentifyBase
 
 
-class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
+class DiskService(Service, DiskIdentifyBase, ServiceChangeMixin):
 
     async def device_to_identifier(self, name):
         disks = await self.middleware.call('device.get_disks')

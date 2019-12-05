@@ -1,7 +1,12 @@
+import re
+
 from bsd import geom, devinfo
 
 from .device_info_base import DeviceInfoBase
 from middlewared.service import Service
+
+
+RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
 
 
 class DeviceService(Service, DeviceInfoBase):
@@ -57,7 +62,7 @@ class DeviceService(Service, DeviceInfoBase):
             if not disk['ident']:
                 disk['ident'] = ''
 
-            reg = self.RE_DISK_NAME.search(g.name)
+            reg = RE_DISK_NAME.search(g.name)
             if reg:
                 disk['subsystem'] = reg.group(1)
                 disk['number'] = int(reg.group(2))
