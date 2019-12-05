@@ -28,7 +28,7 @@ class DiskService(Service, DiskIdentifyBase):
                 return f'{{serial_lunid}}{serial}_{lunid}'
             return f'{{serial}}{serial}'
 
-        serial = await self.serial_from_device(name)
+        serial = (await self.middleware.call('device.get_disks')).get(name, {}).get('serial')
         if serial:
             return f'{{serial}}{serial}'
 
@@ -112,17 +112,3 @@ class DiskService(Service, DiskIdentifyBase):
                 return value
         else:
             raise NotImplementedError(f'Unknown type {tp!r}')
-
-    async def serial_from_device(self, name):
-        output = await self.middleware.call('disk.smartctl', name, ['-i'], {'cache': False, 'silent': True})
-        if output:
-            search = self.RE_SERIAL_NUMBER.search(output)
-            if search:
-                return search.group('serial')
-
-        await self.middleware.run_in_thread(geom.scan)
-        g = geom.geom_by_name('DISK', name)
-        if g and g.provider.config.get('ident'):
-            return g.provider.config['ident']
-
-        return None

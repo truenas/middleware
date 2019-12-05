@@ -3,13 +3,11 @@ import re
 from middlewared.schema import accepts, Str
 from middlewared.service import private, ServicePartBase
 
-RE_SMART_SERIAL_NUMBER = re.compile(r'Serial Number:\s+(?P<serial>.+)', re.I)
 RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 
 class DiskIdentifyBase(ServicePartBase):
 
-    RE_SERIAL_NUMBER = RE_SMART_SERIAL_NUMBER
     RE_IDENTIFIER = RE_IDENTIFIER
 
     @private
