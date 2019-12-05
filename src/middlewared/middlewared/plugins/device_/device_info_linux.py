@@ -1,5 +1,8 @@
 import blkid
+import os
 import subprocess
+
+from lxml import etree
 
 from .device_info_base import DeviceInfoBase
 from middlewared.service import Service
@@ -12,19 +15,48 @@ class DeviceService(Service, DeviceInfoBase):
 
     def get_disks(self):
         disks = {}
+        disks_cp = subprocess.Popen(
+            ['lshw', '-xml', '-class', 'disk'], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        output, error = disks_cp.communicate()
+        lshw_disks = {}
+        if output:
+            xml = etree.fromstring(output.decode())
+            for child in filter(lambda c: c.get('class') == 'disk', xml.getchildren()):
+                data = {'rotationrate': None}
+                for c in child.getchildren():
+                    if not len(c.getchildren()):
+                        data[c.tag] = c.text
+                    elif c.tag == 'capabilities':
+                        for capability in filter(lambda d: d.text.endswith('rotations per minute'), c.getchildren()):
+                            data['rotationrate'] = capability.get('id')[:-3]
+                lshw_disks[data['logicalname']] = data
+
         for block_device in filter(
             lambda b: b.name not in ('sr0',),
             blkid.list_block_devices()
         ):
-            disks[block_device.name] = {
-                k: v for k, v in block_device.__getstate__().items()
-                if k not in ('partitions_data', 'io_limits')
-            }
+            dev_data = block_device.__getstate__()
+            disk = self.disk_default.copy()
+            disk.update({
+                'name': dev_data['name'],
+                'sectorsize': dev_data['io_limits']['logical_sector_size'],
+                'number': ord(dev_data['name'][-1]) - 26,
+                'subsystem': dev_data['name'][:-1],
+            })
+            type_path = os.path.join('/sys/block/', block_device.name, 'queue/rotational')
+            if os.path.exists(type_path):
+                with open(type_path, 'r') as f:
+                    disk['type'] = 'SSD' if f.read().strip() == '0' else 'HDD'
 
-            cp = subprocess.Popen(
-                ['lsblk', '--nodeps', '-no', 'serial', block_device.path],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            stdout, stderr = cp.communicate()
-            disks[block_device.name]['ident'] = stdout.strip().decode() if stdout else None
+            if block_device.path in lshw_disks:
+                disk_data = lshw_disks[block_device.path]
+                if disk['type'] == 'HDD':
+                    disk['rotationrate'] = disk_data['rotationrate']
+
+                disk['ident'] = disk['serial'] = disk_data.get('serial', '')
+                disk['size'] = disk['mediasize'] = int(disk_data['size']) if 'size' in disk_data else None
+                disk['descr'] = disk['model'] = disk_data.get('product')
+
+            disks[block_device.name] = disk
         return disks
