@@ -29,7 +29,7 @@ class DeviceService(Service, DeviceInfoBase):
                 'stripesize': g.provider.stripesize,
             })
             if g.provider.config:
-                disk.update(g.provider.config)
+                disk.update({k: v for k, v in g.provider.config.items() if k not in ('fwheads', 'fwsectors')})
                 if disk['rotationrate'] is not None:
                     disk['rotationrate'] = int(disk['rotationrate']) if disk['rotationrate'].isdigit() else None
                 if disk['descr'] is not None and not disk['descr']:

@@ -13,8 +13,6 @@ class DeviceInfoBase(ServicePartBase):
         'mediasize': None,
         'sectorsize': None,
         'stripesize': None,
-        'fwheads': None,
-        'fwsectors': None,
         'rotationrate': None,
         'ident': '',
         'lunid': None,
