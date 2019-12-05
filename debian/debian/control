@@ -8,7 +8,12 @@ Homepage: http://www.truenas.com
 
 Package: truenas
 Architecture: all
-Depends: middlewared, net-tools, tmux, truenas-webui, ${misc:Depends}
+Depends: middlewared,
+         net-tools,
+         openssh-server,
+         tmux,
+         truenas-webui,
+         ${misc:Depends}
 Description: Main package for TrueNAS
  This package is supposed to hold all the dependencies required
  to build TrueNAS as well as set the correction version so other
