@@ -1,7 +1,7 @@
 import re
 
 from middlewared.schema import accepts, Str
-from middlewared.service import job, private, ServicePartBase
+from middlewared.service import job, private, ServicePartBase, ServiceChangeMixin
 
 RE_DISKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_SMART_SERIAL_NUMBER = re.compile(r'Serial Number:\s+(?P<serial>.+)', re.I)
@@ -52,3 +52,15 @@ class DiskSyncBase(ServicePartBase):
     @accepts(Str('identifier'))
     def identifier_to_device(self, ident):
         raise NotImplementedError()
+
+
+class DiskSyncMixin(ServiceChangeMixin):
+
+    @private
+    async def restart_services_after_sync(self):
+        await self.middleware.call('disk.update_hddstandby_force')
+        await self.middleware.call('disk.update_smartctl_args_for_disks')
+        if await self.middleware.call('service.started', 'collectd'):
+            await self.middleware.call('service.restart', 'collectd')
+        await self._service_change('smartd', 'restart')
+        await self._service_change('snmp', 'restart')

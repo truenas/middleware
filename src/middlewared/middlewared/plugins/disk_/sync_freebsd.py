@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from lxml import etree
 from xml.etree import ElementTree
 
-from middlewared.service import private, Service, ServiceChangeMixin
+from middlewared.service import Service
 
-from .sync_base import DiskSyncBase
+from .sync_base import DiskSyncBase, DiskSyncMixin
 
 
 RAWTYPE = {
@@ -16,7 +16,7 @@ RAWTYPE = {
 }
 
 
-class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
+class DiskService(Service, DiskSyncBase, DiskSyncMixin):
 
     async def __disk_data(self, disk, name):
         g = geom.geom_by_name('DISK', name)
@@ -207,15 +207,6 @@ class DiskService(Service, DiskSyncBase, ServiceChangeMixin):
         if changed:
             await self.restart_services_after_sync()
         return 'OK'
-
-    @private
-    async def restart_services_after_sync(self):
-        await self.middleware.call('disk.update_hddstandby_force')
-        await self.middleware.call('disk.update_smartctl_args_for_disks')
-        if await self.middleware.call('service.started', 'collectd'):
-            await self.middleware.call('service.restart', 'collectd')
-        await self._service_change('smartd', 'restart')
-        await self._service_change('snmp', 'restart')
 
     async def device_to_identifier(self, name):
         await self.middleware.run_in_thread(geom.scan)
