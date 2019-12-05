@@ -52,7 +52,6 @@ class ReplicationService(CRUDService):
         progressfile = f'/tmp/.repl_progress_{data["id"]}'
         if os.path.exists(progressfile):
             with open(progressfile, 'r') as f:
-                f.seek(0)
                 pid = f.read().strip()
 
             if len(pid) > 0:
