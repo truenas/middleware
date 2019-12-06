@@ -60,3 +60,9 @@ class DeviceService(Service, DeviceInfoBase):
 
             disks[block_device.name] = disk
         return disks
+
+    async def get_valid_zfs_partition_type_uuids(self):
+        raise NotImplementedError()
+
+    async def get_valid_swap_partition_type_uuids(self):
+        raise NotImplementedError()

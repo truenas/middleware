@@ -32,3 +32,11 @@ class DeviceInfoBase(ServicePartBase):
     @private
     async def get_disks(self):
         raise NotImplementedError()
+
+    @private
+    async def get_valid_zfs_partition_type_uuids(self):
+        raise NotImplementedError()
+
+    @private
+    async def get_valid_swap_partition_type_uuids(self):
+        raise NotImplementedError()
