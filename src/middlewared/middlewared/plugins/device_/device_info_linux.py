@@ -41,7 +41,7 @@ class DeviceService(Service, DeviceInfoBase):
             disk.update({
                 'name': dev_data['name'],
                 'sectorsize': dev_data['io_limits']['logical_sector_size'],
-                'number': ord(dev_data['name'][-1]) - 26,
+                'number': ord(dev_data['name'][-1].lower()) - 96,
                 'subsystem': dev_data['name'][:-1],
             })
             type_path = os.path.join('/sys/block/', block_device.name, 'queue/rotational')
