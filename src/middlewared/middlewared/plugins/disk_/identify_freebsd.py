@@ -9,12 +9,6 @@ from middlewared.service import Service
 from .identify_base import DiskIdentifyBase
 
 
-RAWTYPE = {
-    'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
-    'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
-}
-
-
 class DiskService(Service, DiskIdentifyBase):
 
     async def device_to_identifier(self, name):
@@ -36,7 +30,7 @@ class DiskService(Service, DiskIdentifyBase):
         if klass:
             for g in filter(lambda v: v.name == name, klass.geoms):
                 for p in g.providers:
-                    if p.config['rawtype'] == RAWTYPE['freebsd-zfs']:
+                    if p.config['rawtype'] in await self.middleware.call('device.get_valid_zfs_partition_type_uuids'):
                         return f'{{uuid}}{p.config["rawuuid"]}'
 
         g = geom.geom_by_name('LABEL', name)

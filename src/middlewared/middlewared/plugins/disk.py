@@ -40,10 +40,6 @@ RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
-RAWTYPE = {
-    'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
-    'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
-}
 
 
 class DiskModel(sa.Model):
@@ -1015,7 +1011,7 @@ class DiskService(CRUDService):
         for g in klass.geoms:
             for p in g.providers:
                 # if swap partition
-                if p.config['rawtype'] == RAWTYPE['freebsd-swap']:
+                if p.config['rawtype'] in await self.middleware.call('device.get_valid_swap_partition_type_uuids'):
                     if p.name not in used_partitions:
                         # Try to save a core dump from that.
                         # Only try savecore if the partition is not already in use
@@ -1104,7 +1100,7 @@ class DiskService(CRUDService):
             if not partgeom:
                 continue
             for p in partgeom.providers:
-                if p.config['rawtype'] == RAWTYPE['freebsd-swap']:
+                if p.config['rawtype'] in await self.middleware.call('device.get_valid_swap_partition_type_uuids'):
                     providers[p.id] = p
                     break
 
