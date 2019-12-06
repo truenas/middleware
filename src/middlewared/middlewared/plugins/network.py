@@ -1417,7 +1417,7 @@ class InterfaceService(CRUDService):
             )
 
         # Let's finally delete the interface
-        netif.destroy_interface(iface['name'])
+        await self.middleware.run_in_thread(netif.destroy_interface, iface['name'])
 
         return oid
 
