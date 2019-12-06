@@ -20,12 +20,9 @@ class DiskService(Service, DiskIdentifyBase):
         dev = blkid.BlockDevice(f'/dev/{name}')
         if dev.partitions_exist:
             for partition in dev.partition_data()['partitions']:
-                if partition['partition_type'] not in [
-                    '6a898cc3-1dd2-11b2-99a6-080020736631',
-                    '516e7cba-6ecf-11d6-8ff8-00022d09712b',
-                ]:
-                    # ^^^ https://salsa.debian.org/debian/gdisk/blob/master/parttypes.cc for valid zfs types
-                    # TODO: Let's please have a central location for all of these
+                if partition['partition_type'] not in await self.middleware.call(
+                    'device.get_valid_zfs_partition_type_uuids'
+                ):
                     continue
                 return f'{{uuid}}{partition["part_uuid"]}'
 
