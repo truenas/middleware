@@ -12,20 +12,15 @@ from .identify_base import DiskIdentifyBase
 class DiskService(Service, DiskIdentifyBase):
 
     async def device_to_identifier(self, name):
-        await self.middleware.run_in_thread(geom.scan)
-
-        g = geom.geom_by_name('DISK', name)
-        if g and g.provider.config.get('ident'):
-            serial = g.provider.config['ident']
-            lunid = g.provider.config.get('lunid')
-            if lunid:
-                return f'{{serial_lunid}}{serial}_{lunid}'
-            return f'{{serial}}{serial}'
-
-        serial = (await self.middleware.call('device.get_disks')).get(name, {}).get('serial')
+        disk_data = await self.middleware.call('device.get_disk', name)
+        serial = disk_data['serial']
         if serial:
-            return f'{{serial}}{serial}'
+            if disk_data['lunid']:
+                return f'{{serial_lunid}}{serial}_{disk_data["lunid"]}'
+            else:
+                return f'{{serial}}{serial}'
 
+        await self.middleware.run_in_thread(geom.scan)
         klass = geom.class_by_name('PART')
         if klass:
             for g in filter(lambda v: v.name == name, klass.geoms):

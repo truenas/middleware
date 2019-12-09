@@ -83,8 +83,8 @@ class DeviceService(Service, DeviceInfoBase):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             )
             cp_stdout, cp_stderr = lun_id_cp.communicate()
-            if not lun_id_cp.returncode:
-                disk['lunid'] = cp_stdout.strip().decode()
+            if not lun_id_cp.returncode and lun_id_cp.stdout:
+                disk['lunid'] = cp_stdout.strip().split()[0].decode()
                 if disk['lunid'].startswith('0x'):
                     disk['lunid'] = disk['lunid'][2:]
 
