@@ -52,6 +52,7 @@ class DiskService(Service):
         # from the wrong disk.
         if not IS_LINUX:
             commands.append(('gpart', 'bootcode', '-b', '/boot/pmbr-datadisk', f'/dev/{disk}'))
+        # TODO: Let's do the same for linux please ^^^
 
         for command in commands:
             cp = subprocess.run(
