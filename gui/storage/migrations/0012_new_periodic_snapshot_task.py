@@ -18,7 +18,7 @@ def dataset_normpath(apps, schema_editor):
 def set_naming_schema(apps, schema_editor):
     Task = apps.get_model('storage', 'Task')
     for task in Task.objects.all():
-        task.task_naming_schema = f"auto-%Y%m%d.%H%M%S-{task.task_ret_count}{task.task_ret_unit[0]}"
+        task.task_naming_schema = f"auto-%Y%m%d.%H%M-{task.task_ret_count}{task.task_ret_unit[0]}"
         task.save()
 
 
