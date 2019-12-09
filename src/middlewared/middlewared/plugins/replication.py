@@ -540,6 +540,12 @@ class ReplicationService(CRUDService):
             if len(data["source_datasets"]) != 1:
                 verrors.add("source_datasets", "You can only have one source dataset for legacy replication")
 
+            if os.path.basename(data["target_dataset"]) != os.path.basename(data["source_datasets"][0]):
+                verrors.add(
+                    "target_dataset",
+                    "Target dataset basename should be same as source dataset basename for Legacy transport",
+                )
+
             if data["retention_policy"] not in ["SOURCE", "NONE"]:
                 verrors.add("retention_policy", "Only \"source\" and \"none\" retention policies are supported by "
                                                 "legacy replication")

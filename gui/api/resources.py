@@ -1671,7 +1671,7 @@ class LegacyReplicationResourceMixin(object):
             "repl_remote_port": task["ssh_credentials"]["attributes"]["port"],
             "repl_status": "Succeeded" if task["state"]["state"] == "FINISHED" else task["state"]["state"],
             "repl_userepl": bundle.data["repl_recursive"],
-            "repl_zfs": bundle.data["repl_target_dataset"],
+            "repl_zfs": os.path.dirname(bundle.data["repl_target_dataset"]),
         }
 
         return bundle
