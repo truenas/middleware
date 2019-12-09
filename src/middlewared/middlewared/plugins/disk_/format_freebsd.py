@@ -1,7 +1,5 @@
 import subprocess
 
-from bsd import geom
-
 from middlewared.service import CallError, Service
 
 from .format_base import FormatDiskBase
@@ -10,15 +8,13 @@ from .format_base import FormatDiskBase
 class DiskService(Service, FormatDiskBase):
 
     def format(self, disk, swapgb, sync=True):
-        geom.scan()
-        g = geom.geom_by_name('DISK', disk)
-        if g and g.provider.mediasize:
-            size = g.provider.mediasize
+        size = self.middleware.call_sync('device.get_dev_size', disk)
+        if not size:
+            self.logger.error(f'Unable to determine size of {disk}')
+        else:
             # The GPT header takes about 34KB + alignment, round it to 100
             if size - 100 <= swapgb * 1024 * 1024:
                 raise CallError(f'Your disk size must be higher than {swapgb}GB')
-        else:
-            self.logger.error(f'Unable to determine size of {disk}')
 
         job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)
         job.wait_sync()
