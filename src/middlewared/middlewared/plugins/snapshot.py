@@ -332,7 +332,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         return False
 
     def _legacy_naming_schema(self, data):
-        return f'auto-%Y%m%d.%H%M%S-{data["lifetime_value"]}{data["lifetime_unit"].lower()[0]}'
+        return f'auto-%Y%m%d.%H%M-{data["lifetime_value"]}{data["lifetime_unit"].lower()[0]}'
 
     async def _legacy_replication_tasks(self):
         return await self.middleware.call('replication.query', [['transport', '=', 'LEGACY']])
