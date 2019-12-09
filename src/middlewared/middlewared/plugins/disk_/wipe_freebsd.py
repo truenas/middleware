@@ -22,10 +22,8 @@ class DiskService(Service, WipeDiskBase):
         if size and size < 33554432:
             return
         await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', 'count=32')
-        try:
-            cp = await run('diskinfo', dev)
-            size = int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]) / 1024)
-        except subprocess.CalledProcessError:
+        size = await self.middleware.call('device.get_dev_size', dev)
+        if not size:
             self.logger.error(f'Unable to determine size of {dev}')
         else:
             # This will fail when EOL is reached
@@ -74,8 +72,7 @@ class DiskService(Service, WipeDiskBase):
         if mode == 'QUICK':
             await self.middleware.call('disk.wipe_quick', dev)
         else:
-            cp = await run('diskinfo', dev)
-            size = int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2])
+            size = await self.middleware.call('device.get_dev_size', dev) or 1
 
             proc = await Popen([
                 'dd',
