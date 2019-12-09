@@ -51,13 +51,13 @@ class DiskService(Service):
 
         # First do a quick wipe of every partition to clean things like zfs labels
         if mode == 'QUICK':
-            for part in await self.middleware.call('device.list_partitions'):
+            for part in await self.middleware.call('device.list_partitions', dev):
                 await self.wipe_quick(part['name'], part['size'])
 
         await self.middleware.call('disk.destroy_partitions', dev)
 
         if mode == 'QUICK':
-            await self.middleware.call('disk.wipe_quick', dev)
+            await self.wipe_quick(dev)
         else:
             size = await self.middleware.call('device.get_dev_size', dev) or 1
 

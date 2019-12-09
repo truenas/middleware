@@ -109,7 +109,7 @@ class DeviceService(Service, DeviceInfoBase):
             return int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]) / 1024)
 
     def list_partitions(self, disk):
-        await self.middleware.run_in_thread(geom.scan)
+        geom.scan()
         klass = geom.class_by_name('PART')
         parts = []
         for g in klass.xml.findall(f'./geom[name=\'{disk}\']'):
@@ -121,6 +121,6 @@ class DeviceService(Service, DeviceInfoBase):
                     except ValueError:
                         size = None
                 name = p.find('./name')
-                parts.append({'name': name, 'size': size})
+                parts.append({'name': name.text, 'size': size})
 
         return parts

@@ -4,7 +4,7 @@ from middlewared.service import private, Service
 from middlewared.utils import run
 
 
-class RemoveDiskService(Service):
+class DiskService(Service):
 
     @private
     async def remove_disk_from_graid(self, dev):

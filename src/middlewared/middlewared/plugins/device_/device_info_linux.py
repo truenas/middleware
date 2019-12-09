@@ -99,7 +99,7 @@ class DeviceService(Service, DeviceInfoBase):
 
     async def get_dev_size(self, dev):
         try:
-            return blkid.BlockDevice(dev).size
+            return blkid.BlockDevice(os.path.join('/dev', dev)).size
         except blkid.BlkidException:
             return None
 
