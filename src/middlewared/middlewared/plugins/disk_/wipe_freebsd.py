@@ -5,8 +5,6 @@ import re
 import signal
 import subprocess
 
-from bsd import geom
-
 from middlewared.service import Service
 from middlewared.utils import Popen, run
 
@@ -39,18 +37,8 @@ class DiskService(Service, WipeDiskBase):
 
         # First do a quick wipe of every partition to clean things like zfs labels
         if mode == 'QUICK':
-            await self.middleware.run_in_thread(geom.scan)
-            klass = geom.class_by_name('PART')
-            for g in klass.xml.findall(f'./geom[name=\'{dev}\']'):
-                for p in g.findall('./provider'):
-                    size = p.find('./mediasize')
-                    if size is not None:
-                        try:
-                            size = int(size.text)
-                        except ValueError:
-                            size = None
-                    name = p.find('./name')
-                    await self.middleware.call('disk.wipe_quick', name.text, size)
+            for part in await self.middleware.call('device.list_partitions'):
+                await self.wipe_quick(part['name'], part['size'])
 
         await run('gpart', 'destroy', '-F', f'/dev/{dev}', check=False)
 
