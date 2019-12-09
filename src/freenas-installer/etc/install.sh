@@ -286,7 +286,7 @@ EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
     dialog --clear --title "$AVATAR_PROJECT ${_type}" --yesno "${_msg}" 13 74
-    [ $? -eq 0 ] || exit 1
+    [ $? -eq 0 ] || abort
 }
 
 ask_upgrade()
@@ -773,6 +773,30 @@ create_be()
   return 0
 }
 
+cleanup()
+{
+    zpool export -f ${BOOT_POOL}
+    zpool export -f ${NEW_BOOT_POOL}
+}
+
+abort()
+{
+    set +e +x
+    trap - EXIT
+    exit 1
+}
+
+fail()
+{
+    local _action=${1}
+    shift
+    local _disks=${@}
+
+    set +x
+    read -p "The ${AVATAR_PROJECT} ${_action} on ${_disks} has failed. Press enter to continue..." junk
+    abort
+}
+
 menu_install()
 {
     local _action
@@ -838,6 +862,9 @@ menu_install()
 	INTERACTIVE=true
     fi
 
+    # Make sure we are working from a clean slate.
+    cleanup 2>&1 >/dev/null
+
     if ${INTERACTIVE}; then
 	pre_install_check || return 0
     fi
@@ -870,13 +897,13 @@ menu_install()
 	    if [ "${_items}" -eq 0 ]; then
 		# Inform the user
 		eval "dialog --title 'Choose destination media' --msgbox 'No drives available' 5 60" 2>${_tmpfile}
-		return 0
+		abort
 	    fi
 
 	    eval "dialog --title 'Choose destination media' \
 	      --checklist 'Select one or more drives where $AVATAR_PROJECT should be installed (use arrow keys to navigate to the drive(s) for installation; select a drive with the spacebar).' \
 	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
-	    [ $? -eq 0 ] || exit 1
+	    [ $? -eq 0 ] || abort
 	fi
     fi # ! do_sata_dom
 
@@ -887,12 +914,12 @@ menu_install()
 
     if [ -z "${_disks}" ]; then
 	${INTERACTIVE} && dialog --msgbox "You need to select at least one disk!" 6 74
-	exit 1
+	abort
     fi
 
     if disk_is_mounted ${_disks} ; then
         ${INTERACTIVE} && dialog --msgbox "The destination drive is already in use!" 6 74
-        exit 1
+        abort
     fi
 
     _action="installation"
@@ -926,7 +953,7 @@ menu_install()
 	    upgrade_style="new"
 	else
 	    echo "Unknown upgrade style" 1>&2
-	    exit 1
+	    abort
 	fi
 	# Ask if we want to do a format or inplace upgrade
         if ${INTERACTIVE}; then
@@ -977,11 +1004,7 @@ menu_install()
     fi
 
     # Start critical section.
-    if ${INTERACTIVE}; then
-	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_realdisks} has failed. Press enter to continue.. \" junk" EXIT
-    else
-	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_realdisks} has failed. Press enter to continue.. \" junk" EXIT
-    fi
+    trap "fail ${_action} ${_realdisks}" EXIT
     set -e
 
     if [ ${_do_upgrade} -eq 1 ]
@@ -1310,6 +1333,8 @@ main()
             4) menu_shutdown ;;
             5) menu_test ;;
         esac
+        # Unset cached setting
+        unset SWAP_IS_SAFE
     done
 }
 
