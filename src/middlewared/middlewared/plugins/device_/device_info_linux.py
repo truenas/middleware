@@ -88,6 +88,9 @@ class DeviceService(Service, DeviceInfoBase):
                 if disk['lunid'].startswith('0x'):
                     disk['lunid'] = disk['lunid'][2:]
 
+        if disk['serial'] and disk['lunid']:
+            disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
+
         return disk
 
     async def get_valid_zfs_partition_type_uuids(self):

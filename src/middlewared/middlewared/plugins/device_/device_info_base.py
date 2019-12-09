@@ -23,6 +23,7 @@ class DeviceInfoBase(ServicePartBase):
         'type': 'UNKNOWN',
         'serial': '',
         'size': None,
+        'serial_lunid': None,
     }
 
     @private

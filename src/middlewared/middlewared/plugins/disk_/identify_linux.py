@@ -14,7 +14,9 @@ class DiskService(Service, DiskIdentifyBase):
         else:
             block_device = disks[name]
 
-        if block_device['serial']:
+        if block_device['serial_lunid']:
+            return f'{{serial_lunid}}{block_device["serial_lunid"]}'
+        elif block_device['serial']:
             return f'{{serial}}{block_device["serial"]}'
 
         dev = blkid.BlockDevice(f'/dev/{name}')
@@ -38,7 +40,7 @@ class DiskService(Service, DiskIdentifyBase):
 
         tp = search.group('type')
         value = search.group('value')
-        mapping = {'uuid': 'uuid', 'devicename': 'name', 'serial_lunid': 'serial', 'serial': 'serial'}
+        mapping = {'uuid': 'uuid', 'devicename': 'name', 'serial_lunid': 'serial_lunid', 'serial': 'serial'}
         if tp not in mapping:
             raise NotImplementedError(f'Unknown type {tp!r}')
         elif tp == 'uuid':

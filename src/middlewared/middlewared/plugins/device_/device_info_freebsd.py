@@ -81,6 +81,8 @@ class DeviceService(Service, DeviceInfoBase):
         # We still keep ident/mediasize to not break previous api users
         disk['serial'] = disk['ident']
         disk['size'] = disk['mediasize']
+        if disk['serial'] and disk['lunid']:
+            disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
         return disk
 

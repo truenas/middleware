@@ -13,12 +13,10 @@ class DiskService(Service, DiskIdentifyBase):
 
     async def device_to_identifier(self, name):
         disk_data = await self.middleware.call('device.get_disk', name)
-        serial = disk_data['serial']
-        if serial:
-            if disk_data['lunid']:
-                return f'{{serial_lunid}}{serial}_{disk_data["lunid"]}'
-            else:
-                return f'{{serial}}{serial}'
+        if disk_data['serial_lunid']:
+            return f'{{serial_lunid}}{disk_data["serial_lunid"]}'
+        elif disk_data['serial']:
+            return f'{{serial}}{disk_data["serial"]}'
 
         await self.middleware.run_in_thread(geom.scan)
         klass = geom.class_by_name('PART')
