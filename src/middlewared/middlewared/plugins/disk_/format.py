@@ -1,11 +1,12 @@
+import platform
 import subprocess
 
 from middlewared.service import CallError, Service
 
-from .format_base import FormatDiskBase
+IS_LINUX = platform.system().lower() == 'linux'
 
 
-class DiskService(Service, FormatDiskBase):
+class DiskService(Service):
 
     def format(self, disk, swapgb, sync=True):
         size = self.middleware.call_sync('device.get_dev_size', disk)
@@ -27,17 +28,30 @@ class DiskService(Service, FormatDiskBase):
         # so next partition starts at mutiple of 128.
         swapsize = (int((swapsize + 127) / 128)) * 128
 
-        commands = []
-        commands.append(('gpart', 'create', '-s', 'gpt', f'/dev/{disk}'))
+        commands = [] if IS_LINUX else [('gpart', 'create', '-s', 'gpt', f'/dev/{disk}')]
         if swapsize > 0:
-            commands.append(('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-swap', '-s', str(swapsize), disk))
-            commands.append(('gpart', 'add', '-a', '4k', '-t', 'freebsd-zfs', disk))
+            if IS_LINUX:
+                commands.extend([
+                    ('sgdisk', '-a=4096', f'-n1:128:{swapsize}', '-t1:8200', f'/dev/{disk}'),
+                    ('sgdisk', f'-n2:0:0', '-t1:BF01', f'/dev/{disk}'),
+                ])
+            else:
+                commands.extend([
+                    ('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-swap', '-s', str(swapsize), disk),
+                    ('gpart', 'add', '-a', '4k', '-t', 'freebsd-zfs', disk),
+                ])
         else:
-            commands.append(('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-zfs', disk))
+            if IS_LINUX:
+                commands.append(
+                    ('sgdisk', '-a=4096', '-n1:0:0', '-t1:BF01', f'/dev/{disk}'),
+                )
+            else:
+                commands.append(('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-zfs', disk))
 
         # Install a dummy boot block so system gives meaningful message if booting
         # from the wrong disk.
-        commands.append(('gpart', 'bootcode', '-b', '/boot/pmbr-datadisk', f'/dev/{disk}'))
+        if not IS_LINUX:
+            commands.append(('gpart', 'bootcode', '-b', '/boot/pmbr-datadisk', f'/dev/{disk}'))
 
         for command in commands:
             cp = subprocess.run(
