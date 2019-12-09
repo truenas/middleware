@@ -94,7 +94,10 @@ def migrate_filesystem(apps, schema_editor):
 def target_dataset_normpath(apps, schema_editor):
     Replication = apps.get_model('storage', 'Replication')
     for replication in Replication.objects.all():
-        replication.repl_target_dataset = os.path.normpath(replication.repl_target_dataset.strip().strip("/").strip())
+        replication.repl_target_dataset = os.path.join(
+            os.path.normpath(replication.repl_target_dataset.strip().strip("/").strip()),
+            os.path.basename(replication.repl_source_datasets[0]),
+        )
         replication.save()
 
 
