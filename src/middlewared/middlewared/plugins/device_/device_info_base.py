@@ -35,3 +35,9 @@ class DeviceInfoBase(ServicePartBase):
     @private
     async def get_disk(self, name):
         raise NotImplementedError()
+
+    @private
+    async def get_dev_size(self, dev):
+        """
+        Return disk/partition size in bytes or None if unable to do so
+        """

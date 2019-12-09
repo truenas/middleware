@@ -96,3 +96,9 @@ class DeviceService(Service, DeviceInfoBase):
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
         return disk
+
+    async def get_dev_size(self, dev):
+        try:
+            return blkid.BlockDevice(dev).size
+        except blkid.BlkidException:
+            return None

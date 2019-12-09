@@ -4,6 +4,7 @@ from bsd import geom, devinfo
 
 from .device_info_base import DeviceInfoBase
 from middlewared.service import private, Service
+from middlewared.utils import run
 
 
 RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
@@ -101,3 +102,8 @@ class DeviceService(Service, DeviceInfoBase):
                     'size': dev.size
                 })
         return ports
+
+    async def get_dev_size(self, dev):
+        cp = await run('diskinfo', dev)
+        if not cp.returncode:
+            return int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]) / 1024)
