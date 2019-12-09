@@ -20,7 +20,7 @@ class DiskService(Service):
         # In the future we can adjust dd size
         if size and size < 33554432:
             return
-        await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', 'count=32')
+        await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1M', 'count=32')
         size = await self.middleware.call('device.get_dev_size', dev)
         if not size:
             self.logger.error(f'Unable to determine size of {dev}')
@@ -43,7 +43,7 @@ class DiskService(Service):
           - FULL_RANDOM: write whole disk with random bytes
         """
         # FIXME: Please implement removal from graid for linux and removal of disk from swap
-        if platform.platform().lower() != 'linux':
+        if platform.system().lower() != 'linux':
             await self.middleware.call('disk.swaps_remove_disks', [dev])
             await self.middleware.call('disk.remove_disk_from_graid', dev)
 
@@ -63,7 +63,7 @@ class DiskService(Service):
                 'dd',
                 'if=/dev/{}'.format('zero' if mode == 'FULL' else 'random'),
                 f'of=/dev/{dev}',
-                'bs=1m',
+                'bs=1M',
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             async def dd_wait():
