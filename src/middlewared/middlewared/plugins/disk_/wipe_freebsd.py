@@ -6,20 +6,17 @@ import subprocess
 
 from bsd import geom
 
-from middlewared.schema import accepts, Bool, Str
-from middlewared.service import job, private, Service
+from middlewared.service import Service
 from middlewared.utils import Popen, run
+
+from .wipe_base import WipeDiskBase
 
 
 RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 
 
-class DiskService(Service):
-    @private
+class DiskService(Service, WipeDiskBase):
     async def wipe_quick(self, dev, size=None):
-        """
-        Perform a quick wipe of a disk `dev` by the first few and last few megabytes
-        """
         # If the size is too small, lets just skip it for now.
         # In the future we can adjust dd size
         if size and size < 33554432:
@@ -34,20 +31,7 @@ class DiskService(Service):
             # This will fail when EOL is reached
             await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', f'oseek={int(size / 1024) - 32}', check=False)
 
-    @accepts(
-        Str('dev'),
-        Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM']),
-        Bool('synccache', default=True),
-    )
-    @job(lock=lambda args: args[0])
     async def wipe(self, job, dev, mode, sync):
-        """
-        Performs a wipe of a disk `dev`.
-        It can be of the following modes:
-          - QUICK: clean the first few and last megabytes of every partition and disk
-          - FULL: write whole disk with zero's
-          - FULL_RANDOM: write whole disk with random bytes
-        """
         await self.middleware.call('disk.swaps_remove_disks', [dev])
 
         # Its possible a disk was previously used by graid so we need to make sure to
