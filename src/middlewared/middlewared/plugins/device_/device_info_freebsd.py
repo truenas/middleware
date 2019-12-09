@@ -107,3 +107,20 @@ class DeviceService(Service, DeviceInfoBase):
         cp = await run('diskinfo', dev)
         if not cp.returncode:
             return int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]) / 1024)
+
+    def list_partitions(self, disk):
+        await self.middleware.run_in_thread(geom.scan)
+        klass = geom.class_by_name('PART')
+        parts = []
+        for g in klass.xml.findall(f'./geom[name=\'{disk}\']'):
+            for p in g.findall('./provider'):
+                size = p.find('./mediasize')
+                if size is not None:
+                    try:
+                        size = int(size.text)
+                    except ValueError:
+                        size = None
+                name = p.find('./name')
+                parts.append({'name': name, 'size': size})
+
+        return parts
