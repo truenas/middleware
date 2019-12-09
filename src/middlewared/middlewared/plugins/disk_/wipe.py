@@ -11,9 +11,21 @@ from middlewared.utils import Popen, run
 
 
 RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
+IS_LINUX = platform.system().lower() == 'linux'
 
 
 class DiskService(Service):
+
+    @private
+    async def destroy_partitions(self, disk):
+        if IS_LINUX:
+            await run(['sgdisk', '-Z', os.path.join('/dev', disk)])
+        else:
+            await run('gpart', 'destroy', '-F', f'/dev/{disk}', check=False)
+            # Wipe out the partition table by doing an additional iterate of create/destroy
+            await run('gpart', 'create', '-s', 'gpt', f'/dev/{disk}')
+            await run('gpart', 'destroy', '-F', f'/dev/{disk}')
+
     @private
     async def wipe_quick(self, dev, size=None):
         # If the size is too small, lets just skip it for now.

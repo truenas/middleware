@@ -1,13 +1,14 @@
 import platform
 import subprocess
 
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, private, Service
 
 IS_LINUX = platform.system().lower() == 'linux'
 
 
 class DiskService(Service):
 
+    @private
     def format(self, disk, swapgb, sync=True):
         size = self.middleware.call_sync('device.get_dev_size', disk)
         if not size:
