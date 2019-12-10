@@ -10,8 +10,11 @@ from middlewared.service import job, private, Service
 from middlewared.utils import Popen, run
 
 
-RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 IS_LINUX = platform.system().lower() == 'linux'
+if IS_LINUX:
+    RE_DD = re.compile(r'^(\d+).*bytes.*copied.*, ([\d\.]+)\s*(.*)/s')
+else:
+    RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 
 
 class DiskService(Service):
@@ -38,7 +41,7 @@ class DiskService(Service):
             self.logger.error(f'Unable to determine size of {dev}')
         else:
             # This will fail when EOL is reached
-            await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', f'oseek={int(size / 1024) - 32}', check=False)
+            await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1M', f'oseek={int(size / 1024) - 32}', check=False)
 
     @accepts(
         Str('dev'),
@@ -82,7 +85,7 @@ class DiskService(Service):
                 while True:
                     if proc.returncode is not None:
                         break
-                    os.kill(proc.pid, signal.SIGINFO)
+                    os.kill(proc.pid, signal.SIGUSR1 if IS_LINUX else signal.SIGINFO)
                     await asyncio.sleep(1)
 
             asyncio.ensure_future(dd_wait())
@@ -94,7 +97,12 @@ class DiskService(Service):
                 line = line.decode()
                 reg = RE_DD.search(line)
                 if reg:
-                    job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': int(reg.group(2))})
+                    speed = float(reg.group(2)) if IS_LINUX else int(reg.group(2))
+                    if IS_LINUX:
+                        mapping = {'gb': 1024 * 1024 * 1024, 'mb': 1024 * 1024, 'kb': 1024, 'b': 1}
+                        speed = int(speed * mapping[reg.group(3).lower()])
+                    unit = reg.group(3) if IS_LINUX else 'bytes'
+                    job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': speed, 'speed_unit': unit})
 
         if sync:
             await self.middleware.call('disk.sync', dev)
