@@ -79,7 +79,7 @@ class DiskService(Service):
                 'if=/dev/{}'.format('zero' if mode == 'FULL' else 'random'),
                 f'of=/dev/{dev}',
                 'bs=1M',
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
             async def dd_wait():
                 while True:
