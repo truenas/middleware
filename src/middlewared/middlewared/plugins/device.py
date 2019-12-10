@@ -3,7 +3,7 @@ import os
 import socket
 
 from middlewared.schema import accepts, Str
-from middlewared.service import Service
+from middlewared.service import private, Service
 
 DEVD_SOCKETFILE = '/var/run/devd.pipe'
 
@@ -18,6 +18,19 @@ class DeviceService(Service):
         Currently only SERIAL is supported.
         """
         return await self.middleware.call(f'device.get_{_type.lower()}s')
+
+    @private
+    async def get_valid_zfs_partition_type_uuids(self):
+        # https://salsa.debian.org/debian/gdisk/blob/master/parttypes.cc for valid zfs types
+        # 516e7cba was being used by freebsd and 6a898cc3 is being used by linux
+        return [
+            '6a898cc3-1dd2-11b2-99a6-080020736631',
+            '516e7cba-6ecf-11d6-8ff8-00022d09712b',
+        ]
+
+    @private
+    async def get_valid_swap_partition_type_uuids(self):
+        return ['516e7cb5-6ecf-11d6-8ff8-00022d09712b']
 
 
 async def devd_loop(middleware):

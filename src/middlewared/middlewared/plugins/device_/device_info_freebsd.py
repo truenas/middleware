@@ -101,9 +101,3 @@ class DeviceService(Service, DeviceInfoBase):
                     'size': dev.size
                 })
         return ports
-
-    async def get_valid_zfs_partition_type_uuids(self):
-        return ['516e7cba-6ecf-11d6-8ff8-00022d09712b']
-
-    async def get_valid_swap_partition_type_uuids(self):
-        return ['516e7cb5-6ecf-11d6-8ff8-00022d09712b']

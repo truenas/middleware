@@ -18,7 +18,7 @@ class DeviceService(Service, DeviceInfoBase):
         lshw_disks = self.retrieve_lshw_disks_data()
 
         for block_device in filter(
-            lambda b: b.name not in ('sr0',),
+            lambda b: not b.name.startswith('sr'),
             blkid.list_block_devices()
         ):
             disks[block_device.name] = self.get_disk_details(block_device, self.disk_default.copy(), lshw_disks)
@@ -56,11 +56,15 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     def get_disk_details(self, block_device, disk, lshw_disks):
         dev_data = block_device.__getstate__()
+        subsystem = os.path.realpath(os.path.join('/sys/block', dev_data['name'], 'device/driver')).split('/')[-1]
         disk.update({
             'name': dev_data['name'],
             'sectorsize': dev_data['io_limits']['logical_sector_size'],
-            'number': ord(dev_data['name'][-1].lower()) - 96,
-            'subsystem': dev_data['name'][:-1],
+            'number': sum(
+                (ord(letter) - ord('a') + 1) * 26 ** i
+                for i, letter in enumerate(reversed(dev_data['name'][len(subsystem):]))
+            ),
+            'subsystem': subsystem,
         })
         type_path = os.path.join('/sys/block/', block_device.name, 'queue/rotational')
         if os.path.exists(type_path):
@@ -92,14 +96,3 @@ class DeviceService(Service, DeviceInfoBase):
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
         return disk
-
-    async def get_valid_zfs_partition_type_uuids(self):
-        # https://salsa.debian.org/debian/gdisk/blob/master/parttypes.cc for valid zfs types
-        # 516e7cba was being used by freebsd and 6a898cc3 is being used by linux
-        return [
-            '6a898cc3-1dd2-11b2-99a6-080020736631',
-            '516e7cba-6ecf-11d6-8ff8-00022d09712b',
-        ]
-
-    async def get_valid_swap_partition_type_uuids(self):
-        raise NotImplementedError()

@@ -45,7 +45,7 @@ class DiskService(Service, DiskIdentifyBase):
             raise NotImplementedError(f'Unknown type {tp!r}')
         elif tp == 'uuid':
             for block_device in filter(
-                lambda b: b.name not in ('sr0',) and b.partitions_exist,
+                lambda b: not b.name.startswith('sr') and b.partitions_exist,
                 blkid.list_block_devices()
             ):
                 for partition in block_device.partition_data()['partitions']:
