@@ -30,7 +30,7 @@ def test_02_delete_used_certificate():
             'range_low': 1000,
             'range_high': 2000,
             'domain': {
-                'id': '20191003',  # id, name... what is the difference?
+                'id': idmap_domain_id,
             },
             'bind_path_user': '',
             'bind_path_group': '',
