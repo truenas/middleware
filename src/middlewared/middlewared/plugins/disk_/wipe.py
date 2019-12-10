@@ -12,7 +12,7 @@ from middlewared.utils import Popen, run
 
 IS_LINUX = platform.system().lower() == 'linux'
 if IS_LINUX:
-    RE_DD = re.compile(r'^(\d+).*bytes.*copied.*, ([\d\.]+)\s*(.*)/s')
+    RE_DD = re.compile(r'^(\d+).*bytes.*copied.*, ([\d\.]+)\s*(GB|MB|KB|B)/s')
 else:
     RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 
@@ -101,8 +101,7 @@ class DiskService(Service):
                     if IS_LINUX:
                         mapping = {'gb': 1024 * 1024 * 1024, 'mb': 1024 * 1024, 'kb': 1024, 'b': 1}
                         speed = int(speed * mapping[reg.group(3).lower()])
-                    unit = reg.group(3) if IS_LINUX else 'bytes'
-                    job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': speed, 'speed_unit': unit})
+                    job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': speed})
 
         if sync:
             await self.middleware.call('disk.sync', dev)
