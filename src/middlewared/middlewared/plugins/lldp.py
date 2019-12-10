@@ -1,4 +1,4 @@
-from middlewared.schema import Bool, Dict, Str, accepts
+from middlewared.schema import Bool, Dict, Str, accepts, ValidationErrors
 from middlewared.service import SystemServiceService
 import middlewared.sqlalchemy as sa
 
@@ -16,6 +16,13 @@ class LLDPService(SystemServiceService):
     class Config:
         service = 'lldp'
         datastore_prefix = 'lldp_'
+
+    @accepts()
+    async def country_choices(self):
+        """
+        Returns country choices for LLDP.
+        """
+        return await self.middleware.call('system.general.country_choices')
 
     @accepts(Dict(
         'lldp_update',
@@ -36,6 +43,11 @@ class LLDPService(SystemServiceService):
 
         new = old.copy()
         new.update(data)
+
+        verrors = ValidationErrors()
+        if new['country'] not in await self.country_choices():
+            verrors.add('lldp_update.country', f'{new["country"]} not in countries recognized by the system.')
+        verrors.check()
 
         await self._update_service(old, new)
 
