@@ -13,9 +13,7 @@ class DeviceService(Service):
     @accepts(Str('type', enum=['SERIAL', 'DISK']))
     async def get_info(self, _type):
         """
-        Get info for certain device types.
-
-        Currently only SERIAL is supported.
+        Get info for SERIAL/DISK device types.
         """
         return await self.middleware.call(f'device.get_{_type.lower()}s')
 

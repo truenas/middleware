@@ -3,12 +3,10 @@ import re
 from middlewared.schema import accepts, Str
 from middlewared.service import private, ServicePartBase
 
-RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
-
 
 class DiskIdentifyBase(ServicePartBase):
 
-    RE_IDENTIFIER = RE_IDENTIFIER
+    RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
     @private
     @accepts(Str('name'))

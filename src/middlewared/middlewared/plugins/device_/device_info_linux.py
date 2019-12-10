@@ -79,18 +79,18 @@ class DeviceService(Service, DeviceInfoBase):
             disk['ident'] = disk['serial'] = disk_data.get('serial', '')
             disk['size'] = disk['mediasize'] = int(disk_data['size']) if 'size' in disk_data else None
             disk['descr'] = disk['model'] = disk_data.get('product')
-            # There are some inconsistencies here with linux and freebsd for lunid,
-            # FreeBSD it seems make a DEVICE ID query but I have seen some inconsistency on a WD disk,
-            # please discuss this with mav
-            lun_id_cp = subprocess.Popen(
-                ['sg_vpd', '--quiet', '-i', block_device.path],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            )
-            cp_stdout, cp_stderr = lun_id_cp.communicate()
-            if not lun_id_cp.returncode and lun_id_cp.stdout:
-                disk['lunid'] = cp_stdout.strip().split()[0].decode()
-                if disk['lunid'].startswith('0x'):
-                    disk['lunid'] = disk['lunid'][2:]
+
+        # We make a device ID query to get DEVICE ID VPD page of the drive if available and then use that identifier
+        # as the lunid - FreeBSD does the same, however it defaults to other schemes if this is unavailable
+        lun_id_cp = subprocess.Popen(
+            ['sg_vpd', '--quiet', '-i', block_device.path],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        cp_stdout, cp_stderr = lun_id_cp.communicate()
+        if not lun_id_cp.returncode and lun_id_cp.stdout:
+            disk['lunid'] = cp_stdout.strip().split()[0].decode()
+            if disk['lunid'].startswith('0x'):
+                disk['lunid'] = disk['lunid'][2:]
 
         if disk['serial'] and disk['lunid']:
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'

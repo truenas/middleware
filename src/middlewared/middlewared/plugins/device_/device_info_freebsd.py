@@ -13,7 +13,7 @@ class DeviceService(Service, DeviceInfoBase):
 
     async def get_disks(self):
         disks = {}
-        klass = await self.middleware.call('device.retrieve_disk_geom_klass')
+        klass = await self.middleware.call('device.retrieve_disk_geom_class')
         if not klass:
             return disks
         for g in klass.geoms:
@@ -24,13 +24,13 @@ class DeviceService(Service, DeviceInfoBase):
         return disks
 
     @private
-    def retrieve_disk_geom_klass(self):
+    def retrieve_disk_geom_class(self):
         geom.scan()
         return geom.class_by_name('DISK')
 
     async def get_disk(self, name):
         disk = self.disk_default.copy()
-        disk_klass = await self.middleware.call('device.retrieve_disk_geom_klass')
+        disk_klass = await self.middleware.call('device.retrieve_disk_geom_class')
         if not disk_klass:
             return disk
         disk_geom = next((g for g in disk_klass.geoms if g.name == name), None)
@@ -50,7 +50,7 @@ class DeviceService(Service, DeviceInfoBase):
             disk.update({k: v for k, v in disk_geom.provider.config.items() if k not in ('fwheads', 'fwsectors')})
             if disk['rotationrate'] is not None:
                 disk['rotationrate'] = int(disk['rotationrate']) if disk['rotationrate'].isdigit() else None
-            if disk['descr'] is not None and not disk['descr']:
+            if not disk['descr']:
                 disk['descr'] = None
             disk['model'] = disk['descr']
 
