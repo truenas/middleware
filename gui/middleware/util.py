@@ -38,8 +38,19 @@ def upload_job_and_wait(fileobj, method_name, *args):
 
     with client as c:
         token = c.call('auth.generate_token')
+
+        """
+        We bypass the proxies that are set for the environment
+        because this function is called in the volume manager
+        section in the legacy webUI in 11.2. Since there should
+        never be a need to use the proxy server when manipulating
+        the zpool, we will alter the header to ignore them.
+        """
+        proxies = {'http': '', 'https': ''}
+
         r = requests.post(
             'http://127.0.0.1/_upload/',
+            proxies=proxies,
             files=[
                 ('data', json.dumps({
                     'method': method_name,
