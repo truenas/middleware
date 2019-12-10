@@ -3,12 +3,7 @@ import os
 import socket
 
 from middlewared.schema import accepts, Str
-from middlewared.service import Service
-
-try:
-    from bsd import devinfo, geom
-except ImportError:
-    devinfo = geom = None
+from middlewared.service import private, Service
 
 DEVD_SOCKETFILE = '/var/run/devd.pipe'
 
@@ -18,48 +13,22 @@ class DeviceService(Service):
     @accepts(Str('type', enum=['SERIAL', 'DISK']))
     async def get_info(self, _type):
         """
-        Get info for certain device types.
-
-        Currently only SERIAL is supported.
+        Get info for SERIAL/DISK device types.
         """
-        return await getattr(self, f'_get_{_type.lower()}')()
+        return await self.middleware.call(f'device.get_{_type.lower()}s')
 
-    async def _get_serial(self):
-        ports = []
-        for devices in devinfo.DevInfo().resource_managers['I/O ports'].values():
-            for dev in devices:
-                if not dev.name.startswith('uart'):
-                    continue
-                ports.append({
-                    'name': dev.name,
-                    'description': dev.desc,
-                    'drivername': dev.drivername,
-                    'location': dev.location,
-                    'start': hex(dev.start),
-                    'size': dev.size
-                })
-        return ports
+    @private
+    async def get_valid_zfs_partition_type_uuids(self):
+        # https://salsa.debian.org/debian/gdisk/blob/master/parttypes.cc for valid zfs types
+        # 516e7cba was being used by freebsd and 6a898cc3 is being used by linux
+        return [
+            '6a898cc3-1dd2-11b2-99a6-080020736631',
+            '516e7cba-6ecf-11d6-8ff8-00022d09712b',
+        ]
 
-    async def _get_disk(self):
-        await self.middleware.run_in_thread(geom.scan)
-        disks = {}
-        klass = geom.class_by_name('DISK')
-        if not klass:
-            return disks
-        for g in klass.geoms:
-            # Skip cd*
-            if g.name.startswith('cd'):
-                continue
-            disk = {
-                'name': g.name,
-                'mediasize': g.provider.mediasize,
-                'sectorsize': g.provider.sectorsize,
-                'stripesize': g.provider.stripesize,
-            }
-            if g.provider.config:
-                disk.update(g.provider.config)
-            disks[g.name] = disk
-        return disks
+    @private
+    async def get_valid_swap_partition_type_uuids(self):
+        return ['516e7cb5-6ecf-11d6-8ff8-00022d09712b']
 
 
 async def devd_loop(middleware):
