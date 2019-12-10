@@ -33,7 +33,7 @@ class DiskService(Service):
         if size and size < 33554432:
             return
         await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1M', 'count=32')
-        size = await self.middleware.call('device.get_dev_size', dev)
+        size = await self.middleware.call('disk.get_dev_size', dev)
         if not size:
             self.logger.error(f'Unable to determine size of {dev}')
         else:
@@ -61,7 +61,7 @@ class DiskService(Service):
 
         # First do a quick wipe of every partition to clean things like zfs labels
         if mode == 'QUICK':
-            for part in await self.middleware.call('device.list_partitions', dev):
+            for part in await self.middleware.call('disk.list_partitions', dev):
                 await self.wipe_quick(part['name'], part['size'])
 
         await self.middleware.call('disk.destroy_partitions', dev)
@@ -69,7 +69,7 @@ class DiskService(Service):
         if mode == 'QUICK':
             await self.wipe_quick(dev)
         else:
-            size = await self.middleware.call('device.get_dev_size', dev) or 1
+            size = await self.middleware.call('disk.get_dev_size', dev) or 1
 
             proc = await Popen([
                 'dd',

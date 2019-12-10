@@ -10,7 +10,7 @@ class DiskService(Service):
 
     @private
     def format(self, disk, swapgb, sync=True):
-        size = self.middleware.call_sync('device.get_dev_size', disk)
+        size = self.middleware.call_sync('disk.get_dev_size', disk)
         if not size:
             self.logger.error(f'Unable to determine size of {disk}')
         else:
