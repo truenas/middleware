@@ -129,6 +129,32 @@ class IdmapService(Service):
         return data
 
     @private
+    async def _validate_domain_info(self, domain, verrors):
+        """
+        Only domains that have been configured as idmap domains
+        are permitted.
+        """
+        configured_domains = await self.middleware.call('idmap.domain.query')
+
+        id = domain.get('id', None)
+        id_verified = False
+
+        short_name = domain.get('idmap_domain_name', None)
+        short_name_verified = False
+
+        for d in configured_domains:
+            if d['id'] == id:
+                id_verified = True
+            if d['name'] == short_name:
+                short_name_verified = True
+
+        if id is not None and not id_verified:
+            verrors.add('domain.id', f'Domain [{id}] does not exist.')
+
+        if short_name is not None and not short_name_verified:
+            verrors.add('domain.idmap_domain_name', f'Domain [{short_name}] does not exist.')
+
+    @private
     async def _common_validate(self, idmap_backend, data):
         """
         Common validation checks for all idmap backends.
@@ -153,13 +179,15 @@ class IdmapService(Service):
             verrors.add(f'idmap_range', 'Idmap high range must be greater than idmap low range')
             return verrors
 
+        await self._validate_domain_info(data['domain'], verrors)
+
         configured_domains = await self.get_configured_idmap_domains()
         ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
         ad_enabled = False if await self.middleware.call('activedirectory.get_state') == 'DISABLED' else True
         new_range = range(data['range_low'], data['range_high'])
         for i in configured_domains:
             # Do not generate validation error comparing to oneself.
-            if i['domain']['id'] == data['domain']['id']:
+            if i['domain']['id'] == data['domain'].get('id', None):
                 continue
 
             # Do not generate validation errors for overlapping with a disabled DS.
@@ -472,7 +500,7 @@ class IdmapADModel(sa.Model):
     idmap_ad_schema_mode = sa.Column(sa.String(120))
     idmap_ad_unix_nss_info = sa.Column(sa.Boolean())
     idmap_ad_unix_primary_group = sa.Column(sa.Boolean())
-    idmap_ad_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+    idmap_ad_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
 
 
 class IdmapADService(CRUDService):
@@ -501,7 +529,12 @@ class IdmapADService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an entry in the idmap backend table.
+        Create an entry in the idmap ad backend table.
+
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
         `unix_primary_group` If True, the primary group membership is fetched from the LDAP attributes (gidNumber).
         If False, the primary group membership is calculated via the "primaryGroupID" LDAP attribute.
 
@@ -574,7 +607,7 @@ class DirectoryserviceIdmapAutoridModel(sa.Model):
     idmap_autorid_rangesize = sa.Column(sa.Integer())
     idmap_autorid_readonly = sa.Column(sa.Boolean())
     idmap_autorid_ignore_builtin = sa.Column(sa.Boolean())
-    idmap_autorid_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+    idmap_autorid_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
 
 
 class IdmapAutoridService(CRUDService):
@@ -603,7 +636,18 @@ class IdmapAutoridService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an entry in the idmap backend table.
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
+        `range_low` and `rang_high` specify the UID and GID range for which this backend is authoritative.
+
+        `rangesize` defines the number of uids/gids available per domain range.
+
+        `readonly` turn the module into read-only mode. No new ranges will be allocated nor will new mappings
+        be created in the idamp pool.
+
+        `ignore builtin` ignore any mapping requests for the BUILTIN domain.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_autorid_create', await self.middleware.call('idmap._common_validate', 'autorid', data))
@@ -669,7 +713,7 @@ class IdmapLDAPModel(sa.Model):
     idmap_ldap_ldap_url = sa.Column(sa.String(255))
     idmap_ldap_ssl = sa.Column(sa.String(120))
     idmap_ldap_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    idmap_ldap_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+    idmap_ldap_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
 
 
 class IdmapLDAPService(CRUDService):
@@ -700,7 +744,23 @@ class IdmapLDAPService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an entry in the idmap backend table.
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
+
+        `rangesize` defines the number of uids/gids available per domain range.
+
+        `ldap_base_dn` defines the directory base suffix to use for SID/uid/gid mapping entries.
+
+        `ldap_user_dn` defines the user DN to be used for authentication.
+
+        `ldap_url` specifies the LDAP server to use for SID/uid/gid map entries.
+
+        `ssl` specifies whether to encrypt the LDAP transport for the idmap backend.
+
+        `certificate` specifies the client certificate to use for SASL_EXTERNAL authentication.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_ldap_create', await self.middleware.call('idmap._common_validate', 'ldap', data))
@@ -761,7 +821,7 @@ class IdmapNSSModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     idmap_nss_range_low = sa.Column(sa.Integer())
     idmap_nss_range_high = sa.Column(sa.Integer())
-    idmap_nss_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+    idmap_nss_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
 
 
 class IdmapNSSService(CRUDService):
@@ -787,7 +847,13 @@ class IdmapNSSService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an entry in the idmap backend table.
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
+
+        The idmap_nss backend maps Unix users and groups to Windows accounts by joining on SamAccountName.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_nss_create', await self.middleware.call('idmap._common_validate', 'nss', data))
@@ -860,7 +926,7 @@ class IdmapRFC2307Model(sa.Model):
     idmap_rfc2307_ldap_realm = sa.Column(sa.String(120))
     idmap_rfc2307_ssl = sa.Column(sa.String(120))
     idmap_rfc2307_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    idmap_rfc2307_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+    idmap_rfc2307_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
 
 
 class IdmapRFC2307Service(CRUDService):
@@ -905,6 +971,12 @@ class IdmapRFC2307Service(CRUDService):
         """
         Create an entry in the idmap_rfc2307 backend table.
 
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
+
         `ldap_server` defines the type of LDAP server to use. This can either be an LDAP server provided
         by the Active Directory Domain (ad) or a stand-alone LDAP server.
 
@@ -927,6 +999,8 @@ class IdmapRFC2307Service(CRUDService):
 
         `realm` defines the realm to use in the user and group names. This is only required when using cn_realm together with
          a stand-alone ldap server.
+
+        `certificate` specifies the LDAP client certificate to use for SASL_EXTERNAL authentication.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_rfc2307_create', await self.middleware.call('idmap._common_validate', 'rfc2307', data))
@@ -945,15 +1019,12 @@ class IdmapRFC2307Service(CRUDService):
     @accepts(
         Int('id', required=True),
         Patch(
-            "idmap_nss_create",
-            "idmap_nss_update",
+            "idmap_rfc2307_create",
+            "idmap_rfc2307_update",
             ("attr", {"update": True})
         )
     )
     async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
@@ -975,9 +1046,6 @@ class IdmapRFC2307Service(CRUDService):
 
     @accepts(Int('id'))
     async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
 
@@ -987,7 +1055,7 @@ class IdmapRIDModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     idmap_rid_range_low = sa.Column(sa.Integer())
     idmap_rid_range_high = sa.Column(sa.Integer())
-    idmap_rid_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+    idmap_rid_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
 
 
 class IdmapRIDService(CRUDService):
@@ -1014,6 +1082,14 @@ class IdmapRIDService(CRUDService):
     async def do_create(self, data):
         """
         Create an entry in the idmap_rid backend table.
+        The idmap_rid backend provides a way to use an algorithmic mapping scheme to map UIDs/GIDs and SIDs.
+        No database is required in this case as the mapping is deterministic.
+
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_rid_create', await self.middleware.call('idmap._common_validate', 'rid', data))
@@ -1075,7 +1151,7 @@ class IdmapScriptModel(sa.Model):
     idmap_script_range_low = sa.Column(sa.Integer())
     idmap_script_range_high = sa.Column(sa.Integer())
     idmap_script_script = sa.Column(sa.String(255))
-    idmap_script_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
+    idmap_script_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
 
 
 class IdmapScriptService(CRUDService):
@@ -1102,7 +1178,15 @@ class IdmapScriptService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an entry in the idmap backend table.
+        Create an entry in the idmap backend table. idmap_script is a read-only backend that
+        uses a script to perform mapping of UIDs and GIDs to Windows SIDs.
+
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
+
         `script` full path to the script or program that generates the mappings.
         """
         verrors = ValidationErrors()
@@ -1190,7 +1274,15 @@ class IdmapTDBService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an entry in the idmap backend table.
+        The idmap_tdb plugin is the default backend used by winbindd for storing SID/uid/gid mapping tables.
+        In contrast to read only backends like idmap_rid, it is an allocating backend. This means that it
+        needs to allocate new user and group IDs in order to create new mappings.
+
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_tdb_create', await self.middleware.call('idmap._common_validate', 'tdb', data))
