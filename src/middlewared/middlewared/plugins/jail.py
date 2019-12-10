@@ -992,7 +992,7 @@ class JailService(CRUDService):
         """Does specified action on rc enabled (boot=on) jails"""
         if not self.iocage_set_up():
             return
-        iocage = ioc.IOCage(rc=True)
+        iocage = ioc.IOCage(rc=True, reset_cache=True)
 
         try:
             if action == "START":
@@ -1278,7 +1278,7 @@ class JailService(CRUDService):
     def activate(self, pool):
         """Activates a pool for iocage usage, and deactivates the rest."""
         pool = self.middleware.call_sync('pool.query', [['name', '=', pool]], {'get': True})
-        iocage = ioc.IOCage()
+        iocage = ioc.IOCage(reset_cache=True)
         try:
             iocage.activate(pool['name'])
         except Exception as e:
