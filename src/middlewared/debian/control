@@ -63,6 +63,7 @@ Homepage: https://github.com/freenas/freenas
 Package: middlewared
 Architecture: all
 Depends: alembic,
+         gdisk,
          ipmitool,
          lshw,
          migrate113,
