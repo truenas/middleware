@@ -15,7 +15,7 @@ class DiskService(Service):
             self.logger.error(f'Unable to determine size of {disk}')
         else:
             # The GPT header takes about 34KB + alignment, round it to 100
-            if size - 100 <= swapgb * 1024 * 1024:
+            if size - 102400 <= swapgb * 1024 * 1024 * 1024:
                 raise CallError(f'Your disk size must be higher than {swapgb}GB')
 
         job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)

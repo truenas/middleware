@@ -41,7 +41,9 @@ class DiskService(Service):
             self.logger.error(f'Unable to determine size of {dev}')
         else:
             # This will fail when EOL is reached
-            await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1M', f'oseek={int(size / 1024) - 32}', check=False)
+            await run(
+                'dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1M', f'oseek={int(size / (1024*1024)) - 32}', check=False
+            )
 
     @accepts(
         Str('dev'),
