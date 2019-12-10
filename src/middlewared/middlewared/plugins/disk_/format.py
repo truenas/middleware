@@ -34,7 +34,7 @@ class DiskService(Service):
             if IS_LINUX:
                 commands.extend([
                     ('sgdisk', '-a=4096', f'-n1:128:{swapsize}', '-t1:8200', f'/dev/{disk}'),
-                    ('sgdisk', f'-n2:0:0', '-t1:BF01', f'/dev/{disk}'),
+                    ('sgdisk', '-n2:0:0', '-t2:BF01', f'/dev/{disk}'),
                 ])
             else:
                 commands.extend([
