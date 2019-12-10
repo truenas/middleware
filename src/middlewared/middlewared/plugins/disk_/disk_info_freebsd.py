@@ -13,7 +13,7 @@ class DiskService(Service, DiskInfoBase):
     async def get_dev_size(self, dev):
         cp = await run('diskinfo', dev)
         if not cp.returncode:
-            return int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]) / 1024)
+            return int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]))
 
     def list_partitions(self, disk):
         geom.scan()
