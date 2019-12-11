@@ -20,6 +20,7 @@ from middlewared.alert.base import (
     ProThreadedAlertService
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
+from middlewared.client.client import ReserveFDException
 from middlewared.schema import Dict, Str, Bool, Int, accepts, Patch
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
@@ -399,6 +400,9 @@ class AlertService(Service):
                             pass
                         else:
                             raise
+                    except ReserveFDException:
+                        pass
+
                 except Exception:
                     alerts_b = [
                         Alert(title="Unable to run alert source %(source_name)r on backup node\n%(traceback)s",
