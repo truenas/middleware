@@ -80,6 +80,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
             'This is a MIME formatted message.  If you see '
             'this text it means that your email software '
             'does not support MIME formatted messages.')
+        margs['html'] = None
     else:
         margs['text'] = ''.join(email.iterators.body_line_iterator(em))
 
