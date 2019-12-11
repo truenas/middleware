@@ -117,13 +117,19 @@ def get_remote_path(provider, attributes):
     return remote_path
 
 
-async def rclone(middleware, job, cloud_sync):
-    if not await middleware.run_in_thread(os.path.exists, cloud_sync["path"]):
-        raise CallError(f"Directory {cloud_sync['path']!r} does not exist")
+def check_local_path(path):
+    if not os.path.exists(path):
+        raise CallError(f"Directory {path!r} does not exist")
 
-    if ((await middleware.run_in_thread(os.stat, cloud_sync["path"])).st_dev ==
-            (await middleware.run_in_thread(os.stat, "/mnt")).st_dev):
-        raise CallError(f"Directory {cloud_sync['path']!r} must reside within volume mount point")
+    if not os.path.isdir(path):
+        raise CallError(f"{path!r} is not a directory")
+
+    if not os.path.normpath(path).startswith("/mnt/") or os.stat(path).st_dev == os.stat("/mnt").st_dev:
+        raise CallError(f"Directory {path!r} must reside within volume mount point")
+
+
+async def rclone(middleware, job, cloud_sync):
+    await middleware.run_in_thread(check_local_path, cloud_sync["path"])
 
     # Use a temporary file to store rclone file
     async with RcloneConfig(cloud_sync) as config:
