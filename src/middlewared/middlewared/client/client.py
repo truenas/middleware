@@ -18,9 +18,7 @@ import sys
 import threading
 import time
 import uuid
-import logging
 
-log = logging.getLogger('middlewared.client')
 
 class Event(TEvent):
 
@@ -165,7 +163,6 @@ class WSClient(WebSocketClient):
             else:
                 break
         if fd < 0:
-            log.debug('Failed to reserve a privileged port')
             raise ReserveFDException()
         return fd
 
