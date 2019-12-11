@@ -1801,7 +1801,7 @@ def setup(middleware):
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
-    middleware.register_hook('pool.post_import_pool', hook_setup_ha, sync=True)
+    middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
