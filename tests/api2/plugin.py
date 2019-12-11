@@ -9,8 +9,15 @@ from functions import GET, POST, DELETE, wait_on_job
 
 JOB_ID = None
 job_results = None
+is_freenas = GET("/system/is_freenas/").json()
 
 # default URL
+if is_freenas is True:
+    test_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
+else:
+    test_repos_url = 'https://github.com/truenas/iocage-ix-plugins.git'
+
+
 repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/11.3-RELEASE/INDEX'
 plugin_index = GET(index_url).json()
@@ -55,7 +62,7 @@ def test_04_verify_plugin_repos_is_in_official_repositories():
     assert isinstance(results.json(), dict), results.text
     assert 'IXSYSTEMS' in results.json(), results.text
     assert results.json()['IXSYSTEMS']['name'] == 'iXsystems', results.text
-    assert results.json()['IXSYSTEMS']['git_repository'] == repos_url, results.text
+    assert results.json()['IXSYSTEMS']['git_repository'] == test_repos_url, results.text
 
 
 def test_05_get_list_of_available_plugins_job_id():

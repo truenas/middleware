@@ -107,7 +107,7 @@ class BootService(Service):
         if options.get('swap_size'):
             commands.append([
                 'gpart', 'add', '-t', 'freebsd-swap', '-i', '3',
-                '-s', str(options['swapsize']) + 'B', dev
+                '-s', str(options['swap_size']) + 'B', dev
             ])
 
         commands.append(
