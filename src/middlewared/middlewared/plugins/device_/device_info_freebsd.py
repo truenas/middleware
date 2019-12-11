@@ -4,6 +4,7 @@ from bsd import geom, devinfo
 
 from .device_info_base import DeviceInfoBase
 from middlewared.service import private, Service
+from middlewared.utils import run
 
 
 RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
