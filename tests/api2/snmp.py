@@ -10,7 +10,7 @@ from functions import PUT, GET, POST
 
 COMMUNITY = 'public'
 TRAPS = False
-CONTACT = 'root@localhost'
+CONTACT = 'root@localhost.com'
 LOCATION = 'Maryville, TN'
 PASSWORD = 'testing1234'
 

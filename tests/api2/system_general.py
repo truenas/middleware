@@ -72,7 +72,7 @@ def test_09_Setting_sysloglevel():
 
 
 def test_10_Checking_sysloglevel_using_api():
-    results = GET("/system/general/")
+    results = GET("/system/advanced/")
     assert results.status_code == 200, results.text
     data = results.json()
     assert data['sysloglevel'] == SYSLOGLEVEL
