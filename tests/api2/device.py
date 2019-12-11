@@ -9,10 +9,9 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
-from auto_config import disk0, disk1, disk2
-
 global all_results
 all_results = {}
+disk_list = list(POST('/device/get_info/', 'DISK').json().keys())
 
 
 @pytest.mark.parametrize('dtype', ['SERIAL', 'DISK'])
@@ -24,13 +23,13 @@ def test_01_get_device_info(dtype):
     all_results[dtype] = results
 
 
-@pytest.mark.parametrize('dtype', ['SERIAL', 'DISK'])
-def test_02_look_device_info(dtype):
-    results = all_results[dtype]
-    if dtype == 'SERIAL':
-        assert results.json()[0]['drivername'] == 'uart', results.text
-        assert results.json()[1]['drivername'] == 'uart', results.text
-    elif dtype == 'DISK':
-        assert results.json()[disk0]['name'] == disk0, results.text
-        assert results.json()[disk1]['name'] == disk1, results.text
-        assert results.json()[disk2]['name'] == disk2, results.text
+def test_02_look_at_device_serial():
+    results = all_results['SERIAL']
+    assert results.json()[0]['drivername'] == 'uart', results.text
+    assert results.json()[1]['drivername'] == 'uart', results.text
+
+
+@pytest.mark.parametrize('disk', disk_list)
+def test_03_look_at_device_disk(disk):
+    results = all_results['DISK']
+    assert results.json()[disk]['name'] == disk, results.text

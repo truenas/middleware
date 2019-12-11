@@ -13,6 +13,8 @@ import threading
 import time
 import types
 
+import humanfriendly
+
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
 from zettarepl.definition.definition import (
@@ -309,6 +311,13 @@ class ZettareplService(Service):
 
                 if isinstance(message, ReplicationTaskLog):
                     job.logs_fd.write(message.log.encode("utf8", "ignore") + b"\n")
+
+                if isinstance(message, ReplicationTaskSnapshotProgress):
+                    job.set_progress(
+                        100 * message.current / message.total,
+                        f"Sending {message.dataset}@{message.snapshot} "
+                        f"({humanfriendly.format_size(message.current)} / {humanfriendly.format_size(message.total)})",
+                    )
 
                 if isinstance(message, ReplicationTaskSuccess):
                     return

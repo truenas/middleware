@@ -2161,7 +2161,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             if (device['dtype'] not in ('DISK', 'RAW')) or device['vm']['id'] in ignored_vms:
                 continue
 
-            disk = device['attributes'].get('path', None)
+            disk = device['attributes'].get('path')
             if not disk:
                 continue
 

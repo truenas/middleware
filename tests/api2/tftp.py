@@ -73,3 +73,8 @@ def test_06_Checking_to_see_if_TFTP_service_is_enabled():
     results = GET("/service/?service=tftp")
 
     assert results.json()[0]["state"] == "RUNNING", results.text
+
+
+def test_07_delete_tftp_dataset():
+    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
+    assert results.status_code == 200, results.text

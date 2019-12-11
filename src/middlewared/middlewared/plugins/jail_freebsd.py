@@ -644,7 +644,7 @@ class JailService(CRUDService):
                     jail = list(jail.values())[0]
                     jail['id'] = jail['host_hostuuid']
                     if jail['dhcp']:
-                        uuid = jail['host_hostuuid']
+                        uuid = jail['host_hostuuid'].replace('.', '_')
 
                         if jail['state'] == 'up':
                             interface = jail['interfaces'].split(',')[0].split(
@@ -668,7 +668,7 @@ class JailService(CRUDService):
                             jail['jid'] = su.check_output(
                                 [
                                     'jls', '-j',
-                                    f'ioc-{jail["host_hostuuid"]}',
+                                    f'ioc-{jail["host_hostuuid"].replace(".", "_")}',
                                     'jid'
                                 ]
                             ).decode().strip()
@@ -1059,7 +1059,7 @@ class JailService(CRUDService):
         """Does specified action on rc enabled (boot=on) jails"""
         if not self.iocage_set_up():
             return
-        iocage = ioc.IOCage(rc=True)
+        iocage = ioc.IOCage(rc=True, reset_cache=True)
 
         try:
             if action == "START":
@@ -1345,12 +1345,13 @@ class JailService(CRUDService):
     def activate(self, pool):
         """Activates a pool for iocage usage, and deactivates the rest."""
         pool = self.middleware.call_sync('pool.query', [['name', '=', pool]], {'get': True})
-        iocage = ioc.IOCage()
+        iocage = ioc.IOCage(reset_cache=True)
         try:
             iocage.activate(pool['name'])
         except Exception as e:
             raise CallError(f'Failed to activate {pool["name"]}: {e}')
         else:
+            self.check_dataset_existence()
             return True
 
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
@@ -1520,7 +1521,7 @@ class JailService(CRUDService):
             return
 
         self.logger.debug('Stopping jails on shutdown: PENDING')
-        ioc.IOCage(rc=True, reset_cache=True).stop()
+        ioc.IOCage(jail='ALL', reset_cache=True).stop(force=True, ignore_exception=True)
         self.logger.debug('Stopping jails on shutdown: SUCCESS')
 
         return True
@@ -1583,7 +1584,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
         else:
             if not activated_pool:
                 return results
-            if query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
+            if activated_pool == query_dataset or query_dataset.startswith(os.path.join(activated_pool, 'iocage')):
                 for j in await self.middleware.call('jail.query', [('state', '=', 'up')]):
                     results.append({'id': j['host_hostuuid']})
 
@@ -1595,7 +1596,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
     async def delete(self, attachments):
         for attachment in attachments:
             try:
-                await self.middleware.call('jail.stop', attachment['id'])
+                await self.middleware.call('jail.stop', attachment['id'], True)
             except Exception:
                 self.middleware.logger.warning('Unable to jail.stop %r', attachment['id'], exc_info=True)
 

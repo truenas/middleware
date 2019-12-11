@@ -253,6 +253,19 @@ class PeriodicSnapshotTaskService(CRUDService):
             }
         """
 
+        for replication_task in await self.middleware.call('replication.query', [
+            ['direction', '=', 'PUSH'],
+            ['also_include_naming_schema', '=', []],
+            ['enabled', '=', True],
+        ]):
+            if len(replication_task['periodic_snapshot_tasks']) == 1:
+                if replication_task['periodic_snapshot_tasks'][0]['id'] == id:
+                    raise CallError(
+                        f'You are deleting the last periodic snapshot task bound to enabled replication task '
+                        f'{replication_task["name"]!r} which will break it. Please, disable that replication task '
+                        f'first.',
+                    )
+
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,

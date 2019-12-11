@@ -39,6 +39,7 @@ Mandatory option
 Optional option
     --test <test name>         - Test name (Network, ALL)
     --vm-name <VM_NAME>        - Name the the Bhyve VM
+    --ha                       - Runtest for HA
     """ % argv[0]
 
 # if have no argument stop
@@ -46,7 +47,14 @@ if len(argv) == 1:
     print(error_msg)
     exit()
 
-option_list = ["ip=", "password=", "interface=", 'test=', "vm-name="]
+option_list = [
+    "ip=",
+    "password=",
+    "interface=",
+    'test=',
+    "vm-name=",
+    "ha"
+]
 
 # look if all the argument are there.
 try:
@@ -72,6 +80,8 @@ for output, arg in myopts:
         testexpr = arg
     elif output in ('--vm-name'):
         vm_name = f"'{arg}'"
+    elif output == '--ha':
+        ha = True
 
 if ('ip' not in locals() and
         'passwd' not in locals() and
@@ -83,13 +93,8 @@ if ('ip' not in locals() and
 if 'vm_name' not in locals():
     vm_name = None
 
-
-# if interface == "vtnet0":
-#     disk = 'disk0 = "vtbd0"\ndisk1 = "vtbd1"\ndisk2 = "vtbd2"'
-# if api == "1.0":
-#     disk = 'disk0 = "da0"\ndisk1 = "da1"\ndisk2 = "da2"'
-# else:
-disk = 'disk0 = "ada0"\ndisk1 = "ada1"\ndisk2 = "ada2"'
+if 'ha' not in locals():
+    ha = False
 
 # create random hostname and random fake domain
 digit = ''.join(random.choices(string.digits, k=2))
@@ -108,9 +113,9 @@ api_url = 'http://{ip}/api/v2.0'
 interface = "{interface}"
 ntpServer = "10.20.20.122"
 localHome = "{localHome}"
-{disk}
 keyPath = "{keyPath}"
 pool_name = "tank"
+ha = {ha}
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -139,10 +144,19 @@ def get_tests():
     rv = []
     sv = []
     ev = []
-    skip_tests = ['volume']
+    skip_tests = []
+
+    if ha is True:
+        skip_tests = ['interfaces', 'network', 'delete_interfaces']
+    else:
+        skip_tests = []
     apidir = 'api2/'
-    sv = ['interfaces', 'network', 'ssh', 'pool', 'user']
-    ev = ['update', 'delete_interfaces']
+    if ha is True:
+        sv = ['ssh', 'pool', 'user']
+        ev = ['update', 'delete_user']
+    else:
+        sv = ['ssh', 'interfaces', 'network', 'pool', 'user']
+        ev = ['update', 'delete_interfaces', 'delete_user']
     for filename in listdir(apidir):
         if filename.endswith('.py') and not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
