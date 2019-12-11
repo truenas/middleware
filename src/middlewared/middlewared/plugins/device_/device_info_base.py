@@ -9,7 +9,7 @@ class DeviceInfoBase(ServicePartBase):
     serial_port_default = {
         'name': None,
         'location': None,
-        'drivername': None,
+        'drivername': 'uart',
         'description': None,
         'start': None,
         'size': None,
