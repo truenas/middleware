@@ -107,9 +107,11 @@ def get_freenas_var(var, default=None):
 
 FREENAS_DATABASE = get_freenas_var("FREENAS_CONFIG", "/data/freenas-v1.db")
 
+undefined = object()
+
 
 def send_mail(
-    subject=None, text=None, interval=None, channel=None,
+    subject=None, text=None, html=undefined, interval=None, channel=None,
     to=None, extra_headers=None, attachments=None, timeout=300,
     queue=True,
 ):
@@ -128,6 +130,8 @@ def send_mail(
             'extra_headers': extra_headers,
             'attachments': bool(attachments),
         }
+        if html is not undefined:
+            data['html'] = html
         if not attachments:
             with client as c:
                 c.call('mail.send', data, job=True)

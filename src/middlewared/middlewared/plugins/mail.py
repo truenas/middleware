@@ -163,7 +163,7 @@ class MailService(ConfigService):
         'mail_message',
         Str('subject', required=True),
         Str('text', required=True, max_length=None),
-        Str('html', max_length=None),
+        Str('html', null=True, max_length=None),
         List('to', items=[Str('email')]),
         List('cc', items=[Str('email')]),
         Int('interval', null=True),
@@ -178,6 +178,9 @@ class MailService(ConfigService):
     def send(self, job, message, config):
         """
         Sends mail using configured mail settings.
+
+        `text` will be formatted to HTML using Markdown and rendered using default E-Mail template.
+        You can put your own HTML using `html`. If `html` is null, no HTML MIME part will be added to E-Mail.
 
         If `attachments` is true, a list compromised of the following dict is required
         via HTTP upload:
@@ -215,7 +218,9 @@ class MailService(ConfigService):
 
         message['subject'] = f'{product_name} {hostname}: {message["subject"]}'
 
-        if 'html' not in message:
+        if 'html' in message and message['html'] is None:
+            message.pop('html')
+        elif 'html' not in message:
             lookup = TemplateLookup(
                 directories=[os.path.join(os.path.dirname(os.path.realpath(__file__)), '../assets/templates')],
                 module_directory="/tmp/mako/templates")
