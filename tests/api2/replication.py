@@ -174,10 +174,11 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
     # Legacy multiple source datasets
     (dict(transport="LEGACY", source_datasets=["tank/data", "tmp"]), "source_datasets"),
     # Legacy not all periodic snapshot tasks
-    (dict(transport="LEGACY", source_datasets=["tank/data/work"], periodic_snapshot_tasks=["data-recursive"]),
+    (dict(transport="LEGACY", source_datasets=["tank/data/work"], target_dataset="data/work",
+          periodic_snapshot_tasks=["data-recursive"]),
      "periodic_snapshot_tasks"),
     # Legacy all periodic snapshot tasks
-    (dict(transport="LEGACY", source_datasets=["tank/data/work"],
+    (dict(transport="LEGACY", source_datasets=["tank/data/work"], target_dataset="data/work",
           ssh_credentials=True, auto=True, allow_from_scratch=True, dedup=False, large_block=False, embed=False,
           compressed=False, retries=1),
      None),
