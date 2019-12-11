@@ -397,4 +397,4 @@ async def pool_post_import(middleware, pool):
 
 
 async def setup(middleware):
-    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)
+    middleware.register_hook('pool.post_import', pool_post_import, sync=True)

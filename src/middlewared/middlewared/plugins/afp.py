@@ -354,4 +354,4 @@ class AFPFSAttachmentDelegate(FSAttachmentDelegate):
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', AFPFSAttachmentDelegate(middleware))
-    middleware.register_hook('pool.post_import_pool', pool_post_import, sync=True)
+    middleware.register_hook('pool.post_import', pool_post_import, sync=True)

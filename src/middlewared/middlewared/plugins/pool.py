@@ -1934,7 +1934,7 @@ class PoolService(CRUDService):
             await self.middleware.call('keyvalue.delete', key)
 
         await self.middleware.call('service.reload', 'disk')
-        await self.middleware.call_hook('pool.post_import_pool', pool)
+        await self.middleware.call_hook('pool.post_import', pool)
 
         return True
 
