@@ -113,6 +113,7 @@ Depends: alembic,
          python3-ws4py,
          python3-zeroconf,
          python3-zettarepl,
+         sockstat,
          truenas-files,
          ${misc:Depends},
          ${python3:Depends}
