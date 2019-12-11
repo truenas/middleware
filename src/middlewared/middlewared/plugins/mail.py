@@ -419,7 +419,7 @@ class MailService(ConfigService):
                 try:
                     config = self.middleware.call_sync('mail.config')
                     server = self._get_smtp_server(config)
-                    server.sendmail(queue.message['From'], queue.message['To'].split(', '), queue.message.as_string())
+                    server.sendmail(queue.message['From'].encode(), queue.message['To'].split(', '), queue.message.as_string())
                     server.quit()
                 except Exception:
                     self.logger.debug('Sending message from queue failed', exc_info=True)
