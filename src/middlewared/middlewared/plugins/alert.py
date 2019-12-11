@@ -400,8 +400,8 @@ class AlertService(Service):
                             pass
                         else:
                             raise
-                    except ReserveFDException:
-                        pass
+                except ReserveFDException:
+                    pass
 
                 except Exception:
                     alerts_b = [
