@@ -27,11 +27,28 @@ pidfile=${collectd_daemon_pidfile:="/var/run/collectd-daemon.pid"}
 command="/usr/sbin/daemon"
 
 start_cmd=collectd_daemon_start
+stop_precmd=collectd_daemon_pre_stop
+stop_postcmd=collectd_daemon_post_stop
 
 collectd_daemon_start()
 {
 	check_startmsgs && echo "Starting $name."
-	$command -f -P /var/run/collectd-daemon.pid -r -R 60 /usr/local/sbin/collectd -f
+	$command -f -p /var/run/collectd.pid -P /var/run/collectd-daemon.pid -r -R 60 /usr/local/sbin/collectd -f
+}
+
+collectd_daemon_pre_stop()
+{
+    collectd_pid=$(cat /var/run/collectd.pid 2> /dev/null)
+}
+
+collectd_daemon_post_stop()
+{
+    if [ -z "$collectd_pid"  ]; then
+        return 0
+    fi
+
+    echo "Waiting for collectd to terminate."
+    wait_for_pids "$collectd_pid"
 }
 
 run_rc_command "$1"
