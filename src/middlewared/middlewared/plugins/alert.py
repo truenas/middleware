@@ -401,6 +401,7 @@ class AlertService(Service):
                         else:
                             raise
                 except ReserveFDException:
+                    self.logger.debug('Failed to reserve a privileged port')
                     pass
 
                 except Exception:
