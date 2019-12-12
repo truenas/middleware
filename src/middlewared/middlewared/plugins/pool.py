@@ -1801,6 +1801,7 @@ class PoolService(CRUDService):
 
         existing_guids = [i['guid'] for i in await self.middleware.call('pool.query')]
 
+        result = []
         for pool in await self.middleware.call('zfs.pool.find_import'):
             if pool['status'] == 'UNAVAIL':
                 continue
@@ -1812,7 +1813,8 @@ class PoolService(CRUDService):
             entry = {}
             for i in ('name', 'guid', 'status', 'hostname'):
                 entry[i] = pool[i]
-            yield entry
+            result.append(entry)
+        return result
 
     @accepts(Dict(
         'pool_import',
