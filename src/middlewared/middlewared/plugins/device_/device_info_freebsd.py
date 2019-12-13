@@ -104,3 +104,6 @@ class DeviceService(Service, DeviceInfoBase):
                 })
                 ports.append(port)
         return ports
+
+    async def get_freebsd_zfs_part_type(self):
+        return '516e7cba-6ecf-11d6-8ff8-00022d09712b'

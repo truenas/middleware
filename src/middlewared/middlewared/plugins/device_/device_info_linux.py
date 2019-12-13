@@ -135,3 +135,6 @@ class DeviceService(Service, DeviceInfoBase):
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
         return disk
+
+    async def get_freebsd_zfs_part_type(self):
+        return '6a898cc3-1dd2-11b2-99a6-080020736631'
