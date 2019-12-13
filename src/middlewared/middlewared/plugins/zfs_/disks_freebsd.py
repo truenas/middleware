@@ -14,6 +14,7 @@ class ZFSPoolService(Service, PoolDiskServiceBase):
 
     def get_disks(self, name):
         disks = self.middleware.call_sync('zfs.pool.get_devices', name)
+        pool_disks = []
 
         geom.scan()
         labelclass = geom.class_by_name('LABEL')
@@ -29,6 +30,7 @@ class ZFSPoolService(Service, PoolDiskServiceBase):
                     name = g.consumer.provider.geom.name
 
             if name and (name.startswith('multipath/') or geom.geom_by_name('DISK', name)):
-                yield name
+                pool_disks.append(name)
             else:
                 self.logger.debug(f'Could not find disk for {dev}')
+        return pool_disks
