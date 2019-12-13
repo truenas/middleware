@@ -136,10 +136,10 @@ class IdmapService(Service):
         """
         configured_domains = await self.middleware.call('idmap.domain.query')
 
-        id = domain.get('id', None)
+        id = domain.get('id')
         id_verified = False
 
-        short_name = domain.get('idmap_domain_name', None)
+        short_name = domain.get('idmap_domain_name')
         short_name_verified = False
 
         for d in configured_domains:
@@ -187,7 +187,7 @@ class IdmapService(Service):
         new_range = range(data['range_low'], data['range_high'])
         for i in configured_domains:
             # Do not generate validation error comparing to oneself.
-            if i['domain']['id'] == data['domain'].get('id', None):
+            if i['domain']['id'] == data['domain'].get('id'):
                 continue
 
             # Do not generate validation errors for overlapping with a disabled DS.
@@ -640,14 +640,14 @@ class IdmapAutoridService(CRUDService):
         domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
         it appears in `idmap.domain`.
 
-        `range_low` and `rang_high` specify the UID and GID range for which this backend is authoritative.
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
 
         `rangesize` defines the number of uids/gids available per domain range.
 
-        `readonly` turn the module into read-only mode. No new ranges will be allocated nor will new mappings
-        be created in the idamp pool.
+        `readonly` sets the module to read-only mode. No new ranges will be allocated and new mappings
+        will not be created in the idmap pool.
 
-        `ignore builtin` ignore any mapping requests for the BUILTIN domain.
+        `ignore_builtin` ignores mapping requests for the BUILTIN domain.
         """
         verrors = ValidationErrors()
         verrors.add_child('idmap_autorid_create', await self.middleware.call('idmap._common_validate', 'autorid', data))
@@ -1275,7 +1275,7 @@ class IdmapTDBService(CRUDService):
     async def do_create(self, data):
         """
         The idmap_tdb plugin is the default backend used by winbindd for storing SID/uid/gid mapping tables.
-        In contrast to read only backends like idmap_rid, it is an allocating backend. This means that it
+        In contrast to read-only backends like idmap_rid, it is an allocating backend. This means that it
         needs to allocate new user and group IDs in order to create new mappings.
 
         `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
