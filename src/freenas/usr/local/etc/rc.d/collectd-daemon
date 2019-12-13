@@ -39,6 +39,7 @@ collectd_daemon_start()
 collectd_daemon_pre_stop()
 {
     collectd_pid=$(cat /var/run/collectd.pid 2> /dev/null)
+    return 0
 }
 
 collectd_daemon_post_stop()

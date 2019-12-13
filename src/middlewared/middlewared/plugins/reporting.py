@@ -728,8 +728,8 @@ class ReportingService(ConfigService):
             'reporting_update',
             Bool('cpu_in_percentage'),
             Str('graphite'),
-            Int('graph_age', validators=[Range(min=1)]),
-            Int('graph_points', validators=[Range(min=1)]),
+            Int('graph_age', validators=[Range(min=1, max=60)]),
+            Int('graph_points', validators=[Range(min=1, max=4096)]),
             Bool('confirm_rrd_destroy'),
             update=True
         )
