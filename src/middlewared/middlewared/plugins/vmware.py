@@ -256,7 +256,6 @@ class VMWareService(CRUDService):
         filesystems = []
         for fs in self.middleware.call_sync("pool.dataset.query", [
             ("pool", "in", [vol["name"] for vol in self.middleware.call_sync("pool.query")]),
-            ("name", "rnin", ".system")
         ]):
             if fs["type"] == "FILESYSTEM":
                 filesystems.append({
