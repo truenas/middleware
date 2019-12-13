@@ -191,10 +191,12 @@ class PluginService(CRUDService):
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
             plugin_info = plugin_output.read_text().strip() if plugin_output.is_file() else None
+            admin_portal = plugin_dict.pop('admin_portal')
 
             plugin_dict.update({
                 'id': plugin_dict['name'],
                 'plugin_info': plugin_info,
+                'admin_portals': admin_portal.split(',') if admin_portal else [],
                 **self.get_local_plugin_version(
                     plugin_dict['plugin'],
                     plugin_dict.pop('primary_pkg'), iocroot, plugin_dict['name']
