@@ -31,3 +31,11 @@ class DiskService(Service, DiskInfoBase):
                 parts.append({'name': name.text, 'size': size})
 
         return parts
+
+    def gptid_from_part_type(self, disk, part_type):
+        geom.scan()
+        g = geom.class_by_name('PART')
+        uuid = g.xml.find(f'.//geom[name="{disk}"]//config/[rawtype="{part_type}"]/rawuuid')
+        if uuid is None:
+            raise ValueError(f'Partition type {part_type} not found on {disk}')
+        return f'gptid/{uuid.text}'
