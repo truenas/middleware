@@ -3531,7 +3531,9 @@ class PoolDatasetService(CRUDService):
                     zfsfilters.append(f)
 
         return filter_list(
-            self.__transform(self.middleware.call_sync('zfs.dataset.query', zfsfilters)), filters, options
+            self.__transform(self.middleware.call_sync(
+                'zfs.dataset.query', zfsfilters, {'extra': {'flat': options.get('extra', {}).get('flat', True)}})
+            ), filters, options
         )
 
     def __transform(self, datasets):
