@@ -6,10 +6,6 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 
-try:
-    from bsd import geom
-except ImportError:
-    geom = None
 import libzfs
 
 from middlewared.alert.base import (
@@ -181,28 +177,6 @@ class ZFSPoolService(CRUDService):
                 return [i.replace('/dev/', '') for i in zfs.get(name).disks]
         except libzfs.ZFSException as e:
             raise CallError(str(e), errno.ENOENT)
-
-    @accepts(Str('pool'))
-    def get_disks(self, name):
-        disks = self.get_devices(name)
-
-        geom.scan()
-        labelclass = geom.class_by_name('LABEL')
-        for dev in disks:
-            dev = dev.replace('.eli', '')
-            find = labelclass.xml.findall(f".//provider[name='{dev}']/../consumer/provider")
-            name = None
-            if find:
-                name = geom.provider_by_id(find[0].get('ref')).geom.name
-            else:
-                g = geom.geom_by_name('DEV', dev)
-                if g:
-                    name = g.consumer.provider.geom.name
-
-            if name and (name.startswith('multipath/') or geom.geom_by_name('DISK', name)):
-                yield name
-            else:
-                self.logger.debug(f'Could not find disk for {dev}')
 
     @accepts(
         Str('name'),
