@@ -3516,6 +3516,13 @@ class PoolDatasetService(CRUDService):
     def query(self, filters=None, options=None):
         """
         Query Pool Datasets with `query-filters` and `query-options`.
+
+        We provide two ways to retrieve datasets. The first is a flat structure (default), where
+        all datasets in the system are returned as separate objects which contain all data
+        there is for their children. This retrieval type is slightly slower because of duplicates in each object.
+        The second type is hierarchical, where only top level datasets are returned in the list. They contain all the
+        children in the `children` key. This retrieval type is slightly faster.
+        These options are controlled by the `query-options.extra.flat` attribute (default true).
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
@@ -3531,7 +3538,9 @@ class PoolDatasetService(CRUDService):
                     zfsfilters.append(f)
 
         return filter_list(
-            self.__transform(self.middleware.call_sync('zfs.dataset.query', zfsfilters)), filters, options
+            self.__transform(self.middleware.call_sync(
+                'zfs.dataset.query', zfsfilters, {'extra': {'flat': options.get('extra', {}).get('flat', True)}})
+            ), filters, options
         )
 
     def __transform(self, datasets):
