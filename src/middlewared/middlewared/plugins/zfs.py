@@ -521,10 +521,21 @@ class ZFSDatasetService(CRUDService):
         if not ds.encrypted:
             raise CallError(f'{id} is not encrypted')
 
-    def get_user_or_group_quota(self, ds, quota_type):
+    def get_quota(self, ds, quota_type):
+        if quota_type == 'dataset':
+            dataset = self.query([('id', '=', ds)], {'get': True})
+            return [{
+                'quota_type': 'DATASET',
+                'id': ds,
+                'name': ds,
+                'quota': int(dataset['properties']['quota']['rawvalue']),
+                'refquota': int(dataset['properties']['refquota']['rawvalue']),
+                'used_bytes': int(dataset['properties']['used']['rawvalue']),
+            }]
+
         quota_list = []
         quota_get = subprocess.run(
-            ['zfs', f'{quota_type}space', '-H', '-n', '-p', '-o', 'name,used,quota', ds],
+            ['zfs', f'{quota_type}space', '-H', '-n', '-p', '-o', 'name,used,quota,objquota,objused', ds],
             capture_output=True,
             check=False,
         )
@@ -535,7 +546,7 @@ class ZFSDatasetService(CRUDService):
 
         for quota in quota_get.stdout.decode().splitlines():
             m = quota.split('\t')
-            if len(m) != 3:
+            if len(m) != 5:
                 self.logger.debug('Invalid %s quota: %s',
                                   quota_type.lower(), quota)
                 continue
@@ -547,9 +558,15 @@ class ZFSDatasetService(CRUDService):
                 'quota': int(m[2]),
                 'used_bytes': int(m[1]),
                 'used_percent': 0,
+                'obj_quota': int(m[3]) if m[3] != '-' else 0,
+                'obj_used': int(m[4]) if m[4] != '-' else 0,
+                'obj_used_percent': 0,
             }
             if entry['quota'] > 0:
                 entry['used_percent'] = entry['used_bytes'] / entry['quota'] * 100
+
+            if entry['obj_quota'] > 0:
+                entry['obj_used_percent'] = entry['obj_used'] / entry['obj_quota'] * 100
 
             try:
                 if quota_type == 'USER':
@@ -572,7 +589,7 @@ class ZFSDatasetService(CRUDService):
 
         return quota_list
 
-    def set_user_or_group_quota(self, ds, quota_list):
+    def set_quota(self, ds, quota_list):
         cmd = ['zfs', 'set']
         cmd.extend(quota_list)
         cmd.append(ds)
