@@ -4223,10 +4223,6 @@ class PoolDatasetService(CRUDService):
         )
         return filter_list(quota_list, filters, options)
 
-    @accepts()
-    async def quota_type_choices(self):
-        return ['DATASET', 'USER', 'USEROBJ', 'GROUP', 'GROUPOBJ']
-
     @accepts(
         Str('ds', required=True),
         List('quotas', items=[
@@ -4300,7 +4296,7 @@ class PoolDatasetService(CRUDService):
                     )
                     continue
 
-                if dataset_quotas.get(q['id'].lower(), None) is not None:
+                if dataset_quotas.get(q['id'].lower()) is not None:
                     verrors.add(
                         f'quotas.{i}.id',
                         f'Setting multiple values for {q["id"]} for quota_type "DATASET" is not permitted'
