@@ -108,11 +108,11 @@ class BootService(Service):
             # Lets try to find out the size of the current freebsd-zfs partition so
             # the new partition is not bigger, preventing size mismatch if one of
             # them fail later on. See #21336
-            await self.middleware.run_in_thread(geom.scan)
-            labelclass = geom.class_by_name('PART')
-            for e in labelclass.xml.findall(f"./geom[name='{disks[0]}']/provider/config[type='freebsd-zfs']"):
-                format_opts['size'] = int(e.find('./length').text)
-                break
+            disk_parts = await self.middleware.call('disk.list_partitions', disks[0])
+            zfs_part_uuid = await self.middleware.call('device.get_zfs_part_type')
+            for part in disk_parts:
+                if part['partition_type'] == zfs_part_uuid:
+                    format_opts['size'] = part['size']
 
         swap_size = await self.middleware.call('disk.get_swap_size', disks[0])
         if swap_size:
