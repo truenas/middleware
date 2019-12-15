@@ -28,7 +28,12 @@ class DiskService(Service, DiskInfoBase):
                     except ValueError:
                         size = None
                 name = p.find('./name')
-                parts.append({'name': name.text, 'size': size})
+                part_type = p.find('./config/type')
+                if part_type is not None:
+                    part_type = self.middleware.call_sync('device.get_partition_uuid_from_name', part_type.text)
+                if not part_type:
+                    part_type = 'UNKNOWN'
+                parts.append({'name': name.text, 'size': size, 'partition_type': part_type})
 
         return parts
 

@@ -38,6 +38,7 @@ class DeviceService(Service):
         mapping = {
             'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
             'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
+            'freebsd-boot': '83bd6b9d-7f41-11dc-be0b-001560b84f0f',
         }
         return mapping.get(part_type_name)
 

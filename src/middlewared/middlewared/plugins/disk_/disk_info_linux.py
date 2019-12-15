@@ -25,7 +25,7 @@ class DiskService(Service, DiskInfoBase):
             return parts
 
         return [
-            {'name': f'{disk}{p["partition_number"]}', 'size': p['partition_size']}
+            {'name': f'{disk}{p["partition_number"]}', 'size': p['partition_size'], 'partition_type': p['type']}
             for p in block_device.__getstate__()['partitions_data']['partitions']
         ]
 
