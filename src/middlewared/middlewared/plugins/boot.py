@@ -101,12 +101,16 @@ class BootService(Service):
             format_opts['swap_size'] = swap_part['size']
         await self.middleware.call('boot.format', dev, format_opts)
 
-        pool = await self.middleware.call("zfs.pool.query", [["name", "=", BOOT_POOL_NAME]], {"get": True})
+        pool = await self.middleware.call('zfs.pool.query', [['name', '=', BOOT_POOL_NAME]], {'get': True})
 
-        extend_pool_job = await self.middleware.call('zfs.pool.extend', BOOT_POOL_NAME, None,
-                                                     [{'target': pool["groups"]["data"][0]["guid"],
-                                                       'type': 'DISK',
-                                                       'path': f'/dev/{dev}p2'}])
+        zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
+        extend_pool_job = await self.middleware.call(
+            'zfs.pool.extend', BOOT_POOL_NAME, None, [{
+                'target': pool['groups']['data'][0]['guid'],
+                'type': 'DISK',
+                'path': f'/dev/{zfs_dev_part["name"]}'
+            }]
+        )
 
         await self.middleware.call('boot.install_loader', dev)
 
@@ -114,7 +118,7 @@ class BootService(Service):
 
         # If the user is upgrading his disks, let's set expand to True to make sure that we
         # register the new disks capacity which increase the size of the pool
-        await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, f'{dev}p2', True)
+        await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
 
     @accepts(Str('dev'))
     async def detach(self, dev):
