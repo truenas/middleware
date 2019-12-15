@@ -107,3 +107,6 @@ class DeviceService(Service, DeviceInfoBase):
 
     async def get_zfs_part_type(self):
         return '516e7cba-6ecf-11d6-8ff8-00022d09712b'
+
+    async def get_swap_part_type(self):
+        return '516e7cb5-6ecf-11d6-8ff8-00022d09712b'

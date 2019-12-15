@@ -28,7 +28,18 @@ class DeviceService(Service):
 
     @private
     async def get_valid_swap_partition_type_uuids(self):
-        return ['516e7cb5-6ecf-11d6-8ff8-00022d09712b']
+        return [
+            '516e7cb5-6ecf-11d6-8ff8-00022d09712b',  # used by freebsd
+            '0657FD6D-A4AB-43C4-84E5-0933C84B4F4F',  # used by linux
+        ]
+
+    @private
+    async def get_partition_uuid_from_name(self, part_type_name):
+        mapping = {
+            'freebsd-zfs': '516e7cba-6ecf-11d6-8ff8-00022d09712b',
+            'freebsd-swap': '516e7cb5-6ecf-11d6-8ff8-00022d09712b',
+        }
+        return mapping.get(part_type_name)
 
 
 async def devd_loop(middleware):
