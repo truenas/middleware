@@ -68,17 +68,6 @@ class BootService(Service):
             return 'BIOS'
         return 'EFI'
 
-    @private
-    def get_swap_size(self, disk):
-        geom.scan()
-        labelclass = geom.class_by_name('PART')
-        length = labelclass.xml.find(
-            f".//geom[name='{disk}']/provider/config[type='freebsd-swap']/length"
-        )
-        if length is None:
-            return None
-        return int(length.text)
-
     @accepts(
         Str('dev'),
         Dict(
@@ -206,7 +195,7 @@ class BootService(Service):
                 format_opts['size'] = int(e.find('./length').text)
                 break
 
-        swap_size = await self.middleware.call('boot.get_swap_size', disks[0])
+        swap_size = await self.middleware.call('disk.get_swap_size', disks[0])
         if swap_size:
             format_opts['swap_size'] = swap_size
         boottype = await self.format(dev, format_opts)
@@ -240,7 +229,7 @@ class BootService(Service):
         """
         format_opts = {}
         disks = list(await self.get_disks())
-        swap_size = await self.middleware.call('boot.get_swap_size', disks[0])
+        swap_size = await self.middleware.call('disk.get_swap_size', disks[0])
         if swap_size:
             format_opts['swap_size'] = swap_size
         boottype = await self.format(dev, format_opts)
