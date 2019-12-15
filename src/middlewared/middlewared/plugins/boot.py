@@ -1,4 +1,5 @@
 import os
+import platform
 import tempfile
 
 from middlewared.schema import Bool, Dict, Int, Str, accepts
@@ -14,6 +15,7 @@ except ImportError:
 
 BOOT_POOL_NAME = None
 BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
+IS_LINUX = platform.system().lower() == 'linux'
 
 
 class BootService(Service):
@@ -44,6 +46,13 @@ class BootService(Service):
         Returns:
             "BIOS", "EFI", None
         """
+        if IS_LINUX:
+            # https://wiki.debian.org/UEFI
+            return 'EFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
+        else:
+            return self.__get_boot_type_freebsd()
+
+    async def __get_boot_type_freebsd(self):
         await self.middleware.run_in_thread(geom.scan)
         labelclass = geom.class_by_name('PART')
         efi = bios = 0

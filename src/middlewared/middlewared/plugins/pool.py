@@ -1088,7 +1088,7 @@ class PoolService(CRUDService):
                 'disk.format', disk, swapgb if config['create_swap'] else 0, False,
             )
             devname = await self.middleware.call(
-                'disk.gptid_from_part_type', disk, await self.middleware.call('device.get_freebsd_zfs_part_type')
+                'disk.gptid_from_part_type', disk, await self.middleware.call('device.get_zfs_part_type')
             )
             if enc_keypath:
                 enc_disks.append({

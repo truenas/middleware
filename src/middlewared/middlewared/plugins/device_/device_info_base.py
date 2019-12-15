@@ -45,5 +45,5 @@ class DeviceInfoBase(ServicePartBase):
         raise NotImplementedError()
 
     @private
-    async def get_freebsd_zfs_part_type(self):
+    async def get_zfs_part_type(self):
         raise NotImplementedError()

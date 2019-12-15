@@ -136,5 +136,5 @@ class DeviceService(Service, DeviceInfoBase):
 
         return disk
 
-    async def get_freebsd_zfs_part_type(self):
+    async def get_zfs_part_type(self):
         return '6a898cc3-1dd2-11b2-99a6-080020736631'
