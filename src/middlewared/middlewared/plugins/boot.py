@@ -92,15 +92,13 @@ class BootService(Service):
             # Lets try to find out the size of the current freebsd-zfs partition so
             # the new partition is not bigger, preventing size mismatch if one of
             # them fail later on. See #21336
-            disk_parts = await self.middleware.call('disk.list_partitions', disks[0])
-            zfs_part_uuid = await self.middleware.call('device.get_zfs_part_type')
-            for part in disk_parts:
-                if part['partition_type'] == zfs_part_uuid:
-                    format_opts['size'] = part['size']
+            zfs_part = await self.middleware.call('disk.get_partition', disks[0], 'ZFS')
+            if zfs_part:
+                format_opts['size'] = zfs_part['size']
 
-        swap_size = await self.middleware.call('disk.get_swap_size', disks[0])
-        if swap_size:
-            format_opts['swap_size'] = swap_size
+        swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
+        if swap_part:
+            format_opts['swap_size'] = swap_part['size']
         await self.middleware.call('boot.format', dev, format_opts)
 
         pool = await self.middleware.call("zfs.pool.query", [["name", "=", BOOT_POOL_NAME]], {"get": True})
@@ -132,9 +130,9 @@ class BootService(Service):
         """
         format_opts = {}
         disks = list(await self.get_disks())
-        swap_size = await self.middleware.call('disk.get_swap_size', disks[0])
-        if swap_size:
-            format_opts['swap_size'] = swap_size
+        swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
+        if swap_part:
+            format_opts['swap_size'] = swap_part['size']
 
         await self.middleware.call('boot.format', dev, format_opts)
         await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, f'{dev}p2')
