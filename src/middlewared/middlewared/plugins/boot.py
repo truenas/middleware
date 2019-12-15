@@ -139,7 +139,8 @@ class BootService(Service):
             format_opts['swap_size'] = swap_part['size']
 
         await self.middleware.call('boot.format', dev, format_opts)
-        await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, f'{dev}p2')
+        zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
+        await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, zfs_dev_part['name'])
         await self.middleware.call('boot.install_loader', dev)
 
     @accepts()
