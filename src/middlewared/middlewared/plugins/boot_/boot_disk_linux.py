@@ -41,4 +41,5 @@ class BootService(Service, BootDiskBase):
                     '%r failed:\n%s%s' % (' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
                 )
 
-        return boot_type
+    async def install_loader(self, dev):
+        raise NotImplementedError()

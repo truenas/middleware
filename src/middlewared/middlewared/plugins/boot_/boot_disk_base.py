@@ -17,3 +17,7 @@ class BootDiskBase(ServicePartBase):
         """
         Format a given disk `dev` using the appropriate partition layout
         """
+
+    @private
+    async def install_loader(self, dev):
+        raise NotImplementedError()

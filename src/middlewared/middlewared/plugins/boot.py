@@ -1,6 +1,5 @@
 import os
 import platform
-import tempfile
 
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, job, private
@@ -68,21 +67,6 @@ class BootService(Service):
             return 'BIOS'
         return 'EFI'
 
-    @private
-    async def install_loader(self, boottype, dev):
-        if boottype == 'EFI':
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', tmpdirname, check=False)
-                try:
-                    os.makedirs(f'{tmpdirname}/efi/boot')
-                except FileExistsError:
-                    pass
-                await run('cp', '/boot/boot1.efi', f'{tmpdirname}/efi/boot/BOOTx64.efi', check=False)
-                await run('umount', tmpdirname, check=False)
-
-        else:
-            await run('gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1', f'/dev/{dev}', check=False)
-
     @accepts(
         Str('dev'),
         Dict(
@@ -117,7 +101,7 @@ class BootService(Service):
         swap_size = await self.middleware.call('disk.get_swap_size', disks[0])
         if swap_size:
             format_opts['swap_size'] = swap_size
-        boottype = await self.middleware.call('boot.format', dev, format_opts)
+        await self.middleware.call('boot.format', dev, format_opts)
 
         pool = await self.middleware.call("zfs.pool.query", [["name", "=", BOOT_POOL_NAME]], {"get": True})
 
@@ -126,7 +110,7 @@ class BootService(Service):
                                                        'type': 'DISK',
                                                        'path': f'/dev/{dev}p2'}])
 
-        await self.install_loader(boottype, dev)
+        await self.middleware.call('boot.install_loader', dev)
 
         await job.wrap(extend_pool_job)
 
@@ -151,9 +135,10 @@ class BootService(Service):
         swap_size = await self.middleware.call('disk.get_swap_size', disks[0])
         if swap_size:
             format_opts['swap_size'] = swap_size
-        boottype = await self.middleware.call('boot.format', dev, format_opts)
+
+        await self.middleware.call('boot.format', dev, format_opts)
         await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, f'{dev}p2')
-        await self.install_loader(boottype, dev)
+        await self.middleware.call('boot.install_loader', dev)
 
     @accepts()
     @job(lock='boot_scrub')

@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 from middlewared.service import CallError, Service
 from middlewared.utils import run
 
@@ -47,8 +50,6 @@ class BootService(Service, BootDiskBase):
                 if p.returncode != 0:
                     raise CallError(
                         '%r failed:\n%s%s' % (' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8')))
-
-            return boottype
         except CallError as e:
             if 'gpart: autofill: No space left on device' in e.errmsg:
                 diskinfo = {
@@ -74,3 +75,20 @@ class BootService(Service, BootDiskBase):
                 ))
 
             raise
+
+    async def install_loader(self, dev):
+        if (await self.middleware.call('boot.get_boot_type')) == 'EFI':
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', tmpdirname, check=False)
+                try:
+                    os.makedirs(f'{tmpdirname}/efi/boot')
+                except FileExistsError:
+                    pass
+                await run('cp', '/boot/boot1.efi', f'{tmpdirname}/efi/boot/BOOTx64.efi', check=False)
+                await run('umount', tmpdirname, check=False)
+
+        else:
+            await run(
+                'gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1', f'/dev/{dev}',
+                check=False
+            )
