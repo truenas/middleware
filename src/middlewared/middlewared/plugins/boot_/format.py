@@ -34,10 +34,11 @@ class BootService(Service):
 
         if IS_LINUX:
             zfs_part_no = 4 if options.get('swap_size') else 3
+            zfs_part_size = f'{int(options["size"]/1024)}K' if options.get('size') else 0
             commands.extend((
                 ['sgdisk', '-a1', f'-n1:24K:+1000K', '-t1:EF02', f'/dev/{dev}'],
-                ['sgdisk', '-n2:1M:+512M', '-t2:EF00', f'/dev/{dev}'],
-                ['sgdisk', f'-n{zfs_part_no}:0:0', f'-t{zfs_part_no}:BF01', f'/dev/{dev}'],
+                ['sgdisk', '-n2:1024K:+524288K', '-t2:EF00', f'/dev/{dev}'],
+                ['sgdisk', f'-n{zfs_part_no}:0:{zfs_part_size}', f'-t{zfs_part_no}:BF01', f'/dev/{dev}'],
             ))
         else:
             if (await self.middleware.call('boot.get_boot_type')) == 'EFI':
@@ -58,7 +59,7 @@ class BootService(Service):
             if IS_LINUX:
                 commands.insert(2, [
                     'sgdisk',
-                    f'-n3:513M:+{int(((int((options["swap_size"] + 127) / 128)) * 128) / 1024 / 1024)}M',
+                    f'-n3:525312K:+{int(((int((options["swap_size"] + 127) / 128)) * 128) / 1024)}K',
                     '-t3:8200', f'/dev/{dev}'
                 ])
             else:
