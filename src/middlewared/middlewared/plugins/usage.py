@@ -206,7 +206,7 @@ class UsageService(Service):
     async def gather_plugins(self):
         return {
             'plugins': [
-                {'name': p['name'], 'version': p['version']}
+                {'name': p['plugin'], 'version': p['version']}
                 for p in (await self.middleware.call('plugin.query'))
             ]
         }
