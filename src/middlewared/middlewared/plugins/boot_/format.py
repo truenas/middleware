@@ -58,7 +58,7 @@ class BootService(Service):
             if IS_LINUX:
                 commands.insert(2, [
                     'sgdisk',
-                    f'-n3:514M:+{((int((options["swap_size"] + 127) / 128)) * 128) / 1024 / 1024}M',
+                    f'-n3:513M:+{int(((int((options["swap_size"] + 127) / 128)) * 128) / 1024 / 1024)}M',
                     '-t3:8200', f'/dev/{dev}'
                 ])
             else:
@@ -81,7 +81,8 @@ class BootService(Service):
                 p = await run(*command, check=False)
                 if p.returncode != 0:
                     raise CallError(
-                        '%r failed:\n%s%s' % (' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8')))
+                        '%r failed:\n%s%s' % (' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
+                    )
         except CallError as e:
             if 'gpart: autofill: No space left on device' in e.errmsg:
                 diskinfo = {
