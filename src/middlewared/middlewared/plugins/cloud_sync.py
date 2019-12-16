@@ -83,6 +83,8 @@ class RcloneConfig:
 
                 remote_path = "encrypted:/"
 
+            extra_args.extend(["--exclude", ".zfs", "--exclude", ".zfs/**"])
+
             if self.cloud_sync.get("exclude"):
                 self.tmp_file_exclude = tempfile.NamedTemporaryFile(mode="w+")
                 self.tmp_file_exclude.write("\n".join(self.cloud_sync["exclude"]))
