@@ -7,6 +7,7 @@ from middlewared.utils import run
 from middlewared.validators import Range
 
 from bsd import geom
+import sysctl
 
 
 class BootService(Service):
@@ -86,7 +87,11 @@ class BootService(Service):
             commands.append(['gpart', 'add', '-t', 'efi', '-i', '1', '-s', '260m', dev])
             partitions.append(("efi", 260 * 1024 * 1024))
 
-            commands.append(['newfs_msdos', '-F', '16', f'/dev/{dev}p1'])
+            sysctl.filter('kern.geom.debugflags')[0].value = 0x10
+            try:
+                commands.append(['newfs_msdos', '-F', '16', f'/dev/{dev}p1'])
+            finally:
+                sysctl.filter('kern.geom.debugflags')[0].value = 0
         else:
             commands.append(['gpart', 'add', '-t', 'freebsd-boot', '-i', '1', '-s', '512k', dev])
             partitions.append(("freebsd-boot", 512 * 1024))
