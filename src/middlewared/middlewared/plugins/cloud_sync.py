@@ -104,6 +104,8 @@ async def rclone(job, cloud_sync):
             "--config", config.config_path,
             "-v",
             "--stats", "1s",
+            "--exclude", ".zfs",
+            "--exclude", ".zfs/**",
         ] + shlex.split(cloud_sync["args"]) + [
             cloud_sync["transfer_mode"].lower(),
         ]
