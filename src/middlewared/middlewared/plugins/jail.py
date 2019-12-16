@@ -1280,7 +1280,7 @@ class JailService(CRUDService):
     def activate(self, pool):
         """Activates a pool for iocage usage, and deactivates the rest."""
         pool = self.middleware.call_sync('pool.query', [['name', '=', pool]], {'get': True})
-        iocage = ioc.IOCage(reset_cache=True)
+        iocage = ioc.IOCage(reset_cache=True, activate=True)
         try:
             iocage.activate(pool['name'])
         except Exception as e:
