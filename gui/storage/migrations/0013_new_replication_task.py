@@ -139,8 +139,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(repl_compression),
-
         migrations.AddField(
             model_name='replication',
             name='repl_direction',
@@ -316,6 +314,7 @@ class Migration(migrations.Migration):
             name='repl_compression',
             field=models.CharField(blank=True, choices=[('LZ4', 'lz4 (fastest)'), ('PIGZ', 'pigz (all rounder)'), ('PLZIP', 'plzip (best compression)')], default='LZ4', max_length=120, null=True, verbose_name='Stream Compression'),
         ),
+        migrations.RunPython(repl_compression),
 
         migrations.RenameField(
             model_name='replication',
