@@ -78,6 +78,8 @@ class AsigraService(SystemServiceService):
         try:
             pool = self.middleware.call_sync('jail.get_activated_pool')
         except Exception:
+            pool = None
+        if not pool:
             # In this case let's activate the pool being used by asigra dataset right now
             pool = asigra_config['filesystem'].split('/', 1)[0]
             if not self.middleware.call_sync('jail.activate', pool):
