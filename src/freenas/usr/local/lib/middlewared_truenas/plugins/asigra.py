@@ -175,7 +175,9 @@ class AsigraService(SystemServiceService):
 
 
 async def _event_system(middleware, event_type, args):
-    if args['id'] != 'ready':
+    if args['id'] != 'ready' or (
+        not await middleware.call('system.is_freenas') and await middleware.call('failover.licensed')
+    ):
         return
 
     await middleware.call('asigra.migrate_to_plugin')

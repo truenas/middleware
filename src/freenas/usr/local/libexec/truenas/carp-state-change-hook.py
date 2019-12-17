@@ -561,6 +561,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                 if ret and ret[0] == 1:
                     run_call(midclt, 'service.restart', i, {'sync': False})
 
+            run_call(midclt, 'asigra.migrate_to_plugin')
             run_call(midclt, 'jail.start_on_boot')
             run_call(midclt, 'vm.start_on_boot')
 
