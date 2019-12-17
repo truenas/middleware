@@ -832,7 +832,17 @@ class JailService(CRUDService):
         self.failover_checks({**jail, **options}, verrors, 'options')
         verrors.check()
 
-        for prop, val in options.items():
+        opts = {}
+        if 'bpf' in options and 'nat' in options:
+            # We do this as props are applied sequentially, this will allow end user to apply
+            # the props bpf/nat without making separate calls for them as they are mutually exclusive
+            if options['bpf']:
+                opts.update({'nat': options.pop('nat'), 'bpf': options.pop('bpf')})
+            else:
+                opts.update({'bpf': options.pop('bpf'), 'nat': options.pop('nat')})
+        opts.update(options)
+
+        for prop, val in opts.items():
             p = f"{prop}={val}"
 
             try:
