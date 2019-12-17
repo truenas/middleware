@@ -82,8 +82,10 @@ class AsigraService(SystemServiceService):
         if not pool:
             # In this case let's activate the pool being used by asigra dataset right now
             pool = asigra_config['filesystem'].split('/', 1)[0]
-            if not self.middleware.call_sync('jail.activate', pool):
-                raise CallError(f'Failed to activate {pool} for iocage pool.')
+            try:
+                self.middleware.call_sync('jail.activate', pool)
+            except Exception as e:
+                raise CallError(f'Failed to activate {pool} for iocage pool: {e}')
 
         # Ensure iocage datasets exist
         self.middleware.call_sync('jail.check_dataset_existence')
