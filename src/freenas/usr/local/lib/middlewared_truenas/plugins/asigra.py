@@ -128,26 +128,23 @@ class AsigraService(SystemServiceService):
         shutil.rmtree(plugin_upgrade_path)
         shutil.rmtree(plugin_tmp_path)
 
-        for dataset, new_path, new_mount in (
+        for source, destination in (
             (
-                os.path.join(asigra_config['filesystem'], 'files'),
-                os.path.join(plugin_root_dataset['id'], 'files'), plugin_data_path
+                os.path.join('/mnt', asigra_config['filesystem'], 'files'), plugin_data_path,
             ),
             (
-                os.path.join(asigra_config['filesystem'], 'database'),
-                os.path.join(plugin_root_dataset['id'], 'database'), plugin_postgres_path
+                os.path.join('/mnt', asigra_config['filesystem'], 'database'), plugin_postgres_path,
             ),
             (
-                os.path.join(asigra_config['filesystem'], 'upgrade'),
-                os.path.join(plugin_root_dataset['id'], 'upgrade'), plugin_upgrade_path
+                os.path.join('/mnt', asigra_config['filesystem'], 'upgrade'), plugin_upgrade_path,
             ),
         ):
-            self.middleware.call_sync('zfs.dataset.rename', dataset, {'new_name': new_path})
-
-            # "new_mount" will start with "/mnt/something", we don't want "/mnt" to be included so we remove it
-            self.middleware.call_sync(
-                'zfs.dataset.update', new_path, {'properties': {'mountpoint': {'value': new_mount[4:]}}}
-            )
+            self.middleware.call_sync('jail.fstab', custom_jail_image, {
+                'action': 'ADD',
+                'source': source,
+                'destination': destination,
+                'fsoptions': 'rw',
+            })
 
         job.set_progress(80, 'Asigra datasets successfully migrated to asigra plugin.')
 
@@ -159,20 +156,17 @@ class AsigraService(SystemServiceService):
                 uid, gid = ids[0]
 
         proc = subprocess.Popen(
-            ['chown', '-R', f'{uid}:{gid}', plugin_postgres_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ['chown', '-R', f'{uid}:{gid}', os.path.join('/mnt', asigra_config['filesystem'], 'database')],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         stdout, stderr = proc.communicate()
 
         if proc.returncode:
-            raise CallError(f'Failed to set ownership of {plugin_postgres_path}: {stderr}')
+            raise CallError(
+                f'Failed to set ownership of {os.path.join("/mnt", asigra_config["filesystem"], "database")}: {stderr}'
+            )
 
         shutil.copytree(system_tmp_path, plugin_tmp_path)
-
-        try:
-            # Finally we destroy asigra parent dataset
-            self.middleware.call_sync('pool.dataset.delete', asigra_dataset['id'])
-        except Exception as e:
-            self.middleware.logger.debug(f'Failed to destroy asigra dataset: {e}')
 
         self.middleware.call_sync('datastore.update', 'services.asigra', asigra_config['id'], {'filesystem': ''})
         self.middleware.logger.debug('Migration successfully performed.')
