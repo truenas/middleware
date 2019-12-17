@@ -1899,6 +1899,11 @@ class CertificateAuthorityService(CRUDService):
                         f'{schema_name}.csr_cert_id',
                         'CSR not valid'
                     )
+                if not csr_cert_data['privatekey']:
+                    verrors.add(
+                        f'{schema_name}.csr_cert_id',
+                        'Private key not found for specified CSR.'
+                    )
 
         if verrors:
             raise verrors
