@@ -160,7 +160,17 @@ def test_14_set_dataset_quota():
     assert results.status_code == 200, results.text
 
 
-def test_15_verify_job_id_is_successfull():
+def test_15_set_dataset_quota():
+    global results
+    payload = {
+        'quota_type': 'USER',
+    }
+    results = POST(f'/pool/dataset/id/{dataset_url}/get_quota', payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results
+
+
+def test_16_verify_job_id_is_successfull():
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
@@ -240,7 +250,7 @@ def test_24_verify_update_zvol_output(key):
 def test_25_query_zvol_changes_by_id():
     global results
     results = GET(f'/pool/dataset/id/{zvol_url}')
-    assert isinstance(results.json(), dict)
+    assert isinstance(results.json(), dict), results
 
 
 @pytest.mark.parametrize('key', ['comments', 'volsize'])
