@@ -62,7 +62,7 @@ class BootService(Service):
                 'total of %s blocks' % '{:,}'.format(int(total_partition_size / disk_details['sectorsize']))
             )
             raise CallError(
-                f'The new device ({dev}, {disk_details["size"]} GB, {disk_details["blocks"]} blocks) '
+                f'The new device ({dev}, {disk_details["size"]/(1024**3)} GB, {disk_details["blocks"]} blocks) '
                 f'does not have enough space to to hold the required new partitions ({", ".join(partitions)}). '
                 'New mirrored devices might require more space than existing devices due to changes in the '
                 'booting procedure.'
@@ -70,7 +70,7 @@ class BootService(Service):
 
         if IS_LINUX:
             zfs_part_no = 4 if options.get('swap_size') else 3
-            zfs_part_size = f'{int(options["size"]/1024)}K' if options.get('size') else 0
+            zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
             commands.extend((
                 ['sgdisk', '-a1', f'-n1:24K:+1000K', '-t1:EF02', f'/dev/{dev}'],
                 ['sgdisk', '-n2:1024K:+524288K', '-t2:EF00', f'/dev/{dev}'],

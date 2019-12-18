@@ -119,7 +119,7 @@ class DeviceService(Service, DeviceInfoBase):
             disk['size'] = disk['mediasize'] = int(disk_data['size']) if 'size' in disk_data else None
             disk['descr'] = disk['model'] = disk_data.get('product')
             if disk['size'] and disk['sectorsize']:
-                disk['blocks'] = disk['size'] / disk['sectorsize']
+                disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
         # We make a device ID query to get DEVICE ID VPD page of the drive if available and then use that identifier
         # as the lunid - FreeBSD does the same, however it defaults to other schemes if this is unavailable
