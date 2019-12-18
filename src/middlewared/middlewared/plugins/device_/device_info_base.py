@@ -30,6 +30,7 @@ class DeviceInfoBase(ServicePartBase):
         'serial': '',
         'size': None,
         'serial_lunid': None,
+        'blocks': None,
     }
 
     @private

@@ -84,6 +84,8 @@ class DeviceService(Service, DeviceInfoBase):
         disk['size'] = disk['mediasize']
         if disk['serial'] and disk['lunid']:
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
+        if disk['size'] and disk['sectorsize']:
+            disk['blocks'] = disk['size'] / disk['sectorsize']
 
         return disk
 
