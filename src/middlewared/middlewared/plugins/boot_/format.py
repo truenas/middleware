@@ -27,10 +27,46 @@ class BootService(Service):
         if job.error:
             raise CallError(job.error)
 
+        disk_details = await self.middleware.call('device.get_disk', dev)
+        if not disk_details['name']:
+            raise CallError(f'Details for {disk_details["name"]} not found.')
+
         commands = []
         partitions = []
+        efi_boot = (await self.middleware.call('boot.get_boot_type')) == 'EFI'
         if not IS_LINUX:
             commands.append(('gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'))
+            partitions.append(
+                ('efi' if efi_boot else 'freebsd-boot', 272629760 if efi_boot else 524288),
+            )
+            if options.get('swap_size'):
+                partitions.append(('freebsd-swap', options['swap_size']))
+            if options.get('size'):
+                partitions.append(('freebsd-zfs', options['size']))
+        else:
+            partitions.extend([
+                ('BIOS boot partition', 1048576),
+                ('EFI System', 536870912)
+            ])
+            if options.get('swap_size'):
+                partitions.append(('Linux swap', ((int((options['swap_size'] + 127) / 128)) * 128)))
+            if options.get('size'):
+                partitions.append(('Solaris /usr & Mac ZFS', options['size']))
+
+        total_partition_size = sum(map(lambda y: y[1], partitions))
+        if disk_details['size'] < total_partition_size:
+            partitions = [
+                '%s, %s blocks' % (p[0], '{:,}'.format(int(p[1] / disk_details['sectorsize']))) for p in partitions
+            ]
+            partitions.append(
+                'total of %s blocks' % '{:,}'.format(int(total_partition_size / disk_details['sectorsize']))
+            )
+            raise CallError(
+                f'The new device ({dev}, {disk_details["size"]} GB, {disk_details["blocks"]} blocks) '
+                f'does not have enough space to to hold the required new partitions ({", ".join(partitions)}). '
+                'New mirrored devices might require more space than existing devices due to changes in the '
+                'booting procedure.'
+            )
 
         if IS_LINUX:
             zfs_part_no = 4 if options.get('swap_size') else 3
@@ -41,19 +77,17 @@ class BootService(Service):
                 ['sgdisk', f'-n{zfs_part_no}:0:{zfs_part_size}', f'-t{zfs_part_no}:BF01', f'/dev/{dev}'],
             ))
         else:
-            if (await self.middleware.call('boot.get_boot_type')) == 'EFI':
+            if efi_boot:
                 efi_size = 260
                 commands.extend((
                     ['gpart', 'add', '-t', 'efi', '-i', '1', '-s', f'{efi_size}m', dev],
                     ['newfs_msdos', '-F', '16', f'/dev/{dev}p1'],
                 ))
-                partitions.append(('efi', efi_size * 1024 * 1024))
             else:
                 commands.extend((
                     ['gpart', 'add', '-t', 'freebsd-boot', '-i', '1', '-s', '512k', dev],
                     ['gpart', 'set', '-a', 'active', dev],
                 ))
-                partitions.append(('freebsd-boot', 512 * 1024))
 
         if options.get('swap_size'):
             if IS_LINUX:
@@ -74,38 +108,10 @@ class BootService(Service):
                     ['-s', str(options['size']) + 'B'] if options.get('size') else []
                 ) + [dev]
             )
-        if options.get('size'):
-            partitions.append(('freebsd-zfs', options['size']))
 
-        try:
-            for command in commands:
-                p = await run(*command, check=False)
-                if p.returncode != 0:
-                    raise CallError(
-                        '%r failed:\n%s%s' % (' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
-                    )
-        except CallError as e:
-            if 'gpart: autofill: No space left on device' in e.errmsg:
-                diskinfo = {
-                    s.split('#')[1].strip(): s.split('#')[0].strip()
-                    for s in (await run('/usr/sbin/diskinfo', '-v', dev)).stdout.decode('utf-8').split('\n')
-                    if '#' in s
-                }
-                name = diskinfo.get('Disk descr.', dev)
-                size_gb = '%.2f' % ((int(diskinfo['mediasize in sectors']) * int(diskinfo['sectorsize']) /
-                                     float(1024 ** 3)))
-                size_blocks = '{:,}'.format(int(diskinfo['mediasize in sectors']) * int(diskinfo['sectorsize']) / 512)
-
-                total_partitions_size = sum([p[1] for p in partitions])
-                partitions = ['%s, %s blocks' % (p[0], '{:,}'.format(int(p[1] / 512))) for p in partitions]
-                partitions.append('total of %s blocks' % '{:,}'.format(int(total_partitions_size / 512)))
-                partitions = ', '.join(partitions)
-
-                raise CallError((
-                    f'The new device ({name}, {size_gb} GB, {size_blocks} blocks) '
-                    f'does not have enough space to to hold the required new partitions ({partitions}). '
-                    'New mirrored devices might require more space than existing devices due to changes in the '
-                    'booting procedure.'
-                ))
-
-            raise
+        for command in commands:
+            p = await run(*command, check=False)
+            if p.returncode != 0:
+                raise CallError(
+                    '%r failed:\n%s%s' % (' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
+                )
