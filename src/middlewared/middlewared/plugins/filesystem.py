@@ -134,12 +134,12 @@ class FilesystemService(Service):
 
         rv = []
         for entry in os.scandir(path):
-            if entry.is_dir():
+            if entry.is_symlink():
+                etype = 'SYMLINK'
+            elif entry.is_dir():
                 etype = 'DIRECTORY'
             elif entry.is_file():
                 etype = 'FILE'
-            elif entry.is_symlink():
-                etype = 'SYMLINK'
             else:
                 etype = 'OTHER'
 
