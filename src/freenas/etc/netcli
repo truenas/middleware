@@ -1474,7 +1474,12 @@ def netcli_title():
     product = proc.communicate()[0].strip()
     proc = subprocess.Popen(['dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
     serial = proc.communicate()[0].strip()
-    return f'{product} | {get_sw_version(True)} | {serial}'
+    try:
+        with Client() as c:
+            version = c.call('system.version') + ' | '
+    except Exception:
+        version = ''
+    return f'{product} | {version}{serial}'
 
 
 def main_menu():
