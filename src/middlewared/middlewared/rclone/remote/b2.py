@@ -24,7 +24,7 @@ class B2RcloneRemote(BaseRcloneRemote):
     ]
 
     task_schema = [
-        Int("b2-chunk-size", title="Upload chunk size (in megabytes)", description=textwrap.dedent("""\
+        Int("chunk_size", title="Upload chunk size (in megabytes)", description=textwrap.dedent("""\
             Upload chunk size. Must fit in memory. Note that these chunks are buffered in memory and there might be a
             maximum of «--transfers» chunks in progress at once. Also, your largest file must be split in no more
             than 10 000 chunks.
@@ -32,4 +32,4 @@ class B2RcloneRemote(BaseRcloneRemote):
     ]
 
     async def get_task_extra(self, task):
-        return {"b2-chunk-size": str(task["attributes"].get("b2-chunk-size", 96)) + "M"}
+        return {"chunk_size": str(task["attributes"].get("chunk_size", 96)) + "M"}
