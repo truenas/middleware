@@ -2,7 +2,7 @@ from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import Str
 
 
-class WebDavRcloneRemote(BaseRcloneRemote):
+class YandexRcloneRemote(BaseRcloneRemote):
     name = "YANDEX"
     title = "Yandex"
 

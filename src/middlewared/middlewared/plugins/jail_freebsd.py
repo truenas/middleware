@@ -193,10 +193,12 @@ class PluginService(CRUDService):
             }
             plugin_output = pathlib.Path(f'{iocroot}/jails/{plugin_dict["name"]}/root/root/PLUGIN_INFO')
             plugin_info = plugin_output.read_text().strip() if plugin_output.is_file() else None
+            admin_portal = plugin_dict.pop('admin_portal')
 
             plugin_dict.update({
                 'id': plugin_dict['name'],
                 'plugin_info': plugin_info,
+                'admin_portals': admin_portal.split(',') if admin_portal else [],
                 **self.get_local_plugin_version(
                     plugin_dict['plugin'],
                     plugin_dict.pop('primary_pkg'), iocroot, plugin_dict['name']
@@ -897,7 +899,17 @@ class JailService(CRUDService):
         self.failover_checks({**jail, **options}, verrors, 'options')
         verrors.check()
 
-        for prop, val in options.items():
+        opts = {}
+        if 'bpf' in options and 'nat' in options:
+            # We do this as props are applied sequentially, this will allow end user to apply
+            # the props bpf/nat without making separate calls for them as they are mutually exclusive
+            if options['bpf']:
+                opts.update({'nat': options.pop('nat'), 'bpf': options.pop('bpf')})
+            else:
+                opts.update({'bpf': options.pop('bpf'), 'nat': options.pop('nat')})
+        opts.update(options)
+
+        for prop, val in opts.items():
             p = f"{prop}={val}"
 
             try:
@@ -1345,7 +1357,7 @@ class JailService(CRUDService):
     def activate(self, pool):
         """Activates a pool for iocage usage, and deactivates the rest."""
         pool = self.middleware.call_sync('pool.query', [['name', '=', pool]], {'get': True})
-        iocage = ioc.IOCage(reset_cache=True)
+        iocage = ioc.IOCage(reset_cache=True, activate=True)
         try:
             iocage.activate(pool['name'])
         except Exception as e:

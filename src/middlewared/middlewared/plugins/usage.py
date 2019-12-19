@@ -88,7 +88,10 @@ class UsageService(Service):
         }
 
     async def gather_jails(self):
-        jails = await self.middleware.call('jail.query')
+        try:
+            jails = await self.middleware.call('jail.query')
+        except Exception:
+            jails = []
         jail_list = []
 
         for j in jails:
@@ -203,10 +206,15 @@ class UsageService(Service):
         }
 
     async def gather_plugins(self):
+        try:
+            plugins = await self.middleware.call('plugin.query')
+        except Exception:
+            plugins = []
+
         return {
             'plugins': [
-                {'name': p['name'], 'version': p['version']}
-                for p in (await self.middleware.call('plugin.query'))
+                {'name': p['plugin'], 'version': p['version']}
+                for p in plugins
             ]
         }
 

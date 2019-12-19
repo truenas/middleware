@@ -231,6 +231,7 @@ class ZettareplService(Service):
         self.command_queue = None
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
+        self.hold_tasks = {}
         self.replication_jobs_channels = defaultdict(list)
         self.queue = None
         self.process = None
@@ -239,13 +240,12 @@ class ZettareplService(Service):
     def is_running(self):
         return self.process is not None and self.process.is_alive()
 
-    def start(self, definition=None):
-        if definition is None:
-            try:
-                definition = self.middleware.call_sync("zettarepl.get_definition")
-            except Exception as e:
-                self.logger.error("Error generating zettarepl definition", exc_info=True)
-                raise CallError(f"Internal error: {e!r}")
+    def start(self):
+        try:
+            definition, hold_tasks = self.middleware.call_sync("zettarepl.get_definition")
+        except Exception as e:
+            self.logger.error("Error generating zettarepl definition", exc_info=True)
+            raise CallError(f"Internal error: {e!r}")
 
         with self.lock:
             if not self.is_running():
@@ -259,6 +259,8 @@ class ZettareplService(Service):
 
                 if self.observer_queue_reader is None:
                     self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
+
+                self.hold_tasks = hold_tasks
 
     def stop(self):
         with self.lock:
@@ -278,7 +280,7 @@ class ZettareplService(Service):
 
     def update_tasks(self):
         try:
-            definition = self.middleware.call_sync("zettarepl.get_definition")
+            definition, hold_tasks = self.middleware.call_sync("zettarepl.get_definition")
         except Exception:
             self.logger.error("Error generating zettarepl definition", exc_info=True)
             return
@@ -288,6 +290,8 @@ class ZettareplService(Service):
         else:
             self.middleware.call_sync("zettarepl.start")
             self.queue.put(("tasks", definition))
+
+        self.hold_tasks = hold_tasks
 
     async def run_periodic_snapshot_task(self, id):
         try:
@@ -412,8 +416,17 @@ class ZettareplService(Service):
     async def get_definition(self):
         timezone = (await self.middleware.call("system.general.config"))["timezone"]
 
+        pools = {pool["name"]: pool for pool in await self.middleware.call("pool.query")}
+
+        hold_tasks = {}
+
         periodic_snapshot_tasks = {}
         for periodic_snapshot_task in await self.middleware.call("pool.snapshottask.query", [["enabled", "=", True]]):
+            hold_task_reason = self._hold_task_reason(pools, periodic_snapshot_task["dataset"])
+            if hold_task_reason:
+                hold_tasks[f"periodic_snapshot_task_{periodic_snapshot_task['id']}"] = hold_task_reason
+                continue
+
             periodic_snapshot_tasks[f"task_{periodic_snapshot_task['id']}"] = {
                 "dataset": periodic_snapshot_task["dataset"],
 
@@ -432,6 +445,23 @@ class ZettareplService(Service):
 
         replication_tasks = {}
         for replication_task in await self.middleware.call("replication.query", [["enabled", "=", True]]):
+            if replication_task["direction"] == "PUSH":
+                hold = True
+                for source_dataset in replication_task["source_datasets"]:
+                    hold_task_reason = self._hold_task_reason(pools, source_dataset)
+                    if hold_task_reason:
+                        hold_tasks[f"replication_task_{replication_task['id']}"] = hold_task_reason
+                        hold = True
+                        break
+                if hold:
+                    continue
+
+            if replication_task["direction"] == "PULL":
+                hold_task_reason = self._hold_task_reason(pools, replication_task["target_dataset"])
+                if hold_task_reason:
+                    hold_tasks[f"replication_task_{replication_task['id']}"] = hold_task_reason
+                    continue
+
             my_periodic_snapshot_tasks = [f"task_{periodic_snapshot_task['id']}"
                                           for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]]
             my_schedule = replication_task["schedule"]
@@ -496,7 +526,19 @@ class ZettareplService(Service):
         # Test if does not cause exceptions
         Definition.from_data(definition, raise_on_error=False)
 
-        return definition
+        return definition, hold_tasks
+
+    def _hold_task_reason(self, pools, dataset):
+        pool = dataset.split("/")[0]
+
+        if pool not in pools:
+            return f"Pool {pool} does not exist"
+
+        if pools[pool]["status"] == "OFFLINE":
+            return f"Pool {pool} is offline"
+
+        if not pools[pool]["is_decrypted"]:
+            return f"Pool {pool} is locked"
 
     @asynccontextmanager
     async def _get_zettarepl_shell(self, transport, ssh_credentials):
@@ -675,6 +717,10 @@ class ZettareplService(Service):
         await self.middleware.run_in_thread(self.stop)
 
 
+async def pool_configuration_change(middleware, *args, **kwargs):
+    await middleware.call("zettarepl.update_tasks")
+
+
 async def setup(middleware):
     await middleware.call("zettarepl.load_state")
 
@@ -682,3 +728,11 @@ async def setup(middleware):
         await middleware.call("zettarepl.start")
     except Exception:
         pass
+
+    middleware.register_hook("pool.post_import", pool_configuration_change, sync=True)
+    middleware.register_hook("pool.post_export", pool_configuration_change, sync=True)
+
+    middleware.register_hook("pool.post_lock", pool_configuration_change, sync=True)
+    middleware.register_hook("pool.post_unlock", pool_configuration_change, sync=True)
+
+    middleware.register_hook("pool.post_create_or_update", pool_configuration_change, sync=True)

@@ -1989,6 +1989,7 @@ class PoolService(CRUDService):
 
         existing_guids = [i['guid'] for i in await self.middleware.call('pool.query')]
 
+        result = []
         for pool in await self.middleware.call('zfs.pool.find_import'):
             if pool['status'] == 'UNAVAIL':
                 continue
@@ -2000,7 +2001,8 @@ class PoolService(CRUDService):
             entry = {}
             for i in ('name', 'guid', 'status', 'hostname'):
                 entry[i] = pool[i]
-            yield entry
+            result.append(entry)
+        return result
 
     @accepts(Dict(
         'pool_import',
@@ -2066,6 +2068,11 @@ class PoolService(CRUDService):
         else:
             encrypt = 0
 
+        try:
+            activated_jail_pool = await self.middleware.call('jail.get_activated_pool')
+        except Exception:
+            activated_jail_pool = None
+
         pool_name = data.get('name') or pool['name']
         pool_id = None
         try:
@@ -2107,6 +2114,16 @@ class PoolService(CRUDService):
                 os.unlink(passfile)
             raise
 
+        if activated_jail_pool:
+            # It is possible the imported pool had iocage set up. System will give preference to
+            # the already configured pool in this case, user can always change this later
+            try:
+                await self.middleware.call('jail.activate', activated_jail_pool)
+            except CallError as e:
+                self.middleware.logger.debug(
+                    f'Failed to activate {activated_jail_pool} after importing {pool_name} pool: {e}'
+                )
+
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.middleware.call('keyvalue.has_key', key):
             for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
@@ -2119,7 +2136,7 @@ class PoolService(CRUDService):
             await self.middleware.call('keyvalue.delete', key)
 
         await self.middleware.call('service.reload', 'disk')
-        await self.middleware.call_hook('pool.post_import_pool', pool)
+        await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
 
         return True
