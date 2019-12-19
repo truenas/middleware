@@ -149,7 +149,7 @@ def test_13_strip_acl_from_dataset():
     JOB_ID = result.json()
 
 
-def test_14_set_dataset_quota():
+def test_14_setting_dataset_quota():
     global results
     payload = [
         {'quota_type': 'USER', 'id': 'root', 'quota_value': 10000},
@@ -160,7 +160,7 @@ def test_14_set_dataset_quota():
     assert results.status_code == 200, results.text
 
 
-def test_15_set_dataset_quota():
+def test_15_getting_dataset_quota():
     global results
     payload = {
         'quota_type': 'USER',
