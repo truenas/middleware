@@ -115,6 +115,7 @@ class SystemAdvancedService(ConfigService):
             data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
 
         data.pop('sed_passwd')
+        data.pop('kmip_uid')
 
         return data
 
@@ -219,6 +220,18 @@ class SystemAdvancedService(ConfigService):
                 config_data['sed_user'] = config_data['sed_user'].lower()
             if config_data['sed_passwd']:
                 config_data['sed_passwd'] = await self.middleware.call('pwenc.encrypt', config_data['sed_passwd'])
+            elif not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
+                # We want to make sure kmip uid is None in this case
+                adv_config = await self.middleware.call('datastore.config', self._config.datastore)
+                if adv_config['adv_kmip_uid']:
+                    try:
+                        await self.middleware.call('kmip.delete_kmip_secret_data', adv_config['adv_kmip_uid'])
+                    except Exception as e:
+                        self.middleware.logger.debug(
+                            f'Failed to remove password from KMIP server for SED Global key: {e}'
+                        )
+                await self.middleware.call('kmip.reset_sed_global_password')
+                config_data['kmip_uid'] = None
 
             await self.middleware.call(
                 'datastore.update',
@@ -278,7 +291,7 @@ class SystemAdvancedService(ConfigService):
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 
-            if original_data['sed_passwd'] != config_data['sed_passwd']:
+            if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
                 await self.middleware.call('kmip.sync_sed_keys')
 
         return await self.config()
