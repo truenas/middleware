@@ -1,4 +1,4 @@
-"""empty message
+"""Fix idmap foreign keys
 
 Revision ID: 17fe2353a0de
 Revises: dcf5c178714b
