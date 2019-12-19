@@ -415,9 +415,9 @@ class UserService(CRUDService):
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
         try:
-            update_sshpubkey_args = (
+            update_sshpubkey_args = [
                 home_old if home_copy else user['home'], user, group['bsdgrp_group'],
-            )
+            ]
             await self.update_sshpubkey(*update_sshpubkey_args)
         except PermissionError as e:
             self.logger.warn('Failed to update authorized keys', exc_info=True)
@@ -425,7 +425,10 @@ class UserService(CRUDService):
         else:
             if user['uid'] == 0:
                 if await self.middleware.call('failover.licensed'):
-                    await self.middleware.call('failover.call_remote', 'user.update_sshpubkey', update_sshpubkey_args)
+                    try:
+                        await self.middleware.call('failover.call_remote', 'user.update_sshpubkey', update_sshpubkey_args)
+                    except Exception:
+                        self.logger.error('Failed to sync root ssh pubkey to standby node', exc_info=True)
 
         if home_copy:
             def do_home_copy():
