@@ -54,6 +54,7 @@ class AlertModel(sa.Model):
     source = sa.Column(sa.Text())
     key = sa.Column(sa.Text())
     datetime = sa.Column(sa.DateTime())
+    last_occurrence = sa.Column(sa.DateTime())
     text = sa.Column(sa.Text())
     args = sa.Column(sa.JSON())
     dismissed = sa.Column(sa.Boolean())
@@ -379,6 +380,8 @@ class AlertService(Service):
         valid_alerts = copy.deepcopy(self.alerts)
         await self.__run_alerts()
 
+        self.__expire_alerts()
+
         if not await self.__should_run_or_send_alerts():
             self.alerts = valid_alerts
             return
@@ -574,7 +577,8 @@ class AlertService(Service):
                                                                   [alert_source.name])
 
                             alerts_b = [Alert(**dict({k: v for k, v in alert.items()
-                                                      if k in ["args", "datetime", "dismissed", "mail"]},
+                                                      if k in ["args", "datetime", "last_occurrence", "dismissed",
+                                                               "mail"]},
                                                      klass=AlertClass.class_by_name[alert["klass"]],
                                                      _source=alert["source"],
                                                      _key=alert["key"]))
@@ -626,10 +630,21 @@ class AlertService(Service):
                 alert.datetime = alert.datetime.astimezone(timezone.utc).replace(tzinfo=None)
         else:
             alert.datetime = existing_alert.datetime
+        alert.last_occurrence = datetime.utcnow()
         if existing_alert is None:
             alert.dismissed = False
         else:
             alert.dismissed = existing_alert.dismissed
+
+    def __expire_alerts(self):
+        self.alerts = list(filter(lambda alert: not self.__should_expire_alert(alert), self.alerts))
+
+    def __should_expire_alert(self, alert):
+        if issubclass(alert.klass, OneShotAlertClass):
+            if alert.klass.expires_after is not None:
+                return alert.last_occurrence < datetime.utcnow() - alert.klass.expires_after
+
+        return False
 
     @private
     async def run_source(self, source_name):
@@ -959,6 +974,7 @@ class AlertServiceService(CRUDService):
             TestAlertClass,
             node=master_node,
             datetime=datetime.utcnow(),
+            last_occurrence=datetime.utcnow(),
             _uuid="test",
         )
 
