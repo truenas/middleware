@@ -65,6 +65,7 @@ class AlertClass(metaclass=AlertClassMeta):
 
 class OneShotAlertClass:
     deleted_automatically = True
+    expires_after = None
 
     async def create(self, args):
         raise NotImplementedError

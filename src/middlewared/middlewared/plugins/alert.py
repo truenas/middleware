@@ -380,6 +380,8 @@ class AlertService(Service):
         valid_alerts = copy.deepcopy(self.alerts)
         await self.__run_alerts()
 
+        self.__expire_alerts()
+
         if not await self.__should_run_or_send_alerts():
             self.alerts = valid_alerts
             return
@@ -633,6 +635,16 @@ class AlertService(Service):
             alert.dismissed = False
         else:
             alert.dismissed = existing_alert.dismissed
+
+    def __expire_alerts(self):
+        self.alerts = list(filter(lambda alert: not self.__should_expire_alert(alert), self.alerts))
+
+    def __should_expire_alert(self, alert):
+        if issubclass(alert.klass, OneShotAlertClass):
+            if alert.klass.expires_after is not None:
+                return alert.last_occurrence < datetime.utcnow() - alert.klass.expires_after
+
+        return False
 
     @private
     async def run_source(self, source_name):
