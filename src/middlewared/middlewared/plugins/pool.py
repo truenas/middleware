@@ -16,6 +16,7 @@ import bsd
 import psutil
 
 from libzfs import ZFSException
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch,
                                 Str, UnixPerm)
@@ -36,6 +37,17 @@ RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULT
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
+
+
+class ZfsDeadmanAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.WARNING
+    title = "Device Is Causing Slow I/O on Pool"
+    text = "Device %(vdev)s is causing slow I/O on pool %(pool)s."
+
+    deleted_automatically = False
+
+    hardware = True
 
 
 class Inheritable(EnumMixin, Attribute):
@@ -3538,6 +3550,12 @@ async def devd_zfs_hook(middleware, data):
         'misc.fs.zfs.config_sync',
     ):
         asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
+
+    if data.get('type') == 'ereport.fs.zfs.deadman':
+        asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
+            'vdev': data.get('vdev_path', '<unknown>'),
+            'pool': data.get('pool', '<unknown>'),
+        }))
 
 
 def setup(middleware):
