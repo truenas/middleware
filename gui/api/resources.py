@@ -944,6 +944,7 @@ class VolumeResourceMixin(NestedMixin):
         )
         form = UnlockPassphraseForm(
             data=deserialized,
+            volume=obj,
         )
         if not form.is_valid():
             raise ImmediateHttpResponse(

@@ -2799,10 +2799,11 @@ class UnlockPassphraseForm(Form):
     )
 
     def __init__(self, *args, **kwargs):
+        volume_id = kwargs.pop('volume').id
         super(UnlockPassphraseForm, self).__init__(*args, **kwargs)
         with client as c:
             self.fields['services'].choices = list(
-                c.call('pool.unlock_services_restart_choices').items()
+                c.call('pool.unlock_services_restart_choices', volume_id).items()
             )
 
     def clean(self):
