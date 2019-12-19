@@ -24,7 +24,10 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     async def system_advanced_config(self):
-        return await self.middleware.call('datastore.config', self.sys_adv_datastore, {'prefix': 'adv_'})
+        adv_config = await self.middleware.call('datastore.config', self.sys_adv_datastore, {'prefix': 'adv_'})
+        if adv_config['sed_passwd']:
+            adv_config['sed_passwd'] = await self.middleware.call('pwenc.decrypt', adv_config['sed_passwd'])
+        return adv_config
 
     @private
     async def sed_keys_pending_sync(self):
@@ -146,7 +149,9 @@ class KMIPService(Service, KMIPServerMixin):
             if key:
                 self.middleware.call_sync(
                     'datastore.update', self.sys_adv_datastore,
-                    adv_config['id'], {'adv_sed_passwd': key, 'adv_kmip_uid': None}
+                    adv_config['id'], {
+                        'adv_sed_passwd': self.middleware.call_sync('pwenc.encrypt', key), 'adv_kmip_uid': None
+                    }
                 )
                 self.global_sed_key = ''
                 if connection_successful:
