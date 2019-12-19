@@ -231,5 +231,9 @@ class KMIPService(Service, KMIPServerMixin):
         self.global_sed_key = ''
 
     @private
+    async def reset_sed_disk_password(self, disk):
+        self.disks_keys.pop(disk, None)
+
+    @private
     async def retrieve_sed_disks_keys(self):
         return self.disks_keys

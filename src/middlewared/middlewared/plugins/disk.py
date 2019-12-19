@@ -198,8 +198,22 @@ class DiskService(CRUDService):
         if verrors:
             raise verrors
 
-        if old['passwd'] != new['passwd'] and new['passwd']:
+        if new['passwd']:
             new['passwd'] = await self.middleware.call('pwenc.encrypt', new['passwd'])
+        elif not new['passwd'] and old['passwd'] != new['passwd']:
+            # We want to make sure kmip uid is None in this case
+            disk_data = await self.middleware.call(
+                'datastore.query', self._config.datastore, [['disk_identifier', '=', id]], {'get': True}
+            )
+            if disk_data['disk_kmip_uid']:
+                try:
+                    await self.middleware.call('kmip.delete_kmip_secret_data', disk_data['disk_kmip_uid'])
+                except Exception as e:
+                    self.middleware.logger.debug(
+                        f'Failed to remove password from KMIP server for {id} disk SED key: {e}'
+                    )
+            await self.middleware.call('kmip.reset_sed_disk_password', id)
+            new['kmip_uid'] = None
 
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             new[key] = new[key].title()
@@ -219,7 +233,10 @@ class DiskService(CRUDService):
 
         if any(
             new[key] != old[key]
-            for key in ['togglesmart', 'smartoptions', 'hddstandby', 'critical', 'difference', 'informational']
+            for key in [
+                'togglesmart', 'smartoptions', 'hddstandby', 'hddstandby_force',
+                'critical', 'difference', 'informational',
+            ]
         ):
             if new['togglesmart']:
                 await self.middleware.call('disk.toggle_smart_on', new['name'])
@@ -232,7 +249,7 @@ class DiskService(CRUDService):
             await self._service_change('smartd', 'restart')
             await self._service_change('snmp', 'restart')
 
-        if old['passwd'] != new['passwd']:
+        if new['passwd'] and old['passwd'] != new['passwd']:
             await self.middleware.call('kmip.sync_sed_keys', [id])
 
         return await self.query([['identifier', '=', id]], {'get': True})
