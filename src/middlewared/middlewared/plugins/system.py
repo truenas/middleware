@@ -217,8 +217,8 @@ class SystemAdvancedService(ConfigService):
                 original_data['sed_user'] = original_data['sed_user'].lower()
             if config_data.get('sed_user'):
                 config_data['sed_user'] = config_data['sed_user'].lower()
-
-            # PASSWORD ENCRYPTION FOR SED IS BEING DONE IN THE MODEL ITSELF
+            if config_data['sed_passwd']:
+                config_data['sed_passwd'] = await self.middleware.call('pwenc.encrypt', config_data['sed_passwd'])
 
             await self.middleware.call(
                 'datastore.update',
@@ -247,8 +247,8 @@ class SystemAdvancedService(ConfigService):
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
             elif (
-                    original_data['serialspeed'] != config_data['serialspeed'] or
-                    original_data['serialport'] != config_data['serialport']
+                original_data['serialspeed'] != config_data['serialspeed'] or
+                original_data['serialport'] != config_data['serialport']
             ):
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
@@ -288,9 +288,12 @@ class SystemAdvancedService(ConfigService):
         """
         Returns configured global SED password.
         """
-        return (await self.middleware.call(
+        passwd = (await self.middleware.call(
             'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
-        ))['sed_passwd'] or await self.middleware.call('kmip.sed_global_password')
+        ))['sed_passwd']
+        if passwd:
+            return await self.middleware.call('pwenc.decrypt', passwd)
+        return await self.middleware.call('kmip.sed_global_password')
 
     @private
     def autotune(self, conf='loader'):
