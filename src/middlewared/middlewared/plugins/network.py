@@ -16,10 +16,12 @@ try:
 except ImportError:
     netif = None
 import os
+import random
 import re
 import shlex
 import signal
 import socket
+import string
 import subprocess
 import urllib.request
 
@@ -1164,6 +1166,14 @@ class InterfaceService(CRUDService):
             'dhcp': data['ipv4_dhcp'],
             'ipv6auto': data['ipv6_auto'],
             'vhid': data.get('failover_vhid'),
+            # CARP password needs to be automatically generated if there isn't one
+            'pass': ''.join([
+                random.SystemRandom().choice(
+                    string.ascii_letters + string.digits
+                ) for n in range(16)
+            ])
+            if not data.get('failover_pass') and data.get('failover_vhid')
+            else data.get('failover_pass', ''),
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
             'options': data.get('options', ''),
@@ -1393,6 +1403,8 @@ class InterfaceService(CRUDService):
                 )
 
             if not interface_id:
+                if config['int_pass']:
+                    new['failover_pass'] = config['int_pass']
                 await self.middleware.call(
                     'datastore.update', 'network.interfaces', config['id'], dict(
                         **(await self.__convert_interface_datastore(new)), **interface_attrs
