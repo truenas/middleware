@@ -116,7 +116,7 @@ class ZFSPoolService(CRUDService):
             topology = convert_topology(zfs, data['vdevs'])
             zfs.create(data['name'], topology, data['options'], data['fsoptions'])
 
-        return self.middleware.call_sync('zfs.pool._get_instance', data['name'])
+        return self.middleware.call_sync('zfs.pool.get_instance', data['name'])
 
     @accepts(Str('pool'), Dict(
         'options',
@@ -630,7 +630,7 @@ class ZFSDatasetService(CRUDService):
     )
     def unload_key(self, id, options):
         force = options.pop('force_umount')
-        if options.pop('umount') and self.middleware.call_sync('zfs.dataset._get_instance', id)['mountpoint']:
+        if options.pop('umount') and self.middleware.call_sync('zfs.dataset.get_instance', id)['mountpoint']:
             self.umount(id, {'force': force})
         try:
             with libzfs.ZFS() as zfs:
