@@ -31,6 +31,7 @@ class BootService(Service):
         if not disk_details['name']:
             raise CallError(f'Details for {disk_details["name"]} not found.')
 
+        swap_size = options.get('swap_size')
         commands = []
         partitions = []
         efi_boot = (await self.middleware.call('boot.get_boot_type')) == 'EFI'
@@ -48,8 +49,8 @@ class BootService(Service):
                 ('BIOS boot partition', 1048576),
                 ('EFI System', 536870912)
             ])
-            if options.get('swap_size'):
-                partitions.append(('Linux swap', ((int((options['swap_size'] + 127) / 128)) * 128)))
+            if swap_size:
+                partitions.append(('Linux swap', swap_size))
             if options.get('size'):
                 partitions.append(('Solaris /usr & Mac ZFS', options['size']))
 
@@ -93,11 +94,11 @@ class BootService(Service):
                     ['gpart', 'set', '-a', 'active', dev],
                 ))
 
-        if options.get('swap_size'):
+        if swap_size:
             if IS_LINUX:
                 commands.insert(2, [
                     'sgdisk',
-                    f'-n3:525312K:+{int(((int((options["swap_size"] + 127) / 128)) * 128) / 1024)}K',
+                    f'-n3:525312K:+{int(swap_size / 1024)}K',
                     '-t3:8200', f'/dev/{dev}'
                 ])
             else:
