@@ -54,9 +54,10 @@ class BootService(Service):
             if options.get('size'):
                 partitions.append(('Solaris /usr & Mac ZFS', options['size']))
 
-        # 33 sectors are reserved by linux for GPT tables and 80 sectors are reserved by FreeBSD for GPT tables
+        # Around 80 sectors are reserved by Linux/FreeBSD for GPT tables and
+        # our 4096 bytes alignment offset for the boot disk
         partitions.append((
-            'GPT partition table', (33 * disk_details['sectorsize']) if IS_LINUX else (80 * disk_details['sectorsize'])
+            'GPT partition table', (73 if IS_LINUX else 80) * disk_details['sectorsize']
         ))
         total_partition_size = sum(map(lambda y: y[1], partitions))
         if disk_details['size'] < total_partition_size:
@@ -74,12 +75,11 @@ class BootService(Service):
             )
 
         if IS_LINUX:
-            zfs_part_no = 4 if options.get('swap_size') else 3
             zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
             commands.extend((
-                ['sgdisk', '-a1', f'-n1:24K:+1000K', '-t1:EF02', f'/dev/{dev}'],
-                ['sgdisk', '-n2:1024K:+524288K', '-t2:EF00', f'/dev/{dev}'],
-                ['sgdisk', f'-n{zfs_part_no}:0:{zfs_part_size}', f'-t{zfs_part_no}:BF01', f'/dev/{dev}'],
+                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
+                ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
+                ['sgdisk', f'-n3:0:{zfs_part_size}', f'-t3:BF01', f'/dev/{dev}'],
             ))
         else:
             if efi_boot:
@@ -98,8 +98,8 @@ class BootService(Service):
             if IS_LINUX:
                 commands.insert(2, [
                     'sgdisk',
-                    f'-n3:525312K:+{int(swap_size / 1024)}K',
-                    '-t3:8200', f'/dev/{dev}'
+                    f'-n4:0:+{int(swap_size / 1024)}K',
+                    '-t4:8200', f'/dev/{dev}'
                 ])
             else:
                 commands.append([
