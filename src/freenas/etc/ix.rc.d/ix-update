@@ -16,6 +16,8 @@ REBOOT_REQUIRED=0
 
 db_update_real()
 {
+	export PATH=$PATH:/usr/local/bin:/usr/local/sbin
+
 	echo "Applying database schema changes"
 
 	if [ $(echo "SELECT name FROM sqlite_master WHERE name = 'alembic_version'" | sqlite3 /data/freenas-v1.db) = "" ];
