@@ -175,6 +175,12 @@ class FreeNAS_BaseCache(object):
         self.__cache.close()
         os.unlink(self.__cachefile)
 
+    def lockstat(self):
+        return self.__dbenv.lock_stat()
+
+    def mempstat(self):
+        return self.__dbenv.memp_stat()
+
     def read(self, key):
         if not key:
             return None
