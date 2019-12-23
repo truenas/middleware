@@ -173,10 +173,13 @@ class KMIPService(Service, KMIPServerMixin):
         else:
             failed = self.pull_sed_keys()
         ret_failed = failed.copy()
-        if failed:
-            if 'Global SED Key' in failed:
-                failed.remove('Global SED Key')
-                self.middleware.call_sync('alert.oneshot_create', 'KMIPSEDGlobalPasswordSyncFailure')
+        try:
+            failed.remove('Global SED Key')
+        except ValueError:
+            pass
+        else:
+            self.middleware.call_sync('alert.oneshot_create', 'KMIPSEDGlobalPasswordSyncFailure')
+        finally:
             if failed:
                 self.middleware.call_sync(
                     'alert.oneshot_create', 'KMIPSEDDisksSyncFailure', {'disks': ','.join(failed)}
