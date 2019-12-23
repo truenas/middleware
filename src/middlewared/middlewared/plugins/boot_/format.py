@@ -53,6 +53,10 @@ class BootService(Service):
             if options.get('size'):
                 partitions.append(('Solaris /usr & Mac ZFS', options['size']))
 
+        # 33 sectors are reserved by linux for GPT tables and 80 sectors are reserved by FreeBSD for GPT tables
+        partitions.append((
+            'GPT partition table', (33 * disk_details['sectorsize']) if IS_LINUX else (80 * disk_details['sectorsize'])
+        ))
         total_partition_size = sum(map(lambda y: y[1], partitions))
         if disk_details['size'] < total_partition_size:
             partitions = [
