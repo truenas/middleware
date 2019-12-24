@@ -88,7 +88,7 @@ class DeviceService(Service, DeviceInfoBase):
         try:
             block_device = blkid.BlockDevice(os.path.join('/dev', name))
         except blkid.BlkidException:
-            return disk
+            return None
 
         return self.get_disk_details(block_device, disk, self.retrieve_lshw_disks_data())
 

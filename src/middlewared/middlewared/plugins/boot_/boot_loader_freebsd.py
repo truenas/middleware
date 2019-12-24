@@ -13,10 +13,7 @@ class BootService(Service, BootLoaderBase):
         if (await self.middleware.call('boot.get_boot_type')) == 'EFI':
             with tempfile.TemporaryDirectory() as tmpdirname:
                 await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', tmpdirname, check=False)
-                try:
-                    os.makedirs(f'{tmpdirname}/efi/boot')
-                except FileExistsError:
-                    pass
+                os.makedirs(f'{tmpdirname}/efi/boot', exist_ok=True)
                 await run('cp', '/boot/boot1.efi', f'{tmpdirname}/efi/boot/BOOTx64.efi', check=False)
                 await run('umount', tmpdirname, check=False)
         else:

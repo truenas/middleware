@@ -28,8 +28,8 @@ class BootService(Service):
             raise CallError(job.error)
 
         disk_details = await self.middleware.call('device.get_disk', dev)
-        if not disk_details['name']:
-            raise CallError(f'Details for {disk_details["name"]} not found.')
+        if not disk_details:
+            raise CallError(f'Details for {dev} not found.')
 
         swap_size = options.get('swap_size')
         commands = []
