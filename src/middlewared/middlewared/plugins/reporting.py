@@ -1031,7 +1031,7 @@ class RealtimeEventSource(EventSource):
 
         cp_time_last = None
         cp_times_last = None
-        last_interface_stats = None
+        last_interface_stats = {}
 
         while not self._cancel.is_set():
             data = {}
@@ -1071,17 +1071,21 @@ class RealtimeEventSource(EventSource):
             for iface in netif.list_interfaces().values():
                 for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
                     addr_data = addr.__getstate__(stats=True)
+                    stats_time = time.time()
                     data['interfaces'][iface.name] = {}
                     for k in retrieve_stat_keys:
-                        data['interfaces'][iface.name].update({
-                            k: addr_data['stats'][k],
-                            f'{k}_last': addr_data['stats'][k] - (
-                                0 if not last_interface_stats else last_interface_stats.get(iface.name, {}).get(k, 0)
+                        traffic_stats = addr_data['stats'][k]
+                        if last_interface_stats.get(iface.name):
+                            traffic_stats = traffic_stats - last_interface_stats[iface.name][k]
+                            traffic_stats = int(
+                                traffic_stats / (time.time() - last_interface_stats[iface.name]['stats_time'])
                             )
-                        })
-
-            last_interface_stats = data['interfaces'].copy()
-
+                        details_dict = {
+                            k: addr_data['stats'][k],
+                            f'{k}_rate': traffic_stats,
+                        }
+                        data['interfaces'][iface.name].update(details_dict)
+                    last_interface_stats[iface.name] = {**data['interfaces'][iface.name], 'stats_time': stats_time}
             self.send_event('ADDED', fields=data)
             time.sleep(2)
 
