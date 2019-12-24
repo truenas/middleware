@@ -26,6 +26,7 @@
 
 import os
 import sys
+import json
 
 sys.path.extend([
     '/usr/local/www',
@@ -554,6 +555,44 @@ def cache_count(**kwargs):
         _cache_count_default(**kwargs)
 
 
+def lock_stat(**kwargs):
+    lock_stats = {}
+    ucache = FreeNAS_UserCache()
+    gcache = FreeNAS_GroupCache()
+    lock_stats.update({
+        'ucache': ucache.lockstat(),
+        'gcache': gcache.lockstat(),
+    })
+    if (activedirectory_enabled() or ldap_enabled()) and ds_cache_enabled():
+        ducache = FreeNAS_Directory_UserCache()
+        dgcache = FreeNAS_Directory_GroupCache()
+        lock_stats.update({
+            'ducache': ducache.lockstat(),
+            'dgcache': dgcache.lockstat(),
+        })
+
+    print(json.dumps(lock_stats))
+
+
+def memp_stat(**kwargs):
+    memp_stats = {}
+    ucache = FreeNAS_UserCache()
+    gcache = FreeNAS_GroupCache()
+    memp_stats.update({
+        'ucache': ucache.mempstat(),
+        'gcache': gcache.mempstat(),
+    })
+    if (activedirectory_enabled() or ldap_enabled()) and ds_cache_enabled():
+        ducache = FreeNAS_Directory_UserCache()
+        dgcache = FreeNAS_Directory_GroupCache()
+        memp_stats.update({
+            'ducache': ducache.mempstat(),
+            'dgcache': dgcache.mempstat(),
+        })
+
+    print(json.dumps(memp_stats))
+
+
 def main():
     cache_funcs = {}
     cache_funcs['fill'] = cache_fill
@@ -563,6 +602,8 @@ def main():
     cache_funcs['rawdump'] = cache_rawdump
     cache_funcs['check'] = cache_check
     cache_funcs['count'] = cache_count
+    cache_funcs['lockstat'] = lock_stat
+    cache_funcs['mempstat'] = memp_stat
 
     if len(sys.argv) < 2:
         usage(list(cache_funcs.keys()))
