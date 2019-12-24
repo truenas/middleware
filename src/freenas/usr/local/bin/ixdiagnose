@@ -138,6 +138,9 @@ else
 	$mydir/freenas-debug -A
 fi
 
+if [ -d "/tmp/middlewared/jobs" ]; then
+	tar -cHf - -C /tmp/middlewared jobs | tar -C $dir -xf -
+fi
 tar -cHf - -C /var log | tar -C $dir -xf -
 tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
 if [ "${limit}" != "-1" ] ; then
