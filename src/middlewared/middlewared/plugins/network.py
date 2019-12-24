@@ -2038,6 +2038,7 @@ class InterfaceService(CRUDService):
             'ips',
             Bool('ipv4', default=True),
             Bool('ipv6', default=True),
+            Bool('ipv6_link_local', default=False),
             Bool('loopback', default=False),
             Bool('any', default=False),
         )
@@ -2098,6 +2099,9 @@ class InterfaceService(CRUDService):
                         list_of_ip.append(alias_dict)
 
                     if choices['ipv6'] and alias_dict['type'] == 'INET6':
+                        if not choices['ipv6_link_local']:
+                            if ipaddress.ip_address(alias_dict['address']) in ipaddress.ip_network('fe80::/64'):
+                                continue
                         list_of_ip.append(alias_dict)
 
         return list_of_ip
