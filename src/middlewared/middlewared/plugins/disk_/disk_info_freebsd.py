@@ -30,7 +30,7 @@ class DiskService(Service, DiskInfoBase):
                 name = p.find('./name')
                 part_type = p.find('./config/type')
                 if part_type is not None:
-                    part_type = self.middleware.call_sync('device.get_partition_uuid_from_name', part_type.text)
+                    part_type = self.middleware.call_sync('disk.get_partition_uuid_from_name', part_type.text)
                 if not part_type:
                     part_type = 'UNKNOWN'
                 parts.append({'name': name.text, 'size': size, 'partition_type': part_type})
