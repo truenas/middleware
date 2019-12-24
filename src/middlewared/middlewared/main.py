@@ -785,6 +785,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             on_modules_loaded=on_modules_loaded,
         )
 
+        return setup_funcs
+
+    async def __plugins_setup(self, setup_funcs):
+
         # TODO: Rework it when we have order defined for setup functions
         def sort_key(plugin__function):
             plugin, function = plugin__function
@@ -1297,7 +1301,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
-        await self.__plugins_load()
+        setup_funcs = await self.__plugins_load()
 
         self._console_write('registering services')
 
@@ -1329,14 +1333,18 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         await restful_api.register_resources()
         asyncio.ensure_future(self.jobs.run())
 
-        if await self.call('system.state') == 'READY':
-            self._setup_periodic_tasks()
-
         # Start up middleware worker process pool
         self.__procpool._start_queue_management_thread()
 
         runner = web.AppRunner(app, handle_signals=False, access_log=None)
         await runner.setup()
+        await web.UnixSite(runner, '/var/run/middlewared-internal.sock').start()
+
+        await self.__plugins_setup(setup_funcs)
+
+        if await self.call('system.state') == 'READY':
+            self._setup_periodic_tasks()
+
         await web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
         await web.UnixSite(runner, '/var/run/middlewared.sock').start()
 
