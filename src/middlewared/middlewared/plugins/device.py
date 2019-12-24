@@ -3,7 +3,7 @@ import os
 import socket
 
 from middlewared.schema import accepts, Str
-from middlewared.service import private, Service
+from middlewared.service import Service
 
 DEVD_SOCKETFILE = '/var/run/devd.pipe'
 
