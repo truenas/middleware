@@ -137,9 +137,3 @@ class DeviceService(Service, DeviceInfoBase):
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
         return disk
-
-    async def get_zfs_part_type(self):
-        return '6a898cc3-1dd2-11b2-99a6-080020736631'
-
-    async def get_swap_part_type(self):
-        return '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f'

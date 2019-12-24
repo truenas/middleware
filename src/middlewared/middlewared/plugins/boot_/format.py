@@ -37,6 +37,8 @@ class BootService(Service):
         efi_boot = (await self.middleware.call('boot.get_boot_type')) == 'EFI'
         if not IS_LINUX:
             commands.append(('gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'))
+            # 272629760 bytes ( 260 mb ) are required by FreeBSD
+            # for EFI partition and 524288 bytes ( 512kb ) if it's bios
             partitions.append(
                 ('efi' if efi_boot else 'freebsd-boot', 272629760 if efi_boot else 524288),
             )
@@ -46,8 +48,8 @@ class BootService(Service):
                 partitions.append(('freebsd-zfs', options['size']))
         else:
             partitions.extend([
-                ('BIOS boot partition', 1048576),
-                ('EFI System', 536870912)
+                ('BIOS boot partition', 1048576),  # We allot 1MiB to bios boot partition
+                ('EFI System', 536870912)   # We allot 512MiB for EFI partition
             ])
             if swap_size:
                 partitions.append(('Linux swap', swap_size))
@@ -118,5 +120,5 @@ class BootService(Service):
             p = await run(*command, check=False)
             if p.returncode != 0:
                 raise CallError(
-                    '%r failed:\n%s%s' % (' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
+                    '{} failed:\n{}{}'.format(' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
                 )

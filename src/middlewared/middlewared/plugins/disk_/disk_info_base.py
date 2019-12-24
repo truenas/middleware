@@ -20,3 +20,11 @@ class DiskInfoBase(ServicePartBase):
         """
         Returns GPT raw UUID for partitioned disk
         """
+
+    @private
+    async def get_zfs_part_type(self):
+        raise NotImplementedError()
+
+    @private
+    async def get_swap_part_type(self):
+        raise NotImplementedError()

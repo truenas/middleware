@@ -44,3 +44,9 @@ class DiskService(Service, DiskInfoBase):
         if uuid is None:
             raise ValueError(f'Partition type {part_type} not found on {disk}')
         return f'gptid/{uuid.text}'
+
+    async def get_zfs_part_type(self):
+        return '516e7cba-6ecf-11d6-8ff8-00022d09712b'
+
+    async def get_swap_part_type(self):
+        return '516e7cb5-6ecf-11d6-8ff8-00022d09712b'

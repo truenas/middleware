@@ -44,11 +44,3 @@ class DeviceInfoBase(ServicePartBase):
     @private
     async def get_disk(self, name):
         raise NotImplementedError()
-
-    @private
-    async def get_zfs_part_type(self):
-        raise NotImplementedError()
-
-    @private
-    async def get_swap_part_type(self):
-        raise NotImplementedError()
