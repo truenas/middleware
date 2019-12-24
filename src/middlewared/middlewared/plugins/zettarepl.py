@@ -481,7 +481,7 @@ class ZettareplService(Service):
         for replication_task in await self.middleware.call("replication.query", [["transport", "!=", "LEGACY"],
                                                                                  ["enabled", "=", True]]):
             if replication_task["direction"] == "PUSH":
-                hold = True
+                hold = False
                 for source_dataset in replication_task["source_datasets"]:
                     hold_task_reason = self._hold_task_reason(pools, source_dataset)
                     if hold_task_reason:
