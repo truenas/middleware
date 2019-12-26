@@ -7,7 +7,10 @@
 import errno
 import os
 import json
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import subprocess
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException

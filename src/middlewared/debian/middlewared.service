@@ -10,7 +10,7 @@ After=systemd-modules-load.service local-fs.target
 
 [Service]
 Type=notify
-ExecStart=/usr/bin/middlewared --log-handler=file
+ExecStart=/usr/bin/middlewared --log-handler=file -o /usr/local/lib/middlewared_truenas
 TimeoutStartSec=240
 Restart=on-failure
 
