@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from middlewared.sqlalchemy import JSON, Time
+from middlewared.sqlalchemy import EncryptedText, JSON, Time
 
 import middlewared.plugins.datastore  # noqa
 import middlewared.plugins.datastore.connection  # noqa
@@ -378,11 +378,25 @@ class EncryptedJSONModel(Model):
     object = sa.Column(JSON(encrypted=True))
 
 
+class EncryptedTextModel(Model):
+    __tablename__ = 'test_encryptedtext'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    object = sa.Column(EncryptedText())
+
+
 def decrypt(s, _raise=False):
     assert _raise is True
 
     if not s.startswith("!"):
         raise Exception("Decryption failed")
+
+    return s[1:]
+
+
+def decrypt_safe(s):
+    if not s.startswith("!"):
+        return ""
 
     return s[1:]
 
@@ -417,6 +431,34 @@ async def test__encrypted_json_save():
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedjson (object) VALUES (?)",
             ['!{"key": "value"}']
+        )
+
+
+@pytest.mark.parametrize("string,object", [
+    ('!Text', 'Text'),
+    ('Text', ''),
+])
+@pytest.mark.asyncio
+async def test__encrypted_text_load(string, object):
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_encryptedtext VALUES (1, ?)", string)
+
+        with patch("middlewared.sqlalchemy.decrypt", decrypt_safe):
+            assert (await ds.query("test.encryptedtext", [], {"get": True}))["object"] == object
+
+
+@pytest.mark.asyncio
+async def test__encrypted_text_save():
+    async with datastore_test() as ds:
+        with patch("middlewared.sqlalchemy.encrypt", encrypt):
+            await ds.insert("test.encryptedtext", {"object": 'Text'})
+
+        assert (await ds.fetchall("SELECT * FROM test_encryptedtext"))[0]["object"] == '!Text'
+
+        ds.middleware.call_hook_inline.assert_called_once_with(
+            "datastore.post_execute_write",
+            "INSERT INTO test_encryptedtext (object) VALUES (?)",
+            ['!Text']
         )
 
 
