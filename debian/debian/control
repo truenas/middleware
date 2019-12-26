@@ -8,8 +8,10 @@ Homepage: http://www.truenas.com
 
 Package: truenas
 Architecture: all
-Depends: middlewared,
+Depends: libnginx-mod-http-uploadprogress,
+         middlewared,
          net-tools,
+         nginx,
          openssh-server,
          tmux,
          truenas-webui,
