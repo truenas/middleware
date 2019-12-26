@@ -1686,7 +1686,7 @@ class InterfaceService(CRUDService):
             disable_capabilities = name in disable_capabilities_ifaces
 
             cloned_interfaces.append(name)
-            await self.middleware.call('interface.lagg_setup', lagg, members, disable_capabilities,
+            await self.middleware.call('interface.lag_setup', lagg, members, disable_capabilities,
                                        parent_interfaces, sync_interface_opts)
 
         vlans = await self.middleware.call('datastore.query', 'network.vlan')

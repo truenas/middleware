@@ -1,12 +1,12 @@
 from middlewared.service import Service
 
-from .lagg_base import InterfaceLaggBase
+from .lag_base import InterfaceLagBase
 
 
-class InterfaceService(Service, InterfaceLaggBase):
+class InterfaceService(Service, InterfaceLagBase):
 
     class Config:
         namespace_alias = 'interfaces'
 
-    async def lagg_supported_protocols(self):
+    async def lag_supported_protocols(self):
         return ['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']
