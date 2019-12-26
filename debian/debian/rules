@@ -5,6 +5,8 @@
 	dh $@
 
 override_dh_auto_install:
+	dh_auto_install
+
 	sh -c "\
 		mkdir -p debian/truenas/etc; \
 		vers=\$$(dpkg-parsechangelog -S version); \
