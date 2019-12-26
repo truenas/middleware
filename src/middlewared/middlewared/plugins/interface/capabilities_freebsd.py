@@ -35,7 +35,7 @@ class InterfaceService(Service, InterfaceCapabilitiesBase):
             self.middleware.logger.debug(f'Enabled {",".join(enabled)} capabilities for {iface}')
 
     def disable_capabilities(self, iface, capabilities):
-        self.middleware.call_sync('interface._get_instance', iface)
+        self.middleware.call_sync('interface.get_instance', iface)
         iface = netif.get_interface(iface)
         disabled_capabilities = [c.name for c in iface.capabilities if c.name in capabilities]
         iface.capabilities = {c for c in iface.capabilities if c.name not in capabilities}
