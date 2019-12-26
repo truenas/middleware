@@ -217,6 +217,7 @@ class ZettareplProcess:
                         break
                 else:
                     logger.warning("Task %s(%r) not found", class_name, task_id)
+                    self.observer_queue.put(ReplicationTaskError(task_id, "Task not found"))
 
 
 class ZettareplService(Service):
