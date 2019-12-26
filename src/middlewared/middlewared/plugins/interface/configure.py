@@ -1,5 +1,6 @@
 import ipaddress
 import os
+import platform
 import shlex
 import signal
 import subprocess
@@ -177,12 +178,13 @@ class InterfaceService(Service):
             self.logger.debug('Killing dhclient for {}'.format(name))
             os.kill(dhclient_pid, signal.SIGTERM)
 
-        if data['int_ipv6auto']:
-            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
-            subprocess.call(['/etc/rc.d/rtsold', 'onestart'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                            close_fds=True)
-        else:
-            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
+        if platform.system() == 'FreeBSD':
+            if data['int_ipv6auto']:
+                iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
+                subprocess.call(['/etc/rc.d/rtsold', 'onestart'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                close_fds=True)
+            else:
+                iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
     @private
     def autoconfigure(self, iface, wait_dhcp):

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["Interface"]
 
 CLONED_PREFIXES = [
-    'lo', 'tun', 'tap', 'br', 'epair', 'carp', 'vlan', 'bond', 'pflog', 'pfsync',
+    'lo', 'tun', 'tap', 'br', 'vlan', 'bond',
 ]
 
 
