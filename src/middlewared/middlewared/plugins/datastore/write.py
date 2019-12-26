@@ -45,7 +45,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         data = data.copy()
 
         if isinstance(id_or_filters, list):
-            rows = await self.middleware.call('datastore.query', name, id_or_filters)
+            rows = await self.middleware.call('datastore.query', name, id_or_filters, options)
             if len(rows) != 1:
                 raise RuntimeError(f'{len(rows)} found, expecting one')
 
@@ -63,7 +63,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         if update:
             result = await self.middleware.call(
                 'datastore.execute_write',
-                table.update().values(**update).where(self._where_clause(table, id)),
+                table.update().values(**update).where(self._where_clause(table, id, options)),
             )
             if result.rowcount != 1:
                 raise RuntimeError('No rows were updated')
@@ -108,14 +108,14 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                     })
                 )
 
-    def _where_clause(self, table, id_or_filters):
+    def _where_clause(self, table, id_or_filters, options):
         if isinstance(id_or_filters, list):
-            return and_(*self._filters_to_queryset(id_or_filters, table, '', {}))
+            return and_(*self._filters_to_queryset(id_or_filters, table, options['prefix'], {}))
         else:
             return self._get_pk(table) == id_or_filters
 
-    @accepts(Str('name'), Any('id_or_filters'))
-    async def delete(self, name, id_or_filters):
+    @accepts(Str('name'), Any('id_or_filters'), Dict('options', Str('prefix', default='')))
+    async def delete(self, name, id_or_filters, options):
         """
         Delete an entry `id` in `name`.
         """
@@ -123,6 +123,6 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         await self.middleware.call(
             'datastore.execute_write',
-            table.delete().where(self._where_clause(table, id_or_filters)),
+            table.delete().where(self._where_clause(table, id_or_filters, options)),
         )
         return True
