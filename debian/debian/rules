@@ -18,4 +18,4 @@ override_dh_auto_install:
 	"
 
 override_dh_installsystemd:
-	dh_systemd_enable --no-start -r --no-restart-after-upgrade --name=ix-etc
+	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-etc
