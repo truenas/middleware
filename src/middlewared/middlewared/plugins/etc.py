@@ -75,7 +75,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'zerotier'},
         ],
         'user': [
-            {'type': 'mako', 'path': 'group'},
+            {'type': 'mako', 'path': 'group', 'platform': 'FreeBSD'},
             {'type': 'mako', 'path': 'master.passwd', 'platform': 'FreeBSD'},
             {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
         ],
@@ -110,7 +110,7 @@ class EtcService(Service):
                 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
         'pam': [
-            {'type': 'mako', 'path': os.path.join('pam.d', f)}
+            {'type': 'mako', 'path': os.path.join('pam.d', f), 'platform': 'FreeBSD'}
             for f in os.listdir(
                 os.path.realpath(
                     os.path.join(
