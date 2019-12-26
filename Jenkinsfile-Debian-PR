@@ -1,7 +1,4 @@
 pipeline {
-  triggers {
-       githubPullRequests.issueCommentTrigger('.*Build Experimental*')
-  }
   agent {
     node {
        label 'FreeNAS-webui'
