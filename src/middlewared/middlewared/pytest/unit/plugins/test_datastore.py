@@ -43,6 +43,8 @@ async def datastore_test():
                 m["datastore.execute_write"] = ds.execute_write
                 m["datastore.fetchall"] = ds.fetchall
 
+                m["datastore.query"] = ds.query
+
                 yield ds
 
 
@@ -186,6 +188,16 @@ async def test__inserted_primary_key():
 
 
 @pytest.mark.asyncio
+async def test__update_filter__too_much_rows():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        await ds.execute("INSERT INTO `account_bsdgroups` VALUES (30, 3030)")
+
+        with pytest.raises(RuntimeError):
+            await ds.update("account_bsdgroups", [("bsdgrp_gid", ">", 1000)], {"bsdgrp_gid": 1000})
+
+
+@pytest.mark.asyncio
 async def test__update_fk():
     async with datastore_test() as ds:
         await ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
@@ -202,7 +214,7 @@ async def test__update_fk():
 
 
 @pytest.mark.asyncio
-async def test__bad_pk_update():
+async def test__bad_fk_update():
     async with datastore_test() as ds:
         with pytest.raises(RuntimeError):
             await ds.execute("INSERT INTO `account_bsdgroups` VALUES (5, 50)")

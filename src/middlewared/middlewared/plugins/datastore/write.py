@@ -35,13 +35,23 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         return pk
 
-    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix', default='')))
-    async def update(self, name, id, data, options):
+    @accepts(Str('name'), Any('id_or_filters'), Dict('data', additional_attrs=True),
+             Dict('options', Str('prefix', default='')))
+    async def update(self, name, id_or_filters, data, options):
         """
         Update an entry `id` in `name`.
         """
         table = self._get_table(name)
         data = data.copy()
+
+        if isinstance(id_or_filters, list):
+            rows = await self.middleware.call('datastore.query', name, id_or_filters)
+            if len(rows) != 1:
+                raise RuntimeError(f'{len(rows)} found, expecting one')
+
+            id = rows[0][self._get_pk(table).name]
+        else:
+            id = id_or_filters
 
         for column in table.c:
             if column.foreign_keys:
@@ -53,12 +63,14 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         if update:
             result = await self.middleware.call(
                 'datastore.execute_write',
-                table.update().values(**update).where(self._get_pk(table) == id)
+                table.update().values(**update).where(self._where_clause(table, id)),
             )
             if result.rowcount != 1:
                 raise RuntimeError('No rows were updated')
 
         await self._handle_relationships(id, relationships)
+
+        return id
 
     def _extract_relationships(self, table, prefix, data):
         relationships = self._get_relationships(table)
@@ -96,6 +108,12 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                     })
                 )
 
+    def _where_clause(self, table, id_or_filters):
+        if isinstance(id_or_filters, list):
+            return and_(*self._filters_to_queryset(id_or_filters, table, '', {}))
+        else:
+            return self._get_pk(table) == id_or_filters
+
     @accepts(Str('name'), Any('id_or_filters'))
     async def delete(self, name, id_or_filters):
         """
@@ -103,10 +121,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         """
         table = self._get_table(name)
 
-        delete = table.delete()
-        if isinstance(id_or_filters, list):
-            delete = delete.where(and_(*self._filters_to_queryset(id_or_filters, table, '', {})))
-        else:
-            delete = delete.where(self._get_pk(table) == id_or_filters)
-        await self.middleware.call('datastore.execute_write', delete)
+        await self.middleware.call(
+            'datastore.execute_write',
+            table.delete().where(self._where_clause(table, id_or_filters)),
+        )
         return True

@@ -396,14 +396,9 @@ def load_modules(directory, base=None, depth=0):
             os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/')
         )
 
-    for f in sorted(os.listdir(directory)):
-        path = os.path.join(directory, f)
-        if os.path.isdir(path):
-            if depth > 0:
-                yield from load_modules(path, f'{base}.{f}', depth - 1)
+    _, dirs, files = next(os.walk(directory))
 
-            continue
-
+    for f in files:
         if not f.endswith('.py'):
             continue
         name = f[:-3]
@@ -426,6 +421,11 @@ def load_modules(directory, base=None, depth=0):
             finally:
                 if fp:
                     fp.close()
+
+    for f in dirs:
+        if depth > 0:
+            path = os.path.join(directory, f)
+            yield from load_modules(path, f'{base}.{f}', depth - 1)
 
 
 def load_classes(module, base, blacklist):
