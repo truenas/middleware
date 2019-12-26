@@ -206,7 +206,7 @@ class FilesystemService(Service):
     @private
     @accepts(
         Str('path'),
-        Str('content', max_length=512000),
+        Str('content', max_length=2048000),
         Dict(
             'options',
             Bool('append', default=False),
