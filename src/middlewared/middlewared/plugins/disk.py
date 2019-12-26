@@ -1009,7 +1009,7 @@ class DiskService(CRUDService):
         for g in klass.geoms:
             for p in g.providers:
                 # if swap partition
-                if p.config['rawtype'] in await self.middleware.call('device.get_valid_swap_partition_type_uuids'):
+                if p.config['rawtype'] in await self.middleware.call('disk.get_valid_swap_partition_type_uuids'):
                     if p.name not in used_partitions:
                         # Try to save a core dump from that.
                         # Only try savecore if the partition is not already in use
@@ -1098,7 +1098,7 @@ class DiskService(CRUDService):
             if not partgeom:
                 continue
             for p in partgeom.providers:
-                if p.config['rawtype'] in await self.middleware.call('device.get_valid_swap_partition_type_uuids'):
+                if p.config['rawtype'] in await self.middleware.call('disk.get_valid_swap_partition_type_uuids'):
                     providers[p.id] = p
                     break
 

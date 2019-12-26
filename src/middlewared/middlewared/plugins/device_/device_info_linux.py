@@ -88,7 +88,7 @@ class DeviceService(Service, DeviceInfoBase):
         try:
             block_device = blkid.BlockDevice(os.path.join('/dev', name))
         except blkid.BlkidException:
-            return disk
+            return None
 
         return self.get_disk_details(block_device, disk, self.retrieve_lshw_disks_data())
 
@@ -118,6 +118,8 @@ class DeviceService(Service, DeviceInfoBase):
             disk['ident'] = disk['serial'] = disk_data.get('serial', '')
             disk['size'] = disk['mediasize'] = int(disk_data['size']) if 'size' in disk_data else None
             disk['descr'] = disk['model'] = disk_data.get('product')
+            if disk['size'] and disk['sectorsize']:
+                disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
         # We make a device ID query to get DEVICE ID VPD page of the drive if available and then use that identifier
         # as the lunid - FreeBSD does the same, however it defaults to other schemes if this is unavailable

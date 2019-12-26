@@ -1,5 +1,5 @@
 import os
-import tempfile
+import platform
 
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, job, private
@@ -14,6 +14,7 @@ except ImportError:
 
 BOOT_POOL_NAME = None
 BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
+IS_LINUX = platform.system().lower() == 'linux'
 
 
 class BootService(Service):
@@ -44,6 +45,13 @@ class BootService(Service):
         Returns:
             "BIOS", "EFI", None
         """
+        if IS_LINUX:
+            # https://wiki.debian.org/UEFI
+            return 'EFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
+        else:
+            return await self.__get_boot_type_freebsd()
+
+    async def __get_boot_type_freebsd(self):
         await self.middleware.run_in_thread(geom.scan)
         labelclass = geom.class_by_name('PART')
         efi = bios = 0
@@ -58,113 +66,6 @@ class BootService(Service):
         if bios > 0:
             return 'BIOS'
         return 'EFI'
-
-    @private
-    def get_swap_size(self, disk):
-        geom.scan()
-        labelclass = geom.class_by_name('PART')
-        length = labelclass.xml.find(
-            f".//geom[name='{disk}']/provider/config[type='freebsd-swap']/length"
-        )
-        if length is None:
-            return None
-        return int(length.text)
-
-    @accepts(
-        Str('dev'),
-        Dict(
-            'options',
-            Int('size'),
-            Int('swap_size'),
-        )
-    )
-    @private
-    async def format(self, dev, options):
-        """
-        Format a given disk `dev` using the appropriate partition layout
-        """
-
-        job = await self.middleware.call('disk.wipe', dev, 'QUICK')
-        await job.wait()
-        if job.error:
-            raise CallError(job.error)
-
-        commands = []
-        partitions = []
-        commands.append(['gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'])
-        boottype = await self.get_boot_type()
-        if boottype == 'EFI':
-            commands.append(['gpart', 'add', '-t', 'efi', '-i', '1', '-s', '260m', dev])
-            partitions.append(("efi", 260 * 1024 * 1024))
-
-            commands.append(['newfs_msdos', '-F', '16', f'/dev/{dev}p1'])
-        else:
-            commands.append(['gpart', 'add', '-t', 'freebsd-boot', '-i', '1', '-s', '512k', dev])
-            partitions.append(("freebsd-boot", 512 * 1024))
-
-            commands.append(['gpart', 'set', '-a', 'active', dev])
-
-        if options.get('swap_size'):
-            commands.append([
-                'gpart', 'add', '-t', 'freebsd-swap', '-i', '3',
-                '-s', str(options['swap_size']) + 'B', dev
-            ])
-
-        commands.append(
-            ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
-                ['-s', str(options['size']) + 'B'] if options.get('size') else []
-            ) + [dev]
-        )
-        if options.get("size"):
-            partitions.append(("freebsd-zfs", options["size"]))
-
-        try:
-            for command in commands:
-                p = await run(*command, check=False)
-                if p.returncode != 0:
-                    raise CallError('%r failed:\n%s%s' % (" ".join(command), p.stdout.decode("utf-8"), p.stderr.decode("utf-8")))
-
-            return boottype
-        except CallError as e:
-            if "gpart: autofill: No space left on device" in e.errmsg:
-                diskinfo = {
-                    s.split("#")[1].strip(): s.split("#")[0].strip()
-                    for s in (await run("/usr/sbin/diskinfo", "-v", dev)).stdout.decode("utf-8").split("\n")
-                    if "#" in s
-                }
-                name = diskinfo.get("Disk descr.", dev)
-                size_gb = "%.2f" % ((int(diskinfo["mediasize in sectors"]) * int(diskinfo["sectorsize"]) /
-                                     float(1024 ** 3)))
-                size_blocks = "{:,}".format(int(diskinfo["mediasize in sectors"]) * int(diskinfo["sectorsize"]) / 512)
-
-                total_partitions_size = sum([p[1] for p in partitions])
-                partitions = ["%s, %s blocks" % (p[0], "{:,}".format(int(p[1] / 512))) for p in partitions]
-                partitions.append("total of %s blocks" % "{:,}".format(int(total_partitions_size / 512)))
-                partitions = ", ".join(partitions)
-
-                raise CallError((
-                    f"The new device ({name}, {size_gb} GB, {size_blocks} blocks) "
-                    f"does not have enough space to to hold the required new partitions ({partitions}). "
-                    f"New mirrored devices might require more space than existing devices due to changes in the "
-                    f"booting procedure."
-                ))
-
-            raise
-
-    @private
-    async def install_loader(self, boottype, dev):
-        if boottype == 'EFI':
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', tmpdirname, check=False)
-                try:
-                    os.makedirs(f'{tmpdirname}/efi/boot')
-                except FileExistsError:
-                    pass
-                await run('cp', '/boot/boot1.efi', f'{tmpdirname}/efi/boot/BOOTx64.efi', check=False)
-                await run('umount', tmpdirname, check=False)
-
-        else:
-            await run('gpart', 'bootcode', '-b', '/boot/pmbr', '-p', '/boot/gptzfsboot', '-i', '1', f'/dev/{dev}', check=False)
 
     @accepts(
         Str('dev'),
@@ -191,31 +92,33 @@ class BootService(Service):
             # Lets try to find out the size of the current freebsd-zfs partition so
             # the new partition is not bigger, preventing size mismatch if one of
             # them fail later on. See #21336
-            await self.middleware.run_in_thread(geom.scan)
-            labelclass = geom.class_by_name('PART')
-            for e in labelclass.xml.findall(f"./geom[name='{disks[0]}']/provider/config[type='freebsd-zfs']"):
-                format_opts['size'] = int(e.find('./length').text)
-                break
+            zfs_part = await self.middleware.call('disk.get_partition', disks[0], 'ZFS')
+            if zfs_part:
+                format_opts['size'] = zfs_part['size']
 
-        swap_size = await self.middleware.call('boot.get_swap_size', disks[0])
-        if swap_size:
-            format_opts['swap_size'] = swap_size
-        boottype = await self.format(dev, format_opts)
+        swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
+        if swap_part:
+            format_opts['swap_size'] = swap_part['size']
+        await self.middleware.call('boot.format', dev, format_opts)
 
-        pool = await self.middleware.call("zfs.pool.query", [["name", "=", BOOT_POOL_NAME]], {"get": True})
+        pool = await self.middleware.call('zfs.pool.query', [['name', '=', BOOT_POOL_NAME]], {'get': True})
 
-        extend_pool_job = await self.middleware.call('zfs.pool.extend', BOOT_POOL_NAME, None,
-                                                     [{'target': pool["groups"]["data"][0]["guid"],
-                                                       'type': 'DISK',
-                                                       'path': f'/dev/{dev}p2'}])
+        zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
+        extend_pool_job = await self.middleware.call(
+            'zfs.pool.extend', BOOT_POOL_NAME, None, [{
+                'target': pool['groups']['data'][0]['guid'],
+                'type': 'DISK',
+                'path': f'/dev/{zfs_dev_part["name"]}'
+            }]
+        )
 
-        await self.install_loader(boottype, dev)
+        await self.middleware.call('boot.install_loader', dev)
 
         await job.wrap(extend_pool_job)
 
         # If the user is upgrading his disks, let's set expand to True to make sure that we
         # register the new disks capacity which increase the size of the pool
-        await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, f'{dev}p2', True)
+        await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
 
     @accepts(Str('dev'))
     async def detach(self, dev):
@@ -231,12 +134,14 @@ class BootService(Service):
         """
         format_opts = {}
         disks = list(await self.get_disks())
-        swap_size = await self.middleware.call('boot.get_swap_size', disks[0])
-        if swap_size:
-            format_opts['swap_size'] = swap_size
-        boottype = await self.format(dev, format_opts)
-        await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, f'{dev}p2')
-        await self.install_loader(boottype, dev)
+        swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
+        if swap_part:
+            format_opts['swap_size'] = swap_part['size']
+
+        await self.middleware.call('boot.format', dev, format_opts)
+        zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
+        await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, zfs_dev_part['name'])
+        await self.middleware.call('boot.install_loader', dev)
 
     @accepts()
     @job(lock='boot_scrub')

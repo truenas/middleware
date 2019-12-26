@@ -13,9 +13,9 @@ class DiskService(Service, DiskIdentifyBase):
 
     async def device_to_identifier(self, name):
         disk_data = await self.middleware.call('device.get_disk', name)
-        if disk_data['serial_lunid']:
+        if disk_data and disk_data['serial_lunid']:
             return f'{{serial_lunid}}{disk_data["serial_lunid"]}'
-        elif disk_data['serial']:
+        elif disk_data and disk_data['serial']:
             return f'{{serial}}{disk_data["serial"]}'
 
         await self.middleware.run_in_thread(geom.scan)
@@ -23,7 +23,7 @@ class DiskService(Service, DiskIdentifyBase):
         if klass:
             for g in filter(lambda v: v.name == name, klass.geoms):
                 for p in g.providers:
-                    if p.config['rawtype'] in await self.middleware.call('device.get_valid_zfs_partition_type_uuids'):
+                    if p.config['rawtype'] in await self.middleware.call('disk.get_valid_zfs_partition_type_uuids'):
                         return f'{{uuid}}{p.config["rawuuid"]}'
 
         g = geom.geom_by_name('LABEL', name)

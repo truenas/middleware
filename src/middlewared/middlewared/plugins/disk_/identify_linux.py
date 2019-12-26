@@ -23,7 +23,7 @@ class DiskService(Service, DiskIdentifyBase):
         if dev.partitions_exist:
             for partition in dev.partition_data()['partitions']:
                 if partition['partition_type'] not in await self.middleware.call(
-                    'device.get_valid_zfs_partition_type_uuids'
+                    'disk.get_valid_zfs_partition_type_uuids'
                 ):
                     continue
                 return f'{{uuid}}{partition["part_uuid"]}'

@@ -33,10 +33,10 @@ class DeviceService(Service, DeviceInfoBase):
         disk = self.disk_default.copy()
         disk_klass = await self.middleware.call('device.retrieve_disk_geom_class')
         if not disk_klass:
-            return disk
+            return None
         disk_geom = next((g for g in disk_klass.geoms if g.name == name), None)
         if not disk_geom:
-            return disk
+            return None
         return await self.get_disk_details(disk, disk_geom)
 
     @private
@@ -84,6 +84,8 @@ class DeviceService(Service, DeviceInfoBase):
         disk['size'] = disk['mediasize']
         if disk['serial'] and disk['lunid']:
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
+        if disk['size'] and disk['sectorsize']:
+            disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
         return disk
 
