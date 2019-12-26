@@ -3,10 +3,9 @@ Description=Generate TrueNAS /etc files
 DefaultDependencies=no
 
 Before=network-pre.target
-Wants=middlewared.service
 
 Wants=systemd-modules-load.service local-fs.target
-After=systemd-modules-load.service local-fs.target
+After=systemd-modules-load.service local-fs.target middlewared.service
 
 [Service]
 Type=oneshot
