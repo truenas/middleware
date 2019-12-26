@@ -8,7 +8,10 @@ from datetime import timedelta
 import logging
 import re
 
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
