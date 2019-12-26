@@ -1,6 +1,6 @@
 pipeline {
   triggers {
-       issueCommentTrigger('.*Build Experimental*')
+       githubPullRequests.issueCommentTrigger('.*Build Experimental*')
   }
   agent {
     node {
