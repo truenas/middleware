@@ -16,3 +16,6 @@ override_dh_auto_install:
 		version=\$$(echo \$$vers | cut -d "-" -f 1); \
 		echo FreeNAS-\$$version-MASTER\$$date > debian/truenas/etc/version; \
 	"
+
+override_dh_installinit:
+	dh_installinit --name=ix-etc
