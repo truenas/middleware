@@ -4,7 +4,7 @@
 export PYBUILD_NAME=middlewared
 
 %:
-	dh $@ --with=systemd --with python3 --buildsystem=pybuild
+	dh $@ --with python3 --buildsystem=pybuild
 
 override_dh_auto_build:
 	dh_auto_build
