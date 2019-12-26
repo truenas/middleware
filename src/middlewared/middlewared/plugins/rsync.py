@@ -40,7 +40,7 @@ from middlewared.service import (
     job, item_method, private,
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run_command_with_user_context
+from middlewared.utils.osc import run_command_with_user_context
 
 
 RSYNC_PATH_LIMIT = 1023
