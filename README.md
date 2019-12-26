@@ -1,4 +1,4 @@
-FreeNAS 11 Source
+FreeNAS 12 Source
 =============
 [![Build Status](https://builds.ixsystems.com/jenkins/buildStatus/icon?job=FreeNAS%20-%20Master%20-%20Incremental%20Build)](https://builds.ixsystems.com/jenkins/job/FreeNAS%20-%20Master%20-%20Incremental%20Build/)
 
@@ -59,7 +59,7 @@ If your Pull-Request needs to build aginst another build profile (I.E. fn_head) 
 |:-------------|:-----------------:|-------------|
 | **trueos**  | [freenas/12-stable](https://github.com/trueos/trueos/tree/freenas/12-stable/) | FreeNAS / TrueOS Build System|
 | **ports**  | [freenas/12-stable](https://github.com/trueos/trueos-ports/tree/freenas/12-stable/) | TrueOS Ports Tree|
-| **freenas**  | [master](https://github.com/freenas/freenas/tree/master/) | Core FreeNAS Sources - Legacy UI and Middleware/API |
+| **freenas**  | [freenas/12-devel](https://github.com/freenas/freenas/tree/12-devel/) | Core FreeNAS Sources - Middleware/API |
 | **webui**  | [master](https://github.com/freenas/webui/tree/master/) | New Angular UI |
 | **freenas-docs**  | [master](https://github.com/freenas/freenas-docs/tree/master/) | Handbook |
 | **samba**  | [freenas/master](https://github.com/freenas/samba/tree/freenas/master) | Samba Sources |
