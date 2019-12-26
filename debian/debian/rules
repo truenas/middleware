@@ -2,9 +2,10 @@
 #export DH_VERBOSE = 1
 
 %:
-	dh $@
+	dh $@ --with-systemd
 
 override_dh_auto_install:
+	dh_auto_install
 	sh -c "\
 		mkdir -p debian/truenas/etc; \
 		vers=\$$(dpkg-parsechangelog -S version); \

@@ -948,7 +948,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             self.startup_seq += 1
 
         if platform.system() == 'Linux':
-            systemd_notify(f'EXTEND_TIMEOUT_USEC={240 * 1e6}')
+            systemd_notify(f'EXTEND_TIMEOUT_USEC={int(240 * 1e6)}')
 
     def __notify_startup_complete(self):
         if platform.system() == 'Linux':
