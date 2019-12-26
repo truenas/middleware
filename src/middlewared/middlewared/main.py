@@ -36,6 +36,7 @@ import itertools
 import multiprocessing
 import os
 import pickle
+import platform
 import re
 import queue
 import select
@@ -50,6 +51,10 @@ import traceback
 import types
 import urllib.parse
 import uuid
+
+if platform.system() == "Linux":
+    from systemd.daemon import notify as systemd_notify
+
 from . import logger
 
 
@@ -784,7 +789,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         def on_module_begin(mod):
             self._console_write(f'loaded plugin {mod.__name__}')
-            self.__incr_startup_seq()
+            self.__notify_startup_progress()
 
         def on_module_end(mod):
             if not hasattr(mod, 'setup'):
@@ -829,7 +834,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         for i, setup_func in enumerate(setup_funcs):
             name, f = setup_func
             self._console_write(f'setting up plugins ({name}) [{i + 1}/{setup_total}]')
-            self.__incr_startup_seq()
+            self.__notify_startup_progress()
             call = f(self)
             # Allow setup to be a coroutine
             if asyncio.iscoroutinefunction(f):
@@ -930,16 +935,24 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         except Exception:
             pass
 
-    def __incr_startup_seq(self):
-        if self.startup_seq_path is None:
-            return
+    def __notify_startup_progress(self):
+        if platform.system() == 'FreeBSD':
+            if self.startup_seq_path is None:
+                return
 
-        with open(self.startup_seq_path + ".tmp", "w") as f:
-            f.write(f"{self.startup_seq}")
+            with open(self.startup_seq_path + ".tmp", "w") as f:
+                f.write(f"{self.startup_seq}")
 
-        os.rename(self.startup_seq_path + ".tmp", self.startup_seq_path)
+            os.rename(self.startup_seq_path + ".tmp", self.startup_seq_path)
 
-        self.startup_seq += 1
+            self.startup_seq += 1
+
+        if platform.system() == 'Linux':
+            systemd_notify(f'EXTEND_TIMEOUT_USEC={240 * 1e6}')
+
+    def __notify_startup_complete(self):
+        if platform.system() == 'Linux':
+            systemd_notify('READY=1')
 
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
@@ -1387,6 +1400,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         self.logger.debug('Accepting connections')
         self._console_write('loading completed\n')
+
+        self.__notify_startup_complete()
 
     def terminate(self):
         self.logger.info('Terminating')
