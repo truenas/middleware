@@ -28,6 +28,23 @@ class Column(_Column):
         super().__init__(*args, **kwargs)
 
 
+class EncryptedText(UserDefinedType):
+    def get_col_spec(self, **kw):
+        return "TEXT"
+
+    def _bind_processor(self, value):
+        return encrypt(value)
+
+    def bind_processor(self, dialect):
+        return self._bind_processor
+
+    def _result_processor(self, value):
+        return decrypt(value)
+
+    def result_processor(self, dialect, coltype):
+        return self._result_processor
+
+
 class JSON(UserDefinedType):
     def __init__(self, type=dict, encrypted=False):
         self.type = type
