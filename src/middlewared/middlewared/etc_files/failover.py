@@ -23,8 +23,6 @@ def render(service, middleware):
     except OSError:
         pass
 
-    shutil.copy('/conf/base/etc/devd.conf', '/etc/devd.conf')
-
     if not middleware.call_sync('failover.licensed'):
         open(pf_block, 'w+').close()
         return
@@ -89,12 +87,3 @@ block drop in quick proto udp from any to $ips\n''' % {
         })
 
     Popen(['pfctl', '-f', pf_block], stderr=PIPE, stdout=PIPE).communicate()
-
-    # TODO: use devd hook in failover plugin
-    with open('/etc/devd.conf', 'a') as f:
-        f.write(textwrap.dedent(r'''
-            notify 100 {
-               match "system"   "CARP";
-               match "subsystem"      "[0-9]+@[0-9a-z]+";
-               action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py $subsystem $type";
-            };'''))
