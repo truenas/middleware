@@ -38,6 +38,7 @@ db_update_real()
 		echo "manage.py migrate failed"
 		return 1
 	fi
+	/usr/local/bin/sqlite3 ${FREENAS_CONFIG} "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')"
 	rm -f /tmp/.sqlite3_ha_skip
 	rm -f $UPDATE_FAILED_LOG
 	return 0
@@ -116,10 +117,6 @@ db_update()
 	set +e
 	db_update_real || handle_error
 	set -e
-
-	if [ $IS_UPLOAD -eq 1 ]; then
-		/usr/local/bin/sqlite3 ${FREENAS_CONFIG} "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')"
-	fi
 
 	rm -f $NEED_UPDATE_SENTINEL
 	rm -f $CD_UPGRADE_SENTINEL
