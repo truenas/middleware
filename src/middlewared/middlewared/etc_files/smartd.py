@@ -20,6 +20,9 @@ async def annotate_disk_for_smart(middleware, devices, disk):
 
 
 async def ensure_smart_enabled(args):
+    if any(arg.startswith("/dev/nvme") for arg in args):
+        return True
+
     p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
     if not re.search("SMART.*abled", p.stdout):
         logger.debug("SMART is not supported on %r", args)
