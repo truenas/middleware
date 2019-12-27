@@ -926,13 +926,16 @@ class FailoverService(ConfigService):
     @private
     @job()
     def encryption_attachall(self, job):
+        pools = self.middleware.call_sync('pool.query', [('encrypt', '>', 0)])
+        if not pools:
+            return
         with LocalEscrowCtl() as escrowctl, tempfile.NamedTemporaryFile(mode='w+') as tmp:
             tmp.file.write(escrowctl.getkey() or "")
             tmp.file.flush()
             procs = []
             failed_drive = 0
             failed_volume = 0
-            for pool in self.middleware.call_sync('pool.query', [('encrypt', '>', 0)]):
+            for pool in pools:
                 keyfile = pool['encryptkey_path']
                 for encrypted_disk in self.middleware.call_sync(
                     'datastore.query',
