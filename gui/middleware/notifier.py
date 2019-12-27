@@ -967,6 +967,7 @@ class notifier(metaclass=HookMetaclass):
         # First, destroy the zpool.
         disks = volume.get_disks()
         self._system("zpool destroy -f %s" % (vol_name, ))
+        self._encvolume_detach(volume, destroy=True)
 
         # Clear out disks associated with the volume
         for disk in disks:
@@ -1212,7 +1213,6 @@ class notifier(metaclass=HookMetaclass):
         vol_mountpath = self.__get_mountpath(vol_name)
         self.__destroy_zfs_volume(volume)
         self.reload('disk')
-        self._encvolume_detach(volume, destroy=True)
         self.__rmdir_mountpoint(vol_mountpath)
 
     def groupmap_list(self):
