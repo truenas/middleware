@@ -13,6 +13,7 @@ Depends: libnginx-mod-http-uploadprogress,
          net-tools,
          nginx,
          openssh-server,
+         sudo,
          tmux,
          truenas-webui,
          ${misc:Depends}
