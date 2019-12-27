@@ -1085,4 +1085,5 @@ class GroupService(CRUDService):
 
 
 async def setup(middleware):
-    await middleware.call('user.sync_builtin')
+    if await middleware.call('keyvalue.get', 'run_migration', False):
+        await middleware.call('user.sync_builtin')
