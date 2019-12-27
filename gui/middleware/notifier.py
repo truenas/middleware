@@ -670,7 +670,7 @@ class notifier(metaclass=HookMetaclass):
         """
         providers = []
         doc = self._geom_confxml()
-        disks = self.get_disks()
+        disks = self.get_disks(unused=True)
         for disk in disks:
             parts = [node.text
                      for node in doc.xpath("//class[name = 'PART']/geom[name = '%s']"
