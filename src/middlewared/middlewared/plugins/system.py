@@ -1390,6 +1390,13 @@ async def firstboot(middleware):
             middleware.logger.error(
                 'Failed to create initial boot environment: %s', cp.stderr.decode()
             )
+        else:
+            boot_pool = await middleware.call('boot.pool_name')
+            cp = await run('zfs', 'set', 'beadm:keep=True', os.path.join(boot_pool, 'ROOT/Initial-Install'))
+            if cp.returncode != 0:
+                middleware.logger.error(
+                    f'Failed to set "beadm:keep=True" for Initial-Install boot environment: {cp.stderr}'
+                )
 
 
 async def update_timeout_value(middleware, *args):
