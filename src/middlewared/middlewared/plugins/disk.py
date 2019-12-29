@@ -78,9 +78,10 @@ class DiskService(CRUDService):
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
         datastore_filters = [('expiretime', '=', None)]
+        datastore_extend_context = 'disk.disk_extend_context'
 
     @private
-    async def disk_extend(self, disk):
+    async def disk_extend(self, disk, context):
         disk.pop('enabled', None)
         disk['passwd'] = await self.middleware.call('pwenc.decrypt', disk['passwd'])
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
@@ -94,9 +95,22 @@ class DiskService(CRUDService):
         else:
             disk['devname'] = disk['name']
         self._expand_enclosure(disk)
-        disk.pop('passwd')
-        disk.pop('kmip_uid')
+        if context['passwords']:
+            if disk['passwd']:
+                disk['passwd'] = await self.middleware.call('pwenc.decrypt', disk['passwd'])
+            else:
+                disk['passwd'] = context['disks_keys'].get(disk['identifier'], '')
+        else:
+            disk.pop('passwd')
+            disk.pop('kmip_uid')
         return disk
+
+    @private
+    async def disk_extend_context(self, extra):
+        context = {'passwords': extra.get('passwords', False), 'disks_keys': {}}
+        if extra.get('passwords'):
+            context['disks_keys'] = await self.middleware.call('kmip.retrieve_sed_disks_keys')
+        return context
 
     def _expand_enclosure(self, disk):
         if disk['enclosure_slot'] is not None:
