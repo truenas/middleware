@@ -9,11 +9,10 @@ class KMIPService(Service, KMIPServerMixin):
         super().__init__(*args, **kwargs)
         self.disks_keys = {}
         self.global_sed_key = ''
-        self.sys_adv_datastore = 'system.advanced'
 
     @private
     async def system_advanced_config(self):
-        adv_config = await self.middleware.call('datastore.config', self.sys_adv_datastore, {'prefix': 'adv_'})
+        adv_config = await self.middleware.call('datastore.config', 'system.advanced', {'prefix': 'adv_'})
         if adv_config['sed_passwd']:
             adv_config['sed_passwd'] = await self.middleware.call('pwenc.decrypt', adv_config['sed_passwd'])
         return adv_config
@@ -85,7 +84,7 @@ class KMIPService(Service, KMIPServerMixin):
                         adv_config['kmip_uid'], conn, self.middleware.logger, 'SED Global Password'
                     )
                     self.middleware.call_sync(
-                        'datastore.update', self.sys_adv_datastore, adv_config['id'], {'adv_kmip_uid': None}
+                        'datastore.update', 'system.advanced', adv_config['id'], {'adv_kmip_uid': None}
                     )
                 self.global_sed_key = adv_config['sed_passwd']
                 try:
@@ -94,7 +93,7 @@ class KMIPService(Service, KMIPServerMixin):
                     failed.append('Global SED Key')
                 else:
                     self.middleware.call_sync(
-                        'datastore.update', self.sys_adv_datastore,
+                        'datastore.update', 'system.advanced',
                         adv_config['id'], {'adv_sed_passwd': '', 'adv_kmip_uid': uid}
                     )
         return failed
@@ -141,7 +140,7 @@ class KMIPService(Service, KMIPServerMixin):
                     failed.append('Global SED Key')
             if key:
                 self.middleware.call_sync(
-                    'datastore.update', self.sys_adv_datastore,
+                    'datastore.update', 'system.advanced',
                     adv_config['id'], {
                         'adv_sed_passwd': self.middleware.call_sync('pwenc.encrypt', key), 'adv_kmip_uid': None
                     }
@@ -190,7 +189,7 @@ class KMIPService(Service, KMIPServerMixin):
         adv_config = await self.system_advanced_config()
         if adv_config['adv_kmip_uid']:
             await self.middleware.call(
-                'datastore.update', self.sys_adv_datastore, adv_config['id'], {'adv_kmip_uid': None}
+                'datastore.update', 'system.advanced', adv_config['id'], {'adv_kmip_uid': None}
             )
         self.global_sed_key = ''
         self.disks_keys = {}
