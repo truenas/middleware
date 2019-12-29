@@ -82,7 +82,7 @@ class ReplicationService(CRUDService):
         datastore_extend_context = "replication.extend_context"
 
     @private
-    async def extend_context(self):
+    async def extend_context(self, extra):
         return {
             "state": await self.middleware.call("zettarepl.get_state"),
         }
