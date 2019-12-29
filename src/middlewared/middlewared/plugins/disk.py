@@ -18,7 +18,7 @@ except ImportError:
     geom = getswapinfo = None
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import filterable, private, CallError, CRUDService
+from middlewared.service import private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
@@ -128,23 +128,6 @@ class DiskService(CRUDService):
         else:
             disk['enclosure_slot'] = None
         del disk['enclosure']
-
-    @filterable
-    async def query_passwords(self, filters=None, options=None):
-        """
-        Query disks SED passwords with `query-filters` and `query-options`.
-        """
-        disks = await self.middleware.call(
-            'datastore.query', self._config.datastore, filters, {**options, 'prefix': self._config.datastore_prefix}
-        )
-        disks_keys = await self.middleware.call('kmip.retrieve_sed_disks_keys')
-        for disk in ([disks] if not isinstance(disks, list) else disks):
-            disk.pop('kmip_uid')
-            if disk['passwd']:
-                disk['passwd'] = await self.middleware.call('pwenc.decrypt', disk['passwd'])
-            else:
-                disk['passwd'] = disks_keys.get(disk['identifier'], '')
-        return disks
 
     @accepts(
         Str('id'),
