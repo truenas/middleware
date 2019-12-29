@@ -230,8 +230,15 @@ class KMIPService(Service, KMIPServerMixin):
         return self.global_sed_key
 
     @private
-    async def reset_sed_global_password(self):
+    async def reset_sed_global_password(self, kmip_uid):
         self.global_sed_key = ''
+        if kmip_uid:
+            try:
+                await self.middleware.call('kmip.delete_kmip_secret_data', kmip_uid)
+            except Exception as e:
+                self.middleware.logger.debug(
+                    f'Failed to remove password from KMIP server for SED Global key: {e}'
+                )
 
     @private
     async def reset_sed_disk_password(self, disk_id, kmip_uid):

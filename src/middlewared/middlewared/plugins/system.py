@@ -223,14 +223,9 @@ class SystemAdvancedService(ConfigService):
             elif not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
                 # We want to make sure kmip uid is None in this case
                 adv_config = await self.middleware.call('datastore.config', self._config.datastore)
-                if adv_config['adv_kmip_uid']:
-                    try:
-                        await self.middleware.call('kmip.delete_kmip_secret_data', adv_config['adv_kmip_uid'])
-                    except Exception as e:
-                        self.middleware.logger.debug(
-                            f'Failed to remove password from KMIP server for SED Global key: {e}'
-                        )
-                await self.middleware.call('kmip.reset_sed_global_password')
+                asyncio.ensure_future(
+                    self.middleware.call('kmip.reset_sed_global_password', adv_config['adv_kmip_uid'])
+                )
                 config_data['kmip_uid'] = None
 
             await self.middleware.call(
