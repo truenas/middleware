@@ -26,7 +26,7 @@ def setup(password, disk=None):
         if disk:
             disk_filter.append(('name', '=', disk))
 
-        disks = c.call('disk.query_passwords', disk_filter)
+        disks = c.call('disk.query', disk_filter, {'extra': {'passwords': True}})
         boot_disks = c.call('boot.get_disks')
         disks = list(filter(lambda d: d['name'] not in boot_disks, disks))
 

@@ -194,7 +194,7 @@ class DiskService(CRUDService):
         If temperature of a disk changes by `difference` degree Celsius since the last report, SMART reports this.
         """
 
-        old = await self.query_passwords([['identifier', '=', id]], {'get': True})
+        old = await self.query([['identifier', '=', id]], {'get': True, 'extra': {'passwords': True}})
         old.pop('enabled', None)
         self._expand_enclosure(old)
         new = old.copy()
@@ -216,12 +216,9 @@ class DiskService(CRUDService):
             new['passwd'] = await self.middleware.call('pwenc.encrypt', new['passwd'])
         elif not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
-            disk_data = await self.middleware.call(
-                'datastore.query', self._config.datastore, [['disk_identifier', '=', id]], {'get': True}
-            )
-            if disk_data['disk_kmip_uid']:
+            if new['kmip_uid']:
                 try:
-                    await self.middleware.call('kmip.delete_kmip_secret_data', disk_data['disk_kmip_uid'])
+                    await self.middleware.call('kmip.delete_kmip_secret_data', new['kmip_uid'])
                 except Exception as e:
                     self.middleware.logger.debug(
                         f'Failed to remove password from KMIP server for {id} disk SED key: {e}'
@@ -717,7 +714,7 @@ class DiskService(CRUDService):
     @private
     async def sed_unlock_all(self):
         advconfig = await self.middleware.call('system.advanced.config')
-        disks = await self.middleware.call('disk.query_passwords')
+        disks = await self.query([], {'extra': {'passwords': True}})
 
         # If no SED password was found we can stop here
         if not await self.middleware.call('system.advanced.sed_global_password') and not any(
@@ -745,7 +742,7 @@ class DiskService(CRUDService):
         password = await self.middleware.call('system.advanced.sed_global_password')
 
         if disk is None:
-            disk = await self.middleware.call('disk.query_passwords', [('name', '=', disk_name)])
+            disk = await self.query([('name', '=', disk_name)], {'extra': {'passwords': True}})
             if disk and disk[0]['passwd']:
                 password = disk[0]['passwd']
         elif disk.get('passwd'):
