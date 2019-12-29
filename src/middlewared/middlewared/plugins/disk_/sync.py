@@ -1,3 +1,5 @@
+import asyncio
+
 from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
@@ -99,12 +101,9 @@ class DiskService(Service, ServiceChangeMixin):
                     ):
                         await self.middleware.call('iscsi.extent.delete', extent['id'])
                     if disk['disk_kmip_uid']:
-                        try:
-                            await self.middleware.call('kmip.delete_kmip_secret_data', disk['disk_kmip_uid'])
-                        except Exception as e:
-                            self.middleware.logger.debug(
-                                f'Failed to remove password from KMIP server for {disk["disk_identifier"]}: {e}'
-                            )
+                        asyncio.ensure_future(self.middleware.call(
+                            'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uid']
+                        ))
                     await self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
                     changed = True
                 continue

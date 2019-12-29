@@ -199,14 +199,7 @@ class DiskService(CRUDService):
             new['passwd'] = await self.middleware.call('pwenc.encrypt', new['passwd'])
         elif not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
-            if new['kmip_uid']:
-                try:
-                    await self.middleware.call('kmip.delete_kmip_secret_data', new['kmip_uid'])
-                except Exception as e:
-                    self.middleware.logger.debug(
-                        f'Failed to remove password from KMIP server for {id} disk SED key: {e}'
-                    )
-            await self.middleware.call('kmip.reset_sed_disk_password', id)
+            asyncio.ensure_future(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
             new['kmip_uid'] = None
 
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
