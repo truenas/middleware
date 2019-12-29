@@ -9,18 +9,7 @@ class KMIPService(Service, KMIPServerMixin):
         super().__init__(*args, **kwargs)
         self.disks_keys = {}
         self.global_sed_key = ''
-        self.disks_datastore = 'storage.disk'
         self.sys_adv_datastore = 'system.advanced'
-
-    @private
-    async def query_disks(self, filters=None, options=None):
-        filters = filters or []
-        for f in filters:
-            if len(f) == 3 and f[0] == 'id':
-                f[0] = 'identifier'
-        return await self.middleware.call(
-            'datastore.query', self.disks_datastore, filters or [], {'prefix': 'disk_', **(options or {})}
-        )
 
     @private
     async def system_advanced_config(self):
@@ -32,7 +21,7 @@ class KMIPService(Service, KMIPServerMixin):
     @private
     async def sed_keys_pending_sync(self):
         adv_config = await self.system_advanced_config()
-        disks = await self.query_disks()
+        disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True}})
         config = await self.middleware.call('kmip.config')
         check_db_key = config['enabled'] and config['manage_sed_disks']
         for disk in disks:
@@ -51,7 +40,9 @@ class KMIPService(Service, KMIPServerMixin):
         adv_config = self.middleware.call_sync('kmip.system_advanced_config')
         failed = []
         with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
-            for disk in self.middleware.call_sync('kmip.query_disks', [['id', 'in' if ids else 'nin', ids or []]]):
+            for disk in self.middleware.call_sync(
+                'disk.query', [['id', 'in', ids]] if ids else [], {'extra': {'passwords': True}}
+            ):
                 if not disk['passwd'] and disk['kmip_uid']:
                     try:
                         key = self._retrieve_secret_data(disk['kmip_uid'], conn)
@@ -63,7 +54,7 @@ class KMIPService(Service, KMIPServerMixin):
                 elif not disk['passwd']:
                     continue
 
-                self.disks_keys[disk['identifier']] = self.middleware.call_sync('pwenc.decrypt', disk['passwd'])
+                self.disks_keys[disk['identifier']] = disk['passwd']
                 destroy_successful = False
                 if disk['kmip_uid']:
                     # This needs to be revoked and destroyed
@@ -79,7 +70,7 @@ class KMIPService(Service, KMIPServerMixin):
                     update_data = {'passwd': '', 'kmip_uid': uid}
                 if update_data:
                     self.middleware.call_sync(
-                        'datastore.update', self.disks_datastore, disk['identifier'], update_data, {'prefix': 'disk_'}
+                        'datastore.update', 'storage.disk', disk['identifier'], update_data, {'prefix': 'disk_'}
                     )
             if not adv_config['sed_passwd'] and adv_config['kmip_uid']:
                 try:
@@ -112,10 +103,12 @@ class KMIPService(Service, KMIPServerMixin):
     def pull_sed_keys(self):
         failed = []
         connection_successful = self.middleware.call_sync('kmip.test_connection')
-        for disk in self.middleware.call_sync('kmip.query_disks', [['kmip_uid', '!=', None]]):
+        for disk in self.middleware.call_sync(
+            'disk.query', [['kmip_uid', '!=', None]], {'extra': {'passwords': True}}
+        ):
             try:
                 if disk['passwd']:
-                    key = self.middleware.call_sync('pwenc.decrypt', disk['passwd'])
+                    key = disk['passwd']
                 elif self.disks_keys.get(disk['identifier']):
                     key = self.disks_keys[disk['identifier']]
                 elif connection_successful:
@@ -128,7 +121,7 @@ class KMIPService(Service, KMIPServerMixin):
             else:
                 update_data = {'passwd': self.middleware.call_sync('pwenc.encrypt', key), 'kmip_uid': None}
                 self.middleware.call_sync(
-                    'datastore.update', self.disks_datastore, disk['identifier'], update_data, {'prefix': 'disk_'}
+                    'datastore.update', 'storage.disk', disk['identifier'], update_data, {'prefix': 'disk_'}
                 )
                 self.disks_keys.pop(disk['identifier'], None)
                 if connection_successful:
@@ -188,9 +181,11 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     async def clear_sync_pending_sed_keys(self):
-        for disk in await self.query_disks([['kmip_uid', '!=', None]]):
+        for disk in await self.middleware.call(
+            'disk.query', [['kmip_uid', '!=', None]], {'extra': {'passwords': True}}
+        ):
             await self.middleware.call(
-                'datastore.update', self.disks_datastore, disk['identifier'], {'disk_kmip_uid': None}
+                'datastore.update', 'storage.disk', disk['identifier'], {'disk_kmip_uid': None}
             )
         adv_config = await self.system_advanced_config()
         if adv_config['adv_kmip_uid']:
@@ -202,9 +197,9 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def initialize_sed_keys(self, connection_success):
-        for disk in self.middleware.call_sync('kmip.query_disks'):
+        for disk in self.middleware.call_sync('disk.query', {'extra': {'passwords': True}}):
             if disk['passwd']:
-                self.disks_keys[disk['identifier']] = self.middleware.call_sync('pwenc.decrypt', disk['passwd'])
+                self.disks_keys[disk['identifier']] = disk['passwd']
             elif disk['kmip_uid'] and connection_success:
                 try:
                     with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
