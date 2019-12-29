@@ -10,10 +10,6 @@ class KMIPService(Service, KMIPServerMixin):
         self.zfs_keys = {}
 
     @private
-    async def query_datasets(self, filters=None, options=None):
-        return await self.middleware.call('datastore.query', 'storage.encrypteddataset', filters or [], options or {})
-
-    @private
     async def zfs_keys_pending_sync(self):
         config = await self.middleware.call('kmip.config')
         for ds in await self.middleware.call('datastore.query', 'storage.encrypteddataset'):
@@ -27,7 +23,9 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def push_zfs_keys(self, ids=None):
-        datasets = self.middleware.call_sync('kmip.query_datasets', [['id', 'in' if ids else 'nin', ids or []]])
+        datasets = self.middleware.call_sync(
+            'datastore.query', 'storage.encrypteddataset', [['id', 'in', ids]] if ids else []
+        )
         existing_datasets = {ds['name']: ds for ds in self.middleware.call_sync('pool.dataset.query')}
         failed = []
         with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
@@ -68,7 +66,7 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def pull_zfs_keys(self):
-        datasets = self.middleware.call_sync('kmip.query_datasets', [['kmip_uid', '!=', None]])
+        datasets = self.middleware.call_sync('datastore.query', 'storage.encrypteddataset', [['kmip_uid', '!=', None]])
         existing_datasets = {ds['name']: ds for ds in self.middleware.call_sync('pool.dataset.query')}
         failed = []
         connection_successful = self.middleware.call_sync('kmip.test_connection')
@@ -119,7 +117,9 @@ class KMIPService(Service, KMIPServerMixin):
     @private
     async def clear_sync_pending_zfs_keys(self):
         to_remove = []
-        for ds in await self.query_datasets([['kmip_uid', '!=', None]]):
+        for ds in await self.middleware.call(
+            'datastore.query', 'storage.encrypteddataset', [['kmip_uid', '!=', None]]
+        ):
             if ds['encryption_key']:
                 await self.middleware.call('datastore.update', 'storage.encrypteddataset', {'kmip_uid': None})
             else:
@@ -129,7 +129,7 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def initialize_zfs_keys(self, connection_success):
-        for ds in self.middleware.call_sync('kmip.query_datasets'):
+        for ds in self.middleware.call_sync('datastore.query', 'storage.encrypteddataset',):
             if ds['encryption_key']:
                 self.zfs_keys[ds['name']] = self.middleware.call_sync('pwenc.decrypt', ds['encryption_key'])
             elif ds['kmip_uid'] and connection_success:
