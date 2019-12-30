@@ -1594,7 +1594,7 @@ class VMService(CRUDService):
         return True
 
     @accepts(Int('id'), Str('host', default=''))
-    @pass_app
+    @pass_app()
     async def get_vnc_web(self, app, id, host=None):
         """
             Get the VNC URL from a given VM.

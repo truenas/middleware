@@ -150,10 +150,14 @@ def no_auth_required(fn):
     return fn
 
 
-def pass_app(fn):
+def pass_app(rest=False):
     """Pass the application instance as parameter to the method."""
-    fn._pass_app = True
-    return fn
+    def wrapper(fn):
+        fn._pass_app = {
+            'rest': rest,
+        }
+        return fn
+    return wrapper
 
 
 def periodic(interval, run_on_start=True):

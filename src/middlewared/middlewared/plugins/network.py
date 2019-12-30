@@ -1481,7 +1481,7 @@ class InterfaceService(CRUDService):
         return oid
 
     @accepts()
-    @pass_app
+    @pass_app()
     async def websocket_local_ip(self, app):
         """
         Returns the ip this websocket is connected to.
@@ -1509,7 +1509,7 @@ class InterfaceService(CRUDService):
                 return local_address.split(":")[0]
 
     @accepts()
-    @pass_app
+    @pass_app()
     async def websocket_interface(self, app):
         """
         Returns the interface this websocket is connected to.
