@@ -541,9 +541,12 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        method_kwargs = {
-            'app': Application(req.headers.get('X-Real-Remote-Addr'), req.headers.get('X-Real-Remote-Port'))
-        } if method.get('pass_application') else {}
+        if method.get('pass_application'):
+            method_kwargs = {
+                'app': Application(req.headers.get('X-Real-Remote-Addr'), req.headers.get('X-Real-Remote-Port'))
+            }
+        else:
+            method_kwargs = {}
         download_pipe = None
         if method['downloadable']:
             download_pipe = self.middleware.pipe()
