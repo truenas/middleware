@@ -96,8 +96,8 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     @job(lock=lambda args: f'kmip_sync_zfs_keys_{args}')
-    def sync_zfs_keys(self, job, ids=None, force=False):
-        if not force and not self.middleware.call_sync('kmip.zfs_keys_pending_sync'):
+    def sync_zfs_keys(self, job, ids=None):
+        if not self.middleware.call_sync('kmip.zfs_keys_pending_sync'):
             return
         config = self.middleware.call_sync('kmip.config')
         conn_successful = self.middleware.call_sync('kmip.test_connection', None, True)

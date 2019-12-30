@@ -254,12 +254,12 @@ class KMIPService(Service, KMIPServerMixin):
 
     @job(lock=lambda args: f'kmip_sync_sed_keys_{args}')
     @private
-    def sync_sed_keys(self, job, ids=None, force=False):
+    def sync_sed_keys(self, job, ids=None):
         """
         SED keys are synced if we have sync pending for SED keys. If SED sync is enabled with KMIP, we push
         SED keys, else we pull SED keys and update the database in both cases.
         """
-        if not force and not self.middleware.call_sync('kmip.sed_keys_pending_sync'):
+        if not self.middleware.call_sync('kmip.sed_keys_pending_sync'):
             return
         config = self.middleware.call_sync('kmip.config')
         conn_successful = self.middleware.call_sync('kmip.test_connection', None, True)

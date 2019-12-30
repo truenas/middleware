@@ -142,7 +142,7 @@ class KMIPService(ConfigService):
             )
             job.set_progress(60, 'Syncing keys from existing server to local database')
             sync_jobs = [
-                (await self.middleware.call(f'kmip.{i}', True)) for i in ('sync_zfs_keys', 'sync_sed_keys')
+                (await self.middleware.call(f'kmip.{i}')) for i in ('sync_zfs_keys', 'sync_sed_keys')
             ]
             errors = []
             for sync_job in sync_jobs:
