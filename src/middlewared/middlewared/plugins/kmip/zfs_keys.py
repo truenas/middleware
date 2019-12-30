@@ -144,3 +144,14 @@ class KMIPService(Service, KMIPServerMixin):
     @private
     async def retrieve_zfs_keys(self):
         return self.zfs_keys
+
+    @private
+    async def reset_zfs_key(self, dataset, kmip_uid):
+        self.zfs_keys.pop(dataset, None)
+        if kmip_uid:
+            try:
+                await self.middleware.call('kmip.delete_kmip_secret_data', kmip_uid)
+            except Exception as e:
+                self.middleware.logger.debug(
+                    f'Failed to remove encryption key from KMIP server for "{dataset}" Dataset: {e}'
+                )

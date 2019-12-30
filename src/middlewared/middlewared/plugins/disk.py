@@ -197,7 +197,8 @@ class DiskService(CRUDService):
 
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
-            asyncio.ensure_future(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
+            if new['kmip_uid']:
+                asyncio.ensure_future(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
             new['kmip_uid'] = None
 
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:

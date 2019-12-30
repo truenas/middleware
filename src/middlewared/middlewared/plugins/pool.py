@@ -3151,24 +3151,9 @@ class PoolDatasetService(CRUDService):
     @private
     async def delete_encrypted_datasets_from_db(self, filters):
         datasets = await self.middleware.call('datastore.query', self.dataset_store, filters)
-        if (await self.middleware.call('kmip.config'))['enabled']:
-            kmip_conn_active = await self.middleware.call('kmip.test_connection')
-        else:
-            kmip_conn_active = False
         for ds in datasets:
             if ds['kmip_uid']:
-                err = False
-                if kmip_conn_active:
-                    try:
-                        await self.middleware.call('kmip.delete_kmip_secret_data', ds['kmip_uid'])
-                    except Exception as e:
-                        err = str(e)
-                else:
-                    err = 'Failed to connect to KMIP Server'
-                if err:
-                    self.middleware.logger.debug(
-                        f'Failed to remove encryption key from KMIP server for {ds["name"]}: {err}'
-                    )
+                asyncio.ensure_future(self.middleware.call('kmip.reset_zfs_key', ds['name'], ds['kmip_uid']))
             await self.middleware.call('datastore.delete', self.dataset_store, ds['id'])
 
     @accepts(Str('id'))
