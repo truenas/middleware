@@ -33,7 +33,7 @@ from middlewared.schema import (
     accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
 )
 from middlewared.service import (
-    ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors, periodic
+    ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
 )
 from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
@@ -3586,6 +3586,7 @@ class PoolDatasetService(CRUDService):
                 ('org.freenas:quota_critical', 'quota_critical', None),
                 ('org.freenas:refquota_warning', 'refquota_warning', None),
                 ('org.freenas:refquota_critical', 'refquota_critical', None),
+                ('org.truenas:managedby', 'managedby', None),
                 ('dedup', 'deduplication', str.upper),
                 ('aclmode', None, str.upper),
                 ('atime', None, str.upper),
@@ -3652,6 +3653,7 @@ class PoolDatasetService(CRUDService):
         ]),
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
+        Str('managedby', empty=False),
         Int('quota', null=True),
         Int('quota_warning', validators=[Range(0, 100)]),
         Int('quota_critical', validators=[Range(0, 100)]),
@@ -3675,7 +3677,8 @@ class PoolDatasetService(CRUDService):
         Bool('inherit_encryption', default=True),
         register=True,
     ))
-    async def do_create(self, data):
+    @pass_app(rest=True)
+    async def do_create(self, app, data):
         """
         Creates a dataset/zvol.
 
@@ -3714,7 +3717,6 @@ class PoolDatasetService(CRUDService):
                 }]
             }
         """
-
         verrors = ValidationErrors()
 
         if '/' not in data['name']:
@@ -3775,6 +3777,17 @@ class PoolDatasetService(CRUDService):
         if verrors:
             raise verrors
 
+        if app:
+            uri = None
+            if app.rest and app.host:
+                uri = app.host
+            elif app.websocket and app.request.headers.get('X-Real-Remote-Addr'):
+                uri = app.request.headers.get('X-Real-Remote-Addr')
+            if uri and uri not in [
+                '::1', '127.0.0.1', *[d['address'] for d in await self.middleware.call('interface.ip_in_use')]
+            ]:
+                data['managedby'] = uri if not data.get('managedby') else f'{data["managedby"]}@{uri}'
+
         props = {}
         for i, real_name, transform in (
             ('aclmode', None, str.lower),
@@ -3785,6 +3798,7 @@ class PoolDatasetService(CRUDService):
             ('copies', None, lambda x: str(x)),
             ('deduplication', 'dedup', str.lower),
             ('exec', None, str.lower),
+            ('managedby', 'org.truenas:managedby', None),
             ('quota', None, _none),
             ('quota_warning', 'org.freenas:quota_warning', str),
             ('quota_critical', 'org.freenas:quota_critical', str),
@@ -3903,6 +3917,7 @@ class PoolDatasetService(CRUDService):
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
+            ('managedby', 'org.truenas:managedby', None, True),
             ('quota', None, _none, False),
             ('quota_warning', 'org.freenas:quota_warning', str, True),
             ('quota_critical', 'org.freenas:quota_critical', str, True),

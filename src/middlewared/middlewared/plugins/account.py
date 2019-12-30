@@ -610,7 +610,7 @@ class UserService(CRUDService):
             update=True,
         )
     )
-    @pass_app
+    @pass_app()
     async def set_root_password(self, app, password, options):
         """
         Set password for root user if it is not already set.

@@ -34,6 +34,15 @@ async def authenticate(middleware, req):
         raise web.HTTPUnauthorized()
 
 
+class Application:
+
+    def __init__(self, host, remote_port):
+        self.host = host
+        self.remote_port = remote_port
+        self.websocket = False
+        self.rest = self.authenticated = True
+
+
 class RESTfulAPI(object):
 
     def __init__(self, middleware, app):
@@ -532,7 +541,12 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        method_kwargs = {}
+        if method.get('pass_application'):
+            method_kwargs = {
+                'app': Application(req.headers.get('X-Real-Remote-Addr'), req.headers.get('X-Real-Remote-Port'))
+            }
+        else:
+            method_kwargs = {}
         download_pipe = None
         if method['downloadable']:
             download_pipe = self.middleware.pipe()

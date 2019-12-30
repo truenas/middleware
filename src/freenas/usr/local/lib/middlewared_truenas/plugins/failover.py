@@ -577,7 +577,7 @@ class FailoverService(ConfigService):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    @pass_app
+    @pass_app()
     async def status(self, app):
         """
         Return the current status of this node in the failover
@@ -644,7 +644,7 @@ class FailoverService(ConfigService):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    @pass_app
+    @pass_app()
     async def get_ips(self, app):
         """
         Get a list of IPs which can be accessed for management via UI.
@@ -759,7 +759,7 @@ class FailoverService(ConfigService):
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    @pass_app
+    @pass_app()
     def disabled_reasons(self, app):
         """
         Returns a list of reasons why failover is not enabled/functional.

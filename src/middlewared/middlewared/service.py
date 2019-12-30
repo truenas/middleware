@@ -150,10 +150,14 @@ def no_auth_required(fn):
     return fn
 
 
-def pass_app(fn):
+def pass_app(rest=False):
     """Pass the application instance as parameter to the method."""
-    fn._pass_app = True
-    return fn
+    def wrapper(fn):
+        fn._pass_app = {
+            'rest': rest,
+        }
+        return fn
+    return wrapper
 
 
 def periodic(interval, run_on_start=True):
@@ -422,23 +426,26 @@ class CRUDService(ServiceChangeMixin, Service):
                 'datastore.query', self._config.datastore, filters, options,
             )
 
-    async def create(self, data):
+    @pass_app(rest=True)
+    async def create(self, app, data):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.create', self, self.do_create, [data]
+            f'{self._config.namespace}.create', self, self.do_create, [data], app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_create', rv)
         return rv
 
-    async def update(self, id, data):
+    @pass_app(rest=True)
+    async def update(self, app, id, data):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.update', self, self.do_update, [id, data]
+            f'{self._config.namespace}.update', self, self.do_update, [id, data], app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
         return rv
 
-    async def delete(self, id, *args):
+    @pass_app(rest=True)
+    async def delete(self, app, id, *args):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args)
+            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args), app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_delete', rv)
         return rv
@@ -815,7 +822,8 @@ class CoreService(Service):
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': hasattr(method, '_no_auth_required'),
                     'filterable': hasattr(method, '_filterable'),
-                    'require_websocket': hasattr(method, '_pass_app'),
+                    'pass_application': hasattr(method, '_pass_app'),
+                    'require_websocket': hasattr(method, '_pass_app') and not method._pass_app['rest'],
                     'job': hasattr(method, '_job'),
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
                     'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],

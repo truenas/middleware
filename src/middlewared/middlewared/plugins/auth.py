@@ -309,7 +309,7 @@ class AuthService(Service):
 
     @no_auth_required
     @accepts(Str('username'), Str('password'), Str('otp_token', null=True, default=None))
-    @pass_app
+    @pass_app()
     async def login(self, app, username, password, otp_token=None):
         """
         Authenticate session using username and password.
@@ -332,7 +332,7 @@ class AuthService(Service):
         return valid
 
     @accepts()
-    @pass_app
+    @pass_app()
     async def logout(self, app):
         """
         Deauthenticates an app and if a token exists, removes that from the
@@ -343,7 +343,7 @@ class AuthService(Service):
 
     @no_auth_required
     @accepts(Str('token'))
-    @pass_app
+    @pass_app()
     def token(self, app, token):
         """Authenticate using a given `token` id."""
         token = self.token_manager.get(token)
