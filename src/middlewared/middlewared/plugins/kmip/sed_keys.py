@@ -189,6 +189,19 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def pull_sed_keys(self):
+        """
+        We pull SED keys from the KMIP server when SED sync has been disabled. In this case, following steps
+        are executed:
+
+        1) If a disk has a SED key saved in database, that is given preference over the key saved in the KMIP server.
+           Which in this case kmip uid is simply removed and database is updated to reflect that.
+        2) If a disk does not have a SED key saved in the database, we first check if we have the key saved
+           in memory cache and use that to update the database and remove the kmip uid from the database.
+        3) If memory cache also does not have the SED key, we finally try to retrieve the key from the KMIP server
+           and if we succeed, we update the database to reflect that.
+
+        The same steps are carried out for system.advanced.
+        """
         failed = []
         connection_successful = self.middleware.call_sync('kmip.test_connection')
         for disk in self.middleware.call_sync(
@@ -242,6 +255,10 @@ class KMIPService(Service, KMIPServerMixin):
     @job(lock=lambda args: f'kmip_sync_sed_keys_{args}')
     @private
     def sync_sed_keys(self, job, ids=None, force=False):
+        """
+        SED keys are synced if we have sync pending for SED keys. If SED sync is enabled with KMIP, we push
+        SED keys, else we pull SED keys and update the database in both cases.
+        """
         if not force and not self.middleware.call_sync('kmip.sed_keys_pending_sync'):
             return
         config = self.middleware.call_sync('kmip.config')
@@ -269,6 +286,11 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     async def clear_sync_pending_sed_keys(self):
+        """
+        We expose an option to clear keys which are pending kmip sync, this can be done if the user knows for certain
+        that the KMIP server can never be reached now and he/she does not want the system trying again to initiate
+        a sync with the KMIP server.
+        """
         for disk in await self.middleware.call(
             'disk.query', [['kmip_uid', '!=', None]], {'extra': {'passwords': True}}
         ):
@@ -285,6 +307,10 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def initialize_sed_keys(self, connection_success):
+        """
+        On middleware boot, we initialize memory cache to contain all the SED keys which we can later use
+        for SED related functionality.
+        """
         for disk in self.middleware.call_sync('disk.query', {'extra': {'passwords': True}}):
             if disk['passwd']:
                 self.disks_keys[disk['identifier']] = disk['passwd']
