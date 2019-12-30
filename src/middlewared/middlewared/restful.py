@@ -36,8 +36,9 @@ async def authenticate(middleware, req):
 
 class Application:
 
-    def __init__(self, request):
-        self.request = request
+    def __init__(self, host, remote_port):
+        self.host = host
+        self.remote_port = remote_port
         self.websocket = False
         self.rest = self.authenticated = True
 
@@ -540,10 +541,9 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        if method.get('pass_application'):
-            method_args.insert(0, Application(req))
-
-        method_kwargs = {}
+        method_kwargs = {
+            'app': Application(req.headers.get('X-Real-Remote-Addr'), req.headers.get('X-Real-Remote-Port'))
+        } if method.get('pass_application') else {}
         download_pipe = None
         if method['downloadable']:
             download_pipe = self.middleware.pipe()

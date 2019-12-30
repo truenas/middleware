@@ -3653,7 +3653,7 @@ class PoolDatasetService(CRUDService):
         ]),
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
-        Str('managedby', default='user'),
+        Str('managedby', empty=False),
         Int('quota', null=True),
         Int('quota_warning', validators=[Range(0, 100)]),
         Int('quota_critical', validators=[Range(0, 100)]),
@@ -3677,7 +3677,8 @@ class PoolDatasetService(CRUDService):
         Bool('inherit_encryption', default=True),
         register=True,
     ))
-    async def do_create(self, data):
+    @pass_app(rest=True)
+    async def do_create(self, app, data):
         """
         Creates a dataset/zvol.
 
@@ -3716,7 +3717,6 @@ class PoolDatasetService(CRUDService):
                 }]
             }
         """
-
         verrors = ValidationErrors()
 
         if '/' not in data['name']:
@@ -3776,6 +3776,17 @@ class PoolDatasetService(CRUDService):
 
         if verrors:
             raise verrors
+
+        if not data.get('managedby') and app:
+            uri = None
+            if app.rest and app.host:
+                uri = app.host
+            elif app.websocket and app.request.headers.get('X-Real-Remote-Addr'):
+                uri = app.request.headers.get('X-Real-Remote-Addr')
+            if uri and uri not in [
+                '::1', '127.0.0.1', *[d['address'] for d in await self.middleware.call('interface.ip_in_use')]
+            ]:
+                data['managedby'] = uri
 
         props = {}
         for i, real_name, transform in (
