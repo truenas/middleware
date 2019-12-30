@@ -220,7 +220,7 @@ class KMIPService(Service, KMIPServerMixin):
             except Exception:
                 failed.append(disk['identifier'])
             else:
-                update_data = {'passwd': self.middleware.call_sync('pwenc.encrypt', key), 'kmip_uid': None}
+                update_data = {'passwd': key, 'kmip_uid': None}
                 self.middleware.call_sync(
                     'datastore.update', 'storage.disk', disk['identifier'], update_data, {'prefix': 'disk_'}
                 )

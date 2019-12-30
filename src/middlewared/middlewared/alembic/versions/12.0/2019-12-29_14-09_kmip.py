@@ -45,6 +45,7 @@ def upgrade():
 
     with op.batch_alter_table('storage_disk', schema=None) as batch_op:
         batch_op.add_column(sa.Column('disk_kmip_uid', sa.String(length=255), nullable=True, default=None))
+        batch_op.alter_column('disk_passwd', existing_type=sa.CHAR, type_=sa.TEXT)
 
     with op.batch_alter_table('storage_encrypteddataset', schema=None) as batch_op:
         batch_op.add_column(sa.Column('kmip_uid', sa.String(length=255), nullable=True, default=None))

@@ -96,9 +96,7 @@ class DiskService(CRUDService):
             disk['devname'] = disk['name']
         self._expand_enclosure(disk)
         if context['passwords']:
-            if disk['passwd']:
-                disk['passwd'] = await self.middleware.call('pwenc.decrypt', disk['passwd'])
-            else:
+            if not disk['passwd']:
                 disk['passwd'] = context['disks_keys'].get(disk['identifier'], '')
         else:
             disk.pop('passwd')
@@ -197,9 +195,7 @@ class DiskService(CRUDService):
         if verrors:
             raise verrors
 
-        if new['passwd']:
-            new['passwd'] = await self.middleware.call('pwenc.encrypt', new['passwd'])
-        elif not new['passwd'] and old['passwd'] != new['passwd']:
+        if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
             asyncio.ensure_future(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
             new['kmip_uid'] = None
