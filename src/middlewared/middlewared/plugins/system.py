@@ -66,7 +66,7 @@ class SystemAdvancedModel(sa.Model):
     adv_boot_scrub = sa.Column(sa.Integer(), default=7)
     adv_fqdn_syslog = sa.Column(sa.Boolean(), default=False)
     adv_sed_user = sa.Column(sa.String(120), default="user")
-    adv_sed_passwd = sa.Column(sa.String(120))
+    adv_sed_passwd = sa.Column(sa.EncryptedText())
     adv_sysloglevel = sa.Column(sa.String(120), default="f_info")
     adv_syslogserver = sa.Column(sa.String(120), default='')
     adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
@@ -218,9 +218,7 @@ class SystemAdvancedService(ConfigService):
                 original_data['sed_user'] = original_data['sed_user'].lower()
             if config_data.get('sed_user'):
                 config_data['sed_user'] = config_data['sed_user'].lower()
-            if config_data['sed_passwd']:
-                config_data['sed_passwd'] = await self.middleware.call('pwenc.encrypt', config_data['sed_passwd'])
-            elif not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
+            if not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
                 # We want to make sure kmip uid is None in this case
                 adv_config = await self.middleware.call('datastore.config', self._config.datastore)
                 asyncio.ensure_future(
@@ -299,9 +297,7 @@ class SystemAdvancedService(ConfigService):
         passwd = (await self.middleware.call(
             'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
         ))['sed_passwd']
-        if passwd:
-            return await self.middleware.call('pwenc.decrypt', passwd)
-        return await self.middleware.call('kmip.sed_global_password')
+        return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
 
     @private
     def autotune(self, conf='loader'):

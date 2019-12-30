@@ -32,13 +32,6 @@ class KMIPService(Service, KMIPServerMixin):
         self.global_sed_key = ''
 
     @private
-    async def system_advanced_config(self):
-        adv_config = await self.middleware.call('datastore.config', 'system.advanced', {'prefix': 'adv_'})
-        if adv_config['sed_passwd']:
-            adv_config['sed_passwd'] = await self.middleware.call('pwenc.decrypt', adv_config['sed_passwd'])
-        return adv_config
-
-    @private
     async def sed_keys_pending_sync(self):
         """
         We determine if we have SED keys pending sync by verifying following scenarios:
@@ -92,7 +85,7 @@ class KMIPService(Service, KMIPServerMixin):
         During this, we also declare sync is pending if we have SED sync enabled and the keys
         are not in the memory as that is what we rely on while actually using the SED keys functionality.
         """
-        adv_config = await self.system_advanced_config()
+        adv_config = await self.middleware.call('datastore.config', 'system.advanced', {'prefix': 'adv_'})
         disks = await self.middleware.call('datastore.query', 'storage.disk', [], {'prefix': 'disk_'})
         config = await self.middleware.call('kmip.config')
         check_db_key = config['enabled'] and config['manage_sed_disks']
@@ -125,11 +118,11 @@ class KMIPService(Service, KMIPServerMixin):
 
         The same steps are followed for system.advanced.
         """
-        adv_config = self.middleware.call_sync('kmip.system_advanced_config')
+        adv_config = self.middleware.call_sync('datastore.config', 'system.advanced', {'prefix': 'adv_'})
         failed = []
         with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
             for disk in self.middleware.call_sync(
-                'datastore.query', 'storage.disk', [['id', 'in', ids]] if ids else [], {'prefix': 'disk_'}
+                'datastore.query', 'storage.disk', [['identifier', 'in', ids]] if ids else [], {'prefix': 'disk_'}
             ):
                 if not disk['passwd'] and disk['kmip_uid']:
                     try:
@@ -227,7 +220,7 @@ class KMIPService(Service, KMIPServerMixin):
                 self.disks_keys.pop(disk['identifier'], None)
                 if connection_successful:
                     self.middleware.call_sync('kmip.delete_kmip_secret_data', disk['kmip_uid'])
-        adv_config = self.middleware.call_sync('kmip.system_advanced_config')
+        adv_config = self.middleware.call_sync('datastore.config', 'system.advanced', {'prefix': 'adv_'})
         if adv_config['kmip_uid']:
             key = None
             if adv_config['sed_passwd']:
@@ -244,7 +237,7 @@ class KMIPService(Service, KMIPServerMixin):
                 self.middleware.call_sync(
                     'datastore.update', 'system.advanced',
                     adv_config['id'], {
-                        'adv_sed_passwd': self.middleware.call_sync('pwenc.encrypt', key), 'adv_kmip_uid': None
+                        'adv_sed_passwd': key, 'adv_kmip_uid': None
                     }
                 )
                 self.global_sed_key = ''
@@ -297,7 +290,7 @@ class KMIPService(Service, KMIPServerMixin):
             await self.middleware.call(
                 'datastore.update', 'storage.disk', disk['identifier'], {'disk_kmip_uid': None}
             )
-        adv_config = await self.system_advanced_config()
+        adv_config = await self.middleware.call('datastore.config', 'system.advanced', {'prefix': 'adv_'})
         if adv_config['adv_kmip_uid']:
             await self.middleware.call(
                 'datastore.update', 'system.advanced', adv_config['id'], {'adv_kmip_uid': None}
@@ -324,7 +317,7 @@ class KMIPService(Service, KMIPServerMixin):
                     self.middleware.logger.debug(f'Failed to retrieve SED disk key for {disk["identifier"]}')
                 else:
                     self.disks_keys[disk['identifier']] = key
-        adv_config = self.middleware.call_sync('kmip.system_advanced_config')
+        adv_config = self.middleware.call_sync('datastore.config', 'system.advanced', {'prefix': 'adv_'})
         if adv_config['sed_passwd']:
             self.global_sed_key = adv_config['sed_passwd']
         elif connection_success and adv_config['kmip_uid']:

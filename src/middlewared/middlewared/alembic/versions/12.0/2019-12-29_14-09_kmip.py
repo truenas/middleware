@@ -52,6 +52,7 @@ def upgrade():
 
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.add_column(sa.Column('adv_kmip_uid', sa.String(length=255), nullable=True, default=None))
+        batch_op.alter_column('adv_sed_passwd', existing_type=sa.CHAR, type_=sa.TEXT)
 
 
 def downgrade():
