@@ -109,6 +109,22 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def push_sed_keys(self, ids=None):
+        """
+        When push SED keys is initiated, we carry out following steps:
+
+        1) For any disk which has it's key stored in KMIP server and not in database, we first update memory
+           cache to reflect the key present in the KMIP server.
+        2) If the disk in question does not have a SED key and no kmip uid, we don't have a key set for it and we
+           dismiss that disk.
+        3) For point (1), the key has already been pushed to the KMIP server so we don't need to do that again.
+        4) Moving on, we are left with the case where we have SED key stored in database for disk with/without a
+           kmip uid present in the disk row.
+        5) If kmip uid present for the disk in question, we first revoke/remove it.
+        6) Existing SED key present in the database is pushed to the KMIP Server and database is updated
+           with new kmip uid.
+
+        The same steps are followed for system.advanced.
+        """
         adv_config = self.middleware.call_sync('kmip.system_advanced_config')
         failed = []
         with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
