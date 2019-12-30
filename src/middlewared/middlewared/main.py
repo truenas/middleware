@@ -69,6 +69,8 @@ class Application(object):
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.session_id = str(uuid.uuid4())
+        self.rest = False
+        self.websocket = True
 
         # Allow at most 10 concurrent calls and only queue up until 20
         self._softhardsemaphore = SoftHardSemaphore(10, 20)

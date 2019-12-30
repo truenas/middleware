@@ -33,7 +33,7 @@ from middlewared.schema import (
     accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
 )
 from middlewared.service import (
-    ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors, periodic
+    ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
 )
 from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
