@@ -83,7 +83,7 @@ class UserModel(sa.Model):
     bsdusr_sudo = sa.Column(sa.Boolean(), default=False)
     bsdusr_microsoft_account = sa.Column(sa.Boolean())
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
-    bsdusr_attributes = sa.Column(sa.JSON(), default=None)
+    bsdusr_attributes = sa.Column(sa.JSON())
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
 
 
@@ -1082,3 +1082,8 @@ class GroupService(CRUDService):
                     f'{schema}.users',
                     f'Following users do not exist: {", ".join(map(str, notfound))}',
                 )
+
+
+async def setup(middleware):
+    if await middleware.call('keyvalue.get', 'run_migration', False):
+        await middleware.call('user.sync_builtin')

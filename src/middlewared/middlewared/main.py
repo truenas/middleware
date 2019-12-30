@@ -826,6 +826,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
                 # We also need to load alerts first because other plugins can issue one-shot alerts during their
                 # initialization
                 'alert',
+                # Migrate users and groups ASAP
+                'account',
             ]
             try:
                 return beginning.index(plugin)
