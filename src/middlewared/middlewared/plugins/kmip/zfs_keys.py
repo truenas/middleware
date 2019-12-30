@@ -33,7 +33,7 @@ class KMIPService(Service, KMIPServerMixin):
                 if not ds['encryption_key']:
                     # We want to make sure we have the KMIP server's keys and in-memory keys in sync
                     try:
-                        if ds['name'] in self.zfs_keys and self.middleware.call(
+                        if ds['name'] in self.zfs_keys and self.middleware.call_sync(
                             'zfs.dataset.check_key', ds['name'], {'key': self.zfs_keys[ds['name']]}
                         ):
                             continue

@@ -175,7 +175,9 @@ class DiskService(CRUDService):
         """
 
         old = await self.middleware.call(
-            'datastore.query', 'storage.disk', [['identifier', '=', id]], {'get': True, 'prefix': 'disk_'}
+            'datastore.query', 'storage.disk', [['identifier', '=', id]], {
+                'get': True, 'prefix': self._config.datastore_prefix
+            }
         )
         old.pop('enabled', None)
         self._expand_enclosure(old)
@@ -688,7 +690,7 @@ class DiskService(CRUDService):
     @private
     async def sed_unlock_all(self):
         advconfig = await self.middleware.call('system.advanced.config')
-        disks = await self.query([], {'extra': {'passwords': True}})
+        disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True}})
 
         # If no SED password was found we can stop here
         if not await self.middleware.call('system.advanced.sed_global_password') and not any(
