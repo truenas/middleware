@@ -7,7 +7,7 @@ IMPORTS
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 freeNas MODULE-IDENTITY
-    LAST-UPDATED "201905120000Z"
+    LAST-UPDATED "202005280000Z"
     ORGANIZATION "www.ixsystems.com"
     CONTACT-INFO
         "postal:   2490 Kruse Dr
@@ -16,7 +16,7 @@ freeNas MODULE-IDENTITY
          email:    support@iXsystems.com"
     DESCRIPTION
         ""
-    REVISION     "201905120000Z"
+    REVISION     "202005280000Z"
     DESCRIPTION
         ""
     ::= { enterprises 50536 }
@@ -569,5 +569,52 @@ alertCancellation NOTIFICATION-TYPE
     DESCRIPTION
         "An alert cancelled"
     ::= { notificationPrefix 2 }
+
+hddTempTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF HDDTempEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of HDDs and their temperatures."
+    ::= { freeNas 3 }
+
+hddTempEntry OBJECT-TYPE
+    SYNTAX      HDDTempEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing a HDD and its temperature."
+    INDEX       { hddTempIndex }
+    ::= { hddTempTable 1 }
+
+HDDTempEntry ::= SEQUENCE {
+    hddTempIndex    Integer32,
+    hddTempDevice   DisplayString,
+    hddTempValue    Gauge32
+}
+
+hddTempIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Reference index for each observed HDD."
+    ::= { hddTempEntry 1 }
+
+hddTempDevice OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the HDD we are reading temperature from."
+    ::= { hddTempEntry 2 }
+
+hddTempValue OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The temperature of this HDD in mC."
+    ::= { hddTempEntry 3 }
 
 END

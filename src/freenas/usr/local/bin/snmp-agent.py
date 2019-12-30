@@ -1,4 +1,5 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
+from middlewared.utils import osc
 
 from collections import defaultdict
 import copy
@@ -13,25 +14,21 @@ import libzfs
 import netsnmpagent
 import pysnmp.hlapi  # noqa
 import pysnmp.smi
-import sysctl
+if osc.IS_FREEBSD:
+    import sysctl
 
 from middlewared.client import Client
 
 
 def get_Kstat():
+    if osc.IS_FREEBSD:
+        return get_Kstat_FreeBSD()
+    else:
+        return get_Kstat_Linux()
+
+
+def get_Kstat_FreeBSD():
     Kstats = [
-        "hw.pagesize",
-        "hw.physmem",
-        "kern.maxusers",
-        "vm.kmem_map_free",
-        "vm.kmem_map_size",
-        "vm.kmem_size",
-        "vm.kmem_size_max",
-        "vm.kmem_size_min",
-        "vm.kmem_size_scale",
-        "vm.stats",
-        "vm.swap_total",
-        "vm.swap_reserved",
         "kstat.zfs",
         "vfs.zfs"
     ]
@@ -43,6 +40,22 @@ def get_Kstat():
                 Kstat[s.name] = Decimal(s.value)
             elif isinstance(s.value, bytearray):
                 Kstat[s.name] = Decimal(int.from_bytes(s.value, "little"))
+
+    return Kstat
+
+
+def get_Kstat_Linux():
+    Kstat = {}
+
+    with open("/proc/spl/kstat/zfs/arcstats") as f:
+        arcstats = f.readlines()
+
+    for line in arcstats[2:]:
+        if line.strip():
+            name, type, data = line.strip().split()
+            Kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
+
+    Kstat["vfs.zfs.version.spa"] = Decimal(5000)
 
     return Kstat
 
@@ -301,8 +314,21 @@ zvol_table = agent.Table(
     ],
 )
 
-temp_sensors_table = agent.Table(
-    oidstr="LM-SENSORS-MIB::lmTempSensorsTable",
+lm_sensors_table = None
+if osc.IS_FREEBSD:
+    lm_sensors_table = agent.Table(
+        oidstr="LM-SENSORS-MIB::lmTempSensorsTable",
+        indexes=[
+            agent.Integer32(),
+        ],
+        columns=[
+            (2, agent.DisplayString()),
+            (3, agent.Unsigned32()),
+        ]
+    )
+
+hdd_temp_table = agent.Table(
+    oidstr="FREENAS-MIB::hddTempTable",
     indexes=[
         agent.Integer32(),
     ],
@@ -486,7 +512,7 @@ class DiskTempThread(threading.Thread):
             try:
                 with Client() as c:
                     self.temperatures = {
-                        disk: temperature
+                        disk: temperature * 1000
                         for disk, temperature in c.call("disk.temperatures", self.disks, self.powermode).items()
                         if temperature is not None
                     }
@@ -506,17 +532,24 @@ if __name__ == "__main__":
     zpool_io_thread = ZpoolIoThread()
     zpool_io_thread.start()
 
-    zilstat_1_thread = ZilstatThread(1)
-    zilstat_5_thread = ZilstatThread(5)
-    zilstat_10_thread = ZilstatThread(10)
+    zilstat_1_thread = None
+    zilstat_5_thread = None
+    zilstat_10_thread = None
 
-    if config["zilstat"]:
-        zilstat_1_thread.start()
-        zilstat_5_thread.start()
-        zilstat_10_thread.start()
+    if osc.IS_FREEBSD:
+        if config["zilstat"]:
+            zilstat_1_thread = ZilstatThread(1)
+            zilstat_5_thread = ZilstatThread(5)
+            zilstat_10_thread = ZilstatThread(10)
 
-    cpu_temp_thread = CpuTempThread(10)
-    cpu_temp_thread.start()
+            zilstat_1_thread.start()
+            zilstat_5_thread.start()
+            zilstat_10_thread.start()
+
+    cpu_temp_thread = None
+    if osc.IS_FREEBSD:
+        cpu_temp_thread = CpuTempThread(10)
+        cpu_temp_thread.start()
 
     disk_temp_thread = DiskTempThread(300)
     disk_temp_thread.start()
@@ -606,17 +639,26 @@ if __name__ == "__main__":
                 row.setRowCell(6, agent.Integer32(available))
                 row.setRowCell(7, agent.Integer32(referenced))
 
-            temp_sensors_table.clear()
-            temperatures = []
-            for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
-                temperatures.append((f"CPU{i}", temp))
-            temperatures.extend(list(disk_temp_thread.temperatures.items()))
-            for i, (name, temp) in enumerate(temperatures):
-                row = temp_sensors_table.addRow([agent.Integer32(i + 1)])
-                row.setRowCell(2, agent.DisplayString(name))
-                row.setRowCell(3, agent.Unsigned32(temp))
+            if lm_sensors_table:
+                lm_sensors_table.clear()
+                temperatures = []
+                if cpu_temp_thread:
+                    for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
+                        temperatures.append((f"CPU{i}", temp))
+                if disk_temp_thread:
+                    temperatures.extend(list(disk_temp_thread.temperatures.items()))
+                for i, (name, temp) in enumerate(temperatures):
+                    row = lm_sensors_table.addRow([agent.Integer32(i + 1)])
+                    row.setRowCell(2, agent.DisplayString(name))
+                    row.setRowCell(3, agent.Unsigned32(temp))
 
-            last_update_at = datetime.utcnow()
+            if hdd_temp_table:
+                hdd_temp_table.clear()
+                if disk_temp_thread:
+                    for i, (name, temp) in enumerate(list(disk_temp_thread.temperatures.items())):
+                        row = hdd_temp_table.addRow([agent.Integer32(i + 1)])
+                        row.setRowCell(2, agent.DisplayString(name))
+                        row.setRowCell(3, agent.Unsigned32(temp))
 
             kstat = get_Kstat()
             arc_efficiency = get_arc_efficiency(kstat)
@@ -638,6 +680,11 @@ if __name__ == "__main__":
             zfs_l2arc_write.update(int(kstat["kstat.zfs.misc.arcstats.l2_write_bytes"] / 1024 % 2 ** 32))
             zfs_l2arc_size.update(int(kstat["kstat.zfs.misc.arcstats.l2_asize"] / 1024))
 
-            zfs_zilstat_ops1.update(zilstat_1_thread.value["ops"])
-            zfs_zilstat_ops5.update(zilstat_5_thread.value["ops"])
-            zfs_zilstat_ops10.update(zilstat_10_thread.value["ops"])
+            if zilstat_1_thread:
+                zfs_zilstat_ops1.update(zilstat_1_thread.value["ops"])
+            if zilstat_5_thread:
+                zfs_zilstat_ops5.update(zilstat_5_thread.value["ops"])
+            if zilstat_10_thread:
+                zfs_zilstat_ops10.update(zilstat_10_thread.value["ops"])
+
+            last_update_at = datetime.utcnow()
