@@ -177,7 +177,9 @@ class DiskService(CRUDService):
         If temperature of a disk changes by `difference` degree Celsius since the last report, SMART reports this.
         """
 
-        old = await self.query([['identifier', '=', id]], {'get': True, 'extra': {'passwords': True}})
+        old = await self.middleware.call(
+            'datastore.query', 'storage.disk', [['identifier', '=', id]], {'get': True, 'prefix': 'disk_'}
+        )
         old.pop('enabled', None)
         self._expand_enclosure(old)
         new = old.copy()
