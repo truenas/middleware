@@ -815,6 +815,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
             beginning = [
                 'datastore',
+                # We run boot plugin first to ensure we are able to retrieve
+                # BOOT POOL during system plugin initialization
+                'boot',
                 # We need to run system plugin setup's function first because when system boots, the right
                 # timezone is not configured. See #72131
                 'system',

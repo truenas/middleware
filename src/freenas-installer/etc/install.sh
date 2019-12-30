@@ -728,6 +728,7 @@ create_be()
 
     # Create the new BE
     zfs create -o mountpoint=legacy ${BOOT_POOL}/ROOT/${BENAME} || return 1
+    zfs set beadm:keep=True ${BOOT_POOL}/ROOT/${BENAME} || return 1
 
     # Mount the new BE datasets
     mkdir -p ${mountpoint}
