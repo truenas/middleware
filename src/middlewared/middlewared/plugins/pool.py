@@ -3777,7 +3777,7 @@ class PoolDatasetService(CRUDService):
         if verrors:
             raise verrors
 
-        if not data.get('managedby') and app:
+        if app:
             uri = None
             if app.rest and app.host:
                 uri = app.host
@@ -3786,7 +3786,7 @@ class PoolDatasetService(CRUDService):
             if uri and uri not in [
                 '::1', '127.0.0.1', *[d['address'] for d in await self.middleware.call('interface.ip_in_use')]
             ]:
-                data['managedby'] = uri
+                data['managedby'] = uri if not data.get('managedby') else f'{data["managedby"]}@{uri}'
 
         props = {}
         for i, real_name, transform in (
@@ -3917,6 +3917,7 @@ class PoolDatasetService(CRUDService):
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
+            ('managedby', 'org.truenas:managedby', None, True),
             ('quota', None, _none, False),
             ('quota_warning', 'org.freenas:quota_warning', str, True),
             ('quota_critical', 'org.freenas:quota_critical', str, True),
