@@ -93,7 +93,7 @@ class KMIPService(Service, KMIPServerMixin):
         are not in the memory as that is what we rely on while actually using the SED keys functionality.
         """
         adv_config = await self.system_advanced_config()
-        disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True}})
+        disks = await self.middleware.call('datastore.query', 'storage.disk', [], {'prefix': 'disk_'})
         config = await self.middleware.call('kmip.config')
         check_db_key = config['enabled'] and config['manage_sed_disks']
         for disk in disks:
@@ -129,7 +129,7 @@ class KMIPService(Service, KMIPServerMixin):
         failed = []
         with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
             for disk in self.middleware.call_sync(
-                'disk.query', [['id', 'in', ids]] if ids else [], {'extra': {'passwords': True}}
+                'datastore.query', 'storage.disk', [['id', 'in', ids]] if ids else [], {'prefix': 'disk_'}
             ):
                 if not disk['passwd'] and disk['kmip_uid']:
                     try:
@@ -205,7 +205,7 @@ class KMIPService(Service, KMIPServerMixin):
         failed = []
         connection_successful = self.middleware.call_sync('kmip.test_connection')
         for disk in self.middleware.call_sync(
-            'disk.query', [['kmip_uid', '!=', None]], {'extra': {'passwords': True}}
+            'datastore.query', 'storage.disk', [['kmip_uid', '!=', None]], {'prefix': 'disk_'}
         ):
             try:
                 if disk['passwd']:
@@ -292,7 +292,7 @@ class KMIPService(Service, KMIPServerMixin):
         a sync with the KMIP server.
         """
         for disk in await self.middleware.call(
-            'disk.query', [['kmip_uid', '!=', None]], {'extra': {'passwords': True}}
+            'datastore.query', 'storage.disk', [['kmip_uid', '!=', None]], {'prefix': 'disk_'}
         ):
             await self.middleware.call(
                 'datastore.update', 'storage.disk', disk['identifier'], {'disk_kmip_uid': None}
@@ -311,7 +311,9 @@ class KMIPService(Service, KMIPServerMixin):
         On middleware boot, we initialize memory cache to contain all the SED keys which we can later use
         for SED related functionality.
         """
-        for disk in self.middleware.call_sync('disk.query', {'extra': {'passwords': True}}):
+        for disk in self.middleware.call_sync(
+            'datastore.query', 'storage.disk', [], {'prefix': 'disk_'}
+        ):
             if disk['passwd']:
                 self.disks_keys[disk['identifier']] = disk['passwd']
             elif disk['kmip_uid'] and connection_success:
