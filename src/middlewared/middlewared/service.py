@@ -426,9 +426,10 @@ class CRUDService(ServiceChangeMixin, Service):
                 'datastore.query', self._config.datastore, filters, options,
             )
 
-    async def create(self, data):
+    @pass_app(rest=True)
+    async def create(self, app, data):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.create', self, self.do_create, [data]
+            f'{self._config.namespace}.create', self, self.do_create, [data], app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_create', rv)
         return rv
