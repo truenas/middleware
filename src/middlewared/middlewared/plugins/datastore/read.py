@@ -163,7 +163,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         result = await self._queryset_serialize(
             result,
             table, aliases, relationships, options['extend'], options['extend_context'], options['prefix'],
-            options['select'],
+            options['select'], options['extra'],
         )
 
         if options['get']:
@@ -200,9 +200,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         return result
 
-    async def _queryset_serialize(self, qs, table, aliases, relationships, extend, extend_context, field_prefix, select):
+    async def _queryset_serialize(
+        self, qs, table, aliases, relationships, extend, extend_context, field_prefix, select, extra_options,
+    ):
         if extend_context:
-            extend_context_value = await self.middleware.call(extend_context)
+            extend_context_value = await self.middleware.call(extend_context, extra_options)
         else:
             extend_context_value = None
 

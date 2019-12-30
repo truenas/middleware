@@ -230,6 +230,9 @@ class EtcService(Service):
         ],
         'openvpn_client': [
             {'type': 'mako', 'path': 'local/openvpn/client/openvpn_client.conf'}
+        ],
+        'kmip': [
+            {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
         ]
     }
 

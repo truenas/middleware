@@ -18,7 +18,7 @@ except ImportError:
     geom = getswapinfo = None
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import job, private, CallError, CRUDService
+from middlewared.service import private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
@@ -61,13 +61,14 @@ class DiskModel(sa.Model):
     disk_smartoptions = sa.Column(sa.String(120))
     disk_expiretime = sa.Column(sa.DateTime(), nullable=True)
     disk_enclosure_slot = sa.Column(sa.Integer(), nullable=True)
-    disk_passwd = sa.Column(sa.String(120))
+    disk_passwd = sa.Column(sa.EncryptedText())
     disk_critical = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_difference = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_informational = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_model = sa.Column(sa.String(200), nullable=True, default=None)
     disk_rotationrate = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_type = sa.Column(sa.String(20), default='UNKNOWN')
+    disk_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 class DiskService(CRUDService):
@@ -77,11 +78,11 @@ class DiskService(CRUDService):
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
         datastore_filters = [('expiretime', '=', None)]
+        datastore_extend_context = 'disk.disk_extend_context'
 
     @private
-    async def disk_extend(self, disk):
+    async def disk_extend(self, disk, context):
         disk.pop('enabled', None)
-        disk['passwd'] = await self.middleware.call('pwenc.decrypt', disk['passwd'])
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             disk[key] = disk[key].upper()
         try:
@@ -93,7 +94,20 @@ class DiskService(CRUDService):
         else:
             disk['devname'] = disk['name']
         self._expand_enclosure(disk)
+        if context['passwords']:
+            if not disk['passwd']:
+                disk['passwd'] = context['disks_keys'].get(disk['identifier'], '')
+        else:
+            disk.pop('passwd')
+            disk.pop('kmip_uid')
         return disk
+
+    @private
+    async def disk_extend_context(self, extra):
+        context = {'passwords': extra.get('passwords', False), 'disks_keys': {}}
+        if extra.get('passwords'):
+            context['disks_keys'] = await self.middleware.call('kmip.retrieve_sed_disks_keys')
+        return context
 
     def _expand_enclosure(self, disk):
         if disk['enclosure_slot'] is not None:
@@ -161,10 +175,9 @@ class DiskService(CRUDService):
         """
 
         old = await self.middleware.call(
-            'datastore.query',
-            self._config.datastore,
-            [('identifier', '=', id)],
-            {'prefix': self._config.datastore_prefix, 'get': True}
+            'datastore.query', 'storage.disk', [['identifier', '=', id]], {
+                'get': True, 'prefix': self._config.datastore_prefix
+            }
         )
         old.pop('enabled', None)
         self._expand_enclosure(old)
@@ -183,8 +196,11 @@ class DiskService(CRUDService):
         if verrors:
             raise verrors
 
-        if old['passwd'] != new['passwd'] and new['passwd']:
-            new['passwd'] = await self.middleware.call('pwenc.encrypt', new['passwd'])
+        if not new['passwd'] and old['passwd'] != new['passwd']:
+            # We want to make sure kmip uid is None in this case
+            if new['kmip_uid']:
+                asyncio.ensure_future(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
+            new['kmip_uid'] = None
 
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
             new[key] = new[key].title()
@@ -203,11 +219,12 @@ class DiskService(CRUDService):
             await self.middleware.call('disk.power_management', new['name'])
 
         if any(
-                new[key] != old[key]
-                for key in ['togglesmart', 'smartoptions', 'hddstandby', 'hddstandby_force', 'critical', 'difference',
-                            'informational']
+            new[key] != old[key]
+            for key in [
+                'togglesmart', 'smartoptions', 'hddstandby', 'hddstandby_force',
+                'critical', 'difference', 'informational',
+            ]
         ):
-
             if new['togglesmart']:
                 await self.middleware.call('disk.toggle_smart_on', new['name'])
             else:
@@ -219,13 +236,10 @@ class DiskService(CRUDService):
             await self._service_change('smartd', 'restart')
             await self._service_change('snmp', 'restart')
 
-        updated_data = await self.query(
-            [('identifier', '=', id)],
-            {'get': True}
-        )
-        updated_data['id'] = id
+        if new['passwd'] and old['passwd'] != new['passwd']:
+            await self.middleware.call('kmip.sync_sed_keys', [id])
 
-        return updated_data
+        return await self.query([['identifier', '=', id]], {'get': True})
 
     @private
     def get_name(self, disk):
@@ -676,10 +690,12 @@ class DiskService(CRUDService):
     @private
     async def sed_unlock_all(self):
         advconfig = await self.middleware.call('system.advanced.config')
-        disks = await self.middleware.call('disk.query')
+        disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True}})
 
         # If no SED password was found we can stop here
-        if not advconfig.get('sed_passwd') and not any([d['passwd'] for d in disks]):
+        if not await self.middleware.call('system.advanced.sed_global_password') and not any(
+            [d['passwd'] for d in disks]
+        ):
             return
 
         result = await asyncio_map(lambda disk: self.sed_unlock(disk['name'], disk, advconfig), disks, 16)
@@ -699,10 +715,10 @@ class DiskService(CRUDService):
         # We need two states to tell apart when disk was successfully unlocked
         locked = None
         unlocked = None
-        password = _advconfig.get('sed_passwd')
+        password = await self.middleware.call('system.advanced.sed_global_password')
 
         if disk is None:
-            disk = await self.middleware.call('disk.query', [('name', '=', disk_name)])
+            disk = await self.query([('name', '=', disk_name)], {'extra': {'passwords': True}})
             if disk and disk[0]['passwd']:
                 password = disk[0]['passwd']
         elif disk.get('passwd'):

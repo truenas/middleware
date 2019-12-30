@@ -95,6 +95,7 @@ class AlertCategory(enum.Enum):
     DIRECTORY_SERVICE = "DIRECTORY_SERVICE"
     HA = "HA"
     HARDWARE = "HARDWARE"
+    KMIP = "KMIP"
     PLUGINS = "PLUGINS"
     NETWORK = "NETWORK"
     REPORTING = "REPORTING"

@@ -66,11 +66,12 @@ class SystemAdvancedModel(sa.Model):
     adv_boot_scrub = sa.Column(sa.Integer(), default=7)
     adv_fqdn_syslog = sa.Column(sa.Boolean(), default=False)
     adv_sed_user = sa.Column(sa.String(120), default="user")
-    adv_sed_passwd = sa.Column(sa.String(120))
+    adv_sed_passwd = sa.Column(sa.EncryptedText())
     adv_sysloglevel = sa.Column(sa.String(120), default="f_info")
     adv_syslogserver = sa.Column(sa.String(120), default='')
     adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
     adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 class SystemAdvancedService(ConfigService):
@@ -112,6 +113,9 @@ class SystemAdvancedService(ConfigService):
 
         if data['syslog_tls_certificate']:
             data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
+
+        data.pop('sed_passwd')
+        data.pop('kmip_uid')
 
         return data
 
@@ -201,6 +205,7 @@ class SystemAdvancedService(ConfigService):
         When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
         """
         config_data = await self.config()
+        config_data['sed_passwd'] = await self.sed_global_password()
         original_data = config_data.copy()
         config_data.update(data)
 
@@ -213,8 +218,13 @@ class SystemAdvancedService(ConfigService):
                 original_data['sed_user'] = original_data['sed_user'].lower()
             if config_data.get('sed_user'):
                 config_data['sed_user'] = config_data['sed_user'].lower()
-
-            # PASSWORD ENCRYPTION FOR SED IS BEING DONE IN THE MODEL ITSELF
+            if not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
+                # We want to make sure kmip uid is None in this case
+                adv_config = await self.middleware.call('datastore.config', self._config.datastore)
+                asyncio.ensure_future(
+                    self.middleware.call('kmip.reset_sed_global_password', adv_config['adv_kmip_uid'])
+                )
+                config_data['kmip_uid'] = None
 
             await self.middleware.call(
                 'datastore.update',
@@ -243,8 +253,8 @@ class SystemAdvancedService(ConfigService):
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
             elif (
-                    original_data['serialspeed'] != config_data['serialspeed'] or
-                    original_data['serialport'] != config_data['serialport']
+                original_data['serialspeed'] != config_data['serialspeed'] or
+                original_data['serialport'] != config_data['serialport']
             ):
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
@@ -274,7 +284,20 @@ class SystemAdvancedService(ConfigService):
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 
+            if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
+                await self.middleware.call('kmip.sync_sed_keys')
+
         return await self.config()
+
+    @accepts()
+    async def sed_global_password(self):
+        """
+        Returns configured global SED password.
+        """
+        passwd = (await self.middleware.call(
+            'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
+        ))['sed_passwd']
+        return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
 
     @private
     def autotune(self, conf='loader'):
