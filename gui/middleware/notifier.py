@@ -2038,7 +2038,7 @@ class notifier(metaclass=HookMetaclass):
         self.__rmdir_mountpoint(vol_mountpath)
 
     def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
-        from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
+        from freenasUI.storage.models import Scrub, Volume
         from freenasUI.sharing.models import AFP_Share, CIFS_Share, NFS_Share_Path, WebDAV_Share
 
         if enc_disks is None:
@@ -2087,29 +2087,6 @@ class notifier(metaclass=HookMetaclass):
                     volume.get_geli_keyfile(),
                     passphrase=passfile
                 )
-                if disk.startswith("gptid/"):
-                    diskname = self.identifier_to_device(
-                        "{uuid}%s" % disk.replace("gptid/", "")
-                    )
-                elif disk.startswith("gpt/"):
-                    diskname = self.label_to_disk(disk)
-                else:
-                    diskname = disk
-                ed = EncryptedDisk.objects.filter(encrypted_provider=disk)
-                if ed.exists():
-                    ed = ed[0]
-                else:
-                    ed = EncryptedDisk()
-                ed.encrypted_volume = volume
-                diskobj = Disk.objects.filter(
-                    disk_name=diskname,
-                    disk_expiretime=None,
-                )
-                if diskobj.exists():
-                    ed.encrypted_disk = diskobj[0]
-                ed.encrypted_provider = disk
-                ed.save()
-                model_objs.append(ed)
         except Exception:
             for obj in reversed(model_objs):
                 if isinstance(obj, Volume):
