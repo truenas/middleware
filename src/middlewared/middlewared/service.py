@@ -434,16 +434,18 @@ class CRUDService(ServiceChangeMixin, Service):
         await self.middleware.call_hook(f'{self._config.namespace}.post_create', rv)
         return rv
 
-    async def update(self, id, data):
+    @pass_app(rest=True)
+    async def update(self, app, id, data):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.update', self, self.do_update, [id, data]
+            f'{self._config.namespace}.update', self, self.do_update, [id, data], app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
         return rv
 
-    async def delete(self, id, *args):
+    @pass_app(rest=True)
+    async def delete(self, app, id, *args):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args)
+            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args), app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_delete', rv)
         return rv
