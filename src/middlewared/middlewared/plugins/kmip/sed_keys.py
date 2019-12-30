@@ -3,9 +3,30 @@ from middlewared.service import job, private, Service
 from .connection import KMIPServerMixin
 
 
+'''
+SED keys are stored in 2 places:
+1) system.advanced table
+2) storage.disk table
+
+There are 3 possible cases which we need to handle for storage.disk
+1) A disk row can have SED key
+2) A disk row can have a blank SED key
+3) A disk row can be removed
+
+There are 2 possible cases which we need to handle for system.advanced
+1) system.advanced.config can have global SED password
+2) system.advanced.config cannot have global SED password
+'''
+
+
 class KMIPService(Service, KMIPServerMixin):
 
     def __init__(self, *args, **kwargs):
+        """
+        System will never directly query KMIP server to determine the SED keys when it actually uses the SED keys.
+        Instead when middleware boots, we will cache keys and maintain a record of them in memory which the system
+        will use and rely on for SED related tasks.
+        """
         super().__init__(*args, **kwargs)
         self.disks_keys = {}
         self.global_sed_key = ''
@@ -19,16 +40,68 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     async def sed_keys_pending_sync(self):
+        """
+        We determine if we have SED keys pending sync by verifying following scenarios:
+
+        1) kmip.config.enabled and kmip.config.manage_sed_disks are set - which means we have to push all SED keys
+           from storage.disk and system.advanced to KMIP server
+        2) kmip.config.enabled or kmip.config.manage_sed_disks is unset ( any one of them ) - which means we have to
+           pull SED keys from the KMIP server for the relevant rows
+
+        How the flow is designed to work for storage.disk when a key is added is following:
+        1) User adds password for disk
+        2) Password is saved in database
+        3) If KMIP service is enabled, kmip sync is initiated for SED keys
+        4) For the disk in question, value of password in database is given priority and pushed to the KMIP server
+        5) If KMIP uid field is already set for the disk in question, system is going to remove that key and push the
+           new password to the KMIP server.
+        6) Once the key has been pushed successfully, it is removed from the database and added to memory for fast
+           retrieval.
+
+        For above case, we determine that a key needs to be synced based on the fact that KMIP sync is enabled for
+        SED keys and we have sed key saved in database.
+
+        Flow when key is removed for storage.disk:
+        1) User sets empty value for the password
+        2) It is saved in database
+        3) If the key had been saved already to KMIP server, it is removed and also it
+           is removed from the memory.
+        4) Difference from above case is that a sync is not initiated in this case and on key
+           removal from database, KMIP uid is revoked/removed at the same time.
+
+        For the above case, we don't get to a state where we can have pending sync as database is updated instantly
+        removing kmip uid and flushing password.
+
+        When a disk is removed, the same steps as above are carried out.
+
+        Above cases took into account when KMIP sync was enabled, when KMIP sync is disabled for SED keys,
+        following steps are performed to determine if we have kmip sync pending for SED keys.
+
+        Flow when KMIP sync is disabled for SED keys:
+        1) KMIP server is contacted for disks which have kmip uid field set.
+        2) Key is retrieved and updated for the disk in question.
+        3) If KMIP server could not be contacted, we have sync pending for the disks in question then.
+        4) Meanwhile if the user sets a new password for the disks, that password will be given precedence over
+           the key saved in KMIP Server and it will be removed as soon as KMIP server can be contacted.
+
+        For the above case, sync is declared pending if kmip uid field has a uid present.
+
+        The same steps are followed for system.advanced except for the one where we remove disks which is not
+        true for system.advanced.
+
+        During this, we also declare sync is pending if we have SED sync enabled and the keys
+        are not in the memory as that is what we rely on while actually using the SED keys functionality.
+        """
         adv_config = await self.system_advanced_config()
         disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True}})
         config = await self.middleware.call('kmip.config')
         check_db_key = config['enabled'] and config['manage_sed_disks']
         for disk in disks:
-            if check_db_key and (disk['passwd'] or disk['identifier'] not in self.disks_keys):
+            if check_db_key and (disk['passwd'] or (disk['kmip_uid'] and disk['identifier'] not in self.disks_keys)):
                 return True
             elif not check_db_key and disk['kmip_uid']:
                 return True
-        if check_db_key and (adv_config['sed_passwd'] or not self.global_sed_key):
+        if check_db_key and (adv_config['sed_passwd'] or (not self.global_sed_key and adv_config['kmip_uid'])):
             return True
         elif not check_db_key and adv_config['kmip_uid']:
             return True
