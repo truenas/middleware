@@ -61,7 +61,7 @@ class DiskModel(sa.Model):
     disk_smartoptions = sa.Column(sa.String(120))
     disk_expiretime = sa.Column(sa.DateTime(), nullable=True)
     disk_enclosure_slot = sa.Column(sa.Integer(), nullable=True)
-    disk_passwd = sa.Column(sa.EncryptedText())
+    disk_passwd = sa.Column(sa.EncryptedText(), default='')
     disk_critical = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_difference = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_informational = sa.Column(sa.Integer(), nullable=True, default=None)

@@ -66,7 +66,7 @@ class SystemAdvancedModel(sa.Model):
     adv_boot_scrub = sa.Column(sa.Integer(), default=7)
     adv_fqdn_syslog = sa.Column(sa.Boolean(), default=False)
     adv_sed_user = sa.Column(sa.String(120), default="user")
-    adv_sed_passwd = sa.Column(sa.EncryptedText())
+    adv_sed_passwd = sa.Column(sa.EncryptedText(), default='')
     adv_sysloglevel = sa.Column(sa.String(120), default="f_info")
     adv_syslogserver = sa.Column(sa.String(120), default='')
     adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
