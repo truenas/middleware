@@ -78,7 +78,7 @@ class CIFS_Share(Model):
         help_text=_(
             'Export ZFS snapshots as Shadow Copies for VSS clients.'
         ),
-        default=False
+        default=True
     )
     cifs_guestok = models.BooleanField(
         verbose_name=_('Allow Guest Access'),
