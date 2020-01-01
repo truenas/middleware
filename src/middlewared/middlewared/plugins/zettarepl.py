@@ -232,6 +232,7 @@ class ZettareplService(Service):
         self.command_queue = None
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
+        self.error = None
         self.state = {}
         self.definition_errors = {}
         self.hold_tasks = {}
@@ -246,6 +247,9 @@ class ZettareplService(Service):
         return self.process is not None and self.process.is_alive()
 
     def get_state(self):
+        if self.error:
+            return {"error": self.error}
+
         jobs = {}
         for j in self.middleware.call_sync("core.get_jobs", [("method", "=", "replication.run")], {"order_by": ["id"]}):
             try:
@@ -274,14 +278,17 @@ class ZettareplService(Service):
                 "reason": make_sentence(v),
             })
 
-        return state
+        return {"tasks": state}
 
     def start(self):
         try:
             definition, hold_tasks = self.middleware.call_sync("zettarepl.get_definition")
         except Exception as e:
             self.logger.error("Error generating zettarepl definition", exc_info=True)
+            self.error = str(e)
             raise CallError(f"Internal error: {e!r}")
+        else:
+            self.error = None
 
         with self.lock:
             if not self.is_running():
@@ -317,9 +324,12 @@ class ZettareplService(Service):
     def update_tasks(self):
         try:
             definition, hold_tasks = self.middleware.call_sync("zettarepl.get_definition")
-        except Exception:
+        except Exception as e:
             self.logger.error("Error generating zettarepl definition", exc_info=True)
+            self.error = str(e)
             return
+        else:
+            self.error = None
 
         if self._is_empty_definition(definition):
             self.middleware.call_sync("zettarepl.stop")
