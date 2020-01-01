@@ -498,6 +498,20 @@ class ZettareplService(Service):
                     hold_tasks[f"replication_task_{replication_task['id']}"] = hold_task_reason
                     continue
 
+            try:
+                transport = await self._define_transport(
+                    replication_task["transport"],
+                    (replication_task["ssh_credentials"] or {}).get("id"),
+                    replication_task["netcat_active_side"],
+                    replication_task["netcat_active_side_listen_address"],
+                    replication_task["netcat_active_side_port_min"],
+                    replication_task["netcat_active_side_port_max"],
+                    replication_task["netcat_passive_side_connect_address"],
+                )
+            except CallError as e:
+                hold_tasks[f"replication_task_{replication_task['id']}"] = e.errmsg
+                continue
+
             my_periodic_snapshot_tasks = [f"task_{periodic_snapshot_task['id']}"
                                           for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
                                           if periodic_snapshot_task["id"] not in legacy_periodic_snapshot_tasks_ids]
@@ -514,15 +528,7 @@ class ZettareplService(Service):
 
             definition = {
                 "direction": replication_task["direction"].lower(),
-                "transport": await self._define_transport(
-                    replication_task["transport"],
-                    (replication_task["ssh_credentials"] or {}).get("id"),
-                    replication_task["netcat_active_side"],
-                    replication_task["netcat_active_side_listen_address"],
-                    replication_task["netcat_active_side_port_min"],
-                    replication_task["netcat_active_side_port_max"],
-                    replication_task["netcat_passive_side_connect_address"],
-                ),
+                "transport": transport,
                 "source-dataset": replication_task["source_datasets"],
                 "target-dataset": replication_task["target_dataset"],
                 "recursive": replication_task["recursive"],
