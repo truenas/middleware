@@ -561,7 +561,7 @@ class ZettareplService(Service):
                 definition["lifetime"] = lifetime_iso8601(replication_task["lifetime_value"],
                                                           replication_task["lifetime_unit"])
             if replication_task["compression"] is not None:
-                definition["compression"] = replication_task["compression"]
+                definition["compression"] = replication_task["compression"].lower()
             if replication_task["speed_limit"] is not None:
                 definition["speed-limit"] = replication_task["speed_limit"]
 
