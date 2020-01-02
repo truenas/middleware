@@ -232,6 +232,7 @@ class ZettareplService(Service):
         self.command_queue = None
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
+        self.error = None
         self.state = {}
         self.definition_errors = {}
         self.hold_tasks = {}
@@ -246,6 +247,9 @@ class ZettareplService(Service):
         return self.process is not None and self.process.is_alive()
 
     def get_state(self):
+        if self.error:
+            return {"error": self.error}
+
         jobs = {}
         for j in self.middleware.call_sync("core.get_jobs", [("method", "=", "replication.run")], {"order_by": ["id"]}):
             try:
@@ -274,14 +278,17 @@ class ZettareplService(Service):
                 "reason": make_sentence(v),
             })
 
-        return state
+        return {"tasks": state}
 
     def start(self):
         try:
             definition, hold_tasks = self.middleware.call_sync("zettarepl.get_definition")
         except Exception as e:
             self.logger.error("Error generating zettarepl definition", exc_info=True)
+            self.error = str(e)
             raise CallError(f"Internal error: {e!r}")
+        else:
+            self.error = None
 
         with self.lock:
             if not self.is_running():
@@ -317,9 +324,12 @@ class ZettareplService(Service):
     def update_tasks(self):
         try:
             definition, hold_tasks = self.middleware.call_sync("zettarepl.get_definition")
-        except Exception:
+        except Exception as e:
             self.logger.error("Error generating zettarepl definition", exc_info=True)
+            self.error = str(e)
             return
+        else:
+            self.error = None
 
         if self._is_empty_definition(definition):
             self.middleware.call_sync("zettarepl.stop")
@@ -498,6 +508,20 @@ class ZettareplService(Service):
                     hold_tasks[f"replication_task_{replication_task['id']}"] = hold_task_reason
                     continue
 
+            try:
+                transport = await self._define_transport(
+                    replication_task["transport"],
+                    (replication_task["ssh_credentials"] or {}).get("id"),
+                    replication_task["netcat_active_side"],
+                    replication_task["netcat_active_side_listen_address"],
+                    replication_task["netcat_active_side_port_min"],
+                    replication_task["netcat_active_side_port_max"],
+                    replication_task["netcat_passive_side_connect_address"],
+                )
+            except CallError as e:
+                hold_tasks[f"replication_task_{replication_task['id']}"] = e.errmsg
+                continue
+
             my_periodic_snapshot_tasks = [f"task_{periodic_snapshot_task['id']}"
                                           for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
                                           if periodic_snapshot_task["id"] not in legacy_periodic_snapshot_tasks_ids]
@@ -514,15 +538,7 @@ class ZettareplService(Service):
 
             definition = {
                 "direction": replication_task["direction"].lower(),
-                "transport": await self._define_transport(
-                    replication_task["transport"],
-                    (replication_task["ssh_credentials"] or {}).get("id"),
-                    replication_task["netcat_active_side"],
-                    replication_task["netcat_active_side_listen_address"],
-                    replication_task["netcat_active_side_port_min"],
-                    replication_task["netcat_active_side_port_max"],
-                    replication_task["netcat_passive_side_connect_address"],
-                ),
+                "transport": transport,
                 "source-dataset": replication_task["source_datasets"],
                 "target-dataset": replication_task["target_dataset"],
                 "recursive": replication_task["recursive"],
@@ -561,7 +577,7 @@ class ZettareplService(Service):
                 definition["lifetime"] = lifetime_iso8601(replication_task["lifetime_value"],
                                                           replication_task["lifetime_unit"])
             if replication_task["compression"] is not None:
-                definition["compression"] = replication_task["compression"]
+                definition["compression"] = replication_task["compression"].lower()
             if replication_task["speed_limit"] is not None:
                 definition["speed-limit"] = replication_task["speed_limit"]
 

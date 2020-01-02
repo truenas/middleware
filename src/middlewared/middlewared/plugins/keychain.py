@@ -422,10 +422,13 @@ class KeychainCredentialService(CRUDService):
         try:
             credential = await self.middleware.call("keychaincredential.query", [["id", "=", id]], {"get": True})
         except IndexError:
-            raise CallError("Credential does not exist")
+            raise CallError("Credential does not exist", errno.ENOENT)
         else:
             if credential["type"] != type:
-                raise ValueError(f"Credential is not of type {type}")
+                raise CallError(f"Credential is not of type {type}", errno.EINVAL)
+
+            if not credential["attributes"]:
+                raise CallError(f"Decrypting credential {credential['name']} failed", errno.EFAULT)
 
             return credential
 

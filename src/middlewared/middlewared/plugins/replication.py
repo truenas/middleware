@@ -116,9 +116,15 @@ class ReplicationService(CRUDService):
                                 "total": int(m.group("total")),
                             }
         else:
-            data["state"] = context["state"].get(f"replication_task_{data['id']}", {
-                "state": "PENDING",
-            })
+            if "error" in context["state"]:
+                data["state"] = {
+                    "state": "ERROR",
+                    "error": context["state"]["error"],
+                }
+            else:
+                data["state"] = context["state"]["tasks"].get(f"replication_task_{data['id']}", {
+                    "state": "PENDING",
+                })
 
         data["job"] = data["state"].pop("job", None)
 
