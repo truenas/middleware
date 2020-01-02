@@ -7,7 +7,7 @@ import subprocess
 
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import Dict, Str
-from middlewared.service import accepts, CallError, job, Service
+from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.utils import Popen, run
 
 logger = logging.getLogger(__name__)
@@ -104,6 +104,8 @@ class MountFsContextManager:
 
 
 class PoolService(Service):
+
+    dismissed_import_disk_jobs = set()
 
     @accepts(
         Str('device'),
@@ -253,3 +255,16 @@ class PoolService(Service):
             for locale in subprocess.check_output(["locale", "-a"], encoding="utf-8").split("\n")
             if locale.strip() and locale.strip() not in ["C", "POSIX"]
         ]
+
+    @private
+    async def get_current_import_disk_job(self):
+        import_jobs = await self.middleware.call('core.get_jobs', [('method', '=', 'pool.import_disk')])
+        not_dismissed_import_jobs = [job for job in import_jobs if job["id"] not in self.dismissed_import_disk_jobs]
+        if not_dismissed_import_jobs:
+            return not_dismissed_import_jobs[0]
+
+    @private
+    async def dismiss_current_import_disk_job(self):
+        current_import_job = await self.get_current_import_disk_job()
+        if current_import_job:
+            self.dismissed_import_disk_jobs.add(current_import_job["id"])
