@@ -247,9 +247,12 @@ class Volume(Model):
             for vm_attached in vms_attached:
                 attachments['vm'].append(vm_attached.get('device_id'))
 
+        jails_licensed = False
         with client as c:
-            attachments['jails_ng'] = [
-                ij['host_hostuuid'] for ij in c.call('jail.query')]
+            jails_licensed = c.call('system.feature_enabled', 'JAILS')
+            if jails_licensed:
+                attachments['jails_ng'] = [
+                    ij['host_hostuuid'] for ij in c.call('jail.query')]
 
         return attachments
 
