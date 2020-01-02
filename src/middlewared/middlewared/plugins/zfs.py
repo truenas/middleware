@@ -4,7 +4,6 @@ import threading
 import time
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime
 
 from bsd import geom
 import libzfs
@@ -752,7 +751,9 @@ class ZFSSnapshot(CRUDService):
         elif 'name' in data:
             name = data['name']
         elif 'naming_schema' in data:
-            name = datetime.now().strftime(data['naming_schema'])
+            # We can't do `strftime` here because we are in the process pool and `TZ` environment variable update
+            # is not propagated here.
+            name = self.middleware.call_sync('replication.new_snapshot_name', data['naming_schema'])
         else:
             verrors.add('snapshot_create.naming_schema', 'You must specify either name or naming schema')
 
