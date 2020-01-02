@@ -7,7 +7,7 @@ import subprocess
 
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import Dict, Str
-from middlewared.service import accepts, job, Service
+from middlewared.service import accepts, CallError, job, Service
 from middlewared.utils import Popen, run
 
 logger = logging.getLogger(__name__)
@@ -193,3 +193,63 @@ class PoolService(Service):
                     job.set_progress(100, description="Done", extra="")
         finally:
             os.rmdir(src)
+
+    @accepts(Str("device"))
+    def import_disk_autodetect_fs_type(self, device):
+        """
+        Autodetect filesystem type for `pool.import_disk`.
+
+        .. examples(websocket)::
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.import_disk_autodetect_fs_type",
+                "params": ["/dev/da0"]
+            }
+        """
+        proc = subprocess.Popen(["blkid", device], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
+        output = proc.communicate()[0].strip()
+
+        if proc.returncode == 2:
+            proc = subprocess.Popen(["file", "-s", device], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                    encoding="utf-8")
+            output = proc.communicate()[0].strip()
+            if proc.returncode != 0:
+                raise CallError(f"blkid failed with code 2 and file failed with code {proc.returncode}: {output}")
+
+            if "Unix Fast File system" in output:
+                return "ufs"
+
+            raise CallError(f"blkid failed with code 2 and file produced unexpected output: {output}")
+
+        if proc.returncode != 0:
+            raise CallError(f"blkid failed with code {proc.returncode}: {output}")
+
+        m = re.search("TYPE=\"(.+?)\"", output)
+        if m is None:
+            raise CallError(f"blkid produced unexpected output: {output}")
+
+        fs = {
+            "ext2": "ext2fs",
+            "ext3": "ext2fs",
+            "ntfs": "ntfs",
+            "vfat": "msdosfs",
+        }.get(m.group(1))
+        if fs is None:
+            self.logger.info("Unknown FS: %s", m.group(1))
+            return None
+
+        return fs
+
+    @accepts()
+    def import_disk_msdosfs_locales(self):
+        """
+        Get a list of locales for msdosfs type to be used in `pool.import_disk`.
+        """
+        return [
+            locale.strip()
+            for locale in subprocess.check_output(["locale", "-a"], encoding="utf-8").split("\n")
+            if locale.strip() and locale.strip() not in ["C", "POSIX"]
+        ]
