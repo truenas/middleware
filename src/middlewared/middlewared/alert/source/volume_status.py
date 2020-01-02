@@ -44,7 +44,7 @@ class VolumeStatusAlertSource(AlertSource):
             try:
                 status = await self.middleware.call("notifier.failover_status")
                 return status in ("MASTER", "SINGLE")
-            except Exception:
-                log.debug('notifier.failover_status failed with error: {e}')
+            except Exception as e:
+                log.debug(f'notifier.failover_status failed with error: {e}')
                 return False
         return True
