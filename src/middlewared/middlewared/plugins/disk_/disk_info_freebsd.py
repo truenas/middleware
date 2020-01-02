@@ -65,3 +65,24 @@ class DiskService(Service, DiskInfoBase):
 
     def get_swap_devices(self):
         return [os.path.join('/dev', i.devname) for i in getswapinfo()]
+
+    def label_to_dev(self, label, geom_scan=True):
+        if label.endswith('.nop'):
+            label = label[:-4]
+        elif label.endswith('.eli'):
+            label = label[:-4]
+
+        if geom_scan:
+            geom.scan()
+        klass = geom.class_by_name('LABEL')
+        prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
+        if prov is not None:
+            return prov.text
+
+    def label_to_disk(self, label, geom_scan=True):
+        if geom_scan:
+            geom.scan()
+        dev = self.label_to_dev(label, geom_scan=False) or label
+        part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
+        if part is not None:
+            return part.text

@@ -32,3 +32,10 @@ class DiskInfoBase(ServicePartBase):
     @private
     async def get_swap_devices(self):
         raise NotImplementedError()
+
+    async def label_to_dev(self, label, *args):
+        raise NotImplementedError()
+
+    @private
+    async def label_to_disk(self, label, *args):
+        raise NotImplementedError()

@@ -659,29 +659,6 @@ class DiskService(CRUDService):
         return partitions
 
     @private
-    def label_to_dev(self, label, geom_scan=True):
-        if label.endswith('.nop'):
-            label = label[:-4]
-        elif label.endswith('.eli'):
-            label = label[:-4]
-
-        if geom_scan:
-            geom.scan()
-        klass = geom.class_by_name('LABEL')
-        prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
-        if prov is not None:
-            return prov.text
-
-    @private
-    def label_to_disk(self, label, geom_scan=True):
-        if geom_scan:
-            geom.scan()
-        dev = self.label_to_dev(label, geom_scan=False) or label
-        part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
-        if part is not None:
-            return part.text
-
-    @private
     def check_clean(self, disk):
         geom.scan()
         return geom.class_by_name('PART').xml.find(f'.//geom[name="{disk}"]') is None
