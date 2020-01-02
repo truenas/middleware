@@ -154,7 +154,7 @@ def get_tests():
     skip_tests = []
 
     if api == '1.0':
-        skip_tests = ['bootenv', 'alerts', 'smarttest']
+        skip_tests = ['bootenv', 'alerts', 'smarttest', 'smb_bsd', 'ad_bsd']
         apidir = 'api1/'
         sv = ['network', 'ssh', 'storage']
     elif api == '2.0':

@@ -35,7 +35,10 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 # Create tests
 def test_01_Setting_auxilary_parameters_for_mount_smbfs():
     toload = "lanman auth = yes\nntlm auth = yes \nraw NTLMv2 auth = yes"
-    payload = {"cifs_srv_smb_options": toload}
+    payload = {
+        "cifs_srv_smb_options": toload,
+        "cifs_srv_enable_smb1": True
+    }
     results = PUT("/services/cifs/", payload)
     assert results.status_code == 200, results.text
 
@@ -57,21 +60,25 @@ def test_04_Checking_to_see_if_SMB_service_is_running():
 
 
 def test_05_Changing_permissions_on_SMB_PATH():
-    payload = {"mp_path": SMB_PATH,
-               "mp_acl": "unix",
-               "mp_mode": "777",
-               "mp_user": "root",
-               "mp_group": "wheel"}
+    payload = {
+        "mp_path": SMB_PATH,
+        "mp_acl": "unix",
+        "mp_mode": "777",
+        "mp_user": "root",
+        "mp_group": "wheel",
+    }
     results = PUT("/storage/permission/", payload)
     assert results.status_code == 201, results.text
 
 
 def test_06_Creating_a_SMB_share_on_SMB_PATH():
-    payload = {"cifs_comment": "My Test SMB Share",
-               "cifs_path": SMB_PATH,
-               "cifs_name": SMB_NAME,
-               "cifs_guestok": True,
-               "cifs_vfsobjects": "streams_xattr"}
+    payload = {
+        "cifs_comment": "My Test SMB Share",
+        "cifs_path": SMB_PATH,
+        "cifs_name": SMB_NAME,
+        "cifs_guestok": True,
+        "cifs_vfsobjects": "streams_xattr"
+    }
     results = POST("/sharing/cifs/", payload)
     assert results.status_code == 201, results.text
 
