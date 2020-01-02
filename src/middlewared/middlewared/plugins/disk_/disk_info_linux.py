@@ -68,3 +68,14 @@ class DiskService(Service, DiskInfoBase):
         for dev_line in filter(lambda l: l.startswith('/dev'), data.splitlines()):
             devices.append(dev_line.split()[0])
         return devices
+
+    def label_to_dev(self, label, *args):
+        dev = os.path.realpath(os.path.join('/dev', label)).split('/')[-1]
+        return dev if dev != label.split('/')[-1] else None
+
+    def label_to_disk(self, label, *args):
+        part_disk = self.label_to_dev(label)
+        if not part_disk:
+            return None
+        with open(os.path.join('/sys/class/block', part_disk, 'partition'), 'r') as f:
+            return part_disk.rsplit(f.read().strip(), 1)[0].strip()
