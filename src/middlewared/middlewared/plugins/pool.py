@@ -402,11 +402,12 @@ class PoolService(CRUDService):
         if isinstance(x, dict):
             path = x.get('path')
             if path is not None:
-                device = None
+                device = disk = None
                 if path.startswith('/dev/'):
                     device = self.middleware.call_sync('disk.label_to_dev', path[5:], geom_scan)
+                    disk = self.middleware.call_sync('disk.label_to_disk', path[5:], geom_scan)
                 x['device'] = device
-                x['disk'] = RE_DISKPART.sub(r'\1', device) if device else None
+                x['disk'] = disk
             for key in x:
                 if key == 'type' and isinstance(x[key], str):
                     x[key] = x[key].upper()
