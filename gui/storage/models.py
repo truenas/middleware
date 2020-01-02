@@ -250,8 +250,7 @@ class Volume(Model):
         jails_licensed = False
         with client as c:
             jails_licensed = c.call('system.feature_enabled', 'JAILS')
-        if jails_licensed:
-            with client as c:
+            if jails_licensed:
                 attachments['jails_ng'] = [
                     ij['host_hostuuid'] for ij in c.call('jail.query')]
 
