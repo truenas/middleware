@@ -776,6 +776,10 @@ class ReplicationService(CRUDService):
         return await self.middleware.call("zettarepl.target_unmatched_snapshots", direction, source_datasets,
                                           target_dataset, transport, ssh_credentials)
 
+    @private
+    def new_snapshot_name(self, naming_schema):
+        return datetime.now().strftime(naming_schema)
+
     # Legacy pair support
     @private
     @accepts(Dict(
