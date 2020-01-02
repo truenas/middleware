@@ -1,4 +1,8 @@
+import logging
+
 from middlewared.alert.base import Alert, AlertLevel, AlertSource
+
+log = logging.getLogger("volume_status_alert")
 
 
 class VolumeStatusAlertSource(AlertSource):
@@ -37,7 +41,10 @@ class VolumeStatusAlertSource(AlertSource):
 
     async def enabled(self):
         if not (await self.middleware.call("system.is_freenas")):
-            status = await self.middleware.call("notifier.failover_status")
-            return status in ("MASTER", "SINGLE")
-
+            try:
+                status = await self.middleware.call("notifier.failover_status")
+                return status in ("MASTER", "SINGLE")
+            except Exception as e:
+                log.debug(f'notifier.failover_status failed with error: {e}')
+                return False
         return True
