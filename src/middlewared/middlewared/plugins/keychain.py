@@ -428,7 +428,7 @@ class KeychainCredentialService(CRUDService):
                 raise CallError(f"Credential is not of type {type}", errno.EINVAL)
 
             if not credential["attributes"]:
-                raise CallError("Decrypting credential %r failed" % credential["name"], errno.EFAULT)
+                raise CallError(f"Decrypting credential {credential['name']} failed", errno.EFAULT)
 
             return credential
 
