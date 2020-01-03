@@ -13,9 +13,9 @@ except ImportError:
 import tempfile
 
 try:
-    from bsd import geom, getswapinfo
+    from bsd import geom
 except ImportError:
-    geom = getswapinfo = None
+    geom = None
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import private, CallError, CRUDService
@@ -967,140 +967,6 @@ class DiskService(CRUDService):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
     @private
-    async def swaps_configure(self):
-        """
-        Configures swap partitions in the system.
-        We try to mirror all available swap partitions to avoid a system
-        crash in case one of them dies.
-        """
-        await self.middleware.run_in_thread(geom.scan)
-
-        used_partitions = set()
-        swap_devices = []
-        disks = [i async for i in await self.middleware.call('pool.get_disks')]
-        klass = geom.class_by_name('MIRROR')
-        if klass:
-            for g in klass.geoms:
-                # Skip gmirror that is not swap*
-                if not g.name.startswith('swap') or g.name.endswith('.sync'):
-                    continue
-                consumers = list(g.consumers)
-                # If the mirror is degraded or disk is not in a pool lets remove it
-                if len(consumers) == 1 or any(filter(
-                    lambda c: c.provider.geom.name not in disks, consumers
-                )):
-                    await self.middleware.call('disk.swaps_remove_disks', [c.provider.geom.name for c in consumers])
-                else:
-                    mirror_name = f'mirror/{g.name}'
-                    swap_devices.append(mirror_name)
-                    for c in consumers:
-                        # Add all partitions used in swap, removing .eli
-                        used_partitions.add(c.provider.name.replace('.eli', ''))
-
-                    # If mirror has been configured automatically (not by middlewared)
-                    # and there is no geli attached yet we should look for core in it.
-                    if g.config.get('Type') == 'AUTOMATIC' and not os.path.exists(
-                        f'/dev/{mirror_name}.eli'
-                    ):
-                        await run(
-                            'savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{mirror_name}',
-                            check=False
-                        )
-
-        klass = geom.class_by_name('PART')
-        if not klass:
-            return
-
-        # Add non-mirror swap devices
-        # e.g. when there is a single disk
-        for i in getswapinfo():
-            if i.devname.startswith('mirror/'):
-                continue
-            devname = i.devname.replace('.eli', '')
-            swap_devices.append(devname)
-            used_partitions.add(devname)
-
-        # Get all partitions of swap type, indexed by size
-        swap_partitions_by_size = defaultdict(list)
-        for g in klass.geoms:
-            for p in g.providers:
-                # if swap partition
-                if p.config['rawtype'] in await self.middleware.call('disk.get_valid_swap_partition_type_uuids'):
-                    if p.name not in used_partitions:
-                        # Try to save a core dump from that.
-                        # Only try savecore if the partition is not already in use
-                        # to avoid errors in the console (#27516)
-                        await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
-                        if g.name in disks:
-                            swap_partitions_by_size[p.mediasize].append(p.name)
-
-        dumpdev = False
-        unused_partitions = []
-        for size, partitions in swap_partitions_by_size.items():
-            # If we have only one partition add it to unused_partitions list
-            if len(partitions) == 1:
-                unused_partitions += partitions
-                continue
-
-            for i in range(int(len(partitions) / 2)):
-                if len(swap_devices) > MIRROR_MAX:
-                    break
-                part_ab = partitions[0:2]
-                partitions = partitions[2:]
-
-                # We could have a single disk being used as swap, without mirror.
-                # If thats the case the swap must be removed for said disk to allow the
-                # new gmirror to be created
-                try:
-                    for i in part_ab:
-                        if i in list(swap_devices):
-                            await self.middleware.call('disk.swaps_remove_disks', [i.split('p')[0]])
-                            swap_devices.remove(i)
-                except Exception:
-                    self.logger.warn('Failed to remove disk from swap', exc_info=True)
-                    # If something failed here there is no point in trying to create the mirror
-                    continue
-                part_a, part_b = part_ab
-
-                if not dumpdev:
-                    dumpdev = await dumpdev_configure(part_a)
-                name = new_swap_name()
-                if name is None:
-                    # Which means maximum has been reached and we can stop
-                    break
-                try:
-                    await run('gmirror', 'create', name, part_a, part_b)
-                except subprocess.CalledProcessError as e:
-                    self.logger.warning('Failed to create gmirror %s: %s', name, e.stderr.decode())
-                    continue
-                swap_devices.append(f'mirror/{name}')
-                # Add remaining partitions to unused list
-                unused_partitions += partitions
-
-        # If we could not make even a single swap mirror, add the first unused
-        # partition as a swap device
-        if not swap_devices and unused_partitions:
-            if not dumpdev:
-                dumpdev = await dumpdev_configure(unused_partitions[0])
-            swap_devices.append(unused_partitions[0])
-
-        for name in swap_devices:
-            if not os.path.exists(f'/dev/{name}.eli'):
-                try:
-                    await run('geli', 'onetime', name)
-                except subprocess.CalledProcessError as e:
-                    self.logger.warning('Failed to encrypt swap partition %s: %s', name, e.stderr.decode())
-                    continue
-
-            try:
-                await run('swapon', f'/dev/{name}.eli')
-            except subprocess.CalledProcessError as e:
-                self.logger.warning('Failed to activate swap partition %s: %s', name, e.stderr.decode())
-                continue
-
-        return swap_devices
-
-    @private
     def gptid_from_part_type(self, disk, part_type):
         geom.scan()
         g = geom.class_by_name('PART')
@@ -1204,31 +1070,6 @@ class DiskService(CRUDService):
                 asyncio.ensure_future(run('camcontrol', 'idle', dev, '-t', str(idle), check=False))
 
             asyncio.ensure_future(camcontrol_idle())
-
-
-def new_swap_name():
-    """
-    Get a new name for a swap mirror
-
-    Returns:
-        str: name of the swap mirror
-    """
-    for i in range(MIRROR_MAX):
-        name = f'swap{i}'
-        if not os.path.exists(f'/dev/mirror/{name}'):
-            return name
-
-
-async def dumpdev_configure(name):
-    # Configure dumpdev on first swap device
-    if not os.path.exists('/dev/dumpdev'):
-        try:
-            os.unlink('/dev/dumpdev')
-        except OSError:
-            pass
-        os.symlink(f'/dev/{name}', '/dev/dumpdev')
-        await run('dumpon', f'/dev/{name}')
-    return True
 
 
 async def devd_devfs_hook(middleware, data):
