@@ -1,0 +1,16 @@
+from middlewared.service import private, ServicePartBase
+
+
+class DiskMirrorBase(ServicePartBase):
+
+    mirror_base = {
+        'name': None,
+        'swap': False,
+        'config_type': None,
+        'disks': [],
+        'providers': [],  # actual partitions
+    }
+
+    @private
+    async def get_swap_mirrors(self):
+        raise NotImplementedError()
