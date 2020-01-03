@@ -54,3 +54,6 @@ class DiskService(Service, DiskInfoBase):
 
     async def get_swap_part_type(self):
         return '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f'
+
+    async def get_swap_devices(self, include_mirrors=False):
+        raise NotImplementedError()
