@@ -24,8 +24,9 @@ class DiskService(Service, DiskMirrorBase):
                 'config_type': g.config.get('Type'),
             }
             for c in g.consumers:
-                mirror_data['disks'].append(c.provider.geom.name)
-                mirror_data['providers'].append(c.provider.name)
+                mirror_data['providers'].append({
+                    'name': c.provider.name, 'id': c.provider.id, 'disk': c.provider.geom.name
+                })
             mirrors.append(mirror_data)
 
         return mirrors

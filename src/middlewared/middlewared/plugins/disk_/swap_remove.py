@@ -32,10 +32,10 @@ class DiskService(Service):
         mirrors = set()
         for mirror in await self.middleware.call('disk.get_swap_mirrors'):
             for provider in mirror['providers']:
-                if providers.pop(provider):
+                if providers.pop(provider['id'], None):
                     mirrors.add(mirror['name'])
 
-        swap_devices = await self.middleware.call('disk.get_swap_devices')
+        swap_devices = await self.middleware.call('disk.get_swap_devices', True)
 
         for name in mirrors:
             if not IS_LINUX:
