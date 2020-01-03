@@ -30,27 +30,33 @@ class DiskService(Service):
             return
 
         mirrors = set()
-        for mirror in await self.middleware.call('disk.get_swap_mirrors'):
+        mirror_data = {m['path']: m for m in await self.middleware.call('disk.get_swap_mirrors')}
+        for mirror in mirror_data.values():
             for provider in mirror['providers']:
                 if providers.pop(provider['id'], None):
-                    mirrors.add(mirror['name'])
+                    mirrors.add(mirror['path'] if IS_LINUX else mirror['name'])
 
         swap_devices = await self.middleware.call('disk.get_swap_devices', True)
 
         for name in mirrors:
-            if not IS_LINUX:
-                devname = f'mirror/{name}.eli'
-                devpath = f'/dev/{devname}'
-                if devname in swap_devices:
-                    await run('swapoff', devpath)
-                if os.path.exists(devpath):
+            devname = name if IS_LINUX else f'mirror/{name}.eli'
+            if devname in swap_devices:
+                await run('swapoff', name if IS_LINUX else os.path.join('/dev', devname))
+            if IS_LINUX:
+                await run('mdadm', '--stop', name)
+                await run(
+                    'mdadm', '--zero-superblock', *(
+                        os.path.join('/dev', p['name']) for p in mirror_data[name]['providers']
+                    )
+                )
+            else:
+                if os.path.exists(os.path.join('/dev', devname)):
                     await run('geli', 'detach', devname)
                 await run('gmirror', 'destroy', name)
 
         for p in providers.values():
-            if not IS_LINUX:
-                devname = f'{p["name"]}.eli'
-                if devname in swap_devices:
-                    await run('swapoff', f'/dev/{devname}')
-                if os.path.exists(f'/dev/{devname}'):
-                    await run('geli', 'detach', devname)
+            devname = os.path.join('/dev', p['name']) if IS_LINUX else f'{p["name"]}.eli'
+            if devname in swap_devices:
+                await run('swapoff', devname if IS_LINUX else os.path.join('/dev', devname))
+            if not IS_LINUX and os.path.exists(f'/dev/{devname}'):
+                await run('geli', 'detach', devname)

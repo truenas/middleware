@@ -1,3 +1,5 @@
+import os
+
 from bsd import geom
 from copy import deepcopy
 
@@ -22,6 +24,7 @@ class DiskService(Service, DiskMirrorBase):
                 **deepcopy(self.mirror_base),
                 'name': g.name,
                 'config_type': g.config.get('Type'),
+                'path': os.path.join('/dev/mirror', g.name),
             }
             for c in g.consumers:
                 mirror_data['providers'].append({

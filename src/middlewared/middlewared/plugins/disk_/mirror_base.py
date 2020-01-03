@@ -6,6 +6,7 @@ class DiskMirrorBase(ServicePartBase):
     mirror_base = {
         'name': None,
         'config_type': None,
+        'path': None,
         'providers': [],  # actual partitions
     }
 
