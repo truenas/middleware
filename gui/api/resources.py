@@ -1637,10 +1637,14 @@ class LegacyReplicationResourceMixin(object):
         resource_name = 'storage/replication'
         allowed_methods = ['get']
 
+    def dispatch(self, *args, **kwargs):
+        with client as c:
+            self.__tasks = {task["id"]: task for task in c.call("replication.query")}
+        return super().dispatch(*args, **kwargs)
+
     def dispatch_list(self, request, **kwargs):
         with client as c:
             self.__tasks = {task["id"]: task for task in c.call("replication.query")}
-            self.__ssh_keypairs = {credential["id"]: credential for credential in c.call("keychaincredential.query")}
         return super().dispatch_list(request, **kwargs)
 
     def dehydrate(self, bundle):
@@ -1652,7 +1656,7 @@ class LegacyReplicationResourceMixin(object):
             "id": bundle.data["id"],
             "repl_begin": bundle.data["repl_schedule_begin"],
             "repl_compression":
-                "none" if bundle.data["repl_compression"] is None else bundle.data["repl_compression"].lower(),
+                "off" if task["compression"] is None else task["compression"].lower(),
             "repl_enabled": bundle.data["repl_enabled"],
             "repl_end": bundle.data["repl_schedule_end"],
             "repl_filesystem": bundle.data["repl_source_datasets"][0],
@@ -1664,9 +1668,6 @@ class LegacyReplicationResourceMixin(object):
                                           else task["ssh_credentials"]["attributes"]["username"]),
             "repl_remote_dedicateduser_enabled": task["ssh_credentials"]["attributes"]["username"] != "root",
             "repl_remote_hostkey": (task["ssh_credentials"]["attributes"]["host"] + " " +
-                                    self.__ssh_keypairs[task["ssh_credentials"]["attributes"]["private_key"]]
-                                        ["attributes"]["public_key"] + "" + "\n\n" +
-                                    task["ssh_credentials"]["attributes"]["host"] + " " +
                                     task["ssh_credentials"]["attributes"]["remote_host_key"] + "\n\n"),
             "repl_remote_hostname": task["ssh_credentials"]["attributes"]["host"],
             "repl_remote_port": task["ssh_credentials"]["attributes"]["port"],
