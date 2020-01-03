@@ -33,7 +33,7 @@ class DiskService(Service, DiskInfoBase):
                     part_type = self.middleware.call_sync('disk.get_partition_uuid_from_name', part_type.text)
                 if not part_type:
                     part_type = 'UNKNOWN'
-                parts.append({'name': name.text, 'size': size, 'partition_type': part_type})
+                parts.append({'name': name.text, 'size': size, 'partition_type': part_type, 'disk': disk})
 
         return parts
 

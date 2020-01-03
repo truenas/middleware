@@ -5,6 +5,17 @@ from middlewared.service import private, Service
 class DiskService(Service):
 
     @private
+    async def list_all_partitions(self):
+        """
+        Returns list of all partitions present in the system
+        """
+        disks = await self.middleware.call('device.get_disks')
+        parts = []
+        for disk in disks:
+            parts.extend(await self.middleware.call('disk.list_partitions', disk))
+        return parts
+
+    @private
     @accepts(
         Str('disk'), Str('part_type', enum=['SWAP', 'ZFS'])
     )
