@@ -111,6 +111,7 @@ alert_category_names = {
     AlertCategory.DIRECTORY_SERVICE: "Directory Service",
     AlertCategory.HA: "High-Availability",
     AlertCategory.HARDWARE: "Hardware",
+    AlertCategory.KMIP: "Key Management Interoperability Protocol (KMIP)",
     AlertCategory.PLUGINS: "Plugins",
     AlertCategory.NETWORK: "Network",
     AlertCategory.REPORTING: "Reporting",
