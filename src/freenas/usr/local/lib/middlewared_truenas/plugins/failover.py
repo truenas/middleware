@@ -7,7 +7,6 @@
 import asyncio
 import base64
 import errno
-import json
 from lockfile import LockFile
 import logging
 try:
@@ -18,7 +17,6 @@ import os
 import pickle
 import queue
 import re
-import requests
 import shutil
 import socket
 import subprocess
@@ -32,8 +30,7 @@ import time
 
 from functools import partial
 
-from middlewared.client import Client, ClientException, CallTimeout
-from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
+from middlewared.schema import accepts, Bool, Dict, Int, NOT_PROVIDED, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
@@ -46,6 +43,8 @@ from middlewared.plugins.system import SystemService
 BUFSIZE = 256
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
+FAILOVER_LASTSTATUS = None
+FAILOVER_LASTDISABLEDREASONS = None
 
 logger = logging.getLogger('failover')
 
@@ -159,81 +158,6 @@ def throttle_condition(middleware, app, *args, **kwargs):
     if app is None or (app and app.authenticated):
         return True, 'AUTHENTICATED'
     return False, None
-
-
-class RemoteClient(object):
-
-    def __init__(self, remote_ip):
-        self.remote_ip = remote_ip
-
-    def __enter__(self):
-        # 860 is the iSCSI port and blocked by the failover script
-        try:
-            self.client = Client(
-                f'ws://{self.remote_ip}:6000/websocket',
-                reserved_ports=True, reserved_ports_blacklist=[860],
-            )
-        except ConnectionRefusedError:
-            raise CallError('Connection refused', errno.ECONNREFUSED)
-        except OSError as e:
-            if e.errno in (
-                errno.EPIPE,  # Happens when failover is configured on cxl device that has no link
-                errno.ENETDOWN, errno.EHOSTDOWN, errno.ENETUNREACH, errno.EHOSTUNREACH
-            ) or isinstance(e, socket.timeout):
-                raise CallError('Standby node is down', errno.EHOSTDOWN)
-            raise
-        return self
-
-    def call(self, *args, **kwargs):
-        try:
-            return self.client.call(*args, **kwargs)
-        except AttributeError as e:
-            # ws4py traceback which can happen when connection is lost
-            if "'NoneType' object has no attribute 'text_message'" in str(e):
-                raise CallError('Remote connection closed.', errno.EREMOTE)
-            else:
-                raise
-        except ClientException as e:
-            raise CallError(str(e), e.errno or errno.EFAULT)
-
-    def __exit__(self, typ, value, traceback):
-        self.client.close()
-        if typ is None:
-            return
-        if typ is ClientException:
-            raise CallError(str(value), value.errno or errno.EREMOTE)
-
-    def sendfile(self, token, local_path, remote_path):
-        r = requests.post(
-            f'http://{self.remote_ip}:6000/_upload/',
-            files=[
-                ('data', json.dumps({
-                    'method': 'filesystem.put',
-                    'params': [remote_path],
-                })),
-                ('file', open(local_path, 'rb')),
-            ],
-            headers={
-                'Authorization': f'Token {token}',
-            },
-        )
-        job_id = r.json()['job_id']
-        # TODO: use event subscription in the client instead of polling
-        while True:
-            rjob = self.client.call('core.get_jobs', [('id', '=', job_id)])
-            if rjob:
-                rjob = rjob[0]
-                if rjob['state'] == 'FAILED':
-                    raise CallError(
-                        f'Failed to send {local_path} to Standby Controller: {job["error"]}.'
-                    )
-                elif rjob['state'] == 'ABORTED':
-                    raise CallError(
-                        f'Failed to send {local_path} to Standby Controller, job aborted by user.'
-                    )
-                elif rjob['state'] == 'SUCCESS':
-                    break
-            time.sleep(0.5)
 
 
 class FailoverModel(sa.Model):
@@ -590,6 +514,46 @@ class FailoverService(ConfigService):
             ERROR
             SINGLE
         """
+        global FAILOVER_LASTSTATUS
+        status = await self._status(app)
+        if status != FAILOVER_LASTSTATUS:
+            FAILOVER_LASTSTATUS = status
+            self.middleware.send_event('failover.status', 'CHANGED', fields={'status': status})
+        return status
+
+    async def _status(self, app):
+        try:
+            status = await self.middleware.call('cache.get', 'failover_status')
+        except KeyError:
+            status = await self._get_local_status(app)
+            if status:
+                await self.middleware.call('cache.put', 'failover_status', status, 300)
+
+        if status:
+            return status
+
+        try:
+            remote_imported = await self.middleware.call('failover.call_remote', 'pool.query', [
+                [['status', '!=', 'OFFLINE']]
+            ])
+            # Other node has the pool
+            if remote_imported:
+                # check for carp MASTER (any) in remote?
+                return 'BACKUP'
+            # Other node has no pool
+            elif not remote_imported:
+                # check for carp MASTER (none) in remote?
+                return 'ERROR'
+            # We couldn't contact the other node
+            else:
+                return 'UNKNOWN'
+        except Exception as e:
+            # Anything other than ClientException is unexpected and should be logged
+            if not isinstance(e, CallError):
+                self.logger.warn('Failed checking failover status', exc_info=True)
+            return 'UNKNOWN'
+
+    async def _get_local_status(self, app):
         interfaces = await self.middleware.call('interface.query')
         if not any(filter(lambda x: x['state']['carp_config'], interfaces)):
             return 'SINGLE'
@@ -612,26 +576,12 @@ class FailoverService(ConfigService):
             elif os.path.exists('/tmp/.failover_failed'):
                 return 'ERROR'
 
-        try:
-            remote_imported = await self.middleware.call('failover.call_remote', 'pool.query', [
-                [['status', '!=', 'OFFLINE']]
-            ])
-            # Other node has the pool
-            if remote_imported or not pools:
-                # check for carp MASTER (any) in remote?
-                return 'BACKUP'
-            # Other node has no pool
-            elif not remote_imported:
-                # check for carp MASTER (none) in remote?
-                return 'ERROR'
-            # We couldn't contact the other node
-            else:
-                return 'UNKNOWN'
-        except Exception as e:
-            # Anything other than ClientException is unexpected and should be logged
-            if not isinstance(e, CallError):
-                self.logger.warn('Failed checking failover status', exc_info=True)
-            return 'UNKNOWN'
+    @private
+    async def status_refresh(self):
+        await self.middleware.call('cache.pop', 'failover_status')
+        # Kick a new status so it may be ready on next user call
+        await self.middleware.call('failover.status')
+        await self.middleware.call('failover.disabled_reasons')
 
     @accepts()
     def in_progress(self):
@@ -774,6 +724,14 @@ class FailoverService(ConfigService):
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         """
+        global FAILOVER_LASTDISABLEDREASONS
+        reasons = set(self._disabled_reasons(app))
+        if reasons != FAILOVER_LASTDISABLEDREASONS:
+            FAILOVER_LASTDISABLEDREASONS = reasons
+            self.middleware.send_event('failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': reasons})
+        return list(reasons)
+
+    def _disabled_reasons(self, app):
         reasons = []
         if not self.middleware.call_sync('pool.query'):
             reasons.append('NO_VOLUME')
@@ -782,7 +740,7 @@ class FailoverService(ConfigService):
         ):
             reasons.append('NO_VIP')
         try:
-            assert self.middleware.call_sync('failover.call_remote', 'core.ping') == 'pong'
+            assert self.middleware.call_sync('failover.remote_connected') is True
             # This only matters if it has responded to 'ping', otherwise
             # there is no reason to even try
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
@@ -854,35 +812,6 @@ class FailoverService(ConfigService):
         """
         self.middleware.call('failover.encryption_setkey', options['passphrase'])
         return self.middleware.call('failover.force_master')
-
-    @private
-    def remote_ip(self):
-        node = self.node()
-        if node == 'A':
-            remote = '169.254.10.2'
-        elif node == 'B':
-            remote = '169.254.10.1'
-        else:
-            raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
-        return remote
-
-    @accepts(
-        Str('method'),
-        List('args', default=[]),
-        Dict(
-            'options',
-            Int('timeout'),
-            Bool('job', default=False),
-        ),
-    )
-    def call_remote(self, method, args, options=None):
-        options = options or {}
-        remote = self.remote_ip()
-        with RemoteClient(remote) as c:
-            try:
-                return c.call(method, *args, **options)
-            except CallTimeout:
-                raise CallError('Call timeout', errno.ETIMEDOUT)
 
     @private
     @accepts()
@@ -1114,15 +1043,13 @@ class FailoverService(ConfigService):
             with open(updatefile_localpath, 'wb') as f:
                 shutil.copyfileobj(job.pipes.input.r, f, 1048576)
 
-        remote_ip = self.remote_ip()
-        with RemoteClient(remote_ip) as remote:
-
-            if not remote.call('system.ready'):
+        try:
+            if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                 raise CallError('Standby Controller is not ready, wait boot process.')
 
             legacy_upgrade = False
             try:
-                remote.call('failover.upgrade_version')
+                self.middleware.call_sync('failover.call_remote', 'failover.upgrade_version')
             except CallError as e:
                 if e.errno == CallError.ENOMETHOD:
                     legacy_upgrade = True
@@ -1148,8 +1075,10 @@ class FailoverService(ConfigService):
                 namespace = 'notifier'
             else:
                 namespace = 'update'
-            remote.call(f'{namespace}.destroy_upload_location')
-            remote_path = remote.call(f'{namespace}.create_upload_location') or '/var/tmp/firmware'
+            self.middleware.call_sync('failover.call_remote', f'{namespace}.destroy_upload_location')
+            remote_path = self.middleware.call_sync(
+                'failover.call_remote', f'{namespace}.create_upload_location'
+            ) or '/var/tmp/firmware'
 
             # Only send files to standby:
             # 1. Its a manual upgrade which means it needs to go through master first
@@ -1158,13 +1087,13 @@ class FailoverService(ConfigService):
             # For legacy upgrade it will be downloaded directly from standby.
             if updatefile or not legacy_upgrade:
                 job.set_progress(None, 'Sending files to Standby Controller')
-                token = remote.call('auth.generate_token')
+                token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
 
                 for f in os.listdir(local_path):
-                    remote.sendfile(token, os.path.join(local_path, f), os.path.join(remote_path, f))
+                    self.middleware.call_sync('failover.sendfile', token, os.path.join(local_path, f), os.path.join(remote_path, f))
 
             local_version = self.middleware.call_sync('system.version')
-            remote_version = remote.call('system.version')
+            remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
 
             update_remote_descr = update_local_descr = 'Starting upgrade'
 
@@ -1194,26 +1123,37 @@ class FailoverService(ConfigService):
             # If they are the same we assume this is a clean upgrade so we start by
             # upgrading the standby controller.
             if legacy_upgrade or local_version == remote_version:
-                rjob = remote.call(update_method, *update_remote_args, job='RETURN', callback=partial(
-                    callback, controller='REMOTE',
-                ))
+                rjob = self.middleware.call_sync(
+                    'failover.call_remote', update_method, update_remote_args, {
+                        'job_return': True,
+                        'callback': partial(callback, controller='REMOTE')
+                    }
+                )
             else:
                 rjob = None
 
             if not legacy_upgrade:
-                ljob = self.middleware.call_sync(update_method, *update_local_args, job_on_progress_cb=partial(
-                    callback, controller='LOCAL',
-                ))
+                ljob = self.middleware.call_sync(
+                    update_method, *update_local_args,
+                    job_on_progress_cb=partial(callback, controller='LOCAL')
+                )
                 ljob.wait_sync()
                 if ljob.error:
                     raise CallError(ljob.error)
 
-                remote_boot_id = remote.call('system.boot_id')
+                remote_boot_id = self.middleware.call_sync(
+                    'failover.call_remote', 'system.boot_id'
+                )
 
             if rjob:
                 rjob.result()
 
-            remote.call('system.reboot', {'delay': 5}, job=True)
+            self.middleware.call_sync('failover.call_remote', 'system.reboot', [
+                {'delay': 5}
+            ], {'job': True})
+
+        except Exception:
+            raise
 
         if not legacy_upgrade:
             # Update will activate the new boot environment.
@@ -1230,41 +1170,39 @@ class FailoverService(ConfigService):
         # Wait enough that standby controller has stopped receiving new connections and is
         # rebooting.
         try:
-            with RemoteClient(remote_ip) as remote:
-                retry_time = time.monotonic()
-                shutdown_timeout = sysctl.filter('kern.init_shutdown_timeout')[0].value
-                while time.monotonic() - retry_time < shutdown_timeout:
-                    remote.call('core.ping')
-                    time.sleep(5)
+            retry_time = time.monotonic()
+            shutdown_timeout = sysctl.filter('kern.init_shutdown_timeout')[0].value
+            while time.monotonic() - retry_time < shutdown_timeout:
+                self.middleware.call_sync('failover.call_remote', 'core.ping', [], {'timeout': 5})
+                time.sleep(5)
         except CallError:
             pass
         else:
             raise CallError('Standby Controller failed to reboot.', errno.ETIMEDOUT)
 
-        if not self.upgrade_waitstandby(remote_ip=remote_ip):
+        if not self.upgrade_waitstandby():
             raise CallError('Timed out waiting Standby Controller after upgrade.')
 
-        if not legacy_upgrade and remote_boot_id == self.call_remote('system.boot_id'):
+        if not legacy_upgrade and remote_boot_id == self.middleware.call_sync(
+            'failover.call_remote', 'system.boot_id'
+        ):
             raise CallError('Standby Controller failed to reboot.')
 
         return True
 
     @private
-    def upgrade_waitstandby(self, remote_ip=None, seconds=900):
+    def upgrade_waitstandby(self, seconds=900):
         """
         We will wait up to 15 minutes by default for the Standby Controller to reboot.
         This values come from observation from support of how long a M-series can take.
         """
-        if remote_ip is None:
-            remote_ip = self.remote_ip()
         retry_time = time.monotonic()
         while time.monotonic() - retry_time < seconds:
             try:
-                with RemoteClient(remote_ip) as c:
-                    if not c.call('system.ready'):
-                        time.sleep(5)
-                        continue
-                    return True
+                if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
+                    time.sleep(5)
+                    continue
+                return True
             except CallError as e:
                 if e.errno in (errno.ECONNREFUSED, errno.EHOSTDOWN):
                     time.sleep(5)
@@ -1645,6 +1583,7 @@ async def hook_restart_devd(middleware, *args, **kwargs):
 async def hook_license_update(middleware, *args, **kwargs):
     FailoverService.HA_MODE = None
     if await middleware.call('failover.licensed'):
+        await middleware.call('failover.ensure_remote_client')
         etc_generate = ['rc']
         if await middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
             await middleware.call('etc.generate', 'loader')
@@ -1656,6 +1595,7 @@ async def hook_license_update(middleware, *args, **kwargs):
         except Exception:
             middleware.logger.warning('Failed to sync license file to standby.')
     await middleware.call('service.restart', 'failover')
+    await middleware.call('failover.status_refresh')
 
 
 async def hook_setup_ha(middleware, *args, **kwargs):
@@ -1681,6 +1621,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         if await middleware.call('failover.status') == 'MASTER':
             middleware.logger.debug('[HA] Configuring network on standby node')
             await middleware.call('failover.call_remote', 'interface.sync')
+        await middleware.call('failover.status_refresh')
         return
 
     middleware.logger.info('[HA] Setting up')
@@ -1694,6 +1635,8 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     middleware.logger.debug('[HA] Restarting devd to enable failover')
     await middleware.call('failover.call_remote', 'service.restart', ['failover'])
     await middleware.call('service.restart', 'failover')
+
+    await middleware.call('failover.status_refresh')
 
     middleware.logger.info('[HA] Setup complete')
 
@@ -1789,7 +1732,16 @@ async def _event_system_ready(middleware, event_type, args):
         })
 
 
-def setup(middleware):
+def remote_status_event(middleware, *args, **kwargs):
+    middleware.call_sync('failover.status_refresh')
+
+
+async def setup(middleware):
+    middleware.event_register('failover.status', 'Sent when failover status changes.')
+    middleware.event_register(
+        'failover.disabled_reasons',
+        'Sent when the reasons for failover being disabled have changed.'
+    )
     middleware.event_register('failover.upgrade_pending', textwrap.dedent('''\
         Sent when system is ready and HA upgrade is pending.
 
@@ -1811,4 +1763,11 @@ def setup(middleware):
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
+
+    # Register callbacks to properly refresh HA status and send events on changes
+    await middleware.call('failover.remote_subscribe', 'system', remote_status_event)
+    await middleware.call('failover.remote_subscribe', 'failover.carp_event', remote_status_event)
+    await middleware.call('failover.remote_on_connect', remote_status_event)
+    await middleware.call('failover.remote_on_disconnect', remote_status_event)
+
     asyncio.ensure_future(journal_ha(middleware))
