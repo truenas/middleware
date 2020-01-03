@@ -989,7 +989,7 @@ class DiskService(CRUDService):
                 if len(consumers) == 1 or any(filter(
                     lambda c: c.provider.geom.name not in disks, consumers
                 )):
-                    await self.swaps_remove_disks([c.provider.geom.name for c in consumers])
+                    await self.middleware.call('disk.swaps_remove_disks', [c.provider.geom.name for c in consumers])
                 else:
                     mirror_name = f'mirror/{g.name}'
                     swap_devices.append(mirror_name)
@@ -1054,7 +1054,7 @@ class DiskService(CRUDService):
                 try:
                     for i in part_ab:
                         if i in list(swap_devices):
-                            await self.swaps_remove_disks([i.split('p')[0]])
+                            await self.middleware.call('disk.swaps_remove_disks', [i.split('p')[0]])
                             swap_devices.remove(i)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
@@ -1099,56 +1099,6 @@ class DiskService(CRUDService):
                 continue
 
         return swap_devices
-
-    @private
-    async def swaps_remove_disks(self, disks):
-        """
-        Remove a given disk (e.g. ["da0", "da1"]) from swap.
-        it will offline if from swap, remove it from the gmirror (if exists)
-        and detach the geli.
-        """
-        await self.middleware.run_in_thread(geom.scan)
-        providers = {}
-        for disk in disks:
-            partgeom = geom.geom_by_name('PART', disk)
-            if not partgeom:
-                continue
-            for p in partgeom.providers:
-                if p.config['rawtype'] in await self.middleware.call('disk.get_valid_swap_partition_type_uuids'):
-                    providers[p.id] = p
-                    break
-
-        if not providers:
-            return
-
-        klass = geom.class_by_name('MIRROR')
-        if not klass:
-            return
-
-        mirrors = set()
-        for g in klass.geoms:
-            for c in g.consumers:
-                if c.provider.id in providers:
-                    mirrors.add(g.name)
-                    del providers[c.provider.id]
-
-        swapinfo_devs = [s.devname for s in getswapinfo()]
-
-        for name in mirrors:
-            devname = f'mirror/{name}.eli'
-            devpath = f'/dev/{devname}'
-            if devname in swapinfo_devs:
-                await run('swapoff', devpath)
-            if os.path.exists(devpath):
-                await run('geli', 'detach', devname)
-            await run('gmirror', 'destroy', name)
-
-        for p in providers.values():
-            devname = f'{p.name}.eli'
-            if devname in swapinfo_devs:
-                await run('swapoff', f'/dev/{devname}')
-            if os.path.exists(f'/dev/{devname}'):
-                await run('geli', 'detach', devname)
 
     @private
     def gptid_from_part_type(self, disk, part_type):
