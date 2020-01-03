@@ -31,6 +31,7 @@ class DiskService(Service, DiskInfoBase):
                 'partition_type': p['type'],
                 'disk': disk,
                 'id': f'{disk}{p["partition_number"]}',
+                'path': os.path.join('/dev', f'{disk}{p["partition_number"]}')
             }
             for p in block_device.__getstate__()['partitions_data']['partitions']
         ]

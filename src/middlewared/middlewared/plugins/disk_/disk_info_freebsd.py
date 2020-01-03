@@ -1,3 +1,4 @@
+import os
 import re
 
 from bsd import geom, getswapinfo
@@ -39,6 +40,7 @@ class DiskService(Service, DiskInfoBase):
                     'partition_type': part_type,
                     'disk': disk,
                     'id': p.get('id'),
+                    'path': os.path.join('/dev', name.text),
                 })
 
         return parts
