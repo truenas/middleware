@@ -18,10 +18,10 @@ class DiskService(Service, DiskMirrorBase):
             mirror_data = deepcopy(self.mirror_base)
             mirror_data.update({
                 'name': array,
-                'path': os.path.join(base_path, array),
+                'path': os.path.realpath(os.path.join(base_path, array)),
             })
             for provider in os.listdir(
-                os.path.join('/sys/block', os.path.realpath(mirror_data['path']).split('/')[-1], 'slaves')
+                os.path.join('/sys/block', mirror_data['path'].split('/')[-1], 'slaves')
             ):
                 provider_data = {'name': provider, 'id': provider}
                 with open(os.path.join('/sys/class/block', provider, 'partition'), 'r') as f:

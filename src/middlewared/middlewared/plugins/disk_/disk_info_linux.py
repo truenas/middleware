@@ -56,4 +56,12 @@ class DiskService(Service, DiskInfoBase):
         return '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f'
 
     async def get_swap_devices(self, include_mirrors=False):
-        raise NotImplementedError()
+        with open('/proc/swaps', 'r') as f:
+            data = f.read()
+        devices = []
+        for dev_line in filter(lambda l: l.startswith('/dev'), data.splitlines()):
+            dev = dev_line.split()[0]
+            if not include_mirrors and dev.startswith('/dev/md'):
+                continue
+            devices.append(dev)
+        return devices
