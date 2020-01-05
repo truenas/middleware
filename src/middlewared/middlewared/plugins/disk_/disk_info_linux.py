@@ -75,7 +75,10 @@ class DiskService(Service, DiskInfoBase):
 
     def label_to_disk(self, label, *args):
         part_disk = self.label_to_dev(label)
-        if not part_disk:
+        return self.get_disk_from_partition(part_disk) if part_disk else None
+
+    def get_disk_from_partition(self, part_name):
+        if not os.path.exists(os.path.join('/dev', part_name)):
             return None
-        with open(os.path.join('/sys/class/block', part_disk, 'partition'), 'r') as f:
-            return part_disk.rsplit(f.read().strip(), 1)[0].strip()
+        with open(os.path.join('/sys/class/block', part_name, 'partition'), 'r') as f:
+            return part_name.rsplit(f.read().strip(), 1)[0].strip()

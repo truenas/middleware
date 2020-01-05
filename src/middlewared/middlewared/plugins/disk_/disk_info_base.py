@@ -39,3 +39,7 @@ class DiskInfoBase(ServicePartBase):
     @private
     async def label_to_disk(self, label, *args):
         raise NotImplementedError()
+
+    @private
+    async def get_disk_from_partition(self, part_name):
+        raise NotImplementedError()

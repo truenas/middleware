@@ -88,3 +88,6 @@ class DiskService(Service, DiskInfoBase):
         part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
         if part is not None:
             return part.text
+
+    def get_disk_from_partition(self, part_name):
+        return self.label_to_disk(part_name, True)
