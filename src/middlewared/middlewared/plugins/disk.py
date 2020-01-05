@@ -949,32 +949,6 @@ class DiskService(CRUDService):
             raise CallError(f'Failed to label {dev}: {cp.stderr.decode()}')
 
     @private
-    def unlabel(self, disk, sync=True):
-        self.middleware.call_sync('disk.swaps_remove_disks', [disk])
-
-        subprocess.run(
-            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        # Wipe out the partition table by doing an additional iterate of create/destroy
-        subprocess.run(
-            ['gpart', 'create', '-s', 'gpt', f'/dev/{disk}'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        subprocess.run(
-            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        if sync:
-            # We might need to sync with reality (e.g. uuid -> devname)
-            self.middleware.call_sync('disk.sync', disk)
-
-    @private
     async def configure_power_management(self):
         """
         This runs on boot to properly configure all power management options
