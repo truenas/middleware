@@ -1998,10 +1998,10 @@ class PoolService(CRUDService):
         else:
             encrypt = 0
 
-        try:
-            activated_jail_pool = await self.middleware.call('jail.get_activated_pool')
-        except Exception:
-            activated_jail_pool = None
+        activated_jail_pool = None
+        if not IS_LINUX:
+            with contextlib.suppress(Exception):
+                activated_jail_pool = await self.middleware.call('jail.get_activated_pool')
 
         pool_name = data.get('name') or pool['name']
         pool_id = None
