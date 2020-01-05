@@ -28,7 +28,6 @@ from middlewared.utils.asyncio_ import asyncio_map
 GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
 GELI_REKEY_FAILED = '/tmp/.rekey_failed'
-MIRROR_MAX = 5
 RE_CAMCONTROL_AAM = re.compile(r'^automatic acoustic management\s+yes', re.M)
 RE_CAMCONTROL_APM = re.compile(r'^advanced power management\s+yes', re.M)
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
