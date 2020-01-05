@@ -2152,7 +2152,7 @@ class PoolService(CRUDService):
                 pass
             else:
                 raise
-        if IS_LINUX:
+        if not IS_LINUX:
             await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
         job.set_progress(30, 'Removing pool disks from swap')
@@ -2187,7 +2187,8 @@ class PoolService(CRUDService):
 
             await self.middleware.call('disk.sync_all')
 
-            await self.middleware.call('disk.geli_detach', pool, True)
+            if not IS_LINUX:
+                await self.middleware.call('disk.geli_detach', pool, True)
             if pool['encrypt'] > 0:
                 try:
                     os.remove(pool['encryptkey_path'])
@@ -2201,7 +2202,8 @@ class PoolService(CRUDService):
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
-            await self.middleware.call('disk.geli_detach', pool)
+            if not IS_LINUX:
+                await self.middleware.call('disk.geli_detach', pool)
 
         job.set_progress(90, 'Cleaning up')
         if os.path.isdir(pool['path']):
@@ -2210,7 +2212,7 @@ class PoolService(CRUDService):
                 # potentially hidden by the mount
                 os.rmdir(pool['path'])
             except OSError as e:
-                self.logger.warn('Failed to remove pointoint %s: %s', pool['path'], e)
+                self.logger.warn('Failed to remove mountpoint %s: %s', pool['path'], e)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
