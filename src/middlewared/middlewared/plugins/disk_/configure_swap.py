@@ -38,16 +38,18 @@ class DiskService(Service):
         # instead
         for mirror in swap_mirrors:
             # If the mirror is degraded or disk is not in a pool lets remove it
+            mirror_name = mirror['path'] if IS_LINUX else mirror['path'].split('/dev/', 1)[-1]
             if len(mirror['providers']) == 1 or any(
                 p['disk'] not in disks for p in mirror['providers']
             ):
                 await self.middleware.call('disk.swaps_remove_disks', [p['disk'] for p in mirror['providers']])
-                if mirror['name'] in existing_swap_devices['mirrors']:
-                    existing_swap_devices['mirrors'].remove(mirror['name'])
+                if mirror_name in existing_swap_devices['mirrors']:
+                    existing_swap_devices['mirrors'].remove(mirror_name)
             else:
-                mirror_name = mirror['path'] if IS_LINUX else mirror['path'].split('/dev/', 1)[-1]
-                if mirror_name not in existing_swap_devices['mirrors']:
-                    create_swap_devices.append(mirror_name)
+                if mirror_name not in existing_swap_devices['mirrors'] and (
+                    IS_LINUX or (mirror_name.endswith('.eli'))
+                ):
+                    create_swap_devices.append(mirror_name if IS_LINUX else mirror_name.rsplit('.eli', 1)[0])
                 used_partitions_in_mirror.update(p['name'] for p in mirror['providers'])
 
                 # If mirror has been configured automatically (not by middlewared)
@@ -97,14 +99,14 @@ class DiskService(Service):
 
                 # We could have a single disk being used as swap, without mirror.
                 try:
-                    for i in part_ab:
+                    for p in part_ab:
                         remove = False
                         if IS_LINUX:
-                            part = all_partitions[i]['path']
+                            part = all_partitions[p]['path']
                             if part in existing_swap_devices['partitions']:
                                 remove = True
                         else:
-                            part = i
+                            part = p
                             if part in existing_swap_devices['partitions']:
                                 remove = True
                             elif f'{part}.eli' in existing_swap_devices['partitions']:
@@ -112,7 +114,7 @@ class DiskService(Service):
                                 remove = True
 
                         if remove:
-                            await self.middleware.call('disk.swaps_remove_disks', [all_partitions[i]['disk']])
+                            await self.middleware.call('disk.swaps_remove_disks', [all_partitions[p]['disk']])
                             existing_swap_devices['partitions'].remove(part)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
