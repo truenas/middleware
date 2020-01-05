@@ -7,6 +7,7 @@ import json
 import logging
 from datetime import datetime, time, timedelta
 import os
+import platform
 import re
 import secrets
 import shutil
@@ -46,6 +47,7 @@ logger = logging.getLogger(__name__)
 
 ENCRYPTEDDISK_LOCK = asyncio.Lock()
 GELI_KEYPATH = '/data/geli'
+IS_LINUX = platform.system().lower() == 'linux'
 RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
@@ -2145,7 +2147,8 @@ class PoolService(CRUDService):
                 pass
             else:
                 raise
-        await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
+        if IS_LINUX:
+            await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
