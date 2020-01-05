@@ -25,7 +25,7 @@ class DiskService(Service):
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
         disks.extend(await self.middleware.call('boot.get_disks'))
         existing_swap_devices = {'mirrors': [], 'partitions': []}
-        for device in await self.middleware.call('disk.get_swap_devices', True):
+        for device in await self.middleware.call('disk.get_swap_devices'):
             if device.startswith('/dev/md') if IS_LINUX else device.startswith('mirror/'):
                 # This is going to be complete path for linux and mirror/swapname.eli for freebsd
                 existing_swap_devices['mirrors'].append(device)

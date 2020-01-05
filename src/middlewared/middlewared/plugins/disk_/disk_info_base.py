@@ -30,5 +30,5 @@ class DiskInfoBase(ServicePartBase):
         raise NotImplementedError()
 
     @private
-    async def get_swap_devices(self, include_mirrors=False):
+    async def get_swap_devices(self):
         raise NotImplementedError()

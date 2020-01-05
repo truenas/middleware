@@ -36,7 +36,7 @@ class DiskService(Service):
                 if providers.pop(provider['id'], None):
                     mirrors.add(mirror['path'] if IS_LINUX else mirror['name'])
 
-        swap_devices = await self.middleware.call('disk.get_swap_devices', True)
+        swap_devices = await self.middleware.call('disk.get_swap_devices')
 
         for name in mirrors:
             devname = name if IS_LINUX else f'mirror/{name}.eli'

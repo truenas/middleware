@@ -59,10 +59,5 @@ class DiskService(Service, DiskInfoBase):
     async def get_swap_part_type(self):
         return '516e7cb5-6ecf-11d6-8ff8-00022d09712b'
 
-    async def get_swap_devices(self, include_mirrors=False):
-        devices = []
-        for i in getswapinfo():
-            if not include_mirrors and i.devname.startswith('mirror/'):
-                continue
-            devices.append(i.devname)
-        return devices
+    def get_swap_devices(self):
+        return [i.devname for i in getswapinfo()]
