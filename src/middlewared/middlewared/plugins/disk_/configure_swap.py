@@ -145,12 +145,16 @@ class DiskService(Service):
                 if cp.returncode:
                     continue
 
-                create_swap_devices.append(os.path.join('/dev/md', name) if IS_LINUX else f'mirror/{name}')
+                create_swap_devices.append(
+                    os.path.realpath(os.path.join('/dev/md', name)) if IS_LINUX else f'mirror/{name}'
+                )
 
             # Add remaining partitions to unused list
             unused_partitions += partitions
 
-        if all(not existing_swap_devices[k] for k in existing_swap_devices) and unused_partitions:
+        if unused_partitions and not create_swap_devices and all(
+            not existing_swap_devices[k] for k in existing_swap_devices
+        ):
             if not IS_LINUX and not dumpdev:
                 await self.middleware.call('disk.dumpdev_configure', unused_partitions[0])
             create_swap_devices.append(
@@ -172,8 +176,9 @@ class DiskService(Service):
                     self.logger.warning('Failed to encrypt swap partition %s: %s', name, e.stderr.decode())
                     continue
 
+            name = name if IS_LINUX else f'{name}.eli'
             try:
-                await run('swapon', name if IS_LINUX else f'/dev/{name}.eli')
+                await run('swapon', name if IS_LINUX else f'/dev/{name}')
             except subprocess.CalledProcessError as e:
                 self.logger.warning('Failed to activate swap partition %s: %s', name, e.stderr.decode())
                 continue
