@@ -1919,7 +1919,7 @@ class PoolService(CRUDService):
             await self.middleware.call('zfs.pool.import_pool', pool['guid'], {
                 'altroot': '/mnt',
                 'cachefile': ZPOOL_CACHE_FILE,
-            })
+            }, True, None, pool_name)
 
             await self.middleware.call('zfs.dataset.update', pool_name, {
                 'properties': {
