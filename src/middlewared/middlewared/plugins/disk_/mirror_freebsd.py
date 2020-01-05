@@ -20,7 +20,7 @@ class DiskService(Service, DiskMirrorBase):
             mirror_data = {
                 **deepcopy(self.mirror_base),
                 'name': g.name,
-                'config_type': g.config.get('Type'),
+                'config_type': g.config.get('Type') if g.config else None,
                 'path': os.path.join('/dev/mirror', g.name),
             }
             if os.path.exists(f'{mirror_data["path"]}.eli'):
