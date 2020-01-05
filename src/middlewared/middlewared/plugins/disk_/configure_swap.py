@@ -32,21 +32,24 @@ class DiskService(Service):
             else:
                 existing_swap_devices['partitions'].append(device)
 
-        swap_mirrors = await self.middleware.call('disk.get_swap_mirrors')
-        # disk.get_swap_mirrors is going to get us complete path for linux and mirror/swapname for freebsd
+        mirrors = await self.middleware.call('disk.get_mirrors')
+        # disk.get_mirrors is going to get us complete path for linux and mirror/swapname for freebsd
         # point to note is that we don't get .eli suffix from above - so we have to be careful here and use path
         # instead
-        for mirror in swap_mirrors:
+        for mirror in mirrors:
             # If the mirror is degraded or disk is not in a pool lets remove it
             mirror_name = mirror['path'] if IS_LINUX else mirror['path'].split('/dev/', 1)[-1]
-            if len(mirror['providers']) == 1 or any(
+            swap_mirror = mirror['name'].split(':')[-1].startswith('swap') if IS_LINUX else (
+                mirror['name'].startswith('swap') or mirror['name'].endswith('.sync')
+            )
+            if swap_mirror and len(mirror['providers']) == 1 or any(
                 p['disk'] not in disks for p in mirror['providers']
             ):
                 await self.middleware.call('disk.swaps_remove_disks', [p['disk'] for p in mirror['providers']])
                 if mirror_name in existing_swap_devices['mirrors']:
                     existing_swap_devices['mirrors'].remove(mirror_name)
             else:
-                if mirror_name not in existing_swap_devices['mirrors'] and (
+                if swap_mirror and mirror_name not in existing_swap_devices['mirrors'] and (
                     IS_LINUX or (mirror_name.endswith('.eli'))
                 ):
                     create_swap_devices.append(mirror_name if IS_LINUX else mirror_name.rsplit('.eli', 1)[0])
@@ -142,7 +145,7 @@ class DiskService(Service):
                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                     )
                 stdout, stderr = await cp.communicate()
-                if stderr:
+                if stderr or cp.returncode:
                     self.logger.warning('Failed to create swap mirror %s: %s', name, stderr.decode())
                 if cp.returncode:
                     continue

@@ -9,12 +9,10 @@ from .mirror_base import DiskMirrorBase
 
 class DiskService(Service, DiskMirrorBase):
 
-    def get_swap_mirrors(self):
+    def get_mirrors(self):
         mirrors = []
         base_path = '/dev/md'
-        for array in filter(
-            lambda v: v.startswith('swap'), os.listdir(base_path)
-        ) if os.path.exists(base_path) else []:
+        for array in os.listdir(base_path) if os.path.exists(base_path) else []:
             mirror_data = deepcopy(self.mirror_base)
             mirror_data.update({
                 'name': array,

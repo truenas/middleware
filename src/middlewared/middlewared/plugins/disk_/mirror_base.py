@@ -11,5 +11,5 @@ class DiskMirrorBase(ServicePartBase):
     }
 
     @private
-    async def get_swap_mirrors(self):
+    async def get_mirrors(self):
         raise NotImplementedError()

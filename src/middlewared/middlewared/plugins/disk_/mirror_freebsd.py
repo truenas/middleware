@@ -10,16 +10,13 @@ from .mirror_base import DiskMirrorBase
 
 class DiskService(Service, DiskMirrorBase):
 
-    def get_swap_mirrors(self):
+    def get_mirrors(self):
         mirrors = []
         geom.scan()
         klass = geom.class_by_name('MIRROR')
         if not klass:
             return mirrors
         for g in klass.geoms:
-            # Skip gmirror that is not swap*
-            if not g.name.startswith('swap') or g.name.endswith('.sync'):
-                continue
             mirror_data = {
                 **deepcopy(self.mirror_base),
                 'name': g.name,

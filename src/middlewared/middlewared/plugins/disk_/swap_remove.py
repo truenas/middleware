@@ -30,7 +30,7 @@ class DiskService(Service):
             return
 
         mirrors = set()
-        mirror_data = {m['path']: m for m in await self.middleware.call('disk.get_swap_mirrors')}
+        mirror_data = {m['path']: m for m in await self.middleware.call('disk.get_mirrors')}
         for mirror in mirror_data.values():
             for provider in mirror['providers']:
                 if providers.pop(provider['id'], None):
