@@ -29,29 +29,24 @@ class DiskService(Service):
         if not providers:
             return
 
-        mirrors = set()
-        mirror_data = {m['path']: m for m in await self.middleware.call('disk.get_mirrors')}
-        for mirror in mirror_data.values():
-            for provider in mirror['providers']:
-                if providers.pop(provider['id'], None):
-                    mirrors.add(mirror['path'] if IS_LINUX else mirror['name'])
-
         swap_devices = await self.middleware.call('disk.get_swap_devices')
-
-        for name in mirrors:
-            devname = name if IS_LINUX else f'mirror/{name}.eli'
-            if devname in swap_devices:
-                await run('swapoff', name if IS_LINUX else os.path.join('/dev', devname))
-            if IS_LINUX:
-                await run('mdadm', '--stop', name)
-            else:
-                if os.path.exists(os.path.join('/dev', devname)):
-                    await run('geli', 'detach', devname)
-                await run('gmirror', 'destroy', name)
+        for mirror in await self.middleware.call('disk.get_mirrors'):
+            destroyed_mirror = False
+            for provider in mirror['providers']:
+                if providers.pop(provider['id'], None) and not destroyed_mirror:
+                    devname = mirror['encrypted_provider'] or mirror['real_path']
+                    if devname in swap_devices:
+                        await run('swapoff', devname)
+                    if mirror['encrypted_provider']:
+                        await self.middleware.call(
+                            'disk.remove_encryption', mirror['encrypted_provider']
+                        )
+                    await self.middleware.call('disk.destroy_mirror', mirror['path'] if IS_LINUX else mirror['name'])
+                    destroyed_mirror = True
 
         for p in providers.values():
-            devname = os.path.join('/dev', p['name']) if IS_LINUX else f'{p["name"]}.eli'
+            devname = p['encrypted_provider'] or p['path']
             if devname in swap_devices:
-                await run('swapoff', devname if IS_LINUX else os.path.join('/dev', devname))
-            if not IS_LINUX and os.path.exists(f'/dev/{devname}'):
-                await run('geli', 'detach', devname)
+                await run('swapoff', devname)
+            if p['encrypted_provider']:
+                await self.middleware.call('disk.remove_encryption', p['encrypted_provider'])
