@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# It unconfigures interfaces we've just configured even if it is instructed to do not touch anything
+systemctl disable systemd-networkd
