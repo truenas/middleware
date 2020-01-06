@@ -1,4 +1,5 @@
 import blkid
+import glob
 import os
 
 from middlewared.service import CallError, Service
@@ -24,17 +25,21 @@ class DiskService(Service, DiskInfoBase):
         if not block_device.partitions_exist:
             return parts
 
-        return [
-            {
+        for p in block_device.__getstate__()['partitions_data']['partitions']:
+            part = {
                 'name': f'{disk}{p["partition_number"]}',
                 'size': p['partition_size'],
                 'partition_type': p['type'],
                 'disk': disk,
                 'id': f'{disk}{p["partition_number"]}',
-                'path': os.path.join('/dev', f'{disk}{p["partition_number"]}')
+                'path': os.path.join('/dev', f'{disk}{p["partition_number"]}'),
+                'encrypted_provider': None,
             }
-            for p in block_device.__getstate__()['partitions_data']['partitions']
-        ]
+            encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
+            if encrypted_provider:
+                part['encrypted_provider'] = os.path.join('/dev', encrypted_provider[0].split('/')[3])
+            parts.append(part)
+        return parts
 
     def gptid_from_part_type(self, disk, part_type):
         try:

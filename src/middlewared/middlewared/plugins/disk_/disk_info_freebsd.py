@@ -34,14 +34,18 @@ class DiskService(Service, DiskInfoBase):
                     part_type = self.middleware.call_sync('disk.get_partition_uuid_from_name', part_type.text)
                 if not part_type:
                     part_type = 'UNKNOWN'
-                parts.append({
+                part = {
                     'name': name.text,
                     'size': size,
                     'partition_type': part_type,
                     'disk': disk,
                     'id': p.get('id'),
                     'path': os.path.join('/dev', name.text),
-                })
+                    'encrypted_provider': None,
+                }
+                if os.path.exists(f'{part["path"]}.eli'):
+                    part['encrypted_provider'] = f'{part["path"]}.eli'
+                parts.append(part)
 
         return parts
 
