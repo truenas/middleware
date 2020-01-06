@@ -4,7 +4,7 @@ from bsd import geom
 from copy import deepcopy
 
 from middlewared.service import CallError, Service
-from middlewared.utils import run
+from middlewared.utils import filter_list, run
 
 from .mirror_base import DiskMirrorBase
 
@@ -15,6 +15,16 @@ class DiskService(Service, DiskMirrorBase):
         cp = await run('gmirror', 'create', name, *(options['paths']), check=False, encoding='utf8')
         if cp.returncode:
             raise CallError('Failed to create gmirror %s: %s', name, cp.stderr)
+
+    async def destroy_mirror(self, name):
+        mirror_data = await self.middleware.call('disk.get_mirrors', [['name', '=', name]], {'get': True})
+        mirror_name = os.path.join('mirror', name)
+        if mirror_data['encrypted_path']:
+            await self.middleware.call('disk.remove_encryption', f'{mirror_name}.eli')
+
+        cp = await run('gmirror', 'destroy', mirror_name, check=False, encoding='utf8')
+        if cp.returncode:
+            raise CallError('Failed to destroy mirror %s: %s', mirror_name, cp.stderr)
 
     def get_mirrors(self, filters, options):
         mirrors = []
@@ -38,4 +48,4 @@ class DiskService(Service, DiskMirrorBase):
                 })
             mirrors.append(mirror_data)
 
-        return mirrors
+        return filter_list(mirrors, filters, options)

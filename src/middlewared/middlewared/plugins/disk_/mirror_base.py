@@ -26,6 +26,10 @@ class DiskMirrorBase(ServicePartBase):
         raise NotImplementedError()
 
     @private
+    async def destroy_mirror(self, name):
+        raise NotImplementedError()
+
+    @private
     @filterable
     async def get_mirrors(self, filters, options):
         raise NotImplementedError()

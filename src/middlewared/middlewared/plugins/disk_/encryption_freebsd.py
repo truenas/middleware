@@ -2,6 +2,7 @@ import os
 import tempfile
 
 from middlewared.service import CallError, Service
+from middlewared.utils import run
 
 from .encryption_base import DiskEncryptionBase
 
@@ -39,3 +40,8 @@ class DiskService(Service, DiskEncryptionBase):
                 raise CallError(f'The following devices failed to attach: {", ".join(failed)}')
 
         return True
+
+    async def remove_encryption(self, device):
+        cp = await run('geli', 'detach', device, check=False, encoding='utf8')
+        if cp.returncode:
+            raise CallError('Failed to detach geli from %s: %s', device, cp.stderr)
