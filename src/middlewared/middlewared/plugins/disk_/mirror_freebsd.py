@@ -19,7 +19,7 @@ class DiskService(Service, DiskMirrorBase):
     async def destroy_mirror(self, name):
         mirror_data = await self.middleware.call('disk.get_mirrors', [['name', '=', name]], {'get': True})
         mirror_name = os.path.join('mirror', name)
-        if mirror_data['encrypted_path']:
+        if mirror_data['encrypted_provider']:
             await self.middleware.call('disk.remove_encryption', f'{mirror_name}.eli')
 
         cp = await run('gmirror', 'destroy', mirror_name, check=False, encoding='utf8')
@@ -41,7 +41,7 @@ class DiskService(Service, DiskMirrorBase):
                 'real_path': os.path.join('/dev/mirror', g.name),
             }
             if os.path.exists(f'{mirror_data["path"]}.eli'):
-                mirror_data['encrypted_path'] = f'{mirror_data["path"]}.eli'
+                mirror_data['encrypted_provider'] = f'{mirror_data["path"]}.eli'
             for c in g.consumers:
                 mirror_data['providers'].append({
                     'name': c.provider.name, 'id': c.provider.id, 'disk': c.provider.geom.name

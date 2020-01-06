@@ -23,8 +23,8 @@ class DiskService(Service, DiskMirrorBase):
     async def destroy_mirror(self, name):
         # name here is path to the array
         mirror = await self.middleware.call('disk.get_mirrors', [['path', '=', name]], {'get': True})
-        if mirror['encrypted_path']:
-            await self.middleware.call('disk.remove_encryption', mirror['encrypted_path'])
+        if mirror['encrypted_provider']:
+            await self.middleware.call('disk.remove_encryption', mirror['encrypted_provider'])
 
         cp = await run('mdadm', '--stop', name, check=False, encoding='utf8')
         if cp.returncode:
@@ -42,7 +42,7 @@ class DiskService(Service, DiskMirrorBase):
             })
             encrypted_path = glob.glob(f'/sys/block/dm-*/slaves/{mirror_data["real_path"].split("/")[-1]}')
             if encrypted_path:
-                mirror_data['encrypted_path'] = os.path.join('/dev', encrypted_path[0].split('/')[3])
+                mirror_data['encrypted_provider'] = os.path.join('/dev', encrypted_path[0].split('/')[3])
             for provider in os.listdir(
                 os.path.join('/sys/block', mirror_data['real_path'].split('/')[-1], 'slaves')
             ):
