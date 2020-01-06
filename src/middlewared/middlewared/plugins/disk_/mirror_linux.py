@@ -1,3 +1,4 @@
+import glob
 import os
 
 from copy import deepcopy
@@ -29,6 +30,11 @@ class DiskService(Service, DiskMirrorBase):
                 'path': os.path.join(base_path, array),
                 'real_path': os.path.realpath(os.path.join(base_path, array)),
             })
+            encrypted_path = glob.glob(f'/sys/block/dm-*/slaves/{mirror_data["real_path"].split("/")[-1]}')
+            if encrypted_path:
+                mirror_data['encrypted_path'] = os.path.join(
+                    '/dev/mapper', encrypted_path[0].split('/')[2]
+                )
             for provider in os.listdir(
                 os.path.join('/sys/block', mirror_data['path'].split('/')[-1], 'slaves')
             ):

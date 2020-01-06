@@ -9,6 +9,7 @@ class DiskMirrorBase(ServicePartBase):
         'config_type': None,
         'path': None,
         'real_path': None,
+        'encrypted_path': None,
         'providers': [],  # actual partitions
     }
 
