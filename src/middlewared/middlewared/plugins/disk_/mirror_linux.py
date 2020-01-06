@@ -2,12 +2,22 @@ import os
 
 from copy import deepcopy
 
-from middlewared.service import Service
+from middlewared.service import CallError, Service
+from middlewared.utils import run
 
 from .mirror_base import DiskMirrorBase
 
 
 class DiskService(Service, DiskMirrorBase):
+
+    async def create_mirror(self, name, options):
+        extra = options['extra']
+        cp = await run(
+            'mdadm', '--build', os.path.join('/dev/md', name), f'--level={extra.get("level", 1)}',
+            f'--raid-devices={len(options["paths"])}', *(options['paths'])
+        )
+        if cp.returncode:
+            raise CallError('Failed to create mirror %s: %s', name, cp.stderr)
 
     def get_mirrors(self):
         mirrors = []

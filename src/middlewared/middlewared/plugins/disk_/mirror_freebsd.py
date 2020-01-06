@@ -3,12 +3,18 @@ import os
 from bsd import geom
 from copy import deepcopy
 
-from middlewared.service import Service
+from middlewared.service import CallError, Service
+from middlewared.utils import run
 
 from .mirror_base import DiskMirrorBase
 
 
 class DiskService(Service, DiskMirrorBase):
+
+    async def create_mirror(self, name, options):
+        cp = await run('gmirror', 'create', name, *(options['paths']), check=False, encoding='utf8')
+        if cp.returncode:
+            raise CallError('Failed to create gmirror %s: %s', name, cp.stderr)
 
     def get_mirrors(self):
         mirrors = []
