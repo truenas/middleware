@@ -16,7 +16,7 @@ class DiskService(Service, DiskMirrorBase):
         if cp.returncode:
             raise CallError('Failed to create gmirror %s: %s', name, cp.stderr)
 
-    def get_mirrors(self):
+    def get_mirrors(self, filters, options):
         mirrors = []
         geom.scan()
         klass = geom.class_by_name('MIRROR')

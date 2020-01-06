@@ -19,7 +19,7 @@ class DiskService(Service, DiskMirrorBase):
         if cp.returncode:
             raise CallError('Failed to create mirror %s: %s', name, cp.stderr)
 
-    def get_mirrors(self):
+    def get_mirrors(self, filters, options):
         mirrors = []
         base_path = '/dev/md'
         for array in os.listdir(base_path) if os.path.exists(base_path) else []:

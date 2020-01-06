@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Dict, Str, List
-from middlewared.service import private, ServicePartBase
+from middlewared.service import filterable, private, ServicePartBase
 
 
 class DiskMirrorBase(ServicePartBase):
@@ -25,5 +25,6 @@ class DiskMirrorBase(ServicePartBase):
         raise NotImplementedError()
 
     @private
-    async def get_mirrors(self):
+    @filterable
+    async def get_mirrors(self, filters, options):
         raise NotImplementedError()
