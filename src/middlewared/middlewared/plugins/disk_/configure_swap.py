@@ -135,7 +135,7 @@ class DiskService(Service):
                 part_a_path, part_b_path = all_partitions[part_a]['path'], all_partitions[part_b]['path']
                 if IS_LINUX:
                     cp = await Popen(
-                        f'echo "y" | mdadm --build {os.path.join("/dev/md", name)} '
+                        f'mdadm --build {os.path.join("/dev/md", name)} '
                         f'--level=1 --raid-devices=2 {part_a_path} {part_b_path}',
                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True,
                     )

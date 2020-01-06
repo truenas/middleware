@@ -44,11 +44,6 @@ class DiskService(Service):
                 await run('swapoff', name if IS_LINUX else os.path.join('/dev', devname))
             if IS_LINUX:
                 await run('mdadm', '--stop', name)
-                await run(
-                    'mdadm', '--zero-superblock', *(
-                        os.path.join('/dev', p['name']) for p in mirror_data[name]['providers']
-                    )
-                )
             else:
                 if os.path.exists(os.path.join('/dev', devname)):
                     await run('geli', 'detach', devname)
