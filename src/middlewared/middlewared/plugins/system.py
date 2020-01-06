@@ -222,6 +222,9 @@ class SystemAdvancedService(ConfigService):
                 f'--userland-reserved={userland_reserved}', '--conf', conf
             ], capture_output=True
         )
+        if cp.returncode != 0:
+            self.logger.warn('autotune for [%s] failed with error: [%s].',
+                             conf, cp.stderr.decode())
         return cp.returncode
 
 
