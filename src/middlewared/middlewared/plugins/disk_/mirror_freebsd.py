@@ -22,6 +22,7 @@ class DiskService(Service, DiskMirrorBase):
                 'name': g.name,
                 'config_type': g.config.get('Type') if g.config else None,
                 'path': os.path.join('/dev/mirror', g.name),
+                'real_path': os.path.join('/dev/mirror', g.name),
             }
             if os.path.exists(f'{mirror_data["path"]}.eli'):
                 mirror_data['path'] = f'{mirror_data["path"]}.eli'
