@@ -106,9 +106,15 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
-        data["state"] = context["state"].get(f"replication_task_{data['id']}", {
-            "state": "PENDING",
-        })
+        if "error" in context["state"]:
+            data["state"] = {
+                "state": "ERROR",
+                "error": context["state"]["error"],
+            }
+        else:
+            data["state"] = context["state"]["tasks"].get(f"replication_task_{data['id']}", {
+                "state": "PENDING",
+            })
 
         data["job"] = data["state"].pop("job", None)
 
@@ -413,6 +419,12 @@ class ReplicationService(CRUDService):
 
             if not task["enabled"]:
                 raise CallError("Task is not enabled")
+
+            if task["state"]["state"] == "RUNNING":
+                raise CallError("Task is already running")
+
+            if task["state"]["state"] == "HOLD":
+                raise CallError("Task is on hold")
 
         await self.middleware.call("zettarepl.run_replication_task", id, really_run, job)
 
@@ -731,6 +743,10 @@ class ReplicationService(CRUDService):
         """
         return await self.middleware.call("zettarepl.target_unmatched_snapshots", direction, source_datasets,
                                           target_dataset, transport, ssh_credentials)
+
+    @private
+    def new_snapshot_name(self, naming_schema):
+        return datetime.now().strftime(naming_schema)
 
     # Legacy pair support
     @private

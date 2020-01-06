@@ -737,7 +737,7 @@ class SharingSMBService(CRUDService):
         List('hostsallow', default=[]),
         List('hostsdeny', default=[]),
         List('vfsobjects', default=['ixnas', 'streams_xattr']),
-        Bool('shadowcopy', default=False),
+        Bool('shadowcopy', default=True),
         Str('auxsmbconf', max_length=None),
         Bool('enabled', default=True),
         register=True

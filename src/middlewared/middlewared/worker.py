@@ -30,7 +30,7 @@ class FakeMiddleware(LoadPluginsMixin, RunInThreadMixin):
 
     async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False, job=None):
         try:
-            with Client(py_exceptions=True) as c:
+            with Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True) as c:
                 self.client = c
                 job_options = getattr(methodobj, '_job', None)
                 if job and job_options:

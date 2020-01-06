@@ -17,6 +17,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
 from middlewared.service import filterable, CallError, CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, filter_list, run
+from middlewared.utils.contextlib import asyncnullcontext
 
 
 class ServiceDefinition:
@@ -489,20 +490,26 @@ class ServiceService(CRUDService):
         await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "reload", **kwargs)
 
-    async def _start_collectd(self, **kwargs):
-        if not await self.started('rrdcached'):
-            # Let's ensure that before we start collectd, rrdcached is always running
-            await self.start('rrdcached')
+    collectd_lock = asyncio.Lock()
 
-        await self.middleware.call('etc.generate', 'collectd')
-        await self._service("collectd-daemon", "restart", **kwargs)
+    async def _start_collectd(self, **kwargs):
+        async with (self.collectd_lock if kwargs.pop('_lock', True) else asyncnullcontext()):
+            await self.middleware.call('etc.generate', 'collectd')
+
+            if not await self.started('rrdcached'):
+                # Let's ensure that before we start collectd, rrdcached is always running
+                await self.start('rrdcached')
+
+            await self._service("collectd-daemon", "restart", **kwargs)
 
     async def _stop_collectd(self, **kwargs):
-        await self._service("collectd-daemon", "stop", **kwargs)
+        async with (self.collectd_lock if kwargs.pop('_lock', True) else asyncnullcontext()):
+            await self._service("collectd-daemon", "stop", **kwargs)
 
     async def _restart_collectd(self, **kwargs):
-        await self._stop_collectd(**kwargs)
-        await self._start_collectd(**kwargs)
+        async with self.collectd_lock:
+            await self._stop_collectd(_lock=False, **kwargs)
+            await self._start_collectd(_lock=False, **kwargs)
 
     async def _started_collectd(self, **kwargs):
         if await self._service('collectd-daemon', 'status', quiet=True, **kwargs):

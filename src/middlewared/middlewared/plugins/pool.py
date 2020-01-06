@@ -2438,7 +2438,7 @@ class PoolService(CRUDService):
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
 
-        await self.middleware.call_hook('pool.post_export', pool=pool, options=options)
+        await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
 
     @item_method
     @accepts(
@@ -2833,10 +2833,7 @@ class PoolService(CRUDService):
         except Exception:
             self.logger.warn('Failed to configure syslogd', exc_info=True)
 
-        try:
-            self.middleware.call_sync('etc.generate', 'zerotier')
-        except Exception:
-            self.logger.warn('Failed to configure zerotier', exc_info=True)
+        self.middleware.call_sync('zettarepl.update_tasks')
 
         # Configure swaps after importing pools. devd events are not yet ready at this
         # stage of the boot process.

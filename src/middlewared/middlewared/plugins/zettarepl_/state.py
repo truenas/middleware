@@ -12,18 +12,22 @@ class ZettareplService(Service):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.error = None
         self.state = {}
         self.definition_errors = {}
         self.last_snapshot = {}
         self.serializable_state = defaultdict(dict)
 
     def get_state(self):
+        if self.error:
+            return {"error": self.error}
+
         context = self._get_state_context()
 
-        return {
+        return {"tasks": {
             task_id: self._get_task_state(task_id, context)
             for task_id in set(self.state.keys()) | set(self.definition_errors.keys())
-        }
+        }}
 
     def _get_state_context(self):
         jobs = {}

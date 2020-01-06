@@ -1012,7 +1012,13 @@ class ActiveDirectoryService(ConfigService):
                     f'nfs/{ad["netbiosname"].upper()}'
                 ])
                 if must_update_trust_pw:
-                    await self.change_trust_account_pw()
+                    try:
+                        await self.change_trust_account_pw()
+                    except Exception as e:
+                        self.logger.debug(
+                            "Failed to change trust password after setting NFS SPN: [%s]."
+                            "This may impact kerberized NFS sessions until the next scheduled trust account password change", e
+                        )
 
                 kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
                 if kt_id:
@@ -1309,7 +1315,8 @@ class ActiveDirectoryService(ConfigService):
         Force an update of the AD machine account password. This can be used to
         refresh the Kerberos principals in the server's system keytab.
         """
-        netads = await run([SMBCmd.NET.value, '-k', 'ads', 'changetrustpw'], check=False)
+        workgroup = (await self.middleware.call('smb.config'))['workgroup']
+        netads = await run([SMBCmd.NET.value, '-k', 'ads', '-w', workgroup, 'changetrustpw'], check=False)
         if netads.returncode != 0:
             raise CallError(
                 f"Failed to update trust password: [{netads.stderr.decode().strip()}]"
