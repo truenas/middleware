@@ -14,7 +14,7 @@ class DiskService(Service, DiskMirrorBase):
     async def create_mirror(self, name, options):
         cp = await run('gmirror', 'create', name, *(options['paths']), check=False, encoding='utf8')
         if cp.returncode:
-            raise CallError('Failed to create gmirror %s: %s', name, cp.stderr)
+            raise CallError(f'Failed to create gmirror {name}: {cp.stderr}')
 
     async def destroy_mirror(self, name):
         mirror_data = await self.middleware.call('disk.get_mirrors', [['name', '=', name]], {'get': True})

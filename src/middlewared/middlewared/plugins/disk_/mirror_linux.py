@@ -18,7 +18,7 @@ class DiskService(Service, DiskMirrorBase):
             f'--raid-devices={len(options["paths"])}', *(options['paths']), encoding='utf8'
         )
         if cp.returncode:
-            raise CallError('Failed to create mirror %s: %s', name, cp.stderr)
+            raise CallError(f'Failed to create mirror {name}: {cp.stderr}')
 
     async def destroy_mirror(self, name):
         # name here is path to the array
@@ -28,7 +28,7 @@ class DiskService(Service, DiskMirrorBase):
 
         cp = await run('mdadm', '--stop', name, check=False, encoding='utf8')
         if cp.returncode:
-            raise CallError('Failed to stop mirror %s: %s', mirror['name'], cp.stderr)
+            raise CallError(f'Failed to stop mirror {mirror["name"]}: {cp.stderr}')
 
     def get_mirrors(self, filters, options):
         mirrors = []
