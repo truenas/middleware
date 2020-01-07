@@ -1398,7 +1398,7 @@ class DiskService(CRUDService):
         await self.middleware.run_in_thread(geom.scan)
 
         used_partitions = set()
-        swap_devices = []
+        create_swap_devices = []
         boot_disks = await self.middleware.call('boot.get_disks')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
         disks.extend(boot_disks)
@@ -1423,7 +1423,10 @@ class DiskService(CRUDService):
                     await self.swaps_remove_disks([c.provider.geom.name for c in consumers])
                 else:
                     mirror_name = f'mirror/{g.name}'
-                    swap_devices.append(mirror_name)
+                    # If mirror is not already being used as a swap device, only then add it to
+                    # the list where we would update the mirror to be used with swap
+                    if all(k not in existing_swap_devices['mirrors'] for k in (mirror_name, f'{mirror_name}.eli')):
+                        create_swap_devices.append(mirror_name)
                     for c in consumers:
                         # Add all partitions used in swap, removing .eli
                         used_partitions.add(c.provider.name.replace('.eli', ''))
@@ -1448,7 +1451,7 @@ class DiskService(CRUDService):
             if i.devname.startswith('mirror/'):
                 continue
             devname = i.devname.replace('.eli', '')
-            swap_devices.append(devname)
+            create_swap_devices.append(devname)
             used_partitions.add(devname)
 
         # Get all partitions of swap type, indexed by size
@@ -1474,7 +1477,7 @@ class DiskService(CRUDService):
                 continue
 
             for i in range(int(len(partitions) / 2)):
-                if len(swap_devices) > MIRROR_MAX:
+                if len(create_swap_devices) > MIRROR_MAX:
                     break
                 part_ab = partitions[0:2]
                 partitions = partitions[2:]
@@ -1484,9 +1487,9 @@ class DiskService(CRUDService):
                 # new gmirror to be created
                 try:
                     for i in part_ab:
-                        if i in list(swap_devices):
+                        if i in list(create_swap_devices):
                             await self.swaps_remove_disks([i.split('p')[0]])
-                            swap_devices.remove(i)
+                            create_swap_devices.remove(i)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
                     # If something failed here there is no point in trying to create the mirror
@@ -1504,18 +1507,18 @@ class DiskService(CRUDService):
                 except subprocess.CalledProcessError as e:
                     self.logger.warning('Failed to create gmirror %s: %s', name, e.stderr.decode())
                     continue
-                swap_devices.append(f'mirror/{name}')
+                create_swap_devices.append(f'mirror/{name}')
                 # Add remaining partitions to unused list
                 unused_partitions += partitions
 
         # If we could not make even a single swap mirror, add the first unused
         # partition as a swap device
-        if not swap_devices and unused_partitions:
+        if not create_swap_devices and unused_partitions:
             if not dumpdev:
                 dumpdev = await dumpdev_configure(unused_partitions[0])
-            swap_devices.append(unused_partitions[0])
+            create_swap_devices.append(unused_partitions[0])
 
-        for name in swap_devices:
+        for name in create_swap_devices:
             if not os.path.exists(f'/dev/{name}.eli'):
                 try:
                     await run('geli', 'onetime', name)
@@ -1529,7 +1532,7 @@ class DiskService(CRUDService):
                 self.logger.warning('Failed to activate swap partition %s: %s', name, e.stderr.decode())
                 continue
 
-        return swap_devices
+        return create_swap_devices
 
     @private
     async def swaps_remove_disks(self, disks):
