@@ -1535,7 +1535,18 @@ class iSCSITargetToExtentService(CRUDService):
         """
         Delete Associated Target of `id`.
         """
-        await self._get_instance(id)
+        return await self._do_delete(id, True)
+
+    async def _do_delete(self, id, validate=True):
+        associated_target = await self._get_instance(id)
+        if validate:
+            target = await self.middleware.call('iscsi.target._get_instance', associated_target['target'])
+            name = target['name']
+            if not name.startswith(('iqn.', 'naa.', 'eui.')):
+                name = f'{(await self.middleware.call("iscsi.global.config"))["basename"]}:{name}'
+            if await self.middleware.call('iscsi.global.sessions', [['target', '=', name]]):
+                raise CallError(f'Target {name} is in use')
+
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
