@@ -708,6 +708,7 @@ class SharingSMBService(CRUDService):
             {'prefix': self._config.datastore_prefix})
         await self.extend(data)  # We should do this in the insert call ?
 
+        await self.middleware.call('etc.generate', 'smb_share')
         await self._service_change('cifs', 'reload')
 
         return data
@@ -755,6 +756,7 @@ class SharingSMBService(CRUDService):
             {'prefix': self._config.datastore_prefix})
         await self.extend(new)  # same here ?
 
+        await self.middleware.call('etc.generate', 'smb_share')
         await self._service_change('cifs', 'reload')
 
         return new
@@ -767,6 +769,7 @@ class SharingSMBService(CRUDService):
         share = await self._get_instance(id)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self.middleware.call('smb.sharesec._delete', share['name'] if not share['home'] else 'homes')
+        await self.middleware.call('etc.generate', 'smb_share')
         await self._service_change('cifs', 'reload')
         return result
 

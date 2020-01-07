@@ -889,7 +889,6 @@ class ServiceService(CRUDService):
         restarting nmbd, winbindd, or wsdd. mDNS advertisement may
         change due to time machine.
         """
-        await self.middleware.call("etc.generate", "smb_share")
         await self._service("smbd", "reload", force=True, **kwargs)
         await self.middleware.call('mdnsadvertise.restart')
 
