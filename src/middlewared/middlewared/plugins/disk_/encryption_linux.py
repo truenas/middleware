@@ -11,4 +11,4 @@ class DiskService(Service, DiskEncryptionBase):
     async def remove_encryption(self, device):
         cp = await run('cryptsetup', 'close', device, check=False, encoding='utf8')
         if cp.returncode:
-            raise CallError('Failed to close encrypted %s device mapping : %s', device, cp.stderr)
+            raise CallError(f'Failed to close encrypted {device} device mapping : {cp.stderr}')

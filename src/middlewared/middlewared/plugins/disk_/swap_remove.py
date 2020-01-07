@@ -35,7 +35,7 @@ class DiskService(Service):
             for provider in mirror['providers']:
                 if providers.pop(provider['id'], None) and not destroyed_mirror:
                     devname = mirror['encrypted_provider'] or mirror['real_path']
-                    if devname in swap_devices:
+                    if (devname if IS_LINUX else devname.strip('/dev/')) in swap_devices:
                         await run('swapoff', devname)
                     if mirror['encrypted_provider']:
                         await self.middleware.call(
@@ -46,7 +46,7 @@ class DiskService(Service):
 
         for p in providers.values():
             devname = p['encrypted_provider'] or p['path']
-            if devname in swap_devices:
+            if (devname if IS_LINUX else devname.split('/')[-1]) in swap_devices:
                 await run('swapoff', devname)
             if p['encrypted_provider']:
                 await self.middleware.call('disk.remove_encryption', p['encrypted_provider'])

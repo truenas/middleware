@@ -22,9 +22,9 @@ class DiskService(Service, DiskMirrorBase):
         if mirror_data['encrypted_provider']:
             await self.middleware.call('disk.remove_encryption', f'{mirror_name}.eli')
 
-        cp = await run('gmirror', 'destroy', mirror_name, check=False, encoding='utf8')
+        cp = await run('gmirror', 'destroy', name, check=False, encoding='utf8')
         if cp.returncode:
-            raise CallError('Failed to destroy mirror %s: %s', mirror_name, cp.stderr)
+            raise CallError(f'Failed to destroy mirror {mirror_name}: {cp.stderr}')
 
     def get_mirrors(self, filters, options):
         mirrors = []

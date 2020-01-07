@@ -44,4 +44,4 @@ class DiskService(Service, DiskEncryptionBase):
     async def remove_encryption(self, device):
         cp = await run('geli', 'detach', device, check=False, encoding='utf8')
         if cp.returncode:
-            raise CallError('Failed to detach geli from %s: %s', device, cp.stderr)
+            raise CallError(f'Failed to detach geli from {device}: {cp.stderr}')
