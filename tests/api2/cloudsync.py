@@ -149,19 +149,28 @@ def test_06_run_cloud_sync(env, task):
     assert False, state
 
 
-def test_07_delete_cloud_sync(env, task):
+def test_07_restore_cloud_sync(env, task):
+    result = POST(f"/cloudsync/id/{task['id']}/restore/", {
+        "transfer_mode": "COPY",
+        "path": dataset_path,
+    })
+
+    assert result.status_code == 200, result.text
+
+
+def test_97_delete_cloud_sync(env, task):
     result = DELETE(f"/cloudsync/id/{task['id']}/")
 
     assert result.status_code == 200, result.text
 
 
-def test_08_delete_cloud_credentials(env, credentials):
+def test_98_delete_cloud_credentials(env, credentials):
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
 
     assert result.status_code == 200, result.text
 
 
-def test_09_destroy_dataset():
+def test_99_destroy_dataset():
     result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
 
     assert result.status_code == 200, result.text

@@ -7,7 +7,12 @@ import asyncio
 import grp
 import imp
 import os
+import platform
 import pwd
+
+
+class FileShouldNotExist(Exception):
+    pass
 
 
 class MakoRenderer(object):
@@ -30,9 +35,15 @@ class MakoRenderer(object):
                 tmpl = lookup.get_template(name)
 
                 # Render the template
-                return tmpl.render(middleware=self.service.middleware)
+                return tmpl.render(
+                    middleware=self.service.middleware,
+                    FileShouldNotExist=FileShouldNotExist,
+                    platform=platform.system(),
+                )
 
             return await self.service.middleware.run_in_thread(do)
+        except FileShouldNotExist:
+            raise
         except Exception:
             self.service.logger.debug('Failed to render mako template: {0}'.format(
                 exceptions.text_error_template().render()
@@ -60,10 +71,13 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
+        'zerotier': [
+            {'type': 'py', 'path': 'zerotier'},
+        ],
         'user': [
-            {'type': 'mako', 'path': 'group'},
-            {'type': 'mako', 'path': 'master.passwd'},
-            {'type': 'py', 'path': 'pwd_db'},
+            {'type': 'mako', 'path': 'group', 'platform': 'FreeBSD'},
+            {'type': 'mako', 'path': 'master.passwd', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
         ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
@@ -76,19 +90,19 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'crontab'},
         ],
         'ctld': [
-            {'type': 'py', 'path': 'ctld'},
+            {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD'},
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
         'loader': [
-            {'type': 'py', 'path': 'loader'},
+            {'type': 'py', 'path': 'loader', 'platform': 'FreeBSD'},
         ],
         'network': [
-            {'type': 'mako', 'path': 'dhclient.conf'},
+            {'type': 'mako', 'path': 'dhclient.conf', 'platform': 'FreeBSD'},
         ],
         'nfsd': [
-            {'type': 'py', 'path': 'nfsd'},
+            {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD'},
         ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
@@ -96,7 +110,7 @@ class EtcService(Service):
                 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
         ],
         'pam': [
-            {'type': 'mako', 'path': os.path.join('pam.d', f)}
+            {'type': 'mako', 'path': os.path.join('pam.d', f), 'platform': 'FreeBSD'}
             for f in os.listdir(
                 os.path.realpath(
                     os.path.join(
@@ -110,10 +124,10 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/proftpd'},
         ],
         'rc': [
-            {'type': 'py', 'path': 'rc.conf'},
+            {'type': 'py', 'path': 'rc.conf', 'platform': 'FreeBSD'},
         ],
         'sysctl': [
-            {'type': 'py', 'path': 'sysctl_config'}
+            {'type': 'py', 'path': 'sysctl_config', 'platform': 'FreeBSD'},
         ],
         's3': [
             {'type': 'py', 'path': 'local/minio/certificates'},
@@ -132,9 +146,12 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
+        'failover': [
+            {'type': 'py', 'path': 'failover'},
+        ],
         'fstab': [
-            {'type': 'mako', 'path': 'fstab'},
-            {'type': 'py', 'path': 'fstab_configure'}
+            {'type': 'mako', 'path': 'fstab', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'fstab_configure', 'platform': 'FreeBSD'}
         ],
         'collectd': [
             {'type': 'mako', 'path': 'local/collectd.conf'}
@@ -143,10 +160,14 @@ class EtcService(Service):
             {'type': 'py', 'path': 'system_setup'}
         ],
         'inetd': [
-            {'type': 'py', 'path': 'inetd_conf'}
+            {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
         ],
         'motd': [
             {'type': 'mako', 'path': 'motd'}
+        ],
+        'mdns': [
+            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf'},
+            {'type': 'py', 'path': 'local/avahi/avahi_services'}
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
@@ -184,6 +205,8 @@ class EtcService(Service):
         ],
         'ssh': [
             {'type': 'mako', 'path': 'local/ssh/sshd_config'},
+            {'type': 'mako', 'path': 'pam.d/sshd'},
+            {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
             {'type': 'py', 'path': 'local/ssh/config'}
         ],
         'ntpd': [
@@ -196,15 +219,24 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/inadyn.conf'}
         ],
         'aliases': [
-            {'type': 'mako', 'path': 'aliases'}
+            {'type': 'mako', 'path': 'mail/aliases'}
         ],
         'ttys': [
-            {'type': 'mako', 'path': 'ttys'},
-            {'type': 'py', 'path': 'ttys_config'}
+            {'type': 'mako', 'path': 'ttys', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'ttys_config', 'platform': 'FreeBSD'}
+        ],
+        'openvpn_server': [
+            {'type': 'mako', 'path': 'local/openvpn/server/openvpn_server.conf'}
+        ],
+        'openvpn_client': [
+            {'type': 'mako', 'path': 'local/openvpn/client/openvpn_client.conf'}
+        ],
+        'kmip': [
+            {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'syslogd', 'smb_configure']
+    SKIP_LIST = ['system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure', 'zerotier']
 
     class Config:
         private = True
@@ -230,9 +262,26 @@ class EtcService(Service):
             if renderer is None:
                 raise ValueError(f'Unknown type: {entry["type"]}')
 
+            if 'platform' in entry and entry['platform'] != platform.system():
+                continue
+
             path = os.path.join(self.files_dir, entry['path'])
+            entry_path = entry['path']
+            if platform.system() == 'Linux':
+                if entry_path.startswith('local/'):
+                    entry_path = entry_path[len('local/'):]
+            outfile = f'/etc/{entry_path}'
             try:
                 rendered = await renderer.render(path)
+            except FileShouldNotExist:
+                self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
+
+                try:
+                    os.unlink(outfile)
+                except FileNotFoundError:
+                    pass
+
+                continue
             except Exception:
                 self.logger.error(f'Failed to render {entry["type"]}:{entry["path"]}', exc_info=True)
                 continue
@@ -240,7 +289,10 @@ class EtcService(Service):
             if rendered is None:
                 continue
 
-            outfile = '/etc/{0}'.format(entry['path'])
+            outfile_dirname = os.path.dirname(outfile)
+            if not os.path.exists(outfile_dirname):
+                os.makedirs(outfile_dirname)
+
             changes = write_if_changed(outfile, rendered)
 
             # If ownership or permissions are specified, see if

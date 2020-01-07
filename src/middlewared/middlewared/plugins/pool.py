@@ -1,33 +1,46 @@
 import asyncio
 import base64
 import contextlib
+import enum
 import errno
+import json
 import logging
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import os
 import re
+import secrets
 import shutil
 import subprocess
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import tempfile
-import uuid
 
-import bsd
+try:
+    import bsd
+except ImportError:
+    bsd = None
 import psutil
+
+from collections import defaultdict
 
 from libzfs import ZFSException
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
-from middlewared.job import JobProgressBuffer
-from middlewared.schema import (accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch,
-                                Str, UnixPerm)
+from middlewared.job import JobProgressBuffer, Pipes
+from middlewared.plugins.zfs import ZFSSetPropertyError
+from middlewared.schema import (
+    accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
+)
 from middlewared.service import (
-    ConfigService, filterable, item_method, job, private, CallError, CRUDService, ValidationErrors
+    ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
 )
 from middlewared.service_exception import ValidationError
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.shell import join_commandline
-from middlewared.validators import Range, Time
+from middlewared.validators import Match, Range, Time
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +58,15 @@ class ZfsDeadmanAlertClass(AlertClass, SimpleOneShotAlertClass):
     title = "Device Is Causing Slow I/O on Pool"
     text = "Device %(vdev)s is causing slow I/O on pool %(pool)s."
 
-    deleted_automatically = False
+    expires_after = timedelta(hours=4)
 
     hardware = True
+
+
+class ZFSKeyFormat(enum.Enum):
+    HEX = 'HEX'
+    PASSPHRASE = 'PASSPHRASE'
+    RAW = 'RAW'
 
 
 class Inheritable(EnumMixin, Attribute):
@@ -105,9 +124,6 @@ async def mount(device, path, fs_type, fs_options, options):
     if isinstance(path, str):
         path = path.encode("utf-8")
 
-    if fs_type == "msdosfs":
-        options.append("large")
-
     executable = "/sbin/mount"
     arguments = []
 
@@ -146,6 +162,16 @@ async def mount(device, path, fs_type, fs_options, options):
 
 class ScrubError(CallError):
     pass
+
+
+class PoolResilverModel(sa.Model):
+    __tablename__ = 'storage_resilver'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    enabled = sa.Column(sa.Boolean(), default=True)
+    begin = sa.Column(sa.Time(), default=time(hour=18))
+    end = sa.Column(sa.Time(), default=time(hour=9))
+    weekday = sa.Column(sa.String(120), default='1,2,3,4,5,6,7')
 
 
 class PoolResilverService(ConfigService):
@@ -284,6 +310,25 @@ class MountFsContextManager:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if await is_mounted(self.middleware, self.path):
             await self.middleware.run_in_thread(bsd.unmount, self.path)
+
+
+class PoolModel(sa.Model):
+    __tablename__ = 'storage_volume'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    vol_name = sa.Column(sa.String(120))
+    vol_guid = sa.Column(sa.String(50))
+    vol_encrypt = sa.Column(sa.Integer(), default=0)
+    vol_encryptkey = sa.Column(sa.String(50))
+
+
+class EncryptedDiskModel(sa.Model):
+    __tablename__ = 'storage_encrypteddisk'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    encrypted_volume_id = sa.Column(sa.ForeignKey('storage_volume.id', ondelete='CASCADE'))
+    encrypted_disk_id = sa.Column(sa.ForeignKey('storage_disk.disk_identifier', ondelete='SET NULL'), nullable=True)
+    encrypted_provider = sa.Column(sa.String(120))
 
 
 class PoolService(CRUDService):
@@ -505,11 +550,113 @@ class PoolService(CRUDService):
             pool['is_decrypted'] = True
         return pool
 
+    @accepts(
+        Int('oid'),
+        Dict(
+            'pool_attach',
+            Str('target_vdev', reuired=True),
+            Str('new_disk', reuired=True),
+            Str('passphrase'),
+        )
+    )
+    @job(lock=lambda args: f'pool_attach_{args[0]}')
+    async def attach(self, job, oid, options):
+        """
+        If the `oid` pool is passphrase GELI encrypted, `passphrase` must be specified for this operation to succeed.
+
+        `new_disk` is the devname of the new disk to be attached.
+
+        `target_vdev` is the GUID of the vdev where the disk needs to be attached. In case of STRIPED vdev, this
+        is the STRIPED disk GUID which will be converted to mirror. If `target_vdev` is mirror, it will be coverted
+        into a n-way mirror.
+        """
+        pool = await self._get_instance(oid)
+        verrors = ValidationErrors()
+        if not pool['is_decrypted']:
+            verrors.add('oid', 'Pool must be unlocked for this action.')
+            verrors.check()
+        topology = pool['topology']
+        topology_type = vdev = None
+        for i in topology:
+            for v in topology[i]:
+                if v['guid'] == options['target_vdev']:
+                    topology_type = i
+                    vdev = v
+                    break
+            if topology_type:
+                break
+        else:
+            verrors.add('pool_attach.target_vdev', 'Unable to locate VDEV')
+            verrors.check()
+        if topology_type in ('cache', 'spares'):
+            verrors.add('pool_attach.target_vdev', f'Attaching disks to {topology_type} not allowed.')
+        elif topology_type == 'data':
+            # We would like to make sure here that we don't have inconsistent vdev types across data
+            if vdev['type'] not in ('DISK', 'MIRROR'):
+                verrors.add('pool_attach.target_vdev', f'Attaching disk to {vdev["type"]} vdev is not allowed.')
+
+        if pool['encrypt'] == 2:
+            if not options.get('passphrase'):
+                verrors.add('pool_attach.passphrase', 'Passphrase is required for encrypted pool.')
+            elif not await self.middleware.call('disk.geli_testkey', pool, options['passphrase']):
+                verrors.add('pool_attach.passphrase', 'Passphrase is not valid.')
+
+        # Let's validate new disk now
+        await self.__check_disks_availability(verrors, {options['new_disk']: options['new_disk']}, 'pool_attach')
+        verrors.check()
+
+        guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
+        disks = {options['new_disk']: {'create_swap': topology_type == 'data', 'vdev': []}}
+        passphrase_path = None
+        if options.get('passphrase'):
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(options['passphrase'])
+            passf.flush()
+            passphrase_path = passf.name
+        try:
+            enc_disks = await self.__format_disks(job, disks, pool['encryptkey_path'], passphrase_path)
+        finally:
+            if passphrase_path:
+                passf.close()
+
+        devname = disks[options['new_disk']]['vdev'][0]
+        extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], None, [
+            {'target': guid, 'type': 'DISK', 'path': devname}
+        ])
+        try:
+            await job.wrap(extend_job)
+        except CallError:
+            if pool['encrypt'] > 0:
+                try:
+                    # If replace has failed lets detach geli to not keep disk busy
+                    await self.middleware.call('disk.geli_detach_single', devname)
+                except Exception:
+                    self.logger.warn(f'Failed to geli detach {devname}', exc_info=True)
+            raise
+
+        disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
+        await self.__save_encrypteddisks(oid, enc_disks, {disk['devname']: disk})
+        await self.middleware.call('disk.swaps_configure')
+
     @accepts(Dict(
         'pool_create',
         Str('name', required=True),
         Bool('encryption', default=False),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
+        Dict(
+            'encryption_options',
+            Bool('generate_key', default=False),
+            Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
+            Str(
+                'algorithm', default='AES-256-CCM', enum=[
+                    'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
+                ]
+            ),
+            Str('passphrase', default=None, null=True, empty=False, private=True),
+            Str('key', default=None, null=True, validators=[Range(min=64, max=64)], private=True),
+            register=True
+        ),
         Dict(
             'topology',
             List('data', items=[
@@ -546,11 +693,22 @@ class PoolService(CRUDService):
         `topology` is a object which requires at least one `data` entry.
         All of `data` entries (vdevs) require to be of the same type.
 
-        `encryption` when set to true means that the pool is encrypted.
-
         `deduplication` when set to ON or VERIFY makes sure that no block of data is duplicated in the pool. When
         VERIFY is specified, if two blocks have similar signatures, byte to byte comparison is performed to ensure that
         the blocks are identical. This should be used in special circumstances as it carries a significant overhead.
+
+        `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
+
+        `encryption_options` specifies configuration for encryption of root dataset for `name` pool.
+        `encryption_options.passphrase` must be specified if encryption for root dataset is desired with a passphrase
+        as a key.
+        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
+        `encryption_options.generate_key` when enabled automatically generates the key to be used
+        for dataset encryption.
+
+        It should be noted that keys are stored by the system for automatic locking/unlocking
+        on import/export of encrypted datasets. If that is not desired, dataset should be created
+        with a passphrase as a key.
 
         Example of `topology`:
 
@@ -604,6 +762,12 @@ class PoolService(CRUDService):
         if not data['topology']['data']:
             verrors.add('pool_create.topology.data', 'At least one data vdev is required')
 
+        encryption_dict = await self.middleware.call(
+            'pool.dataset.validate_encryption_data', None, verrors, {
+                'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False,
+            }, 'pool_create.encryption_options',
+        )
+
         await self.__common_validation(verrors, data, 'pool_create')
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
         disks_cache = await self.__check_disks_availability(verrors, disks)
@@ -611,14 +775,7 @@ class PoolService(CRUDService):
         if verrors:
             raise verrors
 
-        if data['encryption']:
-            enc_key = str(uuid.uuid4())
-            enc_keypath = os.path.join(GELI_KEYPATH, f'{enc_key}.key')
-        else:
-            enc_key = ''
-            enc_keypath = None
-
-        enc_disks = await self.__format_disks(job, disks, enc_keypath)
+        formatted_disks = await self.__format_disks(job, disks)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -630,9 +787,9 @@ class PoolService(CRUDService):
 
         fsoptions = {
             'compression': 'lz4',
-            'aclmode': 'passthrough',
             'aclinherit': 'passthrough',
             'mountpoint': f'/{data["name"]}',
+            **encryption_dict
         }
 
         dedup = data.get('deduplication')
@@ -643,17 +800,18 @@ class PoolService(CRUDService):
         if not os.path.isdir(cachefile_dir):
             os.makedirs(cachefile_dir)
 
-        job.set_progress(90, 'Creating ZFS Pool')
-        z_pool = await self.middleware.call('zfs.pool.create', {
-            'name': data['name'],
-            'vdevs': vdevs,
-            'options': options,
-            'fsoptions': fsoptions,
-        })
-
-        job.set_progress(95, 'Setting pool options')
-        pool_id = None
+        pool_id = z_pool = encrypted_dataset_pk = None
         try:
+            job.set_progress(90, 'Creating ZFS Pool')
+            z_pool = await self.middleware.call('zfs.pool.create', {
+                'name': data['name'],
+                'vdevs': vdevs,
+                'options': options,
+                'fsoptions': fsoptions,
+            })
+
+            job.set_progress(95, 'Setting pool options')
+
             # Inherit mountpoint after create because we set mountpoint on creation
             # making it a "local" source.
             await self.middleware.call('zfs.dataset.update', data['name'], {
@@ -666,8 +824,6 @@ class PoolService(CRUDService):
             pool = {
                 'name': data['name'],
                 'guid': z_pool['guid'],
-                'encrypt': int(data['encryption']),
-                'encryptkey': enc_key,
             }
             pool_id = await self.middleware.call(
                 'datastore.insert',
@@ -676,7 +832,14 @@ class PoolService(CRUDService):
                 {'prefix': 'vol_'},
             )
 
-            await self.__save_encrypteddisks(pool_id, enc_disks, disks_cache)
+            encrypted_dataset_pk = await self.middleware.call(
+                'pool.dataset.insert_or_update_encrypted_record', {
+                    'name': data['name'], 'encryption_key': encryption_dict.get('key'),
+                    'key_format': encryption_dict.get('keyformat')
+                }
+            )
+
+            await self.__save_encrypteddisks(pool_id, formatted_disks, disks_cache)
 
             await self.middleware.call(
                 'datastore.insert',
@@ -686,19 +849,26 @@ class PoolService(CRUDService):
             )
         except Exception as e:
             # Something wrong happened, we need to rollback and destroy pool.
-            try:
-                await self.middleware.call('zfs.pool.delete', data['name'])
-            except Exception:
-                self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
+            if z_pool:
+                try:
+                    await self.middleware.call('zfs.pool.delete', data['name'])
+                except Exception:
+                    self.logger.warn('Failed to delete pool on pool.create rollback', exc_info=True)
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
+            if encrypted_dataset_pk:
+                await self.middleware.call(
+                    'pool.dataset.delete_encrypted_datasets_from_db', [['id', '=', encrypted_dataset_pk]]
+                )
             raise e
 
         # There is really no point in waiting all these services to reload so do them
         # in background.
         async def restart_services():
             await self.middleware.call('service.reload', 'disk')
-            if (await self.middleware.call('systemdataset.config'))['pool'] == 'freenas-boot':
+            if (
+                await self.middleware.call('systemdataset.config')
+            )['pool'] == await self.middleware.call('boot.pool_name'):
                 await self.middleware.call('service.restart', 'system_datasets')
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
@@ -911,7 +1081,7 @@ class PoolService(CRUDService):
             )
         return disks_cache
 
-    async def __format_disks(self, job, disks, enc_keypath, passphrase=None):
+    async def __format_disks(self, job, disks, enc_keypath=None, passphrase=None):
         """
         Format all disks, putting all freebsd-zfs partitions created
         into their respectives vdevs.
@@ -931,7 +1101,9 @@ class PoolService(CRUDService):
             await self.middleware.call(
                 'disk.format', disk, swapgb if config['create_swap'] else 0, False,
             )
-            devname = await self.middleware.call('disk.gptid_from_part_type', disk, 'freebsd-zfs')
+            devname = await self.middleware.call(
+                'disk.gptid_from_part_type', disk, await self.middleware.call('disk.get_zfs_part_type')
+            )
             if enc_keypath:
                 enc_disks.append({
                     'disk': disk,
@@ -1585,10 +1757,11 @@ class PoolService(CRUDService):
 
     @item_method
     @accepts(Int('id'), Dict(
-        'options',
+        'pool_unlock_options',
         Str('passphrase', private=True, required=False),
         Bool('recoverykey', default=False),
         List('services_restart', default=[]),
+        register=True,
     ))
     @job(lock='unlock_pool', pipes=['input'], check_pipes=False)
     async def unlock(self, job, oid, options):
@@ -1704,18 +1877,7 @@ class PoolService(CRUDService):
             verrors.add('id', 'Pool already locked.')
 
         if not verrors:
-            # Make sure that this pool is not being used by system dataset service
-            if pool['name'] == (await self.middleware.call('systemdataset.config'))['pool']:
-                verrors.add(
-                    'id',
-                    f'Pool {pool["name"]} contains the system dataset. The system dataset pool cannot be locked.'
-                )
-            else:
-                if not await self.middleware.call('disk.geli_testkey', pool, passphrase):
-                    verrors.add(
-                        'passphrase',
-                        'The entered passphrase was not valid. Please enter the correct passphrase to lock the pool.'
-                    )
+            verrors.extend(await self.__pool_lock_pre_check(pool, passphrase))
 
         if verrors:
             raise verrors
@@ -1742,6 +1904,24 @@ class PoolService(CRUDService):
         await self.middleware.call('service.restart', 'system_datasets')
 
         return True
+
+    async def __pool_lock_pre_check(self, pool, passphrase):
+        verrors = ValidationErrors()
+
+        # Make sure that this pool is not being used by system dataset service
+        if pool['name'] == (await self.middleware.call('systemdataset.config'))['pool']:
+            verrors.add(
+                'id',
+                f'Pool {pool["name"]} contains the system dataset. The system dataset pool cannot be locked.'
+            )
+        else:
+            if not await self.middleware.call('disk.geli_testkey', pool, passphrase):
+                verrors.add(
+                    'passphrase',
+                    'The entered passphrase was not valid. Please enter the correct passphrase to lock the pool.'
+                )
+
+        return verrors
 
     @item_method
     @accepts(Int('id'), Str('filename', default='geli.key'))
@@ -1898,7 +2078,7 @@ class PoolService(CRUDService):
             activated_jail_pool = None
 
         pool_name = data.get('name') or pool['name']
-        scrub_id = pool_id = None
+        pool_id = None
         try:
             pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
                 'vol_name': pool_name,
@@ -1912,18 +2092,17 @@ class PoolService(CRUDService):
                 with open(pool['encryptkey_path'], 'wb') as f:
                     f.write(key.read())
 
-            scrub_id = (await self.middleware.call('pool.scrub.create', {
+            await self.middleware.call('pool.scrub.create', {
                 'pool': pool_id,
-            }))['id']
+            })
 
             await self.middleware.call('zfs.pool.import_pool', pool['guid'], {
                 'altroot': '/mnt',
                 'cachefile': ZPOOL_CACHE_FILE,
-            })
+            }, True, None, pool_name)
 
             await self.middleware.call('zfs.dataset.update', pool_name, {
                 'properties': {
-                    'aclmode': {'value': 'passthrough'},
                     'aclinherit': {'value': 'passthrough'},
                 },
             })
@@ -1933,8 +2112,6 @@ class PoolService(CRUDService):
 
             await self.middleware.call('pool.sync_encrypted', pool_id)
         except Exception:
-            if scrub_id:
-                await self.middleware.call('pool.scrub.delete', scrub_id)
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
             if passfile:
@@ -1964,6 +2141,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('service.reload', 'disk')
         await self.middleware.call_hook('pool.post_import', pool)
+        await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
 
         return True
 
@@ -2252,11 +2430,169 @@ class PoolService(CRUDService):
                 self.logger.warn('Failed to remove pointoint %s: %s', pool['path'], e)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
+        await self.middleware.call(
+            'pool.dataset.delete_encrypted_datasets_from_db',
+            [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
+        )
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
+
+    @item_method
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Dict(
+                'geli',
+                Str('passphrase', private=True, default=''),
+            ),
+        )
+    )
+    @job(lock='pool_expand')
+    async def expand(self, job, id, options):
+        """
+        Expand pool to fit all available disk space.
+        """
+
+        pool = await self._get_instance(id)
+
+        if pool['encrypt']:
+            if not pool['is_decrypted']:
+                raise CallError('You can only expand decrypted pool')
+
+            for error in (await self.__pool_lock_pre_check(pool, options['geli']['passphrase'])).errors:
+                raise CallError(error.errmsg)
+
+        await self.middleware.run_in_thread(bsd.geom.scan)
+
+        try:
+            sysctl.filter('kern.geom.debugflags')[0].value = 16
+
+            geli_resize = []
+            try:
+                for vdev in sum(pool['topology'].values(), []):
+                    if vdev['type'] != 'DISK':
+                        logger.debug('Not expanding vdev of type %r', vdev['type'])
+                        continue
+
+                    if vdev['status'] != 'ONLINE':
+                        logger.debug('Not expanding vdev that is %r', vdev['status'])
+                        continue
+
+                    partition_number = RE_DISKPART.match(vdev['device'])
+                    if partition_number is None:
+                        logger.debug('Could not parse partition number from %r', vdev['device'])
+                        continue
+
+                    assert partition_number.group(1) == vdev['disk']
+                    partition_number = int(partition_number.group(2)[1:])
+
+                    mediasize = bsd.geom.geom_by_name('LABEL', vdev['device']).provider.mediasize
+
+                    await run('camcontrol', 'reprobe', vdev['disk'])
+                    await run('gpart', 'recover', vdev['disk'])
+                    await run('gpart', 'resize', '-i', str(partition_number), vdev['disk'])
+
+                    if pool['encrypt']:
+                        geli_resize_cmd = (
+                            'geli', 'resize', '-s', str(mediasize), vdev['device']
+                        )
+                        rollback_cmd = (
+                            'gpart', 'resize', '-i', str(partition_number), '-s', str(mediasize), vdev['disk']
+                        )
+
+                        logger.warning('It will be obligatory to notify GELI that the provider has been resized: %r',
+                                       join_commandline(geli_resize_cmd))
+                        logger.warning('Or to resize provider back: %r',
+                                       join_commandline(rollback_cmd))
+
+                        geli_resize.append((geli_resize_cmd, rollback_cmd))
+            finally:
+                if geli_resize:
+                    failed_rollback = []
+
+                    lock_job = await self.middleware.call('pool.lock', pool['id'], options['geli']['passphrase'])
+                    await lock_job.wait()
+                    if lock_job.error:
+                        logger.warning('Error locking pool: %s', lock_job.error)
+
+                        for geli_resize_cmd, rollback_cmd in geli_resize:
+                            if not await self.__run_rollback_cmd(rollback_cmd):
+                                failed_rollback.append(rollback_cmd)
+
+                        if failed_rollback:
+                            raise CallError('Locking your encrypted pool failed and rolling back changes failed too. '
+                                            'You\'ll need to run the following commands manually:\n%s',
+                                            '\n'.join(map(join_commandline, failed_rollback)))
+                    else:
+                        for geli_resize_cmd, rollback_cmd in geli_resize:
+                            try:
+                                await run(*geli_resize_cmd, encoding='utf-8', errors='ignore')
+                            except subprocess.CalledProcessError as geli_resize_error:
+                                if geli_resize_error.stderr.strip() == 'geli: Size hasn\'t changed.':
+                                    logger.info('%s: %s',
+                                                join_commandline(geli_resize_cmd),
+                                                geli_resize_error.stderr.strip())
+                                else:
+                                    logger.error('%r failed: %s. Resizing partition back',
+                                                 join_commandline(geli_resize_cmd),
+                                                 geli_resize_error.stderr.strip())
+                                    if not await self.__run_rollback_cmd(rollback_cmd):
+                                        failed_rollback.append(rollback_cmd)
+
+                        if failed_rollback:
+                            raise CallError('Resizing partitions of your encrypted pool failed and rolling back '
+                                            'changes failed too. You\'ll need to run the following commands manually:\n'
+                                            '%s',
+                                            '\n'.join(map(join_commandline, failed_rollback)))
+
+                        if options['geli']['passphrase']:
+                            unlock_job = await self.middleware.call('pool.unlock', pool['id'],
+                                                                    {'passphrase': options['geli']['passphrase']})
+                        else:
+                            unlock_job = await self.middleware.call('pool.unlock', pool['id'],
+                                                                    {'recoverykey': True},
+                                                                    pipes=Pipes(input=self.middleware.pipe()))
+
+                            def copy():
+                                with open(pool['encryptkey_path'], 'rb') as f:
+                                    shutil.copyfileobj(f, unlock_job.pipes.input.w)
+
+                            try:
+                                await self.middleware.run_in_thread(copy)
+                            finally:
+                                await self.middleware.run_in_thread(unlock_job.pipes.input.w.close)
+
+                        await unlock_job.wait()
+                        if unlock_job.error:
+                            raise CallError(unlock_job.error)
+        finally:
+            sysctl.filter('kern.geom.debugflags')[0].value = 0
+
+        for vdev in sum(pool['topology'].values(), []):
+            if vdev['type'] != 'DISK':
+                continue
+
+            if vdev['status'] != 'ONLINE':
+                continue
+
+            await self.middleware.call('zfs.pool.online', pool['name'], vdev['guid'])
+
+    async def __run_rollback_cmd(self, rollback_cmd):
+        try:
+            await run(*rollback_cmd, encoding='utf-8', errors='ignore')
+        except subprocess.CalledProcessError as rollback_error:
+            logger.critical(
+                '%r failed: %s. To restore your pool functionality you will have to run this command manually.',
+                join_commandline(rollback_cmd),
+                rollback_error.stderr.strip()
+            )
+            return False
+        else:
+            return True
 
     @item_method
     @accepts(Int('id'))
@@ -2453,6 +2789,23 @@ class PoolService(CRUDService):
                         'Failed to inherit mountpoints for %s', pool['name'], exc_info=True,
                     )
 
+                unlock_job = self.middleware.call_sync(
+                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False, 'recursive': True}
+                )
+                unlock_job.wait_sync()
+                if unlock_job.error or unlock_job.result['failed']:
+                    failed = ', '.join(unlock_job.result['failed']) if not unlock_job.error else ''
+                    self.logger.error(
+                        f'Unlocking encrypted datasets failed for {pool["name"]} pool'
+                        f'{f": {unlock_job.error}" if unlock_job.error else f" with following datasets {failed}"}'
+                    )
+
+                # Child unencrypted datasets of root dataset would be mounted if root dataset is still locked,
+                # we don't want that
+                if self.middleware.call_sync('pool.dataset._get_instance', pool['name'])['locked']:
+                    with contextlib.suppress(CallError):
+                        self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
+
         finally:
             proc.kill()
             proc.wait()
@@ -2508,28 +2861,736 @@ class PoolService(CRUDService):
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
 
 
+class PoolDatasetUserPropService(CRUDService):
+
+    class Config:
+        namespace = 'pool.dataset.userprop'
+
+    @filterable
+    def query(self, filters=None, options=None):
+        """
+        Query all user properties for ZFS datasets.
+        """
+        return filter_list(
+            [
+                {k: d[k] for k in ('id', 'properties')} for d in
+                (self.middleware.call_sync('zfs.dataset.query', [], {
+                    'extra': {'user_properties': True, 'properties': []}
+                }))
+            ], filters, options
+        )
+
+    async def __common_validation(self, dataset, data, schema, update=False):
+        verrors = ValidationErrors()
+        exists = data['name'] in dataset['properties']
+        if (exists and not update) or (not exists and update):
+            if update:
+                msg = f'{data["name"]} does not exist in {dataset["id"]} user properties'
+            else:
+                msg = f'{data["name"]} exists in {dataset["id"]} user properties'
+            verrors.add(f'{schema}.property.name', msg)
+
+        return verrors
+
+    @accepts(
+        Dict(
+            'dataset_user_prop_create',
+            Str('id', required=True, empty=False),
+            Dict(
+                'property',
+                Str('name', required=True, validators=[Match(r'.*:.*')]),
+                Str('value',required=True),
+            )
+        )
+    )
+    async def do_create(self, data):
+        """
+        Create a user property for a given `id` dataset.
+        """
+        dataset = await self._get_instance(data['id'])
+        verrors = await self.__common_validation(dataset, data['property'], 'dataset_user_prop_create')
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', data['id'], {
+                'properties': {data['property']['name']: {'value': data['property']['value']}}
+            }
+        )
+
+        return await self._get_instance(data['id'])
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_user_prop_update',
+            Str('name', required=True),
+            Str('value', required=True),
+        )
+    )
+    async def do_update(self, id, data):
+        """
+        Update `dataset_user_prop_update.name` user property for `id` dataset.
+        """
+        dataset = await self._get_instance(id)
+        verrors = await self.__common_validation(dataset, data, 'dataset_user_prop_update', True)
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', id, {
+                'properties': {data['name']: {'value': data['value']}}
+            }
+        )
+
+        return await self._get_instance(id)
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_user_prop_delete',
+            Str('name', required=True),
+        )
+    )
+    async def do_delete(self, id, options):
+        """
+        Delete user property `dataset_user_prop_delete.name` for `id` dataset.
+        """
+        dataset = await self._get_instance(id)
+        verrors = await self.__common_validation(dataset, options, 'dataset_user_prop_delete', True)
+        verrors.check()
+
+        await self.middleware.call(
+            'zfs.dataset.update', id, {
+                'properties': {options['name']: {'source': 'INHERIT'}}
+            }
+        )
+        return True
+
+
+class PoolDatasetEncryptionModel(sa.Model):
+    __tablename__ = 'storage_encrypteddataset'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(255))
+    encryption_key = sa.Column(sa.Text(), nullable=True)
+    kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
+
+
 class PoolDatasetService(CRUDService):
 
     attachment_delegates = []
+    dataset_store = 'storage.encrypteddataset'
 
     class Config:
         namespace = 'pool.dataset'
+
+    @private
+    @accepts(
+        Dict(
+            'dataset_db_create',
+            Any('encryption_key', null=True, default=None),
+            Int('id', default=None, null=True),
+            Str('name', required=True, empty=False),
+            Str('key_format', required=True, null=True),
+        )
+    )
+    async def insert_or_update_encrypted_record(self, data):
+        key_format = data.pop('key_format') or ZFSKeyFormat.PASSPHRASE.value
+        if not data['encryption_key'] or ZFSKeyFormat(key_format.upper()) == ZFSKeyFormat.PASSPHRASE:
+            # We do not want to save passphrase keys - they are only known to the user
+            return
+
+        ds_id = data.pop('id')
+        ds = await self.middleware.call(
+            'datastore.query', self.dataset_store,
+            [['id', '=', ds_id]] if ds_id else [['name', '=', data['name']]]
+        )
+
+        data['encryption_key'] = await self.middleware.call('pwenc.encrypt', data['encryption_key'])
+
+        pk = ds[0]['id'] if ds else None
+        if ds:
+            await self.middleware.call(
+                'datastore.update',
+                self.dataset_store,
+                ds[0]['id'], data
+            )
+        else:
+            pk = await self.middleware.call(
+                'datastore.insert',
+                self.dataset_store,
+                data
+            )
+
+        kmip_config = await self.middleware.call('kmip.config')
+        if kmip_config['enabled'] and kmip_config['manage_zfs_keys']:
+            await self.middleware.call('kmip.sync_zfs_keys', [pk])
+
+        return pk
+
+    @private
+    @accepts(Ref('query-filters'))
+    def query_encrypted_roots_keys(self, filters=None):
+        # We query database first - if we are able to find an encryption key, we assume it's the correct one.
+        # If we are unable to find the key in database, we see if we have it in memory with the KMIP server, if not,
+        # there are 2 ways this can go, we don't retrieve the key or the user can sync KMIP keys and we will have it
+        # with the KMIP service again through which we can retrieve them
+        datasets = self.middleware.call_sync('datastore.query', self.dataset_store, filters)
+        zfs_keys = self.middleware.call_sync('kmip.retrieve_zfs_keys')
+        keys = {}
+        for ds in datasets:
+            if ds['encryption_key']:
+                keys[ds['name']] = self.middleware.call_sync('pwenc.decrypt', ds['encryption_key'])
+            elif ds['name'] in zfs_keys:
+                keys[ds['name']] = zfs_keys[ds['name']]
+        return keys
+
+    @private
+    def validate_encryption_data(self, job, verrors, encryption_dict, schema):
+        opts = {}
+        if not encryption_dict['enabled']:
+            return opts
+
+        key = encryption_dict['key']
+        passphrase = encryption_dict['passphrase']
+        passphrase_key_format = bool(encryption_dict['passphrase'])
+
+        if passphrase_key_format:
+            for f in filter(lambda k: encryption_dict[k], ('key', 'key_file', 'generate_key')):
+                verrors.add(f'{schema}.{f}', 'Must be disabled when dataset is to be encrypted with passphrase.')
+        else:
+            provided_opts = [k for k in ('key', 'key_file', 'generate_key') if encryption_dict[k]]
+            if not provided_opts:
+                verrors.add(
+                    f'{schema}.key',
+                    'Please provide a key or select generate_key to automatically generate '
+                    'a key when passphrase is not provided.'
+                )
+            elif len(provided_opts) > 1:
+                for k in provided_opts:
+                    verrors.add(f'{schema}.{k}', f'Only one of {", ".join(provided_opts)} must be provided.')
+
+        if not verrors:
+            key = key or passphrase
+            if encryption_dict['generate_key']:
+                key = secrets.token_hex(32)
+            elif not key and job:
+                job.check_pipe('input')
+                key = job.pipes.input.r.read(64)
+                # We would like to ensure key matches specified key format
+                try:
+                    key = hex(int(key, 16))[2:]
+                    if len(key) != 64:
+                        raise ValueError('Invalid key')
+                except ValueError:
+                    verrors.add(f'{schema}.key_file', 'Please specify a valid key')
+                    return {}
+
+            opts = {
+                'keyformat': (ZFSKeyFormat.PASSPHRASE if passphrase_key_format else ZFSKeyFormat.HEX).value.lower(),
+                'keylocation': 'prompt',
+                'encryption': encryption_dict['algorithm'].lower(),
+                'key': key,
+                **({'pbkdf2iters': encryption_dict['pbkdf2iters']} if passphrase_key_format else {}),
+            }
+        return opts
+
+    @private
+    def query_encrypted_datasets(self, name, options=None):
+        # Common function to retrieve encrypted datasets
+        options = options or {}
+        key_loaded = options.get('key_loaded', True)
+        db_results = self.query_encrypted_roots_keys([['OR', [['name', '=', name], ['name', '^', f'{name}/']]]])
+
+        def normalize(ds):
+            passphrase = ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.PASSPHRASE
+            key = db_results.get(ds['name']) if not passphrase else None
+            return ds['name'], {'encryption_key': key, **ds}
+
+        def check_key(ds):
+            return options.get('all') or (ds['key_loaded'] and key_loaded) or (not ds['key_loaded'] and not key_loaded)
+
+        return dict(map(
+            normalize,
+            filter(
+                lambda d: d['name'] == d['encryption_root'] and d['encrypted']
+                and f'{d["name"]}/'.startswith(f'{name}/') and check_key(d),
+                self.query()
+            )
+        ))
+
+    @periodic(86400)
+    @private
+    @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
+    def sync_db_keys(self, job, name=None):
+        filters = [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else []
+        db_datasets = self.query_encrypted_roots_keys(filters)
+        encrypted_roots = {d['name']: d for d in self.query(filters) if d['name'] == d['encryption_root']}
+        to_remove = []
+        check_key_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', [
+            (name, {'key': db_datasets[name]}) for name in db_datasets
+        ])
+        check_key_job.wait_sync()
+        if check_key_job.error:
+            self.middleware.logger.error(f'Failed to sync database keys: {check_key_job.error}')
+            return
+
+        for dataset, status in zip(db_datasets, check_key_job.result):
+            if not status['result']:
+                to_remove.append(dataset)
+            elif status['error']:
+                if dataset not in encrypted_roots:
+                    to_remove.append(dataset)
+                else:
+                    self.middleware.logger.error(f'Failed to check encryption status for {dataset}: {status["error"]}')
+
+        self.middleware.call_sync('pool.dataset.delete_encrypted_datasets_from_db', [['name', 'in', to_remove]])
+
+    @private
+    async def delete_encrypted_datasets_from_db(self, filters):
+        datasets = await self.middleware.call('datastore.query', self.dataset_store, filters)
+        for ds in datasets:
+            if ds['kmip_uid']:
+                asyncio.ensure_future(self.middleware.call('kmip.reset_zfs_key', ds['name'], ds['kmip_uid']))
+            await self.middleware.call('datastore.delete', self.dataset_store, ds['id'])
+
+    @accepts(Str('id'))
+    @job(lock='dataset_export_keys', pipes=['output'])
+    def export_keys(self, job, id):
+        """
+        Export keys for `id` and its children which are stored in the system. The exported file is a JSON file
+        which has a dictionary containing dataset names as keys and their keys as the value.
+
+        Please refer to websocket documentation for downloading the file.
+        """
+        self.middleware.call_sync('pool.dataset._get_instance', id)
+        sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', id)
+        sync_job.wait_sync()
+
+        datasets = self.query_encrypted_roots_keys([['OR', [['name', '=', id], ['name', '^', f'{id}/']]]])
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+                temp_path = f.name
+                os.chmod(temp_path, 0o600)
+                f.write(json.dumps(datasets))
+
+            with open(temp_path, 'rb') as f:
+                shutil.copyfileobj(f, job.pipes.output.w)
+        finally:
+            if os.path.exists(temp_path or ''):
+                os.unlink(temp_path)
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'lock_options',
+            Bool('force_umount', default=False),
+        )
+    )
+    async def lock(self, id, options):
+        """
+        Locks `id` dataset. It will unmount the dataset and its children before locking.
+        """
+        ds = await self._get_instance(id)
+
+        if not ds['encrypted']:
+            raise CallError(f'{id} is not encrypted')
+        elif ds['locked']:
+            raise CallError(f'Dataset {id} is already locked')
+        elif ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
+            raise CallError('Only datasets which are encrypted with passphrase can be locked')
+        elif id != ds['encryption_root']:
+            raise CallError(f'Please lock {ds["encryption_root"]}. Only encryption roots can be locked.')
+        elif id == (await self.middleware.call('systemdataset.config'))['pool']:
+            raise CallError(f'Please move system dataset to another pool before locking {id}')
+
+        await self.middleware.call(
+            'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
+        )
+
+        return True
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'unlock_options',
+            Bool('key_file', default=False),
+            Bool('toggle_attachments', default=True),
+            Bool('recursive', default=False),
+            List(
+                'datasets', items=[
+                    Dict(
+                        'dataset',
+                        Str('name', required=True, empty=False),
+                        Str('key', validators=[Range(min=64, max=64)], private=True),
+                        Str('passphrase', empty=False, private=True),
+                    )
+                ], default=[],
+            ),
+        )
+    )
+    @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
+    def unlock(self, job, id, options):
+        """
+        Unlock `id` dataset.
+
+        If `id` dataset is not encrypted an exception will be raised. There is one exception:
+        when `id` is a root dataset and `unlock_options.recursive` is specified, encryption
+        validation will not be performed for `id`. This allow unlocking encrypted children the `id` pool.
+
+        For datasets which are encrypted with a passphrase, include the passphrase with
+        `unlock_options.datasets`.
+
+        Uploading a json file which contains encrypted dataset keys can be specified with
+        `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
+        """
+        verrors = ValidationErrors()
+        dataset = self.middleware.call_sync('pool.dataset._get_instance', id)
+        keys_supplied = {}
+
+        if options['key_file']:
+            keys_supplied = self._retrieve_keys_from_file(job)
+
+        for i, ds in enumerate(options['datasets']):
+            if all(ds.get(k) for k in ('key', 'passphrase')):
+                verrors.add(
+                    f'unlock_options.datasets.{i}.dataset.key',
+                    f'Must not be specified when passphrase for {ds["name"]} is supplied'
+                )
+            keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
+
+        if '/' in id or not options['recursive']:
+            if not dataset['locked']:
+                verrors.add('id', f'{id} dataset is not locked')
+            elif dataset['encryption_root'] != id:
+                verrors.add('id', 'Only encryption roots can be unlocked')
+            else:
+                if not bool(self.query_encrypted_roots_keys([['name', '=', id]])) and id not in keys_supplied:
+                    verrors.add('unlock_options.datasets', f'Please specify key for {id}')
+
+        verrors.check()
+
+        locked_datasets = []
+        datasets = self.query_encrypted_datasets(id.split('/', 1)[0], {'key_loaded': False})
+        for name, ds in datasets.items():
+            ds_key = keys_supplied.get(name) or ds['encryption_key']
+            if ds['locked'] and id != name and id.startswith(name):
+                # This ensures that `id` has locked parents and they should be unlocked first
+                locked_datasets.append(name)
+            elif ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
+                # This is hex encoded right now - we want to change it back to raw
+                try:
+                    ds_key = bytes.fromhex(ds_key)
+                except ValueError:
+                    ds_key = None
+
+            datasets[name] = {'key': ds_key, **ds}
+
+        if locked_datasets:
+            raise CallError(f'{id} has locked parents {",".join(locked_datasets)} which must be unlocked first')
+
+        failed = defaultdict(lambda: dict({'error': None, 'skipped': []}))
+        unlocked = []
+        for name in sorted(
+            filter(
+                lambda n: n and f'{n}/'.startswith(f'{id}/') and datasets[n]['locked'],
+                (datasets if options['recursive'] else [id])
+            ),
+            key=lambda v: v.count('/')
+        ):
+            skip = False
+            for i in range(name.count('/') + 1):
+                check = name.rsplit('/', i)[0]
+                if check in failed:
+                    failed[check]['skipped'].append(name)
+                    skip = True
+                    break
+
+            if skip:
+                continue
+
+            if not datasets[name]['key']:
+                failed[name]['error'] = 'Missing key'
+                continue
+
+            try:
+                self.middleware.call_sync(
+                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': True, 'recursive': True}
+                )
+            except CallError as e:
+                failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
+            else:
+                unlocked.append(name)
+
+        if options['toggle_attachments'] and not failed:
+            j = self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset))
+            j.wait_sync()
+
+        if unlocked:
+            for unlocked_dataset in filter(lambda d: d in keys_supplied, unlocked):
+                self.middleware.call_sync(
+                    'pool.dataset.insert_or_update_encrypted_record', {
+                        'encryption_key': keys_supplied[unlocked_dataset], 'name': unlocked_dataset,
+                        'key_format': datasets[unlocked_dataset]['key_format']['value'],
+                    }
+                )
+
+        return {'unlocked': unlocked, 'failed': failed}
+
+    @private
+    @job(lock=lambda args: f'toggle_attachments_{args[0]}')
+    async def toggle_attachments(self, job, path):
+        for delegate in self.attachment_delegates:
+            if delegate.name in ('jail', 'vm'):
+                await delegate.toggle((await delegate.query(path, False)), True)
+            else:
+                await delegate.toggle([], True)
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'encryption_root_summary_options',
+            Bool('key_file', default=False),
+            List(
+                'datasets', items=[
+                    Dict(
+                        'dataset',
+                        Str('name', required=True, empty=False),
+                        Str('key', validators=[Range(min=64, max=64)], private=True),
+                        Str('passphrase', empty=False, private=True),
+                    )
+                ], default=[],
+            ),
+        )
+    )
+    @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
+    def encryption_summary(self, job, id, options):
+        """
+        Retrieve summary of all encrypted roots under `id`.
+
+        Keys/passphrase can be supplied to check if the keys are valid.
+
+        Example output:
+        [
+            {
+                "name": "hex",
+                "key_format": "HEX",
+                "key_present": true,
+                "valid_key": true,
+                "locked": false
+            },
+            {
+                "name": "hex/p",
+                "key_format": "PASSPHRASE",
+                "key_present": false,
+                "valid_key": false,
+                "locked": true
+            }
+        ]
+        """
+        keys_supplied = {}
+        verrors = ValidationErrors()
+        if options['key_file']:
+            keys_supplied = self._retrieve_keys_from_file(job)
+
+        for i, ds in enumerate(options['datasets']):
+            if all(ds.get(k) for k in ('key', 'passphrase')):
+                verrors.add(
+                    f'unlock_options.datasets.{i}.dataset.key',
+                    f'Must not be specified when passphrase for {ds["name"]} is supplied'
+                )
+            keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
+
+        verrors.check()
+        datasets = self.query_encrypted_datasets(id, {'all': True})
+
+        to_check = []
+        for name, ds in datasets.items():
+            ds_key = keys_supplied.get(name) or ds['encryption_key']
+            if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
+                with contextlib.suppress(ValueError):
+                    ds_key = bytes.fromhex(ds_key)
+            to_check.append((name, {'key': ds_key}))
+
+        check_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', to_check)
+        check_job.wait_sync()
+        if check_job.error:
+            raise CallError(f'Failed to retrieve encryption summary for {id}: {check_job.error}')
+
+        results = []
+        for ds_data, status in zip(to_check, check_job.result):
+            ds_name = ds_data[0]
+            data = datasets[ds_name]
+            results.append({
+                'name': ds_name, 'key_format': ZFSKeyFormat(data['key_format']['value']).value,
+                'key_present_in_database': bool(data['encryption_key']),
+                'valid_key': bool(status['result']), 'locked': data['locked']
+            })
+
+        return results
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'change_key_options',
+            Bool('generate_key', default=False),
+            Bool('key_file', default=False),
+            Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
+            Str('passphrase', empty=False, default=None, null=True, private=True),
+            Str('key', validators=[Range(min=64, max=64)], default=None, null=True, private=True),
+        )
+    )
+    @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
+    async def change_key(self, job, id, options):
+        """
+        Change encryption properties for `id` encrypted dataset.
+
+        Changing dataset encryption to use passphrase instead of a key is not allowed if:
+
+        1) It has encrypted roots as children which are encrypted with a key
+        2) If it is a root dataset where the system dataset is located
+        """
+        ds = await self._get_instance(id)
+        verrors = ValidationErrors()
+        if not ds['encrypted']:
+            verrors.add('id', 'Dataset is not encrypted')
+        elif ds['locked']:
+            verrors.add('id', 'Dataset must be unlocked before key can be changed')
+
+        if not verrors and options['passphrase']:
+            if any(
+                d['name'] == d['encryption_root']
+                for d in await self.middleware.run_in_thread(
+                    self.query, [
+                        ['id', '^', f'{id}/'], ['encrypted', '=', True],
+                        ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
+                    ]
+                )
+            ):
+                verrors.add(
+                    'change_key_options.passphrase',
+                    f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
+                    'roots which are encrypted with a key as children for passphrase encrypted datasets.'
+                )
+            elif id == (await self.middleware.call('systemdataset.config'))['pool']:
+                verrors.add(
+                    'id',
+                    f'{id} contains the system dataset. Please move the system dataset to a '
+                    'different pool before changing key_format.'
+                )
+
+        verrors.check()
+
+        encryption_dict = await self.middleware.call(
+            'pool.dataset.validate_encryption_data', job, verrors, {
+                'enabled': True, 'passphrase': options['passphrase'],
+                'generate_key': options['generate_key'], 'key_file': options['key_file'],
+                'pbkdf2iters': options['pbkdf2iters'], 'algorithm': 'on', 'key': options['key'],
+            }, 'change_key_options'
+        )
+
+        verrors.check()
+
+        encryption_dict.pop('encryption')
+        key = encryption_dict.pop('key')
+
+        await self.middleware.call(
+            'zfs.dataset.change_key', id, {
+                'encryption_properties': encryption_dict,
+                'key': key, 'load_key': False,
+            }
+        )
+
+        # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
+        #  devd changes are in from the OS end
+        await self.insert_or_update_encrypted_record(
+            {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
+        )
+        if options['passphrase'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
+            await self.middleware.call('pool.dataset.sync_db_keys', id)
+
+    @accepts(Str('id'))
+    async def inherit_parent_encryption_properties(self, id):
+        """
+        Allows inheriting parent's encryption root discarding its current encryption settings. This
+        can only be done where `id` has an encrypted parent and `id` itself is an encryption root.
+        """
+        ds = await self._get_instance(id)
+        if not ds['encrypted']:
+            raise CallError(f'Dataset {id} is not encrypted')
+        elif ds['encryption_root'] != id:
+            raise CallError(f'Dataset {id} is not an encryption root')
+        elif ds['locked']:
+            raise CallError('Dataset must be unlocked to perform this operation')
+        elif '/' not in id:
+            raise CallError('Root datasets do not have a parent and cannot inherit encryption settings')
+        else:
+            parent = await self._get_instance(id.rsplit('/', 1)[0])
+            if not parent['encrypted']:
+                raise CallError('This operation requires the parent dataset to be encrypted')
+            else:
+                parent_encrypted_root = await self._get_instance(parent['encryption_root'])
+                if ZFSKeyFormat(parent_encrypted_root['key_format']['value']) == ZFSKeyFormat.PASSPHRASE.value:
+                    if any(
+                        d['name'] == d['encryption_root']
+                        for d in await self.middleware.run_in_thread(
+                            self.query, [
+                                ['id', '^', f'{id}/'], ['encrypted', '=', True],
+                                ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
+                            ]
+                        )
+                    ):
+                        raise CallError(
+                            f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
+                            'roots which are encrypted with a key as children for passphrase encrypted datasets.'
+                        )
+
+        await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
+        await self.middleware.call('pool.dataset.sync_db_keys', id)
+
+    @private
+    def _retrieve_keys_from_file(self, job):
+        job.check_pipe('input')
+        try:
+            data = json.loads(job.pipes.input.r.read(10240))
+        except json.JSONDecodeError:
+            raise CallError('Input file must be a valid JSON file')
+
+        if not isinstance(data, dict) or any(not isinstance(v, str) for v in data.values()):
+            raise CallError('Please specify correct format for input file')
+
+        return data
 
     @filterable
     def query(self, filters=None, options=None):
         """
         Query Pool Datasets with `query-filters` and `query-options`.
+
+        We provide two ways to retrieve datasets. The first is a flat structure (default), where
+        all datasets in the system are returned as separate objects which contain all data
+        there is for their children. This retrieval type is slightly slower because of duplicates in each object.
+        The second type is hierarchical, where only top level datasets are returned in the list. They contain all the
+        children in the `children` key. This retrieval type is slightly faster.
+        These options are controlled by the `query-options.extra.flat` attribute (default true).
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
+        sys_config = self.middleware.call_sync('systemdataset.config')
+        if sys_config['basename']:
+            zfsfilters.extend([
+                ['id', '!=', sys_config['basename']],
+                ['id', '!^', f'{sys_config["basename"]}/'],
+            ])
         for f in filters or []:
             if len(f) == 3:
                 if f[0] in ('id', 'name', 'pool', 'type'):
                     zfsfilters.append(f)
-        datasets = self.middleware.call_sync(
-            'zfs.dataset.query', zfsfilters, {'extra': (options or {}).get('extra', {})}
+
+        return filter_list(
+            self.__transform(self.middleware.call_sync(
+                'zfs.dataset.query', zfsfilters, {'extra': {'flat': options.get('extra', {}).get('flat', True)}})
+            ), filters, options
         )
-        return filter_list(self.__transform(datasets), filters, options)
 
     def __transform(self, datasets):
         """
@@ -2543,6 +3604,7 @@ class PoolDatasetService(CRUDService):
                 ('org.freenas:quota_critical', 'quota_critical', None),
                 ('org.freenas:refquota_warning', 'refquota_warning', None),
                 ('org.freenas:refquota_critical', 'refquota_critical', None),
+                ('org.truenas:managedby', 'managedby', None),
                 ('dedup', 'deduplication', str.upper),
                 ('aclmode', None, str.upper),
                 ('atime', None, str.upper),
@@ -2563,6 +3625,10 @@ class PoolDatasetService(CRUDService):
                 ('sparse', None, None),
                 ('volsize', None, None),
                 ('volblocksize', None, None),
+                ('keyformat', 'key_format', lambda o: o.upper() if o != 'none' else None),
+                ('encryption', 'encryption_algorithm', lambda o: o.upper() if o != 'off' else None),
+                ('used', None, None),
+                ('available', None, None),
             ):
                 if orig_name not in dataset['properties']:
                     continue
@@ -2571,6 +3637,8 @@ class PoolDatasetService(CRUDService):
                 if method:
                     dataset[i]['value'] = method(dataset[i]['value'])
             del dataset['properties']
+
+            dataset['locked'] = dataset['encrypted'] and not dataset['key_loaded']
 
             rv = []
             for child in dataset['children']:
@@ -2603,6 +3671,7 @@ class PoolDatasetService(CRUDService):
         ]),
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
+        Str('managedby', empty=False),
         Int('quota', null=True),
         Int('quota_warning', validators=[Range(0, 100)]),
         Int('quota_critical', validators=[Range(0, 100)]),
@@ -2621,14 +3690,35 @@ class PoolDatasetService(CRUDService):
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
+        Ref('encryption_options'),
+        Bool('encryption', default=False),
+        Bool('inherit_encryption', default=True),
         register=True,
     ))
-    async def do_create(self, data):
+    @pass_app(rest=True)
+    async def do_create(self, app, data):
         """
         Creates a dataset/zvol.
 
         `volsize` is required for type=VOLUME and is supposed to be a multiple of the block size.
         `sparse` and `volblocksize` are only used for type=VOLUME.
+
+        `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
+        There are 2 cases where ZFS encryption is not allowed for a dataset:
+        1) Pool in question is GELI encrypted.
+        2) If the parent dataset is encrypted with a passphrase and `name` is being created
+           with a key for encrypting the dataset.
+
+        `encryption_options` specifies configuration for encryption of dataset for `name` pool.
+        `encryption_options.passphrase` must be specified if encryption for dataset is desired with a passphrase
+        as a key.
+        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
+        `encryption_options.generate_key` when enabled automatically generates the key to be used
+        for dataset encryption.
+
+        It should be noted that keys are stored by the system for automatic locking/unlocking
+        on import/export of encrypted datasets. If that is not desired, dataset should be created
+        with a passphrase as a key.
 
         .. examples(websocket)::
 
@@ -2645,7 +3735,6 @@ class PoolDatasetService(CRUDService):
                 }]
             }
         """
-
         verrors = ValidationErrors()
 
         if '/' not in data['name']:
@@ -2661,8 +3750,61 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             data['aclmode'] = 'RESTRICTED'
 
+        if (await self._get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
+            verrors.add(
+                'pool_dataset_create.name',
+                f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
+            )
+
+        encryption_dict = {}
+        inherit_encryption_properties = data.pop('inherit_encryption')
+        if not inherit_encryption_properties:
+            encryption_dict = {'encryption': 'off'}
+
+        if data['encryption']:
+            if inherit_encryption_properties:
+                verrors.add('pool_dataset_create.inherit_encryption', 'Must be disabled when encryption is enabled.')
+            if (
+                await self.middleware.call('pool.query', [['name', '=', data['name'].split('/')[0]]], {'get': True})
+            )['encrypt']:
+                verrors.add(
+                    'pool_dataset_create.encryption',
+                    'Encrypted datasets cannot be created on a GELI encrypted pool.'
+                )
+
+            if not data['encryption_options']['passphrase']:
+                # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
+                # because we don't allow children to be unlocked while parent is locked
+                parent_encryption_root = (await self._get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
+                if (
+                    parent_encryption_root and ZFSKeyFormat(
+                        (await self._get_instance(parent_encryption_root))['key_format']['value']
+                    ) == ZFSKeyFormat.PASSPHRASE
+                ):
+                    verrors.add(
+                        'pool_dataset_create.encryption',
+                        'Passphrase encrypted datasets cannot have children encrypted with a key.'
+                    )
+
+        encryption_dict = await self.middleware.call(
+            'pool.dataset.validate_encryption_data', None, verrors,
+            {'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False},
+            'pool_dataset_create.encryption_options',
+        ) or encryption_dict
+
         if verrors:
             raise verrors
+
+        if app:
+            uri = None
+            if app.rest and app.host:
+                uri = app.host
+            elif app.websocket and app.request.headers.get('X-Real-Remote-Addr'):
+                uri = app.request.headers.get('X-Real-Remote-Addr')
+            if uri and uri not in [
+                '::1', '127.0.0.1', *[d['address'] for d in await self.middleware.call('interface.ip_in_use')]
+            ]:
+                data['managedby'] = uri if not data.get('managedby') else f'{data["managedby"]}@{uri}'
 
         props = {}
         for i, real_name, transform in (
@@ -2674,6 +3816,7 @@ class PoolDatasetService(CRUDService):
             ('copies', None, lambda x: str(x)),
             ('deduplication', 'dedup', str.lower),
             ('exec', None, str.lower),
+            ('managedby', 'org.truenas:managedby', None),
             ('quota', None, _none),
             ('quota_warning', 'org.freenas:quota_warning', str),
             ('quota_critical', 'org.freenas:quota_critical', str),
@@ -2695,10 +3838,17 @@ class PoolDatasetService(CRUDService):
             name = real_name or i
             props[name] = data[i] if not transform else transform(data[i])
 
+        props.update(encryption_dict)
+
         await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
             'type': data['type'],
             'properties': props,
+        })
+
+        await self.insert_or_update_encrypted_record({
+            'name': data['name'], 'encryption_key': encryption_dict.get('key'),
+            'key_format': encryption_dict.get('keyformat')
         })
 
         data['id'] = data['name']
@@ -2723,6 +3873,9 @@ class PoolDatasetService(CRUDService):
         ('rm', {'name': 'share_type'}),  # This is something we should only do at create time
         ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'volblocksize'}),  # Create time only attribute
+        ('rm', {'name': 'encryption'}),  # Create time only attribute
+        ('rm', {'name': 'encryption_options'}),  # Create time only attribute
+        ('rm', {'name': 'inherit_encryption'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
         ('edit', _add_inherit('exec')),
         ('edit', _add_inherit('sync')),
@@ -2774,8 +3927,7 @@ class PoolDatasetService(CRUDService):
         if verrors:
             raise verrors
 
-        props = {}
-        for i, real_name, transform, inheritable in (
+        properties_definitions = (
             ('aclmode', None, str.lower, True),
             ('atime', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
@@ -2783,6 +3935,7 @@ class PoolDatasetService(CRUDService):
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
+            ('managedby', 'org.truenas:managedby', None, True),
             ('quota', None, _none, False),
             ('quota_warning', 'org.freenas:quota_warning', str, True),
             ('quota_critical', 'org.freenas:quota_critical', str, True),
@@ -2796,7 +3949,10 @@ class PoolDatasetService(CRUDService):
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
             ('volsize', None, lambda x: str(x), False),
-        ):
+        )
+
+        props = {}
+        for i, real_name, transform, inheritable in properties_definitions:
             if i not in data:
                 continue
             name = real_name or i
@@ -2805,7 +3961,12 @@ class PoolDatasetService(CRUDService):
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
-        rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+        try:
+            rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+        except ZFSSetPropertyError as e:
+            verrors = ValidationErrors()
+            verrors.add_child('pool_dataset_update', self.__handle_zfs_set_property_error(e, properties_definitions))
+            raise verrors
 
         if data['type'] == 'VOLUME' and 'volsize' in data:
             if await self.middleware.call('iscsi.extent.query', [('path', '=', f'zvol/{id}')]):
@@ -2875,6 +4036,13 @@ class PoolDatasetService(CRUDService):
                             'Volume size should be a multiple of volume block size'
                         )
 
+    def __handle_zfs_set_property_error(self, e, properties_definitions):
+        zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
+        api_name = zfs_name_to_api_name.get(e.property) or e.property
+        verrors = ValidationErrors()
+        verrors.add(api_name, e.error)
+        return verrors
+
     @accepts(Str('id'), Dict(
         'dataset_delete',
         Bool('recursive', default=False),
@@ -2912,10 +4080,12 @@ class PoolDatasetService(CRUDService):
                 if attachments:
                     await delegate.delete(attachments)
 
-        return await self.middleware.call('zfs.dataset.delete', id, {
+        result = await self.middleware.call('zfs.dataset.delete', id, {
             'force': options['force'],
             'recursive': options['recursive'],
         })
+        await self.delete_encrypted_datasets_from_db([['name', '=', id]])
+        return result
 
     @item_method
     @accepts(Str('id'))
@@ -3119,6 +4289,172 @@ class PoolDatasetService(CRUDService):
             raise CallError(pjob.error)
         return data
 
+    @accepts(
+        Str('ds', required=True),
+        Str('quota_type', enum=['USER', 'GROUP', 'DATASET']),
+        Ref('query-filters'),
+        Ref('query-options'),
+    )
+    @item_method
+    async def get_quota(self, ds, quota_type, filters, options):
+        """
+        Return a list of the specified `quota_type` of  quotas on the ZFS dataset `ds`.
+        Support `query-filters` and `query-options`. used_bytes and used_percentage
+        may not instantly update as space is used.
+
+        When quota_type is not DATASET, each quota entry has these fields:
+
+        `id` - the uid or gid to which the quota applies.
+
+        `name` - the user or group name to which the quota applies. Value is
+        null if the id in the quota cannot be resolved to a user or group. This
+        indicates that the user or group does not exist on the server.
+
+        `quota` - the quota size in bytes.
+
+        `used_bytes` - the amount of bytes the user has written to the dataset.
+        A value of zero means unlimited.
+
+        `used_percentage` - the percentage of the user or group quota consumed.
+
+        `obj_quota` - the number of objects that may be owned by `id`.
+        A value of zero means unlimited.
+
+        'obj_used` - the nubmer of objects currently owned by `id`.
+
+        `obj_used_percent` - the percentage of the `obj_quota` currently used.
+        """
+        dataset = (await self._get_instance(ds))['name']
+        quota_list = await self.middleware.call(
+            'zfs.dataset.get_quota', dataset, quota_type.lower()
+        )
+        return filter_list(quota_list, filters, options)
+
+    @accepts(
+        Str('ds', required=True),
+        List('quotas', items=[
+            Dict(
+                'quota_entry',
+                Str('quota_type',
+                    enum=['DATASET', 'USER', 'USEROBJ', 'GROUP', 'GROUPOBJ'],
+                    required=True),
+                Str('id', required=True),
+                Int('quota_value', required=True, null=True),
+            )
+        ], default=[{
+            'quota_type': 'USER',
+            'id': '0',
+            'quota_value': 0
+        }])
+    )
+    @item_method
+    async def set_quota(self, ds, data):
+        """
+        There are three over-arching types of quotas for ZFS datasets.
+        1) dataset quotas and refquotas. If a DATASET quota type is specified in
+        this API call, then the API acts as a wrapper for `pool.dataset.update`.
+
+        2) User and group quotas. These limit the amount of disk space consumed
+        by files that are owned by the specified users or groups. If the respective
+        "object quota" type is specfied, then the quota limits the number of objects
+        that may be owned by the specified user or group.
+
+        3) Project quotas. These limit the amount of disk space consumed by files
+        that are owned by the specified project. Project quotas are not yet implemended.
+
+        This API allows users to set multiple quotas simultaneously by submitting a
+        list of quotas. The list may contain all supported quota types.
+
+        `ds` the name of the target ZFS dataset.
+
+        `quotas` specifies a list of `quota_entry` entries to apply to dataset.
+
+        `quota_entry` entries have these required parameters:
+
+        `quota_type`: specifies the type of quota to apply to the dataset. Possible
+        values are USER, USEROBJ, GROUP, GROUPOBJ, and DATASET. USEROBJ and GROUPOBJ
+        quotas limit the number of objects consumed by the specified user or group.
+
+        `id`: the uid, gid, or name to which the quota applies. If quota_type is
+        'DATASET', then `id` must be either `QUOTA` or `REFQUOTA`.
+
+        `quota_value`: the quota size in bytes. Setting a value of `0` removes
+        the user or group quota.
+        """
+        MAX_QUOTAS = 100
+        dataset = (await self._get_instance(ds))['name']
+        verrors = ValidationErrors()
+        if len(data) > MAX_QUOTAS:
+            verrors.add(
+                'quotas',
+                f'The number of user or group quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
+            )
+
+        quota_list = []
+        dataset_quotas = {}
+
+        for i, q in enumerate(data):
+            quota_type = q["quota_type"].lower()
+            if q["quota_type"] == 'DATASET':
+                if q['id'] not in ['QUOTA', 'REFQUOTA']:
+                    verrors.add(
+                        f'quotas.{i}.id',
+                        f'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"'
+                    )
+                    continue
+
+                if dataset_quotas.get(q['id'].lower()) is not None:
+                    verrors.add(
+                        f'quotas.{i}.id',
+                        f'Setting multiple values for {q["id"]} for quota_type "DATASET" is not permitted'
+                    )
+                    continue
+
+                dataset_quotas.update({
+                    q['id'].lower(): q['quota_value']
+                })
+
+                continue
+
+            if q["quota_type"] not in ['PROJECT', 'PROJECTOBJ']:
+                if q['quota_value'] is None:
+                    q['quota_value'] = 'none'
+
+                if not q["id"].isdigit():
+                    try:
+                        await self.middleware.call(f'{quota_type}.get_{quota_type}_obj',
+                                                   {f'{quota_type}name': q["id"]})
+                    except Exception:
+                        verrors.add(
+                            f'quotas.{i}.id',
+                            f'{quota_type} {q["id"]} is not valid.'
+                        )
+                else:
+                    id_type = ('user', 'uid') if 'user' in quota_type else ('group', 'gid')
+                    try:
+                        await self.middleware.call(f'{id_type[0]}.get_{id_type[0]}_obj',
+                                                   {id_type[1]: q["id"]})
+                    except Exception:
+                        verrors.add(
+                            f'quotas.{i}.id',
+                            f'{quota_type} {q["id"]} is not valid.'
+                        )
+            else:
+                if not q["id"].isdigit():
+                    verrors.add(
+                        f'quotas.{i}.id',
+                        f'{quota_type} {q["id"]} must be a numeric project id.'
+                    )
+
+            quota_list.append(f'{quota_type}quota@{q["id"]}={q["quota_value"]}')
+
+        verrors.check()
+        if dataset_quotas:
+            await self.update(ds, dataset_quotas)
+
+        if quota_list:
+            await self.middleware.call('zfs.dataset.set_quota', dataset, quota_list)
+
     @accepts(Str('pool'))
     async def recommended_zvol_blocksize(self, pool):
         """
@@ -3187,11 +4523,7 @@ class PoolDatasetService(CRUDService):
         return result
 
     def __attachments_path(self, dataset):
-        if dataset['type'] == 'FILESYSTEM':
-            return dataset['mountpoint']
-
-        if dataset['type'] == 'VOLUME':
-            return os.path.join('/mnt', dataset['name'])
+        return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
 
     @item_method
     @accepts(Str('id', required=True))
@@ -3286,6 +4618,21 @@ class PoolDatasetService(CRUDService):
     @private
     def register_attachment_delegate(self, delegate):
         self.attachment_delegates.append(delegate)
+
+
+class PoolScrubModel(sa.Model):
+    __tablename__ = 'storage_scrub'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    scrub_volume_id = sa.Column(sa.Integer(), sa.ForeignKey('storage_volume.id', ondelete='CASCADE'))
+    scrub_threshold = sa.Column(sa.Integer(), default=35)
+    scrub_description = sa.Column(sa.String(200))
+    scrub_minute = sa.Column(sa.String(100), default="00")
+    scrub_hour = sa.Column(sa.String(100), default="00")
+    scrub_daymonth = sa.Column(sa.String(100), default="*")
+    scrub_month = sa.Column(sa.String(100), default='*')
+    scrub_dayweek = sa.Column(sa.String(100), default="7")
+    scrub_enabled = sa.Column(sa.Boolean(), default=True)
 
 
 class PoolScrubService(CRUDService):
@@ -3473,7 +4820,7 @@ class PoolScrubService(CRUDService):
                 await self.middleware.call('alert.oneshot_create', 'ScrubStarted', name)
 
     async def __run(self, name, threshold):
-        if name == 'freenas-boot':
+        if name == await self.middleware.call('boot.pool_name'):
             pool = await self.middleware.call('zfs.pool.query', [['name', '=', name]], {'get': True})
         else:
             if not await self.middleware.call('system.is_freenas'):

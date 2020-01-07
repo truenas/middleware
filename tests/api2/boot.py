@@ -3,6 +3,7 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import pytest
 import sys
 import os
 from time import time, sleep

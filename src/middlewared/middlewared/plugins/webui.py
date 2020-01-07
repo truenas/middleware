@@ -1,11 +1,19 @@
 import os
 
-from django.db.utils import IntegrityError
+from sqlalchemy.exc import IntegrityError
 
 from middlewared.pipe import Pipes
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
+
+
+class ImageModel(sa.Model):
+    __tablename__ = 'system_filesystem'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    identifier = sa.Column(sa.String(255), default=False)
 
 
 class ImageService(CRUDService):

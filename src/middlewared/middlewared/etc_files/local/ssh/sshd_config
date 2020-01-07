@@ -20,6 +20,10 @@
 
 	if bind_ifaces:
 		bind_ifaces.insert(0, '127.0.0.1')
+
+	twofactor_auth = middleware.call_sync('auth.twofactor.config')
+	twofactor_enabled = twofactor_auth['enabled'] and twofactor_auth['services']['ssh']
+
 %>\
 Subsystem	sftp	/usr/libexec/sftp-server -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
 % if 'Protocol' not in ssh_config['options']:
@@ -28,7 +32,7 @@ Protocol 2
 % if 'UseDNS' not in ssh_config['options']:
 UseDNS no
 % endif
-% if 'ChallengeResponseAuthentication' not in ssh_config['options']:
+% if 'ChallengeResponseAuthentication' not in ssh_config['options'] and not twofactor_enabled:
 ChallengeResponseAuthentication no
 % endif
 % if 'ClientAliveCountMax' not in ssh_config['options']:
@@ -76,3 +80,8 @@ GSSAPIAuthentication yes
 % endif
 PubkeyAuthentication yes
 ${ssh_config['options']}
+% if twofactor_enabled:
+# These are forced to be enabled with 2FA
+UsePAM yes
+ChallengeResponseAuthentication yes
+% endif

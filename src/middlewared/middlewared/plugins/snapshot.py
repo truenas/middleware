@@ -1,10 +1,33 @@
+from datetime import time
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
 from middlewared.validators import ReplicationSnapshotNamingSchema
+
+
+class PeriodicSnapshotTaskModel(sa.Model):
+    __tablename__ = 'storage_task'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    task_dataset = sa.Column(sa.String(150))
+    task_recursive = sa.Column(sa.Boolean(), default=False)
+    task_lifetime_value = sa.Column(sa.Integer(), default=2)
+    task_lifetime_unit = sa.Column(sa.String(120), default='WEEK')
+    task_begin = sa.Column(sa.Time(), default=time(hour=9))
+    task_end = sa.Column(sa.Time(), default=time(hour=18))
+    task_enabled = sa.Column(sa.Boolean(), default=True)
+    task_exclude = sa.Column(sa.JSON(type=list))
+    task_naming_schema = sa.Column(sa.String(150), default='auto-%Y-%m-%d_%H-%M')
+    task_minute = sa.Column(sa.String(100), default="00")
+    task_hour = sa.Column(sa.String(100), default="*")
+    task_daymonth = sa.Column(sa.String(100), default="*")
+    task_month = sa.Column(sa.String(100), default='*')
+    task_dayweek = sa.Column(sa.String(100), default="*")
+    task_allow_empty = sa.Column(sa.Boolean(), default=True)
 
 
 class PeriodicSnapshotTaskService(CRUDService):
@@ -17,9 +40,8 @@ class PeriodicSnapshotTaskService(CRUDService):
         namespace = 'pool.snapshottask'
 
     @private
-    async def extend_context(self):
+    async def extend_context(self, extra):
         return {
-            'legacy_replication_tasks': await self._legacy_replication_tasks(),
             'state': await self.middleware.call('zettarepl.get_state'),
             'vmware': await self.middleware.call('vmware.query'),
         }
@@ -27,8 +49,6 @@ class PeriodicSnapshotTaskService(CRUDService):
     @private
     async def extend(self, data, context):
         Cron.convert_db_format_to_schedule(data, begin_end=True)
-
-        data['legacy'] = self._is_legacy(data, context['legacy_replication_tasks'])
 
         data['vmware_sync'] = any(
             (
@@ -39,10 +59,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         )
 
         if 'error' in context['state']:
-            data['state'] = {
-                'state': 'ERROR',
-                'error': context['state']['error'],
-            }
+            data['state'] = context['state']['error']
         else:
             data['state'] = context['state'].get(f'periodic_snapshot_task_{data["id"]}', {
                 'state': 'PENDING',
@@ -123,12 +140,6 @@ class PeriodicSnapshotTaskService(CRUDService):
         if verrors:
             raise verrors
 
-        if self._is_legacy(data, await self._legacy_replication_tasks()):
-            verrors.add_child('periodic_snapshot_create', self._validate_legacy(data))
-
-        if verrors:
-            raise verrors
-
         Cron.convert_schedule_to_db_format(data, begin_end=True)
 
         data['id'] = await self.middleware.call(
@@ -204,24 +215,12 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         if verrors:
             raise verrors
-
-        legacy_replication_tasks = await self._legacy_replication_tasks()
-        if self._is_legacy(new, legacy_replication_tasks):
-            verrors.add_child(f'periodic_snapshot_update', self._validate_legacy(new))
-        else:
-            if self._is_legacy(old, legacy_replication_tasks):
-                verrors.add(
-                    'periodic_snapshot_update.naming_schema',
-                    ('This snapshot task is being used in legacy replication task. You must use naming schema '
-                     f'{self._legacy_naming_schema(new)!r}. Please upgrade your replication tasks to edit this field.')
-                )
-
         if verrors:
             raise verrors
 
         Cron.convert_schedule_to_db_format(new, begin_end=True)
 
-        for key in ('legacy', 'vmware_sync', 'state'):
+        for key in ('vmware_sync', 'state'):
             new.pop(key, None)
 
         await self.middleware.call(
@@ -259,7 +258,6 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         for replication_task in await self.middleware.call('replication.query', [
             ['direction', '=', 'PUSH'],
-            ['transport', '!=', 'LEGACY'],
             ['also_include_naming_schema', '=', []],
             ['enabled', '=', True],
         ]):
@@ -318,44 +316,6 @@ class PeriodicSnapshotTaskService(CRUDService):
                 )
 
         return verrors
-
-    def _validate_legacy(self, data):
-        verrors = ValidationErrors()
-
-        if data['exclude']:
-            verrors.add(
-                'exclude',
-                ('Excluding child datasets is not available because this snapshot task is being used in '
-                 'legacy replication task. Please upgrade your replication tasks to edit this field.'),
-            )
-
-        if not data['allow_empty']:
-            verrors.add(
-                'allow_empty',
-                ('Disallowing empty snapshots is not available because this snapshot task is being used in '
-                 'legacy replication task. Please upgrade your replication tasks to edit this field.'),
-            )
-
-        return verrors
-
-    def _is_legacy(self, data, legacy_replication_tasks):
-        if data['naming_schema'] == self._legacy_naming_schema(data):
-            for replication_task in legacy_replication_tasks:
-                if (
-                    data['dataset'] == replication_task['source_datasets'][0] or
-                    (data['recursive'] and is_child(replication_task['source_datasets'][0], data['dataset'])) or
-                    (replication_task['recursive'] and
-                         is_child(data['dataset'], replication_task['source_datasets'][0]))
-                ):
-                    return True
-
-        return False
-
-    def _legacy_naming_schema(self, data):
-        return f'auto-%Y%m%d.%H%M-{data["lifetime_value"]}{data["lifetime_unit"].lower()[0]}'
-
-    async def _legacy_replication_tasks(self):
-        return await self.middleware.call('replication.query', [['transport', '=', 'LEGACY']])
 
 
 class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):

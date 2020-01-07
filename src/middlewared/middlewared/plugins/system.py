@@ -5,7 +5,8 @@ from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
-from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version
+import middlewared.sqlalchemy as sa
+from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
 from middlewared.validators import Range
 
 import csv
@@ -16,14 +17,17 @@ import re
 import requests
 import shutil
 import socket
-import struct
 import subprocess
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import syslog
 import tarfile
 import textwrap
 import time
 import uuid
+import warnings
 
 from licenselib.license import ContractType, Features, License
 
@@ -36,6 +40,38 @@ SYSTEM_SHUTTING_DOWN = False
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
+
+RE_MEMWIDTH = re.compile(r'Total Width:\s*(\d*)')
+
+
+class SystemAdvancedModel(sa.Model):
+    __tablename__ = 'system_advanced'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    adv_consolemenu = sa.Column(sa.Boolean(), default=False)
+    adv_serialconsole = sa.Column(sa.Boolean(), default=False)
+    adv_serialport = sa.Column(sa.String(120), default="0x2f8")
+    adv_serialspeed = sa.Column(sa.String(120), default="9600")
+    adv_powerdaemon = sa.Column(sa.Boolean(), default=False)
+    adv_swapondrive = sa.Column(sa.Integer(), default=2)
+    adv_consolemsg = sa.Column(sa.Boolean(), default=True)
+    adv_traceback = sa.Column(sa.Boolean(), default=True)
+    adv_advancedmode = sa.Column(sa.Boolean(), default=False)
+    adv_autotune = sa.Column(sa.Boolean(), default=False)
+    adv_debugkernel = sa.Column(sa.Boolean(), default=False)
+    adv_uploadcrash = sa.Column(sa.Boolean(), default=True)
+    adv_anonstats = sa.Column(sa.Boolean(), default=True)
+    adv_anonstats_token = sa.Column(sa.Text())
+    adv_motd = sa.Column(sa.Text(), default='Welcome')
+    adv_boot_scrub = sa.Column(sa.Integer(), default=7)
+    adv_fqdn_syslog = sa.Column(sa.Boolean(), default=False)
+    adv_sed_user = sa.Column(sa.String(120), default="user")
+    adv_sed_passwd = sa.Column(sa.EncryptedText(), default='')
+    adv_sysloglevel = sa.Column(sa.String(120), default="f_info")
+    adv_syslogserver = sa.Column(sa.String(120), default='')
+    adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
+    adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 class SystemAdvancedService(ConfigService):
@@ -51,10 +87,7 @@ class SystemAdvancedService(ConfigService):
         """
         Get available choices for `serialport`.
         """
-        if(
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.hardware') == 'ECHOSTREAM'
-        ):
+        if await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
             ports = {'0x3f8': '0x3f8'}
         else:
             pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
@@ -74,6 +107,15 @@ class SystemAdvancedService(ConfigService):
 
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
+
+        if data.get('sysloglevel'):
+            data['sysloglevel'] = data['sysloglevel'].upper()
+
+        if data['syslog_tls_certificate']:
+            data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
+
+        data.pop('sed_passwd')
+        data.pop('kmip_uid')
 
         return data
 
@@ -98,6 +140,26 @@ class SystemAdvancedService(ConfigService):
                         'Serial port specified has not been identified by the system'
                     )
 
+        syslog_server = data.get('syslogserver')
+        if syslog_server:
+            match = re.match(r"^[\w\.\-]+(\:\d+)?$", syslog_server)
+            if not match:
+                verrors.add(
+                    f'{schema}.syslogserver',
+                    'Invalid syslog server format'
+                )
+            elif ':' in syslog_server:
+                port = int(syslog_server.split(':')[-1])
+                if port < 0 or port > 65535:
+                    verrors.add(
+                        f'{schema}.syslogserver',
+                        'Port must be in the range of 0 to 65535.'
+                    )
+
+        if data['syslog_transport'] == 'TLS':
+            await self.middleware.call('certificate.cert_services_validation', data['syslog_tls_certificate'],
+                                       f'{schema}.syslog_tls_certificate')
+
         return verrors, data
 
     @accepts(
@@ -105,7 +167,6 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
-            Bool('legacy_ui'),
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
@@ -122,6 +183,12 @@ class SystemAdvancedService(ConfigService):
             Bool('anonstats'),
             Str('sed_user', enum=['USER', 'MASTER']),
             Str('sed_passwd', private=True),
+            Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR',
+                                     'F_WARNING', 'F_NOTICE', 'F_INFO',
+                                     'F_DEBUG', 'F_IS_DEBUG']),
+            Str('syslogserver'),
+            Str('syslog_transport', enum=['UDP', 'TCP', 'TLS']),
+            Int('syslog_tls_certificate', null=True),
             update=True
         )
     )
@@ -135,9 +202,10 @@ class SystemAdvancedService(ConfigService):
         `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
         hardware.
 
-        `legacy_ui` is disabled by default. Enabling it allows end users to use the legacy UI.
+        When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
         """
         config_data = await self.config()
+        config_data['sed_passwd'] = await self.sed_global_password()
         original_data = config_data.copy()
         config_data.update(data)
 
@@ -150,8 +218,13 @@ class SystemAdvancedService(ConfigService):
                 original_data['sed_user'] = original_data['sed_user'].lower()
             if config_data.get('sed_user'):
                 config_data['sed_user'] = config_data['sed_user'].lower()
-
-            # PASSWORD ENCRYPTION FOR SED IS BEING DONE IN THE MODEL ITSELF
+            if not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
+                # We want to make sure kmip uid is None in this case
+                adv_config = await self.middleware.call('datastore.config', self._config.datastore)
+                asyncio.ensure_future(
+                    self.middleware.call('kmip.reset_sed_global_password', adv_config['adv_kmip_uid'])
+                )
+                config_data['kmip_uid'] = None
 
             await self.middleware.call(
                 'datastore.update',
@@ -180,8 +253,8 @@ class SystemAdvancedService(ConfigService):
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
             elif (
-                    original_data['serialspeed'] != config_data['serialspeed'] or
-                    original_data['serialport'] != config_data['serialport']
+                original_data['serialspeed'] != config_data['serialspeed'] or
+                original_data['serialport'] != config_data['serialport']
             ):
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
@@ -203,14 +276,34 @@ class SystemAdvancedService(ConfigService):
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
                 await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
 
-            if original_data['legacy_ui'] != config_data['legacy_ui']:
-                await self.middleware.call('service.reload', 'http')
+            if (
+                original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or
+                original_data['syslogserver'] != config_data['syslogserver'] or
+                original_data['syslog_transport'] != config_data['syslog_transport'] or
+                original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate']
+            ):
+                await self.middleware.call('service.restart', 'syslogd')
+
+            if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
+                await self.middleware.call('kmip.sync_sed_keys')
 
         return await self.config()
 
+    @accepts()
+    async def sed_global_password(self):
+        """
+        Returns configured global SED password.
+        """
+        passwd = (await self.middleware.call(
+            'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
+        ))['sed_passwd']
+        return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
+
     @private
     def autotune(self, conf='loader'):
-        if self.middleware.call_sync('system.is_freenas'):
+        if b'/' not in subprocess.run(['whereis', 'autotune'], capture_output=True).stdout:
+            return
+        if self.middleware.call_sync('system.product_type') == 'CORE':
             kernel_reserved = 1073741824
             userland_reserved = 2417483648
         else:
@@ -227,31 +320,44 @@ class SystemAdvancedService(ConfigService):
 
 class SystemService(Service):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__product_type = None
+
     @no_auth_required
     @accepts()
     async def is_freenas(self):
         """
-        Returns `true` if running system is a FreeNAS or `false` if something else.
+        FreeNAS is now TrueNAS CORE.
+
+        DEPRECATED: Use `system.product_type`
         """
-        # This is a stub calling notifier until we have all infrastructure
-        # to implement in middlewared
-        return await self.middleware.call('notifier.is_freenas')
+        return (await self.product_type()) == 'CORE'
+
+    @no_auth_required
+    @accepts()
+    async def product_type(self):
+        """
+        Returns the type of the product.
+
+        CORE - TrueNAS Core, community version
+        ENTERPRISE - TrueNAS Enterprise, appliance version
+        """
+        if self.__product_type is None:
+            license = await self.middleware.run_in_thread(self._get_license)
+            self.__product_type = 'CORE' if (
+                not license or
+                license['model'].lower().startswith('freenas')
+            ) else 'ENTERPRISE'
+        return self.__product_type
 
     @no_auth_required
     @accepts()
     async def product_name(self):
         """
-        Returns name of the product we are using (FreeNAS or something else).
+        Returns name of the product we are using.
         """
-        return "FreeNAS" if await self.middleware.call("system.is_freenas") else "TrueNAS"
-
-    @no_auth_required
-    @accepts()
-    async def legacy_ui_enabled(self):
-        """
-        Returns a boolean value indicating if the legacy UI can be used by end users.
-        """
-        return (await self.middleware.call('system.advanced.config'))['legacy_ui']
+        return "TrueNAS"
 
     @accepts()
     def version(self):
@@ -268,6 +374,19 @@ class SystemService(Service):
         It is supposed to be unique every system boot.
         """
         return SYSTEM_BOOT_ID
+
+    @no_auth_required
+    @accepts()
+    async def environment(self):
+        """
+        Return environment in which product is running. Possible values:
+        - DEFAULT
+        - EC2
+        """
+        if os.path.exists("/.ec2"):
+            return "EC2"
+
+        return "DEFAULT"
 
     @accepts()
     async def ready(self):
@@ -290,7 +409,8 @@ class SystemService(Service):
             return "READY"
         return "BOOTING"
 
-    def __get_license(self):
+    @staticmethod
+    def _get_license():
         if not os.path.exists(LICENSE_FILE):
             return
 
@@ -356,6 +476,7 @@ class SystemService(Service):
 
         self.middleware.call_sync('etc.generate', 'rc')
 
+        self.__product_type = None
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update'), wait=False,
         )
@@ -370,10 +491,9 @@ class SystemService(Service):
             buildtime = datetime.fromtimestamp(int(buildtime)),
 
         uptime = (await (await Popen(
-            "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
-            stdout=subprocess.PIPE,
-            shell=True,
-        )).communicate())[0].decode().strip()
+            ['env', '-u', 'TZ', 'uptime'], stdout=subprocess.PIPE
+        )).communicate())[0].decode().split(',')
+        uptime = ', '.join([uptime[i].strip() for i in range(2)])
 
         serial = await self._system_serial()
 
@@ -387,25 +507,27 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
+        ecc_results = RE_MEMWIDTH.findall((await run(['dmidecode', '-t', '17'])).stdout.decode())
+
         return {
             'version': self.version(),
             'buildtime': buildtime,
             'hostname': socket.gethostname(),
-            'physmem': sysctl.filter('hw.physmem')[0].value,
-            'model': sysctl.filter('hw.model')[0].value,
-            'cores': sysctl.filter('hw.ncpu')[0].value,
+            'physmem': psutil.virtual_memory().total,
+            'model': osc.get_cpu_model(),
+            'cores': psutil.cpu_count(logical=True),
             'loadavg': os.getloadavg(),
             'uptime': uptime,
-            'uptime_seconds': time.clock_gettime(5),  # CLOCK_UPTIME = 5
+            'uptime_seconds': time.time() - psutil.boot_time(),
             'system_serial': serial,
             'system_product': product,
-            'license': await self.middleware.run_in_thread(self.__get_license),
-            'boottime': datetime.fromtimestamp(
-                struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
-            ),
+            'license': await self.middleware.run_in_thread(self._get_license),
+            'boottime': datetime.fromtimestamp(psutil.boot_time()),
             'datetime': datetime.utcnow(),
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
+            'ecc_memory': all(dimm_module.strip() == '72' for dimm_module in (ecc_results or ['']))
         }
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
@@ -413,12 +535,12 @@ class SystemService(Service):
         """
         Returns whether the `feature` is enabled or not
         """
-        is_freenas = await self.middleware.call('system.is_freenas')
-        if name == 'FIBRECHANNEL' and is_freenas:
+        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
+        if name == 'FIBRECHANNEL' and is_core:
             return False
-        elif is_freenas:
+        elif is_core:
             return True
-        license = await self.middleware.run_in_thread(self.__get_license)
+        license = await self.middleware.run_in_thread(self._get_license)
         if license and name in license['features']:
             return True
         return False
@@ -457,14 +579,10 @@ class SystemService(Service):
         """
         Shuts down the operating system.
 
-        Emits an "added" event of name "system" and id "shutdown".
+        An "added" event of name "system" and id "shutdown" is emitted when shutdown is initiated.
         """
         if options is None:
             options = {}
-
-        self.middleware.send_event('system', 'ADDED', id='shutdown', fields={
-            'description': 'System is going to shutdown',
-        })
 
         delay = options.get('delay')
         if delay:
@@ -532,8 +650,7 @@ class SystemService(Service):
         )
 
         standby_debug = None
-        is_freenas = self.middleware.call_sync('system.is_freenas')
-        if not is_freenas and self.middleware.call_sync('failover.licensed'):
+        if self.middleware.call_sync('failover.licensed'):
             try:
                 standby_debug = self.middleware.call_sync(
                     'failover.call_remote', 'system.debug_generate', [], {'job': True}
@@ -597,7 +714,28 @@ class SystemService(Service):
         job.pipes.output.w.close()
 
 
+class SystemGeneralModel(sa.Model):
+    __tablename__ = 'system_settings'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    stg_guiaddress = sa.Column(sa.JSON(type=list), default=['0.0.0.0'])
+    stg_guiv6address = sa.Column(sa.JSON(type=list), default=['::'])
+    stg_guiport = sa.Column(sa.Integer(), default=80)
+    stg_guihttpsport = sa.Column(sa.Integer(), default=443)
+    stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
+    stg_language = sa.Column(sa.String(120), default="en")
+    stg_kbdmap = sa.Column(sa.String(120))
+    stg_timezone = sa.Column(sa.String(120), default="America/Los_Angeles")
+    stg_wizardshown = sa.Column(sa.Boolean(), default=False)
+    stg_pwenc_check = sa.Column(sa.String(100))
+    stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
+    stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
+    stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
+
+
 class SystemGeneralService(ConfigService):
+    HTTPS_PROTOCOLS = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']
 
     class Config:
         namespace = 'system.general'
@@ -618,7 +756,6 @@ class SystemGeneralService(ConfigService):
             if key.startswith('gui'):
                 data['ui_' + key[3:]] = data.pop(key)
 
-        data['sysloglevel'] = data['sysloglevel'].upper()
         if data['ui_certificate']:
             data['ui_certificate'] = await self.middleware.call(
                 'certificate.query',
@@ -626,13 +763,14 @@ class SystemGeneralService(ConfigService):
                 {'get': True}
             )
 
+        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
         data['crash_reporting_is_set'] = data['crash_reporting'] is not None
         if data['crash_reporting'] is None:
-            data['crash_reporting'] = await self.middleware.call("system.is_freenas")
+            data['crash_reporting'] = is_core
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
-            data['usage_collection'] = await self.middleware.call("system.is_freenas")
+            data['usage_collection'] = is_core
 
         data.pop('pwenc_check')
 
@@ -659,6 +797,13 @@ class SystemGeneralService(ConfigService):
                 'interface.ip_in_use', {'ipv4': False, 'ipv6': True, 'any': True, 'static': True}
             )
         }
+
+    @accepts()
+    def ui_httpsprotocols_choices(self):
+        """
+        Returns available HTTPS protocols.
+        """
+        return dict(zip(self.HTTPS_PROTOCOLS, self.HTTPS_PROTOCOLS))
 
     @accepts()
     def language_choices(self):
@@ -894,22 +1039,6 @@ class SystemGeneralService(ConfigService):
                     f'When "{wildcard}" has been selected, selection of other addresses is not allowed'
                 )
 
-        syslog_server = data.get('syslogserver')
-        if syslog_server:
-            match = re.match(r"^[\w\.\-]+(\:\d+)?$", syslog_server)
-            if not match:
-                verrors.add(
-                    f'{schema}.syslogserver',
-                    'Invalid syslog server format'
-                )
-            elif ':' in syslog_server:
-                port = int(syslog_server.split(':')[-1])
-                if port < 0 or port > 65535:
-                    verrors.add(
-                        f'{schema}.syslogserver',
-                        'Port specified should be between 0 - 65535'
-                    )
-
         certificate_id = data.get('ui_certificate')
         cert = await self.middleware.call(
             'certificate.query',
@@ -953,6 +1082,7 @@ class SystemGeneralService(ConfigService):
             Int('ui_certificate', null=True),
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
+            List('ui_httpsprotocols', items=[Str('protocol', enum=HTTPS_PROTOCOLS)], empty=False),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
@@ -980,8 +1110,22 @@ class SystemGeneralService(ConfigService):
         `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
         listen on.
 
-        When `syslogserver` is defined, `sysloglevel` makes sure that logs matching the specified level are sent.
+        `syslogserver` and `sysloglevel` are deprecated fields as of 11.3
+        and will be permanently moved to system.advanced.update for 12.0
         """
+        advanced_config = {}
+        # fields were moved to Advanced
+        for deprecated_field in ('sysloglevel', 'syslogserver'):
+            if deprecated_field in data:
+                warnings.warn(
+                    f"{deprecated_field} has been deprecated and moved to 'system.advanced'",
+                    DeprecationWarning
+                )
+                advanced_config[deprecated_field] = data[deprecated_field]
+                del data[deprecated_field]
+        if advanced_config:
+            await self.middleware.call('system.advanced.update', advanced_config)
+
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         if not config.pop('crash_reporting_is_set'):
@@ -995,8 +1139,6 @@ class SystemGeneralService(ConfigService):
         if verrors:
             raise verrors
 
-        # Converting new_config to map the database table fields
-        new_config['sysloglevel'] = new_config['sysloglevel'].lower()
         keys = new_config.keys()
         for key in list(keys):
             if key.startswith('ui_'):
@@ -1009,13 +1151,6 @@ class SystemGeneralService(ConfigService):
             new_config,
             {'prefix': 'stg_'}
         )
-
-        # case insensitive comparison should be performed for sysloglevel
-        if (
-            config['sysloglevel'].lower() != new_config['sysloglevel'].lower() or
-                config['syslogserver'] != new_config['syslogserver']
-        ):
-            await self.middleware.call('service.restart', 'syslogd')
 
         if config['kbdmap'] != new_config['kbdmap']:
             await self.middleware.call('service.restart', 'syscons')
@@ -1041,7 +1176,6 @@ class SystemGeneralService(ConfigService):
         Restart HTTP server to use latest UI settings.
         """
         await self.middleware.call('service.restart', 'http')
-        await self.middleware.call('service.restart', 'django')
 
     @accepts()
     async def local_url(self):
@@ -1078,6 +1212,96 @@ class SystemGeneralService(ConfigService):
 
         raise CallError('Unable to connect to any of the specified UI addresses:\n' + '\n'.join(errors))
 
+    def __get_urls(self, aliases, addrs, ipv6=False):
+
+        skip_internal = False
+        if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
+            skip_internal = True
+
+        urls = []
+        for addr in addrs:
+            ip, port = addr.split(':')
+
+            if ip == '*':
+                ips = [
+                    i["address"]
+                    for i in aliases
+                    if i['type'] == ('INET6' if ipv6 else 'INET')
+                ]
+            else:
+                ips = [ip]
+
+            for o in ips:
+                if skip_internal and o in (
+                    '169.254.10.1',
+                    '169.254.10.2',
+                    '169.254.10.20',
+                    '169.254.10.80',
+                ):
+                    continue
+
+                if ipv6 and '%' in o:
+                    o = o.split('%')[0]
+
+                if ipv6:
+                    url = f'http://[{o}]'
+                else:
+                    url = f'http://{o}'
+                if port != '80':
+                    url = f'{url}:{port}'
+                try:
+                    r = requests.head(url, timeout=10)
+                    assert r.status_code in (200, 302, 301)
+                    urls.append(url)
+                    continue
+                except Exception:
+                    pass
+
+                if ipv6:
+                    url = f'https://[{o}]'
+                else:
+                    url = f'https://{o}'
+                if port != '443':
+                    url = f'{url}:{port}'
+                try:
+                    r = requests.head(url, timeout=15, verify=False)
+                    assert r.status_code in (200, 302)
+                    urls.append(url)
+                    continue
+                except Exception:
+                    pass
+        return urls
+
+    @private
+    def get_ui_urls(self):
+        addrsv4 = []
+        addrsv6 = []
+        aliases = []
+        for i in self.middleware.call_sync('interface.query'):
+            if not i['state'] or not i['state']['aliases']:
+                continue
+            aliases += list(filter(lambda x: x['type'].startswith('INET'), i['state']['aliases']))
+
+        cp = subprocess.run(
+            'sockstat -46P tcp |awk \'{ if ($2 == "nginx" && $7 == "*:*") print $5","$6 }\' | '
+            'sort | uniq',
+            shell=True, capture_output=True, text=True,
+        )
+        for line in cp.stdout.strip('\n').split('\n'):
+            _type, addr = line.split(',')
+
+            if _type == 'tcp4':
+                addrsv4.append(addr)
+            else:
+                addrsv6.append(addr)
+
+        urls = []
+        if addrsv4:
+            urls += self.__get_urls(aliases, addrsv4)
+        if addrsv6:
+            urls += self.__get_urls(aliases, addrsv6, ipv6=True)
+        return sorted(urls)
+
     @private
     def set_language(self):
         language = self.middleware.call_sync('system.general.config')['language']
@@ -1093,7 +1317,7 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
-    if args['id'] == 'shutting-down':
+    if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
 
@@ -1189,6 +1413,13 @@ async def firstboot(middleware):
             middleware.logger.error(
                 'Failed to create initial boot environment: %s', cp.stderr.decode()
             )
+        else:
+            boot_pool = await middleware.call('boot.pool_name')
+            cp = await run('zfs', 'set', 'beadm:keep=True', os.path.join(boot_pool, 'ROOT/Initial-Install'))
+            if cp.returncode != 0:
+                middleware.logger.error(
+                    f'Failed to set "beadm:keep=True" for Initial-Install boot environment: {cp.stderr}'
+                )
 
 
 async def update_timeout_value(middleware, *args):
@@ -1201,7 +1432,8 @@ async def update_timeout_value(middleware, *args):
     ):
         # Default 120 seconds is being added to scripts timeout to ensure other
         # system related scripts can execute safely within the default timeout
-        timeout_value = 120 + sum(
+        initial_timeout_value = 120
+        timeout_value = sum(
             list(
                 map(
                     lambda i: i['timeout'],
@@ -1214,6 +1446,14 @@ async def update_timeout_value(middleware, *args):
                 )
             )
         )
+
+        vm_timeout = (await middleware.call('vm.terminate_timeout'))
+        if vm_timeout > timeout_value:
+            # VM's and init tasks are executed asynchronously - so if VM timeout is greater then init tasks one,
+            # we use that, else init tasks timeout is good enough to ensure VM's cleanly exit
+            timeout_value = vm_timeout
+
+        timeout_value += initial_timeout_value
 
         await middleware.run_in_thread(
             lambda: setattr(
@@ -1239,7 +1479,8 @@ async def setup(middleware):
     else:
         autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
 
-        await firstboot(middleware)
+        if os.path.exists('/usr/local/sbin/beadm'):
+            await firstboot(middleware)
 
         if autotune_rv == 2:
             await run('shutdown', '-r', 'now', check=False)
@@ -1257,9 +1498,10 @@ async def setup(middleware):
 
     asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
 
-    await update_timeout_value(middleware)
+    if sysctl:
+        await update_timeout_value(middleware)
 
-    for srv in ['initshutdownscript', 'tunable']:
+    for srv in ['initshutdownscript', 'tunable', 'vm']:
         for event in ('create', 'update', 'delete'):
             middleware.register_hook(
                 f'{srv}.post_{event}',

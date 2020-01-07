@@ -1,6 +1,9 @@
 from collections import defaultdict
 
-import netif
+try:
+    import netif
+except ImportError:
+    netif = None
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
@@ -23,6 +26,8 @@ class LAGGStatus(ThreadedAlertSource):
     count = defaultdict(int)
 
     def check_sync(self):
+        if not netif:
+            return []
         alerts = []
         for iface in netif.list_interfaces().values():
             if not isinstance(iface, netif.LaggInterface):

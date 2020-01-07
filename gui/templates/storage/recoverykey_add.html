@@ -1,9 +1,0 @@
-{% extends "freeadmin/generic_form.html" %}
-{% block form %}
-    <tr><td>
-      {% trans "You are about to add a recovery key for this volume" %}<br />
-      <p style="color: red">{% trans "This will invalidate any previous recovery key" %}</p>
-    </td></tr>
-    {{ block.super }}
-{% endblock %}
-{% block oklabel %}{% trans "Continue" %}{% endblock %}

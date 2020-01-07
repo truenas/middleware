@@ -2,7 +2,7 @@ import datetime
 import enum
 import errno
 import grp
-import ipaddr
+import ipaddress
 import json
 import ldap
 import ldap.sasl
@@ -13,16 +13,20 @@ import socket
 import subprocess
 import threading
 
-from bsd.threading import set_thread_name
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 from middlewared.plugins.smb import SMBCmd
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
 from middlewared.plugins.directoryservices import DSStatus, SSL
-from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
+import middlewared.utils.osc as osc
+try:
+    from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
+except ImportError:
+    MSG_WINBIND_ONLINE = 9
 
 
 class neterr(enum.Enum):
@@ -429,7 +433,7 @@ class ActiveDirectory_LDAP(object):
 
             # Note should/can we do the same skip as done for `network`
             # the site_dn none too?
-            st = ipaddr.IPNetwork(network)
+            st = ipaddress.ip_network(network)
 
             if st.version == 4:
                 ipv4_subnet_info_lst.append({'site_dn': site_dn, 'network': st})
@@ -508,7 +512,7 @@ class ActiveDirectory_LDAP(object):
                 if alias['type'] == 'INET':
                     if ipv4_site is not None:
                         continue
-                    ipv4_addr_obj = ipaddr.IPAddress(alias['address'], version=4)
+                    ipv4_addr_obj = ipaddress.ip_address(alias['address'])
                     for subnet in subnets['ipv4_subnet_info']:
                         if ipv4_addr_obj in subnet['network']:
                             sinfo = self._get_sites(distinguishedname=subnet['site_dn'])[0]
@@ -519,7 +523,7 @@ class ActiveDirectory_LDAP(object):
                 if alias['type'] == 'INET6':
                     if ipv6_site is not None:
                         continue
-                    ipv6_addr_obj = ipaddr.IPAddress(alias['address'], version=6)
+                    ipv6_addr_obj = ipaddress.ip_address(alias['address'])
                     for subnet in subnets['ipv6_subnet_info']:
                         if ipv6_addr_obj in subnet['network']:
                             sinfo = self._get_sites(distinguishedname=subnet['site_dn'])[0]
@@ -537,6 +541,34 @@ class ActiveDirectory_LDAP(object):
             return ipv6_site
 
         return None
+
+
+class ActiveDirectoryModel(sa.Model):
+    __tablename__ = 'directoryservice_activedirectory'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ad_domainname = sa.Column(sa.String(120))
+    ad_bindname = sa.Column(sa.String(120))
+    ad_bindpw = sa.Column(sa.String(120))
+    ad_ssl = sa.Column(sa.String(120))
+    ad_validate_certificates = sa.Column(sa.Boolean())
+    ad_verbose_logging = sa.Column(sa.Boolean())
+    ad_allow_trusted_doms = sa.Column(sa.Boolean())
+    ad_use_default_domain = sa.Column(sa.Boolean())
+    ad_allow_dns_updates = sa.Column(sa.Boolean())
+    ad_disable_freenas_cache = sa.Column(sa.Boolean())
+    ad_site = sa.Column(sa.String(120), nullable=True)
+    ad_timeout = sa.Column(sa.Integer())
+    ad_dns_timeout = sa.Column(sa.Integer())
+    ad_idmap_backend = sa.Column(sa.String(120))
+    ad_nss_info = sa.Column(sa.String(120), nullable=True)
+    ad_ldap_sasl_wrapping = sa.Column(sa.String(120))
+    ad_enable = sa.Column(sa.Boolean())
+    ad_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    ad_kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id', ondelete='SET NULL'),
+                                     index=True, nullable=True)
+    ad_kerberos_principal = sa.Column(sa.String(255))
+    ad_createcomputer = sa.Column(sa.String(255))
 
 
 class ActiveDirectoryService(ConfigService):
@@ -1712,7 +1744,7 @@ class WBStatusThread(threading.Thread):
         self.logger.debug('exiting winbind messaging thread')
 
     def run(self):
-        set_thread_name('ad_monitor_thread')
+        osc.set_thread_name('ad_monitor_thread')
         try:
             self.read_messages()
         except Exception as e:

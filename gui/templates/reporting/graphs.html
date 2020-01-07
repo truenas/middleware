@@ -1,3 +1,0 @@
-{% for graph in graphs %}
-<div data-dojo-type="freeadmin.RRDControl" href="{% url "reporting_generate" %}" plugin="{{ graph.plugin }}"{% if graph.identifier %} identifier="{{ graph.identifier }}"{% endif %}></div>
-{% endfor %}

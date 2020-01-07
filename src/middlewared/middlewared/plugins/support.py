@@ -1,31 +1,34 @@
 import errno
 import json
-import os
 import requests
 import simplejson
 import socket
 import subprocess
-import sys
 import time
 
 from middlewared.pipe import Pipes
-from middlewared.schema import Bool, Dict, Int, Str, accepts
+from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen
-
-# FIXME: Remove when we can generate debug and move license to middleware
-if '/usr/local/www' not in sys.path:
-    sys.path.append('/usr/local/www')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-import django
-from django.apps import apps
-if not apps.ready:
-    django.setup()
-
-from freenasUI.support.utils import get_license
+from middlewared.validators import Email
 
 ADDRESS = 'support-proxy.ixsystems.com'
+
+
+class SupportModel(sa.Model):
+    __tablename__ = 'system_support'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    enabled = sa.Column(sa.Boolean(), nullable=True, default=True)
+    name = sa.Column(sa.String(200))
+    title = sa.Column(sa.String(200))
+    email = sa.Column(sa.String(200))
+    phone = sa.Column(sa.String(200))
+    secondary_name = sa.Column(sa.String(200))
+    secondary_title = sa.Column(sa.String(200))
+    secondary_email = sa.Column(sa.String(200))
+    secondary_phone = sa.Column(sa.String(200))
 
 
 class SupportService(ConfigService):
@@ -161,7 +164,8 @@ class SupportService(ConfigService):
         Str('environment', max_length=None),
         Str('phone'),
         Str('name'),
-        Str('email'),
+        Str('email', validators=[Email()]),
+        List('cc', items=[Str('email', validators=[Email()])])
     ))
     @job()
     async def new_ticket(self, job, data):
@@ -183,9 +187,9 @@ class SupportService(ConfigService):
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await (await Popen(['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE)).communicate())[0].decode().split('\n')[0].upper()
-            license = get_license()[0]
+            license = (await self.middleware.call('system.info'))['license']
             if license:
-                data['company'] = license.customer_name
+                data['company'] = license['customer_name']
             else:
                 data['company'] = 'Unknown'
 

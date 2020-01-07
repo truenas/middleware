@@ -14,6 +14,7 @@ import threading
 import time
 import traceback
 
+import middlewared.main
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
@@ -21,6 +22,7 @@ from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.logger import Logger
 from middlewared.job import Job
 from middlewared.pipe import Pipes
+from middlewared.utils.type import copy_function_metadata
 
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
@@ -64,7 +66,7 @@ class throttle(object):
     Decorator to throttle calls to methods.
 
     If a condition is provided it must return a tuple (shortcut, key).
-    shortcut will immediatly bypass throttle if true.
+    shortcut will immediately bypass throttle if true.
     key is the key for the time of last calls dict, meaning methods can be throttled based
     on some key (possibly argument of the method).
     """
@@ -148,10 +150,14 @@ def no_auth_required(fn):
     return fn
 
 
-def pass_app(fn):
+def pass_app(rest=False):
     """Pass the application instance as parameter to the method."""
-    fn._pass_app = True
-    return fn
+    def wrapper(fn):
+        fn._pass_app = {
+            'rest': rest,
+        }
+        return fn
+    return wrapper
 
 
 def periodic(interval, run_on_start=True):
@@ -219,7 +225,7 @@ class ServiceBase(type):
 
         config_attrs = {
             'datastore': None,
-            'datastore_prefix': None,
+            'datastore_prefix': '',
             'datastore_extend': None,
             'datastore_extend_context': None,
             'datastore_filters': None,
@@ -279,6 +285,35 @@ class ServiceChangeMixin:
                     CallError.ESERVICESTARTFAILURE,
                     [service],
                 )
+
+
+class CompoundService(Service):
+    def __init__(self, middleware, parts):
+        super().__init__(middleware)
+
+        for part in parts[1:]:
+            if self._part_config(part) != self._part_config(parts[0]):
+                raise RuntimeError(f'Service parts configs for {part} and {parts[0]} do not match')
+
+        self._config = parts[0]._config
+
+        self.parts = parts
+
+        for part in self.parts:
+            for name in dir(part):
+                if name.startswith('_'):
+                    continue
+
+                meth = getattr(part, name)
+                if not callable(meth):
+                    continue
+
+                setattr(self, name, meth)
+
+    def _part_config(self, part):
+        # datastore fields are related to CRUDService only, allow not repeating them for other parts
+        return {k: v for k, v in part._config.__dict__.items()
+                if not k.startswith('__') and not k.startswith('datastore')}
 
 
 class ConfigService(ServiceChangeMixin, Service):
@@ -391,26 +426,35 @@ class CRUDService(ServiceChangeMixin, Service):
                 'datastore.query', self._config.datastore, filters, options,
             )
 
-    async def create(self, data):
+    @pass_app(rest=True)
+    async def create(self, app, data):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.create', self, self.do_create, [data]
+            f'{self._config.namespace}.create', self, self.do_create, [data], app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_create', rv)
         return rv
 
-    async def update(self, id, data):
+    @pass_app(rest=True)
+    async def update(self, app, id, data):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.update', self, self.do_update, [id, data]
+            f'{self._config.namespace}.update', self, self.do_update, [id, data], app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
         return rv
 
-    async def delete(self, id, *args):
+    @pass_app(rest=True)
+    async def delete(self, app, id, *args):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args)
+            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args), app=app,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_delete', rv)
         return rv
+
+    async def get_instance(self, id):
+        """
+        Returns instance matching `id`. If `id` is not found, Validation error is raised.
+        """
+        return await self._get_instance(id)
 
     async def _get_instance(self, id):
         """
@@ -430,8 +474,130 @@ class CRUDService(ServiceChangeMixin, Service):
             verrors.add('.'.join(filter(None, [schema_name, field_name])),
                         f'Object with this {field_name} already exists')
 
+    @private
+    async def check_dependencies(self, id, ignored=None):
+        """
+        Raises EBUSY CallError if some datastores/services (except for `ignored`) reference object specified by id.
+        """
+        ignored = ignored or set()
+
+        services = {
+            service['config'].get('datastore'): (name, service)
+            for name, service in (await self.middleware.call('core.get_services')).items()
+            if service['config'].get('datastore')
+        }
+
+        dependencies = {}
+        for datastore, fk in await self.middleware.call('datastore.get_backrefs', self._config.datastore):
+            if datastore in ignored:
+                continue
+
+            if datastore in services:
+                service = {
+                    'name': services[datastore][0],
+                    'type': services[datastore][1]['type'],
+                }
+
+                if service['name'] in ignored:
+                    continue
+            else:
+                service = None
+
+            objects = await self.middleware.call('datastore.query', datastore, [(fk, '=', id)])
+            if objects:
+                data = {
+                    'objects': objects,
+                }
+                if service is not None:
+                    query_col = fk
+                    prefix = services[datastore][1]['config'].get('datastore_prefix')
+                    if prefix:
+                        if query_col.startswith(prefix):
+                            query_col = query_col[len(prefix):]
+
+                    if service['type'] == 'config':
+                        data = {
+                            'key': query_col,
+                        }
+
+                    if service['type'] == 'crud':
+                        data = {
+                            'objects': await self.middleware.call(
+                                f'{service["name"]}.query', [('id', 'in', [object['id'] for object in objects])],
+                            ),
+                        }
+
+                dependencies[datastore] = dict({
+                    'datastore': datastore,
+                    'service': service['name'] if service else None,
+                }, **data)
+
+        if dependencies:
+            raise CallError('This object is being used by other objects', errno.EBUSY,
+                            {'dependencies': list(dependencies.values())})
+
+
+def is_service_class(service, klass):
+    return (
+        isinstance(service, klass) or
+        (isinstance(service, CompoundService) and any(isinstance(part, klass) for part in service.parts))
+    )
+
+
+class ServicePartBaseMeta(ServiceBase):
+    def __new__(cls, name, bases, attrs):
+        klass = super().__new__(cls, name, bases, attrs)
+
+        if name == "ServicePartBase":
+            return klass
+
+        if len(bases) == 1 and bases[0].__name__ == "ServicePartBase":
+            return klass
+
+        for base in bases:
+            if any(b.__name__ == "ServicePartBase" for b in base.__bases__):
+                break
+        else:
+            raise RuntimeError(f"Could not find ServicePartBase among bases of these classes: {bases!r}")
+
+        for name, original_method in inspect.getmembers(base, predicate=inspect.isfunction):
+            new_method = attrs.get(name)
+            if new_method is None:
+                raise RuntimeError(f"{klass!r} does not define method {name!r} that is defined in it's base {base!r}")
+
+            if hasattr(original_method, "wraps"):
+                original_argspec = inspect.getfullargspec(original_method.wraps)
+            else:
+                original_argspec = inspect.getfullargspec(original_method)
+            if original_argspec != inspect.getfullargspec(new_method):
+                raise RuntimeError(f"Signature for method {name!r} does not match between {klass!r} and it's base " 
+                                   f"{base!r}")
+
+            copy_function_metadata(original_method, new_method)
+
+            if hasattr(original_method, "wrap"):
+                new_method = original_method.wrap(new_method)
+                setattr(klass, name, new_method)
+
+        return klass
+
+
+class ServicePartBase(metaclass=ServicePartBaseMeta):
+    pass
+
 
 class CoreService(Service):
+
+    @accepts(Str('id'), Int('cols'), Int('rows'))
+    async def resize_shell(self, id, cols, rows):
+        """
+        Resize terminal session (/websocket/shell) to cols x rows
+        """
+        shell = middlewared.main.ShellApplication.shells.get(id)
+        if shell is None:
+            raise CallError('Shell does not exist', errno.ENOENT)
+
+        shell.resize(cols, rows)
 
     @filterable
     def sessions(self, filters=None, options=None):
@@ -539,9 +705,9 @@ class CoreService(Service):
         for k, v in list(self.middleware.get_services().items()):
             if v._config.private is True:
                 continue
-            if isinstance(v, CRUDService):
+            if is_service_class(v, CRUDService):
                 _typ = 'crud'
-            elif isinstance(v, ConfigService):
+            elif is_service_class(v, ConfigService):
                 _typ = 'config'
             else:
                 _typ = 'service'
@@ -574,7 +740,7 @@ class CoreService(Service):
                 # For CRUD.do_{update,delete} they need to be accounted
                 # as "item_method", since they are just wrapped.
                 item_method = None
-                if isinstance(svc, CRUDService):
+                if is_service_class(svc, CRUDService):
                     """
                     For CRUD the create/update/delete are special.
                     The real implementation happens in do_create/do_update/do_delete
@@ -588,7 +754,7 @@ class CoreService(Service):
                             item_method = True
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
-                elif isinstance(svc, ConfigService):
+                elif is_service_class(svc, ConfigService):
                     """
                     For Config the update is special.
                     The real implementation happens in do_update
@@ -656,7 +822,8 @@ class CoreService(Service):
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': hasattr(method, '_no_auth_required'),
                     'filterable': hasattr(method, '_filterable'),
-                    'require_websocket': hasattr(method, '_pass_app'),
+                    'pass_application': hasattr(method, '_pass_app'),
+                    'require_websocket': hasattr(method, '_pass_app') and not method._pass_app['rest'],
                     'job': hasattr(method, '_job'),
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
                     'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],

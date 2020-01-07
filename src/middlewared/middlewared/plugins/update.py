@@ -1,6 +1,11 @@
-from bsd import geom
+try:
+    from bsd import geom
+except ImportError:
+    geom = None
+
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, CallError, Service
+import middlewared.sqlalchemy as sa
 
 from datetime import datetime
 import enum
@@ -13,19 +18,19 @@ import subprocess
 import sys
 import textwrap
 
-if '/usr/local/lib' not in sys.path:
-    sys.path.append('/usr/local/lib')
-
 import humanfriendly
 
-from freenasOS import Configuration, Manifest, Update, Train
-from freenasOS.Exceptions import (
-    UpdateIncompleteCacheException, UpdateInvalidCacheException,
-    UpdateBusyCacheException,
-)
-from freenasOS.Update import (
-    ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
-)
+try:
+    from freenasOS import Configuration, Manifest, Update, Train
+    from freenasOS.Exceptions import (
+        UpdateIncompleteCacheException, UpdateInvalidCacheException,
+        UpdateBusyCacheException,
+    )
+    from freenasOS.Update import (
+        ApplyUpdate, CheckForUpdates, GetServiceDescription, ExtractFrozenUpdate,
+    )
+except ImportError:
+    freenasOS = None
 
 UPLOAD_LOCATION = '/var/tmp/firmware'
 UPLOAD_LABEL = 'updatemdu'
@@ -237,7 +242,31 @@ def parse_changelog(changelog, start='', end=''):
     return changelog
 
 
+class UpdateModel(sa.Model):
+    __tablename__ = 'system_update'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    upd_autocheck = sa.Column(sa.Boolean(), default=True)
+    upd_train = sa.Column(sa.String(50))
+
+
 class UpdateService(Service):
+
+    @accepts()
+    async def get_auto_download(self):
+        """
+        Returns if update auto-download is enabled.
+        """
+        return (await self.middleware.call('datastore.config', 'system.update'))['upd_autocheck']
+
+    @accepts(Bool('autocheck'))
+    async def set_auto_download(self, autocheck):
+        """
+        Sets if update auto-download is enabled.
+        """
+        config = await self.middleware.call('datastore.config', 'system.update')
+        await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
+        await self.middleware.call('service.restart', 'cron')
 
     def _get_redir_trains(self):
         """

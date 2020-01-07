@@ -5,14 +5,19 @@ import inspect
 import os
 import psutil
 import signal
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import threading
 import time
 import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
 from middlewared.service import filterable, CallError, CRUDService, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, filter_list, run
+from middlewared.utils.contextlib import asyncnullcontext
 
 
 class ServiceDefinition:
@@ -83,6 +88,14 @@ class StartNotify(threading.Thread):
             tries += 1
 
 
+class ServiceModel(sa.Model):
+    __tablename__ = 'services_services'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    srv_service = sa.Column(sa.String(120))
+    srv_enable = sa.Column(sa.Boolean(), default=False)
+
+
 class ServiceService(CRUDService):
 
     SERVICE_DEFS = {
@@ -98,11 +111,13 @@ class ServiceService(CRUDService):
         'tftp': ServiceDefinition('inetd', '/var/run/inetd.pid'),
         'iscsitarget': ServiceDefinition('ctld', '/var/run/ctld.pid'),
         'lldp': ServiceDefinition('ladvd', '/var/run/ladvd.pid'),
+        'mdns': ServiceDefinition('avahi-daemon', '/var/run/avahi-daemon/pid'),
         'ups': ServiceDefinition('upsd', '/var/db/nut/upsd.pid'),
         'upsmon': ServiceDefinition('upsmon', '/var/db/nut/upsmon.pid'),
         'smartd': ServiceDefinition('smartd', 'smartd-daemon', '/var/run/smartd-daemon.pid'),
-        'webshell': ServiceDefinition(None, '/var/run/webshell.pid'),
         'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
+        'openvpn_server': ServiceDefinition('openvpn', '/var/run/openvpn_server.pid'),
+        'openvpn_client': ServiceDefinition('openvpn', '/var/run/openvpn_client.pid')
     }
 
     @filterable
@@ -379,6 +394,66 @@ class ServiceService(CRUDService):
                 ]
         return False, []
 
+    async def _started_libvirtd(self, **kwargs):
+        if await self._service('libvirtd', 'status', onetime=True, **kwargs):
+            return False, []
+        else:
+            return True, []
+
+    async def _start_libvirtd(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('libvirtd', 'start', **kwargs)
+
+    async def _stop_libvirtd(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('libvirtd', 'stop', **kwargs)
+
+    async def _start_openvpn_server(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self.middleware.call('etc.generate', 'ssl')
+        await self.middleware.call('etc.generate', 'openvpn_server')
+        await self._service('openvpn_server', 'start', **kwargs)
+
+    async def _stop_openvpn_server(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('openvpn_server', 'stop', **kwargs)
+
+    async def _restart_openvpn_server(self, **kwargs):
+        await self._stop_openvpn_server(**kwargs)
+        await self._start_openvpn_server(**kwargs)
+
+    async def _start_openvpn_client(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self.middleware.call('etc.generate', 'openvpn_client')
+        await self._service('openvpn_client', 'start', **kwargs)
+
+    async def _stop_openvpn_client(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('openvpn_client', 'stop', **kwargs)
+
+    async def _restart_openvpn_client(self, **kwargs):
+        await self._stop_openvpn_client(**kwargs)
+        await self._start_openvpn_client(**kwargs)
+
+    async def _start_mdns(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self.middleware.call('etc.generate', 'mdns')
+        await self._service('avahi-daemon', 'start', **kwargs)
+
+    async def _stop_mdns(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._service('avahi-daemon', 'stop', **kwargs)
+
+    async def _restart_mdns(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self._stop_mdns(**kwargs)
+        await self._start_mdns(**kwargs)
+
+    async def _reload_mdns(self, **kwargs):
+        kwargs.setdefault('onetime', True)
+        await self.middleware.call('etc.generate', 'mdns')
+        await self._service('avahi-daemon', 'reload', **kwargs)
+
     async def _start_webdav(self, **kwargs):
         await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "start", **kwargs)
@@ -394,23 +469,6 @@ class ServiceService(CRUDService):
     async def _reload_webdav(self, **kwargs):
         await self.middleware.call('etc.generate', 'webdav')
         await self._service("apache24", "reload", **kwargs)
-
-    async def _restart_django(self, **kwargs):
-        await self._service("django", "restart", **kwargs)
-
-    async def _start_webshell(self, **kwargs):
-        await self._system("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
-
-    async def _restart_webshell(self, **kwargs):
-        try:
-            with open('/var/run/webshell.pid', 'r') as f:
-                pid = f.read()
-                os.kill(int(pid), signal.SIGTERM)
-                time.sleep(0.2)
-                os.kill(int(pid), signal.SIGKILL)
-        except Exception:
-            pass
-        await self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     async def _restart_iscsitarget(self, **kwargs):
         await self.middleware.call("etc.generate", "ctld")
@@ -432,20 +490,26 @@ class ServiceService(CRUDService):
         await self.middleware.call("etc.generate", "ctld")
         await self._service("ctld", "reload", **kwargs)
 
-    async def _start_collectd(self, **kwargs):
-        if not await self.started('rrdcached'):
-            # Let's ensure that before we start collectd, rrdcached is always running
-            await self.start('rrdcached')
+    collectd_lock = asyncio.Lock()
 
-        await self.middleware.call('etc.generate', 'collectd')
-        await self._service("collectd-daemon", "restart", **kwargs)
+    async def _start_collectd(self, **kwargs):
+        async with (self.collectd_lock if kwargs.pop('_lock', True) else asyncnullcontext()):
+            await self.middleware.call('etc.generate', 'collectd')
+
+            if not await self.started('rrdcached'):
+                # Let's ensure that before we start collectd, rrdcached is always running
+                await self.start('rrdcached')
+
+            await self._service("collectd-daemon", "restart", **kwargs)
 
     async def _stop_collectd(self, **kwargs):
-        await self._service("collectd-daemon", "stop", **kwargs)
+        async with (self.collectd_lock if kwargs.pop('_lock', True) else asyncnullcontext()):
+            await self._service("collectd-daemon", "stop", **kwargs)
 
     async def _restart_collectd(self, **kwargs):
-        await self._stop_collectd(**kwargs)
-        await self._start_collectd(**kwargs)
+        async with self.collectd_lock:
+            await self._stop_collectd(_lock=False, **kwargs)
+            await self._start_collectd(_lock=False, **kwargs)
 
     async def _started_collectd(self, **kwargs):
         if await self._service('collectd-daemon', 'status', quiet=True, **kwargs):
@@ -494,7 +558,7 @@ class ServiceService(CRUDService):
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'rc')
         await self._service("hostname", "start", quiet=True, **kwargs)
-        await self._service("mdnsd", "restart", quiet=True, **kwargs)
+        await self.reload("mdns", kwargs)
         await self._restart_collectd(**kwargs)
 
     async def _reload_resolvconf(self, **kwargs):
@@ -600,29 +664,33 @@ class ServiceService(CRUDService):
 
     async def _reload_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
         await self._service("openssh", "reload", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
         await self._service("openssh", "start", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _stop_ssh(self, **kwargs):
         await self._service("openssh", "stop", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
 
     async def _restart_ssh(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssh')
         await self._service("openssh", "stop", force=True, **kwargs)
         await self._service("openssh", "restart", **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_ssl(self, **kwargs):
         await self.middleware.call('etc.generate', 'ssl')
+
+    async def _start_kmip(self, **kwargs):
+        await self._start_ssl(**kwargs)
+        await self.middleware.call('etc.generate', 'kmip')
 
     async def _start_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
@@ -809,7 +877,7 @@ class ServiceService(CRUDService):
     async def _start_afp(self, **kwargs):
         await self.middleware.call("etc.generate", "afpd")
         await self._service("netatalk", "start", **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
 
     async def _stop_afp(self, **kwargs):
         await self._service("netatalk", "stop", force=True, **kwargs)
@@ -818,7 +886,7 @@ class ServiceService(CRUDService):
         # restarting netatalk.
         await self._system("pkill -9 afpd")
         await self._system("pkill -9 cnid_metad")
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
 
     async def _restart_afp(self, **kwargs):
         await self._stop_afp()
@@ -827,7 +895,7 @@ class ServiceService(CRUDService):
     async def _reload_afp(self, **kwargs):
         await self.middleware.call("etc.generate", "afpd")
         await self._system("killall -1 netatalk")
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
 
     async def _reload_nfs(self, **kwargs):
         await self.middleware.call("etc.generate", "nfsd")
@@ -884,7 +952,7 @@ class ServiceService(CRUDService):
         """
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("smbd", "reload", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
 
     async def _restart_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
@@ -893,7 +961,7 @@ class ServiceService(CRUDService):
         await self._service("winbindd", "restart", force=True, **kwargs)
         await self._service("nmbd", "restart", force=True, **kwargs)
         await self._service("wsdd", "restart", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
 
     async def _start_cifs(self, **kwargs):
         await self.middleware.call("etc.generate", "smb")
@@ -902,7 +970,7 @@ class ServiceService(CRUDService):
         await self._service("winbindd", "start", force=True, **kwargs)
         await self._service("nmbd", "start", force=True, **kwargs)
         await self._service("wsdd", "start", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
         try:
             await self.middleware.call("smb.add_admin_group", "", True)
         except Exception as e:
@@ -913,7 +981,7 @@ class ServiceService(CRUDService):
         await self._service("winbindd", "stop", force=True, **kwargs)
         await self._service("nmbd", "stop", force=True, **kwargs)
         await self._service("wsdd", "stop", force=True, **kwargs)
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
 
     async def _started_cifs(self, **kwargs):
         if await self._service("smbd", "status", quiet=True, onetime=True, **kwargs):
@@ -946,12 +1014,12 @@ class ServiceService(CRUDService):
 
     async def _restart_http(self, **kwargs):
         await self.middleware.call("etc.generate", "nginx")
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
         await self._service("nginx", "restart", **kwargs)
 
     async def _reload_http(self, **kwargs):
         await self.middleware.call("etc.generate", "nginx")
-        await self.middleware.call('mdnsadvertise.restart')
+        await self.reload("mdns", kwargs)
         await self._service("nginx", "reload", **kwargs)
 
     async def _reload_loader(self, **kwargs):

@@ -27,6 +27,7 @@
 # $FreeBSD$
 #####################################################################
 
+import copy
 import getpass
 import os
 import re
@@ -34,46 +35,291 @@ import signal
 import sys
 import subprocess
 import time
+import traceback
 
 import ipaddr
-import requests
+import sqlite3
 
 # Only root can run it.
 if os.geteuid() != 0:
     exit("This command must be run with root privileges.")
 
-WWW_PATH = "/usr/local/www"
-FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
-NETWORK_PATH = os.path.join(FREENAS_PATH, "network")
-NOTIFIER_PATH = os.path.join(FREENAS_PATH, "middleware/notifier.py")
-
 FREENAS_DATA_PATH = "/data"
 FREENAS_DB = os.path.join(FREENAS_DATA_PATH, "freenas-v1.db")
 
-sys.path.append(WWW_PATH)
-sys.path.append(FREENAS_PATH)
-sys.path.append(NETWORK_PATH)
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-import django
-django.setup()
-
-from django.utils.translation import ugettext as _
-
 _ = lambda s: s
 
-from freenasUI.choices import NICChoices, LAGGType
-from freenasUI.common import i18n
-from freenasUI.common.system import get_sw_version
-from freenasUI.network.models import GlobalConfiguration, Interfaces, \
-	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
-from freenasUI.system.models import Settings, Support
-from freenasUI.middleware.client import client
-from freenasUI.middleware.notifier import notifier
+from middlewared.client import Client
 
 from requests.packages.urllib3 import poolmanager
 from requests.packages.urllib3.connectionpool import HTTPSConnectionPool
+
+LAGGType = (
+    ('failover', 'Failover'),
+    ('lacp', 'LACP'),
+    ('loadbalance', 'Load Balance'),
+    ('roundrobin', 'Round Robin'),
+    ('none', 'None'),
+)
+
+
+class NICChoices(object):
+    """Populate a list of NIC choices"""
+    def __init__(self, nolagg=False, novlan=False, noloopback=True, notap=True,
+                 exclude_configured=True, include_vlan_parent=False,
+                 exclude_unconfigured_vlan_parent=False,
+                 with_alias=False, nobridge=True, noepair=True, include_lagg_parent=True):
+
+        self.nolagg = nolagg
+        self.novlan = novlan
+        self.noloopback = noloopback
+        self.notap = notap
+        self.exclude_configured = exclude_configured
+        self.include_vlan_parent = include_vlan_parent
+        self.exclude_unconfigured_vlan_parent = exclude_unconfigured_vlan_parent
+        self.with_alias = with_alias
+        self.nobridge = nobridge
+        self.noepair = noepair
+        self.include_lagg_parent = include_lagg_parent
+
+    def __iter__(self):
+        pipe = os.popen("/sbin/ifconfig -l")
+        self._NIClist = pipe.read().strip().split(' ')
+        self._NIClist = [y for y in self._NIClist if y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0')]
+        if self.noloopback is False:
+            self._NIClist.append('lo0')
+
+        # Remove internal interfaces for failover
+        with Client() as c:
+            if not c.call('system.is_freenas'):
+                for iface in c.call('failover.internal_interfaces'):
+                    if iface in self._NIClist:
+                        self._NIClist.remove(iface)
+
+        conn = sqlite3.connect('/data/freenas-v1.db')
+        c = conn.cursor()
+        # Remove interfaces that are parent devices of a lagg
+        # Database queries are wrapped in try/except as this is run
+        # before the database is created during syncdb and the queries
+        # will fail
+        if self.include_lagg_parent:
+            try:
+                c.execute("SELECT lagg_physnic FROM network_lagginterfacemembers")
+            except sqlite3.OperationalError:
+                pass
+            else:
+                for interface in c:
+                    if interface[0] in self._NIClist:
+                        self._NIClist.remove(interface[0])
+
+        if self.nolagg:
+            # vlan devices are not valid parents of laggs
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("lagg")]
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
+        if self.novlan:
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
+        else:
+            # This removes devices that are parents of vlans.  We don't
+            # remove these devices if we are adding a vlan since multiple
+            # vlan devices may share the same parent.
+            # The exception to this case is when we are getting the NIC
+            # list for the GUI, in which case we want the vlan parents
+            # as they may have a valid config on them.
+            if not self.include_vlan_parent or self.exclude_unconfigured_vlan_parent:
+                try:
+                    c.execute("SELECT vlan_pint FROM network_vlan")
+                except sqlite3.OperationalError:
+                    pass
+                else:
+                    for interface in c:
+                        if interface[0] in self._NIClist:
+                            self._NIClist.remove(interface[0])
+
+            if self.exclude_unconfigured_vlan_parent:
+                # Add the configured VLAN parents back in
+                try:
+                    c.execute("SELECT vlan_pint FROM network_vlan "
+                              "INNER JOIN network_interfaces ON "
+                              "network_vlan.vlan_pint=network_interfaces.int_interface "
+                              "WHERE network_interfaces.int_interface IS NOT NULL "
+                              "AND ((network_interfaces.int_ipv4address != '' "
+                              "AND network_interfaces.int_ipv4address IS NOT NULL) "
+                              "OR network_interfaces.int_dhcp = 1)")
+                except sqlite3.OperationalError:
+                    pass
+                else:
+                    for interface in c:
+                        if interface[0] not in self._NIClist:
+                            self._NIClist.append(interface[0])
+
+        if self.with_alias:
+            try:
+                sql = """
+                    SELECT
+                        int_interface
+
+                    FROM
+                        network_interfaces as ni
+
+                    INNER JOIN
+                        network_alias as na
+                    ON
+                        na.alias_interface_id = ni.id
+                """
+                c.execute(sql)
+
+            except sqlite3.OperationalError:
+                pass
+
+            else:
+                aliased_nics = [x[0] for x in c]
+                niclist = copy.deepcopy(self._NIClist)
+                for interface in niclist:
+                    if interface not in aliased_nics:
+                        self._NIClist.remove(interface)
+
+        if self.exclude_configured:
+            try:
+                # Exclude any configured interfaces
+                c.execute("SELECT int_interface FROM network_interfaces")
+            except sqlite3.OperationalError:
+                pass
+            else:
+                for interface in c:
+                    if interface[0] in self._NIClist:
+                        self._NIClist.remove(interface[0])
+
+        if self.nobridge:
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("bridge")]
+
+        if self.noepair:
+            niclist = copy.deepcopy(self._NIClist)
+            for nic in niclist:
+                if nic.startswith('epair') or nic.startswith('vnet'):
+                    self._NIClist.remove(nic)
+
+        if self.notap:
+            taplist = copy.deepcopy(self._NIClist)
+            for nic in taplist:
+                if nic.startswith('tap'):
+                    self._NIClist.remove(nic)
+
+        self.max_choices = len(self._NIClist)
+
+        return iter((i, i) for i in self._NIClist)
+
+
+class DjangoModelMeta(type):
+    @property
+    def objects(cls):
+        return DjangoModelManager(cls)
+
+
+class DjangoModel(metaclass=DjangoModelMeta):
+    datastore = NotImplementedError
+
+    def __init__(self, **kwargs):
+        self.row = kwargs
+
+    def __getattr__(self, item):
+        try:
+            return self.row[item]
+        except KeyError:
+            return None
+
+    def __setattr__(self, key, value):
+        if key in ['row']:
+            self.__dict__[key] = value
+        else:
+            self.row[key] = value
+
+    def save(self):
+        data = self.row.copy()
+
+        for k, v in data.items():
+            if isinstance(v, DjangoModel):
+                if v.id is None:
+                    v.save()
+
+                data[k] = v.id
+
+        with Client() as c:
+            if 'id' in self.row:
+                c.call('datastore.update', self.datastore, self.row['id'], data)
+            else:
+                self.row['id'] = c.call('datastore.insert', self.datastore, data)
+
+    def delete(self):
+        with Client() as c:
+            c.call('datastore.delete', self.datastore, self.row['id'])
+
+
+class DjangoModelManager:
+    def __init__(self, cls):
+        self.cls = cls
+
+    def all(self):
+        return self.filter()
+
+    def create(self, **kwargs):
+        self.cls(**kwargs).save()
+
+    def filter(self, **kwargs):
+        with Client() as c:
+            return DjangoModelResultSet([
+                self.cls(**row)
+                for row in c.call('datastore.query', self.cls.datastore, [[k, '=', v] for k, v in kwargs.items()])
+            ])
+
+
+class DjangoModelResultSet:
+    def __init__(self, objects):
+        self.objects = objects
+
+    def exists(self):
+        return bool(self.objects)
+
+    def __bool__(self):
+        return bool(self.objects)
+
+    def __getitem__(self, item):
+        return self.objects[item]
+
+    def __iter__(self):
+        return iter(self.objects)
+
+
+def produce_django_model(ds):
+    class Model(DjangoModel):
+        datastore = ds
+
+    return Model
+
+
+LAGGInterfaceMembers = produce_django_model("network.lagginterfacemembers")
+VLAN = produce_django_model("network.vlan")
+GlobalConfiguration = produce_django_model("network.globalconfiguration")
+StaticRoute = produce_django_model("network.staticroute")
+Support = produce_django_model("system.support")
+
+
+class Interfaces(DjangoModel):
+    datastore = "network.interfaces"
+
+    def __str__(self):
+        if not self.int_name:
+            return self.int_interface
+        return str(self.int_name)
+
+
+class LAGGInterface(DjangoModel):
+    datastore = "network.lagginterface"
+
+    def __init__(self, **kwargs):
+        if 'lagg_interface' in kwargs and isinstance(kwargs['lagg_interface'], dict):
+            kwargs['lagg_interface'] = Interfaces(**kwargs['lagg_interface'])
+
+        super().__init__(**kwargs)
 
 
 class FailoverIsEnabledException(Exception):
@@ -81,12 +327,13 @@ class FailoverIsEnabledException(Exception):
 
 
 def ensure_failover_is_disabled():
-    if not notifier().is_freenas() and notifier().failover_licensed():
-        from freenasUI.failover.models import Failover
-        qs = Failover.objects.all()
-        if qs.exists():
-            if not qs[0].disabled:
-                raise FailoverIsEnabledException()
+    with Client() as c:
+        if (
+                not c.call('system.is_freenas') and
+                c.call('failover.licensed') and
+                not c.call('failover.config')['disabled']
+        ):
+            raise FailoverIsEnabledException()
 
 
 # Custom class to avoid warning about unverified SSL, see #16474
@@ -176,10 +423,16 @@ def get_nic(choices=None):
 def get_lagg_proto():
     proto = False
 
+    with Client() as c:
+        is_freenas = c.call('system.is_freenas')
+        failover_licensed = False
+        if not is_freenas:
+            failover_licensed = c.call('failover.licensed')
+
     while True:
         protos = { }
         types = LAGGType
-        if  not notifier().is_freenas() and notifier().failover_licensed():
+        if  not is_freenas and failover_licensed:
             types = list(filter(lambda x: x[0] != 'failover', types))
         for i, t in enumerate(types):
             protos[i] = t[0]
@@ -215,7 +468,8 @@ def get_lagg_nics():
 
 def configure_interface_stub(*args):
     retval = configure_interface()
-    notifier().restart("http")
+    with Client() as c:
+        c.call('service.restart', 'http')
     return retval
 
 
@@ -248,13 +502,15 @@ def configure_interface():
             print(_("Ok"))
             print(_("Restarting network:"), end=' ')
             try:
-                notifier().start("network")
+                with Client() as c:
+                    c.call('service.start', 'network')
             except:
                 print(_("Failed"))
             print(_("ok"))
             print(_("Restarting routing:"), end=' ')
             try:
-                notifier().reload("networkgeneral")
+                with Client() as c:
+                    c.call('service.reload', 'networkgeneral')
             except:
                 print(_("Failed"))
             print(_("ok"))
@@ -288,13 +544,15 @@ def configure_interface():
             print(_("Ok"))
             print(_("Restarting network:"), end=' ')
             try:
-                notifier().start("network")
+                with Client() as c:
+                    c.call('service.start', 'network')
             except:
                 print(_("Failed"))
             print(_("ok"))
             print(_("Restarting routing:"), end=' ')
             try:
-                notifier().reload("networkgeneral")
+                with Client() as c:
+                    c.call('service.reload', 'networkgeneral')
             except:
                 print(_("Failed"))
             print(_("ok"))
@@ -337,7 +595,12 @@ def configure_interface():
         else:
             break
 
-    _n = notifier()
+    with Client() as c:
+        is_freenas = c.call('system.is_freenas')
+        failover_node = failover_licensed = False
+        if not is_freenas:
+            failover_licensed = c.call('failover.licensed')
+            failover_node = c.call('failover.node')
 
     while True and need_restart != "DHCP":
         yes = input(_("Configure IPv4? (y/n) "))
@@ -346,8 +609,8 @@ def configure_interface():
             int_name = input(int_name_prompt)
             if not int_name and iface.int_name:
                 int_name = iface.int_name
-            if not _n.is_freenas() and _n.failover_licensed():
-                if _n.failover_node() == 'A':
+            if not is_freenas and failover_licensed:
+                if failover_node == 'A':
                     ip_label = "IPv4 Address (This TrueNAS Controller)"
                     ip_b_label = "IPv4 Address (TrueNAS Controller 2)"
                 else:
@@ -373,7 +636,7 @@ def configure_interface():
                 if not ip and iface.int_ipv4address:
                     ip = iface.int_ipv4address
 
-                if not _n.is_freenas() and _n.failover_licensed():
+                if failover_licensed:
                     ip_b = input(ip_b_prompt)
 
                     if not ip_b and iface.int_ipv4address_b:
@@ -387,7 +650,7 @@ def configure_interface():
                         continue
                     ip, mask = ip.split('/')
 
-                    if not _n.is_freenas() and _n.failover_licensed():
+                    if failover_licensed:
                         try:
                             ipaddr.IPNetwork(ip_b, version=4)
                         except ValueError:
@@ -498,7 +761,7 @@ Acceptable formats are 255.255.255.0,
             break
 
     while True:
-        if _n.is_freenas() or not _n.failover_licensed():
+        if failover_licensed:
             break
         yes = input(_("Configure failover settings? (y/n) "))
         if yes.lower().startswith("y"):
@@ -568,28 +831,24 @@ Acceptable formats are 255.255.255.0,
     if need_restart:
         print(_("Restarting network:"), end=' ')
         try:
-            notifier().start("network")
+            with Client() as c:
+                c.call('service.start', 'network')
         except:
             print(_("Failed"))
         print(_("ok"))
     if need_restart == "DHCP":
         print(_("Restarting routing:"), end=' ')
         try:
-            notifier().reload("networkgeneral")
+            with Client() as c:
+                c.call('service.reload', 'networkgeneral')
         except:
             print(_("Failed"))
         print(_("ok"))
         return True
 
 def reset_root_pw(*args):
-    from freenasUI.account.models import bsdUsers
-    qs = bsdUsers.objects.filter(bsdusr_uid=0)
-    if not qs.exists():
-        return None
-    user = qs[0]
-
     print()
-    print(_("Changing password for %s") % user.bsdusr_username)
+    print(_("Changing password for root"))
     print()
 
     if not args:
@@ -608,12 +867,17 @@ def reset_root_pw(*args):
 
     if p1:
         try:
-            with client as c:
-                c.call("user.update", user.id, {"password": p1})
+            with Client() as c:
+                user_id = c.call("user.query", [["username", "=", "root"]], {"get": True})["id"]
+                c.call("user.update", user_id, {"password": p1})
         except (FileNotFoundError, ConnectionRefusedError):
             from middlewared.plugins.account import crypted_password
-            user.bsdusr_unixhash = crypted_password(p1)
-            user.save()
+            conn = sqlite3.connect(FREENAS_DB)
+            c = conn.cursor()
+            c.execute("UPDATE account_bsdusers SET bsdusr_unixhash = ? WHERE bsdusr_username = 'root'",
+                      (crypted_password(p1),))
+            conn.commit()
+            conn.close()
         print()
         print(_('Password successfully changed.'))
         print()
@@ -633,7 +897,7 @@ def reset_factory_defaults(*args):
                   + '(yes/no): ')
     if a.lower().startswith('y'):
         try:
-            with client as c:
+            with Client() as c:
                 c.call('config.reset', {'reboot': False}, job=True)
             os.system("/sbin/shutdown -r now")
         except Exception as e:
@@ -727,7 +991,8 @@ def create_lagg_interface():
 
     print(_("Restarting network:"), end=' ')
     try:
-        notifier().start("network")
+        with Client() as c:
+            c.call('service.start', 'network')
     except:
         print(_("Failed"))
         return False
@@ -780,7 +1045,8 @@ def delete_lagg_interface():
     print(_("Ok"))
     print(_("Restarting network:"), end=' ')
     try:
-        notifier().start("network")
+        with Client() as c:
+            c.call('service.start', 'network')
     except:
         print(_("Failed"))
         return False
@@ -890,7 +1156,8 @@ def create_vlan():
     print(_("Ok"))
     print(_("Restarting network:"), end=' ')
     try:
-        notifier().start("network")
+        with Client() as c:
+            c.call('service.start', 'network')
     except:
         print(_("Failed"))
         return False
@@ -1017,7 +1284,8 @@ def configure_default_route(*args):
     if need_save:
         print(_("Restarting routing:"), end=' ')
         try:
-            notifier().reload("networkgeneral")
+            with Client() as c:
+                c.call('service.reload', 'networkgeneral')
         except:
             print(_("Failed"))
             return False
@@ -1058,7 +1326,8 @@ def configure_static_routes(*args):
     print(_("ok"))
     try:
         print(_("Restarting routing:"), end=' ')
-        notifier().reload("networkgeneral")
+        with Client() as c:
+            c.call('service.reload', 'networkgeneral')
     except:
         print(_("Failed"))
         return False
@@ -1129,7 +1398,8 @@ def configure_dns(*args):
 
         print(_("Reloading network config:"), end=' ')
         try:
-            notifier().reload("networkgeneral")
+            with Client() as c:
+                c.call('service.reload', 'networkgeneral')
         except:
             print(_("Failed"))
             return False
@@ -1181,86 +1451,9 @@ def shutdown(*args):
             return False
 
 
-def get_urls(addrs, ipv6=False):
-
-    skip_internal = False
-    if not notifier().is_freenas():
-        skip_internal = True
-
-    urls = []
-    inet = ('inet6', 'prefixlen') if ipv6 else ('inet', 'broadcast')
-    for addr in addrs:
-        ip, port = addr.split(':')
-
-        ips = []
-        if ip == '*':
-            p1 = subprocess.Popen('ifconfig -a %s | grep %s | cut -f2 -d" "' % inet, shell=True, stdout=subprocess.PIPE, encoding='utf8')
-            out = p1.communicate()[0].strip('\n').strip(' ').split('\n')
-            if out:
-                ips = out
-        else:
-            ips = [ip]
-        ips = [y for y in ips if y != '::1' and not y.endswith('lo0')]
-        for o in ips:
-            if skip_internal and o in (
-                '169.254.10.1',
-                '169.254.10.2',
-                '169.254.10.20',
-                '169.254.10.80',
-            ):
-                continue
-
-            if ipv6 and '%' in o:
-                o = o.split('%')[0]
-
-            try:
-                if ipv6:
-                    url = 'http://[%s]' % o
-                else:
-                    url = 'http://%s' % o
-                if port != '80':
-                    url = '%s:%s' % (url, port)
-                r = requests.head(url, timeout=10)
-                assert r.status_code in (200, 302, 301)
-                urls.append(url)
-                continue
-            except Exception as e:
-                pass
-
-            try:
-                if ipv6:
-                    url = 'https://[%s]' % o
-                else:
-                    url = 'https://%s' % o
-                if port != '443':
-                    url = '%s:%s' % (url, port)
-                r = requests.head(url, timeout=15, verify=False)
-                assert r.status_code in (200, 302)
-                urls.append(url)
-                continue
-            except Exception as e:
-                pass
-    return urls
-
-
 def show_ip():
-    p1 = subprocess.Popen("sockstat -46P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $5\",\"$6 }'|sort|uniq", shell=True, stdout=subprocess.PIPE, encoding='utf8')
-
-    addrsv4 = []
-    addrsv6 = []
-    for line in p1.communicate()[0].strip('\n').split('\n'):
-        _type, addr = line.split(',')
-
-        if _type == 'tcp4':
-            addrsv4.append(addr)
-        else:
-            addrsv6.append(addr)
-
-    urls = []
-    if addrsv4:
-        urls.extend(get_urls(addrsv4))
-    if addrsv6:
-        urls.extend(get_urls(addrsv6, ipv6=True))
+    with Client() as c:
+        urls = c.call('system.general.get_ui_urls')
 
     if urls:
         print()
@@ -1281,7 +1474,12 @@ def netcli_title():
     product = proc.communicate()[0].strip()
     proc = subprocess.Popen(['dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
     serial = proc.communicate()[0].strip()
-    return f'{product} | {get_sw_version(True)} | {serial}'
+    try:
+        with Client() as c:
+            version = c.call('system.version') + ' | '
+    except Exception:
+        version = ''
+    return f'{product} | {version}{serial}'
 
 
 def main_menu():
@@ -1299,7 +1497,18 @@ def main_menu():
         [ _("Shut Down"), shutdown],
     ]
 
-    if not notifier().is_freenas() and Support.is_available()[0]:
+    failover_status = 'SINGLE'
+    try:
+        with Client() as c:
+            support_available = c.call('support.is_available')
+            is_freenas = c.call('system.is_freenas')
+            if not is_freenas:
+                failover_status = c.call('failover.status')
+    except Exception:
+        support_available = False
+        is_freenas = True
+
+    if not is_freenas and support_available:
         menu.insert(12, [ _("Toggle automatic support alerts to iXsystems"), automatic_ix_alert ])
 
     menu_map = {}
@@ -1313,19 +1522,17 @@ def main_menu():
                 item[1](*sys.argv[2:])
                 sys.exit(0)
 
-    is_truenas = hasattr(notifier(), 'failover_status')
-
     while True:
-        if is_truenas and os.path.exists('/tmp/.failover_needop'):
+        if not is_freenas and os.path.exists('/tmp/.failover_needop'):
             """
             Currently we can have multiple pools.
             Because one encrypted pool failed to import does not mean the node
             is supposed/allowed to unlock.
             """
-            passphrase = (notifier().failover_status() != 'MASTER')
+            passphrase = (failover_status != 'MASTER')
             if passphrase:
                 try:
-                    with client as c:
+                    with Client() as c:
                         passphrase &= (
                             c.call('failover.call_remote', 'failover.status') != 'MASTER'
                         )
@@ -1340,7 +1547,7 @@ def main_menu():
                     time.sleep(5)
                     continue
 
-        if is_truenas:
+        if not is_freenas:
             print(netcli_title())
 
         print()
@@ -1378,12 +1585,11 @@ def main_menu():
 #
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    i18n.apply_language()
 
     while True:
         try:
             try:
-                with client as c:
+                with Client() as c:
                     console = c.call('system.advanced.config')['consolemenu']
             except Exception:
                     console = True
@@ -1395,4 +1601,5 @@ if __name__ == '__main__':
         except SystemExit as e:
             sys.exit(e.code)
         except Exception:
+            traceback.print_exc()
             exit(1)

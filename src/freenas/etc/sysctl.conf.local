@@ -1,0 +1,35 @@
+# Template sysctl.conf file...  Maybe we should put these in the database by default.
+
+# By default, FreeBSD flushes things to disk every 30s or so.  In an embedded
+# environment, this can leave too much data unflushed.  Reduced these times to
+# about as short as you can go.  The syncer flushes these different types
+# of blocks after they have been in the queues for X seconds.  It is critical
+# that metadelay < dirdelay < filedelay and no fractions are allowed.
+
+kern.metadelay=3
+kern.dirdelay=4
+kern.filedelay=5
+kern.coredump=1
+kern.sugid_coredump=1
+vfs.timestamp_precision=3
+net.link.lagg.lacp.default_strict_mode=0
+
+# NFS tuning
+vfs.nfsd.tcpcachetimeo=300
+vfs.nfsd.tcphighwater=150000
+
+# Force minimal 4KB ashift for new top level ZFS VDEVs.
+vfs.zfs.min_auto_ashift=12
+
+# Reduce default indirect block size from 128KB to 32KB.
+vfs.zfs.default_ibs=15
+
+net.inet.carp.preempt=1
+# Do not allow carp to run until boot is finished
+# See #28198 for one of the implications
+net.inet.carp.allow=0
+
+# don't automagically deprioritize carp
+# we handle that in the application layer
+net.inet.carp.senderr_demotion_factor=0
+net.inet.carp.ifdown_demotion_factor=0

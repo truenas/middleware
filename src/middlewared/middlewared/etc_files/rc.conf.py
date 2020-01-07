@@ -32,7 +32,7 @@ def collectd_config(middleware, context):
 
         rrdcached_flags = '-s www -l /var/run/rrdcached.sock -p /var/run/rrdcached.pid'
         sysds = middleware.call_sync('systemdataset.config')
-        if sysds['pool'] in ('', 'freenas-boot'):
+        if sysds['pool'] in ('', middleware.call_sync('boot.pool_name')):
             rrdcached_flags += ' -w 3600 -f 7200'
         yield f'rrdcached_flags="{rrdcached_flags}"'
     else:
@@ -109,7 +109,7 @@ def services_config(middleware, context):
     These daemons should be configured to start in the following scenarios:
         1. FreeNAS systems
         2. TrueNAS single controller systems
-        3. ONLY TrueNAS MASTER controllers in HA systems
+        3. ONLY TrueNAS ACTIVE controllers in HA systems
     """
     mapping = {}
     if not context['failover_licensed'] or context['failover_status'] == 'MASTER':
@@ -117,6 +117,8 @@ def services_config(middleware, context):
             'afp': ['netatalk'],
             'dynamicdns': ['inadyn'],
             'ftp': ['proftpd'],
+            'openvpn_client': ['openvpn_client'],
+            'openvpn_server': ['openvpn_server'],
             's3': ['minio'],
             'rsync': ['rsyncd'],
             'snmp': ['snmpd', 'snmp_agent'],
@@ -238,6 +240,11 @@ def nfs_config(middleware, context):
                 yield 'nfsuserd_enable="YES"'
             sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
             sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 0
+            nfsuserd_flags = []
+            if nfs['v4_domain']:
+                nfsuserd_flags.append(f"-domain {nfs['v4_domain']}")
+            if nfsuserd_flags:
+                yield f"nfsuserd_flags=\"{' '.join(nfsuserd_flags)}\""
     else:
         if nfs['userd_manage_gids']:
             if enabled:
@@ -283,6 +290,16 @@ def nut_config(middleware, context):
         yield f'nut_upslog_ups="{ups["identifier"]}@{ups["remotehost"]}:{ups["remoteport"]}"'
     yield 'nut_upslog_enable="YES"'
     yield 'nut_upsmon_enable="YES"'
+
+
+def openvpn_server_config(middleware, context):
+    yield 'openvpn_server_configfile="/usr/local/etc/openvpn/server/openvpn_server.conf"'
+    yield 'openvpn_server_dir="/usr/local/etc/openvpn/server"'
+
+
+def openvpn_client_config(middleware, context):
+    yield 'openvpn_client_configfile="/usr/local/etc/openvpn/client/openvpn_client.conf"'
+    yield 'openvpn_client_dir="/usr/local/etc/openvpn/client"'
 
 
 def powerd_config(middleware, context):
@@ -433,6 +450,8 @@ def render(service, middleware):
         nfs_config,
         nis_config,
         nut_config,
+        openvpn_client_config,
+        openvpn_server_config,
         powerd_config,
         s3_config,
         smart_config,

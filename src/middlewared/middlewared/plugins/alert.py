@@ -31,6 +31,7 @@ from middlewared.service import (
     job, periodic, private,
 )
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.validators import validate_attributes
 from middlewared.utils import bisect, load_modules, load_classes
 
@@ -41,6 +42,25 @@ ALERT_SOURCES = {}
 ALERT_SERVICES_FACTORIES = {}
 
 AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
+
+
+class AlertModel(sa.Model):
+    __tablename__ = 'system_alert'
+    __table_args__ = (
+        sa.Index('system_alert_node_f77e0d77_uniq', 'node', 'klass', 'key', unique=True),
+    )
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    node = sa.Column(sa.String(100))
+    source = sa.Column(sa.Text())
+    key = sa.Column(sa.Text())
+    datetime = sa.Column(sa.DateTime())
+    last_occurrence = sa.Column(sa.DateTime())
+    text = sa.Column(sa.Text())
+    args = sa.Column(sa.JSON())
+    dismissed = sa.Column(sa.Boolean())
+    uuid = sa.Column(sa.Text())
+    klass = sa.Column(sa.Text())
 
 
 class AlertSourceRunFailedAlertClass(AlertClass):
@@ -154,9 +174,6 @@ class AlertService(Service):
         for sources_dir in sources_dirs:
             for module in load_modules(sources_dir):
                 for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
-                    if not is_freenas and cls.freenas_only:
-                        continue
-
                     source = cls(self.middleware)
                     ALERT_SOURCES[source.name] = source
 
@@ -223,13 +240,13 @@ class AlertService(Service):
     @accepts()
     async def list_categories(self):
         """
-        List all types of alert sources which the system can issue.
+        List all types of alerts which the system can issue.
         """
 
-        is_freenas = await self.middleware.call("system.is_freenas")
+        product_type = await self.middleware.call("system.product_type")
 
         classes = [alert_class for alert_class in AlertClass.classes
-                   if not alert_class.exclude_from_list and not (not is_freenas and alert_class.freenas_only)]
+                   if product_type in alert_class.products and not alert_class.exclude_from_list]
 
         return [
             {
@@ -364,6 +381,8 @@ class AlertService(Service):
         valid_alerts = copy.deepcopy(self.alerts)
         await self.__run_alerts()
 
+        self.__expire_alerts()
+
         if not await self.__should_run_or_send_alerts():
             self.alerts = valid_alerts
             return
@@ -492,9 +511,10 @@ class AlertService(Service):
     async def __run_alerts(self):
         master_node = "A"
         backup_node = "B"
+        product_type = await self.middleware.call("system.product_type")
         run_on_backup_node = False
         run_failover_related = False
-        if not await self.middleware.call("system.is_freenas"):
+        if product_type == "ENTERPRISE":
             if await self.middleware.call("failover.licensed"):
                 if await self.middleware.call("failover.node") == "B":
                     master_node = "B"
@@ -518,10 +538,13 @@ class AlertService(Service):
                 await self.unblock_source(k)
 
         for alert_source in ALERT_SOURCES.values():
-            if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
+            if product_type not in alert_source.products:
                 continue
 
             if alert_source.failover_related and not run_failover_related:
+                continue
+
+            if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
                 continue
 
             self.alert_source_last_run[alert_source.name] = datetime.utcnow()
@@ -555,7 +578,8 @@ class AlertService(Service):
                                                                   [alert_source.name])
 
                             alerts_b = [Alert(**dict({k: v for k, v in alert.items()
-                                                      if k in ["args", "datetime", "dismissed", "mail"]},
+                                                      if k in ["args", "datetime", "last_occurrence", "dismissed",
+                                                               "mail"]},
                                                      klass=AlertClass.class_by_name[alert["klass"]],
                                                      _source=alert["source"],
                                                      _key=alert["key"]))
@@ -609,10 +633,21 @@ class AlertService(Service):
                 alert.datetime = alert.datetime.astimezone(timezone.utc).replace(tzinfo=None)
         else:
             alert.datetime = existing_alert.datetime
+        alert.last_occurrence = datetime.utcnow()
         if existing_alert is None:
             alert.dismissed = False
         else:
             alert.dismissed = existing_alert.dismissed
+
+    def __expire_alerts(self):
+        self.alerts = list(filter(lambda alert: not self.__should_expire_alert(alert), self.alerts))
+
+    def __should_expire_alert(self, alert):
+        if issubclass(alert.klass, OneShotAlertClass):
+            if alert.klass.expires_after is not None:
+                return alert.last_occurrence < datetime.utcnow() - alert.klass.expires_after
+
+        return False
 
     @private
     async def run_source(self, source_name):
@@ -752,6 +787,17 @@ class AlertService(Service):
             raise CallError("Alert source {name!r} not found.", errno.ENOENT)
 
         self.alert_source_last_run[alert_source.name] = datetime.min
+
+
+class AlertServiceModel(sa.Model):
+    __tablename__ = 'system_alertservice'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(120))
+    type = sa.Column(sa.String(20))
+    attributes = sa.Column(sa.JSON())
+    enabled = sa.Column(sa.Boolean())
+    level = sa.Column(sa.String(20))
 
 
 class AlertServiceService(CRUDService):
@@ -924,13 +970,14 @@ class AlertServiceService(CRUDService):
 
         master_node = "A"
         if not await self.middleware.call("system.is_freenas"):
-            if await self.middleware.call("notifier.failover_licensed"):
+            if await self.middleware.call("failover.licensed"):
                 master_node = await self.middleware.call("failover.node")
 
         test_alert = Alert(
             TestAlertClass,
             node=master_node,
             datetime=datetime.utcnow(),
+            last_occurrence=datetime.utcnow(),
             _uuid="test",
         )
 
@@ -941,6 +988,13 @@ class AlertServiceService(CRUDService):
             return False
 
         return True
+
+
+class AlertClassesModel(sa.Model):
+    __tablename__ = 'system_alertclasses'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    classes = sa.Column(sa.JSON())
 
 
 class AlertClassesService(ConfigService):

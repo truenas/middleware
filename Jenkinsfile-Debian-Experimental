@@ -1,0 +1,43 @@
+pipeline {
+  agent {
+    node {
+       label 'FreeNAS-webui'
+    }
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        dir('src') {
+           checkout scm
+        }
+        sh 'git clone http://github.com/truenas/repo-mgmt mgmt || ( cd mgmt ; git pull )'
+      }
+    }
+    stage('Cleanup') {
+      steps {
+        sh 'cd src && rm -rf * && git reset --hard HEAD'
+      }
+    }
+    stage('Build') {
+      steps {
+        sh 'env DEB_SIGN_KEYID=92B8B783F95A684C0A3B643073CF445610D143A1 ./mgmt/scripts/debuilder --path src/debian -D bullseye-truenas-experimental -vvv'
+        sh 'env DEB_SIGN_KEYID=92B8B783F95A684C0A3B643073CF445610D143A1 ./mgmt/scripts/debuilder --path src/src/middlewared -D bullseye-truenas-experimental -vvv'
+        sh 'env DEB_SIGN_KEYID=92B8B783F95A684C0A3B643073CF445610D143A1 ./mgmt/scripts/debuilder --path src/src/freenas -D bullseye-truenas-experimental -vvv'
+      }
+    }
+    stage('Push to buildd') {
+      steps {
+        withCredentials([file(credentialsId: 'dput.cf', variable: 'dputcfg')]) {
+          sh "dput -c \"${dputcfg}\" mini-buildd-mini-buildd-host src/truenas*.changes"
+          sh "dput -c \"${dputcfg}\" mini-buildd-mini-buildd-host src/src/middlewared*.changes"
+          sh "dput -c \"${dputcfg}\" mini-buildd-mini-buildd-host src/src/truenas-files*.changes"
+        }
+      }
+    }
+  }
+  post {  
+    failure {  
+      mail bcc: '', body: "<b>Jenkins: Middleware Build Failure</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "ERROR CI: Project name -> ${env.JOB_NAME}", to: "william@ixsystems.com";
+     }  
+  }
+}

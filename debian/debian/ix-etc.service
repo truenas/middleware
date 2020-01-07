@@ -1,0 +1,17 @@
+[Unit]
+Description=Generate TrueNAS /etc files
+DefaultDependencies=no
+
+Before=network-pre.target
+
+Wants=systemd-modules-load.service local-fs.target
+After=systemd-modules-load.service local-fs.target middlewared.service
+
+[Service]
+Type=oneshot
+ExecStart=midclt call certificate.dhparam_setup
+ExecStart=midclt call etc.generate_all
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

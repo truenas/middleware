@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ -z "${PKG_ROOTDIR}" ] ; then
+	PKG_ROOTDIR=/
+fi
+
+if [ "$2" != "POST-INSTALL" ] ; then
+	exit 0
+fi
+
+chroot ${PKG_ROOTDIR} /usr/local/libexec/nas/post-install

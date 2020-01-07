@@ -1,0 +1,5 @@
+#!/bin/sh -ex
+(
+    cd "$(python3 -c 'import os; import middlewared; print(os.path.dirname(middlewared.__spec__.origin))')" &&
+    alembic upgrade head
+)

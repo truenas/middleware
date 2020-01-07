@@ -92,6 +92,10 @@ class DirectoryServices(Service):
         self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state)
         return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
 
+    @accepts()
+    async def cache_refresh(self):
+        return await self.middleware.call('dscache.refresh')
+
     @private
     async def dstype_choices(self):
         return [x.value.upper() for x in list(DSType)]

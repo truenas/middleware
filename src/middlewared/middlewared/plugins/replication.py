@@ -1,21 +1,79 @@
-from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, time
 import os
-import pickle
-import re
-
-import psutil
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Path, Str
 from middlewared.service import item_method, job, private, CallError, CRUDService, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
 
 
-class ReplicationService(CRUDService):
+class ReplicationModel(sa.Model):
+    __tablename__ = 'storage_replication'
 
-    ZFS_SEND_REGEX = re.compile(r"zfs: sending (?P<snapshot>.+) \([0-9]+%: (?P<current>[0-9]+)/(?P<total>[0-9]+)\)")
+    id = sa.Column(sa.Integer(), primary_key=True)
+    repl_target_dataset = sa.Column(sa.String(120))
+    repl_recursive = sa.Column(sa.Boolean(), default=False)
+    repl_compression = sa.Column(sa.String(120), nullable=True, default="LZ4")
+    repl_speed_limit = sa.Column(sa.Integer(), nullable=True, default=None)
+    repl_schedule_begin = sa.Column(sa.Time(), nullable=True, default=time(hour=0))
+    repl_schedule_end = sa.Column(sa.Time(), nullable=True, default=time(hour=23, minute=45))
+    repl_enabled = sa.Column(sa.Boolean(), default=True)
+    repl_direction = sa.Column(sa.String(120), default="PUSH")
+    repl_transport = sa.Column(sa.String(120), default="SSH")
+    repl_ssh_credentials_id = sa.Column(sa.ForeignKey('system_keychaincredential.id'), index=True, nullable=True)
+    repl_netcat_active_side = sa.Column(sa.String(120), nullable=True, default=None)
+    repl_netcat_active_side_port_min = sa.Column(sa.Integer(), nullable=True)
+    repl_netcat_active_side_port_max = sa.Column(sa.Integer(), nullable=True)
+    repl_source_datasets = sa.Column(sa.JSON(type=list))
+    repl_exclude = sa.Column(sa.JSON(type=list))
+    repl_naming_schema = sa.Column(sa.JSON(type=list))
+    repl_auto = sa.Column(sa.Boolean(), default=True)
+    repl_schedule_minute = sa.Column(sa.String(100), nullable=True, default="00")
+    repl_schedule_hour = sa.Column(sa.String(100), nullable=True, default="*")
+    repl_schedule_daymonth = sa.Column(sa.String(100), nullable=True, default="*")
+    repl_schedule_month = sa.Column(sa.String(100), nullable=True, default='*')
+    repl_schedule_dayweek = sa.Column(sa.String(100), nullable=True, default="*")
+    repl_only_matching_schedule = sa.Column(sa.Boolean())
+    repl_allow_from_scratch = sa.Column(sa.Boolean())
+    repl_hold_pending_snapshots = sa.Column(sa.Boolean())
+    repl_retention_policy = sa.Column(sa.String(120), default="NONE")
+    repl_lifetime_unit = sa.Column(sa.String(120), nullable=True, default='WEEK')
+    repl_lifetime_value = sa.Column(sa.Integer(), nullable=True, default=2)
+    repl_dedup = sa.Column(sa.Boolean(), default=False)
+    repl_large_block = sa.Column(sa.Boolean(), default=True)
+    repl_embed = sa.Column(sa.Boolean(), default=False)
+    repl_compressed = sa.Column(sa.Boolean(), default=True)
+    repl_retries = sa.Column(sa.Integer(), default=5)
+    repl_restrict_schedule_minute = sa.Column(sa.String(100), nullable=True, default="00")
+    repl_restrict_schedule_hour = sa.Column(sa.String(100), nullable=True, default="*")
+    repl_restrict_schedule_daymonth = sa.Column(sa.String(100), nullable=True, default="*")
+    repl_restrict_schedule_month = sa.Column(sa.String(100), nullable=True, default='*')
+    repl_restrict_schedule_dayweek = sa.Column(sa.String(100), nullable=True, default="*")
+    repl_restrict_schedule_begin = sa.Column(sa.Time(), nullable=True, default=time(hour=0))
+    repl_restrict_schedule_end = sa.Column(sa.Time(), nullable=True, default=time(hour=23, minute=45))
+    repl_netcat_active_side_listen_address = sa.Column(sa.String(120), nullable=True, default=None)
+    repl_netcat_passive_side_connect_address = sa.Column(sa.String(120), nullable=True, default=None)
+    repl_logging_level = sa.Column(sa.String(120), nullable=True, default=None)
+    repl_name = sa.Column(sa.String(120))
+    repl_state = sa.Column(sa.Text(), default="{}")
+    repl_properties = sa.Column(sa.Boolean(), default=True)
+    repl_replicate = sa.Column(sa.Boolean())
+
+    repl_periodic_snapshot_tasks = sa.relationship('PeriodicSnapshotTaskModel',
+                                                   secondary=lambda: ReplicationPeriodicSnapshotTaskModel.__table__)
+
+
+class ReplicationPeriodicSnapshotTaskModel(sa.Model):
+    __tablename__ = 'storage_replication_repl_periodic_snapshot_tasks'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    replication_id = sa.Column(sa.ForeignKey('storage_replication.id'))
+    task_id = sa.Column(sa.ForeignKey('storage_task.id'))
+
+
+class ReplicationService(CRUDService):
 
     class Config:
         datastore = "storage.replication"
@@ -24,26 +82,10 @@ class ReplicationService(CRUDService):
         datastore_extend_context = "replication.extend_context"
 
     @private
-    async def extend_context(self):
-        legacy_result, legacy_result_datetime = await self.middleware.run_in_thread(self._legacy_extend_context)
-
+    async def extend_context(self, extra):
         return {
             "state": await self.middleware.call("zettarepl.get_state"),
-            "legacy_result": legacy_result,
-            "legacy_result_datetime": legacy_result_datetime,
         }
-
-    def _legacy_extend_context(self):
-        try:
-            with open("/tmp/.repl-result", "rb") as f:
-                data = f.read()
-                legacy_result = pickle.loads(data)
-                legacy_result_datetime = datetime.fromtimestamp(os.stat("/tmp/.repl-result").st_mtime)
-        except Exception:
-            legacy_result = defaultdict(dict)
-            legacy_result_datetime = None
-
-        return legacy_result, legacy_result_datetime
 
     @private
     async def extend(self, data, context):
@@ -64,67 +106,12 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
-        if data["transport"] == "LEGACY":
-            if data["id"] in context["legacy_result"]:
-                legacy_result = context["legacy_result"][data["id"]]
-
-                msg = legacy_result.get("msg")
-                if msg == "Running":
-                    state = "RUNNING"
-                elif msg in ["Succeeded", "Up to date"]:
-                    state = "FINISHED"
-                else:
-                    state = "ERROR"
-
-                data["state"] = {
-                    "datetime": context["legacy_result_datetime"],
-                    "state": state,
-                    "last_snapshot": legacy_result.get("last_snapshot"),
-                }
-
-                if state == "ERROR":
-                    data["state"]["error"] = msg
-            else:
-                data["state"] = {
-                    "state": "PENDING",
-                }
-
-            progressfile = f"/tmp/.repl_progress_{data['id']}"
-            if os.path.exists(progressfile):
-                with open(progressfile, "r") as f:
-                    pid = f.read().strip()
-
-                try:
-                    pid = int(pid)
-                except ValueError:
-                    pass
-                else:
-                    try:
-                        title = " ".join(await self.middleware.run_in_thread(
-                            lambda: psutil.Process(pid).cmdline()
-                        ))
-                    except psutil.NoSuchProcess:
-                        pass
-                    else:
-                        m = self.ZFS_SEND_REGEX.match(title)
-                        if m:
-                            dataset, snapshot = m.group("snapshot").split("@")
-                            data["state"]["progress"] = {
-                                "dataset": dataset,
-                                "snapshot": snapshot,
-                                "current": int(m.group("current")),
-                                "total": int(m.group("total")),
-                            }
+        if "error" in context["state"]:
+            data["state"] = context["state"]["error"]
         else:
-            if "error" in context["state"]:
-                data["state"] = {
-                    "state": "ERROR",
-                    "error": context["state"]["error"],
-                }
-            else:
-                data["state"] = context["state"]["tasks"].get(f"replication_task_{data['id']}", {
-                    "state": "PENDING",
-                })
+            data["state"] = context["state"]["tasks"].get(f"replication_task_{data['id']}", {
+                "state": "PENDING",
+            })
 
         data["job"] = data["state"].pop("job", None)
 
@@ -148,7 +135,7 @@ class ReplicationService(CRUDService):
             "replication_create",
             Str("name", required=True),
             Str("direction", enum=["PUSH", "PULL"], required=True),
-            Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+            Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
             Int("ssh_credentials", null=True, default=None),
             Str("netcat_active_side", enum=["LOCAL", "REMOTE"], null=True, default=None),
             Str("netcat_active_side_listen_address", null=True, default=None),
@@ -159,7 +146,8 @@ class ReplicationService(CRUDService):
             Path("target_dataset", required=True, empty=False),
             Bool("recursive", required=True),
             List("exclude", items=[Path("dataset", empty=False)], default=[]),
-            Bool('properties', default=True),
+            Bool("properties", default=True),
+            Bool("replicate", default=False),
             List("periodic_snapshot_tasks", items=[Int("periodic_snapshot_task")], default=[],
                  validators=[Unique()]),
             List("naming_schema", items=[
@@ -217,7 +205,6 @@ class ReplicationService(CRUDService):
             to be open on `netcat_active_side`
             `ssh_credentials` is also required for control connection
           * `LOCAL` replicates to or from localhost
-          * `LEGACY` uses legacy replication engine prior to FreeNAS 11.3
         * `source_datasets` is a non-empty list of datasets to replicate snapshots from
         * `target_dataset` is a dataset to put snapshots into. It must exist on target side
         * `recursive` and `exclude` have the same meaning as for Periodic Snapshot Task
@@ -430,9 +417,6 @@ class ReplicationService(CRUDService):
             if not task["enabled"]:
                 raise CallError("Task is not enabled")
 
-            if task["transport"] == "LEGACY":
-                raise CallError("You can't run legacy replication manually")
-
             if task["state"]["state"] == "RUNNING":
                 raise CallError("Task is already running")
 
@@ -457,7 +441,7 @@ class ReplicationService(CRUDService):
             if data["naming_schema"]:
                 verrors.add("naming_schema", "This field has no sense for push replication")
 
-            if data["transport"] != "LEGACY" and not snapshot_tasks and not data["also_include_naming_schema"]:
+            if not snapshot_tasks and not data["also_include_naming_schema"]:
                 verrors.add(
                     "periodic_snapshot_tasks", "You must at least either bind a periodic snapshot task or provide "
                                                "\"Also Include Naming Schema\" for push replication task"
@@ -468,7 +452,7 @@ class ReplicationService(CRUDService):
                     verrors.add("schedule", "Push replication can't be bound to periodic snapshot task and have "
                                             "schedule at the same time")
             else:
-                if data["auto"] and not data["periodic_snapshot_tasks"] and data["transport"] != "LEGACY":
+                if data["auto"] and not data["periodic_snapshot_tasks"]:
                     verrors.add("auto", "Push replication that runs automatically must be either "
                                         "bound to periodic snapshot task or have schedule")
 
@@ -536,35 +520,6 @@ class ReplicationService(CRUDService):
                 except CallError as e:
                     verrors.add("ssh_credentials", str(e))
 
-        if data["transport"] == "LEGACY":
-            for should_be_true in ["auto", "allow_from_scratch"]:
-                if not data[should_be_true]:
-                    verrors.add(should_be_true, "Legacy replication does not support disabling this option")
-
-            for should_be_false in ["exclude", "periodic_snapshot_tasks", "naming_schema", "also_include_naming_schema",
-                                    "only_matching_schedule", "dedup", "large_block", "embed", "compressed"]:
-                if data[should_be_false]:
-                    verrors.add(should_be_false, "Legacy replication does not support this option")
-
-            if data["direction"] != "PUSH":
-                verrors.add("direction", "Only push application is allowed for Legacy transport")
-
-            if len(data["source_datasets"]) != 1:
-                verrors.add("source_datasets", "You can only have one source dataset for legacy replication")
-
-            if os.path.basename(data["target_dataset"]) != os.path.basename(data["source_datasets"][0]):
-                verrors.add(
-                    "target_dataset",
-                    "Target dataset basename should be same as source dataset basename for Legacy transport",
-                )
-
-            if data["retention_policy"] not in ["SOURCE", "NONE"]:
-                verrors.add("retention_policy", "Only \"source\" and \"none\" retention policies are supported by "
-                                                "legacy replication")
-
-            if data["retries"] != 1:
-                verrors.add("retries", "This value should be 1 for legacy replication")
-
         # Common for all directions and transports
 
         for i, source_dataset in enumerate(data["source_datasets"]):
@@ -587,6 +542,16 @@ class ReplicationService(CRUDService):
         for i, v in enumerate(data["exclude"]):
             if not any(v.startswith(ds + "/") for ds in data["source_datasets"]):
                 verrors.add(f"exclude.{i}", "This dataset is not a child of any of source datasets")
+
+        if data["replicate"]:
+            if not data["recursive"]:
+                verrors.add("recursive", "This option is required for full filesystem replication")
+
+            if data["exclude"]:
+                verrors.add("exclude", "This option is not supported for full filesystem replication")
+
+            if not data["properties"]:
+                verrors.add("properties", "This option is required for full filesystem replication")
 
         if data["schedule"]:
             if not data["auto"]:
@@ -644,7 +609,7 @@ class ReplicationService(CRUDService):
 
         return verrors, snapshot_tasks
 
-    @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+    @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
              Int("ssh_credentials", null=True, default=None))
     async def list_datasets(self, transport, ssh_credentials=None):
         """
@@ -669,7 +634,7 @@ class ReplicationService(CRUDService):
         return await self.middleware.call("zettarepl.list_datasets", transport, ssh_credentials)
 
     @accepts(Str("dataset", required=True),
-             Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+             Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
              Int("ssh_credentials", null=True, default=None))
     async def create_dataset(self, dataset, transport, ssh_credentials=None):
         """
@@ -714,7 +679,7 @@ class ReplicationService(CRUDService):
         List("naming_schema", empty=False, items=[
             Str("naming_schema", validators=[ReplicationSnapshotNamingSchema()])
         ]),
-        Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
+        Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
         Int("ssh_credentials", null=True, default=None),
     )
     async def count_eligible_manual_snapshots(self, datasets, naming_schema, transport, ssh_credentials):
@@ -837,5 +802,14 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
         await self.middleware.call('zettarepl.update_tasks')
 
 
+async def on_zettarepl_state_changed(middleware, id, fields):
+    if id.startswith('replication_task_'):
+        task_id = int(id.split('_')[-1])
+        middleware.send_event('replication.query', 'CHANGED', id=task_id, fields={'state': fields})
+
+
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', ReplicationFSAttachmentDelegate(middleware))
+
+    middleware.event_register('replication.query', 'Replication task state')
+    middleware.register_hook('zettarepl.state_change', on_zettarepl_state_changed)

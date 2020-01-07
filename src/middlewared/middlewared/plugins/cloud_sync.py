@@ -4,6 +4,7 @@ from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import load_modules, load_classes, Popen, run
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_attributes
@@ -130,7 +131,7 @@ def check_local_path(path):
         raise CallError(f"Directory {path!r} must reside within volume mount point")
 
 
-async def rclone(middleware, job, cloud_sync):
+async def rclone(middleware, job, cloud_sync, dry_run=False):
     await middleware.run_in_thread(check_local_path, cloud_sync["path"])
 
     # Use a temporary file to store rclone file
@@ -156,6 +157,9 @@ async def rclone(middleware, job, cloud_sync):
                 f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
                 for limit in cloud_sync["bwlimit"]
             ])])
+
+        if dry_run:
+            args.extend(["--dry-run"])
 
         args += config.extra_args
 
@@ -420,6 +424,15 @@ def lsjson_error_excerpt(error):
     return excerpt
 
 
+class CloudCredentialModel(sa.Model):
+    __tablename__ = 'system_cloudcredentials'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    name = sa.Column(sa.String(100))
+    provider = sa.Column(sa.String(50))
+    attributes = sa.Column(sa.JSON(encrypted=True))
+
+
 class CredentialsService(CRUDService):
 
     class Config:
@@ -527,6 +540,36 @@ class CredentialsService(CRUDService):
             raise verrors
 
 
+class CloudSyncModel(sa.Model):
+    __tablename__ = 'tasks_cloudsync'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    description = sa.Column(sa.String(150))
+    direction = sa.Column(sa.String(10), default='PUSH')
+    path = sa.Column(sa.String(255))
+    attributes = sa.Column(sa.JSON())
+    minute = sa.Column(sa.String(100), default="00")
+    hour = sa.Column(sa.String(100), default="*")
+    daymonth = sa.Column(sa.String(100), default="*")
+    month = sa.Column(sa.String(100), default='*')
+    dayweek = sa.Column(sa.String(100), default="*")
+    enabled = sa.Column(sa.Boolean(), default=True)
+    credential_id = sa.Column(sa.ForeignKey('system_cloudcredentials.id'), index=True)
+    transfer_mode = sa.Column(sa.String(20), default='sync')
+    encryption = sa.Column(sa.Boolean())
+    filename_encryption = sa.Column(sa.Boolean(), default=True)
+    encryption_password = sa.Column(sa.String(256))
+    encryption_salt = sa.Column(sa.String(256))
+    args = sa.Column(sa.Text())
+    post_script = sa.Column(sa.Text())
+    pre_script = sa.Column(sa.Text())
+    snapshot = sa.Column(sa.Boolean())
+    bwlimit = sa.Column(sa.JSON(type=list))
+    exclude = sa.Column(sa.JSON(type=list))
+    transfers = sa.Column(sa.Integer(), nullable=True)
+    follow_symlinks = sa.Column(sa.Boolean())
+
+
 class CloudSyncService(CRUDService):
 
     local_fs_lock_manager = FsLockManager()
@@ -534,7 +577,7 @@ class CloudSyncService(CRUDService):
 
     class Config:
         datastore = "tasks.cloudsync"
-        datastore_extend = "cloudsync._extend"
+        datastore_extend = "cloudsync.extend"
 
     @filterable
     async def query(self, filters=None, options=None):
@@ -544,7 +587,8 @@ class CloudSyncService(CRUDService):
         tasks_or_task = await super().query(filters, options)
 
         jobs = {}
-        for j in await self.middleware.call("core.get_jobs", [("method", "=", "cloudsync.sync")],
+        for j in await self.middleware.call("core.get_jobs", [('OR', [("method", "=", "cloudsync.sync"),
+                                                                      ("method", "=", "cloudsync.restore")])],
                                             {"order_by": ["id"]}):
             try:
                 task_id = int(j["arguments"][0])
@@ -565,7 +609,7 @@ class CloudSyncService(CRUDService):
         return tasks_or_task
 
     @private
-    async def _extend(self, cloud_sync):
+    async def extend(self, cloud_sync):
         cloud_sync["credentials"] = cloud_sync.pop("credential")
 
         cloud_sync["encryption_password"] = await self.middleware.call(
@@ -767,7 +811,7 @@ class CloudSyncService(CRUDService):
         cloud_sync["id"] = await self.middleware.call("datastore.insert", "tasks.cloudsync", cloud_sync)
         await self.middleware.call("service.restart", "cron")
 
-        cloud_sync = await self._extend(cloud_sync)
+        cloud_sync = await self.extend(cloud_sync)
         return cloud_sync
 
     @accepts(Int("id"), Patch("cloud_sync_create", "cloud_sync_update", ("attr", {"update": True})))
@@ -800,7 +844,7 @@ class CloudSyncService(CRUDService):
         await self.middleware.call("datastore.update", "tasks.cloudsync", id, cloud_sync)
         await self.middleware.call("service.restart", "cron")
 
-        cloud_sync = await self._extend(cloud_sync)
+        cloud_sync = await self.extend(cloud_sync)
         return cloud_sync
 
     @accepts(Int("id"))
@@ -878,15 +922,50 @@ class CloudSyncService(CRUDService):
                 raise CallError(proc.stderr, extra={"excerpt": lsjson_error_excerpt(proc.stderr)})
 
     @item_method
-    @accepts(Int("id"))
+    @accepts(
+        Int("id"),
+        Dict(
+            "cloud_sync_sync_options",
+            Bool("dry_run", default=False),
+            register=True,
+        )
+    )
     @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True)
-    async def sync(self, job, id):
+    async def sync(self, job, id, options):
         """
         Run the cloud_sync job `id`, syncing the local data to remote.
         """
 
         cloud_sync = await self._get_instance(id)
 
+        await self._sync(cloud_sync, options, job)
+
+    @accepts(
+        Patch("cloud_sync_create", "cloud_sync_sync_onetime"),
+        Patch("cloud_sync_sync_options", "cloud_sync_sync_onetime_options"),
+    )
+    @job(logs=True)
+    async def sync_onetime(self, job, cloud_sync, options):
+        """
+        Run cloud sync task without creating it.
+        """
+        verrors = ValidationErrors()
+
+        await self._validate(verrors, "cloud_sync_sync_onetime", cloud_sync)
+
+        if verrors:
+            raise verrors
+
+        await self._validate_folder(verrors, "cloud_sync_sync_onetime", cloud_sync)
+
+        if verrors:
+            raise verrors
+
+        cloud_sync["credentials"] = await self._get_credentials(cloud_sync["credentials"])
+
+        await self._sync(cloud_sync, options, job)
+
+    async def _sync(self, cloud_sync, options, job):
         credentials = cloud_sync["credentials"]
 
         local_path = cloud_sync["path"]
@@ -906,13 +985,15 @@ class CloudSyncService(CRUDService):
             async with self.remote_fs_lock_manager.lock(f"{credentials['id']}/{remote_path}", remote_direction):
                 job.set_progress(0, "Starting")
                 try:
-                    await rclone(self.middleware, job, cloud_sync)
-                    await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", cloud_sync["id"])
+                    await rclone(self.middleware, job, cloud_sync, options["dry_run"])
+                    if "id" in cloud_sync:
+                        await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", cloud_sync["id"])
                 except Exception:
-                    await self.middleware.call("alert.oneshot_create", "CloudSyncTaskFailed", {
-                        "id": cloud_sync["id"],
-                        "name": cloud_sync["description"],
-                    })
+                    if "id" in cloud_sync:
+                        await self.middleware.call("alert.oneshot_create", "CloudSyncTaskFailed", {
+                            "id": cloud_sync["id"],
+                            "name": cloud_sync["description"],
+                        })
                     raise
 
     @item_method

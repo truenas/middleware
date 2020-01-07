@@ -1,5 +1,6 @@
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 
 import asyncio
@@ -9,6 +10,16 @@ import shutil
 import uuid
 
 SYSDATASET_PATH = '/var/db/system'
+
+
+class SystemDatasetModel(sa.Model):
+    __tablename__ = 'system_systemdataset'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    sys_pool = sa.Column(sa.String(1024))
+    sys_syslog_usedataset = sa.Column(sa.Boolean(), default=False)
+    sys_uuid = sa.Column(sa.String(32))
+    sys_uuid_b = sa.Column(sa.String(32), nullable=True)
 
 
 class SystemDatasetService(ConfigService):
@@ -21,11 +32,12 @@ class SystemDatasetService(ConfigService):
     @private
     async def config_extend(self, config):
 
-        # Treat empty system dataset pool as freenas-boot
+        # Treat empty system dataset pool as boot pool
+        boot_pool = await self.middleware.call('boot.pool_name')
         if not config['pool']:
-            config['pool'] = 'freenas-boot'
+            config['pool'] = boot_pool
         # Add `is_decrypted` dynamic attribute
-        if config['pool'] == 'freenas-boot':
+        if config['pool'] == boot_pool:
             config['is_decrypted'] = True
         else:
             pool = await self.middleware.call('pool.query', [('name', '=', config['pool'])])
@@ -86,7 +98,7 @@ class SystemDatasetService(ConfigService):
         new.update(data)
 
         verrors = ValidationErrors()
-        if new['pool'] and new['pool'] != 'freenas-boot':
+        if new['pool'] and new['pool'] != await self.middleware.call('boot.pool_name'):
             pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
             if not pool:
                 verrors.add(
@@ -101,19 +113,34 @@ class SystemDatasetService(ConfigService):
                     f'Pool "{new["pool"]}" has an encryption passphrase set. '
                     'The system dataset cannot be placed on this pool.'
                 )
+            elif await self.middleware.call(
+                'pool.dataset.query', [
+                    ['name', '=', new['pool']], ['encrypted', '=', True],
+                    ['OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]]
+                ]
+            ):
+                verrors.add(
+                    'sysdataset_update.pool',
+                    'The system dataset cannot be placed on a pool '
+                    'which has the root dataset encrypted with a passphrase or is locked.'
+                )
         elif not new['pool']:
             for pool in await self.middleware.call(
                 'pool.query', [
                     ['encrypt', '!=', 2]
                 ]
             ):
-                if data.get('pool_exclude') == pool['name']:
+                if data.get('pool_exclude') == pool['name'] or await self.middleware.call('pool.dataset.query', [
+                    ['name', '=', pool['name']], [
+                        'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
+                    ]
+                ]):
                     continue
                 new['pool'] = pool['name']
                 break
             else:
                 # If a data pool could not be found, reset it to blank
-                # Which will eventually mean its back to freenas-boot (temporarily)
+                # Which will eventually mean its back to boot pool (temporarily)
                 new['pool'] = ''
         verrors.check()
 
@@ -146,7 +173,7 @@ class SystemDatasetService(ConfigService):
                 try:
                     await self.middleware.call('failover.call_remote', 'system.reboot')
                 except Exception as e:
-                    self.logger.debug('Failed to reboot passive storage controller after system dataset change: %s', e)
+                    self.logger.debug('Failed to reboot standby storage controller after system dataset change: %s', e)
 
         return await self.config()
 
@@ -161,10 +188,11 @@ class SystemDatasetService(ConfigService):
             'datastore.config', self._config.datastore, {'prefix': self._config.datastore_prefix}
         )
 
+        boot_pool = await self.middleware.call('boot.pool_name')
         if (
             not await self.middleware.call('system.is_freenas') and
             await self.middleware.call('failover.status') == 'BACKUP' and
-            config.get('basename') and config['basename'] != 'freenas-boot/.system'
+            config.get('basename') and config['basename'] != f'{boot_pool}/.system'
         ):
             try:
                 os.unlink(SYSDATASET_PATH)
@@ -174,7 +202,7 @@ class SystemDatasetService(ConfigService):
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
-        if config['pool'] != 'freenas-boot' and not await self.middleware.call(
+        if config['pool'] != boot_pool and not await self.middleware.call(
             'pool.query', [('name', '=', config['pool'])]
         ):
             job = await self.middleware.call('systemdataset.update', {
@@ -192,7 +220,11 @@ class SystemDatasetService(ConfigService):
             for p in await self.middleware.call(
                 'pool.query', [('encrypt', '!=', '2')], {'order_by': ['encrypt']}
             ):
-                if exclude_pool and p['name'] == exclude_pool:
+                if (exclude_pool and p['name'] == exclude_pool) or await self.middleware.call('pool.dataset.query', [
+                    ['name', '=', p['name']], [
+                        'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
+                    ]
+                ]):
                     continue
                 if p['is_decrypted']:
                     pool = p
@@ -225,12 +257,12 @@ class SystemDatasetService(ConfigService):
                 os.unlink(SYSDATASET_PATH)
             os.mkdir(SYSDATASET_PATH)
 
-        aclmode = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
-        if aclmode and aclmode[0]['properties']['aclmode']['value'] == 'restricted':
+        acltype = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
+        if acltype and acltype[0]['properties']['acltype']['value'] == 'off':
             await self.middleware.call(
                 'zfs.dataset.update',
                 config['basename'],
-                {'properties': {'aclmode': {'value': 'passthrough'}}},
+                {'properties': {'acltype': {'value': 'off'}}},
             )
 
         if mount:
@@ -255,21 +287,29 @@ class SystemDatasetService(ConfigService):
         """
         createdds = False
         datasets = [i[0] for i in self.__get_datasets(pool, uuid)]
-        datasets_prop = {i['id']: i['properties'].get('mountpoint') for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])}
+        datasets_prop = {
+            i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
+        }
         for dataset in datasets:
-            mountpoint = datasets_prop.get(dataset)
-            if mountpoint and mountpoint['value'] != 'legacy':
-                await self.middleware.call(
-                    'zfs.dataset.update',
-                    dataset,
-                    {'properties': {'mountpoint': {'value': 'legacy'}}},
-                )
-            elif not mountpoint:
+            dataset_quota = {'quota': '1G'} if dataset.endswith('/cores') else {}
+            if dataset not in datasets_prop:
                 await self.middleware.call('zfs.dataset.create', {
                     'name': dataset,
-                    'properties': {'mountpoint': 'legacy'},
+                    'properties': {'mountpoint': 'legacy', **dataset_quota},
                 })
                 createdds = True
+            else:
+                update_props_dict = {}
+                if datasets_prop[dataset]['mountpoint']['value'] != 'legacy':
+                    update_props_dict['mountpoint'] = {'value': 'legacy'}
+                if dataset_quota and datasets_prop[dataset]['quota']['value'] != '1G':
+                    update_props_dict['quota'] = {'value': '1G'}
+                if update_props_dict:
+                    await self.middleware.call(
+                        'zfs.dataset.update',
+                        dataset,
+                        {'properties': update_props_dict},
+                    )
         return createdds
 
     async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
@@ -292,7 +332,7 @@ class SystemDatasetService(ConfigService):
         return [(f'{pool}/.system', '')] + [
             (f'{pool}/.system/{i}', i) for i in [
                 'cores', 'samba4', f'syslog-{uuid}',
-                f'rrd-{uuid}', f'configs-{uuid}', 'webui',
+                f'rrd-{uuid}', f'configs-{uuid}', 'webui', 'services'
             ]
         ]
 

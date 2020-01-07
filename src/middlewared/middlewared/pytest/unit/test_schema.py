@@ -331,6 +331,14 @@ def test__schema_dict_mixed_args(value, expected, msg):
         assert dictargs(self, value) == expected
 
 
+@pytest.mark.parametrize('items,value', [
+    ([List('b', items=[List('c', private=True)])], [[['a']]]),
+    ([Dict('b', Str('c', private=True))], [{'c': 'secret'}])
+])
+def test__schema_list_private_items(items, value):
+    assert List('a', items=items).dump(value) == '********'
+
+
 def test__schema_list_empty():
 
     @accepts(List('data', empty=False))
@@ -408,7 +416,32 @@ def test__schema_list_items(value, expected):
 
     if expected is Error:
         with pytest.raises(Error):
-            listnotnull(self, [False])
+            listnotnull(self, value)
+    else:
+        assert listnotnull(self, value) == expected
+
+
+@pytest.mark.parametrize('value,expected', [
+    (['foo'], ['foo']),
+    ([True, True, 'foo'], [True, True, 'foo']),
+    ([2, {'bool': True}], ['2', {'bool': True}]),
+    ([2, {'bool': True, 'str': False}], Error),
+    ({'foo': False}, Error),
+    ({'unexpected': False}, Error),
+    ('foo', Error),
+    ({'foo': 'foo'}, Error),
+])
+def test__schema_list_multiple_items(value, expected):
+
+    @accepts(List('data', items=[Str('foo'), Bool('bool'), Dict('dict', Bool('bool'), Str('str'))]))
+    def listnotnull(self, data):
+        return data
+
+    self = Mock()
+
+    if expected is Error:
+        with pytest.raises(Error):
+            listnotnull(self, value)
     else:
         assert listnotnull(self, value) == expected
 

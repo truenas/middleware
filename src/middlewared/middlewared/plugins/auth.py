@@ -1,5 +1,7 @@
 import crypt
 from datetime import datetime, timedelta
+import platform
+import pyotp
 import random
 import re
 import socket
@@ -7,9 +9,16 @@ import string
 import subprocess
 import time
 
-from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import Service, filterable, filter_list, no_auth_required, pass_app, private
+from middlewared.schema import Dict, Int, Str, accepts, Bool
+from middlewared.service import (
+    ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private, CallError
+)
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen
+from middlewared.validators import Range
+
+
+IS_LINUX = platform.system().lower() == 'linux'
 
 
 class TokenManager:
@@ -291,19 +300,39 @@ class AuthService(Service):
             return None
 
     @no_auth_required
-    @accepts(Str('username'), Str('password'))
-    @pass_app
-    async def login(self, app, username, password):
-        """Authenticate session using username and password.
+    @accepts()
+    async def two_factor_auth(self):
+        """
+        Returns true if two factor authorization is required for authorizing user's login.
+        """
+        return (await self.middleware.call('auth.twofactor.config'))['enabled']
+
+    @no_auth_required
+    @accepts(Str('username'), Str('password'), Str('otp_token', null=True, default=None))
+    @pass_app()
+    async def login(self, app, username, password, otp_token=None):
+        """
+        Authenticate session using username and password.
         Currently only root user is allowed.
+        `otp_token` must be specified if two factor authentication is enabled.
         """
         valid = await self.check_user(username, password)
+        twofactor_auth = await self.middleware.call('auth.twofactor.config')
+
+        if twofactor_auth['enabled']:
+            # We should run auth.twofactor.verify nevertheless of check_user result to prevent guessing
+            # passwords with a timing attack
+            valid &= await self.middleware.call(
+                'auth.twofactor.verify',
+                otp_token
+            )
+
         if valid:
             self.session_manager.login(app, LoginPasswordSessionManagerCredentials())
         return valid
 
     @accepts()
-    @pass_app
+    @pass_app()
     async def logout(self, app):
         """
         Deauthenticates an app and if a token exists, removes that from the
@@ -314,7 +343,7 @@ class AuthService(Service):
 
     @no_auth_required
     @accepts(Str('token'))
-    @pass_app
+    @pass_app()
     def token(self, app, token):
         """Authenticate using a given `token` id."""
         token = self.token_manager.get(token)
@@ -325,9 +354,142 @@ class AuthService(Service):
         return True
 
 
+class TwoFactorAuthModel(sa.Model):
+    __tablename__ = 'system_twofactorauthentication'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    otp_digits = sa.Column(sa.Integer(), default=6)
+    secret = sa.Column(sa.String(16), nullable=True, default=None)
+    window = sa.Column(sa.Integer(), default=0)
+    interval = sa.Column(sa.Integer(), default=30)
+    services = sa.Column(sa.JSON(), default={})
+    enabled = sa.Column(sa.Boolean(), default=False)
+
+
+class TwoFactorAuthService(ConfigService):
+
+    class Config:
+        datastore = 'system.twofactorauthentication'
+        datastore_extend = 'auth.twofactor.two_factor_extend'
+        namespace = 'auth.twofactor'
+
+    @private
+    async def two_factor_extend(self, data):
+        data['secret'] = await self.middleware.call('pwenc.decrypt', data['secret'])
+
+        for srv in ['ssh']:
+            data['services'].setdefault(srv, False)
+
+        return data
+
+    @accepts(
+        Dict(
+            'auth_twofactor_update',
+            Bool('enabled'),
+            Int('otp_digits', validators=Range(min=6, max=8)),
+            Int('window', validators=Range(min=0)),
+            Int('interval', validators=Range(min=5)),
+            Dict(
+                'services',
+                Bool('ssh', default=False)
+            ),
+            update=True
+        )
+    )
+    async def do_update(self, data):
+        """
+        `otp_digits` represents number of allowed digits in the OTP.
+
+        `window` extends the validity to `window` many counter ticks before and after the current one.
+
+        `interval` is time duration in seconds specifying OTP expiration time from it's creation time.
+        """
+        old_config = await self.config()
+        config = old_config.copy()
+
+        config.update(data)
+
+        if config['enabled'] and not config['secret']:
+            # Only generate a new secret on `enabled` when `secret` is not already set.
+            # This will aid users not setting secret up again on their mobiles.
+            config['secret'] = await self.middleware.run_in_thread(
+                self.generate_base32_secret
+            )
+
+        config['secret'] = await self.middleware.call('pwenc.encrypt', config['secret'])
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            config['id'],
+            config
+        )
+
+        await self.middleware.call('service.reload', 'ssh')
+
+        return await self.config()
+
+    @accepts(
+        Str('token', null=True)
+    )
+    def verify(self, token):
+        """
+        Returns boolean true if provided `token` is successfully authenticated.
+        """
+        config = self.middleware.call_sync(f'{self._config.namespace}.config')
+        if not config['enabled']:
+            raise CallError('Please enable Two Factor Authentication first.')
+
+        totp = pyotp.totp.TOTP(
+            config['secret'], interval=config['interval'], digits=config['otp_digits']
+        )
+        return totp.verify(token, valid_window=config['window'])
+
+    @accepts()
+    def renew_secret(self):
+        """
+        Generates a new secret for Two Factor Authentication. Returns boolean true on success.
+        """
+        config = self.middleware.call_sync(f'{self._config.namespace}.config')
+        if not config['enabled']:
+            raise CallError('Please enable Two Factor Authentication first.')
+
+        self.middleware.call_sync(
+            'datastore.update',
+            self._config.datastore,
+            config['id'], {
+                'secret': self.middleware.call_sync('pwenc.encrypt', self.generate_base32_secret())
+            }
+        )
+
+        if config['services']['ssh']:
+            self.middleware.call_sync('service.reload', 'ssh')
+
+        return True
+
+    @accepts()
+    async def provisioning_uri(self):
+        """
+        Returns the provisioning URI for the OTP. This can then be encoded in a QR Code and used to
+        provision an OTP app like Google Authenticator.
+        """
+        config = await self.middleware.call(f'{self._config.namespace}.config')
+        return pyotp.totp.TOTP(
+            config['secret'], interval=config['interval'], digits=config['otp_digits']
+        ).provisioning_uri(
+            f'{(await self.middleware.call("system.info"))["hostname"]}@'
+            f'{await self.middleware.call("system.product_name")}',
+            'iXsystems'
+        )
+
+    @private
+    def generate_base32_secret(self):
+        return pyotp.random_base32()
+
+
 async def check_permission(middleware, app):
     """
-    Authenticates connections comming from loopback and from
+    Authenticates connections coming from loopback and from
     root user.
     """
     sock = app.request.transport.get_extra_info('socket')
@@ -349,7 +511,7 @@ async def check_permission(middleware, app):
     data = await proc.communicate()
     for line in data[0].strip().splitlines()[1:]:
         cols = line.decode().split()
-        if cols[-2] == remote and cols[0] == 'root':
+        if cols[-3 if IS_LINUX else -2] == remote and cols[0] == 'root':
             AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
             break
 

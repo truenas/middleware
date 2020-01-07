@@ -9,8 +9,23 @@ from middlewared.validators import IpAddress, Range
 from middlewared.service import (SystemServiceService, ValidationErrors,
                                  CRUDService, private)
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
 import os
+
+
+class AFPModel(sa.Model):
+    __tablename__ = 'services_afp'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    afp_srv_guest = sa.Column(sa.Boolean(), default=False)
+    afp_srv_guest_user = sa.Column(sa.String(120), default="nobody")
+    afp_srv_bindip = sa.Column(sa.MultiSelectField(), default=[])
+    afp_srv_connections_limit = sa.Column(sa.Integer(), default=50)
+    afp_srv_dbpath = sa.Column(sa.String(255), nullable=True)
+    afp_srv_global_aux = sa.Column(sa.Text())
+    afp_srv_map_acls = sa.Column(sa.String(120))
+    afp_srv_chmod_request = sa.Column(sa.String(120))
 
 
 class AFPService(SystemServiceService):
@@ -81,6 +96,33 @@ class AFPService(SystemServiceService):
         await self._update_service(old, new)
 
         return await self.config()
+
+
+class SharingAFPModel(sa.Model):
+    __tablename__ = 'sharing_afp_share'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    afp_path = sa.Column(sa.String(255))
+    afp_name = sa.Column(sa.String(120))
+    afp_comment = sa.Column(sa.String(120))
+    afp_allow = sa.Column(sa.String(120))
+    afp_deny = sa.Column(sa.String(120))
+    afp_ro = sa.Column(sa.String(120))
+    afp_rw = sa.Column(sa.String(120))
+    afp_timemachine = sa.Column(sa.Boolean(), default=False)
+    afp_nodev = sa.Column(sa.Boolean(), default=False)
+    afp_nostat = sa.Column(sa.Boolean(), default=False)
+    afp_upriv = sa.Column(sa.Boolean(), default=True)
+    afp_fperm = sa.Column(sa.String(3), default="644")
+    afp_dperm = sa.Column(sa.String(3), default="755")
+    afp_umask = sa.Column(sa.String(3), default="000")
+    afp_hostsallow = sa.Column(sa.String(120))
+    afp_hostsdeny = sa.Column(sa.String(120))
+    afp_auxparams = sa.Column(sa.Text())
+    afp_timemachine_quota = sa.Column(sa.Integer(), default=0)
+    afp_home = sa.Column(sa.Boolean(), default=False)
+    afp_enabled = sa.Column(sa.Boolean(), default=True)
+    afp_vuid = sa.Column(sa.String(36))
 
 
 class SharingAFPService(CRUDService):

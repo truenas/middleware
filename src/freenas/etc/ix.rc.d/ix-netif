@@ -12,12 +12,6 @@
 _interface_config()
 {
 	local failover_status="" failover_licensed=0
-	if ! is_freenas; then
-		if [ "$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/failover/licensed.py 2> /dev/null)" = "True" ]; then
-			failover_licensed=1
-		fi
-		failover_status="$(ulimit -n 1000; /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
-	fi
 
 	local saved_ifs="${IFS}"
 	local IFS=\|

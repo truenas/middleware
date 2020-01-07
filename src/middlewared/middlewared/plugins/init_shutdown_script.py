@@ -1,10 +1,28 @@
-from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
-from middlewared.service import CRUDService, job, private
-from middlewared.utils import Popen
-
 import asyncio
 import os
+import stat
 import subprocess
+import tempfile
+
+from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
+from middlewared.service import CRUDService, job, private
+import middlewared.sqlalchemy as sa
+from middlewared.utils import Popen
+from middlewared.validators import Range
+
+
+class InitShutdownScriptModel(sa.Model):
+    __tablename__ = 'tasks_initshutdown'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    ini_type = sa.Column(sa.String(15), default='command')
+    ini_command = sa.Column(sa.String(300))
+    ini_script = sa.Column(sa.String(255), nullable=True)
+    ini_when = sa.Column(sa.String(15))
+    ini_enabled = sa.Column(sa.Boolean(), default=True)
+    ini_timeout = sa.Column(sa.Integer(), default=10)
+    ini_comment = sa.Column(sa.String(255))
+    ini_script_text = sa.Column(sa.Text())
 
 
 class InitShutdownScriptService(CRUDService):
@@ -18,10 +36,12 @@ class InitShutdownScriptService(CRUDService):
         'init_shutdown_script_create',
         Str('type', enum=['COMMAND', 'SCRIPT'], required=True),
         Str('command', null=True),
+        Str('script_text', null=True),
         File('script', null=True),
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
         Int('timeout', default=10),
+        Str('comment', default='', validators=[Range(max=255)]),
         register=True,
     ))
     async def do_create(self, data):
@@ -115,13 +135,24 @@ class InitShutdownScriptService(CRUDService):
             if not data.get('command'):
                 verrors.add(f'{schema_name}.command', 'This field is required')
             else:
+                data['script_text'] = ''
                 data['script'] = ''
 
         if data['type'] == 'SCRIPT':
-            if not data.get('script'):
-                verrors.add(f'{schema_name}.script', 'This field is required')
+            if data.get('script') and data.get('script_text'):
+                verrors.add(f'{schema_name}.script', 'Only one of two fields should be provided')
+            elif not data.get('script') and not data.get('script_text'):
+                # IDEA may be it's worth putting both fields validations errors to verrors
+                # e.g.
+                # verrors.add(f'{schema_name}.script', 'This field is required')
+                # verrors.add(f'{schema_name}.script_text', 'This field is required')
+                verrors.add(f'{schema_name}.script', "Either 'script' or 'script_text' field is required")
+            elif data.get('script') and not data.get('script_text'):
+                data['command'] = ''
+                data['script_text'] = ''
             else:
                 data['command'] = ''
+                data['script'] = ''
 
         if verrors:
             raise verrors
@@ -130,27 +161,52 @@ class InitShutdownScriptService(CRUDService):
     async def execute_task(self, task):
         task_type = task['type']
         cmd = None
+        tmp_script = None
 
         if task_type == 'COMMAND':
             cmd = task['command']
+        elif task_type == 'SCRIPT' and task['script_text']:
+            _, tmp_script = tempfile.mkstemp(text=True)
+            os.chmod(tmp_script, stat.S_IRWXU)
+            with open(tmp_script, 'w') as f:
+                f.write(task['script_text'])
+            cmd = f'exec {tmp_script}'
         elif os.path.exists(task['script'] or '') and os.access(task['script'], os.X_OK):
             cmd = f'exec {task["script"]}'
 
-        if cmd:
-            proc = await Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                shell=True,
-                close_fds=True
-            )
-            stdout, stderr = await proc.communicate()
-
-            if proc.returncode:
-                self.middleware.logger.debug(
-                    'Execution failed for '
-                    f'{task_type} {task["command"] if task_type == "COMMAND" else task["script"]}: {stderr.decode()}'
+        try:
+            if cmd:
+                proc = await Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    shell=True,
+                    close_fds=True
                 )
+                stdout, stderr = await proc.communicate()
+
+                if proc.returncode:
+                    if task_type == 'COMMAND':
+                        cmd = task['command']
+                    elif task_type == 'SCRIPT' and task['script_text']:
+                        cmd = task['comment']
+                    elif task_type == 'SCRIPT' and task['script']:
+                        cmd = task['script']
+                    else:
+                        cmd = ''
+                    self.middleware.logger.debug(
+                        'Execution failed for '
+                        f'{task_type} {cmd}: {stdout.decode()}'
+                    )
+        except Exception as error:
+            if task_type == 'SCRIPT' and task['script_text']:
+                cmd = task['comment']
+            self.middleware.logger.debug(
+                f'{task["type"]} {cmd}: {error!r}'
+            )
+        finally:
+            if tmp_script and os.path.exists(tmp_script):
+                os.unlink(tmp_script)
 
     @private
     @accepts(
@@ -169,9 +225,15 @@ class InitShutdownScriptService(CRUDService):
             try:
                 await asyncio.wait_for(self.execute_task(task), timeout=task['timeout'])
             except asyncio.TimeoutError:
-                self.middleware.logger.debug(
-                    f'{task["type"]} {task["command"] if task["type"] == "COMMAND" else task["script"]} timed out'
-                )
+                if task['type'] == 'COMMAND':
+                    cmd = task['command']
+                elif task['type'] == 'SCRIPT' and task['script_text']:
+                    cmd = task['comment']
+                elif task['type'] == 'SCRIPT' and task['script']:
+                    cmd = task['script']
+                else:
+                    cmd = ''
+                self.middleware.logger.debug(f'{task["type"]} {cmd} timed out')
             finally:
                 job.set_progress((100 / len(tasks)) * (i + 1))
 

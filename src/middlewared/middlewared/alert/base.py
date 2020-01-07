@@ -46,7 +46,7 @@ class AlertClass(metaclass=AlertClassMeta):
     text = None
 
     exclude_from_list = False
-    freenas_only = False
+    products = ("CORE", "ENTERPRISE")
     hardware = False
 
     def __init__(self, middleware):
@@ -65,6 +65,7 @@ class AlertClass(metaclass=AlertClassMeta):
 
 class OneShotAlertClass:
     deleted_automatically = True
+    expires_after = None
 
     async def create(self, args):
         raise NotImplementedError
@@ -94,6 +95,8 @@ class AlertCategory(enum.Enum):
     DIRECTORY_SERVICE = "DIRECTORY_SERVICE"
     HA = "HA"
     HARDWARE = "HARDWARE"
+    KMIP = "KMIP"
+    PLUGINS = "PLUGINS"
     NETWORK = "NETWORK"
     REPORTING = "REPORTING"
     SHARING = "SHARING"
@@ -108,6 +111,8 @@ alert_category_names = {
     AlertCategory.DIRECTORY_SERVICE: "Directory Service",
     AlertCategory.HA: "High-Availability",
     AlertCategory.HARDWARE: "Hardware",
+    AlertCategory.KMIP: "Key Management Interoperability Protocol (KMIP)",
+    AlertCategory.PLUGINS: "Plugins",
     AlertCategory.NETWORK: "Network",
     AlertCategory.REPORTING: "Reporting",
     AlertCategory.SHARING: "Sharing",
@@ -129,8 +134,8 @@ class AlertLevel(enum.Enum):
 
 
 class Alert:
-    def __init__(self, klass, args=None, key=undefined, datetime=None, node=None, dismissed=None, mail=None,
-                 _uuid=None, _source=None, _key=None, _text=None):
+    def __init__(self, klass, args=None, key=undefined, datetime=None, last_occurrence=None, node=None, dismissed=None,
+                 mail=None, _uuid=None, _source=None, _key=None, _text=None):
         self.uuid = _uuid
         self.source = _source
         self.klass = klass
@@ -144,6 +149,7 @@ class Alert:
         else:
             self.key = _key
         self.datetime = datetime
+        self.last_occurrence = last_occurrence or datetime
         self.dismissed = dismissed
         self.mail = mail
 
@@ -175,7 +181,7 @@ class Alert:
 class AlertSource:
     schedule = IntervalSchedule(timedelta())
 
-    freenas_only = False
+    products = ("CORE", "ENTERPRISE")
     failover_related = False
     run_on_backup_node = True
 

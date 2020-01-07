@@ -6,8 +6,20 @@ import grp
 from middlewared.schema import accepts, Bool, Dict, List, Str
 from middlewared.service import job, private, ConfigService
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus
+
+
+class NISModel(sa.Model):
+    __tablename__ = 'directoryservice_nis'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    nis_domain = sa.Column(sa.String(120))
+    nis_servers = sa.Column(sa.String(8192))
+    nis_secure_mode = sa.Column(sa.Boolean())
+    nis_manycast = sa.Column(sa.Boolean())
+    nis_enable = sa.Column(sa.Boolean(), default=False)
 
 
 class NISService(ConfigService):

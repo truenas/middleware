@@ -12,8 +12,7 @@ from .client import ejson as json
 from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
-from .service import CallError, ValidationError, ValidationErrors
-from .service_exception import adapt_exception, MatchNotFound
+from .service_exception import adapt_exception, CallError, ValidationError, ValidationErrors, MatchNotFound
 
 
 async def authenticate(middleware, req):
@@ -33,6 +32,15 @@ async def authenticate(middleware, req):
         raise
     except Exception:
         raise web.HTTPUnauthorized()
+
+
+class Application:
+
+    def __init__(self, host, remote_port):
+        self.host = host
+        self.remote_port = remote_port
+        self.websocket = False
+        self.rest = self.authenticated = True
 
 
 class RESTfulAPI(object):
@@ -533,7 +541,12 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        method_kwargs = {}
+        if method.get('pass_application'):
+            method_kwargs = {
+                'app': Application(req.headers.get('X-Real-Remote-Addr'), req.headers.get('X-Real-Remote-Port'))
+            }
+        else:
+            method_kwargs = {}
         download_pipe = None
         if method['downloadable']:
             download_pipe = self.middleware.pipe()

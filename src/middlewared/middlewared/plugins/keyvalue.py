@@ -1,6 +1,15 @@
 from middlewared.client import ejson as json
 from middlewared.schema import Any, Str, accepts
 from middlewared.service import Service
+import middlewared.sqlalchemy as sa
+
+
+class KeyValueModel(sa.Model):
+    __tablename__ = 'system_keyvalue'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    key = sa.Column(sa.String(255))
+    value = sa.Column(sa.Text())
 
 
 class KeyValueService(Service):

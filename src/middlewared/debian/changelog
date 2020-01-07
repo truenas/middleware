@@ -1,0 +1,11 @@
+middlewared (0.0+git201911201644.d1a1876-1~truenas+1) bullseye-truenas-unstable; urgency=medium
+
+  * New release
+
+ -- William Grzybowski <william@grzy.org>  Wed, 20 Nov 2019 16:45:11 -0300
+
+middlewared (0.0-1) unstable; urgency=medium
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- William Grzybowski <william@grzy.org>  Thu, 18 Jul 2019 09:52:46 -0300

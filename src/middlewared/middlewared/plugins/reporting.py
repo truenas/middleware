@@ -3,14 +3,20 @@ import errno
 import glob
 import itertools
 import json
-import netif
+try:
+    import netif
+except ImportError:
+    netif = None
 import os
 import psutil
 import re
 import shutil
 import statistics
 import subprocess
-import sysctl
+try:
+    import sysctl
+except ImportError:
+    sysctl = None
 import tarfile
 import textwrap
 import time
@@ -19,7 +25,8 @@ from middlewared.event import EventSource
 from middlewared.i18n import _
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, filterable, private
-from middlewared.utils import filter_list, run
+import middlewared.sqlalchemy as sa
+from middlewared.utils import filter_list, run, start_daemon_thread
 from middlewared.validators import Range
 
 RE_COLON = re.compile('(.+):(.+)$')
@@ -712,6 +719,17 @@ class UPSRemainingBatteryPlugin(UPSBase, RRDBase):
     )
 
 
+class ReportingModel(sa.Model):
+    __tablename__ = 'system_reporting'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cpu_in_percentage = sa.Column(sa.Boolean(), default=False)
+    graphite = sa.Column(sa.String(120), default="")
+    graph_age = sa.Column(sa.Integer(), default=12)
+    graph_points = sa.Column(sa.Integer(), default=1200)
+    graphite_separateinstances = sa.Column(sa.Boolean(), default=False)
+
+
 class ReportingService(ConfigService):
 
     class Config:
@@ -728,6 +746,7 @@ class ReportingService(ConfigService):
             'reporting_update',
             Bool('cpu_in_percentage'),
             Str('graphite'),
+            Bool('graphite_separateinstances'),
             Int('graph_age', validators=[Range(min=1, max=60)]),
             Int('graph_points', validators=[Range(min=1, max=4096)]),
             Bool('confirm_rrd_destroy'),
@@ -741,6 +760,8 @@ class ReportingService(ConfigService):
         If `cpu_in_percentage` is `true`, collectd reports CPU usage in percentage instead of "jiffies".
 
         `graphite` specifies a destination hostname or IP for collectd data sent by the Graphite plugin..
+
+        `graphite_separateinstances` corresponds to collectd SeparateInstances option.
 
         `graph_age` specifies the maximum age of stored graphs in months. `graph_points` is the number of points for
         each hourly, daily, weekly, etc. graph. Changing these requires destroying the current reporting database,
@@ -1065,27 +1086,28 @@ class RealtimeEventSource(EventSource):
                     break
                 data['cpu']['temperature'][i] = v[0].value
 
-            # Interface related statistics
-            data['interfaces'] = {}
-            retrieve_stat_keys = ['received_bytes', 'sent_bytes']
-            for iface in netif.list_interfaces().values():
-                for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
-                    addr_data = addr.__getstate__(stats=True)
-                    stats_time = time.time()
-                    data['interfaces'][iface.name] = {}
-                    for k in retrieve_stat_keys:
-                        traffic_stats = addr_data['stats'][k]
-                        if last_interface_stats.get(iface.name):
-                            traffic_stats = traffic_stats - last_interface_stats[iface.name][k]
-                            traffic_stats = int(
-                                traffic_stats / (time.time() - last_interface_stats[iface.name]['stats_time'])
-                            )
-                        details_dict = {
-                            k: addr_data['stats'][k],
-                            f'{k}_rate': traffic_stats,
-                        }
-                        data['interfaces'][iface.name].update(details_dict)
-                    last_interface_stats[iface.name] = {**data['interfaces'][iface.name], 'stats_time': stats_time}
+            if netif is not None:
+                # Interface related statistics
+                data['interfaces'] = {}
+                retrieve_stat_keys = ['received_bytes', 'sent_bytes']
+                for iface in netif.list_interfaces().values():
+                    for addr in filter(lambda addr: addr.af.name.lower() == 'link', iface.addresses):
+                        addr_data = addr.__getstate__(stats=True)
+                        stats_time = time.time()
+                        data['interfaces'][iface.name] = {}
+                        for k in retrieve_stat_keys:
+                            traffic_stats = addr_data['stats'][k]
+                            if last_interface_stats.get(iface.name):
+                                traffic_stats = traffic_stats - last_interface_stats[iface.name][k]
+                                traffic_stats = int(
+                                    traffic_stats / (time.time() - last_interface_stats[iface.name]['stats_time'])
+                                )
+                            details_dict = {
+                                k: addr_data['stats'][k],
+                                f'{k}_rate': traffic_stats,
+                            }
+                            data['interfaces'][iface.name].update(details_dict)
+                        last_interface_stats[iface.name] = {**data['interfaces'][iface.name], 'stats_time': stats_time}
             self.send_event('ADDED', fields=data)
             time.sleep(2)
 

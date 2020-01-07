@@ -4,6 +4,7 @@ from middlewared.service import (SystemServiceService, ValidationErrors,
                                  accepts, filterable, private, periodic, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
+import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, filter_list
 from middlewared.utils.path import is_child
 
@@ -15,7 +16,11 @@ import os
 import re
 import subprocess
 import uuid
-from samba import param
+
+try:
+    from samba import param
+except ImportError:
+    param = None
 
 LOGLEVEL_MAP = {
     '0': 'NONE',
@@ -32,7 +37,7 @@ RE_SHAREACLENTRY = re.compile(r"^ACL:(?P<ae_who_sid>.+):(?P<ae_type>.+)\/0x0\/(?
 class SMBHAMODE(enum.IntEnum):
     """
     'standalone' - Not an HA system.
-    'legacy' - Two samba instances simultaneously running on active and passive controllers with no shared state.
+    'legacy' - Two samba instances simultaneously running on active and standby controllers with no shared state.
     'unified' - Single set of state files migrating between controllers. Single netbios name.
     """
     STANDALONE = 0
@@ -65,6 +70,34 @@ class SIDType(enum.IntEnum):
     UNKNOWN = 8
     COMPUTER = 9
     LABEL = 10
+
+
+class SMBModel(sa.Model):
+    __tablename__ = 'services_cifs'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cifs_srv_netbiosname = sa.Column(sa.String(120))
+    cifs_srv_netbiosname_b = sa.Column(sa.String(120), nullable=True)
+    cifs_srv_netbiosalias = sa.Column(sa.String(120), nullable=True)
+    cifs_srv_workgroup = sa.Column(sa.String(120))
+    cifs_srv_description = sa.Column(sa.String(120))
+    cifs_srv_unixcharset = sa.Column(sa.String(120), default="UTF-8")
+    cifs_srv_loglevel = sa.Column(sa.String(120), default="0")
+    cifs_srv_syslog = sa.Column(sa.Boolean(), default=False)
+    cifs_srv_localmaster = sa.Column(sa.Boolean(), default=False)
+    cifs_srv_guest = sa.Column(sa.String(120), default="nobody")
+    cifs_srv_filemask = sa.Column(sa.String(120))
+    cifs_srv_dirmask = sa.Column(sa.String(120))
+    cifs_srv_smb_options = sa.Column(sa.Text())
+    cifs_srv_aio_enable = sa.Column(sa.Boolean(), default=False)
+    cifs_srv_aio_rs = sa.Column(sa.Integer(), default=4096)
+    cifs_srv_aio_ws = sa.Column(sa.Integer(), default=4096)
+    cifs_srv_zeroconf = sa.Column(sa.Boolean(), default=True)
+    cifs_srv_bindip = sa.Column(sa.MultiSelectField(), nullable=True)
+    cifs_SID = sa.Column(sa.String(120), nullable=True)
+    cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
+    cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)
+    cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
 
 
 class SMBService(SystemServiceService):
@@ -352,6 +385,23 @@ class SMBService(SystemServiceService):
             )
 
     @private
+    async def groupmap_delete(self, ntgroup=None, sid=None):
+        if not ntgroup and not sid:
+            raise CallError("ntgroup or sid is required")
+
+        if ntgroup:
+            target = f"ntgroup={ntgroup}"
+        elif sid:
+            target = f"sid={sid}"
+
+        gm_delete = await run(
+            [SMBCmd.NET.value, '-d' '0', 'groupmap', 'delete', target], check=False
+        )
+
+        if gm_delete.returncode != 0:
+            self.logger.debug(f'Failed to delete groupmap for [{target}]: ({gm_delete.stderr.decode()})')
+
+    @private
     async def passdb_list(self, verbose=False):
         """
         passdb entries for local SAM database. This will be populated with
@@ -508,7 +558,7 @@ class SMBService(SystemServiceService):
 
         if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
             system_dataset = await self.middleware.call('systemdataset.config')
-            if system_dataset['pool'] != 'freenas-boot':
+            if system_dataset['pool'] != await self.middleware.call('boot.pool_name'):
                 hamode = SMBHAMODE['UNIFIED'].name
             else:
                 hamode = SMBHAMODE['LEGACY'].name
@@ -634,6 +684,33 @@ class SMBService(SystemServiceService):
         data['netbiosalias'] = ' '.join(data['netbiosalias'])
         data.pop('netbiosname_local', None)
         return data
+
+
+class SharingSMBModel(sa.Model):
+    __tablename__ = 'sharing_cifs_share'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    cifs_path = sa.Column(sa.String(255), nullable=True)
+    cifs_home = sa.Column(sa.Boolean(), default=False)
+    cifs_name = sa.Column(sa.String(120))
+    cifs_comment = sa.Column(sa.String(120))
+    cifs_ro = sa.Column(sa.Boolean(), default=False)
+    cifs_browsable = sa.Column(sa.Boolean(), default=True)
+    cifs_recyclebin = sa.Column(sa.Boolean(), default=False)
+    cifs_showhiddenfiles = sa.Column(sa.Boolean(), default=False)
+    cifs_guestok = sa.Column(sa.Boolean(), default=False)
+    cifs_guestonly = sa.Column(sa.Boolean(), default=False)
+    cifs_hostsallow = sa.Column(sa.Text())
+    cifs_hostsdeny = sa.Column(sa.Text())
+    cifs_vfsobjects = sa.Column(sa.MultiSelectField(), default=['ixnas', 'streams_xattr'])
+    cifs_auxsmbconf = sa.Column(sa.Text())
+    cifs_storage_task_id = sa.Column(sa.ForeignKey('storage_task.id'), index=True, nullable=True)
+    cifs_abe = sa.Column(sa.Boolean())
+    cifs_timemachine = sa.Column(sa.Boolean(), default=False)
+    cifs_vuid = sa.Column(sa.String(36))
+    cifs_shadowcopy = sa.Column(sa.Boolean())
+    cifs_enabled = sa.Column(sa.Boolean(), default=True)
+    cifs_share_acl = sa.Column(sa.Text())
 
 
 class SharingSMBService(CRUDService):

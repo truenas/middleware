@@ -1,27 +1,20 @@
 import asyncio
-import ctypes
-import ctypes.util
 import imp
 import inspect
+import itertools
 import os
-import pwd
-import queue
+import platform
 import re
 import sys
 import subprocess
 import threading
 from datetime import datetime, timedelta
-from itertools import chain
 from functools import wraps
-from multiprocessing import Process, Queue, Value
 from threading import Lock
 
 from middlewared.schema import Schemas
 from middlewared.service_exception import MatchNotFound
-
-# For freenasOS
-if '/usr/local/lib' not in sys.path:
-    sys.path.append('/usr/local/lib')
+import middlewared.utils.osc as osc
 
 BUILDTIME = None
 VERSION = None
@@ -37,49 +30,6 @@ def bisect(condition, iterable):
             b.append(val)
 
     return a, b
-
-
-def django_modelobj_serialize(middleware, obj, extend=None, extend_context=None, extend_context_value=None,
-                              field_prefix=None, select=None):
-    from django.db.models.fields.related import ForeignKey, ManyToManyField
-    from freenasUI.contrib.IPAddressField import (
-        IPAddressField, IP4AddressField, IP6AddressField
-    )
-    data = {}
-    for field in chain(obj._meta.fields, obj._meta.many_to_many):
-        origname = field.name
-        if field_prefix and origname.startswith(field_prefix):
-            name = origname[len(field_prefix):]
-        else:
-            name = origname
-        if select and name not in select:
-            continue
-        try:
-            value = getattr(obj, origname)
-        except Exception as e:
-            # If foreign key does not exist set it to None
-            if isinstance(field, ForeignKey) and isinstance(e, field.rel.model.DoesNotExist):
-                data[name] = None
-                continue
-            raise
-        if isinstance(field, (
-            IPAddressField, IP4AddressField, IP6AddressField
-        )):
-            data[name] = str(value)
-        elif isinstance(field, ForeignKey):
-            data[name] = django_modelobj_serialize(middleware, value) if value is not None else value
-        elif isinstance(field, ManyToManyField):
-            data[name] = []
-            for o in value.all():
-                data[name].append(django_modelobj_serialize(middleware, o))
-        else:
-            data[name] = value
-    if extend:
-        if extend_context:
-            data = middleware.call_sync(extend, data, extend_context_value)
-        else:
-            data = middleware.call_sync(extend, data)
-    return data
 
 
 def Popen(args, **kwargs):
@@ -108,83 +58,6 @@ async def run(*args, **kwargs):
     if check:
         cp.check_returncode()
     return cp
-
-
-def setusercontext(user):
-    libc = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
-    libutil = ctypes.cdll.LoadLibrary(ctypes.util.find_library('util'))
-    libc.getpwnam.restype = ctypes.POINTER(ctypes.c_void_p)
-    pwnam = libc.getpwnam(user)
-    passwd = pwd.getpwnam(user)
-
-    libutil.login_getpwclass.restype = ctypes.POINTER(ctypes.c_void_p)
-    lc = libutil.login_getpwclass(pwnam)
-    os.setgid(passwd.pw_gid)
-    if lc and lc[0]:
-        libutil.setusercontext(
-            lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)  # 0x07ff LOGIN_SETALL
-        )
-        libutil.login_close(lc)
-    else:
-        os.setgid(passwd.pw_gid)
-        libc.setlogin(user)
-        libc.initgroups(user, passwd.pw_gid)
-        os.setuid(passwd.pw_uid)
-
-    try:
-        os.chdir(passwd.pw_dir)
-    except Exception:
-        os.chdir('/')
-
-
-def _run_command(user, commandline, q, rv):
-    setusercontext(user)
-
-    os.environ['PATH'] = (
-        '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin'
-    )
-    proc = subprocess.Popen(
-        commandline, shell=True, stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-    )
-
-    while True:
-        line = proc.stdout.readline()
-        if line == b'':
-            break
-
-        try:
-            q.put(line, False)
-        except queue.Full:
-            pass
-    proc.communicate()
-    rv.value = proc.returncode
-    q.put(None)
-
-
-def run_command_with_user_context(commandline, user, callback):
-    q = Queue()
-    rv = Value('i')
-    stdout = b''
-    p = Process(
-        target=_run_command, args=(user, commandline, q, rv),
-        daemon=True
-    )
-    p.start()
-    while p.is_alive() or not q.empty():
-        try:
-            get = q.get(True, 2)
-            if get is None:
-                break
-            stdout += get
-            callback(get)
-        except queue.Empty:
-            pass
-    p.join()
-
-    return subprocess.CompletedProcess(
-        commandline, stdout=stdout, returncode=rv.value
-    )
 
 
 def partition(s):
@@ -356,38 +229,24 @@ def filter_getattrs(filters):
 
 
 def sw_buildtime():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
     global BUILDTIME
     if BUILDTIME is None:
-        conf = Configuration.Configuration()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            BUILDTIME = sys_mani.TimeStamp()
+        version = osc.get_app_version()
+        BUILDTIME = version['buildtime']
     return BUILDTIME
 
 
 def sw_version():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
     global VERSION
     if VERSION is None:
-        conf = Configuration.Configuration()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            VERSION = sys_mani.Version()
+        version = osc.get_app_version()
+        VERSION = version['fullname']
     return VERSION
 
 
 def sw_version_is_stable():
-    # Lazy import to avoid freenasOS configure logging for us
-    from freenasOS import Configuration
-    conf = Configuration.Configuration()
-    train = conf.CurrentTrain()
-    if train and 'stable' in train.lower():
-        return True
-    else:
-        return False
+    version = osc.get_app_version()
+    return version['stable']
 
 
 def is_empty(val):
@@ -448,22 +307,43 @@ class cache_with_autorefresh(object):
         return wrapper
 
 
-def load_modules(directory):
-    for f in sorted(os.listdir(directory)):
+def load_modules(directory, base=None, depth=0):
+    if base is None:
+        base = '.'.join(
+            ['middlewared'] +
+            os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/')
+        )
+
+    _, dirs, files = next(os.walk(directory))
+
+    for f in files:
         if not f.endswith('.py'):
             continue
-        f = f[:-3]
-        name = '.'.join(
-            ['middlewared'] +
-            os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/') +
-            [f]
-        )
-        fp, pathname, description = imp.find_module(f, [directory])
-        try:
-            yield imp.load_module(name, fp, pathname, description)
-        finally:
-            if fp:
-                fp.close()
+        name = f[:-3]
+
+        if any(name.endswith(f'_{suffix}') for suffix in ('base', 'freebsd', 'linux')):
+            if name.rsplit('_', 1)[-1] != platform.system().lower():
+                continue
+
+        if name == '__init__':
+            mod_name = base
+        else:
+            mod_name = f'{base}.{name}'
+
+        if mod_name in sys.modules:
+            yield sys.modules[mod_name]
+        else:
+            fp, pathname, description = imp.find_module(name, [directory])
+            try:
+                yield imp.load_module(mod_name, fp, pathname, description)
+            finally:
+                if fp:
+                    fp.close()
+
+    for f in dirs:
+        if depth > 0:
+            path = os.path.join(directory, f)
+            yield from load_modules(path, f'{base}.{f}', depth - 1)
 
 
 def load_classes(module, base, blacklist):
@@ -480,15 +360,16 @@ def load_classes(module, base, blacklist):
 
 class LoadPluginsMixin(object):
 
-    def __init__(self, overlay_dirs):
+    def __init__(self, overlay_dirs=None):
         self.overlay_dirs = overlay_dirs or []
         self._schemas = Schemas()
         self._services = {}
         self._services_aliases = {}
 
     def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None):
-        from middlewared.service import Service, CRUDService, ConfigService, SystemServiceService
+        from middlewared.service import Service, CompoundService, CRUDService, ConfigService, SystemServiceService
 
+        services = []
         main_plugins_dir = os.path.realpath(os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             '..',
@@ -501,17 +382,25 @@ class LoadPluginsMixin(object):
             if not os.path.exists(plugins_dir):
                 raise ValueError(f'plugins dir not found: {plugins_dir}')
 
-            for mod in load_modules(plugins_dir):
+            for mod in load_modules(plugins_dir, depth=1):
                 if on_module_begin:
                     on_module_begin(mod)
 
-                for cls in load_classes(mod, Service, (
-                    ConfigService, CRUDService, SystemServiceService)
-                ):
-                    self.add_service(cls(self))
+                services.extend(load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)))
 
                 if on_module_end:
                     on_module_end(mod)
+
+        key = lambda service: service._config.namespace
+        for name, parts in itertools.groupby(sorted(services, key=key), key=key):
+            parts = list(parts)
+
+            if len(parts) == 1:
+                service = parts[0](self)
+            else:
+                service = CompoundService(self, [part(self) for part in parts])
+
+            self.add_service(service)
 
         if on_modules_loaded:
             on_modules_loaded()

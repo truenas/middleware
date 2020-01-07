@@ -38,7 +38,6 @@ Mandatory option
 
 Optional option
     --test <test name>         - Test name (Network, ALL)
-    --api <version number>     - API version number (1.0, 2.0)
     --vm-name <VM_NAME>        - Name the the Bhyve VM
     --ha                       - Runtest for HA
     """ % argv[0]
@@ -49,7 +48,6 @@ if len(argv) == 1:
     exit()
 
 option_list = [
-    "api=",
     "ip=",
     "password=",
     "interface=",
@@ -67,7 +65,6 @@ except getopt.GetoptError as e:
     exit()
 
 testName = None
-api = "1.0"
 testexpr = None
 
 for output, arg in myopts:
@@ -79,8 +76,6 @@ for output, arg in myopts:
         interface = arg
     elif output in ('-t', '--test'):
         testName = arg
-    elif output in ('-a', '--api'):
-        api = arg
     elif output == '-k':
         testexpr = arg
     elif output in ('--vm-name'):
@@ -89,7 +84,7 @@ for output, arg in myopts:
         ha = True
 
 if ('ip' not in locals() and
-        'password' not in locals() and
+        'passwd' not in locals() and
         'interface' not in locals()):
     print("Mandatory option missing!\n")
     print(error_msg)
@@ -114,9 +109,7 @@ ip = "{ip}"
 vm_name = {vm_name}
 hostname = "{hostname}"
 domain = "{domain}"
-default_api_url = 'http://' + ip + '/api/v{api}'
-api1_url = 'http://' + ip + '/api/v1.0'
-api2_url = 'http://' + ip + '/api/v2.0'
+api_url = 'http://{ip}/api/v2.0'
 interface = "{interface}"
 ntpServer = "10.20.20.122"
 localHome = "{localHome}"
@@ -153,25 +146,19 @@ def get_tests():
     ev = []
     skip_tests = []
 
-    if api == '1.0':
-        skip_tests = ['bootenv', 'alerts', 'smarttest']
-        apidir = 'api1/'
-        sv = ['network', 'ssh', 'storage']
-    elif api == '2.0':
-        if ha is True:
-            skip_tests = ['interfaces', 'network', 'delete_interfaces']
-        else:
-            skip_tests = []
-        apidir = 'api2/'
-        if ha is True:
-            sv = ['ssh', 'pool', 'user']
-            ev = ['update', 'delete_user']
-        else:
-            sv = ['ssh', 'interfaces', 'network', 'pool', 'user']
-            ev = ['update', 'delete_interfaces', 'delete_user']
+    if ha is True:
+        skip_tests = ['interfaces', 'network', 'delete_interfaces']
+    else:
+        skip_tests = []
+    apidir = 'api2/'
+    if ha is True:
+        sv = ['ssh', 'pool', 'user']
+        ev = ['update', 'delete_user']
+    else:
+        sv = ['ssh', 'interfaces', 'network', 'pool', 'user']
+        ev = ['update', 'delete_interfaces', 'delete_user']
     for filename in listdir(apidir):
-        if filename.endswith('.py') and \
-                not filename.startswith('__init__'):
+        if filename.endswith('.py') and not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
             if (filename not in skip_tests and filename not in sv and
                     filename not in ev):
@@ -180,25 +167,16 @@ def get_tests():
     return sv + rv + ev
 
 
-if api == "1.0":
-    for i in get_tests():
-        if testName is not None and testName != i:
-            continue
-        call(["py.test-3.6", "-v", "--junitxml",
-              f"{results_xml}{i}_tests_result.xml"] + (
-                  ["-k", testexpr] if testexpr else []
-        ) + [f"api1/{i}.py"])
-elif api == "2.0":
-    for i in get_tests():
-        if testName is not None and testName != i:
-            continue
-        call(["py.test-3.6", "-v", "--junitxml",
-              f"{results_xml}{i}_tests_result.xml"] + (
-                  ["-k", testexpr] if testexpr else []
-        ) + [f"api2/{i}.py"])
+for i in get_tests():
+    if testName is not None and testName != i:
+        continue
+    call(["py.test-3.6", "-v", "--junitxml",
+          f"{results_xml}{i}_tests_result.xml"] + (
+              ["-k", testexpr] if testexpr else []
+    ) + [f"api2/{i}.py"])
 
 # get useful logs
-artifacts = f"{workdir}/artifacts/{api}"
+artifacts = f"{workdir}/artifacts/"
 logs_list = [
     "/var/log/middlewared.log",
     "/var/log/messages",

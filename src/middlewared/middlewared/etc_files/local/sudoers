@@ -3,6 +3,9 @@
 	groups = middleware.call_sync('group.query', [["sudo", "=", True]])
 
 %>\
+% if platform == 'Linux':
+root ALL=(ALL:ALL) ALL
+% endif
 % for user in users:
 ${user['username']} ALL=(ALL) ALL
 % endfor

@@ -1,6 +1,9 @@
 import binascii
-import bsd
-from bsd import acl
+try:
+    import bsd
+    from bsd import acl
+except ImportError:
+    bsd = acl = None
 import errno
 import enum
 import grp
@@ -203,7 +206,7 @@ class FilesystemService(Service):
     @private
     @accepts(
         Str('path'),
-        Str('content', max_length=512000),
+        Str('content', max_length=2048000),
         Dict(
             'options',
             Bool('append', default=False),

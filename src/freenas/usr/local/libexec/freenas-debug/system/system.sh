@@ -117,9 +117,9 @@ system_func()
 		section_footer
 	fi
 
-	ret1=$(python /usr/local/www/freenasUI/middleware/notifier.py is_freenas)
+	ret1=$(midclt call system.is_freenas)
 	if [ "x${ret1}" = "xFalse" ]; then
-		ret2=$(python /usr/local/www/freenasUI/middleware/notifier.py failover_status)
+		ret2=$(midclt call failover.status)
 		section_header "HA db journal status"
 		if [ "x${ret2}" != "xSINGLE" ]; then
 			if [ -s /data/ha-journal ]; then

@@ -165,24 +165,6 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
     # SSH+Netcat + speed limit
     (dict(transport="SSH+NETCAT", speed_limit=1024), "speed_limit"),
 
-    # Legacy + non-automatic
-    (dict(transport="LEGACY", auto=False), "auto"),
-    # Legacy + does not allow from scratch
-    (dict(transport="LEGACY", allow_from_scratch=False), "allow_from_scratch"),
-    # Legacy PULL
-    (dict(direction="PULL", transport="LEGACY"), "direction"),
-    # Legacy multiple source datasets
-    (dict(transport="LEGACY", source_datasets=["tank/data", "tmp"]), "source_datasets"),
-    # Legacy not all periodic snapshot tasks
-    (dict(transport="LEGACY", source_datasets=["tank/data/work"], target_dataset="data/work",
-          periodic_snapshot_tasks=["data-recursive"]),
-     "periodic_snapshot_tasks"),
-    # Legacy all periodic snapshot tasks
-    (dict(transport="LEGACY", source_datasets=["tank/data/work"], target_dataset="data/work",
-          ssh_credentials=True, auto=True, allow_from_scratch=True, dedup=False, large_block=False, embed=False,
-          compressed=False, retries=1),
-     None),
-
     # Does not exclude garbage
     (dict(source_datasets=["tank/exclude/work"], periodic_snapshot_tasks=["exclude"], recursive=True), "exclude"),
     # Does not exclude garbage
@@ -223,4 +205,10 @@ def test_create_replication(credentials, periodic_snapshot_tasks, req, error):
         assert result.status_code == 422, result.text
         assert f"replication_create.{error}" in result.json(), result.text
     else:
+        assert result.status_code == 200, result.text
+
+        result = POST(f"/replication/id/{result.json()['id']}/restore/", {
+            "name": f"restore {name}",
+            "target_dataset": "data/restore",
+        })
         assert result.status_code == 200, result.text

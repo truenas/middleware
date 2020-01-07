@@ -1,4 +1,7 @@
-from bsd import kld
+try:
+    from bsd import kld
+except ImportError:
+    kld = None
 
 from middlewared.schema import Bool, Dict, Int, IPAddr, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
@@ -170,7 +173,8 @@ class IPMIService(CRUDService):
 async def setup(middleware):
 
     try:
-        kld.kldload('/boot/kernel/ipmi.ko')
+        if kld:
+            kld.kldload('/boot/kernel/ipmi.ko')
     except OSError as e:
         # Only skip if not already loaded
         if e.errno != errno.EEXIST:
@@ -180,7 +184,7 @@ async def setup(middleware):
     # Scan available channels
     for i in range(1, 17):
         try:
-            await run('/usr/local/bin/ipmitool', 'lan', 'print', str(i))
+            await run('ipmitool', 'lan', 'print', str(i))
         except subprocess.CalledProcessError:
             continue
         channels.append(i)

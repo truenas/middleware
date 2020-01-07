@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+#export DH_VERBOSE = 1
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	sh -c "\
+		mkdir -p debian/truenas-files/etc; \
+		cp -a root usr debian/truenas-files/; \
+		cp etc/find* debian/truenas-files/etc/; \
+		cp etc/iso_3166_2_countries.csv debian/truenas-files/etc/; \
+	"
+
+override_dh_shlibdeps:
+
+override_dh_usrlocal:

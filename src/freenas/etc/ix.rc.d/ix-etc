@@ -22,7 +22,7 @@ copy_templates()
 
 		# Special handling for login.conf file that needs cap_mkdb run
 		if [ "$nfile" = "/etc/login.conf" ] ; then
-			cap_mkdb -f /etc/login.conf.db /etc/login.conf
+			cap_mkdb /etc/login.conf
 		fi
 	done
 }
@@ -31,8 +31,7 @@ generate_etc()
 {
 	copy_templates
 
-	[ -s /data/dhparam.pem ] || openssl dhparam -rand /dev/random 2048 > /data/dhparam.pem
-
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call certificate.dhparam_setup > /dev/null
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate_all > /dev/null
 
 	# etc rc plugin will generate rc.conf.freenas which needs to be re-read by /etc/rc script

@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 from middlewared.client.utils import Struct
 import contextlib
 import logging
@@ -111,7 +110,7 @@ def main(middleware):
     cf_contents_shadow.clear()
 
     gconf = Struct(middleware.call_sync('datastore.query', 'services.iSCSITargetGlobalConfiguration',
-                                        None, {'get': True}))
+                                        [], {'get': True}))
     if gconf.iscsi_alua:
         node = middleware.call_sync('failover.node')
 
@@ -210,7 +209,7 @@ def main(middleware):
 
     # Cache zpool threshold
     poolthreshold = {}
-    zpoollist = middleware.call_sync('notifier.zpool_list')
+    zpoollist = {i['name']: i for i in middleware.call_sync('zfs.pool.query')}
 
     # Generate the LUN section
     for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
@@ -240,15 +239,15 @@ def main(middleware):
                 if gconf.iscsi_pool_avail_threshold:
                     if poolname in zpoollist:
                         poolthreshold[poolname] = int(
-                            zpoollist.get(poolname).get('size') * (
+                            zpoollist[poolname]['properties']['size']['parsed'] * (
                                 gconf.iscsi_pool_avail_threshold / 100.0
                             )
                         )
                 if extent.iscsi_target_extent_avail_threshold:
                     zvolname = path.split('/', 1)[1]
-                    zfslist = middleware.call_sync('notifier.zfs_list', zvolname, False, False, False, ['volume'])
-                    if zfslist:
-                        lunthreshold = int(zfslist[zvolname]['volsize'] *
+                    zfslist = middleware.call_sync('pool.dataset.query', [('id', '=', zvolname)])
+                    if zfslist and zfslist[0]['type'] == 'VOLUME':
+                        lunthreshold = int(zfslist[0]['volsize']['parsed'] *
                                            (extent.iscsi_target_extent_avail_threshold / 100.0))
                 path = '/dev/' + path
             else:
@@ -283,7 +282,7 @@ def main(middleware):
         if extent.iscsi_target_extent_legacy is True:
             addline('\toption "vendor" "FreeBSD"\n')
         else:
-            if middleware.call_sync('notifier.is_freenas'):
+            if middleware.call_sync('system.is_freenas'):
                 addline('\toption "vendor" "FreeNAS"\n')
             else:
                 addline('\toption "vendor" "TrueNAS"\n')
@@ -369,8 +368,7 @@ def main(middleware):
         cur_lunid = 0
         for t2e in middleware.call_sync('datastore.query', 'services.iscsitargettoextent',
                                         [('iscsi_target', '=', target.id)],
-                                        {'extra': {'select': {'null_first': 'iscsi_lunid IS NULL'}},
-                                         'order_by': ['null_first', 'iscsi_lunid']}):
+                                        {'order_by': ['nulls_last:iscsi_lunid']}):
             t2e = Struct(t2e)
 
             if t2e.iscsi_lunid is None:

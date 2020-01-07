@@ -5,12 +5,12 @@ from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
-from .service import CallError, CallException, ValidationError, ValidationErrors
-from .service_exception import adapt_exception
+from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
 from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
+import middlewared.utils.osc as osc
 from .utils.profile import profile_wrap
 from .utils.run_in_thread import RunInThreadMixin
 from .webui_auth import WebUIAuth
@@ -19,28 +19,30 @@ from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_wsgi import WSGIHandler
-from bsd import closefrom
-from bsd.threading import set_thread_name
 from collections import defaultdict
 
 import argparse
 import asyncio
 import binascii
+from collections import namedtuple
 import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
 import errno
+import fcntl
 import functools
 import inspect
 import itertools
 import multiprocessing
 import os
 import pickle
+import platform
 import re
 import queue
 import select
 import setproctitle
 import signal
+import struct
 import sys
 import termios
 import threading
@@ -49,6 +51,10 @@ import traceback
 import types
 import urllib.parse
 import uuid
+
+if platform.system() == "Linux":
+    from systemd.daemon import notify as systemd_notify
+
 from . import logger
 
 
@@ -63,6 +69,8 @@ class Application(object):
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.session_id = str(uuid.uuid4())
+        self.rest = False
+        self.websocket = True
 
         # Allow at most 10 concurrent calls and only queue up until 20
         self._softhardsemaphore = SoftHardSemaphore(10, 20)
@@ -179,7 +187,6 @@ class Application(object):
                 await self.middleware.run_in_thread(
                     self.middleware.crash_reporting.report,
                     exc_info,
-                    None,
                     extra_log_files,
                 )
 
@@ -519,6 +526,9 @@ class FileApplication(object):
         return resp
 
 
+ShellResize = namedtuple("ShellResize", ["cols", "rows"])
+
+
 class ShellWorkerThread(threading.Thread):
     """
     Worker thread responsible for forking and running the shell
@@ -534,11 +544,14 @@ class ShellWorkerThread(threading.Thread):
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
+    def resize(self, cols, rows):
+        self.input_queue.put(ShellResize(cols, rows))
+
     def run(self):
 
         self.shell_pid, master_fd = os.forkpty()
         if self.shell_pid == 0:
-            closefrom(3)
+            osc.close_fds(3)
 
             os.chdir('/root')
             cmd = [
@@ -585,7 +598,10 @@ class ShellWorkerThread(threading.Thread):
             while True:
                 try:
                     get = self.input_queue.get(timeout=1)
-                    os.write(master_fd, get)
+                    if isinstance(get, ShellResize):
+                        fcntl.ioctl(master_fd, termios.TIOCSWINSZ, struct.pack("HHHH", get.rows, get.cols, 0, 0))
+                    else:
+                        os.write(master_fd, get)
                 except queue.Empty:
                     # If we timeout waiting in input query lets make sure
                     # the shell process is still alive
@@ -620,10 +636,12 @@ class ShellWorkerThread(threading.Thread):
 
 
 class ShellConnectionData(object):
+    id = None
     t_worker = None
 
 
 class ShellApplication(object):
+    shells = {}
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -633,6 +651,7 @@ class ShellApplication(object):
         await ws.prepare(request)
 
         conndata = ShellConnectionData()
+        conndata.id = str(uuid.uuid4())
 
         try:
             await self.run(ws, request, conndata)
@@ -640,6 +659,7 @@ class ShellApplication(object):
             if conndata.t_worker:
                 await self.worker_kill(conndata.t_worker)
         finally:
+            self.shells.pop(conndata.id, None)
             return ws
 
     async def run(self, ws, request, conndata):
@@ -681,11 +701,14 @@ class ShellApplication(object):
                 authenticated = True
                 await ws.send_json({
                     'msg': 'connected',
+                    'id': conndata.id,
                 })
 
                 jail = data.get('jail')
                 conndata.t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), jail=jail)
                 conndata.t_worker.start()
+
+                self.shells[conndata.id] = conndata.t_worker
 
         # If connection was not authenticated, return earlier
         if not authenticated:
@@ -755,7 +778,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         # Spawn new processes for ProcessPool instead of forking
         multiprocessing.set_start_method('spawn')
         self.__ws_threadpool = concurrent.futures.ThreadPoolExecutor(
-            initializer=lambda: set_thread_name('threadpool_ws'),
+            initializer=lambda: osc.set_thread_name('threadpool_ws'),
             max_workers=10,
         )
         self.__init_procpool()
@@ -780,12 +803,15 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         def on_module_begin(mod):
             self._console_write(f'loaded plugin {mod.__name__}')
-            self.__incr_startup_seq()
+            self.__notify_startup_progress()
 
         def on_module_end(mod):
             if not hasattr(mod, 'setup'):
                 return
-            setup_plugin = mod.__name__.rsplit('.', 1)[-1]
+
+            mod_name = mod.__name__.split('.')
+            setup_plugin = mod_name[mod_name.index('plugins') + 1]
+
             setup_funcs.append((setup_plugin, mod.setup))
 
         def on_modules_loaded():
@@ -806,12 +832,18 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             plugin, function = plugin__function
 
             beginning = [
+                'datastore',
+                # We run boot plugin first to ensure we are able to retrieve
+                # BOOT POOL during system plugin initialization
+                'boot',
                 # We need to run system plugin setup's function first because when system boots, the right
                 # timezone is not configured. See #72131
                 'system',
                 # We also need to load alerts first because other plugins can issue one-shot alerts during their
                 # initialization
                 'alert',
+                # Migrate users and groups ASAP
+                'account',
             ]
             try:
                 return beginning.index(plugin)
@@ -825,7 +857,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         for i, setup_func in enumerate(setup_funcs):
             name, f = setup_func
             self._console_write(f'setting up plugins ({name}) [{i + 1}/{setup_total}]')
-            self.__incr_startup_seq()
+            self.__notify_startup_progress()
             call = f(self)
             # Allow setup to be a coroutine
             if asyncio.iscoroutinefunction(f):
@@ -926,16 +958,24 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         except Exception:
             pass
 
-    def __incr_startup_seq(self):
-        if self.startup_seq_path is None:
-            return
+    def __notify_startup_progress(self):
+        if platform.system() == 'FreeBSD':
+            if self.startup_seq_path is None:
+                return
 
-        with open(self.startup_seq_path + ".tmp", "w") as f:
-            f.write(f"{self.startup_seq}")
+            with open(self.startup_seq_path + ".tmp", "w") as f:
+                f.write(f"{self.startup_seq}")
 
-        os.rename(self.startup_seq_path + ".tmp", self.startup_seq_path)
+            os.rename(self.startup_seq_path + ".tmp", self.startup_seq_path)
 
-        self.startup_seq += 1
+            self.startup_seq += 1
+
+        if platform.system() == 'Linux':
+            systemd_notify(f'EXTEND_TIMEOUT_USEC={int(240 * 1e6)}')
+
+    def __notify_startup_complete(self):
+        if platform.system() == 'Linux':
+            systemd_notify('READY=1')
 
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
@@ -949,7 +989,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
     def unregister_wsclient(self, client):
         self.__wsclients.pop(client.session_id)
 
-    def register_hook(self, name, method, sync=True):
+    def register_hook(self, name, method, sync=True, inline=False):
         """
         Register a hook under `name`.
 
@@ -958,11 +998,30 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             name(str): name of the hook, e.g. service.hook_name
             method(callable): method to be called
             sync(bool): whether the method should be called in a sync way
+            inline(bool): whether the method should be called in executor's context synchronously
         """
+
+        if inline:
+            if asyncio.iscoroutinefunction(method):
+                raise RuntimeError('You can\'t register coroutine function as inline hook')
+
+            if not sync:
+                raise RuntimeError('Inline hooks are always called in a sync way')
+
         self.__hooks[name].append({
             'method': method,
+            'inline': inline,
             'sync': sync,
         })
+
+    def _call_hook_base(self, name, *args, **kwargs):
+        for hook in self.__hooks[name]:
+            try:
+                yield hook, hook['method'](self, *args, **kwargs)
+            except Exception:
+                self.logger.error(
+                    'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
+                )
 
     async def call_hook(self, name, *args, **kwargs):
         """
@@ -970,19 +1029,26 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         Args:
             name(str): name of the hook, e.g. service.hook_name
         """
-        for hook in self.__hooks[name]:
+        for hook, fut in self._call_hook_base(name, *args, **kwargs):
             try:
-                fut = hook['method'](self, *args, **kwargs)
-                if hook['sync']:
+                if hook['inline']:
+                    raise RuntimeError('Inline hooks should be called with call_hook_inline')
+                elif hook['sync']:
                     await fut
                 else:
                     asyncio.ensure_future(fut)
-
             except Exception:
-                self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
+                self.logger.error(
+                    'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
+                )
 
     def call_hook_sync(self, name, *args, **kwargs):
         return self.run_coroutine(self.call_hook(name, *args, **kwargs))
+
+    def call_hook_inline(self, name, *args, **kwargs):
+        for hook, fut in self._call_hook_base(name, *args, **kwargs):
+            if not hook['inline']:
+                raise RuntimeError('Only inline hooks can be called with call_hook_inline')
 
     def register_event_source(self, name, event_source):
         if not issubclass(event_source, EventSource):
@@ -1039,7 +1105,6 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         self, name, serviceobj, methodobj, params=None, app=None, pipes=None,
         job_on_progress_cb=None, io_thread=True,
     ):
-
         args = []
         if hasattr(methodobj, '_pass_app'):
             args.append(app)
@@ -1127,7 +1192,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             app=app, pipes=pipes, job_on_progress_cb=job_on_progress_cb, io_thread=True,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None):
+    def call_sync(self, name, *params, job_on_progress_cb=None, wait=True):
         """
         Synchronous method call to be used from another thread.
         """
@@ -1141,7 +1206,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             self._call(
                 name, serviceobj, methodobj, params,
                 io_thread=True, job_on_progress_cb=job_on_progress_cb,
-            )
+            ),
+            wait=wait,
         )
 
     def run_coroutine(self, coro, wait=True):
@@ -1208,7 +1274,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
-            asyncio.ensure_future(handler(self, event_type, kwargs))
+            asyncio.run_coroutine_threadsafe(handler(self, event_type, kwargs), loop=self.loop)
 
     def pdb(self):
         import pdb
@@ -1253,7 +1319,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         DISCLAIMER/TODO: This is not free of race condition so it may show
         false positives.
         """
-        set_thread_name('loop_monitor')
+        osc.set_thread_name('loop_monitor')
         last = None
         while True:
             time.sleep(2)
@@ -1276,7 +1342,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         self._console_write('starting')
 
-        set_thread_name('asyncio_loop')
+        osc.set_thread_name('asyncio_loop')
         self.loop = asyncio.get_event_loop()
 
         if self.loop_debug:
@@ -1352,6 +1418,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         self.logger.debug('Accepting connections')
         self._console_write('loading completed\n')
 
+        self.__notify_startup_complete()
+
     def terminate(self):
         self.logger.info('Terminating')
         self.__terminate_task = self.loop.create_task(self.__terminate())
@@ -1362,8 +1430,20 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             # in base class to reduce number of awaits
             if hasattr(service, "terminate"):
                 self.logger.trace("Terminating %r", service)
+                timeout = None
+                if hasattr(service, 'terminate_timeout'):
+                    try:
+                        timeout = await asyncio.wait_for(self.call(f'{service_name}.terminate_timeout'), 5)
+                    except Exception:
+                        self.logger.error(
+                            'Failed to retrieve terminate timeout value for %s', service_name, exc_info=True
+                        )
+
+                # This is to ensure if some service returns 0 as a timeout value meaning it is probably not being
+                # used, we still give it the standard default 10 seconds timeout to ensure a clean exit
+                timeout = timeout or 10
                 try:
-                    await asyncio.wait_for(service.terminate(), 10)
+                    await asyncio.wait_for(service.terminate(), timeout)
                 except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
@@ -1404,7 +1484,7 @@ def main():
     args = parser.parse_args()
 
     pidpath = '/var/run/middlewared.pid'
-    startup_seq_path = '/var/run/middlewared_startup.seq'
+    startup_seq_path = '/tmp/middlewared_startup.seq'
 
     if args.restart:
         if os.path.exists(pidpath):
@@ -1419,8 +1499,6 @@ def main():
     logger.setup_logging('middleware', args.debug_level, args.log_handler)
 
     setproctitle.setproctitle('middlewared')
-    # Workaround to tell django to not set up logging on its own
-    os.environ['MIDDLEWARED'] = str(os.getpid())
 
     if args.pidfile:
         with open(pidpath, "w") as _pidfile:

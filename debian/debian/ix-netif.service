@@ -1,0 +1,17 @@
+[Unit]
+Description=Setup TrueNAS Network
+DefaultDependencies=no
+
+Before=network-pre.target
+
+Wants=systemd-modules-load.service local-fs.target
+After=systemd-modules-load.service local-fs.target middlewared.service
+Conflicts=systemd-networkd.service
+
+[Service]
+Type=oneshot
+ExecStart=midclt -t 120 call interfaces.sync true
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

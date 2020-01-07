@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ -f /.ec2 ];
+then
+    touch /boot/loader.conf.local
+    /usr/sbin/sysrc -f /boot/loader.conf.local if_ena_load=YES
+    /usr/sbin/sysrc -f /boot/loader.conf.local autoboot_delay=-1
+    /usr/sbin/sysrc -f /boot/loader.conf.local beastie_disable=YES
+    /usr/sbin/sysrc -f /boot/loader.conf.local boot_multicons=YES
+    /usr/sbin/sysrc -f /boot/loader.conf.local hint.atkbd.0.disabled=1
+    /usr/sbin/sysrc -f /boot/loader.conf.local hint.atkbdc.0.disabled=1
+fi

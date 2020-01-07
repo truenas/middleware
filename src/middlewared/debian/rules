@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+#export DH_VERBOSE = 1
+
+export PYBUILD_NAME=middlewared
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_build:
+	dh_auto_build
+	env FREENAS_INSTALL=yes /usr/sbin/migrate93 -f freenas-v1.db -s pwenc_secret
+	env FREENAS_INSTALL=yes PYTHONPATH=. /usr/sbin/migrate113 -f freenas-v1.db
+	cd middlewared && env PYTHONPATH=.. FREENAS_DATABASE=../freenas-v1.db alembic upgrade head
+
+override_dh_install:
+	dh_install
+	mkdir -p debian/middlewared/data
+	cp freenas-v1.db debian/middlewared/data/factory-v1.db
+
+override_dh_auto_test:

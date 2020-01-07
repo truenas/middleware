@@ -1,4 +1,5 @@
 import functools
+import re
 from itertools import chain
 
 import asyncio
@@ -8,7 +9,12 @@ from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import CRUDService, filterable, filter_list, private, SystemServiceService, ValidationErrors
+import middlewared.sqlalchemy as sa
+from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
+
+
+RE_TIME_DETAILS = re.compile(r'test will complete after(.*)', re.IGNORECASE)
 
 
 async def annotate_disk_smart_tests(middleware, devices, disk):
@@ -93,6 +99,32 @@ def parse_smart_selftest_results(stdout):
             tests.append(test)
 
         return tests
+
+
+class SmartTestModel(sa.Model):
+    __tablename__ = 'tasks_smarttest'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    smarttest_type = sa.Column(sa.String(2))
+    smarttest_desc = sa.Column(sa.String(120))
+    smarttest_hour = sa.Column(sa.String(100), default='*')
+    smarttest_daymonth = sa.Column(sa.String(100), default='*')
+    smarttest_month = sa.Column(sa.String(100), default='*')
+    smarttest_dayweek = sa.Column(sa.String(100), default='*')
+    smarttest_all_disks = sa.Column(sa.Boolean(), default=False)
+
+    smarttest_disks = sa.relationship('DiskModel', secondary=lambda: SmartTestDiskModel.__table__)
+
+
+class SmartTestDiskModel(sa.Model):
+    __tablename__ = 'tasks_smarttest_smarttest_disks'
+    __table_args__ = (
+        sa.Index('tasks_smarttest_smarttest_disks_smarttest_id__disk_id', 'smarttest_id', 'disk_id', unique=True),
+    )
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    smarttest_id = sa.Column(sa.Integer(), sa.ForeignKey('tasks_smarttest.id', ondelete='CASCADE'))
+    disk_id = sa.Column(sa.String(100), sa.ForeignKey('storage_disk.disk_identifier', ondelete='CASCADE'))
 
 
 class SMARTTestService(CRUDService):
@@ -296,6 +328,107 @@ class SMARTTestService(CRUDService):
 
         return response
 
+    @accepts(
+        List(
+            'disks', items=[
+                Dict(
+                    'disk_run',
+                    Str('identifier', required=True),
+                    Str('mode', enum=['FOREGROUND', 'BACKGROUND'], default='BACKGROUND'),
+                    Str('type', enum=['LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE'], required=True),
+                )
+            ]
+        )
+    )
+    async def manual_test(self, disks):
+        """
+        Run manual SMART tests for `disks`.
+
+        `type` indicates what type of SMART test will be ran and must be specified.
+        """
+        verrors = ValidationErrors()
+        if not disks:
+            verrors.add(
+                'disks',
+                'Please specify at least one disk.'
+            )
+        else:
+            test_disks_list = []
+            disks_data = await self.middleware.call('disk.query')
+            devices = await camcontrol_list()
+
+            for index, disk in enumerate(disks):
+                for d in disks_data:
+                    if disk['identifier'] == d['identifier']:
+                        current_disk = d
+                        test_disks_list.append({
+                            'disk': current_disk['name'],
+                            **disk
+                        })
+                        break
+                else:
+                    verrors.add(
+                        f'disks.{index}.identifier',
+                        f'{disk["identifier"]} is not valid. Please provide a valid disk identifier.'
+                    )
+                    continue
+
+                if current_disk['name'] is None:
+                    verrors.add(
+                        f'disks.{index}.identifier',
+                        f'Test cannot be performed for {disk["identifier"]} disk. Failed to retrieve name.'
+                    )
+
+                if current_disk['name'].startswith('nvd'):
+                    verrors.add(
+                        f'disks.{index}.identifier',
+                        f'Test cannot be performed for {disk["identifier"]} disk. NVMe devices cannot be mapped yet.'
+                    )
+
+                device = devices.get(current_disk['name'])
+                if not device:
+                    verrors.add(
+                        f'disks.{index}.identifier',
+                        f'Test cannot be performed for {disk["identifier"]}. Unable to retrieve disk details.'
+                    )
+
+        verrors.check()
+
+        return list(
+            await asyncio_map(functools.partial(self.__manual_test, devices), test_disks_list, 16)
+        )
+
+    async def __manual_test(self, devices, disk):
+        device = devices.get(disk['disk'])
+        args = await get_smartctl_args(self.middleware, disk['disk'], device)
+
+        proc = await run(
+            list(
+                filter(bool, ['smartctl', '-t', disk['type'].lower(), '-C' if disk['mode'] == 'FOREGROUND' else None])
+            ) + args,
+            check=False, encoding='utf8'
+        )
+
+        output = {}
+        if proc.returncode:
+            output['error'] = proc.stderr
+            self.middleware.logger.debug(
+                f'Self test for {disk["disk"]} failed with {proc.returncode} return code.'
+            )
+        else:
+            time_details = re.findall(RE_TIME_DETAILS, proc.stdout)
+            if not time_details:
+                output['error'] = f'Failed to parse smartctl self test details for {disk["identifier"]}.'
+            else:
+                output['expected_result_time'] = time_details[0].strip()
+                # TODO: Please setup alerts
+
+        return {
+            'disk': disk['disk'],
+            'identifier': disk['identifier'],
+            **output
+        }
+
     @filterable
     async def results(self, filters, options):
         """
@@ -402,6 +535,17 @@ class SMARTTestService(CRUDService):
         )
 
 
+class SmartModel(sa.Model):
+    __tablename__ = 'services_smart'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    smart_interval = sa.Column(sa.Integer(), default=30)
+    smart_powermode = sa.Column(sa.String(60), default="never")
+    smart_difference = sa.Column(sa.Integer(), default=0)
+    smart_informational = sa.Column(sa.Integer(), default=0)
+    smart_critical = sa.Column(sa.Integer(), default=0)
+
+
 class SmartService(SystemServiceService):
 
     class Config:
@@ -451,6 +595,7 @@ class SmartService(SystemServiceService):
 
         if new["powermode"] != old["powermode"]:
             await self.middleware.call("service.restart", "collectd", {"onetime": False})
+            await self._service_change("snmp", "restart")
 
         await self.smart_extend(new)
 

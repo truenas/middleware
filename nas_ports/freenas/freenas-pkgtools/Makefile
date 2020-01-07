@@ -9,8 +9,6 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=	dev@ixsystems.com
 COMMENT=	FreeNAS sef\'s pkg tools
 
-PRODUCT?=
-
 USES=		python
 
 EXTRACT_ONLY=

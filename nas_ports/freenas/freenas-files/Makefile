@@ -10,11 +10,12 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=	dev@ixsystems.com
 COMMENT=	miscellaneous files for FreeNAS
 
-PRODUCT?=
 PREFIX=/
 
 USES= 	python
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}snmp_passpersist>=1.3.0:net-mgmt/py-snmp_passpersist
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}snmp_passpersist>=1.3.0:net-mgmt/py-snmp_passpersist \
+		${PYTHON_PKGNAMEPREFIX}middlewared>0:freenas/py-middlewared@${PY_FLAVOR} \
+		firmware>0:freenas/firmware
 
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
@@ -22,6 +23,8 @@ PLIST_SUB=	MACHINE_ARCH=${MACHINE_ARCH}
 
 EXTRACT_ONLY=
 WRKSRC=/usr/nas_source
+
+SUB_FILES=	pkg-install
 
 # no checksum, we just used git!
 checksum fetch:
@@ -37,20 +40,29 @@ MAKE_JOBS_UNSAFE=yes
 .include <bsd.port.pre.mk>
 
 do-build:
-	${MAKE} -C ${WRKSRC}/freenas-sysctl obj
-	${MAKE} -C ${WRKSRC}/freenas-sysctl all
+	(cd ${WRKSRC}/escrowd; \
+		${MAKE} cleandir && \
+		${MAKE} obj && \
+		${MAKE} depend all \
+	)
 	${MAKE} -C ${WRKSRC}/winacl   obj
 	${MAKE} -C ${WRKSRC}/winacl  all
 
+
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/sbin
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/share/man/man8
 	mkdir -p ${STAGEDIR}${PREFIX}/boot/modules
 .if defined(DEBUG_FLAGS)
 	mkdir -p ${STAGEDIR}${DEBUGDIR}${PREFIX}/boot/modules
 .endif
+	(cd ${WRKSRC}/escrowd; \
+		${MAKE} BINDIR=${STAGEDIR}${PREFIX}/usr/sbin \
+		MANDIR=${STAGEDIR}${PREFIX}/usr/share/man/man install \
+	)
 
 	${MAKE} -C ${WRKSRC}/winacl DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
-	${MAKE} -C ${WRKSRC}/freenas-sysctl DESTDIR=${STAGEDIR} KMODDIR=${PREFIX}/boot/modules install
 	#
 	# Adding autotune
 	#
@@ -59,16 +71,9 @@ do-install:
 	#
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
-.if ${PRODUCT} == "TrueNAS"
-	${RM} \
-		${STAGEDIR}/boot/loader.conf \
-		${STAGEDIR}/boot/loader.rc.local \
-		${STAGEDIR}/etc/sysctl.conf \
-		${STAGEDIR}/etc/motd
-.endif
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
-		| ${AWK} '{print $$2 }' >> ${TMPPLIST})
+		| ${AWK} '{$$1=""; sub(/^[ \t]+/, ""); print $$0}' >> ${TMPPLIST})
 
 .include <bsd.port.post.mk>

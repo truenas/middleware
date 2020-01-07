@@ -1,9 +1,0 @@
-<div data-dojo-type="dijit/layout/ContentPane">
-<script type="dojo/method">
-  var me = this;
-  addToStack(function() {
-    cancelDialog(me);
-    window.location='{% url "system_debug_download" %}';
-  });
-</script>
-</div>

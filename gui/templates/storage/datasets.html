@@ -1,6 +1,0 @@
-{% extends "freeadmin/generic_form.html" %}
-{% block form %}
-<tr><td>{% blocktrans with fs=fs %}Create ZFS dataset in {{ fs }}{% endblocktrans %}</td></tr>
-{{ block.super }}
-{% endblock %}
-{% block oklabel %}{% trans "Add Dataset" %}{% endblock %}

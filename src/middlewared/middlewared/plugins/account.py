@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Email
 
@@ -63,6 +64,27 @@ def crypted_password(cleartext):
 def nt_password(cleartext):
     nthash = hashlib.new('md4', cleartext.encode('utf-16le')).digest()
     return binascii.hexlify(nthash).decode().upper()
+
+
+class UserModel(sa.Model):
+    __tablename__ = 'account_bsdusers'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    bsdusr_uid = sa.Column(sa.Integer())
+    bsdusr_username = sa.Column(sa.String(16), default='User &')
+    bsdusr_unixhash = sa.Column(sa.String(128), default='*')
+    bsdusr_smbhash = sa.Column(sa.String(128), default='*')
+    bsdusr_home = sa.Column(sa.String(255), default="/nonexistent")
+    bsdusr_shell = sa.Column(sa.String(120), default='/bin/csh')
+    bsdusr_full_name = sa.Column(sa.String(120))
+    bsdusr_builtin = sa.Column(sa.Boolean(), default=False)
+    bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
+    bsdusr_locked = sa.Column(sa.Boolean(), default=False)
+    bsdusr_sudo = sa.Column(sa.Boolean(), default=False)
+    bsdusr_microsoft_account = sa.Column(sa.Boolean())
+    bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
+    bsdusr_attributes = sa.Column(sa.JSON())
+    bsdusr_email = sa.Column(sa.String(254), nullable=True)
 
 
 class UserService(CRUDService):
@@ -297,7 +319,7 @@ class UserService(CRUDService):
 
             data['sshpubkey'] = sshpubkey
             try:
-                await self.__update_sshpubkey(data['home'], data, group['group'])
+                await self.update_sshpubkey(data['home'], data, group['group'])
             except PermissionError as e:
                 self.logger.warn('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
@@ -393,12 +415,20 @@ class UserService(CRUDService):
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
         try:
-            await self.__update_sshpubkey(
+            update_sshpubkey_args = [
                 home_old if home_copy else user['home'], user, group['bsdgrp_group'],
-            )
+            ]
+            await self.update_sshpubkey(*update_sshpubkey_args)
         except PermissionError as e:
             self.logger.warn('Failed to update authorized keys', exc_info=True)
             raise CallError(f'Failed to update authorized keys: {e}')
+        else:
+            if user['uid'] == 0:
+                if await self.middleware.call('failover.licensed'):
+                    try:
+                        await self.middleware.call('failover.call_remote', 'user.update_sshpubkey', update_sshpubkey_args)
+                    except Exception:
+                        self.logger.error('Failed to sync root ssh pubkey to standby node', exc_info=True)
 
         if home_copy:
             def do_home_copy():
@@ -569,14 +599,35 @@ class UserService(CRUDService):
         ))['bsdusr_unixhash'] != '*'
 
     @no_auth_required
-    @accepts(Str('password'))
-    @pass_app
-    async def set_root_password(self, app, password):
+    @accepts(
+        Str('password'),
+        Dict(
+            'options',
+            Dict(
+                'ec2',
+                Str('instance_id', required=True),
+            ),
+            update=True,
+        )
+    )
+    @pass_app()
+    async def set_root_password(self, app, password, options):
         """
         Set password for root user if it is not already set.
         """
-        if not app.authenticated and await self.middleware.call('user.has_root_password'):
-            raise CallError('You cannot call this method anonymously if root already has a password', errno.EACCES)
+        if not app.authenticated:
+            if await self.middleware.call('user.has_root_password'):
+                raise CallError('You cannot call this method anonymously if root already has a password', errno.EACCES)
+
+            if await self.middleware.call('system.environment') == 'EC2':
+                if 'ec2' not in options:
+                    raise CallError(
+                        'You need to specify instance ID when setting initial root password on EC2 instance',
+                        errno.EACCES,
+                    )
+
+                if options['ec2']['instance_id'] != await self.middleware.call('ec2.instance_id'):
+                    raise CallError('Incorrect EC2 instance ID', errno.EACCES)
 
         root = await self.middleware.call('user.query', [('username', '=', 'root')], {'get': True})
         await self.middleware.call('user.update', root['id'], {'password': password})
@@ -702,7 +753,8 @@ class UserService(CRUDService):
                 {'prefix': 'bsdgrpmember_'}
             )
 
-    async def __update_sshpubkey(self, homedir, user, group):
+    @private
+    async def update_sshpubkey(self, homedir, user, group):
         if 'sshpubkey' not in user:
             return
         if not os.path.isdir(homedir):
@@ -757,6 +809,24 @@ class UserService(CRUDService):
             f.write(pubkey)
             f.write('\n')
         await self.middleware.call('filesystem.setperm', {'path': keysfile, 'mode': str(600)})
+
+
+class GroupModel(sa.Model):
+    __tablename__ = 'account_bsdgroups'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    bsdgrp_gid = sa.Column(sa.Integer())
+    bsdgrp_group = sa.Column(sa.String(120))
+    bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
+    bsdgrp_sudo = sa.Column(sa.Boolean(), default=False)
+
+
+class GroupMembershipModel(sa.Model):
+    __tablename__ = 'account_bsdgroupmembership'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id", ondelete="CASCADE"))
+    bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id", ondelete="CASCADE"))
 
 
 class GroupService(CRUDService):
@@ -916,7 +986,7 @@ class GroupService(CRUDService):
                 await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': i})
 
         if delete_groupmap:
-            await self.middleware.call('notifier.groupmap_delete', delete_groupmap)
+            await self.middleware.call('smb.groupmap_delete', delete_groupmap)
 
         await self.middleware.call('service.reload', 'user')
 
@@ -933,14 +1003,20 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        await self.middleware.call('notifier.groupmap_delete', group['group'])
+        await self.middleware.call('smb.groupmap_delete', group['group'])
 
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 
-        if options['delete_users']:
-            for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])], {'prefix': 'bsdusr_'}):
+        nogroup = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', 'nogroup')],
+                                             {'prefix': 'bsdgrp_', 'get': True})
+        for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])],
+                                            {'prefix': 'bsdusr_'}):
+            if options['delete_users']:
                 await self.middleware.call('datastore.delete', 'account.bsdusers', i['id'])
+            else:
+                await self.middleware.call('datastore.update', 'account.bsdusers', i['id'], {'group': nogroup['id']},
+                                           {'prefix': 'bsdusr_'})
 
         await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
 
@@ -1006,3 +1082,8 @@ class GroupService(CRUDService):
                     f'{schema}.users',
                     f'Following users do not exist: {", ".join(map(str, notfound))}',
                 )
+
+
+async def setup(middleware):
+    if await middleware.call('keyvalue.get', 'run_migration', False):
+        await middleware.call('user.sync_builtin')

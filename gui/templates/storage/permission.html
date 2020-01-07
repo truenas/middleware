@@ -1,7 +1,0 @@
-{% extends "freeadmin/generic_form.html" %}
-{% block oklabel %}{% trans "Change" %}{% endblock %}
-{% block form %}
-    <h3>{% trans "Change permission" %}</h3>
-    <p>{% blocktrans with path=path %}Change permission on {{ path }} to{% endblocktrans %}:</p>
-{{ block.super }}
-{% endblock %}

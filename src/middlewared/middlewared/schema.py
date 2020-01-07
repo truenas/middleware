@@ -81,6 +81,9 @@ class Attribute(object):
                 raise Error(self.name, 'attribute required')
         return value
 
+    def has_private(self):
+        return self.private
+
     def dump(self, value):
         if self.private:
             return "********"
@@ -460,17 +463,19 @@ class List(EnumMixin, Attribute):
                     try:
                         value[index] = i.clean(v)
                         found = True
+                        break
                     except Error as e:
                         found = e
-                        break
                 if self.items and found is not True:
                     raise Error(self.name, 'Item#{0} is not valid per list types: {1}'.format(index, found))
         return value
 
-    def dump(self, value):
-        if self.private or (self.items and any(item.private for item in self.items)):
-            return "********"
+    def has_private(self):
+        return self.private or any(item.has_private() for item in self.items)
 
+    def dump(self, value):
+        if self.has_private():
+            return '********'
         return value
 
     def validate(self, value):
@@ -487,11 +492,16 @@ class List(EnumMixin, Attribute):
                 if v in s:
                     verrors.add(f"{self.name}.{i}", "This value is not unique.")
                 s.add(v)
+            attr_verrors = ValidationErrors()
             for attr in self.items:
                 try:
                     attr.validate(v)
                 except ValidationErrors as e:
-                    verrors.add_child(f"{self.name}.{i}", e)
+                    attr_verrors.add_child(f"{self.name}.{i}", e)
+                else:
+                    break
+            else:
+                verrors.extend(attr_verrors)
 
         if verrors:
             raise verrors
@@ -568,6 +578,9 @@ class Dict(Attribute):
                     if not attr.has_default:
                         raise ValueError(f"Attribute {attr.name} is not required and does not have default value, "
                                          f"this is forbidden in strict mode")
+
+    def has_private(self):
+        return self.private or any(i.has_private() for i in self.attrs.values())
 
     def clean(self, data):
         data = super().clean(data)
@@ -952,17 +965,12 @@ def accepts(*schema):
                 args, kwargs = clean_and_validate_args(args, kwargs)
                 return f(*args, **kwargs)
 
-        nf.__name__ = f.__name__
-        nf.__doc__ = f.__doc__
-        # Copy private attrs to new function so decorators can work on top of it
-        # e.g. _pass_app
-        for i in dir(f):
-            if i.startswith('__'):
-                continue
-            if i.startswith('_'):
-                setattr(nf, i, getattr(f, i))
+        from middlewared.utils.type import copy_function_metadata
+        copy_function_metadata(f, nf)
         nf.accepts = list(schema)
         nf.wraps = f
+        nf.wrap = wrap
 
         return nf
+
     return wrap

@@ -2,9 +2,24 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.validators import Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
+import middlewared.sqlalchemy as sa
 
 
 import os
+
+
+class S3Model(sa.Model):
+    __tablename__ = 'services_s3'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    s3_bindip = sa.Column(sa.String(128))
+    s3_bindport = sa.Column(sa.SmallInteger(), default=9000)
+    s3_access_key = sa.Column(sa.String(128), default='')
+    s3_secret_key = sa.Column(sa.String(128), default='')
+    s3_mode = sa.Column(sa.String(120), default="local")
+    s3_disks = sa.Column(sa.String(255), default='')
+    s3_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    s3_browser = sa.Column(sa.Boolean(), default=True)
 
 
 class S3Service(SystemServiceService):
@@ -13,6 +28,16 @@ class S3Service(SystemServiceService):
         service = "s3"
         datastore_prefix = "s3_"
         datastore_extend = "s3.config_extend"
+
+    async def bindip_choices(self):
+        """
+        Return ip choices for S3 service to use.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call(
+                'interface.ip_in_use', {'static': True, 'any': True}
+            )
+        }
 
     @private
     async def config_extend(self, s3):
@@ -87,6 +112,9 @@ class S3Service(SystemServiceService):
             verrors.extend((await self.middleware.call(
                 'certificate.cert_services_validation', new['certificate'], 's3_update.certificate', False
             )))
+
+        if new['bindip'] not in await self.bindip_choices():
+            verrors.add('s3_update.bindip', 'Please provide a valid ip address')
 
         if verrors:
             raise verrors
