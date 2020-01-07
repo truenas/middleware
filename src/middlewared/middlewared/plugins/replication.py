@@ -558,6 +558,15 @@ class ReplicationService(CRUDService):
                     "Target dataset basename should be same as source dataset basename for Legacy transport",
                 )
 
+            if data["retention_policy"] == "SOURCE":
+                if not data["properties"]:
+                    verrors.add("properties", "This option should be enabled for legacy replication when retention "
+                                              "policy is SOURCE")
+            if data["retention_policy"] == "NONE":
+                if data["properties"]:
+                    verrors.add("properties", "This option should be disabled for legacy replication when retention "
+                                              "policy is NONE")
+
             if data["retention_policy"] not in ["SOURCE", "NONE"]:
                 verrors.add("retention_policy", "Only \"source\" and \"none\" retention policies are supported by "
                                                 "legacy replication")

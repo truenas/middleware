@@ -6,6 +6,13 @@ import datetime
 from django.db import migrations, models
 
 
+def set_repl_properties(apps, schema_editor):
+    Replication = apps.get_model('storage', 'Replication')
+    for repl in Replication.objects.all():
+        repl.repl_properties = repl.repl_retention_policy == "SOURCE"
+        repl.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -18,4 +25,5 @@ class Migration(migrations.Migration):
             name='repl_properties',
             field=models.BooleanField(default=True, verbose_name='Send dataset properties along with snapshots'),
         ),
+        migrations.RunPython(set_repl_properties),
     ]
