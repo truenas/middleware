@@ -64,4 +64,4 @@ class DiskService(Service, DiskInfoBase):
         return '516e7cb5-6ecf-11d6-8ff8-00022d09712b'
 
     def get_swap_devices(self):
-        return [i.devname for i in getswapinfo()]
+        return [os.path.join('/dev', i.devname) for i in getswapinfo()]
