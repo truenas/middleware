@@ -28,3 +28,7 @@ class DiskInfoBase(ServicePartBase):
     @private
     async def get_swap_part_type(self):
         raise NotImplementedError()
+
+    @private
+    async def get_swap_devices(self):
+        raise NotImplementedError()

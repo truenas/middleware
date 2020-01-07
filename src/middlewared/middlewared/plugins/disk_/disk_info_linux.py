@@ -1,4 +1,5 @@
 import blkid
+import glob
 import os
 
 from middlewared.service import CallError, Service
@@ -24,10 +25,21 @@ class DiskService(Service, DiskInfoBase):
         if not block_device.partitions_exist:
             return parts
 
-        return [
-            {'name': f'{disk}{p["partition_number"]}', 'size': p['partition_size'], 'partition_type': p['type']}
-            for p in block_device.__getstate__()['partitions_data']['partitions']
-        ]
+        for p in block_device.__getstate__()['partitions_data']['partitions']:
+            part = {
+                'name': f'{disk}{p["partition_number"]}',
+                'size': p['partition_size'],
+                'partition_type': p['type'],
+                'disk': disk,
+                'id': f'{disk}{p["partition_number"]}',
+                'path': os.path.join('/dev', f'{disk}{p["partition_number"]}'),
+                'encrypted_provider': None,
+            }
+            encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
+            if encrypted_provider:
+                part['encrypted_provider'] = os.path.join('/dev', encrypted_provider[0].split('/')[3])
+            parts.append(part)
+        return parts
 
     def gptid_from_part_type(self, disk, part_type):
         try:
@@ -48,3 +60,11 @@ class DiskService(Service, DiskInfoBase):
 
     async def get_swap_part_type(self):
         return '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f'
+
+    def get_swap_devices(self):
+        with open('/proc/swaps', 'r') as f:
+            data = f.read()
+        devices = []
+        for dev_line in filter(lambda l: l.startswith('/dev'), data.splitlines()):
+            devices.append(dev_line.split()[0])
+        return devices

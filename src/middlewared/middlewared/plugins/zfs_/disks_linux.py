@@ -16,7 +16,7 @@ class ZFSPoolService(Service, PoolDiskServiceBase):
         disks = self.middleware.call_sync('zfs.pool.get_devices', name)
         block_devices = blkid.list_block_devices()
         mapping = {}
-        for dev in block_devices:
+        for dev in filter(lambda d: not d.name.startswith('sr'), block_devices):
             mapping[dev.name] = dev.name
             if dev.partitions_exist:
                 part_uuids = {

@@ -1,6 +1,7 @@
+import os
 import re
 
-from bsd import geom
+from bsd import geom, getswapinfo
 
 from middlewared.service import Service
 from middlewared.utils import run
@@ -33,7 +34,18 @@ class DiskService(Service, DiskInfoBase):
                     part_type = self.middleware.call_sync('disk.get_partition_uuid_from_name', part_type.text)
                 if not part_type:
                     part_type = 'UNKNOWN'
-                parts.append({'name': name.text, 'size': size, 'partition_type': part_type})
+                part = {
+                    'name': name.text,
+                    'size': size,
+                    'partition_type': part_type,
+                    'disk': disk,
+                    'id': p.get('id'),
+                    'path': os.path.join('/dev', name.text),
+                    'encrypted_provider': None,
+                }
+                if os.path.exists(f'{part["path"]}.eli'):
+                    part['encrypted_provider'] = f'{part["path"]}.eli'
+                parts.append(part)
 
         return parts
 
@@ -50,3 +62,6 @@ class DiskService(Service, DiskInfoBase):
 
     async def get_swap_part_type(self):
         return '516e7cb5-6ecf-11d6-8ff8-00022d09712b'
+
+    def get_swap_devices(self):
+        return [os.path.join('/dev', i.devname) for i in getswapinfo()]

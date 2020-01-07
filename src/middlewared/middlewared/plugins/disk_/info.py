@@ -5,6 +5,17 @@ from middlewared.service import private, Service
 class DiskService(Service):
 
     @private
+    async def list_all_partitions(self):
+        """
+        Returns list of all partitions present in the system
+        """
+        disks = await self.middleware.call('device.get_disks')
+        parts = []
+        for disk in disks:
+            parts.extend(await self.middleware.call('disk.list_partitions', disk))
+        return parts
+
+    @private
     @accepts(
         Str('disk'), Str('part_type', enum=['SWAP', 'ZFS'])
     )
@@ -41,5 +52,5 @@ class DiskService(Service):
     async def get_valid_swap_partition_type_uuids(self):
         return [
             '516e7cb5-6ecf-11d6-8ff8-00022d09712b',  # used by freebsd
-            '0657FD6D-A4AB-43C4-84E5-0933C84B4F4F',  # used by linux
+            '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f',  # used by linux
         ]

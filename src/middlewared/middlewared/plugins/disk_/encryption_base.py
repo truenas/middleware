@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, List, Str
-from middlewared.service import job, ServicePartBase
+from middlewared.service import job, private, ServicePartBase
 
 
 class DiskEncryptionBase(ServicePartBase):
@@ -12,3 +12,7 @@ class DiskEncryptionBase(ServicePartBase):
         """
         Decrypt `devices` using uploaded encryption key
         """
+
+    @private
+    async def remove_encryption(self, device):
+        raise NotImplementedError()
