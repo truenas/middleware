@@ -30,7 +30,7 @@ class DiskService(Service):
         all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
 
         for device in await self.middleware.call('disk.get_swap_devices'):
-            if device in encrypted_mirrors or device.startswith(('/dev/md', 'mirror/')):
+            if device in encrypted_mirrors or device.startswith(('/dev/md', '/dev/mirror/')):
                 # This is going to be complete path for linux and freebsd
                 existing_swap_devices['mirrors'].append(device)
             else:
