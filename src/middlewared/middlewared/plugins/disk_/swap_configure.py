@@ -61,9 +61,6 @@ class DiskService(Service):
                         check=False
                     )
 
-        if (len(existing_swap_devices['mirrors']) + len(existing_swap_devices['partitions'])) > MIRROR_MAX:
-            return
-
         # Get all partitions of swap type, indexed by size
         swap_partitions_by_size = defaultdict(list)
         valid_swap_part_uuids = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
