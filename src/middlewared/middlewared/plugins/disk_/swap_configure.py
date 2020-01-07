@@ -5,7 +5,7 @@ import subprocess
 from collections import defaultdict
 
 from middlewared.service import CallError, private, Service
-from middlewared.utils import Popen, run
+from middlewared.utils import run
 
 IS_LINUX = platform.system().lower() == 'linux'
 MIRROR_MAX = 5
@@ -46,7 +46,9 @@ class DiskService(Service):
                 await self.middleware.call('disk.swaps_remove_disks', [p['disk'] for p in mirror['providers']])
                 existing_swap_devices['mirrors'].remove(mirror_name)
             else:
-                if mirror['is_swap_mirror'] and mirror_name not in existing_swap_devices['mirrors']:
+                if mirror['is_swap_mirror'] and mirror_name not in existing_swap_devices['mirrors'] and (
+                    IS_LINUX or not mirror['name'].endswith('.sync')
+                ):
                     create_swap_devices[mirror_name] = {
                         'path': mirror_name,
                         'encrypted_provider': mirror['encrypted_provider'],
@@ -57,7 +59,7 @@ class DiskService(Service):
                 # and there is no geli attached yet we should look for core in it.
                 if not IS_LINUX and mirror['config_type'] == 'AUTOMATIC' and not mirror['encrypted_provider']:
                     await run(
-                        'savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{mirror_name}',
+                        'savecore', '-z', '-m', '5', '/data/crash/', mirror_name,
                         check=False
                     )
 
@@ -134,7 +136,7 @@ class DiskService(Service):
                     self.logger.warning('Failed to create swap mirror %s', swap_path)
                     continue
 
-                swap_device = os.path.realpath(os.path.join('/dev/md', swap_path)) if IS_LINUX else f'mirror/{swap_path}'
+                swap_device = os.path.realpath(os.path.join('/dev/md' if IS_LINUX else '/dev', swap_path))
                 create_swap_devices[swap_device] = {
                     'path': swap_device,
                     'encrypted_provider': None,
@@ -158,14 +160,12 @@ class DiskService(Service):
         for swap_path, data in create_swap_devices.items():
             if IS_LINUX:
                 if not data['encrypted_provider']:
-                    cp = await Popen(
-                        'echo "y" | cryptsetup -d /dev/urandom open --type plain '
-                        f'{swap_path} {swap_path.split("/")[-1]}',
-                        shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    cp = await run(
+                        'cryptsetup', '-d', '/dev/urandom', 'open', '--type', 'plain',
+                        swap_path, swap_path.split('/')[-1], check=False, encoding='utf8',
                     )
-                    stdout, stderr = await cp.communicate()
                     if cp.returncode:
-                        self.logger.warning('Failed to encrypt %s device: %s', swap_path, stderr)
+                        self.logger.warning('Failed to encrypt %s device: %s', swap_path, cp.stderr)
                         continue
                     swap_path = os.path.join('/dev/mapper', swap_path.split('/')[-1])
                 else:

@@ -1,4 +1,3 @@
-import os
 import platform
 
 from middlewared.service import private, Service
