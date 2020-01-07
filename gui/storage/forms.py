@@ -981,7 +981,7 @@ class AutoImportDecryptForm(Form):
             ]
 
     def done(self, *arg, **kwargs):
-        super(AutoImportDecryptForm, self).done()
+        super(AutoImportDecryptForm, self).done(*args, **kwargs)
         key = self.cleaned_data.get("key")
         disks = self.cleaned_data.get("disks")
         passphrase = self.cleaned_data.get("passphrase")
