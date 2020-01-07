@@ -13,8 +13,7 @@ class DiskService(Service):
     async def swaps_remove_disks(self, disks):
         """
         Remove a given disk (e.g. ["da0", "da1"]) from swap.
-        it will offline if from swap, remove it from the gmirror (if exists)
-        and detach the geli.
+        It will offline if from swap, removing encryption and destroying the mirror ( if part of one ).
         """
         providers = {}
         for disk in disks:
