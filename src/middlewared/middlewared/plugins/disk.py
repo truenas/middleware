@@ -1399,7 +1399,16 @@ class DiskService(CRUDService):
 
         used_partitions = set()
         swap_devices = []
+        boot_disks = await self.middleware.call('boot.get_disks')
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
+        disks.extend(boot_disks)
+        existing_swap_devices = {'mirrors': [], 'partitions': []}
+        for i in getswapinfo():
+            if i.devname.startswith('mirror/'):
+                existing_swap_devices['mirrors'].append(i.devname)
+            else:
+                existing_swap_devices['partitions'].append(i.devname)
+
         klass = geom.class_by_name('MIRROR')
         if klass:
             for g in klass.geoms:
