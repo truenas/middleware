@@ -18,7 +18,7 @@ class DiskMirrorBase(ServicePartBase):
         Str('name'),
         Dict(
             'create_mirror_options',
-            Dict('extra'),
+            Dict('extra', additional_attrs=True),
             List('paths', empty=False, required=True),
         )
     )
