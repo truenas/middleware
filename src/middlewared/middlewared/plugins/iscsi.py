@@ -692,6 +692,24 @@ class iSCSITargetExtentService(CRUDService):
         """
         data = await self._get_instance(id)
 
+        target_to_extents = await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]])
+        associated_targets = await self.middleware.call(
+            'iscsi.target.query', [[
+                'id', 'in', [t['target'] for t in target_to_extents]
+            ]]
+        )
+        check_targets = []
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        for target in associated_targets:
+            name = target['name']
+            if not name.startswith(('iqn.', 'naa.', 'eui.')):
+                name = f'{global_basename}:{name}'
+            check_targets.append(name)
+
+        active_sessions = await self.middleware.call('iscsi.global.sessions', [['target', 'in', check_targets]])
+        if active_sessions:
+            raise CallError(f'Associated targets {",".join([s["target"] for s in active_sessions])} is in use')
+
         if remove:
             await self.compress(data)
             delete = await self.remove_extent_file(data)
@@ -699,8 +717,8 @@ class iSCSITargetExtentService(CRUDService):
             if delete is not True:
                 raise CallError('Failed to remove extent file')
 
-        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]]):
-            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
+        for target_to_extent in target_to_extents:
+            await self.middleware.call('iscsi.targetextent._do_delete', target_to_extent['id'], False)
 
         try:
             return await self.middleware.call(
