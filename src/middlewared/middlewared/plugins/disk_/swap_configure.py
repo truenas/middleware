@@ -102,8 +102,8 @@ class DiskService(Service):
                     for p in part_ab:
                         remove = False
                         part_data = all_partitions[p]
-                        if part_data['encryption_provider'] in existing_swap_devices['partitions']:
-                            part = part_data['encryption_provider']
+                        if part_data['encrypted_provider'] in existing_swap_devices['partitions']:
+                            part = part_data['encrypted_provider']
                             remove = True
                         elif part_data['path'] in existing_swap_devices['partitions']:
                             remove = True
