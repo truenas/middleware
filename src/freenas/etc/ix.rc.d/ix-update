@@ -44,6 +44,9 @@ db_update_real()
 		echo "alembic migrate failed"
 		return 1
 	fi
+
+	/usr/local/bin/sqlite3 ${FREENAS_CONFIG} "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')"
+
 	rm -f $UPDATE_FAILED_LOG
 	return 0
 }

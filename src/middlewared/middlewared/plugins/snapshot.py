@@ -58,9 +58,12 @@ class PeriodicSnapshotTaskService(CRUDService):
             for vmware in context['vmware']
         )
 
-        data['state'] = context['state'].get(f'periodic_snapshot_task_{data["id"]}', {
-            'state': 'PENDING',
-        })
+        if 'error' in context['state']:
+            data['state'] = context['state']['error']
+        else:
+            data['state'] = context['state'].get(f'periodic_snapshot_task_{data["id"]}', {
+                'state': 'PENDING',
+            })
 
         return data
 

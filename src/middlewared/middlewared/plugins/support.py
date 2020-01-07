@@ -299,8 +299,8 @@ class SupportService(ConfigService):
         'attach_ticket',
         Int('ticket', required=True),
         Str('filename', required=True, max_length=None),
-        Str('username'),
-        Str('password'),
+        Str('username', private=True),
+        Str('password', private=True),
     ))
     @job(pipes=["input"])
     async def attach_ticket(self, job, data):

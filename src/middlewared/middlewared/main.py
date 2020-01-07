@@ -129,11 +129,13 @@ class Application(object):
             }, **error_extra),
         })
 
-    async def call_method(self, message):
+    async def call_method(self, message, serviceobj, methodobj):
+        params = message.get('params') or []
 
         try:
             async with self._softhardsemaphore:
-                result = await self.middleware.call_method(self, message)
+                result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self,
+                                                     io_thread=False)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -308,7 +310,17 @@ class Application(object):
             return
 
         if message['msg'] == 'method':
-            asyncio.ensure_future(self.call_method(message))
+            try:
+                serviceobj, methodobj = self.middleware._method_lookup(message['method'])
+            except CallError as e:
+                self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
+                return
+
+            if not self.authenticated and not hasattr(methodobj, '_no_auth_required'):
+                self.send_error(message, errno.EACCES, 'Not authenticated')
+                return
+
+            asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
             return
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
@@ -811,6 +823,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             on_modules_loaded=on_modules_loaded,
         )
 
+        return setup_funcs
+
+    async def __plugins_setup(self, setup_funcs):
+
         # TODO: Rework it when we have order defined for setup functions
         def sort_key(plugin__function):
             plugin, function = plugin__function
@@ -1166,17 +1182,6 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         return [method.accepts[i].dump(arg) for i, arg in enumerate(args) if i < len(method.accepts)]
 
-    async def call_method(self, app, message):
-        """Call method from websocket"""
-        params = message.get('params') or []
-        serviceobj, methodobj = self._method_lookup(message['method'])
-
-        if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
-            app.send_error(message, errno.EACCES, 'Not authenticated')
-            return
-
-        return await self._call(message['method'], serviceobj, methodobj, params, app=app, io_thread=False)
-
     async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None, profile=False):
         serviceobj, methodobj = self._method_lookup(name)
 
@@ -1363,7 +1368,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
-        await self.__plugins_load()
+        setup_funcs = await self.__plugins_load()
 
         self._console_write('registering services')
 
@@ -1395,14 +1400,18 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         await restful_api.register_resources()
         asyncio.ensure_future(self.jobs.run())
 
-        if await self.call('system.state') == 'READY':
-            self._setup_periodic_tasks()
-
         # Start up middleware worker process pool
         self.__procpool._start_queue_management_thread()
 
         runner = web.AppRunner(app, handle_signals=False, access_log=None)
         await runner.setup()
+        await web.UnixSite(runner, '/var/run/middlewared-internal.sock').start()
+
+        await self.__plugins_setup(setup_funcs)
+
+        if await self.call('system.state') == 'READY':
+            self._setup_periodic_tasks()
+
         await web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
         await web.UnixSite(runner, '/var/run/middlewared.sock').start()
 

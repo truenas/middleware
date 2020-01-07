@@ -473,7 +473,7 @@ class LDAPService(ConfigService):
         port = 636 if SSL(ldap['ssl']) == SSL.USESSL else 389
         for h in ldap['hostname']:
             await self.middleware.call('ldap.port_is_listening', h, port, ldap['dns_timeout'])
-        await self.middleware.call('ldap.validate_credentials')
+        await self.middleware.call('ldap.validate_credentials', ldap)
 
     @accepts(Dict(
         'ldap_update',
