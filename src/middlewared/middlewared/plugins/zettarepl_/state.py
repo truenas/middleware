@@ -12,22 +12,30 @@ class ZettareplService(Service):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.error = None
         self.state = {}
+        self.error = None
         self.definition_errors = {}
+        self.hold_tasks = {}
         self.last_snapshot = {}
         self.serializable_state = defaultdict(dict)
 
     def get_state(self):
         if self.error:
-            return {"error": self.error}
+            return {
+                "error": self.error,
+            }
 
         context = self._get_state_context()
 
-        return {"tasks": {
-            task_id: self._get_task_state(task_id, context)
-            for task_id in set(self.state.keys()) | set(self.definition_errors.keys())
-        }}
+        return {
+            "tasks": {
+                task_id: self._get_task_state(task_id, context)
+                for task_id in self._known_tasks_ids()
+            }
+        }
+
+    def _known_tasks_ids(self):
+        return set(self.state.keys()) | set(self.definition_errors.keys()) | set(self.hold_tasks.keys())
 
     def _get_state_context(self):
         jobs = {}
@@ -42,8 +50,14 @@ class ZettareplService(Service):
         return {"jobs": jobs}
 
     def _get_task_state(self, task_id, context):
+        if self.error:
+            return self.error
+
         if task_id in self.definition_errors:
             return self.definition_errors[task_id]
+
+        if task_id in self.hold_tasks:
+            return self.hold_tasks[task_id]
 
         state = self.state.get(task_id, {}).copy()
 
@@ -53,10 +67,23 @@ class ZettareplService(Service):
 
         return state
 
+    def set_error(self, error):
+        old_error = self.error
+        self.error = error
+        if old_error != self.error:
+            for task_id in self._known_tasks_ids():
+                self._notify_state_change(task_id)
+
     def set_definition_errors(self, definition_errors):
         old_definition_errors = self.definition_errors
         self.definition_errors = definition_errors
         for task_id in set(old_definition_errors.keys()) | set(self.definition_errors.keys()):
+            self._notify_state_change(task_id)
+
+    def set_hold_tasks(self, hold_tasks):
+        old_hold_tasks = self.hold_tasks
+        self.hold_tasks = hold_tasks
+        for task_id in set(old_hold_tasks.keys()) | set(self.hold_tasks.keys()):
             self._notify_state_change(task_id)
 
     def set_state(self, task_id, state):

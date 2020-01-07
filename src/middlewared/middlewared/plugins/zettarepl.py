@@ -232,7 +232,6 @@ class ZettareplService(Service):
         self.command_queue = None
         self.observer_queue = multiprocessing.Queue()
         self.observer_queue_reader = None
-        self.hold_tasks = {}
         self.replication_jobs_channels = defaultdict(list)
         self.queue = None
         self.process = None
@@ -246,10 +245,14 @@ class ZettareplService(Service):
             definition, hold_tasks = self.middleware.call_sync("zettarepl.get_definition")
         except Exception as e:
             self.logger.error("Error generating zettarepl definition", exc_info=True)
-            self.error = str(e)
+            self.middleware.call_sync("zettarepl.set_error", {
+                "state": "ERROR",
+                "datetime": datetime.utcnow(),
+                "error": make_sentence(str(e)),
+            })
             raise CallError(f"Internal error: {e!r}")
         else:
-            self.error = None
+            self.middleware.call_sync("zettarepl.set_error", None)
 
         with self.lock:
             if not self.is_running():
@@ -264,7 +267,7 @@ class ZettareplService(Service):
                 if self.observer_queue_reader is None:
                     self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
 
-                self.hold_tasks = hold_tasks
+                self.middleware.call_sync("zettarepl.set_hold_tasks", hold_tasks)
 
     def stop(self):
         with self.lock:
@@ -287,10 +290,14 @@ class ZettareplService(Service):
             definition, hold_tasks = self.middleware.call_sync("zettarepl.get_definition")
         except Exception as e:
             self.logger.error("Error generating zettarepl definition", exc_info=True)
-            self.error = str(e)
+            self.middleware.call_sync("zettarepl.set_error", {
+                "state": "ERROR",
+                "datetime": datetime.utcnow(),
+                "error": make_sentence(str(e)),
+            })
             return
         else:
-            self.error = None
+            self.middleware.call_sync("zettarepl.set_error", None)
 
         if self._is_empty_definition(definition):
             self.middleware.call_sync("zettarepl.stop")
@@ -298,7 +305,7 @@ class ZettareplService(Service):
             self.middleware.call_sync("zettarepl.start")
             self.queue.put(("tasks", definition))
 
-        self.hold_tasks = hold_tasks
+        self.middleware.call_sync("zettarepl.set_hold_tasks", hold_tasks)
 
     async def run_periodic_snapshot_task(self, id):
         try:
@@ -538,6 +545,15 @@ class ZettareplService(Service):
 
         # Test if does not cause exceptions
         Definition.from_data(definition, raise_on_error=False)
+
+        hold_tasks = {
+            task_id: {
+                "state": "HOLD",
+                "datetime": datetime.utcnow(),
+                "reason": make_sentence(reason),
+            }
+            for task_id, reason in hold_tasks.items()
+        }
 
         return definition, hold_tasks
 

@@ -107,10 +107,7 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
         if "error" in context["state"]:
-            data["state"] = {
-                "state": "ERROR",
-                "error": context["state"]["error"],
-            }
+            data["state"] = context["state"]["error"]
         else:
             data["state"] = context["state"]["tasks"].get(f"replication_task_{data['id']}", {
                 "state": "PENDING",
