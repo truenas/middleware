@@ -37,11 +37,11 @@ ad_data_type = {
 }
 
 ad_object_list = [
-        "bindname",
-        "domainname",
-        "netbiosname",
-        "idmap_backend",
-        "enable"
+    "bindname",
+    "domainname",
+    "netbiosname",
+    "idmap_backend",
+    "enable"
 ]
 
 MOUNTPOINT = f"/tmp/ad-test"
@@ -317,7 +317,7 @@ def test_28_store_AD_credentials_in_a_file_for_mount_smbfs():
 @skip_ad_test
 def test_29_mounting_SMB():
     cmd = 'mount_smbfs -N -I %s -W AD03 ' % ip
-    cmd += '"//aduser@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
+    cmd += '"//guest@testnas/%s" "%s"' % (SMB_NAME, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
 
