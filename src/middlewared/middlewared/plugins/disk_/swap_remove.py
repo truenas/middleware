@@ -28,7 +28,7 @@ class DiskService(Service):
             return
 
         swap_devices = await self.middleware.call('disk.get_swap_devices')
-        for mirror in await self.middleware.call('disk.get_mirrors'):
+        for mirror in await self.middleware.call('disk.get_swap_mirrors'):
             destroyed_mirror = False
             for provider in mirror['providers']:
                 if providers.pop(provider['id'], None) and not destroyed_mirror:
@@ -39,7 +39,7 @@ class DiskService(Service):
                         await self.middleware.call(
                             'disk.remove_encryption', mirror['encrypted_provider']
                         )
-                    await self.middleware.call('disk.destroy_mirror', mirror['name'])
+                    await self.middleware.call('disk.destroy_swap_mirror', mirror['name'])
                     destroyed_mirror = True
 
         for p in providers.values():

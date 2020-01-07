@@ -25,7 +25,7 @@ class DiskService(Service):
         disks = [i async for i in await self.middleware.call('pool.get_disks')]
         disks.extend(await self.middleware.call('boot.get_disks'))
         existing_swap_devices = {'mirrors': [], 'partitions': []}
-        mirrors = await self.middleware.call('disk.get_mirrors')
+        mirrors = await self.middleware.call('disk.get_swap_mirrors')
         encrypted_mirrors = {m['encrypted_provider']: m for m in mirrors if m['encrypted_provider']}
         all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
 
@@ -46,9 +46,7 @@ class DiskService(Service):
                 await self.middleware.call('disk.swaps_remove_disks', [p['disk'] for p in mirror['providers']])
                 existing_swap_devices['mirrors'].remove(mirror_name)
             else:
-                if mirror['is_swap_mirror'] and mirror_name not in existing_swap_devices['mirrors'] and (
-                    IS_LINUX or not mirror['name'].endswith('.sync')
-                ):
+                if mirror_name not in existing_swap_devices['mirrors']:
                     create_swap_devices[mirror_name] = {
                         'path': mirror_name,
                         'encrypted_provider': mirror['encrypted_provider'],
@@ -127,7 +125,7 @@ class DiskService(Service):
                 part_a_path, part_b_path = all_partitions[part_a]['path'], all_partitions[part_b]['path']
                 try:
                     await self.middleware.call(
-                        'disk.create_mirror', swap_path, {
+                        'disk.create_swap_mirror', swap_path, {
                             'paths': [part_a_path, part_b_path],
                             'extra': {'level': 1} if IS_LINUX else {},
                         }

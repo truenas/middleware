@@ -6,12 +6,12 @@ from copy import deepcopy
 from middlewared.service import CallError, Service
 from middlewared.utils import filter_list, run
 
-from .mirror_base import DiskMirrorBase
+from .swap_mirror_base import DiskSwapMirrorBase
 
 
-class DiskService(Service, DiskMirrorBase):
+class DiskService(Service, DiskSwapMirrorBase):
 
-    async def create_mirror(self, name, options):
+    async def create_swap_mirror(self, name, options):
         extra = options['extra']
         cp = await run(
             'mdadm', '--build', os.path.join('/dev/md', name), f'--level={extra.get("level", 1)}',
@@ -20,8 +20,8 @@ class DiskService(Service, DiskMirrorBase):
         if cp.returncode:
             raise CallError(f'Failed to create mirror {name}: {cp.stderr}')
 
-    async def destroy_mirror(self, name):
-        mirror = await self.middleware.call('disk.get_mirrors', [['name', '=', name]], {'get': True})
+    async def destroy_swap_mirror(self, name):
+        mirror = await self.middleware.call('disk.get_swap_mirrors', [['name', '=', name]], {'get': True})
         path = mirror['path']
         if mirror['encrypted_provider']:
             await self.middleware.call('disk.remove_encryption', mirror['encrypted_provider'])
@@ -30,16 +30,18 @@ class DiskService(Service, DiskMirrorBase):
         if cp.returncode:
             raise CallError(f'Failed to stop mirror {name}: {cp.stderr}')
 
-    def get_mirrors(self, filters, options):
+    def get_swap_mirrors(self, filters, options):
         mirrors = []
         base_path = '/dev/md'
-        for array in os.listdir(base_path) if os.path.exists(base_path) else []:
+        for array in filter(
+            lambda a: a.split(':')[-1].startswith('swap'),
+            os.listdir(base_path)
+        ) if os.path.exists(base_path) else []:
             mirror_data = deepcopy(self.mirror_base)
             mirror_data.update({
                 'name': array,
                 'path': os.path.join(base_path, array),
                 'real_path': os.path.realpath(os.path.join(base_path, array)),
-                'is_swap_mirror': array.split(':')[-1].startswith('swap'),
             })
             encrypted_path = glob.glob(f'/sys/block/dm-*/slaves/{mirror_data["real_path"].split("/")[-1]}')
             if encrypted_path:

@@ -2,7 +2,7 @@ from middlewared.schema import accepts, Dict, Str, List
 from middlewared.service import filterable, private, ServicePartBase
 
 
-class DiskMirrorBase(ServicePartBase):
+class DiskSwapMirrorBase(ServicePartBase):
 
     mirror_base = {
         'name': None,
@@ -11,7 +11,6 @@ class DiskMirrorBase(ServicePartBase):
         'real_path': None,  # real path in case `path` is a symbolic link
         'encrypted_provider': None,
         'providers': [],  # actual partitions
-        'is_swap_mirror': False,
     }
 
     @private
@@ -23,14 +22,14 @@ class DiskMirrorBase(ServicePartBase):
             List('paths', empty=False, required=True),
         )
     )
-    async def create_mirror(self, name, options):
+    async def create_swap_mirror(self, name, options):
         raise NotImplementedError()
 
     @private
-    async def destroy_mirror(self, name):
+    async def destroy_swap_mirror(self, name):
         raise NotImplementedError()
 
     @private
     @filterable
-    async def get_mirrors(self, filters, options):
+    async def get_swap_mirrors(self, filters, options):
         raise NotImplementedError()
