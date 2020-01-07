@@ -163,6 +163,8 @@ class ConfigService(Service):
                             shutil.move(
                                 os.path.join(file_path, key_path), os.path.join(destination, key_path)
                             )
+                    elif filename == 'pwenc_secret':
+                        shutil.move(file_path, '/data/pwenc_secret_uploaded')
                     else:
                         shutil.move(file_path, destination)
 
