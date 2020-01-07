@@ -6,9 +6,6 @@ from django.db import migrations, models
 
 
 def set_repl_name(apps, schema_editor):
-    """
-    Disks that are currently disabled get a expire time
-    """
     Replication = apps.get_model('storage', 'Replication')
     for repl in Replication.objects.all():
         repl.repl_name = "%s -> %s:%s" % (
