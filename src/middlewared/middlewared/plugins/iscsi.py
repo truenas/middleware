@@ -683,32 +683,25 @@ class iSCSITargetExtentService(CRUDService):
     @accepts(
         Int('id'),
         Bool('remove', default=False),
+        Bool('validate', default=True),
     )
-    async def do_delete(self, id, remove):
+    async def do_delete(self, id, remove, validate):
         """
         Delete iSCSI Extent of `id`.
 
         If `id` iSCSI Extent's `type` was configured to FILE, `remove` can be set to remove the configured file.
         """
         data = await self._get_instance(id)
-
         target_to_extents = await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]])
-        associated_targets = await self.middleware.call(
-            'iscsi.target.query', [[
-                'id', 'in', [t['target'] for t in target_to_extents]
-            ]]
-        )
-        check_targets = []
-        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
-        for target in associated_targets:
-            name = target['name']
-            if not name.startswith(('iqn.', 'naa.', 'eui.')):
-                name = f'{global_basename}:{name}'
-            check_targets.append(name)
-
-        active_sessions = await self.middleware.call('iscsi.global.sessions', [['target', 'in', check_targets]])
-        if active_sessions:
-            raise CallError(f'Associated targets {",".join([s["target"] for s in active_sessions])} is in use')
+        if validate:
+            active_sessions = await self.middleware.call(
+                'iscsi.target.active_sessions_for_targets', [t['target'] for t in target_to_extents]
+            )
+            if active_sessions:
+                raise CallError(
+                    f'Associated target(s) {",".join(active_sessions)} '
+                    f'{"is" if len(active_sessions) == 1 else "are"} in use'
+                )
 
         if remove:
             await self.compress(data)
@@ -718,7 +711,7 @@ class iSCSITargetExtentService(CRUDService):
                 raise CallError('Failed to remove extent file')
 
         for target_to_extent in target_to_extents:
-            await self.middleware.call('iscsi.targetextent._do_delete', target_to_extent['id'], False)
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], False)
 
         try:
             return await self.middleware.call(
@@ -1440,14 +1433,16 @@ class iSCSITargetService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id):
+    @accepts(Int('id'), Bool('validate', default=True))
+    async def do_delete(self, id, validate):
         """
         Delete iSCSI Target of `id`.
 
         Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
         """
-        await self._get_instance(id)
+        target = await self._get_instance(id)
+        if validate and await self.active_sessions_for_targets([target['id']]):
+            raise CallError(f'Target {target["name"]} is in use')
         for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id]]):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'])
 
@@ -1457,6 +1452,27 @@ class iSCSITargetService(CRUDService):
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
         await self._service_change('iscsitarget', 'reload')
         return rv
+
+    @private
+    async def active_sessions_for_targets(self, target_id_list):
+        targets = await self.middleware.call(
+            'iscsi.target.query', [[
+                'id', 'in', [t['target'] for t in target_id_list]
+            ]]
+        )
+        check_targets = []
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        for target in targets:
+            name = target['name']
+            if not name.startswith(('iqn.', 'naa.', 'eui.')):
+                name = f'{global_basename}:{name}'
+            check_targets.append(name)
+
+        return [
+            s['target'] for s in await self.middleware.call(
+                'iscsi.global.sessions', [['target', 'in', check_targets]]
+            )
+        ]
 
     @private
     async def compress(self, data):
@@ -1548,16 +1564,18 @@ class iSCSITargetToExtentService(CRUDService):
 
         return await self._get_instance(id)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id):
+    @accepts(Int('id'), Bool('validate', default=True))
+    async def do_delete(self, id, validate):
         """
         Delete Associated Target of `id`.
         """
-        return await self._do_delete(id, True)
-
-    async def _do_delete(self, id, validate=True):
         associated_target = await self._get_instance(id)
         if validate:
+            active_sessions = await self.middleware.call(
+                'iscsi.target.active_session_for_target', [associated_target['target']]
+            )
+            if active_sessions:
+                raise CallError(f'Target {active_sessions[0]} is in use')
             target = await self.middleware.call('iscsi.target._get_instance', associated_target['target'])
             name = target['name']
             if not name.startswith(('iqn.', 'naa.', 'eui.')):
