@@ -190,6 +190,21 @@ class DiskService(Service):
             else:
                 created_swap_devices.append(swap_path)
 
+        if existing_swap_devices['partitions'] and (created_swap_devices or existing_swap_devices['mirrors']):
+            # This will happen in a case where a single partition existed initially
+            # then other disks were added of different size. Now we don't use a single partition
+            # for swap unless there is no existing partition/mirror already configured for swap.
+            # In this case, we did create a mirror now and existing partitions should be removed from swap
+            # as a mirror has been configured
+            try:
+                await self.middleware.call()
+            except Exception as e:
+                self.logger.warning(
+                    'Failed to remove %s from swap: %s', ','.join(existing_swap_devices['partitions']), str(e)
+                )
+            else:
+                existing_swap_devices['partitions'] = []
+
         return existing_swap_devices['partitions'] + existing_swap_devices['mirrors'] + created_swap_devices
 
     @private
