@@ -41,7 +41,7 @@ class DiskService(Service):
                         await self.middleware.call(
                             'disk.remove_encryption', mirror['encrypted_provider']
                         )
-                    await self.middleware.call('disk.destroy_mirror', mirror['path'] if IS_LINUX else mirror['name'])
+                    await self.middleware.call('disk.destroy_mirror', mirror['name'])
                     destroyed_mirror = True
 
         for p in providers.values():

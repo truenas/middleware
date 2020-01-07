@@ -21,14 +21,14 @@ class DiskService(Service, DiskMirrorBase):
             raise CallError(f'Failed to create mirror {name}: {cp.stderr}')
 
     async def destroy_mirror(self, name):
-        # name here is path to the array
-        mirror = await self.middleware.call('disk.get_mirrors', [['path', '=', name]], {'get': True})
+        mirror = await self.middleware.call('disk.get_mirrors', [['name', '=', name]], {'get': True})
+        path = mirror['path']
         if mirror['encrypted_provider']:
             await self.middleware.call('disk.remove_encryption', mirror['encrypted_provider'])
 
-        cp = await run('mdadm', '--stop', name, check=False, encoding='utf8')
+        cp = await run('mdadm', '--stop', path, check=False, encoding='utf8')
         if cp.returncode:
-            raise CallError(f'Failed to stop mirror {mirror["name"]}: {cp.stderr}')
+            raise CallError(f'Failed to stop mirror {name}: {cp.stderr}')
 
     def get_mirrors(self, filters, options):
         mirrors = []
