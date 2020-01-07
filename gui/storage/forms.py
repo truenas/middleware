@@ -980,15 +980,10 @@ class AutoImportDecryptForm(Form):
                 for i in c.call('disk.get_encrypted', {'unused': True})
             ]
 
-    def clean(self):
+    def done(self, *args, **kwargs):
+        super(AutoImportDecryptForm, self).done(*args, **kwargs)
         key = self.cleaned_data.get("key")
-        if not key:
-            return self.cleaned_data
-
         disks = self.cleaned_data.get("disks")
-        if not disks:
-            return self.cleaned_data
-
         passphrase = self.cleaned_data.get("passphrase")
 
         try:
@@ -997,8 +992,6 @@ class AutoImportDecryptForm(Form):
             self._errors['__all__'] = self.error_class([e.value])
         except JobAborted:
             self._errors['__all__'] = self.error_class([_('Decrypt job aborted')])
-
-        return self.cleaned_data
 
 
 class VolumeAutoImportForm(Form):
