@@ -7,7 +7,7 @@ import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import DELETE, GET, POST, PUT
+from functions import DELETE, GET, POST, PUT, wait_on_job
 from auto_config import pool_name
 
 dataset = f"{pool_name}/tftproot"

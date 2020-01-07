@@ -8,7 +8,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name, user, password, ip
 from config import *
-from functions import GET, POST, PUT, DELETE, SSH_TEST, ping_host
+from functions import GET, POST, PUT, DELETE, SSH_TEST, ping_host, wait_on_job
 
 ad_data_type = {
     'id': int,
