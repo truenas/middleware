@@ -86,7 +86,6 @@ def test_04_Add_ISCSI_extent():
     extent_id = results.json()['id']
 
 
-
 # Associate iSCSI target
 def test_05_Associate_ISCSI_target():
     global associate_id
