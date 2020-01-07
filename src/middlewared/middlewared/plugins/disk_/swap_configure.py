@@ -134,7 +134,7 @@ class DiskService(Service):
                     self.logger.warning('Failed to create swap mirror %s', swap_path)
                     continue
 
-                swap_device = os.path.realpath(os.path.join('/dev/md' if IS_LINUX else '/dev', swap_path))
+                swap_device = os.path.realpath(os.path.join(f'/dev/{"md" if IS_LINUX else "mirror"}', swap_path))
                 create_swap_devices[swap_device] = {
                     'path': swap_device,
                     'encrypted_provider': None,
@@ -196,8 +196,16 @@ class DiskService(Service):
             # for swap unless there is no existing partition/mirror already configured for swap.
             # In this case, we did create a mirror now and existing partitions should be removed from swap
             # as a mirror has been configured
+            all_partitions_by_path = {
+                p['encrypted_provider'] or p['path']: p['disk'] for p in all_partitions.values()
+            }
             try:
-                await self.middleware.call('disk.swaps_remove_disks', existing_swap_devices['partitions'])
+                await self.middleware.call(
+                    'disk.swaps_remove_disks', [
+                        all_partitions_by_path[p] for p in existing_swap_devices['partitions']
+                        if p in all_partitions_by_path
+                    ]
+                )
             except Exception as e:
                 self.logger.warning(
                     'Failed to remove %s from swap: %s', ','.join(existing_swap_devices['partitions']), str(e)

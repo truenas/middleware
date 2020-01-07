@@ -12,7 +12,7 @@ from .swap_mirror_base import DiskSwapMirrorBase
 class DiskService(Service, DiskSwapMirrorBase):
 
     async def create_swap_mirror(self, name, options):
-        cp = await run('gmirror', 'create', name, *(options['paths']), check=False, encoding='utf8')
+        cp = await run('gmirror', 'create', name, *options['paths'], check=False, encoding='utf8')
         if cp.returncode:
             raise CallError(f'Failed to create gmirror {name}: {cp.stderr}')
 
