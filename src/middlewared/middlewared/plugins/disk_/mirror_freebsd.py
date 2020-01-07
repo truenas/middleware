@@ -39,6 +39,7 @@ class DiskService(Service, DiskMirrorBase):
                 'config_type': g.config.get('Type') if g.config else None,
                 'path': os.path.join('/dev/mirror', g.name),
                 'real_path': os.path.join('/dev/mirror', g.name),
+                'is_swap_mirror': g.name.startswith('swap') or g.name.endswith('.sync')
             }
             if os.path.exists(f'{mirror_data["path"]}.eli'):
                 mirror_data['encrypted_provider'] = f'{mirror_data["path"]}.eli'

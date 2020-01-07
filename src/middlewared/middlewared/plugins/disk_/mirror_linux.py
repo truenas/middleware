@@ -39,6 +39,7 @@ class DiskService(Service, DiskMirrorBase):
                 'name': array,
                 'path': os.path.join(base_path, array),
                 'real_path': os.path.realpath(os.path.join(base_path, array)),
+                'is_swap_mirror': array.split(':')[-1].startswith('swap'),
             })
             encrypted_path = glob.glob(f'/sys/block/dm-*/slaves/{mirror_data["real_path"].split("/")[-1]}')
             if encrypted_path:

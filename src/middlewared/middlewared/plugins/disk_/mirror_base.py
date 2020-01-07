@@ -8,9 +8,10 @@ class DiskMirrorBase(ServicePartBase):
         'name': None,
         'config_type': None,
         'path': None,
-        'real_path': None,
+        'real_path': None,  # real path in case `path` is a symbolic link
         'encrypted_provider': None,
         'providers': [],  # actual partitions
+        'is_swap_mirror': False,
     }
 
     @private

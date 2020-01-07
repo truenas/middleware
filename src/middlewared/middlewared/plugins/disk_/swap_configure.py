@@ -31,32 +31,24 @@ class DiskService(Service):
 
         for device in await self.middleware.call('disk.get_swap_devices'):
             if device in encrypted_mirrors or device.startswith(('/dev/md', 'mirror/')):
-                # This is going to be complete path for linux and mirror/swapname.eli for freebsd
+                # This is going to be complete path for linux and freebsd
                 existing_swap_devices['mirrors'].append(device)
             else:
                 existing_swap_devices['partitions'].append(device)
 
-        # disk.get_mirrors is going to get us complete path for linux and mirror/swapname for freebsd
-        # point to note is that we don't get .eli suffix from above - so we have to be careful here and
-        # use encrypted_provider instead
         for mirror in mirrors:
+            mirror_name = (mirror['encrypted_provider'] or mirror['real_path'])
+
             # If the mirror is degraded or disk is not in a pool lets remove it
-            mirror_name = (mirror['encrypted_provider'] or mirror['real_path']) if IS_LINUX else (
-                mirror['encrypted_provider'] or mirror['path']
-            ).strip('/dev/')
-            swap_mirror = mirror['name'].split(':')[-1].startswith('swap') if IS_LINUX else (
-                mirror['name'].startswith('swap') or mirror['name'].endswith('.sync')
-            )
-            if swap_mirror and (len(mirror['providers']) == 1 or any(
+            if mirror_name in existing_swap_devices['mirrors'] and (len(mirror['providers']) == 1 or any(
                 p['disk'] not in disks for p in mirror['providers']
             )):
                 await self.middleware.call('disk.swaps_remove_disks', [p['disk'] for p in mirror['providers']])
-                if mirror_name in existing_swap_devices['mirrors']:
-                    existing_swap_devices['mirrors'].remove(mirror_name)
+                existing_swap_devices['mirrors'].remove(mirror_name)
             else:
-                if swap_mirror and mirror_name not in existing_swap_devices['mirrors']:
-                    create_swap_devices[mirror_name if IS_LINUX else mirror_name.rsplit('.eli', 1)[0]] = {
-                        'path': mirror_name if IS_LINUX else mirror_name.rsplit('.eli', 1)[0],
+                if mirror['is_swap_mirror'] and mirror_name not in existing_swap_devices['mirrors']:
+                    create_swap_devices[mirror_name] = {
+                        'path': mirror_name,
                         'encrypted_provider': mirror['encrypted_provider'],
                     }
                 used_partitions_in_mirror.update(p['name'] for p in mirror['providers'])
@@ -79,9 +71,7 @@ class DiskService(Service):
             lambda d: d['partition_type'] in valid_swap_part_uuids and d['name'] not in used_partitions_in_mirror,
             all_partitions.values()
         ):
-            if not IS_LINUX and not any(
-                k in existing_swap_devices for k in (swap_part['name'], f'{swap_part["name"]}.eli')
-            ):
+            if not IS_LINUX and not any(swap_part[k] in existing_swap_devices for k in ('encrypted_provider', 'path')):
                 # Try to save a core dump from that.
                 # Only try savecore if the partition is not already in use
                 # to avoid errors in the console (#27516)
@@ -111,20 +101,16 @@ class DiskService(Service):
                 try:
                     for p in part_ab:
                         remove = False
-                        if IS_LINUX:
-                            part = all_partitions[p]['encrypted_provider']
-                            if part in existing_swap_devices['partitions']:
-                                remove = True
-                        else:
-                            part = p
-                            if part in existing_swap_devices['partitions']:
-                                remove = True
-                            elif f'{part}.eli' in existing_swap_devices['partitions']:
-                                part = f'{part}.eli'
-                                remove = True
+                        part_data = all_partitions[p]
+                        if part_data['encryption_provider'] in existing_swap_devices['partitions']:
+                            part = part_data['encryption_provider']
+                            remove = True
+                        elif part_data['path'] in existing_swap_devices['partitions']:
+                            remove = True
+                            part = part_data['path']
 
                         if remove:
-                            await self.middleware.call('disk.swaps_remove_disks', [all_partitions[p]['disk']])
+                            await self.middleware.call('disk.swaps_remove_disks', [part_data['disk']])
                             existing_swap_devices['partitions'].remove(part)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
@@ -135,23 +121,23 @@ class DiskService(Service):
 
                 if not IS_LINUX and not dumpdev:
                     dumpdev = await self.middleware.call('disk.dumpdev_configure', part_a)
-                name = await self.middleware.call('disk.new_swap_name')
-                if not name:
+                swap_path = await self.middleware.call('disk.new_swap_name')
+                if not swap_path:
                     # Which means maximum has been reached and we can stop
                     break
                 part_a_path, part_b_path = all_partitions[part_a]['path'], all_partitions[part_b]['path']
                 try:
                     await self.middleware.call(
-                        'disk.create_mirror', name, {
+                        'disk.create_mirror', swap_path, {
                             'paths': [part_a_path, part_b_path],
                             'extra': {'level': 1} if IS_LINUX else {},
                         }
                     )
                 except CallError:
-                    self.logger.warning('Failed to create swap mirror %s: %s', name)
+                    self.logger.warning('Failed to create swap mirror %s', swap_path)
                     continue
 
-                swap_device = os.path.realpath(os.path.join('/dev/md', name)) if IS_LINUX else f'mirror/{name}'
+                swap_device = os.path.realpath(os.path.join('/dev/md', swap_path)) if IS_LINUX else f'mirror/{swap_path}'
                 create_swap_devices[swap_device] = {
                     'path': swap_device,
                     'encrypted_provider': None,
@@ -165,47 +151,49 @@ class DiskService(Service):
         ):
             if not IS_LINUX and not dumpdev:
                 await self.middleware.call('disk.dumpdev_configure', unused_partitions[0])
-            swap_device = all_partitions[unused_partitions[0]]['path'] if IS_LINUX else unused_partitions[0]
-            create_swap_devices[swap_device] = {
-                'path': swap_device,
-                'encrypted_provider': all_partitions[unused_partitions[0]]['encrypted_provider'],
+            swap_device = all_partitions[unused_partitions[0]]
+            create_swap_devices[swap_device['path']] = {
+                'path': swap_device['path'],
+                'encrypted_provider': swap_device['encrypted_provider'],
             }
 
         created_swap_devices = []
-        for name, data in create_swap_devices.items():
+        for swap_path, data in create_swap_devices.items():
             if IS_LINUX:
                 if not data['encrypted_provider']:
                     cp = await Popen(
-                        f'echo "y" | cryptsetup -d /dev/urandom open --type plain {name} {name.split("/")[-1]}',
+                        'echo "y" | cryptsetup -d /dev/urandom open --type plain '
+                        f'{swap_path} {swap_path.split("/")[-1]}',
                         shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                     )
                     stdout, stderr = await cp.communicate()
                     if cp.returncode:
-                        self.logger.warning('Failed to encrypt %s device: %s', name, stderr)
+                        self.logger.warning('Failed to encrypt %s device: %s', swap_path, stderr)
                         continue
-                    name = os.path.join('/dev/mapper', name.split('/')[-1])
+                    swap_path = os.path.join('/dev/mapper', swap_path.split('/')[-1])
                 else:
-                    name = data['encrypted_provider']
+                    swap_path = data['encrypted_provider']
                 try:
-                    await run('mkswap', name)
+                    await run('mkswap', swap_path)
                 except subprocess.CalledProcessError as e:
-                    self.logger.warning(f'Failed to make swap for %s: %s', name, e.stderr.decode())
+                    self.logger.warning(f'Failed to make swap for %s: %s', swap_path, e.stderr.decode())
                     continue
             elif not IS_LINUX and not data['encrypted_provider']:
                 try:
-                    await run('geli', 'onetime', name)
+                    await run('geli', 'onetime', swap_path)
                 except subprocess.CalledProcessError as e:
-                    self.logger.warning('Failed to encrypt swap partition %s: %s', name, e.stderr.decode())
+                    self.logger.warning('Failed to encrypt swap partition %s: %s', swap_path, e.stderr.decode())
                     continue
+                else:
+                    swap_path = f'{swap_path}.eli'
 
-            name = name if IS_LINUX else f'{name}.eli'
             try:
-                await run('swapon', name if IS_LINUX else f'/dev/{name}')
+                await run('swapon', swap_path)
             except subprocess.CalledProcessError as e:
-                self.logger.warning('Failed to activate swap partition %s: %s', name, e.stderr.decode())
+                self.logger.warning('Failed to activate swap partition %s: %s', swap_path, e.stderr.decode())
                 continue
             else:
-                created_swap_devices.append(name)
+                created_swap_devices.append(swap_path)
 
         return existing_swap_devices['partitions'] + existing_swap_devices['mirrors'] + created_swap_devices
 
