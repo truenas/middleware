@@ -141,6 +141,8 @@ def send_mail(
     to=None, extra_headers=None, attachments=None, timeout=300,
     queue=True,
 ):
+    to = to or []
+    extra_headers = extra_headers or {}
 
     if isinstance(interval, timedelta):
         interval = int(interval.total_seconds())
