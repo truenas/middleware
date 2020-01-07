@@ -980,7 +980,7 @@ class AutoImportDecryptForm(Form):
                 for i in c.call('disk.get_encrypted', {'unused': True})
             ]
 
-    def done(self, *arg, **kwargs):
+    def done(self, *args, **kwargs):
         super(AutoImportDecryptForm, self).done(*args, **kwargs)
         key = self.cleaned_data.get("key")
         disks = self.cleaned_data.get("disks")
