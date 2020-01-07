@@ -197,7 +197,7 @@ class DiskService(Service):
             # In this case, we did create a mirror now and existing partitions should be removed from swap
             # as a mirror has been configured
             try:
-                await self.middleware.call()
+                await self.middleware.call('disk.swaps_remove_disks', existing_swap_devices['partitions'])
             except Exception as e:
                 self.logger.warning(
                     'Failed to remove %s from swap: %s', ','.join(existing_swap_devices['partitions']), str(e)
