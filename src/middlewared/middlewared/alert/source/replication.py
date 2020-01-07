@@ -52,6 +52,12 @@ class ReplicationAlertSource(AlertSource):
                     )
                 )
             if replication["state"]["state"] == "ERROR":
+                key_datetime = replication["state"]["datetime"]
+                if replication["transport"] == "LEGACY":
+                    # Legacy replication attempts every minute; prevent alert spam
+                    key_datetime = key_datetime.replace(hour=key_datetime.hour // 2 * 2,
+                                                        minute=0, second=0, microsecond=0)
+
                 alerts.append(
                     Alert(
                         ReplicationFailedAlertClass,
@@ -59,7 +65,7 @@ class ReplicationAlertSource(AlertSource):
                             "name": replication["name"],
                             "message": replication["state"]["error"],
                         },
-                        key=[replication["id"], replication["state"]["datetime"].isoformat()],
+                        key=[replication["id"], key_datetime.isoformat()],
                         datetime=replication["state"]["datetime"],
                     )
                 )
