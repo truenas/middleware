@@ -1445,15 +1445,6 @@ class DiskService(CRUDService):
         if not klass:
             return
 
-        # Add non-mirror swap devices
-        # e.g. when there is a single disk
-        for i in getswapinfo():
-            if i.devname.startswith('mirror/'):
-                continue
-            devname = i.devname.replace('.eli', '')
-            create_swap_devices.append(devname)
-            used_partitions.add(devname)
-
         # Get all partitions of swap type, indexed by size
         swap_partitions_by_size = defaultdict(list)
         for g in klass.geoms:
@@ -1487,9 +1478,16 @@ class DiskService(CRUDService):
                 # new gmirror to be created
                 try:
                     for i in part_ab:
-                        if i in list(create_swap_devices):
-                            await self.swaps_remove_disks([i.split('p')[0]])
-                            create_swap_devices.remove(i)
+                        part = i
+                        remove = False
+                        if f'{part}.eli' in existing_swap_devices['partitions']:
+                            part = f'{part}.eli'
+                            remove = True
+                        elif part in existing_swap_devices['partitions']:
+                            remove = True
+                        if remove:
+                            await self.swaps_remove_disks([part.split('p')[0]])
+                            existing_swap_devices['partitions'].remove(part)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
                     # If something failed here there is no point in trying to create the mirror
@@ -1515,7 +1513,7 @@ class DiskService(CRUDService):
         # partition as a swap device
         if not create_swap_devices and unused_partitions:
             if not dumpdev:
-                dumpdev = await dumpdev_configure(unused_partitions[0])
+                await dumpdev_configure(unused_partitions[0])
             create_swap_devices.append(unused_partitions[0])
 
         for name in create_swap_devices:
@@ -1532,7 +1530,7 @@ class DiskService(CRUDService):
                 self.logger.warning('Failed to activate swap partition %s: %s', name, e.stderr.decode())
                 continue
 
-        return create_swap_devices
+        return create_swap_devices + existing_swap_devices['partitions'] + existing_swap_devices['mirrors']
 
     @private
     async def swaps_remove_disks(self, disks):
