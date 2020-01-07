@@ -1468,7 +1468,10 @@ class DiskService(CRUDService):
                 continue
 
             for i in range(int(len(partitions) / 2)):
-                if len(create_swap_devices) > MIRROR_MAX:
+                if (
+                    len(existing_swap_devices['mirrors']) +
+                    len(existing_swap_devices['partitions']) + len(create_swap_devices)
+                ) > MIRROR_MAX:
                     break
                 part_ab = partitions[0:2]
                 partitions = partitions[2:]
@@ -1506,12 +1509,14 @@ class DiskService(CRUDService):
                     self.logger.warning('Failed to create gmirror %s: %s', name, e.stderr.decode())
                     continue
                 create_swap_devices.append(f'mirror/{name}')
-                # Add remaining partitions to unused list
-                unused_partitions += partitions
+            # Add remaining partitions to unused list
+            unused_partitions += partitions
 
         # If we could not make even a single swap mirror, add the first unused
         # partition as a swap device
-        if not create_swap_devices and unused_partitions:
+        if not create_swap_devices and unused_partitions and all(
+            not existing_swap_devices[k] for k in existing_swap_devices
+        ):
             if not dumpdev:
                 await dumpdev_configure(unused_partitions[0])
             create_swap_devices.append(unused_partitions[0])
@@ -1529,6 +1534,21 @@ class DiskService(CRUDService):
             except subprocess.CalledProcessError as e:
                 self.logger.warning('Failed to activate swap partition %s: %s', name, e.stderr.decode())
                 continue
+
+        if existing_swap_devices['partitions'] and (create_swap_devices or existing_swap_devices['mirrors']):
+            # This will happen in a case where a single partition existed initially
+            # then other disks were added of different size. Now we don't use a single partition
+            # for swap unless there is no existing partition/mirror already configured for swap.
+            # In this case, we did create a mirror now and existing partitions should be removed from swap
+            # as a mirror has been configured
+            try:
+                await self.swaps_remove_disks([p.split('p')[0] for p in existing_swap_devices['partitions']])
+            except Exception as e:
+                self.logger.warning(
+                    'Failed to remove %s from swap: %s', ','.join(existing_swap_devices['partitions']), str(e),
+                )
+            else:
+                existing_swap_devices['partitions'] = []
 
         return create_swap_devices + existing_swap_devices['partitions'] + existing_swap_devices['mirrors']
 
