@@ -336,10 +336,7 @@ class PoolService(Service):
 
     async def _unlock_restarted_vms(self, pool_name):
         result = []
-        vms = (await self.middleware.call(
-            'vm.query', [('autostart', '=', True)])
-               )
-        for vm in vms:
+        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
             for device in vm['devices']:
                 if device['dtype'] not in ('DISK', 'RAW'):
                     continue

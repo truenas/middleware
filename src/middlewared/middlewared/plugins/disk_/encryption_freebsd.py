@@ -3,6 +3,9 @@ import os
 import subprocess
 import tempfile
 
+from bsd import geom
+
+from middlewared.schema import accepts, Bool, Dict
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
@@ -353,3 +356,58 @@ class DiskService(Service, DiskEncryptionBase):
                 except Exception as e:
                     self.logger.warn('Failed to clear %s: %s', dev, e)
         return failed
+
+    @accepts(Dict(
+        'options',
+        Bool('unused', default=False),
+    ))
+    def get_encrypted(self, options):
+        """
+        Get all geli providers
+
+        It might be an entire disk or a partition of type freebsd-zfs
+        """
+        providers = []
+
+        disks_blacklist = []
+        if options['unused']:
+            disks_blacklist += self.middleware.call_sync('disk.get_reserved')
+
+        geom.scan()
+        klass_part = geom.class_by_name('PART')
+        klass_label = geom.class_by_name('LABEL')
+        if not klass_part:
+            return providers
+
+        for g in klass_part.geoms:
+            for p in g.providers:
+                if p.config['type'] != 'freebsd-zfs':
+                    continue
+
+                disk = p.geom.consumer.provider.name
+                if disk in disks_blacklist:
+                    continue
+                try:
+                    subprocess.run(
+                        ['geli', 'dump', p.name],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
+                    )
+                except subprocess.CalledProcessError:
+                    continue
+
+                dev = None
+                if klass_label:
+                    for g in klass_label.geoms:
+                        if g.name == p.name:
+                            dev = g.provider.name
+                            break
+
+                if dev is None:
+                    dev = p.name
+                providers.append({
+                    'name': p.name,
+                    'dev': dev,
+                    'disk': disk
+                })
+
+        return providers

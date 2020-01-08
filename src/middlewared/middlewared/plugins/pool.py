@@ -25,7 +25,6 @@ import psutil
 
 from collections import defaultdict
 
-from libzfs import ZFSException
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.job import Pipes
 from middlewared.plugins.zfs import ZFSSetPropertyError
@@ -1874,7 +1873,7 @@ class PoolDatasetUserPropService(CRUDService):
             Dict(
                 'property',
                 Str('name', required=True, validators=[Match(r'.*:.*')]),
-                Str('value',required=True),
+                Str('value', required=True),
             )
         )
     )
