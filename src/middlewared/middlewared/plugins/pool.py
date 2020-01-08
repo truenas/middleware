@@ -896,7 +896,7 @@ class PoolService(CRUDService):
             if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
                 for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
-            else:
+            elif not IS_LINUX:
                 for encrypted_disk in await self.middleware.call(
                     'datastore.query',
                     'storage.encrypteddisk',
