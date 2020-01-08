@@ -36,7 +36,7 @@ class ShareSec(CRUDService):
         namespace = 'smb.sharesec'
 
     @private
-    async def _parse_share_sd(self, sd, options=None):
+    async def parse_share_sd(self, sd, options=None):
         """
         Parses security descriptor text returned from 'sharesec'.
         Optionally will resolve the SIDs in the SD to names.
@@ -121,7 +121,7 @@ class ShareSec(CRUDService):
         idx = 1
         share_entries = (await self._sharesec(action='--view-all')).split('\n\n')
         for share in share_entries:
-            parsed_sd = await self.middleware.call('smb.sharesec._parse_share_sd', share, options)
+            parsed_sd = await self.parse_share_sd(share, options)
             if parsed_sd:
                 parsed_sd.update({'id': idx})
                 idx = idx + 1
@@ -148,7 +148,7 @@ class ShareSec(CRUDService):
         """
         sharesec = await self._sharesec(action='--view', share=share_name)
         share_sd = f'[{share_name.upper()}]\n{sharesec}'
-        return await self.middleware.call('smb.sharesec._parse_share_sd', share_sd, options)
+        return await self.parse_share_sd(share_sd, options)
 
     @private
     async def _ae_to_string(self, ae):
