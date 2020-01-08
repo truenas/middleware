@@ -84,6 +84,40 @@ class PoolService(Service):
             )
         return True
 
+    @item_method
+    @accepts(Int('id'), Dict(
+        'options',
+        Str('admin_password', private=True, required=False),
+    ))
+    async def rekey(self, oid, options):
+        """
+        Rekey encrypted pool `id`.
+
+        .. examples(websocket)::
+
+          Rekey pool 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.rekey,
+                "params": [1, {
+                    "admin_password": "rootpassword"
+                }]
+            }
+        """
+        pool = await self.middleware.call('pool.get_instance', oid)
+        await self.middleware.call('pool.common_encopt_validation', pool, options)
+        await self.middleware.call('disk.geli_rekey', pool)
+        if pool['encrypt'] == 2:
+            await self.middleware.call(
+                'datastore.update', 'storage.volume', oid, {'vol_encrypt': 1}
+            )
+
+        await self.middleware.call_hook('pool.rekey_done', pool=pool)
+        return True
+
     @private
     async def common_encopt_validation(self, pool, options):
         verrors = ValidationErrors()
