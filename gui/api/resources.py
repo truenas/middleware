@@ -1724,7 +1724,9 @@ class LegacyTaskResourceMixin(object):
             if int(bundle.data["task_dayweek"][2:]) == 1:
                 task_repeat_unit = "daily"
         else:
-            task_byweekday = bundle.data["task_dayweek"]
+            task_byweekday = bundle.data["task_dayweek"].lower()
+            for i, name in enumerate(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]):
+                task_byweekday = task_byweekday.replace(name, str(i + 1))
             if bundle.data["task_dayweek"] == "1,2,3,4,5,6,7":
                 task_repeat_unit = "daily"
 
