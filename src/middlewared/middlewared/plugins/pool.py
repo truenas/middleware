@@ -963,7 +963,8 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
-        await self.middleware.call('pool.sync_encrypted', oid)
+        if not IS_LINUX:
+            await self.middleware.call('pool.sync_encrypted', oid)
 
         if disk:
             wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
@@ -1014,7 +1015,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
-        if found[1]['path'].endswith('.eli'):
+        if not IS_LINUX and found[1]['path'].endswith('.eli'):
             devname = found[1]['path'].replace('/dev/', '')[:-4]
             await self.middleware.call('disk.geli_detach_single', devname)
             async with ENCRYPTEDDISK_LOCK:
@@ -1058,7 +1059,7 @@ class PoolService(CRUDService):
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
 
-        if pool['encrypt'] > 0:
+        if not IS_LINUX and pool['encrypt'] > 0:
             verrors.add('id', 'Disk cannot be set to online in encrypted pool.')
 
         if verrors:
@@ -1118,11 +1119,12 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
 
-        await self.middleware.call('pool.sync_encrypted', oid)
+        if not IS_LINUX:
+            await self.middleware.call('pool.sync_encrypted', oid)
 
-        if found[1]['path'].endswith('.eli'):
-            devname = found[1]['path'].replace('/dev/', '')[:-4]
-            await self.middleware.call('disk.geli_detach_single', devname)
+            if found[1]['path'].endswith('.eli'):
+                devname = found[1]['path'].replace('/dev/', '')[:-4]
+                await self.middleware.call('disk.geli_detach_single', devname)
 
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
