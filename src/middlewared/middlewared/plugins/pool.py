@@ -527,8 +527,9 @@ class PoolService(CRUDService):
 
         guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
         disks = {options['new_disk']: {'create_swap': topology_type == 'data', 'vdev': []}}
-        enc_disks = await self.format_disks(
-            job, disks, {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')}
+        enc_disks = await self.middleware.call(
+            'pool.format_disks', job, disks,
+            {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')}
         )
 
         devname = disks[options['new_disk']]['vdev'][0]
@@ -686,7 +687,7 @@ class PoolService(CRUDService):
         if verrors:
             raise verrors
 
-        formatted_disks = await self.format_disks(job, disks)
+        formatted_disks = await self.middleware.call('pool.format_disks', job, disks)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -837,7 +838,7 @@ class PoolService(CRUDService):
         else:
             enc_keypath = None
 
-        enc_disks = await self.format_disks(job, disks, {'enc_keypath': enc_keypath})
+        enc_disks = await self.middleware.call('pool.format_disks', job, disks, {'enc_keypath': enc_keypath})
 
         job.set_progress(90, 'Extending ZFS Pool')
 
@@ -959,64 +960,6 @@ class PoolService(CRUDService):
                 disks[disk] = {'vdev': vdev_devs_list, 'create_swap': True}
 
         return disks, vdevs
-
-    @private
-    async def format_disks(self, job, disks, disk_encryption_options=None):
-        """
-        Format all disks, putting all freebsd-zfs partitions created
-        into their respective vdevs and encrypting disks if specified for FreeBSD.
-        """
-        # Make sure all SED disks are unlocked
-        await self.middleware.call('disk.sed_unlock_all')
-        disk_encryption_options = disk_encryption_options or {}
-
-        swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
-
-        enc_disks = []
-        formatted = 0
-
-        async def format_disk(arg):
-            nonlocal enc_disks, formatted
-            disk, config = arg
-            await self.middleware.call(
-                'disk.format', disk, swapgb if config['create_swap'] else 0, False,
-            )
-            devname = await self.middleware.call(
-                'disk.gptid_from_part_type', disk, await self.middleware.call('disk.get_zfs_part_type')
-            )
-            if not IS_LINUX and disk_encryption_options.get('enc_keypath'):
-                enc_disks.append({
-                    'disk': disk,
-                    'devname': devname,
-                })
-                devname = await self.middleware.call(
-                    'disk.encrypt', devname, disk_encryption_options['enc_keypath'],
-                    disk_encryption_options['passphrase_path']
-                )
-            formatted += 1
-            job.set_progress(15, f'Formatting disks ({formatted}/{len(disks)})')
-            config['vdev'].append(f'/dev/{devname}')
-
-        job.set_progress(15, f'Formatting disks (0/{len(disks)})')
-
-        pass_file = None
-        if not IS_LINUX and disk_encryption_options.get('passphrase'):
-            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
-            os.chmod(passf.name, 0o600)
-            passf.write(disk_encryption_options['passphrase'])
-            passf.flush()
-            pass_file = passf.name
-            disk_encryption_options['passphrase_path'] = pass_file
-
-        try:
-            await asyncio_map(format_disk, disks.items(), limit=16)
-        finally:
-            if pass_file:
-                pass_file.close()
-
-        await self.middleware.call('disk.sync_all')
-
-        return enc_disks
 
     async def __save_encrypteddisks(self, pool_id, enc_disks, disks_cache):
         async with ENCRYPTEDDISK_LOCK:
@@ -1151,9 +1094,8 @@ class PoolService(CRUDService):
         await self.middleware.call('disk.swaps_remove_disks', swap_disks)
 
         vdev = []
-        enc_disks = await self.format_disks(
-            job,
-            {disk['devname']: {'vdev': vdev, 'create_swap': create_swap}},
+        enc_disks = await self.middleware.call(
+            'pool.format_disks', job, {disk['devname']: {'vdev': vdev, 'create_swap': create_swap}},
             {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')},
         )
 
