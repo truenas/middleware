@@ -531,7 +531,9 @@ class PoolService(CRUDService):
             passf.flush()
             passphrase_path = passf.name
         try:
-            enc_disks = await self.__format_disks(job, disks, pool['encryptkey_path'], passphrase_path)
+            enc_disks = await self.format_disks(
+                job, disks, {'enc_keypath': pool['encryptkey_path'], 'passphrase': passphrase_path}
+            )
         finally:
             if passphrase_path:
                 passf.close()
@@ -691,7 +693,7 @@ class PoolService(CRUDService):
         if verrors:
             raise verrors
 
-        formatted_disks = await self.__format_disks(job, disks)
+        formatted_disks = await self.format_disks(job, disks)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -842,7 +844,7 @@ class PoolService(CRUDService):
         else:
             enc_keypath = None
 
-        enc_disks = await self.__format_disks(job, disks, enc_keypath)
+        enc_disks = await self.format_disks(job, disks, {'enc_keypath': enc_keypath})
 
         job.set_progress(90, 'Extending ZFS Pool')
 
@@ -997,14 +999,15 @@ class PoolService(CRUDService):
             )
         return disks_cache
 
-    async def __format_disks(self, job, disks, enc_keypath=None, passphrase=None):
+    @private
+    async def format_disks(self, job, disks, disk_encryption_options=None):
         """
         Format all disks, putting all freebsd-zfs partitions created
-        into their respectives vdevs.
+        into their respective vdevs and encrypting disks if specified for FreeBSD.
         """
-
         # Make sure all SED disks are unlocked
         await self.middleware.call('disk.sed_unlock_all')
+        disk_encryption_options = disk_encryption_options or {}
 
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
 
@@ -1020,12 +1023,15 @@ class PoolService(CRUDService):
             devname = await self.middleware.call(
                 'disk.gptid_from_part_type', disk, await self.middleware.call('disk.get_zfs_part_type')
             )
-            if enc_keypath:
+            if not IS_LINUX and disk_encryption_options.get('enc_keypath'):
                 enc_disks.append({
                     'disk': disk,
                     'devname': devname,
                 })
-                devname = await self.middleware.call('disk.encrypt', devname, enc_keypath, passphrase)
+                devname = await self.middleware.call(
+                    'disk.encrypt', devname, disk_encryption_options['enc_keypath'],
+                    disk_encryption_options['passphrase']
+                )
             formatted += 1
             job.set_progress(15, f'Formatting disks ({formatted}/{len(disks)})')
             config['vdev'].append(f'/dev/{devname}')
@@ -1178,11 +1184,10 @@ class PoolService(CRUDService):
             passf.flush()
             passphrase_path = passf.name
         try:
-            enc_disks = await self.__format_disks(
+            enc_disks = await self.format_disks(
                 job,
                 {disk['devname']: {'vdev': vdev, 'create_swap': create_swap}},
-                pool['encryptkey_path'],
-                passphrase_path,
+                {'enc_keypath': pool['encryptkey_path'], 'passphrase': passphrase_path},
             )
         finally:
             if passphrase_path:
