@@ -7,6 +7,9 @@ from middlewared.utils import run
 
 from .encryption_base import DiskEncryptionBase
 
+GELI_KEY_SLOT = 0
+GELI_RECOVERY_SLOT = 1
+
 
 class DiskService(Service, DiskEncryptionBase):
     def decrypt(self, job, devices, passphrase=None):
@@ -90,6 +93,52 @@ class DiskService(Service, DiskEncryptionBase):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+
+    @private
+    def geli_passphrase(self, pool, passphrase, rmrecovery=False):
+        """
+        Set a passphrase in a geli
+        If passphrase is None then remove the passphrase
+        """
+        if passphrase:
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(passphrase)
+            passf.flush()
+            passphrase = passf.name
+        try:
+            for ed in self.middleware.call_sync(
+                    'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                if rmrecovery:
+                    self.geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
+                self.geli_setkey(dev, pool['encryptkey_path'], GELI_KEY_SLOT, passphrase)
+        finally:
+            if passphrase:
+                passf.close()
+
+    @private
+    def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
+        cp = subprocess.run(
+            ['geli', 'setkey', '-n', str(slot)] + (
+                ['-J', passphrase] if passphrase else ['-P']
+            ) + ['-K', key] + (['-k', oldkey] if oldkey else []) + [dev],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        if cp.stderr:
+            raise CallError(f'Unable to set passphrase on {dev}: {cp.stderr.decode()}')
+
+        self.__geli_notify_passphrase(passphrase)
+
+    @private
+    def geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
+        cp = subprocess.run(
+            ['geli', 'delkey', '-n', str(slot)] + (['-f'] if force else []) + [dev],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        if cp.stderr:
+            raise CallError(f'Unable to delete key {slot} on {dev}: {cp.stderr.decode()}')
 
     async def remove_encryption(self, device):
         cp = await run('geli', 'detach', device, check=False, encoding='utf8')

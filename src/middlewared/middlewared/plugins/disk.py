@@ -383,60 +383,12 @@ class DiskService(CRUDService):
         return True
 
     @private
-    def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
-        cp = subprocess.run([
-            'geli', 'setkey', '-n', str(slot),
-        ] + (
-            ['-J', passphrase] if passphrase else ['-P']
-        ) + ['-K', key] + (
-            ['-k', oldkey] if oldkey else []
-        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if cp.stderr:
-            raise CallError(f'Unable to set passphrase on {dev}: {cp.stderr.decode()}')
-
-        self.__geli_notify_passphrase(passphrase)
-
-    @private
-    def geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
-        cp = subprocess.run([
-            'geli', 'delkey', '-n', str(slot),
-        ] + (
-            ['-f'] if force else []
-        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if cp.stderr:
-            raise CallError(f'Unable to delete key {slot} on {dev}: {cp.stderr.decode()}')
-
-    @private
     def geli_recoverykey_rm(self, pool):
         for ed in self.middleware.call_sync(
             'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
         ):
             dev = ed['encrypted_provider']
-            self.geli_delkey(dev, GELI_RECOVERY_SLOT, True)
-
-    @private
-    def geli_passphrase(self, pool, passphrase, rmrecovery=False):
-        """
-        Set a passphrase in a geli
-        If passphrase is None then remove the passphrase
-        """
-        if passphrase:
-            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
-            os.chmod(passf.name, 0o600)
-            passf.write(passphrase)
-            passf.flush()
-            passphrase = passf.name
-        try:
-            for ed in self.middleware.call_sync(
-                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-            ):
-                dev = ed['encrypted_provider']
-                if rmrecovery:
-                    self.geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
-                self.geli_setkey(dev, pool['encryptkey_path'], GELI_KEY_SLOT, passphrase)
-        finally:
-            if passphrase:
-                passf.close()
+            self.middleware.call_sync('disk.geli_delkey', dev, GELI_RECOVERY_SLOT, True)
 
     @private
     def geli_rekey(self, pool, slot=GELI_KEY_SLOT):
@@ -464,7 +416,7 @@ class DiskService(CRUDService):
         applied = []
         for dev in devs:
             try:
-                self.geli_setkey(dev, geli_keyfile_tmp, slot)
+                self.middleware.call_sync('disk.geli_setkey', dev, geli_keyfile_tmp, slot)
                 dev_to_keyfile[dev] = geli_keyfile_tmp
                 applied.append(dev)
             except Exception as ee:
@@ -478,7 +430,7 @@ class DiskService(CRUDService):
             could_not_restore = False
             for dev in applied:
                 try:
-                    self.geli_setkey(dev, geli_keyfile, slot, oldkey=geli_keyfile_tmp)
+                    self.middleware.call_sync('disk.geli_setkey', dev, geli_keyfile, slot, None, geli_keyfile_tmp)
                     dev_to_keyfile[dev] = geli_keyfile
                 except Exception as ee:
                     # this is very bad for the user, at the very least there
@@ -528,7 +480,7 @@ class DiskService(CRUDService):
             ):
                 dev = ed['encrypted_provider']
                 try:
-                    self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, None)
+                    self.middleware.call_sync('disk.geli_setkey', dev, reckey_file, GELI_RECOVERY_SLOT)
                 except Exception as ee:
                     errors.append(str(ee))
 
@@ -575,13 +527,6 @@ class DiskService(CRUDService):
                 except Exception as e:
                     self.logger.warn('Failed to clear %s: %s', dev, e)
         return failed
-
-    def __geli_notify_passphrase(self, passphrase):
-        if passphrase:
-            with open(passphrase) as f:
-                self.middleware.call_hook_sync('disk.post_geli_passphrase', f.read())
-        else:
-            self.middleware.call_hook_sync('disk.post_geli_passphrase', None)
 
     @private
     async def get_reserved(self):
