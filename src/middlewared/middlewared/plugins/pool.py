@@ -452,12 +452,14 @@ class PoolService(CRUDService):
                 'status_detail': None,
             })
 
-        if pool['encrypt'] > 0:
+        if not IS_LINUX and pool['encrypt'] > 0:
             if zpool:
                 pool['is_decrypted'] = True
             else:
                 decrypted = True
-                for ed in self.middleware.call_sync('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
+                for ed in self.middleware.call_sync(
+                    'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+                ):
                     if not os.path.exists(f'/dev/{ed["encrypted_provider"]}.eli'):
                         decrypted = False
                         break
