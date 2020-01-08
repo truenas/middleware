@@ -1158,12 +1158,13 @@ class PoolService(CRUDService):
             if service['enable'] or service['state'] == 'RUNNING':
                 result[k] = v
 
-        try:
-            activated_pool = await self.middleware.call('jail.get_activated_pool')
-        except Exception:
-            activated_pool = None
+        activated_pool = None
+        if not IS_LINUX:
+            with contextlib.suppress(Exception):
+                activated_pool = await self.middleware.call('jail.get_activated_pool')
+
         # If iocage is not activated yet, there is a chance that this pool might have it activated there
-        if activated_pool is None:
+        if not IS_LINUX and activated_pool is None:
             result['jails'] = 'Jails/Plugins'
 
         if await self._unlock_restarted_vms(pool['name']):
