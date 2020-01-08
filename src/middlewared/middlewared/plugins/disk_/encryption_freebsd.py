@@ -1,3 +1,4 @@
+import base64
 import os
 import subprocess
 import tempfile
@@ -251,3 +252,104 @@ class DiskService(Service, DiskEncryptionBase):
         cp = await run('geli', 'detach', device, check=False, encoding='utf8')
         if cp.returncode:
             raise CallError(f'Failed to detach geli from {device}: {cp.stderr}')
+
+    @private
+    def geli_attach(self, pool, passphrase=None, key=None):
+        """
+        Attach geli providers of a given pool
+
+        Returns:
+            The number of providers that failed to attach
+        """
+        failed = 0
+        geli_keyfile = key or pool['encryptkey_path']
+
+        if passphrase:
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(passphrase)
+            passf.flush()
+            passphrase = passf.name
+        try:
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                try:
+                    self.middleware.call_sync('disk.geli_attach_single', dev, geli_keyfile, passphrase)
+                except Exception as ee:
+                    self.logger.warn(str(ee))
+                    failed += 1
+        finally:
+            if passphrase:
+                passf.close()
+        return failed
+
+    @private
+    def geli_recoverykey_rm(self, pool):
+        for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+        ):
+            dev = ed['encrypted_provider']
+            self.middleware.call_sync('disk.geli_delkey', dev, GELI_RECOVERY_SLOT, True)
+
+    @private
+    def geli_recoverykey_add(self, pool):
+        with tempfile.NamedTemporaryFile(dir='/tmp/') as reckey:
+            reckey_file = reckey.name
+            self.middleware.call_sync('disk.create_keyfile', reckey_file, 64, True)
+            reckey.flush()
+
+            errors = []
+            for ed in self.middleware.call_sync(
+                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+            ):
+                dev = ed['encrypted_provider']
+                try:
+                    self.middleware.call_sync('disk.geli_setkey', dev, reckey_file, GELI_RECOVERY_SLOT)
+                except Exception as ee:
+                    errors.append(str(ee))
+
+            if errors:
+                raise CallError(
+                    'Unable to set recovery key for {len(errors)} devices: {", ".join(errors)}'
+                )
+            reckey.seek(0)
+            return base64.b64encode(reckey.read()).decode()
+
+    @private
+    def geli_detach_single(self, dev):
+        if not os.path.exists(f'/dev/{dev.replace(".eli", "")}.eli'):
+            return
+        cp = subprocess.run(
+            ['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Unable to geli detach {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_clear(self, dev):
+        cp = subprocess.run(
+            ['geli', 'clear', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if cp.returncode != 0:
+            raise CallError(f'Unable to geli clear {dev}: {cp.stderr.decode()}')
+
+    @private
+    def geli_detach(self, pool, clear=False):
+        failed = 0
+        for ed in self.middleware.call_sync(
+            'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
+        ):
+            dev = ed['encrypted_provider']
+            try:
+                self.geli_detach_single(dev)
+            except Exception as ee:
+                self.logger.warn(str(ee))
+                failed += 1
+            if clear:
+                try:
+                    self.geli_clear(dev)
+                except Exception as e:
+                    self.logger.warn('Failed to clear %s: %s', dev, e)
+        return failed
