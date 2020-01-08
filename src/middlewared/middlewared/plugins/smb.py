@@ -53,6 +53,17 @@ class SMBCmd(enum.Enum):
     WBINFO = '/usr/local/bin/wbinfo'
 
 
+class SMBPath(enum.Enum):
+    GLOBALCONF = '/usr/local/etc/smb4.conf'
+    SHARECONF = '/usr/local/etc/smb4_share.conf'
+    STATEDIR = '/var/db/system/samba4'
+    PRIVATEDIR = '/var/db/system/samba4/private'
+    LEGACYPRIVATE = '/root/samba/private'
+    RUNDIR = '/var/run/samba4'
+    LOCKDIR = '/var/lock'
+    LOGDIR = '/var/log/samba4'
+
+
 class SMBModel(sa.Model):
     __tablename__ = 'services_cifs'
 
@@ -527,7 +538,7 @@ class SMBService(SystemServiceService):
         conditions without returning the parameter's value.
         """
         try:
-            res = param.LoadParm('/usr/local/etc/smb4.conf').get(parm, section)
+            res = param.LoadParm(SMBPath.GLOBALCONF.value).get(parm, section)
             return res
         except Exception as e:
             raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
@@ -766,7 +777,7 @@ class SharingSMBService(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self._reg_addshare(data)
+        await self.reg_addshare(data)
         await self.extend(data)  # We should do this in the insert call ?
 
         await self._service_change('cifs', 'reload')
@@ -826,10 +837,10 @@ class SharingSMBService(CRUDService):
             except Exception:
                 self.logger.warn('Failed to remove stale share [%]',
                                  old['name'], exc_info=True)
-            await self._reg_addshare(new)
+            await self.reg_addshare(new)
         else:
-            diff = await self._diff_middleware_and_registry(new['name'], new)
-            await self._apply_conf_diff('REGISTRY', new['name'], diff)
+            diff = await self.diff_middleware_and_registry(new['name'], new)
+            await self.apply_conf_diff('REGISTRY', new['name'], diff)
 
         await self.extend(new)  # same here ?
 
@@ -974,7 +985,7 @@ class SharingSMBService(CRUDService):
         return vuid
 
     @private
-    async def _netconf(self, **kwargs):
+    async def netconf(self, **kwargs):
         """
         wrapper for net(8) conf. This manages the share configuration, which is stored in
         samba's registry.tdb file.
@@ -1003,32 +1014,32 @@ class SharingSMBService(CRUDService):
         return netconf.stdout.decode()
 
     @private
-    async def _reg_listshares(self):
-        return (await self._netconf(action='listshares')).splitlines()
+    async def reg_listshares(self):
+        return (await self.netconf(action='listshares')).splitlines()
 
     @private
-    async def _reg_addshare(self, data):
-        conf = await self._share_to_smbconf(data)
+    async def reg_addshare(self, data):
+        conf = await self.share_to_smbconf(data)
         path = conf.pop('path')
         name = 'homes' if data['home'] else data['name']
-        await self._netconf(
+        await self.netconf(
             action='addshare',
             share=name,
             args=[path, f'writeable={"N" if data["ro"] else "y"}',
                   f'guest_ok={"y" if data["guestok"] else "N"}']
         )
         for k, v in conf.items():
-            await self._reg_setparm(name, k, v)
+            await self.reg_setparm(name, k, v)
 
     @private
     async def _reg_delshare(self, share):
-        return await self._netconf(action='delshare', share=share)
+        return await self.netconf(action='delshare', share=share)
 
     @private
     async def _reg_showshare(self, share):
         ret = {}
         to_list = ['vfs objects', 'hosts allow', 'hosts deny']
-        net = await self._netconf(action='showshare', share=share)
+        net = await self.netconf(action='showshare', share=share)
         for param in net.splitlines()[1:]:
             kv = param.strip().split('=', 1)
             k = kv[0].strip()
@@ -1038,17 +1049,17 @@ class SharingSMBService(CRUDService):
         return ret
 
     @private
-    async def _reg_setparm(self, share, parm, value):
+    async def reg_setparm(self, share, parm, value):
         if type(value) == list:
             value = ' '.join(value)
-        return await self._netconf(action='setparm', share=share, args=[parm, value])
+        return await self.netconf(action='setparm', share=share, args=[parm, value])
 
     @private
-    async def _reg_delparm(self, share, parm):
-        return await self._netconf(action='delparm', share=share, args=[parm])
+    async def reg_delparm(self, share, parm):
+        return await self.netconf(action='delparm', share=share, args=[parm])
 
     @private
-    async def _get_global_params(self, globalconf):
+    async def get_global_params(self, globalconf):
         if globalconf is None:
             globalconf = {}
 
@@ -1077,7 +1088,7 @@ class SharingSMBService(CRUDService):
         return gl
 
     @private
-    async def _order_vfs_objects(self, vfs_objects):
+    async def order_vfs_objects(self, vfs_objects):
         vfs_objects_special = ('shadow_copy_zfs', 'catia', 'zfs_space', 'noacl', 'ixnas', 'zfsacl',
                                'fruit', 'streams_xattr', 'crossrename', 'recycle')
         vfs_objects_ordered = []
@@ -1101,14 +1112,14 @@ class SharingSMBService(CRUDService):
         return vfs_objects_ordered
 
     @private
-    async def _diff_middleware_and_registry(self, share, data):
+    async def diff_middleware_and_registry(self, share, data):
         if share is None:
             raise CallError('Share name must be specified.')
 
         if data is None:
             data = await self.query([('name', '=', share)], {'get': True})
 
-        share_conf = await self._share_to_smbconf(data)
+        share_conf = await self.share_to_smbconf(data)
         reg_conf = await self._reg_showshare(share)
         s_keys = set(share_conf.keys())
         r_keys = set(reg_conf.keys())
@@ -1120,18 +1131,18 @@ class SharingSMBService(CRUDService):
         }
 
     @private
-    async def _apply_conf_registry(self, share, diff):
+    async def apply_conf_registry(self, share, diff):
         for k, v in diff['added'].items():
-            await self._reg_setparm(share, k, v)
+            await self.reg_setparm(share, k, v)
 
         for k, v in diff['removed'].items():
-            await self._reg_delparm(share, k)
+            await self.reg_delparm(share, k)
 
         for k, v in diff['modified'].items():
-            await self._reg_setparm(share, k, v[0])
+            await self.reg_setparm(share, k, v[0])
 
     @private
-    async def _apply_conf_diff(self, target, share, confdiff):
+    async def apply_conf_diff(self, target, share, confdiff):
         self.logger.trace('target: [%s], share: [%s], diff: [%s]',
                           target, share, confdiff)
         if target not in ['REGISTRY', 'FNCONF']:
@@ -1141,11 +1152,11 @@ class SharingSMBService(CRUDService):
             # TODO: add ability to convert the registry back to our sqlite table
             raise CallError('FNCONF target not implemented')
 
-        return await self._apply_conf_registry(share, confdiff)
+        return await self.apply_conf_registry(share, confdiff)
 
     @private
-    async def _share_to_smbconf(self, data, globalconf=None):
-        gl = await self._get_global_params(globalconf)
+    async def share_to_smbconf(self, data, globalconf=None):
+        gl = await self.get_global_params(globalconf)
         conf = {}
         conf['path'] = data['path']
         if data['comment']:
@@ -1208,7 +1219,7 @@ class SharingSMBService(CRUDService):
                 "shadow:include": "fss-*",
             })
 
-        conf["vfs objects"] = await self._order_vfs_objects(data['vfsobjects'])
+        conf["vfs objects"] = await self.order_vfs_objects(data['vfsobjects'])
         if gl['fruit_enabled']:
             conf["fruit:metadata"] = "stream"
             conf["fruit:resource"] = "stream"
