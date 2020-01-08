@@ -140,6 +140,37 @@ class DiskService(Service, DiskEncryptionBase):
         if cp.stderr:
             raise CallError(f'Unable to delete key {slot} on {dev}: {cp.stderr.decode()}')
 
+    @private
+    def geli_testkey(self, pool, passphrase):
+        """
+        Test key for geli providers of a given pool
+
+        Returns:
+            bool
+        """
+
+        with tempfile.NamedTemporaryFile(mode='w+', dir='/tmp') as tf:
+            os.chmod(tf.name, 0o600)
+            tf.write(passphrase)
+            tf.flush()
+            # EncryptedDisk table might be out of sync for some reason,
+            # this is much more reliable!
+            devs = self.middleware.call_sync('zfs.pool.get_devices', pool['name'])
+            for dev in devs:
+                name, ext = os.path.splitext(dev)
+                if ext != '.eli':
+                    continue
+                try:
+                    self.middleware.call_sync(
+                        'disk.geli_attach_single', name, pool['encryptkey_path'],
+                        tf.name if passphrase else None, True,
+                    )
+                except Exception as e:
+                    # "Missing -p flag" happens when using passphrase on a pool without passphrase
+                    if any(s in str(e) for s in ('Wrong key', 'Missing -p flag')):
+                        return False
+        return True
+
     async def remove_encryption(self, device):
         cp = await run('geli', 'detach', device, check=False, encoding='utf8')
         if cp.returncode:

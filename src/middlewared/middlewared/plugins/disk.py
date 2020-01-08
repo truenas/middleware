@@ -352,37 +352,6 @@ class DiskService(CRUDService):
         return failed
 
     @private
-    def geli_testkey(self, pool, passphrase):
-        """
-        Test key for geli providers of a given pool
-
-        Returns:
-            bool
-        """
-
-        with tempfile.NamedTemporaryFile(mode='w+', dir='/tmp') as tf:
-            os.chmod(tf.name, 0o600)
-            tf.write(passphrase)
-            tf.flush()
-            # EncryptedDisk table might be out of sync for some reason,
-            # this is much more reliable!
-            devs = self.middleware.call_sync('zfs.pool.get_devices', pool['name'])
-            for dev in devs:
-                name, ext = os.path.splitext(dev)
-                if ext != '.eli':
-                    continue
-                try:
-                    self.middleware.call_sync(
-                        'disk.geli_attach_single', name, pool['encryptkey_path'],
-                        tf.name if passphrase else None, True,
-                    )
-                except Exception as e:
-                    # "Missing -p flag" happens when using passphrase on a pool without passphrase
-                    if any(s in str(e) for s in ('Wrong key', 'Missing -p flag')):
-                        return False
-        return True
-
-    @private
     def geli_recoverykey_rm(self, pool):
         for ed in self.middleware.call_sync(
             'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
