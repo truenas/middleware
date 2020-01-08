@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import contextlib
 import enum
 import errno
@@ -1134,58 +1133,6 @@ class PoolService(CRUDService):
             await wipe_job.wait()
             if wipe_job.error:
                 raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
-
-    @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('admin_password', private=True, required=False),
-    ))
-    @job(lock=lambda x: f'pool_reckey_{x[0]}', pipes=['output'])
-    async def recoverykey_add(self, job, oid, options):
-        """
-        Add Recovery key for encrypted pool `id`.
-
-        This is to be used with `core.download` which will provide an URL
-        to download the recovery key.
-        """
-        pool = await self._get_instance(oid)
-        await self.middleware.call('pool.common_encopt_validation', pool, options)
-
-        reckey = await self.middleware.call('disk.geli_recoverykey_add', pool)
-        job.pipes.output.w.write(base64.b64decode(reckey))
-        job.pipes.output.w.close()
-
-        return True
-
-    @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('admin_password', private=True, required=False),
-    ))
-    async def recoverykey_rm(self, oid, options):
-        """
-        Remove recovery key for encrypted pool `id`.
-
-        .. examples(websocket)::
-
-          Remove recovery key for pool 1.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.recoverykey_rm,
-                "params": [1, {
-                    "admin_password": "rootpassword"
-                }]
-            }
-        """
-        pool = await self._get_instance(oid)
-
-        await self.middleware.call('pool.common_encopt_validation', pool, options)
-        await self.middleware.call('disk.geli_recoverykey_rm', pool)
-
-        return True
 
     @accepts(Int('id'))
     async def unlock_services_restart_choices(self, oid):
