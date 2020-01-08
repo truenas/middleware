@@ -79,7 +79,6 @@ class ShareSec(CRUDService):
 
         return parsed_share_sd
 
-    @private
     async def _sharesec(self, **kwargs):
         """
         wrapper for sharesec(1). This manipulates share permissions on SMB file shares.
@@ -97,7 +96,6 @@ class ShareSec(CRUDService):
             raise CallError(f'sharesec {action} failed with error: {sharesec.stderr.decode()}')
         return sharesec.stdout.decode()
 
-    @private
     async def _delete(self, share):
         """
         Delete stored SD for share. This should be performed when share is
@@ -112,7 +110,6 @@ class ShareSec(CRUDService):
             if 'NT_STATUS_NOT_FOUND' not in str(e):
                 raise CallError(e)
 
-    @private
     async def _view_all(self, options=None):
         """
         Return Security Descriptor for all shares.
@@ -150,7 +147,6 @@ class ShareSec(CRUDService):
         share_sd = f'[{share_name.upper()}]\n{sharesec}'
         return await self.parse_share_sd(share_sd, options)
 
-    @private
     async def _ae_to_string(self, ae):
         """
         Convert aclentry in Securty Descriptor dictionary to string
@@ -168,7 +164,6 @@ class ShareSec(CRUDService):
 
         return f'{ae["ae_who_sid"]}:{ae["ae_type"]}/0x0/{ae["ae_perm"]}'
 
-    @private
     async def _string_to_ae(self, perm_str):
         """
         Convert string representation of SD into dictionary.
@@ -214,7 +209,6 @@ class ShareSec(CRUDService):
         await self.middleware.call('datastore.update', 'sharing.cifs_share', config_share['id'],
                                    {'cifs_share_acl': ' '.join(ae_list)})
 
-    @private
     async def _flush_share_info(self):
         """
         Write stored share acls to share_info.tdb. This should only be called
