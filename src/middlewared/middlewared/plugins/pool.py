@@ -548,7 +548,7 @@ class PoolService(CRUDService):
             raise
 
         disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
-        await self.__save_encrypteddisks(oid, enc_disks, {disk['devname']: disk})
+        await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
         await self.middleware.call('disk.swaps_configure')
 
     @accepts(Dict(
@@ -751,7 +751,8 @@ class PoolService(CRUDService):
                 }
             )
 
-            await self.__save_encrypteddisks(pool_id, formatted_disks, disks_cache)
+            if not IS_LINUX:
+                await self.middleware.call('pool.save_encrypteddisks', pool_id, formatted_disks, disks_cache)
 
             await self.middleware.call(
                 'datastore.insert',
@@ -848,7 +849,7 @@ class PoolService(CRUDService):
         if extend_job.error:
             raise CallError(extend_job.error)
 
-        await self.__save_encrypteddisks(id, enc_disks, disks_cache)
+        await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
 
         if pool['encrypt'] >= 2:
             # FIXME: ask current passphrase and validate
@@ -960,20 +961,6 @@ class PoolService(CRUDService):
                 disks[disk] = {'vdev': vdev_devs_list, 'create_swap': True}
 
         return disks, vdevs
-
-    async def __save_encrypteddisks(self, pool_id, enc_disks, disks_cache):
-        async with ENCRYPTEDDISK_LOCK:
-            for enc_disk in enc_disks:
-                await self.middleware.call(
-                    'datastore.insert',
-                    'storage.encrypteddisk',
-                    {
-                        'volume': pool_id,
-                        'disk': disks_cache[enc_disk['disk']]['identifier'],
-                        'provider': enc_disk['devname'],
-                    },
-                    {'prefix': 'encrypted_'},
-                )
 
     @item_method
     @accepts(Int('id', required=False, default=None, null=True))
@@ -1128,7 +1115,7 @@ class PoolService(CRUDService):
             # removed from swap prior to replacement
             await self.middleware.call('disk.swaps_configure')
 
-        await self.__save_encrypteddisks(oid, enc_disks, {disk['devname']: disk})
+        await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
 
         return True
 
