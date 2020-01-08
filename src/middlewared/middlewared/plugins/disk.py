@@ -532,9 +532,8 @@ class DiskService(CRUDService):
         return partitions
 
     @private
-    def check_clean(self, disk):
-        geom.scan()
-        return geom.class_by_name('PART').xml.find(f'.//geom[name="{disk}"]') is None
+    async def check_clean(self, disk):
+        return not bool(await self.middleware.call('disk.list_partitions', disk))
 
     @private
     async def sed_unlock_all(self):
