@@ -522,7 +522,7 @@ class PoolService(CRUDService):
                 verrors.add('pool_attach.passphrase', 'Passphrase is not valid.')
 
         # Let's validate new disk now
-        await self.__check_disks_availability(verrors, {options['new_disk']: options['new_disk']}, 'pool_attach')
+        await self.middleware.call('disk.check_disks_availability', verrors, [options['new_disk']], 'pool_attach')
         verrors.check()
 
         guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
@@ -681,7 +681,7 @@ class PoolService(CRUDService):
 
         await self.__common_validation(verrors, data, 'pool_create')
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        disks_cache = await self.__check_disks_availability(verrors, disks)
+        disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_create')
 
         if verrors:
             raise verrors
@@ -827,7 +827,7 @@ class PoolService(CRUDService):
 
         await self.__common_validation(verrors, data, 'pool_update', old=pool)
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        disks_cache = await self.__check_disks_availability(verrors, disks, 'pool_update')
+        disks_cache = await self.middleware.call('disk.check_disks_availability', verrors, list(disks), 'pool_update')
 
         if verrors:
             raise verrors
@@ -959,38 +959,6 @@ class PoolService(CRUDService):
                 disks[disk] = {'vdev': vdev_devs_list, 'create_swap': True}
 
         return disks, vdevs
-
-    async def __check_disks_availability(self, verrors, disks, schema='pool_create'):
-        """
-        Makes sure the disks are present in the system and not reserved
-        by anything else (boot, pool, iscsi, etc).
-
-        Returns:
-            dict - disk.query for all disks
-        """
-        disks_cache = dict(map(
-            lambda x: (x['devname'], x),
-            await self.middleware.call(
-                'disk.query', [('devname', 'in', list(disks.keys()))]
-            )
-        ))
-
-        disks_set = set(disks.keys())
-        disks_not_in_cache = disks_set - set(disks_cache.keys())
-        if disks_not_in_cache:
-            verrors.add(
-                f'{schema}.topology',
-                f'The following disks were not found in system: {"," .join(disks_not_in_cache)}.'
-            )
-
-        disks_reserved = await self.middleware.call('disk.get_reserved')
-        disks_reserved = disks_set - (disks_set - set(disks_reserved))
-        if disks_reserved:
-            verrors.add(
-                f'{schema}.topology',
-                f'The following disks are already in use: {"," .join(disks_reserved)}.'
-            )
-        return disks_cache
 
     @private
     async def format_disks(self, job, disks, disk_encryption_options=None):
