@@ -64,6 +64,8 @@ class ReplicationService(CRUDService):
         Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
         Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
+        legacy_last_snapshot = context["legacy_result"].get(data["id"], {}).get("last_snapshot")
+
         if data["transport"] == "LEGACY":
             if data["id"] in context["legacy_result"]:
                 legacy_result = context["legacy_result"][data["id"]]
@@ -79,7 +81,7 @@ class ReplicationService(CRUDService):
                 data["state"] = {
                     "datetime": context["legacy_result_datetime"],
                     "state": state,
-                    "last_snapshot": legacy_result.get("last_snapshot"),
+                    "last_snapshot": legacy_last_snapshot,
                 }
 
                 if state == "ERROR":
@@ -125,6 +127,9 @@ class ReplicationService(CRUDService):
                 data["state"] = context["state"]["tasks"].get(f"replication_task_{data['id']}", {
                     "state": "PENDING",
                 })
+
+                if data["state"].get("last_snapshot") is None:
+                    data["state"]["last_snapshot"] = legacy_last_snapshot
 
         data["job"] = data["state"].pop("job", None)
 
