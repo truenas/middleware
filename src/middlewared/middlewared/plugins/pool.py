@@ -1134,24 +1134,6 @@ class PoolService(CRUDService):
             if wipe_job.error:
                 raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
 
-    @item_method
-    @accepts(Int('id'), Str('filename', default='geli.key'))
-    async def download_encryption_key(self, oid, filename):
-        """
-        Download encryption key for a given pool `id`.
-        """
-        pool = await self.query([('id', '=', oid)], {'get': True})
-        if not pool['encryptkey']:
-            return None
-
-        job_id, url = await self.middleware.call(
-            'core.download',
-            'filesystem.get',
-            [os.path.join(self.GELI_KEYPATH, f"{pool['encryptkey']}.key")],
-            filename,
-        )
-        return url
-
     @private
     def configure_resilver_priority(self):
         """

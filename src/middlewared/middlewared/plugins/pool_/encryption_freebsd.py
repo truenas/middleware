@@ -9,7 +9,7 @@ from libzfs import ZFSException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, item_method, job, private, Service, ValidationErrors
 
-
+GELI_KEYPATH = '/data/geli'
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 
 ENCRYPTEDDISK_LOCK = asyncio.Lock()
@@ -416,3 +416,21 @@ class PoolService(Service):
         await self.middleware.call_hook('pool.post_lock', pool=pool)
         await self.middleware.call('service.restart', 'system_datasets')
         return True
+
+    @item_method
+    @accepts(Int('id'), Str('filename', default='geli.key'))
+    async def download_encryption_key(self, oid, filename):
+        """
+        Download encryption key for a given pool `id`.
+        """
+        pool = await self.middleware.call('pool.query', [('id', '=', oid)], {'get': True})
+        if not pool['encryptkey']:
+            return None
+
+        job_id, url = await self.middleware.call(
+            'core.download',
+            'filesystem.get',
+            [os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')],
+            filename,
+        )
+        return url
