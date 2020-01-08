@@ -25,9 +25,7 @@ from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
-GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 RE_CAMCONTROL_AAM = re.compile(r'^automatic acoustic management\s+yes', re.M)
 RE_CAMCONTROL_APM = re.compile(r'^advanced power management\s+yes', re.M)
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
@@ -358,82 +356,6 @@ class DiskService(CRUDService):
         ):
             dev = ed['encrypted_provider']
             self.middleware.call_sync('disk.geli_delkey', dev, GELI_RECOVERY_SLOT, True)
-
-    @private
-    def geli_rekey(self, pool, slot=GELI_KEY_SLOT):
-        """
-        Regenerates the geli global key and set it to devices
-        Removes the passphrase if it was present
-        """
-
-        geli_keyfile = pool['encryptkey_path']
-        geli_keyfile_tmp = f'{geli_keyfile}.tmp'
-        devs = [
-            ed['encrypted_provider']
-            for ed in self.middleware.call_sync(
-                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-            )
-        ]
-
-        # keep track of which device has which key in case something goes wrong
-        dev_to_keyfile = {dev: geli_keyfile for dev in devs}
-
-        # Generate new key as .tmp
-        self.logger.debug("Creating new key file: %s", geli_keyfile_tmp)
-        self.middleware.call_sync('disk.create_keyfile', geli_keyfile_tmp, 64, True)
-        error = None
-        applied = []
-        for dev in devs:
-            try:
-                self.middleware.call_sync('disk.geli_setkey', dev, geli_keyfile_tmp, slot)
-                dev_to_keyfile[dev] = geli_keyfile_tmp
-                applied.append(dev)
-            except Exception as ee:
-                error = str(ee)
-                self.logger.error('Failed to set geli key on %s: %s', dev, error, exc_info=True)
-                break
-
-        # Try to be atomic in a certain way
-        # If rekey failed for one of the devs, revert for the ones already applied
-        if error:
-            could_not_restore = False
-            for dev in applied:
-                try:
-                    self.middleware.call_sync('disk.geli_setkey', dev, geli_keyfile, slot, None, geli_keyfile_tmp)
-                    dev_to_keyfile[dev] = geli_keyfile
-                except Exception as ee:
-                    # this is very bad for the user, at the very least there
-                    # should be a notification that they will need to
-                    # manually rekey as they now have drives with different keys
-                    could_not_restore = True
-                    self.logger.error(
-                        'Failed to restore key on rekey for %s: %s', dev, str(ee), exc_info=True
-                    )
-            if could_not_restore:
-                try:
-                    open(GELI_REKEY_FAILED, 'w').close()
-                except Exception:
-                    pass
-                self.logger.error(
-                    'Unable to rekey. Devices now have the following keys: %s',
-                    '\n'.join([
-                        f'{dev}: {keyfile}'
-                        for dev, keyfile in dev_to_keyfile
-                    ])
-                )
-                raise CallError(
-                    'Unable to rekey and devices have different keys. See the log file.'
-                )
-            else:
-                raise CallError(f'Unable to set key: {error}')
-        else:
-            if os.path.exists(GELI_REKEY_FAILED):
-                try:
-                    os.unlink(GELI_REKEY_FAILED)
-                except Exception:
-                    pass
-            self.logger.debug("Rename geli key %s -> %s", geli_keyfile_tmp, geli_keyfile)
-            os.rename(geli_keyfile_tmp, geli_keyfile)
 
     @private
     def geli_recoverykey_add(self, pool):
