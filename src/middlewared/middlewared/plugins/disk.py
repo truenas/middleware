@@ -319,42 +319,6 @@ class DiskService(CRUDService):
 
         return providers
 
-    def __create_keyfile(self, keyfile, size=64, force=False):
-        if force or not os.path.exists(keyfile):
-            keypath = os.path.dirname(keyfile)
-            if not os.path.exists(keypath):
-                os.makedirs(keypath)
-            subprocess.run(
-                ['dd', 'if=/dev/random', f'of={keyfile}', f'bs={size}', 'count=1'],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-
-    def __geli_setmetadata(self, dev, keyfile, passphrase=None):
-        self.__create_keyfile(keyfile)
-        cp = subprocess.run([
-            'geli', 'init', '-s', '4096', '-l', '256', '-B', 'none',
-        ] + (
-            ['-J', passphrase] if passphrase else ['-P']
-        ) + ['-K', keyfile, dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if cp.stderr:
-            raise CallError(f'Unable to set geli metadata on {dev}: {cp.stderr.decode()}')
-
-    @private
-    def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
-        if skip_existing or not os.path.exists(f'/dev/{dev}.eli'):
-            cp = subprocess.run([
-                'geli', 'attach',
-            ] + (['-j', passphrase] if passphrase else ['-p']) + [
-                '-k', key, dev,
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if cp.stderr or not os.path.exists(f'/dev/{dev}.eli'):
-                raise CallError(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
-            self.__geli_notify_passphrase(passphrase)
-        else:
-            self.logger.debug(f'{dev} already attached')
-
     @private
     def geli_attach(self, pool, passphrase=None, key=None):
         """
@@ -378,7 +342,7 @@ class DiskService(CRUDService):
             ):
                 dev = ed['encrypted_provider']
                 try:
-                    self.geli_attach_single(dev, geli_keyfile, passphrase)
+                    self.middleware.call_sync('disk.geli_attach_single', dev, geli_keyfile, passphrase)
                 except Exception as ee:
                     self.logger.warn(str(ee))
                     failed += 1
@@ -408,8 +372,9 @@ class DiskService(CRUDService):
                 if ext != '.eli':
                     continue
                 try:
-                    self.geli_attach_single(
-                        name, pool['encryptkey_path'], tf.name if passphrase else None, skip_existing=True,
+                    self.middleware.call_sync(
+                        'disk.geli_attach_single', name, pool['encryptkey_path'],
+                        tf.name if passphrase else None, True,
                     )
                 except Exception as e:
                     # "Missing -p flag" happens when using passphrase on a pool without passphrase
@@ -494,7 +459,7 @@ class DiskService(CRUDService):
 
         # Generate new key as .tmp
         self.logger.debug("Creating new key file: %s", geli_keyfile_tmp)
-        self.__create_keyfile(geli_keyfile_tmp, force=True)
+        self.middleware.call_sync('disk.create_keyfile', geli_keyfile_tmp, 64, True)
         error = None
         applied = []
         for dev in devs:
@@ -553,7 +518,7 @@ class DiskService(CRUDService):
     def geli_recoverykey_add(self, pool):
         with tempfile.NamedTemporaryFile(dir='/tmp/') as reckey:
             reckey_file = reckey.name
-            self.__create_keyfile(reckey_file, force=True)
+            self.middleware.call_sync('disk.create_keyfile', reckey_file, 64, True)
             reckey.flush()
 
             errors = []
@@ -617,12 +582,6 @@ class DiskService(CRUDService):
                 self.middleware.call_hook_sync('disk.post_geli_passphrase', f.read())
         else:
             self.middleware.call_hook_sync('disk.post_geli_passphrase', None)
-
-    @private
-    def encrypt(self, devname, keypath, passphrase=None):
-        self.__geli_setmetadata(devname, keypath, passphrase)
-        self.geli_attach_single(devname, keypath, passphrase)
-        return f'{devname}.eli'
 
     @private
     async def get_reserved(self):
