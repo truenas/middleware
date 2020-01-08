@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3.7
 
 # Author: Eric Turgeon
 # License: BSD
@@ -12,6 +12,9 @@ import re
 import random
 import string
 
+major_v = sys.version_info.major
+minor_v = sys.version_info.minor
+version = f"{major_v}.{minor_v}"
 apifolder = getcwd()
 sys.path.append(apifolder)
 workdir = getcwd()
@@ -184,7 +187,7 @@ if api == "1.0":
     for i in get_tests():
         if testName is not None and testName != i:
             continue
-        call(["py.test-3.6", "-v", "--junitxml",
+        call([f"py.test-{version}", "-v", "--junitxml",
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
         ) + [f"api1/{i}.py"])
@@ -192,7 +195,7 @@ elif api == "2.0":
     for i in get_tests():
         if testName is not None and testName != i:
             continue
-        call(["py.test-3.6", "-v", "--junitxml",
+        call([f"py.test-{version}", "-v", "--junitxml",
               f"{results_xml}{i}_tests_result.xml"] + (
                   ["-k", testexpr] if testexpr else []
         ) + [f"api2/{i}.py"])

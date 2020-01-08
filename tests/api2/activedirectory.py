@@ -160,6 +160,7 @@ def test_09_Changing_permissions_on_dataset():
     job_id = results.json()
 
 
+@skip_ad_test
 def test_10_verify_the_job_id_is_successfull():
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
