@@ -753,7 +753,7 @@ class PoolService(CRUDService):
         if verrors:
             raise verrors
 
-        if pool['encryptkey']:
+        if not IS_LINUX and pool['encryptkey']:
             enc_keypath = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
         else:
             enc_keypath = None
@@ -768,14 +768,15 @@ class PoolService(CRUDService):
         if extend_job.error:
             raise CallError(extend_job.error)
 
-        await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
+        if not IS_LINUX:
+            await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
 
-        if pool['encrypt'] >= 2:
-            # FIXME: ask current passphrase and validate
-            await self.middleware.call('disk.geli_passphrase', pool, None)
-            await self.middleware.call(
-                'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
-            )
+            if pool['encrypt'] >= 2:
+                # FIXME: ask current passphrase and validate
+                await self.middleware.call('disk.geli_passphrase', pool, None)
+                await self.middleware.call(
+                    'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
+                )
 
         pool = await self._get_instance(id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
