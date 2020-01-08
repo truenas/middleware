@@ -527,20 +527,9 @@ class PoolService(CRUDService):
 
         guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
         disks = {options['new_disk']: {'create_swap': topology_type == 'data', 'vdev': []}}
-        passphrase_path = None
-        if options.get('passphrase'):
-            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
-            os.chmod(passf.name, 0o600)
-            passf.write(options['passphrase'])
-            passf.flush()
-            passphrase_path = passf.name
-        try:
-            enc_disks = await self.format_disks(
-                job, disks, {'enc_keypath': pool['encryptkey_path'], 'passphrase': passphrase_path}
-            )
-        finally:
-            if passphrase_path:
-                passf.close()
+        enc_disks = await self.format_disks(
+            job, disks, {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')}
+        )
 
         devname = disks[options['new_disk']]['vdev'][0]
         extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], None, [
@@ -1034,14 +1023,28 @@ class PoolService(CRUDService):
                 })
                 devname = await self.middleware.call(
                     'disk.encrypt', devname, disk_encryption_options['enc_keypath'],
-                    disk_encryption_options['passphrase']
+                    disk_encryption_options['passphrase_path']
                 )
             formatted += 1
             job.set_progress(15, f'Formatting disks ({formatted}/{len(disks)})')
             config['vdev'].append(f'/dev/{devname}')
 
         job.set_progress(15, f'Formatting disks (0/{len(disks)})')
-        await asyncio_map(format_disk, disks.items(), limit=16)
+
+        pass_file = None
+        if not IS_LINUX and disk_encryption_options.get('passphrase'):
+            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
+            os.chmod(passf.name, 0o600)
+            passf.write(disk_encryption_options['passphrase'])
+            passf.flush()
+            pass_file = passf.name
+            disk_encryption_options['passphrase_path'] = pass_file
+
+        try:
+            await asyncio_map(format_disk, disks.items(), limit=16)
+        finally:
+            if pass_file:
+                pass_file.close()
 
         await self.middleware.call('disk.sync_all')
 
@@ -1180,22 +1183,11 @@ class PoolService(CRUDService):
         await self.middleware.call('disk.swaps_remove_disks', swap_disks)
 
         vdev = []
-        passphrase_path = None
-        if options.get('passphrase'):
-            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
-            os.chmod(passf.name, 0o600)
-            passf.write(options['passphrase'])
-            passf.flush()
-            passphrase_path = passf.name
-        try:
-            enc_disks = await self.format_disks(
-                job,
-                {disk['devname']: {'vdev': vdev, 'create_swap': create_swap}},
-                {'enc_keypath': pool['encryptkey_path'], 'passphrase': passphrase_path},
-            )
-        finally:
-            if passphrase_path:
-                passf.close()
+        enc_disks = await self.format_disks(
+            job,
+            {disk['devname']: {'vdev': vdev, 'create_swap': create_swap}},
+            {'enc_keypath': pool['encryptkey_path'], 'passphrase': options.get('passphrase')},
+        )
 
         new_devname = vdev[0].replace('/dev/', '')
 
