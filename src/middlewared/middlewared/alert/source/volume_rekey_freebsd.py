@@ -1,5 +1,5 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, FilePresenceAlertSource
-from middlewared.plugins.disk import GELI_REKEY_FAILED
+from middlewared.plugins.disk_.encryption_freebsd import GELI_REKEY_FAILED
 
 
 class VolumeRekeyAlertClass(AlertClass):
