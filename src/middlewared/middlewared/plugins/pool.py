@@ -7,21 +7,16 @@ import logging
 from datetime import datetime, time, timedelta
 import os
 import platform
+import psutil
 import re
 import secrets
 import shutil
 import subprocess
+import tempfile
 try:
     import sysctl
 except ImportError:
     sysctl = None
-import tempfile
-
-try:
-    import bsd
-except ImportError:
-    bsd = None
-import psutil
 
 from collections import defaultdict
 
@@ -45,7 +40,6 @@ logger = logging.getLogger(__name__)
 
 GELI_KEYPATH = '/data/geli'
 IS_LINUX = platform.system().lower() == 'linux'
-RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
@@ -1518,7 +1512,7 @@ class PoolService(CRUDService):
             ).errors:
                 raise CallError(error.errmsg)
 
-        await self.middleware.run_in_thread(bsd.geom.scan)
+        all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
 
         try:
             sysctl.filter('kern.geom.debugflags')[0].value = 16
@@ -1534,15 +1528,18 @@ class PoolService(CRUDService):
                         logger.debug('Not expanding vdev that is %r', vdev['status'])
                         continue
 
-                    partition_number = RE_DISKPART.match(vdev['device'])
-                    if partition_number is None:
+                    part_data = all_partitions.get(vdev['device'])
+                    if not part_data:
+                        logger.debug('Unable to find partition data for %s', vdev['device'])
+
+                    partition_number = part_data['partition_number']
+                    if not partition_number:
                         logger.debug('Could not parse partition number from %r', vdev['device'])
                         continue
 
-                    assert partition_number.group(1) == vdev['disk']
-                    partition_number = int(partition_number.group(2)[1:])
+                    assert part_data['disk'] == vdev['disk']
 
-                    mediasize = bsd.geom.geom_by_name('LABEL', vdev['device']).provider.mediasize
+                    mediasize = part_data['size']
 
                     await run('camcontrol', 'reprobe', vdev['disk'])
                     await run('gpart', 'recover', vdev['disk'])
