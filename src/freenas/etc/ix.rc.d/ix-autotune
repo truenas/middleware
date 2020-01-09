@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+#
+
+# PROVIDE: ix-autotune
+# REQUIRE: NETWORKING
+# BEFORE: LOGIN
+
+. /etc/rc.freenas
+
+do_autotune()
+{
+	/usr/local/bin/midclt call system.advanced.autotune sysctl
+	/usr/local/bin/midclt call system.advanced.autotune loader
+	return $?
+}
+
+autotune()
+{
+	do_autotune
+	local res=$?
+
+	if [ ${res} -eq 2 ]
+	then
+		debug "Rebooting server after applying loader.conf changes."
+		echo "Rebooting server after applying loader.conf changes."
+		shutdown -r now
+	fi
+}
+
+name="ix-autotune"
+start_cmd='autotune'

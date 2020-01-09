@@ -1237,12 +1237,7 @@ async def setup(middleware):
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
     else:
-        autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
-
         await firstboot(middleware)
-
-        if autotune_rv == 2:
-            await run('shutdown', '-r', 'now', check=False)
 
     settings = await middleware.call(
         'system.general.config',
@@ -1254,8 +1249,6 @@ async def setup(middleware):
 
     await middleware.call('system.general.set_language')
     await middleware.call('system.general.set_crash_reporting')
-
-    asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
 
     await update_timeout_value(middleware)
 
