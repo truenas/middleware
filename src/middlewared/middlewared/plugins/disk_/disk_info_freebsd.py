@@ -36,6 +36,7 @@ class DiskService(Service, DiskInfoBase):
                     part_type = self.middleware.call_sync('disk.get_partition_uuid_from_name', part_type.text)
                 if not part_type:
                     part_type = 'UNKNOWN'
+                part_uuid = p.find('./config/rawuuid')
                 part = {
                     'name': name.text,
                     'size': size,
@@ -45,6 +46,7 @@ class DiskService(Service, DiskInfoBase):
                     'path': os.path.join('/dev', name.text),
                     'encrypted_provider': None,
                     'partition_number': None,
+                    'partition_uuid': part_uuid.text if part_uuid else None,
                 }
                 part_no = RE_DISKPART.match(part['name'])
                 if part_no:
