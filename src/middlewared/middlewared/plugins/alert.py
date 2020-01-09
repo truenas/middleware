@@ -561,8 +561,8 @@ class AlertService(Service):
                                                      _key=alert["key"]))
                                         for alert in alerts_b]
                     except CallError as e:
-                        if e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT,
-                                       CallError.EALERTCHECKERUNAVAILABLE]:
+                        if e.errno in [errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET, errno.EHOSTDOWN,
+                                       errno.ETIMEDOUT, CallError.EALERTCHECKERUNAVAILABLE]:
                             pass
                         else:
                             raise
@@ -651,7 +651,8 @@ class AlertService(Service):
         except UnavailableException:
             raise
         except Exception as e:
-            if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN, errno.ETIMEDOUT]:
+            if isinstance(e, CallError) and e.errno in [errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET,
+                                                        errno.EHOSTDOWN, errno.ETIMEDOUT]:
                 alerts = [
                     Alert(AlertSourceRunFailedAlertClass,
                           args={
