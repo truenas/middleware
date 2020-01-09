@@ -1,10 +1,13 @@
 import logging
 import os
+import platform
 import subprocess
 import time
 from middlewared.plugins.smb import SMBCmd, SMBPath
 
 logger = logging.getLogger(__name__)
+
+IS_LINUX = platform.system().lower() == 'linux'
 
 NETCMD = SMBCmd.NET.value
 PDBCMD = SMBCmd.PDBEDIT.value
@@ -46,9 +49,9 @@ def get_config(middleware):
         conf[parm] = middleware.call_sync('smb.getparm', parm, 'global')
 
     if not conf['privatedir']:
-        conf['privatedir'] = SMBPath.PRIVATEDIR.value
+        conf['privatedir'] = SMBPath.PRIVATEDIR.platform()
     if not conf['state directory']:
-        conf['state directory'] = SMBPath.STATEDIR.value
+        conf['state directory'] = SMBPath.STATEDIR.platform()
     return conf
 
 
@@ -68,8 +71,8 @@ def setup_samba_dirs(middleware, conf):
         "/root/samba",
         conf['privatedir'],
         "/var/run/samba",
-        SMBPath.RUNDIR.value,
-        SMBPath.LOGDIR.value,
+        SMBPath.RUNDIR.platform(),
+        SMBPath.LOGDIR.platform(),
     ]
     for dir in samba_dirs:
         if not os.path.exists(dir):

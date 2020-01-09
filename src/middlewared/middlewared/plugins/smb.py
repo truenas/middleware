@@ -13,6 +13,7 @@ import codecs
 import enum
 import errno
 import os
+import platform
 import re
 import subprocess
 import uuid
@@ -21,6 +22,8 @@ try:
     from samba import param
 except ImportError:
     param = None
+
+IS_LINUX = platform.system().lower() == 'linux'
 
 LOGLEVEL_MAP = {
     '0': 'NONE',
@@ -45,23 +48,26 @@ class SMBHAMODE(enum.IntEnum):
 
 
 class SMBCmd(enum.Enum):
-    NET = '/usr/local/bin/net'
-    PDBEDIT = '/usr/local/bin/pdbedit'
-    SHARESEC = '/usr/local/bin/sharesec'
-    SMBCONTROL = '/usr/local/bin/smbcontrol'
-    SMBPASSWD = '/usr/local/bin/smbpasswd'
-    WBINFO = '/usr/local/bin/wbinfo'
+    NET = 'net'
+    PDBEDIT = 'pdbedit'
+    SHARESEC = 'sharesec'
+    SMBCONTROL = 'smbcontrol'
+    SMBPASSWD = 'smbpasswd'
+    WBINFO = 'wbinfo'
 
 
 class SMBPath(enum.Enum):
-    GLOBALCONF = '/usr/local/etc/smb4.conf'
-    SHARECONF = '/usr/local/etc/smb4_share.conf'
-    STATEDIR = '/var/db/system/samba4'
-    PRIVATEDIR = '/var/db/system/samba4/private'
-    LEGACYPRIVATE = '/root/samba/private'
-    RUNDIR = '/var/run/samba4'
-    LOCKDIR = '/var/lock'
-    LOGDIR = '/var/log/samba4'
+    GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb.conf')
+    SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb_share.conf')
+    STATEDIR = ('/var/db/system/samba4', '/var/db/system/samba4')
+    PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4')
+    LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private')
+    RUNDIR = ('/var/run/samba4', '/var/run/samba')
+    LOCKDIR = ('/var/lock', '/var/lock')
+    LOGDIR = ('/var/log/samba4', '/var/log/samba')
+
+    def platform(self):
+        return self.value[1] if IS_LINUX else self.value[0]
 
 
 class SMBModel(sa.Model):
@@ -538,7 +544,7 @@ class SMBService(SystemServiceService):
         conditions without returning the parameter's value.
         """
         try:
-            res = param.LoadParm(SMBPath.GLOBALCONF.value).get(parm, section)
+            res = param.LoadParm(SMBPath.GLOBALCONF.platform()).get(parm, section)
             return res
         except Exception as e:
             raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
