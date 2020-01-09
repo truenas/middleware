@@ -19,7 +19,6 @@ import socket
 import threading
 import time
 
-REMOTE_CLIENT = None
 logger = logging.getLogger('failover.remote')
 
 
@@ -30,6 +29,7 @@ class RemoteClient(object):
         self.connected = threading.Event()
         self.middleware = None
         self.remote_ip = None
+        self._subscribe_lock = threading.Lock()
         self._subscriptions = defaultdict(list)
         self._on_connect_callbacks = []
         self._on_disconnect_callbacks = []
@@ -61,8 +61,9 @@ class RemoteClient(object):
                 self.client = c
                 self.connected.set()
                 # Subscribe to all events on connection
-                for name in self._subscriptions:
-                    self.client.subscribe(name, partial(self._sub_callback, name))
+                with self._subscribe_lock:
+                    for name in self._subscriptions:
+                        self.client.subscribe(name, partial(self._sub_callback, name))
                 self._on_connect()
                 c._closed.wait()
         except OSError as e:
@@ -118,6 +119,8 @@ class RemoteClient(object):
     def call(self, *args, **kwargs):
         try:
             if not self.connected.wait(timeout=20):
+                if self.remote_ip is None:
+                    raise CallError('Unable to determine remote node IP')
                 raise CallError('Remote connection unavailable', errno.ECONNREFUSED)
             return self.client.call(*args, **kwargs)
         except AttributeError as e:
@@ -132,7 +135,8 @@ class RemoteClient(object):
     def subscribe(self, name, callback):
         # Only subscribe if we are already connected, otherwise simply register it
         if name not in self._subscriptions and self.is_connected():
-            self.client.subscribe(name, partial(self._sub_callback, name))
+            with self._subscribe_lock:
+                self.client.subscribe(name, partial(self._sub_callback, name))
         self._subscriptions[name].append(callback)
 
     def _sub_callback(self, name, type_, **message):
@@ -175,10 +179,9 @@ class RemoteClient(object):
             time.sleep(0.5)
 
 
-REMOTE_CLIENT = RemoteClient()
-
-
 class FailoverService(Service):
+
+    CLIENT = RemoteClient()
 
     @private
     async def remote_ip(self):
@@ -211,40 +214,40 @@ class FailoverService(Service):
         if job_return is not None:
             options['job'] = 'RETURN'
         try:
-            return REMOTE_CLIENT.call(method, *args, **options)
+            return self.CLIENT.call(method, *args, **options)
         except CallTimeout:
             raise CallError('Call timeout', errno.ETIMEDOUT)
 
     @private
     def sendfile(self, token, src, dst):
-        REMOTE_CLIENT.sendfile(token, src, dst)
+        self.CLIENT.sendfile(token, src, dst)
 
     @private
     async def ensure_remote_client(self):
-        if REMOTE_CLIENT.remote_ip is not None:
+        if self.CLIENT.remote_ip is not None:
             return
         try:
-            REMOTE_CLIENT.remote_ip = await self.middleware.call('failover.remote_ip')
-            REMOTE_CLIENT.middleware = self.middleware
-            start_daemon_thread(target=REMOTE_CLIENT.run)
+            self.CLIENT.remote_ip = await self.middleware.call('failover.remote_ip')
+            self.CLIENT.middleware = self.middleware
+            start_daemon_thread(target=self.CLIENT.run)
         except CallError:
             pass
 
     @private
     def remote_connected(self):
-        return REMOTE_CLIENT.is_connected()
+        return self.CLIENT.is_connected()
 
     @private
     def remote_subscribe(self, name, callback):
-        REMOTE_CLIENT.subscribe(name, callback)
+        self.CLIENT.subscribe(name, callback)
 
     @private
     def remote_on_connect(self, callback):
-        REMOTE_CLIENT.register_connect(callback)
+        self.CLIENT.register_connect(callback)
 
     @private
     def remote_on_disconnect(self, callback):
-        REMOTE_CLIENT.register_disconnect(callback)
+        self.CLIENT.register_disconnect(callback)
 
 
 async def setup(middleware):

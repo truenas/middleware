@@ -43,8 +43,6 @@ from middlewared.plugins.system import SystemService
 BUFSIZE = 256
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
-FAILOVER_LASTSTATUS = None
-FAILOVER_LASTDISABLEDREASONS = None
 
 logger = logging.getLogger('failover')
 
@@ -172,6 +170,8 @@ class FailoverModel(sa.Model):
 class FailoverService(ConfigService):
 
     HA_MODE = None
+    LAST_STATUS = None
+    LAST_DISABLEDREASONS = None
 
     class Config:
         datastore = 'system.failover'
@@ -514,10 +514,9 @@ class FailoverService(ConfigService):
             ERROR
             SINGLE
         """
-        global FAILOVER_LASTSTATUS
         status = await self._status(app)
-        if status != FAILOVER_LASTSTATUS:
-            FAILOVER_LASTSTATUS = status
+        if status != self.LAST_STATUS:
+            self.LAST_STATUS = status
             self.middleware.send_event('failover.status', 'CHANGED', fields={'status': status})
         return status
 
@@ -541,12 +540,9 @@ class FailoverService(ConfigService):
                 # check for carp MASTER (any) in remote?
                 return 'BACKUP'
             # Other node has no pool
-            elif not remote_imported:
+            else:
                 # check for carp MASTER (none) in remote?
                 return 'ERROR'
-            # We couldn't contact the other node
-            else:
-                return 'UNKNOWN'
         except Exception as e:
             # Anything other than ClientException is unexpected and should be logged
             if not isinstance(e, CallError):
@@ -724,10 +720,9 @@ class FailoverService(ConfigService):
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         """
-        global FAILOVER_LASTDISABLEDREASONS
         reasons = set(self._disabled_reasons(app))
-        if reasons != FAILOVER_LASTDISABLEDREASONS:
-            FAILOVER_LASTDISABLEDREASONS = reasons
+        if reasons != self.LAST_DISABLEDREASONS:
+            self.LAST_DISABLEDREASONS = reasons
             self.middleware.send_event('failover.disabled_reasons', 'CHANGED', fields={'disabled_reasons': reasons})
         return list(reasons)
 
