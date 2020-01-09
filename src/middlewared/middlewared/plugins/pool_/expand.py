@@ -1,4 +1,5 @@
 import logging
+import os
 import platform
 import shutil
 import subprocess
@@ -35,10 +36,12 @@ class PoolService(Service):
         """
         Expand pool to fit all available disk space.
         """
+        # FIXME: We have issues in ZoL where when pool is created with partition uuids, we are unable
+        #  to expand pool where all pool related options error out saying I/O error
         pool = await self.middleware.call('pool.get_instance', id)
         if IS_LINUX:
-            if options:
-                raise CallError('Options are not configurable for this platform.')
+            if options.get('passphrase'):
+                raise CallError('Passphrase should not be supplied for this platform.')
         else:
             if pool['encrypt']:
                 if not pool['is_decrypted']:
@@ -76,7 +79,15 @@ class PoolService(Service):
 
                     assert part_data['disk'] == vdev['disk']
 
-                    if not IS_LINUX:
+                    # sgdisk -d 2 -n 2:0:0 -c 2: -u 2:8d7e3eb4-a94f-4a43-b593-755ca8a6166f -t 2:BF01 /dev/sdc
+                    if IS_LINUX:
+                        await run(
+                            'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0',
+                            '-c', '2:', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
+                            '-t', f'{partition_number}:BF01', part_data['path']
+                        )
+                        await run('partprobe', os.path.join('/dev', part_data['disk']))
+                    else:
                         await run('camcontrol', 'reprobe', vdev['disk'])
                         await run('gpart', 'recover', vdev['disk'])
                         await run('gpart', 'resize', '-i', str(partition_number), vdev['disk'])
@@ -105,7 +116,7 @@ class PoolService(Service):
             if vdev['type'] != 'DISK' or vdev['status'] != 'ONLINE':
                 continue
 
-            await self.middleware.call('zfs.pool.online', pool['name'], vdev['guid'])
+            await self.middleware.call('zfs.pool.online', pool['name'], vdev['guid'], True)
 
     async def __geli_resize(self, pool, geli_resize, options):
         failed_rollback = []
