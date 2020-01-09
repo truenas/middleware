@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 # License: BSD
 # Location for tests into REST API of FreeNAS
