@@ -111,6 +111,13 @@ class FailoverService(Service):
 
     @private
     def event(self, ifname, vhid, event):
+        try:
+            return self._event(ifname, vhid, event)
+        finally:
+            self.middleware.call_sync('failover.status_refresh')
+
+    @private
+    def _event(self, ifname, vhid, event):
 
         if event == 'forcetakeover':
             forcetakeover = True
@@ -760,8 +767,14 @@ async def devd_carp_hook(middleware, data):
     if '@' not in data['subsystem']:
         return
     vhid, iface = data['subsystem'].split('@', 1)
+    middleware.send_event('failover.carp_event', 'CHANGED', fields={
+        'vhid': vhid,
+        'interface': iface,
+        'type': data['type'],
+    })
     await middleware.call('failover.event', iface, vhid, data['type'])
 
 
 def setup(middleware):
+    middleware.event_register('failover.carp_event', 'Sent when a CARP state is changed.')
     middleware.register_hook('devd.carp', devd_carp_hook)
