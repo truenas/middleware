@@ -8,6 +8,8 @@ from middlewared.utils import run
 
 from .disk_info_base import DiskInfoBase
 
+RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
+
 
 class DiskService(Service, DiskInfoBase):
 
@@ -42,7 +44,11 @@ class DiskService(Service, DiskInfoBase):
                     'id': p.get('id'),
                     'path': os.path.join('/dev', name.text),
                     'encrypted_provider': None,
+                    'partition_number': None,
                 }
+                part_no = RE_DISKPART.match(part['name'])
+                if part_no:
+                    part['partition_number'] = int(part_no.group(2)[1:])
                 if os.path.exists(f'{part["path"]}.eli'):
                     part['encrypted_provider'] = f'{part["path"]}.eli'
                 parts.append(part)

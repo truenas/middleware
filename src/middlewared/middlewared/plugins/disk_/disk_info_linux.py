@@ -30,6 +30,7 @@ class DiskService(Service, DiskInfoBase):
                 'name': f'{disk}{p["partition_number"]}',
                 'size': p['partition_size'],
                 'partition_type': p['type'],
+                'partition_number': p['partition_number'],
                 'disk': disk,
                 'id': f'{disk}{p["partition_number"]}',
                 'path': os.path.join('/dev', f'{disk}{p["partition_number"]}'),
