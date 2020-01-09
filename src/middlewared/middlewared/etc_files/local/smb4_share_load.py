@@ -3,7 +3,11 @@ import logging
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd, SMBPath
 
+import platform
+
 logger = logging.getLogger(__name__)
+
+IS_LINUX = platform.system().lower() == 'linux'
 
 
 async def reload_registry_shares(middleware):
@@ -11,7 +15,8 @@ async def reload_registry_shares(middleware):
     if drop.returncode != 0:
         middleware.logger.debug('failed to drop existing share config: %s',
                                 drop.stderr.decode())
-    load = await run([SMBCmd.NET.value, 'conf', 'import', SMBPath.SHARECONF.value], check=False)
+    load = await run([SMBCmd.NET.value, 'conf', 'import',
+                     SMBPath.SHARECONF.platform()], check=False)
     if load.returncode != 0:
         middleware.logger.debug('failed to load share config: %s',
                                 load.stderr.decode())
