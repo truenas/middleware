@@ -5,8 +5,8 @@
 #
 
 # PROVIDE: ix-autotune
-# REQUIRE: NETWORKING
-# BEFORE: LOGIN
+# REQUIRE: middlewared
+# BEFORE: NETWORKING
 
 . /etc/rc.freenas
 
