@@ -2078,7 +2078,10 @@ class InterfaceService(CRUDService):
         ignore_nics = tuple(ignore_nics)
         static_ips = {}
         if choices['static']:
-            failover_licensed = self.middleware.call_sync('failover.licensed')
+            if not self.middleware.call_sync('system.is_freenas'):
+                failover_licensed = self.middleware.call_sync('failover.licensed')
+            else:
+                failover_licensed = False
             for i in self.middleware.call_sync('interface.query'):
                 if failover_licensed:
                     for alias in i.get('failover_virtual_aliases') or []:
