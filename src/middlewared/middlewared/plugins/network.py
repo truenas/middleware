@@ -1731,9 +1731,9 @@ class InterfaceService(CRUDService):
 
             # If there are no interfaces configured we start DHCP on all
             if not interfaces:
-                fut = await self.middleware.call('interface.autoconfigure', iface, wait_dhcp)
-                if fut is not None:
-                    dhclient_aws.append(fut)
+                dhclient_aws.append(asyncio.ensure_future(
+                    self.middleware.call('interface.autoconfigure', iface, wait_dhcp)
+                ))
             else:
                 # Destroy interfaces which are not in database
 
