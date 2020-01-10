@@ -25,8 +25,9 @@ def GET(testpath, **optional):
             auth = None
         else:
             auth = authentification
+        payload = optional.get('payload') or {}
         getit = requests.get(api_url + testpath, headers=header,
-                             auth=auth)
+                             auth=auth, data=json.dumps(payload))
     return getit
 
 
