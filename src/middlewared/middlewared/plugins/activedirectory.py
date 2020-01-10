@@ -1110,7 +1110,7 @@ class ActiveDirectoryService(ConfigService):
         tmpconf = ad.copy()
         if tmpconf['certificate']:
             tmpconf['certificate'] = self.middleware.call_sync(
-                'certificate.query'
+                'certificate.query',
                 [('id', '=', ad['certificate'])],
                 {'get': True}
             )['name']
