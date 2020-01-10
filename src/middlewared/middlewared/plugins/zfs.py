@@ -1145,6 +1145,8 @@ class ScrubNotStartedAlertClass(AlertClass, OneShotAlertClass):
     title = "Scrub Failed to Start"
     text = "%s."
 
+    deleted_automatically = False
+
     async def create(self, args):
         return Alert(self.__class__, args["text"], _key=args["pool"])
 
@@ -1161,12 +1163,16 @@ class ScrubStartedAlertClass(AlertClass, SimpleOneShotAlertClass):
     title = "Scrub Started"
     text = "Scrub of pool %r started."
 
+    deleted_automatically = False
+
 
 class ScrubFinishedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.INFO
     title = "Scrub Finished"
     text = "Scrub of pool %r finished."
+
+    deleted_automatically = False
 
 
 async def devd_zfs_hook(middleware, data):
