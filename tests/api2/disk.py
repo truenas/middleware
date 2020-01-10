@@ -79,7 +79,14 @@ def test_08_update_disk_password():
         }
     )
     assert results.status_code == 200, results.text
-    assert results.json()['passwd'] == new_passwd
+    results = GET(
+        '/disk', payload={
+            'query-filters': [['identifier', '=', DISK_ID]],
+            'query-options': {'extra': {'passwords': True}},
+        }
+    )
+    assert results.status_code == 200, results.text
+    assert results.json()[0]['passwd'] == new_passwd
 
 
 def test_09_get_encrypted_disks():
