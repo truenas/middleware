@@ -225,8 +225,11 @@ class SMBService(SystemServiceService):
         conditions without returning the parameter's value.
         """
         try:
-            res = param.LoadParm(SMBPath.GLOBALCONF.platform()).get(parm, section)
-            return res
+            if section.upper() == 'GLOBAL':
+                return param.LoadParm(SMBPath.GLOBALCONF.platform()).get(parm, section)
+            else:
+                return self.middleware.call_sync('sharing.smb.reg_getparm', section, parm)
+
         except Exception as e:
             raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
 
