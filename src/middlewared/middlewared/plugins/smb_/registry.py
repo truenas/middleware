@@ -21,7 +21,15 @@ class SharingSMBService(CRUDService):
         samba's registry.tdb file.
         """
         action = kwargs.get('action')
-        if action not in ['listshares', 'showshare', 'addshare', 'delshare', 'setparm', 'delparm']:
+        if action not in [
+            'listshares',
+            'showshare',
+            'addshare',
+            'delshare',
+            'getparm',
+            'setparm',
+            'delparm'
+        ]:
             raise CallError(f'Action [{action}] is not permitted.', errno.EPERM)
 
         share = kwargs.get('share')
@@ -87,6 +95,20 @@ class SharingSMBService(CRUDService):
     @private
     async def reg_delparm(self, share, parm):
         return await self.netconf(action='delparm', share=share, args=[parm])
+
+    @private
+    async def reg_getparm(self, share, parm):
+        to_list = ['vfs objects', 'hosts allow', 'hosts deny']
+        try:
+            ret = await self.netconf(action='getparm', share=share, args=[parm])
+        except Exception as e:
+            if f"Error: given parameter '{parm}' is not set." in e.errmsg:
+                # Copy behavior of samba python binding
+                return None
+            else:
+                raise
+
+        return ret.split() if parm in to_list else ret
 
     @private
     async def get_global_params(self, globalconf):
