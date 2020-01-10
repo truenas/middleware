@@ -38,6 +38,7 @@ class PoolService(Service):
         """
         # FIXME: We have issues in ZoL where when pool is created with partition uuids, we are unable
         #  to expand pool where all pool related options error out saying I/O error
+        #  https://github.com/zfsonlinux/zfs/issues/9830
         pool = await self.middleware.call('pool.get_instance', id)
         if IS_LINUX:
             if options.get('passphrase'):
