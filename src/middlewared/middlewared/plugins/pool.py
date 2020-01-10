@@ -4450,7 +4450,7 @@ class PoolDatasetService(CRUDService):
 
         verrors.check()
         if dataset_quotas:
-            await self.update(ds, dataset_quotas)
+            await self.middleware.call('pool.dataset.update', ds, dataset_quotas)
 
         if quota_list:
             await self.middleware.call('zfs.dataset.set_quota', dataset, quota_list)
