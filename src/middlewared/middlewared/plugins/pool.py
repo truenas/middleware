@@ -3645,7 +3645,7 @@ class PoolScrubService(CRUDService):
 
             pool = await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
             if pool['status'] == 'OFFLINE':
-                if not pool['is_decrypted']:
+                if not IS_LINUX and not pool['is_decrypted']:
                     raise ScrubError(f'Pool {name} is not decrypted, skipping scrub')
                 else:
                     raise ScrubError(f'Pool {name} is offline, not running scrub')
