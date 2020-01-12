@@ -269,7 +269,7 @@ class PoolService(CRUDService):
                 "params": [1, "START"]
             }
         """
-        pool = await self._get_instance(oid)
+        pool = await self.get_instance(oid)
         return await job.wrap(
             await self.middleware.call('zfs.pool.scrub', pool['name'], action)
         )
@@ -333,7 +333,7 @@ class PoolService(CRUDService):
                 "params": [1]
             }
         """
-        name = (await self._get_instance(oid))['name']
+        name = (await self.get_instance(oid))['name']
         proc = await Popen(
             f'zpool get -H -o value version {name}',
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8', shell=True
@@ -383,7 +383,7 @@ class PoolService(CRUDService):
         # Should we check first if upgrade is required ?
         await self.middleware.call(
             'zfs.pool.upgrade',
-            (await self._get_instance(oid))['name']
+            (await self.get_instance(oid))['name']
         )
         return True
 
@@ -697,7 +697,7 @@ class PoolService(CRUDService):
 
         asyncio.ensure_future(restart_services())
 
-        pool = await self._get_instance(pool_id)
+        pool = await self.get_instance(pool_id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
@@ -732,7 +732,7 @@ class PoolService(CRUDService):
                 }]
             }
         """
-        pool = await self._get_instance(id)
+        pool = await self.get_instance(id)
 
         verrors = ValidationErrors()
 
@@ -768,7 +768,7 @@ class PoolService(CRUDService):
                     'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
                 )
 
-        pool = await self._get_instance(id)
+        pool = await self.get_instance(id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
@@ -936,7 +936,7 @@ class PoolService(CRUDService):
                 }]
             }
         """
-        pool = await self._get_instance(oid)
+        pool = await self.get_instance(oid)
 
         verrors = ValidationErrors()
         found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
@@ -989,7 +989,7 @@ class PoolService(CRUDService):
                 }]
             }
         """
-        pool = await self._get_instance(oid)
+        pool = await self.get_instance(oid)
 
         verrors = ValidationErrors()
         found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
@@ -1041,7 +1041,7 @@ class PoolService(CRUDService):
                 }]
             }
         """
-        pool = await self._get_instance(oid)
+        pool = await self.get_instance(oid)
 
         verrors = ValidationErrors()
 
@@ -1096,7 +1096,7 @@ class PoolService(CRUDService):
                 }]
             }
         """
-        pool = await self._get_instance(oid)
+        pool = await self.get_instance(oid)
 
         verrors = ValidationErrors()
 
@@ -1367,7 +1367,7 @@ class PoolService(CRUDService):
                 }]
             }
         """
-        pool = await self._get_instance(oid)
+        pool = await self.get_instance(oid)
 
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
         is_freenas = await self.middleware.call('system.is_freenas')
@@ -1496,7 +1496,7 @@ class PoolService(CRUDService):
         Responsible for telling the user whether there is a related
         share, asking for confirmation.
         """
-        pool = await self._get_instance(oid)
+        pool = await self.get_instance(oid)
         return await self.middleware.call('pool.dataset.attachments', pool['name'])
 
     @item_method
@@ -1505,7 +1505,7 @@ class PoolService(CRUDService):
         """
         Returns a list of running processes using this pool.
         """
-        pool = await self._get_instance(oid)
+        pool = await self.get_instance(oid)
         return await self.middleware.call('pool.dataset.processes', pool['name'])
 
     def __dtrace_read(self, job, proc):
@@ -1633,7 +1633,7 @@ class PoolService(CRUDService):
 
                 # Child unencrypted datasets of root dataset would be mounted if root dataset is still locked,
                 # we don't want that
-                if self.middleware.call_sync('pool.dataset._get_instance', pool['name'])['locked']:
+                if self.middleware.call_sync('pool.dataset.get_instance', pool['name'])['locked']:
                     with contextlib.suppress(CallError):
                         self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
 
@@ -1723,7 +1723,7 @@ class PoolDatasetUserPropService(CRUDService):
         """
         Create a user property for a given `id` dataset.
         """
-        dataset = await self._get_instance(data['id'])
+        dataset = await self.get_instance(data['id'])
         verrors = await self.__common_validation(dataset, data['property'], 'dataset_user_prop_create')
         verrors.check()
 
@@ -1733,7 +1733,7 @@ class PoolDatasetUserPropService(CRUDService):
             }
         )
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(
         Str('id'),
@@ -1747,7 +1747,7 @@ class PoolDatasetUserPropService(CRUDService):
         """
         Update `dataset_user_prop_update.name` user property for `id` dataset.
         """
-        dataset = await self._get_instance(id)
+        dataset = await self.get_instance(id)
         verrors = await self.__common_validation(dataset, data, 'dataset_user_prop_update', True)
         verrors.check()
 
@@ -1757,7 +1757,7 @@ class PoolDatasetUserPropService(CRUDService):
             }
         )
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(
         Str('id'),
@@ -1770,7 +1770,7 @@ class PoolDatasetUserPropService(CRUDService):
         """
         Delete user property `dataset_user_prop_delete.name` for `id` dataset.
         """
-        dataset = await self._get_instance(id)
+        dataset = await self.get_instance(id)
         verrors = await self.__common_validation(dataset, options, 'dataset_user_prop_delete', True)
         verrors.check()
 
@@ -1978,7 +1978,7 @@ class PoolDatasetService(CRUDService):
 
         Please refer to websocket documentation for downloading the file.
         """
-        self.middleware.call_sync('pool.dataset._get_instance', id)
+        self.middleware.call_sync('pool.dataset.get_instance', id)
         sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', id)
         sync_job.wait_sync()
 
@@ -2007,7 +2007,7 @@ class PoolDatasetService(CRUDService):
         """
         Locks `id` dataset. It will unmount the dataset and its children before locking.
         """
-        ds = await self._get_instance(id)
+        ds = await self.get_instance(id)
 
         if not ds['encrypted']:
             raise CallError(f'{id} is not encrypted')
@@ -2061,7 +2061,7 @@ class PoolDatasetService(CRUDService):
         `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
         """
         verrors = ValidationErrors()
-        dataset = self.middleware.call_sync('pool.dataset._get_instance', id)
+        dataset = self.middleware.call_sync('pool.dataset.get_instance', id)
         keys_supplied = {}
 
         if options['key_file']:
@@ -2266,7 +2266,7 @@ class PoolDatasetService(CRUDService):
         1) It has encrypted roots as children which are encrypted with a key
         2) If it is a root dataset where the system dataset is located
         """
-        ds = await self._get_instance(id)
+        ds = await self.get_instance(id)
         verrors = ValidationErrors()
         if not ds['encrypted']:
             verrors.add('id', 'Dataset is not encrypted')
@@ -2331,7 +2331,7 @@ class PoolDatasetService(CRUDService):
         Allows inheriting parent's encryption root discarding its current encryption settings. This
         can only be done where `id` has an encrypted parent and `id` itself is an encryption root.
         """
-        ds = await self._get_instance(id)
+        ds = await self.get_instance(id)
         if not ds['encrypted']:
             raise CallError(f'Dataset {id} is not encrypted')
         elif ds['encryption_root'] != id:
@@ -2341,11 +2341,11 @@ class PoolDatasetService(CRUDService):
         elif '/' not in id:
             raise CallError('Root datasets do not have a parent and cannot inherit encryption settings')
         else:
-            parent = await self._get_instance(id.rsplit('/', 1)[0])
+            parent = await self.get_instance(id.rsplit('/', 1)[0])
             if not parent['encrypted']:
                 raise CallError('This operation requires the parent dataset to be encrypted')
             else:
-                parent_encrypted_root = await self._get_instance(parent['encryption_root'])
+                parent_encrypted_root = await self.get_instance(parent['encryption_root'])
                 if ZFSKeyFormat(parent_encrypted_root['key_format']['value']) == ZFSKeyFormat.PASSPHRASE.value:
                     if any(
                         d['name'] == d['encryption_root']
@@ -2566,7 +2566,7 @@ class PoolDatasetService(CRUDService):
             data['casesensitivity'] = 'INSENSITIVE'
             data['aclmode'] = 'RESTRICTED'
 
-        if (await self._get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
+        if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
             verrors.add(
                 'pool_dataset_create.name',
                 f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
@@ -2591,10 +2591,10 @@ class PoolDatasetService(CRUDService):
             if not data['encryption_options']['passphrase']:
                 # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
                 # because we don't allow children to be unlocked while parent is locked
-                parent_encryption_root = (await self._get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
+                parent_encryption_root = (await self.get_instance(data['name'].rsplit('/', 1)[0]))['encryption_root']
                 if (
                     parent_encryption_root and ZFSKeyFormat(
-                        (await self._get_instance(parent_encryption_root))['key_format']['value']
+                        (await self.get_instance(parent_encryption_root))['key_format']['value']
                     ) == ZFSKeyFormat.PASSPHRASE
                 ):
                     verrors.add(
@@ -2674,7 +2674,7 @@ class PoolDatasetService(CRUDService):
         if data['type'] == 'FILESYSTEM' and data['share_type'] == 'SMB':
             await self.middleware.call('pool.dataset.permission', data['id'], {'mode': None})
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     def _add_inherit(name):
         def add(attr):
@@ -2888,7 +2888,7 @@ class PoolDatasetService(CRUDService):
             raise CallError(f'Failed to delete dataset: cannot destroy {id!r}: filesystem has children',
                             errno.ENOTEMPTY)
 
-        dataset = await self._get_instance(id)
+        dataset = await self.get_instance(id)
         path = self.__attachments_path(dataset)
         if path:
             for delegate in self.attachment_delegates:
@@ -3014,7 +3014,7 @@ class PoolDatasetService(CRUDService):
             }
 
         """
-        path = (await self._get_instance(id))['mountpoint']
+        path = (await self.get_instance(id))['mountpoint']
         user = data.get('user', None)
         group = data.get('group', None)
         uid = gid = -1
@@ -3140,7 +3140,7 @@ class PoolDatasetService(CRUDService):
 
         `obj_used_percent` - the percentage of the `obj_quota` currently used.
         """
-        dataset = (await self._get_instance(ds))['name']
+        dataset = (await self.get_instance(ds))['name']
         quota_list = await self.middleware.call(
             'zfs.dataset.get_quota', dataset, quota_type.lower()
         )
@@ -3198,7 +3198,7 @@ class PoolDatasetService(CRUDService):
         the user or group quota.
         """
         MAX_QUOTAS = 100
-        dataset = (await self._get_instance(ds))['name']
+        dataset = (await self.get_instance(ds))['name']
         verrors = ValidationErrors()
         if len(data) > MAX_QUOTAS:
             verrors.add(
@@ -3327,7 +3327,7 @@ class PoolDatasetService(CRUDService):
         ]
         """
         result = []
-        dataset = await self._get_instance(oid)
+        dataset = await self.get_instance(oid)
         path = self.__attachments_path(dataset)
         if path:
             for delegate in self.attachment_delegates:
@@ -3363,7 +3363,7 @@ class PoolDatasetService(CRUDService):
         ]
         """
         result = []
-        dataset = await self._get_instance(oid)
+        dataset = await self.get_instance(oid)
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
@@ -3578,7 +3578,7 @@ class PoolScrubService(CRUDService):
         """
         Update scrub task of `id`.
         """
-        task_data = await self._get_instance(id)
+        task_data = await self.get_instance(id)
         original_data = task_data.copy()
         task_data['original_pool_id'] = original_data['pool']
         task_data.update(data)
@@ -3606,7 +3606,7 @@ class PoolScrubService(CRUDService):
 
             await self.middleware.call('service.restart', 'cron')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):

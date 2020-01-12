@@ -1,6 +1,7 @@
 import asyncio
 from collections import defaultdict
 import errno
+import platform
 import re
 import subprocess
 try:
@@ -21,6 +22,7 @@ from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
+IS_LINUX = platform.system().lower() == 'linux'
 RE_CAMCONTROL_AAM = re.compile(r'^automatic acoustic management\s+yes', re.M)
 RE_CAMCONTROL_APM = re.compile(r'^advanced power management\s+yes', re.M)
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
@@ -258,7 +260,9 @@ class DiskService(CRUDService):
     async def get_reserved(self):
         reserved = list(await self.middleware.call('boot.get_disks'))
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
-        reserved += [i async for i in self.__get_iscsi_targets()]
+        if not IS_LINUX:
+            # FIXME: Make this freebsd specific for now
+            reserved += [i async for i in self.__get_iscsi_targets()]
         return reserved
 
     async def __get_iscsi_targets(self):

@@ -51,14 +51,14 @@ class PoolService(Service):
 
         pass_file = None
         if not IS_LINUX and disk_encryption_options.get('passphrase'):
-            pass_file = await self.middleware.call('disk.create_temp_pass_file', disk_encryption_options['passphrase'])
+            pass_file = await self.middleware.call('pool.create_temp_pass_file', disk_encryption_options['passphrase'])
             disk_encryption_options['passphrase_path'] = pass_file
 
         try:
             await asyncio_map(format_disk, disks.items(), limit=16)
         finally:
             if pass_file:
-                await self.middleware.call('disk.destroy_temp_pass_file', pass_file)
+                await self.middleware.call('pool.destroy_temp_pass_file', pass_file)
 
         await self.middleware.call('disk.sync_all')
 
