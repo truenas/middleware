@@ -1557,13 +1557,14 @@ class PoolService(CRUDService):
         job.set_progress(0, 'Beginning pools import')
 
         try:
-            proc = subprocess.Popen(
-                ['dtrace', '-qn', 'zfs-dbgmsg{printf("%s\\n", stringof(arg0))}'],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            )
+            if not IS_LINUX:
+                proc = subprocess.Popen(
+                    ['dtrace', '-qn', 'zfs-dbgmsg{printf("%s\\n", stringof(arg0))}'],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                )
 
-            start_daemon_thread(target=self.__dtrace_read, args=[job, proc])
+                start_daemon_thread(target=self.__dtrace_read, args=[job, proc])
 
             pools = self.middleware.call_sync('pool.query', [
                 ('encrypt', '<', 2),
