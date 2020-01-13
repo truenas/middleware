@@ -1,4 +1,4 @@
-from middlewared.service import (SystemServiceService, private)
+from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
 from middlewared.plugins.smb import SMBCmd
@@ -7,14 +7,11 @@ import os
 import subprocess
 
 
-class SMBService(SystemServiceService):
+class SMBService(Service):
 
     class Config:
         service = 'cifs'
         service_verb = 'restart'
-        datastore = 'services.cifs'
-        datastore_extend = 'smb.smb_extend'
-        datastore_prefix = 'cifs_srv_'
 
     @private
     async def passdb_list(self, verbose=False):
@@ -72,7 +69,7 @@ class SMBService(SystemServiceService):
         Accounts that are 'locked' in the UI will have their corresponding passdb entry
         disabled.
         """
-        if self.getparm('passdb backend', 'global') == 'ldapsam':
+        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
             return
 
         bsduser = await self.middleware.call('user.query', [

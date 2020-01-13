@@ -1,17 +1,14 @@
-from middlewared.service import (SystemServiceService, ValidationErrors, private)
+from middlewared.service import Service, ValidationErrors, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd
 
 
-class SMBService(SystemServiceService):
+class SMBService(Service):
 
     class Config:
         service = 'cifs'
         service_verb = 'restart'
-        datastore = 'services.cifs'
-        datastore_extend = 'smb.smb_extend'
-        datastore_prefix = 'cifs_srv_'
 
     @private
     async def validate_admin_groups(self, sid):
