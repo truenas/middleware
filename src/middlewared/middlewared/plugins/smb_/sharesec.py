@@ -197,7 +197,6 @@ class ShareSec(CRUDService):
         `ae_type` can be ALLOWED or DENIED.
         """
         ae_list = []
-        data['share_name']
         for entry in data['share_acl']:
             ae_list.append(await self._ae_to_string(entry))
 
