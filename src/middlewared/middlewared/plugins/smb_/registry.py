@@ -1,4 +1,4 @@
-from middlewared.service import (private, CRUDService)
+from middlewared.service import private, Service
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd
@@ -6,13 +6,10 @@ from middlewared.plugins.smb import SMBCmd
 import errno
 
 
-class SharingSMBService(CRUDService):
+class SharingSMBService(Service):
 
     class Config:
         namespace = 'sharing.smb'
-        datastore = 'sharing.cifs_share'
-        datastore_prefix = 'cifs_'
-        datastore_extend = 'sharing.smb.extend'
 
     @private
     async def netconf(self, **kwargs):
@@ -101,7 +98,7 @@ class SharingSMBService(CRUDService):
         to_list = ['vfs objects', 'hosts allow', 'hosts deny']
         try:
             ret = await self.netconf(action='getparm', share=share, args=[parm])
-        except Exception as e:
+        except CallError as e:
             if f"Error: given parameter '{parm}' is not set." in e.errmsg:
                 # Copy behavior of samba python binding
                 return None
@@ -169,7 +166,7 @@ class SharingSMBService(CRUDService):
             raise CallError('Share name must be specified.')
 
         if data is None:
-            data = await self.query([('name', '=', share)], {'get': True})
+            data = await self.middleware.call('sharing.smb.query', [('name', '=', share)], {'get': True})
 
         share_conf = await self.share_to_smbconf(data)
         reg_conf = await self._reg_showshare(share)

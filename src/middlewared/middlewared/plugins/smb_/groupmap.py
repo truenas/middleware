@@ -1,4 +1,4 @@
-from middlewared.service import (SystemServiceService, private)
+from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd
@@ -8,14 +8,11 @@ import re
 RE_NETGROUPMAP = re.compile(r"^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$")
 
 
-class SMBService(SystemServiceService):
+class SMBService(Service):
 
     class Config:
         service = 'cifs'
         service_verb = 'restart'
-        datastore = 'services.cifs'
-        datastore_extend = 'smb.smb_extend'
-        datastore_prefix = 'cifs_srv_'
 
     @private
     async def groupmap_list(self):
@@ -38,7 +35,7 @@ class SMBService(SystemServiceService):
         builtin groups must be avoided. Mapping groups with the same
         names as users should also be avoided.
         """
-        passdb_backend = await self.middleware.run_in_thread(self.getparm, 'passdb backend', 'global')
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
         if passdb_backend == 'ldapsam':
             return
 

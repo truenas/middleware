@@ -966,15 +966,6 @@ class DiskService(CRUDService):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
     @private
-    def gptid_from_part_type(self, disk, part_type):
-        geom.scan()
-        g = geom.class_by_name('PART')
-        uuid = g.xml.find(f'.//geom[name="{disk}"]//config/[type="{part_type}"]/rawuuid')
-        if uuid is None:
-            raise ValueError(f'Partition type {part_type} not found on {disk}')
-        return f'gptid/{uuid.text}'
-
-    @private
     async def label(self, dev, label):
         cp = await run('geom', 'label', 'label', label, dev, check=False)
         if cp.returncode != 0:
