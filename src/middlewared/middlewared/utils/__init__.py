@@ -392,7 +392,7 @@ class LoadPluginsMixin(object):
                     on_module_end(mod)
 
         key = lambda service: service._config.namespace
-        for name, parts in itertools.groupby(sorted(services, key=key), key=key):
+        for name, parts in itertools.groupby(sorted(set(services), key=key), key=key):
             parts = list(parts)
 
             if len(parts) == 1:
