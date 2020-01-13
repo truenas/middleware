@@ -67,11 +67,11 @@ class SharingSMBService(Service):
             await self.reg_setparm(name, k, v)
 
     @private
-    async def _reg_delshare(self, share):
+    async def reg_delshare(self, share):
         return await self.netconf(action='delshare', share=share)
 
     @private
-    async def _reg_showshare(self, share):
+    async def reg_showshare(self, share):
         ret = {}
         to_list = ['vfs objects', 'hosts allow', 'hosts deny']
         net = await self.netconf(action='showshare', share=share)
@@ -169,7 +169,7 @@ class SharingSMBService(Service):
             data = await self.middleware.call('sharing.smb.query', [('name', '=', share)], {'get': True})
 
         share_conf = await self.share_to_smbconf(data)
-        reg_conf = await self._reg_showshare(share)
+        reg_conf = await self.reg_showshare(share)
         s_keys = set(share_conf.keys())
         r_keys = set(reg_conf.keys())
         intersect = s_keys.intersection(r_keys)

@@ -467,7 +467,7 @@ class SharingSMBService(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.reg_addshare(data)
+        await self.middleware.call('sharing.smb.reg_addshare', data)
         await self.extend(data)  # We should do this in the insert call ?
 
         await self._service_change('cifs', 'reload')
@@ -523,14 +523,17 @@ class SharingSMBService(CRUDService):
             # Forcibly closes any existing SMB sessions.
             await self.close_share(oldname)
             try:
-                await self._reg_delshare(oldname)
+                await self.middleware.call('sharing.smb.reg_delshare', oldname)
             except Exception:
                 self.logger.warn('Failed to remove stale share [%]',
                                  old['name'], exc_info=True)
-            await self.reg_addshare(new)
+            await self.middleware.call('sharing.smb.reg_addshare', new)
         else:
-            diff = await self.diff_middleware_and_registry(new['name'], new)
-            await self.apply_conf_diff('REGISTRY', new['name'], diff)
+            diff = await self.middleware.call(
+                'sharing.smb.diff_middleware_and_registry', new['name'], new
+            )
+            await self.middleware.call('sharing.smb.apply_conf_diff',
+                                       'REGISTRY', new['name'], diff)
 
         await self.extend(new)  # same here ?
 
@@ -553,7 +556,8 @@ class SharingSMBService(CRUDService):
             self.logger.debug('Failed to delete share ACL for [%s].', share['name'], exc_info=True)
 
         try:
-            await self._reg_delshare(share['name'] if not share['home'] else 'home')
+            await self.middleware.call('sharing.smb.reg_delshare',
+                                       share['name'] if not share['home'] else 'homes')
         except Exception:
             self.logger.warn('Failed to remove registry entry for [%s].', share['name'], exc_info=True)
 
