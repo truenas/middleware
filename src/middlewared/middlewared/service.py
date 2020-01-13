@@ -299,6 +299,7 @@ class CompoundService(Service):
 
         self.parts = parts
 
+        methods_parts = {}
         for part in self.parts:
             for name in dir(part):
                 if name.startswith('_'):
@@ -308,7 +309,13 @@ class CompoundService(Service):
                 if not callable(meth):
                     continue
 
+                if hasattr(self, name):
+                    raise RuntimeError(
+                        f'Duplicate method name {name} for service parts {methods_parts[name]} and {part}',
+                    )
+
                 setattr(self, name, meth)
+                methods_parts[name] = part
 
     def _part_config(self, part):
         # datastore fields are related to CRUDService only, allow not repeating them for other parts
