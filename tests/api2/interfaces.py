@@ -193,3 +193,8 @@ def test_19_get_interface_has_pending_changes():
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is False, results.text
+
+
+def test_20_get_the_vlan1_interface_from_id():
+    results = GET(f'/interface/id/{interfaces_id}/')
+    assert results.status_code == 200, results.text
