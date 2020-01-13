@@ -21,7 +21,7 @@ vlan1_ip = f"192.168.0.{random.randint(10, 250)}"
 
 def test_00_store_default_routes_as_gateway_for_network_testing():
     results = GET("/network/general/summary/")
-    assert results.status_code == 200
+    assert results.status_code == 200, results.text
     gateway = results.json()['default_routes'][0]
     cfg_file = open("auto_config.py", 'a')
     cfg_file.writelines(f'gateway = "{gateway}"\n')
@@ -45,6 +45,7 @@ def test_02_get_interface_aliases_ip():
         if ip in aliases_list['address']:
             interface_ip = aliases_list['address']
     assert interface_ip == ip, results.text
+
 
 
 def test_03_get_interface_aliases_broadcast_ip():
@@ -176,10 +177,10 @@ def test_15_get_interface_has_pending_changes():
     assert results.json() is True, results.text
 
 
-def test_16_commite_interface():
+def test_16_commit_interface():
     payload = {
         "rollback": True,
-        "checkin_timeout": 10
+        "checkin_timeout": 60
     }
     results = POST('/interface/commit/', payload)
     assert results.status_code == 200, results.text
@@ -202,3 +203,8 @@ def test_19_get_interface_has_pending_changes():
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is False, results.text
+
+
+def test_20_get_the_vlan1_interface_from_id():
+    results = GET(f'/interface/id/{interfaces_id}/')
+    assert results.status_code == 200, results.text
