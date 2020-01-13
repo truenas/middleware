@@ -25,6 +25,7 @@ try:
 except ImportError:
     netif = None
 import os
+import platform
 import psutil
 import random
 import re
@@ -46,6 +47,7 @@ from lxml import etree
 logger = middlewared.logger.Logger('vm').getLogger()
 
 BUFSIZE = 65536
+IS_LINUX = platform.system().lower() == 'linux'
 LIBVIRT_URI = 'bhyve+unix:///system'
 LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
 SHUTDOWN_LOCK = asyncio.Lock()
@@ -2203,7 +2205,8 @@ async def setup(middleware):
     global ZFS_ARC_MAX_INITIAL
     if sysctl:
         ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
-    asyncio.ensure_future(kmod_load())
+    if not IS_LINUX:
+        asyncio.ensure_future(kmod_load())
     asyncio.ensure_future(middleware.call('pool.dataset.register_attachment_delegate',
                                           VMFSAttachmentDelegate(middleware)))
 
