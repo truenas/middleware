@@ -1672,6 +1672,11 @@ async def hook_pool_lock(middleware, pool=None):
         middleware.logger.warn('Failed to clear encryption key on standby node: %s', e)
 
 
+async def hook_pool_unlock(middleware, pool=None, passphrase=None):
+    if passphrase:
+        await middleware.call('failover.encryption_setkey', passphrase)
+
+
 async def hook_pool_rekey(middleware, pool=None):
     if not pool or not pool['encryptkey_path']:
         return
@@ -1753,6 +1758,7 @@ async def setup(middleware):
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
+    middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
