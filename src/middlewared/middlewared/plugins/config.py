@@ -134,7 +134,7 @@ class ConfigService(Service):
                 )
                 new_numsouth = cur.fetchone()[0]
                 cur.execute(
-                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin'"
+                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin' and app != 'vcp'"
                 )
                 new_num = cur.fetchone()[0]
                 cur.close()
@@ -148,7 +148,7 @@ class ConfigService(Service):
                 )
                 numsouth = cur.fetchone()[0]
                 cur.execute(
-                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin'"
+                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin' and app != 'vcp'"
                 )
                 num = cur.fetchone()[0]
                 cur.close()
@@ -159,9 +159,9 @@ class ConfigService(Service):
                         'Failed to upload config, version newer than the '
                         'current installed.'
                     )
-        except Exception:
+        except Exception as e:
             os.unlink(config_file_name)
-            raise CallError('The uploaded file is not valid.')
+            raise CallError(f'The uploaded file is not valid: {e}')
 
         shutil.move(config_file_name, '/data/uploaded.db')
         if bundle:
