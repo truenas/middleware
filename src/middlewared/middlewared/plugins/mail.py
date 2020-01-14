@@ -11,10 +11,10 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from lockfile import LockFile, LockTimeout
 from mako.lookup import TemplateLookup
-import markdown2
 
 import base64
 import errno
+import html
 import json
 import os
 import pickle
@@ -242,7 +242,7 @@ class MailService(ConfigService):
 
             tmpl = lookup.get_template('mail.html')
 
-            message['html'] = tmpl.render(body=markdown2.markdown(message['text']))
+            message['html'] = tmpl.render(body=html.escape(message['text']).replace('\n', '<br>\n'))
 
         return self.send_raw(job, message, config)
 
