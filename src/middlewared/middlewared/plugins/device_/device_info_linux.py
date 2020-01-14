@@ -56,10 +56,16 @@ class DeviceService(Service, DeviceInfoBase):
         disks = {}
         lshw_disks = self.retrieve_lshw_disks_data()
 
-        for block_device in filter(
-            lambda b: not b.name.startswith('sr') and b.path in lshw_disks,
-            blkid.list_block_devices()
-        ):
+        for block_device in blkid.list_block_devices():
+            if block_device.name.startswith(('sr', 'md', 'dm-', 'loop')):
+                continue
+            device_type = os.path.join('/sys/block', block_device.name, 'device/type')
+            if not os.path.exists(device_type):
+                continue
+            with open(device_type, 'r') as f:
+                if f.read().strip() != '0':
+                    continue
+
             disks[block_device.name] = self.get_disk_details(block_device, self.disk_default.copy(), lshw_disks)
         return disks
 
