@@ -26,15 +26,21 @@ class DiskService(Service, DiskInfoBase):
             return parts
 
         for p in block_device.__getstate__()['partitions_data']['partitions']:
+            if disk.startswith('nvme'):
+                # This is a hack for nvme disks, however let's please come up with a better way
+                # to link disks with their partitions
+                part_name = f'{disk}p{p["partition_number"]}'
+            else:
+                part_name = f'{disk}{p["partition_number"]}'
             part = {
-                'name': f'{disk}{p["partition_number"]}',
+                'name': part_name,
                 'size': p['partition_size'],
                 'partition_type': p['type'],
                 'partition_number': p['partition_number'],
                 'partition_uuid': p['part_uuid'],
                 'disk': disk,
-                'id': f'{disk}{p["partition_number"]}',
-                'path': os.path.join('/dev', f'{disk}{p["partition_number"]}'),
+                'id': part_name,
+                'path': os.path.join('/dev', part_name),
                 'encrypted_provider': None,
             }
             encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')

@@ -102,17 +102,22 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     def get_disk_details(self, block_device, disk, lshw_disks):
         dev_data = block_device.__getstate__()
-        subsystem = os.path.realpath(os.path.join('/sys/block', dev_data['name'], 'device/driver')).split('/')[-1]
+        disk_sys_path = os.path.join('/sys/block', block_device.name)
+        driver_name = os.path.realpath(os.path.join(disk_sys_path, 'device/driver')).split('/')[-1]
+        number = 0
+        if driver_name != 'driver':
+            number = sum(
+                (ord(letter) - ord('a') + 1) * 26 ** i
+                for i, letter in enumerate(reversed(dev_data['name'][len(driver_name):]))
+            )
+        elif dev_data['name'].startswith('nvme'):
+            number = int(dev_data['name'].rsplit('n', 1)[-1])
         disk.update({
             'name': dev_data['name'],
             'sectorsize': dev_data['io_limits']['logical_sector_size'],
-            'number': sum(
-                (ord(letter) - ord('a') + 1) * 26 ** i
-                for i, letter in enumerate(reversed(dev_data['name'][len(subsystem):]))
-            ),
-            'subsystem': subsystem,
+            'number': number,
+            'subsystem': os.path.realpath(os.path.join(disk_sys_path, 'device/subsystem')).split('/')[-1],
         })
-        disk_sys_path = os.path.join('/sys/block', block_device.name)
         type_path = os.path.join(disk_sys_path, 'queue/rotational')
         if os.path.exists(type_path):
             with open(type_path, 'r') as f:
@@ -144,6 +149,11 @@ class DeviceService(Service, DeviceInfoBase):
                 reg = RE_DISK_SERIAL.search(cp_stdout.decode().strip())
                 if reg:
                     disk['serial'] = disk['ident'] = reg.group(1)
+
+        if not disk['model'] and os.path.exists(os.path.join(disk_sys_path, 'device/model')):
+            # For nvme drives, we are unable to retrieve it via lshw
+            with open(os.path.join(disk_sys_path, 'device/model'), 'r') as f:
+                disk['model'] = disk['descr'] = f.read().strip()
 
         # We make a device ID query to get DEVICE ID VPD page of the drive if available and then use that identifier
         # as the lunid - FreeBSD does the same, however it defaults to other schemes if this is unavailable
