@@ -211,6 +211,7 @@ def main(middleware):
     poolthreshold = {}
     zpoollist = {i['name']: i for i in middleware.call_sync('zfs.pool.query')}
 
+    system_disks = middleware.call_sync('device.get_disks')
     # Generate the LUN section
     for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
                                        [['iscsi_target_extent_enabled', '=', True]]):
@@ -232,7 +233,9 @@ def main(middleware):
             if disk.disk_multipath_name:
                 path = '/dev/multipath/%s' % disk.disk_multipath_name
             else:
-                path = '/dev/%s' % middleware.call_sync('disk.identifier_to_device', disk.disk_identifier)
+                path = '/dev/%s' % middleware.call_sync(
+                    'disk.identifier_to_device', disk.disk_identifier, system_disks
+                )
         else:
             if not path.startswith('/mnt'):
                 poolname = path.split('/', 2)[1]

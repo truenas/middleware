@@ -31,7 +31,7 @@ class DiskService(Service, ServiceChangeMixin):
         # Abort if the disk is not recognized as an available disk
         if name not in disks:
             return
-        ident = await self.middleware.call('disk.device_to_identifier', name)
+        ident = await self.middleware.call('disk.device_to_identifier', name, disks)
         qs = await self.middleware.call(
             'datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['disk_expiretime']}
         )
@@ -85,7 +85,7 @@ class DiskService(Service, ServiceChangeMixin):
         ):
             original_disk = disk.copy()
 
-            name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'])
+            name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'], sys_disks)
             if not name or name in seen_disks:
                 # If we cant translate the identifier to a device, give up
                 # If name has already been seen once then we are probably
@@ -135,7 +135,7 @@ class DiskService(Service, ServiceChangeMixin):
 
         for name in sys_disks:
             if name not in seen_disks:
-                disk_identifier = await self.middleware.call('disk.device_to_identifier', name)
+                disk_identifier = await self.middleware.call('disk.device_to_identifier', name, sys_disks)
                 qs = await self.middleware.call(
                     'datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)]
                 )

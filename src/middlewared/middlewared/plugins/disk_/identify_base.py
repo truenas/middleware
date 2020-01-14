@@ -10,7 +10,7 @@ class DiskIdentifyBase(ServicePartBase):
 
     @private
     @accepts(Str('name'))
-    async def device_to_identifier(self, name):
+    async def device_to_identifier(self, name, disks=None):
         """
         Given a device `name` (e.g. da0) returns an unique identifier string
         for this device.
@@ -22,11 +22,13 @@ class DiskIdentifyBase(ServicePartBase):
           - label - label name from geom label
           - devicename - name of the device if any other could not be used/found
 
+        `disks` is value returned by `device.get_disks`. This can be passed to avoid collecting system
+        data again if the consumer already has it.
         Returns:
             str - identifier
         """
 
     @private
     @accepts(Str('identifier'))
-    def identifier_to_device(self, ident):
+    def identifier_to_device(self, ident, disks=None):
         raise NotImplementedError()
