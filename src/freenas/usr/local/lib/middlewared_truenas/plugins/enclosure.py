@@ -194,7 +194,7 @@ class EnclosureService(CRUDService):
                 if dev["path"] is None:
                     continue
 
-                label = dev["path"].replace("/dev/")
+                label = dev["path"].replace("/dev/", "")
                 seen_devs.append(label)
 
                 disk = label2disk.get(label)
@@ -218,7 +218,7 @@ class EnclosureService(CRUDService):
                         if dev["path"] is None:
                             continue
 
-                        label = dev["path"].replace("/dev/")
+                        label = dev["path"].replace("/dev/", "")
                         disk = label2disk.get(label)
 
                         if disk is None:
