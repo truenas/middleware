@@ -20,7 +20,8 @@ db_update_real()
 
 	echo "Applying database schema changes"
 
-	if [ $(echo "SELECT name FROM sqlite_master WHERE name = 'alembic_version'" | sqlite3 /data/freenas-v1.db) = "" ];
+	has_alembic=$(echo "SELECT name FROM sqlite_master WHERE name = 'alembic_version'" | sqlite3 /data/freenas-v1.db)
+	if [ "$has_alembic" = "" ];
 	then
         /usr/local/sbin/migrate93 -f /data/freenas-v1.db
         NEW_MIGRATION_APPLIED=$(echo "select count(*) from django_migrations where app = 'network' and name = '0007_globalconfiguration_gc_hostname_virtual';" | /usr/local/bin/sqlite3 /data/freenas-v1.db)
