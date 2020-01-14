@@ -1683,7 +1683,9 @@ class PoolService(CRUDService):
                 await self.middleware.call('vm.stop', vm['id'])
                 await self.middleware.call('vm.start', vm['id'])
 
-        await self.middleware.call_hook('pool.post_unlock', pool=pool)
+        await self.middleware.call_hook(
+            'pool.post_unlock', pool=pool, passphrase=options.get('passphrase'),
+        )
 
         return True
 
