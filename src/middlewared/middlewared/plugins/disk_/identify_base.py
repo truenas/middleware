@@ -1,6 +1,6 @@
 import re
 
-from middlewared.schema import accepts, Str
+from middlewared.schema import accepts, Dict, Str
 from middlewared.service import private, ServicePartBase
 
 
@@ -9,7 +9,7 @@ class DiskIdentifyBase(ServicePartBase):
     RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
     @private
-    @accepts(Str('name'))
+    @accepts(Str('name'), Dict('disks', additional_attrs=True))
     async def device_to_identifier(self, name, disks=None):
         """
         Given a device `name` (e.g. da0) returns an unique identifier string
@@ -29,6 +29,6 @@ class DiskIdentifyBase(ServicePartBase):
         """
 
     @private
-    @accepts(Str('identifier'))
+    @accepts(Str('identifier'), Dict('disks', additional_attrs=True))
     def identifier_to_device(self, ident, disks=None):
         raise NotImplementedError()
