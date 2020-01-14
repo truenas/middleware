@@ -118,7 +118,7 @@ class SharingSMBService(Service):
             'ad_enabled': globalconf.get('ad_enabled', None),
             'afp_shares': globalconf.get('afp_shares', None),
             'nfs_exports': globalconf.get('nfs_exports', None),
-            'smb_shares': globalconf.get('nfs_exports', None)
+            'smb_shares': globalconf.get('smb_shares', None)
         })
         if gl['afp_shares'] is None:
             gl['afp_shares'] = await self.middleware.call('sharing.afp.query', [['enabled', '=', True]])
@@ -222,7 +222,7 @@ class SharingSMBService(Service):
             conf["hosts allow"] = data['hostsallow']
         if data['hostsdeny']:
             conf["hosts deny"] = data['hostsdeny']
-        conf["read only"] = "no" if data['ro'] else "yes"
+        conf["read only"] = "yes" if data['ro'] else "no"
         conf["guest ok"] = "yes" if data['guestok'] else "no"
 
         if any(filter(lambda x: f"{x['path']}/" in f"{conf['path']}/" or f"{conf['path']}/" in f"{x['path']}/", gl['afp_shares'])):

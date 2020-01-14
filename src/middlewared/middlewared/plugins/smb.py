@@ -88,7 +88,6 @@ class SMBModel(sa.Model):
     cifs_srv_aio_enable = sa.Column(sa.Boolean(), default=False)
     cifs_srv_aio_rs = sa.Column(sa.Integer(), default=4096)
     cifs_srv_aio_ws = sa.Column(sa.Integer(), default=4096)
-    cifs_srv_zeroconf = sa.Column(sa.Boolean(), default=True)
     cifs_srv_bindip = sa.Column(sa.MultiSelectField(), nullable=True)
     cifs_SID = sa.Column(sa.String(120), nullable=True)
     cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
@@ -271,7 +270,6 @@ class SMBService(SystemServiceService):
         Str('admin_group', required=False, default=None, null=True),
         Str('filemask'),
         Str('dirmask'),
-        Bool('zeroconf'),
         Bool('ntlmv1_auth'),
         List('bindip', items=[IPAddr('ip')], default=[]),
         Str('smb_options', max_length=None),
@@ -294,8 +292,6 @@ class SMBService(SystemServiceService):
         `guest` attribute is specified to select the account to be used for guest access. It defaults to "nobody".
 
         `nullpw` when enabled allows the users to authorize access without a password.
-
-        `zeroconf` should be enabled if macOS Clients will be connecting to the SMB share.
 
         `hostlookup` when enabled, allows using hostnames rather then IP addresses in "hostsallow"/"hostsdeny" fields
         of SMB Shares.

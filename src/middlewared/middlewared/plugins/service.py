@@ -112,10 +112,12 @@ class ServiceService(CRUDService):
         'iscsitarget': ServiceDefinition('ctld', '/var/run/ctld.pid'),
         'lldp': ServiceDefinition('ladvd', '/var/run/ladvd.pid'),
         'mdns': ServiceDefinition('avahi-daemon', '/var/run/avahi-daemon/pid'),
+        'netbios': ServiceDefinition('nmbd', '/var/run/samba4/nmbd.pid'),
         'ups': ServiceDefinition('upsd', '/var/db/nut/upsd.pid'),
         'upsmon': ServiceDefinition('upsmon', '/var/db/nut/upsmon.pid'),
         'smartd': ServiceDefinition('smartd', 'smartd-daemon', '/var/run/smartd-daemon.pid'),
         'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
+        'wsd': ServiceDefinition('wsdd', '/var/run/samba4/wsdd.pid'),
         'openvpn_server': ServiceDefinition('openvpn', '/var/run/openvpn_server.pid'),
         'openvpn_client': ServiceDefinition('openvpn', '/var/run/openvpn_client.pid')
     }
@@ -436,6 +438,11 @@ class ServiceService(CRUDService):
         await self._start_openvpn_client(**kwargs)
 
     async def _start_mdns(self, **kwargs):
+        announce = (await self.middleware.call('network.configuration.config')
+                    )['service_announcement']
+        if not announce['mdns']:
+            return
+
         kwargs.setdefault('onetime', True)
         await self.middleware.call('etc.generate', 'mdns')
         await self._service('avahi-daemon', 'start', **kwargs)
@@ -450,6 +457,11 @@ class ServiceService(CRUDService):
         await self._start_mdns(**kwargs)
 
     async def _reload_mdns(self, **kwargs):
+        announce = (await self.middleware.call('network.configuration.config')
+                    )['service_announcement']
+        if not announce['mdns']:
+            return
+
         kwargs.setdefault('onetime', True)
         await self.middleware.call('etc.generate', 'mdns')
         await self._service('avahi-daemon', 'reload', **kwargs)
@@ -954,21 +966,30 @@ class ServiceService(CRUDService):
         await self.reload("mdns", kwargs)
 
     async def _restart_cifs(self, **kwargs):
+        announce = (await self.middleware.call('network.configuration.config')
+                    )['service_announcement']
         await self.middleware.call("etc.generate", "smb")
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("smbd", "restart", force=True, **kwargs)
         await self._service("winbindd", "restart", force=True, **kwargs)
-        await self._service("nmbd", "restart", force=True, **kwargs)
-        await self._service("wsdd", "restart", force=True, **kwargs)
+        if announce['netbios']:
+            await self._service("nmbd", "restart", force=True, **kwargs)
+        if announce['wsdd']:
+            await self._service("wsdd", "restart", force=True, **kwargs)
         await self.reload("mdns", kwargs)
 
     async def _start_cifs(self, **kwargs):
+        announce = (await self.middleware.call('network.configuration.config')
+                    )['service_announcement']
         await self.middleware.call("etc.generate", "smb")
         await self.middleware.call("etc.generate", "smb_share")
         await self._service("smbd", "start", force=True, **kwargs)
         await self._service("winbindd", "start", force=True, **kwargs)
-        await self._service("nmbd", "start", force=True, **kwargs)
-        await self._service("wsdd", "start", force=True, **kwargs)
+        if announce['netbios']:
+            await self._service("nmbd", "start", force=True, **kwargs)
+        if announce['wsdd']:
+            await self._service("wsdd", "start", force=True, **kwargs)
+
         await self.reload("mdns", kwargs)
         try:
             await self.middleware.call("smb.add_admin_group", "", True)
