@@ -713,6 +713,11 @@ class UserService(CRUDService):
                 'The ":" character is not allowed in a "Full Name".'
             )
 
+        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices', pk):
+            verrors.add(
+                f'{schema}.shell', 'Please select a valid shell.'
+            )
+
     async def __set_password(self, data):
         if 'password' not in data:
             return
