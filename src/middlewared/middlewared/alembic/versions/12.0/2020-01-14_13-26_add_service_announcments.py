@@ -21,8 +21,8 @@ def upgrade():
     with op.batch_alter_table('network_globalconfiguration', schema=None) as batch_op:
         batch_op.add_column(sa.Column('gc_service_announcement', sa.Text(), nullable=True))
 
-    op.execute("UPDATE network_globalconfiguration SET gc_service_announcement = '{"mdns": true,  "wsd": true, "netbios": false}'")
-
+    defaults = '{"mdns": true, "wsd": true, "netbios": false}'
+    op.execute(f"UPDATE network_globalconfiguration SET gc_service_announcement = \'{defaults}\'")
 
     with op.batch_alter_table('services_cifs', schema=None) as batch_op:
         batch_op.drop_column('cifs_srv_zeroconf')
