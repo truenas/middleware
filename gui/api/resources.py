@@ -1652,6 +1652,13 @@ class LegacyReplicationResourceMixin(object):
 
         task = self.__tasks[bundle.data["id"]]
 
+        target_dataset = bundle.data["repl_target_dataset"]
+        source_snapshot_path_without_pool_name = "/".join(bundle.data["repl_source_datasets"][0].split("/")[1:])
+        if target_dataset.endswith(f"/{source_snapshot_path_without_pool_name}"):
+            target_dataset = target_dataset[:-len(f"/{source_snapshot_path_without_pool_name}")]
+        else:
+            target_dataset = "INVALID_TARGET_DATASET"
+
         bundle.data = {
             "id": bundle.data["id"],
             "repl_begin": bundle.data["repl_schedule_begin"],
@@ -1673,7 +1680,7 @@ class LegacyReplicationResourceMixin(object):
             "repl_remote_port": task["ssh_credentials"]["attributes"]["port"],
             "repl_status": "Succeeded" if task["state"]["state"] == "FINISHED" else task["state"]["state"],
             "repl_userepl": bundle.data["repl_recursive"],
-            "repl_zfs": os.path.dirname(bundle.data["repl_target_dataset"]),
+            "repl_zfs": target_dataset,
         }
 
         return bundle

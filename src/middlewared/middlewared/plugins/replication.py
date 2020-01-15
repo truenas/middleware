@@ -557,10 +557,11 @@ class ReplicationService(CRUDService):
             if len(data["source_datasets"]) != 1:
                 verrors.add("source_datasets", "You can only have one source dataset for legacy replication")
 
-            if os.path.basename(data["target_dataset"]) != os.path.basename(data["source_datasets"][0]):
+            source_snapshot_path_without_pool_name = "/".join(data["source_datasets"][0].split("/")[1:])
+            if not data["target_dataset"].endswith(f"/{source_snapshot_path_without_pool_name}"):
                 verrors.add(
-                    "target_dataset",
-                    "Target dataset basename should be same as source dataset basename for Legacy transport",
+                    "target_dataset", "Target dataset should end with source dataset name without the first element "
+                                      "(without pool name) for Legacy transport",
                 )
 
             if data["retention_policy"] == "SOURCE":
