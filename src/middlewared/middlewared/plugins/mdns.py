@@ -75,6 +75,10 @@ class mDNSServiceThread(threading.Thread):
                 return True
             else:
                 return False
+
+        if self.service == 'AFPOVERTCP':
+            return any(filter_list(self.service_info, [('service', '=', 'afp'), ('state', '=', 'RUNNING')]))
+
         if self.service == 'SMB':
             if not self.middleware.call_sync('smb.config')['zeroconf']:
                 return False
@@ -312,6 +316,8 @@ class mDNSAdvertiseService(Service):
                 return ngc['hostname_virtual']
             elif failover_status == 'BACKUP':
                 return None
+            else:
+                return ngc['hostname_local']
         else:
             return ngc['hostname_local']
 
