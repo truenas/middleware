@@ -72,6 +72,7 @@ do-install:
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
+		| ${GREP} -v "/netcli.sh" \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
 		| ${AWK} '{$$1=""; sub(/^[ \t]+/, ""); print $$0}' >> ${TMPPLIST})
