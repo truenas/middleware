@@ -496,16 +496,20 @@ class UserService(CRUDService):
 
         return pk
 
-    @accepts()
-    def shell_choices(self):
+    @accepts(Int('oid', default=None))
+    def shell_choices(self, oid=None):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
+
+        If `oid` is provided, shell choices are filtered to ensure the user can access the shell choices provided.
         """
+        user = self.middleware.call_sync('user.get_instance', oid) if oid else None
         with open('/etc/shells', 'r') as f:
             shells = [x.rstrip() for x in f.readlines() if x.startswith('/')]
         return {
             shell: os.path.basename(shell)
-            for shell in shells + ['/usr/sbin/nologin']
+            for shell in (shells + ['/usr/sbin/nologin'])
+            if 'netcli' not in shell or (user and user['username'] == 'root')
         }
 
     @accepts(Dict(
