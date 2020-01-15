@@ -12,9 +12,10 @@
 
 do_autotune()
 {
-	/usr/local/bin/midclt call system.advanced.autotune sysctl
-	/usr/local/bin/midclt call system.advanced.autotune loader
-	return $?
+	local rv
+	/usr/local/bin/midclt call system.advanced.autotune sysctl > /dev/null
+	rv=$(/usr/local/bin/midclt call system.advanced.autotune loader)
+	return ${rv}
 }
 
 autotune()
@@ -32,3 +33,4 @@ autotune()
 
 name="ix-autotune"
 start_cmd='autotune'
+run_rc_command "$1"
