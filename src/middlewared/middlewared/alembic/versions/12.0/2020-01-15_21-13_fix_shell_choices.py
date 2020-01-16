@@ -5,8 +5,6 @@ Revises: 133f2d9049d2
 Create Date: 2020-01-15 21:13:01.570666+00:00
 
 """
-import json
-
 from alembic import op
 
 

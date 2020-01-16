@@ -496,14 +496,14 @@ class UserService(CRUDService):
 
         return pk
 
-    @accepts(Int('oid', default=None))
-    def shell_choices(self, oid=None):
+    @accepts(Int('user_id', default=None))
+    def shell_choices(self, user_id=None):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
 
-        If `oid` is provided, shell choices are filtered to ensure the user can access the shell choices provided.
+        If `user_id` is provided, shell choices are filtered to ensure the user can access the shell choices provided.
         """
-        user = self.middleware.call_sync('user.get_instance', oid) if oid else None
+        user = self.middleware.call_sync('user.get_instance', user_id) if user_id else None
         with open('/etc/shells', 'r') as f:
             shells = [x.rstrip() for x in f.readlines() if x.startswith('/')]
         return {
