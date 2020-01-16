@@ -1,1 +1,1 @@
-@shell etc/netcli.sh
+@shell /etc/netcli.sh

@@ -496,16 +496,20 @@ class UserService(CRUDService):
 
         return pk
 
-    @accepts()
-    def shell_choices(self):
+    @accepts(Int('user_id', default=None))
+    def shell_choices(self, user_id=None):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
+
+        If `user_id` is provided, shell choices are filtered to ensure the user can access the shell choices provided.
         """
+        user = self.middleware.call_sync('user.get_instance', user_id) if user_id else None
         with open('/etc/shells', 'r') as f:
             shells = [x.rstrip() for x in f.readlines() if x.startswith('/')]
         return {
             shell: os.path.basename(shell)
-            for shell in shells + ['/usr/sbin/nologin']
+            for shell in (shells + ['/usr/sbin/nologin'])
+            if 'netcli' not in shell or (user and user['username'] == 'root')
         }
 
     @accepts(Dict(
@@ -707,6 +711,11 @@ class UserService(CRUDService):
             verrors.add(
                 f'{schema}.full_name',
                 'The ":" character is not allowed in a "Full Name".'
+            )
+
+        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices', pk):
+            verrors.add(
+                f'{schema}.shell', 'Please select a valid shell.'
             )
 
     async def __set_password(self, data):
