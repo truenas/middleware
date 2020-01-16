@@ -797,8 +797,12 @@ class ZettareplService(Service):
     @periodic(3600)
     async def flush_state(self):
         for task_id, state in self.serializable_state.items():
-            await self.middleware.call("datastore.update", "storage.replication", task_id,
-                                       {"repl_state": ejson.dumps(state)})
+            try:
+                await self.middleware.call("datastore.update", "storage.replication", task_id,
+                                           {"repl_state": ejson.dumps(state)})
+            except Exception as e:
+                if e.__class__.__name__ != "DoesNotExist":
+                    raise
 
 
 async def pool_configuration_change(middleware, *args, **kwargs):
