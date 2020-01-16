@@ -1,7 +1,8 @@
 # $FreeBSD$
 
 PORTNAME=	freenas-migrate113
-PORTVERSION=	2019112901
+PORTVERSION=	2020000000
+PORTREVISION=	1
 CATEGORIES=	freenas
 VALID_CATEGORIES+=	freenas
 
@@ -12,7 +13,8 @@ RUN_DEPENDS=	python>0:${PORTSDIR}/lang/python
 
 USES=		python
 USE_GITHUB=	yes
-GH_TUPLE+=	freenas:freenas-migrate113:c9e5b7871f790257ee0d81c74c45ddf55f33f4ff
+GH_ACCOUNT=	freenas
+GH_TAGNAME=	651123627efc645ee3c154bb98de41aaad36aa69
 
 NO_BUILD=	yes
 
