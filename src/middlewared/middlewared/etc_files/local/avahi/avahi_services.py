@@ -73,9 +73,6 @@ class mDNSService(object):
                 return True
             else:
                 return False
-        if self.service == 'SMB':
-            if not self.middleware.call_sync('smb.config')['zeroconf']:
-                return False
 
             return any(filter_list(self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]))
 
@@ -310,6 +307,9 @@ def generate_avahi_config(middleware):
         return
 
     remove_service_configs(middleware)
+    announce = middleware.call_sync('network.configuration.config')['service_announcement']
+    if not announce['mdns']:
+        return
     mdns_configs = mDNSService(
        middleware=middleware,
        hostname=hostname,

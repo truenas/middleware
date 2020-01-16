@@ -26,6 +26,11 @@ from .interface.type_base import InterfaceType
 
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
+ANNOUNCE_SRV = {
+    'mdns': 'mdns',
+    'netbios': 'nmbd',
+    'wsd': 'wsdd'
+}
 
 
 class NetworkConfigurationModel(sa.Model):
@@ -45,6 +50,7 @@ class NetworkConfigurationModel(sa.Model):
     gc_netwait_ip = sa.Column(sa.String(300))
     gc_hosts = sa.Column(sa.Text(), default='')
     gc_domains = sa.Column(sa.Text(), default='')
+    gc_service_announcement = sa.Column(sa.JSON(type=dict), default={'mdns': True, 'wsdd': True, "netbios": False})
     gc_hostname_virtual = sa.Column(sa.String(120), nullable=True)
 
 
@@ -155,6 +161,12 @@ class NetworkConfigurationService(ConfigService):
             Str('hostname_virtual', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]+$')]),
             List('domains', items=[Str('domains')]),
+            Dict(
+                'service_announcement',
+                Bool('netbios', default=False),
+                Bool('mdns', default=True),
+                Bool('wsd', default=True),
+            ),
             IPAddr('ipv4gateway'),
             IPAddr('ipv6gateway', allow_zone_index=True),
             IPAddr('nameserver1'),
@@ -183,6 +195,12 @@ class NetworkConfigurationService(ConfigService):
 
         `netwait_enabled` is a boolean attribute which when set indicates that network services will not start at
         boot unless they are able to ping the addresses listed in `netwait_ip` list.
+
+        `service_announcement` determines the broadcast protocols that will be used to advertise the server.
+        `netbios` enables the NetBIOS name server (NBNS), which starts concurrently with the SMB service. SMB clients
+        will only perform NBNS lookups if SMB1 is enabled. NBNS may be required for legacy SMB clients.
+        `mdns` enables multicast DNS service announcements for enabled services. `wsd` enables Web Service
+        Discovery support.
         """
         config = await self.config()
         new_config = config.copy()
@@ -210,12 +228,13 @@ class NetworkConfigurationService(ConfigService):
             new_config,
             {'prefix': 'gc_'}
         )
-
+        service_announcement = new_config.pop('service_announcement')
         new_config['domains'] = new_config['domains'].split()
         new_config['netwait_ip'] = new_config['netwait_ip'].split()
 
         netwait_ip_set = set(new_config.pop('netwait_ip', []))
         old_netwait_ip_set = set(config.pop('netwait_ip', []))
+        old_service_announcement = config.pop('service_announcement')
         data_changed = netwait_ip_set != old_netwait_ip_set
 
         if not data_changed:
@@ -264,6 +283,12 @@ class NetworkConfigurationService(ConfigService):
                     'network.config',
                     'CHANGED',
                     {'data': {'httpproxy': new_config['httpproxy']}}
+                )
+
+        for srv, enabled in service_announcement.items():
+            if enabled != old_service_announcement[srv]:
+                await self.middleware.call(
+                    "service.start" if enabled else "service.stop", ANNOUNCE_SRV[srv]
                 )
 
         return await self.config()
