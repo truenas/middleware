@@ -1,7 +1,7 @@
 from middlewared.service import private, Service
 from middlewared.service_exception import CallError
 from middlewared.utils import run
-from middlewared.plugins.smb import SMBCmd
+from middlewared.plugins.smb import SMBCmd, SMBSharePreset
 
 import errno
 
@@ -130,10 +130,8 @@ class SharingSMBService(Service):
             gl['ad_enabled'] = False if (await self.middleware.call('activedirectory.get_state')) == "DISABLED" else True
 
         if gl['fruit_enabled'] is None:
-            for share in gl['smb_shares']:
-                if "fruit" in share['vfsobjects'] or share['timemachine']:
-                    gl['fruit_enabled'] = True
-                    break
+            gl['fruit_enabled'] = (await self.middleware.call('smb.config'))['aapl_extensions']
+
         return gl
 
     @private
@@ -204,18 +202,22 @@ class SharingSMBService(Service):
         return await self.apply_conf_registry(share, confdiff)
 
     @private
-    async def share_to_smbconf(self, data, globalconf=None):
+    async def share_to_smbconf(self, conf_in, globalconf=None):
+        data = conf_in.copy()
         gl = await self.get_global_params(globalconf)
         conf = {}
-        conf['path'] = data['path']
+
+        if data['home'] and gl['ad_enabled']:
+            data['path_suffix'] = '%d/%U'
+        elif data['home']:
+            data['path_suffix'] = '%U'
+
+        conf['path'] = '/'.join([data['path'], data['path_suffix']]) if data['path_suffix'] else data['path']
+        data['vfsobjects'] = []
         if data['comment']:
             conf["comment"] = data['comment']
         if not data['browsable']:
             conf["browseable"] = "no"
-        if data['guestonly']:
-            conf["guest only"] = "yes"
-        if data['showhiddenfiles']:
-            conf["hide dot files"] = "no"
         if data['abe']:
             conf["access based share enum"] = "yes"
         if data['hostsallow']:
@@ -224,16 +226,6 @@ class SharingSMBService(Service):
             conf["hosts deny"] = data['hostsdeny']
         conf["read only"] = "yes" if data['ro'] else "no"
         conf["guest ok"] = "yes" if data['guestok'] else "no"
-
-        if any(filter(lambda x: f"{x['path']}/" in f"{conf['path']}/" or f"{conf['path']}/" in f"{x['path']}/", gl['afp_shares'])):
-            self.logger.debug("SMB share [%s] is also an AFP share. "
-                              "Applying parameters for mixed-protocol share.", data['name'])
-            conf.update({
-                "fruit:locking": "netatalk",
-                "strict locking": "auto",
-                "streams_xattr:prefix": "user.",
-                "streams_xattr:store_stream_type": "no"
-            })
 
         nfs_path_list = []
         for export in gl['nfs_exports']:
@@ -247,10 +239,20 @@ class SharingSMBService(Service):
                 "level2 oplocks": "no",
                 "oplocks": "no"
             })
+            if data['durablehandle']:
+                self.logger.warn("Disabling durable handle support on SMB share [%s] "
+                                 "due to NFS export of same path.", data['name'])
+                await self.middleware.call('datastore.update', 'sharing.cifs_share',
+                                           data['id'], {'cifs_durablehandle': False})
+                data['durablehandle'] = False
 
         if gl['fruit_enabled']:
-            if "fruit" not in data['vfsobjects']:
-                data['vfsobjects'].append('fruit')
+            data['vfsobjects'].append('fruit')
+
+        if data['acl']:
+            data['vfsobjects'].append('ixnas')
+        else:
+            data['vfsobjects'].append('noacl')
 
         if data['recyclebin']:
             # crossrename is required for 'recycle' to work across sub-datasets
@@ -261,6 +263,13 @@ class SharingSMBService(Service):
         if data['shadowcopy'] or data['fsrvp']:
             data['vfsobjects'].append('shadow_copy_zfs')
 
+        if data['durablehandle']:
+            conf.update({
+                "kernel oplocks": "no",
+                "kernel share modes": "no",
+                "posix locking": "no",
+            })
+
         if data['fsrvp']:
             data['vfsobjects'].append('zfs_fsrvp')
             conf.update({
@@ -268,14 +277,48 @@ class SharingSMBService(Service):
                 "shadow:include": "fss-*",
             })
 
+        conf.update({
+            "nfs4:chown": "true",
+            "nfs4:acedup": "merge",
+            "aio write size": "0",
+            "mangled names": "illegal",
+            "ea support": "false",
+        })
+
+        if data['aapl_name_mangling']:
+            data['vfsobjects'].append('catia')
+            conf.update({
+                'fruit:encoding': 'native',
+                'mangled names': 'no'
+            })
+
+        if data['timemachine']:
+            conf["fruit:time machine"] = "yes"
+
+        if data['purpose'] == 'ENHANCED_TIMEMACHINE':
+            data['vfsobjects'].append('tmprotect')
+        elif data['purpose'] == 'WORM_DROPBOX':
+            data['vfsobjects'].append('worm')
+
         conf["vfs objects"] = await self.order_vfs_objects(data['vfsobjects'])
+
         if gl['fruit_enabled']:
             conf["fruit:metadata"] = "stream"
             conf["fruit:resource"] = "stream"
 
-        if data['timemachine']:
-            conf["fruit:time machine"] = "yes"
-            conf["fruit:volume_uuid"] = data['vuid']
+        if any(filter(lambda x: f"{x['path']}/" in f"{conf['path']}/" or f"{conf['path']}/" in f"{x['path']}/", gl['afp_shares'])):
+            self.logger.debug("SMB share [%s] is also an AFP share. "
+                              "Applying parameters for mixed-protocol share.", data['name'])
+            conf.update({
+                "fruit:locking": "netatalk",
+                "fruit:metadata": "netatalk",
+                "fruit:resource": "file",
+                "strict locking": "auto",
+                "streams_xattr:prefix": "user.",
+                "streams_xattr:store_stream_type": "no"
+            })
+
+        nfs_path_list = []
 
         if data['recyclebin']:
             conf.update({
@@ -287,18 +330,8 @@ class SharingSMBService(Service):
                 "recycle:subdir_mode": "0700"
             })
 
-        conf.update({
-            "nfs4:chown": "true",
-            "nfs4:acedup": "merge",
-            "aio write size": "0",
-            "mangled names": "illegal",
-            "ea support": "false",
-        })
-
-        if data['home'] and gl['ad_enabled']:
-            conf["path"] = f'{data["path"]}/%D/%U'
-        elif data['home']:
-            conf["path"] = f'{data["path"]}/%U'
+        if not data['auxsmbconf']:
+            data['auxsmbconf'] = (SMBSharePreset[data["purpose"]].value)["params"]["auxsmbconf"]
 
         for param in data['auxsmbconf'].splitlines():
             if not param.strip():

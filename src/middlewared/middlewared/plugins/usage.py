@@ -305,7 +305,9 @@ class UsageService(Service):
                             'guestok': s['guestok'],
                             'guestonly': s['guestonly'],
                             'abe': s['abe'],
-                            'vfsobjects': s['vfsobjects']
+                            'acl': s['acl'],
+                            'fsrvp': s['fsrvp'],
+                            'streams': s['streams'],
                         }
                     )
                 elif service == 'afp':
