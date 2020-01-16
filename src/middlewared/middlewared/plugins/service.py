@@ -974,7 +974,7 @@ class ServiceService(CRUDService):
         await self._service("winbindd", "restart", force=True, **kwargs)
         if announce['netbios']:
             await self._service("nmbd", "restart", force=True, **kwargs)
-        if announce['wsdd']:
+        if announce['wsd']:
             await self._service("wsdd", "restart", force=True, **kwargs)
         await self.reload("mdns", kwargs)
 
@@ -987,7 +987,7 @@ class ServiceService(CRUDService):
         await self._service("winbindd", "start", force=True, **kwargs)
         if announce['netbios']:
             await self._service("nmbd", "start", force=True, **kwargs)
-        if announce['wsdd']:
+        if announce['wsd']:
             await self._service("wsdd", "start", force=True, **kwargs)
 
         await self.reload("mdns", kwargs)
