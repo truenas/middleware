@@ -1096,7 +1096,7 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
-    if args['id'] == 'shutting-down':
+    if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
 
