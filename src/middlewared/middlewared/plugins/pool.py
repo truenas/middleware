@@ -44,6 +44,7 @@ from middlewared.validators import Match, Range, Time
 
 logger = logging.getLogger(__name__)
 
+ENCRYPTEDDISK_LOCK = asyncio.Lock()
 GELI_KEYPATH = '/data/geli'
 RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
@@ -1122,17 +1123,18 @@ class PoolService(CRUDService):
         return enc_disks
 
     async def __save_encrypteddisks(self, pool_id, enc_disks, disks_cache):
-        for enc_disk in enc_disks:
-            await self.middleware.call(
-                'datastore.insert',
-                'storage.encrypteddisk',
-                {
-                    'volume': pool_id,
-                    'disk': disks_cache[enc_disk['disk']]['identifier'],
-                    'provider': enc_disk['devname'],
-                },
-                {'prefix': 'encrypted_'},
-            )
+        async with ENCRYPTEDDISK_LOCK:
+            for enc_disk in enc_disks:
+                await self.middleware.call(
+                    'datastore.insert',
+                    'storage.encrypteddisk',
+                    {
+                        'volume': pool_id,
+                        'disk': disks_cache[enc_disk['disk']]['identifier'],
+                        'provider': enc_disk['devname'],
+                    },
+                    {'prefix': 'encrypted_'},
+                )
 
     @item_method
     @accepts(Int('id', required=False, default=None, null=True))
@@ -1413,11 +1415,12 @@ class PoolService(CRUDService):
         if found[1]['path'].endswith('.eli'):
             devname = found[1]['path'].replace('/dev/', '')[:-4]
             await self.middleware.call('disk.geli_detach_single', devname)
-            await self.middleware.call(
-                'datastore.delete',
-                'storage.encrypteddisk',
-                [('encrypted_volume', '=', oid), ('encrypted_provider', '=', devname)],
-            )
+            async with ENCRYPTEDDISK_LOCK:
+                await self.middleware.call(
+                    'datastore.delete',
+                    'storage.encrypteddisk',
+                    [('encrypted_volume', '=', oid), ('encrypted_provider', '=', devname)],
+                )
         return True
 
     @item_method
@@ -2630,7 +2633,7 @@ class PoolService(CRUDService):
         return rv
 
     @private
-    def sync_encrypted(self, pool=None):
+    async def sync_encrypted(self, pool=None):
         """
         This syncs the EncryptedDisk table with the current state
         of a volume
@@ -2640,45 +2643,46 @@ class PoolService(CRUDService):
         else:
             filters = []
 
-        pools = self.middleware.call_sync('pool.query', filters)
+        pools = await self.middleware.call('pool.query', filters)
         if not pools:
             return
 
         # Grab all disks at once to avoid querying every iteration
-        disks = {i['devname']: i['identifier'] for i in self.middleware.call_sync('disk.query')}
+        disks = {i['devname']: i['identifier'] for i in await self.middleware.call('disk.query')}
 
-        for pool in pools:
-            if not pool['is_decrypted'] or pool['status'] == 'OFFLINE' or pool['encrypt'] == 0:
-                continue
-
-            provs = []
-            for dev, disk in self.__get_dev_and_disk(pool['topology']):
-                if not dev.endswith(".eli"):
+        async with ENCRYPTEDDISK_LOCK:
+            for pool in pools:
+                if not pool['is_decrypted'] or pool['status'] == 'OFFLINE' or pool['encrypt'] == 0:
                     continue
-                prov = dev[:-4]
-                diskid = disks.get(disk)
-                ed = self.middleware.call_sync('datastore.query', 'storage.encrypteddisk', [
-                    ('encrypted_provider', '=', prov)
-                ])
-                if not ed:
-                    if not diskid:
-                        self.logger.warn('Could not find Disk entry for %s', disk)
-                    self.middleware.call_sync('datastore.insert', 'storage.encrypteddisk', {
-                        'encrypted_volume': pool['id'],
-                        'encrypted_provider': prov,
-                        'encrypted_disk': diskid,
-                    })
-                elif diskid and ed[0]['encrypted_disk'] != diskid:
-                    self.middleware.call_sync(
-                        'datastore.update', 'storage.encrypteddisk', ed[0]['id'],
-                        {'encrypted_disk': diskid},
-                    )
-                provs.append(prov)
 
-            # Delete devices no longer in pool from database
-            self.middleware.call_sync('datastore.delete', 'storage.encrypteddisk', [
-                ('encrypted_volume', '=', pool['id']), ('encrypted_provider', 'nin', provs)
-            ])
+                provs = []
+                for dev, disk in self.__get_dev_and_disk(pool['topology']):
+                    if not dev.endswith(".eli"):
+                        continue
+                    prov = dev[:-4]
+                    diskid = disks.get(disk)
+                    ed = await self.middleware.call('datastore.query', 'storage.encrypteddisk', [
+                        ('encrypted_provider', '=', prov)
+                    ])
+                    if not ed:
+                        if not diskid:
+                            self.logger.warn('Could not find Disk entry for %s', disk)
+                        await self.middleware.call('datastore.insert', 'storage.encrypteddisk', {
+                            'encrypted_volume': pool['id'],
+                            'encrypted_provider': prov,
+                            'encrypted_disk': diskid,
+                        })
+                    elif diskid and ed[0]['encrypted_disk'] != diskid:
+                        await self.middleware.call(
+                            'datastore.update', 'storage.encrypteddisk', ed[0]['id'],
+                            {'encrypted_disk': diskid},
+                        )
+                    provs.append(prov)
+
+                # Delete devices no longer in pool from database
+                await self.middleware.call('datastore.delete', 'storage.encrypteddisk', [
+                    ('encrypted_volume', '=', pool['id']), ('encrypted_provider', 'nin', provs)
+                ])
 
     def __dtrace_read(self, job, proc):
         while True:
