@@ -2,7 +2,6 @@ import asyncio
 import functools
 import subprocess
 
-from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args, smartctl
 from middlewared.service import accepts, Bool, Dict, CallError, List, private, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
@@ -28,7 +27,7 @@ class DiskService(Service):
                     )
                 ]
 
-                devices = await camcontrol_list()
+                devices = await self.middleware.call('device.get_storage_devices_topology')
 
                 self.smartctl_args_for_disk = dict(zip(
                     disks,
@@ -61,7 +60,7 @@ class DiskService(Service):
             if options['cache']:
                 smartctl_args = await self.middleware.call('disk.smartctl_args', disk)
             else:
-                devices = await camcontrol_list()
+                devices = await self.middleware.call('device.get_storage_devices_topology')
                 smartctl_args = await get_smartctl_args(self.middleware, devices, disk)
 
             if smartctl_args is None:

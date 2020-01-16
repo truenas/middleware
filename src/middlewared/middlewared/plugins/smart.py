@@ -4,7 +4,6 @@ from itertools import chain
 
 import asyncio
 
-from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Range
@@ -355,7 +354,7 @@ class SMARTTestService(CRUDService):
         else:
             test_disks_list = []
             disks_data = await self.middleware.call('disk.query')
-            devices = await camcontrol_list()
+            devices = await self.middleware.call('device.get_storage_devices_topology')
 
             for index, disk in enumerate(disks):
                 for d in disks_data:
@@ -523,7 +522,7 @@ class SMARTTestService(CRUDService):
             options,
         )
 
-        devices = await camcontrol_list()
+        devices = await self.middleware.call('device.get_storage_devices_topology')
         return filter_list(
             list(filter(
                 None,
