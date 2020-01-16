@@ -240,6 +240,7 @@ class AlertService(Service):
                         {
                             "id": alert_class.name,
                             "title": alert_class.title,
+                            "level": alert_class.level.name,
                         }
                         for alert_class in classes
                         if alert_class.category == alert_category
