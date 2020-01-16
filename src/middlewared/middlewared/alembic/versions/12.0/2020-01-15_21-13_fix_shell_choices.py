@@ -1,7 +1,7 @@
 """Fix user shell choices
 
-Revision ID: a7f13f81a210
-Revises: 133f2d9049d2
+Revision ID: f3875acb8d76
+Revises: 39a133a04496
 Create Date: 2020-01-15 21:13:01.570666+00:00
 
 """
@@ -9,8 +9,8 @@ from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision = 'a7f13f81a210'
-down_revision = '133f2d9049d2'
+revision = 'f3875acb8d76'
+down_revision = '39a133a04496'
 branch_labels = None
 depends_on = None
 
