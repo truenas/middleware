@@ -173,3 +173,20 @@ class DeviceService(Service, DeviceInfoBase):
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
         return disk
+
+    def get_storage_devices_topology(self):
+        disks = self.get_disks()
+        topology = {}
+        for disk in filter(lambda d: d['subsystem'] == 'scsi', disks.values()):
+            disk_path = os.path.join('/sys/block', disk['name'])
+            hctl = os.path.realpath(os.path.join(disk_path, 'device')).split('/')[-1]
+            if hctl.count(':') == 3:
+                driver = os.path.realpath(os.path.join(disk_path, 'device/driver')).split('/')[-1]
+                topology[disk['name']] = {
+                    'driver': driver if driver != 'driver' else disk['subsystem'], **{
+                        k: int(v) for k, v in zip(
+                            ('controller_id', 'channel_no', 'target', 'lun_id'), hctl.split(':')
+                        )
+                    }
+                }
+        return topology
