@@ -226,6 +226,8 @@ netif_start()
 		_interface_config > /etc/rc.conf.network
 		killall -ALRM sh
 	fi
+	echo "Generating configuration for web interface"
+	/usr/local/bin/midclt call etc.generate 'nginx' > /dev/null
 
 }
 
