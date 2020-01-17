@@ -13,10 +13,6 @@ import secrets
 import shutil
 import subprocess
 import tempfile
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
 
 from collections import defaultdict
 
@@ -43,6 +39,9 @@ RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULT
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
+
+if not IS_LINUX:
+    import sysctl
 
 
 class ZfsDeadmanAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -1298,7 +1297,8 @@ class PoolService(CRUDService):
             # Reset all mountpoints
             await self.middleware.call('zfs.dataset.inherit', pool_name, 'mountpoint', True)
 
-            await self.middleware.call('pool.sync_encrypted', pool_id)
+            if not IS_LINUX:
+                await self.middleware.call('pool.sync_encrypted', pool_id)
         except Exception:
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
@@ -1638,8 +1638,9 @@ class PoolService(CRUDService):
                         self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
 
         finally:
-            proc.kill()
-            proc.wait()
+            if not IS_LINUX:
+                proc.kill()
+                proc.wait()
 
         with contextlib.suppress(OSError):
             os.unlink(ZPOOL_KILLCACHE)
