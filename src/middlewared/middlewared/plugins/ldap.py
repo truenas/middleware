@@ -3,6 +3,7 @@ import enum
 import errno
 import fcntl
 import grp
+import ipaddress
 import ldap
 import ldap.sasl
 import os
@@ -12,6 +13,7 @@ import struct
 import sys
 
 from ldap.controls import SimplePagedResultsControl
+from urllib.parse import urlparse
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
@@ -156,13 +158,10 @@ class LDAPQuery(object):
             saved_simple_error = None
             saved_gssapi_error = None
             for server in self.hosts:
-                proto = 'ldaps' if SSL(self.ldap['ssl']) == SSL.USESSL else 'ldap'
-                port = 636 if SSL(self.ldap['ssl']) == SSL.USESSL else 389
-                uri = f"{proto}://{server}:{port}"
                 try:
-                    self._handle = ldap.initialize(uri)
+                    self._handle = ldap.initialize(server)
                 except Exception as e:
-                    self.logger.debug(f'Failed to initialize ldap connection to [{uri}]: ({e}). Moving to next server.')
+                    self.logger.debug(f'Failed to initialize ldap connection to [{server}]: ({e}). Moving to next server.')
                     continue
 
                 res = None
@@ -220,7 +219,7 @@ class LDAPQuery(object):
                     try:
                         res = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
                         if self.ad['verbose_logging']:
-                            self.logger.debug('Successfully bound to [%s] using client certificate.', uri)
+                            self.logger.debug('Successfully bound to [%s] using client certificate.', server)
                         break
                     except Exception as e:
                         saved_simple_error = e
@@ -241,7 +240,7 @@ class LDAPQuery(object):
                     res = self._handle.simple_bind_s(self.ldap['binddn'], self.ldap['bindpw'])
                     break
                 except Exception as e:
-                    self.logger.debug(f'Failed to bind to [{uri}] using [{self.ldap["binddn"]}]: {e}')
+                    self.logger.debug(f'Failed to bind to [{server}] using [{self.ldap["binddn"]}]: {e}')
                     saved_simple_error = e
                     continue
 
@@ -399,13 +398,15 @@ class LDAPService(ConfigService):
 
     @private
     async def ldap_extend(self, data):
-        data['hostname'] = data['hostname'].split(',')
+        data['hostname'] = data['hostname'].split(',') if data['hostname'] else []
         for key in ["ssl", "schema"]:
             data[key] = data[key].upper()
 
         for key in ["certificate", "kerberos_realm"]:
             if data[key] is not None:
                 data[key] = data[key]["id"]
+
+        data['uri_list'] = await self.hostnames_to_uris(data)
 
         return data
 
@@ -417,6 +418,8 @@ class LDAPService(ConfigService):
 
         if not data['bindpw']:
             data.pop('bindpw')
+
+        data.pop('uri_list')
 
         return data
 
@@ -433,6 +436,30 @@ class LDAPService(ConfigService):
         Returns list of SSL choices.
         """
         return await self.middleware.call('directoryservices.ssl_choices', 'LDAP')
+
+    @private
+    async def hostnames_to_uris(self, data):
+        ret = []
+        for h in data['hostname']:
+            proto = 'ldaps' if SSL(data['ssl']) == SSL.USESSL else 'ldap'
+            parsed = urlparse(f"{proto}://{h}")
+            try:
+                port = parsed.port
+                host = parsed.netloc if not parsed.port else parsed.netloc.rsplit(':', 1)[0]
+            except ValueError:
+                """
+                ParseResult.port will raise a ValueError if the port is not an int
+                Ignore for now. ValidationError will be raised in common_validate()
+                """
+                host, port = h.rsplit(':', 1)
+
+            if port is None:
+                port = 636 if SSL(data['ssl']) == SSL.USESSL else 389
+
+            uri = f"{proto}://{host}:{port}"
+            ret.append(uri)
+
+        return ret
 
     @private
     async def common_validate(self, new, old, verrors):
@@ -459,13 +486,22 @@ class LDAPService(ConfigService):
                 "ldap_update.hostname",
                 "The LDAP hostname parameter is required."
             )
+        for idx, uri in enumerate(new["uri_list"]):
+            parsed = urlparse(uri)
+            try:
+                port = parsed.port
+
+            except ValueError:
+                verrors.add(f"ldap_update.hostname.{idx}",
+                            f"Invalid port number: [{port}].")
 
     @private
-    async def ldap_validate(self, ldap):
-        port = 636 if SSL(ldap['ssl']) == SSL.USESSL else 389
-        for h in ldap['hostname']:
-            await self.middleware.call('ldap.port_is_listening', h, port, ldap['dns_timeout'])
-        await self.middleware.call('ldap.validate_credentials', ldap)
+    async def ldap_validate(self, data):
+        for h in data['uri_list']:
+            host, port = urlparse(h).netloc.rsplit(':', 1)
+            await self.middleware.call('ldap.port_is_listening', host, int(port), data['dns_timeout'])
+
+        await self.middleware.call('ldap.validate_credentials', data)
 
     @accepts(Dict(
         'ldap_update',
@@ -546,9 +582,9 @@ class LDAPService(ConfigService):
         old = await self.config()
         new = old.copy()
         new.update(data)
+        data['uri_list'] = await self.hostnames_to_uris(new)
         await self.common_validate(new, old, verrors)
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if old != new:
             must_reload = True
@@ -579,7 +615,12 @@ class LDAPService(ConfigService):
     def port_is_listening(self, host, port, timeout=1):
         ret = False
 
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            ipaddress.IPv6Address(host)
+            s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        except ipaddress.AddressValueError:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         if timeout:
             s.settimeout(timeout)
 
@@ -601,7 +642,7 @@ class LDAPService(ConfigService):
         if ldap is None:
             ldap = self.middleware.call_sync('ldap.config')
 
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
+        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
             ret = LDAP.validate_credentials()
 
         return ret
@@ -612,7 +653,7 @@ class LDAPService(ConfigService):
         if ldap is None:
             ldap = self.middleware.call_sync('ldap.config')
 
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
+        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
             ret = LDAP.get_samba_domains()
 
         return ret
@@ -643,7 +684,7 @@ class LDAPService(ConfigService):
         if ldap is None:
             ldap = self.middleware.call_sync('ldap.config')
 
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
+        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
             ret = LDAP.get_root_DSE()
 
         return ret
@@ -659,7 +700,7 @@ class LDAPService(ConfigService):
 
         if dn is None:
             dn = ldap['basedn']
-        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['hostname']) as LDAP:
+        with LDAPQuery(conf=ldap, logger=self.logger, hosts=ldap['uri_list']) as LDAP:
             ret = LDAP.get_dn(dn)
 
         return ret
