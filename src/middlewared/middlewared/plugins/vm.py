@@ -2074,11 +2074,13 @@ class VMDeviceService(CRUDService):
             if vm_instance:
                 if vm_instance['bootloader'] != 'UEFI':
                     verrors.add('dtype', 'VNC only works with UEFI bootloader.')
-                if any(d['dtype'] == 'VNC' and d['id'] != device.get('id') for d in vm_instance['devices']):
-                    verrors.add(
-                        'dtype',
-                        'Only one VNC device is allowed per VM'
-                    )
+                if all(not d.get('id') for d in vm_instance['devices']):
+                    # VM is being created so devices don't have an id yet. We can just count no of VNC devices
+                    # and add a validation error if it's more then one
+                    if len([d for d in vm_instance['devices'] if d['dtype'] == 'VNC']) > 1:
+                        verrors.add('dtype', 'Only one VNC device is allowed per VM')
+                elif any(d['dtype'] == 'VNC' and d['id'] != device.get('id') for d in vm_instance['devices']):
+                    verrors.add('dtype', 'Only one VNC device is allowed per VM')
             all_ports = [
                 d['attributes'].get('vnc_port')
                 for d in (await self.middleware.call('vm.device.query', [['dtype', '=', 'VNC']]))
