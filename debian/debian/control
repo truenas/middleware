@@ -8,7 +8,8 @@ Homepage: http://www.truenas.com
 
 Package: truenas
 Architecture: all
-Depends: libnginx-mod-http-uploadprogress,
+Depends: docker-ce,
+         libnginx-mod-http-uploadprogress,
          middlewared,
          net-tools,
          nginx,
