@@ -9,6 +9,7 @@ Homepage: http://www.truenas.com
 Package: truenas
 Architecture: all
 Depends: docker-ce,
+         glusterfs-server,
          libnginx-mod-http-uploadprogress,
          middlewared,
          net-tools,
