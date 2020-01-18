@@ -7,7 +7,7 @@ def migrate_to_ldaps_ad(apps, schema_editor):
         if o.ad_dns_timeout == 60:
             o.ad_dns_timeout = 10
 
-        if not o.ad_enable:
+        if o.ad_ldap_sasl_wrapping != 'seal':
             o.ad_ldap_sasl_wrapping = 'sign'
 
         o.save()
