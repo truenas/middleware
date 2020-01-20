@@ -409,7 +409,7 @@ class CryptoKeyService(Service):
             'san': [],
             'email': obj.get_subject().emailAddress,
             'DN': '',
-            'subject_name_hash': obj.subject_name_hash(),
+            'subject_name_hash': obj.subject_name_hash() if not isinstance(obj, crypto.X509Req) else None,
             'extensions': {},
         }
 
