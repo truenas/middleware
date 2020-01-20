@@ -348,6 +348,11 @@ class MailService(ConfigService):
 
         extra_headers = message.get('extra_headers') or {}
         for key, val in list(extra_headers.items()):
+            # We already have "Content-Type: multipart/mixed" and setting "Content-Type: text/plain" like some scripts
+            # do will break python e-mail module.
+            if key.lower() == "сontent-type":
+                continue
+
             if key in msg:
                 msg.replace_header(key, val)
             else:
