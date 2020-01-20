@@ -9,7 +9,7 @@ After=systemd-modules-load.service local-fs.target middlewared.service
 
 [Service]
 Type=oneshot
-ExecStart=midclt call certificate.dhparam_setup
+ExecStart=midclt call -job certificate.dhparam_setup
 ExecStart=midclt call etc.generate_all
 StandardOutput=null
 
