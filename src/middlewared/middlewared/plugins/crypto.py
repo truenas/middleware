@@ -1501,7 +1501,8 @@ class CertificateService(CRUDService):
         return '/data/dhparam.pem'
 
     @private
-    def dhparam_setup(self):
+    @job()
+    def dhparam_setup(self, job):
         dhparam_path = self.middleware.call_sync('certificate.dhparam')
         if not os.path.exists(dhparam_path) or os.stat(dhparam_path).st_size == 0:
             with open('/dev/console', 'wb') as console:
