@@ -14,9 +14,9 @@ from time import sleep, time
 
 url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
-reason = 'Skip update for internal build'
+Reason = 'Skip update for internal build'
 version = GET("/system/version/").json()
-not_internal = pytest.mark.skipif('INTERNAL' in version, reason)
+not_internal = pytest.mark.skipif('INTERNAL' in version, reason=Reason)
 
 
 @not_internal
