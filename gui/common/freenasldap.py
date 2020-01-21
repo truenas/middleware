@@ -252,6 +252,7 @@ class FreeNAS_LDAP_Directory(object):
                 "(sasl gssapi bind) trying to bind to %s:%d",
                 self.host, self.port
             )
+        self._handle.set_option(ldap.OPT_X_SASL_NOCANON, 1)
         auth_tokens = ldap.sasl.gssapi()
 
         res = self._handle.sasl_interactive_bind_s('', auth_tokens)
