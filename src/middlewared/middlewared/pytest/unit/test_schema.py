@@ -539,6 +539,27 @@ def test__cron__convert_db_format_to_schedule(data_dict, begin_end, result):
     assert data_dict == result
 
 
+@pytest.mark.parametrize("value,error", [
+    ({'hour': '0', 'minute': '0', 'begin': '09:00', 'end': '18:00'}, True),
+    ({'hour': '9', 'minute': '0', 'begin': '09:00', 'end': '18:00'}, False),
+    ({'hour': '9', 'minute': '0', 'begin': '09:10', 'end': '18:00'}, True),
+    ({'hour': '9', 'minute': '15', 'begin': '09:10', 'end': '18:00'}, False),
+])
+def test__cron__begin_end_validate(value, error):
+
+    @accepts(Cron('data', begin_end=True))
+    def cronv(self, data):
+        return data
+
+    self = Mock()
+
+    if error:
+        with pytest.raises(ValidationErrors):
+            cronv(self, value)
+    else:
+        cronv(self, value)
+
+
 @pytest.mark.parametrize("value,expected", [
     ('127.0.0.1', '127.0.0.1'),
     ('22::56', '22::56'),
