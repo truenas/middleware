@@ -238,7 +238,7 @@ class Job(object):
             'extra': None,
         }
         self.internal_data = {}
-        self.time_started = datetime.now()
+        self.time_started = datetime.utcnow()
         self.time_finished = None
         self.loop = asyncio.get_event_loop()
         self.future = None
@@ -287,7 +287,7 @@ class Job(object):
         assert self.state not in (State.SUCCESS, State.FAILED, State.ABORTED)
         self.state = State.__members__[state]
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
-            self.time_finished = datetime.now()
+            self.time_finished = datetime.utcnow()
 
     def set_progress(self, percent, description=None, extra=None):
         if percent is not None:
