@@ -61,7 +61,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         if 'error' in context['state']:
             data['state'] = context['state']['error']
         else:
-            data['state'] = context['state'].get(f'periodic_snapshot_task_{data["id"]}', {
+            data['state'] = context['state']['tasks'].get(f'periodic_snapshot_task_{data["id"]}', {
                 'state': 'PENDING',
             })
 
