@@ -3278,9 +3278,14 @@ class PoolDatasetService(CRUDService):
                 return
 
             for process in processes:
-                if process.get("service") is not None:
-                    self.logger.info('Restarting service %r that holds dataset %r', process['service'], oid)
-                    await self.middleware.call('service.restart', process['service'])
+                service = process.get('service')
+                if service is not None:
+                    if any(attachment_delegate.service == service for attachment_delegate in self.attachment_delegates):
+                        self.logger.info('Restarting service %r that holds dataset %r', service, oid)
+                        await self.middleware.call('service.restart', service)
+                    else:
+                        self.logger.info('Stopping service %r that holds dataset %r', service, oid)
+                        await self.middleware.call('service.stop', service)
                 else:
                     self.logger.info('Killing process %r (%r) that holds dataset %r', process['pid'],
                                      process['cmdline'], oid)
