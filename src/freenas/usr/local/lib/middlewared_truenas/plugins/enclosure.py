@@ -341,7 +341,11 @@ class Enclosures(object):
     def __init__(self, stat, labels):
         self.__enclosures = []
         for num, data in stat.items():
-            self.__enclosures.append(Enclosure(num=num, data=data, labels=labels))
+            enclosure = Enclosure(num=num, data=data, labels=labels)
+            if "VirtualSES" in enclosure.encname:
+                continue
+
+            self.__enclosures.append(enclosure)
 
     def __iter__(self):
         for e in list(self.__enclosures):
