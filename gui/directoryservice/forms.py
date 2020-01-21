@@ -478,7 +478,7 @@ class ActiveDirectoryForm(ModelForm):
         cdata = self.cleaned_data
         domain = cdata.get("ad_domainname")
         bindname = cdata.get("ad_bindname")
-        binddn = "%s@%s" % (bindname, domain)
+        binddn = "%s@%s" % (bindname, domain.upper())
         bindpw = cdata.get("ad_bindpw")
         site = cdata.get("ad_site")
         netbiosname = cdata.get("ad_netbiosname_a")

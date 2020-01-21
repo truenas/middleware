@@ -843,7 +843,7 @@ def add_activedirectory_conf(client, smb4_conf):
              "yes" if ad.ad_allow_trusted_doms else "no")
 
     confset2(smb4_conf, "client ldap sasl wrapping = %s",
-             ad.ad_ldap_sasl_wrapping)
+             ad.ad_ldap_sasl_wrapping if ad.ad_ldap_sasl_wrapping != 'plain' else 'sign')
 
     confset1(smb4_conf, "template shell = /bin/sh")
     cifs_homedir = "%s/%%D/%%U" % get_cifs_homedir(client)

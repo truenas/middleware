@@ -34,6 +34,7 @@ import socket
 import tempfile
 import time
 import ipaddr
+import subprocess
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
@@ -1326,11 +1327,26 @@ class FreeNAS_ActiveDirectory_Base(object):
             )
 
         best_host = FreeNAS_ActiveDirectory_Base.get_best_host(dcs)
+
+        kinit = subprocess.Popen([
+            '/usr/bin/kinit',
+            '--renewable',
+            '--password-file=STDIN',
+            binddn],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+        )
+        output = kinit.communicate(input=bindpw.encode())
+        if kinit.returncode != 0:
+            raise FreeNAS_ActiveDirectory_Exception(
+                f"Failed to kinit with user [{binddn}]: {output[1].decode().strip()}"
+            )
+
         if best_host:
             (dchost, dcport) = best_host
+            f = FLAGS_SASL_GSSAPI if ssl == 'off' else 0
             FreeNAS_LDAP(
                 host=dchost, port=dcport, binddn=binddn, bindpw=bindpw,
-                ssl=ssl, certfile=certfile
+                ssl=ssl, certfile=certfile, flags=f
             ).open()
         else:
             raise FreeNAS_ActiveDirectory_Exception(
@@ -1733,7 +1749,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.set_kpasswd_server()
 
         flags = self.flags & ~ FLAGS_SASL_GSSAPI
-        if self.keytab_principal:
+        if self.keytab_principal or self.ssl == 'off':
             flags |= FLAGS_SASL_GSSAPI
 
         self.dchandle = FreeNAS_LDAP_Directory(
