@@ -194,7 +194,7 @@ class InterfaceService(Service):
             # NAS-103577
             if netif.InterfaceFlags.UP not in iface.flags:
                 iface.up()
-            return self.middleware.call_sync('interface.dhclient_start', iface.name, wait_dhcp, wait=False)
+            return self.middleware.call_sync('interface.dhclient_start', iface.name, wait_dhcp)
 
     @private
     def unconfigure(self, iface, cloned_interfaces, parent_interfaces):
