@@ -68,8 +68,8 @@ class PeriodicSnapshotTaskService(CRUDService):
                 'schedule',
                 defaults={
                     'minute': '00',
-                    'begin': '09:00',
-                    'end': '18:00'
+                    'begin': '00:00',
+                    'end': '23:59',
                 },
                 required=True,
                 begin_end=True
