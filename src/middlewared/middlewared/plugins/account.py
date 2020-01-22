@@ -496,7 +496,7 @@ class UserService(CRUDService):
 
         return pk
 
-    @accepts(Int('user_id', default=None))
+    @accepts(Int('user_id', default=None, null=True))
     def shell_choices(self, user_id=None):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
