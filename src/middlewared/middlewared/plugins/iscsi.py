@@ -1056,7 +1056,6 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
     @accepts(Dict(
         'iscsi_initiator_create',
-        Int('tag', default=0),
         List('initiators', default=[]),
         List('auth_network', items=[IPAddr('ip', network=True)], default=[]),
         Str('comment'),
@@ -1072,15 +1071,6 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         `auth_network` is a list of IP/CIDR addresses which are allowed to use this initiator. If all networks are
         to be allowed, this field should be left empty.
         """
-        if data['tag'] == 0:
-            i = len((await self.query())) + 1
-            while True:
-                tag_result = await self.query([('tag', '=', i)])
-                if not tag_result:
-                    break
-                i += 1
-            data['tag'] = i
-
         await self.compress(data)
 
         data['id'] = await self.middleware.call(
@@ -1126,12 +1116,6 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
-
-        for i, initiator in enumerate(await self.middleware.call('iscsi.initiator.query', [], {'order_by': ['tag']})):
-            await self.middleware.call(
-                'datastore.update', self._config.datastore, initiator['id'], {'tag': i + 1},
-                {'prefix': self._config.datastore_prefix}
-            )
 
         await self._service_change('iscsitarget', 'reload')
 
@@ -1649,6 +1633,7 @@ class iSCSITargetToExtentService(CRUDService):
 class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'iscsi'
     title = 'iSCSI Extent'
+
     service = 'iscsitarget'
 
     async def query(self, path, enabled):
