@@ -1293,12 +1293,17 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         try:
             async for msg in ws:
+                if not connection.authenticated and len(msg.data) > 8192:
+                    await ws.close(message='Anonymous connection max message length is 8 kB'.encode('utf-8'))
+                    break
+
                 x = json.loads(msg.data)
                 try:
                     await connection.on_message(x)
                 except Exception as e:
                     self.logger.error('Connection closed unexpectedly', exc_info=True)
                     await ws.close(message=str(e).encode('utf-8'))
+                    break
         finally:
             await connection.on_close()
         return ws
