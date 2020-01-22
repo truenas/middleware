@@ -1040,7 +1040,6 @@ class iSCSITargetAuthorizedInitiatorModel(sa.Model):
     __tablename__ = 'services_iscsitargetauthorizedinitiator'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_target_initiator_tag = sa.Column(sa.Integer(), default=1)
     iscsi_target_initiator_initiators = sa.Column(sa.Text(), default="ALL")
     iscsi_target_initiator_auth_network = sa.Column(sa.Text(), default="ALL")
     iscsi_target_initiator_comment = sa.Column(sa.String(120))
@@ -1633,7 +1632,6 @@ class iSCSITargetToExtentService(CRUDService):
 class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'iscsi'
     title = 'iSCSI Extent'
-
     service = 'iscsitarget'
 
     async def query(self, path, enabled):
