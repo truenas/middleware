@@ -763,8 +763,7 @@ def add_ldap_section(client, sc):
         sc.merge_config(aux_sc)
 
 
-def add_activedirectory_section(client, sc):
-    activedirectory = Struct(client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True}))
+def add_activedirectory_section(client, sc, adconf):
     ad = Struct(client.call('notifier.directoryservice', 'AD'))
     use_ad_provider = False
 
@@ -828,7 +827,7 @@ def add_activedirectory_section(client, sc):
         if key not in ad_section:
             setattr(ad_section, key, d[key])
 
-    if activedirectory.ad_use_default_domain:
+    if adconf['use_default_domain']:
         ad_section.use_fully_qualified_names = 'false'
 
     try:
@@ -856,7 +855,8 @@ def add_activedirectory_section(client, sc):
     else:
         ad_section.ldap_uri = "ldap://%s" % ad.dchost
         ad_section.ldap_search_base = ad.basedn
-
+        ad_section.ldap_user_search_base = ad.basedn
+        ad_section.ldap_group_search_base = ad.basedn
         ad_section.ldap_default_bind_dn = ad.binddn
         ad_section.ldap_default_authtok_type = 'password'
         ad_section.ldap_default_authtok = ad.bindpw
@@ -915,8 +915,10 @@ def get_directoryservice_cookie(client):
 def main():
     client = Client()
     sssd_conf = None
+    ldap = client.call('datastore.query', 'directoryservice.ldap',
+                       [], {'get': True, 'prefix': 'ldap_'})
 
-    if client.call('notifier.common', 'system', 'ldap_enabled') and client.call('notifier.common', 'system', 'ldap_anonymous_bind'):
+    if ldap['enable'] and ldap['anonbind']:
         sys.exit(1)
 
     sssd_setup()
@@ -935,9 +937,12 @@ def main():
     sc.add_nss_section()
     sc.add_pam_section()
 
-    if client.call('notifier.common', 'system', 'activedirectory_enabled') and activedirectory_has_unix_extensions(client):
-        add_activedirectory_section(client, sc)
-    if client.call('notifier.common', 'system', 'ldap_enabled'):
+    ad = client.call('datastore.query', 'directoryservice.activedirectory',
+                     [], {'get': True, 'prefix': 'ad_'})
+    if ad['enable'] and ad['idmap_backend'] == 'nss':
+        add_activedirectory_section(client, sc, ad)
+
+    if ldap['enable'] and not ad['enable']:
         add_ldap_section(client, sc)
 
     sc.save(SSSD_CONFIGFILE)
