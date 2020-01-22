@@ -178,7 +178,7 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
           periodic_snapshot_tasks=["data-recursive"]),
      "periodic_snapshot_tasks"),
     # Legacy all periodic snapshot tasks
-    (dict(transport="LEGACY", source_datasets=["tank/data/work"], target_dataset="data/work", properties=False,
+    (dict(transport="LEGACY", source_datasets=["tank/data/work"], target_dataset="data/data/work", properties=False,
           ssh_credentials=True, auto=True, allow_from_scratch=True, dedup=False, large_block=False, embed=False,
           compressed=False, retries=1),
      None),
