@@ -340,6 +340,8 @@ def resolve_callback(sdRef, flags, interfaceIndex, errorCode, fullname,
 
 # Example of hostname is 'freenas', domain is 'local' regtype is '_middleware._tcp.'
 def dns_service_resolve(hostname=None, domain=None, regtype=None):
+    results.clear()
+    resolved.clear()
     resolve_sdRef = pybonjour.DNSServiceResolve(0, pybonjour.kDNSServiceInterfaceIndexAny, hostname, regtype, domain, resolve_callback)
     try:
         while not resolved:
