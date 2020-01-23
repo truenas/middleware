@@ -1101,6 +1101,7 @@ class PoolService(CRUDService):
 
         new_devname = vdev[0].replace('/dev/', '')
 
+        job.set_progress(30, 'Replacing disk')
         try:
             await self.middleware.call(
                 'zfs.pool.replace', pool['name'], options['label'], new_devname

@@ -388,6 +388,8 @@ class Job(object):
                 rv = await self.middleware.run_in_thread(self.method, *([self] + args))
         self.set_result(rv)
         self.set_state('SUCCESS')
+        if self.progress['percent'] != 100:
+            self.set_progress(100, '')
 
     async def __close_logs(self):
         if self.logs_fd:
