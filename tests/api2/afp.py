@@ -11,7 +11,8 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name
+from functions import dns_service_resolve
+from auto_config import ip, pool_name, hostname, domain
 from config import *
 
 if "BRIDGEHOST" in locals():
@@ -124,17 +125,33 @@ def test_14_checking_if_afp_is_running():
     assert results.json()[0]['state'] == "RUNNING", results.text
 
 
-def test_15_creating_a_afp_share_on_afp_path():
-    payload = {"name": AFP_NAME, "path": AFP_PATH}
+def test_15_verify_afp_mdns_service_record():
+    results = dns_service_resolve(hostname, domain, '_afpovertcp._tcp.')
+    assert results['status'] is True, str(results['results'])
+    assert results['results']['ports'] == 548, str(results['results'])
+
+
+def test_16_creating_a_afp_share_on_afp_path():
+    payload = {
+        "name": AFP_NAME,
+        "path": AFP_PATH,
+        "timemachine": True,
+    }
     results = POST("/sharing/afp/", payload)
     assert results.status_code == 200, results.text
+
+
+def test_17_verify_adisk_mdns_service_record():
+    results = dns_service_resolve(hostname, domain, '_adisk._tcp.')
+    assert results['status'] is True, str(results['results'])
+    assert results['results']['ports'] == 9, str(results['results'])
 
 
 # have to wait for the volume api
 # Mount share on OSX system and create a test file
 @mount_test_cfg
 @osx_host_cfg
-def test_16_create_mount_point_for_afp_on_osx_system():
+def test_18_create_mount_point_for_afp_on_osx_system():
     cmd = f'mkdir -p "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -142,7 +159,7 @@ def test_16_create_mount_point_for_afp_on_osx_system():
 
 @mount_test_cfg
 @osx_host_cfg
-def test_17_mount_afp_share_on_osx_system():
+def test_19_mount_afp_share_on_osx_system():
     cmd = f'mount -t afp "afp://{ip}/{AFP_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -150,7 +167,7 @@ def test_17_mount_afp_share_on_osx_system():
 
 @mount_test_cfg
 @osx_host_cfg
-def test_18_create_file_on_afp_share_via_osx_to_test_permissions():
+def test_20_create_file_on_afp_share_via_osx_to_test_permissions():
     cmd = f'touch "{MOUNTPOINT}/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -159,7 +176,7 @@ def test_18_create_file_on_afp_share_via_osx_to_test_permissions():
 # Move test file to a new location on the AFP share
 @mount_test_cfg
 @osx_host_cfg
-def test_19_moving_afp_test_file_into_a_new_directory():
+def test_21_moving_afp_test_file_into_a_new_directory():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
         f'"{MOUNTPOINT}/tmp/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -169,7 +186,7 @@ def test_19_moving_afp_test_file_into_a_new_directory():
 # Delete test file and test directory from AFP share
 @mount_test_cfg
 @osx_host_cfg
-def test_20_deleting_test_file_and_directory_from_afp_share():
+def test_22_deleting_test_file_and_directory_from_afp_share():
     cmd = f'rm -f "{MOUNTPOINT}/tmp/testfile.txt" && rmdir "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -177,7 +194,7 @@ def test_20_deleting_test_file_and_directory_from_afp_share():
 
 @mount_test_cfg
 @osx_host_cfg
-def test_21_verifying_test_file_directory_were_successfully_removed():
+def test_23_verifying_test_file_directory_were_successfully_removed():
     cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -186,27 +203,27 @@ def test_21_verifying_test_file_directory_were_successfully_removed():
 # Clean up mounted AFP share
 @mount_test_cfg
 @osx_host_cfg
-def test_22_unmount_afp_share():
+def test_24_unmount_afp_share():
     cmd = f"umount -f '{MOUNTPOINT}'"
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
 # Update test
-def test_23_updating_the_apf_service():
+def test_25_updating_the_apf_service():
     payload = {"connections_limit": 10}
     results = PUT("/afp/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_24_update_afp_share():
+def test_26_update_afp_share():
     afpid = GET(f'/sharing/afp?name={AFP_NAME}').json()[0]['id']
     payload = {"home": True, "comment": "AFP Test"}
     results = PUT(f"/sharing/afp/id/{afpid}", payload)
     assert results.status_code == 200, results.text
 
 
-def test_25_checking_to_see_if_afp_service_is_enabled():
+def test_27_checking_to_see_if_afp_service_is_enabled():
     results = GET("/service?service=afp")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
@@ -214,7 +231,7 @@ def test_25_checking_to_see_if_afp_service_is_enabled():
 # Update tests
 @mount_test_cfg
 @osx_host_cfg
-def test_26_mount_afp_share_on_osx_system():
+def test_28_mount_afp_share_on_osx_system():
     cmd = f'mount -t afp "afp://{ip}/{AFP_NAME}" "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -222,7 +239,7 @@ def test_26_mount_afp_share_on_osx_system():
 
 @mount_test_cfg
 @osx_host_cfg
-def test_27_create_file_on_afp_share_via_osx_to_test_permissions():
+def test_29_create_file_on_afp_share_via_osx_to_test_permissions():
     cmd = f'touch "{MOUNTPOINT}/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -231,7 +248,7 @@ def test_27_create_file_on_afp_share_via_osx_to_test_permissions():
 # Move test file to a new location on the AFP share
 @mount_test_cfg
 @osx_host_cfg
-def test_28_moving_afp_test_file_into_a_new_directory():
+def test_30_moving_afp_test_file_into_a_new_directory():
     cmd = f'mkdir -p "{MOUNTPOINT}/tmp" && mv "{MOUNTPOINT}/testfile.txt" ' \
         f'"{MOUNTPOINT}/tmp/testfile.txt"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
@@ -241,7 +258,7 @@ def test_28_moving_afp_test_file_into_a_new_directory():
 # Delete test file and test directory from AFP share
 @mount_test_cfg
 @osx_host_cfg
-def test_29_deleting_test_file_and_directory_from_afp_share():
+def test_31_deleting_test_file_and_directory_from_afp_share():
     cmd = f'rm -f "{MOUNTPOINT}/tmp/testfile.txt" && rmdir "{MOUNTPOINT}/tmp"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -249,7 +266,7 @@ def test_29_deleting_test_file_and_directory_from_afp_share():
 
 @mount_test_cfg
 @osx_host_cfg
-def test_30_verifying_test_file_directory_were_successfully_removed():
+def test_32_verifying_test_file_directory_were_successfully_removed():
     cmd = f'find -- "{MOUNTPOINT}/" -prune -type d -empty | grep -q .'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -258,7 +275,7 @@ def test_30_verifying_test_file_directory_were_successfully_removed():
 # Clean up mounted AFP share
 @mount_test_cfg
 @osx_host_cfg
-def test_31_unmount_afp_share():
+def test_33_unmount_afp_share():
     cmd = f'umount -f "{MOUNTPOINT}"'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
@@ -267,41 +284,41 @@ def test_31_unmount_afp_share():
 # Delete tests
 @mount_test_cfg
 @osx_host_cfg
-def test_32_removing_SMB_mountpoint():
+def test_34_removing_SMB_mountpoint():
     cmd = f'test -d "{MOUNTPOINT}" && rmdir "{MOUNTPOINT}" || exit 0'
     results = SSH_TEST(cmd, OSX_USERNAME, OSX_PASSWORD, OSX_HOST)
     assert results['result'] is True, results['output']
 
 
-def test_33_delete_afp_share():
+def test_35_delete_afp_share():
     afpid = GET(f'/sharing/afp?name={AFP_NAME}').json()[0]['id']
     results = DELETE(f"/sharing/afp/id/{afpid}")
     assert results.status_code == 200, results.text
 
 
-def test_34_stopping_afp_service():
+def test_36_stopping_afp_service():
     payload = {"service": "afp", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
 
 
-def test_35_checking_if_afp_is_stop():
+def test_37_checking_if_afp_is_stop():
     results = GET("/service?service=afp")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 # Test disable AFP
-def test_36_disable_afp_service_at_boot():
+def test_38_disable_afp_service_at_boot():
     results = PUT("/service/id/afp/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_37_checking_afp_disable_at_boot():
+def test_39_checking_afp_disable_at_boot():
     results = GET("/service?service=afp")
     assert results.json()[0]['enable'] is False, results.text
 
 
-def test_38_destroying_afp_dataset():
+def test_40_destroying_afp_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
