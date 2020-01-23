@@ -646,7 +646,8 @@ class UpdateService(Service):
                     job.set_progress(30, 'Extracting uploaded file')
                     ExtractFrozenUpdate(destfile, dest_extracted, verbose=True)
                     job.set_progress(50, 'Applying update')
-                    ApplyUpdate(dest_extracted)
+                    if ApplyUpdate(dest_extracted) is None:
+                        raise ValueError('Uploaded file is not a manual update file')
                 except Exception as e:
                     raise CallError(str(e))
 
