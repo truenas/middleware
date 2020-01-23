@@ -22,6 +22,7 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
 from middlewared.plugins.directoryservices import DSStatus, SSL
+from middlewared.plugins.idmap import dstype
 import middlewared.utils.osc as osc
 try:
     from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
@@ -892,8 +893,11 @@ class ActiveDirectoryService(ConfigService):
         stop = False
 
         if old['idmap_backend'] != new['idmap_backend'].upper():
-            idmap = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', 'DS_TYPE_ACTIVEDIRECTORY')])
-            await self.middleware.call('idmap.domaintobackend.update', idmap[0]['id'], {'idmap_backend': new['idmap_backend'].upper()})
+            idmap = await self.middleware.call('idmap.query', [('id', '=', dstype.DS_TYPE_ACTIVEDIRECTORY.value)], {})
+            idmap_id = idmap.pop('id')
+            if not idmap['range_low']:
+                idmap['range_low'], idmap['range_high'] = await self.middleware.call('idmap.get_next_idmap_range')
+            await self.middleware.call('idmap.update', idmap_id, idmap)
 
         if not old['enable']:
             if new['enable']:
@@ -1032,8 +1036,6 @@ class ActiveDirectoryService(ConfigService):
                     ad = await self.config()
 
             ret = neterr.JOINED
-
-            await self.middleware.call('idmap.get_or_create_idmap_by_domain', 'DS_TYPE_ACTIVEDIRECTORY')
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.middleware.call('activedirectory.set_ntp_servers')
 
@@ -1560,21 +1562,21 @@ class ActiveDirectoryService(ConfigService):
         local_users.update({x['uid']: x for x in self.middleware.call_sync('user.query')})
         local_users.update({x['gid']: x for x in self.middleware.call_sync('group.query')})
         cache_data = {'users': {}, 'groups': {}}
-        configured_domains = self.middleware.call_sync('idmap.get_configured_idmap_domains')
+        configured_domains = self.middleware.call_sync('idmap.query')
         user_next_index = group_next_index = 300000000
         for d in configured_domains:
-            if d['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
+            if d['name'] == 'DS_TYPE_ACTIVEDIRECTORY':
                 known_domains.append({
                     'domain': smb['workgroup'],
-                    'low_id': d['backend_data']['range_low'],
-                    'high_id': d['backend_data']['range_high'],
+                    'low_id': d['range_low'],
+                    'high_id': d['range_high'],
                     'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
                 })
-            elif d['domain']['idmap_domain_name'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
+            elif d['domain'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
                 known_domains.append({
-                    'domain': d['domain']['idmap_domain_name'],
-                    'low_id': d['backend_data']['range_low'],
-                    'high_id': d['backend_data']['range_high'],
+                    'domain': d['name'],
+                    'low_id': d['range_low'],
+                    'high_id': d['range_high'],
                     'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
                 })
 
