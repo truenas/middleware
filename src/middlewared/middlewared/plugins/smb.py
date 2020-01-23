@@ -68,6 +68,76 @@ class SMBPath(enum.Enum):
         return self.value[1] if IS_LINUX else self.value[0]
 
 
+class SMBSharePreset(enum.Enum):
+    NO_PRESET = {"verbose_name": "No presets", "params": {
+        'auxsmbconf': '',
+    }}
+    DEFAULT_SHARE = {"verbose_name": "Default share parameters", "params": {
+        'path_suffix': '',
+        'home': False,
+        'ro': False,
+        'browsable': True,
+        'timemachine': False,
+        'recyclebin': False,
+        'abe': False,
+        'hostsallow': [],
+        'hostsdeny': [],
+        'aapl_name_mangling': False,
+        'acl': True,
+        'durablehandle': True,
+        'shadowcopy': True,
+        'streams': True,
+        'fsrvp': False,
+        'auxsmbconf': '',
+    }}
+    ENHANCED_TIMEMACHINE = {"verbose_name": "Multi-user time machine", "params": {
+        'path_suffix': '%U',
+        'auxsmbconf': '\n'.join([
+            'tmprotect:auto_rollback=powerloss',
+            'ixnas:zfs_auto_homedir=true',
+            'ixnas:default_user_quota=1T',
+        ])
+    }}
+    MULTI_PROTOCOL_AFP = {"verbose_name": "Multi-protocol (AFP/SMB) shares", "params": {
+        'acl': True,
+        'aapl_name_mangling': True,
+        'streams': True,
+        'durablehandle': False,
+        'auxsmbconf': '\n'.join([
+            'fruit:locking = netatalk',
+            'fruit:metadata = netatalk',
+            'fruit:resource = file',
+            'streams_xattr:prefix = user.',
+            'streams_xattr:store_stream_type = no',
+            'oplocks = no',
+            'level 2 oplocks = no',
+            'strict locking = auto',
+        ])
+    }}
+    MULTI_PROTOCOL_NFS = {"verbose_name": "Multi-protocol (NFSv3/SMB) shares", "params": {
+        'acl': False,
+        'streams': False,
+        'durablehandle': False,
+        'auxsmbconf': '\n'.join([
+            'oplocks = no',
+            'level 2 oplocks = no',
+            'strict locking = yes',
+        ])
+    }}
+    PRIVATE_DATASETS = {"verbose_name": "Private SMB Datasets and Shares", "params": {
+        'path_suffix': '%U',
+        'auxsmbconf': '\n'.join([
+            'ixnas:zfs_auto_homedir=true'
+        ])
+    }}
+    WORM_DROPBOX = {"verbose_name": "Files become readonly of SMB after 5 minutes", "params": {
+        'path_suffix': '',
+        'auxsmbconf': '\n'.join([
+            'worm:grace_period = 300',
+        ])
+    }}
+
+
 class SMBModel(sa.Model):
     __tablename__ = 'services_cifs'
 
@@ -80,14 +150,12 @@ class SMBModel(sa.Model):
     cifs_srv_unixcharset = sa.Column(sa.String(120), default="UTF-8")
     cifs_srv_loglevel = sa.Column(sa.String(120), default="0")
     cifs_srv_syslog = sa.Column(sa.Boolean(), default=False)
+    cifs_srv_aapl_extensions = sa.Column(sa.Boolean(), default=False)
     cifs_srv_localmaster = sa.Column(sa.Boolean(), default=False)
     cifs_srv_guest = sa.Column(sa.String(120), default="nobody")
     cifs_srv_filemask = sa.Column(sa.String(120))
     cifs_srv_dirmask = sa.Column(sa.String(120))
     cifs_srv_smb_options = sa.Column(sa.Text())
-    cifs_srv_aio_enable = sa.Column(sa.Boolean(), default=False)
-    cifs_srv_aio_rs = sa.Column(sa.Integer(), default=4096)
-    cifs_srv_aio_ws = sa.Column(sa.Integer(), default=4096)
     cifs_srv_bindip = sa.Column(sa.MultiSelectField(), nullable=True)
     cifs_SID = sa.Column(sa.String(120), nullable=True)
     cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
@@ -110,9 +178,6 @@ class SMBService(SystemServiceService):
         smb['netbiosname_local'] = smb['netbiosname']
         if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.node') == 'B':
             smb['netbiosname_local'] = smb['netbiosname_b']
-
-        for i in ('aio_enable', 'aio_rs', 'aio_ws'):
-            smb.pop(i, None)
 
         smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
 
@@ -265,6 +330,7 @@ class SMBService(SystemServiceService):
         Str('unixcharset'),
         Str('loglevel', enum=['NONE', 'MINIMUM', 'NORMAL', 'FULL', 'DEBUG']),
         Bool('syslog'),
+        Bool('aapl_extensions'),
         Bool('localmaster'),
         Str('guest'),
         Str('admin_group', required=False, default=None, null=True),
@@ -368,21 +434,24 @@ class SharingSMBModel(sa.Model):
     __tablename__ = 'sharing_cifs_share'
 
     id = sa.Column(sa.Integer(), primary_key=True)
+    cifs_purpose = sa.Column(sa.String(120))
     cifs_path = sa.Column(sa.String(255), nullable=True)
+    cifs_path_suffix = sa.Column(sa.String(255), nullable=True)
     cifs_home = sa.Column(sa.Boolean(), default=False)
     cifs_name = sa.Column(sa.String(120))
     cifs_comment = sa.Column(sa.String(120))
     cifs_ro = sa.Column(sa.Boolean(), default=False)
     cifs_browsable = sa.Column(sa.Boolean(), default=True)
     cifs_recyclebin = sa.Column(sa.Boolean(), default=False)
-    cifs_showhiddenfiles = sa.Column(sa.Boolean(), default=False)
     cifs_guestok = sa.Column(sa.Boolean(), default=False)
-    cifs_guestonly = sa.Column(sa.Boolean(), default=False)
     cifs_hostsallow = sa.Column(sa.Text())
     cifs_hostsdeny = sa.Column(sa.Text())
-    cifs_vfsobjects = sa.Column(sa.MultiSelectField(), default=['ixnas', 'streams_xattr'])
     cifs_auxsmbconf = sa.Column(sa.Text())
+    cifs_aapl_name_mangling = sa.Column(sa.Boolean())
     cifs_abe = sa.Column(sa.Boolean())
+    cifs_acl = sa.Column(sa.Boolean())
+    cifs_durablehandle = sa.Column(sa.Boolean())
+    cifs_streams = sa.Column(sa.Boolean())
     cifs_timemachine = sa.Column(sa.Boolean(), default=False)
     cifs_vuid = sa.Column(sa.String(36))
     cifs_shadowcopy = sa.Column(sa.Boolean())
@@ -400,7 +469,9 @@ class SharingSMBService(CRUDService):
 
     @accepts(Dict(
         'sharingsmb_create',
+        Str('purpose', enum=[x.name for x in SMBSharePreset], default="DEFAULT"),
         Str('path', required=True),
+        Str('path_suffix', default=''),
         Bool('home', default=False),
         Str('name', max_length=80),
         Str('comment', default=''),
@@ -408,14 +479,15 @@ class SharingSMBService(CRUDService):
         Bool('browsable', default=True),
         Bool('timemachine', default=False),
         Bool('recyclebin', default=False),
-        Bool('showhiddenfiles', default=False),
         Bool('guestok', default=False),
-        Bool('guestonly', default=False),
         Bool('abe', default=False),
         List('hostsallow', default=[]),
         List('hostsdeny', default=[]),
-        List('vfsobjects', default=['ixnas', 'streams_xattr']),
+        Bool('aapl_name_mangling', default=False),
+        Bool('acl', default=True),
+        Bool('durablehandle', default=True),
         Bool('shadowcopy', default=True),
+        Bool('streams', default=True),
         Bool('fsrvp', default=False),
         Str('auxsmbconf', max_length=None, default=''),
         Bool('enabled', default=True),
@@ -424,6 +496,8 @@ class SharingSMBService(CRUDService):
     async def do_create(self, data):
         """
         Create a SMB Share.
+
+        `purpose` applies common configuration presets depending on intended purpose.
 
         `timemachine` when set, enables Time Machine backups for this share.
 
@@ -437,7 +511,14 @@ class SharingSMBService(CRUDService):
         of hostnames are to be only allowed access, `hostsdeny` can be passed "ALL" which means that it will deny
         access to ALL hostnames except for the ones which have been listed in `hostsallow`.
 
-        `vfsobjects` is a list of keywords which aim to provide virtual file system modules to enhance functionality.
+        `acl` enables support for storing the SMB Security Descriptor as a Filesystem ACL.
+
+        `streams` enables support for storing alternate datastreams as filesystem extended attributes.
+
+        `fsrvp` enables support for the filesystem remote VSS protocol. This allows clients to create
+        ZFS snapshots through RPC.
+
+        `shadowcopy` enables support for the volume shadow copy service.
 
         `auxsmbconf` is a string of additional smb4.conf parameters not covered by the system's API.
         """
@@ -456,6 +537,7 @@ class SharingSMBService(CRUDService):
             except OSError as e:
                 raise CallError(f'Failed to create {path}: {e}')
 
+        await self.apply_presets(data)
         await self.compress(data)
         vuid = await self.generate_vuid(data['timemachine'])
         data.update({'vuid': vuid})
@@ -466,7 +548,12 @@ class SharingSMBService(CRUDService):
         await self.middleware.call('sharing.smb.reg_addshare', data)
         await self.extend(data)  # We should do this in the insert call ?
 
-        await self._service_change('cifs', 'reload')
+        enable_aapl = await self.check_aapl(data)
+
+        if enable_aapl:
+            await self._service_change('cifs', 'restart')
+        else:
+            await self._service_change('cifs', 'reload')
 
         return data
 
@@ -493,6 +580,7 @@ class SharingSMBService(CRUDService):
 
         new = old.copy()
         new.update(data)
+
         oldname = 'homes' if old['home'] else old['name']
         newname = 'homes' if new['home'] else new['name']
 
@@ -509,11 +597,15 @@ class SharingSMBService(CRUDService):
             except OSError as e:
                 raise CallError(f'Failed to create {path}: {e}')
 
+        if old['purpose'] != new['purpose']:
+            await self.apply_presets(new)
+
         await self.compress(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
+        enable_aapl = await self.check_aapl(new)
         if newname != oldname:
             # This is disruptive change. Share is actually being removed and replaced.
             # Forcibly closes any existing SMB sessions.
@@ -533,7 +625,10 @@ class SharingSMBService(CRUDService):
 
         await self.extend(new)  # same here ?
 
-        await self._service_change('cifs', 'reload')
+        if enable_aapl:
+            await self._service_change('cifs', 'restart')
+        else:
+            await self._service_change('cifs', 'reload')
 
         return new
 
@@ -563,6 +658,20 @@ class SharingSMBService(CRUDService):
         return result
 
     @private
+    async def check_aapl(self, data):
+        """
+        Returns whether we changed the global aapl support settings.
+        """
+        aapl_extensions = (await self.middleware.call('smb.config'))['aapl_extensions']
+
+        if not aapl_extensions and data['timemachine']:
+            await self.middleware.call('datastore.update', 'services_cifs', 1,
+                                       {'cifs_srv_aapl_extensions': True})
+            return True
+
+        return False
+
+    @private
     async def close_share(self, share_name):
         c = await run([SMBCmd.SMBCONTROL.value, 'smbd', 'close-share', share_name], check=False)
         if c.returncode != 0:
@@ -589,18 +698,21 @@ class SharingSMBService(CRUDService):
                 verrors, self.middleware, f"{schema_name}.path", data['path']
             )
 
-        if 'noacl' in data['vfsobjects']:
-            if not await self.middleware.call('filesystem.acl_is_trivial', data['path']):
-                verrors.add(
-                    f'{schema_name}.vfsobjects',
-                    f'The "noacl" VFS module is incompatible with the extended ACL on {data["path"]}.'
-                )
+        if not data['acl'] and not await self.middleware.call('filesystem.acl_is_trivial', data['path']):
+            verrors.add(
+                f'{schema_name}.acl',
+                f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
+                'of SMB share.'
+            )
 
         if data.get('name') and data['name'].lower() in ['global', 'homes', 'printers']:
             verrors.add(
                 f'{schema_name}.name',
                 f'{data["name"]} is a reserved section name, please select another one'
             )
+        if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
+            verrors.add(f'{schema_name}.name',
+                        'Path suffix may not contain more than two components.')
 
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
@@ -619,6 +731,23 @@ class SharingSMBService(CRUDService):
                         home_filters, {'prefix': self._config.datastore_prefix})
 
         return home_result
+
+    @private
+    async def auxsmbconf_dict(self, aux, direction="TO"):
+        ret = None
+        if direction == 'TO':
+            ret = {}
+            for entry in aux.splitlines():
+                try:
+                    kv = param.split('=', 1)
+                    ret[kv[0].strip()] = kv[1].strip()
+                except Exception:
+                    self.logger.debug("[%s] contains invalid auxiliary parameter: [%s]",
+                                      aux['name'], param)
+            return ret
+
+        if direction == 'FROM':
+            return '\n'.join([f'{k}={v}' for k, v in aux.items()])
 
     @private
     async def name_exists(self, data, schema_name, verrors, id=None):
@@ -648,6 +777,9 @@ class SharingSMBService(CRUDService):
     async def extend(self, data):
         data['hostsallow'] = data['hostsallow'].split()
         data['hostsdeny'] = data['hostsdeny'].split()
+        if data['fsrvp']:
+            data['shadowcopy'] = True
+
         if 'share_acl' in data:
             data.pop('share_acl')
 
@@ -674,33 +806,31 @@ class SharingSMBService(CRUDService):
 
         return vuid
 
-    @accepts()
-    def vfsobjects_choices(self):
+    @private
+    async def apply_presets(self, data):
         """
-        Returns a list of valid virtual file system module choices which can be used with SMB Shares to enable virtual
-        file system modules.
+        Apply settings from presets. Only include auxiliary parameters
+        from preset if user-defined aux parameters already exist. In this
+        case user-defined takes precedence.
         """
-        vfs_modules = [
-            'audit',
-            'catia',
-            'crossrename',
-            'dirsort',
-            'fruit',
-            'full_audit',
-            'ixnas',
-            'media_harmony',
-            'noacl',
-            'offline',
-            'preopen',
-            'shell_snap',
-            'streams_xattr',
-            'shadow_copy2',
-            'winmsa',
-            'zfs_space',
-            'zfsacl'
-        ]
+        params = (SMBSharePreset[data["purpose"]].value)["params"].copy()
+        aux = params.pop("auxsmbconf")
+        data.update(params)
+        if data["auxsmbconf"]:
+            preset_aux = await self.auxsmbconf_dict(aux, direction="TO")
+            data_aux = await self.auxsmbconf_dict(data["auxsmbconf"], direction="TO")
+            preset_aux.update(data_aux)
+            data["auxsmbconf"] = await self.auxsmbconf_dict(preset_aux, direction="FROM")
 
-        return vfs_modules
+        return data
+
+    @accepts()
+    async def presets(self):
+        """
+        Retrieve pre-defined configuration sets for specific use-cases. These parameter
+        combinations are often non-obvious, but beneficial in these scenarios.
+        """
+        return {x.name: x.value for x in SMBSharePreset}
 
 
 async def pool_post_import(middleware, pool):
