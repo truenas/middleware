@@ -1928,8 +1928,14 @@ class PoolService(CRUDService):
                 },
             })
 
-            # Reset all mountpoints
-            await self.middleware.call('zfs.dataset.inherit', pool_name, 'mountpoint', True)
+            try:
+                # Reset all mountpoints
+                await self.middleware.call('zfs.dataset.inherit', pool_name, 'mountpoint', True)
+            except Exception as e:
+                # Let's not make this fatal
+                self.middleware.logger.debug(
+                    f'Failed to inherit mountpoints recursively for imported {pool_name} pool: {e}'
+                )
 
             await self.middleware.call('pool.sync_encrypted', pool_id)
         except Exception:
