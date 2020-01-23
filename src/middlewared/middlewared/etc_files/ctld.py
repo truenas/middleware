@@ -370,7 +370,9 @@ def main(middleware):
                                         [('iscsi_target', '=', target.id)],
                                         {'order_by': ['nulls_last:iscsi_lunid']}):
             t2e = Struct(t2e)
-
+            if not t2e.iscsi_extent.iscsi_target_extent_enabled:
+                # Skip adding extents to targets which are not enabled
+                continue
             if t2e.iscsi_lunid is None:
                 while cur_lunid in used_lunids:
                     cur_lunid += 1
