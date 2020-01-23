@@ -126,9 +126,9 @@ def test_14_checking_if_afp_is_running():
 
 
 def test_15_verify_afp_mdns_service_record():
-    results = dns_service_resolve(hostname, domain, '_afpovertcp._tcp.')
+    results = dns_service_resolve(hostname, 'local', '_afpovertcp._tcp.')
     assert results['status'] is True, str(results['results'])
-    assert results['results']['ports'] == 548, str(results['results'])
+    assert results['results']['port'] == 548, str(results['results'])
 
 
 def test_16_creating_a_afp_share_on_afp_path():
@@ -142,9 +142,9 @@ def test_16_creating_a_afp_share_on_afp_path():
 
 
 def test_17_verify_adisk_mdns_service_record():
-    results = dns_service_resolve(hostname, domain, '_adisk._tcp.')
+    results = dns_service_resolve(hostname, 'local', '_adisk._tcp.')
     assert results['status'] is True, str(results['results'])
-    assert results['results']['ports'] == 9, str(results['results'])
+    assert results['results']['port'] == 9, str(results['results'])
 
 
 # have to wait for the volume api
