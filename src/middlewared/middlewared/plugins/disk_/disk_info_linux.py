@@ -89,4 +89,8 @@ class DiskService(Service, DiskInfoBase):
         if not os.path.exists(os.path.join('/dev', part_name)):
             return None
         with open(os.path.join('/sys/class/block', part_name, 'partition'), 'r') as f:
-            return part_name.rsplit(f.read().strip(), 1)[0].strip()
+            part_num = f.read().strip()
+        if part_name.startswith('nvme'):
+            # nvme partitions would be like nvmen1p1 where disk is nvmen1
+            part_num = f'p{part_num}'
+        return part_name.rsplit(part_num, 1)[0].strip()

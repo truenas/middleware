@@ -36,13 +36,14 @@ class PoolService(Service):
         """
         Expand pool to fit all available disk space.
         """
-        # FIXME: We have issues in ZoL where when pool is created with partition uuids, we are unable
-        #  to expand pool where all pool related options error out saying I/O error
-        #  https://github.com/zfsonlinux/zfs/issues/9830
         pool = await self.middleware.call('pool.get_instance', id)
         if IS_LINUX:
             if options.get('passphrase'):
                 raise CallError('Passphrase should not be supplied for this platform.')
+            # FIXME: We have issues in ZoL where when pool is created with partition uuids, we are unable
+            #  to expand pool where all pool related options error out saying I/O error
+            #  https://github.com/zfsonlinux/zfs/issues/9830
+            raise CallError('Expand is not supported on this platform yet because of underlying ZFS issues.')
         else:
             if pool['encrypt']:
                 if not pool['is_decrypted']:
@@ -80,7 +81,6 @@ class PoolService(Service):
 
                     assert part_data['disk'] == vdev['disk']
 
-                    # sgdisk -d 2 -n 2:0:0 -c 2: -u 2:8d7e3eb4-a94f-4a43-b593-755ca8a6166f -t 2:BF01 /dev/sdc
                     if IS_LINUX:
                         await run(
                             'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0',

@@ -1,4 +1,5 @@
 import errno
+import platform
 import subprocess
 import threading
 import time
@@ -17,6 +18,7 @@ from middlewared.service import (
 from middlewared.utils import filter_list, filter_getattrs, start_daemon_thread
 from middlewared.validators import ReplicationSnapshotNamingSchema
 
+IS_LINUX = platform.system().lower() == 'linux'
 SCAN_THREADS = {}
 
 
@@ -356,7 +358,9 @@ class ZFSPoolService(CRUDService):
     def import_pool(self, name_or_guid, options, any_host, cachefile, new_name):
         found = False
         with libzfs.ZFS() as zfs:
-            for pool in zfs.find_import(cachefile=cachefile):
+            for pool in zfs.find_import(
+                cachefile=cachefile, search_paths=['/dev/disk/by-partuuid'] if IS_LINUX else None
+            ):
                 if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
                     found = pool
                     break

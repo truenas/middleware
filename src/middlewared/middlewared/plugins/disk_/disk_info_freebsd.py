@@ -46,7 +46,7 @@ class DiskService(Service, DiskInfoBase):
                     'path': os.path.join('/dev', name.text),
                     'encrypted_provider': None,
                     'partition_number': None,
-                    'partition_uuid': part_uuid.text if part_uuid else None,
+                    'partition_uuid': part_uuid.text if part_uuid is not None else None,
                 }
                 part_no = RE_DISKPART.match(part['name'])
                 if part_no:
