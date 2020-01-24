@@ -1007,12 +1007,10 @@ class PoolService(CRUDService):
         if not IS_LINUX and found[1]['path'].endswith('.eli'):
             devname = found[1]['path'].replace('/dev/', '')[:-4]
             await self.middleware.call('disk.geli_detach_single', devname)
-            async with ENCRYPTEDDISK_LOCK:
-                await self.middleware.call(
-                    'datastore.delete',
-                    'storage.encrypteddisk',
-                    [('encrypted_volume', '=', oid), ('encrypted_provider', '=', devname)],
-                )
+            await self.middleware.call(
+                'pool.remove_from_storage_encrypted_disk',
+                [('encrypted_volume', '=', oid), ('encrypted_provider', '=', devname)],
+            )
         return True
 
     @item_method

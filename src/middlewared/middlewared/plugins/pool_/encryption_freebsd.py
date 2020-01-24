@@ -190,6 +190,7 @@ class PoolService(Service):
             verrors.add('options.admin_password', 'Invalid admin password.')
 
         verrors.check()
+        return verrors
 
     @item_method
     @accepts(Int('id'), Dict(
@@ -443,6 +444,11 @@ class PoolService(Service):
                     rv.append((value['path'].replace('/dev/', ''), value['disk']))
                 values += value.get('children') or []
         return rv
+
+    @private
+    async def remove_from_storage_encrypted_disk(self, id_or_filters):
+        async with ENCRYPTEDDISK_LOCK:
+            await self.middleware.call('datastore.delete', 'storage.encrypteddisk', id_or_filters)
 
     @private
     async def sync_encrypted(self, pool=None):

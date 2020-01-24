@@ -365,7 +365,11 @@ class DiskService(Service, DiskEncryptionBase):
         """
         Get all geli providers
 
-        It might be an entire disk or a partition of type freebsd-zfs
+        It might be an entire disk or a partition of type freebsd-zfs.
+
+        Before a geli encrypted pool can be imported, disks used in the pool should be decrypted
+        and then pool import can proceed as desired. In that case `unused` can be passed as `true`, to find out
+        which disks are geli encrypted but not being used by active ZFS pools.
         """
         providers = []
 
