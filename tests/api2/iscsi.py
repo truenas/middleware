@@ -8,11 +8,10 @@ import os
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-
-from auto_config import ip, user, password, pool_name
-# SHOULD IMPORT FOLLOWING VARIABLES - BSD_HOST, BSD_PASSWORD, BSD_USERNAME
+from auto_config import ip, user, password, pool_name, hostname
 from config import *
 from functions import PUT, POST, GET, SSH_TEST, return_output, DELETE
+from functions import dns_service_resolve
 
 global DEVICE_NAME
 
@@ -124,6 +123,12 @@ def test_08_Verify_the_iSCSI_service_is_enabled():
     results = GET("/service/?service=iscsitarget")
     assert results.status_code == 200, results.text
     assert results.json()[0]["state"] == "RUNNING", results.text
+
+
+def test_09_verify_iscsi_mdns_service_record():
+    results = dns_service_resolve(hostname, 'local', '_iscsi._tcp.')
+    assert results['status'] is True, str(results['results'])
+    assert results['results']['port'] == 3260, str(results['results'])
 
 
 # when SSH_TEST is functional test using it will need to be added
