@@ -33,7 +33,7 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 # Add iSCSI initator
 def test_01_Add_iSCSI_initiator():
     payload = {
-        'tag': 0,
+        'comment': 'Default initiator',
     }
     results = POST("/iscsi/initiator/", payload)
     assert results.status_code == 200, results.text
