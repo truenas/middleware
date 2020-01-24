@@ -391,6 +391,10 @@ class SystemService(Service):
 
         return "DEFAULT"
 
+    @private
+    async def platform(self):
+        return osc.SYSTEM
+
     @accepts()
     async def ready(self):
         """
