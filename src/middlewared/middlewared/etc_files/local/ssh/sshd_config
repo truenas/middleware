@@ -41,7 +41,8 @@ ClientAliveCountMax 3
 % if 'ClientAliveInterval' not in ssh_config['options']:
 ClientAliveInterval 15
 % endif
-% if 'NoneEnabled' not in ssh_config['options']:
+## Scale doesnt have HPN patches yet
+% if platform.upper() != 'LINUX' and 'NoneEnabled' not in ssh_config['options']:
 NoneEnabled yes
 % endif
 % if 'VersionAddendum' not in ssh_config['options']:
