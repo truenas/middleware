@@ -103,6 +103,12 @@ def test_09_checking_to_see_if_nfs_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
+def test_10_verify_nfs_mdns_service_record():
+    results = dns_service_resolve(hostname, 'local', '_nfs._tcp.')
+    assert results['status'] is True, str(results['results'])
+    assert results['results']['port'] == 2049, str(results['results'])
+
+
 def test_10_checking_if_sysctl_vfs_nfsd_server_max_nfsvers_is_4():
     cmd = 'sysctl -n vfs.nfsd.server_max_nfsvers'
     results = SSH_TEST(cmd, user, password, ip)
