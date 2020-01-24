@@ -8,4 +8,3 @@ statically-linked-binary
 unstripped-binary-or-object
 embedded-library
 missing-dependency-on-libc
-dir-or-file-in-home
