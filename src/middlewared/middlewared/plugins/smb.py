@@ -469,7 +469,7 @@ class SharingSMBService(CRUDService):
 
     @accepts(Dict(
         'sharingsmb_create',
-        Str('purpose', enum=[x.name for x in SMBSharePreset], default="DEFAULT"),
+        Str('purpose', enum=[x.name for x in SMBSharePreset], default=SMBSharePreset.DEFAULT_SHARE.name),
         Str('path', required=True),
         Str('path_suffix', default=''),
         Bool('home', default=False),
