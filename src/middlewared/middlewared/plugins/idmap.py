@@ -213,6 +213,89 @@ class IdmapDomainService(CRUDService):
         except Exception:
             self.logger.debug("Failed to remove winbindd_idmap.tdb.", exc_info=True)
 
+    @private
+    async def domain_info(self, domain):
+        ret = {}
+
+        if domain == 'DS_TYPE_ACTIVEDIRECTORY':
+            domain = (await self.middleware.call('smb.config'))['workgroup']
+
+        wbinfo = await run(['wbinfo', '-D', domain], check=False)
+        if wbinfo.returncode != 0:
+            raise CallError(f'Failed to get domain info for {domain}: '
+                            f'{wbinfo.stderr.decode().strip()}')
+
+        for entry in wbinfo.stdout.splitlines():
+            kv = entry.decode().split(':')
+            ret.update({kv[0].strip(): kv[1].strip()})
+
+        return ret
+
+    @private
+    async def get_sssd_low_range(self, domain, sssd_config=None, seed=0xdeadbeef):
+        """
+        This is best effort attempt for SSSD compatibility. It will allocate low
+        range for then initial slice in the SSSD environment. The SSSD allocation algorithm
+        is non-deterministic. Domain SID string is converted to a 32-bit hashed value
+        using murmurhash3 algorithm.
+
+        The modulus of this value with the total number of available slices is used to
+        pick the slice. This slice number is then used to calculate the low range for
+        RID 0. With the default settings in SSSD this will be deterministic as long as
+        the domain has less than 200,000 RIDs.
+        """
+        sid = (await self.domain_info(domain))['SID']
+        sssd_config = {} if not sssd_config else sssd_config
+        range_size = sssd_config.get('range_size', 200000)
+        range_low = sssd_config.get('range_low', 10001)
+        range_max = sssd_config.get('range_max', 2000200000)
+        max_slices = int((range_max - range_low) / range_size)
+
+        data = bytearray(sid.encode())
+        datalen = len(data)
+        hash = seed
+        data_bytes = data
+
+        c1 = 0xcc9e2d51
+        c2 = 0x1b873593
+        r1 = 15
+        r2 = 13
+        n = 0xe6546b64
+
+        while datalen >= 4:
+            k = int.from_bytes(data_bytes[:4], byteorder='little') & 0xFFFFFFFF
+            self.logger.debug('%d', k)
+            data_bytes = data_bytes[4:]
+            datalen = datalen - 4
+            k = (k * c1) & 0xFFFFFFFF
+            k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
+            k = (k * c2) & 0xFFFFFFFF
+            hash ^= k
+            hash = (hash << r2 | hash >> 32 - r2) & 0xFFFFFFFF
+            hash = (hash * 5 + n) & 0xFFFFFFFF
+
+        if datalen > 0:
+            k = 0
+            if datalen >= 3:
+                k = k | int.from_bytes(data_bytes[2], byteorder='little') << 16
+            if datalen >= 2:
+                k = k | data_bytes[1] << 8
+            if datalen >= 1:
+                k = k | data_bytes[0]
+                k = (k * c1) & 0xFFFFFFFF
+                k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
+                k = (k * c2) & 0xFFFFFFFF
+                hash ^= k
+
+        hash = (hash ^ len(data)) & 0xFFFFFFFF
+        hash ^= hash >> 16
+        hash = (hash * 0x85ebca6b) & 0xFFFFFFFF
+        hash ^= hash >> 13
+        hash = (hash * 0xc2b2ae35) & 0xFFFFFFFF
+        hash ^= hash >> 16
+
+        return (hash % max_slices) * range_size + range_size
+
     @accepts()
     @job(lock='clear_idmap_cache')
     async def clear_idmap_cache(self, job):
@@ -231,6 +314,7 @@ class IdmapDomainService(CRUDService):
         except Exception:
             self.logger.debug("Failed to remove winbindd_cache.tdb.", exc_info=True)
 
+        await self.middleware.call('etc.generate', 'smb')
         await self.middleware.call('service.start', 'cifs')
         gencache_flush = await run(['net', 'cache', 'flush'], check=False)
         if gencache_flush.returncode != 0:
@@ -295,7 +379,6 @@ class IdmapDomainService(CRUDService):
 
         if data['range_high'] < data['range_low']:
             verrors.add(f'{schema_name}.range_low', 'Idmap high range must be greater than idmap low range')
-            return verrors
 
         configured_domains = await self.query()
         ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
@@ -481,6 +564,17 @@ class IdmapDomainService(CRUDService):
         verrors = ValidationErrors()
         if data['name'] in [x['name'] for x in await self.query()]:
             verrors.add('idmap_domain_create.name', 'Domain names must be unique.')
+
+        if data['options'].get('sssd_compat'):
+            if await self.middleware.call('activedirectory.get_state') != 'HEALTHY':
+                verrors.add('idmap_domain_create.options',
+                            'AD service must be enabled and started to '
+                            'generate an SSSD-compatible id range')
+                verrors.check()
+
+            data['range_low'] = await self.get_sssd_low_range(data['name'])
+            data['range_high'] = data['range_low'] + 100000000
+
         await self.validate('idmap_domain_create', data, verrors)
         await self.validate_options('idmap_domain_create', data, verrors)
         if data.get('certificate_id') and not data['options'].get('ssl'):
@@ -518,8 +612,18 @@ class IdmapDomainService(CRUDService):
         tmp = data.copy()
         verrors = ValidationErrors()
         if old['name'] in [x.name for x in DSType] and old['name'] != new['name']:
-            verrors.add('idmap_domain_update',
+            verrors.add('idmap_domain_update.name',
                         f'Changing name of default domain {old["name"]} is not permitted')
+
+        if new['options'].get('sssd_compat') and not old['options'].get('sssd_compat'):
+            if await self.middleware.call('activedirectory.get_state') != 'HEALTHY':
+                verrors.add('idmap_domain_update.options',
+                            'AD service must be enabled and started to '
+                            'generate an SSSD-compatible id range')
+                verrors.check()
+
+            new['range_low'] = await self.get_sssd_low_range(new['name'])
+            new['range_high'] = new['range_low'] + 100000000
 
         await self.validate('idmap_domain_update', new, verrors)
         await self.validate_options('idmap_domain_update', new, verrors, ['MISSING'])
@@ -544,6 +648,7 @@ class IdmapDomainService(CRUDService):
             new,
             {'prefix': self._config.datastore_prefix}
         )
+        await self.middleware.call('idmap.clear_idmap_cache')
         return await self._get_instance(id)
 
     @accepts(Int('id'))
