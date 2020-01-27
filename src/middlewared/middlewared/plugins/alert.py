@@ -280,20 +280,25 @@ class AlertService(Service):
     @private
     async def node_map(self):
         nodes = {
-            "A": "Active Controller",
-            "B": "Standby Controller",
+            'A': 'Controller A',
+            'B': 'Controller B',
         }
-        if (
-            not await self.middleware.call('system.is_freenas') and
-            await self.middleware.call('failover.licensed') and
-            (
-                (await self.middleware.call('failover.node') == 'A' and
-                 await self.middleware.call('failover.status') == 'BACKUP') or
-                (await self.middleware.call('failover.node') == 'B' and
-                 await self.middleware.call('failover.status') == 'MASTER')
-            )
-        ):
-            nodes["A"], nodes["B"] = nodes["B"], nodes["A"]
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
+            node = await self.middleware.call('failover.node')
+            status = await self.middleware.call('failover.status')
+            if status == 'MASTER':
+                if node == 'A':
+                    nodes = {
+                        'A': 'Active Controller (A)',
+                        'B': 'Standby Controller (B)',
+                    }
+                else:
+                    nodes = {
+                        'A': 'Standby Controller (A)',
+                        'B': 'Active Controller (B)',
+                    }
+            else:
+                nodes[node] = f'{status.title()} Controller ({node})'
 
         return nodes
 
