@@ -1330,15 +1330,6 @@ async def _event_system(middleware, event_type, args):
         SYSTEM_SHUTTING_DOWN = True
 
 
-async def devd_zfs_hook(middleware, data):
-    """
-    This is so we can invalidate the CACHE_POOLS_STATUSES cache
-    when pool status changes
-    """
-    if data.get('type') == 'misc.fs.zfs.vdev_statechange':
-        await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
-
-
 class SystemHealthEventSource(EventSource):
 
     """
@@ -1518,7 +1509,6 @@ async def setup(middleware):
             )
 
     middleware.event_subscribe('system', _event_system)
-    middleware.register_hook('devd.zfs', devd_zfs_hook)
     middleware.register_event_source('system.health', SystemHealthEventSource)
 
     # watchdog 38 = ~256 seconds or ~4 minutes, see sys/watchdog.h for explanation

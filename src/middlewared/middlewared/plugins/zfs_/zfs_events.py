@@ -8,6 +8,7 @@ from middlewared.alert.base import (
 )
 from middlewared.utils import start_daemon_thread
 
+CACHE_POOLS_STATUSES = 'system.system_health_pools'
 IS_LINUX = platform.system().lower() == 'linux'
 SCAN_THREADS = {}
 
@@ -125,12 +126,17 @@ async def devd_zfs_hook(middleware, data):
         'misc.fs.zfs.config_sync',
     ):
         asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
-
-    if data.get('type') == 'ereport.fs.zfs.deadman':
+    elif data.get('type') == 'ereport.fs.zfs.deadman':
         asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
             'vdev': data.get('vdev_path', '<unknown>'),
             'pool': data.get('pool', '<unknown>'),
         }))
+    elif data.get('type') == 'misc.fs.zfs.vdev_statechange':
+        """
+        This is so we can invalidate the CACHE_POOLS_STATUSES cache
+        when pool status changes
+        """
+        await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
 
 
 async def zfs_events(middleware, event_type, args):
@@ -149,6 +155,8 @@ async def zfs_events(middleware, event_type, args):
             'vdev': args['fields'].get('vdev_path', '<unknown>'),
             'pool': args['fields'].get('pool', '<unknown>'),
         }))
+    elif event_id == 'resource.fs.zfs.statechange':
+        await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
 
 
 def setup(middleware):
