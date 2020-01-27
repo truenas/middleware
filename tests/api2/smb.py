@@ -155,7 +155,7 @@ def test_010_verify_if_smb_getparm_path_homes_is_null():
     assert results['output'].strip() == 'null'
 
 
-def test_011_checking_to_see_if_nfs_service_is_running():
+def test_011_checking_to_see_if_smb_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
@@ -558,7 +558,7 @@ def test_066_starting_cifs_service():
     sleep(1)
 
 
-def test_067_checking_to_see_if_nfs_service_is_running():
+def test_067_checking_to_see_if_smb_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
@@ -680,7 +680,7 @@ def test_083_starting_cifs_service():
     sleep(1)
 
 
-def test_084_checking_to_see_if_nfs_service_is_running():
+def test_084_checking_to_see_if_smb_service_is_running():
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
