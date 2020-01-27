@@ -1,4 +1,5 @@
 import libzfs
+import platform
 import threading
 
 from middlewared.alert.base import (
@@ -6,6 +7,7 @@ from middlewared.alert.base import (
 )
 from middlewared.utils import start_daemon_thread
 
+IS_LINUX = platform.system().lower() == 'linux'
 SCAN_THREADS = {}
 
 
@@ -76,36 +78,62 @@ class ScrubFinishedAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
 
 
+async def resilver_scrub_start(middleware, pool_name):
+    if not pool_name:
+        return
+    print('\n\npool name called for srub start -- ', pool_name)
+    if pool_name in SCAN_THREADS:
+        return
+    scanwatch = ScanWatch(middleware, pool_name)
+    SCAN_THREADS[pool_name] = scanwatch
+    start_daemon_thread(target=scanwatch.run)
+
+
+async def resilver_scrub_stop_abort(middleware, pool_name):
+    if not pool_name:
+        return
+    scanwatch = SCAN_THREADS.pop(pool_name, None)
+    if not scanwatch:
+        return
+    await middleware.run_in_thread(scanwatch.cancel)
+
+    # Send the last event with SCRUB/RESILVER as FINISHED
+    await middleware.run_in_thread(scanwatch.send_scan)
+
+
+async def scrub_finished(middleware, pool_name):
+    await middleware.call('alert.oneshot_delete', 'ScrubFinished', pool_name)
+    await middleware.call('alert.oneshot_create', 'ScrubFinished', pool_name)
+
+
 async def devd_zfs_hook(middleware, data):
     if data.get('type') in ('misc.fs.zfs.resilver_start', 'misc.fs.zfs.scrub_start'):
-        pool = data.get('pool_name')
-        if not pool:
-            return
-        if pool in SCAN_THREADS:
-            return
-        scanwatch = ScanWatch(middleware, pool)
-        SCAN_THREADS[pool] = scanwatch
-        start_daemon_thread(target=scanwatch.run)
-
+        await resilver_scrub_start(middleware, data.get('pool_name'))
     elif data.get('type') in (
         'misc.fs.zfs.resilver_finish', 'misc.fs.zfs.scrub_finish', 'misc.fs.zfs.scrub_abort',
     ):
-        pool = data.get('pool_name')
-        if not pool:
-            return
-        scanwatch = SCAN_THREADS.pop(pool, None)
-        if not scanwatch:
-            return
-        await middleware.run_in_thread(scanwatch.cancel)
-
-        # Send the last event with SCRUB/RESILVER as FINISHED
-        await middleware.run_in_thread(scanwatch.send_scan)
+        await resilver_scrub_stop_abort(middleware, data.get('pool_name'))
 
     if data.get('type') == 'misc.fs.zfs.scrub_finish':
-        await middleware.call('alert.oneshot_delete', 'ScrubFinished', data.get('pool_name'))
-        await middleware.call('alert.oneshot_create', 'ScrubFinished', data.get('pool_name'))
+        await scrub_finished(middleware, data.get('pool_name'))
+
+
+async def zfs_events(middleware, event_type, args):
+    event_id = args['id']
+    if event_id in ('sysevent.fs.zfs.resilver_start', 'sysevent.fs.zfs.scrub_start'):
+        await resilver_scrub_start(middleware, args['fields'].get('pool'))
+    elif event_id in (
+        'sysevent.fs.zfs.resilver_finish', 'sysevent.fs.zfs.scrub_finish', 'sysevent.fs.zfs.scrub_abort'
+    ):
+        await resilver_scrub_stop_abort(middleware, args['fields'].get('pool'))
+
+    if event_id == 'sysevent.fs.zfs.scrub_finish':
+        await scrub_finished(middleware, args['fields'].get('pool'))
 
 
 def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
-    middleware.register_hook('devd.zfs', devd_zfs_hook)
+    if IS_LINUX:
+        middleware.event_subscribe('zfs.pool.events', zfs_events)
+    else:
+        middleware.register_hook('devd.zfs', devd_zfs_hook)
