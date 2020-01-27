@@ -174,9 +174,8 @@ class UsageService(Service):
 
         usage_version = 1
         version = system['version']
-        system_hash = hashlib.sha256((await self.middleware.call(
-            'systemdataset.config'
-        ))['uuid'].encode()).hexdigest()
+        with open('/etc/hostid', 'rb') as f:
+            system_hash = hashlib.sha256(f.read().strip()).hexdigest()
         datasets = await self.middleware.call(
             'zfs.dataset.query', [('type', '!=', 'VOLUME')], {'count': True}
         )
