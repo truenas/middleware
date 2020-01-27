@@ -4,9 +4,10 @@
 # License: BSD
 # Location for tests into REST API 2.0 of FreeNAS
 
+import pytest
 import sys
 import os
-
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, POST, dns_service_resolve
@@ -41,6 +42,7 @@ def test_05_Starting_ftp_service():
     payload = {"service": "ftp", "service-control": {"onetime": True}}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
+    sleep(1)
 
 
 def test_06_Checking_to_see_if_FTP_service_is_enabled():
@@ -48,6 +50,7 @@ def test_06_Checking_to_see_if_FTP_service_is_enabled():
     assert results.json()[0]["state"] == "RUNNING"
 
 
+@pytest.mark.skip(reason='mdnsadvertise.restart not into ftp service yet')
 def test_07_verify_ftp_mdns_service_record():
     results = dns_service_resolve(hostname, 'local', '_ftp._tcp.')
     assert results['status'] is True, str(results['results'])

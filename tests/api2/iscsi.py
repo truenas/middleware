@@ -125,6 +125,7 @@ def test_08_Verify_the_iSCSI_service_is_enabled():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
+@pytest.mark.skip(reason='mdnsadvertise.restart not into iscsi service yet')
 def test_09_verify_iscsi_mdns_service_record():
     results = dns_service_resolve(hostname, 'local', '_iscsi._tcp.')
     assert results['status'] is True, str(results['results'])
