@@ -22,7 +22,7 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
 from middlewared.plugins.directoryservices import DSStatus, SSL
-from middlewared.plugins.idmap import dstype
+from middlewared.plugins.idmap import DSType
 import middlewared.utils.osc as osc
 try:
     from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
@@ -910,7 +910,9 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def set_idmap(self, trusted_domains):
-        idmap = await self.middleware.call('idmap.query', [('id', '=', dstype.DS_TYPE_ACTIVEDIRECTORY.value)], {})
+        idmap = await self.middleware.call('idmap.query',
+                                           [('id', '=', DSType.DS_TYPE_ACTIVEDIRECTORY.value)],
+                                           {'get': True})
         idmap_id = idmap.pop('id')
         if not idmap['range_low']:
             idmap['range_low'], idmap['range_high'] = await self.middleware.call('idmap.get_next_idmap_range')

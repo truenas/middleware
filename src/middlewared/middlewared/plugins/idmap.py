@@ -9,7 +9,7 @@ from middlewared.utils import run
 from middlewared.validators import Range
 
 
-class dstype(enum.Enum):
+class DSType(enum.Enum):
     """
     The below DS_TYPES are defined for use as system domains for idmap backends.
     DS_TYPE_NT4 is defined, but has been deprecated. DS_TYPE_DEFAULT_DOMAIN corresponds
@@ -20,7 +20,7 @@ class dstype(enum.Enum):
     DS_TYPE_ACTIVEDIRECTORY = 1
     DS_TYPE_LDAP = 2
     DS_TYPE_NIS = 3
-    DS_TYPE_NT4 = 4
+    DS_TYPE_FREEIPA = 4
     DS_TYPE_DEFAULT_DOMAIN = 5
 
 
@@ -57,6 +57,7 @@ class IdmapBackend(enum.Enum):
             'ldap_user_dn': {"required": True, "default": None},
             'ldap_url': {"required": True, "default": None},
             'ssl': {"required": False, "default": "NO"},
+            'readonly': {"required": False, "default": False},
         },
         'services': ['AD', 'LDAP'],
     }
@@ -101,7 +102,9 @@ class IdmapBackend(enum.Enum):
     TDB = {
         'description': 'Default backend used to store mapping tables for '
                        'BUILTIN and well-known SIDs.',
-        'parameters': {},
+        'parameters': {
+            'readonly': {"required": False, "default": False},
+        },
         'services': ['AD'],
     }
 
@@ -131,7 +134,7 @@ class IdmapBackend(enum.Enum):
         ds = {'AD': [], 'LDAP': []}
         for x in IdmapBackend:
             for ds in directory_services:
-                if ds in x.params['services']:
+                if ds in x.value['services']:
                     ret[ds].append(x.name)
 
         return ret
@@ -253,18 +256,34 @@ class IdmapDomainService(CRUDService):
     @accepts()
     async def backend_options(self):
         """
-        This returns additional information about idmap backend options. Not all
+        This returns full information about idmap backend options. Not all
         `options` are valid for every backend.
         """
         return {x.name: x.value for x in IdmapBackend}
 
+    @accepts(
+        Str('idmap_backend', enum=[x.name for x in IdmapBackend]),
+    )
+    async def options_choices(self, backend):
+        """
+        Returns a list of supported keys for the specified idmap backend.
+        """
+        return IdmapBackend[backend].supported_keys()
+
+    @accepts()
+    async def backend_choices(self):
+        """
+        Returns array of valid idmap backend choices per directory service.
+        """
+        return IdmapBackend.ds_choices()
+
     @private
     async def validate(self, schema_name, data, verrors):
-        if data['name'] in [dstype.DS_TYPE_LDAP.value, dstype.DS_TYPE_DEFAULT_DOMAIN.value]:
-            if data['idmap_backend'] not in ['ldap', 'tdb']:
+        if data['name'] in [DSType.DS_TYPE_LDAP.name, DSType.DS_TYPE_DEFAULT_DOMAIN.name]:
+            if data['idmap_backend'] not in (await self.backend_choices())['LDAP']:
                 verrors.add(f'{schema_name}.idmap_backend',
                             f'idmap backend [{data["idmap_backend"]}] is not appropriate. '
-                            f'for the system domain type {dstype[data["domain"]]}')
+                            f'for the system domain type {data["name"]}')
 
         if data['range_high'] < data['range_low']:
             verrors.add(f'{schema_name}.range_low', 'Idmap high range must be greater than idmap low range')
@@ -326,7 +345,7 @@ class IdmapDomainService(CRUDService):
         provided_keys = set([str(x) for x in data['options'].keys()])
 
         for k in (provided_keys - supported_keys):
-            data.pop(k)
+            data['options'].pop(k)
 
     @accepts(
         Dict(
@@ -335,7 +354,7 @@ class IdmapDomainService(CRUDService):
             Str('dns_domain_name'),
             Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
             Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Str('idmap_backend', enum=['AD', 'AUTORID', 'FRUIT', 'LDAP', 'NSS', 'RFC2307', 'RID', 'SCRIPT', 'TDB']),
+            Str('idmap_backend', enum=[x.name for x in IdmapBackend]),
             Int('certificate_id', null=True),
             Dict(
                 'options',
@@ -490,22 +509,25 @@ class IdmapDomainService(CRUDService):
         new.update(data)
         tmp = data.copy()
         verrors = ValidationErrors()
-        if old['name'] in [x.name for x in dstype] and old['name'] != new['name']:
+        if old['name'] in [x.name for x in DSType] and old['name'] != new['name']:
             verrors.add('idmap_domain_update',
                         f'Changing name of default domain {old["name"]} is not permitted')
 
         await self.validate('idmap_domain_update', new, verrors)
         await self.validate_options('idmap_domain_update', new, verrors, ['MISSING'])
-        self.logger.debug('got after missing')
         tmp['idmap_backend'] = new['idmap_backend']
-        await self.validate_options('idmap_domain_update', tmp, verrors, ['EXTRA'])
+        if data.get('options'):
+            await self.validate_options('idmap_domain_update', tmp, verrors, ['EXTRA'])
+
         if data.get('certificate_id') and not data['options'].get('ssl'):
             verrors.add('idmap_domain_update.certificate_id',
                         f'The {new["idmap_backend"]} idmap backend does not '
                         'generate LDAP traffic. Certificates do not apply.')
         verrors.check()
-        self.logger.debug('got after vailidation')
         await self.prune_keys(new)
+        final_options = IdmapBackend[data['idmap_backend']].defaults()
+        final_options.update(new['options'])
+        new['options'] = final_options
         await self.idmap_compress(new)
         await self.middleware.call(
             'datastore.update',

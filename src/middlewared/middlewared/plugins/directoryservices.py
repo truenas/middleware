@@ -37,17 +37,6 @@ class NSS_Info(enum.Enum):
     RFC2307BIS = ('RFC2307BIS', [DSType.LDAP])
 
 
-class IDMAP_Backend(enum.Enum):
-    AD = ('AD', [DSType.AD])
-    AUTORID = ('AUTORID', [DSType.AD])
-    LDAP = ('LDAP', [DSType.AD, DSType.LDAP])
-    NSS = ('NSS', [DSType.AD])
-    RFC2307 = ('RFC2307', [DSType.AD, DSType.LDAP])
-    RID = ('RID', [DSType.AD])
-    SCRIPT = ('SCRIPT', [DSType.AD])
-    TDB = ('TDB', [DSType.AD])
-
-
 class DirectoryServices(Service):
     class Config:
         service = "directoryservices"
@@ -116,19 +105,6 @@ class DirectoryServices(Service):
             return ret
 
         for x in list(NSS_Info):
-            if ds in x.value[1]:
-                ret.append(x.value[0])
-
-        return ret
-
-    @private
-    async def idmap_backend_choices(self, dstype):
-        ds = DSType(dstype.lower())
-        ret = []
-        if ds == DSType.NIS:
-            return ret
-
-        for x in list(IDMAP_Backend):
             if ds in x.value[1]:
                 ret.append(x.value[0])
 

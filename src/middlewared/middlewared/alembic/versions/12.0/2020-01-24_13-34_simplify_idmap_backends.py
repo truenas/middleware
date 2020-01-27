@@ -68,10 +68,10 @@ def upgrade():
     op.drop_table('directoryservice_idmap_nss')
     op.drop_table('directoryservice_idmap_autorid')
     with op.batch_alter_table('directoryservice_activedirectory', schema=None) as batch_op:
-        batch_op.drop_column('idmap_backend')
+        batch_op.drop_column('ad_idmap_backend')
 
     with op.batch_alter_table('directoryservice_ldap', schema=None) as batch_op:
-        batch_op.drop_column('idmap_backend')
+        batch_op.drop_column('ldap_idmap_backend')
 
     with op.batch_alter_table('directoryservice_idmap_domain', schema=None) as batch_op:
         batch_op.add_column(sa.Column('idmap_domain_certificate_id', sa.Integer(), nullable=True))
