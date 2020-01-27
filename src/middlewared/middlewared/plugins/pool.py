@@ -3714,25 +3714,5 @@ def parse_lsof(lsof, dirs):
     return list(pids.items())
 
 
-async def devd_zfs_hook(middleware, data):
-    if data.get('subsystem') != 'ZFS':
-        return
-
-    if data.get('type') in (
-        'ATTACH',
-        'DETACH',
-        'resource.fs.zfs.removed',
-        'misc.fs.zfs.config_sync',
-    ):
-        asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
-
-    if data.get('type') == 'ereport.fs.zfs.deadman':
-        asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
-            'vdev': data.get('vdev_path', '<unknown>'),
-            'pool': data.get('pool', '<unknown>'),
-        }))
-
-
 def setup(middleware):
-    middleware.register_hook('devd.zfs', devd_zfs_hook)
     asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))

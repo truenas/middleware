@@ -1,3 +1,4 @@
+import asyncio
 import libzfs
 import platform
 import threading
@@ -117,6 +118,20 @@ async def devd_zfs_hook(middleware, data):
     if data.get('type') == 'misc.fs.zfs.scrub_finish':
         await scrub_finished(middleware, data.get('pool_name'))
 
+    if data.get('type') in (
+        'ATTACH',
+        'DETACH',
+        'resource.fs.zfs.removed',
+        'misc.fs.zfs.config_sync',
+    ):
+        asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
+
+    if data.get('type') == 'ereport.fs.zfs.deadman':
+        asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
+            'vdev': data.get('vdev_path', '<unknown>'),
+            'pool': data.get('pool', '<unknown>'),
+        }))
+
 
 async def zfs_events(middleware, event_type, args):
     event_id = args['id']
@@ -129,6 +144,11 @@ async def zfs_events(middleware, event_type, args):
 
     if event_id == 'sysevent.fs.zfs.scrub_finish':
         await scrub_finished(middleware, args['fields'].get('pool'))
+    elif event_id == 'ereport.fs.zfs.deadman':
+        asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
+            'vdev': args['fields'].get('vdev_path', '<unknown>'),
+            'pool': args['fields'].get('pool', '<unknown>'),
+        }))
 
 
 def setup(middleware):
