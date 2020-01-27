@@ -14,12 +14,12 @@ from time import sleep, time
 
 url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
-Reason = 'Skip update for internal build'
+Reason = 'Skip update for all build until update repos exist'
 version = GET("/system/version/").json()
-not_internal = pytest.mark.skipif('INTERNAL' in version, reason=Reason)
+update_repos_missing = pytest.mark.skip(reason=Reason)
 
 
-@not_internal
+@update_repos_missing
 def test_00_get_update_conf_for_internals_and_nightly():
     freenas = GET("/system/is_freenas/").json()
     if freenas is True:
@@ -41,8 +41,7 @@ def test_00_get_update_conf_for_internals_and_nightly():
     assert True
 
 
-
-@not_internal
+@update_repos_missing
 def test_01_get_initial_FreeNAS_version():
     results = GET("/system/info/")
     assert results.status_code == 200, results.text
@@ -51,7 +50,7 @@ def test_01_get_initial_FreeNAS_version():
     initial_version = results.json()['version']
 
 
-@not_internal
+@update_repos_missing
 def test_02_get_update_trains():
     results = GET('/update/get_trains/')
     assert results.status_code == 200, results.text
@@ -60,7 +59,7 @@ def test_02_get_update_trains():
     selected_trains = results.json()['selected']
 
 
-@not_internal
+@update_repos_missing
 def test_03_check_available_update():
     global update_version
     results = POST('/update/check_available/')
@@ -72,7 +71,7 @@ def test_03_check_available_update():
         update_version = None
 
 
-@not_internal
+@update_repos_missing
 def test_04_update_get_pending():
     results = POST('/update/get_pending/')
     assert results.status_code == 200, results.text
@@ -80,7 +79,7 @@ def test_04_update_get_pending():
     assert results.json() == [], results.text
 
 
-@not_internal
+@update_repos_missing
 def test_05_get_download_update():
     if update_version is None:
         pytest.skip('No update found')
@@ -92,7 +91,7 @@ def test_05_get_download_update():
         JOB_ID = results.json()
 
 
-@not_internal
+@update_repos_missing
 def test_06_verify_the_update_download_is_successful():
     if update_version is None:
         pytest.skip('No update found')
@@ -118,7 +117,7 @@ def test_06_verify_the_update_download_is_successful():
                 break
 
 
-@not_internal
+@update_repos_missing
 def test_07_get_pending_update():
     if update_version is None:
         pytest.skip('No update found')
@@ -131,7 +130,7 @@ def test_07_get_pending_update():
         assert results.json() != [], results.text
 
 
-@not_internal
+@update_repos_missing
 def test_08_install_update():
     global reboot
     reboot = False
@@ -151,7 +150,7 @@ def test_08_install_update():
         JOB_ID = results.json()
 
 
-@not_internal
+@update_repos_missing
 def test_09_verify_the_update_is_successful():
     if update_version is None:
         pytest.skip('No update found')
@@ -168,7 +167,7 @@ def test_09_verify_the_update_is_successful():
                 break
 
 
-@not_internal
+@update_repos_missing
 def test_10_verify_system_is_ready_to_reboot():
     if update_version is None:
         pytest.skip('No update found')
@@ -181,7 +180,7 @@ def test_10_verify_system_is_ready_to_reboot():
         assert results.json()['status'] == 'REBOOT_REQUIRED', results.text
 
 
-@not_internal
+@update_repos_missing
 def test_11_wait_for_first_reboot_with_bhyve():
     if update_version is None:
         pytest.skip('No update found')
@@ -199,7 +198,7 @@ def test_11_wait_for_first_reboot_with_bhyve():
     sleep(1)
 
 
-@not_internal
+@update_repos_missing
 def test_12_wait_for_second_reboot_with_bhyve():
     if update_version is None:
         pytest.skip('No update found')
@@ -217,7 +216,7 @@ def test_12_wait_for_second_reboot_with_bhyve():
     sleep(1)
 
 
-@not_internal
+@update_repos_missing
 def test_13_wait_for_FreeNAS_to_be_online():
     if update_version is None:
         pytest.skip('No update found')
@@ -232,7 +231,7 @@ def test_13_wait_for_FreeNAS_to_be_online():
     sleep(10)
 
 
-@not_internal
+@update_repos_missing
 def test_14_verify_initial_version_is_not_current_FreeNAS_version():
     if update_version is None:
         pytest.skip('No update found')
@@ -249,7 +248,7 @@ def test_14_verify_initial_version_is_not_current_FreeNAS_version():
         assert initial_version != current_version, results.text
 
 
-@not_internal
+@update_repos_missing
 def test_15_verify_update_version_is_current_version():
     if update_version is None:
         pytest.skip('No update found')

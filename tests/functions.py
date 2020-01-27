@@ -4,17 +4,23 @@
 # License: BSD
 
 import requests
-from auto_config import default_api_url, api1_url, api2_url, user, password
+import select
+import pybonjour
 import json
 import os
-from subprocess import run, Popen, PIPE
-from time import sleep
 import re
+from time import sleep
+from subprocess import run, Popen, PIPE
+from auto_config import default_api_url, api1_url, api2_url, user, password
 
 global header
 header = {'Content-Type': 'application/json', 'Vary': 'accept'}
 global authentification
 authentification = (user, password)
+
+# used by reslove function
+results = {}
+resolved = []
 
 
 def GET(testpath, **optional):
@@ -317,3 +323,37 @@ def wait_on_job(job_id, max_timeout):
         if timeout >= max_timeout:
             return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
         timeout += 5
+
+
+def resolve_callback(sdRef, flags, interfaceIndex, errorCode, fullname,
+                     hosttarget, port, txtRecord):
+    if errorCode != pybonjour.kDNSServiceErr_NoError:
+        return
+
+    results.update({
+        'fullname': fullname,
+        'hosttarget': hosttarget,
+        'port': port,
+        'txtrecord': txtRecord
+    })
+
+
+# Example of hostname is 'freenas', domain is 'local' regtype is '_middleware._tcp.'
+def dns_service_resolve(hostname=None, domain=None, regtype=None):
+    results.clear()
+    resolved.clear()
+    resolve_sdRef = pybonjour.DNSServiceResolve(0, pybonjour.kDNSServiceInterfaceIndexAny, hostname, regtype, domain, resolve_callback)
+    try:
+        while not resolved:
+            ready = select.select([resolve_sdRef], [], [], 1)
+            if resolve_sdRef not in ready[0]:
+                break
+            pybonjour.DNSServiceProcessResult(resolve_sdRef)
+        else:
+            resolved.pop()
+    finally:
+        resolve_sdRef.close()
+    if results == {}:
+        return {'status': False, 'results': results}
+    else:
+        return {'status': True, 'results': results}
