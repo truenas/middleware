@@ -379,7 +379,6 @@ class LDAPModel(sa.Model):
     ldap_ssl = sa.Column(sa.String(120))
     ldap_timeout = sa.Column(sa.Integer())
     ldap_dns_timeout = sa.Column(sa.Integer())
-    ldap_idmap_backend = sa.Column(sa.String(120))
     ldap_has_samba_schema = sa.Column(sa.Boolean())
     ldap_auxiliary_parameters = sa.Column(sa.Text())
     ldap_schema = sa.Column(sa.String(120))
@@ -401,7 +400,7 @@ class LDAPService(ConfigService):
     @private
     async def ldap_extend(self, data):
         data['hostname'] = data['hostname'].split(',')
-        for key in ["ssl", "idmap_backend", "schema"]:
+        for key in ["ssl", "schema"]:
             data[key] = data[key].upper()
 
         for key in ["certificate", "kerberos_realm"]:
@@ -413,20 +412,13 @@ class LDAPService(ConfigService):
     @private
     async def ldap_compress(self, data):
         data['hostname'] = ','.join(data['hostname'])
-        for key in ["ssl", "idmap_backend", "schema"]:
+        for key in ["ssl", "schema"]:
             data[key] = data[key].lower()
 
         if not data['bindpw']:
             data.pop('bindpw')
 
         return data
-
-    @accepts()
-    async def idmap_backend_choices(self):
-        """
-        Returns list of available idmap backends.
-        """
-        return await self.middleware.call('directoryservices.idmap_backend_choices', 'LDAP')
 
     @accepts()
     async def schema_choices(self):
@@ -488,7 +480,6 @@ class LDAPService(ConfigService):
         Bool('disable_freenas_cache'),
         Int('timeout', default=30),
         Int('dns_timeout', default=5),
-        Str('idmap_backend', default='LDAP', enum=['SCRIPT', 'LDAP']),
         Int('kerberos_realm', null=True),
         Str('kerberos_principal'),
         Bool('has_samba_schema', default=False),
@@ -544,12 +535,6 @@ class LDAPService(ConfigService):
         use when connecting to the directory server. This directly impacts the
         length of time that the LDAP service tries before failing over to
         a secondary LDAP URI.
-
-        `idmap_backend` provides a plugin interface for Winbind to use varying
-        backends to store SID/uid/gid mapping tables. The correct setting
-        depends on the environment in which the NAS is deployed. The default is
-        to use idmap_ldap with the same LDAP configuration as the main LDAP
-        service.
 
         `has_samba_schema` determines whether to configure samba to use the
         ldapsam passdb backend to provide SMB access to LDAP users. This feature

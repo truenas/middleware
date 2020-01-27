@@ -33,7 +33,8 @@ class IdmapBackend(enum.Enum):
             'schema_mode': {"required": False, "default": 'RFC2307'},
             'unix_primary_group': {"required": False, "default": False},
             'unix_nss_info': {"required": False, "default": False},
-        }
+        },
+        'services': ['AD'],
     }
     AUTORID = {
         'description': 'Similar to the RID backend, but automatically configures '
@@ -45,7 +46,8 @@ class IdmapBackend(enum.Enum):
             'rangesize': {"required": False, "default": 100000},
             'readonly': {"required": False, "default": False},
             'ignore_builtin': {"required": False, "default": False},
-        }
+        },
+        'services': ['AD'],
     }
     LDAP = {
         'description': 'Stores and retrieves mapping tables in an LDAP directory '
@@ -55,7 +57,8 @@ class IdmapBackend(enum.Enum):
             'ldap_user_dn': {"required": True, "default": None},
             'ldap_url': {"required": True, "default": None},
             'ssl': {"required": False, "default": "NO"},
-        }
+        },
+        'services': ['AD', 'LDAP'],
     }
     NSS = {
         'description': 'Provides a simple means of ensuring that the SID for a '
@@ -63,7 +66,8 @@ class IdmapBackend(enum.Enum):
                        'corresponding domain user.',
         'parameters': {
             'linked_service': {"required": False, "default": "LOCAL_ACCOUNTS"},
-        }
+        },
+        'services': ['AD'],
     }
     RFC2307 = {
         'description': 'Looks up IDs in the Active Directory LDAP server '
@@ -82,18 +86,23 @@ class IdmapBackend(enum.Enum):
             'ldap_user_dn_password': {"required": True, "default": None},
             'ldap_realm': {"required": False, "default": None},
             'ssl': {"required": False, "default": "OFF"},
-        }
+        },
+        'services': ['AD', 'LDAP'],
     }
     RID = {
         'description': 'Default for Active Directory service. requires '
                        'an explicit configuration for each domain, using '
                        'disjoint ranges.',
-        'parameters': {}
+        'parameters': {
+            'sssd_compat': {"required': False, "default": False},
+        },
+        'services': ['AD'],
     }
     TDB = {
         'description': 'Default backend used to store mapping tables for '
                        'BUILTIN and well-known SIDs.',
-        'parameters': {}
+        'parameters': {},
+	'services': ['AD'],
     }
 
     def supported_keys(self):
@@ -111,6 +120,20 @@ class IdmapBackend(enum.Enum):
         for k, v in self.value['parameters'].items():
             if v['default'] is not None:
                 ret.update({k: v['default']})
+        return ret
+
+    def ds_choices():
+        directory_services = ['AD', 'LDAP']
+        ret = {}
+        for ds in directory_services:
+            ret[ds] = []
+
+        ds = {'AD': [], 'LDAP': []}
+        for x in IdmapBackend:
+            for ds in directory_services:
+                if ds in x.params['services']:
+                    ret[ds].append(x.name)
+
         return ret
 
 
@@ -205,14 +228,27 @@ class IdmapDomainService(CRUDService):
     @private
     async def autodiscover_trusted_domains(self):
         smb = await self.middleware.call('smb.config')
+
+        ad_idmap_backend = (await self.query([('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')], {'get': True}))['idmap_backend']
+        if ad_idmap_backend == IdmapBackend.AUTORID.name:
+            self.logger.trace('Skipping auto-generation of trusted domains due to AutoRID being enabled.')
+            return
+
         wbinfo = await run(['/usr/local/bin/wbinfo', '-m', '--verbose'], check=False)
         if wbinfo.returncode != 0:
             raise CallError(f'wbinfo -m failed with error: {wbinfo.stderr.decode().strip()}')
 
         for entry in wbinfo.stdout.decode().splitlines():
             c = entry.split()
+            range_low, range_high = await self.get_next_idmap_range()
             if len(c) == 6 and c[0] != smb['workgroup']:
-                await self.middleware.call('idmap.domain.create', {'name': c[0], 'dns_domain_name': c[1]})
+                await self.middleware.call('idmap.create', {
+                    'name': c[0],
+                    'dns_domain_name': c[1],
+                    'range_low': range_low,
+                    'range_high': range_high,
+                    'idmap_backend': 'RID'
+                })
 
     @accepts()
     async def backend_options(self):
@@ -322,6 +358,7 @@ class IdmapDomainService(CRUDService):
                 Str('cn_realm'),
                 Str('ldap_domain'),
                 Str('ldap_url'),
+                Bool('sssd_compat'),
             ),
             register=True
         )
@@ -334,8 +371,85 @@ class IdmapDomainService(CRUDService):
         There are three default system domains: DS_TYPE_ACTIVEDIRECTORY, DS_TYPE_LDAP, DS_TYPE_DEFAULT_DOMAIN.
         The system domains correspond with the idmap settings under Active Directory, LDAP, and SMB
         respectively.
+
         `name` the pre-windows 2000 domain name.
+
         `DNS_domain_name` DNS name of the domain.
+
+        `idmap_backend` provides a plugin interface for Winbind to use varying
+        backends to store SID/uid/gid mapping tables. The correct setting
+        depends on the environment in which the NAS is deployed.
+
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
+
+        `certificate_id` references the certificate ID of the SSL certificate to use for certificate-based
+        authentication to a remote LDAP server. This parameter is not supported for all idmap backends as some
+        backends will generate SID to ID mappings algorithmically without causing network traffic.
+
+        `options` are additional parameters that are backend-dependent:
+
+        `AD` idmap backend options:
+        `unix_primary_group` If True, the primary group membership is fetched from the LDAP attributes (gidNumber).
+        If False, the primary group membership is calculated via the "primaryGroupID" LDAP attribute.
+
+        `unix_nss_info` if True winbind will retrieve the login shell and home directory from the LDAP attributes.
+        If False or if the AD LDAP entry lacks the SFU attributes the smb4.conf parameters `template shell` and `template homedir` are used.
+
+        `schema_mode` Defines the schema that idmap_ad should use when querying Active Directory regarding user and group information.
+        This can be either the RFC2307 schema support included in Windows 2003 R2 or the Service for Unix (SFU) schema.
+        For SFU 3.0 or 3.5 please choose "SFU", for SFU 2.0 please choose "SFU20". The behavior of primary group membership is
+        controlled by the unix_primary_group option.
+
+        `AUTORID` idmap backend options:
+        `readonly` sets the module to read-only mode. No new ranges will be allocated and new mappings
+        will not be created in the idmap pool.
+
+        `ignore_builtin` ignores mapping requests for the BUILTIN domain.
+
+        `LDAP` idmap backend options:
+        `ldap_base_dn` defines the directory base suffix to use for SID/uid/gid mapping entries.
+
+        `ldap_user_dn` defines the user DN to be used for authentication.
+
+        `ldap_url` specifies the LDAP server to use for SID/uid/gid map entries.
+
+        `ssl` specifies whether to encrypt the LDAP transport for the idmap backend.
+
+        `NSS` idmap backend options:
+        `linked_service` specifies the auxiliary directory service ID provider.
+
+        `RFC2307` idmap backend options:
+        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
+        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
+        it appears in `idmap.domain`.
+
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
+
+        `ldap_server` defines the type of LDAP server to use. This can either be an LDAP server provided
+        by the Active Directory Domain (ad) or a stand-alone LDAP server.
+
+        `bind_path_user` specfies the search base where user objects can be found in the LDAP server.
+
+        `bind_path_group` specifies the search base where group objects can be found in the LDAP server.
+
+        `user_cn` query cn attribute instead of uid attribute for the user name in LDAP.
+
+        `realm` append @realm to cn for groups (and users if user_cn is set) in LDAP queries.
+
+        `ldmap_domain` when using the LDAP server in the Active Directory server, this allows one to
+        specify the domain where to access the Active Directory server. This allows using trust relationships
+        while keeping all RFC 2307 records in one place. This parameter is optional, the default is to access
+        the AD server in the current domain to query LDAP records.
+
+        `ldap_url` when using a stand-alone LDAP server, this parameter specifies the LDAP URL for accessing the LDAP server.
+
+        `ldap_user_dn` defines the user DN to be used for authentication.
+
+        `realm` defines the realm to use in the user and group names. This is only required when using cn_realm together with
+         a stand-alone ldap server.
+
+        `RID` backend options:
+        `sssd_compat` generate idmap low range based on same algorithm that SSSD uses by default.
         """
         verrors = ValidationErrors()
         if data['name'] in [x['name'] for x in await self.query()]:

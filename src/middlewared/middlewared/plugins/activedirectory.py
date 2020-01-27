@@ -561,7 +561,6 @@ class ActiveDirectoryModel(sa.Model):
     ad_site = sa.Column(sa.String(120), nullable=True)
     ad_timeout = sa.Column(sa.Integer())
     ad_dns_timeout = sa.Column(sa.Integer())
-    ad_idmap_backend = sa.Column(sa.String(120))
     ad_nss_info = sa.Column(sa.String(120), nullable=True)
     ad_ldap_sasl_wrapping = sa.Column(sa.String(120))
     ad_enable = sa.Column(sa.Boolean())
@@ -602,7 +601,7 @@ class ActiveDirectoryService(ConfigService):
                 'netbiosalias': smb['netbiosalias']
             })
 
-        for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
+        for key in ['ssl', 'nss_info', 'ldap_sasl_wrapping']:
             if key in ad and ad[key] is not None:
                 ad[key] = ad[key].upper()
 
@@ -623,18 +622,11 @@ class ActiveDirectoryService(ConfigService):
             if key in ad:
                 ad.pop(key)
 
-        for key in ['ssl', 'idmap_backend', 'nss_info', 'ldap_sasl_wrapping']:
+        for key in ['ssl', 'nss_info', 'ldap_sasl_wrapping']:
             if ad[key] is not None:
                 ad[key] = ad[key].lower()
 
         return ad
-
-    @accepts()
-    async def idmap_backend_choices(self):
-        """
-        Returns list of available idmap backends.
-        """
-        return await self.middleware.call('directoryservices.idmap_backend_choices', 'ACTIVEDIRECTORY')
 
     @accepts()
     async def nss_info_choices(self):
@@ -728,7 +720,6 @@ class ActiveDirectoryService(ConfigService):
         Str('kerberos_principal', null=True),
         Int('timeout', default=60),
         Int('dns_timeout', default=10),
-        Str('idmap_backend', default='RID', enum=['AD', 'AUTORID', 'FRUIT', 'LDAP', 'NSS', 'RFC2307', 'RID', 'SCRIPT']),
         Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
         Str('ldap_sasl_wrapping', default='SIGN', enum=['PLAIN', 'SIGN', 'SEAL']),
         Str('createcomputer'),
@@ -833,10 +824,6 @@ class ActiveDirectoryService(ConfigService):
         When this field is blank, new computer accounts are created in the
         Active Directory default OU.
 
-        `idmap_backend` provides a plugin interface for Winbind to use varying
-        backends to store SID/uid/gid mapping tables. The correct setting
-        depends on the environment in which the NAS is deployed.
-
         The Active Directory service is started after a configuration
         update if the service was initially disabled, and the updated
         configuration sets `enable` to `True`. The Active Directory
@@ -892,13 +879,6 @@ class ActiveDirectoryService(ConfigService):
         start = False
         stop = False
 
-        if old['idmap_backend'] != new['idmap_backend'].upper():
-            idmap = await self.middleware.call('idmap.query', [('id', '=', dstype.DS_TYPE_ACTIVEDIRECTORY.value)], {})
-            idmap_id = idmap.pop('id')
-            if not idmap['range_low']:
-                idmap['range_low'], idmap['range_high'] = await self.middleware.call('idmap.get_next_idmap_range')
-            await self.middleware.call('idmap.update', idmap_id, idmap)
-
         if not old['enable']:
             if new['enable']:
                 start = True
@@ -927,6 +907,16 @@ class ActiveDirectoryService(ConfigService):
         Active Directory service.
         """
         return (await self.middleware.call('directoryservices.get_state'))['activedirectory']
+
+    @private
+    async def set_idmap(self, trusted_domains):
+        idmap = await self.middleware.call('idmap.query', [('id', '=', dstype.DS_TYPE_ACTIVEDIRECTORY.value)], {})
+        idmap_id = idmap.pop('id')
+        if not idmap['range_low']:
+            idmap['range_low'], idmap['range_high'] = await self.middleware.call('idmap.get_next_idmap_range')
+        await self.middleware.call('idmap.update', idmap_id, idmap)
+        if trusted_domains:
+            await self.middleware.call('idmap.autodiscover_trusted_domains')
 
     @private
     async def start(self):
@@ -1037,6 +1027,7 @@ class ActiveDirectoryService(ConfigService):
 
             ret = neterr.JOINED
             await self.middleware.call('service.update', 'cifs', {'enable': True})
+            await self.set_idmap(ad['allow_trusted_doms'])
             await self.middleware.call('activedirectory.set_ntp_servers')
 
         await self.middleware.call('service.restart', 'cifs')
