@@ -94,7 +94,7 @@ class IdmapBackend(enum.Enum):
                        'an explicit configuration for each domain, using '
                        'disjoint ranges.',
         'parameters': {
-            'sssd_compat': {"required': False, "default": False},
+            'sssd_compat': {"required": False, "default": False},
         },
         'services': ['AD'],
     }
@@ -102,7 +102,7 @@ class IdmapBackend(enum.Enum):
         'description': 'Default backend used to store mapping tables for '
                        'BUILTIN and well-known SIDs.',
         'parameters': {},
-	'services': ['AD'],
+        'services': ['AD'],
     }
 
     def supported_keys(self):
