@@ -129,7 +129,6 @@ DEF_KNOBS = {
         'vfs.zfs.vdev.async_write_max_active',
         'vfs.zfs.vdev.sync_write_max_active',
         'vfs.zfs.top_maxinflight',
-        'vfs.zfs.metaslab.lba_weighting_enabled',
         'vfs.zfs.zfetch.max_distance',
     },
 }
@@ -306,13 +305,6 @@ def guess_vfs_zfs_top_maxinflight():
         return 256
     else:
         return None
-
-
-def guess_vfs_zfs_metaslab_lba_weighting_enabled():
-    if TRUENAS and hardware[0] == "Z50":
-        return 0
-    else:
-        return 1
 
 
 def guess_vfs_zfs_zfetch_max_distance():
