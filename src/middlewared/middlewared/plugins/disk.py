@@ -687,19 +687,6 @@ async def devd_devfs_hook(middleware, data):
         await middleware.call('disk.swaps_configure')
 
 
-async def devd_zfs_hook(middleware, data):
-    # Swap must be configured only on disks being used by some pool,
-    # for this reason we must react to certain types of ZFS events to keep
-    # it in sync every time there is a change.
-    if data.get('type') in (
-        'misc.fs.zfs.config_sync',
-        'misc.fs.zfs.pool_create',
-        'misc.fs.zfs.pool_destroy',
-        'misc.fs.zfs.pool_import',
-    ):
-        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
-
-
 async def _event_system_ready(middleware, event_type, args):
     if args['id'] != 'ready':
         return
@@ -711,7 +698,5 @@ async def _event_system_ready(middleware, event_type, args):
 def setup(middleware):
     # Listen to DEVFS events so we can sync on disk attach/detach
     middleware.register_hook('devd.devfs', devd_devfs_hook)
-    # Listen to ZFS events to reconfigure swap on pool create/export/import
-    middleware.register_hook('devd.zfs', devd_zfs_hook)
     # Run disk tasks once system is ready (e.g. power management)
     middleware.event_subscribe('system', _event_system_ready)
