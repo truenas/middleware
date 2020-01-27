@@ -1,14 +1,15 @@
 import enum
 import errno
 import os
+import datetime
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
-from middlewared.service import CallError, CRUDService, job, Service, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.validators import Range
 
 
-class dstype(enum.Enum):
+class DSType(enum.Enum):
     """
     The below DS_TYPES are defined for use as system domains for idmap backends.
     DS_TYPE_NT4 is defined, but has been deprecated. DS_TYPE_DEFAULT_DOMAIN corresponds
@@ -19,222 +20,170 @@ class dstype(enum.Enum):
     DS_TYPE_ACTIVEDIRECTORY = 1
     DS_TYPE_LDAP = 2
     DS_TYPE_NIS = 3
-    DS_TYPE_NT4 = 4
+    DS_TYPE_FREEIPA = 4
     DS_TYPE_DEFAULT_DOMAIN = 5
 
 
-class IdmapService(Service):
+class IdmapBackend(enum.Enum):
+    AD = {
+        'description': 'The AD backend provides a way for TrueNAS to read id '
+                       'mappings from an Active Directory server that uses '
+                       'RFC2307/SFU schema extensions. ',
+        'parameters': {
+            'schema_mode': {"required": False, "default": 'RFC2307'},
+            'unix_primary_group': {"required": False, "default": False},
+            'unix_nss_info': {"required": False, "default": False},
+        },
+        'services': ['AD'],
+    }
+    AUTORID = {
+        'description': 'Similar to the RID backend, but automatically configures '
+                       'the range to be used for each domain, so that there is no '
+                       'need to specify a specific range for each domain in the forest '
+                       'The only needed configuration is the range of UID/GIDs to use '
+                       'for user/group mappings and an optional size for the ranges.',
+        'parameters': {
+            'rangesize': {"required": False, "default": 100000},
+            'readonly': {"required": False, "default": False},
+            'ignore_builtin': {"required": False, "default": False},
+        },
+        'services': ['AD'],
+    }
+    LDAP = {
+        'description': 'Stores and retrieves mapping tables in an LDAP directory '
+                       'service. Default for LDAP directory service.',
+        'parameters': {
+            'ldap_base_dn': {"required": True, "default": None},
+            'ldap_user_dn': {"required": True, "default": None},
+            'ldap_url': {"required": True, "default": None},
+            'ssl': {"required": False, "default": "NO"},
+            'readonly': {"required": False, "default": False},
+        },
+        'services': ['AD', 'LDAP'],
+    }
+    NSS = {
+        'description': 'Provides a simple means of ensuring that the SID for a '
+                       'Unix user is reported as the one assigned to the '
+                       'corresponding domain user.',
+        'parameters': {
+            'linked_service': {"required": False, "default": "LOCAL_ACCOUNTS"},
+        },
+        'services': ['AD'],
+    }
+    RFC2307 = {
+        'description': 'Looks up IDs in the Active Directory LDAP server '
+                       'or an extenal (non-AD) LDAP server. IDs must be stored '
+                       'in RFC2307 ldap schema extensions. Other schema extensions '
+                       'such as Services For Unix (SFU20/SFU30) are not supported.',
+        'parameters': {
+            'ldap_server': {"required": False, "default": "AD"},
+            'bind_path_user': {"required": False, "default": None},
+            'bind_path_group': {"required": False, "default": None},
+            'user_cn': {"required": False, "default": None},
+            'cn_realm': {"required": False, "default": None},
+            'ldap_domain': {"required": False, "default": None},
+            'ldap_url': {"required": False, "default": None},
+            'ldap_user_dn': {"required": True, "default": None},
+            'ldap_user_dn_password': {"required": True, "default": None},
+            'ldap_realm': {"required": False, "default": None},
+            'ssl': {"required": False, "default": "OFF"},
+        },
+        'services': ['AD', 'LDAP'],
+    }
+    RID = {
+        'description': 'Default for Active Directory service. requires '
+                       'an explicit configuration for each domain, using '
+                       'disjoint ranges.',
+        'parameters': {
+            'sssd_compat': {"required": False, "default": False},
+        },
+        'services': ['AD'],
+    }
+    TDB = {
+        'description': 'Default backend used to store mapping tables for '
+                       'BUILTIN and well-known SIDs.',
+        'parameters': {
+            'readonly': {"required": False, "default": False},
+        },
+        'services': ['AD'],
+    }
+
+    def supported_keys(self):
+        return [str(x) for x in self.value['parameters'].keys()]
+
+    def required_keys(self):
+        ret = []
+        for k, v in self.value['parameters'].items():
+            if v['required']:
+                ret.append(str(k))
+        return ret
+
+    def defaults(self):
+        ret = {}
+        for k, v in self.value['parameters'].items():
+            if v['default'] is not None:
+                ret.update({k: v['default']})
+        return ret
+
+    def ds_choices():
+        directory_services = ['AD', 'LDAP']
+        ret = {}
+        for ds in directory_services:
+            ret[ds] = []
+
+        ds = {'AD': [], 'LDAP': []}
+        for x in IdmapBackend:
+            for ds in directory_services:
+                if ds in x.value['services']:
+                    ret[ds].append(x.name)
+
+        return ret
+
+
+class IdmapDomainModel(sa.Model):
+    __tablename__ = 'directoryservice_idmap_domain'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    idmap_domain_name = sa.Column(sa.String(120))
+    idmap_domain_dns_domain_name = sa.Column(sa.String(255), nullable=True)
+    idmap_domain_range_low = sa.Column(sa.Integer())
+    idmap_domain_range_high = sa.Column(sa.Integer())
+    idmap_domain_idmap_backend = sa.Column(sa.String(120), default='rid')
+    idmap_domain_options = sa.Column(sa.JSON(type=dict))
+    idmap_domain_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+
+
+class IdmapDomainService(CRUDService):
     class Config:
-        private = False
+        datastore = 'directoryservice.idmap_domain'
+        datastore_prefix = 'idmap_domain_'
         namespace = 'idmap'
-
-    @accepts(
-        Str('domain')
-    )
-    async def get_or_create_idmap_by_domain(self, domain):
-        """
-        Returns idmap settings based on pre-windows 2000 domain name (workgroup)
-        If mapping exists, but there's no corresponding entry in the specified idmap
-        table, then we generate a new one with the next available block of ids and return it.
-        """
-        my_domain = await self.middleware.call('idmap.domaintobackend.query', [('domain', '=', domain)])
-        if not my_domain:
-            raise CallError(f'No domain to idmap backend exists for domain [{domain}]', errno.ENOENT)
-
-        backend_entry = await self.middleware.call(
-            f'idmap.{my_domain[0]["idmap_backend"].lower()}.query',
-            [('domain.idmap_domain_name', '=', domain)]
-        )
-        if backend_entry:
-            return backend_entry[0]
-
-        next_idmap_range = await self.get_next_idmap_range()
-        new_idmap = await self.middleware.call(f'idmap.{my_domain[0]["idmap_backend"].lower()}.create', {
-            'domain': {'id': my_domain[0]['id']},
-            'range_low': next_idmap_range[0],
-            'range_high': next_idmap_range[1]
-        })
-        return new_idmap
+        datastore_extend = f'{namespace}.idmap_extend'
 
     @private
-    async def idmap_domain_choices(self):
-        choices = []
-        domains = await self.middleware.call('idmap.domain.query')
-        for domain in domains:
-            choices.append(domain['name'])
+    async def idmap_extend(self, data):
+        if data.get('idmap_backend'):
+            data['idmap_backend'] = data['idmap_backend'].upper()
 
-        return choices
-
-    @private
-    async def get_idmap_legacy(self, obj_type, idmap_type):
-        """
-        This is compatibility shim for legacy idmap code
-        utils.get_idmap()
-        obj_type is dstype.
-        idmap_type is the idmap backend
-        If the we don't have a corresponding entry in the idmap backend table,
-        automatically generate one.
-        """
-        idmap_type = idmap_type.lower()
-        if idmap_type in ['adex', 'hash']:
-            raise CallError(f'idmap backend {idmap_type} has been deprecated')
-
-        ds_type = dstype(int(obj_type)).name
-
-        if ds_type not in ['DS_TYPE_ACTIVEDIRECTORY', 'DS_TYPE_LDAP', 'DS_TYPE_DEFAULT_DOMAIN']:
-            raise CallError(f'idmap backends are not supported for {ds_type}')
-
-        res = await self.middleware.call(f'idmap.{idmap_type}.query', [('domain.idmap_domain_name', '=', ds_type)])
-        if res:
-            return {
-                'idmap_id': res[0]['id'],
-                'idmap_type': idmap_type,
-                'idmap_name': idmap_type
-            }
-        next_idmap_range = await self.get_next_idmap_range()
-        new_idmap = await self.middleware.call(f'idmap.{idmap_type}.create', {
-            'domain': {'id': obj_type},
-            'range_low': next_idmap_range[0],
-            'range_high': next_idmap_range[1]
-        })
-        return {'idmap_id': new_idmap['id'], 'idmap_type': idmap_type, 'idmap_name': idmap_type}
-
-    @private
-    async def common_backend_extend(self, data):
-        for key in ['ldap_server', 'schema_mode', 'ssl']:
-            if key in data and data[key] is not None:
-                data[key] = data[key].upper()
+        opt_enums = ['ssl', 'linked_service']
+        if data.get('options'):
+            for i in opt_enums:
+                if data['options'].get(i):
+                    data['options'][i] = data['options'][i].upper()
 
         return data
 
     @private
-    async def common_backend_compress(self, data):
-        for key in ['ldap_server', 'schema_mode', 'ssl']:
-            if key in data and data[key] is not None:
-                data[key] = data[key].lower()
+    async def idmap_compress(self, data):
+        opt_enums = ['ssl', 'linked_service']
+        if data.get('options'):
+            for i in opt_enums:
+                if data['options'].get(i):
+                    data['options'][i] = data['options'][i].lower()
 
-        if 'id' in data['domain'] and data['domain']['id']:
-            domain_info = await self.middleware.call(
-                'idmap.domain.query', [('id', '=', data['domain']['id'])]
-            )
-            data['domain'] = domain_info[0]['name']
-        elif 'idmap_domain_name' in data['domain'] and data['domain']['idmap_domain_name']:
-            data['domain'] = data['domain']['idmap_domain_name']
-        else:
-            domain_info = await self.middleware.call(
-                'idmap.domain.query', [('domain', '=', data['domain']['idmap_domain_dns_domain_name'].upper())]
-            )
-            data['domain'] = domain_info[0]['name']
+        data['idmap_backend'] = data['idmap_backend'].lower()
 
         return data
-
-    @private
-    async def _validate_domain_info(self, domain, verrors):
-        """
-        Only domains that have been configured as idmap domains
-        are permitted.
-        """
-        configured_domains = await self.middleware.call('idmap.domain.query')
-
-        id = domain.get('id')
-        id_verified = False
-
-        short_name = domain.get('idmap_domain_name')
-        short_name_verified = False
-
-        for d in configured_domains:
-            if d['id'] == id:
-                id_verified = True
-            if d['name'] == short_name:
-                short_name_verified = True
-
-        if id is not None and not id_verified:
-            verrors.add('domain.id', f'Domain [{id}] does not exist.')
-
-        if short_name is not None and not short_name_verified:
-            verrors.add('domain.idmap_domain_name', f'Domain [{short_name}] does not exist.')
-
-    @private
-    async def _common_validate(self, idmap_backend, data):
-        """
-        Common validation checks for all idmap backends.
-
-        1) Check for a high range that is lower than the low range.
-
-        2) Check for overlap with other configured idmap ranges.
-
-        In some circumstances overlap is permitted:
-
-        - new idmap range may overlap previously configured idmap range of same domain.
-
-        - new idmap range may overlap an idmap range configured for a disabled directory service.
-
-        - new idmap range for 'autorid' may overlap DS_TYPE_DEFAULT_DOMAIN
-
-        - new idmap range for 'ad' may overlap other 'ad' ranges. In this situation, it is responsibility
-          of the system administrator to avoid id collisions between the configured domains.
-        """
-        verrors = ValidationErrors()
-        if data['range_high'] < data['range_low']:
-            verrors.add(f'idmap_range', 'Idmap high range must be greater than idmap low range')
-            return verrors
-
-        await self._validate_domain_info(data['domain'], verrors)
-
-        configured_domains = await self.get_configured_idmap_domains()
-        ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
-        ad_enabled = False if await self.middleware.call('activedirectory.get_state') == 'DISABLED' else True
-        new_range = range(data['range_low'], data['range_high'])
-        for i in configured_domains:
-            # Do not generate validation error comparing to oneself.
-            if i['domain']['id'] == data['domain'].get('id'):
-                continue
-
-            # Do not generate validation errors for overlapping with a disabled DS.
-            if not ldap_enabled and i['domain']['idmap_domain_name'] == 'DS_TYPE_LDAP':
-                continue
-
-            if not ad_enabled and i['domain']['idmap_domain_name'] == 'DS_TYPE_ACTIVEDIRECTORY':
-                continue
-
-            # Idmap settings under Services->SMB are ignored when autorid is enabled.
-            if idmap_backend == 'autorid' and i['domain']['id'] == 5:
-                continue
-
-            # Overlap between ranges defined for 'ad' backend are permitted.
-            if idmap_backend == 'ad' and i['idmap_backend'] == 'ad':
-                continue
-
-            existing_range = range(i['backend_data']['range_low'], i['backend_data']['range_high'])
-            if range(max(existing_range[0], new_range[0]), min(existing_range[-1], new_range[-1]) + 1):
-                verrors.add(
-                    f'idmap_range',
-                    f'new idmap range conflicts with existing range for domain [{i["domain"]["idmap_domain_name"]}]'
-                )
-
-        return verrors
-
-    @accepts()
-    async def get_configured_idmap_domains(self):
-        """
-        returns list of all configured idmap domains. A configured domain is one
-        that exists in the domaintobackend table and has a corresponding backend configured in the respective
-        idmap_{backend} table. List is sorted based in ascending order based on the id range.
-        """
-        domains = await self.middleware.call('idmap.domaintobackend.query')
-        configured_domains = []
-        for domain in domains:
-            b = await self.middleware.call(
-                f'idmap.{domain["idmap_backend"].lower()}.query',
-                [('domain.idmap_domain_name', '=', domain['domain']['idmap_domain_name'])]
-            )
-            for entry in b:
-                entry.pop('domain')
-                entry.pop('id')
-                domain.update({'backend_data': entry})
-                configured_domains.append(domain)
-
-        return sorted(configured_domains, key=lambda domain: domain['backend_data']['range_high'])
 
     @private
     async def get_next_idmap_range(self):
@@ -243,10 +192,109 @@ class IdmapService(Service):
         to accomodate the highest available rid value for a domain.
         Configured idmap ranges _must_ not overlap.
         """
-        sorted_idmaps = await self.get_configured_idmap_domains()
-        low_range = sorted_idmaps[-1]['backend_data']['range_high'] + 1
-        high_range = sorted_idmaps[-1]['backend_data']['range_high'] + 100000000
+        domains = await self.query()
+        sorted_idmaps = sorted(domains, key=lambda domain: domain['range_high'])
+        low_range = sorted_idmaps[-1]['range_high'] + 1
+        high_range = sorted_idmaps[-1]['range_high'] + 100000000
         return (low_range, high_range)
+
+    @private
+    async def remove_winbind_idmap_tdb(self):
+        sysdataset = (await self.middleware.call('systemdataset.config'))['basename']
+        ts = str(datetime.datetime.now(datetime.timezone.utc).timestamp())[:10]
+        await self.middleware.call('zfs.snapshot.create', {'dataset': f'{sysdataset}/samba4',
+                                                           'name': f'wbc-{ts}'})
+        try:
+            os.remove('/var/db/system/samba4/winbindd_idmap.tdb')
+
+        except FileNotFoundError:
+            self.logger.trace("winbindd_idmap.tdb does not exist. Skipping removal.")
+
+        except Exception:
+            self.logger.debug("Failed to remove winbindd_idmap.tdb.", exc_info=True)
+
+    @private
+    async def domain_info(self, domain):
+        ret = {}
+
+        if domain == 'DS_TYPE_ACTIVEDIRECTORY':
+            domain = (await self.middleware.call('smb.config'))['workgroup']
+
+        wbinfo = await run(['wbinfo', '-D', domain], check=False)
+        if wbinfo.returncode != 0:
+            raise CallError(f'Failed to get domain info for {domain}: '
+                            f'{wbinfo.stderr.decode().strip()}')
+
+        for entry in wbinfo.stdout.splitlines():
+            kv = entry.decode().split(':')
+            ret.update({kv[0].strip(): kv[1].strip()})
+
+        return ret
+
+    @private
+    async def get_sssd_low_range(self, domain, sssd_config=None, seed=0xdeadbeef):
+        """
+        This is best effort attempt for SSSD compatibility. It will allocate low
+        range for then initial slice in the SSSD environment. The SSSD allocation algorithm
+        is non-deterministic. Domain SID string is converted to a 32-bit hashed value
+        using murmurhash3 algorithm.
+
+        The modulus of this value with the total number of available slices is used to
+        pick the slice. This slice number is then used to calculate the low range for
+        RID 0. With the default settings in SSSD this will be deterministic as long as
+        the domain has less than 200,000 RIDs.
+        """
+        sid = (await self.domain_info(domain))['SID']
+        sssd_config = {} if not sssd_config else sssd_config
+        range_size = sssd_config.get('range_size', 200000)
+        range_low = sssd_config.get('range_low', 10001)
+        range_max = sssd_config.get('range_max', 2000200000)
+        max_slices = int((range_max - range_low) / range_size)
+
+        data = bytearray(sid.encode())
+        datalen = len(data)
+        hash = seed
+        data_bytes = data
+
+        c1 = 0xcc9e2d51
+        c2 = 0x1b873593
+        r1 = 15
+        r2 = 13
+        n = 0xe6546b64
+
+        while datalen >= 4:
+            k = int.from_bytes(data_bytes[:4], byteorder='little') & 0xFFFFFFFF
+            self.logger.debug('%d', k)
+            data_bytes = data_bytes[4:]
+            datalen = datalen - 4
+            k = (k * c1) & 0xFFFFFFFF
+            k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
+            k = (k * c2) & 0xFFFFFFFF
+            hash ^= k
+            hash = (hash << r2 | hash >> 32 - r2) & 0xFFFFFFFF
+            hash = (hash * 5 + n) & 0xFFFFFFFF
+
+        if datalen > 0:
+            k = 0
+            if datalen >= 3:
+                k = k | int.from_bytes(data_bytes[2], byteorder='little') << 16
+            if datalen >= 2:
+                k = k | data_bytes[1] << 8
+            if datalen >= 1:
+                k = k | data_bytes[0]
+                k = (k * c1) & 0xFFFFFFFF
+                k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
+                k = (k * c2) & 0xFFFFFFFF
+                hash ^= k
+
+        hash = (hash ^ len(data)) & 0xFFFFFFFF
+        hash ^= hash >> 16
+        hash = (hash * 0x85ebca6b) & 0xFFFFFFFF
+        hash ^= hash >> 13
+        hash = (hash * 0xc2b2ae35) & 0xFFFFFFFF
+        hash ^= hash >> 16
+
+        return (hash % max_slices) * range_size + range_size
 
     @accepts()
     @job(lock='clear_idmap_cache')
@@ -256,11 +304,17 @@ class IdmapService(Service):
         This should be performed after finalizing idmap changes.
         """
         await self.middleware.call('service.stop', 'cifs')
+
         try:
             os.remove('/var/db/system/samba4/winbindd_cache.tdb')
-        except Exception as e:
-            self.logger.debug("Failed to remove winbindd_cache.tdb: %s" % e)
 
+        except FileNotFoundError:
+            self.logger.debug("Failed to remove winbindd_cache.tdb. File not found.")
+
+        except Exception:
+            self.logger.debug("Failed to remove winbindd_cache.tdb.", exc_info=True)
+
+        await self.middleware.call('etc.generate', 'smb')
         await self.middleware.call('service.start', 'cifs')
         gencache_flush = await run(['net', 'cache', 'flush'], check=False)
         if gencache_flush.returncode != 0:
@@ -269,35 +323,153 @@ class IdmapService(Service):
     @private
     async def autodiscover_trusted_domains(self):
         smb = await self.middleware.call('smb.config')
-        wbinfo = await run(['/usr/local/bin/wbinfo', '-m', '--verbose'], check=False)
+
+        ad_idmap_backend = (await self.query([('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')], {'get': True}))['idmap_backend']
+        if ad_idmap_backend == IdmapBackend.AUTORID.name:
+            self.logger.trace('Skipping auto-generation of trusted domains due to AutoRID being enabled.')
+            return
+
+        wbinfo = await run(['wbinfo', '-m', '--verbose'], check=False)
         if wbinfo.returncode != 0:
             raise CallError(f'wbinfo -m failed with error: {wbinfo.stderr.decode().strip()}')
 
         for entry in wbinfo.stdout.decode().splitlines():
             c = entry.split()
+            range_low, range_high = await self.get_next_idmap_range()
             if len(c) == 6 and c[0] != smb['workgroup']:
-                await self.middleware.call('idmap.domain.create', {'name': c[0], 'dns_domain_name': c[1]})
+                await self.middleware.call('idmap.create', {
+                    'name': c[0],
+                    'dns_domain_name': c[1],
+                    'range_low': range_low,
+                    'range_high': range_high,
+                    'idmap_backend': 'RID'
+                })
 
+    @accepts()
+    async def backend_options(self):
+        """
+        This returns full information about idmap backend options. Not all
+        `options` are valid for every backend.
+        """
+        return {x.name: x.value for x in IdmapBackend}
 
-class IdmapDomainModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_domain'
+    @accepts(
+        Str('idmap_backend', enum=[x.name for x in IdmapBackend]),
+    )
+    async def options_choices(self, backend):
+        """
+        Returns a list of supported keys for the specified idmap backend.
+        """
+        return IdmapBackend[backend].supported_keys()
 
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_domain_name = sa.Column(sa.String(120))
-    idmap_domain_dns_domain_name = sa.Column(sa.String(255), nullable=True)
+    @accepts()
+    async def backend_choices(self):
+        """
+        Returns array of valid idmap backend choices per directory service.
+        """
+        return IdmapBackend.ds_choices()
 
+    @private
+    async def validate(self, schema_name, data, verrors):
+        if data['name'] in [DSType.DS_TYPE_LDAP.name, DSType.DS_TYPE_DEFAULT_DOMAIN.name]:
+            if data['idmap_backend'] not in (await self.backend_choices())['LDAP']:
+                verrors.add(f'{schema_name}.idmap_backend',
+                            f'idmap backend [{data["idmap_backend"]}] is not appropriate. '
+                            f'for the system domain type {data["name"]}')
 
-class IdmapDomainService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_domain'
-        datastore_prefix = 'idmap_domain_'
-        namespace = 'idmap.domain'
+        if data['range_high'] < data['range_low']:
+            verrors.add(f'{schema_name}.range_low', 'Idmap high range must be greater than idmap low range')
+
+        configured_domains = await self.query()
+        ldap_enabled = False if await self.middleware.call('ldap.get_state') == 'DISABLED' else True
+        ad_enabled = False if await self.middleware.call('activedirectory.get_state') == 'DISABLED' else True
+        new_range = range(data['range_low'], data['range_high'])
+        idmap_backend = data.get('idmap_backend')
+        for i in configured_domains:
+            # Do not generate validation error comparing to oneself.
+            if i['name'] == data['name']:
+                continue
+
+            # Do not generate validation errors for overlapping with a disabled DS.
+            if not ldap_enabled and i['name'] == 'DS_TYPE_LDAP':
+                continue
+
+            if not ad_enabled and i['name'] == 'DS_TYPE_ACTIVEDIRECTORY':
+                continue
+
+            # Idmap settings under Services->SMB are ignored when autorid is enabled.
+            if idmap_backend == IdmapBackend.AUTORID.name and i['name'] == 'DS_TYPE_DEFAULT_DOMAIN':
+                continue
+
+            # Overlap between ranges defined for 'ad' backend are permitted.
+            if idmap_backend == IdmapBackend.AD.name and i['idmap_backend'] == IdmapBackend.AD.name:
+                continue
+
+            existing_range = range(i['range_low'], i['range_high'])
+            if range(max(existing_range[0], new_range[0]), min(existing_range[-1], new_range[-1]) + 1):
+                verrors.add(f'{schema_name}.range_low',
+                            'new idmap range conflicts with existing range for domain '
+                            f'[{i["name"]}].')
+
+    @private
+    async def validate_options(self, schema_name, data, verrors, check=['MISSING', 'EXTRA']):
+        supported_keys = set(IdmapBackend[data['idmap_backend']].supported_keys())
+        required_keys = set(IdmapBackend[data['idmap_backend']].required_keys())
+        provided_keys = set([str(x) for x in data['options'].keys()])
+
+        missing_keys = required_keys - provided_keys
+        extra_keys = provided_keys - supported_keys
+
+        if 'MISSING' in check:
+            for k in missing_keys:
+                verrors.add(f'{schema_name}.options.{k}',
+                            f'[{k}] is a required parameter for the [{data["idmap_backend"]}] idmap backend.')
+
+        if 'EXTRA' in check:
+            for k in extra_keys:
+                verrors.add(f'{schema_name}.options.{k}',
+                            f'[{k}] is not a valid parameter for the [{data["idmap_backend"]}] idmap backend.')
+
+    @private
+    async def prune_keys(self, data):
+        supported_keys = set(IdmapBackend[data['idmap_backend']].supported_keys())
+        provided_keys = set([str(x) for x in data['options'].keys()])
+
+        for k in (provided_keys - supported_keys):
+            data['options'].pop(k)
 
     @accepts(
         Dict(
             'idmap_domain_create',
             Str('name', required=True),
-            Str('DNS_domain_name'),
+            Str('dns_domain_name'),
+            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
+            Str('idmap_backend', enum=[x.name for x in IdmapBackend]),
+            Int('certificate_id', null=True),
+            Dict(
+                'options',
+                Str('schema_mode'),
+                Bool('unix_primary_group'),
+                Bool('unix_nss_info'),
+                Int('rangesize', validators=[Range(min=10000, max=1000000000)]),
+                Bool('readonly'),
+                Bool('ignore_builtin'),
+                Str('ldap_base_dn'),
+                Str('ldap_user_dn'),
+                Str('ldap_user_dn_password'),
+                Str('ldap_url'),
+                Str('ssl', enum=['OFF', 'ON', 'START_TLS']),
+                Str('linked_service', enum=['LOCAL_ACCOUNT', 'LDAP', 'NIS']),
+                Str('ldap_server'),
+                Str('bind_path_user'),
+                Str('bind_path_group'),
+                Str('user_cn'),
+                Str('cn_realm'),
+                Str('ldap_domain'),
+                Str('ldap_url'),
+                Bool('sssd_compat'),
+            ),
             register=True
         )
     )
@@ -309,232 +481,24 @@ class IdmapDomainService(CRUDService):
         There are three default system domains: DS_TYPE_ACTIVEDIRECTORY, DS_TYPE_LDAP, DS_TYPE_DEFAULT_DOMAIN.
         The system domains correspond with the idmap settings under Active Directory, LDAP, and SMB
         respectively.
+
         `name` the pre-windows 2000 domain name.
+
         `DNS_domain_name` DNS name of the domain.
-        """
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_domain_create",
-            "idmap_domain_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update a domain by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_domain_update', await self._validate(new))
+        `idmap_backend` provides a plugin interface for Winbind to use varying
+        backends to store SID/uid/gid mapping tables. The correct setting
+        depends on the environment in which the NAS is deployed.
 
-        if verrors:
-            raise verrors
+        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
 
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        return await self._get_instance(id)
+        `certificate_id` references the certificate ID of the SSL certificate to use for certificate-based
+        authentication to a remote LDAP server. This parameter is not supported for all idmap backends as some
+        backends will generate SID to ID mappings algorithmically without causing network traffic.
 
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete a domain by id. Deletion of default system domains is not permitted.
-        """
-        if id <= 5:
-            entry = await self._get_instance(id)
-            raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
+        `options` are additional parameters that are backend-dependent:
 
-    @private
-    async def _validate(self, data):
-        verrors = ValidationErrors()
-        if data['id'] <= dstype['DS_TYPE_DEFAULT_DOMAIN'].value:
-            verrors.add('id', f'Modifying system idmap domain [{data["name"]}] is not permitted.')
-        return verrors
-
-
-class IdmapDomaintobackendModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_domaintobackend'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_dtb_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
-    idmap_dtb_idmap_backend = sa.Column(sa.String(120), default='rid')
-
-
-class IdmapDomainBackendService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_domaintobackend'
-        datastore_prefix = 'idmap_dtb_'
-        namespace = 'idmap.domaintobackend'
-
-    @accepts(
-        Dict(
-            'idmap_domaintobackend_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Str('idmap_backend', enum=['AD', 'AUTORID', 'FRUIT', 'LDAP', 'NSS', 'RFC2307', 'RID', 'SCRIPT', 'TDB']),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        Set an idmap backend for a domain.
-        `domain` dictionary containing domain information. Has one-to-one relationship with idmap_domain entries.
-        `idmap_backed` type of idmap backend to use for the domain.
-
-        Create entry for domain in the respective idmap backend table if one does not exist.
-        """
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        verrors = ValidationErrors()
-        if data['domain'] in [dstype.DS_TYPE_LDAP.value, dstype.DS_TYPE_DEFAULT_DOMAIN.value]:
-            if data['idmap_backend'] not in ['ldap', 'tdb']:
-                verrors.add(
-                    'domaintobackend_create.idmap_backend',
-                    f'idmap backend [{data["idmap_backend"]}] is not appropriate for the system domain type {dstype[data["domain"]]}'
-                )
-        if verrors:
-            raise verrors
-
-        backend_entry_is_present = False
-        idmap_data = await self.middleware.call(f'idmap.{data["idmap_backend"]}.query')
-        for i in idmap_data:
-            if not i['domain']:
-                continue
-            if i['domain']['idmap_domain_name'] == data['domain']['idmap_domain_name']:
-                backend_entry_is_present = True
-                break
-
-        if not backend_entry_is_present:
-            next_idmap_range = await self.middleware.call('idmap.get_next_idmap_range')
-            await self.middleware.call(f'idmap.{data["idmap_backend"]}.create', {
-                'domain': {'id': data['domain']['id']},
-                'range_low': next_idmap_range[0],
-                'range_high': next_idmap_range[1]
-            })
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_domaintobackend_create",
-            "idmap_domaintobackend_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update idmap to backend mapping by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        verrors = ValidationErrors()
-        if new['domain'] in [dstype.DS_TYPE_LDAP.value, dstype.DS_TYPE_DEFAULT_DOMAIN.value]:
-            if new['idmap_backend'] not in ['ldap', 'tdb']:
-                verrors.add(
-                    'domaintobackend_create.idmap_backend',
-                    f'idmap backend [{new["idmap_backend"]}] is not appropriate for the system domain type {dstype[new["domain"]]}'
-                )
-        if verrors:
-            raise verrors
-
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        updated_entry = await self._get_instance(id)
-        try:
-            await self.middleware.call('idmap.get_or_create_idmap_by_domain', updated_entry['domain']['domain_name'])
-        except Exception as e:
-            self.logger.debug('Failed to generate new idmap backend: %s', e)
-
-        return updated_entry
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
-        entry = await self._get_instance(id)
-        if entry['domain']['id'] <= dstype['DS_TYPE_DEFAULT_DOMAIN'].value:
-            raise CallError(f'Deleting mapping for [{entry["domain"]["idmap_domain_name"]}] is not permitted.', errno.EPERM)
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class IdmapADModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_ad'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_ad_range_low = sa.Column(sa.Integer())
-    idmap_ad_range_high = sa.Column(sa.Integer())
-    idmap_ad_schema_mode = sa.Column(sa.String(120))
-    idmap_ad_unix_nss_info = sa.Column(sa.Boolean())
-    idmap_ad_unix_primary_group = sa.Column(sa.Boolean())
-    idmap_ad_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
-
-
-class IdmapADService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_ad'
-        datastore_prefix = 'idmap_ad_'
-        datastore_extend = 'idmap.common_backend_extend'
-        namespace = 'idmap.ad'
-
-    @accepts(
-        Dict(
-            'idmap_ad_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Str('schema_mode', default='RFC2307', enum=['RFC2307', 'SFU', 'SFU20']),
-            Bool('unix_primary_group', default=False),
-            Bool('unix_nss_info', default=False),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        Create an entry in the idmap ad backend table.
-
-        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
-        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
-        it appears in `idmap.domain`.
-
+        `AD` idmap backend options:
         `unix_primary_group` If True, the primary group membership is fetched from the LDAP attributes (gidNumber).
         If False, the primary group membership is calculated via the "primaryGroupID" LDAP attribute.
 
@@ -545,213 +509,14 @@ class IdmapADService(CRUDService):
         This can be either the RFC2307 schema support included in Windows 2003 R2 or the Service for Unix (SFU) schema.
         For SFU 3.0 or 3.5 please choose "SFU", for SFU 2.0 please choose "SFU20". The behavior of primary group membership is
         controlled by the unix_primary_group option.
-        """
-        verrors = ValidationErrors()
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        verrors.add_child('idmap_ad_create', await self.middleware.call('idmap._common_validate', 'ad', data))
-        if verrors:
-            raise verrors
 
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_ad_create",
-            "idmap_ad_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_ad_update', await self.middleware.call('idmap._common_validate', 'ad', new))
-        if verrors:
-            raise verrors
-
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        return await self._get_instance(id)
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class DirectoryserviceIdmapAutoridModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_autorid'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_autorid_range_low = sa.Column(sa.Integer())
-    idmap_autorid_range_high = sa.Column(sa.Integer())
-    idmap_autorid_rangesize = sa.Column(sa.Integer())
-    idmap_autorid_readonly = sa.Column(sa.Boolean())
-    idmap_autorid_ignore_builtin = sa.Column(sa.Boolean())
-    idmap_autorid_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
-
-
-class IdmapAutoridService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_autorid'
-        datastore_prefix = 'idmap_autorid_'
-        datastore_extend = 'idmap.common_backend_extend'
-        namespace = 'idmap.autorid'
-
-    @accepts(
-        Dict(
-            'idmap_autorid_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('rangesize', default=100000),
-            Bool('readonly', default=False),
-            Bool('ignore_builtin', default=False),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
-        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
-        it appears in `idmap.domain`.
-
-        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
-
-        `rangesize` defines the number of uids/gids available per domain range.
-
+        `AUTORID` idmap backend options:
         `readonly` sets the module to read-only mode. No new ranges will be allocated and new mappings
         will not be created in the idmap pool.
 
         `ignore_builtin` ignores mapping requests for the BUILTIN domain.
-        """
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_autorid_create', await self.middleware.call('idmap._common_validate', 'autorid', data))
-        if verrors:
-            raise verrors
 
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_autorid_create",
-            "idmap_autorid_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_autorid_update', await self.middleware.call('idmap._common_validate', 'autorid', new))
-
-        if verrors:
-            raise verrors
-
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        return await self._get_instance(id)
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class IdmapLDAPModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_ldap'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_ldap_range_low = sa.Column(sa.Integer())
-    idmap_ldap_range_high = sa.Column(sa.Integer())
-    idmap_ldap_ldap_base_dn = sa.Column(sa.String(120))
-    idmap_ldap_ldap_user_dn = sa.Column(sa.String(120))
-    idmap_ldap_ldap_url = sa.Column(sa.String(255))
-    idmap_ldap_ssl = sa.Column(sa.String(120))
-    idmap_ldap_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    idmap_ldap_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
-
-
-class IdmapLDAPService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_ldap'
-        datastore_prefix = 'idmap_ldap_'
-        datastore_extend = 'idmap.common_backend_extend'
-        namespace = 'idmap.ldap'
-
-    @accepts(
-        Dict(
-            'idmap_ldap_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Str('ldap_base_dn'),
-            Str('ldap_user_dn'),
-            Str('ldap_url'),
-            Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
-            Int('certificate'),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
-        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
-        it appears in `idmap.domain`.
-
-        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
-
-        `rangesize` defines the number of uids/gids available per domain range.
-
+        `LDAP` idmap backend options:
         `ldap_base_dn` defines the directory base suffix to use for SID/uid/gid mapping entries.
 
         `ldap_user_dn` defines the user DN to be used for authentication.
@@ -760,217 +525,10 @@ class IdmapLDAPService(CRUDService):
 
         `ssl` specifies whether to encrypt the LDAP transport for the idmap backend.
 
-        `certificate` specifies the client certificate to use for SASL_EXTERNAL authentication.
-        """
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_ldap_create', await self.middleware.call('idmap._common_validate', 'ldap', data))
-        if verrors:
-            raise verrors
+        `NSS` idmap backend options:
+        `linked_service` specifies the auxiliary directory service ID provider.
 
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_ldap_create",
-            "idmap_ldap_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_ldap_update', await self.middleware.call('idmap._common_validate', 'ldap', new))
-
-        if verrors:
-            raise verrors
-
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        return await self._get_instance(id)
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class IdmapNSSModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_nss'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_nss_range_low = sa.Column(sa.Integer())
-    idmap_nss_range_high = sa.Column(sa.Integer())
-    idmap_nss_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
-
-
-class IdmapNSSService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_nss'
-        datastore_prefix = 'idmap_nss_'
-        datastore_extend = 'idmap.common_backend_extend'
-        namespace = 'idmap.nss'
-
-    @accepts(
-        Dict(
-            'idmap_nss_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True),
-            Int('range_high', required=True),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
-        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
-        it appears in `idmap.domain`.
-
-        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
-
-        The idmap_nss backend maps Unix users and groups to Windows accounts by joining on SamAccountName.
-        """
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_nss_create', await self.middleware.call('idmap._common_validate', 'nss', data))
-        if verrors:
-            raise verrors
-
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_nss_create",
-            "idmap_nss_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_nss_update', await self.middleware.call('idmap._common_validate', 'nss', new))
-
-        if verrors:
-            raise verrors
-
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        return await self._get_instance(id)
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class IdmapRFC2307Model(sa.Model):
-    __tablename__ = 'directoryservice_idmap_rfc2307'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_rfc2307_range_low = sa.Column(sa.Integer())
-    idmap_rfc2307_range_high = sa.Column(sa.Integer())
-    idmap_rfc2307_ldap_server = sa.Column(sa.String(120))
-    idmap_rfc2307_bind_path_user = sa.Column(sa.String(120))
-    idmap_rfc2307_bind_path_group = sa.Column(sa.String(120))
-    idmap_rfc2307_user_cn = sa.Column(sa.Boolean())
-    idmap_rfc2307_cn_realm = sa.Column(sa.Boolean())
-    idmap_rfc2307_ldap_domain = sa.Column(sa.String(120))
-    idmap_rfc2307_ldap_url = sa.Column(sa.String(255))
-    idmap_rfc2307_ldap_user_dn = sa.Column(sa.String(120))
-    idmap_rfc2307_ldap_user_dn_password = sa.Column(sa.String(120))
-    idmap_rfc2307_ldap_realm = sa.Column(sa.String(120))
-    idmap_rfc2307_ssl = sa.Column(sa.String(120))
-    idmap_rfc2307_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    idmap_rfc2307_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
-
-
-class IdmapRFC2307Service(CRUDService):
-    """
-    In the rfc2307 backend range acts as a filter. Anything falling outside of it is ignored.
-    If no user_dn is specified, then an anonymous bind is performed.
-    ldap_url is only required when using a standalone server.
-    """
-    class Config:
-        datastore = 'directoryservice.idmap_rfc2307'
-        datastore_prefix = 'idmap_rfc2307_'
-        datastore_extend = 'idmap.common_backend_extend'
-        namespace = 'idmap.rfc2307'
-
-    @accepts(
-        Dict(
-            'idmap_rfc2307_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Str('ldap_server', default='AD', enum=['AD', 'STAND-ALONE']),
-            Str('bind_path_user'),
-            Str('bind_path_group'),
-            Bool('user_cn', default=False),
-            Bool('cn_realm', default=False),
-            Str('ldap_domain'),
-            Str('ldap_url'),
-            Str('ldap_user_dn'),
-            Str('ldap_user_dn_password'),
-            Str('ldap_realm'),
-            Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
-            Int('certificate'),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        Create an entry in the idmap_rfc2307 backend table.
-
+        `RFC2307` idmap backend options:
         `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
         domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
         it appears in `idmap.domain`.
@@ -1000,14 +558,34 @@ class IdmapRFC2307Service(CRUDService):
         `realm` defines the realm to use in the user and group names. This is only required when using cn_realm together with
          a stand-alone ldap server.
 
-        `certificate` specifies the LDAP client certificate to use for SASL_EXTERNAL authentication.
+        `RID` backend options:
+        `sssd_compat` generate idmap low range based on same algorithm that SSSD uses by default.
         """
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rfc2307_create', await self.middleware.call('idmap._common_validate', 'rfc2307', data))
-        if verrors:
-            raise verrors
+        if data['name'] in [x['name'] for x in await self.query()]:
+            verrors.add('idmap_domain_create.name', 'Domain names must be unique.')
 
-        data = await self.middleware.call('idmap.common_backend_compress', data)
+        if data['options'].get('sssd_compat'):
+            if await self.middleware.call('activedirectory.get_state') != 'HEALTHY':
+                verrors.add('idmap_domain_create.options',
+                            'AD service must be enabled and started to '
+                            'generate an SSSD-compatible id range')
+                verrors.check()
+
+            data['range_low'] = await self.get_sssd_low_range(data['name'])
+            data['range_high'] = data['range_low'] + 100000000
+
+        await self.validate('idmap_domain_create', data, verrors)
+        await self.validate_options('idmap_domain_create', data, verrors)
+        if data.get('certificate_id') and not data['options'].get('ssl'):
+            verrors.add('idmap_domain_create.certificate_id',
+                        f'The {data["idmap_backend"]} idmap backend does not '
+                        'generate LDAP traffic. Certificates do not apply.')
+        verrors.check()
+
+        final_options = IdmapBackend[data['idmap_backend']].defaults()
+        final_options.update(data['options'])
+        data['options'] = final_options
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -1019,22 +597,50 @@ class IdmapRFC2307Service(CRUDService):
     @accepts(
         Int('id', required=True),
         Patch(
-            "idmap_rfc2307_create",
-            "idmap_rfc2307_update",
+            "idmap_domain_create",
+            "idmap_domain_update",
             ("attr", {"update": True})
         )
     )
     async def do_update(self, id, data):
+        """
+        Update a domain by id.
+        """
         old = await self._get_instance(id)
         new = old.copy()
         new.update(data)
+        tmp = data.copy()
         verrors = ValidationErrors()
-        verrors.add_child('idmap_rfc2307_update', await self.middleware.call('idmap._common_validate', 'rfc2307', new))
+        if old['name'] in [x.name for x in DSType] and old['name'] != new['name']:
+            verrors.add('idmap_domain_update.name',
+                        f'Changing name of default domain {old["name"]} is not permitted')
 
-        if verrors:
-            raise verrors
+        if new['options'].get('sssd_compat') and not old['options'].get('sssd_compat'):
+            if await self.middleware.call('activedirectory.get_state') != 'HEALTHY':
+                verrors.add('idmap_domain_update.options',
+                            'AD service must be enabled and started to '
+                            'generate an SSSD-compatible id range')
+                verrors.check()
 
-        new = await self.middleware.call('idmap.common_backend_compress', new)
+            new['range_low'] = await self.get_sssd_low_range(new['name'])
+            new['range_high'] = new['range_low'] + 100000000
+
+        await self.validate('idmap_domain_update', new, verrors)
+        await self.validate_options('idmap_domain_update', new, verrors, ['MISSING'])
+        tmp['idmap_backend'] = new['idmap_backend']
+        if data.get('options'):
+            await self.validate_options('idmap_domain_update', tmp, verrors, ['EXTRA'])
+
+        if data.get('certificate_id') and not data['options'].get('ssl'):
+            verrors.add('idmap_domain_update.certificate_id',
+                        f'The {new["idmap_backend"]} idmap backend does not '
+                        'generate LDAP traffic. Certificates do not apply.')
+        verrors.check()
+        await self.prune_keys(new)
+        final_options = IdmapBackend[data['idmap_backend']].defaults()
+        final_options.update(new['options'])
+        new['options'] = final_options
+        await self.idmap_compress(new)
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
@@ -1042,296 +648,15 @@ class IdmapRFC2307Service(CRUDService):
             new,
             {'prefix': self._config.datastore_prefix}
         )
-        return await self._get_instance(id)
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class IdmapRIDModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_rid'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_rid_range_low = sa.Column(sa.Integer())
-    idmap_rid_range_high = sa.Column(sa.Integer())
-    idmap_rid_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
-
-
-class IdmapRIDService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_rid'
-        datastore_prefix = 'idmap_rid_'
-        datastore_extend = 'idmap.common_backend_extend'
-        namespace = 'idmap.rid'
-
-    @accepts(
-        Dict(
-            'idmap_rid_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        Create an entry in the idmap_rid backend table.
-        The idmap_rid backend provides a way to use an algorithmic mapping scheme to map UIDs/GIDs and SIDs.
-        No database is required in this case as the mapping is deterministic.
-
-        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
-        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
-        it appears in `idmap.domain`.
-
-        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
-        """
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_rid_create', await self.middleware.call('idmap._common_validate', 'rid', data))
-        if verrors:
-            raise verrors
-
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_rid_create",
-            "idmap_rid_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_rid_update', await self.middleware.call('idmap._common_validate', 'rid', new))
-
-        if verrors:
-            raise verrors
-
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
+        await self.middleware.call('idmap.clear_idmap_cache')
         return await self._get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
-        Delete idmap to backend mapping by id
+        Delete a domain by id. Deletion of default system domains is not permitted.
         """
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class IdmapScriptModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_script'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_script_range_low = sa.Column(sa.Integer())
-    idmap_script_range_high = sa.Column(sa.Integer())
-    idmap_script_script = sa.Column(sa.String(255))
-    idmap_script_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name', ondelete='CASCADE'), nullable=True)
-
-
-class IdmapScriptService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_script'
-        datastore_prefix = 'idmap_script_'
-        datastore_extend = 'idmap.common_backend_extend'
-        namespace = 'idmap.script'
-
-    @accepts(
-        Dict(
-            'idmap_script_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Str('script'),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        Create an entry in the idmap backend table. idmap_script is a read-only backend that
-        uses a script to perform mapping of UIDs and GIDs to Windows SIDs.
-
-        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
-        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
-        it appears in `idmap.domain`.
-
-        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
-
-        `script` full path to the script or program that generates the mappings.
-        """
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_script_create', await self.middleware.call('idmap._common_validate', 'script', data))
-        if verrors:
-            raise verrors
-
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_script_create",
-            "idmap_script_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_script_update', await self.middleware.call('idmap._common_validate', 'script', new))
-
-        if verrors:
-            raise verrors
-
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        return await self._get_instance(id)
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
-
-
-class IdmapTDBModel(sa.Model):
-    __tablename__ = 'directoryservice_idmap_tdb'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    idmap_tdb_range_low = sa.Column(sa.Integer())
-    idmap_tdb_range_high = sa.Column(sa.Integer())
-    idmap_tdb_domain_id = sa.Column(sa.ForeignKey('directoryservice_idmap_domain.idmap_domain_name'), nullable=True)
-
-
-class IdmapTDBService(CRUDService):
-    class Config:
-        datastore = 'directoryservice.idmap_tdb'
-        datastore_prefix = 'idmap_tdb_'
-        datastore_extend = 'idmap.common_backend_extend'
-        namespace = 'idmap.tdb'
-
-    @accepts(
-        Dict(
-            'idmap_tdb_create',
-            Dict(
-                'domain',
-                Int('id'),
-                Str('idmap_domain_name'),
-                Str('idmap_domain_dns_domain_name'),
-            ),
-            Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-            Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        """
-        The idmap_tdb plugin is the default backend used by winbindd for storing SID/uid/gid mapping tables.
-        In contrast to read-only backends like idmap_rid, it is an allocating backend. This means that it
-        needs to allocate new user and group IDs in order to create new mappings.
-
-        `domain` specifies the domain for which the idmap backend is being created. Numeric id, short-form
-        domain name, or long-form DNS domain name of the domain may be specified. Entry must be entered as
-        it appears in `idmap.domain`.
-
-        `range_low` and `range_high` specify the UID and GID range for which this backend is authoritative.
-        """
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb_create', await self.middleware.call('idmap._common_validate', 'tdb', data))
-        if verrors:
-            raise verrors
-
-        data = await self.middleware.call('idmap.common_backend_compress', data)
-        data["id"] = await self.middleware.call(
-            "datastore.insert", self._config.datastore, data,
-            {
-                "prefix": self._config.datastore_prefix
-            },
-        )
-        return await self._get_instance(data['id'])
-
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "idmap_tdb_create",
-            "idmap_tdb_update",
-            ("attr", {"update": True})
-        )
-    )
-    async def do_update(self, id, data):
-        """
-        Update an entry in the idmap backend table by id.
-        """
-        old = await self._get_instance(id)
-        new = old.copy()
-        new.update(data)
-        verrors = ValidationErrors()
-        verrors.add_child('idmap_tdb_update', await self.middleware.call('idmap._common_validate', 'tdb', new))
-
-        if verrors:
-            raise verrors
-
-        new = await self.middleware.call('idmap.common_backend_compress', new)
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-        return await self._get_instance(id)
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        """
-        Delete idmap to backend mapping by id
-        """
+        if id <= 5:
+            entry = await self._get_instance(id)
+            raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
         await self.middleware.call("datastore.delete", self._config.datastore, id)
