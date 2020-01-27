@@ -200,12 +200,16 @@ class IdmapDomainService(CRUDService):
 
     @private
     async def remove_winbind_idmap_tdb(self):
-        sysdataset = (await self.middleware.call('systemdatast.config'))['basename']
+        sysdataset = (await self.middleware.call('systemdataset.config'))['basename']
         ts = str(datetime.datetime.now(datetime.timezone.utc).timestamp())[:10]
         await self.middleware.call('zfs.snapshot.create', {'dataset': f'{sysdataset}/samba4',
-                                                           'name': f'wb_cache-{ts}'})
+                                                           'name': f'wbc-{ts}'})
         try:
             os.remove('/var/db/system/samba4/winbindd_idmap.tdb')
+
+        except FileNotFoundError:
+            self.logger.trace("winbindd_idmap.tdb does not exist. Skipping removal.")
+
         except Exception:
             self.logger.debug("Failed to remove winbindd_idmap.tdb.", exc_info=True)
 
@@ -220,8 +224,12 @@ class IdmapDomainService(CRUDService):
 
         try:
             os.remove('/var/db/system/samba4/winbindd_cache.tdb')
-        except Exception as e:
-            self.logger.debug("Failed to remove winbindd_cache.tdb: %s" % e)
+
+        except FileNotFoundError:
+            self.logger.debug("Failed to remove winbindd_cache.tdb. File not found.")
+
+        except Exception:
+            self.logger.debug("Failed to remove winbindd_cache.tdb.", exc_info=True)
 
         await self.middleware.call('service.start', 'cifs')
         gencache_flush = await run(['net', 'cache', 'flush'], check=False)
@@ -237,7 +245,7 @@ class IdmapDomainService(CRUDService):
             self.logger.trace('Skipping auto-generation of trusted domains due to AutoRID being enabled.')
             return
 
-        wbinfo = await run(['/usr/local/bin/wbinfo', '-m', '--verbose'], check=False)
+        wbinfo = await run(['wbinfo', '-m', '--verbose'], check=False)
         if wbinfo.returncode != 0:
             raise CallError(f'wbinfo -m failed with error: {wbinfo.stderr.decode().strip()}')
 
