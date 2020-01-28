@@ -4,6 +4,7 @@ import multiprocessing
 import time
 
 from middlewared.utils import start_daemon_thread
+from middlewared.utils.osc import set_thread_name
 
 
 def zfs_events(child_conn, start_time):
@@ -28,6 +29,7 @@ def zfs_events(child_conn, start_time):
 
 
 def setup_zfs_events_process(middleware):
+    set_thread_name('retrieve_zfs_events_thread')
     while True:
         start_time = time.time_ns() / (10 ** 9)
         try:
@@ -54,4 +56,4 @@ def setup_zfs_events_process(middleware):
 
 
 async def setup(middleware):
-    start_daemon_thread(target=setup_zfs_events_process, args=(middleware,), name='retrieve_zfs_events_thread')
+    start_daemon_thread(target=setup_zfs_events_process, args=(middleware,))
