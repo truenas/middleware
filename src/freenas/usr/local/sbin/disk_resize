@@ -183,9 +183,9 @@ Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe
 		err=$?
 	fi
 
-	# When resizing SSD to specified size (down?) format to deallocate the flash.
+	# When resizing SSD format to deallocate the flash.
 	ssd=`sg_vpd -p bdc /dev/${dev} 2>/dev/null | grep -c "Non-rotating medium"`
-	if [ ${ssd} -ne 0 -a -n "${size}" ]; then
+	if [ ${ssd} -ne 0 ]; then
 		echo "Formatting device."
 		camcontrol format ${dev} -y
 	fi
