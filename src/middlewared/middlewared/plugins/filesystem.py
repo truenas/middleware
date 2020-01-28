@@ -17,6 +17,7 @@ from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accepts
 from middlewared.service import private, CallError, Service, job
 from middlewared.utils import filter_list
+from middlewared.plugins.smb import SMBBuiltin
 
 
 class ACLDefault(enum.Enum):
@@ -561,13 +562,15 @@ class FilesystemService(Service):
         return acl_choices
 
     @accepts(
-        Str('acl_type', default='OPEN', enum=[x.name for x in ACLDefault])
+        Str('acl_type', default='OPEN', enum=[x.name for x in ACLDefault]),
+        Str('share_type', default='NONE', enum=['NONE', 'AFP', 'SMB', 'NFS']),
     )
-    async def get_default_acl(self, acl_type):
+    async def get_default_acl(self, acl_type, share_type):
         """
         Returns a default ACL depending on the usage specified by `acl_type`.
         If an admin group is defined, then an entry granting it full control will
-        be placed at the top of the ACL.
+        be placed at the top of the ACL. Optionally may pass `share_type` to argument
+        to get share-specific template ACL.
         """
         acl = []
         admin_group = (await self.middleware.call('smb.config'))['admin_group']
@@ -578,6 +581,14 @@ class FilesystemService(Service):
                 'tag': 'GROUP',
                 'id': (await self.middleware.call('dscache.get_uncached_group', admin_group))['gr_gid'],
                 'perms': {'BASIC': 'FULL_CONTROL'},
+                'flags': {'BASIC': 'INHERIT'},
+                'type': 'ALLOW'
+            })
+        if share_type == 'SMB':
+            acl.append({
+                'tag': 'GROUP',
+                'id': int(SMBBuiltin['USERS'].value[1][9:]),
+                'perms': {'BASIC': 'MODIFY'},
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
             })
