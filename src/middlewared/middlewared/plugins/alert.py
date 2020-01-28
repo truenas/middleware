@@ -441,9 +441,13 @@ class AlertService(Service):
                                       alert_service_desc["type"], alert_service_desc["attributes"], exc_info=True)
                     continue
 
-                if self.alerts or service_gone_alerts or service_new_alerts:
+                alerts = [alert for alert in self.alerts if not alert.dismissed]
+                service_gone_alerts = [alert for alert in service_gone_alerts if not alert.dismissed]
+                service_new_alerts = [alert for alert in service_new_alerts if not alert.dismissed]
+
+                if alerts or service_gone_alerts or service_new_alerts:
                     try:
-                        await alert_service.send(self.alerts, service_gone_alerts, service_new_alerts)
+                        await alert_service.send(alerts, service_gone_alerts, service_new_alerts)
                     except Exception:
                         self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
 
