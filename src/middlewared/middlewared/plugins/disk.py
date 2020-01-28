@@ -4,10 +4,6 @@ import errno
 import platform
 import re
 import subprocess
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
 
 try:
     from bsd import geom
@@ -28,7 +24,6 @@ RE_CAMCONTROL_APM = re.compile(r'^advanced power management\s+yes', re.M)
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
 RE_CAMCONTROL_POWER = re.compile(r'^power management\s+yes', re.M)
 RE_DA = re.compile('^da[0-9]+$')
-RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
@@ -662,31 +657,6 @@ class DiskService(CRUDService):
             asyncio.ensure_future(camcontrol_idle())
 
 
-async def devd_devfs_hook(middleware, data):
-    if data.get('subsystem') != 'CDEV':
-        return
-
-    if data['type'] == 'CREATE':
-        disks = await middleware.run_in_thread(lambda: sysctl.filter('kern.disks')[0].value.split())
-        # Device notified about is not a disk
-        if data['cdev'] not in disks:
-            return
-        await middleware.call('disk.sync', data['cdev'])
-        await middleware.call('disk.sed_unlock', data['cdev'])
-        await middleware.call('disk.multipath_sync')
-        await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
-    elif data['type'] == 'DESTROY':
-        # Device notified about is not a disk
-        if not RE_ISDISK.match(data['cdev']):
-            return
-        await (await middleware.call('disk.sync_all')).wait()
-        await middleware.call('disk.multipath_sync')
-        await middleware.call('alert.oneshot_delete', 'SMART', data['cdev'])
-        # If a disk dies we need to reconfigure swaps so we are not left
-        # with a single disk mirror swap, which may be a point of failure.
-        await middleware.call('disk.swaps_configure')
-
-
 async def _event_system_ready(middleware, event_type, args):
     if args['id'] != 'ready':
         return
@@ -696,7 +666,5 @@ async def _event_system_ready(middleware, event_type, args):
 
 
 def setup(middleware):
-    # Listen to DEVFS events so we can sync on disk attach/detach
-    middleware.register_hook('devd.devfs', devd_devfs_hook)
     # Run disk tasks once system is ready (e.g. power management)
     middleware.event_subscribe('system', _event_system_ready)
