@@ -47,4 +47,7 @@ render:x:107:
 crontab:x:108:
 netdev:x:109:
 messagebus:x:110:
+builtin_administrators:x:544:
+builtin_users:x:545:
+builtin_guests:x:546:
 systemd-coredump:x:999:

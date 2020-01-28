@@ -35,15 +35,4 @@ def upgrade():
     with op.batch_alter_table('account_bsdusers', schema=None) as batch_op:
         batch_op.alter_column('bsdusr_smb', nullable=False)
 
-    op.execute("INSERT INTO account_bsdgroups "
-               "(bsdgrp_gid, bsdgrp_group, bsdgrp_builtin, bsdgrp_sudo, bsdgrp_smb) "
-               "VALUES (546, 'builtin_guests', 1, 0, 1)")
-
-    op.execute("INSERT INTO account_bsdgroups "
-               "(bsdgrp_gid, bsdgrp_group, bsdgrp_builtin, bsdgrp_sudo, bsdgrp_smb) "
-               "VALUES (545, 'builtin_users', 1, 0, 1)")
-
-    op.execute("INSERT INTO account_bsdgroups "
-               "(bsdgrp_gid, bsdgrp_group, bsdgrp_builtin, bsdgrp_sudo, bsdgrp_smb) "
-               "VALUES (544, 'builtin_administrators', 1, 0, 1)")
     # ### end Alembic commands ###
