@@ -44,3 +44,7 @@ class DeviceInfoBase(ServicePartBase):
     @private
     async def get_disk(self, name):
         raise NotImplementedError()
+
+    @private
+    async def get_storage_devices_topology(self):
+        raise NotImplementedError()

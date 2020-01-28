@@ -8,6 +8,8 @@ from middlewared.utils import run
 
 from .disk_info_base import DiskInfoBase
 
+RE_DISKPART = re.compile(r'^([a-z]+\d+)(p\d+)?')
+
 
 class DiskService(Service, DiskInfoBase):
 
@@ -34,6 +36,7 @@ class DiskService(Service, DiskInfoBase):
                     part_type = self.middleware.call_sync('disk.get_partition_uuid_from_name', part_type.text)
                 if not part_type:
                     part_type = 'UNKNOWN'
+                part_uuid = p.find('./config/rawuuid')
                 part = {
                     'name': name.text,
                     'size': size,
@@ -42,7 +45,12 @@ class DiskService(Service, DiskInfoBase):
                     'id': p.get('id'),
                     'path': os.path.join('/dev', name.text),
                     'encrypted_provider': None,
+                    'partition_number': None,
+                    'partition_uuid': part_uuid.text if part_uuid is not None else None,
                 }
+                part_no = RE_DISKPART.match(part['name'])
+                if part_no:
+                    part['partition_number'] = int(part_no.group(2)[1:])
                 if os.path.exists(f'{part["path"]}.eli'):
                     part['encrypted_provider'] = f'{part["path"]}.eli'
                 parts.append(part)
@@ -65,3 +73,29 @@ class DiskService(Service, DiskInfoBase):
 
     def get_swap_devices(self):
         return [os.path.join('/dev', i.devname) for i in getswapinfo()]
+
+    def label_to_dev(self, label, *args):
+        geom_scan = args[0] if args else True
+        if label.endswith('.nop'):
+            label = label[:-4]
+        elif label.endswith('.eli'):
+            label = label[:-4]
+
+        if geom_scan:
+            geom.scan()
+        klass = geom.class_by_name('LABEL')
+        prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
+        if prov is not None:
+            return prov.text
+
+    def label_to_disk(self, label, *args):
+        geom_scan = args[0] if args else True
+        if geom_scan:
+            geom.scan()
+        dev = self.label_to_dev(label, geom_scan) or label
+        part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
+        if part is not None:
+            return part.text
+
+    def get_disk_from_partition(self, part_name):
+        return self.label_to_disk(part_name, True)

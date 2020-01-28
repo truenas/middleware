@@ -1,11 +1,13 @@
 from middlewared.schema import accepts, Str
-from middlewared.service import private, Service
+from middlewared.service import filterable, private, Service
+from middlewared.utils import filter_list
 
 
 class DiskService(Service):
 
     @private
-    async def list_all_partitions(self):
+    @filterable
+    async def list_all_partitions(self, filters, options):
         """
         Returns list of all partitions present in the system
         """
@@ -13,7 +15,7 @@ class DiskService(Service):
         parts = []
         for disk in disks:
             parts.extend(await self.middleware.call('disk.list_partitions', disk))
-        return parts
+        return filter_list(parts, filters, options)
 
     @private
     @accepts(

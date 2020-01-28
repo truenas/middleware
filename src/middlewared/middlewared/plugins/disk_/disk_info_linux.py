@@ -26,13 +26,21 @@ class DiskService(Service, DiskInfoBase):
             return parts
 
         for p in block_device.__getstate__()['partitions_data']['partitions']:
+            if disk.startswith('nvme'):
+                # This is a hack for nvme disks, however let's please come up with a better way
+                # to link disks with their partitions
+                part_name = f'{disk}p{p["partition_number"]}'
+            else:
+                part_name = f'{disk}{p["partition_number"]}'
             part = {
-                'name': f'{disk}{p["partition_number"]}',
+                'name': part_name,
                 'size': p['partition_size'],
                 'partition_type': p['type'],
+                'partition_number': p['partition_number'],
+                'partition_uuid': p['part_uuid'],
                 'disk': disk,
-                'id': f'{disk}{p["partition_number"]}',
-                'path': os.path.join('/dev', f'{disk}{p["partition_number"]}'),
+                'id': part_name,
+                'path': os.path.join('/dev', part_name),
                 'encrypted_provider': None,
             }
             encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
@@ -68,3 +76,21 @@ class DiskService(Service, DiskInfoBase):
         for dev_line in filter(lambda l: l.startswith('/dev'), data.splitlines()):
             devices.append(dev_line.split()[0])
         return devices
+
+    def label_to_dev(self, label, *args):
+        dev = os.path.realpath(os.path.join('/dev', label)).split('/')[-1]
+        return dev if dev != label.split('/')[-1] else None
+
+    def label_to_disk(self, label, *args):
+        part_disk = self.label_to_dev(label)
+        return self.get_disk_from_partition(part_disk) if part_disk else None
+
+    def get_disk_from_partition(self, part_name):
+        if not os.path.exists(os.path.join('/dev', part_name)):
+            return None
+        with open(os.path.join('/sys/class/block', part_name, 'partition'), 'r') as f:
+            part_num = f.read().strip()
+        if part_name.startswith('nvme'):
+            # nvme partitions would be like nvmen1p1 where disk is nvmen1
+            part_num = f'p{part_num}'
+        return part_name.rsplit(part_num, 1)[0].strip()

@@ -12,6 +12,7 @@ from middlewared.validators import Range
 import csv
 import io
 import os
+import platform
 import psutil
 import re
 import requests
@@ -31,6 +32,7 @@ import warnings
 
 from licenselib.license import ContractType, Features, License
 
+IS_LINUX = platform.system().lower() == 'linux'
 SYSTEM_BOOT_ID = None
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
@@ -1528,7 +1530,7 @@ async def setup(middleware):
         'sysctl debug.ddb.textdump.pending=1',
         'sysctl debug.debugger_on_panic=1',
         'sysctl debug.ddb.capture.bufsize=4194304'
-    ]:
+    ] if not IS_LINUX else []:  # TODO: See reasonable linux alternative
         ret = await Popen(
             command,
             shell=True,

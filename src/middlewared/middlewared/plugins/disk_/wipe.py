@@ -59,9 +59,9 @@ class DiskService(Service):
           - FULL: write whole disk with zero's
           - FULL_RANDOM: write whole disk with random bytes
         """
-        # FIXME: Please implement removal from graid for linux and removal of disk from swap
-        if platform.system().lower() != 'linux':
-            await self.middleware.call('disk.swaps_remove_disks', [dev])
+        await self.middleware.call('disk.swaps_remove_disks', [dev])
+        # FIXME: Please implement appropriate alternative for removal of disk from graid in linux
+        if not IS_LINUX:
             await self.middleware.call('disk.remove_disk_from_graid', dev)
 
         # First do a quick wipe of every partition to clean things like zfs labels

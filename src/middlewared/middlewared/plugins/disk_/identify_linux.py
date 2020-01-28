@@ -7,8 +7,8 @@ from .identify_base import DiskIdentifyBase
 
 class DiskService(Service, DiskIdentifyBase):
 
-    async def device_to_identifier(self, name):
-        disks = await self.middleware.call('device.get_disks')
+    async def device_to_identifier(self, name, disks=None):
+        disks = disks or await self.middleware.call('device.get_disks')
         if name not in disks:
             return ''
         else:
@@ -22,7 +22,7 @@ class DiskService(Service, DiskIdentifyBase):
         dev = blkid.BlockDevice(f'/dev/{name}')
         if dev.partitions_exist:
             for partition in dev.partition_data()['partitions']:
-                if partition['partition_type'] not in await self.middleware.call(
+                if partition['type'] not in await self.middleware.call(
                     'disk.get_valid_zfs_partition_type_uuids'
                 ):
                     continue
@@ -30,7 +30,7 @@ class DiskService(Service, DiskIdentifyBase):
 
         return f'{{devicename}}{name}'
 
-    async def identifier_to_device(self, ident):
+    async def identifier_to_device(self, ident, disks=None):
         if not ident:
             return None
 
@@ -44,15 +44,13 @@ class DiskService(Service, DiskIdentifyBase):
         if tp not in mapping:
             raise NotImplementedError(f'Unknown type {tp!r}')
         elif tp == 'uuid':
-            for block_device in filter(
-                lambda b: not b.name.startswith('sr') and b.partitions_exist,
-                blkid.list_block_devices()
-            ):
-                for partition in block_device.partition_data()['partitions']:
-                    if partition['part_uuid'] == value:
-                        return block_device.name
+            partition = await self.middleware.call('disk.list_all_partitions', [['partition_uuid', '=', value]])
+            if partition:
+                return partition[0]['disk']
         else:
             disk = next(
-                (b for b in (await self.middleware.call('device.get_disks')).values() if b[mapping[tp]] == value), None
+                (b for b in (
+                    disks or await self.middleware.call('device.get_disks')
+                ).values() if b[mapping[tp]] == value), None
             )
             return disk['name'] if disk else None

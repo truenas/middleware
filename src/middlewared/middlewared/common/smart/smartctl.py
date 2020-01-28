@@ -1,12 +1,8 @@
 from asyncio import Lock
 import logging
 import re
+import platform
 import subprocess
-
-try:
-    from nvme import get_nsid
-except ImportError:
-    get_nsid = None
 
 from middlewared.utils import run
 
@@ -14,20 +10,27 @@ from .areca import annotate_devices_with_areca_dev_id
 
 logger = logging.getLogger(__name__)
 
+IS_LINUX = platform.system().lower() == 'linux'
 SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
 
 areca_lock = Lock()
 
+if not IS_LINUX:
+    from nvme import get_nsid
+
 
 async def get_smartctl_args(middleware, devices, disk):
-    if disk.startswith("nvd"):
-        try:
-            nvme = await middleware.run_in_thread(get_nsid, f"/dev/{disk}")
-        except Exception as e:
-            logger.warning("Unable to run nvme.get_nsid for %r: %r", disk, e)
-            return
+    if disk.startswith(('nvd', 'nvme')):
+        if IS_LINUX:
+            return [f'/dev/{disk}', '-d', 'nvme']
         else:
-            return [f"/dev/{nvme}"]
+            try:
+                nvme = await middleware.run_in_thread(get_nsid, f'/dev/{disk}')
+            except Exception as e:
+                logger.warning('Unable to run nvme.get_nsid for %r: %r', disk, e)
+                return
+            else:
+                return [f'/dev/{nvme}']
 
     device = devices.get(disk)
     if device is None:

@@ -11,8 +11,8 @@ from .identify_base import DiskIdentifyBase
 
 class DiskService(Service, DiskIdentifyBase):
 
-    async def device_to_identifier(self, name):
-        disk_data = await self.middleware.call('device.get_disk', name)
+    async def device_to_identifier(self, name, disks=None):
+        disk_data = disks.get('name') or await self.middleware.call('device.get_disk', name)
         if disk_data and disk_data['serial_lunid']:
             return f'{{serial_lunid}}{disk_data["serial_lunid"]}'
         elif disk_data and disk_data['serial']:
@@ -36,7 +36,7 @@ class DiskService(Service, DiskIdentifyBase):
 
         return ''
 
-    def identifier_to_device(self, ident):
+    def identifier_to_device(self, ident, disks=None):
 
         if not ident:
             return None

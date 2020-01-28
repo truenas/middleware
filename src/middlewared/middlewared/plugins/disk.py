@@ -1,16 +1,13 @@
 import asyncio
-import base64
 from collections import defaultdict
 import errno
-import glob
-import os
+import platform
 import re
 import subprocess
 try:
     import sysctl
 except ImportError:
     sysctl = None
-import tempfile
 
 try:
     from bsd import geom
@@ -25,9 +22,7 @@ from middlewared.utils import Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-GELI_KEY_SLOT = 0
-GELI_RECOVERY_SLOT = 1
-GELI_REKEY_FAILED = '/tmp/.rekey_failed'
+IS_LINUX = platform.system().lower() == 'linux'
 RE_CAMCONTROL_AAM = re.compile(r'^automatic acoustic management\s+yes', re.M)
 RE_CAMCONTROL_APM = re.compile(r'^advanced power management\s+yes', re.M)
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
@@ -257,378 +252,17 @@ class DiskService(CRUDService):
 
         if join_partitions:
             for disk in disks:
-                disk["partitions"] = await self.__get_partitions(disk)
+                disk['partitions'] = await self.middleware.call('disk.list_partitions', disk['devname'])
 
         return disks
-
-    @accepts(Dict(
-        'options',
-        Bool('unused', default=False),
-    ))
-    def get_encrypted(self, options):
-        """
-        Get all geli providers
-
-        It might be an entire disk or a partition of type freebsd-zfs
-        """
-        providers = []
-
-        disks_blacklist = []
-        if options['unused']:
-            disks_blacklist += self.middleware.call_sync('disk.get_reserved')
-
-        geom.scan()
-        klass_part = geom.class_by_name('PART')
-        klass_label = geom.class_by_name('LABEL')
-        if not klass_part:
-            return providers
-
-        for g in klass_part.geoms:
-            for p in g.providers:
-
-                if p.config['type'] != 'freebsd-zfs':
-                    continue
-
-                disk = p.geom.consumer.provider.name
-                if disk in disks_blacklist:
-                    continue
-
-                try:
-                    subprocess.run(
-                        ['geli', 'dump', p.name],
-                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
-                    )
-                except subprocess.CalledProcessError:
-                    continue
-
-                dev = None
-                if klass_label:
-                    for g in klass_label.geoms:
-                        if g.name == p.name:
-                            dev = g.provider.name
-                            break
-
-                if dev is None:
-                    dev = p.name
-
-                providers.append({
-                    'name': p.name,
-                    'dev': dev,
-                    'disk': disk
-                })
-
-        return providers
-
-    def __create_keyfile(self, keyfile, size=64, force=False):
-        if force or not os.path.exists(keyfile):
-            keypath = os.path.dirname(keyfile)
-            if not os.path.exists(keypath):
-                os.makedirs(keypath)
-            subprocess.run(
-                ['dd', 'if=/dev/random', f'of={keyfile}', f'bs={size}', 'count=1'],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-
-    def __geli_setmetadata(self, dev, keyfile, passphrase=None):
-        self.__create_keyfile(keyfile)
-        cp = subprocess.run([
-            'geli', 'init', '-s', '4096', '-l', '256', '-B', 'none',
-        ] + (
-            ['-J', passphrase] if passphrase else ['-P']
-        ) + ['-K', keyfile, dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if cp.stderr:
-            raise CallError(f'Unable to set geli metadata on {dev}: {cp.stderr.decode()}')
-
-    @private
-    def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
-        if skip_existing or not os.path.exists(f'/dev/{dev}.eli'):
-            cp = subprocess.run([
-                'geli', 'attach',
-            ] + (['-j', passphrase] if passphrase else ['-p']) + [
-                '-k', key, dev,
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if cp.stderr or not os.path.exists(f'/dev/{dev}.eli'):
-                raise CallError(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
-            self.__geli_notify_passphrase(passphrase)
-        else:
-            self.logger.debug(f'{dev} already attached')
-
-    @private
-    def geli_attach(self, pool, passphrase=None, key=None):
-        """
-        Attach geli providers of a given pool
-
-        Returns:
-            The number of providers that failed to attach
-        """
-        failed = 0
-        geli_keyfile = key or pool['encryptkey_path']
-
-        if passphrase:
-            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
-            os.chmod(passf.name, 0o600)
-            passf.write(passphrase)
-            passf.flush()
-            passphrase = passf.name
-        try:
-            for ed in self.middleware.call_sync(
-                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-            ):
-                dev = ed['encrypted_provider']
-                try:
-                    self.geli_attach_single(dev, geli_keyfile, passphrase)
-                except Exception as ee:
-                    self.logger.warn(str(ee))
-                    failed += 1
-        finally:
-            if passphrase:
-                passf.close()
-        return failed
-
-    @private
-    def geli_testkey(self, pool, passphrase):
-        """
-        Test key for geli providers of a given pool
-
-        Returns:
-            bool
-        """
-
-        with tempfile.NamedTemporaryFile(mode='w+', dir='/tmp') as tf:
-            os.chmod(tf.name, 0o600)
-            tf.write(passphrase)
-            tf.flush()
-            # EncryptedDisk table might be out of sync for some reason,
-            # this is much more reliable!
-            devs = self.middleware.call_sync('zfs.pool.get_devices', pool['name'])
-            for dev in devs:
-                name, ext = os.path.splitext(dev)
-                if ext != '.eli':
-                    continue
-                try:
-                    self.geli_attach_single(
-                        name, pool['encryptkey_path'], tf.name if passphrase else None, skip_existing=True,
-                    )
-                except Exception as e:
-                    # "Missing -p flag" happens when using passphrase on a pool without passphrase
-                    if any(s in str(e) for s in ('Wrong key', 'Missing -p flag')):
-                        return False
-        return True
-
-    @private
-    def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
-        cp = subprocess.run([
-            'geli', 'setkey', '-n', str(slot),
-        ] + (
-            ['-J', passphrase] if passphrase else ['-P']
-        ) + ['-K', key] + (
-            ['-k', oldkey] if oldkey else []
-        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if cp.stderr:
-            raise CallError(f'Unable to set passphrase on {dev}: {cp.stderr.decode()}')
-
-        self.__geli_notify_passphrase(passphrase)
-
-    @private
-    def geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
-        cp = subprocess.run([
-            'geli', 'delkey', '-n', str(slot),
-        ] + (
-            ['-f'] if force else []
-        ) + [dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if cp.stderr:
-            raise CallError(f'Unable to delete key {slot} on {dev}: {cp.stderr.decode()}')
-
-    @private
-    def geli_recoverykey_rm(self, pool):
-        for ed in self.middleware.call_sync(
-            'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-        ):
-            dev = ed['encrypted_provider']
-            self.geli_delkey(dev, GELI_RECOVERY_SLOT, True)
-
-    @private
-    def geli_passphrase(self, pool, passphrase, rmrecovery=False):
-        """
-        Set a passphrase in a geli
-        If passphrase is None then remove the passphrase
-        """
-        if passphrase:
-            passf = tempfile.NamedTemporaryFile(mode='w+', dir='/tmp/')
-            os.chmod(passf.name, 0o600)
-            passf.write(passphrase)
-            passf.flush()
-            passphrase = passf.name
-        try:
-            for ed in self.middleware.call_sync(
-                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-            ):
-                dev = ed['encrypted_provider']
-                if rmrecovery:
-                    self.geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
-                self.geli_setkey(dev, pool['encryptkey_path'], GELI_KEY_SLOT, passphrase)
-        finally:
-            if passphrase:
-                passf.close()
-
-    @private
-    def geli_rekey(self, pool, slot=GELI_KEY_SLOT):
-        """
-        Regenerates the geli global key and set it to devices
-        Removes the passphrase if it was present
-        """
-
-        geli_keyfile = pool['encryptkey_path']
-        geli_keyfile_tmp = f'{geli_keyfile}.tmp'
-        devs = [
-            ed['encrypted_provider']
-            for ed in self.middleware.call_sync(
-                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-            )
-        ]
-
-        # keep track of which device has which key in case something goes wrong
-        dev_to_keyfile = {dev: geli_keyfile for dev in devs}
-
-        # Generate new key as .tmp
-        self.logger.debug("Creating new key file: %s", geli_keyfile_tmp)
-        self.__create_keyfile(geli_keyfile_tmp, force=True)
-        error = None
-        applied = []
-        for dev in devs:
-            try:
-                self.geli_setkey(dev, geli_keyfile_tmp, slot)
-                dev_to_keyfile[dev] = geli_keyfile_tmp
-                applied.append(dev)
-            except Exception as ee:
-                error = str(ee)
-                self.logger.error('Failed to set geli key on %s: %s', dev, error, exc_info=True)
-                break
-
-        # Try to be atomic in a certain way
-        # If rekey failed for one of the devs, revert for the ones already applied
-        if error:
-            could_not_restore = False
-            for dev in applied:
-                try:
-                    self.geli_setkey(dev, geli_keyfile, slot, oldkey=geli_keyfile_tmp)
-                    dev_to_keyfile[dev] = geli_keyfile
-                except Exception as ee:
-                    # this is very bad for the user, at the very least there
-                    # should be a notification that they will need to
-                    # manually rekey as they now have drives with different keys
-                    could_not_restore = True
-                    self.logger.error(
-                        'Failed to restore key on rekey for %s: %s', dev, str(ee), exc_info=True
-                    )
-            if could_not_restore:
-                try:
-                    open(GELI_REKEY_FAILED, 'w').close()
-                except Exception:
-                    pass
-                self.logger.error(
-                    'Unable to rekey. Devices now have the following keys: %s',
-                    '\n'.join([
-                        f'{dev}: {keyfile}'
-                        for dev, keyfile in dev_to_keyfile
-                    ])
-                )
-                raise CallError(
-                    'Unable to rekey and devices have different keys. See the log file.'
-                )
-            else:
-                raise CallError(f'Unable to set key: {error}')
-        else:
-            if os.path.exists(GELI_REKEY_FAILED):
-                try:
-                    os.unlink(GELI_REKEY_FAILED)
-                except Exception:
-                    pass
-            self.logger.debug("Rename geli key %s -> %s", geli_keyfile_tmp, geli_keyfile)
-            os.rename(geli_keyfile_tmp, geli_keyfile)
-
-    @private
-    def geli_recoverykey_add(self, pool):
-        with tempfile.NamedTemporaryFile(dir='/tmp/') as reckey:
-            reckey_file = reckey.name
-            self.__create_keyfile(reckey_file, force=True)
-            reckey.flush()
-
-            errors = []
-
-            for ed in self.middleware.call_sync(
-                'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-            ):
-                dev = ed['encrypted_provider']
-                try:
-                    self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, None)
-                except Exception as ee:
-                    errors.append(str(ee))
-
-            if errors:
-                raise CallError(
-                    'Unable to set recovery key for {len(errors)} devices: {", ".join(errors)}'
-                )
-            reckey.seek(0)
-            return base64.b64encode(reckey.read()).decode()
-
-    @private
-    def geli_detach_single(self, dev):
-        if not os.path.exists(f'/dev/{dev.replace(".eli", "")}.eli'):
-            return
-        cp = subprocess.run(
-            ['geli', 'detach', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
-        if cp.returncode != 0:
-            raise CallError(f'Unable to geli dettach {dev}: {cp.stderr.decode()}')
-
-    @private
-    def geli_clear(self, dev):
-        cp = subprocess.run(
-            ['geli', 'clear', dev], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
-        if cp.returncode != 0:
-            raise CallError(f'Unable to geli clear {dev}: {cp.stderr.decode()}')
-
-    @private
-    def geli_detach(self, pool, clear=False):
-        failed = 0
-        for ed in self.middleware.call_sync(
-            'datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]
-        ):
-            dev = ed['encrypted_provider']
-            try:
-                self.geli_detach_single(dev)
-            except Exception as ee:
-                self.logger.warn(str(ee))
-                failed += 1
-            if clear:
-                try:
-                    self.geli_clear(dev)
-                except Exception as e:
-                    self.logger.warn('Failed to clear %s: %s', dev, e)
-        return failed
-
-    def __geli_notify_passphrase(self, passphrase):
-        if passphrase:
-            with open(passphrase) as f:
-                self.middleware.call_hook_sync('disk.post_geli_passphrase', f.read())
-        else:
-            self.middleware.call_hook_sync('disk.post_geli_passphrase', None)
-
-    @private
-    def encrypt(self, devname, keypath, passphrase=None):
-        self.__geli_setmetadata(devname, keypath, passphrase)
-        self.geli_attach_single(devname, keypath, passphrase)
-        return f'{devname}.eli'
 
     @private
     async def get_reserved(self):
         reserved = list(await self.middleware.call('boot.get_disks'))
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
-        reserved += [i async for i in self.__get_iscsi_targets()]
+        if not IS_LINUX:
+            # FIXME: Make this freebsd specific for now
+            reserved += [i async for i in self.__get_iscsi_targets()]
         return reserved
 
     async def __get_iscsi_targets(self):
@@ -641,50 +275,9 @@ class DiskService(CRUDService):
                                                [('disk_identifier', 'in', iscsi_target_extent_paths)]):
             yield disk["disk_name"]
 
-    async def __get_partitions(self, disk):
-        partitions = []
-        name = await self.middleware.call("disk.get_name", disk)
-        for path in glob.glob(f"/dev/%s[a-fps]*" % name) or [f"/dev/{name}"]:
-            cp = await run("/usr/sbin/diskinfo", path, check=False)
-            if cp.returncode:
-                self.logger.debug('Failed to get diskinfo for %s: %s', name, cp.stderr.decode())
-                continue
-            info = cp.stdout.decode("utf-8").split("\t")
-            if len(info) > 3:
-                partitions.append({
-                    "path": path,
-                    "capacity": int(info[2]),
-                })
-
-        return partitions
-
     @private
-    def label_to_dev(self, label, geom_scan=True):
-        if label.endswith('.nop'):
-            label = label[:-4]
-        elif label.endswith('.eli'):
-            label = label[:-4]
-
-        if geom_scan:
-            geom.scan()
-        klass = geom.class_by_name('LABEL')
-        prov = klass.xml.find(f'.//provider[name="{label}"]/../name')
-        if prov is not None:
-            return prov.text
-
-    @private
-    def label_to_disk(self, label, geom_scan=True):
-        if geom_scan:
-            geom.scan()
-        dev = self.label_to_dev(label, geom_scan=False) or label
-        part = geom.class_by_name('PART').xml.find(f'.//provider[name="{dev}"]/../name')
-        if part is not None:
-            return part.text
-
-    @private
-    def check_clean(self, disk):
-        geom.scan()
-        return geom.class_by_name('PART').xml.find(f'.//geom[name="{disk}"]') is None
+    async def check_clean(self, disk):
+        return not bool(await self.middleware.call('disk.list_partitions', disk))
 
     @private
     async def sed_unlock_all(self):
@@ -966,36 +559,43 @@ class DiskService(CRUDService):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
     @private
+    async def check_disks_availability(self, verrors, disks, schema):
+        """
+        Makes sure the disks are present in the system and not reserved
+        by anything else (boot, pool, iscsi, etc).
+
+        Returns:
+            dict - disk.query for all disks
+        """
+        disks_cache = dict(map(
+            lambda x: (x['devname'], x),
+            await self.middleware.call(
+                'disk.query', [('devname', 'in', disks)]
+            )
+        ))
+
+        disks_set = set(disks)
+        disks_not_in_cache = disks_set - set(disks_cache.keys())
+        if disks_not_in_cache:
+            verrors.add(
+                f'{schema}.topology',
+                f'The following disks were not found in system: {"," .join(disks_not_in_cache)}.'
+            )
+
+        disks_reserved = await self.middleware.call('disk.get_reserved')
+        disks_reserved = disks_set - (disks_set - set(disks_reserved))
+        if disks_reserved:
+            verrors.add(
+                f'{schema}.topology',
+                f'The following disks are already in use: {"," .join(disks_reserved)}.'
+            )
+        return disks_cache
+
+    @private
     async def label(self, dev, label):
         cp = await run('geom', 'label', 'label', label, dev, check=False)
         if cp.returncode != 0:
             raise CallError(f'Failed to label {dev}: {cp.stderr.decode()}')
-
-    @private
-    def unlabel(self, disk, sync=True):
-        self.middleware.call_sync('disk.swaps_remove_disks', [disk])
-
-        subprocess.run(
-            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        # Wipe out the partition table by doing an additional iterate of create/destroy
-        subprocess.run(
-            ['gpart', 'create', '-s', 'gpt', f'/dev/{disk}'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        subprocess.run(
-            ['gpart', 'destroy', '-F', f'/dev/{disk}'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        if sync:
-            # We might need to sync with reality (e.g. uuid -> devname)
-            self.middleware.call_sync('disk.sync', disk)
 
     @private
     async def configure_power_management(self):

@@ -10,7 +10,10 @@ class DiskService(Service):
 
     @private
     def format(self, disk, swapgb, sync=True):
-        size = self.middleware.call_sync('disk.get_dev_size', disk)
+        disk_details = self.middleware.call_sync('device.get_disk', disk)
+        if not disk_details:
+            raise CallError(f'Unable to retrieve disk details for {disk}')
+        size = disk_details['size']
         if not size:
             self.logger.error(f'Unable to determine size of {disk}')
         else:
@@ -33,7 +36,10 @@ class DiskService(Service):
         if swapsize > 0:
             if IS_LINUX:
                 commands.extend([
-                    ('sgdisk', '-a=4096', f'-n1:128:{swapsize}', '-t1:8200', f'/dev/{disk}'),
+                    (
+                        'sgdisk', f'-a{int(4096/disk_details["sectorsize"])}',
+                        f'-n1:128:{swapsize}', '-t1:8200', f'/dev/{disk}'
+                    ),
                     ('sgdisk', '-n2:0:0', '-t2:BF01', f'/dev/{disk}'),
                 ])
             else:
@@ -44,7 +50,7 @@ class DiskService(Service):
         else:
             if IS_LINUX:
                 commands.append(
-                    ('sgdisk', '-a=4096', '-n1:0:0', '-t1:BF01', f'/dev/{disk}'),
+                    ('sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:0', '-t1:BF01', f'/dev/{disk}'),
                 )
             else:
                 commands.append(('gpart', 'add', '-a', '4k', '-b', '128', '-t', 'freebsd-zfs', disk))

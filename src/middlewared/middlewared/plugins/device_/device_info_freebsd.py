@@ -3,8 +3,9 @@ import re
 from bsd import geom, devinfo
 
 from .device_info_base import DeviceInfoBase
+
+from middlewared.common.camcontrol import camcontrol_list
 from middlewared.service import private, Service
-from middlewared.utils import run
 
 
 RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
@@ -106,3 +107,6 @@ class DeviceService(Service, DeviceInfoBase):
                 })
                 ports.append(port)
         return ports
+
+    async def get_storage_devices_topology(self):
+        return await camcontrol_list()

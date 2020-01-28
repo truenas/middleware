@@ -89,25 +89,13 @@ def test_08_update_disk_password():
     assert results.json()[0]['passwd'] == new_passwd
 
 
-def test_09_get_encrypted_disks():
-    # TODO: create a volume with encryption enabled and then test the
-    # encrypted disk. Will complete as soon as we have implementation of pool
-    # create in middlewared
-    pass
-
-
-def test_10_get_decrypted_disks():
-    # TODO: Complete after test 05
-    pass
-
-
-def test_11_get_unused_disks():
+def test_09_get_unused_disks():
     results = POST('/disk/get_unused/', False)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
 
 
-def test_12_perform_wipe_on_unused_disk():
+def test_10_perform_wipe_on_unused_disk():
     unused_disks = POST('/disk/get_unused/', False)
     if len(unused_disks.json()) > 0:
         print('in if')

@@ -3,7 +3,6 @@ import logging
 import re
 import subprocess
 
-from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import get_smartctl_args, smartctl
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -111,7 +110,7 @@ async def render(service, middleware):
 
     disks = [dict(disk, **smart_config) for disk in disks]
 
-    devices = await camcontrol_list()
+    devices = await middleware.call('device.get_storage_devices_topology')
     annotated = dict(filter(None, await asyncio_map(functools.partial(annotate_disk_for_smart, middleware, devices),
                                                     set(filter(None, {disk["disk_name"] for disk in disks})),
                                                     16)))
