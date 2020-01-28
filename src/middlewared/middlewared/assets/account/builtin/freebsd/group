@@ -32,6 +32,9 @@ nslcd:*:389:
 consul:*:469:
 nomad:*:472:
 minio:*:473:
+builtin_administrators:x:544:
+builtin_users:x:545:
+builtin_guests:x:546:
 webdav:*:666:
 hast:*:845:
 nogroup:*:65533:

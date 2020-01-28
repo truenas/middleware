@@ -78,6 +78,7 @@ class UserModel(sa.Model):
     bsdusr_shell = sa.Column(sa.String(120), default='/bin/csh')
     bsdusr_full_name = sa.Column(sa.String(120))
     bsdusr_builtin = sa.Column(sa.Boolean(), default=False)
+    bsdusr_smb = sa.Column(sa.Boolean(), default=True)
     bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_locked = sa.Column(sa.Boolean(), default=False)
     bsdusr_sudo = sa.Column(sa.Boolean(), default=False)
@@ -175,6 +176,7 @@ class UserService(CRUDService):
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
         Bool('microsoft_account', default=False),
+        Bool('smb', default=True),
         Bool('sudo', default=False),
         Str('sshpubkey', null=True, max_length=None),
         List('groups', default=[]),
@@ -227,7 +229,7 @@ class UserService(CRUDService):
             if group:
                 group = group[0]
             else:
-                group = await self.middleware.call('group.create', {'name': data['username']})
+                group = await self.middleware.call('group.create', {'name': data['username'], 'smb': False})
                 group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
             data['group'] = group['id']
         else:
@@ -300,7 +302,8 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        await self.__set_smbpasswd(data['username'])
+        if data['smb']:
+            await self.__set_smbpasswd(data['username'])
 
         if os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -454,8 +457,8 @@ class UserService(CRUDService):
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
         await self.middleware.call('service.reload', 'user')
-
-        await self.__set_smbpasswd(user['username'])
+        if user['smb']:
+            await self.__set_smbpasswd(user['username'])
 
         return pk
 
@@ -482,7 +485,8 @@ class UserService(CRUDService):
                 except Exception:
                     self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
-        await run('smbpasswd', '-x', user['username'], check=False)
+        if user['smb']:
+            await run('smbpasswd', '-x', user['username'], check=False)
 
         # TODO: add a hook in CIFS service
         cifs = await self.middleware.call('datastore.query', 'services.cifs', [], {'prefix': 'cifs_srv_'})
@@ -828,6 +832,7 @@ class GroupModel(sa.Model):
     bsdgrp_group = sa.Column(sa.String(120))
     bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
     bsdgrp_sudo = sa.Column(sa.Boolean(), default=False)
+    bsdgrp_smb = sa.Column(sa.Boolean(), default=True)
 
 
 class GroupMembershipModel(sa.Model):
@@ -901,6 +906,7 @@ class GroupService(CRUDService):
         'group_create',
         Int('gid'),
         Str('name', required=True),
+        Bool('smb', default=True),
         Bool('sudo', default=False),
         Bool('allow_duplicate_gid', default=False),
         List('users', items=[Int('id')], required=False),
@@ -936,19 +942,19 @@ class GroupService(CRUDService):
             await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': user})
 
         await self.middleware.call('service.reload', 'user')
-
-        try:
-            await self.middleware.call('smb.groupmap_add', data['name'])
-        except Exception:
-            """
-            Samba's group mapping database does not allow duplicate gids.
-            Unfortunately, we don't get a useful error message at -d 0.
-            """
-            if not allow_duplicate_gid:
-                raise
-            else:
-                self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
-                                  data['name'], data['gid'])
+        if data['smb']:
+            try:
+                await self.middleware.call('smb.groupmap_add', data['name'])
+            except Exception:
+                """
+                Samba's group mapping database does not allow duplicate gids.
+                Unfortunately, we don't get a useful error message at -d 0.
+                """
+                if not allow_duplicate_gid:
+                    raise
+                else:
+                    self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
+                                      data['name'], data['gid'])
 
         return pk
 
@@ -999,7 +1005,8 @@ class GroupService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        await self.middleware.call('smb.groupmap_add', group['group'])
+        if group['smb']:
+            await self.middleware.call('smb.groupmap_add', group['group'])
 
         return pk
 
@@ -1012,7 +1019,8 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        await self.middleware.call('smb.groupmap_delete', group['group'])
+        if group['smb']:
+            await self.middleware.call('smb.groupmap_delete', group['group'])
 
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)

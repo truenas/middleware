@@ -1,7 +1,7 @@
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
-from middlewared.plugins.smb import SMBCmd
+from middlewared.plugins.smb import SMBCmd, SMBBuiltin
 
 import re
 
@@ -28,6 +28,21 @@ class SMBService(Service):
         return groupmap
 
     @private
+    async def add_builtin_group(self, group):
+        unixgroup = group
+        ntgroup = group[8:].capitalize()
+        sid = SMBBuiltin[ntgroup.upper()].value[1]
+        gm_add = await run([
+            SMBCmd.NET.value, '-d', '0', 'groupmap', 'add', f'sid={sid}',
+            'type=builtin', f'unixgroup={unixgroup}', f'ntgroup={ntgroup}'],
+            check=False
+        )
+        if gm_add.returncode != 0:
+            raise CallError(
+                f'Failed to generate groupmap for [{group}]: ({gm_add.stderr.decode()})'
+            )
+
+    @private
     async def groupmap_add(self, group):
         """
         Map Unix group to NT group. This is required for group members to be
@@ -39,10 +54,15 @@ class SMBService(Service):
         if passdb_backend == 'ldapsam':
             return
 
+        if group in SMBBuiltin.unix_groups():
+            return await self.add_builtin_group(group)
+
         disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
         existing_groupmap = await self.middleware.call('smb.groupmap_list')
+
         for user in (await self.middleware.call('user.query')):
             disallowed_list.append(user['username'].upper())
+
         for g in existing_groupmap:
             disallowed_list.append(g['ntgroup'].upper())
 

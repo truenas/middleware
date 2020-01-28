@@ -10,6 +10,11 @@ class UserService(Service):
 
     @private
     def sync_builtin(self):
+        smb_builtins = [
+            'builtin_administrators',
+            'builtin_users',
+            'builtin_guests',
+        ]
         remove_groups = {
             group["group"]: group
             for group in self.middleware.call_sync(
@@ -61,6 +66,7 @@ class UserService(Service):
                         "group": name,
                         "builtin": True,
                         "sudo": False,
+                        "smb": True if name in smb_builtins else False,
                     }
                     existing_group["id"] = self.middleware.call_sync(
                         "datastore.insert",

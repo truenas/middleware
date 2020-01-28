@@ -54,6 +54,18 @@ class SMBCmd(enum.Enum):
     WBINFO = 'wbinfo'
 
 
+class SMBBuiltin(enum.Enum):
+    ADMINISTRATORS = ('builtin_administrators', 'S-1-5-32-544')
+    GUESTS = ('builtin_guests', 'S-1-5-32-546')
+    USERS = ('builtin_users', 'S-1-5-32-545')
+
+    def unix_groups():
+        return [x.value[0] for x in SMBBuiltin]
+
+    def sids():
+        return [x.value[1] for x in SMBBuiltin]
+
+
 class SMBPath(enum.Enum):
     GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb.conf')
     SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb_share.conf')
