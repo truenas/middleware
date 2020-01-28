@@ -3,7 +3,7 @@ import os
 import platform
 import subprocess
 import time
-from middlewared.plugins.smb import SMBCmd, SMBPath
+from middlewared.plugins.smb import SMBCmd, SMBPath, SMBBuiltin
 
 logger = logging.getLogger(__name__)
 
@@ -285,14 +285,40 @@ def fixsid(middleware, conf, groupmap):
 
 def validate_group_mappings(middleware, conf):
     groupmap = middleware.call_sync('smb.groupmap_list')
+    must_remove_cache = False
     if groupmap:
         sids_fixed = fixsid(middleware, conf, groupmap)
         if not sids_fixed:
             groupmap = []
+
+    for b in SMBBuiltin:
+        entry = list(filter(lambda x: b.value[0] == x['unixgroup'], groupmap))
+        if b.name == 'ADMINISTRATORS':
+            if len(middleware.call_sync('group.query', [('gid', '=', 544)])) > 1:
+                # Creating an SMB administrators mapping for a duplicate ID is potentially a security issue.
+                logger.warn("Multiple groups have GID 544, switching allocation method for "
+                            "SMB Administrators [S-1-5-32-544] to internal winbind method.")
+                continue
+
+        if not entry:
+            stale_entry = list(filter(lambda x: b.name.lower().capitalize() == x['ntgroup'], groupmap))
+            if stale_entry:
+                must_remove_cache = True
+                middleware.call_sync('smb.groupmap_delete', b.name.lower().capitalize())
+
+            middleware.call_sync('smb.groupmap_add', b.value[0])
+
     groups = get_groups(middleware)
     for g in groups:
         if not any(filter(lambda x: g.upper() == x['ntgroup'].upper(), groupmap)):
             middleware.call_sync('smb.groupmap_add', g)
+
+    if must_remove_cache:
+        if os.path.exists(f'{SMBPath.STATEDIR.platform()}/winbindd_cache.tdb'):
+            os.remove(f'{SMBPath.STATEDIR.platform()}/winbindd_cache.tdb')
+        flush = subprocess.run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
+        if flush.returncode != 0:
+            logger.debug('Attempt to flush cache failed: %s', flush.stderr.decode().strip())
 
 
 def render(service, middleware):
