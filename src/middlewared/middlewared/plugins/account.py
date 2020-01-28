@@ -196,6 +196,9 @@ class UserService(CRUDService):
         Available choices for `shell` can be retrieved with `user.shell_choices`.
 
         `attributes` is a general-purpose object for storing arbitrary user information.
+
+        `smb` specifies whether the user should be allowed access to SMB shares. User
+        willl also automatically be added to the `builtin_users` group.
         """
         verrors = ValidationErrors()
 
@@ -237,6 +240,11 @@ class UserService(CRUDService):
             if not group:
                 raise CallError(f'Group {data["group"]} not found')
             group = group[0]
+
+        if data['smb']:
+            groups.append((await self.middleware.call('group.query',
+                                                      [('group', '=', 'builtin_users')],
+                                                      {'get': True}))['id'])
 
         # Is this a new directory or not? Let's not nuke existing directories,
         # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
@@ -921,6 +929,8 @@ class GroupService(CRUDService):
         `allow_duplicate_gid` allows distinct group names to share the same gid.
 
         `users` is a list of user ids (`id` attribute from `user.query`).
+
+        `smb` specifies whether the group should be mapped into an NT group.
         """
         allow_duplicate_gid = data['allow_duplicate_gid']
         verrors = ValidationErrors()
