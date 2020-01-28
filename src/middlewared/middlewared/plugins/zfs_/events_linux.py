@@ -4,6 +4,8 @@ import libzfs
 import multiprocessing
 import time
 
+from middlewared.utils import start_daemon_thread
+
 
 def zfs_events(child_conn, start_time):
     zevent_fd = None
@@ -48,4 +50,4 @@ def setup_zfs_events_process(middleware):
 
 
 async def setup(middleware):
-    asyncio.ensure_future(middleware.run_in_thread(setup_zfs_events_process, middleware))
+    start_daemon_thread(target=setup_zfs_events_process, args=(middleware,))
