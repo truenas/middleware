@@ -45,7 +45,7 @@ async def devd_devfs_hook(middleware, data):
 
 
 async def udev_block_devices_hook(middleware, data):
-    if data.get('DEVTYPE') != 'disk':
+    if data.get('SUBSYSTEM') != 'block' or data.get('DEVTYPE') != 'disk':
         return
 
     if data['ACTION'] == 'add':
