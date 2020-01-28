@@ -149,21 +149,21 @@ async def devd_zfs_hook(middleware, data):
         asyncio.ensure_future(middleware.call('disk.swaps_configure'))
 
 
-async def zfs_events(middleware, event_type, args):
-    event_id = args['id']
+async def zfs_events(middleware, data):
+    event_id = data['class']
     if event_id in ('sysevent.fs.zfs.resilver_start', 'sysevent.fs.zfs.scrub_start'):
-        await resilver_scrub_start(middleware, args['fields'].get('pool'))
+        await resilver_scrub_start(middleware, data.get('pool'))
     elif event_id in (
         'sysevent.fs.zfs.resilver_finish', 'sysevent.fs.zfs.scrub_finish', 'sysevent.fs.zfs.scrub_abort'
     ):
-        await resilver_scrub_stop_abort(middleware, args['fields'].get('pool'))
+        await resilver_scrub_stop_abort(middleware, data.get('pool'))
 
     if event_id == 'sysevent.fs.zfs.scrub_finish':
-        await scrub_finished(middleware, args['fields'].get('pool'))
+        await scrub_finished(middleware, data.get('pool'))
     elif event_id == 'ereport.fs.zfs.deadman':
         asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
-            'vdev': args['fields'].get('vdev_path', '<unknown>'),
-            'pool': args['fields'].get('pool', '<unknown>'),
+            'vdev': data.get('vdev_path', '<unknown>'),
+            'pool': data.get('pool', '<unknown>'),
         }))
     elif event_id == 'resource.fs.zfs.statechange':
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
@@ -180,6 +180,6 @@ async def zfs_events(middleware, event_type, args):
 def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
     if IS_LINUX:
-        middleware.event_subscribe('zfs.pool.events', zfs_events)
+        middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
     else:
         middleware.register_hook('devd.zfs', devd_zfs_hook)
