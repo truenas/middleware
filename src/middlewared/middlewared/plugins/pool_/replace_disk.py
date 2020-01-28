@@ -26,7 +26,7 @@ class PoolService(Service):
 
         `label` is the ZFS guid or a device name
         `disk` is the identifier of a disk
-        `passphrase` is only valid for FreeBSD platform where pool is GELI encrypted
+        `passphrase` is only valid for TrueNAS Core/Enterprise platform where pool is GELI encrypted
 
         .. examples(websocket)::
 
