@@ -7,20 +7,17 @@ from middlewared.utils import start_daemon_thread
 from middlewared.utils.osc import set_thread_name
 
 
-def zfs_events(child_conn, start_time):
+def zfs_events(child_conn, current_no_of_zfs_events):
     zevent_fd = None
     try:
         zevent_fd = os.open('/dev/zfs', os.O_RDWR)
         with libzfs.ZFS() as zfs:
+            event_count = -1
             while True:
                 event = zfs.zpool_events_single(zevent_fd)
-                if event.get('time'):
-                    # When we retrieve zfs events, we start from a point where we retrieve old events as well,
-                    # so in this case we filter the old events out by comparing the timestamp of the event
-                    # with the time events endpoint was called and only sending events for those zfs events
-                    # which came after that timestamp
-                    if start_time > float(f'{event["time"][0]}.{event["time"][1]}'):
-                        continue
+                event_count += 1
+                if event_count < current_no_of_zfs_events:
+                    continue
 
                 child_conn.send(event)
     finally:
@@ -28,14 +25,45 @@ def zfs_events(child_conn, start_time):
             os.close(zevent_fd)
 
 
+def current_zfs_events(child_conn):
+    with libzfs.ZFS() as zfs:
+        child_conn.send(list(zfs.zpool_events(False)))
+
+
+def get_current_no_of_zfs_events(middleware):
+    data = {'event_count': None, 'error': True}
+    try:
+        parent_conn, child_conn = multiprocessing.Pipe(duplex=False)
+        events_process = multiprocessing.Process(
+            daemon=True, target=current_zfs_events, args=(child_conn,), name='retrieve_current_zfs_events_process'
+        )
+    except Exception as e:
+        middleware.logger.error('Failed to spawn process for retrieving current ZFS events %s', str(e))
+        return data
+
+    try:
+        events_process.start()
+        data.update({'error': False, 'event_count': len(parent_conn.recv())})
+    except Exception as e:
+        middleware.logger.error('Failed to retrieve current number of ZFS events %s', str(e))
+    return data
+
+
 def setup_zfs_events_process(middleware):
     set_thread_name('retrieve_zfs_events_thread')
     while True:
-        start_time = time.time_ns() / (10 ** 9)
+        current_no_of_zfs_events = get_current_no_of_zfs_events(middleware)
+        if current_no_of_zfs_events['error']:
+            time.sleep(3)
+            continue
+        else:
+            current_no_of_zfs_events = current_no_of_zfs_events['event_count']
+
         try:
             parent_conn, child_conn = multiprocessing.Pipe(duplex=False)
             events_process = multiprocessing.Process(
-                daemon=True, target=zfs_events, args=(child_conn, start_time), name='retrieve_zfs_events_process'
+                daemon=True, target=zfs_events, args=(child_conn, current_no_of_zfs_events),
+                name='retrieve_zfs_events_process'
             )
         except Exception as e:
             middleware.logger.error('Failed to spawn process for retrieving ZFS events %s', str(e))
