@@ -32,9 +32,12 @@ def setup_zfs_events_process(middleware):
         start_time = time.time_ns() / (10 ** 9)
         try:
             parent_conn, child_conn = multiprocessing.Pipe(duplex=False)
-            events_process = multiprocessing.Process(daemon=True, target=zfs_events, args=(child_conn, start_time))
+            events_process = multiprocessing.Process(
+                daemon=True, target=zfs_events, args=(child_conn, start_time), name='retrieve_zfs_events_process'
+            )
         except Exception as e:
             middleware.logger.error('Failed to spawn process for retrieving ZFS events %s', str(e))
+            time.sleep(3)
             continue
 
         try:
@@ -44,9 +47,11 @@ def setup_zfs_events_process(middleware):
         except Exception as e:
             if middleware.call_sync('system.state') != 'SHUTTING_DOWN':
                 middleware.logger.error('Failed to retrieve ZFS events: %s', str(e))
+            else:
+                break
 
         time.sleep(1)
 
 
 async def setup(middleware):
-    start_daemon_thread(target=setup_zfs_events_process, args=(middleware,))
+    start_daemon_thread(target=setup_zfs_events_process, args=(middleware,), name='retrieve_zfs_events_thread')
