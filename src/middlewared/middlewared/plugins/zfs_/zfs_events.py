@@ -9,6 +9,7 @@ from middlewared.alert.base import (
 from middlewared.utils import start_daemon_thread
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
+EVENT_LOCK = asyncio.Lock()
 IS_LINUX = platform.system().lower() == 'linux'
 SCAN_THREADS = {}
 
@@ -83,7 +84,6 @@ class ScrubFinishedAlertClass(AlertClass, SimpleOneShotAlertClass):
 async def resilver_scrub_start(middleware, pool_name):
     if not pool_name:
         return
-    print('\n\npool name called for srub start -- ', pool_name)
     if pool_name in SCAN_THREADS:
         return
     scanwatch = ScanWatch(middleware, pool_name)
@@ -173,7 +173,8 @@ async def zfs_events(middleware, event_type, args):
         'sysevent.fs.zfs.pool_destroy',
         'sysevent.fs.zfs.pool_import',
     ):
-        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+        async with EVENT_LOCK:
+            await middleware.call('disk.swaps_configure')
 
 
 def setup(middleware):

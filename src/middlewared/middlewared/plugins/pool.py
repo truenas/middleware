@@ -1673,7 +1673,9 @@ class PoolService(CRUDService):
 
         # Configure swaps after importing pools. devd events are not yet ready at this
         # stage of the boot process.
-        self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
+        if not IS_LINUX:
+            # For now let's make this FreeBSD specific as we may very well be getting zfs events here in linux
+            self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
 
         job.set_progress(100, 'Pools import completed')
 
