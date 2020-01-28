@@ -492,7 +492,7 @@ class FileApplication(object):
                 try:
                     while True:
                         read = asyncio.run_coroutine_threadsafe(
-                            filepart.read_chunk(1048576),
+                            filepart.read_chunk(filepart.chunk_size),
                             loop=self.loop,
                         ).result()
                         if read == b'':
