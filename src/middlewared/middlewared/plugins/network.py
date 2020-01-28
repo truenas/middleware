@@ -24,6 +24,7 @@ from .interface.netif import netif
 from .interface.type_base import InterfaceType
 
 
+IS_LINUX = platform.system().lower() == 'linux'
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
 ANNOUNCE_SRV = {
@@ -2215,15 +2216,11 @@ async def configure_http_proxy(middleware, *args, **kwargs):
     urllib.request.install_opener(None)
 
 
-async def devd_ifnet_hook(middleware, data):
-    if data.get('system') != 'IFNET' or data.get('type') != 'ATTACH':
-        return
-
-    iface = data.get('subsystem')
+async def attach_interface(middleware, iface):
     if not iface:
         return
 
-    # We dont handle the following interfaces in middlwared
+    # We dont handle the following interfaces in middlewared
     if iface.startswith(('epair', 'tun', 'tap')):
         return
 
@@ -2241,13 +2238,30 @@ async def devd_ifnet_hook(middleware, data):
     await middleware.call('interface.sync_interface', iface['name'])
 
 
+async def devd_ifnet_hook(middleware, data):
+    if data.get('system') != 'IFNET' or data.get('type') != 'ATTACH':
+        return
+
+    await attach_interface(middleware, data.get('subsystem'))
+
+
+async def udevd_ifnet_hook(middleware, data):
+    if data.get('SUBSYSTEM') != 'net' and data.get('ACTION') != 'add':
+        return
+
+    await attach_interface(middleware, data.get('INTERFACE'))
+
+
 async def setup(middleware):
     # Configure http proxy on startup and on network.config events
     asyncio.ensure_future(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
 
-    # Listen to IFNET events so we can sync on interface attach
-    middleware.register_hook('devd.ifnet', devd_ifnet_hook)
+    if IS_LINUX:
+        middleware.register_hook('udev.net', udevd_ifnet_hook)
+    else:
+        # Listen to IFNET events so we can sync on interface attach
+        middleware.register_hook('devd.ifnet', devd_ifnet_hook)
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

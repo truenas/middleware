@@ -1673,7 +1673,9 @@ class PoolService(CRUDService):
 
         # Configure swaps after importing pools. devd events are not yet ready at this
         # stage of the boot process.
-        self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
+        if not IS_LINUX:
+            # For now let's make this FreeBSD specific as we may very well be getting zfs events here in linux
+            self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
 
         job.set_progress(100, 'Pools import completed')
 
@@ -3714,25 +3716,5 @@ def parse_lsof(lsof, dirs):
     return list(pids.items())
 
 
-async def devd_zfs_hook(middleware, data):
-    if data.get('subsystem') != 'ZFS':
-        return
-
-    if data.get('type') in (
-        'ATTACH',
-        'DETACH',
-        'resource.fs.zfs.removed',
-        'misc.fs.zfs.config_sync',
-    ):
-        asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
-
-    if data.get('type') == 'ereport.fs.zfs.deadman':
-        asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
-            'vdev': data.get('vdev_path', '<unknown>'),
-            'pool': data.get('pool', '<unknown>'),
-        }))
-
-
 def setup(middleware):
-    middleware.register_hook('devd.zfs', devd_zfs_hook)
     asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))
