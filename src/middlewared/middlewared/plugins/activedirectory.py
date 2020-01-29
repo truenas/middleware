@@ -909,13 +909,14 @@ class ActiveDirectoryService(ConfigService):
         return (await self.middleware.call('directoryservices.get_state'))['activedirectory']
 
     @private
-    async def set_idmap(self, trusted_domains):
+    async def set_idmap(self, trusted_domains, our_domain):
         idmap = await self.middleware.call('idmap.query',
                                            [('id', '=', DSType.DS_TYPE_ACTIVEDIRECTORY.value)],
                                            {'get': True})
         idmap_id = idmap.pop('id')
         if not idmap['range_low']:
             idmap['range_low'], idmap['range_high'] = await self.middleware.call('idmap.get_next_idmap_range')
+        idmap['dns_domain_name'] = our_domain.upper()
         await self.middleware.call('idmap.update', idmap_id, idmap)
         if trusted_domains:
             await self.middleware.call('idmap.autodiscover_trusted_domains')
@@ -1029,7 +1030,7 @@ class ActiveDirectoryService(ConfigService):
 
             ret = neterr.JOINED
             await self.middleware.call('service.update', 'cifs', {'enable': True})
-            await self.set_idmap(ad['allow_trusted_doms'])
+            await self.set_idmap(ad['allow_trusted_doms'], ad['domainname'])
             await self.middleware.call('activedirectory.set_ntp_servers')
 
         await self.middleware.call('service.restart', 'cifs')

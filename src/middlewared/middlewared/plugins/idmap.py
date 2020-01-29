@@ -446,7 +446,7 @@ class IdmapDomainService(CRUDService):
             Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
             Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
             Str('idmap_backend', enum=[x.name for x in IdmapBackend]),
-            Int('certificate_id', null=True),
+            Int('certificate', null=True),
             Dict(
                 'options',
                 Str('schema_mode'),
