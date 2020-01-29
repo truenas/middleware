@@ -1,8 +1,13 @@
+# flake8: noqa
+import io
+import textwrap
 from unittest.mock import Mock
 
 import pytest
 
-from middlewared.plugins.cloud_sync import get_dataset_recursive, FsLockManager, lsjson_error_excerpt
+from middlewared.plugins.cloud_sync import (
+    get_dataset_recursive, FsLockManager, lsjson_error_excerpt, RcloneVerboseLogCutter
+)
 
 
 def test__get_dataset_recursive_1():
@@ -203,3 +208,50 @@ def test__fs_lock_manager_3():
 ])
 def test__lsjson_error_excerpt(error, excerpt):
     assert lsjson_error_excerpt(error) == excerpt
+
+
+def INFO(v):
+    return textwrap.dedent(f"""\
+        2020/01/22 22:32:{v:02d} INFO  : 
+        Transferred:   	  752.465G / 27.610 TBytes, 3%, 7.945 MBytes/s, ETA 5w6d1h16m55s
+        Errors:               478 (retrying may help)
+        Checks:                89 / 89, 100%
+        Transferred:           75 / 3546, 2%
+        Elapsed time:  26h56m23.1s
+        Transferring:
+         *         Cam (2018)/Cam (2018) WEBDL-1080p.mkv:  0% /3.470G, 0/s, -
+         * Call Me by Your Name (…2017) Bluray-1080p.mkv:  0% /9.839G, 0/s, -
+         * Can't Take It Back (20…(2017) WEBDL-1080p.mkv:  0% /3.035G, 0/s, -
+         * Candleshoe (1977)/Cand… (1977) WEBDL-720p.mkv:  0% /2.865G, 0/s, -
+    
+    """)
+
+
+@pytest.mark.parametrize("input,output", [
+    (f"WELCOME TO RCLONE\n{INFO(1)}{INFO(2)}BYE!\n", f"WELCOME TO RCLONE\n{INFO(1)}BYE!\n"),
+    (f"WELCOME TO RCLONE\n{INFO(1)}{INFO(2)}{INFO(3)}{INFO(4)}{INFO(5)}{INFO(6)}BYE!\n",
+     f"WELCOME TO RCLONE\n{INFO(1)}{INFO(6)}BYE!\n"),
+    (f"WELCOME TO RCLONE\n{INFO(1)}{INFO(2)[:300]}\nKilled (9)",
+     f"WELCOME TO RCLONE\n{INFO(1)}{INFO(2)[:300]}\nKilled (9)"),
+    (f"2020/01/27 13:16:15 INFO  : S3 bucket ixsystems: Waiting for transfers to finish\n"
+     f"{INFO(1)}{INFO(2)}{INFO(3)}{INFO(4)}{INFO(5)}{INFO(6)}BYE!\n",
+     f"2020/01/27 13:16:15 INFO  : S3 bucket ixsystems: Waiting for transfers to finish\n{INFO(1)}{INFO(6)}BYE!\n")
+])
+def test__RcloneVerboseLogCutter(input, output):
+    cutter = RcloneVerboseLogCutter(5)
+    f = io.StringIO(input)
+    out = ""
+    while True:
+        line = f.readline()
+        if not line:
+            break
+
+        result = cutter.notify(line)
+        if result:
+             out += result
+
+    result = cutter.flush()
+    if result:
+        out += result
+
+    assert out == output
