@@ -228,7 +228,7 @@ class UsageService(Service):
 
             disks = 0
             vdevs = 0
-            type = 'STRIPE'
+            type = 'UNKNOWN'
 
             try:
                 pd = (await self.middleware.call(
@@ -240,6 +240,7 @@ class UsageService(Service):
                     f'{p["name"]} is missing, skipping collection',
                     exc_info=True
                 )
+                continue
 
             for d in p['topology']['data']:
                 if not d.get('path'):
@@ -248,6 +249,7 @@ class UsageService(Service):
                     disks += len(d['children'])
                 else:
                     disks += 1
+                    type = 'STRIPE'
 
             pool_list.append(
                 {
