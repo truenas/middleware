@@ -407,9 +407,13 @@ class PluginService(CRUDService):
         else:
             self.middleware.call_sync('jail.check_dataset_existence')
             plugins_versions_data = IOCPlugin(branch=branch, git_repository=plugin_repository).fetch_plugin_versions()
-            resource_list = ioc.IOCage(skip_jails=True).fetch(
-                list=True, plugins=True, header=False, branch=branch, git_repository=options['plugin_repository']
-            )
+            try:
+                resource_list = ioc.IOCage(skip_jails=True).fetch(
+                    list=True, plugins=True, header=False, branch=branch, git_repository=options['plugin_repository']
+                )
+            except Exception as e:
+                resource_list = []
+                self.middleware.logger.debug(f'Failed to retrieve plugins for {options["plugin_repository"]}: {e}')
 
         for plugin in resource_list:
             plugin.update({
