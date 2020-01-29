@@ -1110,7 +1110,7 @@ class ActiveDirectoryService(ConfigService):
         tmpconf = ad.copy()
         if tmpconf['certificate']:
             tmpconf['certificate'] = self.middleware.call_sync(
-                'certificate.query'
+                'certificate.query',
                 [('id', '=', ad['certificate'])],
                 {'get': True}
             )['name']
@@ -1482,6 +1482,7 @@ class ActiveDirectoryService(ConfigService):
         """
         ad = await self.config()
         principal = f'{data["username"]}@{ad["domainname"]}'
+        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         ad_kinit = await Popen(
             ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
@@ -1494,12 +1495,14 @@ class ActiveDirectoryService(ConfigService):
         if netads.returncode != 0:
             raise CallError(f"Failed to leave domain: [{netads.stderr.decode()}]")
 
-        krb_princ = await self.middleware.call(
-            'kerberos.keytab.query',
-            [('name', '=', 'AD_MACHINE_ACCOUNT')],
-            {'get': True}
-        )
-        await self.middleware.call('kerberos.keytab.delete', krb_princ['id'])
+        if smb_ha_mode != 'LEGACY':
+            krb_princ = await self.middleware.call(
+                'kerberos.keytab.query',
+                [('name', '=', 'AD_MACHINE_ACCOUNT')],
+                {'get': True}
+            )
+            await self.middleware.call('kerberos.keytab.delete', krb_princ['id'])
+
         await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
         await self.middleware.call('activedirectory.stop')
 
