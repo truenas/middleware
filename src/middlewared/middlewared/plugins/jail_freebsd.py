@@ -415,7 +415,9 @@ class PluginService(CRUDService):
                 )
             except Exception as e:
                 resource_list = []
-                self.middleware.logger.debug(f'Failed to retrieve plugins for {options["plugin_repository"]}: {e}')
+                self.middleware.logger.debug(
+                    'Failed to retrieve plugins for %s: %s', options['plugin_repository'], str(e)
+                )
 
         for plugin in resource_list:
             plugin.update({
@@ -459,7 +461,9 @@ class PluginService(CRUDService):
             index = plugins_obj.retrieve_plugin_index_data(plugins_obj.git_destination)
 
         if options['plugin'] not in index:
-            raise CallError(f'{options["plugin"]} not found')
+            raise CallError(
+                f'{options["plugin"]} not found, likely because local plugin repository is corrupted.'
+            )
         return {
             'plugin': options['plugin'],
             'properties': {**IOCPlugin.DEFAULT_PROPS, **index[options['plugin']].get('properties', {})}
