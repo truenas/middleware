@@ -223,7 +223,7 @@ async def rclone(middleware, job, cloud_sync):
         if cancelled_error is not None:
             raise cancelled_error
         if proc.returncode != 0:
-            message = "rclone failed"
+            message = f"rclone failed with exit code {proc.returncode}"
             if "dropbox__restricted_content" in job.internal_data:
                 message = "DropBox restricted content"
             raise ValueError(message)
@@ -287,19 +287,112 @@ async def run_script_check(job, proc, name):
         job.logs_fd.write(f"[{name}] ".encode("utf-8") + read)
 
 
+# Prevents clogging job logs with progress reports every second
+class RcloneVerboseLogCutter:
+    PREFIXES = (
+        re.compile(r"[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} INFO {2}:"),
+        re.compile(r"Transferred:\s+"),
+        re.compile(r"Errors:\s+"),
+        re.compile(r"Checks:\s+"),
+        re.compile(r"Transferred:\s+"),
+        re.compile(r"Elapsed time:\s+"),
+        re.compile(r"Transferring:"),
+    )
+
+    def __init__(self, interval):
+        self.interval = interval
+
+        self.buffer = []
+        self.counter = 0
+
+    def notify(self, line):
+        if self.buffer:
+            # We are currently reading progress message
+
+            self.buffer.append(line)
+
+            if line.rstrip("\n"):
+                # We are still reading message
+
+                i = len(self.buffer) - 1
+                if i < len(self.PREFIXES):
+                    # Next line should match this
+                    matches = self.PREFIXES[i].match(line)
+                else:
+                    # Next line should be an individual file progress
+                    matches = line.startswith(" * ")
+
+                if matches:
+                    # Good, consuming this line to buffer and yet not writing it to logs
+                    return None
+                else:
+                    # This was unexpected form of progress message (or not a progress message at all)
+
+                    new_buffer = []
+                    if self.PREFIXES[0].match(line):
+                        # This line can be start of new progress message, ejecting it from buffer
+                        self.buffer = self.buffer[:-1]
+                        # And adding to new buffer
+                        new_buffer = [line]
+
+                    # Writing buffer to logs
+                    try:
+                        return self.flush()
+                    finally:
+                        self.buffer = new_buffer
+            else:
+                # This message ends with newline
+                try:
+                    if self.counter % self.interval == 0:
+                        # Every {counter} times we still write this buffer to logs
+                        return "".join(self.buffer)
+                    else:
+                        return None
+                finally:
+                    # Resetting state, ready to consume next line
+                    self.buffer = []
+                    self.counter += 1
+        else:
+            # We are not reading progress message
+
+            if self.PREFIXES[0].match(line):
+                # This is the first line of progress message
+                self.buffer.append(line)
+                return None
+            else:
+                return line
+
+    def flush(self):
+        try:
+            return "".join(self.buffer)
+        finally:
+            self.buffer = []
+
+
 async def rclone_check_progress(job, proc):
+    cutter = RcloneVerboseLogCutter(300)
     dropbox__restricted_content = False
-    while True:
-        read = (await proc.stdout.readline()).decode()
-        if read == "":
-            break
-        if "failed to open source object: path/restricted_content/" in read:
-            job.internal_data["dropbox__restricted_content"] = True
-            dropbox__restricted_content = True
-        job.logs_fd.write(read.encode("utf-8", "ignore"))
-        reg = RE_TRANSF.search(read)
-        if reg:
-            job.set_progress(int(reg.group("progress")), reg.group("progress_1") + reg.group("progress_2"))
+    try:
+        while True:
+            read = (await proc.stdout.readline()).decode()
+            if read == "":
+                break
+
+            if "failed to open source object: path/restricted_content/" in read:
+                job.internal_data["dropbox__restricted_content"] = True
+                dropbox__restricted_content = True
+
+            result = cutter.notify(read)
+            if result:
+                job.logs_fd.write(result.encode("utf-8", "ignore"))
+
+            reg = RE_TRANSF.search(read)
+            if reg:
+                job.set_progress(int(reg.group("progress")), reg.group("progress_1") + reg.group("progress_2"))
+    finally:
+        result = cutter.flush()
+        if result:
+            job.logs_fd.write(result.encode("utf-8", "ignore"))
 
     if dropbox__restricted_content:
         message = "\n" + (
