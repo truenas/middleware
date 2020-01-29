@@ -582,7 +582,7 @@ class LDAPService(ConfigService):
         old = await self.config()
         new = old.copy()
         new.update(data)
-        data['uri_list'] = await self.hostnames_to_uris(new)
+        new['uri_list'] = await self.hostnames_to_uris(new)
         await self.common_validate(new, old, verrors)
         verrors.check()
 
