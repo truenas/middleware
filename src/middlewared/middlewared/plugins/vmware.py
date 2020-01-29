@@ -485,7 +485,7 @@ class VMWareService(CRUDService):
                             snapvmskips.append(vm.config.uuid)
                     except Exception as e:
                         self.logger.warning("Snapshot of VM %s failed", vm.name, exc_info=True)
-                        self.middleware.call("alert.oneshot_create", "VMWareSnapshotCreateFailed", {
+                        self.middleware.call_sync("alert.oneshot_create", "VMWareSnapshotCreateFailed", {
                             "hostname": vmsnapobj["hostname"],
                             "vm": vm.name,
                             "snapshot": vmsnapname,
@@ -549,7 +549,7 @@ class VMWareService(CRUDService):
                             VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
                     except Exception as e:
                         self.logger.debug("Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True)
-                        self.middleware.call("alert.oneshot_create", "VMWareSnapshotDeleteFailed", {
+                        self.middleware.call_sync("alert.oneshot_create", "VMWareSnapshotDeleteFailed", {
                             "hostname": vmsnapobj["hostname"],
                             "vm": vm.name,
                             "snapshot": vmsnapname,
@@ -567,7 +567,7 @@ class VMWareService(CRUDService):
         return self.snapshot_begin(task["dataset"], task["recursive"])
 
     @private
-    async def periodic_snapshot_task_end(self, context):
+    def periodic_snapshot_task_end(self, context):
         return self.snapshot_end(context)
 
     # Check if a VM is using a certain datastore
