@@ -79,7 +79,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		rclone>0:net/rclone \
 		ifstat>0:net/ifstat \
 		pyvmomi>0:net/py-pyvmomi \
-		samba411>=0:net/samba411 \
+		samba>=0:net/samba \
 		swagger-ui>0:freenas/swagger-ui
 
 USE_RC_SUBR=	middlewared
