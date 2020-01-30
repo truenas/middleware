@@ -752,7 +752,7 @@ class KerberosKeytabService(CRUDService):
             for line in kt_list_output.splitlines():
                 fields = line.split()
                 if len(fields) >= 4 and fields[0] != 'Vno':
-                    if fields['1'] == 'unknown':
+                    if fields[1] == 'unknown':
                         self.logger.warning('excluding unknown encryption type %s from keytab choices', fields[2])
                         continue
 
@@ -814,17 +814,21 @@ class KerberosKeytabService(CRUDService):
         """
         Delete all keytab entries from the tmp keytab that are not samba entries.
         """
+        seen_principals = []
         for i in to_delete:
+            if i['principal'] in seen_principals:
+                continue
+
             ktutil_remove = await run([
                 '/usr/sbin/ktutil',
                 '-k', keytab['SAMBA'].value,
                 'remove',
-                '-p', i['principal'],
-                '-e', i['type']],
+                '-p', i['principal']],
                 check=False
             )
+            seen_principals.append(i['principal'])
             if ktutil_remove.stderr.decode():
-                raise CallError(f"ktutil_remove [{keytab['SAMBA'].value}]: {ktutil_remove.stderr.decode()}")
+                raise CallError(f"ktutil_remove failed for [{i}]: {ktutil_remove.stderr.decode()}")
 
     @private
     async def kerberos_principal_choices(self):
