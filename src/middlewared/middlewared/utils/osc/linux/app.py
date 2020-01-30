@@ -10,8 +10,7 @@ __all__ = ['get_app_version']
 
 def get_app_version():
     cache = apt.Cache()
-    # FIXME: use virtual package
-    package = cache.get('apt')
+    package = cache.get('truenas')
     return {
         'stable': 'git' not in package.installed.version,
         'version': package.installed.version,
