@@ -434,6 +434,7 @@ class KerberosKeytabCreateForm(ModelForm):
 
         with client as c:
             c.call('kerberos.keytab.legacy_validate', encoded)
+            encoded = c.call('pwenc.encrypt', encoded)
 
         return encoded
 
