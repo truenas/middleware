@@ -11,6 +11,7 @@ from middlewared.utils.path import is_child
 import asyncio
 import codecs
 import enum
+import errno
 import os
 import platform
 import re
@@ -173,6 +174,21 @@ class SMBModel(sa.Model):
     cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
     cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)
     cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
+
+
+class WBCErr(enum.Enum):
+    SUCCESS = ('Winbind operation successfully completed.', None)
+    NOT_IMPLEMENTED = ('Function is not implemented.', errno.ENOSYS)
+    UNKNOWN_FAILURE = ('Generic failure.', errno.EFAULT)
+    ERR_NO_MEMORY = ('Memory allocation error.', errno.ENOMEM)
+    WINBIND_NOT_AVAILABLE = ('Winbind daemon is not available.', errno.EFAULT)
+    DOMAIN_NOT_FOUND = ('Domain is not trusted or cannot be found.', errno.EFAULT)
+    INVALID_RESPONSE = ('Winbind returned an invalid response.', errno.EINVAL)
+    AUTH_ERROR = ('Authentication failed.', errno.EPERM)
+    PWD_CHANGE_FAILED = ('Password change failed.', errno.EFAULT)
+
+    def err(self):
+        return f'WBC_ERR_{self.name}'
 
 
 class SMBService(SystemServiceService):
