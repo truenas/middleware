@@ -6,8 +6,7 @@ import pytest
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, user, password, ip
-from config import *
+from auto_config import pool_name, user, password, ip, hostname
 from functions import GET, POST, PUT, DELETE, SSH_TEST, ping_host
 
 ad_data_type = {
@@ -28,7 +27,6 @@ ad_data_type = {
     'createcomputer': str,
     'timeout': int,
     'dns_timeout': int,
-    'idmap_backend': str,
     'nss_info': type(None),
     'ldap_sasl_wrapping': str,
     'enable': bool,
@@ -37,11 +35,10 @@ ad_data_type = {
 }
 
 ad_object_list = [
-        "bindname",
-        "domainname",
-        "netbiosname",
-        "idmap_backend",
-        "enable"
+    "bindname",
+    "domainname",
+    "netbiosname",
+    "enable"
 ]
 
 MOUNTPOINT = f"/tmp/ad-test"
@@ -53,32 +50,30 @@ VOL_GROUP = "wheel"
 
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
-Reason = "AD_DOMAIN, ADPASSWORD, and ADUSERNAME are missing in config.py"
 
 ad_host_up = False
-if 'AD_DOMAIN' in locals():
+try:
+    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
     ad_host_up = ping_host(AD_DOMAIN, 5)
-    print(ad_host_up)
-    if ad_host_up is False:
-        print(ad_host_up)
-        Reason = f'{AD_DOMAIN} is down'
-
-skip_ad_test = pytest.mark.skipif(all(["AD_DOMAIN" in locals(),
-                                       "ADPASSWORD" in locals(),
-                                       "ADUSERNAME" in locals(),
-                                       ad_host_up is True
-                                       ]) is False, reason=Reason)
+    Reason = f'{AD_DOMAIN} is down'
+    skip_ad_test = pytest.mark.skipif(ad_host_up is False, reason=Reason)
+except ImportError:
+    Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
+    skip_ad_test = pytest.mark.skip(reason=Reason)
 
 
-bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
-                                       "BSD_USERNAME" in locals(),
-                                       "BSD_PASSWORD" in locals()
-                                       ]) is False, reason=BSDReason)
+try:
+    from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
+    bsd_host_cfg = pytest.mark.skipif(False, reason=BSDReason)
+except ImportError:
+    bsd_host_cfg = pytest.mark.skipif(True, reason=BSDReason)
 
-osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
-                                       "OSX_USERNAME" in locals(),
-                                       "OSX_PASSWORD" in locals()
-                                       ]) is False, reason=OSXReason)
+
+try:
+    from config import OSX_HOST, OSX_USERNAME, OSX_PASSWORD
+    osx_host_cfg = pytest.mark.skipif(False, reason=OSXReason)
+except ImportError:
+    osx_host_cfg = pytest.mark.skipif(True, reason=OSXReason)
 
 
 @skip_ad_test
@@ -165,8 +160,7 @@ def test_10_enabling_activedirectory():
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
         "domainname": AD_DOMAIN,
-        "netbiosname": BRIDGEHOST,
-        "idmap_backend": "RID",
+        "netbiosname": hostname,
         "dns_timeout": 15,
         "verbose_logging": True,
         "enable": True
@@ -411,8 +405,7 @@ def test_40_re_enable_activedirectory():
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
         "domainname": AD_DOMAIN,
-        "netbiosname": BRIDGEHOST,
-        "idmap_backend": "RID",
+        "netbiosname": hostname,
         "enable": True
     }
     results = PUT("/activedirectory/", payload)

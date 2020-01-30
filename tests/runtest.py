@@ -173,7 +173,7 @@ def get_tests():
 for i in get_tests():
     if testName is not None and testName != i:
         continue
-    call([f"py.test-{version}", "--junitxml",
+    call([f"py.test-{version}", "-v", "--junitxml",
           f"{results_xml}{i}_tests_result.xml"] + (
               ["-k", testexpr] if testexpr else []
     ) + [f"api2/{i}.py"])
