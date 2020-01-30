@@ -168,7 +168,7 @@ scsi)
 			echo "Specified size is too big for the short block descriptor."
 			exit 1
 		fi
-		echo "Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe
+		echo "Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe -P3
 		err=$?
 	else
 		if [ -z "${size}" ]; then
@@ -179,7 +179,7 @@ scsi)
 			lsize=$((${size} & 0xffffffff))
 		fi
 		echo "Number of Logical Blocks High: ${hsize}
-Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe
+Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe -P3
 		err=$?
 	fi
 
