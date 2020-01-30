@@ -22,7 +22,8 @@ from zettarepl.definition.definition import (
 )
 from zettarepl.observer import (
     PeriodicSnapshotTaskStart, PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError,
-    ReplicationTaskScheduled, ReplicationTaskStart, ReplicationTaskSnapshotProgress, ReplicationTaskSnapshotSuccess,
+    ReplicationTaskScheduled, ReplicationTaskStart, ReplicationTaskSnapshotStart, ReplicationTaskSnapshotProgress,
+    ReplicationTaskSnapshotSuccess,
     ReplicationTaskSuccess, ReplicationTaskError
 )
 from zettarepl.replication.task.dataset import get_target_dataset
@@ -362,11 +363,22 @@ class ZettareplService(Service):
                 if isinstance(message, ReplicationTaskLog):
                     job.logs_fd.write(message.log.encode("utf8", "ignore") + b"\n")
 
+                if isinstance(message, ReplicationTaskSnapshotStart):
+                    job.set_progress(
+                        100 * (message.snapshots_sent / message.snapshots_total),
+                        f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
+                        f"{message.dataset}@{message.snapshot}",
+                    )
+
                 if isinstance(message, ReplicationTaskSnapshotProgress):
                     job.set_progress(
-                        100 * message.current / message.total,
-                        f"Sending {message.dataset}@{message.snapshot} "
-                        f"({humanfriendly.format_size(message.current)} / {humanfriendly.format_size(message.total)})",
+                        100 * (
+                            (message.snapshots_sent + message.bytes_sent / message.bytes_total) /
+                            message.snapshots_total
+                        ),
+                        f"Sending {message.snapshots_sent + 1} of {message.snapshots_total}: "
+                        f"{message.dataset}@{message.snapshot} ({humanfriendly.format_size(message.bytes_sent)} / "
+                        f"{humanfriendly.format_size(message.bytes_total)})",
                     )
 
                 if isinstance(message, ReplicationTaskSuccess):
@@ -732,6 +744,26 @@ class ZettareplService(Service):
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
 
+                if isinstance(message, ReplicationTaskSnapshotStart):
+                    self.state[f"replication_{message.task_id}"] = {
+                        "state": "RUNNING",
+                        "datetime": datetime.utcnow(),
+                        "progress": {
+                            "dataset": message.dataset,
+                            "snapshot": message.snapshot,
+                            "snapshots_sent": message.snapshots_sent,
+                            "snapshots_total": message.snapshots_total,
+                            "bytes_sent": 0,
+                            "bytes_total": 0,
+                            # legacy
+                            "current": 0,
+                            "total": 9,
+                        }
+                    }
+
+                    for channel in self.replication_jobs_channels[message.task_id]:
+                        channel.put(message)
+
                 if isinstance(message, ReplicationTaskSnapshotProgress):
                     self.state[f"replication_{message.task_id}"] = {
                         "state": "RUNNING",
@@ -739,8 +771,13 @@ class ZettareplService(Service):
                         "progress": {
                             "dataset": message.dataset,
                             "snapshot": message.snapshot,
-                            "current": message.current,
-                            "total": message.total,
+                            "snapshots_sent": message.snapshots_sent,
+                            "snapshots_total": message.snapshots_total,
+                            "bytes_sent": message.bytes_sent,
+                            "bytes_total": message.bytes_total,
+                            # legacy
+                            "current": message.bytes_sent,
+                            "total": message.bytes_total,
                         }
                     }
 
