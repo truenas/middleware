@@ -783,6 +783,10 @@ class KerberosKeytabService(CRUDService):
             for line in kt_list_output.splitlines():
                 fields = line.split()
                 if len(fields) >= 4 and fields[0] != 'Vno':
+                    if fields['1'] == 'unknown':
+                        self.logger.warning('excluding unknown encryption type %s from keytab choices', fields[2])
+                        continue
+
                     keytab_entries.append({
                         'kvno': fields[0],
                         'type': fields[1],
