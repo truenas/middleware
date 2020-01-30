@@ -1373,7 +1373,7 @@ class iSCSITargetService(CRUDService):
                 verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group is required for '
                                                               'CHAP and CHAP Mutual')
             elif group['auth'] and group['authmethod'] == 'CHAP_MUTUAL':
-                auth = await self.middleware.call('iscsi.auth.query', [('id', '=', group['auth'])])
+                auth = await self.middleware.call('iscsi.auth.query', [('tag', '=', group['auth'])])
                 if not auth:
                     verrors.add(f'{schema_name}.groups.{i}.auth', 'Authentication group not found', errno.ENOENT)
                 else:
