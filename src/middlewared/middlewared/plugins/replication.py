@@ -114,6 +114,11 @@ class ReplicationService(CRUDService):
                             data["state"]["progress"] = {
                                 "dataset": dataset,
                                 "snapshot": snapshot,
+                                "snapshots_sent": 0,
+                                "snapshots_total": 0,
+                                "bytes_sent": int(m.group("current")),
+                                "bytes_total": int(m.group("total")),
+                                # legacy
                                 "current": int(m.group("current")),
                                 "total": int(m.group("total")),
                             }
