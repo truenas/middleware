@@ -194,7 +194,10 @@ class LDAPQuery(object):
                             ldap.OPT_X_TLS_ALLOW
                         )
 
-                    ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
+                    try:
+                        ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
+                    except Exception:
+                        self.logger.warning('Failed to initialize new TLS context.', exc_info=True)
 
                 if SSL(self.ldap['ssl']) == SSL.USESTARTTLS:
                     try:
