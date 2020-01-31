@@ -351,6 +351,8 @@ class SystemDatasetService(ConfigService):
 
         restart = ['syslogd', 'collectd']
 
+        await self.middleware.call('notifier.samba4', 'user_import_sentinel_file_remove')
+
         if await self.middleware.call('service.started', 'cifs'):
             restart.append('cifs')
 
