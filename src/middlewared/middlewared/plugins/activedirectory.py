@@ -1369,7 +1369,7 @@ class ActiveDirectoryService(ConfigService):
 
         if ad['certificate']:
             ad['certificate'] = self.middleware.call_sync(
-                'certificate.query'
+                'certificate.query',
                 [('id', '=', ad['certificate'])],
                 {'get': True}
             )['name']
@@ -1445,7 +1445,7 @@ class ActiveDirectoryService(ConfigService):
 
         if ad['certificate']:
             ad['certificate'] = self.middleware.call_sync(
-                'certificate.query'
+                'certificate.query',
                 [('id', '=', ad['certificate'])],
                 {'get': True}
             )['name']
