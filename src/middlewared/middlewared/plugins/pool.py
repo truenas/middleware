@@ -540,7 +540,7 @@ class PoolService(CRUDService):
                     {"type": "STRIPE", "disks": ["da4"]}
                 ],
                 "log": [
-                    {"type": "RAIDZ1", "disks": ["da5"]}
+                    {"type": "STRIPE", "disks": ["da5"]}
                 ],
                 "spares": ["da6"]
             }
