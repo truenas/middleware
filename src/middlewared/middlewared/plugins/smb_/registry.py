@@ -213,7 +213,7 @@ class SharingSMBService(Service):
             data['path_suffix'] = '%U'
 
         conf['path'] = '/'.join([data['path'], data['path_suffix']]) if data['path_suffix'] else data['path']
-        data['vfsobjects'] = []
+        data['vfsobjects'] = ['aio_fbsd']
         if data['comment']:
             conf["comment"] = data['comment']
         if not data['browsable']:
@@ -279,9 +279,6 @@ class SharingSMBService(Service):
 
         conf.update({
             "nfs4:chown": "true",
-            "nfs4:acedup": "merge",
-            "aio write size": "0",
-            "mangled names": "illegal",
             "ea support": "false",
         })
 
