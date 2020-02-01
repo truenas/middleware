@@ -38,7 +38,10 @@ def get_config(middleware):
             ('smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
         ]]
     ])
-    conf['role'] = 'file_server'
+    conf['passdb_backend'] = 'tdbsam'
+    ldap = middleware.call_sync('ldap.config')
+    if ldap['enable'] and ldap['has_samba_schema']:
+        conf['passdb_backend'] = 'ldapsam'
 
     parm_to_test = ['privatedir', 'state directory']
     for parm in parm_to_test:
@@ -305,7 +308,11 @@ def render(service, middleware):
         return
 
     set_SID(middleware, conf)
-    if conf['role'] == "file_server":
+    """
+    If LDAP is enabled with samba schema, then remote LDAP server provides SAM and group mapping.
+    Trying to initialize the passdb backend here will fail.
+    """
+    if conf['passdb_backend'] == "tdbsam":
         middleware.call_sync('smb.synchronize_passdb')
         validate_group_mappings(middleware, conf)
         middleware.call_sync('admonitor.start')
