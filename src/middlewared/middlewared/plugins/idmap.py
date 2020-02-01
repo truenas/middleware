@@ -4,6 +4,7 @@ import os
 import datetime
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.validators import Range
@@ -56,7 +57,7 @@ class IdmapBackend(enum.Enum):
             'ldap_base_dn': {"required": True, "default": None},
             'ldap_user_dn': {"required": True, "default": None},
             'ldap_url': {"required": True, "default": None},
-            'ssl': {"required": False, "default": "NO"},
+            'ssl': {"required": False, "default": SSL.NOSSL.value},
             'readonly': {"required": False, "default": False},
         },
         'services': ['AD', 'LDAP'],
@@ -66,7 +67,7 @@ class IdmapBackend(enum.Enum):
                        'Unix user is reported as the one assigned to the '
                        'corresponding domain user.',
         'parameters': {
-            'linked_service': {"required": False, "default": "LOCAL_ACCOUNTS"},
+            'linked_service': {"required": False, "default": "LOCAL_ACCOUNT"},
         },
         'services': ['AD'],
     }
@@ -86,7 +87,7 @@ class IdmapBackend(enum.Enum):
             'ldap_user_dn': {"required": True, "default": None},
             'ldap_user_dn_password': {"required": True, "default": None},
             'ldap_realm': {"required": False, "default": None},
-            'ssl': {"required": False, "default": "OFF"},
+            'ssl': {"required": False, "default": SSL.NOSSL.value},
         },
         'services': ['AD', 'LDAP'],
     }
@@ -459,9 +460,10 @@ class IdmapDomainService(CRUDService):
                 Str('ldap_user_dn'),
                 Str('ldap_user_dn_password'),
                 Str('ldap_url'),
-                Str('ssl', enum=['OFF', 'ON', 'START_TLS']),
+                Str('ssl', enum=[x.value for x in SSL]),
                 Str('linked_service', enum=['LOCAL_ACCOUNT', 'LDAP', 'NIS']),
                 Str('ldap_server'),
+                Str('ldap_realm'),
                 Str('bind_path_user'),
                 Str('bind_path_group'),
                 Str('user_cn'),
