@@ -12,8 +12,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import ip, pool_name, password, user
-from config import *
-
 
 MOUNTPOINT = "/tmp/smb-cifs"
 dataset = f"{pool_name}/smb-cifs"
@@ -24,15 +22,18 @@ VOL_GROUP = "wheel"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
-bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
-                                       "BSD_USERNAME" in locals(),
-                                       "BSD_PASSWORD" in locals()
-                                       ]) is False, reason=BSDReason)
+try:
+    from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
+    bsd_host_cfg = pytest.mark.skipif(False, reason=BSDReason)
+except ImportError:
+    bsd_host_cfg = pytest.mark.skipif(True, reason=BSDReason)
 
-osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
-                                       "OSX_USERNAME" in locals(),
-                                       "OSX_PASSWORD" in locals()
-                                       ]) is False, reason=OSXReason)
+
+try:
+    from config import OSX_HOST, OSX_USERNAME, OSX_PASSWORD
+    osx_host_cfg = pytest.mark.skipif(False, reason=OSXReason)
+except ImportError:
+    osx_host_cfg = pytest.mark.skipif(True, reason=OSXReason)
 
 smb_acl = [
     {
