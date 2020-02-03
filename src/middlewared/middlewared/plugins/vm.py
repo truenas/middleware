@@ -980,7 +980,8 @@ class VMService(CRUDService):
             sysctl.filter('vfs.zfs.arc.max')[0].value = new_arc_max
         return True
 
-    async def _init_guest_vmemory(self, vm, overcommit):
+    @private
+    async def init_guest_vmemory(self, vm, overcommit):
         guest_memory = vm.get('memory', None)
         guest_status = await self.middleware.call('vm.status', vm['id'])
         if guest_status.get('state') != 'RUNNING':
@@ -1364,7 +1365,7 @@ class VMService(CRUDService):
             # Perhaps we should have a default config option for VMs?
             overcommit = False
 
-        self.middleware.call_sync('vm._init_guest_vmemory', vm, overcommit)
+        self.middleware.call_sync('vm.init_guest_vmemory', vm, overcommit)
 
         # Passing vm_data will ensure that the domain/vm is started with latest changes registered
         # to the vm object
@@ -1403,7 +1404,7 @@ class VMService(CRUDService):
         if options['force_after_timeout'] and self.status(id)['state'] == 'RUNNING':
             vm.poweroff()
 
-        self.middleware.call_sync('vm._teardown_guest_vmemory', id)
+        self.middleware.call_sync('vm.teardown_guest_vmemory', id)
 
     @item_method
     @accepts(Int('id'))
@@ -1421,7 +1422,8 @@ class VMService(CRUDService):
         self.ensure_libvirt_connection()
         self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
 
-    async def _teardown_guest_vmemory(self, id):
+    @private
+    async def teardown_guest_vmemory(self, id):
         guest_status = await self.middleware.call('vm.status', id)
         if guest_status.get('state') != 'STOPPED':
             return
