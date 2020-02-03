@@ -665,7 +665,7 @@ class SharingSMBService(CRUDService):
             self.logger.warn('Failed to remove registry entry for [%s].', share['name'], exc_info=True)
 
         if share['timemachine']:
-            await self.middleware.call('mdnsadvertise.restart')
+            await self.middleware.call('service.restart', 'mdns')
 
         return result
 
