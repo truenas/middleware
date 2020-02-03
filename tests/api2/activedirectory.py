@@ -238,7 +238,7 @@ def test_19_creating_a_smb_share_on_smb_path():
         "path": SMB_PATH,
         "name": SMB_NAME,
         "guestok": True,
-        "vfsobjects": ["streams_xattr"]
+        "streams": True
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
@@ -246,7 +246,7 @@ def test_19_creating_a_smb_share_on_smb_path():
 
 
 @skip_ad_test
-@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "vfsobjects"])
+@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "streams"])
 def test_20_verify_the_value_of_the_created_sharing_smb_object_(data):
     assert results.json()[data] == payload[data], results.text
 
@@ -259,7 +259,7 @@ def test_21_get_sharing_smb_from_id():
 
 
 @skip_ad_test
-@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "vfsobjects"])
+@pytest.mark.parametrize('data', ["comment", "path", "name", "guestok", "streams"])
 def test_22_verify_the_value_of_get_sharing_smb_object_(data):
     assert results.json()[data] == payload[data], results.text
 
