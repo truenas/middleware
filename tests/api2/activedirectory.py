@@ -238,7 +238,7 @@ def test_19_creating_a_smb_share_on_smb_path():
         "path": SMB_PATH,
         "name": SMB_NAME,
         "guestok": True,
-        "vfsobjects": ["streams_xattr"]
+        "streams": True
     }
     results = POST("/sharing/smb/", payload)
     assert results.status_code == 200, results.text
