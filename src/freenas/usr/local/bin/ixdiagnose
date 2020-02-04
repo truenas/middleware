@@ -84,14 +84,17 @@ truncate_files ()
 	done
 }
 
-test -e /etc/rc.conf && . /etc/rc.conf
-[ "$dumpdir" = "" ] && dumpdir="$dumpdir"
+if [ "$is_linux" -eq 1 ]; then
+	# Make text dump freebsd only until we implement saving dumps in linux
+	test -e /etc/rc.conf && . /etc/rc.conf
+	[ "$dumpdir" = "" ] && dumpdir="$dumpdir"
+	textdump=$(get_textdump)
+fi
 
 has_ticket_info=false
 dont_delete=false
 print=false
 limit=10000
-textdump=$(get_textdump)
 
 while getopts "Fd:psl:" opt ; do
 	case "${opt}" in
@@ -151,16 +154,17 @@ if [ "${limit}" != "-1" ] ; then
 	truncate_files "${limit}"
 fi
 
-if ! dumpfile_to_submit_exists $dumpdir ; then
-	if [ $? = 2 ] ; then
-		exit 2
+if [ "$is_linux" -eq 1 ]; then
+	if ! dumpfile_to_submit_exists $dumpdir ; then
+		if [ $? = 2 ] ; then
+			exit 2
+		fi
+	else
+		mkdir "$dir/textdump"
+		tar -xvf $textdump -C "$dir/textdump"
+		cp $dumpdir/info.last "$dir/textdump"
 	fi
-else
-	mkdir "$dir/textdump"
-	tar -xvf $textdump -C "$dir/textdump"
-	cp $dumpdir/info.last "$dir/textdump"
 fi
-
 set +e
 /usr/local/sbin/dmidecode > "$dir/dmidecode"
 sysctl hw > "$dir/sysctl_hw"
