@@ -20,7 +20,7 @@ from middlewared.alert.base import (
     ProThreadedAlertService
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.client.client import ReserveFDException
+from middlewared.client.client import BindToPrivilegedPortFailed
 from middlewared.schema import Dict, Str, Bool, Int, accepts, Patch
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
@@ -400,8 +400,8 @@ class AlertService(Service):
                             pass
                         else:
                             raise
-                except ReserveFDException:
-                    self.logger.debug('Failed to reserve a privileged port')
+                except BindToPrivilegedPortFailed:
+                    self.logger.debug('Failed to bind to a privileged port')
 
                 except Exception:
                     alerts_b = [
