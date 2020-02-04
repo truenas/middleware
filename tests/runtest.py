@@ -39,11 +39,11 @@ Mandatory option
     --ip <###.###.###.###>     - IP of the FreeNAS
     --password <root password> - Password of the FreeNAS root user
     --interface <interface>    - The interface that FreeNAS is run one
-
 Optional option
     --test <test name>         - Test name (Network, ALL)
     --api <version number>     - API version number (1.0, 2.0)
     --vm-name <VM_NAME>        - Name the the Bhyve VM
+    --ha                       - Runtest for HA
     """ % argv[0]
 
 # if have no argument stop
@@ -51,7 +51,7 @@ if len(argv) == 1:
     print(error_msg)
     exit()
 
-option_list = ["api=", "ip=", "password=", "interface=", 'test=', "vm-name="]
+option_list = ["api=", "ip=", "password=", "interface=", 'test=', "vm-name=", 'ha']
 
 # look if all the argument are there.
 try:
@@ -64,6 +64,7 @@ except getopt.GetoptError as e:
 testName = None
 api = "1.0"
 testexpr = None
+ha = False
 
 for output, arg in myopts:
     if output in ('-i', '--ip'):
@@ -80,10 +81,10 @@ for output, arg in myopts:
         testexpr = arg
     elif output in ('--vm-name'):
         vm_name = arg
+    elif output == '--ha':
+        ha = True
 
-if ('ip' not in locals() and
-        'password' not in locals() and
-        'interface' not in locals()):
+if 'ip' not in locals() and 'password' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
     print(error_msg)
     exit()
@@ -106,7 +107,6 @@ hostname = f'test{digit}'
 domain = f'test{digit}.nb.ixsystems.com'
 
 cfg_content = f"""#!/usr/bin/env python3.6
-
 user = "root"
 password = "{passwd}"
 ip = "{ip}"
@@ -122,6 +122,7 @@ localHome = "{localHome}"
 {disk}
 keyPath = "{keyPath}"
 pool_name = "tank"
+ha = {ha}
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -151,21 +152,27 @@ def get_tests():
     skip_tests = []
 
     if api == '1.0':
-        skip_tests = ['bootenv', 'jails', 'alerts', 'smarttest']
+        if ha:
+            skip_tests = ['bootenv', 'jails', 'alerts', 'smarttest', 'network', 'storage']
+            rv = ['ssh']
+        else:
+            skip_tests = ['bootenv', 'jails', 'alerts', 'smarttest']
+            rv = ['network', 'ssh', 'storage']
         apidir = 'api1/'
-        rv = ['network', 'ssh', 'storage']
     elif api == '2.0':
-        skip_tests = []
+        if ha:
+            skip_tests = ['interfaces', 'network', 'volume']
+            rv = ['ssh']
+        else:
+            skip_tests = []
+            rv = ['interface', 'ssh', 'network', 'volume']
         apidir = 'api2/'
-        rv = ['interfaces', 'network', 'ssh', 'volume']
-
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
                 not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
             if filename not in skip_tests and filename not in rv:
                 rv.append(filename)
-
     return rv
 
 
