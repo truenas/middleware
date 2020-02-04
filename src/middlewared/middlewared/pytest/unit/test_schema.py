@@ -511,6 +511,7 @@ def test__cron__convert_db_format_to_schedule(data_dict, begin_end, result):
     ({'hour': '9', 'minute': '0', 'begin': '09:00', 'end': '18:00'}, False),
     ({'hour': '9', 'minute': '0', 'begin': '09:10', 'end': '18:00'}, True),
     ({'hour': '9', 'minute': '15', 'begin': '09:10', 'end': '18:00'}, False),
+    ({'hour': '9', 'minute': '0', 'begin': '18:00', 'end': '09:10'}, False),
 ])
 def test__cron__begin_end_validate(value, error):
 
