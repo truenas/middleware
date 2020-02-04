@@ -165,10 +165,15 @@ if [ "$is_linux" -eq 1 ]; then
 		cp $dumpdir/info.last "$dir/textdump"
 	fi
 fi
+if [ "$is_linux" -eq 0 ]; then
+	path_prefix="/usr"
+else
+	path_prefix="/usr/local"
+fi
 set +e
-/usr/local/sbin/dmidecode > "$dir/dmidecode"
+"$path_prefix"/sbin/dmidecode > "$dir/dmidecode"
 sysctl hw > "$dir/sysctl_hw"
-/usr/local/bin/cpuid > "$dir/cpuid"
+"$path_prefix"/bin/cpuid > "$dir/cpuid"
 set -e
 
 if [ -d /root/syslog ]; then
@@ -187,18 +192,20 @@ if [ -f /etc/version ] ; then
 	cp /etc/version "$dir/version"
 fi
 
-set +e
-ls /dev/ses* 2> /dev/null | while read -r ses; do
-	name=$(echo ${ses}|cut -d "/" -f 3)
-	/sbin/camcontrol smpphylist ${ses} > "$dir/smpphylist.${name}"
-	/usr/local/bin/smp_rep_phy_err_log ${ses} > "$dir/smp_rep_phy_err_log.${name}"
-	cat $dir/smpphylist.${name} | tail -n +3 | while read -r num val desc; do
-		if [ -n "${desc}" ]; then
-			/usr/local/bin/smp_rep_phy_err_log ${ses} -p ${num} > "$dir/smp_rep_phy_err_log.${name}.${num}"
-		fi
+if [ "$is_linux" -eq 1 ]; then
+	set +e
+	ls /dev/ses* 2> /dev/null | while read -r ses; do
+		name=$(echo ${ses}|cut -d "/" -f 3)
+		/sbin/camcontrol smpphylist ${ses} > "$dir/smpphylist.${name}"
+		/usr/local/bin/smp_rep_phy_err_log ${ses} > "$dir/smp_rep_phy_err_log.${name}"
+		cat $dir/smpphylist.${name} | tail -n +3 | while read -r num val desc; do
+			if [ -n "${desc}" ]; then
+				/usr/local/bin/smp_rep_phy_err_log ${ses} -p ${num} > "$dir/smp_rep_phy_err_log.${name}.${num}"
+			fi
+		done
 	done
-done
-set -e
+	set -e
+fi
 
 tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
 if [ "$actualdump" != "" ] ; then
