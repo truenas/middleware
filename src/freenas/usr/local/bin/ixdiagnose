@@ -6,6 +6,10 @@
 # to it.
 #
 
+# Determine platform
+uname -s | grep -q "Linux"
+is_linux=$?
+
 # If there is a system dataset use it
 tmpdir="/var/db/system"
 if [ ! -e "${tmpdir}" ]; then tmpdir="/var/tmp"; fi
