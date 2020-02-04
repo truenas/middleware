@@ -67,17 +67,6 @@ class WSClient(WebSocketClient):
         else:
             self.privileged_ports_blacklist = list(set(self.privileged_ports_blacklist + [860]))
 
-        """
-        This gets the IP address of the internal NIC on TrueNAS HA systems.
-        """
-        host = ''
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-                s.connect(('169.254.10.1', 80))
-                host = s.getsockname()[0]
-        except Exception:
-            pass
-
         for port in (x for x in range(600, 1024) if x not in self.privileged_ports_blacklist):
             try:
                 self.sock.bind((host, port))
