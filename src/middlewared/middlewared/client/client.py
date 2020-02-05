@@ -4,18 +4,14 @@ from .utils import ProgressBar
 from collections import defaultdict, namedtuple, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
-from ws4py.websocket import WebSocket
 
 import argparse
-from base64 import b64decode, b64encode
-import ctypes
+from base64 import b64decode
 import errno
 import os
 import pickle
 import socket
-import ssl
 import sys
-import threading
 import time
 import uuid
 
@@ -48,126 +44,45 @@ class Event(TEvent):
 CALL_TIMEOUT = int(os.environ.get('CALL_TIMEOUT', 60))
 
 
-class ReserveFDException(Exception):
+class BindToPrivilegedPortFailed(Exception):
     pass
 
 
 class WSClient(WebSocketClient):
+
     def __init__(self, url, *args, **kwargs):
         self.client = kwargs.pop('client')
-        reserved_ports = kwargs.pop('reserved_ports')
-        reserved_ports_blacklist = kwargs.pop('reserved_ports_blacklist')
+        self.use_privileged_port = kwargs.pop('use_privileged_port, False')
+        self.privileged_ports_blacklist = kwargs.pop('reserved_ports_blacklist')
         self.reserved_fd = None
         self.protocol = DDPProtocol(self)
-        if not reserved_ports:
-            super(WSClient, self).__init__(url, *args, **kwargs)
+        super(WSClient, self).__init__(url, *args, **kwargs)
+
+    def bind_to_privileged_port(self):
+        """
+        We always blacklist port 860 because that's the port used by iSCSI ALUA
+        on TrueNAS HA systems.
+        """
+        if self.privileged_ports_blacklist is None:
+            self.privileged_ports_blacklist = [860]
         else:
-            """
-            All this code has been copied from WebSocketClient.__init__
-            because it is not prepared to handle a custom socket via method
-            overriding. We need to use socket.fromfd in case reserved_ports
-            is specified.
-            """
-            self.url = url
-            self.host = None
-            self.scheme = None
-            self.port = None
-            self.unix_socket_path = None
-            self.resource = None
-            self.ssl_options = kwargs.get('ssl_options') or {}
-            self.extra_headers = kwargs.get('headers') or []
-            self.exclude_headers = kwargs.get('exclude_headers') or []
-            self.exclude_headers = [x.lower() for x in self.exclude_headers]
+            self.privileged_ports_blacklist = list(set(self.privileged_ports_blacklist + [860]))
 
-            if self.scheme == "wss":
-                # Prevent check_hostname requires server_hostname (ref #187)
-                if "cert_reqs" not in self.ssl_options:
-                    self.ssl_options["cert_reqs"] = ssl.CERT_NONE
-
-            self._parse_url()
-
-            if self.unix_socket_path:
-                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
-            else:
-                # Let's handle IPv4 and IPv6 addresses
-                # Simplified from CherryPy's code
-                try:
-                    family, socktype, proto, canonname, sa = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)[0]
-                except socket.gaierror:
-                    family = socket.AF_INET
-                    if self.host.startswith('::'):
-                        family = socket.AF_INET6
-
-                    socktype = socket.SOCK_STREAM
-                    proto = 0
-
-                """
-                This is the line replaced to use socket.fromfd
-                """
-                try:
-                    self.reserved_fd = self.get_reserved_portfd(blacklist=reserved_ports_blacklist)
-                    sock = socket.fromfd(self.reserved_fd, family, socktype, proto)
-                    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    if hasattr(socket, 'AF_INET6') and family == socket.AF_INET6 and self.host.startswith('::'):
-                        try:
-                            sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-                        except (AttributeError, socket.error):
-                            pass
-                except Exception as e:
-                    if self.reserved_fd:
-                        try:
-                            os.close(self.reserved_fd)
-                        except OSError:
-                            pass
-                    raise e
-
-            WebSocket.__init__(self, sock, protocols=kwargs.get('protocols'),
-                               extensions=kwargs.get('extensions'),
-                               heartbeat_freq=kwargs.get('heartbeat_freq'))
-
-            self.stream.always_mask = True
-            self.stream.expect_masking = False
-            self.key = b64encode(os.urandom(16))
-            self._th = threading.Thread(target=self.run, name='WebSocketClient')
-            self._th.daemon = True
-
-    def get_reserved_portfd(self, blacklist=None):
-        """
-        Get a file descriptor with a reserved port (<=1024).
-        The port is arbitrary using the libc "rresvport" call and its tried
-        again if its within `blacklist` list.
-        """
-        if blacklist is None:
-            blacklist = []
-
-        libc = ctypes.cdll.LoadLibrary('libc.so.7')
-        port = ctypes.c_int(0)
-        pport = ctypes.pointer(port)
-        fd = libc.rresvport(pport)
-        retries = 5
-        while True:
-            if retries == 0:
-                break
-            if fd < 0:
-                time.sleep(0.1)
-                fd = libc.rresvport(pport)
-                retries -= 1
+        for port in (x for x in range(600, 1024) if x not in self.privileged_ports_blacklist):
+            try:
+                self.sock.bind(('', port))
+            except Exception:
                 continue
-            if pport.contents.value in blacklist:
-                oldfd = fd
-                fd = libc.rresvport(pport)
-                os.close(oldfd)
-                retries -= 1
-                continue
-            else:
-                break
-        if fd < 0:
-            raise ReserveFDException()
-        return fd
+            return
+
+        raise BindToPrivilegedPortFailed()
 
     def connect(self):
         self.sock.settimeout(10)
+
+        if self.used_privileged_port:
+            self.bind_to_privileged_port()
+
         max_attempts = 3
         for i in range(max_attempts):
             try:
@@ -191,19 +106,6 @@ class WSClient(WebSocketClient):
     def closed(self, code, reason=None):
         self.protocol.on_close(code, reason)
 
-    def __close_reserved_fd(self):
-        try:
-            if self.reserved_fd:
-                os.close(self.reserved_fd)
-        except OSError:
-            pass
-        finally:
-            self.reserved_fd = None
-
-    def close_connection(self):
-        self.__close_reserved_fd()
-        return super().close_connection()
-
     def received_message(self, message):
         self.protocol.on_message(message.data.decode('utf8'))
 
@@ -215,9 +117,6 @@ class WSClient(WebSocketClient):
 
     def on_close(self, code, reason=None):
         self.client.on_close(code, reason)
-
-    def __del__(self):
-        self.__close_reserved_fd()
 
 
 class Call(object):
@@ -286,13 +185,13 @@ class CallTimeout(ClientException):
 class Client(object):
 
     def __init__(
-        self, uri=None, reserved_ports=False, reserved_ports_blacklist=None,
+        self, uri=None, use_privileged_port=False, privileged_ports_blacklist=None,
         py_exceptions=False,
     ):
         """
         Arguments:
-           :reserved_ports(bool): whether the connection should origin using a reserved port (<= 1024)
-           :reserved_ports_blacklist(list): list of ports that should not be used as origin
+           :use_privileged_port(bool): whether the local socket should bind using a privileged port
+           :privileged_ports_blacklist(list): list of ports to exclude when binding the local socket
         """
         self._calls = {}
         self._jobs = defaultdict(dict)
@@ -309,8 +208,8 @@ class Client(object):
             self._ws = WSClient(
                 uri,
                 client=self,
-                reserved_ports=reserved_ports,
-                reserved_ports_blacklist=reserved_ports_blacklist,
+                use_privileged_port=use_privileged_port,
+                privileged_ports_blacklist=privileged_ports_blacklist,
             )
             if 'unix://' in uri:
                 self._ws.resource = '/websocket'
@@ -413,14 +312,14 @@ class Client(object):
                 if isinstance(job.get('__callback'), Callable):
                     job['__callback'](job)
                 if mtype == 'CHANGED' and job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'):
-                        # If an Event already exist we just set it to mark it finished.
-                        # Otherwise we create a new Event.
-                        # This is to prevent a race-condition of job finishing before
-                        # the client can create the Event.
-                        event = job.get('__ready')
-                        if event is None:
-                            event = job['__ready'] = Event()
-                        event.set()
+                    # If an Event already exist we just set it to mark it finished.
+                    # Otherwise we create a new Event.
+                    # This is to prevent a race-condition of job finishing before
+                    # the client can create the Event.
+                    event = job.get('__ready')
+                    if event is None:
+                        event = job['__ready'] = Event()
+                    event.set()
 
     def _jobs_subscribe(self):
         """
