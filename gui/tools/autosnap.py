@@ -55,6 +55,7 @@ from freenasUI.common.locks import mntlock
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import send_mail
 from freenasUI.common.timesubr import isTimeBetween
+from freenasUI.middleware.client import client
 from freenasUI.storage.models import VMWarePlugin
 from freenasUI.tools.replication_adapter import query_model
 from freenasUI.middleware.notifier import notifier
@@ -255,7 +256,9 @@ mp_to_task_map = {}
 # Grab all matching tasks into a tree.
 # Since the snapshot we make have the name 'foo@auto-%Y%m%d.%H%M-{expire time}'
 # format, we just keep one task.
-TaskObjects = query_model("storage/task", "task_enabled")
+with client as c:
+    legacy_tasks = [t["id"] for t in c.call("pool.snapshottask.query", [["legacy", "=", True]])]
+TaskObjects = [t for t in query_model("storage/task", "task_enabled") if t.id in legacy_tasks]
 taskpath = {'recursive': [], 'nonrecursive': []}
 for task in TaskObjects:
     task.task_begin = time(*map(int, task.task_begin.split(':')))
