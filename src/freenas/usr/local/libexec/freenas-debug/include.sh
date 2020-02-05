@@ -32,6 +32,9 @@ is_linux=$?
 if [ "$is_linux" -eq 1 ]; then
 	test -e /etc/rc.freenas && . /etc/rc.freenas
 	test -e /etc/rc.conf.local && . /etc/rc.conf.local
+else
+	FREENAS_SQLITE_CMD="/usr/local/bin/sqlite3fn"
+	FREENAS_CONFIG="/data/freenas-v1.db"
 fi
 
 #
