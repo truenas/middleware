@@ -764,16 +764,17 @@ class Cron(Dict):
             iter = None
             verrors.add(self.name, 'Please ensure fields match cron syntax - ' + str(e))
 
-        if value.get('begin') and value.get('end') and not (value.get('begin') <= value.get('end')):
-            verrors.add(self.name, 'Begin time should be less or equal than end time')
-
         if iter is not None and (value.get('begin') or value.get('end')):
             begin = value.get('begin') or time(0, 0)
             end = value.get('end') or time(23, 59)
             for i in range(24 * 60):
                 d = iter.get_next(datetime)
-                if begin <= d.time() <= end:
-                    break
+                if begin < end:
+                    if begin <= d.time() <= end:
+                        break
+                else:
+                    if d.time() >= begin or d.time() <= end:
+                        break
             else:
                 verrors.add(self.name, 'Specified schedule does not match specified time interval')
 
