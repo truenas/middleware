@@ -52,8 +52,8 @@ class WSClient(WebSocketClient):
 
     def __init__(self, url, *args, **kwargs):
         self.client = kwargs.pop('client')
-        self.use_privileged_port = kwargs.pop('use_privileged_port, False')
-        self.privileged_ports_blacklist = kwargs.pop('reserved_ports_blacklist')
+        self.use_privileged_port = kwargs.pop('use_privileged_port', False)
+        self.privileged_ports_blacklist = kwargs.pop('reserved_ports_blacklist', None)
         self.reserved_fd = None
         self.protocol = DDPProtocol(self)
         super(WSClient, self).__init__(url, *args, **kwargs)
