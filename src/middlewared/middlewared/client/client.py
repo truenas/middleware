@@ -69,7 +69,7 @@ class WSClient(WebSocketClient):
 
         for port in (x for x in range(600, 1024) if x not in self.privileged_ports_blacklist):
             try:
-                self.sock.bind((host, port))
+                self.sock.bind(('', port))
             except Exception:
                 continue
             return
