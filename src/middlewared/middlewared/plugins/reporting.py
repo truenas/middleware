@@ -847,9 +847,8 @@ class ReportingService(ConfigService):
 
             os.unlink('/data/rrd_dir.tar.bz2')
 
-        hostname = self.middleware.call_sync('system.info')['hostname']
-        if not hostname:
-            hostname = self.middleware.call_sync('network.configuration.config')['hostname_local']
+        network_config = self.middleware.call_sync('network.configuration.config')
+        hostname = f"{network_config['hostname_local']}.{network_config['domain']}"
 
         # Migrate from old version, where `hostname` was a real directory and `localhost` was a symlink.
         # Skip the case where `hostname` is "localhost", so symlink was not (and is not) needed.
