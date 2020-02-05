@@ -26,9 +26,6 @@
 #
 #####################################################################
 
-uname -s | grep -q "Linux"
-is_linux=$?
-
 if [ "$is_linux" -eq 1 ]; then
 	test -e /etc/rc.freenas && . /etc/rc.freenas
 	test -e /etc/rc.conf.local && . /etc/rc.conf.local

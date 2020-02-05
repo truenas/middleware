@@ -1,2 +1,8 @@
 #!/bin/sh
-exec /usr/local/bin/sqlite3 -cmd ".timeout 60000" "$@"
+uname -s | grep -q "Linux"
+if [ $? -eq 0 ]; then
+	prefix="/usr"
+else
+	prefix="/usr/local"
+fi
+exec "$prefix"/bin/sqlite3 -cmd ".timeout 60000" "$@"
