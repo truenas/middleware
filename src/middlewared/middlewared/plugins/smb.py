@@ -67,6 +67,21 @@ class SIDType(enum.IntEnum):
     LABEL = 10
 
 
+class WBCErr(enum.Enum):
+    SUCCESS = ('Winbind operation successfully completed.', None)
+    NOT_IMPLEMENTED = ('Function is not implemented.', errno.ENOSYS)
+    UNKNOWN_FAILURE = ('Generic failure.', errno.EFAULT)
+    ERR_NO_MEMORY = ('Memory allocation error.', errno.ENOMEM)
+    WINBIND_NOT_AVAILABLE = ('Winbind daemon is not available.', errno.EFAULT)
+    DOMAIN_NOT_FOUND = ('Domain is not trusted or cannot be found.', errno.EFAULT)
+    INVALID_RESPONSE = ('Winbind returned an invalid response.', errno.EINVAL)
+    AUTH_ERROR = ('Authentication failed.', errno.EPERM)
+    PWD_CHANGE_FAILED = ('Password change failed.', errno.EFAULT)
+
+    def err(self):
+        return f'WBC_ERR_{self.name}'
+
+
 class SMBService(SystemServiceService):
 
     class Config:
@@ -193,8 +208,8 @@ class SMBService(SystemServiceService):
         )
         output = await proc.communicate()
         if proc.returncode != 0:
-            if "WBC_ERR_WINBIND_NOT_AVAILABLE" in output[1].decode():
-                return "WBC_ERR_WINBIND_NOT_AVAILABLE"
+            if WBCErr.WINBIND_NOT_AVAILABLE.err() in output[1].decode():
+                return WBCErr.WINBIND_NOT_AVAILABLE.err()
             else:
                 verrors.add('smb_update.admin_group', f"Failed to identify Windows SID for group: {output[1].decode()}")
                 raise verrors
@@ -240,7 +255,7 @@ class SMBService(SystemServiceService):
             raise verrors
 
         sid = await self.wbinfo_gidtosid(group['gr_gid'])
-        if sid == "WBC_ERR_WINBIND_NOT_AVAILABLE":
+        if sid == WBCErr.WINBIND_NOT_AVAILABLE.err():
             self.logger.debug("Delaying admin group add until winbind starts")
             await self.middleware.call('cache.put', 'SMB_SET_ADMIN', True)
             return True
