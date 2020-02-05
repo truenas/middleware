@@ -409,9 +409,15 @@ class PluginService(CRUDService):
         else:
             self.middleware.call_sync('jail.check_dataset_existence')
             plugins_versions_data = IOCPlugin(branch=branch, git_repository=plugin_repository).fetch_plugin_versions()
-            resource_list = ioc.IOCage(skip_jails=True).fetch(
-                list=True, plugins=True, header=False, branch=branch, git_repository=options['plugin_repository']
-            )
+            try:
+                resource_list = ioc.IOCage(skip_jails=True).fetch(
+                    list=True, plugins=True, header=False, branch=branch, git_repository=options['plugin_repository']
+                )
+            except Exception as e:
+                resource_list = []
+                self.middleware.logger.debug(
+                    'Failed to retrieve plugins for %s: %s', options['plugin_repository'], str(e)
+                )
 
         for plugin in resource_list:
             plugin.update({
@@ -455,7 +461,9 @@ class PluginService(CRUDService):
             index = plugins_obj.retrieve_plugin_index_data(plugins_obj.git_destination)
 
         if options['plugin'] not in index:
-            raise CallError(f'{options["plugin"]} not found')
+            raise CallError(
+                f'{options["plugin"]} not found, likely because local plugin repository is corrupted.'
+            )
         return {
             'plugin': options['plugin'],
             'properties': {**IOCPlugin.DEFAULT_PROPS, **index[options['plugin']].get('properties', {})}
