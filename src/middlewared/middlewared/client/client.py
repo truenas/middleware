@@ -80,7 +80,7 @@ class WSClient(WebSocketClient):
     def connect(self):
         self.sock.settimeout(10)
 
-        if self.used_privileged_port:
+        if self.use_privileged_port:
             self.bind_to_privileged_port()
 
         max_attempts = 3
