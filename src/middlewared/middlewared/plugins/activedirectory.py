@@ -196,7 +196,7 @@ class ActiveDirectory_LDAP(object):
             return True
 
         if self.hosts:
-            saved_sasl_bind_error = None
+            saved_bind_error = None
             for server in self.hosts:
                 proto = 'ldaps' if SSL(self.ad['ssl']) == SSL.USESSL else 'ldap'
                 uri = f"{proto}://{server['host']}:{server['port']}"
@@ -283,7 +283,7 @@ class ActiveDirectory_LDAP(object):
                         break
 
                     except Exception as e:
-                        saved_sasl_bind_error = e
+                        saved_bind_error = e
                         self.logger.debug('Certificate-based bind failed.', exc_info=True)
                         continue
 
@@ -316,13 +316,13 @@ class ActiveDirectory_LDAP(object):
                     res = True
                     break
                 except Exception as e:
-                    saved_sasl_bind_error = e
+                    saved_bind_error = e
                     self.logger.debug('SASL GSSAPI bind failed.', exc_info=True)
 
             if res:
                 self._isopen = True
             elif saved_bind_error:
-                raise CallError(saved_sasl_bind_error)
+                raise CallError(saved_bind_error)
 
         return (self._isopen is True)
 
