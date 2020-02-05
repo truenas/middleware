@@ -29,15 +29,24 @@
 
 get_physical_disks_list()
 {
-	sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
-		| sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
+	if [ "$is_linux" -eq 0 ]; then
+		lsblk -ndo path | grep -v '^sr'
+	else
+		sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
+			| sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
+	fi
 }
 
 
 hardware_opt() { echo h; }
 hardware_help() { echo "Dump Hardware Configuration"; }
 hardware_directory() { echo "Hardware"; }
-hardware_func()
+
+hardware_linux()
+{
+}
+
+hardware_freebsd()
 {
 	section_header "Hardware"
 
@@ -148,5 +157,14 @@ hardware_func()
 		section_header "sas3flash -listall"
 		sas3flash -listall
 		section_footer
+	fi
+}
+
+hardware_func()
+{
+	if [ "$is_linux" -eq 0 ]; then
+		hardware_linux
+	else
+		hardware_freebsd
 	fi
 }
