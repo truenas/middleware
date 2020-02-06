@@ -204,23 +204,18 @@ class Client(object):
             uri = 'ws+unix:///var/run/middlewared.sock'
         self._closed = Event()
         self._connected = Event()
-        try:
-            self._ws = WSClient(
-                uri,
-                client=self,
-                use_privileged_port=use_privileged_port,
-                privileged_ports_blacklist=privileged_ports_blacklist,
-            )
-            if 'unix://' in uri:
-                self._ws.resource = '/websocket'
-            self._ws.connect()
-            self._connected.wait(10)
-            if not self._connected.is_set():
-                raise ClientException('Failed connection handshake')
-        except Exception:
-            if hasattr(self, '_ws'):
-                del self._ws
-            raise
+        self._ws = WSClient(
+            uri,
+            client=self,
+            use_privileged_port=use_privileged_port,
+            privileged_ports_blacklist=privileged_ports_blacklist,
+        )
+        if 'unix://' in uri:
+            self._ws.resource = '/websocket'
+        self._ws.connect()
+        self._connected.wait(10)
+        if not self._connected.is_set():
+            raise ClientException('Failed connection handshake')
 
     def __enter__(self):
         return self
