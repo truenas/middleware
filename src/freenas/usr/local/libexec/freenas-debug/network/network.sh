@@ -82,7 +82,7 @@ network_func()
 		then
 			if [ "$is_linux" -eq 0 ]; then
 				ips=$(ip address show dev ${i} | grep '\binet\b' | awk '{ print $2 }'| xargs)
-				ips6=$(ip address show dev ${i} | grep '\binet6\b' | awk '{ print $2 }'| xarg)
+				ips6=$(ip address show dev ${i} | grep '\binet6\b' | awk '{ print $2 }'| xargs)
 			else
 				ips=$(ifconfig ${i}|grep '\binet\b'|awk '{ print $2 }'|xargs)
 				ips6=$(ifconfig ${i}|grep '\binet6\b'|awk '{ print $2 }'|xargs)

@@ -48,8 +48,13 @@ system_func()
 	ntpq -pwn
 	section_footer
 
-	section_header "ps -auxwwd"
-	ps -auxwwd
+	if [ "$is_linux" -eq 0 ]; then
+		section_header "ps -auxwwf"
+		ps -auxwwf
+	else
+		section_header "ps -auxwwd"
+		ps -auxwwd
+	fi
 	section_footer
 
 	section_header "mount"
@@ -60,41 +65,63 @@ system_func()
 	df -T -h
 	section_footer
 
-	section_header "swapinfo -h"
-	swapinfo -h
-	section_footer
+	if [ "$is_linux" -eq 0 ]; then
+		section_header "swapon -s"
+		swapon -s
+		section_footer
 
-	section_header "kldstat"
-	kldstat
-	section_footer
+		section_header "lsmod"
+		lsmod
+		section_footer
 
-	section_header "dmesg -a"
-	dmesg -a
-	section_footer
+		section_header "dmesg -Tx"
+		dmesg -Tx
+		section_footer
 
-	section_header "vmstat -ia"
-	vmstat -ia
-	section_footer
+		section_header "vmstat"
+		vmstat
+		section_footer
 
-	section_header "top -SHIwz -d 2"
-	top -SHIwz -d 2
-	section_footer
+		section_header "top -SHin2"
+		top -SHin2
+		section_footer
+	else
+		section_header "swapinfo -h"
+		swapinfo -h
+		section_footer
 
-	section_header "procstat -akk"
-	procstat -akk
-	section_footer
+		section_header "kldstat"
+		kldstat
+		section_footer
 
-	section_header "vmstat -m"
-	vmstat -m
-	section_footer
+		section_header "dmesg -Tx"
+		dmesg -a
+		section_footer
 
-	section_header "vmstat -z"
-	vmstat -z
-	section_footer
+		section_header "vmstat -ia"
+		vmstat -ia
+		section_footer
 
-	section_header "beadm list"
-	beadm list
-	section_footer
+		section_header "top -SHIwz -d 2"
+		top -SHIwz -d 2
+		section_footer
+
+		section_header "procstat -akk"
+		procstat -akk
+		section_footer
+
+		section_header "vmstat -m"
+		vmstat -m
+		section_footer
+
+		section_header "vmstat -z"
+		vmstat -z
+		section_footer
+
+		section_header "beadm list"
+		beadm list
+		section_footer
+	fi
 
 	section_header "Alert System"
 	midclt call alert.list | jq .
