@@ -17,11 +17,10 @@ Each condition in the filter list should compare a field with a value.
 eg. Filter Syntax: `["field", "operator", value]` 
 
 Javascript:
-    ```
+    :::javascript
     [
       ["name","=","ada1"] 
     ]
-    ```
 
 Command Line: `# midclt call disk.query '[["name", "=", "ada1"]]'`
 
