@@ -52,8 +52,6 @@ def django_modelobj_serialize(middleware, obj, extend=None, extend_context=None,
             name = origname[len(field_prefix):]
         else:
             name = origname
-        if select and name not in select:
-            continue
         try:
             value = getattr(obj, origname)
         except Exception as e:
@@ -79,7 +77,11 @@ def django_modelobj_serialize(middleware, obj, extend=None, extend_context=None,
             data = middleware.call_sync(extend, data, extend_context_value)
         else:
             data = middleware.call_sync(extend, data)
-    return data
+
+    if not select:
+        return data
+    else:
+        return {k: v for k, v in data.items() if k in select}
 
 
 def Popen(args, **kwargs):
