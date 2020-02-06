@@ -219,7 +219,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     async def _serialize(self, obj, table, aliases, relationships, extend, extend_context, extend_context_value,
                          field_prefix, select):
-        data = self._serialize_row(obj, table, aliases, select)
+        data = self._serialize_row(obj, table, aliases)
         data.update(relationships)
 
         data = {self._strip_prefix(k, field_prefix): v for k, v in data.items()}
@@ -230,18 +230,18 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             else:
                 data = await self.middleware.call(extend, data)
 
-        return data
+        if not select:
+            return data
+        else:
+            return {k: v for k, v in data.items() if k in select}
 
     def _strip_prefix(self, k, field_prefix):
         return k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k
 
-    def _serialize_row(self, obj, table, aliases, select):
+    def _serialize_row(self, obj, table, aliases):
         data = {}
 
         for column in table.c:
-            if select and column.name not in select:
-                continue
-
             # aliases == {} when we are loading without relationships, let's leave fk values in that case
             if not column.foreign_keys or not aliases:
                 data[column.name] = obj[column]
@@ -256,7 +256,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 raise RuntimeError('Foreign key column must end with _id')
 
             data[column.name[:-3]] = (
-                self._serialize_row(obj, alias, aliases, select)
+                self._serialize_row(obj, alias, aliases)
                 if obj[column] is not None and obj[self._get_pk(alias)] is not None
                 else None
             )
