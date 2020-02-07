@@ -87,12 +87,12 @@ smart_func()
 	fi
 
 	if [ "$is_linux" -eq 0 ]; then
-		disks=$(lsblk -ndo path | grep -v '^sr')
+		disks=$(lsblk -ndo name | grep -v '^sr')
 	else
 		disks=$(sysctl -n kern.disks)
 	fi
 
-	for i in "$disks"
+	for i in $disks
 	do
     		echo /dev/$i >> /tmp/smart.out
 		smartctl -a /dev/$i >> /tmp/smart.out

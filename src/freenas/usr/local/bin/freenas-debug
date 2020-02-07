@@ -272,7 +272,11 @@ main()
 	OPTIND=1
 	if [ -d "${FREENAS_DEBUG_DIRECTORY}" ]
 	then
-		rm -rfx "${FREENAS_DEBUG_DIRECTORY}"
+		if [ "$is_linux" -eq 0 ]; then
+			rm --one-file-system -rf "${FREENAS_DEBUG_DIRECTORY}"
+		else
+			rm -rfx "${FREENAS_DEBUG_DIRECTORY}"
+		fi
 	fi
 
 	if $zap ; then

@@ -30,7 +30,7 @@
 get_physical_disks_list()
 {
 	if [ "$is_linux" -eq 0 ]; then
-		lsblk -ndo path | grep -v '^sr'
+		lsblk -ndo path | grep -v '^/dev/sr'
 	else
 		sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
 			| sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '

@@ -176,10 +176,10 @@ if [ "$is_linux" -eq 0 ]; then
 	path_prefix="/usr"
 else
 	path_prefix="/usr/local"
+	sysctl hw > "$dir/sysctl_hw"
 fi
 set +e
 "$path_prefix"/sbin/dmidecode > "$dir/dmidecode"
-sysctl hw > "$dir/sysctl_hw"
 "$path_prefix"/bin/cpuid > "$dir/cpuid"
 set -e
 

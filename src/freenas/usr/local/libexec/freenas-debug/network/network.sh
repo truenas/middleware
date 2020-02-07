@@ -67,6 +67,7 @@ network_func()
 	fi
 	for i in $interfaces
 	do
+		echo
 		if [ "$is_linux" -eq 0 ]; then
 			ip address show dev "$i"
 			grep -iq 'up' /sys/class/net/"$i"/operstate
@@ -76,13 +77,14 @@ network_func()
 			ifconfig ${i} | grep -q '\bUP\b'
 			iface_up=$?
 		fi
+
 		echo
 
 		if [ "$iface_up" -eq 0 ];
 		then
 			if [ "$is_linux" -eq 0 ]; then
-				ips=$(ip address show dev ${i} | grep '\binet\b' | awk '{ print $2 }'| xargs)
-				ips6=$(ip address show dev ${i} | grep '\binet6\b' | awk '{ print $2 }'| xargs)
+				ips=$(ip address show dev ${i} | grep '\binet\b' | awk '{ print $2 }' | cut -d'/' -f1 | xargs)
+				ips6=$(ip address show dev ${i} | grep '\binet6\b' | awk '{ print $2 }' | cut -d'/' -f1 | xargs)
 			else
 				ips=$(ifconfig ${i}|grep '\binet\b'|awk '{ print $2 }'|xargs)
 				ips6=$(ifconfig ${i}|grep '\binet6\b'|awk '{ print $2 }'|xargs)
