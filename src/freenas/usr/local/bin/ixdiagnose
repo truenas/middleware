@@ -59,7 +59,8 @@ dumpfile_to_submit_exists ()
 truncate_files ()
 {
 	local limit=$1
-	local IFS=$'\n'
+	local IFS='
+	'
 
 	for file in $(find $dir -type f -a \
 		! -name '*.tar' -a \
@@ -145,11 +146,17 @@ else
 	$mydir/freenas-debug -A
 fi
 
-if [ -d "/tmp/middlewared/jobs" ]; then
-	tar -cHf - -C /tmp/middlewared jobs | tar -C $dir -xf -
+if [ "$is_linux" -eq 0 ]; then
+	h_args="h"
+else
+	h_args="H"
 fi
-tar -cHf - -C /var log | tar -C $dir -xf -
-tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
+
+if [ -d "/tmp/middlewared/jobs" ]; then
+	tar -c${h_args}f - -C /tmp/middlewared jobs | tar -C $dir -xf -
+fi
+tar -c${h_args}f - -C /var log | tar -C $dir -xf -
+tar -c${h_args}f - -C /var/tmp fndebug | tar -C $dir -xf -
 if [ "${limit}" != "-1" ] ; then
 	truncate_files "${limit}"
 fi
@@ -207,7 +214,8 @@ if [ "$is_linux" -eq 1 ]; then
 	set -e
 fi
 
-tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
+tar -C $dir/.. -c${h_args}zf $dir/../ixdiagnose.tgz ixdiagnose
+
 if [ "$actualdump" != "" ] ; then
 	touch $actualdump.submitted
 fi
