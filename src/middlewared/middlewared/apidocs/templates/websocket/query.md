@@ -2,7 +2,7 @@
 
 FreeNAS API has multiple query methods including pool.query, disk.query, vm.query and many more. 
 
-The arguments for these methods support multiple options and filters that are similar to what is available in SQL queries.
+The arguments for these methods support multiple options and filters that are similar to what one might find in SQL queries.
 
 ### Query Filters
 
