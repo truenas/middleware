@@ -65,7 +65,7 @@ network_func()
 	else
 		interfaces=$(ifconfig -l)
 	fi
-	for i in "$interfaces"
+	for i in $interfaces
 	do
 		if [ "$is_linux" -eq 0 ]; then
 			ip address show dev "$i"
@@ -108,7 +108,7 @@ network_func()
 			then
 				for ip6 in ${ips6}
 				do
-					if []; then
+					if [ "$is_linux" -eq 0 ]; then
 						gw=$(get_gw_in_linux_for_ip "2001:4860:4860::8888" "$ip6")
 					else
 						gw=$(route -n show -inet6 ${ip6}|grep gateway|xargs)
@@ -151,6 +151,7 @@ network_func()
 	else
 		section_header "Interface statistics (netstat -in)"
 		netstat -in
+	fi
 	section_footer
 
 	section_header "protocols - 'netstat -p protocol -s'"

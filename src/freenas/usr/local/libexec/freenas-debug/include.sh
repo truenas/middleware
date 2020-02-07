@@ -252,6 +252,16 @@ load_module()
 	local name="${1}"
 	local d="${FREENAS_DEBUG_MODULEDIR}"
 	local p="${d}/${name}"
+
+	# Some modules might be linux/freebsd specifc
+	# their directory names end with their respective suffixes
+	# however the scripts would be stripped of the suffixes
+	# and we should ensure we handle this as desired
+	for suffix in "_freebsd" "_linux";
+	do
+		name=${name%"$suffix"}
+	done
+
 	local m="${p}/${name}.sh"
 
 	if [ -z "${name}" ]
