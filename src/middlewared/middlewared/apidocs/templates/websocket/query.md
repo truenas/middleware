@@ -54,7 +54,7 @@ Javascript:
 
 Command Line: `# midclt call jail.query '[["OR", [["release","=","11.2-RELEASE"],["release","=","11.3-RELEASE"]]]]'`
 
-Queries with no defined conjuction assume `AND`.
+Queries with no defined conjunction assume `AND`.
 
 ### Query Options
 
