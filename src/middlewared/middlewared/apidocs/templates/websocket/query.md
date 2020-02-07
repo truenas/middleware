@@ -102,7 +102,7 @@ Command Line: `# midclt call disk.query '[]' '{"offset": 1}'
 
 #### Select
 
-Use the `select` option to specify exactly the fields you're interested in.
+Use the `select` option to specify exactly the fields you're interested in. Fields must be provided in an array of strings.
 
 Javascript:
     :::javascript
@@ -110,7 +110,7 @@ Javascript:
       "select": ["devname","size","rotationrate"]
     }
 
-Command Line: `# midclt call jail.query '[["release","=","11.2-RELEASE"]]' '{"limit": 5}'`
+Command Line: `# midclt call jail.query '[["release","=","11.2-RELEASE"]]' '{"select": ["devname","size","rotationrate"]}'`
 
 #### Order By
 
