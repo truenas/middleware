@@ -968,7 +968,12 @@ class Middleware(LoadPluginsMixin):
         Also used to run non thread safe libraries (using a ProcessPool)
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
+        result = await loop.run_in_executor(pool, self._run_in_thread_wrap, method, args, kwargs)
+
+        if isinstance(result, Exception):
+            raise result
+        else:
+            return result
 
     async def _run_in_conn_threadpool(self, method, *args, **kwargs):
         """
