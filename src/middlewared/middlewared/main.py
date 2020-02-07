@@ -980,7 +980,15 @@ class Middleware(LoadPluginsMixin):
            uses the thread pool. If service.foo is called many times before each thread
            finishes we will have a deadlock)
         """
-        return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
+        try:
+            result = await self.run_in_executor(self.__threadpool, self._run_in_thread_wrap, method, args, kwargs)
+        finally:
+            self.__threadpool.shutdown(wait=False)
+
+        if isinstance(result, Exception):
+            raise result
+        else:
+            return result
 
     def __init_procpool(self):
         self.__procpool = ProcessPoolExecutor(
