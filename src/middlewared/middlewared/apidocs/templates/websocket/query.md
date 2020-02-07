@@ -41,7 +41,7 @@ Command Line: `# midclt call disk.query '[["type", "=", "HDD"],["rotationrate","
 
 #### Conjunctions
 
-The conjunction `OR` is supported. Using `OR` implies `AND`. We can use `jail.query` with `OR` to filter jails by release:
+The conjunction `OR` is supported. We can use `jail.query` with `OR` to filter jails by release.
 
 Javascript:
     :::javascript
@@ -53,6 +53,8 @@ Javascript:
     ]
 
 Command Line: `# midclt call jail.query '[["OR", [["release","=","11.2-RELEASE"],["release","=","11.3-RELEASE"]]]]'`
+
+Queries with no defined conjuction assume `AND`.
 
 ### Query Options
 
