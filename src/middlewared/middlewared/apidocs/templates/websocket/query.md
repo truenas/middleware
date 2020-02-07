@@ -1,20 +1,20 @@
 ## Query Methods
 
-FreeNAS API has multiple query methods including pool.query, disk.query, vm.query and many more. 
+FreeNAS API has multiple query methods including `pool.query`, `disk.query`, `vm.query`, and many more.
 
-The arguments for these methods support multiple options and filters that are similar to what one might find in SQL queries.
+The arguments for these methods support multiple options and filters that are similar to SQL queries.
 
 ### Query Filters
 
 #### Basic Usage
 
-Query Filters are primarily an array of conditions, with each condition also represented as an array. 
+Query Filters are primarily an array of conditions, with each condition also represented as an array.
 
 Each condition in the filter list should compare a field with a value.
 
 eg. Filter Syntax: `["field", "operator", value]` 
 
-For example to filter the data returned by `disk.query`, we provide a list of conditions. 
+For example, to filter the data returned by `disk.query`, we provide a list of conditions:
 
 Javascript:
     :::javascript
@@ -28,7 +28,7 @@ NOTE: Supported Operators include `'=' | '!=' | '>' | '>=' | '<' | '<=' `
 
 #### Multiple Filters
 
-Below we can use filters together with `disk.query` to find hard drives with a rotation rate higher than 5400 RPM
+We can use `disk.query` with the "type" and "rotationrate" filters to find hard drives with a rotation rate higher than 5400 RPM:
 
 Javascript:
     :::javascript
@@ -41,9 +41,7 @@ Command Line: `# midclt call disk.query '[["type", "=", "HDD"],["rotationrate","
 
 #### Conjunctions
 
-The conjunction `OR` is also supported. We can use the filters below with jail.query to filter by release.
-
-Not using the `OR` conjunction implies `AND`.
+The conjunction `OR` is supported. We can use `jail.query` with `OR` to filter jails by release.
 
 Javascript:
     :::javascript
@@ -56,17 +54,19 @@ Javascript:
 
 Command Line: `# midclt call jail.query '[["OR", [["release","=","11.2-RELEASE"],["release","=","11.3-RELEASE"]]]]'`
 
+Queries with no defined conjuction assume `AND`.
+
 ### Query Options
 
-Query Options are an object you can pass to further customize the results returned by a Query Method. 
+Query Options are objects that can further customize the results returned by a Query Method.
 
-Query Option's properties include `extend | extend_context | prefix | extra | order_by | select | count | get | limit | offset`
+Properties of a Query Option include `extend | extend_context | prefix | extra | order_by | select | count | get | limit | offset`
 
-NOTE: When using `midclt` always remember to keep options and filters separated eg. `midclt <method> '<filters>' '<options>'` 
+NOTE: Keep options and filters separate when using `midclt` (eg. `midclt <method> '<filters>' '<options>'`)
 
 #### Count
 
-Use the `count` option to get the number of results returned
+Use the `count` option to get the number of results returned.
 
 Javascript:
     :::javascript
@@ -90,7 +90,7 @@ Command Line: `# midclt call jail.query '[["release","=","11.2-RELEASE"]]' '{"li
 
 #### Offset
 
-Use the `offset` option to omit items from the beginning of the list of returned items.
+Use the `offset` option to remove the first items from a returned list.
 
 Javascript:
     :::javascript
@@ -98,11 +98,11 @@ Javascript:
       "offset": 1 // Omits the first item from the query result
     }
 
-Command Line: `# midclt call disk.query '[]' '{"offset": 1}'
+Command Line: `# midclt call disk.query '[]' '{"offset": 1}'`
 
 #### Select
 
-Use the `select` option to specify exactly the fields you're interested in. Fields must be provided in an array of strings.
+Use the `select` option to specify the exact fields to return. Fields must be provided in an array of strings.
 
 Javascript:
     :::javascript
@@ -114,7 +114,7 @@ Command Line: `# midclt call jail.query '[["release","=","11.2-RELEASE"]]' '{"se
 
 #### Order By
 
-Use the `order_by` option to specify which field determines the sort order
+Use the `order_by` option to specify which field determines the sort order.
 
 Javascript:
     :::javascript
@@ -122,7 +122,7 @@ Javascript:
       "order_by": "size" // field name
     }
 
-Command Line: `# midclt call disk.query '[]' '{"order_by": ["size"]}'
+Command Line: `# midclt call disk.query '[]' '{"order_by": ["size"]}'`
 
 
     
