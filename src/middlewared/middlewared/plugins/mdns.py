@@ -125,8 +125,23 @@ class mDNSServiceThread(threading.Thread):
 
         if self.service == 'ADISK':
             iindex = [kDNSServiceInterfaceIndexAny]
-            afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
-            smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
+
+            afp_is_running = any(filter_list(
+                self.service_info, [('service', '=', 'afp'), ('state', '=', 'RUNNING')]
+            ))
+            smb_is_running = any(filter_list(
+                self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]
+            ))
+
+            if afp_is_running:
+                afp_shares = self.middleware.call_sync('sharing.afp.query', [('timemachine', '=', True)])
+            else:
+                afp_shares = []
+            if smb_is_running:
+                smb_shares = self.middleware.call_sync('sharing.smb.query', [('timemachine', '=', True)])
+            else:
+                smb_shares = []
+
             afp = set([(x['name'], x['path']) for x in afp_shares])
             smb = set([(x['name'], x['path']) for x in smb_shares])
             if len(afp | smb) == 0:
