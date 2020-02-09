@@ -108,9 +108,32 @@ class VMSupervisor(object):
         self.taps = []
         self.bhyve_error = None
 
+    def has_iommu(self):
+        def check_iommu(type):
+            IOMMU_TEST = { 'VT-d': { 'arglist': ['/usr/sbin/acpidump', '-t'], 'string': 'DMAR' },
+                           'amdvi': { 'arglist': ['/sbin/sysctl', 'hw'], 'string': 'vmm.amdvi.enable: 1' } }
+            if type in IOMMU_TEST:
+                proc1=subprocess.Popen(IOMMU_TEST[type]['arglist'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                proc2=subprocess.Popen(['/usr/bin/grep', IOMMU_TEST[type]['string']], stdin=proc1.stdout, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                proc1.stdout.close() # Allow proc1 to receive a SIGPIPE if proc2 exits.
+                try:
+                    outs, errs = proc2.communicate(timeout=5)
+                except TimeoutExpired:
+                    proc2.kill()
+                    outs, errs = proc2.communicate()
+                if outs:
+                    return(type)
+            return(None)
+
+        for type in ['VT-d', 'amdvi']:
+            if check_iommu(type):
+                return(type)
+        self.logger.debug('====> PCI passthrough not supported on this system (no VT-d or amdvi)')
+        return(None)
+
     def check_pptdev(self, pptdevs, pptdev):
         # Check format and availability of PPT device
-        if re.match(r'([0-9]+/){2}[0-7]',pptdev)==None:
+        if re.match(r'([0-9]+/){2}[0-9]+',pptdev)==None:
             # Device specifier has invalid format.
             self.logger.debug('====> Invalid host PCI device specification: {}. Skipping'.format(pptdev))
         elif not pptdev in pptdevs:
@@ -193,6 +216,7 @@ class VMSupervisor(object):
         }
         pptdevs=await self.middleware.call('vm.device.pptdev_choices')
         pptslots=[]
+        IOMMU_SUPPORT=self.has_iommu()
 
         for device in sorted(self.vm['devices'], key=lambda x: (x['order'], x['id'])):
             if device['dtype'] in ('CDROM', 'DISK', 'RAW'):
@@ -259,7 +283,7 @@ class VMSupervisor(object):
                     args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, random_mac)]
                 else:
                     args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
-            elif device['dtype'] == 'PCI':
+            elif device['dtype'] == 'PCI' and IOMMU_SUPPORT:
                 ### PCI passthru section begins here ###
                 valid_pptdev = self.check_pptdev(pptdevs, device['attributes'].get('pptdev'))
                 if valid_pptdev:
@@ -1418,7 +1442,7 @@ class VMDeviceService(CRUDService):
 
         lines = outs.split('\n')
         pptdevs = {}
-        regexp = r'^('+re.escape(PPT_BASE_NAME)+'[0-9]+@pci.*:)(([0-9]+:){2}[0-7]).*$'
+        regexp = r'^('+re.escape(PPT_BASE_NAME)+'[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$'
         for line in lines:
             object = re.match(regexp, line, flags=re.I)
             if object:
