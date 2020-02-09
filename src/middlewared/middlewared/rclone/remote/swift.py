@@ -1,5 +1,5 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Str
+from middlewared.schema import Str, Int
 
 
 class OpenStackSwiftRcloneRemote(BaseRcloneRemote):
@@ -48,9 +48,9 @@ class OpenStackSwiftRcloneRemote(BaseRcloneRemote):
         Str("application_credential_secret", default="",
             title="Application Credential Secret "
                   "(OS_APPLICATION_CREDENTIAL_SECRET)"),
-        Str("auth_version", default="",
-            title="AuthVersion - set to (1,2,3) if your auth URL has no "
-                  "version (ST_AUTH_VERSION)"),
+        Int("auth_version", enum=[0, 1, 2, 3],
+            title="AuthVersion - set it if your auth URL has no version "
+                  "(ST_AUTH_VERSION)"),
         Str("endpoint_type", enum=["public", "internal", "admin"],
             title="Endpoint type to choose from the service catalogue "
                   "(OS_ENDPOINT_TYPE)"),
