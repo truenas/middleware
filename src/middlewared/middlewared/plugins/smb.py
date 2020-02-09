@@ -815,6 +815,13 @@ class SharingSMBService(CRUDService):
                     f'The "noacl" VFS module is incompatible with the extended ACL on {data["path"]}.'
                 )
 
+        if 'shadow_copy2' in data['vfsobjects'] and data['shadowcopy']:
+            verrors.add(
+                f'{schema_name}.name',
+                'vfs_shadow_copy2 is incompatible with the built-in shadow copy module. Either '
+                'deselect "shadowcopy" or remove shadow_copy2 from vfsobjects list.'
+            )
+
         if data.get('name') and data['name'].lower() in ['global', 'homes', 'printers']:
             verrors.add(
                 f'{schema_name}.name',
