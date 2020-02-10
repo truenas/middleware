@@ -82,8 +82,8 @@ system_func()
 		vmstat
 		section_footer
 
-		section_header "top -SHin2"
-		top -SHin2
+		section_header "top -SHbi -d1 -n2"
+		top -SHbi -d1 -n2
 		section_footer
 	else
 		section_header "swapinfo -h"
@@ -128,7 +128,7 @@ system_func()
 	section_footer
 
 	section_header "Middleware Jobs - 'midclt call core.get_jobs'"
-	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' | python -m json.tool	
+	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' | jq .
 	section_footer
 
 	if [ -f /data/license ]; then

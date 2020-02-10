@@ -48,7 +48,7 @@ smart_func()
 	LIMIT 1
 	")
 
-	if [ "$smart_onoff" == "1" ]
+	if [ "$smart_onoff" = "1" ]
 	then
 		smart_enabled="start on boot."
 	fi
