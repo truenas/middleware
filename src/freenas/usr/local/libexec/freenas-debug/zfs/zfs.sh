@@ -87,7 +87,7 @@ zfs_func()
 	done
 	section_footer
 
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		lsblk -o name,partuuid -l > /tmp/glabel.out
 	else
 		glabel status > /tmp/glabel.out

@@ -48,7 +48,7 @@ system_func()
 	ntpq -pwn
 	section_footer
 
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		section_header "ps -auxwwf"
 		ps -auxwwf
 	else
@@ -65,7 +65,7 @@ system_func()
 	df -T -h
 	section_footer
 
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		section_header "swapon -s"
 		swapon -s
 		section_footer

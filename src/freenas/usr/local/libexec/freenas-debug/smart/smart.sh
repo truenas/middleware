@@ -58,7 +58,7 @@ smart_func()
 	section_footer
 
 	section_header "SMARTD Run Status"
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		systemctl status smartd
 	else
 		service smartd-daemon onestatus
@@ -86,7 +86,7 @@ smart_func()
 		rm -f /tmp/smart.out
 	fi
 
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		disks=$(lsblk -ndo name | grep -v '^sr')
 	else
 		disks=$(sysctl -n kern.disks)

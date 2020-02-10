@@ -60,7 +60,7 @@ network_func()
 	section_footer
 
 	section_header "Interfaces"
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		interfaces=$(ls /sys/class/net)
 	else
 		interfaces=$(ifconfig -l)
@@ -68,7 +68,7 @@ network_func()
 	for i in $interfaces
 	do
 		echo
-		if [ "$is_linux" -eq 0 ]; then
+		if is_linux; then
 			ip address show dev "$i"
 			grep -iq 'up' /sys/class/net/"$i"/operstate
 			iface_up=$?
@@ -82,7 +82,7 @@ network_func()
 
 		if [ "$iface_up" -eq 0 ];
 		then
-			if [ "$is_linux" -eq 0 ]; then
+			if is_linux; then
 				ips=$(ip address show dev ${i} | grep '\binet\b' | awk '{ print $2 }' | cut -d'/' -f1 | xargs)
 				ips6=$(ip address show dev ${i} | grep '\binet6\b' | awk '{ print $2 }' | cut -d'/' -f1 | xargs)
 			else
@@ -94,7 +94,7 @@ network_func()
 			then
 				for ip in ${ips}
 				do
-					if [ "$is_linux" -eq 0 ]; then
+					if is_linux; then
 						gw=$(get_gw_in_linux_for_ip "8.8.8.8" "$ip")
 					else
 						gw=$(route -n show -inet ${ip}|grep gateway|xargs)
@@ -110,7 +110,7 @@ network_func()
 			then
 				for ip6 in ${ips6}
 				do
-					if [ "$is_linux" -eq 0 ]; then
+					if is_linux; then
 						gw=$(get_gw_in_linux_for_ip "2001:4860:4860::8888" "$ip6")
 					else
 						gw=$(route -n show -inet6 ${ip6}|grep gateway|xargs)
@@ -126,7 +126,7 @@ network_func()
 	section_footer
 
 	section_header "Default Route"
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		ip route show default | awk '/default/ {print $3}'
 	else
 		route -n show default|grep gateway|awk '{ print $2 }'
@@ -141,13 +141,13 @@ network_func()
 	arp -an
 	section_footer
 
-	if [ "$is_linux" -eq 1 ]; then
+	if is_freebsd; then
 		section_header "mbuf statistics (netstat -m)"
 		netstat -m
 		section_footer
 	fi
 
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		section_header "Interface statistics (ip -s addr)"
 		ip -s addr
 	else

@@ -1,6 +1,8 @@
 #!/bin/sh
-uname -s | grep -q "Linux"
-if [ $? -eq 0 ]; then
+
+. /etc/system_info
+
+if is_linux; then
 	prefix="/usr"
 else
 	prefix="/usr/local"

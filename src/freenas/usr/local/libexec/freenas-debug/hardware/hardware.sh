@@ -29,7 +29,7 @@
 
 get_physical_disks_list()
 {
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		lsblk -ndo path | grep -v '^/dev/sr'
 	else
 		sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
@@ -211,7 +211,7 @@ hardware_freebsd()
 
 hardware_func()
 {
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		hardware_linux
 	else
 		hardware_freebsd
