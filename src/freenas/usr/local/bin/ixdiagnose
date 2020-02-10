@@ -145,17 +145,11 @@ else
 	$mydir/freenas-debug -A
 fi
 
-if is_linux; then
-	h_args="h"
-else
-	h_args="H"
-fi
-
 if [ -d "/tmp/middlewared/jobs" ]; then
-	tar -c${h_args}f - -C /tmp/middlewared jobs | tar -C $dir -xf -
+	tar -chf - -C /tmp/middlewared jobs | tar -C $dir -xf -
 fi
-tar -c${h_args}f - -C /var log | tar -C $dir -xf -
-tar -c${h_args}f - -C /var/tmp fndebug | tar -C $dir -xf -
+tar -chf - -C /var log | tar -C $dir -xf -
+tar -chf - -C /var/tmp fndebug | tar -C $dir -xf -
 if [ "${limit}" != "-1" ] ; then
 	truncate_files "${limit}"
 fi
@@ -213,7 +207,7 @@ if is_freebsd; then
 	set -e
 fi
 
-tar -C $dir/.. -c${h_args}zf $dir/../ixdiagnose.tgz ixdiagnose
+tar -C $dir/.. -chzf $dir/../ixdiagnose.tgz ixdiagnose
 
 if [ "$actualdump" != "" ] ; then
 	touch $actualdump.submitted
