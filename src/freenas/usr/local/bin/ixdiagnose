@@ -84,7 +84,7 @@ truncate_files ()
 	done
 }
 
-if is_linux; then
+if is_freebsd; then
 	# Make text dump freebsd only until we implement saving dumps in linux
 	test -e /etc/rc.conf && . /etc/rc.conf
 	[ "$dumpdir" = "" ] && dumpdir="$dumpdir"
@@ -160,7 +160,7 @@ if [ "${limit}" != "-1" ] ; then
 	truncate_files "${limit}"
 fi
 
-if is_linux; then
+if is_freebsd; then
 	if ! dumpfile_to_submit_exists $dumpdir ; then
 		if [ $? = 2 ] ; then
 			exit 2
@@ -198,7 +198,7 @@ if [ -f /etc/version ] ; then
 	cp /etc/version "$dir/version"
 fi
 
-if is_linux; then
+if is_freebsd; then
 	set +e
 	ls /dev/ses* 2> /dev/null | while read -r ses; do
 		name=$(echo ${ses}|cut -d "/" -f 3)
