@@ -14,6 +14,8 @@ echo $num_errors_after
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
 git checkout HEAD~
 else
+git remote set-branches origin ${TRAVIS_BRANCH}
+git fetch --depth 1 origin ${TRAVIS_BRANCH}
 git checkout ${TRAVIS_BRANCH}
 fi
 
