@@ -17,3 +17,7 @@ is_freebsd() {
 is_linux() {
 	$is_linux
 }
+
+# Database specific variables
+FREENAS_SQLITE_CMD="/usr/local/bin/sqlite3fn"
+FREENAS_CONFIG="/data/freenas-v1.db"
