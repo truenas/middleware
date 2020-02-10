@@ -69,6 +69,7 @@ Package: middlewared
 Architecture: all
 Depends: alembic,
          cryptsetup,
+         gawk,
          gdisk,
          jq,
          ipmitool,
