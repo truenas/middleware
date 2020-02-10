@@ -26,12 +26,9 @@
 #
 #####################################################################
 
-if [ "$is_linux" -eq 1 ]; then
+if is_freebsd; then
 	test -e /etc/rc.freenas && . /etc/rc.freenas
 	test -e /etc/rc.conf.local && . /etc/rc.conf.local
-else
-	FREENAS_SQLITE_CMD="/usr/local/bin/sqlite3fn"
-	FREENAS_CONFIG="/data/freenas-v1.db"
 fi
 
 #
@@ -160,7 +157,7 @@ freenas_header()
 		section_header "no version file found"
 	fi
 
-	if [ "$is_linux" -eq 0 ]; then
+	if is_linux; then
 		kernel_prefix="kernel"
 	else
 		kernel_prefix="kern"
@@ -172,7 +169,7 @@ freenas_header()
 	out=$(sysctl -n "$kernel_prefix".osrelease)
 	echo "Operating system release: ${out}"
 
-	if [ "$is_linux" -eq 1 ]; then
+	if is_freebsd; then
 		out=$(sysctl -n kern.osrevision)
 		echo "Operating system revision: ${out}"
 

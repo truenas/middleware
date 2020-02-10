@@ -6,9 +6,8 @@
 # to it.
 #
 
-# Determine platform
-uname -s | grep -q "Linux"
-is_linux=$?
+# Bring in platform specific bits
+. /etc/system_info
 
 # If there is a system dataset use it
 tmpdir="/var/db/system"
@@ -85,7 +84,7 @@ truncate_files ()
 	done
 }
 
-if [ "$is_linux" -eq 1 ]; then
+if is_linux; then
 	# Make text dump freebsd only until we implement saving dumps in linux
 	test -e /etc/rc.conf && . /etc/rc.conf
 	[ "$dumpdir" = "" ] && dumpdir="$dumpdir"
@@ -146,7 +145,7 @@ else
 	$mydir/freenas-debug -A
 fi
 
-if [ "$is_linux" -eq 0 ]; then
+if is_linux; then
 	h_args="h"
 else
 	h_args="H"
@@ -161,7 +160,7 @@ if [ "${limit}" != "-1" ] ; then
 	truncate_files "${limit}"
 fi
 
-if [ "$is_linux" -eq 1 ]; then
+if is_linux; then
 	if ! dumpfile_to_submit_exists $dumpdir ; then
 		if [ $? = 2 ] ; then
 			exit 2
@@ -199,7 +198,7 @@ if [ -f /etc/version ] ; then
 	cp /etc/version "$dir/version"
 fi
 
-if [ "$is_linux" -eq 1 ]; then
+if is_linux; then
 	set +e
 	ls /dev/ses* 2> /dev/null | while read -r ses; do
 		name=$(echo ${ses}|cut -d "/" -f 3)

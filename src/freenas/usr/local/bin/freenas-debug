@@ -31,9 +31,7 @@
 # executed from webserver/restricted context.
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
-uname -s | grep -q "Linux"
-is_linux=$?
-
+. /etc/system_info
 : ${FREENAS_DEBUG_MODULEDIR="$(realpath $(dirname "$0"))/../libexec/freenas-debug"}
 
 . "$FREENAS_DEBUG_MODULEDIR/include.sh"
@@ -138,7 +136,7 @@ load_modules()
 {
 	for f in $(ls "${FREENAS_DEBUG_MODULEDIR}")
 	do
-		if [ "$is_linux" -eq 0 ]; then
+		if is_linux; then
 			echo "$f" | grep -q ".*freebsd"
 		else
 			echo "$f" | grep -q ".*linux"
@@ -272,7 +270,7 @@ main()
 	OPTIND=1
 	if [ -d "${FREENAS_DEBUG_DIRECTORY}" ]
 	then
-		if [ "$is_linux" -eq 0 ]; then
+		if is_linux; then
 			rm --one-file-system -rf "${FREENAS_DEBUG_DIRECTORY}"
 		else
 			rm -rfx "${FREENAS_DEBUG_DIRECTORY}"
