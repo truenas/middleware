@@ -7,11 +7,21 @@
 	ldiskdev=splout[1]
 	#toss crypot
 	gsub (/.eli/ , "", ldiskdev);
-	grepsuccess="grep " ldiskdev  " /tmp/glabel.out " | getline sesline
+	islinux_code=system("uname -s | grep -q 'Linux'")
+	grepsuccess=sprintf("grep %s /tmp/glabel.out", ldiskdev) | getline sesline
 	if ( grepsuccess )  {
-		split (sesline, sessplit , " " ) 
-		rdiskdev=sessplit[3]
-		gsub (/p[0-9]/,"", rdiskdev);
+		split (sesline, sessplit , " " )
+		if ( islinux_code == 0 ) {
+			rdiskdev=sessplit[1]
+			if ( match(rdiskdev, /nvme/) ) {
+				gsub (/p[0-9]+/,"", rdiskdev);
+			} else {
+				gsub (/[0-9]/,"", rdiskdev);
+			}
+		} else {
+			rdiskdev=sessplit[3]
+			gsub (/p[0-9]/,"", rdiskdev);
+		}
 		print ( "/dev: " rdiskdev " " $0); 
 		} else {
 			#print " 5: " $5 " 6: " $6 " 7: "$7;	
