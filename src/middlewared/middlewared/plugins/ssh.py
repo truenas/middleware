@@ -37,6 +37,7 @@ class SSHModel(sa.Model):
     ssh_host_rsa_key = sa.Column(sa.Text(), nullable=True)
     ssh_host_rsa_key_pub = sa.Column(sa.Text(), nullable=True)
     ssh_host_rsa_key_cert_pub = sa.Column(sa.Text(), nullable=True)
+    ssh_weak_ciphers = sa.Column(sa.JSON(type=list))
     ssh_options = sa.Column(sa.Text())
 
 
@@ -66,6 +67,7 @@ class SSHService(SystemServiceService):
         Str('sftp_log_level', enum=["", "QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG2", "DEBUG3"]),
         Str('sftp_log_facility', enum=["", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4",
                                        "LOCAL5", "LOCAL6", "LOCAL7"]),
+        List('weak_ciphers', items=[Str('cipher', enum=['AES128-CBC', 'NONE'])]),
         Str('options', max_length=None),
         update=True
     ))
