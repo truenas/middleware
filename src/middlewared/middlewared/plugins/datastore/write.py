@@ -33,6 +33,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         await self._handle_relationships(pk, relationships)
 
+        await self.middleware.call('datastore.send_insert_events', name, insert)
+
         return pk
 
     @accepts(Str('name'), Any('id_or_filters'), Dict('data', additional_attrs=True),
@@ -67,6 +69,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             )
             if result.rowcount != 1:
                 raise RuntimeError('No rows were updated')
+
+            await self.middleware.call('datastore.send_update_events', name, update)
 
         await self._handle_relationships(id, relationships)
 
@@ -125,4 +129,9 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             'datastore.execute_write',
             table.delete().where(self._where_clause(table, id_or_filters, options)),
         )
+
+        # FIXME: Sending events for batch deletes not implemented yet
+        if not isinstance(id_or_filters, list):
+            await self.middleware.call('datastore.send_delete_events', name, id_or_filters)
+
         return True

@@ -187,3 +187,13 @@ class DiskService(Service, ServiceChangeMixin):
             await self.middleware.call('service.restart', 'collectd')
         await self._service_change('smartd', 'restart')
         await self._service_change('snmp', 'restart')
+
+
+async def setup(middleware):
+    await middleware.call("datastore.register_event", {
+        "description": "Sent on disk changes.",
+        "datastore": "storage.disk",
+        "plugin": "disk",
+        "prefix": "disk_",
+        "id": "identifier",
+    })
