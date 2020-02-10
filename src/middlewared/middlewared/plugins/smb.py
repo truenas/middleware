@@ -51,6 +51,7 @@ class SMBCmd(enum.Enum):
     SHARESEC = 'sharesec'
     SMBCONTROL = 'smbcontrol'
     SMBPASSWD = 'smbpasswd'
+    STATUS = 'smbstatus'
     WBINFO = 'wbinfo'
 
 
