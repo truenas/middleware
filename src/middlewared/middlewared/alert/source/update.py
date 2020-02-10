@@ -6,12 +6,27 @@ import logging
 from freenasOS.Update import PendingUpdates
 from freenasUI.system.utils import is_update_applied
 
-from middlewared.alert.base import Alert, AlertLevel, FilePresenceAlertSource, ThreadedAlertSource
+from middlewared.alert.base import Alert, AlertLevel, AlertSource, FilePresenceAlertSource, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 UPDATE_APPLIED_SENTINEL = "/tmp/.updateapplied"
 
 log = logging.getLogger("update_check_alertmod")
+
+
+class TrainEOLAlertSource(AlertSource):
+    level = AlertLevel.INFO
+    title = "Update Train EOL Reached"
+    text = ("The FreeNAS 11.2-STABLE update train has reached its End of "
+            "Life and is no longer receiving security updates. Please "
+            "schedule a time to upgrade to FreeNAS 11.3 and use the "
+            "FreeNAS 11.3-STABLE update train. For more details about "
+            "updating FreeNAS, please refer to the FreeNAS Documentation "
+            "(https://www.ixsystems.com/documentation/freenas/11.3-RELEASE/"
+            "system.html#update)")
+
+    async def check(self):
+        return Alert()
 
 
 class HasUpdateAlertSource(ThreadedAlertSource):
