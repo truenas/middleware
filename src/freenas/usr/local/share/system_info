@@ -8,6 +8,7 @@ FreeBSD)
 Linux)
 	is_linux=true
 	is_freebsd=false
+	;;
 esac
 
 is_freebsd() {
