@@ -110,14 +110,22 @@ class VMSupervisor(object):
 
     def has_iommu(self):
         def check_iommu(type):
-            IOMMU_TEST = { 'VT-d': { 'arglist': ['/usr/sbin/acpidump', '-t'], 'string': 'DMAR' },
-                           'amdvi': { 'arglist': ['/sbin/sysctl', 'hw'], 'string': 'vmm.amdvi.enable: 1' } }
+            IOMMU_TEST = {'VT-d': {'arglist': ['/usr/sbin/acpidump', '-t'],
+                                   'string': 'DMAR' },
+                          'amdvi': {'arglist': ['/sbin/sysctl', 'hw'],
+                                    'string': 'vmm.amdvi.enable: 1'}}
             if type in IOMMU_TEST:
-                proc1=subprocess.Popen(IOMMU_TEST[type]['arglist'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-                proc2=subprocess.Popen(['/usr/bin/grep', IOMMU_TEST[type]['string']], stdin=proc1.stdout, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-                proc1.stdout.close() # Allow proc1 to receive a SIGPIPE if proc2 exits.
+                proc1 = subprocess.Popen(IOMMU_TEST[type]['arglist'],
+                                         stdout = subprocess.PIPE,
+                                         stderr = subprocess.DEVNULL)
+                proc2 = subprocess.Popen(['/usr/bin/grep', IOMMU_TEST[type]['string']],
+                                         stdin = proc1.stdout,
+                                         stdout = subprocess.PIPE,
+                                         stderr = subprocess.DEVNULL)
+                proc1.stdout.close() # Allow proc1 to receive a SIGPIPE if
+                                     # proc2 exits.
                 try:
-                    outs, errs = proc2.communicate(timeout=5)
+                    outs, errs = proc2.communicate(timeout = 5)
                 except TimeoutExpired:
                     proc2.kill()
                     outs, errs = proc2.communicate()
@@ -128,17 +136,20 @@ class VMSupervisor(object):
         for type in ['VT-d', 'amdvi']:
             if check_iommu(type):
                 return(type)
-        self.logger.debug('====> PCI passthrough not supported on this system (no VT-d or amdvi)')
+        self.logger.debug('====> PCI passthrough not supported on this system'\
+                          ' (no VT-d or amdvi)')
         return(None)
 
     def check_pptdev(self, pptdevs, pptdev):
         # Check format and availability of PPT device
-        if re.match(r'([0-9]+/){2}[0-9]+',pptdev)==None:
+        if re.match(r'([0-9]+/){2}[0-9]+',pptdev) == None:
             # Device specifier has invalid format.
-            self.logger.debug('====> Invalid host PCI device specification: {}. Skipping'.format(pptdev))
+            self.logger.debug('====> Invalid host PCI device specification: {}.'\
+                              ' Skipping'.format(pptdev))
         elif not pptdev in pptdevs:
             # Device not available for passthru
-            self.logger.debug('====> Host PCI device {} not available for passthru to guest. Skipping.'.format(pptdev))
+            self.logger.debug('====> Host PCI device {} not available for'\
+                              'passthru to guest. Skipping.'.format(pptdev))
         else:
             # Device OK
             return(pptdev)
@@ -148,13 +159,14 @@ class VMSupervisor(object):
     def args_pptdev(self, pptslots, nid, pptdev):
         pptdev_bsf =  pptdev.split('/')
 
-        # Multi-function PCI devices are not always independent. For some (but not all) adapters the
-        # mappings of functions must be the same in the guest. For simplicity, we map functions of the
-        # same host slot on one guest slot.
+        # Multi-function PCI devices are not always independent. For some (but
+        # not all) adapters the mappings of functions must be the same in the
+        # guest. For simplicity, we map functions of the same host slot on one
+        # guest slot.
 
         # Compile list of already assigned devices with same source slot
-        mylist=(item for item in pptslots if item['host_bsf'][0:2] == pptdev_bsf[0:2])
-        item=next(mylist,None)
+        mylist = (item for item in pptslots if item['host_bsf'][0:2] == pptdev_bsf[0:2])
+        item = next(mylist,None)
         if item == None:
             # Source bus/slot not seen before. Map on new guest slot.
             guest_slot = nid();
@@ -165,11 +177,14 @@ class VMSupervisor(object):
             # Check if the function has already been mapped.
             while (item != None and item['host_bsf'] != pptdev_bsf):
                 # Not same function. Check next item.
-                item=next(mylist,None)
+                item = next(mylist,None)
             if item == None:
                 # Host bus/slot seen before, but function is new.
-                # Map it on the same guest slot as other functions of same host bus/slot.
-                self.logger.debug('====> Bus and slot of host PCI device {} seen before. Using the same guest slot {} as before'.format(pptdev,guest_slot))
+                # Map it on the same guest slot as other functions of same host
+                # bus/slot.
+                self.logger.debug('====> Bus and slot of host PCI device {}'\
+                                  ' seen before. Using the same guest slot {}'\
+                                  ' as before'.format(pptdev,guest_slot))
         if item == None:
             # Add passthru device to bhyve args
             pptdev_args = []
@@ -177,12 +192,17 @@ class VMSupervisor(object):
                 # First ppt device --> wire memory
                 pptdev_args += ['-S']
             pptslots.append({ 'host_bsf': pptdev_bsf, 'guest_slot': guest_slot })
-            pptdev_args += ['-s', '{}:{},passthru,{}'.format(guest_slot,pptdev_bsf[2],pptdev)]
-            self.logger.debug('====> Host PCI device {} passed thru to guest as PCI device {}:{}'.format(pptdev,guest_slot,pptdev_bsf[2]))
+            pptdev_args += ['-s', '{}:{},passthru,{}'.format(guest_slot,
+                                                             pptdev_bsf[2],
+                                                             pptdev)]
+            self.logger.debug('====> Host PCI device {} passed thru to guest'\
+                              'as PCI device {}:{}'.format(pptdev,guest_slot,
+                                                           pptdev_bsf[2]))
             return(pptdev_args)
         else:
             # Do not add same device more than once
-            self.logger.debug('====> Host PCI device {} already passed thru to guest. Skipping.'.format(pptdev))
+            self.logger.debug('====> Host PCI device {} already passed thru to'\
+                              'guest. Skipping.'.format(pptdev))
         return(None)
 
 
@@ -214,9 +234,9 @@ class VMSupervisor(object):
             'ahci': [],
             'virtio-blk': [],
         }
-        pptdevs=await self.middleware.call('vm.device.pptdev_choices')
-        pptslots=[]
-        IOMMU_SUPPORT=self.has_iommu()
+        pptdevs = await self.middleware.call('vm.device.pptdev_choices')
+        pptslots = []
+        IOMMU_SUPPORT = self.has_iommu()
 
         for device in sorted(self.vm['devices'], key=lambda x: (x['order'], x['id'])):
             if device['dtype'] in ('CDROM', 'DISK', 'RAW'):
@@ -285,7 +305,8 @@ class VMSupervisor(object):
                     args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
             elif device['dtype'] == 'PCI' and IOMMU_SUPPORT:
                 ### PCI passthru section begins here ###
-                valid_pptdev = self.check_pptdev(pptdevs, device['attributes'].get('pptdev'))
+                valid_pptdev = self.check_pptdev(pptdevs,
+                                                 device['attributes'].get('pptdev'))
                 if valid_pptdev:
                     ppt_args = self.args_pptdev(pptslots, nid, valid_pptdev)
                     if ppt_args:
@@ -1432,7 +1453,9 @@ class VMDeviceService(CRUDService):
     def pptdev_choices(self):
         PPT_BASE_NAME = 'ppt'
 
-        proc=subprocess.Popen(['/usr/sbin/pciconf', '-l'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        proc = subprocess.Popen(['/usr/sbin/pciconf', '-l'],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.DEVNULL, text=True)
 
         try:
             outs, errs = proc.communicate(timeout=5)
@@ -1442,7 +1465,8 @@ class VMDeviceService(CRUDService):
 
         lines = outs.split('\n')
         pptdevs = {}
-        regexp = r'^('+re.escape(PPT_BASE_NAME)+'[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$'
+        regexp = r'^('+re.escape(PPT_BASE_NAME)\
+                 +'[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$'
         for line in lines:
             object = re.match(regexp, line, flags=re.I)
             if object:
@@ -1501,7 +1525,8 @@ class VMDeviceService(CRUDService):
     @accepts(
         Dict(
             'vmdevice_create',
-            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'VNC', 'RAW'], required=True),
+            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'VNC', 'RAW'],
+                required=True),
             Int('vm', required=True),
             Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None, null=True),
@@ -1753,11 +1778,9 @@ class VMDeviceService(CRUDService):
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
             await self.failover_nic_check(device, verrors, 'attributes')
         elif device.get('dtype') == 'PCI':
-            # TO DO: check validity of PCI passthru device
             pptdev = device['attributes'].get('pptdev')
             if not pptdev:
                 verrors.add('attributes.pptdev', 'PCI device is required.')
-                # TO DO: Also check that format conforms to 'x/y/z' or 'x/0/0', if not add error
         elif device.get('dtype') == 'VNC':
             if vm_instance['bootloader'] != 'UEFI':
                 verrors.add('dtype', 'VNC only works with UEFI bootloader.')
