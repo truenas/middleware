@@ -25,6 +25,8 @@ class TrainEOLAlertSource(AlertSource):
             "(https://www.ixsystems.com/documentation/freenas/11.3-RELEASE/"
             "system.html#update)")
 
+    freenas_only = True
+
     async def check(self):
         return Alert()
 
