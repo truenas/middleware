@@ -7,7 +7,7 @@
 #
 
 # Bring in platform specific bits
-. /etc/system_info
+. /usr/local/share/system_info
 
 # If there is a system dataset use it
 tmpdir="/var/db/system"

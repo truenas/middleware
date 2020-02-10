@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. /etc/system_info
+. /usr/local/share/system_info
 
 if is_linux; then
 	prefix="/usr"

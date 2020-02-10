@@ -31,7 +31,7 @@
 # executed from webserver/restricted context.
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
-. /etc/system_info
+. /usr/local/share/system_info
 : ${FREENAS_DEBUG_MODULEDIR="$(realpath $(dirname "$0"))/../libexec/freenas-debug"}
 
 . "$FREENAS_DEBUG_MODULEDIR/include.sh"
