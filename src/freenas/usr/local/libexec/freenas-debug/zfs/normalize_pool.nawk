@@ -10,7 +10,7 @@
 #cache and log aren't ONLINE; the sadists that wrote zpool status didn't see this coming
 ($0 ~ /ONLINE|log|cache|REMOVED|OFFLINE|DEGRADED/  ) {
 	#bug: needs an entry for every vdev type
-	if ( match ( $1, "gptid") || match ($1, "[a]*da[0-9]") || match ($1, "diskid") || match ($2, "OFFLINE") )  {
+	if ( match ( $1, "gptid") || match ($1, "[a]*da[0-9]") || match ($1, "diskid") || match ($2, "OFFLINE") || match ($1, "[[:alnum:]]{8}(-[[:alnum:]]{4}){3}-[[:alnum:]]{12}") )  {
 	#            gptid/13377042-b351-11e7-8040-0007432ba650  ONLINE       0     0     0
 	# get device ^^^^^^^^                      and      status^^^^
 		print ( "disk: " $1  " state: "  $2  " vdev: " lvdv " pool: " lpool " aux: " $5 $6 $7); 
