@@ -1091,7 +1091,7 @@ class SystemGeneralService(ConfigService):
             Int('ui_certificate', null=True),
             Int('ui_httpsport', validators=[Range(min=1, max=65535)]),
             Bool('ui_httpsredirect'),
-            List('ui_httpsprotocols', items=[Str('protocol', enum=HTTPS_PROTOCOLS)], empty=False),
+            List('ui_httpsprotocols', items=[Str('protocol', enum=HTTPS_PROTOCOLS)], empty=False, unique=True),
             Int('ui_port', validators=[Range(min=1, max=65535)]),
             List('ui_address', items=[IPAddr('addr')], empty=False),
             List('ui_v6address', items=[IPAddr('addr')], empty=False),
