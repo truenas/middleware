@@ -125,7 +125,7 @@ class VMSupervisor(object):
                 proc1.stdout.close()  # Allow proc1 to receive a SIGPIPE if proc2 exits.
                 try:
                     outs, errs = proc2.communicate(timeout=5)
-                except TimeoutExpired:
+                except subprocess.TimeoutExpired:
                     proc2.kill()
                     outs, errs = proc2.communicate()
                 if outs:
@@ -1457,13 +1457,13 @@ class VMDeviceService(CRUDService):
 
         try:
             outs, errs = proc.communicate(timeout=5)
-        except TimeoutExpired:
+        except subprocess.TimeoutExpired:
             proc.kill()
             outs, errs = proc.communicate()
 
         lines = outs.split('\n')
         pptdevs = {}
-        regexp = r'^('+re.escape(PPT_BASE_NAME)\
+        regexp = r'^(' + re.escape(PPT_BASE_NAME)\
                  + '[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$'
         for line in lines:
             object = re.match(regexp, line, flags=re.I)
