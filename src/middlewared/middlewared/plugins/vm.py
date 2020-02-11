@@ -288,7 +288,8 @@ class VMSupervisor(object):
 
         args.append(str(self.vm['id']) + '_' + self.vm['name'])
 
-        self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
+        log_message = re.sub(r'password=[^,]*,', 'password=********', ' '.join(args))
+        self.logger.debug('Starting bhyve: {}'.format(log_message))
         self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         if vnc_web:
