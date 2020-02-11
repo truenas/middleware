@@ -10,6 +10,7 @@ from .utils import start_daemon_thread, LoadPluginsMixin
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .webui_auth import WebUIAuth
 from .worker import ProcessPoolExecutor, main_worker
+from .utils.asyncio_ import async_run_in_executor
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
@@ -960,16 +961,6 @@ class Middleware(LoadPluginsMixin):
     def get_event_source(self, name):
         return self.__event_sources.get(name)
 
-    async def run_in_executor(self, pool, method, *args, **kwargs):
-        """
-        Runs method in a native thread using concurrent.futures.Pool.
-        This prevents a CPU intensive or non-asyncio friendly method
-        to block the event loop indefinitely.
-        Also used to run non thread safe libraries (using a ProcessPool)
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
-
     async def _run_in_conn_threadpool(self, method, *args, **kwargs):
         """
         Threads to handle websocket connection are gated on `__threadpool`.
@@ -980,7 +971,9 @@ class Middleware(LoadPluginsMixin):
            uses the thread pool. If service.foo is called many times before each thread
            finishes we will have a deadlock)
         """
-        return await self.run_in_executor(self.__threadpool, method, *args, **kwargs)
+        loop = asyncio.get_event_loop()
+        executor = self.__threadpool
+        return await async_run_in_executor(loop, executor, method, *args, **kwargs)
 
     def __init_procpool(self):
         self.__procpool = ProcessPoolExecutor(
@@ -989,32 +982,24 @@ class Middleware(LoadPluginsMixin):
         )
 
     async def run_in_proc(self, method, *args, **kwargs):
+        loop = asyncio.get_event_loop()
+        executor = self.__procpool
         retries = 2
         for i in range(retries):
             try:
-                return await self.run_in_executor(self.__procpool, method, *args, **kwargs)
+                return await async_run_in_executor(loop, executor, method, *args, **kwargs)
             except concurrent.futures.process.BrokenProcessPool:
                 if i == retries - 1:
                     raise
                 self.__init_procpool()
 
     async def run_in_thread(self, method, *args, **kwargs):
+        loop = self.loop
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         try:
-            result = await self.loop.run_in_executor(executor, self._run_in_thread_wrap, method, args, kwargs)
+            return await async_run_in_executor(loop, executor, method, *args, **kwargs)
         finally:
             executor.shutdown(wait=False)
-
-        if isinstance(result, Exception):
-            raise result
-        else:
-            return result
-
-    def _run_in_thread_wrap(self, f, args, kwargs):
-        try:
-            return f(*args, **kwargs)
-        except Exception as e:
-            return e
 
     def pipe(self):
         return Pipe(self)
@@ -1060,7 +1045,8 @@ class Middleware(LoadPluginsMixin):
             if hasattr(methodobj, '_thread_pool'):
                 tpool = methodobj._thread_pool
             if tpool:
-                return await self.run_in_executor(tpool, methodobj, *args)
+                loop = asyncio.get_event_loop()
+                return await async_run_in_executor(loop, tpool, methodobj, *args)
 
             if io_thread:
                 run_method = self.run_in_thread
@@ -1183,7 +1169,7 @@ class Middleware(LoadPluginsMixin):
     _loop_monitor_ignore_frames = (
         (
             re.compile(r'\s+File ".+/middlewared/main\.py", line [0-9]+, in run_in_thread\s+'
-                       'return await self.loop.run_in_executor'),
+                       'return await async_run_in_executor'),
             'run_in_thread'
         ),
     )

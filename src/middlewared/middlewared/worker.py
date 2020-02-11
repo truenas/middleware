@@ -1,10 +1,10 @@
 #!/usr/local/bin/python3
 from middlewared.client import Client
+from middlewared.utils.asyncio_ import async_run_in_executor
 
 import asyncio
 import concurrent.futures
 from concurrent.futures.process import _process_worker
-import functools
 import inspect
 import logging
 import multiprocessing
@@ -60,11 +60,10 @@ class FakeMiddleware(LoadPluginsMixin):
         self.logger = logging.getLogger('worker')
 
     async def run_in_thread(self, method, *args, **kwargs):
+        loop = asyncio.get_event_loop()
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         try:
-            return await asyncio.get_event_loop().run_in_executor(
-                executor, functools.partial(method, *args, **kwargs)
-            )
+            return await async_run_in_executor(loop, executor, method, *args, **kwargs)
         finally:
             # We need this because default behavior of PoolExecutor with
             # context manager is to shutdown(wait=True) which would block
