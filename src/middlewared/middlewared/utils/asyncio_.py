@@ -1,5 +1,4 @@
 import asyncio
-import functools
 
 
 async def asyncio_map(func, arguments, limit=None):
