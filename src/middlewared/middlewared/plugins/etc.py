@@ -71,9 +71,6 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
-        'zerotier': [
-            {'type': 'py', 'path': 'zerotier'},
-        ],
         'user': [
             {'type': 'mako', 'path': 'group', 'platform': 'FreeBSD'},
             {'type': 'mako', 'path': 'master.passwd', 'platform': 'FreeBSD'},
@@ -237,7 +234,7 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure', 'zerotier', 'nginx']
+    SKIP_LIST = ['system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure', 'nginx']
 
     class Config:
         private = True
