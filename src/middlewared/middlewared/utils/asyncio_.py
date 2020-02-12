@@ -1,5 +1,4 @@
 import asyncio
-import functools
 
 
 async def asyncio_map(func, arguments, limit=None):
@@ -17,6 +16,13 @@ async def asyncio_map(func, arguments, limit=None):
     return await asyncio.gather(*futures)
 
 
+def _noexec_wrapper(method, *args, **kwargs):
+    try:
+        return method(*args, **kwargs)
+    except Exception as e:
+        return e
+
+
 async def async_run_in_executor(loop, executor, method, *args, **kwargs):
     """
     Runs `method` using a concurrent.futures.Executor.
@@ -28,14 +34,9 @@ async def async_run_in_executor(loop, executor, method, *args, **kwargs):
     # As a workaround, we use a wrapper to catch exceptions before they are raised past
     # top and return them. Then we "catch" returned exceptions and re-raise them to
     # bridge the gap.
-    @functools.wraps(method)
-    def wrapped():
-        try:
-            return method(*args, **kwargs)
-        except Exception as e:
-            return e
 
-    result = await loop.run_in_executor(executor, wrapped)
+    result = await loop.run_in_executor(executor, _noexec_wrapper, method, *args, **kwargs)
+
     if isinstance(result, Exception):
         raise result
     else:
