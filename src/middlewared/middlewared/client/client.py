@@ -64,6 +64,8 @@ class WSClient(WebSocketClient):
         IP_PORTRANGE = 19
         IP_PORTRANGE_LOW = 2
 
+        oldsock = None
+
         for retry in range(5):
             self.sock.setsockopt(socket.IPPROTO_IP, IP_PORTRANGE, IP_PORTRANGE_LOW)
             self.sock.bind(('', 0))
