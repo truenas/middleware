@@ -69,7 +69,8 @@ class WSClient(WebSocketClient):
             self.sock.bind(('', 0))
             _host, port = self.sock.getsockname()
 
-            # close here because we previously bind() to a port in blacklist
+            # The old socket can't be closed before we bind the new socket or
+            # we have the possibility of binding to the same port.
             if retry > 0:
                 oldsock.close()
 
