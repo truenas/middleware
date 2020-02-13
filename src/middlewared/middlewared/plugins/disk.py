@@ -1365,6 +1365,7 @@ class DiskService(CRUDService):
                     ['disk_name', 'in', _disks],
                     ['disk_multipath_member', 'in', _disks],
                 ]],
+                ['disk_expiretime', '=', None],
             ])
             if qs:
                 diskobj = qs[0]
