@@ -1292,8 +1292,12 @@ class SystemGeneralService(ConfigService):
             aliases += list(filter(lambda x: x['type'].startswith('INET'), i['state']['aliases']))
 
         cp = subprocess.run(
-            'sockstat -46P tcp |awk \'{ if ($2 == "nginx" && $7 == "*:*") print $5","$6 }\' | '
-            'sort | uniq',
+            'sockstat -46{} tcp |awk \'{{ if ($2 == "nginx" && ${} == "*:*") print ${}","${} }}\' | '
+            'sort | uniq'.format(
+                # Linux sockstat uses -R for protocol selection
+                # FreeBSD uses -P instead.
+                *(('R', '6', '4', '5') if IS_LINUX else ('P', '7', '5', '6'))
+            ),
             shell=True, capture_output=True, text=True,
         )
         for line in cp.stdout.strip('\n').split('\n'):
