@@ -66,9 +66,15 @@ class WSClient(WebSocketClient):
 
         oldsock = None
 
-        for retry in range(5):
+        n_retries = 5
+        for retry in range(n_retries):
             self.sock.setsockopt(socket.IPPROTO_IP, IP_PORTRANGE, IP_PORTRANGE_LOW)
-            self.sock.bind(('', 0))
+
+            try:
+                self.sock.bind(('', 0))
+            except OSError:
+                time.sleep(0.1)
+                continue
 
             # The old socket can't be closed before we bind the new socket or
             # we have the possibility of binding to the same port.
@@ -82,7 +88,7 @@ class WSClient(WebSocketClient):
             # If we're at last pass in loop and get here, break out
             # so we don't set up a socket just to close it essentially
             # making it a NO-OP.
-            if retry == 4:
+            if retry == n_retries - 1:
                 break
 
             oldsock = self.sock
