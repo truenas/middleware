@@ -77,14 +77,17 @@ class WSClient(WebSocketClient):
             if port not in self.reserved_ports_blacklist:
                 return
 
+            # If we're at last pass in loop and get here, break out
+            # so we don't set up a socket just to close it essentially
+            # making it a NO-OP.
+            if retry == 4:
+                break
+
             oldsock = self.sock
 
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
             self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        # called in case we hit retry limit
-        oldsock.close()
 
         raise ReserveFDException()
 
