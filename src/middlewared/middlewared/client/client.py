@@ -64,17 +64,16 @@ class WSClient(WebSocketClient):
         IP_PORTRANGE = 19
         IP_PORTRANGE_LOW = 2
 
-        oldsock = None
-
         for retry in range(5):
             self.sock.setsockopt(socket.IPPROTO_IP, IP_PORTRANGE, IP_PORTRANGE_LOW)
             self.sock.bind(('', 0))
             _host, port = self.sock.getsockname()
 
-            # Close here because we previously bind() to a port in blacklist
-            if oldsock is not None:
+            # close here because we previously bind() to a port in blacklist
+            if retry > 0:
                 oldsock.close()
 
+            _host, port = self.sock.getsockname()
             if port not in self.reserved_ports_blacklist:
                 return
 
