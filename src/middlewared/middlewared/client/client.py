@@ -84,7 +84,8 @@ class WSClient(WebSocketClient):
             self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        oldsock.close() # called in case we hit retry limit
+        # called in case we hit retry limit
+        oldsock.close()
 
         raise ReserveFDException()
 
