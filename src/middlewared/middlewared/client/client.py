@@ -67,7 +67,6 @@ class WSClient(WebSocketClient):
         for retry in range(5):
             self.sock.setsockopt(socket.IPPROTO_IP, IP_PORTRANGE, IP_PORTRANGE_LOW)
             self.sock.bind(('', 0))
-            _host, port = self.sock.getsockname()
 
             # The old socket can't be closed before we bind the new socket or
             # we have the possibility of binding to the same port.
