@@ -64,20 +64,27 @@ class WSClient(WebSocketClient):
         IP_PORTRANGE = 19
         IP_PORTRANGE_LOW = 2
 
-        retries = 5
-        while retries > 0:
+        oldsock = None
+
+        for retry in range(5):
             self.sock.setsockopt(socket.IPPROTO_IP, IP_PORTRANGE, IP_PORTRANGE_LOW)
+            self.sock.bind(('', 0))
             _host, port = self.sock.getsockname()
+
+            # Close here because we previously bind() to a port in blacklist
+            if oldsock is not None:
+                oldsock.close()
 
             if port not in self.reserved_ports_blacklist:
                 return
 
-            newsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-            newsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            newsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.sock.close()
-            self.sock = newsock
-            retries += -1
+            oldsock = self.sock
+
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        oldsock.close() # called in case we hit retry limit
 
         raise ReserveFDException()
 
