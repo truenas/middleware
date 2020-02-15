@@ -2035,7 +2035,7 @@ class PeriodicSnapForm(MiddlewareModelForm, ModelForm):
         return bwd
 
     def middleware_clean(self, data):
-        data['dow'] = [int(day) for day in data.pop('byweekday')]
+        data['dow'] = [int(day) for day in data.pop('byweekday')[0].split(",")]
         data.pop('repeat_unit', None)
         data['ret_unit'] = data['ret_unit'].upper()
         return data
