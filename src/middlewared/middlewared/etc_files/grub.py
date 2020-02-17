@@ -2,10 +2,10 @@ import re
 import subprocess
 
 DEFAULT_GRUB = '/etc/default/grub'
-RE_DISTRIBUTOR = re.compile(r'^(GRUB_DISTRIBUTOR=).*', flags=re.M)
-RE_TERMINAL = re.compile(r'^(GRUB_TERMINAL=).*', flags=re.M)
-RE_SERIAL = re.compile(r'^(GRUB_SERIAL_COMMAND=).*', flags=re.M)
 RE_CMDLINE_LINUX = re.compile(r'^(GRUB_CMDLINE_LINUX=).*"', flags=re.M)
+RE_DISTRIBUTOR = re.compile(r'^(GRUB_DISTRIBUTOR=).*', flags=re.M)
+RE_SERIAL = re.compile(r'^(GRUB_SERIAL_COMMAND=).*', flags=re.M)
+RE_TERMINAL = re.compile(r'^(GRUB_TERMINAL=).*', flags=re.M)
 
 
 def render(service, middleware):
@@ -41,7 +41,7 @@ def render(service, middleware):
             default_grub,
         )
     else:
-        middleware.warn('Failed to determine root filesystem')
+        middleware.logger.warn('Failed to determine root filesystem')
 
     with open(DEFAULT_GRUB, 'w') as f:
         f.write(default_grub)
