@@ -43,6 +43,7 @@ CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
+RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
 RE_MEMWIDTH = re.compile(r'Total Width:\s*(\d*)')
 
 
@@ -92,10 +93,18 @@ class SystemAdvancedService(ConfigService):
         if await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
             ports = {'0x3f8': '0x3f8'}
         else:
-            pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
-                               "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'", stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-            ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
+            if IS_LINUX:
+                proc = await Popen(
+                    'dmesg | grep ttyS',
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
+                )
+                output = (await proc.communicate())[0].decode()
+                ports = {i: i for i in RE_LINUX_DMESG_TTY.findall(output)}
+            else:
+                pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
+                                   "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'", stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, shell=True)
+                ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
 
         if not ports or (await self.config())['serialport'] == '0x2f8':
             # We should always add 0x2f8 if ports is false or current value is the default one in db
@@ -254,6 +263,8 @@ class SystemAdvancedService(ConfigService):
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
+                if IS_LINUX:
+                    await self.middleware.call('etc.generate', 'grub')
             elif (
                 original_data['serialspeed'] != config_data['serialspeed'] or
                 original_data['serialport'] != config_data['serialport']

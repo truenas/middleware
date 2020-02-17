@@ -89,6 +89,9 @@ class EtcService(Service):
         'ctld': [
             {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD'},
         ],
+        'grub': [
+            {'type': 'py', 'path': 'grub', 'platform': 'Linux'},
+        ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
