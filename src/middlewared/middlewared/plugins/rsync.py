@@ -349,10 +349,7 @@ class RsyncTaskService(CRUDService):
                             )
 
             if(
-                data.get('validate_rpath') and
-                remote_path and
-                remote_host and
-                remote_port
+                data.get('validate_rpath') and remote_path and remote_host and remote_port and data.get('enabled')
             ):
                 if '@' in remote_host:
                     remote_username, remote_host = remote_host.rsplit('@', 1)
