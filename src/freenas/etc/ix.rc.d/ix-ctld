@@ -14,6 +14,13 @@ generate_ctl()
 {
 	/usr/local/libexec/nas/generate_ctl_conf.py
 	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.alua_enabled)" = "True" ]; then
+                # 999 is the port used by ALUA on the heartbeat interface
+                # on TrueNAS HA systems so set lowfirst=998.
+                # This is to reduce technical debt in middlewared
+                # surrounding the code used to connect to a remote
+                # websocket on the other controller using the heartbeat interface.
+                /sbin/sysctl net.inet.ip.portrange.lowfirst=998 >/dev/null
+
 		if [ "$(ha_mode)" = "MANUAL" ]; then
 			# TODO: get from database if we are not echostream
 		else

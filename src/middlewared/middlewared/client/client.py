@@ -52,50 +52,25 @@ class WSClient(WebSocketClient):
     def __init__(self, url, *args, **kwargs):
         self.client = kwargs.pop('client')
         self.reserved_ports = kwargs.pop('reserved_ports', False)
-        self.reserved_ports_blacklist = kwargs.pop('reserved_ports_blacklist', None)
         self.protocol = DDPProtocol(self)
         super(WSClient, self).__init__(url, *args, **kwargs)
 
     def get_reserved_portfd(self):
-        if self.reserved_ports_blacklist is None:
-            self.reserved_ports_blacklist = []
-
         # defined in net/in.h
         IP_PORTRANGE = 19
         IP_PORTRANGE_LOW = 2
 
-        oldsock = None
-
+        # number of times to retry binding the local socket
         n_retries = 5
         for retry in range(n_retries):
             self.sock.setsockopt(socket.IPPROTO_IP, IP_PORTRANGE, IP_PORTRANGE_LOW)
 
             try:
                 self.sock.bind(('', 0))
+                return
             except OSError:
                 time.sleep(0.1)
                 continue
-
-            # The old socket can't be closed before we bind the new socket or
-            # we have the possibility of binding to the same port.
-            if retry > 0:
-                oldsock.close()
-
-            _host, port = self.sock.getsockname()
-            if port not in self.reserved_ports_blacklist:
-                return
-
-            # If we're at last pass in loop and get here, break out
-            # so we don't set up a socket just to close it essentially
-            # making it a NO-OP.
-            if retry == n_retries - 1:
-                break
-
-            oldsock = self.sock
-
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         raise ReserveFDException()
 
@@ -206,14 +181,10 @@ class CallTimeout(ClientException):
 
 class Client(object):
 
-    def __init__(
-        self, uri=None, reserved_ports=False, reserved_ports_blacklist=None,
-        py_exceptions=False,
-    ):
+    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False):
         """
         Arguments:
-           :reserved_ports(bool): whether the connection should origin using a reserved port (<= 1024)
-           :reserved_ports_blacklist(list): list of ports that should not be used as origin
+           :reserved_ports(bool): should the connection use a reserved port
         """
         self._calls = {}
         self._jobs = defaultdict(dict)
@@ -231,7 +202,6 @@ class Client(object):
                 uri,
                 client=self,
                 reserved_ports=reserved_ports,
-                reserved_ports_blacklist=reserved_ports_blacklist,
             )
             if 'unix://' in uri:
                 self._ws.resource = '/websocket'
