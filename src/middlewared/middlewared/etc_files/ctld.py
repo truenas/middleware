@@ -402,6 +402,12 @@ def set_ctl_ha_peer(middleware):
     with contextlib.suppress(IndexError):
         if middleware.call_sync("iscsi.global.alua_enabled"):
             node = middleware.call_sync("failover.node")
+            # 999 is the port used by ALUA on the heartbeat interface
+            # on TrueNAS HA systems. Because of this, we set
+            # net.inet.ip.portrange.lowfirst=998 to ensure local
+            # websocket connections do not have the opportunity
+            # to interfere.
+            sysctl.filter("net.inet.ip.portrange.lowfirst")[0].value = 998
             if node == "A":
                 sysctl.filter("kern.cam.ctl.ha_peer")[0].value = "listen 169.254.10.1"
             if node == "B":
