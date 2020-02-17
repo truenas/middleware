@@ -623,6 +623,12 @@ class PoolService(CRUDService):
         pool_id = z_pool = encrypted_dataset_pk = None
         try:
             job.set_progress(90, 'Creating ZFS Pool')
+
+            if IS_LINUX:
+                self.middleware.logger.debug(
+                    'Pool %s is being created with topology %s', data['name'], data['topology'],
+                )
+
             z_pool = await self.middleware.call('zfs.pool.create', {
                 'name': data['name'],
                 'vdevs': vdevs,
