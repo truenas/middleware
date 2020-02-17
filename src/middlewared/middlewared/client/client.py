@@ -132,19 +132,6 @@ class WSClient(WebSocketClient):
     def closed(self, code, reason=None):
         self.protocol.on_close(code, reason)
 
-    def __close_reserved_fd(self):
-        try:
-            if self.reserved_fd:
-                os.close(self.reserved_fd)
-        except OSError:
-            pass
-        finally:
-            self.reserved_fd = None
-
-    def close_connection(self):
-        self.__close_reserved_fd()
-        return super().close_connection()
-
     def received_message(self, message):
         self.protocol.on_message(message.data.decode('utf8'))
 
@@ -156,9 +143,6 @@ class WSClient(WebSocketClient):
 
     def on_close(self, code, reason=None):
         self.client.on_close(code, reason)
-
-    def __del__(self):
-        self.__close_reserved_fd()
 
 
 class Call(object):
