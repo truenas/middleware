@@ -268,7 +268,7 @@ class FailoverService(ConfigService):
         node = None
 
         proc = subprocess.Popen([
-            '/usr/local/sbin/dmidecode',
+            'dmidecode',
             '-s', 'system-product-name',
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         manufacturer = proc.communicate()[0].strip()
@@ -353,7 +353,7 @@ class FailoverService(ConfigService):
             return hardware, node
 
         proc = subprocess.Popen([
-            '/usr/local/sbin/dmidecode',
+            'dmidecode',
             '-s', 'system-serial-number',
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         serial = proc.communicate()[0].split('\n', 1)[0].strip()
@@ -372,7 +372,7 @@ class FailoverService(ConfigService):
         if license['system_serial'] and license['system_serial_ha']:
             mode = None
             proc = subprocess.Popen([
-                '/usr/local/sbin/dmidecode',
+                'dmidecode',
                 '-s', 'baseboard-product-name',
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
             board = proc.communicate()[0].split('\n', 1)[0].strip()
