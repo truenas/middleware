@@ -349,10 +349,7 @@ class RsyncTaskService(CRUDService):
                             )
 
             if(
-                data.get('validate_rpath') and
-                remote_path and
-                remote_host and
-                remote_port
+                data['enabled'] and data['validate_rpath'] and remote_path and remote_host and remote_port
             ):
                 if '@' in remote_host:
                     remote_username, remote_host = remote_host.rsplit('@', 1)
@@ -421,7 +418,7 @@ class RsyncTaskService(CRUDService):
                         f'{schema}.remotepath',
                         f'Remote Path could not be validated. An exception was raised. {exception_reason}'
                     )
-            elif data.get('validate_rpath'):
+            elif data['enabled'] and data['validate_rpath']:
                 verrors.add(
                     f'{schema}.remotepath',
                     'Remote path could not be validated because of missing fields'
@@ -444,7 +441,7 @@ class RsyncTaskService(CRUDService):
         Str('mode', enum=['MODULE', 'SSH'], default='MODULE'),
         Str('remotemodule'),
         Str('remotepath'),
-        Bool('validate_rpath'),
+        Bool('validate_rpath', default=True),
         Str('direction', enum=['PULL', 'PUSH'], default='PUSH'),
         Str('desc'),
         Cron(
@@ -461,7 +458,7 @@ class RsyncTaskService(CRUDService):
         Bool('preserveattr'),
         Bool('delayupdates'),
         List('extra', items=[Str('extra')]),
-        Bool('enabled'),
+        Bool('enabled', default=True),
         register=True,
     ))
     async def do_create(self, data):
