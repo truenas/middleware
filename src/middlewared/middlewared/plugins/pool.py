@@ -3403,15 +3403,22 @@ class PoolDatasetService(CRUDService):
         return result
 
     @private
-    async def kill_processes(self, oid, restart_services, max_tries=5):
-        manually_restart_services = []
+    async def kill_processes(self, oid, control_services, max_tries=5):
+        need_restart_services = []
+        need_stop_services = []
         for process in await self.middleware.call('pool.dataset.processes', oid):
-            if process.get("service") is not None:
-                manually_restart_services.append(process["service"])
-        if manually_restart_services and not restart_services:
-            raise CallError('Some services have open files and need to be restarted', errno.EBUSY, {
-                'code': 'services_restart',
-                'services': manually_restart_services,
+            service = process.get('service')
+            if service is not None:
+                if any(attachment_delegate.service == service for attachment_delegate in self.attachment_delegates):
+                    need_restart_services.append(service)
+                else:
+                    need_stop_services.append(service)
+        if (need_restart_services or need_stop_services) and not control_services:
+            raise CallError('Some services have open files and need to be restarted or stopped', errno.EBUSY, {
+                'code': 'control_services',
+                'restart_services': need_restart_services,
+                'stop_services': need_stop_services,
+                'services': need_restart_services + need_stop_services,
             })
 
         for i in range(max_tries):
