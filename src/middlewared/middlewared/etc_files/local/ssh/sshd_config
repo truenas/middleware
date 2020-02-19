@@ -42,14 +42,14 @@ ClientAliveCountMax 3
 ClientAliveInterval 15
 % endif
 ## Scale doesnt have HPN patches yet
-% if platform.upper() != 'LINUX' and 'NoneEnabled' not in ssh_config['options']:
+% if 'NONE' in ssh_config['weak_ciphers'] and platform.upper() != 'LINUX':
 NoneEnabled yes
 % endif
 % if 'VersionAddendum' not in ssh_config['options']:
 VersionAddendum none
 % endif
 ## Add aes128-cbc by default. See #20044
-% if 'Ciphers' not in ssh_config['options']:
+% if 'Ciphers' not in ssh_config['options'] and 'AES128-CBC' in ssh_config['weak_ciphers']:
 Ciphers +aes128-cbc
 % endif
 % if ssh_config['tcpport'] > 0:
