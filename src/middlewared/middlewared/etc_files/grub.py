@@ -17,10 +17,11 @@ def render(service, middleware):
 
     # Serial port
     advanced = middleware.call_sync('system.advanced.config')
-    default_grub = RE_TERMINAL.sub(
-        r'\1"console{}"'.format(' serial' if advanced['serialconsole'] else ''),
-        default_grub,
+    default_grub = RE_TERMINAL.sub('', default_grub)
+    default_grub += 'GRUB_TERMINAL="console{}"'.format(
+        ' serial' if advanced['serialconsole'] else '',
     )
+
     default_grub = RE_SERIAL.sub('', default_grub)
     if advanced['serialconsole']:
         default_grub += (
