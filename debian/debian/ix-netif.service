@@ -11,6 +11,7 @@ Conflicts=systemd-networkd.service
 [Service]
 Type=oneshot
 ExecStart=midclt -t 120 call interfaces.sync true
+ExecStartPost=midclt call etc.generate nginx
 StandardOutput=null
 
 [Install]
