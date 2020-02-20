@@ -67,7 +67,10 @@ class DeviceService(Service, DeviceInfoBase):
                         continue
             # nvme drives won't have this
 
-            disks[block_device.name] = self.get_disk_details(block_device, self.disk_default.copy(), lshw_disks)
+            try:
+                disks[block_device.name] = self.get_disk_details(block_device, self.disk_default.copy(), lshw_disks)
+            except Exception as e:
+                self.middleware.logger.debug('Failed to retrieve disk details for %s : %s', block_device.name, str(e))
         return disks
 
     @private

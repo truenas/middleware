@@ -623,6 +623,7 @@ class PoolService(CRUDService):
         pool_id = z_pool = encrypted_dataset_pk = None
         try:
             job.set_progress(90, 'Creating ZFS Pool')
+
             z_pool = await self.middleware.call('zfs.pool.create', {
                 'name': data['name'],
                 'vdevs': vdevs,
@@ -670,6 +671,10 @@ class PoolService(CRUDService):
             )
         except Exception as e:
             # Something wrong happened, we need to rollback and destroy pool.
+            if IS_LINUX:
+                self.middleware.logger.debug(
+                    'Pool %s failed to create with topology %s', data['name'], data['topology'],
+                )
             if z_pool:
                 try:
                     await self.middleware.call('zfs.pool.delete', data['name'])
