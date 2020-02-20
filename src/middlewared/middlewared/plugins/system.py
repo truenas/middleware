@@ -90,7 +90,7 @@ class SystemAdvancedService(ConfigService):
         """
         Get available choices for `serialport`.
         """
-        if await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
+        if not IS_LINUX and await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
             ports = {'0x3f8': '0x3f8'}
         else:
             if IS_LINUX:
