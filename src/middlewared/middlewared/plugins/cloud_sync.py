@@ -792,6 +792,11 @@ class CloudSyncService(CRUDService):
                 verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
             if data["transfer_mode"] == "MOVE":
                 verrors.add(f"{name}.snapshot", "This option can not be used for MOVE transfer mode")
+            if await self.middleware.call("pool.dataset.query",
+                                          [["name", "^", os.path.relpath(data["path"], "/mnt") + "/"],
+                                           ["type", "=", "FILESYSTEM"]]):
+                verrors.add(f"{name}.snapshot", "This option is only available for datasets that have no further "
+                                                "nesting")
 
     @private
     async def _validate_folder(self, verrors, name, data):
