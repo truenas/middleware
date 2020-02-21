@@ -15,7 +15,7 @@ import threading
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
-from middlewared.plugins.smb import SMBCmd
+from middlewared.plugins.smb import SMBCmd, WBCErr
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
@@ -1209,7 +1209,15 @@ class ActiveDirectoryService(ConfigService):
 
         netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
         if netlogon_ping.returncode != 0:
-            raise CallError(netlogon_ping.stderr.decode().strip('\n'))
+            wberr = netlogon_ping.stderr.decode().strip('\n')
+            err = errno.EFAULT
+            for wb in WBCErr:
+                if wb.err() in wberr:
+                    wberr = wberr.replace(wb.err(), wb.value[0])
+                    err = wb.value[1] if wb.value[1] else errno.EFAULT
+                    break
+
+            raise CallError(wberr, err)
 
         return True
 
