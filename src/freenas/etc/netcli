@@ -1600,7 +1600,14 @@ if __name__ == '__main__':
             else:
                 show_ip()
                 if IS_LINUX:
-                    os.execv('/sbin/agetty', ['/sbin/agetty', '--noclear', 'tty1'])
+                    proc = subprocess.Popen(['/usr/bin/tty'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout, stderr = proc.communicate()
+                    if proc.returncode:
+                        print(f'Failed to determine active tty: {stderr.decode()}')
+                        os.execv('/bin/login', ['/bin/login'])
+                    else:
+                        terminal = stdout.decode().strip().strip('/dev/')
+                        os.execv('/sbin/agetty', ['/sbin/agetty', '--noclear', '--keep-baud', terminal])
                 else:
                     os.execv('/usr/libexec/getty', ['/usr/libexec/getty', 'Pc'])
         except SystemExit as e:
