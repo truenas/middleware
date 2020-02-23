@@ -58,7 +58,7 @@ class DeviceService(Service, DeviceInfoBase):
         lshw_disks = self.retrieve_lshw_disks_data()
 
         for block_device in blkid.list_block_devices():
-            if block_device.name.startswith(('sr', 'md', 'dm-', 'loop')):
+            if block_device.name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
                 continue
             device_type = os.path.join('/sys/block', block_device.name, 'device/type')
             if os.path.exists(device_type):
