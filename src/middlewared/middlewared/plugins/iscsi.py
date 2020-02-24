@@ -17,6 +17,7 @@ import errno
 import hashlib
 import re
 import os
+import platform
 import subprocess
 try:
     import sysctl
@@ -29,6 +30,7 @@ AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'CHAP': 'CHAP',
     'CHAP Mutual': 'CHAP_MUTUAL',
 })
+IS_LINUX = platform.system().lower() == 'linux'
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 
@@ -763,7 +765,10 @@ class iSCSITargetExtentService(CRUDService):
             if disk:
                 data['disk'] = disk[0]['name']
             else:
-                data['disk'] = data['path']
+                if IS_LINUX:
+                    data['disk'] = os.path.relpath(os.path.realpath(os.path.join('/dev', data['path'])), '/dev')
+                else:
+                    data['disk'] = data['path']
         else:
             extent_size = data['filesize']
 
@@ -1607,7 +1612,11 @@ class iSCSITargetToExtentService(CRUDService):
         else:
             lunid = data['lunid']
 
-        lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
+        if IS_LINUX:
+            # FIXME: see if we need this in linux and if yes what value should be there
+            lun_map_size = 1024
+        else:
+            lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
 
         if lunid < 0 or lunid > lun_map_size - 1:
             verrors.add(
