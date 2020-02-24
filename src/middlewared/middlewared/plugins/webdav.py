@@ -2,9 +2,11 @@ import asyncio
 import os
 
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import CRUDService, SystemServiceService, private
 import middlewared.sqlalchemy as sa
+from middlewared.utils.path import is_child
 
 
 class WebDAVSharingModel(sa.Model):
@@ -16,6 +18,7 @@ class WebDAVSharingModel(sa.Model):
     webdav_path = sa.Column(sa.String(255))
     webdav_ro = sa.Column(sa.Boolean(), default=False)
     webdav_perm = sa.Column(sa.Boolean(), default=True)
+    webdav_enabled = sa.Column(sa.Boolean(), default=True)
 
 
 class WebDAVSharingService(CRUDService):
@@ -65,6 +68,7 @@ class WebDAVSharingService(CRUDService):
             Str('comment'),
             Str('name', required=True),
             Str('path', required=True),
+            Bool('enabled', default=True),
             register=True
         )
     )
@@ -271,5 +275,36 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'webdav'))
 
 
+class WebDAVFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'webdav'
+    title = 'WebDAV Share'
+    service = 'webdav'
+
+    async def query(self, path, enabled):
+        results = []
+        for share in await self.middleware.call('sharing.webdav.query', [['enabled', '=', enabled]]):
+            if is_child(share['path'], path):
+                results.append(share)
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['name']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', 'sharing.webdav_share', attachment['id'])
+
+        await self._service_change('webdav', 'reload')
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call('datastore.update', 'sharing.webdav_share', attachment['id'],
+                                       {'webdav_enabled': enabled})
+
+        await self._service_change('webdav', 'reload')
+
+
 async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', WebDAVFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
