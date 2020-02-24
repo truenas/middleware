@@ -53,6 +53,25 @@ class CompareTrainsResult(enum.Enum):
     NIGHTLY_UPGRADE = "NIGHTLY_UPGRADE"
 
 
+BAD_UPGRADES = {
+    CompareTrainsResult.NIGHTLY_DOWNGRADE: textwrap.dedent("""\
+        You're not allowed to change away from the nightly train, it is considered a downgrade.
+        If you have an existing boot environment that uses that train, boot into it in order to upgrade
+        that train.
+    """),
+    CompareTrainsResult.MINOR_DOWNGRADE: textwrap.dedent("""\
+        Changing minor version is considered a downgrade, thus not a supported operation.
+        If you have an existing boot environment that uses that train, boot into it in order to upgrade
+        that train.
+    """),
+    CompareTrainsResult.MAJOR_DOWNGRADE: textwrap.dedent("""\
+        Changing major version is considered a downgrade, thus not a supported operation.
+        If you have an existing boot environment that uses that train, boot into it in order to upgrade
+        that train.
+    """),
+}
+
+
 def compare_trains(t1, t2):
     v1 = parse_train_name(t1)
     v2 = parse_train_name(t2)
@@ -313,6 +332,18 @@ class UpdateService(Service):
             train = conf._trains.get(name)
             if train is None:
                 train = Train.Train(name, descr)
+
+            try:
+                result = compare_trains(conf.CurrentTrain(), train.Name())
+            except Exception:
+                self.logger.warning(
+                    "Failed to compare trains %r and %r", conf.CurrentTrain(), train.Name(), exc_info=True
+                )
+                continue
+            else:
+                if result in BAD_UPGRADES:
+                    continue
+
             if not selected and data['upd_train'] == train.Name():
                 selected = data['upd_train']
             if name in redir_trains:
@@ -341,7 +372,7 @@ class UpdateService(Service):
 
     def __set_train(self, train, trains=None):
         """
-        Wrapper so we dont call get_trains twice on update method.
+        Wrapper so we don't call get_trains twice on update method.
         """
         if trains is None:
             trains = self.get_trains()
@@ -356,25 +387,8 @@ class UpdateService(Service):
                     "Failed to compare trains %r and %r", trains['current'], train, exc_info=True
                 )
             else:
-                errors = {
-                    CompareTrainsResult.NIGHTLY_DOWNGRADE: textwrap.dedent("""\
-                        You're not allowed to change away from the nightly train, it is considered a downgrade.
-                        If you have an existing boot environment that uses that train, boot into it in order to upgrade
-                        that train.
-                    """),
-                    CompareTrainsResult.MINOR_DOWNGRADE: textwrap.dedent("""\
-                        Changing minor version is considered a downgrade, thus not a supported operation.
-                        If you have an existing boot environment that uses that train, boot into it in order to upgrade
-                        that train.
-                    """),
-                    CompareTrainsResult.MAJOR_DOWNGRADE: textwrap.dedent("""\
-                        Changing major version is considered a downgrade, thus not a supported operation.
-                        If you have an existing boot environment that uses that train, boot into it in order to upgrade
-                        that train.
-                    """),
-                }
-                if result in errors:
-                    raise CallError(errors[result])
+                if result in BAD_UPGRADES:
+                    raise CallError(BAD_UPGRADES[result])
 
             data = self.middleware.call_sync('datastore.config', 'system.update')
             if data['upd_train'] != train:
