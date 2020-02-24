@@ -145,7 +145,7 @@ db_update()
 	rm -f $NEED_UPDATE_SENTINEL
 	rm -f $CD_UPGRADE_SENTINEL
 
-	midclt call etc.generate loader > /dev/null
+	/usr/local/bin/midclt call etc.generate loader > /dev/null
 
 	echo "Database upgrade complete.  Rebooting."
 	cd /
