@@ -36,11 +36,16 @@ class DatastoreService(Service):
 
     async def send_update_events(self, datastore, row):
         for options in self.events[datastore]:
+            fields = await self._fields(options, row, False)
+            if not fields:
+                # It is possible the row in question got deleted with the update
+                # event still pending, in this case we skip sending update event
+                continue
             self.middleware.send_event(
                 f"{options['plugin']}.query",
                 "CHANGED",
                 id=row[options["prefix"] + options["id"]],
-                fields=await self._fields(options, row),
+                fields=fields[0],
             )
 
     async def send_delete_events(self, datastore, id):
@@ -52,9 +57,9 @@ class DatastoreService(Service):
                 cleared=True,
             )
 
-    async def _fields(self, options, row):
+    async def _fields(self, options, row, get=True):
         return await self.middleware.call(
             f"{options['plugin']}.query",
             [[options["id"], "=", row[options["prefix"] + options["id"]]]],
-            {"get": True},
+            {"get": get},
         )
