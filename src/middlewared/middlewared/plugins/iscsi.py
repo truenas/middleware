@@ -1,16 +1,14 @@
-from lxml import etree
-
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
 from middlewared.service import (
-    CallError, CRUDService, SystemServiceService, ValidationErrors, filterable, private
+    CallError, CRUDService, ValidationErrors, private
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, run
+from middlewared.utils import run
 from middlewared.utils.path import is_child
-from middlewared.validators import IpAddress, Range
+from middlewared.validators import Range
 
 import bidict
 import errno
@@ -18,7 +16,6 @@ import hashlib
 import re
 import os
 import platform
-import subprocess
 try:
     import sysctl
 except ImportError:
@@ -31,137 +28,7 @@ AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'CHAP Mutual': 'CHAP_MUTUAL',
 })
 IS_LINUX = platform.system().lower() == 'linux'
-RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
-
-
-class ISCSIGlobalModel(sa.Model):
-    __tablename__ = 'services_iscsitargetglobalconfiguration'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    iscsi_basename = sa.Column(sa.String(120))
-    iscsi_isns_servers = sa.Column(sa.Text())
-    iscsi_pool_avail_threshold = sa.Column(sa.Integer(), nullable=True)
-    iscsi_alua = sa.Column(sa.Boolean(), default=False)
-
-
-class ISCSIGlobalService(SystemServiceService):
-
-    class Config:
-        datastore_extend = 'iscsi.global.config_extend'
-        datastore_prefix = 'iscsi_'
-        service = 'iscsitarget'
-        service_model = 'iscsitargetglobalconfiguration'
-        namespace = 'iscsi.global'
-
-    @private
-    def config_extend(self, data):
-        data['isns_servers'] = data['isns_servers'].split()
-        return data
-
-    @accepts(Dict(
-        'iscsiglobal_update',
-        Str('basename'),
-        List('isns_servers', items=[Str('server')]),
-        Int('pool_avail_threshold', validators=[Range(min=1, max=99)], null=True),
-        Bool('alua'),
-        update=True
-    ))
-    async def do_update(self, data):
-        """
-        `alua` is a no-op for FreeNAS.
-        """
-        old = await self.config()
-
-        new = old.copy()
-        new.update(data)
-
-        verrors = ValidationErrors()
-
-        servers = data.get('isns_servers') or []
-        for server in servers:
-            reg = RE_IP_PORT.search(server)
-            if reg:
-                ip = reg.group(1)
-                if ip and ip[0] == '[' and ip[-1] == ']':
-                    ip = ip[1:-1]
-                try:
-                    ip_validator = IpAddress()
-                    ip_validator(ip)
-                    continue
-                except ValueError:
-                    pass
-            verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" is not a valid IP(:PORT)? tuple.')
-
-        if verrors:
-            raise verrors
-
-        new['isns_servers'] = '\n'.join(servers)
-
-        await self._update_service(old, new)
-
-        if old['alua'] != new['alua']:
-            await self.middleware.call('etc.generate', 'loader')
-
-        return await self.config()
-
-    @filterable
-    def sessions(self, filters, options):
-        """
-        Get a list of currently running iSCSI sessions. This includes initiator and target names
-        and the unique connection IDs.
-        """
-        def transform(tag, text):
-            if tag in (
-                'target_portal_group_tag', 'max_data_segment_length', 'max_burst_length',
-                'first_burst_length',
-            ) and text.isdigit():
-                return int(text)
-            if tag in ('immediate_data', 'iser'):
-                return bool(int(text))
-            if tag in ('header_digest', 'data_digest', 'offload') and text == 'None':
-                return None
-            return text
-
-        cp = subprocess.run(['ctladm', 'islist', '-x'], capture_output=True, text=True)
-        connections = etree.fromstring(cp.stdout)
-        sessions = []
-        for connection in connections.xpath("//connection"):
-            sessions.append({
-                i.tag: transform(i.tag, i.text) for i in connection.iterchildren()
-            })
-        return filter_list(sessions, filters, options)
-
-    @private
-    async def alua_enabled(self):
-        """
-        Returns whether iSCSI ALUA is enabled or not.
-        """
-        if await self.middleware.call('system.is_freenas'):
-            return False
-        if not await self.middleware.call('failover.licensed'):
-            return False
-
-        license = (await self.middleware.call('system.info'))['license']
-        if license and 'FIBRECHANNEL' in license['features']:
-            return True
-
-        return (await self.middleware.call('iscsi.global.config'))['alua']
-
-    @private
-    async def terminate_luns_for_pool(self, pool_name):
-        cp = await run(['ctladm', 'devlist', '-b', 'block', '-x'], check=False, encoding='utf8')
-        for lun in etree.fromstring(cp.stdout).xpath('//lun'):
-            lun_id = lun.attrib['id']
-
-            try:
-                path = lun.xpath('//file')[0].text
-            except IndexError:
-                continue
-
-            if path.startswith(f'/dev/zvol/{pool_name}/'):
-                self.logger.info('Terminating LUN %s (%s)', lun_id, path)
-                await run(['ctladm', 'remove', '-b', 'block', '-l', lun_id], check=False)
 
 
 class ISCSIPortalModel(sa.Model):
