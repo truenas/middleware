@@ -1720,7 +1720,8 @@ Update resource
       Content-Type: application/json
 
         {
-                "task_interval": 30
+                "task_interval": 30,
+                "task_byweekday": ["1", "2", "3", "4"]
         }
 
    **Example response**:
@@ -1738,7 +1739,7 @@ Update resource
                 "task_recursive": false,
                 "task_end": "18:00:00",
                 "task_interval": 30,
-                "task_byweekday": "1,2,3,4,5",
+                "task_byweekday": "1,2,3,4",
                 "task_begin": "09:00:00",
                 "task_filesystem": "tank",
                 "id": 1,
