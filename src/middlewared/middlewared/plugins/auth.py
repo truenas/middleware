@@ -386,9 +386,9 @@ class TwoFactorAuthService(ConfigService):
         Dict(
             'auth_twofactor_update',
             Bool('enabled'),
-            Int('otp_digits', validators=Range(min=6, max=8)),
-            Int('window', validators=Range(min=0)),
-            Int('interval', validators=Range(min=5)),
+            Int('otp_digits', validators=[Range(min=6, max=8)]),
+            Int('window', validators=[Range(min=0)]),
+            Int('interval', validators=[Range(min=5)]),
             Dict(
                 'services',
                 Bool('ssh', default=False)
