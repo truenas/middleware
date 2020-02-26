@@ -136,8 +136,9 @@ class SharingSMBService(Service):
 
     @private
     async def order_vfs_objects(self, vfs_objects):
-        vfs_objects_special = ('shadow_copy_zfs', 'catia', 'zfs_space', 'noacl', 'ixnas', 'zfsacl',
-                               'fruit', 'streams_xattr', 'crossrename', 'recycle')
+        vfs_objects_special = ('shadow_copy_zfs', 'catia', 'zfs_space', 'fruit', 'streams_xattr',
+                               'noacl', 'ixnas', 'zfsacl', 'crossrename', 'recycle')
+
         vfs_objects_ordered = []
 
         if 'fruit' in vfs_objects:
