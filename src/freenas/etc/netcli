@@ -1606,7 +1606,7 @@ if __name__ == '__main__':
                         print(f'Failed to determine active tty: {stderr.decode()}')
                         os.execv('/bin/login', ['/bin/login'])
                     else:
-                        terminal = stdout.decode().strip().strip('/dev/')
+                        terminal = os.path.relpath(stdout.decode().strip(), '/dev')
                         os.execv('/sbin/agetty', ['/sbin/agetty', '--noclear', '--keep-baud', terminal])
                 else:
                     os.execv('/usr/libexec/getty', ['/usr/libexec/getty', 'Pc'])
