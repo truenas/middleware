@@ -237,7 +237,9 @@ class EtcService(Service):
         ]
     }
 
-    SKIP_LIST = ['system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure', 'nginx']
+    SKIP_LIST = [
+        'system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure', 'nginx'
+    ] + (['ttys'] if platform.system().lower() == 'linux' else [])
 
     class Config:
         private = True
