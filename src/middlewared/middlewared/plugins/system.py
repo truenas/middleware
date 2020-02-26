@@ -90,7 +90,7 @@ class SystemAdvancedService(ConfigService):
         """
         Get available choices for `serialport`.
         """
-        if await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
+        if not IS_LINUX and await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
             ports = {'0x3f8': '0x3f8'}
         else:
             if IS_LINUX:
@@ -144,7 +144,10 @@ class SystemAdvancedService(ConfigService):
             else:
                 data['serialport'] = serial_choice = hex(
                     int(serial_choice)
-                ) if serial_choice.isdigit() else serial_choice
+                ) if serial_choice.isdigit() else hex(int(serial_choice, 16))
+                # The else can happen when we have incoming value like 0x03f8 which is a valid
+                # hex value but the following validation would fail as we are not comparing with
+                # normalised hex strings
                 if serial_choice not in await self.serial_port_choices():
                     verrors.add(
                         f'{schema}.serialport',
