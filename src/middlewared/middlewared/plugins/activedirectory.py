@@ -88,7 +88,9 @@ class ActiveDirectory_DNS(object):
             ret = True
 
         except Exception as e:
-            raise CallError(e)
+            self.logger.debug("connection to %s failed with error: %s",
+                              host, e)
+            ret = False
 
         finally:
             s.close()
@@ -144,7 +146,7 @@ class ActiveDirectory_DNS(object):
 
             host = server.target.to_text(True)
             port = int(server.port)
-            if self.port_is_listening(host, port, timeout=1):
+            if self.port_is_listening(host, port, timeout=self.ad['timeout']):
                 server_info = {'host': host, 'port': port}
                 found_servers.append(server_info)
 
@@ -174,16 +176,6 @@ class ActiveDirectory_LDAP(object):
     def __exit__(self, typ, value, traceback):
         if self._isopen:
             self._close()
-
-    def validate_credentials(self):
-        """
-        :validate_credentials: simple check to determine whether we can establish
-        an ldap session with the credentials that are in the configuration.
-        """
-        ret = self._open()
-        if ret:
-            self._close()
-        return ret
 
     def _open(self):
         """
@@ -870,15 +862,17 @@ class ActiveDirectoryService(ConfigService):
             if not new['enable']:
                 stop = True
 
+        job = None
         if stop:
             await self.stop()
         if start:
-            await self.start()
+            job = (await self.middleware.call('activedirectory.start')).id
 
         if not stop and not start and new['enable']:
             await self.middleware.call('service.restart', 'cifs')
-
-        return await self.config()
+        ret = await self.config()
+        ret.update({'job_id': job})
+        return ret
 
     @private
     async def set_state(self, state):
@@ -893,7 +887,8 @@ class ActiveDirectoryService(ConfigService):
         return (await self.middleware.call('directoryservices.get_state'))['activedirectory']
 
     @private
-    async def start(self):
+    @job(lock="AD_start")
+    async def start(self, job):
         """
         Start AD service. In 'UNIFIED' HA configuration, only start AD service
         on active storage controller.
@@ -910,6 +905,7 @@ class ActiveDirectoryService(ConfigService):
             raise CallError(f'Active Directory Service has status of [{state}]. Wait until operation completes.', errno.EBUSY)
 
         await self.set_state(DSStatus['JOINING'])
+        job.set_progress(0, 'Preparing to join Active Directory')
         if ad['verbose_logging']:
             self.logger.debug('Starting Active Directory service for [%s]', ad['domainname'])
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': True})
@@ -919,6 +915,7 @@ class ActiveDirectoryService(ConfigService):
         Kerberos realm field must be populated so that we can perform a kinit
         and use the kerberos ticket to execute 'net ads' commands.
         """
+        job.set_progress(5, 'Configuring Kerberos Settings.')
         if not ad['kerberos_realm']:
             realms = await self.middleware.call('kerberos.realm.query', [('realm', '=', ad['domainname'])])
 
@@ -928,7 +925,8 @@ class ActiveDirectoryService(ConfigService):
                 await self.middleware.call('datastore.insert', 'directoryservice.kerberosrealm', {'krb_realm': ad['domainname'].upper()})
             ad = await self.config()
 
-        await self.middleware.call('kerberos.start')
+        if not await self.middleware.call('kerberos._klist_test'):
+            await self.middleware.call('kerberos.start')
 
         """
         'workgroup' is the 'pre-Windows 2000 domain name'. It must be set to the nETBIOSName value in Active Directory.
@@ -937,23 +935,16 @@ class ActiveDirectoryService(ConfigService):
         default to 'Default-First-Site-Name'.
         """
 
+        job.set_progress(20, 'Detecting Active Directory Site.')
         if not ad['site']:
-            new_site = await self.middleware.run_in_thread(self.get_site)
+            new_site = await self.middleware.call('activedirectory.get_site')
             if new_site != 'Default-First-Site-Name':
                 ad = await self.config()
-                site_indexed_kerberos_servers = await self.middleware.run_in_thread(self.get_kerberos_servers)
+                await self.middleware.call('activedirectory.set_kerberos_servers', ad)
 
-                if site_indexed_kerberos_servers:
-                    await self.middleware.call(
-                        'datastore.update',
-                        'directoryservice.kerberosrealm',
-                        ad['kerberos_realm']['id'],
-                        site_indexed_kerberos_servers
-                    )
-                    await self.middleware.call('etc.generate', 'kerberos')
-
+        job.set_progress(30, 'Detecting Active Directory NetBIOS Domain Name.')
         if not smb['workgroup'] or smb['workgroup'] == 'WORKGROUP':
-            await self.middleware.run_in_thread(self.get_netbios_domain_name)
+            await self.middleware.call('activedirectory.get_netbios_domain_name')
 
         await self.middleware.call('etc.generate', 'smb')
 
@@ -964,8 +955,10 @@ class ActiveDirectoryService(ConfigService):
         In this case, samba should be started, but the directory service reported in a FAULTED state.
         """
 
+        job.set_progress(40, 'Performing testjoin to Active Directory Domain')
         ret = await self._net_ads_testjoin(smb['workgroup'])
         if ret == neterr.NOTJOINED:
+            job.set_progress(50, 'Joining Active Directory Domain')
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join()
             await self._register_virthostname(ad, smb, smb_ha_mode)
@@ -975,6 +968,7 @@ class ActiveDirectoryService(ConfigService):
                 principals while we have these on-hand. Once added, force a refresh of the system
                 keytab so that the NFS principal will be available for gssd.
                 """
+                job.set_progress(60, 'Adding NFS Principal entries.')
                 must_update_trust_pw = await self._net_ads_setspn([
                     f'nfs/{ad["netbiosname"].upper()}.{ad["domainname"]}',
                     f'nfs/{ad["netbiosname"].upper()}'
@@ -988,6 +982,7 @@ class ActiveDirectoryService(ConfigService):
                             "This may impact kerberized NFS sessions until the next scheduled trust account password change", e
                         )
 
+                job.set_progress(70, 'Storing computer account keytab.')
                 kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
                 if kt_id:
                     self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
@@ -1001,10 +996,12 @@ class ActiveDirectoryService(ConfigService):
 
             ret = neterr.JOINED
 
+            job.set_progress(80, 'Configuring idmap backend and NTP servers.')
             await self.middleware.call('idmap.get_or_create_idmap_by_domain', 'DS_TYPE_ACTIVEDIRECTORY')
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.middleware.call('activedirectory.set_ntp_servers')
 
+        job.set_progress(90, 'Restarting SMB server.')
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
@@ -1016,7 +1013,10 @@ class ActiveDirectoryService(ConfigService):
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
         else:
             await self.set_state(DSStatus['FAULTED'])
-            self.logger.debug('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
+            self.logger.warning('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
+
+        job.set_progress(100, f'Active Directory start completed with status [{ret.name}]')
+        return ret.name
 
     @private
     async def stop(self):
@@ -1035,10 +1035,13 @@ class ActiveDirectoryService(ConfigService):
     @private
     def validate_credentials(self, ad=None):
         """
-        Performs test bind to LDAP server in AD environment. Since we are performing
-        sasl_gssapi binds, we must first configure kerberos and obtain a ticket.
+        Kinit with user-provided credentials is sufficient to determine
+        whether the credentials are good. A testbind here is unnecessary.
         """
-        ret = False
+        if self.middleware.call_sync('kerberos._klist_test'):
+            # Short-circuit credential validation if we have a valid tgt
+            return
+
         if ad is None:
             ad = self.middleware.call_sync('activedirectory.config')
 
@@ -1076,23 +1079,6 @@ class ActiveDirectoryService(ConfigService):
                     f"kinit for domain [{ad['domainname']}] with password failed: {kinit.stderr.decode()}"
                 )
 
-        dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
-        if not dcs:
-            raise CallError('Failed to open LDAP socket to any DC in domain.')
-
-        tmpconf = ad.copy()
-        if tmpconf['certificate']:
-            tmpconf['certificate'] = self.middleware.call_sync(
-                'certificate.query',
-                [('id', '=', ad['certificate'])],
-                {'get': True}
-            )['name']
-
-        with ActiveDirectory_LDAP(ad_conf=tmpconf, logger=self.logger, hosts=dcs) as AD_LDAP:
-            ret = AD_LDAP.validate_credentials()
-
-        return ret
-
     @private
     def check_clockskew(self, ad=None):
         """
@@ -1108,6 +1094,12 @@ class ActiveDirectoryService(ConfigService):
             ad = self.middleware.call_sync('activedirectory.config')
 
         pdc = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['PDC'], 1)
+        if not pdc:
+            # This should never happen in real life. It means that the AD domain
+            # is significantly broken.
+            self.logger.warning("Unable to find PDC emulator via DNS.")
+            return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
+
         c = ntplib.NTPClient()
         response = c.request(pdc[0]['host'])
         ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
@@ -1385,8 +1377,21 @@ class ActiveDirectoryService(ConfigService):
         return {'krb_kdc': kdc, 'krb_admin_server': admin_server, 'krb_kpasswd_server': kpasswd}
 
     @private
-    @job(lock='set_ntp_servers')
-    def set_ntp_servers(self, job):
+    def set_kerberos_servers(self, ad):
+        if not ad:
+            ad = self.config()
+        site_indexed_kerberos_servers = self.middleawre.call_sync('get_kerberos_servers')
+        if site_indexed_kerberos_servers:
+            self.middleware.call_sync(
+                'datastore.update',
+                'directoryservice.kerberosrealm',
+                ad['kerberos_realm']['id'],
+                site_indexed_kerberos_servers
+            )
+            self.middleware.call_sync('etc.generate', 'kerberos')
+
+    @private
+    def set_ntp_servers(self):
         """
         Appropriate time sources are a requirement for an AD environment. By default kerberos authentication
         fails if there is more than a 5 minute time difference between the AD domain and the member server.
@@ -1401,6 +1406,11 @@ class ActiveDirectoryService(ConfigService):
 
         ad = self.middleware.call_sync('activedirectory.config')
         pdc = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['PDC'], 1)
+        if not pdc:
+            self.logger.warning("Unable to detect PDC emulator for domain. "
+                                "Failed to automatically set time source.")
+            return
+
         self.middleware.call_sync('system.ntpserver.create', {'address': pdc[0]['host'], 'prefer': True})
 
     @private
