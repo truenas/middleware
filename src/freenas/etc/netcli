@@ -30,6 +30,7 @@
 import copy
 import getpass
 import os
+import platform
 import re
 import signal
 import sys
@@ -46,6 +47,7 @@ if os.geteuid() != 0:
 
 FREENAS_DATA_PATH = "/data"
 FREENAS_DB = os.path.join(FREENAS_DATA_PATH, "freenas-v1.db")
+IS_LINUX = platform.system().lower() == 'linux'
 
 _ = lambda s: s
 
@@ -1597,7 +1599,17 @@ if __name__ == '__main__':
                 main_menu()
             else:
                 show_ip()
-                os.execv('/usr/libexec/getty', ['/usr/libexec/getty', 'Pc'])
+                if IS_LINUX:
+                    proc = subprocess.Popen(['/usr/bin/tty'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout, stderr = proc.communicate()
+                    if proc.returncode:
+                        print(f'Failed to determine active tty: {stderr.decode()}')
+                        os.execv('/bin/login', ['/bin/login'])
+                    else:
+                        terminal = os.path.relpath(stdout.decode().strip(), '/dev')
+                        os.execv('/sbin/agetty', ['/sbin/agetty', '--noclear', '--keep-baud', terminal])
+                else:
+                    os.execv('/usr/libexec/getty', ['/usr/libexec/getty', 'Pc'])
         except SystemExit as e:
             sys.exit(e.code)
         except Exception:

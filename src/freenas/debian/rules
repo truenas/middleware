@@ -13,6 +13,7 @@ override_dh_auto_install:
 		cp etc/find* debian/truenas-files/etc/; \
 		cp etc/netcli debian/truenas-files/etc/; \
 		cp etc/iso_3166_2_countries.csv debian/truenas-files/etc/; \
+		cp -a etc/systemd debian/truenas-files/etc/; \
 	"
 
 override_dh_shlibdeps:
