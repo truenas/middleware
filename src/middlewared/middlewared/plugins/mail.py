@@ -318,7 +318,7 @@ class MailService(ConfigService):
 
         if 'html' in message or attachments:
             msg = MIMEMultipart()
-            msg.preamble = message['text']
+            msg.preamble = 'This is a multi-part message in MIME format.'
             if 'html' in message:
                 msg2 = MIMEMultipart('alternative')
                 msg2.attach(MIMEText(message['text'], 'plain', _charset='utf-8'))
