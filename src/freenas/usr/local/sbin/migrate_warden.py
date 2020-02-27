@@ -314,7 +314,7 @@ class Migrate(object):
                 # Warden only uses one mac, we use two for iocage.
                 mac_a = int(mac, 16)
                 mac_b = mac_a + 1
-                vnet0_mac = f'{mac_a:012x},{mac_b:012x}'
+                vnet0_mac = f'{mac_b:012x},{mac_a:012x}'
             else:
                 vnet0_mac = 'none'
 
