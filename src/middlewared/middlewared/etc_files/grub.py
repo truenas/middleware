@@ -25,7 +25,7 @@ def render(service, middleware):
     default_grub = RE_SERIAL.sub('', default_grub)
     if advanced['serialconsole']:
         default_grub += (
-            'GRUB_SERIAL_COMMAND="serial --speed={} --word=8 --parity=no --stop=1"\n'.format(
+            '\nGRUB_SERIAL_COMMAND="serial --speed={} --word=8 --parity=no --stop=1"\n'.format(
                 advanced['serialspeed'],
             )
         )
@@ -36,7 +36,7 @@ def render(service, middleware):
         default_grub = RE_CMDLINE_LINUX.sub(
             r'\1"root={}{}"'.format(
                 root,
-                f' console=ttyS0,{advanced["serialspeed"]} console=tty0'
+                f' console={advanced["serialport"]},{advanced["serialspeed"]} console=tty1'
                 if advanced['serialconsole'] else '',
             ),
             default_grub,
