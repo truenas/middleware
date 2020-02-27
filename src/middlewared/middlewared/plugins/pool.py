@@ -2435,6 +2435,7 @@ class PoolDatasetService(CRUDService):
                 ('org.truenas:managedby', 'managedby', None),
                 ('dedup', 'deduplication', str.upper),
                 ('aclmode', None, str.upper),
+                ('xattr', None, str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
                 ('exec', None, str.upper),
@@ -2518,6 +2519,7 @@ class PoolDatasetService(CRUDService):
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
+        Str('xattr', enum=['ON', 'SA']),
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
@@ -2577,6 +2579,7 @@ class PoolDatasetService(CRUDService):
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
             data['aclmode'] = 'RESTRICTED'
+            data['xattr'] = 'SA'
 
         if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
             verrors.add(
@@ -2660,6 +2663,7 @@ class PoolDatasetService(CRUDService):
             ('sync', None, str.lower),
             ('volblocksize', None, None),
             ('volsize', None, lambda x: str(x)),
+            ('xattr', None, str.lower),
         ):
             if i not in data:
                 continue
