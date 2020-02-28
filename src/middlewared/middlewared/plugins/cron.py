@@ -29,7 +29,7 @@ class CronJobService(CRUDService):
                     schedule['minute'], schedule['hour'], schedule['dom'], schedule['month'],
                     schedule['dow'], user,
                     'PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin"',
-                    command.replace('\n', '').replace('%', r'\%'),
+                    command.replace('\n', ''),
                     '> /dev/null' if stdout else '', '2> /dev/null' if stderr else ''
                 )
             )
