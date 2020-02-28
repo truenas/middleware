@@ -1446,7 +1446,7 @@ def shutdown(*args):
     while True:
         ret = input(_("Confirm Shutdown (y/n): "))
         if ret.lower().startswith("y"):
-            os.system("/sbin/shutdown -p now")
+            os.system(f"/sbin/shutdown -{'P' if IS_LINUX else 'p'} now")
             time.sleep(60)
             return False
         if ret.lower().startswith("n"):
