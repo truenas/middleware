@@ -11,6 +11,8 @@ Architecture: all
 Depends: docker-ce,
          glusterfs-server,
          libnginx-mod-http-uploadprogress,
+         man-db,
+         manpages,
          middlewared,
          net-tools,
          nfs-ganesha,
