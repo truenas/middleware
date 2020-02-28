@@ -56,7 +56,7 @@ class DirectoryServices(Service):
         `HEALTHY` Directory Service is enabled, and last status check has passed.
         """
         try:
-            return (await self.middleware.call('cache.get', 'DS_State'))
+            return (await self.middleware.call('cache.get', 'DS_STATE'))
         except KeyError:
             ds_state = {}
             for srv in DSType:

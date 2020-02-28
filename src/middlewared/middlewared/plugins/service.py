@@ -763,22 +763,6 @@ class ServiceService(CRUDService):
         await self._service("ladvd", "stop", force=True, **kwargs)
         await self._service("ladvd", "restart", **kwargs)
 
-    async def _started_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.started'), []
-
-    async def _start_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.start'), []
-
-    async def _stop_activedirectory(self, **kwargs):
-        return await self.middleware.call('activedirectory.stop'), []
-
-    async def _restart_activedirectory(self, **kwargs):
-        await self.middleware.call('kerberos.stop'), []
-        return await self.middleware.call('activedirectory.start'), []
-
-    async def _reload_activedirectory(self, **kwargs):
-        await self._service("winbindd", "reload", quiet=True, **kwargs)
-
     async def _restart_syslogd(self, **kwargs):
         await self.middleware.call("etc.generate", "syslogd")
         await self._system("/etc/local/rc.d/syslog-ng restart")
