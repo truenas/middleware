@@ -1433,6 +1433,9 @@ class JailService(CRUDService):
 
         def progress_callback(content, exception):
             msg = content['message'].strip('\n')
+            if 'No updates needed to update system' in msg:
+                raise CallError(f'No updates available for {jail}')
+
             if content['level'] == 'EXCEPTION':
                 raise exception(msg)
 
