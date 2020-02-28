@@ -365,7 +365,7 @@ class MailService(ConfigService):
         for key, val in list(extra_headers.items()):
             # We already have "Content-Type: multipart/mixed" and setting "Content-Type: text/plain" like some scripts
             # do will break python e-mail module.
-            if key.lower() == "сontent-type":
+            if key.lower() == "content-type":
                 continue
 
             if key in msg:
