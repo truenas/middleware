@@ -37,6 +37,9 @@ GELI_KEYPATH = '/data/geli'
 IS_LINUX = platform.system().lower() == 'linux'
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
+ZFS_ENCRYPTION_ALGORITHM_CHOICES = [
+    'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
+]
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
@@ -468,11 +471,7 @@ class PoolService(CRUDService):
             'encryption_options',
             Bool('generate_key', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
-            Str(
-                'algorithm', default='AES-256-CCM', enum=[
-                    'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
-                ]
-            ),
+            Str('algorithm', default='AES-256-CCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
             Str('passphrase', default=None, null=True, empty=False, private=True),
             Str('key', default=None, null=True, validators=[Range(min=64, max=64)], private=True),
             register=True
@@ -1810,6 +1809,13 @@ class PoolDatasetService(CRUDService):
 
     class Config:
         namespace = 'pool.dataset'
+
+    @accepts()
+    async def encryption_algorithm_choices(self):
+        """
+        Retrieve encryption algorithms supported for ZFS dataset encryption.
+        """
+        return {v: v for v in ZFS_ENCRYPTION_ALGORITHM_CHOICES}
 
     @private
     @accepts(
