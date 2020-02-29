@@ -27,7 +27,7 @@ from middlewared.service_exception import ValidationError
 from middlewared.utils import Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.shell import join_commandline
-from middlewared.validators import Range, Time
+from middlewared.validators import Exact, Or, Range, Time
 
 logger = logging.getLogger(__name__)
 
@@ -2616,10 +2616,10 @@ class PoolDatasetService(CRUDService):
         ]),
         Str('atime', enum=['ON', 'OFF']),
         Str('exec', enum=['ON', 'OFF']),
-        Int('quota', null=True, validators=[Range(min=1024**3)]),
+        Int('quota', null=True, validators=[Or(Range(min=1024**3), Exact(0))]),
         Int('quota_warning', validators=[Range(0, 100)]),
         Int('quota_critical', validators=[Range(0, 100)]),
-        Int('refquota', null=True, validators=[Range(min=1024**3)]),
+        Int('refquota', null=True, validators=[Or(Range(min=1024**3), Exact(0))]),
         Int('refquota_warning', validators=[Range(0, 100)]),
         Int('refquota_critical', validators=[Range(0, 100)]),
         Int('reservation'),
