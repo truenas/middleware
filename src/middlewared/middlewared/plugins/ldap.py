@@ -475,10 +475,10 @@ class LDAPService(ConfigService):
                 "Bind credentials or kerberos keytab are required for an authenticated bind."
             )
         if new["bindpw"] and new["kerberos_principal"]:
-            verrors.add(
-                "ldap_update.kerberos_principal",
-                "Simultaneous keytab and password authentication are not permitted."
-            )
+            self.logger.warning("Simultaneous keytab and password authentication "
+                                "are selected. Clearing LDAP bind password.")
+            new["bindpw"] = ""
+
         if not new["basedn"]:
             verrors.add(
                 "ldap_update.basedn",
