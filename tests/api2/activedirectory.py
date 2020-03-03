@@ -556,16 +556,22 @@ def test_57_get_activedirectory_started_after_disabling_AD():
 
 @skip_ad_test
 def test_58_re_enable_activedirectory():
-    global payload, results
+    global payload, results, job_id
     payload = {
         "enable": True
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
+    job_id = results.json()['job_id']
+
+
+def test_59_verify_job_id_is_successfull():
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @skip_ad_test
-def test_59_get_activedirectory_state():
+def test_60_get_activedirectory_state():
     global results
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
@@ -573,14 +579,14 @@ def test_59_get_activedirectory_state():
 
 
 @skip_ad_test
-def test_60_get_activedirectory_started():
+def test_61_get_activedirectory_started():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
 @skip_ad_test
-def test_61_leave_activedirectory():
+def test_62_leave_activedirectory():
     global payload, results
     payload = {
         "username": ADUSERNAME,
@@ -591,33 +597,33 @@ def test_61_leave_activedirectory():
 
 
 @skip_ad_test
-def test_62_get_activedirectory_state():
+def test_63_get_activedirectory_state():
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
 @skip_ad_test
-def test_63_get_activedirectory_started_after_living():
+def test_64_get_activedirectory_started_after_living():
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
 
 
 @skip_ad_test
-def test_64_disable_cifs_service_at_boot():
+def test_65_disable_cifs_service_at_boot():
     results = PUT("/service/id/cifs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
 @skip_ad_test
-def test_65_checking_to_see_if_clif_service_is_enabled_at_boot():
+def test_66_checking_to_see_if_clif_service_is_enabled_at_boot():
     results = GET("/service?service=cifs")
     assert results.json()[0]["enable"] is False, results.text
 
 
 @skip_ad_test
-def test_66_stoping_clif_service():
+def test_67_stoping_clif_service():
     payload = {"service": "cifs", "service-control": {"onetime": True}}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
@@ -625,19 +631,19 @@ def test_66_stoping_clif_service():
 
 
 @skip_ad_test
-def test_67_checking_if_cifs_is_stop():
+def test_68_checking_if_cifs_is_stop():
     results = GET("/service?service=cifs")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 @skip_ad_test
-def test_68_destroying_ad_dataset_for_smb():
+def test_69_destroying_ad_dataset_for_smb():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
 @skip_ad_test
-def test_69_configure_setting_domain_hostname_and_dns():
+def test_70_configure_setting_domain_hostname_and_dns():
     if ad_dns is True:
         pytest.skip('DSN is fine')
     global payload
