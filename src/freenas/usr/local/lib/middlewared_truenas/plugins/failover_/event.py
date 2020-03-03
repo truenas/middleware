@@ -553,7 +553,7 @@ class FailoverService(Service):
                 self.run_call('service.restart', 'syslogd', {'sync': False})
 
                 for i in (
-                    'smartd', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp', 'webdav',
+                    'smartd', 'ftp', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp', 'webdav',
                 ):
                     c.execute(f'SELECT srv_enable FROM services_services WHERE srv_service = "{i}"')
                     ret = c.fetchone()
