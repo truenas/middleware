@@ -4,6 +4,7 @@ from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Ref, Str,
                                 ValidationErrors, accepts)
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc
 from middlewared.validators import Match, Range
 
 import asyncio
@@ -24,7 +25,6 @@ from .interface.netif import netif
 from .interface.type_base import InterfaceType
 
 
-IS_LINUX = platform.system().lower() == 'linux'
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
 ANNOUNCE_SRV = {
@@ -1527,7 +1527,7 @@ class InterfaceService(CRUDService):
 
         for line in (await run("sockstat", "-46", encoding="utf-8")).stdout.split("\n")[1:]:
             line = line.split()
-            if platform.system() == "Linux":
+            if osc.IS_LINUX:
                 line.pop()  # STATE column
             local_address = line[-2]
             foreign_address = line[-1]
@@ -2257,7 +2257,7 @@ async def setup(middleware):
     asyncio.ensure_future(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
 
-    if IS_LINUX:
+    if osc.IS_LINUX:
         middleware.register_hook('udev.net', udevd_ifnet_hook)
     else:
         # Listen to IFNET events so we can sync on interface attach

@@ -6,7 +6,6 @@ import json
 import logging
 from datetime import datetime, time, timedelta
 import os
-import platform
 import psutil
 import re
 import secrets
@@ -26,7 +25,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, filter_list, run, start_daemon_thread
+from middlewared.utils import osc, Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.shell import join_commandline
 from middlewared.validators import Exact, Match, Or, Range, Time
@@ -34,7 +33,7 @@ from middlewared.validators import Exact, Match, Or, Range, Time
 logger = logging.getLogger(__name__)
 
 GELI_KEYPATH = '/data/geli'
-IS_LINUX = platform.system().lower() == 'linux'
+
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
 RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 ZFS_ENCRYPTION_ALGORITHM_CHOICES = [
@@ -43,7 +42,7 @@ ZFS_ENCRYPTION_ALGORITHM_CHOICES = [
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
-if not IS_LINUX:
+if osc.IS_FREEBSD:
     import sysctl
 
 
@@ -399,7 +398,7 @@ class PoolService(CRUDService):
             if path is not None:
                 device = disk = None
                 if path.startswith('/dev/'):
-                    args = [path[5:]] + ([] if IS_LINUX else [options.get('geom_scan', True)])
+                    args = [path[5:]] + ([] if osc.IS_LINUX else [options.get('geom_scan', True)])
                     device = self.middleware.call_sync('disk.label_to_dev', *args)
                     disk = self.middleware.call_sync('disk.label_to_disk', *args)
                 x['device'] = device
@@ -444,7 +443,7 @@ class PoolService(CRUDService):
                 'status_detail': None,
             })
 
-        if not IS_LINUX and pool['encrypt'] > 0:
+        if osc.IS_FREEBSD and pool['encrypt'] > 0:
             if zpool:
                 pool['is_decrypted'] = True
             else:
@@ -659,7 +658,7 @@ class PoolService(CRUDService):
                 }
             )
 
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 await self.middleware.call('pool.save_encrypteddisks', pool_id, formatted_disks, disks_cache)
 
             await self.middleware.call(
@@ -670,7 +669,7 @@ class PoolService(CRUDService):
             )
         except Exception as e:
             # Something wrong happened, we need to rollback and destroy pool.
-            if IS_LINUX:
+            if osc.IS_LINUX:
                 self.middleware.logger.debug(
                     'Pool %s failed to create with topology %s', data['name'], data['topology'],
                 )
@@ -746,7 +745,7 @@ class PoolService(CRUDService):
         if verrors:
             raise verrors
 
-        if not IS_LINUX and pool['encryptkey']:
+        if osc.IS_FREEBSD and pool['encryptkey']:
             enc_keypath = os.path.join(GELI_KEYPATH, f'{pool["encryptkey"]}.key')
         else:
             enc_keypath = None
@@ -761,7 +760,7 @@ class PoolService(CRUDService):
         if extend_job.error:
             raise CallError(extend_job.error)
 
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             await self.middleware.call('pool.save_encrypteddisks', id, enc_disks, disks_cache)
 
             if pool['encrypt'] >= 2:
@@ -889,7 +888,7 @@ class PoolService(CRUDService):
             if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
                 for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
-            elif not IS_LINUX:
+            elif osc.IS_FREEBSD:
                 for encrypted_disk in await self.middleware.call(
                     'datastore.query',
                     'storage.encrypteddisk',
@@ -956,7 +955,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             await self.middleware.call('pool.sync_encrypted', oid)
 
         if disk:
@@ -1008,7 +1007,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
-        if not IS_LINUX and found[1]['path'].endswith('.eli'):
+        if osc.IS_FREEBSD and found[1]['path'].endswith('.eli'):
             devname = found[1]['path'].replace('/dev/', '')[:-4]
             await self.middleware.call('disk.geli_detach_single', devname)
             await self.middleware.call(
@@ -1050,7 +1049,7 @@ class PoolService(CRUDService):
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
 
-        if not IS_LINUX and pool['encrypt'] > 0:
+        if osc.IS_FREEBSD and pool['encrypt'] > 0:
             verrors.add('id', 'Disk cannot be set to online in encrypted pool.')
 
         if verrors:
@@ -1110,7 +1109,7 @@ class PoolService(CRUDService):
 
         await self.middleware.call('zfs.pool.remove', pool['name'], found[1]['guid'])
 
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             await self.middleware.call('pool.sync_encrypted', oid)
 
             if found[1]['path'].endswith('.eli'):
@@ -1164,7 +1163,7 @@ class PoolService(CRUDService):
             resilver_min_time_ms = 3000
             scan_idle = 50
 
-        if IS_LINUX:
+        if osc.IS_LINUX:
             with open('/sys/module/zfs/parameters/zfs_resilver_min_time_ms', 'w') as f:
                 f.write(str(resilver_min_time_ms))
         else:
@@ -1262,7 +1261,7 @@ class PoolService(CRUDService):
             encrypt = 0
 
         activated_jail_pool = None
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             with contextlib.suppress(Exception):
                 activated_jail_pool = await self.middleware.call('jail.get_activated_pool')
 
@@ -1305,7 +1304,7 @@ class PoolService(CRUDService):
                     f'Failed to inherit mountpoints recursively for imported {pool_name} pool: {e}'
                 )
 
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 await self.middleware.call('pool.sync_encrypted', pool_id)
         except Exception:
             if pool_id:
@@ -1422,7 +1421,7 @@ class PoolService(CRUDService):
                 pass
             else:
                 raise
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
         job.set_progress(30, 'Removing pool disks from swap')
@@ -1457,7 +1456,7 @@ class PoolService(CRUDService):
 
             await self.middleware.call('disk.sync_all')
 
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 await self.middleware.call('disk.geli_detach', pool, True)
             if pool['encrypt'] > 0:
                 try:
@@ -1472,7 +1471,7 @@ class PoolService(CRUDService):
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 await self.middleware.call('disk.geli_detach', pool)
 
         job.set_progress(90, 'Cleaning up')
@@ -1565,7 +1564,7 @@ class PoolService(CRUDService):
         job.set_progress(0, 'Beginning pools import')
 
         try:
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 proc = subprocess.Popen(
                     ['dtrace', '-qn', 'zfs-dbgmsg{printf("%s\\n", stringof(arg0))}'],
                     stdout=subprocess.PIPE,
@@ -1646,7 +1645,7 @@ class PoolService(CRUDService):
                         self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
 
         finally:
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 proc.kill()
                 proc.wait()
 
@@ -1677,7 +1676,7 @@ class PoolService(CRUDService):
 
         # Configure swaps after importing pools. devd events are not yet ready at this
         # stage of the boot process.
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             # For now let's make this FreeBSD specific as we may very well be getting zfs events here in linux
             self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
 
@@ -2585,7 +2584,7 @@ class PoolDatasetService(CRUDService):
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
             # FIXME: aclmode not available in Linux (yet?)
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 data['aclmode'] = 'RESTRICTED'
             data['xattr'] = 'SA'
 
@@ -3681,7 +3680,7 @@ class PoolScrubService(CRUDService):
 
             pool = await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
             if pool['status'] == 'OFFLINE':
-                if not IS_LINUX and not pool['is_decrypted']:
+                if osc.IS_FREEBSD and not pool['is_decrypted']:
                     raise ScrubError(f'Pool {name} is not decrypted, skipping scrub')
                 else:
                     raise ScrubError(f'Pool {name} is offline, not running scrub')

@@ -5,7 +5,7 @@ from middlewared.service import (SystemServiceService, ValidationErrors,
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run
+from middlewared.utils import osc, Popen, run
 from middlewared.utils.path import is_child
 
 import asyncio
@@ -13,7 +13,6 @@ import codecs
 import enum
 import errno
 import os
-import platform
 import re
 import subprocess
 import uuid
@@ -23,7 +22,6 @@ try:
 except ImportError:
     param = None
 
-IS_LINUX = platform.system().lower() == 'linux'
 
 LOGLEVEL_MAP = {
     '0': 'NONE',
@@ -79,7 +77,7 @@ class SMBPath(enum.Enum):
     LOGDIR = ('/var/log/samba4', '/var/log/samba')
 
     def platform(self):
-        return self.value[1] if IS_LINUX else self.value[0]
+        return self.value[1] if osc.IS_LINUX else self.value[0]
 
 
 class SMBSharePreset(enum.Enum):

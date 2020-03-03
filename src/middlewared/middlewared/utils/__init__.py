@@ -3,7 +3,6 @@ import imp
 import inspect
 import itertools
 import os
-import platform
 import re
 import sys
 import subprocess
@@ -14,7 +13,7 @@ from threading import Lock
 
 from middlewared.schema import Schemas
 from middlewared.service_exception import MatchNotFound
-import middlewared.utils.osc as osc
+from middlewared.utils import osc
 
 BUILDTIME = None
 VERSION = None
@@ -322,7 +321,7 @@ def load_modules(directory, base=None, depth=0):
         name = f[:-3]
 
         if any(name.endswith(f'_{suffix}') for suffix in ('base', 'freebsd', 'linux')):
-            if name.rsplit('_', 1)[-1] != platform.system().lower():
+            if name.rsplit('_', 1)[-1].upper() != osc.SYSTEM:
                 continue
 
         if name == '__init__':

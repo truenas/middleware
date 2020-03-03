@@ -1,12 +1,11 @@
 import os
-import platform
 import subprocess
 
 from middlewared.service import private, Service
-from middlewared.utils import Popen
+from middlewared.utils import osc, Popen
 
 
-if platform.system() == 'FreeBSD':
+if osc.IS_FREEBSD:
     LEASEFILE_TEMPLATE = '/var/db/dhclient.leases.{}'
     PIDFILE_TEMPLATE = '/var/run/dhclient/dhclient.{}.pid'
 else:
@@ -22,11 +21,11 @@ class InterfaceService(Service):
     async def dhclient_start(self, interface, wait=False):
         cmd = ['dhclient']
 
-        if platform.system() == 'FreeBSD':
+        if osc.IS_FREEBSD:
             if not wait:
                 cmd.append('-b')
 
-        if platform.system() == 'Linux':
+        if osc.IS_LINUX:
             if not wait:
                 cmd.append('-nw')
 

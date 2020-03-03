@@ -1,17 +1,15 @@
 import asyncio
 import os
-import platform
 import re
 import signal
 import subprocess
 
 from middlewared.schema import accepts, Bool, Str
 from middlewared.service import job, private, Service
-from middlewared.utils import Popen, run
+from middlewared.utils import osc, Popen, run
 
 
-IS_LINUX = platform.system().lower() == 'linux'
-if IS_LINUX:
+if osc.IS_LINUX:
     RE_DD = re.compile(r'^(\d+).*bytes.*copied.*, ([\d\.]+)\s*(GB|MB|KB|B)/s')
 else:
     RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
@@ -21,7 +19,7 @@ class DiskService(Service):
 
     @private
     async def destroy_partitions(self, disk):
-        if IS_LINUX:
+        if osc.IS_LINUX:
             await run(['sgdisk', '-Z', os.path.join('/dev', disk)])
         else:
             await run('gpart', 'destroy', '-F', f'/dev/{disk}', check=False)
@@ -61,7 +59,7 @@ class DiskService(Service):
         """
         await self.middleware.call('disk.swaps_remove_disks', [dev])
         # FIXME: Please implement appropriate alternative for removal of disk from graid in linux
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             await self.middleware.call('disk.remove_disk_from_graid', dev)
 
         # First do a quick wipe of every partition to clean things like zfs labels
@@ -87,7 +85,7 @@ class DiskService(Service):
                 while True:
                     if proc.returncode is not None:
                         break
-                    os.kill(proc.pid, signal.SIGUSR1 if IS_LINUX else signal.SIGINFO)
+                    os.kill(proc.pid, signal.SIGUSR1 if osc.IS_LINUX else signal.SIGINFO)
                     await asyncio.sleep(1)
 
             asyncio.ensure_future(dd_wait())
@@ -99,8 +97,8 @@ class DiskService(Service):
                 line = line.decode()
                 reg = RE_DD.search(line)
                 if reg:
-                    speed = float(reg.group(2)) if IS_LINUX else int(reg.group(2))
-                    if IS_LINUX:
+                    speed = float(reg.group(2)) if osc.IS_LINUX else int(reg.group(2))
+                    if osc.IS_LINUX:
                         mapping = {'gb': 1024 * 1024 * 1024, 'mb': 1024 * 1024, 'kb': 1024, 'b': 1}
                         speed = int(speed * mapping[reg.group(3).lower()])
                     job.set_progress((int(reg.group(1)) / size) * 100, extra={'speed': speed})

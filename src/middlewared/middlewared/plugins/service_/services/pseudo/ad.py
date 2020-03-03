@@ -1,4 +1,4 @@
-import platform
+from middlewared.utils import osc
 
 from middlewared.plugins.service_.services.base import ServiceInterface, ServiceState
 from middlewared.plugins.service_.services.base_freebsd import freebsd_service
@@ -33,8 +33,8 @@ class ActiveDirectoryService(PseudoServiceBase):
         await self.middleware.call("activedirectory.start")
 
     async def reload(self):
-        if platform.system() == "FreeBSD":
-            await freebsd_service(["winbindd", "quietreload"])
+        if osc.IS_FREEBSD:
+            await freebsd_service("winbindd", "quietreload")
 
 
 class LdapService(PseudoServiceBase):

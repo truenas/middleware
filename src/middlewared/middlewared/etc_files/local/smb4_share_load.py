@@ -3,11 +3,7 @@ import logging
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd, SMBPath
 
-import platform
-
 logger = logging.getLogger(__name__)
-
-IS_LINUX = platform.system().lower() == 'linux'
 
 
 async def reload_registry_shares(middleware):

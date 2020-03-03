@@ -6,11 +6,10 @@ from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
-from .utils import start_daemon_thread, LoadPluginsMixin
+from .utils import osc, start_daemon_thread, LoadPluginsMixin
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
-import middlewared.utils.osc as osc
 from .utils.profile import profile_wrap
 from .utils.run_in_thread import RunInThreadMixin
 from .webui_auth import WebUIAuth
@@ -36,7 +35,6 @@ import itertools
 import multiprocessing
 import os
 import pickle
-import platform
 import re
 import queue
 import select
@@ -52,10 +50,10 @@ import types
 import urllib.parse
 import uuid
 
-if platform.system() == "Linux":
-    from systemd.daemon import notify as systemd_notify
-
 from . import logger
+
+if osc.IS_LINUX:
+    from systemd.daemon import notify as systemd_notify
 
 
 class Application(object):
@@ -959,7 +957,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             pass
 
     def __notify_startup_progress(self):
-        if platform.system() == 'FreeBSD':
+        if osc.IS_FREEBSD:
             if self.startup_seq_path is None:
                 return
 
@@ -970,11 +968,11 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
             self.startup_seq += 1
 
-        if platform.system() == 'Linux':
+        if osc.IS_LINUX:
             systemd_notify(f'EXTEND_TIMEOUT_USEC={int(240 * 1e6)}')
 
     def __notify_startup_complete(self):
-        if platform.system() == 'Linux':
+        if osc.IS_LINUX:
             systemd_notify('READY=1')
 
     def plugin_route_add(self, plugin_name, route, method):

@@ -1,6 +1,6 @@
-import platform
+from middlewared.utils import osc
 
-if platform.system() == "FreeBSD":
+if osc.IS_FREEBSD:
     import netif  # noqa
-if platform.system() == "Linux":
+if osc.IS_LINUX:
     import middlewared.plugins.interface.netif_linux as netif  # noqa

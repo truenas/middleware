@@ -1,13 +1,10 @@
 import logging
 import os
-import platform
 import subprocess
 import time
 from middlewared.plugins.smb import SMBCmd, SMBPath, SMBBuiltin
 
 logger = logging.getLogger(__name__)
-
-IS_LINUX = platform.system().lower() == 'linux'
 
 NETCMD = SMBCmd.NET.value
 PDBCMD = SMBCmd.PDBEDIT.value

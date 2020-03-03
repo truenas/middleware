@@ -4,14 +4,13 @@ import dateutil.tz
 import glob
 import io
 import os
-import platform
 import re
 import syslog
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
+from middlewared.utils import osc, run
 from middlewared.validators import Email, Range, Port
 
 
@@ -82,7 +81,7 @@ class UPSService(SystemServiceService):
         Returns choices of UPS drivers supported by the system.
         """
         ups_choices = {}
-        if platform.system().lower() == 'linux':
+        if osc.IS_LINUX:
             driver_list = '/usr/share/nut/driver.list'
         else:
             driver_list = '/conf/base/etc/local/nut/driver.list'
