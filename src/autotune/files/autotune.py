@@ -108,7 +108,6 @@ DEF_KNOBS = {
         'vfs.zfs.vdev.sync_read_max_active',
         'vfs.zfs.vdev.async_write_max_active',
         'vfs.zfs.vdev.sync_write_max_active',
-        'vfs.zfs.top_maxinflight',
         'vfs.zfs.zfetch.max_distance',
     },
 }
@@ -258,13 +257,6 @@ def guess_vfs_zfs_vdev_async_write_max_active():
 def guess_vfs_zfs_vdev_sync_write_max_active():
     if TRUENAS and hardware[0] == "Z50":
         return 64
-    else:
-        return None
-
-
-def guess_vfs_zfs_top_maxinflight():
-    if TRUENAS and hardware[0] == "Z50":
-        return 256
     else:
         return None
 
