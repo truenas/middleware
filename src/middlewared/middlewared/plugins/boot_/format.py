@@ -1,10 +1,6 @@
-import platform
-
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import CallError, private, Service
-from middlewared.utils import run
-
-IS_LINUX = platform.system().lower() == 'linux'
+from middlewared.utils import osc, run
 
 
 class BootService(Service):
@@ -35,7 +31,7 @@ class BootService(Service):
         commands = []
         partitions = []
         efi_boot = (await self.middleware.call('boot.get_boot_type')) == 'EFI'
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             commands.append(('gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'))
             # 272629760 bytes ( 260 mb ) are required by FreeBSD
             # for EFI partition and 524288 bytes ( 512kb ) if it's bios
@@ -59,7 +55,7 @@ class BootService(Service):
         # Around 80 sectors are reserved by Linux/FreeBSD for GPT tables and
         # our 4096 bytes alignment offset for the boot disk
         partitions.append((
-            'GPT partition table', (73 if IS_LINUX else 80) * disk_details['sectorsize']
+            'GPT partition table', (73 if osc.IS_LINUX else 80) * disk_details['sectorsize']
         ))
         total_partition_size = sum(map(lambda y: y[1], partitions))
         if disk_details['size'] < total_partition_size:
@@ -76,7 +72,7 @@ class BootService(Service):
                 'booting procedure.'
             )
 
-        if IS_LINUX:
+        if osc.IS_LINUX:
             zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
             commands.extend((
                 ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
@@ -97,7 +93,7 @@ class BootService(Service):
                 ))
 
         if swap_size:
-            if IS_LINUX:
+            if osc.IS_LINUX:
                 commands.insert(2, [
                     'sgdisk',
                     f'-n4:0:+{int(swap_size / 1024)}K',
@@ -109,7 +105,7 @@ class BootService(Service):
                     '-s', str(options['swap_size']) + 'B', dev
                 ])
 
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             commands.append(
                 ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
                     ['-s', str(options['size']) + 'B'] if options.get('size') else []

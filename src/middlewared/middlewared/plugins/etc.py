@@ -1,13 +1,13 @@
 from mako import exceptions
 from mako.lookup import TemplateLookup
 from middlewared.service import Service
+from middlewared.utils import osc
 from middlewared.utils.io import write_if_changed
 
 import asyncio
 import grp
 import imp
 import os
-import platform
 import pwd
 
 
@@ -38,7 +38,8 @@ class MakoRenderer(object):
                 return tmpl.render(
                     middleware=self.service.middleware,
                     FileShouldNotExist=FileShouldNotExist,
-                    platform=platform.system(),
+                    IS_FREEBSD=osc.IS_FREEBSD,
+                    IS_LINUX=osc.IS_LINUX,
                 )
 
             return await self.service.middleware.run_in_thread(do)
@@ -239,7 +240,7 @@ class EtcService(Service):
 
     SKIP_LIST = [
         'system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure', 'nginx'
-    ] + (['ttys'] if platform.system().lower() == 'linux' else [])
+    ] + (['ttys'] if osc.IS_LINUX else [])
 
     class Config:
         private = True
@@ -265,12 +266,12 @@ class EtcService(Service):
             if renderer is None:
                 raise ValueError(f'Unknown type: {entry["type"]}')
 
-            if 'platform' in entry and entry['platform'] != platform.system():
+            if 'platform' in entry and entry['platform'].upper() != osc.SYSTEM:
                 continue
 
             path = os.path.join(self.files_dir, entry['path'])
             entry_path = entry['path']
-            if platform.system() == 'Linux':
+            if osc.IS_LINUX:
                 if entry_path.startswith('local/'):
                     entry_path = entry_path[len('local/'):]
             outfile = f'/etc/{entry_path}'

@@ -6,7 +6,6 @@ import ipaddress
 import josepy as jose
 import json
 import os
-import platform
 import random
 import re
 import subprocess
@@ -16,6 +15,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import CallError, CRUDService, job, periodic, private, Service, skip_arg, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.validators import Email, IpAddress, Range
+from middlewared.utils import osc
 
 from acme import client, errors, messages
 from OpenSSL import crypto, SSL
@@ -1507,7 +1507,7 @@ class CertificateService(CRUDService):
         if not os.path.exists(dhparam_path) or os.stat(dhparam_path).st_size == 0:
             with open('/dev/console', 'wb') as console:
                 with open(dhparam_path, 'wb') as f:
-                    if platform.platform() == 'FreeBSD':
+                    if osc.IS_FREEBSD:
                         rand = '/dev/random'
                     else:
                         rand = '/dev/urandom'

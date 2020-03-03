@@ -1,12 +1,9 @@
 import errno
 import os
-import platform
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import item_method, job, Service, ValidationErrors
-
-
-IS_LINUX = platform.system().lower() == 'linux'
+from middlewared.utils import osc
 
 
 class PoolService(Service):
@@ -57,7 +54,7 @@ class PoolService(Service):
             if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
                 verrors.add('options.force', 'Disk is not clean, partitions were found.')
 
-        if not IS_LINUX and pool['encrypt'] == 2:
+        if osc.IS_FREEBSD and pool['encrypt'] == 2:
             if not options.get('passphrase'):
                 verrors.add('options.passphrase', 'Passphrase is required for encrypted pool.')
             elif not await self.middleware.call(
@@ -65,7 +62,7 @@ class PoolService(Service):
             ):
                 verrors.add('options.passphrase', 'Passphrase is not valid.')
 
-        if IS_LINUX and options.get('passphrase'):
+        if osc.IS_LINUX and options.get('passphrase'):
             verrors.add(
                 'options.passphrase', 'This field is not valid on this platform.'
             )
@@ -115,7 +112,7 @@ class PoolService(Service):
             except Exception:
                 self.logger.warn('Failed to detach device', exc_info=True)
         except Exception as e:
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 try:
                     # If replace has failed lets detach geli to not keep disk busy
                     await self.middleware.call('disk.geli_detach_single', new_devname)
@@ -127,7 +124,7 @@ class PoolService(Service):
             # removed from swap prior to replacement
             await self.middleware.call('disk.swaps_configure')
 
-        if not IS_LINUX:
+        if osc.IS_FREEBSD:
             await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
 
         return True

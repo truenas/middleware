@@ -1,9 +1,5 @@
-import platform
-
 from middlewared.service import private, Service
 from middlewared.utils import run
-
-IS_LINUX = platform.system().lower() == 'linux'
 
 
 class DiskService(Service):

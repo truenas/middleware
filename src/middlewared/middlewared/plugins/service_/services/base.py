@@ -1,13 +1,12 @@
 import logging
-import platform
+
+from middlewared.utils import osc
 
 from .base_freebsd import SimpleServiceFreeBSD
 from .base_linux import SimpleServiceLinux
 from .base_state import ServiceState  # noqa
 
 logger = logging.getLogger(__name__)
-
-IS_LINUX = platform.system() == "Linux"
 
 
 class ServiceInterface:
@@ -67,37 +66,37 @@ class IdentifiableServiceInterface:
 
 class SimpleService(ServiceInterface, IdentifiableServiceInterface, SimpleServiceLinux, SimpleServiceFreeBSD):
     async def get_state(self):
-        if IS_LINUX:
+        if osc.IS_LINUX:
             return await self._get_state_linux()
         else:
             return await self._get_state_freebsd()
 
     async def start(self):
-        if IS_LINUX:
+        if osc.IS_LINUX:
             return await self._start_linux()
         else:
             return await self._start_freebsd()
 
     async def stop(self):
-        if IS_LINUX:
+        if osc.IS_LINUX:
             return await self._stop_linux()
         else:
             return await self._stop_freebsd()
 
     async def restart(self):
-        if IS_LINUX:
+        if osc.IS_LINUX:
             return await self._restart_linux()
         else:
             return await self._restart_freebsd()
 
     async def reload(self):
-        if IS_LINUX:
+        if osc.IS_LINUX:
             return await self._reload_linux()
         else:
             return await self._reload_freebsd()
 
     async def identify(self, procname):
-        if IS_LINUX:
+        if osc.IS_LINUX:
             return await self._identify_linux(procname)
         else:
             return await self._identify_freebsd(procname)

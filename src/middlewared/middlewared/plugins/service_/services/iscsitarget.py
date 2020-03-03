@@ -1,7 +1,8 @@
 import contextlib
-import platform
 
-if platform.system() == "FreeBSD":
+from middlewared.utils import osc
+
+if osc.IS_FREEBSD:
     import sysctl
 
 from .base import SimpleService
@@ -17,6 +18,6 @@ class ISCSITargetService(SimpleService):
     freebsd_pidfile = "/var/run/ctld.pid"
 
     async def before_stop(self):
-        if platform.system() == "FreeBSD":
+        if osc.IS_FREEBSD:
             with contextlib.suppress(IndexError):
                 sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""

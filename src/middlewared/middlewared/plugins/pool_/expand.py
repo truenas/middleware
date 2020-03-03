@@ -1,20 +1,19 @@
 import logging
 import os
-import platform
 import shutil
 import subprocess
 
 from middlewared.job import Pipes
 from middlewared.service import CallError, item_method, job, Service
 from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.utils import run
+from middlewared.utils import osc, run
 from middlewared.utils.shell import join_commandline
 
-IS_LINUX = platform.system().lower() == 'linux'
+
 logger = logging.getLogger(__name__)
 
 # platform specific imports
-if not IS_LINUX:
+if osc.IS_FREEBSD:
     import sysctl
 
 
@@ -37,7 +36,7 @@ class PoolService(Service):
         Expand pool to fit all available disk space.
         """
         pool = await self.middleware.call('pool.get_instance', id)
-        if IS_LINUX:
+        if osc.IS_LINUX:
             if options.get('passphrase'):
                 raise CallError('Passphrase should not be supplied for this platform.')
             # FIXME: We have issues in ZoL where when pool is created with partition uuids, we are unable
@@ -57,7 +56,7 @@ class PoolService(Service):
         all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
 
         try:
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 sysctl.filter('kern.geom.debugflags')[0].value = 16
             geli_resize = []
             try:
@@ -81,7 +80,7 @@ class PoolService(Service):
 
                     assert part_data['disk'] == vdev['disk']
 
-                    if IS_LINUX:
+                    if osc.IS_LINUX:
                         await run(
                             'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0',
                             '-c', '2:', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
@@ -93,7 +92,7 @@ class PoolService(Service):
                         await run('gpart', 'recover', vdev['disk'])
                         await run('gpart', 'resize', '-i', str(partition_number), vdev['disk'])
 
-                    if not IS_LINUX and pool['encrypt']:
+                    if osc.IS_FREEBSD and pool['encrypt']:
                         geli_resize_cmd = (
                             'geli', 'resize', '-s', str(part_data['size']), vdev['device']
                         )
@@ -107,10 +106,10 @@ class PoolService(Service):
                                        join_commandline(rollback_cmd))
                         geli_resize.append((geli_resize_cmd, rollback_cmd))
             finally:
-                if not IS_LINUX and geli_resize:
+                if osc.IS_FREEBSD and geli_resize:
                     await self.__geli_resize(pool, geli_resize, options)
         finally:
-            if not IS_LINUX:
+            if osc.IS_FREEBSD:
                 sysctl.filter('kern.geom.debugflags')[0].value = 0
 
         for vdev in sum(pool['topology'].values(), []):

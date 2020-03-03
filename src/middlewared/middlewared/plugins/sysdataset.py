@@ -182,7 +182,7 @@ class SystemDatasetService(ConfigService):
     async def setup(self, mount, exclude_pool=None):
 
         # FIXME: corefile for LINUX
-        if osc.SYSTEM == 'FREEBSD':
+        if osc.IS_FREEBSD:
             # We default kern.corefile value
             await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
 
@@ -275,7 +275,7 @@ class SystemDatasetService(ConfigService):
             corepath = f'{SYSDATASET_PATH}/cores'
             if os.path.exists(corepath):
                 # FIXME: corefile for LINUX
-                if osc.SYSTEM == 'FREEBSD':
+                if osc.IS_FREEBSD:
                     # FIXME: sysctl module not working
                     await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
                 os.chmod(corepath, 0o775)

@@ -1,9 +1,8 @@
 import os
-import platform
 
 from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils import run
+from middlewared.utils import osc, run
 from middlewared.validators import Range
 
 try:
@@ -14,7 +13,6 @@ except ImportError:
 
 BOOT_POOL_NAME = None
 BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
-IS_LINUX = platform.system().lower() == 'linux'
 
 
 class BootService(Service):
@@ -45,7 +43,7 @@ class BootService(Service):
         Returns:
             "BIOS", "EFI", None
         """
-        if IS_LINUX:
+        if osc.IS_LINUX:
             # https://wiki.debian.org/UEFI
             return 'EFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
         else:

@@ -1,10 +1,9 @@
 import os
-import platform
 import time
 
 import asyncio
 
-from middlewared.utils import run
+from middlewared.utils import osc, run
 
 from middlewared.plugins.service_.services.base import ServiceState, ServiceInterface, SimpleService
 from middlewared.plugins.service_.services.base_freebsd import freebsd_service
@@ -36,7 +35,7 @@ class DiskService(PseudoServiceBase):
         await self.reload()
 
     async def reload(self):
-        if platform.system() == "FreeBSD":
+        if osc.IS_FREEBSD:
             await freebsd_service("mountlate", "start")
 
         asyncio.ensure_future(self.middleware.call("service.restart", "collectd"))
@@ -66,7 +65,7 @@ class MOTDService(PseudoServiceBase):
     etc = ["motd"]
 
     async def start(self):
-        if platform.system() == "FreeBSD":
+        if osc.IS_FREEBSD:
             await freebsd_service("motd", "start")
 
 
@@ -79,7 +78,7 @@ class HostnameService(PseudoServiceBase):
         await run(["hostname", ""])
         await self.middleware.call("etc.generate", "hostname")
         await self.middleware.call("etc.generate", "rc")
-        if platform.system() == "FreeBSD":
+        if osc.IS_FREEBSD:
             await freebsd_service("hostname", "start")
         await self.middleware.call("service.reload", "mdns")
         await self.middleware.call("service.restart", "collectd")
@@ -94,12 +93,12 @@ class HttpService(PseudoServiceBase):
 
     async def restart(self):
         await self.middleware.call("service.reload", "mdns")
-        if platform.system() == "FreeBSD":
+        if osc.IS_FREEBSD:
             await freebsd_service("nginx", "restart")
 
     async def reload(self):
         await self.middleware.call("service.reload", "mdns")
-        if platform.system() == "FreeBSD":
+        if osc.IS_FREEBSD:
             await freebsd_service("nginx", "reload")
 
 
@@ -118,7 +117,7 @@ class NetworkGeneralService(PseudoServiceBase):
 
     async def reload(self):
         await self.middleware.call("service.reload", "resolvconf")
-        if platform.system() == "FreeBSD":
+        if osc.IS_FREEBSD:
             await freebsd_service("routing", "restart")
 
 

@@ -6,7 +6,7 @@ import socket
 from middlewared.utils import filter_list, osc
 
 AVAHI_SERVICE_PATH = '/etc/avahi/services'
-if osc.PLATFORM == 'FREEBSD':
+if osc.IS_FREEBSD:
     AVAHI_SERVICE_PATH = f'/usr/local{AVAHI_SERVICE_PATH}'
 
 

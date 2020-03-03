@@ -1,9 +1,9 @@
 from collections import defaultdict
 import os
 import pkg_resources
-import platform
 
 from middlewared.service import private, Service
+from middlewared.utils import osc
 
 
 class UserService(Service):
@@ -36,7 +36,7 @@ class UserService(Service):
             )
         }
 
-        path = pkg_resources.resource_filename("middlewared", f"assets/account/builtin/{platform.system().lower()}")
+        path = pkg_resources.resource_filename("middlewared", f"assets/account/builtin/{osc.SYSTEM.lower()}")
 
         # Insert new groups or update GID for existing groups
 

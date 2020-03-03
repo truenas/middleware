@@ -1,13 +1,12 @@
 import os
-import platform
 import subprocess
 
 from collections import defaultdict
 
 from middlewared.service import CallError, private, Service
-from middlewared.utils import run
+from middlewared.utils import osc, run
 
-IS_LINUX = platform.system().lower() == 'linux'
+
 MIRROR_MAX = 5
 
 
@@ -55,7 +54,7 @@ class DiskService(Service):
 
                 # If mirror has been configured automatically (not by middlewared)
                 # and there is no geli attached yet we should look for core in it.
-                if not IS_LINUX and mirror['config_type'] == 'AUTOMATIC' and not mirror['encrypted_provider']:
+                if osc.IS_FREEBSD and mirror['config_type'] == 'AUTOMATIC' and not mirror['encrypted_provider']:
                     await run(
                         'savecore', '-z', '-m', '5', '/data/crash/', mirror_name,
                         check=False
@@ -68,7 +67,7 @@ class DiskService(Service):
             lambda d: d['partition_type'] in valid_swap_part_uuids and d['name'] not in used_partitions_in_mirror,
             all_partitions.values()
         ):
-            if not IS_LINUX and not any(swap_part[k] in existing_swap_devices for k in ('encrypted_provider', 'path')):
+            if osc.IS_FREEBSD and not any(swap_part[k] in existing_swap_devices for k in ('encrypted_provider', 'path')):
                 # Try to save a core dump from that.
                 # Only try savecore if the partition is not already in use
                 # to avoid errors in the console (#27516)
@@ -116,7 +115,7 @@ class DiskService(Service):
 
                 part_a, part_b = part_ab
 
-                if not IS_LINUX and not dumpdev:
+                if osc.IS_FREEBSD and not dumpdev:
                     dumpdev = await self.middleware.call('disk.dumpdev_configure', part_a)
                 swap_path = await self.middleware.call('disk.new_swap_name')
                 if not swap_path:
@@ -127,14 +126,14 @@ class DiskService(Service):
                     await self.middleware.call(
                         'disk.create_swap_mirror', swap_path, {
                             'paths': [part_a_path, part_b_path],
-                            'extra': {'level': 1} if IS_LINUX else {},
+                            'extra': {'level': 1} if osc.IS_LINUX else {},
                         }
                     )
                 except CallError:
                     self.logger.warning('Failed to create swap mirror %s', swap_path)
                     continue
 
-                swap_device = os.path.realpath(os.path.join(f'/dev/{"md" if IS_LINUX else "mirror"}', swap_path))
+                swap_device = os.path.realpath(os.path.join(f'/dev/{"md" if osc.IS_LINUX else "mirror"}', swap_path))
                 create_swap_devices[swap_device] = {
                     'path': swap_device,
                     'encrypted_provider': None,
@@ -146,7 +145,7 @@ class DiskService(Service):
         if unused_partitions and not create_swap_devices and all(
             not existing_swap_devices[k] for k in existing_swap_devices
         ):
-            if not IS_LINUX and not dumpdev:
+            if osc.IS_FREEBSD and not dumpdev:
                 await self.middleware.call('disk.dumpdev_configure', unused_partitions[0])
             swap_device = all_partitions[unused_partitions[0]]
             create_swap_devices[swap_device['path']] = {
@@ -156,7 +155,7 @@ class DiskService(Service):
 
         created_swap_devices = []
         for swap_path, data in create_swap_devices.items():
-            if IS_LINUX:
+            if osc.IS_LINUX:
                 if not data['encrypted_provider']:
                     cp = await run(
                         'cryptsetup', '-d', '/dev/urandom', 'open', '--type', 'plain',
@@ -173,7 +172,7 @@ class DiskService(Service):
                 except subprocess.CalledProcessError as e:
                     self.logger.warning(f'Failed to make swap for %s: %s', swap_path, e.stderr.decode())
                     continue
-            elif not IS_LINUX and not data['encrypted_provider']:
+            elif osc.IS_FREEBSD and not data['encrypted_provider']:
                 try:
                     await run('geli', 'onetime', swap_path)
                 except subprocess.CalledProcessError as e:
@@ -225,5 +224,5 @@ class DiskService(Service):
         """
         for i in range(MIRROR_MAX):
             name = f'swap{i}'
-            if not os.path.exists(os.path.join('/dev', 'md' if IS_LINUX else 'mirror', name)):
+            if not os.path.exists(os.path.join('/dev', 'md' if osc.IS_LINUX else 'mirror', name)):
                 return name

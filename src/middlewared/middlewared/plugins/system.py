@@ -12,7 +12,6 @@ from middlewared.validators import Range
 import csv
 import io
 import os
-import platform
 import psutil
 import re
 import requests
@@ -32,7 +31,7 @@ import warnings
 
 from licenselib.license import ContractType, Features, License
 
-IS_LINUX = platform.system().lower() == 'linux'
+
 SYSTEM_BOOT_ID = None
 # Flag telling whether the system completed boot and is ready to use
 SYSTEM_READY = False
@@ -90,10 +89,10 @@ class SystemAdvancedService(ConfigService):
         """
         Get available choices for `serialport`.
         """
-        if not IS_LINUX and await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
+        if osc.IS_FREEBSD and await self.middleware.call('failover.hardware') == 'ECHOSTREAM':
             ports = {'0x3f8': '0x3f8'}
         else:
-            if IS_LINUX:
+            if osc.IS_LINUX:
                 proc = await Popen(
                     'dmesg | grep ttyS',
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
@@ -266,7 +265,7 @@ class SystemAdvancedService(ConfigService):
                 if not loader_reloaded:
                     await self.middleware.call('service.reload', 'loader', {'onetime': False})
                     loader_reloaded = True
-                if IS_LINUX:
+                if osc.IS_LINUX:
                     await self.middleware.call('etc.generate', 'grub')
             elif (
                 original_data['serialspeed'] != config_data['serialspeed'] or
@@ -1310,7 +1309,7 @@ class SystemGeneralService(ConfigService):
             'sort | uniq'.format(
                 # Linux sockstat uses -R for protocol selection
                 # FreeBSD uses -P instead.
-                *(('R', '6', '4', '5') if IS_LINUX else ('P', '7', '5', '6'))
+                *(('R', '6', '4', '5') if osc.IS_LINUX else ('P', '7', '5', '6'))
             ),
             shell=True, capture_output=True, text=True,
         )
@@ -1538,7 +1537,7 @@ async def setup(middleware):
         'sysctl debug.ddb.textdump.pending=1',
         'sysctl debug.debugger_on_panic=1',
         'sysctl debug.ddb.capture.bufsize=4194304'
-    ] if not IS_LINUX else []:  # TODO: See reasonable linux alternative
+    ] if osc.IS_FREEBSD else []:  # TODO: See reasonable linux alternative
         ret = await Popen(
             command,
             shell=True,

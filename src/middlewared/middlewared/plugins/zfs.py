@@ -1,5 +1,4 @@
 import errno
-import platform
 import subprocess
 import threading
 import time
@@ -12,10 +11,8 @@ from middlewared.schema import Any, Dict, Int, List, Str, Bool, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, job,
 )
-from middlewared.utils import filter_list, filter_getattrs
+from middlewared.utils import filter_list, filter_getattrs, osc
 from middlewared.validators import ReplicationSnapshotNamingSchema
-
-IS_LINUX = platform.system().lower() == 'linux'
 
 
 class ZFSSetPropertyError(CallError):
@@ -355,7 +352,7 @@ class ZFSPoolService(CRUDService):
         found = False
         with libzfs.ZFS() as zfs:
             for pool in zfs.find_import(
-                cachefile=cachefile, search_paths=['/dev/disk/by-partuuid'] if IS_LINUX else None
+                cachefile=cachefile, search_paths=['/dev/disk/by-partuuid'] if osc.IS_LINUX else None
             ):
                 if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
                     found = pool

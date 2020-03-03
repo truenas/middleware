@@ -1,6 +1,5 @@
 import crypt
 from datetime import datetime, timedelta
-import platform
 import pyotp
 import random
 import re
@@ -14,11 +13,8 @@ from middlewared.service import (
     ConfigService, Service, filterable, filter_list, no_auth_required, pass_app, private, CallError
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen
+from middlewared.utils import osc, Popen
 from middlewared.validators import Range
-
-
-IS_LINUX = platform.system().lower() == 'linux'
 
 
 class TokenManager:
@@ -511,7 +507,7 @@ async def check_permission(middleware, app):
     data = await proc.communicate()
     for line in data[0].strip().splitlines()[1:]:
         cols = line.decode().split()
-        if cols[-3 if IS_LINUX else -2] == remote and cols[0] == 'root':
+        if cols[-3 if osc.IS_LINUX else -2] == remote and cols[0] == 'root':
             AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
             break
 

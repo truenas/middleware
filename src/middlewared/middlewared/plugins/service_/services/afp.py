@@ -1,6 +1,4 @@
-import platform
-
-from middlewared.utils import run
+from middlewared.utils import osc, run
 
 from .base import SimpleService
 
@@ -17,7 +15,7 @@ class AFPService(SimpleService):
         await self.middleware.call("service.reload", "mdns")
 
     async def after_stop(self):
-        if platform.system() == "FreeBSD":
+        if osc.IS_FREEBSD:
             # when netatalk stops if afpd or cnid_metad is stuck
             # they'll get left behind, which can cause issues
             # restarting netatalk.

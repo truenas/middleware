@@ -1,13 +1,12 @@
 import os
-import platform
 import signal
 import subprocess
 
-IS_LINUX = platform.system().lower() == 'linux'
+from middlewared.utils import osc
 
 
 def render(service, middleware):
-    if IS_LINUX:
+    if osc.IS_LINUX:
         for command in [
             ['systemctl', 'restart', 'getty@tty1.service'],
             ['systemctl', 'restart', 'serial-getty@*.service'],

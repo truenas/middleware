@@ -1,6 +1,5 @@
 import ipaddress
 import os
-import platform
 import shlex
 import signal
 import subprocess
@@ -10,6 +9,7 @@ from .netif import netif
 from .type_base import InterfaceType
 
 from middlewared.service import private, Service
+from middlewared.utils import osc
 
 
 class InterfaceService(Service):
@@ -178,7 +178,7 @@ class InterfaceService(Service):
             self.logger.debug('Killing dhclient for {}'.format(name))
             os.kill(dhclient_pid, signal.SIGTERM)
 
-        if platform.system() == 'FreeBSD':
+        if osc.IS_FREEBSD:
             if data['int_ipv6auto']:
                 iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
                 subprocess.call(['/etc/rc.d/rtsold', 'onestart'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,

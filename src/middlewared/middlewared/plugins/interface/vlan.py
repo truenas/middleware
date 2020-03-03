@@ -1,6 +1,5 @@
-import platform
-
 from middlewared.service import Service
+from middlewared.utils import osc
 
 from .netif import netif
 
@@ -15,9 +14,9 @@ class InterfaceService(Service):
         try:
             iface = netif.get_interface(vlan['vlan_vint'])
         except KeyError:
-            if platform.system() == 'FreeBSD':
+            if osc.IS_FREEBSD:
                 netif.create_interface(vlan['vlan_vint'])
-            if platform.system() == 'Linux':
+            if osc.IS_LINUX:
                 netif.create_vlan(vlan['vlan_vint'], vlan['vlan_pint'], vlan['vlan_tag'])
             iface = netif.get_interface(vlan['vlan_vint'])
 
