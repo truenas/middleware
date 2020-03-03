@@ -284,7 +284,7 @@ class FailoverService(ConfigService):
             if proc.returncode == 0:
                 if 'TrueNAS_A' in devlist:
                     node = 'A'
-                else:
+                elif 'TrueNAS_B' in devlist:
                     node = 'B'
 
         else:
