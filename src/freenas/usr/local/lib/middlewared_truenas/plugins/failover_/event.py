@@ -491,7 +491,7 @@ class FailoverService(Service):
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "nfs"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
-                    self.run_call('service.restart', 'nfs', {'sync': False})
+                    self.run_call('service.restart', 'nfs', {'ha_propagate': False})
 
                 # 0 for Active node
                 run('/sbin/sysctl kern.cam.ctl.ha_role=0')
@@ -509,18 +509,18 @@ class FailoverService(Service):
                         os.unlink(AD_ALERT_FILE)
                     except Exception:
                         pass
-                    self.run_call('service.restart', 'cifs', {'sync': False})
+                    self.run_call('service.restart', 'cifs', {'ha_propagate': False})
 
                 # iscsi should be running on standby but we make sure its started anyway
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "iscsitarget"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
-                    self.run_call('service.start', 'iscsitarget', {'sync': True})
+                    self.run_call('service.start', 'iscsitarget')
 
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
-                    self.run_call('service.restart', 'afp', {'sync': False})
+                    self.run_call('service.restart', 'afp', {'ha_propagate': False})
 
                 self.logger.warn('Service restarts complete.')
 
@@ -549,8 +549,8 @@ class FailoverService(Service):
                 self.logger.warn('Syncing enclosure')
                 self.run_call('enclosure.sync_zpool')
 
-                self.run_call('service.restart', 'collectd', {'sync': False})
-                self.run_call('service.restart', 'syslogd', {'sync': False})
+                self.run_call('service.restart', 'collectd', {'ha_propagate': False})
+                self.run_call('service.restart', 'syslogd', {'ha_propagate': False})
 
                 for i in (
                     'smartd', 'ftp', 'lldp', 'rsync', 's3', 'snmp', 'ssh', 'tftp', 'webdav',
@@ -558,7 +558,7 @@ class FailoverService(Service):
                     c.execute(f'SELECT srv_enable FROM services_services WHERE srv_service = "{i}"')
                     ret = c.fetchone()
                     if ret and ret[0] == 1:
-                        self.run_call('service.restart', i, {'sync': False})
+                        self.run_call('service.restart', i, {'ha_propagate': False})
 
                 self.run_call('asigra.migrate_to_plugin')
                 self.run_call('jail.start_on_boot')
@@ -728,13 +728,13 @@ class FailoverService(Service):
                     pass
 
                 # syslogd needs to restart on BACKUP to configure remote logging to ACTIVE
-                self.run_call('service.restart', 'syslogd', {'sync': False})
+                self.run_call('service.restart', 'syslogd', {'ha_propagate': False})
 
                 if volumes:
                     run('/usr/sbin/service watchdogd quietstart')
                     self.run_call('etc.generate', 'cron')
-                    self.run_call('service.stop', 'smartd', {'sync': False})
-                    self.run_call('service.stop', 'collectd', {'sync': False})
+                    self.run_call('service.stop', 'smartd', {'ha_propagate': False})
+                    self.run_call('service.stop', 'collectd', {'ha_propagate': False})
                     self.run_call('jail.stop_on_shutdown')
                     for vm in (self.run_call('vm.query', [['status.state', '=', 'RUNNING']]) or []):
                         self.run_call('vm.poweroff', vm['id'], True)
@@ -751,7 +751,7 @@ class FailoverService(Service):
 
                     ret = self.run_call('datastore.query', 'services.services', [('srv_service', '=', i)])
                     if ret and ret[0]['srv_enable']:
-                        self.run_call(f'service.{verb}', i, {'sync': False})
+                        self.run_call(f'service.{verb}', i, {'ha_propagate': False})
 
                 run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper detachall')
 
