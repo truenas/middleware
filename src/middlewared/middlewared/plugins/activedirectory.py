@@ -658,11 +658,6 @@ class ActiveDirectoryService(ConfigService):
                 "activedirectory_update.bindname",
                 "Bind credentials or kerberos keytab are required to join an AD domain."
             )
-        if new["bindpw"] and new["kerberos_principal"]:
-            verrors.add(
-                "activedirectory_update.kerberos_principal",
-                "Simultaneous keytab and password authentication are not permitted."
-            )
         if not new["domainname"]:
             verrors.add(
                 "activedirectory_update.domainname",
@@ -816,6 +811,9 @@ class ActiveDirectoryService(ConfigService):
             await self.update_netbios_data(old, new)
         except Exception as e:
             raise ValidationError('activedirectory_update.netbiosname', str(e))
+
+        if new["bindpw"] and new["kerberos_principal"]:
+            new["bindpw"] = ""
 
         await self.common_validate(new, old, verrors)
 
