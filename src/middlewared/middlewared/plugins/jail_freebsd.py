@@ -715,9 +715,10 @@ class JailService(CRUDService):
         Retrieve default configuration for iocage jails.
         """
         if not self.iocage_set_up():
-            return IOCJson.retrieve_default_props()
+            defaults = IOCJson.retrieve_default_props()
         else:
-            return self.query(filters=[['host_hostuuid', '=', 'default']], options={'get': True})
+            defaults = self.query(filters=[['host_hostuuid', '=', 'default']], options={'get': True})
+        return {k: v for k, v in defaults.items() if k not in IOCJson.default_only_props}
 
     @accepts(
         Bool('remote', default=False),
