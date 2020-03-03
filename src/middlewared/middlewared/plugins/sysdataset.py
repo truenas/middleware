@@ -1,7 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run
+from middlewared.utils import osc, Popen, run
 
 import asyncio
 import errno
@@ -180,8 +180,11 @@ class SystemDatasetService(ConfigService):
     @accepts(Bool('mount', default=True), Str('exclude_pool', default=None, null=True))
     @private
     async def setup(self, mount, exclude_pool=None):
-        # We default kern.corefile value
-        await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
+
+        # FIXME: corefile for LINUX
+        if osc.SYSTEM == 'FREEBSD':
+            # We default kern.corefile value
+            await run('sysctl', "kern.corefile='/var/tmp/%N.core'")
 
         config = await self.config()
         dbconfig = await self.middleware.call(
@@ -271,8 +274,10 @@ class SystemDatasetService(ConfigService):
 
             corepath = f'{SYSDATASET_PATH}/cores'
             if os.path.exists(corepath):
-                # FIXME: sysctl module not working
-                await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
+                # FIXME: corefile for LINUX
+                if osc.SYSTEM == 'FREEBSD':
+                    # FIXME: sysctl module not working
+                    await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
                 os.chmod(corepath, 0o775)
 
             await self.__nfsv4link(config)
