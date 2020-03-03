@@ -1,5 +1,6 @@
 import os
 import shutil
+from middlewared.utils import osc
 
 
 def write_certificates(certs, cacerts):
@@ -24,8 +25,13 @@ def write_certificates(certs, cacerts):
     Write unified CA certificate file for use with LDAP.
     """
     if not cacerts:
-        shutil.copyfile('/usr/local/share/certs/ca-root-nss.crt',
-                        '/etc/ssl/truenas_cacerts.pem')
+        if osc.IS_FREEBSD:
+            ca_root_path = '/usr/local/share/certs/ca-root-nss.crt'
+        elif osc.IS_LINUX:
+            ca_root_path = '/etc/ssl/certs/ca-certificates.crt'
+        else:
+            raise NotImplementedError()
+        shutil.copyfile(ca_root_path, '/etc/ssl/truenas_cacerts.pem')
     else:
         with open('/etc/ssl/truenas_cacerts.pem', 'w') as f:
             f.write('## USER PROVIDED CA CERTIFICATES ##\n')
