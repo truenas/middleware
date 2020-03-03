@@ -102,6 +102,7 @@ class ServiceService(CRUDService):
         Str('service'),
         Dict(
             'service-control',
+            Bool('ha_propagate', default=True),
             register=True,
         ),
     )

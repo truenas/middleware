@@ -48,7 +48,7 @@ def test_04_checking_to_see_if_LLDP_service_is_enabled_at_boot():
 
 
 def test_05_starting_LLDP_service():
-    payload = {"service": "lldp", "service-control": {"onetime": True}}
+    payload = {"service": "lldp"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)

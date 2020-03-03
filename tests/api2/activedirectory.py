@@ -284,7 +284,7 @@ def test_25_checking_to_see_if_clif_service_is_enabled():
 
 @skip_ad_test
 def test_26_starting_cifs_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/restart/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
@@ -624,7 +624,7 @@ def test_66_checking_to_see_if_clif_service_is_enabled_at_boot():
 
 @skip_ad_test
 def test_67_stoping_clif_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)

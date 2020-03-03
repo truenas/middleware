@@ -94,8 +94,7 @@ def test_08_Check_to_see_if_dyndns_service_is_enabled_at_boot():
 @noip_test_cfg
 def test_09_Starting_dyndns_service():
     results = POST('/service/start/',
-                   {'service': 'dynamicdns',
-                    'service-control': {'onetime': True}})
+                   {'service': 'dynamicdns'})
     assert results.status_code == 200, results.text
     sleep(1)
 

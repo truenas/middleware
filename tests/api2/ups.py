@@ -75,9 +75,6 @@ def test_05_look_at_UPS_options_output_of_(data):
 def test_06_starting_ups_service():
     payload = {
         "service": "ups",
-        "service-control": {
-            "onetime": True,
-        }
     }
     results = POST('/service/start/', payload)
     assert results.status_code == 200, results.text
@@ -135,9 +132,6 @@ def test_14_look_if_UPS_service_status_is_still_running():
 def test_15_stop_ups_service():
     payload = {
         "service": "ups",
-        "service-control": {
-            "onetime": True,
-        }
     }
     results = POST('/service/stop/', payload)
     assert results.status_code == 200, results.text
@@ -171,9 +165,6 @@ def test_18_look_at_change_UPS_options_output_of_(data):
 def test_19_starting_ups_service():
     payload = {
         "service": "ups",
-        "service-control": {
-            "onetime": True,
-        }
     }
     results = POST('/service/start/', payload)
     assert results.status_code == 200, results.text
@@ -232,9 +223,6 @@ def test_27_Disabling_UPS_Service_at_boot():
 def test_28_stop_ups_service():
     payload = {
         "service": "ups",
-        "service-control": {
-            "onetime": True,
-        }
     }
     results = POST('/service/stop/', payload)
     assert results.status_code == 200, results.text

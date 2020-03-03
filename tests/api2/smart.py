@@ -80,7 +80,7 @@ def test_06_look_smartd_service_at_boot():
 
 @not_real_disk
 def test_07_starting_smartd_service():
-    payload = {"service": "smartd", "service-control": {"onetime": True}}
+    payload = {"service": "smartd"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)

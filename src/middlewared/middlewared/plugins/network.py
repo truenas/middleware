@@ -274,7 +274,7 @@ class NetworkConfigurationService(ConfigService):
                 restart_nfs = True
 
             for service_to_reload in services_to_reload:
-                await self.middleware.call('service.reload', service_to_reload, {'onetime': False})
+                await self.middleware.call('service.reload', service_to_reload)
             if restart_nfs:
                 await self._service_change('nfs', 'restart')
 

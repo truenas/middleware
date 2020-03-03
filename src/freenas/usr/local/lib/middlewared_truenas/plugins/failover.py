@@ -1693,7 +1693,7 @@ async def service_remote(middleware, service, verb, options):
 
     This is the middleware side of what legacy UI did on service changes.
     """
-    if options.get('sync') is False:
+    if not options['ha_propagate']:
         return
     # Skip if service is blacklisted or we are not MASTER
     if service in (
@@ -1708,12 +1708,9 @@ async def service_remote(middleware, service, verb, options):
     if service == 'nginx' and verb == 'stop':
         return
     try:
-        if options.get('wait') is True:
-            await middleware.call('failover.call_remote', f'service.{verb}', [service, options])
-        else:
-            await middleware.call('failover.call_remote', 'core.bulk', [
-                f'service.{verb}', [[service, options]]
-            ])
+        await middleware.call('failover.call_remote', 'core.bulk', [
+            f'service.{verb}', [[service, options]]
+        ])
     except Exception as e:
         if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.EHOSTDOWN)):
             middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)

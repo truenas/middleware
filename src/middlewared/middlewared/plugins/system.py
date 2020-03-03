@@ -252,18 +252,18 @@ class SystemAdvancedService(ConfigService):
 
             loader_reloaded = False
             if original_data['motd'] != config_data['motd']:
-                await self.middleware.call('service.start', 'motd', {'onetime': False})
+                await self.middleware.call('service.start', 'motd')
 
             if original_data['consolemenu'] != config_data['consolemenu']:
-                await self.middleware.call('service.start', 'ttys', {'onetime': False})
+                await self.middleware.call('service.start', 'ttys')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
-                await self.middleware.call('service.restart', 'powerd', {'onetime': False})
+                await self.middleware.call('service.restart', 'powerd')
 
             if original_data['serialconsole'] != config_data['serialconsole']:
-                await self.middleware.call('service.start', 'ttys', {'onetime': False})
+                await self.middleware.call('service.start', 'ttys')
                 if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    await self.middleware.call('service.reload', 'loader')
                     loader_reloaded = True
                 if osc.IS_LINUX:
                     await self.middleware.call('etc.generate', 'grub')
@@ -272,12 +272,12 @@ class SystemAdvancedService(ConfigService):
                 original_data['serialport'] != config_data['serialport']
             ):
                 if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    await self.middleware.call('service.reload', 'loader')
                     loader_reloaded = True
 
             if original_data['autotune'] != config_data['autotune']:
                 if not loader_reloaded:
-                    await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                    await self.middleware.call('service.reload', 'loader')
                     loader_reloaded = True
                 await self.middleware.call('system.advanced.autotune', 'loader')
                 await self.middleware.call('system.advanced.autotune', 'sysctl')
@@ -286,10 +286,10 @@ class SystemAdvancedService(ConfigService):
                 original_data['debugkernel'] != config_data['debugkernel'] and
                 not loader_reloaded
             ):
-                await self.middleware.call('service.reload', 'loader', {'onetime': False})
+                await self.middleware.call('service.reload', 'loader')
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
-                await self.middleware.call('service.restart', 'syslogd', {'onetime': False})
+                await self.middleware.call('service.restart', 'syslogd')
 
             if (
                 original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or

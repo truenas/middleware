@@ -30,7 +30,7 @@ def test_03_Checking_ssh_enable_at_boot():
 
 
 def test_04_Start_ssh_service():
-    payload = {"service": "ssh", "service-control": {"onetime": True}}
+    payload = {"service": "ssh"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)

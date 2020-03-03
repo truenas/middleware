@@ -59,9 +59,6 @@ def test_05_Start_TFTP_service():
     results = POST(
         '/service/start/', {
             'service': 'tftp',
-            'service-control': {
-                'onetime': True
-            }
         }
     )
 
