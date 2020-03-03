@@ -167,7 +167,7 @@ def test_10_enabling_activedirectory():
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()
+    job_id = results.json()['job_id']
 
 
 def test_11_verify_job_id_is_successfull():
@@ -416,7 +416,7 @@ def test_41_re_enable_activedirectory():
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()
+    job_id = results.json()['job_id']
 
 
 def test_42_verify_job_id_is_successfull():
