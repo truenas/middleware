@@ -596,6 +596,9 @@ class ZFSDatasetService(CRUDService):
         if recursive:
             args += ['-r']
 
+        # If dataset is mounted and has receive_resume_token, we should destroy it or ZFS will say
+        # "cannot destroy 'pool/dataset': dataset already exists"
+        recv_run = subprocess.run(['zfs', 'recv', '-A', id], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         # Destroying may take a long time, lets not use py-libzfs as it will block
         # other ZFS operations.
         try:
@@ -603,6 +606,9 @@ class ZFSDatasetService(CRUDService):
                 ['zfs', 'destroy'] + args + [id], text=True, capture_output=True, check=True,
             )
         except subprocess.CalledProcessError as e:
+            if recv_run.returncode == 0 and e.stderr.strip().endswith('dataset does not exist'):
+                # This operation might have deleted this dataset if it was created by `zfs recv` operation
+                return
             self.logger.error('Failed to delete dataset', exc_info=True)
             error = e.stderr.strip()
             errno_ = errno.EFAULT

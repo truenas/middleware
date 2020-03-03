@@ -7,8 +7,8 @@ import os
 import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import DELETE, GET, POST, PUT, wait_on_job
-from auto_config import pool_name
+from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
+from auto_config import ip, pool_name, user, password
 
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')
@@ -245,3 +245,23 @@ def test_26_delete_zvol():
 def test_27_verify_the_id_zvol_does_not_exist():
     result = GET(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 404, result.text
+
+
+@pytest.mark.parametrize("create_dst", [True, False])
+def test_28_delete_dataset_with_receive_resume_token(create_dst):
+    result = POST('/pool/dataset/', {'name': f'{pool_name}/src'})
+    assert result.status_code == 200, result.text
+
+    if create_dst:
+        result = POST('/pool/dataset/', {'name': f'{pool_name}/dst'})
+        assert result.status_code == 200, result.text
+
+    SSH_TEST(f'dd if=/dev/urandom of=/mnt/{pool_name}/src bs=1M count=1', user, password, ip)
+    SSH_TEST(f'zfs snapshot {pool_name}@snap-1', user, password, ip)
+    SSH_TEST(f'zfs send {pool_name}@snap-1 | head -c 102400 | zfs recv -s -F {pool_name}/dst', user, password, ip)
+
+    result = DELETE(f'/pool/dataset/id/{pool_name}%2Fsrc/')
+    assert result.status_code == 200, result.text
+
+    result = DELETE(f'/pool/dataset/id/{pool_name}%2Fdst/')
+    assert result.status_code == 200, result.text
