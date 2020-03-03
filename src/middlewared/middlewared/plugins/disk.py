@@ -706,9 +706,8 @@ class DiskService(CRUDService):
     async def serial_from_device(self, name):
         args = await self.__get_smartctl_args(name)
         if args:
-            p1 = await smartctl(args + ['-i'], stdout=subprocess.PIPE)
-            output = p1.stdout.decode()
-            search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
+            p1 = await smartctl(args + ['-i'], check=False, stdout=subprocess.PIPE, encoding='utf-8', errors='ignore')
+            search = re.search(r'Serial Number:\s+(?P<serial>.+)', p1.stdout, re.I)
             if search:
                 return search.group('serial')
 
