@@ -5,7 +5,7 @@ import syslog
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, ValidationErrors
 from middlewared.validators import Range
-from middlewared.service import SystemServiceService
+from middlewared.service import private, SystemServiceService
 import middlewared.sqlalchemy as sa
 
 
@@ -123,3 +123,34 @@ class SSHService(SystemServiceService):
             syslog.closelog()
 
         return new
+
+    @private
+    def save_keys(self):
+        update = {}
+        for i in [
+            "ssh_host_key",
+            "ssh_host_key.pub",
+            "ssh_host_dsa_key",
+            "ssh_host_dsa_key.pub",
+            "ssh_host_dsa_key-cert.pub",
+            "ssh_host_ecdsa_key",
+            "ssh_host_ecdsa_key.pub",
+            "ssh_host_ecdsa_key-cert.pub",
+            "ssh_host_rsa_key",
+            "ssh_host_rsa_key.pub",
+            "ssh_host_rsa_key-cert.pub",
+            "ssh_host_ed25519_key",
+            "ssh_host_ed25519_key.pub",
+            "ssh_host_ed25519_key-cert.pub",
+        ]:
+            path = os.path.join("/usr/local/etc/ssh", i)
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    data = base64.b64encode(f.read())
+
+                column = i.replace(".", "_",).replace("-", "_")
+
+                update[column] = data
+
+        old = self.middleware.call_sync('ssh.config')
+        self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update)
