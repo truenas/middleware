@@ -2584,7 +2584,9 @@ class PoolDatasetService(CRUDService):
 
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
-            data['aclmode'] = 'RESTRICTED'
+            # FIXME: aclmode not available in Linux (yet?)
+            if not IS_LINUX:
+                data['aclmode'] = 'RESTRICTED'
             data['xattr'] = 'SA'
 
         if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
