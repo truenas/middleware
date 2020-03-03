@@ -112,9 +112,6 @@ def test_07_start_iSCSI_service():
     result = POST(
         '/service/start', {
             'service': 'iscsitarget',
-            'service-control': {
-                'onetime': True
-            }
         }
     )
     assert result.status_code == 200, result.text
@@ -215,7 +212,6 @@ def test_18_verifiying_iscsi_session_on_freenas():
         })
         POST("/service/start", {
             'service': 'ssh',
-            'service-control': {'onetime': True}
         })
         result = SSH_TEST('ctladm islist', user, password, ip)
         assert result['result'] is True, result['output']
@@ -258,9 +254,6 @@ def test_23_stop_iSCSI_service():
     results = POST(
         '/service/stop/', {
             'service': 'iscsitarget',
-            'service-control': {
-                'onetime': True
-            }
         }
     )
     assert results.status_code == 200, result.text

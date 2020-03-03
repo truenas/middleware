@@ -36,7 +36,7 @@ def test_03_checking_to_see_if_snmp_service_is_enabled_at_boot():
 
 
 def test_04_starting_snmp_service():
-    payload = {"service": "snmp", "service-control": {"onetime": True}}
+    payload = {"service": "snmp"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 

@@ -50,9 +50,6 @@ def test_04_start_s3_service():
     result = POST(
         '/service/start/', {
             'service': 's3',
-            'service-control': {
-                'onetime': True
-            }
         }
     )
 
@@ -69,9 +66,6 @@ def test_06_stop_iSCSI_service():
     result = POST(
         '/service/stop/', {
             'service': 's3',
-            'service-control': {
-                'onetime': True
-            }
         }
     )
 

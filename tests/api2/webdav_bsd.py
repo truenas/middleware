@@ -68,7 +68,6 @@ def test_05_Checking_to_see_if_WebDAV_service_is_enabled_at_boot():
 def test_06_Starting_WebDAV_service():
     results = POST('/service/start/', {
         'service': 'webdav',
-        'service-control': {'onetime': True}
     })
     assert results.status_code == 200, results.text
     sleep(1)
@@ -87,7 +86,6 @@ def test_08_Disabling_WebDAV_service():
 def test_09_Stopping_WebDAV_service():
     results = POST('/service/stop/', {
         'service': 'webdav',
-        'service-control': {'onetime': True}
     })
     assert results.status_code == 200, results.text
     sleep(1)

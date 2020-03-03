@@ -85,7 +85,7 @@ def test_06_checking_to_see_if_nfs_service_is_enabled_at_boot():
 
 
 def test_07_starting_nfs_service():
-    payload = {"service": "nfs", "service-control": {"onetime": True}}
+    payload = {"service": "nfs"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
@@ -264,7 +264,7 @@ def test_29_delete_nfs_share():
 
 
 def test_30_stoping_nfs_service():
-    payload = {"service": "nfs", "service-control": {"onetime": True}}
+    payload = {"service": "nfs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)

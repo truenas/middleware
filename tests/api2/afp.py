@@ -106,7 +106,7 @@ def test_11_checking_afp_enable_at_boot():
 
 
 def test_12_start_afp_service():
-    payload = {"service": "afp", "service-control": {"onetime": True}}
+    payload = {"service": "afp"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
@@ -273,7 +273,7 @@ def test_32_delete_afp_share():
 
 
 def test_33_stopping_afp_service():
-    payload = {"service": "afp", "service-control": {"onetime": True}}
+    payload = {"service": "afp"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)

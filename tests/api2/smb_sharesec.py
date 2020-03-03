@@ -57,7 +57,7 @@ def test_03_creating_a_smb_share_path():
 
 
 def test_04_starting_cifs_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
@@ -263,7 +263,7 @@ def test_30_delete_share_acl():
 
 
 def test_31_starting_cifs_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 

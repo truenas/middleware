@@ -142,7 +142,7 @@ def test_008_verify_if_smb_getparm_path_homes_is_null():
 
 
 def test_009_starting_cifs_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
@@ -515,7 +515,7 @@ def test_059_verify_smb_getparm_path_homes():
 
 
 def test_060_stoping_clif_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
@@ -539,7 +539,7 @@ def test_063_update_cifs_share():
 
 
 def test_064_starting_cifs_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
@@ -868,7 +868,7 @@ def test_109_checking_to_see_if_clif_service_is_enabled_at_boot():
 
 
 def test_110_stoping_clif_service():
-    payload = {"service": "cifs", "service-control": {"onetime": True}}
+    payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
