@@ -8,6 +8,7 @@ class SSHService(SimpleService):
     etc = ["ssh"]
 
     freebsd_rc = "openssh"
+    freebsd_procname = "sshd"
     freebsd_pidfile = "/var/run/sshd.pid"
 
     async def before_start(self):
