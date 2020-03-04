@@ -1633,12 +1633,22 @@ class DiskService(CRUDService):
                 await run('geli', 'detach', devname)
             await run('gmirror', 'destroy', name)
 
+        configure_swap = False
         for p in providers.values():
             devname = f'{p.name}.eli'
             if devname in swapinfo_devs:
                 await run('swapoff', f'/dev/{devname}')
             if os.path.exists(f'/dev/{devname}'):
                 await run('geli', 'detach', devname)
+            if os.path.realpath('/dev/dumpdev') == os.path.join('/dev', p.name):
+                configure_swap = True
+                try:
+                    os.unlink('/dev/dumpdev')
+                except OSError:
+                    pass
+
+        if configure_swap:
+            await self.middleware.call('disk.swaps_configure')
 
     @private
     async def wipe_quick(self, dev, size=None):
