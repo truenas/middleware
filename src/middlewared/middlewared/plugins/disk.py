@@ -1952,7 +1952,7 @@ async def devd_zfs_hook(middleware, data):
         'misc.fs.zfs.pool_destroy',
         'misc.fs.zfs.pool_import',
     ):
-        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+        middleware.call('disk.swaps_configure')
 
 
 async def _event_system_ready(middleware, event_type, args):
