@@ -1423,6 +1423,7 @@ class DiskService(CRUDService):
                 existing_swap_devices['mirrors'].append(i.devname)
             else:
                 existing_swap_devices['partitions'].append(i.devname)
+                used_partitions.add(i.devname.replace('.eli', ''))
 
         klass = geom.class_by_name('MIRROR')
         if klass:
