@@ -1403,7 +1403,8 @@ class DiskService(CRUDService):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
     @private
-    async def swaps_configure(self):
+    @job(lock='swaps_configure')
+    async def swaps_configure(self, job):
         """
         Configures swap partitions in the system.
         We try to mirror all available swap partitions to avoid a system
@@ -1469,7 +1470,11 @@ class DiskService(CRUDService):
                         # Try to save a core dump from that.
                         # Only try savecore if the partition is not already in use
                         # to avoid errors in the console (#27516)
-                        await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
+                        cp = await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
+                        if cp.returncode:
+                            self.middleware.logger.debug(
+                                'Failed to savecore for "%s": ', f'/dev/{p.name}', cp.stderr.decode()
+                            )
                         if g.name in disks:
                             swap_partitions_by_size[p.mediasize].append(p.name)
 
