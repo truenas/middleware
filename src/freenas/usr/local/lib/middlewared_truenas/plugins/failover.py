@@ -785,12 +785,16 @@ class FailoverService(ConfigService):
         """
         local_boot_disks = await self.middleware.call('zfs.pool.get_disks', 'freenas-boot')
         remote_boot_disks = await self.middleware.call('failover.call_remote', 'zfs.pool.get_disks', ['freenas-boot'])
-        local_disks = set(v['ident'] for k, v in
-            (await self.middleware.call('device.get_info', 'DISK')).items()
-            if not k in local_boot_disks)
-        remote_disks = set(v['ident'] for k, v in
-            (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).items()
-            if not k in remote_boot_disks)
+        local_disks = set(
+            v['ident']
+            for k, v in (await self.middleware.call('device.get_info', 'DISK')).items()
+            if k not in local_boot_disks
+        )
+        remote_disks = set(
+            v['ident']
+            for k, v in (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).items()
+            if k not in remote_boot_disks
+        )
         return {
             'missing_local': sorted(remote_disks - local_disks),
             'missing_remote': sorted(local_disks - remote_disks),
