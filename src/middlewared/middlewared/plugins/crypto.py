@@ -2796,7 +2796,9 @@ async def setup(middlewared):
             )
         except Exception as e:
             failure = True
-            middlewared.logger.debug(f'Failed to set certificate for system.general plugin: {e}')
+            middlewared.logger.debug(
+                'Failed to set certificate for system.general plugin: %s', e, exc_info=True
+            )
 
     if not failure:
         middlewared.logger.debug('Certificate setup for System complete')
