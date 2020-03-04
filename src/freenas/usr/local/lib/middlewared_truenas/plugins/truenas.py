@@ -9,9 +9,6 @@ import errno
 import json
 import os
 
-
-from licenselib.license import ContractType
-
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import Service, private
 import middlewared.sqlalchemy as sa

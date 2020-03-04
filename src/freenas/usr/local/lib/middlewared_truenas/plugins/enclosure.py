@@ -5,7 +5,6 @@
 # without the express permission of iXsystems.
 
 from collections import OrderedDict
-import glob
 import logging
 import os
 import re
@@ -376,7 +375,7 @@ class EnclosureService(CRUDService):
                     continue
 
                 pnpinfo = sysctl.filter(f"dev.pcib.{m.group(1)}.%pnpinfo")[0].value
-                if not "vendor=0x10b5 device=0x8717" in pnpinfo:
+                if "vendor=0x10b5 device=0x8717" not in pnpinfo:
                     continue
 
                 location = sysctl.filter(f"dev.pcib.{m.group(1)}.%location")[0].value
