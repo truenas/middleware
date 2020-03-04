@@ -1965,7 +1965,6 @@ async def devd_zfs_hook(middleware, data):
     # it in sync every time there is a change.
     if data.get('type') in (
         'misc.fs.zfs.config_sync',
-        'misc.fs.zfs.pool_create',
         'misc.fs.zfs.pool_destroy',
         'misc.fs.zfs.pool_import',
     ):
