@@ -633,12 +633,12 @@ class SystemService(Service):
 
         cp = subprocess.Popen(
             ['ixdiagnose', '-d', direc, '-s', '-F', '-p'],
-            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             bufsize=1
         )
 
-        for line in iter(cp.stdout.readline, ''):
-            line = line.rstrip()
+        for line in iter(cp.stdout.readline, b''):
+            line = line.decode(errors='ignore').rstrip()
 
             if line.startswith('**'):
                 percent, help = line.split(':')
