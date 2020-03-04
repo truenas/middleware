@@ -1518,7 +1518,7 @@ class DiskService(CRUDService):
                 part_a, part_b = part_ab
 
                 if not dumpdev:
-                    dumpdev = await dumpdev_configure(part_a)
+                    dumpdev = await self.dumpdev_configure(part_a)
                 name = new_swap_name()
                 if name is None:
                     # Which means maximum has been reached and we can stop
@@ -1538,7 +1538,7 @@ class DiskService(CRUDService):
             not existing_swap_devices[k] for k in existing_swap_devices
         ):
             if not dumpdev:
-                await dumpdev_configure(unused_partitions[0])
+                await self.dumpdev_configure(unused_partitions[0])
             create_swap_devices.append(unused_partitions[0])
 
         for name in create_swap_devices:
@@ -1571,6 +1571,24 @@ class DiskService(CRUDService):
                 existing_swap_devices['partitions'] = []
 
         return create_swap_devices + existing_swap_devices['partitions'] + existing_swap_devices['mirrors']
+
+    @private
+    async def dumpdev_configure(self, name):
+        # Configure dumpdev on first swap device
+        if not os.path.exists('/dev/dumpdev'):
+            try:
+                os.unlink('/dev/dumpdev')
+            except OSError:
+                pass
+            os.symlink(f'/dev/{name}', '/dev/dumpdev')
+            cp = await run('dumpon', f'/dev/{name}')
+            if cp.returncode:
+                self.middleware.logger.debug(
+                    'Failed to specify "%s" device for crash dumps: %s', f'/dev/{name}', cp.stderr.decode()
+                )
+            else:
+                self.middleware.logger.debug('Configured "%s" device for crash dumps.', f'/dev/{name}')
+        return True
 
     @private
     async def swaps_remove_disks(self, disks):
@@ -1906,18 +1924,6 @@ def new_swap_name():
             return name
 
 
-async def dumpdev_configure(name):
-    # Configure dumpdev on first swap device
-    if not os.path.exists('/dev/dumpdev'):
-        try:
-            os.unlink('/dev/dumpdev')
-        except OSError:
-            pass
-        os.symlink(f'/dev/{name}', '/dev/dumpdev')
-        await run('dumpon', f'/dev/{name}')
-    return True
-
-
 async def devd_devfs_hook(middleware, data):
     if data.get('subsystem') != 'CDEV':
         return
@@ -1953,7 +1959,7 @@ async def devd_zfs_hook(middleware, data):
         'misc.fs.zfs.pool_destroy',
         'misc.fs.zfs.pool_import',
     ):
-        middleware.call('disk.swaps_configure')
+        await middleware.call('disk.swaps_configure')
 
 
 async def _event_system_ready(middleware, event_type, args):
