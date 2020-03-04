@@ -704,6 +704,7 @@ class PoolService(CRUDService):
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
 
+        await self.middleware.call('disk.swaps_configure')
         asyncio.ensure_future(restart_services())
 
         pool = await self._get_instance(pool_id)
@@ -2497,7 +2498,7 @@ class PoolService(CRUDService):
 
         # Configure swaps after importing pools. devd events are not yet ready at this
         # stage of the boot process.
-        self.middleware.call('disk.swaps_configure')
+        self.middleware.call_sync('disk.swaps_configure')
 
         job.set_progress(100, 'Pools import completed')
 
