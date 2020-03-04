@@ -718,6 +718,18 @@ class DiskService(CRUDService):
 
         return None
 
+    @private
+    async def disks_for_temperature_monitoring(self):
+        return [
+            disk['devname']
+            for disk in await self.query([['devname', '!=', None],
+                                          ['togglesmart', '=', True],
+                                          # Polling for disk temperature does
+                                          # not allow them to go to sleep
+                                          # automatically
+                                          ['hddstandby', '=', 'ALWAYS ON']])
+        ]
+
     @accepts(
         List('names', items=[Str('name')]),
         Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
@@ -727,6 +739,8 @@ class DiskService(CRUDService):
         """
         Returns temperatures for a list of device `names` using specified S.M.A.R.T. `powermode`.
         """
+        if len(names) == 0:
+            names = await self.disks_for_temperature_monitoring()
 
         if not smartctl_args:
             smartctl_args = await self.smartctl_args_for_devices(names)
