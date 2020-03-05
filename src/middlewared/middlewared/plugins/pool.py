@@ -1177,7 +1177,8 @@ class PoolService(CRUDService):
     @job()
     async def import_find(self, job):
         """
-        Get a list of pools available for import with the following details:
+        Returns a job id which can be used to retrieve a list of pools available for
+        import with the following details as a result of the job:
         name, guid, status, hostname.
         """
 
