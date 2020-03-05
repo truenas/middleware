@@ -7,7 +7,9 @@ import os
 import select
 import setproctitle
 import threading
+
 from . import logger
+from .common.environ import environ_update
 from .utils import LoadPluginsMixin
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 from .utils.run_in_thread import RunInThreadMixin
@@ -131,6 +133,16 @@ def watch_parent():
     os._exit(1)
 
 
+def receive_environ():
+    def callback(*args, **kwargs):
+        environ_update(kwargs['fields'])
+
+    c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+    c.subscribe('core.environ', callback)
+
+    environ_update(c.call('core.environ'))
+
+
 def worker_init(overlay_dirs, debug_level, log_handler):
     global MIDDLEWARE
     MIDDLEWARE = FakeMiddleware(overlay_dirs)
@@ -140,3 +152,4 @@ def worker_init(overlay_dirs, debug_level, log_handler):
     setproctitle.setproctitle('middlewared (worker)')
     threading.Thread(target=watch_parent, daemon=True).start()
     logger.setup_logging('worker', debug_level, log_handler)
+    receive_environ()

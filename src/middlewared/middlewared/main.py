@@ -773,6 +773,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
     def __init_services(self):
         from middlewared.service import CoreService
         self.add_service(CoreService(self))
+        self.event_register('core.environ', 'Send on middleware process environment changes.', private=True)
 
     async def __plugins_load(self):
 
@@ -1169,10 +1170,14 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         return itertools.chain(
             self.__events, map(
                 lambda n: (
-                    n[0], {
-                        'description': inspect.getdoc(n[1]), 'wildcard_subscription': False,
+                    n[0],
+                    {
+                        'description': inspect.getdoc(n[1]),
+                        'private': False,
+                        'wildcard_subscription': False,
                     }
-                ), self.__event_sources.items()
+                ),
+                self.__event_sources.items()
             )
         )
 
@@ -1182,19 +1187,19 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description):
+    def event_register(self, name, description, private=False):
         """
         All events middleware can send should be registered so they are properly documented
         and can be browsed in documentation page without source code inspection.
         """
-        self.__events.register(name, description)
+        self.__events.register(name, description, private=private)
 
     def send_event(self, name, event_type, **kwargs):
 
         if name not in self.__events:
             # We should eventually deny events that are not registered to ensure every event is
             # documented but for backward-compability and safety just log it for now.
-            self.logger.warn(f'Event {name!r} not registered.')
+            self.logger.warning(f'Event {name!r} not registered.')
 
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
