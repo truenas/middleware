@@ -697,6 +697,7 @@ class PoolService(CRUDService):
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
 
+        await self.middleware.call('disk.swaps_configure')
         asyncio.ensure_future(restart_services())
 
         pool = await self.get_instance(pool_id)

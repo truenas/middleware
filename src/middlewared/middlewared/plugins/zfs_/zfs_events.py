@@ -137,7 +137,6 @@ async def devd_zfs_hook(middleware, data):
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
     elif data.get('type') in (
         'misc.fs.zfs.config_sync',
-        'misc.fs.zfs.pool_create',
         'misc.fs.zfs.pool_destroy',
         'misc.fs.zfs.pool_import',
     ):
@@ -167,7 +166,6 @@ async def zfs_events(middleware, data):
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
     elif event_id in (
         'sysevent.fs.zfs.config_sync',
-        'sysevent.fs.zfs.pool_create',
         'sysevent.fs.zfs.pool_destroy',
         'sysevent.fs.zfs.pool_import',
     ):
