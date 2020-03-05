@@ -3,7 +3,7 @@ import subprocess
 
 from collections import defaultdict
 
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, job, private, Service
 from middlewared.utils import osc, run
 
 
@@ -13,7 +13,8 @@ MIRROR_MAX = 5
 class DiskService(Service):
 
     @private
-    async def swaps_configure(self):
+    @job(lock='swaps_configure')
+    async def swaps_configure(self, job):
         """
         Configures swap partitions in the system.
         We try to mirror all available swap partitions to avoid a system
@@ -67,11 +68,17 @@ class DiskService(Service):
             lambda d: d['partition_type'] in valid_swap_part_uuids and d['name'] not in used_partitions_in_mirror,
             all_partitions.values()
         ):
-            if osc.IS_FREEBSD and not any(swap_part[k] in existing_swap_devices for k in ('encrypted_provider', 'path')):
+            if osc.IS_FREEBSD and not any(
+                swap_part[k] in existing_swap_devices for k in ('encrypted_provider', 'path')
+            ):
                 # Try to save a core dump from that.
                 # Only try savecore if the partition is not already in use
                 # to avoid errors in the console (#27516)
-                await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{swap_part["name"]}', check=False)
+                cp = await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{swap_part["name"]}', check=False)
+                if cp.returncode:
+                    self.middleware.logger.error(
+                        'Failed to savecore for "%s": ', f'/dev/{swap_part["name"]}', cp.stderr.decode()
+                    )
 
             if swap_part['disk'] in disks:
                 swap_partitions_by_size[swap_part['size']].append(swap_part['name'])
