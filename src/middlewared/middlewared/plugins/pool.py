@@ -601,6 +601,7 @@ class PoolService(CRUDService):
             'cachefile': ZPOOL_CACHE_FILE,
             'failmode': 'continue',
             'autoexpand': 'on',
+            'ashift': 12,
         }
 
         fsoptions = {
