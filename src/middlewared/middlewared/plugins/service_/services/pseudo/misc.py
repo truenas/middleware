@@ -1,6 +1,3 @@
-import os
-import time
-
 import asyncio
 
 from middlewared.utils import osc, run
@@ -248,8 +245,7 @@ class TimeservicesService(PseudoServiceBase):
         await self.middleware.call("service.restart", "ntpd")
 
         settings = await self.middleware.call("datastore.config", "system.settings")
-        os.environ["TZ"] = settings["stg_timezone"]
-        time.tzset()
+        await self.middleware.call("core.environ_update", {"TZ": settings["stg_timezone"]})
 
 
 class TtysService(PseudoServiceBase):

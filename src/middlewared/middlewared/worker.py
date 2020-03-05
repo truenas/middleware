@@ -5,7 +5,9 @@ import asyncio
 import inspect
 import os
 import setproctitle
+
 from . import logger
+from .common.environ import environ_update
 from .utils import LoadPluginsMixin
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 import middlewared.utils.osc as osc
@@ -105,6 +107,16 @@ def main_worker(*call_args):
     return res
 
 
+def receive_environ():
+    def callback(*args, **kwargs):
+        environ_update(kwargs['fields'])
+
+    c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+    c.subscribe('core.environ', callback)
+
+    environ_update(c.call('core.environ'))
+
+
 def worker_init(overlay_dirs, debug_level, log_handler):
     global MIDDLEWARE
     MIDDLEWARE = FakeMiddleware(overlay_dirs)
@@ -114,3 +126,4 @@ def worker_init(overlay_dirs, debug_level, log_handler):
     setproctitle.setproctitle('middlewared (worker)')
     osc.die_with_parent()
     logger.setup_logging('worker', debug_level, log_handler)
+    receive_environ()
