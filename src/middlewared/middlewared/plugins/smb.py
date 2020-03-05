@@ -922,6 +922,7 @@ class SharingSMBService(CRUDService):
             'streams_xattr',
             'shadow_copy2',
             'winmsa',
+            'worm',
             'zfs_space',
             'zfsacl'
         ]
