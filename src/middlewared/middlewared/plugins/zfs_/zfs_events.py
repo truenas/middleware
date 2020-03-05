@@ -8,7 +8,6 @@ from middlewared.alert.base import (
 from middlewared.utils import osc, start_daemon_thread
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
-EVENT_LOCK = asyncio.Lock()
 
 SCAN_THREADS = {}
 
@@ -138,14 +137,13 @@ async def devd_zfs_hook(middleware, data):
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
     elif data.get('type') in (
         'misc.fs.zfs.config_sync',
-        'misc.fs.zfs.pool_create',
         'misc.fs.zfs.pool_destroy',
         'misc.fs.zfs.pool_import',
     ):
         # Swap must be configured only on disks being used by some pool,
         # for this reason we must react to certain types of ZFS events to keep
         # it in sync every time there is a change.
-        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+        await middleware.call('disk.swaps_configure')
 
 
 async def zfs_events(middleware, data):
@@ -168,12 +166,10 @@ async def zfs_events(middleware, data):
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
     elif event_id in (
         'sysevent.fs.zfs.config_sync',
-        'sysevent.fs.zfs.pool_create',
         'sysevent.fs.zfs.pool_destroy',
         'sysevent.fs.zfs.pool_import',
     ):
-        async with EVENT_LOCK:
-            await middleware.call('disk.swaps_configure')
+        await middleware.call('disk.swaps_configure')
 
 
 def setup(middleware):

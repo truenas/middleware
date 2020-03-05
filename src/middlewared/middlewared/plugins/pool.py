@@ -698,6 +698,7 @@ class PoolService(CRUDService):
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
 
+        await self.middleware.call('disk.swaps_configure')
         asyncio.ensure_future(restart_services())
 
         pool = await self.get_instance(pool_id)
@@ -1679,7 +1680,7 @@ class PoolService(CRUDService):
         # stage of the boot process.
         if osc.IS_FREEBSD:
             # For now let's make this FreeBSD specific as we may very well be getting zfs events here in linux
-            self.middleware.run_coroutine(self.middleware.call('disk.swaps_configure'), wait=False)
+            self.middleware.call_sync('disk.swaps_configure')
 
         job.set_progress(100, 'Pools import completed')
 
