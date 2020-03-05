@@ -25,6 +25,7 @@ import urllib.request
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 
+RE_HWADDR = re.compile(r'hwaddr ([0-9a-f:]+)')
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
 
@@ -1610,9 +1611,15 @@ class InterfaceService(CRUDService):
                 self.logger.info('{}: changing protocol to {}'.format(name, protocol))
                 iface.protocol = protocol
 
+            ether = None
             members_database = set()
             members_configured = set(p[0] for p in iface.ports)
-            for member in (await self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])])):
+            for member in await self.middleware.call(
+                'datastore.query',
+                'network.lagginterfacemembers',
+                [('lagg_interfacegroup_id', '=', lagg['id'])],
+                {'order_by': ['lagg_physnic']},
+            ):
                 # For Link Aggregation MTU is configured in parent, not ports
                 sync_interface_opts[member['lagg_physnic']]['skip_mtu'] = True
                 members_database.add(member['lagg_physnic'])
@@ -1621,6 +1628,15 @@ class InterfaceService(CRUDService):
                 except KeyError:
                     self.logger.warn('Could not find {} from {}'.format(member['lagg_physnic'], name))
                     continue
+
+                if ether is None:
+                    try:
+                        result = await run('ifconfig', member['lagg_physnic'], encoding='utf-8', errors='ignore')
+                        m = RE_HWADDR.search(result.stdout)
+                        if m:
+                            ether = m.group(1)
+                    except Exception:
+                        self.logger.warning('Could not get hardware address from %r', member_iface, exc_info=True)
 
                 lagg_mtu = lagg['lagg_interface']['int_mtu'] or 1500
                 if member_iface.mtu != lagg_mtu:
@@ -1637,6 +1653,11 @@ class InterfaceService(CRUDService):
             # Add member in database but not configured
             for member in (members_database - members_configured):
                 iface.add_port(member)
+
+            if ether is not None:
+                result = await run('ifconfig', name, 'ether', ether, check=False, encoding='utf-8', errors='ignore')
+                if result.returncode != 0:
+                    self.logger.warning('Unable to set ethernet address %r for %r: %s', ether, name, result.stderr)
 
             for port in iface.ports:
                 try:
