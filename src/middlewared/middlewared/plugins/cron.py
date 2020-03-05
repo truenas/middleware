@@ -1,7 +1,7 @@
 import contextlib
 
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
-from middlewared.service import CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.validators import Range
 from middlewared.utils.osc import run_command_with_user_context
@@ -272,6 +272,9 @@ class CronJobService(CRUDService):
                 )
 
             job.logs_fd.write(f'Executed CronTask - {cron_cmd}: {stdout}'.encode())
+
+        if cp.returncode:
+            raise CallError(f'CronTask "{cron_cmd}" exited with {cp.returncode} (non-zero) exit status.')
 
         job.set_progress(
             100,
