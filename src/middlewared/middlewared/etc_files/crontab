@@ -1,49 +1,24 @@
-<%
-    import random
+# /etc/crontab - root's crontab for FreeBSD
+#
+# $FreeBSD: src/etc/crontab,v 1.33.2.1 2009/08/03 08:13:06 kensmith Exp $
+#
+SHELL=/bin/sh
+PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+#
+#minute	hour	mday	month	wday	who	command
+#
+*/5	*	*	*	*	root	/usr/libexec/atrun > /dev/null 2>&1
+#
+# Save some entropy so that /dev/random can re-seed on boot.
+*/11	*	*	*	*	operator /usr/libexec/save-entropy > /dev/null 2>&1
+#
+# Rotate log files only at midnight.
+0	0	*	*	*	root	newsyslog > /dev/null 2>&1
+#
+# Adjust the time zone if the CMOS clock keeps local time, as opposed to
+# UTC time.  See adjkerntz(8) for details.
+1,31	0-5	*	*	*	root	adjkerntz -a > /dev/null 2>&1
 
-    with open("/conf/base/etc/crontab.template") as f:
-        system_crontab = f.read()
+0	*	*	*	*	root	/usr/local/bin/python /usr/local/bin/mfistatus.py > /dev/null 2>&1
 
-    system_advanced = middleware.call_sync("system.advanced.config")
-    resilver = middleware.call_sync("pool.resilver.config")
-    boot_pool = middleware.call_sync("boot.pool_name")
-%>\
-${system_crontab}
-
-45 3 * * * root /usr/local/bin/midclt call pool.scrub.run ${boot_pool} ${system_advanced['boot_scrub']} > /dev/null 2>&1
-
-## Don't run these on TrueNAS HA standby controllers
-## Redmine 55908
-% if middleware.call_sync("system.is_freenas") or middleware.call_sync("failover.status") != "BACKUP":
-    % for job in middleware.call_sync("cronjob.query", [["enabled", "=", True]]):
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call cronjob.run {job['id']}"))}
-    % endfor
-
-    % for job in middleware.call_sync("rsynctask.query", [["enabled", "=", True]]):
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call rsynctask.run {job['id']}"))}
-    % endfor
-
-    % for job in middleware.call_sync("cloudsync.query", [["enabled", "=", True]]):
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call cloudsync.sync {job['id']}"))}
-    % endfor
-
-    % for job in middleware.call_sync("pool.scrub.query", [["enabled", "=", True]]):
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call pool.scrub.run {job['pool_name']} {job['threshold']}"))}
-    % endfor
-
-    % if resilver["enabled"]:
-        ${resilver["begin"].split(":")[1]} ${resilver["begin"].split(":")[0]} * * * root \
-        /usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1
-
-        ${resilver["end"].split(":")[1]} ${resilver["end"].split(":")[0]} * * * root \
-        /usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1
-    % endif
-
-    % if middleware.call_sync("datastore.query", "system.update", [["upd_autocheck", "=", True]]):
-${random.randint(0, 59)} \
-${random.randint(1, 4)} \
-* * * root /usr/local/bin/midclt call update.download > /dev/null 2>&1
-    % endif
-
-@weekly root /usr/local/sbin/update-smart-drivedb > /dev/null 2>&1
-% endif
+30	*/5	*	*	*	root	/etc/ix.rc.d/ix-kinit renew > /dev/null 2>&1
