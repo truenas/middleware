@@ -63,9 +63,7 @@ def test_07_Testing_rsync_access():
 
 
 def test_08_Starting_rsyncd_service():
-    results = POST("/service/start/",
-                   {'service': 'rsyncd'}
-                   )
+    results = POST("/service/start/", {'service': 'rsync'})
     assert results.status_code == 200, results.text
     sleep(1)
 
