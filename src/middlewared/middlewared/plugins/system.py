@@ -1245,8 +1245,7 @@ async def setup(middleware):
     settings = await middleware.call(
         'system.general.config',
     )
-    os.environ['TZ'] = settings['timezone']
-    time.tzset()
+    await middleware.call('core.environ_update', {'TZ': settings['timezone']})
 
     middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
 

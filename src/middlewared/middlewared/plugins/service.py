@@ -526,8 +526,7 @@ class ServiceService(CRUDService):
             [],
             {'order_by': ['-id'], 'get': True}
         )
-        os.environ['TZ'] = settings['stg_timezone']
-        time.tzset()
+        await self.middleware.call('core.environ_update', {'TZ': settings['stg_timezone']})
 
     async def _restart_ntpd(self, **kwargs):
         await self.middleware.call('etc.generate', 'ntpd')
