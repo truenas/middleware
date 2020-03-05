@@ -85,7 +85,8 @@ class EtcService(Service):
             {'type': 'py', 'path': 'afpd'},
         ],
         'cron': [
-            {'type': 'mako', 'path': 'crontab'},
+            {'type': 'mako', 'path': 'cron.d/middlewared'},
+            {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
         ],
         'ctld': [
             {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD'},
