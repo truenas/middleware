@@ -812,6 +812,7 @@ class FilesystemService(Service):
             a.strip()
             a.apply(data['path'])
         else:
+            inheritable_is_present = False
             cleaned_acl = []
             lockace_is_present = False
             for entry in dacl:
@@ -829,7 +830,14 @@ class FilesystemService(Service):
                     )
                 if ace['tag'] == 'EVERYONE' and self.__convert_to_basic_permset(ace['perms']) == 'NOPERMS':
                     lockace_is_present = True
+                elif ace['flags'].get('DIRECTORY_INHERIT') or ace['flags'].get('FILE_INHERIT'):
+                    inheritable_is_present = True
+
                 cleaned_acl.append(ace)
+
+            if not inheritable_is_present:
+                raise CallError('At least one inheritable ACL entry is required', errno.EINVAL)
+
             if options['canonicalize']:
                 cleaned_acl = self.canonicalize_acl_order(cleaned_acl)
 
