@@ -12,14 +12,12 @@ from collections import defaultdict
 import contextlib
 import ipaddress
 import itertools
-import os
 import platform
 import random
 import re
 import socket
 import string
 import subprocess
-import urllib.request
 
 from .interface.netif import netif
 from .interface.type_base import InterfaceType
@@ -2203,17 +2201,11 @@ async def configure_http_proxy(middleware, *args, **kwargs):
     """
     gc = await middleware.call('datastore.config', 'network.globalconfiguration')
     http_proxy = gc['gc_httpproxy']
-    if http_proxy:
-        os.environ['http_proxy'] = http_proxy
-        os.environ['https_proxy'] = http_proxy
-    elif not http_proxy:
-        if 'http_proxy' in os.environ:
-            del os.environ['http_proxy']
-        if 'https_proxy' in os.environ:
-            del os.environ['https_proxy']
-
-    # Reset global opener so ProxyHandler can be recalculated
-    urllib.request.install_opener(None)
+    update = {
+        'http_proxy': http_proxy,
+        'https_proxy': http_proxy,
+    }
+    await middleware.call('core.environ_update', update)
 
 
 async def attach_interface(middleware, iface):
@@ -2253,6 +2245,8 @@ async def udevd_ifnet_hook(middleware, data):
 
 
 async def setup(middleware):
+    middleware.event_register('network.config', 'Sent on network configuration changes.')
+
     # Configure http proxy on startup and on network.config events
     asyncio.ensure_future(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
