@@ -1473,7 +1473,7 @@ class DiskService(CRUDService):
                         # to avoid errors in the console (#27516)
                         cp = await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
                         if cp.returncode:
-                            self.middleware.logger.debug(
+                            self.middleware.logger.error(
                                 'Failed to savecore for "%s": ', f'/dev/{p.name}', cp.stderr.decode()
                             )
                         if g.name in disks:
@@ -1581,9 +1581,9 @@ class DiskService(CRUDService):
             except OSError:
                 pass
             os.symlink(f'/dev/{name}', '/dev/dumpdev')
-            cp = await run('dumpon', f'/dev/{name}')
+            cp = await run('dumpon', f'/dev/{name}', check=False)
             if cp.returncode:
-                self.middleware.logger.debug(
+                self.middleware.logger.error(
                     'Failed to specify "%s" device for crash dumps: %s', f'/dev/{name}', cp.stderr.decode()
                 )
             else:
