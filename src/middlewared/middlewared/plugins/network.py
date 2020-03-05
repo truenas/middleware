@@ -994,7 +994,7 @@ class InterfaceService(CRUDService):
                     await self.middleware.call('interface.validate_name', InterfaceType.LINK_AGGREGATION, data['name'])
                 except ValueError as e:
                     verrors.add(f'{schema_name}.name', str(e))
-            if data['lag_protocol'] not in await self.middleware.call('interface.lagg_supported_protocols'):
+            if data['lag_protocol'] not in await self.middleware.call('interface.lag_supported_protocols'):
                 verrors.add(
                     f'{schema_name}.lag_protocol',
                     f'{platform.system()} does not support LAGG protocol {data["lag_protocol"]}',
@@ -1708,7 +1708,8 @@ class InterfaceService(CRUDService):
         for lagg in laggs:
             name = lagg['lagg_interface']['int_interface']
             members = await self.middleware.call('datastore.query', 'network.lagginterfacemembers',
-                                                 [('lagg_interfacegroup_id', '=', lagg['id'])])
+                                                 [('lagg_interfacegroup_id', '=', lagg['id'])],
+                                                 {'order_by': ['lagg_physnic']})
             disable_capabilities = name in disable_capabilities_ifaces
 
             cloned_interfaces.append(name)
