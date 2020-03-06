@@ -69,6 +69,7 @@ Package: middlewared
 Architecture: all
 Depends: alembic,
          avahi-daemon,
+         bsd-mailx,
          collectd-core,
          cryptsetup,
          ethtool,
