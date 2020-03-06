@@ -832,6 +832,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
             beginning = [
                 'datastore',
+                # Allow internal UNIX socket authentication for plugins that run in separate pools
+                'auth',
                 # We need to register all services because pseudo-services can still be used by plugins setup functions
                 'service',
                 # We run boot plugin first to ensure we are able to retrieve
