@@ -27,6 +27,9 @@ def get_config(middleware):
     """
     Set basic configuration
     """
+    if not os.path.exists(SMBPath.GLOBALCONF.platform()):
+        middleware.call_sync("etc.generate", "smb")
+
     conf = {}
     conf['systemdataset'] = middleware.call_sync('systemdataset.config')
     if conf['systemdataset']['path'] is None:

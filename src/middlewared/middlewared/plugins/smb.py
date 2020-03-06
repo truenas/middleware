@@ -769,8 +769,8 @@ class SharingSMBService(CRUDService):
                     kv = param.split('=', 1)
                     ret[kv[0].strip()] = kv[1].strip()
                 except Exception:
-                    self.logger.debug("[%s] contains invalid auxiliary parameter: [%s]",
-                                      aux['name'], param)
+                    self.logger.debug("Share contains invalid auxiliary parameter: [%s]",
+                                      param)
             return ret
 
         if direction == 'FROM':
