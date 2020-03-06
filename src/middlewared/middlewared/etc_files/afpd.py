@@ -128,7 +128,7 @@ def render(service, middleware):
             cf_contents.append("\tldap group attr = %s\n" % "sAMAccountName")
 
     cf_contents.append("\tlog file = %s\n" % "/var/log/afp.log")
-    cf_contents.append("\tlog level = %s\n" % "default:info")
+    cf_contents.append("\tlog level = %s\n" % "default:warn")
     cf_contents.append("\n")
 
     for share in middleware.call_sync('datastore.query', 'sharing.afp_share', [['afp_enabled', '=', True]]):
