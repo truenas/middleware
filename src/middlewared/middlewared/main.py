@@ -808,6 +808,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
             plugin, function = plugin__function
 
             beginning = [
+                # Allow internal UNIX socket authentication for plugins that run in separate pools
+                'auth',
                 # We need to run system plugin setup's function first because when system boots, the right
                 # timezone is not configured. See #72131
                 'system',
