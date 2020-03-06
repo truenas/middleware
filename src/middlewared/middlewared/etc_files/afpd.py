@@ -49,7 +49,7 @@ def render(service, middleware):
     cf_contents.append('\tuam list = %s\n' % (" ").join(uam_list))
 
     if afp.afp_srv_bindip:
-        ifaces = get_interface(afp.afp_srv_bindip)
+        ifaces = get_interface(middleware, afp.afp_srv_bindip)
         if ifaces:
             cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
             cf_contents.append("\tafp interfaces = %s\n" % ' '.join(ifaces))
