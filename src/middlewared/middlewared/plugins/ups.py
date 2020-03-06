@@ -14,7 +14,10 @@ from middlewared.utils import osc, run
 from middlewared.validators import Email, Range, Port
 
 
-DRIVER_BIN_DIR = '/usr/local/libexec/nut'
+if osc.IS_FREEBSD:
+    DRIVER_BIN_DIR = '/usr/local/libexec/nut'
+elif osc.IS_LINUX:
+    DRIVER_BIN_DIR = '/lib/nut'
 
 
 class UPSModel(sa.Model):
@@ -269,7 +272,7 @@ class UPSService(SystemServiceService):
             # same time. This will ensure that we don't initiate a shutdown if ups is OL.
             stats_output = (
                 await run(
-                    '/usr/local/bin/upsc', upsc_identifier,
+                    'upsc', upsc_identifier,
                     check=False
                 )
             ).stdout
@@ -285,7 +288,7 @@ class UPSService(SystemServiceService):
                 )
             else:
                 syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown"')
-                await run('/usr/local/sbin/upsmon', '-c', 'fsd', check=False)
+                await run('upsmon', '-c', 'fsd', check=False)
         elif 'notify' in notify_type.lower():
             # notify_type is expected to be of the following format
             # NOTIFY-EVENT i.e NOTIFY-LOWBATT
@@ -339,7 +342,7 @@ class UPSService(SystemServiceService):
                 }
 
                 stats_output = (
-                    await run('/usr/local/bin/upsc', upsc_identifier, check=False)
+                    await run('upsc', upsc_identifier, check=False)
                 ).stdout
                 recovered_stats = re.findall(
                     fr'({"|".join(data_points)}): (.*)',
