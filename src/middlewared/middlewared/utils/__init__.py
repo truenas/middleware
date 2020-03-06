@@ -63,7 +63,7 @@ def django_modelobj_serialize(middleware, obj, extend=None, extend_context=None,
         if isinstance(field, (
             IPAddressField, IP4AddressField, IP6AddressField
         )):
-            data[name] = str(value)
+            data[name] = str(value) if value is not None else value
         elif isinstance(field, ForeignKey):
             data[name] = django_modelobj_serialize(middleware, value) if value is not None else value
         elif isinstance(field, ManyToManyField):
