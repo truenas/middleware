@@ -678,6 +678,12 @@ class ActiveDirectoryService(ConfigService):
         if not new["enable"]:
             return
 
+        if new["certificate"]:
+            verrors.extend(await self.middleware.call(
+                "certificate.cert_services_validation",
+                new["certificate"], "activedirectory_update.certificate", False
+            ))
+
         if not new["bindpw"] and not new["kerberos_principal"]:
             verrors.add(
                 "activedirectory_update.bindname",
