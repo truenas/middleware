@@ -37,6 +37,7 @@ class MakoRenderer(object):
                 # Render the template
                 return tmpl.render(
                     middleware=self.service.middleware,
+                    service=self.service,
                     FileShouldNotExist=FileShouldNotExist,
                     IS_FREEBSD=osc.IS_FREEBSD,
                     IS_LINUX=osc.IS_LINUX,
@@ -70,6 +71,8 @@ class PyRenderer(object):
 
 
 class EtcService(Service):
+
+    APACHE_DIR = 'local/apache24' if osc.IS_FREEBSD else 'local/apache2'
 
     GROUPS = {
         'user': [
@@ -141,9 +144,21 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'webdav': [
-            {'type': 'mako', 'path': 'local/apache24/httpd.conf'},
-            {'type': 'mako', 'path': 'local/apache24/Includes/webdav.conf'},
-            {'type': 'py', 'path': 'local/apache24/webdav_config'},
+            {
+                'type': 'mako',
+                'local_path': 'local/apache24/httpd.conf',
+                'path': f'{APACHE_DIR}/httpd.conf',
+            },
+            {
+                'type': 'mako',
+                'local_path': f'local/apache24/Includes/webdav.conf',
+                'path': f'{APACHE_DIR}/Includes/webdav.conf',
+            },
+            {
+                'type': 'py',
+                'local_path': f'local/apache24/webdav_config',
+                'path': f'{APACHE_DIR}/webdav_config',
+            },
         ],
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
@@ -270,7 +285,7 @@ class EtcService(Service):
             if 'platform' in entry and entry['platform'].upper() != osc.SYSTEM:
                 continue
 
-            path = os.path.join(self.files_dir, entry['path'])
+            path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])
             entry_path = entry['path']
             if osc.IS_LINUX:
                 if entry_path.startswith('local/'):
