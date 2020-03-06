@@ -68,6 +68,7 @@ Homepage: https://github.com/freenas/freenas
 Package: middlewared
 Architecture: all
 Depends: alembic,
+         apache2,
          avahi-daemon,
          collectd-core,
          cryptsetup,
