@@ -1273,6 +1273,13 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def _net_ads_setspn(self, spn_list):
+        """
+        Only automatically add NFS SPN entries on domain join
+        if kerberized nfsv4 is enabled.
+        """
+        if not (await self.middleware.call('nfs.config'))['v4_krb']:
+            return False
+
         for spn in spn_list:
             netads = await run([
                 SMBCmd.NET.value, '-k', 'ads', 'setspn',
