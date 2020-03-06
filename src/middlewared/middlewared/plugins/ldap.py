@@ -452,6 +452,12 @@ class LDAPService(ConfigService):
         if not new["enable"]:
             return
 
+        if new["certificate"]:
+            verrors.extend(await self.middleware.call(
+                "certificate.cert_services_validation",
+                new["certificate"], "ldap_update.certificate", False
+            ))
+
         if not new["bindpw"] and not new["kerberos_principal"] and not new["anonbind"]:
             verrors.add(
                 "ldap_update.binddn",
