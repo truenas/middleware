@@ -640,8 +640,8 @@ class SharingSMBService(CRUDService):
             try:
                 await self.middleware.call('sharing.smb.reg_delshare', oldname)
             except Exception:
-                self.logger.warn('Failed to remove stale share [%]',
-                                 old['name'], exc_info=True)
+                self.logger.warning('Failed to remove stale share [%s]',
+                                    old['name'], exc_info=True)
             await self.middleware.call('sharing.smb.reg_addshare', new)
         else:
             diff = await self.middleware.call(
