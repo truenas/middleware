@@ -239,7 +239,7 @@ class EtcService(Service):
     }
 
     SKIP_LIST = [
-        'system_dataset', 'collectd', 'mdns', 'syslogd', 'smb_configure', 'nginx'
+        'system_dataset', 'mdns', 'syslogd', 'smb_configure', 'nginx'
     ] + (['ttys'] if osc.IS_LINUX else [])
 
     class Config:
