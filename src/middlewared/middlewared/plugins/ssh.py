@@ -146,7 +146,7 @@ class SSHService(SystemServiceService):
             path = os.path.join("/usr/local/etc/ssh", i)
             if os.path.exists(path):
                 with open(path, "rb") as f:
-                    data = base64.b64encode(f.read())
+                    data = base64.b64encode(f.read()).decode("ascii")
 
                 column = i.replace(".", "_",).replace("-", "_")
 

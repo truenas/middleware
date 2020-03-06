@@ -219,7 +219,7 @@ class SystemDatasetsService(PseudoServiceBase):
     restartable = True
 
     async def restart(self):
-        systemdataset = await self.middleware.call('systemdataset.setup')
+        systemdataset = await self.middleware.call("systemdataset.setup")
         if not systemdataset:
             return None
 
