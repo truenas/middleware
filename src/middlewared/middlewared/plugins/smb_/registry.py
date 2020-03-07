@@ -283,9 +283,6 @@ class SharingSMBService(Service):
             "ea support": "false",
         })
 
-        if not data['home'] and not data['path_suffix']:
-            conf["jail:enable"] = "true"
-
         if data['aapl_name_mangling']:
             data['vfsobjects'].append('catia')
             conf.update({
