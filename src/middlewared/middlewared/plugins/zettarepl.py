@@ -521,6 +521,7 @@ class ZettareplService(Service):
                 "auto": replication_task["auto"],
                 "only-matching-schedule": replication_task["only_matching_schedule"],
                 "allow-from-scratch": replication_task["allow_from_scratch"],
+                "readonly": replication_task["readonly"].lower(),
                 "hold-pending-snapshots": replication_task["hold_pending_snapshots"],
                 "retention-policy": replication_task["retention_policy"].lower(),
                 "dedup": replication_task["dedup"],

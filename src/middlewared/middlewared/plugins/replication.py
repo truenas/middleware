@@ -36,6 +36,7 @@ class ReplicationModel(sa.Model):
     repl_schedule_month = sa.Column(sa.String(100), nullable=True, default='*')
     repl_schedule_dayweek = sa.Column(sa.String(100), nullable=True, default="*")
     repl_only_matching_schedule = sa.Column(sa.Boolean())
+    repl_readonly = sa.Column(sa.String(120))
     repl_allow_from_scratch = sa.Column(sa.Boolean())
     repl_hold_pending_snapshots = sa.Column(sa.Boolean())
     repl_retention_policy = sa.Column(sa.String(120), default="NONE")
@@ -171,6 +172,7 @@ class ReplicationService(CRUDService):
             ),
             Bool("only_matching_schedule", default=False),
             Bool("allow_from_scratch", default=False),
+            Str("readonly", enum=["SET", "REQUIRE", "IGNORE"], default="SET"),
             Bool("hold_pending_snapshots", default=False),
             Str("retention_policy", enum=["SOURCE", "CUSTOM", "NONE"], required=True),
             Int("lifetime_value", null=True, default=None, validators=[Range(min=1)]),
@@ -222,6 +224,10 @@ class ReplicationService(CRUDService):
           `restrict_schedule`
         * `allow_from_scratch` will destroy all snapshots on target side and replicate everything from scratch if none
           of the snapshots on target side matches source snapshots
+        * `readonly` controls destination datasets readonly property:
+          * `SET` will set all destination datasets to readonly=on after finishing the replication
+          * `REQUIRE` will require all existing destination datasets to have readonly=on property
+          * `IGNORE` will avoid this kind of behavior
         * `hold_pending_snapshots` will prevent source snapshots from being deleted by retention of replication fails
           for some reason
         * `retention_policy` specifies how to delete old snapshots on target side:
