@@ -677,6 +677,14 @@ class Replication(Model):
     repl_only_matching_schedule = models.BooleanField(
         verbose_name=_("Only replicate snapshots matching schedule"),
     )
+    repl_readonly = models.CharField(
+        max_length=120,
+        choices=[("SET", "Set to read-only"),
+                 ("REQUIRE", "Require to be read-only"),
+                 ("IGNORE", "Ignore read-only value")],
+        default="SET",
+        verbose_name=_("Destination dataset read-only"),
+    )
     repl_allow_from_scratch = models.BooleanField(
         verbose_name=_("Replicate from scratch if incremental is not possible"),
     )

@@ -193,6 +193,7 @@ class ReplicationService(CRUDService):
             ),
             Bool("only_matching_schedule", default=False),
             Bool("allow_from_scratch", default=False),
+            Str("readonly", enum=["SET", "REQUIRE", "IGNORE"], default="SET"),
             Bool("hold_pending_snapshots", default=False),
             Str("retention_policy", enum=["SOURCE", "CUSTOM", "NONE"], required=True),
             Int("lifetime_value", null=True, default=None, validators=[Range(min=1)]),
@@ -245,6 +246,10 @@ class ReplicationService(CRUDService):
           `restrict_schedule`
         * `allow_from_scratch` will destroy all snapshots on target side and replicate everything from scratch if none
           of the snapshots on target side matches source snapshots
+        * `readonly` controls destination datasets readonly property:
+          * `SET` will set all destination datasets to readonly=on after finishing the replication
+          * `REQUIRE` will require all existing destination datasets to have readonly=on property
+          * `IGNORE` will avoid this kind of behavior
         * `hold_pending_snapshots` will prevent source snapshots from being deleted by retention of replication fails
           for some reason
         * `retention_policy` specifies how to delete old snapshots on target side:
@@ -567,6 +572,15 @@ class ReplicationService(CRUDService):
                 verrors.add(
                     "target_dataset", "Target dataset should end with source dataset name without the first element "
                                       "(without pool name) for Legacy transport",
+                )
+
+            if await self.middleware.call("system.is_freenas"):
+                legacy_readonly = "SET"
+            else:
+                legacy_readonly = "IGNORE"
+            if data["readonly"] != legacy_readonly:
+                verrors.add(
+                    "readonly", f"This option should be {legacy_readonly} for Legacy transport",
                 )
 
             if data["retention_policy"] == "SOURCE":

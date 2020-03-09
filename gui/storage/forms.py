@@ -2423,7 +2423,11 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             data["speed_limit"] = None
 
         if data["transport"] == "LEGACY":
+            with client as c:
+                is_freenas = c.call("system.is_freenas")
+
             data["auto"] = True
+            data["readonly"] = "SET" if is_freenas else "REQUIRE"
             data["allow_from_scratch"] = True
 
             data["exclude"] = []
