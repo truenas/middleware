@@ -58,7 +58,12 @@ def test_03_verify_certificate_delete_failed():
             sleep(5)
         else:
             assert job_status['state'] == 'FAILED', get_job.text
-            assert job_status['exc_info']['extra']['dependencies'][1]['objects'][0]['certificate']['id'] == certificate_id,  get_job.text
+            try:
+                job_status['exc_info']['extra']['dependencies'][0]['objects']
+                num = 0
+            except KeyError:
+                num = 1
+            assert job_status['exc_info']['extra']['dependencies'][num]['objects'][0]['certificate']['id'] == certificate_id,  get_job.text
             break
 
 
