@@ -42,7 +42,8 @@ Mandatory option
 Optional option
     --test <test name>         - Test name (Network, ALL)
     --vm-name <VM_NAME>        - Name the the Bhyve VM
-    --ha                       - Runtest for HA
+    --ha                       - Run test for HA
+    --scale                    - Run test for Scale
     """ % argv[0]
 
 # if have no argument stop
@@ -56,7 +57,8 @@ option_list = [
     "interface=",
     'test=',
     "vm-name=",
-    "ha"
+    "ha",
+    "scale"
 ]
 
 # look if all the argument are there.
@@ -67,8 +69,11 @@ except getopt.GetoptError as e:
     print(error_msg)
     exit()
 
+vm_name = None
 testName = None
 testexpr = None
+ha = False
+scale = False
 
 for output, arg in myopts:
     if output in ('-i', '--ip'):
@@ -85,19 +90,13 @@ for output, arg in myopts:
         vm_name = f"'{arg}'"
     elif output == '--ha':
         ha = True
+    elif output == '--scale':
+        scale = True
 
-if ('ip' not in locals() and
-        'passwd' not in locals() and
-        'interface' not in locals()):
+if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
     print(error_msg)
     exit()
-
-if 'vm_name' not in locals():
-    vm_name = None
-
-if 'ha' not in locals():
-    ha = False
 
 # create random hostname and random fake domain
 digit = ''.join(random.choices(string.digits, k=2))
@@ -119,6 +118,7 @@ localHome = "{localHome}"
 keyPath = "{keyPath}"
 pool_name = "tank"
 ha = {ha}
+scale = {scale}
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -150,9 +150,9 @@ def get_tests():
     skip_tests = []
 
     if ha is True:
-        skip_tests = ['interfaces', 'network', 'delete_interfaces']
-    else:
-        skip_tests = []
+        skip_tests += ['interfaces', 'network', 'delete_interfaces']
+    if scale is True:
+        skip_tests += ['jail', 'plugin']
     apidir = 'api2/'
     if ha is True:
         sv = ['ssh', 'pool', 'user']
@@ -163,8 +163,7 @@ def get_tests():
     for filename in listdir(apidir):
         if filename.endswith('.py') and not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
-            if (filename not in skip_tests and filename not in sv and
-                    filename not in ev):
+            if filename not in skip_tests and filename not in sv and filename not in ev:
                 rv.append(filename)
     rv.sort()
     return sv + rv + ev
