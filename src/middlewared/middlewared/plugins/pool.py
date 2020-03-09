@@ -466,6 +466,7 @@ class PoolService(CRUDService):
         Str('name', required=True),
         Bool('encryption', default=False),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
+        Int('special_small_block_size', validators=[Range(min=512)]),
         Dict(
             'encryption_options',
             Bool('generate_key', default=False),
@@ -628,6 +629,8 @@ class PoolService(CRUDService):
         dedup = data.get('deduplication')
         if dedup:
             fsoptions['dedup'] = dedup.lower()
+        if data.get('special_small_block_size'):
+            fsoptions['special_small_blocks'] = data['special_small_block_size']
 
         cachefile_dir = os.path.dirname(ZPOOL_CACHE_FILE)
         if not os.path.isdir(cachefile_dir):
@@ -2480,6 +2483,7 @@ class PoolDatasetService(CRUDService):
                 ('encryption', 'encryption_algorithm', lambda o: o.upper() if o != 'off' else None),
                 ('used', None, None),
                 ('available', None, None),
+                ('special_small_blocks', 'special_small_block_size', None),
             ):
                 if orig_name not in dataset['properties']:
                     continue
@@ -2531,6 +2535,7 @@ class PoolDatasetService(CRUDService):
         Int('refquota_critical', validators=[Range(0, 100)]),
         Int('reservation'),
         Int('refreservation'),
+        Int('special_small_block_size', validators=[Range(min=512)]),
         Int('copies'),
         Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
         Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
@@ -2688,6 +2693,7 @@ class PoolDatasetService(CRUDService):
             ('volblocksize', None, None),
             ('volsize', None, lambda x: str(x)),
             ('xattr', None, str.lower),
+            ('special_small_block_size', 'special_small_blocks', None),
         ):
             if i not in data:
                 continue
@@ -2805,6 +2811,7 @@ class PoolDatasetService(CRUDService):
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
             ('volsize', None, lambda x: str(x), False),
+            ('special_small_block_size', 'special_small_blocks', None, True),
         )
 
         props = {}
