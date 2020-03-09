@@ -165,7 +165,7 @@ def get_tests():
             rv = ['ssh']
         else:
             skip_tests = []
-            rv = ['interface', 'ssh', 'network', 'volume']
+            rv = ['interfaces', 'ssh', 'network', 'volume']
         apidir = 'api2/'
     for filename in listdir(apidir):
         if filename.endswith('.py') and \
