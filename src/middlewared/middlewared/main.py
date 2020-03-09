@@ -336,6 +336,12 @@ class Application(object):
         elif message['msg'] == 'unsub':
             await self.unsubscribe(message['id'])
 
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, newstate):
+        pass
+
 
 class FileApplication(object):
 
