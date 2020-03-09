@@ -204,7 +204,7 @@ def filter_list(_list, filters=None, options=None):
             rv = sorted(rv, key=lambda x: x[o], reverse=reverse)
 
     if options.get('get') is True:
-        return rv[0]
+        return rv if not rv else rv[0]
 
     return rv
 
@@ -404,7 +404,6 @@ class LoadPluginsMixin(object):
                     resolved += 1
             if resolved == 0:
                 raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
-
 
     def add_service(self, service):
         self._services[service._config.namespace] = service
