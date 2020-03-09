@@ -7,7 +7,7 @@ from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from .service_exception import adapt_exception
-from .utils import start_daemon_thread, LoadPluginsMixin
+from .utils import start_daemon_thread, sw_version, LoadPluginsMixin
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
@@ -739,6 +739,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         self.logger = logger.Logger(
             'middlewared', debug_level, log_format
         ).getLogger()
+        self.logger.info('Starting %s middleware', sw_version())
         self.crash_reporting = logger.CrashReporting()
         self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
         self.loop_debug = loop_debug
