@@ -597,6 +597,9 @@ class VMWareService(CRUDService):
     # check if there is already a snapshot by a given name
     def _doesVMSnapshotByNameExists(self, vm, snapshotName):
         try:
+            if vm.snapshot is None:
+                return False
+
             tree = vm.snapshot.rootSnapshotList
             while tree[0].childSnapshotList is not None:
                 snap = tree[0]
