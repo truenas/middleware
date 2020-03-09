@@ -484,6 +484,20 @@ class PoolService(CRUDService):
                     List('disks', items=[Str('disk')], required=True),
                 ),
             ], required=True),
+            List('special', items=[
+                Dict(
+                    'datavdevs',
+                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ], required=True),
+            List('dedup', items=[
+                Dict(
+                    'datavdevs',
+                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ], required=True),
             List('cache', items=[
                 Dict(
                     'cachevdevs',
@@ -847,7 +861,7 @@ class PoolService(CRUDService):
         # to be performed in parallel if we wish to do so.
         disks = {}
         vdevs = []
-        for i in ('data', 'cache', 'log'):
+        for i in ('data', 'cache', 'log', 'special', 'dedup'):
             t_vdevs = topology.get(i)
             if not t_vdevs:
                 continue
