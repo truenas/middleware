@@ -8,8 +8,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT, POST
 
-ups_dc_list = list(GET('/ups/driver_choices/').json().keys())
-
 first_ups_list = [
     'rmonitor',
     'emailnotify',
@@ -195,32 +193,25 @@ def test_23_get_ups_driver_choice():
     ups_dc = results
 
 
-@pytest.mark.parametrize('dkey', ups_dc_list)
-def test_24_check_ups_driver_choice_info_(dkey):
-    driver_choice = dkey.partition('$')[2]
-    assert isinstance(ups_dc.json()[dkey], str) is True, ups_dc.text
-    assert driver_choice in ups_dc.json()[dkey], ups_dc.text
-
-
-def test_25_get_ups_driver_choice():
+def test_24_get_ups_driver_choice():
     results = GET('/ups/port_choices/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     assert isinstance(results.json()[0], str) is True, results.text
 
 
-def test_26_Disabling_UPS_Service():
+def test_25_Disabling_UPS_Service():
     results = PUT('/service/id/ups/', {'enable': False})
     assert results.status_code == 200, results.text
 
 
-def test_27_Disabling_UPS_Service_at_boot():
+def test_26_Disabling_UPS_Service_at_boot():
     results = GET(f'/service/id/{ups_id}/')
     assert results.status_code == 200, results.text
     assert results.json()['enable'] is False, results.text
 
 
-def test_28_stop_ups_service():
+def test_27_stop_ups_service():
     payload = {
         "service": "ups",
     }
@@ -228,7 +219,7 @@ def test_28_stop_ups_service():
     assert results.status_code == 200, results.text
 
 
-def test_29_look_UPS_service_status_is_stopped():
+def test_28_look_UPS_service_status_is_stopped():
     results = GET(f'/service/id/{ups_id}/')
     assert results.status_code == 200, results.text
     assert results.json()['state'] == 'STOPPED', results.text
