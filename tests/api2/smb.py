@@ -134,13 +134,6 @@ def test_007_creating_a_smb_share_path():
     smb_id = results.json()['id']
 
 
-def test_008_verify_if_smb_getparm_path_homes_is_null():
-    cmd = 'midclt call smb.getparm path homes'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == 'null'
-
-
 def test_009_starting_cifs_service():
     payload = {"service": "cifs"}
     results = POST("/service/start/", payload)
@@ -844,11 +837,11 @@ def test_105_verify_smbclient_127_0_0_1_connection():
     assert 'My Test SMB Share' in results['output'], results['output']
 
 
-def test_106_verify_midclt_call_smb_getparm_access_based_share_enum_is_true():
+def test_106_verify_midclt_call_smb_getparm_access_based_share_enum_is_null():
     cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == 'False', results['output']
+    assert results['output'].strip() == 'null', results['output']
 
 
 def test_107_delete_cifs_share():
