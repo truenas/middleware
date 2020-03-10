@@ -256,12 +256,21 @@ def test_28_delete_dataset_with_receive_resume_token(create_dst):
         result = POST('/pool/dataset/', {'name': f'{pool_name}/dst'})
         assert result.status_code == 200, result.text
 
-    SSH_TEST(f'dd if=/dev/urandom of=/mnt/{pool_name}/src bs=1M count=1', user, password, ip)
-    SSH_TEST(f'zfs snapshot {pool_name}@snap-1', user, password, ip)
-    SSH_TEST(f'zfs send {pool_name}@snap-1 | head -c 102400 | zfs recv -s -F {pool_name}/dst', user, password, ip)
+    results = SSH_TEST(f'dd if=/dev/urandom of=/mnt/{pool_name}/src/blob bs=1M count=1', user, password, ip)
+    assert results['result'] is True, results
+    results = SSH_TEST(f'zfs snapshot {pool_name}/src@snap-1', user, password, ip)
+    assert results['result'] is True, results
+    results = SSH_TEST(f'zfs send {pool_name}/src@snap-1 | head -c 102400 | zfs recv -s -F {pool_name}/dst', user, password, ip)
+    results = SSH_TEST(f'zfs get -H -o value receive_resume_token {pool_name}/dst', user, password, ip)
+    assert results['result'] is True, results
+    assert results['output'].strip() != "-", results
 
-    result = DELETE(f'/pool/dataset/id/{pool_name}%2Fsrc/')
+    result = DELETE(f'/pool/dataset/id/{pool_name}%2Fsrc/', {
+        'recursive': True,
+    })
     assert result.status_code == 200, result.text
 
-    result = DELETE(f'/pool/dataset/id/{pool_name}%2Fdst/')
+    result = DELETE(f'/pool/dataset/id/{pool_name}%2Fdst/', {
+        'recursive': True,
+    })
     assert result.status_code == 200, result.text
