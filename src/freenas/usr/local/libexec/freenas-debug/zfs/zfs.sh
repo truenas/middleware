@@ -61,7 +61,7 @@ zfs_func()
 	section_footer
 
 	section_header "zpool history"
-	zpool history"
+	zpool history
 	section_footer
 
 	section_header "zpool get all"
