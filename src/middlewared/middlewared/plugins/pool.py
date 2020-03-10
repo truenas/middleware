@@ -466,7 +466,6 @@ class PoolService(CRUDService):
         Str('name', required=True),
         Bool('encryption', default=False),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
-        Int('special_small_block_size', validators=[Range(min=512)]),
         Dict(
             'encryption_options',
             Bool('generate_key', default=False),
@@ -629,8 +628,6 @@ class PoolService(CRUDService):
         dedup = data.get('deduplication')
         if dedup:
             fsoptions['dedup'] = dedup.lower()
-        if data.get('special_small_block_size'):
-            fsoptions['special_small_blocks'] = data['special_small_block_size']
 
         cachefile_dir = os.path.dirname(ZPOOL_CACHE_FILE)
         if not os.path.isdir(cachefile_dir):
@@ -726,7 +723,6 @@ class PoolService(CRUDService):
         'pool_create', 'pool_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'encryption'}),
-        ('rm', {'name': 'special_small_block_size'}),
         ('rm', {'name': 'deduplication'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
