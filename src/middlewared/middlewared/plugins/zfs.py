@@ -379,7 +379,16 @@ class ZFSPoolService(CRUDService):
             if not found:
                 raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
 
-            zfs.import_pool(found, found.name, options, any_host=any_host)
+            try:
+                zfs.import_pool(found, found.name, options, any_host=any_host)
+            except libzfs.ZFSException as e:
+                # We only log if some datasets failed to mount after pool import
+                if e.code != libzfs.Error.MOUNTFAILED:
+                    raise
+                else:
+                    self.logger.error(
+                        'Failed to mount datasets after importing "%s" pool: %s', name_or_guid, str(e), exc_info=True
+                    )
 
     @accepts(Str('pool'))
     async def find_not_online(self, pool):
