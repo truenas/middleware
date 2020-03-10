@@ -60,8 +60,8 @@ zfs_func()
 	zpool status -v
 	section_footer
 
-	section_header "zpool history - excepting replication"
-	zpool history | egrep -v "zfs.*(snapshot|destroy|recv).*"
+	section_header "zpool history"
+	zpool history"
 	section_footer
 
 	section_header "zpool get all"
