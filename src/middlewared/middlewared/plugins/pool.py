@@ -726,6 +726,8 @@ class PoolService(CRUDService):
         'pool_create', 'pool_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'encryption'}),
+        ('rm', {'name': 'special_small_block_size'}),
+        ('rm', {'name': 'deduplication'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
     @job(lock='pool_createupdate')
