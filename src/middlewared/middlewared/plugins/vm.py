@@ -277,7 +277,8 @@ class VMSupervisor(object):
             )
 
             try:
-                await asyncio.wait_for(self.grub_proc.communicate(), 2)
+                # We wait for 5 seconds before timing out - See #105324
+                await asyncio.wait_for(self.grub_proc.communicate(), 5)
             except asyncio.TimeoutError:
                 try:
                     os.kill(self.grub_proc.pid, signal.SIGKILL)
