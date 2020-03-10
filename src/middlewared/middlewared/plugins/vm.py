@@ -1411,6 +1411,7 @@ class VMService(CRUDService):
         vm_data = self.middleware.call_sync('vm.get_instance', id)
         self.ensure_libvirt_connection()
         self.vms[vm_data['name']].poweroff()
+        self.middleware.call_sync('vm.teardown_guest_vmemory', id)
 
     @item_method
     @accepts(Int('id'))
