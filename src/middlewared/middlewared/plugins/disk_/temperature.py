@@ -100,6 +100,9 @@ class DiskService(Service):
         Returns temperatures for a list of devices (runs in parallel).
         See `disk.temperature` documentation for more details.
         """
+        if len(names) == 0:
+            names = await self.disks_for_temperature_monitoring()
+
         result = dict(zip(
             names,
             await asyncio_map(lambda name: self.middleware.call('disk.temperature', name, powermode), names, 8),
