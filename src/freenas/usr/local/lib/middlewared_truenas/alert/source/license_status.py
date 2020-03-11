@@ -11,8 +11,6 @@ import textwrap
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
-from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
-
 
 class LicenseAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
@@ -192,6 +190,45 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                                 'License expects %(license)s units of ES24 Expansion shelf but found %(found)s.' % {
                                     'license': addhw[0],
                                     'found': enc_nums['ES24'],
+                                }
+                            )
+                        ))
+
+                # ES24F Expansion shelf
+                if addhw[1] == 7:
+                    if enc_nums['ES24F'] != addhw[0]:
+                        alerts.append(Alert(
+                            LicenseAlertClass,
+                            (
+                                'License expects %(license)s units of ES24F Expansion shelf but found %(found)s.' % {
+                                    'license': addhw[0],
+                                    'found': enc_nums['ES24F'],
+                                }
+                            )
+                        ))
+
+                # ES60S Expansion shelf
+                if addhw[1] == 8:
+                    if enc_nums['ES60S'] != addhw[0]:
+                        alerts.append(Alert(
+                            LicenseAlertClass,
+                            (
+                                'License expects %(license)s units of ES60S Expansion shelf but found %(found)s.' % {
+                                    'license': addhw[0],
+                                    'found': enc_nums['ES60S'],
+                                }
+                            )
+                        ))
+
+                # ES102 Expansion shelf
+                if addhw[1] == 9:
+                    if enc_nums['ES102'] != addhw[0]:
+                        alerts.append(Alert(
+                            LicenseAlertClass,
+                            (
+                                'License expects %(license)s units of ES102 Expansion shelf but found %(found)s.' % {
+                                    'license': addhw[0],
+                                    'found': enc_nums['ES102'],
                                 }
                             )
                         ))
