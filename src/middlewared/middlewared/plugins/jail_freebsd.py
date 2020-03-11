@@ -1253,6 +1253,10 @@ class JailService(CRUDService):
         ))
     def fstab(self, jail, options):
         """Manipulate a jails fstab"""
+        jail_data = self.middleware.call_sync('jail.get_instance', jail)
+        if jail_data['template']:
+            raise CallError(f'Unable to perform {options["action"]} action as {jail} is a template.')
+
         uuid, _, iocage = self.check_jail_existence(jail, skip=False)
         status, jid = IOCList.list_get_jid(uuid)
         action = options['action'].lower()
