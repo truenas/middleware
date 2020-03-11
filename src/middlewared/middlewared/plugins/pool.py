@@ -792,58 +792,59 @@ class PoolService(CRUDService):
         return pool
 
     async def __common_validation(self, verrors, data, schema_name, old=None):
-        topology_data = list(data['topology'].get('data') or [])
 
-        if old:
-            def disk_to_stripe():
-                """
-                We need to convert the original topology to use STRIPE
-                instead of DISK to match the user input data
-                """
-                rv = []
-                spare = None
-                for i in old['topology']['data']:
-                    if i['type'] == 'DISK':
-                        if spare is None:
-                            spare = {
-                                'type': 'STRIPE',
-                                'disks': [i['path']],
-                            }
-                            rv.append(spare)
-                        else:
-                            spare['disks'].append(i['path'])
+        def disk_to_stripe(topology_type):
+            """
+            We need to convert the original topology to use STRIPE
+            instead of DISK to match the user input data
+            """
+            rv = []
+            spare = None
+            for i in old['topology'][topology_type]:
+                if i['type'] == 'DISK':
+                    if spare is None:
+                        spare = {
+                            'type': 'STRIPE',
+                            'disks': [i['path']],
+                        }
+                        rv.append(spare)
                     else:
-                        rv.append({
-                            'type': i['type'],
-                            'disks': [j['type'] for j in i['children']],
-                        })
-                return rv
+                        spare['disks'].append(i['path'])
+                else:
+                    rv.append({
+                        'type': i['type'],
+                        'disks': [j['type'] for j in i['children']],
+                    })
+            return rv
 
-            topology_data += disk_to_stripe()
-        lastdatatype = None
-        for i, vdev in enumerate(topology_data):
-            numdisks = len(vdev['disks'])
-            minmap = {
-                'STRIPE': 1,
-                'MIRROR': 2,
-                'RAIDZ1': 3,
-                'RAIDZ2': 4,
-                'RAIDZ3': 5,
-            }
-            mindisks = minmap[vdev['type']]
-            if numdisks < mindisks:
-                verrors.add(
-                    f'{schema_name}.topology.data.{i}.disks',
-                    f'You need at least {mindisks} disk(s) for this vdev type.',
-                )
+        for topology_type in ('data', 'special', 'dedup'):
+            lastdatatype = None
+            topology_data = list(data['topology'].get(topology_type) or [])
+            if old:
+                topology_data += disk_to_stripe(topology_type)
+            for i, vdev in enumerate(topology_data):
+                numdisks = len(vdev['disks'])
+                minmap = {
+                    'STRIPE': 1,
+                    'MIRROR': 2,
+                    'RAIDZ1': 3,
+                    'RAIDZ2': 4,
+                    'RAIDZ3': 5,
+                }
+                mindisks = minmap[vdev['type']]
+                if numdisks < mindisks:
+                    verrors.add(
+                        f'{schema_name}.topology.{topology_type}.{i}.disks',
+                        f'You need at least {mindisks} disk(s) for this vdev type.',
+                    )
 
-            if lastdatatype and lastdatatype != vdev['type']:
-                verrors.add(
-                    f'{schema_name}.topology.data.{i}.type',
-                    'You are not allowed to create a pool with different data vdev types '
-                    f'({lastdatatype} and {vdev["type"]}).',
-                )
-            lastdatatype = vdev['type']
+                if lastdatatype and lastdatatype != vdev['type']:
+                    verrors.add(
+                        f'{schema_name}.topology.{topology_type}.{i}.type',
+                        f'You are not allowed to create a pool with different {topology_type} vdev types '
+                        f'({lastdatatype} and {vdev["type"]}).',
+                    )
+                lastdatatype = vdev['type']
 
         for i in ('cache', 'log', 'spare'):
             value = data['topology'].get(i)
