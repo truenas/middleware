@@ -550,6 +550,7 @@ class ActiveDirectoryModel(sa.Model):
     ad_use_default_domain = sa.Column(sa.Boolean())
     ad_allow_dns_updates = sa.Column(sa.Boolean())
     ad_disable_freenas_cache = sa.Column(sa.Boolean())
+    ad_restrict_pam = sa.Column(sa.Boolean())
     ad_site = sa.Column(sa.String(120), nullable=True)
     ad_timeout = sa.Column(sa.Integer())
     ad_dns_timeout = sa.Column(sa.Integer())
@@ -713,6 +714,7 @@ class ActiveDirectoryService(ConfigService):
         Bool('allow_trusted_doms'),
         Bool('allow_dns_updates'),
         Bool('disable_freenas_cache'),
+        Bool('restrict_pam', default=False),
         Str('site', null=True),
         Int('kerberos_realm', null=True),
         Str('kerberos_principal', null=True),

@@ -200,6 +200,7 @@ class EtcService(Service):
         ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
+            {'type': 'mako', 'path': 'security/pam_winbind.conf'},
         ],
         'smb_share': [
             {'type': 'mako', 'path': 'local/smb4_share.conf'},
