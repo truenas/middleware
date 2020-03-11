@@ -77,7 +77,7 @@ class HostnameService(PseudoServiceBase):
         await self.middleware.call("etc.generate", "rc")
         if osc.IS_FREEBSD:
             await freebsd_service("hostname", "start")
-        await self.middleware.call("service.reload", "mdns")
+        await self.middleware.call("service.restart", "mdns")
         await self.middleware.call("service.restart", "collectd")
 
 
