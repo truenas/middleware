@@ -484,6 +484,20 @@ class PoolService(CRUDService):
                     List('disks', items=[Str('disk')], required=True),
                 ),
             ], required=True),
+            List('special', items=[
+                Dict(
+                    'specialvdevs',
+                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ]),
+            List('dedup', items=[
+                Dict(
+                    'dedupvdevs',
+                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ]),
             List('cache', items=[
                 Dict(
                     'cachevdevs',
@@ -709,6 +723,7 @@ class PoolService(CRUDService):
         'pool_create', 'pool_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'encryption'}),
+        ('rm', {'name': 'deduplication'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
     @job(lock='pool_createupdate')
@@ -777,58 +792,59 @@ class PoolService(CRUDService):
         return pool
 
     async def __common_validation(self, verrors, data, schema_name, old=None):
-        topology_data = list(data['topology'].get('data') or [])
 
-        if old:
-            def disk_to_stripe():
-                """
-                We need to convert the original topology to use STRIPE
-                instead of DISK to match the user input data
-                """
-                rv = []
-                spare = None
-                for i in old['topology']['data']:
-                    if i['type'] == 'DISK':
-                        if spare is None:
-                            spare = {
-                                'type': 'STRIPE',
-                                'disks': [i['path']],
-                            }
-                            rv.append(spare)
-                        else:
-                            spare['disks'].append(i['path'])
+        def disk_to_stripe(topology_type):
+            """
+            We need to convert the original topology to use STRIPE
+            instead of DISK to match the user input data
+            """
+            rv = []
+            spare = None
+            for i in old['topology'][topology_type]:
+                if i['type'] == 'DISK':
+                    if spare is None:
+                        spare = {
+                            'type': 'STRIPE',
+                            'disks': [i['path']],
+                        }
+                        rv.append(spare)
                     else:
-                        rv.append({
-                            'type': i['type'],
-                            'disks': [j['type'] for j in i['children']],
-                        })
-                return rv
+                        spare['disks'].append(i['path'])
+                else:
+                    rv.append({
+                        'type': i['type'],
+                        'disks': [j['type'] for j in i['children']],
+                    })
+            return rv
 
-            topology_data += disk_to_stripe()
-        lastdatatype = None
-        for i, vdev in enumerate(topology_data):
-            numdisks = len(vdev['disks'])
-            minmap = {
-                'STRIPE': 1,
-                'MIRROR': 2,
-                'RAIDZ1': 3,
-                'RAIDZ2': 4,
-                'RAIDZ3': 5,
-            }
-            mindisks = minmap[vdev['type']]
-            if numdisks < mindisks:
-                verrors.add(
-                    f'{schema_name}.topology.data.{i}.disks',
-                    f'You need at least {mindisks} disk(s) for this vdev type.',
-                )
+        for topology_type in ('data', 'special', 'dedup'):
+            lastdatatype = None
+            topology_data = list(data['topology'].get(topology_type) or [])
+            if old:
+                topology_data += disk_to_stripe(topology_type)
+            for i, vdev in enumerate(topology_data):
+                numdisks = len(vdev['disks'])
+                minmap = {
+                    'STRIPE': 1,
+                    'MIRROR': 2,
+                    'RAIDZ1': 3,
+                    'RAIDZ2': 4,
+                    'RAIDZ3': 5,
+                }
+                mindisks = minmap[vdev['type']]
+                if numdisks < mindisks:
+                    verrors.add(
+                        f'{schema_name}.topology.{topology_type}.{i}.disks',
+                        f'You need at least {mindisks} disk(s) for this vdev type.',
+                    )
 
-            if lastdatatype and lastdatatype != vdev['type']:
-                verrors.add(
-                    f'{schema_name}.topology.data.{i}.type',
-                    'You are not allowed to create a pool with different data vdev types '
-                    f'({lastdatatype} and {vdev["type"]}).',
-                )
-            lastdatatype = vdev['type']
+                if lastdatatype and lastdatatype != vdev['type']:
+                    verrors.add(
+                        f'{schema_name}.topology.{topology_type}.{i}.type',
+                        f'You are not allowed to create a pool with different {topology_type} vdev types '
+                        f'({lastdatatype} and {vdev["type"]}).',
+                    )
+                lastdatatype = vdev['type']
 
         for i in ('cache', 'log', 'spare'):
             value = data['topology'].get(i)
@@ -847,7 +863,7 @@ class PoolService(CRUDService):
         # to be performed in parallel if we wish to do so.
         disks = {}
         vdevs = []
-        for i in ('data', 'cache', 'log'):
+        for i in ('data', 'cache', 'log', 'special', 'dedup'):
             t_vdevs = topology.get(i)
             if not t_vdevs:
                 continue
@@ -2466,6 +2482,7 @@ class PoolDatasetService(CRUDService):
                 ('encryption', 'encryption_algorithm', lambda o: o.upper() if o != 'off' else None),
                 ('used', None, None),
                 ('available', None, None),
+                ('special_small_blocks', 'special_small_block_size', None),
             ):
                 if orig_name not in dataset['properties']:
                     continue
@@ -2517,6 +2534,7 @@ class PoolDatasetService(CRUDService):
         Int('refquota_critical', validators=[Range(0, 100)]),
         Int('reservation'),
         Int('refreservation'),
+        Int('special_small_block_size', validators=[Range(min=512)]),
         Int('copies'),
         Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
         Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
@@ -2674,6 +2692,7 @@ class PoolDatasetService(CRUDService):
             ('volblocksize', None, None),
             ('volsize', None, lambda x: str(x)),
             ('xattr', None, str.lower),
+            ('special_small_block_size', 'special_small_blocks', None),
         ):
             if i not in data:
                 continue
@@ -2791,6 +2810,7 @@ class PoolDatasetService(CRUDService):
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
             ('volsize', None, lambda x: str(x), False),
+            ('special_small_block_size', 'special_small_blocks', None, True),
         )
 
         props = {}
