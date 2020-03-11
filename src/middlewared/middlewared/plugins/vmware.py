@@ -611,16 +611,23 @@ class VMWareService(CRUDService):
             if vm.snapshot is None:
                 return False
 
-            tree = vm.snapshot.rootSnapshotList
-            while tree[0].childSnapshotList is not None:
-                snap = tree[0]
-                if snap.name == snapshotName:
-                    return snap.snapshot
-                if len(tree[0].childSnapshotList) < 1:
-                    break
-                tree = tree[0].childSnapshotList
+            return any(self._doesVMSnapshotExistsInTree(tree, snapshotName) for tree in vm.snapshot.rootSnapshotList)
         except Exception:
             self.logger.debug('Exception in doesVMSnapshotByNameExists', exc_info=True)
+
+        return False
+
+    def _doesVMSnapshotExistsInTree(self, tree, snapshotName):
+        if tree.name == snapshotName:
+            return True
+
+        for i in tree.childSnapshotList:
+            if i.name == snapshotName:
+                return True
+
+            if hasattr(i, "childSnapshotList"):
+                if self._doesVMSnapshotExistsInTree(i, snapshotName):
+                    return True
 
         return False
 
