@@ -1,7 +1,7 @@
 """Add ad_restrict_pam key
 
-Revision ID: d5f5d0c10d4b
-Revises: b5cac06345ea
+Revision ID: 32f55c715352
+Revises: 8f874e6e40bc
 Create Date: 2020-03-11 14:38:45.857258+00:00
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd5f5d0c10d4b'
-down_revision = 'b5cac06345ea'
+revision = '32f55c715352'
+down_revision = '8f874e6e40bc'
 branch_labels = None
 depends_on = None
 
