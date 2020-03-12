@@ -39,7 +39,7 @@ RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", r
 def get_cert_info_from_data(data):
     cert_info_keys = [
         'key_length', 'country', 'state', 'city', 'organization', 'common', 'key_type', 'ec_curve',
-        'san', 'serial', 'email', 'lifetime', 'digest_algorithm', 'organizational_unit'
+        'san', 'serial', 'email', 'lifetime', 'digest_algorithm', 'organizational_unit', 'server_auth_eku',
     ]
     return {key: data.get(key) for key in cert_info_keys if data.get(key)}
 
@@ -393,6 +393,7 @@ class CryptoKeyService(Service):
     @accepts(
         Dict(
             'certificate_cert_info',
+            Bool('server_auth_eku', default=False),
             Int('key_length'),
             Int('serial', required=False, null=True),
             Int('lifetime', required=True),
@@ -446,7 +447,12 @@ class CryptoKeyService(Service):
             key.public_key()
         ).add_extension(
             x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
-        ).sign(
+        )
+        if data.get('server_auth_eku'):
+            cert = cert.add_extension(
+                x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), False
+            )
+        cert = cert.sign(
             ca_key or key, getattr(hashes, data.get('digest_algorithm') or 'SHA256')(), default_backend()
         )
 
@@ -1103,6 +1109,7 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_create',
             Bool('tos'),
+            Bool('server_auth_eku'),
             Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
             Int('signedby'),
