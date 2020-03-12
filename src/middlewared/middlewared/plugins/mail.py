@@ -21,6 +21,9 @@ import pickle
 import smtplib
 import socket
 import syslog
+import time
+
+from requests_oauthlib import OAuth2Session
 
 
 class QueueItem(object):
@@ -94,9 +97,13 @@ class MailModel(sa.Model):
     em_user = sa.Column(sa.String(120), nullable=True)
     em_pass = sa.Column(sa.String(120), nullable=True)
     em_fromname = sa.Column(sa.String(120), default='')
+    em_oauth = sa.Column(sa.JSON(type=dict, encrypted=True), nullable=True)
 
 
 class MailService(ConfigService):
+
+    oauth_access_token = None
+    oauth_access_token_expires_at = None
 
     class Config:
         datastore = 'system.email'
@@ -119,6 +126,14 @@ class MailService(ConfigService):
         Bool('smtp'),
         Str('user'),
         Str('pass', private=True),
+        Dict('oauth',
+             Str('client_id', required=True),
+             Str('client_secret', required=True),
+             Str('access_token', required=True),
+             Str('refresh_token', required=True),
+             Str('token_uri', required=True),
+             null=True,
+             private=True),
         register=True,
         update=True,
     ))
@@ -149,12 +164,22 @@ class MailService(ConfigService):
                 'This field is required when SMTP authentication is enabled',
             )
 
+        if new['smtp'] and new['oauth']:
+            verrors.add(
+                'mail_update.oauth',
+                'OAuth should be disabled when SMTP username/password authentication is enabled'
+            )
+
         self.__password_verify(new['pass'], 'mail_update.pass', verrors)
 
         if verrors:
             raise verrors
 
         await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
+
+        if new['oauth']:
+            self.oauth_access_token = None
+
         return await self.config()
 
     def __password_verify(self, password, schema, verrors=None):
@@ -224,6 +249,9 @@ class MailService(ConfigService):
          }
         ]
         """
+
+        if config:
+            self.oauth_access_token = None
 
         product_name = self.middleware.call_sync('system.product_name')
 
@@ -428,6 +456,20 @@ class MailService(ConfigService):
                 server.starttls()
         if config['smtp']:
             server.login(config['user'], config['pass'])
+        elif config['oauth']:
+            if self.oauth_access_token is None or time.monotonic() + 300 >= self.oauth_access_token_expires_at:
+                session = OAuth2Session(config['oauth']['client_id'])
+                access_token = session.refresh_token(config['oauth']['token_uri'],
+                                                     config['oauth']['refresh_token'],
+                                                     client_id=config['oauth']['client_id'],
+                                                     client_secret=config['oauth']['client_secret'])
+                self.oauth_access_token_expires_at = time.monotonic() + access_token['expires_in']
+                self.oauth_access_token = access_token['access_token']
+
+            auth_string = f'user={config["fromemail"]}\1auth=Bearer {self.oauth_access_token}\1\1'
+            auth_string = base64.b64encode(auth_string.encode('ascii')).decode('ascii')
+            server.docmd('AUTH', f'XOAUTH2 {auth_string}')
+
         return server
 
     @periodic(600, run_on_start=False)
