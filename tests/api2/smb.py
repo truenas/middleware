@@ -661,13 +661,6 @@ def test_081_verify_smb_getparm_vfs_objects_share(vfs_object):
     assert vfs_object in results['output'], results['output']
 
 
-def test_082_verify_smb_getparm_fruit_volume_uuid_share():
-    cmd = f'midclt call smb.getparm "fruit:volume_uuid" {SMB_NAME}'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == vuid, results['output']
-
-
 def test_083_verify_smb_getparm_fruit_time_machine_is_yes():
     cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
