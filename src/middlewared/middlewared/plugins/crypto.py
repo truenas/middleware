@@ -360,7 +360,8 @@ class CryptoKeyService(Service):
     @accepts(
         Patch(
             'certificate_cert_info', 'generate_certificate_signing_request',
-            ('rm', {'name': 'lifetime'})
+            ('rm', {'name': 'lifetime'}),
+            ('rm', {'name': 'server_auth_eku'}),
         )
     )
     def generate_certificate_signing_request(self, data):
@@ -1739,6 +1740,7 @@ class CertificateAuthorityService(CRUDService):
             'certificate_create', 'ca_create',
             ('edit', _set_enum('create_type')),
             ('rm', {'name': 'dns_mapping'}),
+            ('rm', {'name': 'server_auth_eku'}),
             register=True
         )
     )
