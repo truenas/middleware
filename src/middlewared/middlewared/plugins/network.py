@@ -1804,7 +1804,7 @@ class InterfaceService(CRUDService):
     )
     def ip_in_use(self, choices=None):
         """
-        Get all IPv4 / Ipv6 from all valid interfaces, excluding bridge, tap and epair.
+        Get all IPv4 / Ipv6 from all valid interfaces, excluding tap and epair.
 
         `loopback` will return loopback interface addresses.
 
@@ -1830,7 +1830,7 @@ class InterfaceService(CRUDService):
 
         """
         list_of_ip = []
-        ignore_nics = ['bridge', 'tap', 'epair', 'pflog']
+        ignore_nics = ['tap', 'epair', 'pflog']
         if not choices['loopback']:
             ignore_nics.append('lo')
         ignore_nics = tuple(ignore_nics)
