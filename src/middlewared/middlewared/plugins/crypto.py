@@ -39,6 +39,7 @@ CERT_TYPE_CSR = 0x20
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
 EKU_OIDS = [i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')]
+NOT_VALID_AFTER_DEFAULT = 825
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 
@@ -461,7 +462,7 @@ class CryptoKeyService(Service):
                 'common_name': 'localhost',
                 'email_address': 'info@ixsystems.com'
             },
-            'lifetime': 3600
+            'lifetime': NOT_VALID_AFTER_DEFAULT
         })
         key = self.generate_private_key({
             'serialize': False,
@@ -768,7 +769,9 @@ class CryptoKeyService(Service):
         # Lifetime represents no of days
         # Let's normalize lifetime value
         not_valid_before = datetime.datetime.utcnow()
-        not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(days=options.get('lifetime') or 3600)
+        not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(
+            days=options.get('lifetime') or NOT_VALID_AFTER_DEFAULT
+        )
 
         # Let's normalize `san`
         san = x509.SubjectAlternativeName([
@@ -978,7 +981,7 @@ class CertificateService(CRUDService):
             },
             'key_length': 2048,
             'key_type': 'RSA',
-            'lifetime': 3650,
+            'lifetime': NOT_VALID_AFTER_DEFAULT,
             'digest_algorithm': 'SHA256'
         },
         'openvpn_client_certificate': {
@@ -1008,7 +1011,7 @@ class CertificateService(CRUDService):
             },
             'key_length': 2048,
             'key_type': 'RSA',
-            'lifetime': 3650,
+            'lifetime': NOT_VALID_AFTER_DEFAULT,
             'digest_algorithm': 'SHA256'
         }
     }
@@ -2092,13 +2095,13 @@ class CertificateAuthorityService(CRUDService):
             },
             'key_length': 2048,
             'key_type': 'RSA',
-            'lifetime': 3650,
+            'lifetime': NOT_VALID_AFTER_DEFAULT,
             'digest_algorithm': 'SHA256'
         },
         'ca': {
             'key_length': 2048,
             'key_type': 'RSA',
-            'lifetime': 3650,
+            'lifetime': NOT_VALID_AFTER_DEFAULT,
             'digest_algorithm': 'SHA256',
             'cert_extensions': {
                 'KeyUsage': {
