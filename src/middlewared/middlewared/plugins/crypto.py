@@ -38,6 +38,7 @@ CERT_TYPE_CSR = 0x20
 
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
+EKU_OIDS = [i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')]
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 
@@ -567,17 +568,7 @@ class CryptoKeyService(Service):
                 ),
                 Dict(
                     'ExtendedKeyUsage',
-                    List(
-                        'usages',
-                        items=[
-                            Str(
-                                'usage', enum=[
-                                    i for i in dir(x509.oid.ExtendedKeyUsageOID)
-                                    if not i.startswith('__')
-                                ]
-                            )
-                        ]
-                    ),
+                    List('usages', items=[Str('usage', enum=EKU_OIDS)]),
                     Bool('enabled', default=False),
                     Bool('extension_critical', default=False)
                 ),
@@ -1491,10 +1482,7 @@ class CertificateService(CRUDService):
         """
         Dictionary of choices for `ExtendedKeyUsage` extension which can be passed over to `usages` attribute.
         """
-        return {
-            k: k for k in
-            dir(x509.oid.ExtendedKeyUsageOID) if not k.startswith('__')
-        }
+        return {k: k for k in EKU_OIDS}
 
     @private
     async def dhparam(self):
