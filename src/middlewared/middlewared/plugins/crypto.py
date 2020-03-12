@@ -33,6 +33,7 @@ CERT_TYPE_CSR = 0x20
 
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
+NOT_VALID_AFTER = 825
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 
@@ -319,7 +320,7 @@ class CryptoKeyService(Service):
                 'common_name': 'localhost',
                 'email_address': 'info@ixsystems.com'
             },
-            'lifetime': 3600
+            'lifetime': NOT_VALID_AFTER
         })
         key = self.generate_private_key({
             'serialize': False,
@@ -579,7 +580,9 @@ class CryptoKeyService(Service):
         # Lifetime represents no of days
         # Let's normalize lifetime value
         not_valid_before = datetime.datetime.utcnow()
-        not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(days=options.get('lifetime') or 3600)
+        not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(
+            days=options.get('lifetime') or NOT_VALID_AFTER
+        )
 
         # Let's normalize `san`
         san = x509.SubjectAlternativeName([
