@@ -39,7 +39,7 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import Zettarepl
 
-from middlewared.client import Client, ejson
+from middlewared.client import Client, ClientException, ejson
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, periodic, Service
 from middlewared.utils import start_daemon_thread
@@ -178,8 +178,8 @@ class ZettareplProcess:
                 task_id = int(message.task_id.split("_")[-1])
 
                 if isinstance(message, PeriodicSnapshotTaskStart):
-                    with Client(py_exceptions=True) as c:
-                        context = c.call("vmware.periodic_snapshot_task_begin", task_id)
+                    with Client() as c:
+                        context = c.call("vmware.periodic_snapshot_task_begin", task_id, job=True)
 
                     self.vmware_contexts[task_id] = context
 
@@ -192,9 +192,14 @@ class ZettareplProcess:
                 if isinstance(message, (PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError)):
                     context = self.vmware_contexts.pop(task_id, None)
                     if context:
-                        with Client(py_exceptions=True) as c:
-                            c.call("vmware.periodic_snapshot_task_end", context)
+                        with Client() as c:
+                            c.call("vmware.periodic_snapshot_task_end", context, job=True)
 
+        except ClientException as e:
+            if e.error:
+                logger.error("Unhandled exception in ZettareplProcess._observer: %r", e.error)
+            if e.trace:
+                logger.error("Unhandled exception in ZettareplProcess._observer:\n%s", e.trace["formatted"])
         except Exception:
             logger.error("Unhandled exception in ZettareplProcess._observer", exc_info=True)
 

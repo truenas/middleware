@@ -8,7 +8,7 @@ import uuid
 
 from middlewared.async_validators import resolve_hostname
 from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 
 from pyVim import connect, task as VimTask
 from pyVmomi import vim, vmodl
@@ -548,7 +548,8 @@ class VMWareService(CRUDService):
             connect.Disconnect(si)
 
     @private
-    def periodic_snapshot_task_begin(self, task_id):
+    @job()
+    def periodic_snapshot_task_begin(self, job, task_id):
         task = self.middleware.call_sync("pool.snapshottask.query",
                                          [["id", "=", task_id]],
                                          {"get": True})
@@ -556,7 +557,8 @@ class VMWareService(CRUDService):
         return self.snapshot_begin(task["dataset"], task["recursive"])
 
     @private
-    def periodic_snapshot_task_end(self, context):
+    @job()
+    def periodic_snapshot_task_end(self, job, context):
         return self.snapshot_end(context)
 
     # Check if a VM is using a certain datastore
