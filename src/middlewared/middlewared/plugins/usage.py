@@ -306,7 +306,6 @@ class UsageService(Service):
                             'recyclebin': s['recyclebin'],
                             'shadowcopy': s['shadowcopy'],
                             'guestok': s['guestok'],
-                            'guestonly': s['guestonly'],
                             'abe': s['abe'],
                             'acl': s['acl'],
                             'fsrvp': s['fsrvp'],

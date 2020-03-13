@@ -206,10 +206,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/smb4_share.conf'},
             {'type': 'py', 'path': 'local/smb4_share_load'}
         ],
-        'smb_configure': [
-            {'type': 'mako', 'path': 'local/smbusername.map'},
-            {'type': 'py', 'path': 'smb_configure'},
-        ],
         'snmpd': [
             {'type': 'mako', 'path': 'local/snmpd.conf'},
         ],
@@ -256,7 +252,7 @@ class EtcService(Service):
     }
 
     SKIP_LIST = [
-        'system_dataset', 'mdns', 'syslogd', 'smb_configure', 'nginx'
+        'system_dataset', 'mdns', 'syslogd', 'nginx'
     ] + (['ttys'] if osc.IS_LINUX else [])
 
     class Config:

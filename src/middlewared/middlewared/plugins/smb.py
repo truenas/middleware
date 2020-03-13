@@ -1,7 +1,7 @@
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import (SystemServiceService, ValidationErrors,
-                                 accepts, private, CRUDService)
+                                 accepts, job, private, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
@@ -67,17 +67,24 @@ class SMBBuiltin(enum.Enum):
 
 
 class SMBPath(enum.Enum):
-    GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb.conf')
-    SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb_share.conf')
-    STATEDIR = ('/var/db/system/samba4', '/var/db/system/samba4')
-    PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4')
-    LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private')
-    RUNDIR = ('/var/run/samba4', '/var/run/samba')
-    LOCKDIR = ('/var/lock', '/var/lock')
-    LOGDIR = ('/var/log/samba4', '/var/log/samba')
+    GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb.conf', 0o755, False)
+    SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb_share.conf', 0o755, False)
+    STATEDIR = ('/var/db/system/samba4', '/var/db/system/samba4', 0o755, True)
+    PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4', 0o700, True)
+    LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private', 0o700, True)
+    MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/msg.sock', 0o700, True)
+    RUNDIR = ('/var/run/samba4', '/var/run/samba', 0o755, True)
+    LOCKDIR = ('/var/lock', '/var/lock', 0o755, True)
+    LOGDIR = ('/var/log/samba4', '/var/log/samba', 0o755, True)
 
     def platform(self):
         return self.value[1] if osc.IS_LINUX else self.value[0]
+
+    def mode(self):
+        return self.value[2]
+
+    def is_dir(self):
+        return self.value[3]
 
 
 class SMBSharePreset(enum.Enum):
@@ -323,6 +330,60 @@ class SMBService(SystemServiceService):
 
         except Exception as e:
             raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
+
+    @private
+    async def setup_directories(self):
+        for p in SMBPath:
+            if p == SMBPath.STATEDIR:
+                path = await self.middleware.call("smb.getparm", "state directory", "global")
+            elif p == SMBPath.PRIVATEDIR:
+                path = await self.middleware.call("smb.getparm", "privatedir", "global")
+            else:
+                path = p.platform()
+
+            try:
+                if not await self.middleware.call('filesystem.acl_is_trivial', path):
+                    self.logger.warning("Inappropriate ACL detected on path [%s] stripping ACL", path)
+                    stripacl = await run(['setfacl', '-b', path], check=False)
+                    if stripacl.returncode != 0:
+                        self.logger.warning("Failed to strip ACL from path %s: %s", path,
+                                            stripacl.stderr.decode())
+            except CallError:
+                # Currently only time CallError is raise here is on ENOENT, which may be expected
+                pass
+
+            if not os.path.exists(path):
+                if p.is_dir():
+                    os.mkdir(path, p.mode())
+            else:
+                os.chmod(path, p.mode())
+
+    @private
+    @job(lock="smb_configure")
+    async def configure(self, job):
+        job.set_progress(0, 'Preparing to configure SMB.')
+        data = await self.config()
+        job.set_progress(10, 'Generating SMB config.')
+        await self.middleware.call('etc.generate', 'smb')
+        job.set_progress(20, 'Setting up SMB directories.')
+        await self.setup_directories()
+        job.set_progress(30, 'Setting up server SID.')
+        await self.middleware.call('smb.set_sid', data['cifs_SID'])
+
+        if await self.middleware.call("smb.getparm", "passdb backend", "global") == "tdbsam":
+            job.set_progress(40, 'Synchronizing passdb.')
+            await self.middleware.call("smb.synchronize_passdb")
+            job.set_progress(50, 'Synchronizing group mappings.')
+            await self.middleware.call("smb.synchronize_group_mappings")
+            await self.middleware.call("admonitor.start")
+            job.set_progress(60, 'generating SMB share configuration.')
+            await self.middleware.call("etc.generate", "smb_share")
+
+        job.set_progress(70, 'Checking SMB server status.')
+        if await self.middleware.call("service.started", "cifs"):
+            job.set_progress(80, 'Restarting SMB service.')
+            await self.middleware.call("service.restart", "cifs")
+        job.set_progress(100, 'Finished configuring SMB.')
 
     @private
     async def get_smb_ha_mode(self):
