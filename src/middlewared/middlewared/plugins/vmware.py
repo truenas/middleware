@@ -8,7 +8,7 @@ import uuid
 
 from middlewared.async_validators import resolve_hostname
 from middlewared.schema import accepts, Bool, Dict, Int, Str, Patch
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 
 from pyVim import connect, task as VimTask
@@ -417,8 +417,7 @@ class VMWareService(CRUDService):
         # the performance of your VMs.
         qs = self._dataset_get_vms(dataset, recursive)
 
-        # Generate a unique snapshot name that (hopefully) won't collide with anything
-        # that exists on the VMWare side.
+        # Generate a unique snapshot name that won't collide with anything that exists on the VMWare side.
         vmsnapname = str(uuid.uuid4())
 
         # Generate a helpful description that is visible on the VMWare side.  Since we
@@ -459,7 +458,7 @@ class VMWareService(CRUDService):
                 if self._doesVMDependOnDataStore(vm, vmsnapobj["datastore"]):
                     try:
                         if self._canSnapshotVM(vm):
-                            if not self._doesVMSnapshotByNameExists(vm, vmsnapname):
+                            if not self._findVMSnapshotByName(vm, vmsnapname):
                                 # have we already created a snapshot of the VM for this volume
                                 # iteration? can happen if the VM uses two datasets (a and b)
                                 # where both datasets are mapped to the same ZFS volume in FreeNAS.
@@ -543,9 +542,9 @@ class VMWareService(CRUDService):
                 if [vm_uuid, vm.name] not in elem["snapvmfails"] and vm_uuid not in elem["snapvmskips"]:
                     # The test above is paranoia.  It shouldn't be possible for a vm to
                     # be in more than one of the three dictionaries.
-                    snap = self._doesVMSnapshotByNameExists(vm, vmsnapname)
+                    snap = self._findVMSnapshotByName(vm, vmsnapname)
                     try:
-                        if snap is not False:
+                        if snap:
                             VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
                     except Exception as e:
                         self.logger.debug("Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True)
@@ -559,7 +558,8 @@ class VMWareService(CRUDService):
             connect.Disconnect(si)
 
     @private
-    def periodic_snapshot_task_begin(self, task_id):
+    @job()
+    def periodic_snapshot_task_begin(self, job, task_id):
         task = self.middleware.call_sync("pool.snapshottask.query",
                                          [["id", "=", task_id]],
                                          {"get": True})
@@ -567,7 +567,8 @@ class VMWareService(CRUDService):
         return self.snapshot_begin(task["dataset"], task["recursive"])
 
     @private
-    def periodic_snapshot_task_end(self, context):
+    @job()
+    def periodic_snapshot_task_end(self, job, context):
         return self.snapshot_end(context)
 
     # Check if a VM is using a certain datastore
@@ -605,31 +606,34 @@ class VMWareService(CRUDService):
 
         return True
 
-    # check if there is already a snapshot by a given name
-    def _doesVMSnapshotByNameExists(self, vm, snapshotName):
+    def _findVMSnapshotByName(self, vm, snapshotName):
         try:
             if vm.snapshot is None:
-                return False
+                return None
 
-            return any(self._doesVMSnapshotExistsInTree(tree, snapshotName) for tree in vm.snapshot.rootSnapshotList)
+            for tree in vm.snapshot.rootSnapshotList:
+                result = self._findVMSnapshotByNameInTree(tree, snapshotName)
+                if result:
+                    return result
         except Exception:
-            self.logger.debug('Exception in doesVMSnapshotByNameExists', exc_info=True)
+            self.logger.debug('Exception in _findVMSnapshotByName', exc_info=True)
 
-        return False
+        return None
 
-    def _doesVMSnapshotExistsInTree(self, tree, snapshotName):
+    def _findVMSnapshotByNameInTree(self, tree, snapshotName):
         if tree.name == snapshotName:
-            return True
+            return tree.snapshot
 
         for i in tree.childSnapshotList:
             if i.name == snapshotName:
-                return True
+                return i.snapshot
 
             if hasattr(i, "childSnapshotList"):
-                if self._doesVMSnapshotExistsInTree(i, snapshotName):
-                    return True
+                result = self._findVMSnapshotByNameInTree(i, snapshotName)
+                if result:
+                    return result
 
-        return False
+        return None
 
     def _vmware_exception_message(self, e):
         if hasattr(e, "msg"):
