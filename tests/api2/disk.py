@@ -6,10 +6,10 @@
 import pytest
 import sys
 import os
-import re
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT
+from auto_config import scale
 RunTest = True
 TestName = "get disk information"
 DISK_ID = None
@@ -34,14 +34,17 @@ def test_02_looking_for_disk(disk):
 def test_03_looking_subsystem(disk):
     results = GET(f'/disk?name={disk}')
     assert results.status_code == 200, results.text
-    assert results.json()[0]['subsystem'] == disk[:-1]
+    if scale is True:
+        assert results.json()[0]['subsystem'] == 'scsi'
+    else:
+        assert results.json()[0]['subsystem'] == disk[:-1]
 
 
 @pytest.mark.parametrize('disk', disk_list)
 def test_04_looking_number(disk):
     results = GET(f'/disk?name={disk}')
     assert results.status_code == 200, results.text
-    assert results.json()[0]['number'] == int(re.sub("\D", "", disk))
+    assert isinstance(results.json()[0]['number'], int), results.text
 
 
 @pytest.mark.parametrize('disk', disk_list)
