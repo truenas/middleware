@@ -9,6 +9,11 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT
+from auto_config import scale
+if scale is True:
+    shell = '/bin/bash'
+else:
+    shell = '/bin/csh'
 
 
 def test_01_get_next_uid():
@@ -19,12 +24,14 @@ def test_01_get_next_uid():
 
 
 def test_02_creating_user_testuser():
-    payload = {"username": "testuser",
-               "full_name": "Test User",
-               "group_create": True,
-               "password": "test",
-               "uid": next_uid,
-               "shell": "/bin/csh"}
+    payload = {
+        "username": "testuser",
+        "full_name": "Test User",
+        "group_create": True,
+        "password": "test",
+        "uid": next_uid,
+        "shell": shell
+    }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
 
@@ -54,10 +61,14 @@ def test_08_look_user_shell():
     assert userinfo["shell"] == "/bin/csh"
 
 
-def test_09_add_employe_id_and_team_special_atributes():
+def test_09_add_employee_id_and_team_special_attributes():
     userid = GET('/user?username=testuser').json()[0]['id']
-    payload = {'key': 'Employe ID', 'value': 'TU1234',
-               'key': 'Team', 'value': 'QA'}
+    payload = {
+        'key': 'Employee ID',
+        'value': 'TU1234',
+        'key': 'Team',
+        'value': 'QA'
+    }
     results = POST("/user/id/%s/set_attribute" % userid, payload)
     assert results.status_code == 200, results.text
 
@@ -153,6 +164,7 @@ def test_24_creating_shareuser_to_test_sharing():
         "groups": [1],
         "password": "testing",
         "uid": next_uid,
-        "shell": "/bin/csh"}
+        "shell": shell
+    }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
