@@ -1,7 +1,7 @@
 --
 -- SPDX-License-Identifier: BSD-2-Clause-FreeBSD
 --
--- Copyright (c) 2018 Kris Moore <kmoore@FreeBSD.org>
+-- Copyright (c) 2018 Ken Moore <ken@ixsystems.com>
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -29,37 +29,24 @@
 
 local drawer = require("drawer")
 
-local atruenas_brand = {
-"  ______               _     _   __    _____",
-" |__  __|             | \\   | | /  \\  /  ___|",
-"   |  | _ __   __  ___|  \\  | |/ /\\ \\|  (__    ___   __",
-"   |  || '__|| | |/ _ \\ |\\\\ | | |__| |\\___ \\  / __| / \\",
-"   |  || | | |_| |  __/ | \\\\| |  __  |____) || |_  |  |",
-"   |__||_| |_____|\\_\\ |_|  \\ _|_| _|_|_____/  \\__| \\_/",
+local truenas_color = {
+" +mmdhs/.   ,.:+sydmNMm       ",
+"  hMMMMMMdydNMMMMMMMMM:       ",
+"  yMMMMMMMMMMMMMMMNNNo        ",
+" /MMMMMMMMMMMMMMMmho.        .",
+" NMMMMMMMMMMMMMMMMm:'    ..:yN",
+" MMMMMMMMMMMMMMMmMNmddmydmNMMo",
+" mMMMMMMMMMMMMMs./ymMMMMMMmy- ",
+" :NMMMMMMMMMMMM.   `.oMMm-`   ",
+"  -mMMMMMMMMMMMmo/:/yNMh.     ",
+"  .mhdMMMMMMMMMMMMMMMh/       ",
+"  +'  `+ymMMMMMMNmy+'         "
 }
 
-local truenas_brand = {
-"  ______               _     _   __    _____",
-" |__  __|             | \\   | | /  \\  /  ___|",
-"   |  | _ __   __  ___|  \\  | |/ /\\ \\|  (__    __",
-"   |  || '__|| | |/ _ \\ |\\\\ | | |__| |\\___ \\  /",
-"   |  || | | |_| |  __/ | \\\\| |  __  |____) ||",
-"   |__||_| |_____|\\_\\ |_|  \\ _|_| _|_|_____/  \\__",
-}
-
-drawer.addBrand("TrueNAS", {
+drawer.addLogo("TrueNASCore", {
 	requires_color = false,
-	graphic = truenas_brand,
-})
-
-drawer.addBrand("TrueNAS Core", {
-	requires_color = false,
-	graphic = truenas_brand,
-})
-
-drawer.addBrand("TrueNAS Enterprise", {
-	requires_color = false,
-	graphic = truenas_brand,
+	graphic = truenas_color,
+	shift = {x = 0, y = 6},
 })
 
 return true

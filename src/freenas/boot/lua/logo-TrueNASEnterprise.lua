@@ -43,19 +43,7 @@ local truenas_color = {
 "  +'  `+ymMMMMMMNmy+'         "
 }
 
-drawer.addLogo("TrueNAS", {
-	requires_color = false,
-	graphic = truenas_color,
-	shift = {x = 0, y = 6},
-})
-
-drawer.addLogo("TrueNAS Core", {
-	requires_color = false,
-	graphic = truenas_color,
-	shift = {x = 0, y = 6},
-})
-
-drawer.addLogo("TrueNAS Enterprise", {
+drawer.addLogo("TrueNASEnterprise", {
 	requires_color = false,
 	graphic = truenas_color,
 	shift = {x = 0, y = 6},
