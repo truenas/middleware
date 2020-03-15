@@ -43,7 +43,7 @@ local freenas_color = {
 "  +'  `+ymMMMMMMNmy+'         "
 }
 
-drawer.addLogo("FreeNAS", {
+drawer.addLogo("TrueNAS", {
 	requires_color = false,
 	graphic = freenas_color,
 	shift = {x = 0, y = 6},
