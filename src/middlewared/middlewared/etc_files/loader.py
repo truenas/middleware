@@ -19,6 +19,7 @@ def generate_loader_config(middleware):
         generate_debugkernel_loader_config,
         generate_ha_loader_config,
         generate_ec2_config,
+        generate_logo_config,
     ]
     if middleware.call_sync("system.is_freenas"):
         generators.append(generate_xen_loader_config)
@@ -28,6 +29,15 @@ def generate_loader_config(middleware):
         config.extend(generator(middleware) or [])
 
     return config
+
+
+def generate_logo_config(middleware):
+    product_type = 'Core' if middleware.call_sync('system.product_type') == 'CORE' else 'Enterprise'
+    return [
+        f'loader_logo="TrueNAS{product_type}"',
+        f'loader_brand="TrueNAS{product_type}"',
+        f'product="TrueNAS {product_type}"',
+    ]
 
 
 def generate_serial_loader_config(middleware):
