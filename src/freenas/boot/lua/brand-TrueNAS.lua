@@ -52,4 +52,14 @@ drawer.addBrand("TrueNAS", {
 	graphic = truenas_brand,
 })
 
+drawer.addBrand("TrueNAS Core", {
+	requires_color = false,
+	graphic = truenas_brand,
+})
+
+drawer.addBrand("TrueNAS Enterprise", {
+	requires_color = false,
+	graphic = truenas_brand,
+})
+
 return true
