@@ -487,14 +487,14 @@ class PoolService(CRUDService):
             List('special', items=[
                 Dict(
                     'specialvdevs',
-                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    Str('type', enum=['MIRROR', 'STRIPE'], required=True),
                     List('disks', items=[Str('disk')], required=True),
                 ),
             ]),
             List('dedup', items=[
                 Dict(
                     'dedupvdevs',
-                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    Str('type', enum=['MIRROR', 'STRIPE'], required=True),
                     List('disks', items=[Str('disk')], required=True),
                 ),
             ]),
