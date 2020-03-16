@@ -29,52 +29,6 @@
 
 local drawer = require("drawer")
 
-local atruenas_color = {
-" +mmdhs/.   ,.:+sydmNMm       ",
-"  hMMMMMMdydNMMMMMMMMM:       ",
-"  yMMMMMMMMMMMMMMMNNNo        ",
-" /MMMMMMMMMMMMMMMmho.        .",
-" NMMMMMMMMMMMMMMMMm:'    ..:yN",
-" MMMMMMMMMMMMMMMmMNmddmydmNMMo",
-" mMMMMMMMMMMMMMs./ymMMMMMMmy- ",
-" :NMMMMMMMMMMMM.   `.oMMm-`   ",
-"  -mMMMMMMMMMMMmo/:/yNMh.     ",
-"  .mhdMMMMMMMMMMMMMMMh/       ",
-"  +'  `+ymMMMMMMNmy+'         "
-}
-
-local old_truenas_color = {
-"  ///",
-"   /!!?\\//",
-"   /|___!?\\/",
-"    /?_____!?\\/",
-"     /!_______!\\/",
-"     /\\______!__!|/",
-"      /\\?!____!!__!?//",
-"      /\\________!!__!?//",
-"      /\\_________!|!__!|//",
-"      /?___________?|!__!\\/",
-"     //!____________?/|!__?//",
-"    //?______________|/\\!__!\\/",
-"   //?_______________?///|!_!\\/",
-"  /\\?__________!!!!!?||||||!__|//",
-"///|!!!!!!!!!!!!!!!!!!!!!!!!!!?///",
-}
-
-local odl2_truenas_color = {
-"  MMM",
-"   yMMMM//",
-"   /|MMM!?\\/",
-"    /?MMMMM!?\\/",
-"     /\\MMMM!MM!|/",
-"      /\\?!MM!!MM!?//",
-"      /\\MMMMMMM!|!MM!|//",
-"      /?MMMMMMMMM?|!MM!\\/",
-"     //!MMMMMMMMMM?/|!MM?//",
-"   //?MMMMMMMMMMMMM?///|!M!\\/",
-"  /\\?MMMMMMMM!!!!!?||||||!__|//",
-}
-
 local truenas_color = {
 "   :dd:",
 "    :dMMd::",
