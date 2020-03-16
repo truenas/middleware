@@ -176,10 +176,14 @@ def test_11_look_if_Directory_slash_File():
 
 
 def test_12_import_nonascii_msdosfs():
+    if scale is True:
+        locale = 'utf8'
+    else:
+        locale = 'ru_RU.UTF-8'
     payload = {
         "device": IMAGES['msdosfs-nonascii'],
         "fs_type": "msdosfs",
-        "fs_options": {"locale": "ru_RU.UTF-8"},
+        "fs_options": {"locale": locale},
         "dst_path": dataset_path,
     }
     results = POST("/pool/import_disk/", payload)
