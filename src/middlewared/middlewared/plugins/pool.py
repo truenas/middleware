@@ -2276,8 +2276,33 @@ class PoolDatasetService(CRUDService):
             results.append({
                 'name': ds_name, 'key_format': ZFSKeyFormat(data['key_format']['value']).value,
                 'key_present_in_database': bool(data['encryption_key']),
-                'valid_key': bool(status['result']), 'locked': data['locked']
+                'valid_key': bool(status['result']), 'locked': data['locked'],
+                'unlock_error': None,
+                'unlock_successful': False,
             })
+
+        failed = set()
+        for ds in sorted(results, key=lambda d: d['name'].count('/')):
+            for i in range(1, ds['name'].count('/') + 1):
+                check = ds['name'].rsplit('/', i)[0]
+                if check in failed:
+                    failed.add(ds['name'])
+                    ds['unlock_error'] = f'Child cannot be unlocked when parent "{check}" is locked'
+
+            if ds['valid_key']:
+                if not ds['unlock_error']:
+                    ds['unlock_successful'] = not bool(ds['unlock_error'])
+            else:
+                key_provided = ds['name'] in keys_supplied or ds['key_present_in_database']
+                if key_provided:
+                    if ds['unlock_error']:
+                        if ds['name'] in keys_supplied or ds['key_present_in_database']:
+                            ds['unlock_error'] += ' and provided key is invalid'
+                    else:
+                        ds['unlock_error'] = 'Provided key is invalid'
+                elif not ds['unlock_error']:
+                    ds['unlock_error'] = 'Key not provided'
+                failed.add(ds['name'])
 
         return results
 
