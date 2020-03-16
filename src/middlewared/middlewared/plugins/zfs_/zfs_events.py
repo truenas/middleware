@@ -150,7 +150,7 @@ async def devd_zfs_hook(middleware, data):
     ):
         await middleware.call(
             'pool.dataset.delete_encrypted_datasets_from_db', [
-                [['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]]
+                ['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]
             ]
         )
 
