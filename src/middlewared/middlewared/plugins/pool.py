@@ -2307,7 +2307,8 @@ class PoolDatasetService(CRUDService):
             ds_name = ds_data[0]
             data = datasets[ds_name]
             results.append({
-                'name': ds_name, 'key_format': ZFSKeyFormat(data['key_format']['value']).value,
+                'name': ds_name,
+                'key_format': ZFSKeyFormat(data['key_format']['value']).value,
                 'key_present_in_database': bool(data['encryption_key']),
                 'valid_key': bool(status['result']), 'locked': data['locked'],
                 'unlock_error': None,
@@ -2323,8 +2324,7 @@ class PoolDatasetService(CRUDService):
                     ds['unlock_error'] = f'Child cannot be unlocked when parent "{check}" is locked'
 
             if ds['valid_key']:
-                if not ds['unlock_error']:
-                    ds['unlock_successful'] = not bool(ds['unlock_error'])
+                ds['unlock_successful'] = not bool(ds['unlock_error'])
             elif not ds['locked']:
                 # For datasets which are already not locked, unlock operation for them
                 # will succeed as they are not locked
