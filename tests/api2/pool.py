@@ -4,10 +4,11 @@ import pytest
 import sys
 import os
 import time
+import re
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, send_file
-from auto_config import ip, user, password, pool_name, ha
+from auto_config import ip, user, password, pool_name, ha, scale
 
 dataset = f"{pool_name}/test_pool"
 dataset_url = dataset.replace('/', '%2F')
@@ -18,7 +19,7 @@ IMAGES = {}
 Reason = 'Skip for HA'
 skip_for_ha = pytest.mark.skipif(ha, reason=Reason)
 nas_disk = GET('/boot/get_disks/').json()
-disk_list = list(POST('/device/get_info/', 'DISK').json().keys())
+disk_list = sorted(list(POST('/device/get_info/', 'DISK').json().keys()))
 disk_pool = list(set(disk_list) - set(nas_disk))
 
 
@@ -89,7 +90,11 @@ def test_05_looking_pool_info_of_(pool_keys):
             info = results.json()[keys_list[0]][keys_list[1]]
             disk_list = payload[keys_list[0]][keys_list[1]][0][keys_list[2]]
             for props in info:
-                assert props['device'].partition('p')[0] in disk_list, results.text
+                if scale is True:
+                    device = re.sub(r'[0-9]+', '', props['device'])
+                else:
+                    device = props['device'].partition('p')[0]
+                assert device in disk_list, results.text
                 assert props['disk'] in disk_list, results.text
         else:
             info = results.json()[keys_list[0]][keys_list[1]][keys_list[2]]
