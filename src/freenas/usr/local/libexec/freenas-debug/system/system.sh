@@ -171,4 +171,8 @@ system_func()
 			echo "Non-HA TrueNAS system detected"
 		fi
 	fi
+
+	section_header "Failed updates /data/update.failed"
+	sc /data/update.failed
+	section_footer
 }	
