@@ -29,23 +29,24 @@
 
 local drawer = require("drawer")
 
-local freenas_color = {
-" +mmdhs/.   ,.:+sydmNMm       ",
-"  hMMMMMMdydNMMMMMMMMM:       ",
-"  yMMMMMMMMMMMMMMMNNNo        ",
-" /MMMMMMMMMMMMMMMmho.        .",
-" NMMMMMMMMMMMMMMMMm:'    ..:yN",
-" MMMMMMMMMMMMMMMmMNmddmydmNMMo",
-" mMMMMMMMMMMMMMs./ymMMMMMMmy- ",
-" :NMMMMMMMMMMMM.   `.oMMm-`   ",
-"  -mMMMMMMMMMMMmo/:/yNMh.     ",
-"  .mhdMMMMMMMMMMMMMMMh/       ",
-"  +'  `+ymMMMMMMNmy+'         "
+local truenas_color = {
+"   :dd:",
+"    :dMMd::",
+"     :MMMddd:",
+"      dMMMdddd::",
+"      ::ddMMdddMd:",
+"       dddMMMMd:dMd:",
+"       dMMMMMMMd::dMd:",
+"      :MMMMMMMMMMd :dMd",
+"      dMMMMMMMMMMMd  dMd:",
+"     :MMMMMMMMMMMMM:  :dMd",
+"    :MMMMMMMMdddddd:    :Md:",
+"   :ddddddddddddddddddddddd:",
 }
 
-drawer.addLogo("FreeNAS", {
+drawer.addLogo("TrueNAS", {
 	requires_color = false,
-	graphic = freenas_color,
+	graphic = truenas_color,
 	shift = {x = 0, y = 6},
 })
 
