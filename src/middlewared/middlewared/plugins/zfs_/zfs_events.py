@@ -144,6 +144,15 @@ async def devd_zfs_hook(middleware, data):
         # for this reason we must react to certain types of ZFS events to keep
         # it in sync every time there is a change.
         await middleware.call('disk.swaps_configure')
+    elif (
+        data.get('type') == 'sysevent.fs.zfs.history_event' and data.get('history_internal_name') == 'destroy'
+        and data.get('history_dsname')
+    ):
+        await middleware.call(
+            'pool.dataset.delete_encrypted_datasets_from_db', [
+                [['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]]
+            ]
+        )
 
 
 async def zfs_events(middleware, data):
@@ -170,6 +179,15 @@ async def zfs_events(middleware, data):
         'sysevent.fs.zfs.pool_import',
     ):
         await middleware.call('disk.swaps_configure')
+    elif (
+        event_id == 'sysevent.fs.zfs.history_event' and data.get('history_internal_name') == 'destroy'
+        and data.get('history_dsname')
+    ):
+        await middleware.call(
+            'pool.dataset.delete_encrypted_datasets_from_db', [
+                [['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]]
+            ]
+        )
 
 
 def setup(middleware):
