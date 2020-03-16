@@ -2222,21 +2222,54 @@ class PoolDatasetService(CRUDService):
 
         Keys/passphrase can be supplied to check if the keys are valid.
 
+        It should be noted that there are 2 keys which show if a recursive unlock operation is
+        done for `id`, which dataset will be unlocked and if not why it won't be unlocked. The keys
+        namely are "unlock_successful" and "unlock_error". The former is a boolean value showing if unlock
+        would succeed/fail. The latter is description why it failed if it failed.
+
+        If a dataset is already unlocked, it will show up as true for "unlock_successful" regardless of what
+        key user provided as the unlock keys in the output are to reflect what a real unlock operation would
+        behave. If user is interested in seeing if a provided key is valid or not, then the key to look out for
+        in the output is "valid_key" which based on what system has in database or if a user provided one, validates
+        the key and sets a boolean value for the dataset.
+
         Example output:
         [
             {
-                "name": "hex",
-                "key_format": "HEX",
-                "key_present": true,
+                "name": "vol",
+                "key_format": "PASSPHRASE",
+                "key_present_in_database": false,
                 "valid_key": true,
-                "locked": false
+                "locked": true,
+                "unlock_error": null,
+                "unlock_successful": true
             },
             {
-                "name": "hex/p",
+                "name": "vol/c1/d1",
                 "key_format": "PASSPHRASE",
-                "key_present": false,
+                "key_present_in_database": false,
                 "valid_key": false,
-                "locked": true
+                "locked": true,
+                "unlock_error": "Provided key is invalid",
+                "unlock_successful": false
+            },
+            {
+                "name": "vol/c",
+                "key_format": "PASSPHRASE",
+                "key_present_in_database": false,
+                "valid_key": false,
+                "locked": true,
+                "unlock_error": "Key not provided",
+                "unlock_successful": false
+            },
+            {
+                "name": "vol/c/d2",
+                "key_format": "PASSPHRASE",
+                "key_present_in_database": false,
+                "valid_key": false,
+                "locked": true,
+                "unlock_error": "Child cannot be unlocked when parent \"vol/c\" is locked and provided key is invalid",
+                "unlock_successful": false
             }
         ]
         """
@@ -2274,10 +2307,39 @@ class PoolDatasetService(CRUDService):
             ds_name = ds_data[0]
             data = datasets[ds_name]
             results.append({
-                'name': ds_name, 'key_format': ZFSKeyFormat(data['key_format']['value']).value,
+                'name': ds_name,
+                'key_format': ZFSKeyFormat(data['key_format']['value']).value,
                 'key_present_in_database': bool(data['encryption_key']),
-                'valid_key': bool(status['result']), 'locked': data['locked']
+                'valid_key': bool(status['result']), 'locked': data['locked'],
+                'unlock_error': None,
+                'unlock_successful': False,
             })
+
+        failed = set()
+        for ds in sorted(results, key=lambda d: d['name'].count('/')):
+            for i in range(1, ds['name'].count('/') + 1):
+                check = ds['name'].rsplit('/', i)[0]
+                if check in failed:
+                    failed.add(ds['name'])
+                    ds['unlock_error'] = f'Child cannot be unlocked when parent "{check}" is locked'
+
+            if ds['valid_key']:
+                ds['unlock_successful'] = not bool(ds['unlock_error'])
+            elif not ds['locked']:
+                # For datasets which are already not locked, unlock operation for them
+                # will succeed as they are not locked
+                ds['unlock_successful'] = True
+            else:
+                key_provided = ds['name'] in keys_supplied or ds['key_present_in_database']
+                if key_provided:
+                    if ds['unlock_error']:
+                        if ds['name'] in keys_supplied or ds['key_present_in_database']:
+                            ds['unlock_error'] += ' and provided key is invalid'
+                    else:
+                        ds['unlock_error'] = 'Provided key is invalid'
+                elif not ds['unlock_error']:
+                    ds['unlock_error'] = 'Key not provided'
+                failed.add(ds['name'])
 
         return results
 
