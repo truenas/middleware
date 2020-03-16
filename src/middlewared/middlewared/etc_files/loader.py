@@ -34,7 +34,6 @@ def generate_loader_config(middleware):
 def generate_logo_config(middleware):
     product_type = 'Core' if middleware.call_sync('system.product_type') == 'CORE' else 'Enterprise'
     return [
-        f'loader_logo="TrueNAS{product_type}"',
         f'loader_brand="TrueNAS{product_type}"',
         f'product="TrueNAS {product_type}"',
     ]
