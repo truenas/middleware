@@ -29,7 +29,7 @@
 
 local drawer = require("drawer")
 
-local truenas_color = {
+local atruenas_color = {
 " +mmdhs/.   ,.:+sydmNMm       ",
 "  hMMMMMMdydNMMMMMMMMM:       ",
 "  yMMMMMMMMMMMMMMMNNNo        ",
@@ -43,7 +43,54 @@ local truenas_color = {
 "  +'  `+ymMMMMMMNmy+'         "
 }
 
-drawer.addLogo("TrueNASEnterprise", {
+local old_truenas_color = {
+"  ///",
+"   /!!?\\//",
+"   /|___!?\\/",
+"    /?_____!?\\/",
+"     /!_______!\\/",
+"     /\\______!__!|/",
+"      /\\?!____!!__!?//",
+"      /\\________!!__!?//",
+"      /\\_________!|!__!|//",
+"      /?___________?|!__!\\/",
+"     //!____________?/|!__?//",
+"    //?______________|/\\!__!\\/",
+"   //?_______________?///|!_!\\/",
+"  /\\?__________!!!!!?||||||!__|//",
+"///|!!!!!!!!!!!!!!!!!!!!!!!!!!?///",
+}
+
+local odl2_truenas_color = {
+"  MMM",
+"   yMMMM//",
+"   /|MMM!?\\/",
+"    /?MMMMM!?\\/",
+"     /\\MMMM!MM!|/",
+"      /\\?!MM!!MM!?//",
+"      /\\MMMMMMM!|!MM!|//",
+"      /?MMMMMMMMM?|!MM!\\/",
+"     //!MMMMMMMMMM?/|!MM?//",
+"   //?MMMMMMMMMMMMM?///|!M!\\/",
+"  /\\?MMMMMMMM!!!!!?||||||!__|//",
+}
+
+local truenas_color = {
+"   :dd:",
+"    :dMMd::",
+"     :MMMddd:",
+"      dMMMdddd::",
+"      ::ddMMdddMd:",
+"       dddMMMMd:dMd:",
+"       dMMMMMMMd::dMd:",
+"      :MMMMMMMMMMd :dMd",
+"      dMMMMMMMMMMMd  dMd:",
+"     :MMMMMMMMMMMMM:  :dMd",
+"    :MMMMMMMMdddddd:    :Md:",
+"   :ddddddddddddddddddddddd:",
+}
+
+drawer.addLogo("TrueNAS", {
 	requires_color = false,
 	graphic = truenas_color,
 	shift = {x = 0, y = 6},
