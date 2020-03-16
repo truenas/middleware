@@ -122,7 +122,7 @@ def test_07_setup_function(image):
     gunzip_results = SSH_TEST(cmd, user, password, ip)
     assert gunzip_results['result'] is True, gunzip_results['output']
     if scale is True:
-        cmd = f"losetup {loops[image]} /tmp/{image}"
+        cmd = f"losetup -P {loops[image]} /tmp/{image}"
     else:
         cmd = f"mdconfig -a -t vnode -f /tmp/{image}"
     mdconfig_results = SSH_TEST(cmd, user, password, ip)
@@ -131,9 +131,6 @@ def test_07_setup_function(image):
         IMAGES[image] = f"{loops[image]}p1"
     else:
         IMAGES[image] = f"/dev/{mdconfig_results['output'].strip()}s1"
-    # cmd = 'ls /dev | grep loop'
-    # results = SSH_TEST(cmd, user, password, ip)
-    # assert 'loop8p1' in results['output'], results['output']
 
 
 def test_08_import_msdosfs():
