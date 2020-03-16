@@ -117,8 +117,10 @@ def test_07_setup_function(image):
     cmd = f"gunzip -f /tmp/{image}.gz"
     gunzip_results = SSH_TEST(cmd, user, password, ip)
     assert gunzip_results['result'] is True, gunzip_results['output']
-
-    cmd = f"mdconfig -a -t vnode -f /tmp/{image}"
+    if scale is True:
+        cmd = f"losetup /dev/{image} /tmp/{image}"
+    else:
+        cmd = f"mdconfig -a -t vnode -f /tmp/{image}"
     mdconfig_results = SSH_TEST(cmd, user, password, ip)
     assert mdconfig_results['result'] is True, mdconfig_results['output']
     IMAGES[image] = mdconfig_results['output'].strip()
@@ -208,7 +210,10 @@ def test_15_look_if_Каталог_slash_Файл():
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
 def test_16_stop_image_with_mdconfig(image):
-    cmd = f"mdconfig -d -u {IMAGES[image]}"
+    if scale is True:
+        cmd = f"losetup -d /dev/{image}"
+    else:
+        cmd = f"mdconfig -d -u {IMAGES[image]}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
