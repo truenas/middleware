@@ -2292,6 +2292,10 @@ class PoolDatasetService(CRUDService):
             if ds['valid_key']:
                 if not ds['unlock_error']:
                     ds['unlock_successful'] = not bool(ds['unlock_error'])
+            elif not ds['locked']:
+                # For datasets which are already not locked, unlock operation for them
+                # will succeed as they are not locked
+                ds['unlock_successful'] = Trueg
             else:
                 key_provided = ds['name'] in keys_supplied or ds['key_present_in_database']
                 if key_provided:
