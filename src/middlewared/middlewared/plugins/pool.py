@@ -2222,21 +2222,54 @@ class PoolDatasetService(CRUDService):
 
         Keys/passphrase can be supplied to check if the keys are valid.
 
+        It should be noted that there are 2 keys which show if a recursive unlock operation is
+        done for `id`, which dataset will be unlocked and if not why it won't be unlocked. The keys
+        namely are "unlock_successful" and "unlock_error". The former is a boolean value showing if unlock
+        would succeed/fail. The latter is description why it failed if it failed.
+
+        If a dataset is already unlocked, it will show up as true for "unlock_successful" regardless of what
+        key user provided as the unlock keys in the output are to reflect what a real unlock operation would
+        behave. If user is interested in seeing if a provided key is valid or not, then the key to look out for
+        in the output is "valid_key" which based on what system has in database or if a user provided one, validates
+        the key and sets a boolean value for the dataset.
+
         Example output:
         [
             {
-                "name": "hex",
-                "key_format": "HEX",
-                "key_present": true,
+                "name": "vol",
+                "key_format": "PASSPHRASE",
+                "key_present_in_database": false,
                 "valid_key": true,
-                "locked": false
+                "locked": true,
+                "unlock_error": null,
+                "unlock_successful": true
             },
             {
-                "name": "hex/p",
+                "name": "vol/c1/d1",
                 "key_format": "PASSPHRASE",
-                "key_present": false,
+                "key_present_in_database": false,
                 "valid_key": false,
-                "locked": true
+                "locked": true,
+                "unlock_error": "Provided key is invalid",
+                "unlock_successful": false
+            },
+            {
+                "name": "vol/c",
+                "key_format": "PASSPHRASE",
+                "key_present_in_database": false,
+                "valid_key": false,
+                "locked": true,
+                "unlock_error": "Key not provided",
+                "unlock_successful": false
+            },
+            {
+                "name": "vol/c/d2",
+                "key_format": "PASSPHRASE",
+                "key_present_in_database": false,
+                "valid_key": false,
+                "locked": true,
+                "unlock_error": "Child cannot be unlocked when parent \"vol/c\" is locked and provided key is invalid",
+                "unlock_successful": false
             }
         ]
         """
@@ -2295,7 +2328,7 @@ class PoolDatasetService(CRUDService):
             elif not ds['locked']:
                 # For datasets which are already not locked, unlock operation for them
                 # will succeed as they are not locked
-                ds['unlock_successful'] = Trueg
+                ds['unlock_successful'] = True
             else:
                 key_provided = ds['name'] in keys_supplied or ds['key_present_in_database']
                 if key_provided:
