@@ -76,6 +76,7 @@ class EtcService(Service):
 
     GROUPS = {
         'user': [
+            {'type': 'mako', 'path': 'local/smbusername.map'},
             {'type': 'mako', 'path': 'group', 'platform': 'FreeBSD'},
             {'type': 'mako', 'path': 'master.passwd', 'platform': 'FreeBSD'},
             {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
