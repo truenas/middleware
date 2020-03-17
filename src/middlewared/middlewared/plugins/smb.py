@@ -138,9 +138,8 @@ class SMBService(SystemServiceService):
         Addresses assigned by DHCP are excluded from the results.
         """
         choices = {}
-        for i in await self.middleware.call('interface.query'):
-            for alias in i['aliases']:
-                choices[alias['address']] = alias['address']
+        for i in await self.middleware.call('interface.ip_in_use'):
+            choices[i['address']] = i['address']
         return choices
 
     @accepts()
