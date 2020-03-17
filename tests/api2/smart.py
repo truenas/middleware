@@ -12,7 +12,7 @@ from auto_config import interface
 
 Reason = f"VM detected no real ATA disk"
 
-interface_exist = (interface == "vtnet0" or interface == "em0")
+interface_exist = (interface == "vtnet0" or interface == "em0" or interface == 'enp0s7')
 not_real_disk = pytest.mark.skipif(interface_exist, reason=Reason)
 
 
@@ -49,7 +49,9 @@ def test_02_check_that_API_reports_new_smarttest(smart_dict):
     assert results.status_code == 200, results.text
     smarttest = results.json()
     assert isinstance(smarttest, dict), smarttest
-    assert smarttest['disks'] == smart_dict['idents']
+    print(smarttest['disks'])
+    for disk in smarttest['disks']:
+        assert disk in smart_dict['idents']
 
 
 def test_03_update_smarttest(smart_dict):
