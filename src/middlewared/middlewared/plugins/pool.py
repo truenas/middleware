@@ -3008,7 +3008,6 @@ class PoolDatasetService(CRUDService):
             'force': options['force'],
             'recursive': options['recursive'],
         })
-        await self.delete_encrypted_datasets_from_db([['name', '=', id]])
         return result
 
     @item_method
