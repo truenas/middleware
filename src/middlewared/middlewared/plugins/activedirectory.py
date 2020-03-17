@@ -1142,7 +1142,7 @@ class ActiveDirectoryService(ConfigService):
         ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
         clockskew = abs(ntp_time - nas_time)
         if clockskew > permitted_clockskew:
-            raise CallError(f'Clockskew between {pdc[0]["host"]} and NAS exceeds 3 minutes')
+            raise CallError(f'Clockskew between {pdc[0]["host"]} and NAS exceeds 3 minutes: {clockskew}')
         return {'pdc': str(pdc[0]['host']), 'timestamp': str(ntp_time), 'clockskew': str(clockskew)}
 
     @private
@@ -1565,8 +1565,8 @@ class ActiveDirectoryService(ConfigService):
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
         id_type_both_backends = [
-            'rid',
-            'autorid'
+            'RID',
+            'AUTORID'
         ]
         if not ad['disable_freenas_cache']:
             """
@@ -1603,7 +1603,7 @@ class ActiveDirectoryService(ConfigService):
                     'high_id': d['range_high'],
                     'id_type_both': True if d['idmap_backend'] in id_type_both_backends else False,
                 })
-            elif d['domain'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
+            elif d['name'] not in ['DS_TYPE_DEFAULT_DOMAIN', 'DS_TYPE_LDAP']:
                 known_domains.append({
                     'domain': d['name'],
                     'low_id': d['range_low'],
