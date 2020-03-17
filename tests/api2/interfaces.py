@@ -10,8 +10,8 @@ import random
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface, ip, user, password
-from functions import GET, PUT, POST, SSH_TEST
+from auto_config import interface, ip
+from functions import GET, PUT, POST
 
 aliases = {'address': ip}
 
@@ -23,6 +23,8 @@ def test_01_get_interface_name():
     results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
+    print(interface)
+    print(results.json())
     assert results.json()[0]["name"] == interface, results.text
 
 
