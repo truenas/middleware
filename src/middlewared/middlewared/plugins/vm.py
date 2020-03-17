@@ -458,6 +458,8 @@ class VMSupervisor:
                     }
 
                 device_xml = device.xml(child_element=create_element('address', **address_dict))
+            elif isinstance(device, NIC):
+                device_xml = device.xml(slot=pci_slot())
             else:
                 device_xml = device.xml()
 
@@ -650,6 +652,7 @@ class NIC(Device):
                         'mac', address=self.data['attributes']['mac'] if
                         self.data['attributes'].get('mac') else self.random_mac()
                     ),
+                    create_element('address', type='pci', slot=str(kwargs['slot'])),
                 ]
             }
         )
