@@ -61,12 +61,10 @@ def generate_debugkernel_loader_config(middleware):
     if advanced["debugkernel"]:
         return [
             'kernel="kernel-debug"',
-            'module_path="/boot/kernel-debug;/boot/modules;/usr/local/modules"',
         ]
     else:
         return [
             'kernel="kernel"',
-            'module_path="/boot/kernel;/boot/modules;/usr/local/modules"'
         ]
 
 
