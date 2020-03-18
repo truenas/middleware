@@ -549,7 +549,7 @@ class ZFSDatasetService(CRUDService):
                 entry['obj_used_percent'] = entry['obj_used'] / entry['obj_quota'] * 100
 
             try:
-                if quota_type == 'USER':
+                if entry['quota_type'] == 'USER':
                     entry['name'] = (
                         self.middleware.call_sync('user.get_user_obj',
                                                   {'uid': entry['id']})
