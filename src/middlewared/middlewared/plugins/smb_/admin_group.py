@@ -49,13 +49,13 @@ class SMBService(Service):
     @private
     async def wbinfo_gidtosid(self, gid):
         verrors = ValidationErrors()
-        proc = await run(['/usr/local/bin/wbinfo', '--gid-to-sid', gid], check=False)
+        proc = await run(['/usr/local/bin/wbinfo', '--gid-to-sid', str(gid)], check=False)
         if proc.returncode != 0:
             if WBCErr.WINBIND_NOT_AVAILABLE.err() in proc.stderr.decode():
                 return WBCErr.WINBIND_NOT_AVAILABLE.err()
             else:
                 verrors.add('smb_update.admin_group',
-                            f'Failed to identify Windows SID for group: {proc.stderr.decode()}')
+                            f'Failed to identify Windows SID for gid [{gid}]: {proc.stderr.decode()}')
                 raise verrors
 
         return proc.stdout.decode().strip()

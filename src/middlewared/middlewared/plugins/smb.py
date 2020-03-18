@@ -493,7 +493,7 @@ class SMBService(SystemServiceService):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
-            await self.add_admin_group(new['admin_group'])
+            await self.middleware.call('smb.add_admin_group', new['admin_group'])
 
         if verrors:
             raise verrors
