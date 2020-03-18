@@ -53,11 +53,7 @@ class RemoteClient(object):
 
     def connect_and_wait(self):
         try:
-            # 860 is the iSCSI port and blocked by the failover script
-            with Client(
-                f'ws://{self.remote_ip}:6000/websocket',
-                reserved_ports=True, reserved_ports_blacklist=[860],
-            ) as c:
+            with Client(f'ws://{self.remote_ip}:6000/websocket', reserved_ports=True) as c:
                 self.client = c
                 self.connected.set()
                 # Subscribe to all events on connection
