@@ -1509,6 +1509,7 @@ class PoolService(CRUDService):
             'pool.dataset.delete_encrypted_datasets_from_db',
             [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
+        await self.middleware.call('pool.dataset.remove_dataset_from_cache', pool['name'])
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
@@ -2438,10 +2439,25 @@ class PoolDatasetService(CRUDService):
         await self.insert_or_update_encrypted_record(
             {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
         )
-        if options['passphrase'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
+        passphrase_key_format = ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.PASSPHRASE
+        if options['passphrase'] and not passphrase_key_format:
             await self.middleware.call('pool.dataset.sync_db_keys', id)
 
-        await self.sync_keys_with_remote_node()
+        if not options['passphrase'] and passphrase_key_format:
+            # Dataset encryption has been changed from passphrase to key in this case
+            await self.remove_dataset_from_cache(id)
+        else:
+            await self.sync_keys_with_remote_node()
+
+    @private
+    async def remove_dataset_from_cache(self, dataset):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK:
+                # We want to save the passphrase in cache so that we can unlock these datasets on failover
+                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                keys = {k: v for k, v in keys.items() if k != dataset and not k.startswith(f'{dataset}/')}
+                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
+                asyncio.ensure_future(self.sync_keys_with_remote_node())
 
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):
@@ -2481,6 +2497,8 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
         await self.middleware.call('pool.dataset.sync_db_keys', id)
+        if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.PASSPHRASE:
+            await self.remove_dataset_from_cache(id)
 
     @private
     def _retrieve_keys_from_file(self, job):
