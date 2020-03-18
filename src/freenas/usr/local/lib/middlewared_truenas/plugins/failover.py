@@ -618,12 +618,7 @@ class FailoverService(ConfigService):
             return False
         for i in self.middleware.call_sync('interface.query', [('failover_critical', '!=', None)]):
             if i['failover_vhid']:
-                subprocess.run([
-                    'python',
-                    '/usr/local/libexec/truenas/carp-state-change-hook.py',
-                    f'{i["failover_vhid"]}@{i["name"]}',
-                    'forcetakeover',
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                self.middleware.call_sync('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
                 break
         return False
 
