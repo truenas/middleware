@@ -49,7 +49,7 @@ class SMBService(Service):
     @private
     async def wbinfo_gidtosid(self, gid):
         verrors = ValidationErrors()
-        proc = await run(['/usr/local/bin/wbinfo', '--gid-to-sid', str(gid)], check=False)
+        proc = await run([SMBCmd.WBINFO.value, '--gid-to-sid', str(gid)], check=False)
         if proc.returncode != 0:
             if WBCErr.WINBIND_NOT_AVAILABLE.err() in proc.stderr.decode():
                 return WBCErr.WINBIND_NOT_AVAILABLE.err()
@@ -108,7 +108,7 @@ class SMBService(Service):
         if not must_add_sid:
             return True
 
-        proc = await run(['/usr/local/bin/net', 'groupmap', 'addmem', 'S-1-5-32-544', sid],
+        proc = await run([SMBCmd.NET.value, 'groupmap', 'addmem', 'S-1-5-32-544', sid],
                          check=False)
         if proc.returncode != 0:
             raise CallError(f'net groupmap addmem failed: {proc.stderr.decode().strip()}')
