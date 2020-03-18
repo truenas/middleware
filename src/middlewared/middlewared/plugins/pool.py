@@ -32,6 +32,7 @@ from middlewared.validators import Exact, Match, Or, Range, Time
 
 logger = logging.getLogger(__name__)
 
+ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 GELI_KEYPATH = '/data/geli'
 
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
@@ -1849,6 +1850,15 @@ class PoolDatasetService(CRUDService):
         key_format = data.pop('key_format') or ZFSKeyFormat.PASSPHRASE.value
         if not data['encryption_key'] or ZFSKeyFormat(key_format.upper()) == ZFSKeyFormat.PASSPHRASE:
             # We do not want to save passphrase keys - they are only known to the user
+            if ZFSKeyFormat(key_format.upper()) == ZFSKeyFormat.PASSPHRASE and await self.middleware.call(
+                'failover.licensed'
+            ):
+                async with ENCRYPTION_CACHE_LOCK:
+                    # We want to save the passphrase in cache so that we can unlock these datasets on failover
+                    keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                    keys[data['id']] = data['encryption_key']
+                    await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
+                    await self.middleware.call('failover.call_remote', 'cache.put', ['failover_zfs_keys', keys])
             return
 
         ds_id = data.pop('id')
