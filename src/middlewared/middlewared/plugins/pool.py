@@ -673,6 +673,7 @@ class PoolService(CRUDService):
                     'key_format': encryption_dict.get('keyformat')
                 }
             )
+            asyncio.ensure_future(self.middleware.call('pool.dataset.sync_keys_with_remote_node'))
 
             if osc.IS_FREEBSD:
                 await self.middleware.call('pool.save_encrypteddisks', pool_id, formatted_disks, disks_cache)
@@ -1858,7 +1859,6 @@ class PoolDatasetService(CRUDService):
                     keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
                     keys[data['id']] = data['encryption_key']
                     await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
-                    await self.middleware.call('failover.call_remote', 'cache.put', ['failover_zfs_keys', keys])
             return
 
         ds_id = data.pop('id')
@@ -1888,6 +1888,13 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call('kmip.sync_zfs_keys', [pk])
 
         return pk
+
+    @private
+    async def sync_keys_with_remote_node(self):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK:
+                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                await self.middleware.call('failover.call_remote', 'cache.put', ['failover_zfs_keys', keys])
 
     @private
     @accepts(Ref('query-filters'))
@@ -2196,6 +2203,7 @@ class PoolDatasetService(CRUDService):
                         'key_format': datasets[unlocked_dataset]['key_format']['value'],
                     }
                 )
+            self.middleware.call_sync('pool.dataset.sync_keys_with_remote_node')
 
         return {'unlocked': unlocked, 'failed': failed}
 
@@ -2432,6 +2440,8 @@ class PoolDatasetService(CRUDService):
         )
         if options['passphrase'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
             await self.middleware.call('pool.dataset.sync_db_keys', id)
+
+        await self.sync_keys_with_remote_node()
 
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):
@@ -2783,6 +2793,7 @@ class PoolDatasetService(CRUDService):
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
             'key_format': encryption_dict.get('keyformat')
         })
+        asyncio.ensure_future(self.sync_keys_with_remote_node())
 
         data['id'] = data['name']
 
