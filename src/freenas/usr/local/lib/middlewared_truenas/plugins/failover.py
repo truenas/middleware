@@ -1463,6 +1463,16 @@ class JournalSync:
             await self.sync_keys_with_remote_node()
 
     @private
+    async def remove_zfs_keys_from_cache(self, datasets):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK:
+                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                for dataset in datasets:
+                    keys = {k: v for k, v in keys.items() if k != dataset and not k.startswith(f'{dataset}/')}
+                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
+            await self.sync_keys_with_remote_node()
+
+    @private
     async def sync_keys_with_remote_node(self):
         if await self.middleware.call('failover.licensed'):
             async with ENCRYPTION_CACHE_LOCK:
@@ -1701,6 +1711,14 @@ async def hook_pool_dataset_unlock(middleware, datasets):
     await middleware.call('failover.update_zfs_keys_cache', datasets)
 
 
+async def hook_pool_dataset_change_key(middleware, dataset_data):
+    if dataset_data['key_format'] == 'PASSPHRASE' or dataset_data['old_key_format'] == 'PASSPHRASE':
+        if dataset_data['key_format'] == 'PASSPHRASE':
+            await middleware.call('failover.update_zfs_keys_cache', [dataset_data])
+        else:
+            await middleware.call('failover.remove_zfs_keys_from_cache', [dataset_data['name']])
+
+
 async def hook_pool_rekey(middleware, pool=None):
     if not pool or not pool['encryptkey_path']:
         return
@@ -1781,6 +1799,7 @@ async def setup(middleware):
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
     middleware.register_hook('pool.dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
+    middleware.register_hook('pool.dataset.change_key', hook_pool_dataset_change_key, sync=True)
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)

@@ -2442,13 +2442,14 @@ class PoolDatasetService(CRUDService):
 
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end
-        await self.insert_or_update_encrypted_record(
-            {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
-        )
+        data = {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
+        await self.insert_or_update_encrypted_record(data)
         passphrase_key_format = ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.PASSPHRASE
         if options['passphrase'] and not passphrase_key_format:
             await self.middleware.call('pool.dataset.sync_db_keys', id)
 
+        data['old_key_format'] = ds['key_format']['value']
+        await self.middleware.call_hook('pool.dataset.change_key', data)
         if not options['passphrase'] and passphrase_key_format:
             # Dataset encryption has been changed from passphrase to key in this case
             await self.remove_dataset_from_cache(id)
