@@ -1723,6 +1723,10 @@ async def hook_pool_dataset_change_key(middleware, dataset_data):
             await middleware.call('failover.remove_zfs_keys_from_cache', [dataset_data['name']])
 
 
+async def hook_pool_dataset_inherit_parent_encryption_root(middleware, dataset):
+    await middleware.call('failover.remove_zfs_keys_from_cache', [dataset])
+
+
 async def hook_pool_rekey(middleware, pool=None):
     if not pool or not pool['encryptkey_path']:
         return
@@ -1805,6 +1809,9 @@ async def setup(middleware):
     middleware.register_hook('pool.dataset.post_create', hook_pool_dataset_post_create, sync=True)
     middleware.register_hook('pool.dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
     middleware.register_hook('pool.dataset.change_key', hook_pool_dataset_change_key, sync=True)
+    middleware.register_hook(
+        'pool.dataset.inherit_parent_encryption_root', hook_pool_dataset_inherit_parent_encryption_root, sync=True
+    )
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)

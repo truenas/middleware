@@ -2505,8 +2505,7 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
         await self.middleware.call('pool.dataset.sync_db_keys', id)
-        if ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.PASSPHRASE:
-            await self.remove_dataset_from_cache(id)
+        await self.middleware.call_hook('pool.dataset.inherit_parent_encryption_root', id)
 
     @private
     def _retrieve_keys_from_file(self, job):
