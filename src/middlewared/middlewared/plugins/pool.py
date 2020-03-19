@@ -2197,13 +2197,19 @@ class PoolDatasetService(CRUDService):
             j.wait_sync()
 
         if unlocked:
+            def dataset_data(unlocked_dataset):
+                return {
+                    'encryption_key': keys_supplied[unlocked_dataset], 'name': unlocked_dataset,
+                    'key_format': datasets[unlocked_dataset]['key_format']['value'],
+                }
+
             for unlocked_dataset in filter(lambda d: d in keys_supplied, unlocked):
                 self.middleware.call_sync(
-                    'pool.dataset.insert_or_update_encrypted_record', {
-                        'encryption_key': keys_supplied[unlocked_dataset], 'name': unlocked_dataset,
-                        'key_format': datasets[unlocked_dataset]['key_format']['value'],
-                    }
+                    'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
+            await self.middleware.call_hook(
+                'pool.dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
+            )
             self.middleware.call_sync('pool.dataset.sync_keys_with_remote_node')
 
         return {'unlocked': unlocked, 'failed': failed}

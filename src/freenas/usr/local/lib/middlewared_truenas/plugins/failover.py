@@ -41,6 +41,7 @@ from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.plugins.system import SystemService
 
 BUFSIZE = 256
+ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
 
@@ -1450,6 +1451,24 @@ class JournalSync:
     def _update_failover_status(self):
         self.failover_status = self.middleware.call_sync('failover.status')
 
+    @private
+    async def update_zfs_keys_cache(self, datasets):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK:
+                # We want to save the passphrase in cache so that we can unlock these datasets on failover
+                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                for ds in filter(lambda d: d['key_format'].upper() == 'PASSPHRASE', datasets):
+                    keys[ds['name']] = ds['encryption_key']
+                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
+            await self.sync_keys_with_remote_node()
+
+    @private
+    async def sync_keys_with_remote_node(self):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK:
+                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                await self.middleware.call('failover.call_remote', 'cache.put', ['failover_zfs_keys', keys])
+
 
 def hook_datastore_execute_write(middleware, sql, params):
     sql_queue.put((sql, params))
@@ -1678,6 +1697,10 @@ async def hook_pool_unlock(middleware, pool=None, passphrase=None):
         await middleware.call('failover.encryption_setkey', passphrase)
 
 
+async def hook_pool_dataset_unlock(middleware, datasets):
+    await middleware.call('failover.update_zfs_keys_cache', datasets)
+
+
 async def hook_pool_rekey(middleware, pool=None):
     if not pool or not pool['encryptkey_path']:
         return
@@ -1757,6 +1780,7 @@ async def setup(middleware):
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
+    middleware.register_hook('pool.dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
