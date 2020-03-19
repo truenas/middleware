@@ -429,10 +429,11 @@ class FailoverService(Service):
                         run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
 
                 self.logger.warn('Beginning volume imports.')
-                # TODO: now that we are all python, we should probably just absorb the code in.
-                run(
-                    'LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper attachall'
-                )
+
+                attach_all_job = self.middleware.call_sync('failover.encryption_attachall')
+                attach_all_job.wait_sync()
+                if attach_all_job.error:
+                    self.logger.error('Failed to attach geli providers: %s', attach_all_job.error)
 
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
@@ -751,11 +752,16 @@ class FailoverService(Service):
                     if ret and ret[0]['srv_enable']:
                         self.run_call(f'service.{verb}', i, {'ha_propagate': False})
 
-                run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper detachall')
+                detach_all_job = self.middleware.call_sync('failover.encryption_detachall')
+                detach_all_job.wait_sync()
+                if detach_all_job.error:
+                    self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
                 if fobj['phrasedvolumes']:
                     self.logger.warn('Setting passphrase from master')
-                    run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper syncfrompeer')
+                    passphrase = self.middleware.call_sync('failover.call_remote', 'failover.encryption_getkey')
+                    if not self.middleware.call_sync('failover.encryption_setkey', passphrase, {'sync': False}):
+                        self.logger.error('ERROR: Failed to sync passphrase on local controller.')
 
         except AlreadyLocked:
             self.logger.warn('Failover event handler failed to aquire backup lockfile')
