@@ -1511,6 +1511,7 @@ class PoolService(CRUDService):
             [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
         await self.middleware.call('pool.dataset.remove_dataset_from_cache', pool['name'])
+        await self.middleware.call('pool.dataset.post_delete', pool['name'])
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
