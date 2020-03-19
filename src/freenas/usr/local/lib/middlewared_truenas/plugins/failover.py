@@ -30,7 +30,7 @@ import time
 
 from functools import partial
 
-from middlewared.schema import accepts, Bool, Dict, Int, NOT_PROVIDED, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
@@ -798,22 +798,36 @@ class FailoverService(ConfigService):
 
     @accepts(Dict(
         'options',
-        Str('passphrase', password=True, required=True),
+        List(
+            'pools', items=[
+                Dict(
+                    'pool_keys',
+                    Str('name', required=True),
+                    Str('passphrase', required=True)
+                )
+            ]
+        ),
     ))
-    def unlock(self, options):
+    async def unlock(self, options):
         """
         Unlock pools in HA, syncing passphrase between controllers and forcing this controller
         to be MASTER importing the pools.
         """
-        self.middleware.call('failover.encryption_setkey', options['passphrase'])
-        return self.middleware.call('failover.force_master')
+        for pool in options['pools']:
+            await self.middleware.call(
+                'failover.encryption_setkey', pool['name'], pool['passphrase'], {'sync': False}
+            )
+        try:
+            await self.sync_keys_with_remote_node()
+        except Exception as e:
+            self.logger.error('Failed to sync encryption keys with standby node: %s', e)
+
+        return await self.middleware.call('failover.force_master')
 
     @private
     @accepts()
-    def encryption_getkey(self):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.getkey()
+    async def encryption_getkey(self):
+        return await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
 
     @private
     def encryption_shutdown(self):
@@ -916,14 +930,11 @@ class FailoverService(ConfigService):
                         os.unlink(FAILOVER_NEEDOP)
                     except FileNotFoundError:
                         pass
-                    passphrase = escrowctl.getkey()
                     try:
-                        self.middleware.call_sync(
-                            'failover.call_remote', 'failover.encryption_setkey', [passphrase]
-                        )
+                        self.middleware.call_sync('failover.sync_keys_with_remote_node')
                     except Exception:
                         self.logger.error(
-                            'Failed to set encryption key on standby node.', exc_info=True,
+                            'Failed to sync encryption keys with standby node.', exc_info=True,
                         )
                 else:
                     open(FAILOVER_NEEDOP, 'w').close()
@@ -1705,7 +1716,7 @@ async def hook_pool_lock(middleware, pool=None):
 
 async def hook_pool_unlock(middleware, pool=None, passphrase=None):
     if passphrase:
-        await middleware.call('failover.encryption_setkey', passphrase)
+        await middleware.call('failover.encryption_setkey', pool, passphrase)
 
 
 async def hook_pool_dataset_unlock(middleware, datasets):
