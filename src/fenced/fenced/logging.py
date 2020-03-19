@@ -33,6 +33,10 @@ def setup_logging(foreground):
             'simple': {
                 'format': '[%(name)s:%(lineno)s] %(message)s',
             },
+            'simple-file': {
+                'format': '[%(asctime)s %(name)s:%(lineno)s] %(message)s',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
+            },
         },
         'handlers': {
             'syslog': {
@@ -41,6 +45,14 @@ def setup_logging(foreground):
                 'formatter': 'simple',
                 'level': 'INFO',
                 'facility': 'daemon',
+            },
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'formatter': 'simple-file',
+                'level': 'ERROR',
+                'filename': '/var/log/failover.log',
+                'maxBytes': 1000000, # 1MB size
+                'backupCount': '3',
             },
             'console': {
                 'class': 'logging.StreamHandler',
@@ -51,7 +63,7 @@ def setup_logging(foreground):
         },
         'loggers': {
             '': {
-                'handlers': ['console', 'syslog'],
+                'handlers': ['console', 'syslog', 'file'],
                 'level': 'DEBUG',
                 'propagate': True,
             },
