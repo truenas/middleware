@@ -826,19 +826,19 @@ class FailoverService(ConfigService):
             return escrowctl.status()
 
     @private
-    @accepts(Str('passphrase'), Dict('options', Bool('sync', default=True)))
-    def encryption_setkey(self, passphrase, options=None):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            rv = escrowctl.setkey(passphrase)
-        if not rv:
-            return rv
+    @accepts(Str('pool'), Str('passphrase'), Dict('options', Bool('sync', default=True)))
+    async def encryption_setkey(self, pool, passphrase, options=None):
+        async with ENCRYPTION_CACHE_LOCK:
+            keys = await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
+            keys[pool] = passphrase
+            await self.middleware.call('cache.put', 'failover_geli_keys', keys)
+
         if options['sync']:
             try:
-                self.call_remote('failover.encryption_setkey', [passphrase, {'sync': False}])
+                await self.sync_keys_with_remote_node()
             except Exception as e:
-                self.logger.warn('Failed to set encryption key on standby node: %s', e)
-        return rv
+                self.logger.warn('Failed to sync encryption keys with standby node: %s', e)
+        return True
 
     @private
     @accepts()
