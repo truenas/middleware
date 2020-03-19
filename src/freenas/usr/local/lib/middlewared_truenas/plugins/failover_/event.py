@@ -438,10 +438,8 @@ class FailoverService(Service):
                 p.start()
                 for volume in fobj['volumes']:
                     self.logger.warn('Importing %s', volume)
-                    error, output = run('zpool import {} -o cachefile=none -m -R /mnt -f {}'.format(
-                        '-c /data/zfs/zpool.cache.saved' if os.path.exists(
-                            '/data/zfs/zpool.cache.saved'
-                        ) else '',
+                    # TODO: try to import using cachefile and then fallback without if it fails
+                    error, output = run('zpool import -o cachefile=none -m -R /mnt -f {}'.format(
                         volume,
                     ), stderr=True)
                     if error:
