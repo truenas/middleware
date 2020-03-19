@@ -32,7 +32,6 @@ from middlewared.validators import Exact, Match, Or, Range, Time
 
 logger = logging.getLogger(__name__)
 
-ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 GELI_KEYPATH = '/data/geli'
 
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
@@ -1510,7 +1509,6 @@ class PoolService(CRUDService):
             'pool.dataset.delete_encrypted_datasets_from_db',
             [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
-        await self.middleware.call('pool.dataset.remove_dataset_from_cache', pool['name'])
         await self.middleware.call('pool.dataset.post_delete', pool['name'])
 
         # scrub needs to be regenerated in crontab
@@ -1854,14 +1852,6 @@ class PoolDatasetService(CRUDService):
         key_format = data.pop('key_format') or ZFSKeyFormat.PASSPHRASE.value
         if not data['encryption_key'] or ZFSKeyFormat(key_format.upper()) == ZFSKeyFormat.PASSPHRASE:
             # We do not want to save passphrase keys - they are only known to the user
-            if ZFSKeyFormat(key_format.upper()) == ZFSKeyFormat.PASSPHRASE and await self.middleware.call(
-                'failover.licensed'
-            ):
-                async with ENCRYPTION_CACHE_LOCK:
-                    # We want to save the passphrase in cache so that we can unlock these datasets on failover
-                    keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                    keys[data['id']] = data['encryption_key']
-                    await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
             return
 
         ds_id = data.pop('id')
@@ -1891,13 +1881,6 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call('kmip.sync_zfs_keys', [pk])
 
         return pk
-
-    @private
-    async def sync_keys_with_remote_node(self):
-        if await self.middleware.call('failover.licensed'):
-            async with ENCRYPTION_CACHE_LOCK:
-                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                await self.middleware.call('failover.call_remote', 'cache.put', ['failover_zfs_keys', keys])
 
     @private
     @accepts(Ref('query-filters'))
@@ -2212,7 +2195,6 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call_hook(
                 'pool.dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
             )
-            self.middleware.call_sync('pool.dataset.sync_keys_with_remote_node')
 
         return {'unlocked': unlocked, 'failed': failed}
 
@@ -2446,27 +2428,11 @@ class PoolDatasetService(CRUDService):
         #  devd changes are in from the OS end
         data = {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
         await self.insert_or_update_encrypted_record(data)
-        passphrase_key_format = ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.PASSPHRASE
-        if options['passphrase'] and not passphrase_key_format:
+        if options['passphrase'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
             await self.middleware.call('pool.dataset.sync_db_keys', id)
 
         data['old_key_format'] = ds['key_format']['value']
         await self.middleware.call_hook('pool.dataset.change_key', data)
-        if not options['passphrase'] and passphrase_key_format:
-            # Dataset encryption has been changed from passphrase to key in this case
-            await self.remove_dataset_from_cache(id)
-        else:
-            await self.sync_keys_with_remote_node()
-
-    @private
-    async def remove_dataset_from_cache(self, dataset):
-        if await self.middleware.call('failover.licensed'):
-            async with ENCRYPTION_CACHE_LOCK:
-                # We want to save the passphrase in cache so that we can unlock these datasets on failover
-                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                keys = {k: v for k, v in keys.items() if k != dataset and not k.startswith(f'{dataset}/')}
-                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
-                asyncio.ensure_future(self.sync_keys_with_remote_node())
 
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):

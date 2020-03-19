@@ -1264,6 +1264,34 @@ class FailoverService(ConfigService):
         self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
         return True
 
+    @private
+    async def update_zfs_keys_cache(self, datasets):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK:
+                # We want to save the passphrase in cache so that we can unlock these datasets on failover
+                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                for ds in filter(lambda d: d['key_format'].upper() == 'PASSPHRASE', datasets):
+                    keys[ds['name']] = ds['encryption_key']
+                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
+            await self.sync_keys_with_remote_node()
+
+    @private
+    async def remove_zfs_keys_from_cache(self, datasets):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK:
+                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                for dataset in datasets:
+                    keys = {k: v for k, v in keys.items() if k != dataset and not k.startswith(f'{dataset}/')}
+                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
+            await self.sync_keys_with_remote_node()
+
+    @private
+    async def sync_keys_with_remote_node(self):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK:
+                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+                await self.middleware.call('failover.call_remote', 'cache.put', ['failover_zfs_keys', keys])
+
 
 async def ha_permission(middleware, app):
     # Skip if session was already authenticated
@@ -1450,34 +1478,6 @@ class JournalSync:
 
     def _update_failover_status(self):
         self.failover_status = self.middleware.call_sync('failover.status')
-
-    @private
-    async def update_zfs_keys_cache(self, datasets):
-        if await self.middleware.call('failover.licensed'):
-            async with ENCRYPTION_CACHE_LOCK:
-                # We want to save the passphrase in cache so that we can unlock these datasets on failover
-                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                for ds in filter(lambda d: d['key_format'].upper() == 'PASSPHRASE', datasets):
-                    keys[ds['name']] = ds['encryption_key']
-                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
-            await self.sync_keys_with_remote_node()
-
-    @private
-    async def remove_zfs_keys_from_cache(self, datasets):
-        if await self.middleware.call('failover.licensed'):
-            async with ENCRYPTION_CACHE_LOCK:
-                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                for dataset in datasets:
-                    keys = {k: v for k, v in keys.items() if k != dataset and not k.startswith(f'{dataset}/')}
-                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
-            await self.sync_keys_with_remote_node()
-
-    @private
-    async def sync_keys_with_remote_node(self):
-        if await self.middleware.call('failover.licensed'):
-            async with ENCRYPTION_CACHE_LOCK:
-                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                await self.middleware.call('failover.call_remote', 'cache.put', ['failover_zfs_keys', keys])
 
 
 def hook_datastore_execute_write(middleware, sql, params):
