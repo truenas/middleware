@@ -296,10 +296,14 @@ class Client(object):
             if self._event_callbacks:
                 if '*' in self._event_callbacks:
                     event = self._event_callbacks['*']
-                    event['callback'](msg.upper(), **message)
+                    Thread(
+                        target=event['callback'], args=[msg.upper()], kwargs=message, daemon=True,
+                    ).start()
                 if message['collection'] in self._event_callbacks:
                     event = self._event_callbacks[message['collection']]
-                    event['callback'](msg.upper(), **message)
+                    Thread(
+                        target=event['callback'], args=[msg.upper()], kwargs=message, daemon=True,
+                    ).start()
         elif msg == 'ready':
             for subid in message['subs']:
                 # FIXME: We may need to keep a different index for id
