@@ -2814,11 +2814,12 @@ class PoolDatasetService(CRUDService):
             'properties': props,
         })
 
-        await self.insert_or_update_encrypted_record({
+        dataset_data = {
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
             'key_format': encryption_dict.get('keyformat')
-        })
-        asyncio.ensure_future(self.sync_keys_with_remote_node())
+        }
+        await self.insert_or_update_encrypted_record(dataset_data)
+        await self.middleware.call_hook('pool.dataset.post_create', dataset_data)
 
         data['id'] = data['name']
 

@@ -1711,6 +1711,10 @@ async def hook_pool_dataset_unlock(middleware, datasets):
     await middleware.call('failover.update_zfs_keys_cache', datasets)
 
 
+async def hook_pool_dataset_post_create(middleware, dataset_data):
+    await middleware.call('failover.update_zfs_keys_cache', [dataset_data])
+
+
 async def hook_pool_dataset_change_key(middleware, dataset_data):
     if dataset_data['key_format'] == 'PASSPHRASE' or dataset_data['old_key_format'] == 'PASSPHRASE':
         if dataset_data['key_format'] == 'PASSPHRASE':
@@ -1798,6 +1802,7 @@ async def setup(middleware):
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
+    middleware.register_hook('pool.dataset.post_create', hook_pool_dataset_post_create, sync=True)
     middleware.register_hook('pool.dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
     middleware.register_hook('pool.dataset.change_key', hook_pool_dataset_change_key, sync=True)
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
