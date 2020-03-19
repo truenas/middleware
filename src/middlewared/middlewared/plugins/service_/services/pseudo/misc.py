@@ -38,6 +38,17 @@ class DiskService(PseudoServiceBase):
         asyncio.ensure_future(self.middleware.call("service.restart", "collectd"))
 
 
+class FailoverService(PseudoServiceBase):
+    name = "failover"
+
+    etc = ["failover"]
+    restartable = True
+
+    async def restart(self):
+        if osc.IS_FREEBSD:
+            await freebsd_service("devd", "restart")
+
+
 class KmipService(PseudoServiceBase):
     name = "kmip"
 
