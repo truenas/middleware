@@ -667,13 +667,13 @@ class PoolService(CRUDService):
                 {'prefix': 'vol_'},
             )
 
+            encrypted_dataset_data = {
+                'name': data['name'], 'encryption_key': encryption_dict.get('key'),
+                'key_format': encryption_dict.get('keyformat')
+            }
             encrypted_dataset_pk = await self.middleware.call(
-                'pool.dataset.insert_or_update_encrypted_record', {
-                    'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-                    'key_format': encryption_dict.get('keyformat')
-                }
+                'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
             )
-            asyncio.ensure_future(self.middleware.call('pool.dataset.sync_keys_with_remote_node'))
 
             if osc.IS_FREEBSD:
                 await self.middleware.call('pool.save_encrypteddisks', pool_id, formatted_disks, disks_cache)
@@ -719,6 +719,7 @@ class PoolService(CRUDService):
 
         pool = await self.get_instance(pool_id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
+        await self.middleware.call_hook('pool.dataset.post_create', encrypted_dataset_data)
         return pool
 
     @accepts(Int('id'), Patch(
