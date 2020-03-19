@@ -77,7 +77,11 @@ class mDNSService(object):
             else:
                 return False
 
+        if self.service == 'SMB':
             return any(filter_list(self.service_info, [('service', '=', 'cifs'), ('state', '=', 'RUNNING')]))
+
+        if self.service == 'SFTP_SSH':
+            return any(filter_list(self.service_info, [('service', '=', 'ssh'), ('state', '=', 'RUNNING')]))
 
         return any(filter_list(self.service_info, [('service', '=', self.service.lower()), ('state', '=', 'RUNNING')]))
 
