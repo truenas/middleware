@@ -20,7 +20,7 @@ import sys
 
 from middlewared.client import Client
 
-c = Client()
+c = Client('ws+unix:///var/run/middlewared-internal.sock')
 if c.call('system.is_freenas'):
     TRUENAS = False
 else:
