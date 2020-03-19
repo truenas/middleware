@@ -1289,8 +1289,9 @@ class FailoverService(ConfigService):
     async def sync_keys_with_remote_node(self):
         if await self.middleware.call('failover.licensed'):
             async with ENCRYPTION_CACHE_LOCK:
-                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                await self.middleware.call('failover.call_remote', 'cache.put', ['failover_zfs_keys', keys])
+                for cache_key in ('failover_zfs_keys', 'failover_geli_keys'):
+                    keys = await self.middleware.call('cache.get_or_put', cache_key, 0, lambda: {})
+                    await self.middleware.call('failover.call_remote', 'cache.put', [cache_key, keys])
 
 
 async def ha_permission(middleware, app):
