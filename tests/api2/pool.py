@@ -224,7 +224,7 @@ def test_16_stop_image_with_mdconfig(image):
     if scale is True:
         cmd = f"losetup -d {loops[image]}"
     else:
-        cmd = f"mdconfig -d -u {IMAGES[image]}"
+        cmd = f"mdconfig -d -u {IMAGES[image].replace('s1', '')}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
