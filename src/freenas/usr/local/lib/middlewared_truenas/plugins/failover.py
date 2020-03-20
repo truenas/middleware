@@ -1608,6 +1608,9 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     if not await middleware.call('pool.query'):
         return
 
+    # If we have reached this stage make sure status is up to date
+    await middleware.call('failover.status_refresh')
+
     try:
         ha_configured = await middleware.call(
             'failover.call_remote', 'failover.status'
@@ -1620,7 +1623,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         if await middleware.call('failover.status') == 'MASTER':
             middleware.logger.debug('[HA] Configuring network on standby node')
             await middleware.call('failover.call_remote', 'interface.sync')
-        await middleware.call('failover.status_refresh')
         return
 
     middleware.logger.info('[HA] Setting up')
