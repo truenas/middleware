@@ -750,7 +750,7 @@ class FailoverService(ConfigService):
 
     @private
     @accepts(Str('pool'))
-    def encryption_clearkey(self, pool):
+    async def encryption_clearkey(self, pool):
         async with ENCRYPTION_CACHE_LOCK:
             keys = await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
             keys.pop(pool, None)
@@ -1632,7 +1632,7 @@ async def hook_pool_dataset_post_create(middleware, dataset_data):
     await middleware.call('failover.update_zfs_keys_cache', [dataset_data])
 
 
-async def hook_pool_dataset_post_delete( middleware, dataset):
+async def hook_pool_dataset_post_delete(middleware, dataset):
     await middleware.call('failover.remove_zfs_keys_from_cache', [dataset])
 
 

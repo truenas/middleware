@@ -2192,7 +2192,7 @@ class PoolDatasetService(CRUDService):
                 self.middleware.call_sync(
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
-            await self.middleware.call_hook(
+            self.middleware.call_hook_sync(
                 'pool.dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
             )
 
