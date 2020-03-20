@@ -311,3 +311,17 @@ def setup_logging(name, debug_level, log_handler):
         _logger.configure_logging('console')
     else:
         _logger.configure_logging('file')
+
+
+def reconfigure_logging(handler_name='file'):
+    handler = logging._handlers.get(handler_name)
+    if handler:
+        stream = handler.stream
+        handler.stream = handler._open()
+        if sys.stdout is stream:
+            sys.stdout = handler.stream
+            sys.stderr = handler.stream
+        try:
+            stream.close()
+        except Exception:
+            pass

@@ -40,7 +40,7 @@ from zettarepl.utils.logging import (
 from zettarepl.zettarepl import Zettarepl
 
 from middlewared.client import Client, ClientException, ejson
-from middlewared.logger import setup_logging
+from middlewared.logger import setup_logging, reconfigure_logging
 from middlewared.service import CallError, periodic, Service
 from middlewared.utils import start_daemon_thread
 from middlewared.utils.string import make_sentence
@@ -145,6 +145,9 @@ class ZettareplProcess:
         for handler in logging.getLogger("zettarepl").handlers:
             handler.addFilter(LongStringsFilter())
             handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
+
+        c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+        c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: reconfigure_logging('zettarepl_file'))
 
         definition = Definition.from_data(self.definition, raise_on_error=False)
         self.observer_queue.put(DefinitionErrors(definition.errors))
