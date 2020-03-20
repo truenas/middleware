@@ -12,7 +12,12 @@ After=systemd-modules-load.service local-fs.target
 Type=notify
 ExecStart=/usr/bin/middlewared --log-handler=file -o /usr/local/lib/middlewared_truenas
 TimeoutStartSec=240
-Restart=on-failure
+Restart=always
+# SIGTERM will only happen if systemd kills process that timed out booting (it is the only case in which we don't
+# want to restart middleware infinitely as it will cause boot process to hang).
+# If user accidentally (or intentionally) kills middleware with SIGTERM, we'll see successful exit because we catch
+# SIGTERM and terminate event loop, then exit with successful status.
+RestartPreventExitStatus=SIGTERM
 
 [Install]
 WantedBy=multi-user.target
