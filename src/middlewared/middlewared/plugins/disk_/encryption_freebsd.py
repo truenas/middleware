@@ -75,16 +75,8 @@ class DiskService(Service, DiskEncryptionBase):
             )
             if cp.stderr or not os.path.exists(f'/dev/{dev}.eli'):
                 raise CallError(f'Unable to geli attach {dev}: {cp.stderr.decode()}')
-            self.__geli_notify_passphrase(passphrase)
         else:
             self.logger.debug(f'{dev} already attached')
-
-    def __geli_notify_passphrase(self, passphrase):
-        if passphrase:
-            with open(passphrase) as f:
-                self.middleware.call_hook_sync('disk.post_geli_passphrase', f.read())
-        else:
-            self.middleware.call_hook_sync('disk.post_geli_passphrase', None)
 
     @private
     def create_keyfile(self, keyfile, size=64, force=False):
@@ -208,8 +200,6 @@ class DiskService(Service, DiskEncryptionBase):
         )
         if cp.stderr:
             raise CallError(f'Unable to set passphrase on {dev}: {cp.stderr.decode()}')
-
-        self.__geli_notify_passphrase(passphrase)
 
     @private
     def geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
