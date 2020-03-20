@@ -8,6 +8,7 @@ import logging
 import logging.config
 import logging.handlers
 
+LOG_FILE = '/var/log/fenced.log'
 
 class FaultSysLogHandler(logging.handlers.SysLogHandler):
     """
@@ -50,7 +51,7 @@ def setup_logging(foreground):
                 'class': 'logging.handlers.RotatingFileHandler',
                 'formatter': 'simple-file',
                 'level': 'ERROR',
-                'filename': '/var/log/failover.log',
+                'filename': LOG_FILE,
                 'maxBytes': 1000000, # 1MB size
                 'backupCount': '3',
             },
