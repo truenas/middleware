@@ -91,6 +91,14 @@ class PoolService(Service):
             await self.middleware.call(
                 'datastore.update', 'storage.volume', oid, {'vol_encrypt': 1}
             )
+
+        await self.middleware.call_hook(
+            'pool.post_change_passphrase', {
+                'action': 'UPDATE' if options['passphrase'] else 'REMOVE',
+                'passphrase': options['passphrase'],
+                'pool': pool['name'],
+            }
+        )
         return True
 
     @item_method

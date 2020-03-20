@@ -1326,14 +1326,16 @@ async def ha_permission(middleware, app):
         AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
 
 
-async def hook_geli_passphrase(middleware, passphrase):
+async def hook_pool_change_passphrase(middleware, passphrase_data):
     """
     Hook to set pool passphrase when its changed.
     """
     if not await middleware.call('failover.licensed'):
         return
-    if passphrase:
-        await middleware.call('failover.encryption_setkey', passphrase, {'sync': True})
+    if passphrase_data['action'] == 'UPDATE':
+        await middleware.call(
+            'failover.encryption_setkey', passphrase_data['pool'], passphrase_data['passphrase'], {'sync': True}
+        )
     else:
         await middleware.call('failover.encryption_clearkey')
 
@@ -1813,7 +1815,7 @@ async def setup(middleware):
     middleware.event_subscribe('system', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
-    middleware.register_hook('disk.post_geli_passphrase', hook_geli_passphrase, sync=False)
+    middleware.register_hook('pool.post_change_passphrase', hook_pool_change_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
