@@ -855,11 +855,12 @@ class FailoverService(ConfigService):
         return True
 
     @private
-    @accepts()
-    def encryption_clearkey(self):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.clear()
+    @accepts(Str('pool'))
+    def encryption_clearkey(self, pool):
+        async with ENCRYPTION_CACHE_LOCK:
+            keys = await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
+            keys.pop(pool, None)
+            await self.middleware.call('cache.put', 'failover_geli_keys', keys)
 
     @private
     @job()
