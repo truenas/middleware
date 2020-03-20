@@ -1338,7 +1338,7 @@ async def hook_pool_change_passphrase(middleware, passphrase_data):
             'failover.encryption_setkey', passphrase_data['pool'], passphrase_data['passphrase'], {'sync': True}
         )
     else:
-        await middleware.call('failover.encryption_clearkey')
+        await middleware.call('failover.encryption_clearkey', passphrase_data['pool'])
 
 
 sql_queue = queue.Queue()
@@ -1710,11 +1710,11 @@ async def hook_pool_export(middleware, pool=None, *args, **kwargs):
 
 
 async def hook_pool_lock(middleware, pool=None):
-    await middleware.call('failover.encryption_clearkey')
+    await middleware.call('failover.encryption_clearkey', pool)
     try:
-        await middleware.call('failover.call_remote', 'failover.encryption_clearkey')
+        await middleware.call('failover.sync_keys_with_remote_node')
     except Exception as e:
-        middleware.logger.warn('Failed to clear encryption key on standby node: %s', e)
+        middleware.logger.error('Failed to sync encryption keys with standby node: %s', e)
 
 
 async def hook_pool_unlock(middleware, pool=None, passphrase=None):
