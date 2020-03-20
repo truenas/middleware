@@ -835,9 +835,8 @@ class FailoverService(ConfigService):
             return escrowctl.shutdown()
 
     @private
-    def encryption_status(self):
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.status()
+    async def encryption_status(self, pool):
+        return pool in await self.encryption_getkey()
 
     @private
     @accepts(Str('pool'), Str('passphrase'), Dict('options', Bool('sync', default=True)))
