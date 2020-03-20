@@ -731,10 +731,11 @@ class ZettareplService(Service):
                 # Replication task events
 
                 if isinstance(message, ReplicationTaskScheduled):
-                    self.state[f"replication_{message.task_id}"] = {
-                        "state": "WAITING",
-                        "datetime": datetime.utcnow(),
-                    }
+                    if self.state.get(f"replication_{message.task_id}", {}).get("state") != "RUNNING":
+                        self.state[f"replication_{message.task_id}"] = {
+                            "state": "WAITING",
+                            "datetime": datetime.utcnow(),
+                        }
 
                 if isinstance(message, ReplicationTaskStart):
                     self.state[f"replication_{message.task_id}"] = {
