@@ -524,7 +524,7 @@ def test_061_verify_smb_getparm_path_homes():
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == f'{smb_path}/%U'
+    assert results['output'].strip() == f'{smb_path}/%D/%U'
 
 
 def test_062_stoping_clif_service():
