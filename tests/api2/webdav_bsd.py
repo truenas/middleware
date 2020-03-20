@@ -7,7 +7,7 @@ import pytest
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE
+from functions import PUT, POST, GET, DELETE, wait_on_job
 from auto_config import pool_name
 
 dataset = f'{pool_name}/webdav-bsd-share'
@@ -53,19 +53,26 @@ def test_03_Changing_permissions_on_dataset():
         'group': 'wheel'
     })
     assert results.status_code == 200, results.text
+    global job_id
+    job_id = results.json()
 
 
-def test_04_Enable_WebDAV_service():
+def test_04_verify_the_job_id_is_successfull():
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_05_Enable_WebDAV_service():
     results = PUT('/service/id/webdav/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
-def test_05_Checking_to_see_if_WebDAV_service_is_enabled_at_boot():
+def test_06_Checking_to_see_if_WebDAV_service_is_enabled_at_boot():
     results = GET('/service?service=webdav')
     assert results.json()[0]['enable'] is True, results.text
 
 
-def test_06_Starting_WebDAV_service():
+def test_07_Starting_WebDAV_service():
     results = POST('/service/start/', {
         'service': 'webdav',
     })
@@ -73,17 +80,17 @@ def test_06_Starting_WebDAV_service():
     sleep(1)
 
 
-def test_07_Checking_to_see_if_WebDAV_service_is_running():
+def test_08_Checking_to_see_if_WebDAV_service_is_running():
     results = GET('/service?service=webdav')
     assert results.json()[0]['state'] == 'RUNNING', results.text
 
 
-def test_08_Disabling_WebDAV_service():
+def test_09_Disabling_WebDAV_service():
     results = PUT('/service/id/webdav/', {'enable': False})
     assert results.status_code == 200, results.text
 
 
-def test_09_Stopping_WebDAV_service():
+def test_10_Stopping_WebDAV_service():
     results = POST('/service/stop/', {
         'service': 'webdav',
     })
@@ -91,12 +98,12 @@ def test_09_Stopping_WebDAV_service():
     sleep(1)
 
 
-def test_10_Verifying_that_the_WebDAV_service_has_stopped():
+def test_11_Verifying_that_the_WebDAV_service_has_stopped():
     results = GET('/service?service=webdav')
     assert results.json()[0]['state'] == 'STOPPED', results.text
 
 
-def test_11_Changing_comment_for_WebDAV(webdav_dict):
+def test_12_Changing_comment_for_WebDAV(webdav_dict):
     id = webdav_dict['id']
     results = PUT(f'/sharing/webdav/id/{id}/', {
         'comment': 'foobar'
@@ -104,7 +111,7 @@ def test_11_Changing_comment_for_WebDAV(webdav_dict):
     assert results.status_code == 200, results.text
 
 
-def test_12_Change_WebDAV_password():
+def test_13_Change_WebDAV_password():
     results = PUT('/webdav/', {
         'password': 'ixsystems',
     })
@@ -112,12 +119,12 @@ def test_12_Change_WebDAV_password():
     assert results.status_code == 200, results.text
 
 
-def test_13_Check_WebDAV_password():
+def test_14_Check_WebDAV_password():
     results = GET('/webdav/')
     assert results.json()['password'] == 'ixsystems', results.text
 
 
-def test_14_Check_that_API_reports_WebDAV_config_as_changed(webdav_dict):
+def test_15_Check_that_API_reports_WebDAV_config_as_changed(webdav_dict):
     id = webdav_dict['id']
     results = GET(f'/sharing/webdav?id={id}')
     assert results.status_code == 200, results.text
@@ -125,14 +132,14 @@ def test_14_Check_that_API_reports_WebDAV_config_as_changed(webdav_dict):
     assert data['comment'] == 'foobar'
 
 
-def test_15_Delete_WebDAV_share(webdav_dict):
+def test_16_Delete_WebDAV_share(webdav_dict):
     id = webdav_dict['id']
 
     results = DELETE(f'/sharing/webdav/id/{id}/')
     assert results.status_code == 200, results.text
 
 
-def test_16_Destroying_dataset_for_WebDAV_use(pool_dict):
+def test_17_Destroying_dataset_for_WebDAV_use(pool_dict):
     id = pool_dict['id'].replace('/', '%2F')
 
     results = DELETE(f'/pool/dataset/id/{id}/')
