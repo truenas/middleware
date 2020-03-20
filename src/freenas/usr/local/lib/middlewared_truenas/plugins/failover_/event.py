@@ -759,9 +759,12 @@ class FailoverService(Service):
 
                 if fobj['phrasedvolumes']:
                     self.logger.warn('Setting passphrase from master')
-                    passphrase = self.middleware.call_sync('failover.call_remote', 'failover.encryption_getkey')
-                    if not self.middleware.call_sync('failover.encryption_setkey', passphrase, {'sync': False}):
-                        self.logger.error('ERROR: Failed to sync passphrase on local controller.')
+                    try:
+                        self.middleware.call_sync(
+                            'failover.call_remote', 'failover.sync_keys_with_remote_node'
+                        )
+                    except Exception:
+                        self.logger.error('ERROR: Failed to sync keys from remote controller to local controller.')
 
         except AlreadyLocked:
             self.logger.warn('Failover event handler failed to aquire backup lockfile')

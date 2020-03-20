@@ -196,11 +196,9 @@ class FailoverAlertSource(ThreadedAlertSource):
                     if not self.middleware.call_sync('failover.encryption_status'):
                         alerts.append(Alert(NoFailoverEscrowedPassphraseAlertClass))
                         # Kick a syncfrompeer if we don't.
-                        passphrase = self.middleware.call_sync(
-                            'failover.call_remote', 'failover.encryption_getkey'
+                        self.middleware.call_sync(
+                            'failover.call_remote', 'failover.sync_keys_with_remote_node'
                         )
-                        if passphrase:
-                            self.middleware.call_sync('failover.encryption_setkey', passphrase)
             except Exception:
                 pass
 
