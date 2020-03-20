@@ -830,11 +830,6 @@ class FailoverService(ConfigService):
         return await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
 
     @private
-    def encryption_shutdown(self):
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.shutdown()
-
-    @private
     async def encryption_status(self, pool):
         return pool in await self.encryption_getkey()
 
