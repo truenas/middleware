@@ -696,10 +696,15 @@ class ZettareplService(Service):
                 # Replication task events
 
                 if isinstance(message, ReplicationTaskScheduled):
-                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
-                        "state": "WAITING",
-                        "datetime": datetime.utcnow(),
-                    })
+                    if (
+                            (self.middleware.call_sync(
+                                "zettarepl.get_state_internal", f"replication_{message.task_id}"
+                            ) or {}).get("state") != "RUNNING"
+                    ):
+                        self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
+                            "state": "WAITING",
+                            "datetime": datetime.utcnow(),
+                        })
 
                 if isinstance(message, ReplicationTaskStart):
                     self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {

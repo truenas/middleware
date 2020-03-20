@@ -34,6 +34,9 @@ class ZettareplService(Service):
             }
         }
 
+    def get_state_internal(self, task_id):
+        return self.state.get(task_id)
+
     def _known_tasks_ids(self):
         return set(self.state.keys()) | set(self.definition_errors.keys()) | set(self.hold_tasks.keys())
 
