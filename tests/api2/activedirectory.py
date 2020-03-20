@@ -168,7 +168,7 @@ def test_10_verify_the_job_id_is_successfull():
 
 @skip_ad_test
 def test_11_enabling_activedirectory():
-    global payload, results, job_id
+    global payload, results, job_id_11
     payload = {
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
@@ -181,12 +181,12 @@ def test_11_enabling_activedirectory():
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
+    job_id_11 = results.json()['job_id']
 
 
 @skip_ad_test
 def test_12_verify_job_id_is_successfull():
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(job_id_11, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -421,7 +421,7 @@ def test_41_get_activedirectory_started_after_leaving_AD():
 
 @skip_ad_test
 def test_42_re_enable_activedirectory():
-    global payload, results, job_id
+    global payload, results, job_id_42
     payload = {
         "bindpw": ADPASSWORD,
         "bindname": ADUSERNAME,
@@ -432,12 +432,12 @@ def test_42_re_enable_activedirectory():
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
+    job_id_42 = results.json()['job_id']
 
 
 @skip_ad_test
 def test_43_verify_job_id_is_successfull():
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(job_id_42, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -549,18 +549,18 @@ def test_55_Removing_SMB_mountpoint():
 # put all code to disable and delete under here
 @skip_ad_test
 def test_56_disable_activedirectory():
-    global payload, results, job_id
+    global payload, results, job_id_56
     payload = {
         "enable": False
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
+    job_id_56 = results.json()['job_id']
 
 
 @skip_ad_test
 def test_57_verify_job_id_is_successfull():
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(job_id_56, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -580,18 +580,18 @@ def test_59_get_activedirectory_started_after_disabling_AD():
 
 @skip_ad_test
 def test_60_re_enable_activedirectory():
-    global payload, results, job_id
+    global payload, results, job_id_60
     payload = {
         "enable": True
     }
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
+    job_id_60 = results.json()['job_id']
 
 
 @skip_ad_test
 def test_61_verify_job_id_is_successfull():
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(job_id_60, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
