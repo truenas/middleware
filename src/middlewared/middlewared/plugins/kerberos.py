@@ -138,7 +138,7 @@ class KerberosService(ConfigService):
         """
         Returns false if there is not a TGT or if the TGT has expired.
         """
-        klist = await run(['/usr/bin/klist', '-t'], check=False)
+        klist = await run(['klist', '-t'], check=False)
         if klist.returncode != 0:
             return False
         return True
@@ -255,13 +255,13 @@ class KerberosService(ConfigService):
         await self.middleware.call('etc.generate', 'kerberos')
         if ad['enable']:
             if ad['kerberos_principal']:
-                ad_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ad['kerberos_principal']], check=False)
+                ad_kinit = await run(['kinit', '--renewable', '-k', ad['kerberos_principal']], check=False)
                 if ad_kinit.returncode != 0:
                     raise CallError(f"kinit for domain [{ad['domainname']}] with principal [{ad['kerberos_principal']}] failed: {ad_kinit.stderr.decode()}")
             else:
                 principal = f'{ad["bindname"]}@{ad["domainname"].upper()}'
                 ad_kinit = await Popen(
-                    ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
+                    ['kinit', '--renewable', '--password-file=STDIN', principal],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
                 )
                 output = await ad_kinit.communicate(input=ad['bindpw'].encode())
@@ -269,7 +269,7 @@ class KerberosService(ConfigService):
                     raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {output[1].decode()}")
         if ldap['enable'] and ldap['kerberos_realm']:
             if ldap['kerberos_principal']:
-                ldap_kinit = await run(['/usr/bin/kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
+                ldap_kinit = await run(['kinit', '--renewable', '-k', ldap['kerberos_principal']], check=False)
                 if ldap_kinit.returncode != 0:
                     raise CallError(f"kinit for realm {ldap['kerberos_realm']} with keytab failed: {ldap_kinit.stderr.decode()}")
             else:
@@ -281,7 +281,7 @@ class KerberosService(ConfigService):
                 bind_cn = (ldap['binddn'].split(','))[0].split("=")
                 principal = f'{bind_cn[1]}@{krb_realm["realm"]}'
                 ldap_kinit = await Popen(
-                    ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
+                    ['kinit', '--renewable', '--password-file=STDIN', principal],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
                 )
                 output = await ldap_kinit.communicate(input=ldap['bindpw'].encode())
@@ -310,7 +310,7 @@ class KerberosService(ConfigService):
 
         try:
             klist = await asyncio.wait_for(
-                run(['/usr/bin/klist', '-v'], check=False, stdout=subprocess.PIPE),
+                run(['klist', '-v'], check=False, stdout=subprocess.PIPE),
                 timeout=10.0
             )
         except Exception as e:
@@ -407,7 +407,7 @@ class KerberosService(ConfigService):
 
         if must_renew and not must_reinit:
             try:
-                kinit = await asyncio.wait_for(run(['/usr/bin/kinit', '-R'], check=False), timeout=15)
+                kinit = await asyncio.wait_for(run(['kinit', '-R'], check=False), timeout=15)
                 if kinit.returncode != 0:
                     raise CallError(f'kinit -R failed with error: {kinit.stderr.decode()}')
                 self.logger.debug(f'Successfully renewed kerberos TGT')
@@ -439,7 +439,7 @@ class KerberosService(ConfigService):
     @private
     async def stop(self):
         await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
-        kdestroy = await run(['/usr/bin/kdestroy'], check=False)
+        kdestroy = await run(['kdestroy'], check=False)
         if kdestroy.returncode != 0:
             raise CallError(f'kdestroy failed with error: {kdestroy.stderr.decode()}')
 
@@ -759,7 +759,7 @@ class KerberosKeytabService(CRUDService):
         with open(keytab['TEST'].value, "wb") as f:
             f.write(decoded)
 
-        ktutil = await run(["/usr/sbin/ktutil", "-k", keytab['TEST'].value, "list"], check=False)
+        ktutil = await run(["ktutil", "-k", keytab['TEST'].value, "list"], check=False)
         if ktutil.returncode != 0:
             verrors.add("kerberos.keytab_create", f"Failed to validate keytab: [{ktutil.stderr.decode().strip()}]")
 
@@ -774,7 +774,7 @@ class KerberosKeytabService(CRUDService):
         """
         keytab_entries = []
         kt_list = await run(
-            ["/usr/sbin/ktutil", "-k", keytab_file, "-v", "list"], check=False
+            ["ktutil", "-k", keytab_file, "-v", "list"], check=False
         )
         if kt_list.returncode != 0:
             raise CallError(f'ktutil list for keytab [{keytab_file}] failed with error: {kt_list.stderr.decode()}')
@@ -832,7 +832,7 @@ class KerberosKeytabService(CRUDService):
         if os.path.exists(keytab['SAMBA'].value):
             os.remove(keytab['SAMBA'].value)
         kt_copy = await run([
-            '/usr/sbin/ktutil', 'copy',
+            'ktutil', 'copy',
             keytab['SYSTEM'].value,
             keytab['SAMBA'].value],
             check=False
@@ -851,7 +851,7 @@ class KerberosKeytabService(CRUDService):
                 continue
 
             ktutil_remove = await run([
-                '/usr/sbin/ktutil',
+                'ktutil',
                 '-k', keytab['SAMBA'].value,
                 'remove',
                 '-p', i['principal']],
