@@ -743,8 +743,7 @@ class FailoverService(Service):
                 ):
                     verb = 'restart'
                     if i == 'iscsitarget':
-                        iscsicfg = self.run_call('iscsi.global.config')
-                        if iscsicfg and iscsicfg['alua'] is False:
+                        if not self.run_call('iscsi.global.alua_enabled'):
                             verb = 'stop'
 
                     ret = self.run_call('datastore.query', 'services.services', [('srv_service', '=', i)])
