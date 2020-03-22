@@ -153,7 +153,7 @@ async def zfs_events(middleware, data):
                 ['OR', [['name', '=', data['history_dsname']], ['name', '^', f'{data["history_dsname"]}/']]]
             ]
         )
-        await middleware.call_hook('pool.dataset.post_delete', data['history_dsname'])
+        await middleware.call_hook('dataset.post_delete', data['history_dsname'])
 
 
 def setup(middleware):

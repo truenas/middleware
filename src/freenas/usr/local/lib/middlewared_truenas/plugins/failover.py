@@ -1751,12 +1751,12 @@ async def setup(middleware):
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
-    middleware.register_hook('pool.dataset.post_create', hook_pool_dataset_post_create, sync=True)
-    middleware.register_hook('pool.dataset.post_delete', hook_pool_dataset_post_delete, sync=True)
-    middleware.register_hook('pool.dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
-    middleware.register_hook('pool.dataset.change_key', hook_pool_dataset_change_key, sync=True)
+    middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)
+    middleware.register_hook('dataset.post_delete', hook_pool_dataset_post_delete, sync=True)
+    middleware.register_hook('dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
+    middleware.register_hook('dataset.change_key', hook_pool_dataset_change_key, sync=True)
     middleware.register_hook(
-        'pool.dataset.inherit_parent_encryption_root', hook_pool_dataset_inherit_parent_encryption_root, sync=True
+        'dataset.inherit_parent_encryption_root', hook_pool_dataset_inherit_parent_encryption_root, sync=True
     )
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)

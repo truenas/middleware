@@ -718,7 +718,7 @@ class PoolService(CRUDService):
 
         pool = await self.get_instance(pool_id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
-        await self.middleware.call_hook('pool.dataset.post_create', encrypted_dataset_data)
+        await self.middleware.call_hook('dataset.post_create', encrypted_dataset_data)
         return pool
 
     @accepts(Int('id'), Patch(
@@ -1509,7 +1509,7 @@ class PoolService(CRUDService):
             'pool.dataset.delete_encrypted_datasets_from_db',
             [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
-        await self.middleware.call('pool.dataset.post_delete', pool['name'])
+        await self.middleware.call('dataset.post_delete', pool['name'])
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
@@ -2196,7 +2196,7 @@ class PoolDatasetService(CRUDService):
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
             self.middleware.call_hook_sync(
-                'pool.dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked if ds in keys_supplied],
+                'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked if ds in keys_supplied],
             )
 
         return {'unlocked': unlocked, 'failed': failed}
@@ -2435,7 +2435,7 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call('pool.dataset.sync_db_keys', id)
 
         data['old_key_format'] = ds['key_format']['value']
-        await self.middleware.call_hook('pool.dataset.change_key', data)
+        await self.middleware.call_hook('dataset.change_key', data)
 
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):
@@ -2475,7 +2475,7 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
         await self.middleware.call('pool.dataset.sync_db_keys', id)
-        await self.middleware.call_hook('pool.dataset.inherit_parent_encryption_root', id)
+        await self.middleware.call_hook('dataset.inherit_parent_encryption_root', id)
 
     @private
     def _retrieve_keys_from_file(self, job):
@@ -2789,7 +2789,7 @@ class PoolDatasetService(CRUDService):
             'key_format': encryption_dict.get('keyformat')
         }
         await self.insert_or_update_encrypted_record(dataset_data)
-        await self.middleware.call_hook('pool.dataset.post_create', dataset_data)
+        await self.middleware.call_hook('dataset.post_create', dataset_data)
 
         data['id'] = data['name']
 
