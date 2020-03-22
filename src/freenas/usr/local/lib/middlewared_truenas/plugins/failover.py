@@ -1711,6 +1711,13 @@ async def service_remote(middleware, service, verb, options):
             middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)
 
 
+async def ready_system_sync_keys(middleware):
+    try:
+        await middleware.call('failover.call_remote', 'failover.sync_keys_with_remote_node')
+    except Exception as e:
+        middleware.logger.error('Failed to sync keys from MASTER node to STANDBY node: %s', str(e))
+
+
 async def _event_system_ready(middleware, event_type, args):
     """
     Method called when system is ready to issue an event in case
@@ -1718,6 +1725,10 @@ async def _event_system_ready(middleware, event_type, args):
     """
     if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
         return
+
+    if args['id'] == 'ready':
+        asyncio.ensure_future(ready_system_sync_keys(middleware))
+
     if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
         middleware.send_event('failover.upgrade_pending', 'ADDED', {
             'id': 'BACKUP', 'fields': {'pending': True},
@@ -1771,3 +1782,6 @@ async def setup(middleware):
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     asyncio.ensure_future(journal_ha(middleware))
+
+    if await middleware.call('system.ready'):
+        asyncio.ensure_future(ready_system_sync_keys(middleware))

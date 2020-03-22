@@ -652,7 +652,7 @@ class FailoverService(Service):
                 # For reboots, /tmp is cleared by virtue of being a memory device.
                 # If someone does a kill -9 on the script while it's running the lockfile
                 # will get left dangling.
-                self.logger.warn('Aquired failover backup lock')
+                self.logger.warn('Acquired failover backup lock')
                 run('pkill -9 -f fenced')
 
                 for iface in fobj['non_crit_interfaces']:
@@ -766,16 +766,9 @@ class FailoverService(Service):
                 if detach_all_job.error:
                     self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
-                self.logger.warn('Syncing passphrase keys from master')
-                try:
-                    self.middleware.call_sync(
-                        'failover.call_remote', 'failover.sync_keys_with_remote_node'
-                    )
-                except Exception:
-                    self.logger.error('ERROR: Failed to sync keys from remote controller to local controller.')
-
+                # We don't sync keys in this case as we expect that cache is always in sync between nodes
         except AlreadyLocked:
-            self.logger.warn('Failover event handler failed to aquire backup lockfile')
+            self.logger.warn('Failover event handler failed to acquire backup lockfile')
 
 
 async def devd_carp_hook(middleware, data):
