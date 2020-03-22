@@ -446,6 +446,15 @@ class FailoverService(Service):
                     if error:
                         self.logger.error('Failed to import %s: %s', volume, output)
                         open(FAILED_FILE, 'w').close()
+                    else:
+                        unlock_job = self.middleware.call_sync('failover.unlock_zfs_datasets', volume)
+                        unlock_job.wait_sync()
+                        if unlock_job.error:
+                            self.logger.error('Failed to unlock ZFS encrypted datasets: %s', unlock_job.error)
+                        elif unlock_job.result['failed']:
+                            self.logger.error(
+                                'Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed'])
+                            )
                     run(f'zpool set cachefile=/data/zfs/zpool.cache {volume}')
 
                 p.terminate()

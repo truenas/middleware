@@ -736,6 +736,19 @@ class FailoverService(ConfigService):
         return await self.middleware.call('failover.force_master')
 
     @private
+    @job(lock=lambda args: f'failover_dataset_unlock_{args[0]}')
+    async def unlock_zfs_datasets(self, job, pool_name):
+        # We are going to unlock all zfs datasets we have keys in cache/database for the pool in question
+        keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+        unlock_job = await self.middleware.call(
+            'pool.dataset.unlock', pool_name, {
+                'recursive': True,
+                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in keys.items()]
+            }
+        )
+        return await job.wrap(unlock_job)
+
+    @private
     @accepts()
     async def encryption_getkey(self):
         return await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
