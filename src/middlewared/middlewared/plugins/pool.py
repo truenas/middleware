@@ -1977,6 +1977,9 @@ class PoolDatasetService(CRUDService):
     @private
     @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
     def sync_db_keys(self, job, name=None):
+        if self.middleware.call_sync('failover.licensed') and self.middleware.call_sync('failover.status') == 'BACKUP':
+            # We don't want to do this for passive controller
+            return
         filters = [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else []
         db_datasets = self.query_encrypted_roots_keys(filters)
         encrypted_roots = {d['name']: d for d in self.query(filters) if d['name'] == d['encryption_root']}
@@ -2193,7 +2196,7 @@ class PoolDatasetService(CRUDService):
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
             self.middleware.call_hook_sync(
-                'pool.dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
+                'pool.dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked if ds in keys_supplied],
             )
 
         return {'unlocked': unlocked, 'failed': failed}
