@@ -679,8 +679,9 @@ class FailoverService(ConfigService):
          2. the quantity of disks are the same between
             controllers but serials do not match
         """
-        local_boot_disks = await self.middleware.call('zfs.pool.get_disks', 'freenas-boot')
-        remote_boot_disks = await self.middleware.call('failover.call_remote', 'zfs.pool.get_disks', ['freenas-boot'])
+        boot_pool = await self.middleware.call('boot.pool_name')
+        local_boot_disks = await self.middleware.call('zfs.pool.get_disks', boot_pool)
+        remote_boot_disks = await self.middleware.call('failover.call_remote', 'zfs.pool.get_disks', [boot_pool])
         local_disks = set(
             v['ident']
             for k, v in (await self.middleware.call('device.get_info', 'DISK')).items()
