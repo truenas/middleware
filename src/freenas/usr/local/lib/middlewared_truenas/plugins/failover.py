@@ -706,7 +706,16 @@ class FailoverService(ConfigService):
                     Str('name', required=True),
                     Str('passphrase', required=True)
                 )
-            ]
+            ], default=[]
+        ),
+        List(
+            'datasets', items=[
+                Dict(
+                    'dataset_keys',
+                    Str('name', required=True),
+                    Str('encryption_key', required=True),
+                )
+            ], default=[]
         ),
     ))
     async def unlock(self, options):
@@ -718,6 +727,7 @@ class FailoverService(ConfigService):
             await self.middleware.call(
                 'failover.encryption_setkey', pool['name'], pool['passphrase'], {'sync': False}
             )
+        await self.update_zfs_keys_cache([{'key_format': 'PASSPHRASE', **ds} for ds in options['datasets']])
         try:
             await self.sync_keys_with_remote_node()
         except Exception as e:
