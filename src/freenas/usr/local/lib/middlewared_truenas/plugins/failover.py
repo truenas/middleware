@@ -6,6 +6,7 @@
 
 import asyncio
 import base64
+import contextlib
 import errno
 from lockfile import LockFile
 import logging
@@ -728,10 +729,9 @@ class FailoverService(ConfigService):
                 'failover.encryption_setkey', pool['name'], pool['passphrase'], {'sync': False}
             )
         await self.update_zfs_keys_cache([{'key_format': 'PASSPHRASE', **ds} for ds in options['datasets']])
-        try:
+
+        with contextlib.suppress(Exception):
             await self.sync_keys_with_remote_node()
-        except Exception as e:
-            self.logger.error('Failed to sync encryption keys with standby node: %s', e)
 
         return await self.middleware.call('failover.force_master')
 
@@ -766,10 +766,9 @@ class FailoverService(ConfigService):
             await self.middleware.call('cache.put', 'failover_geli_keys', keys)
 
         if options['sync']:
-            try:
+            with contextlib.suppress(Exception):
                 await self.sync_keys_with_remote_node()
-            except Exception as e:
-                self.logger.warn('Failed to sync encryption keys with standby node: %s', e)
+
         return True
 
     @private
@@ -857,12 +856,8 @@ class FailoverService(ConfigService):
                     os.unlink(FAILOVER_NEEDOP)
                 except FileNotFoundError:
                     pass
-                try:
+                with contextlib.suppress(Exception):
                     self.middleware.call_sync('failover.sync_keys_with_remote_node')
-                except Exception:
-                    self.logger.error(
-                        'Failed to sync encryption keys with standby node.', exc_info=True,
-                    )
             else:
                 open(FAILOVER_NEEDOP, 'w').close()
         except Exception:
@@ -1227,9 +1222,16 @@ class FailoverService(ConfigService):
     async def sync_keys_with_remote_node(self):
         if await self.middleware.call('failover.licensed'):
             async with ENCRYPTION_CACHE_LOCK:
-                for cache_key in ('failover_zfs_keys', 'failover_geli_keys'):
-                    keys = await self.middleware.call('cache.get_or_put', cache_key, 0, lambda: {})
-                    await self.middleware.call('failover.call_remote', 'cache.put', [cache_key, keys])
+                try:
+                    for cache_key in ('failover_zfs_keys', 'failover_geli_keys'):
+                        keys = await self.middleware.call('cache.get_or_put', cache_key, 0, lambda: {})
+                        await self.middleware.call('failover.call_remote', 'cache.put', [cache_key, keys])
+                except Exception as e:
+                    await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
+                    self.middleware.logger.error('Failed to sync keys with remote node: %s', str(e), exc_info=True)
+                    raise
+                else:
+                    await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
 
 
 async def ha_permission(middleware, app):
@@ -1637,10 +1639,8 @@ async def hook_pool_export(middleware, pool=None, *args, **kwargs):
 
 async def hook_pool_lock(middleware, pool=None):
     await middleware.call('failover.encryption_clearkey', pool)
-    try:
+    with contextlib.suppress(Exception):
         await middleware.call('failover.sync_keys_with_remote_node')
-    except Exception as e:
-        middleware.logger.error('Failed to sync encryption keys with standby node: %s', e)
 
 
 async def hook_pool_unlock(middleware, pool=None, passphrase=None):
@@ -1712,10 +1712,8 @@ async def service_remote(middleware, service, verb, options):
 
 
 async def ready_system_sync_keys(middleware):
-    try:
+    with contextlib.suppress(Exception):
         await middleware.call('failover.call_remote', 'failover.sync_keys_with_remote_node')
-    except Exception as e:
-        middleware.logger.error('Failed to sync keys from MASTER node to STANDBY node: %s', str(e))
 
 
 async def _event_system_ready(middleware, event_type, args):

@@ -18,3 +18,18 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     )
 
     products = ("ENTERPRISE",)
+
+
+class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = "Automatic Keys Sync to Peer Failed"
+    text = (
+        "Failed to sync keys/passphrases configuration information to standby storage "
+        "controller. Use Sync to Peer on the System/Failover page to "
+        "perform a manual sync."
+    )
+
+    products = ("ENTERPRISE",)
