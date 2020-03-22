@@ -766,14 +766,13 @@ class FailoverService(Service):
                 if detach_all_job.error:
                     self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
-                if fobj['phrasedvolumes']:
-                    self.logger.warn('Setting passphrase from master')
-                    try:
-                        self.middleware.call_sync(
-                            'failover.call_remote', 'failover.sync_keys_with_remote_node'
-                        )
-                    except Exception:
-                        self.logger.error('ERROR: Failed to sync keys from remote controller to local controller.')
+                self.logger.warn('Syncing passphrase keys from master')
+                try:
+                    self.middleware.call_sync(
+                        'failover.call_remote', 'failover.sync_keys_with_remote_node'
+                    )
+                except Exception:
+                    self.logger.error('ERROR: Failed to sync keys from remote controller to local controller.')
 
         except AlreadyLocked:
             self.logger.warn('Failover event handler failed to aquire backup lockfile')
