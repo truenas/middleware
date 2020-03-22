@@ -2066,6 +2066,8 @@ class PoolDatasetService(CRUDService):
             'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
         )
 
+        await self.middleware.call_hook('dataset.post_lock', id)
+
         return True
 
     @accepts(
