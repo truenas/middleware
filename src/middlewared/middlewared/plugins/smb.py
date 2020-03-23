@@ -18,7 +18,7 @@ import subprocess
 import uuid
 
 try:
-    from samba import param
+    from samba.samba3 import param
 except ImportError:
     param = None
 
@@ -31,6 +31,8 @@ LOGLEVEL_MAP = {
     '10': 'DEBUG',
 }
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
+
+LP_CTX = param.get_context()
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -324,7 +326,12 @@ class SMBService(SystemServiceService):
         """
         try:
             if section.upper() == 'GLOBAL':
-                return param.LoadParm(SMBPath.GLOBALCONF.platform()).get(parm, section)
+                try:
+                    LP_CTX.load(SMBPath.GLOBALCONF.platform())
+                except Exception as e:
+                    self.logger.warning("Failed to reload smb.conf: %s", e)
+
+                return LP_CTX.get(parm)
             else:
                 return self.middleware.call_sync('sharing.smb.reg_getparm', section, parm)
 
