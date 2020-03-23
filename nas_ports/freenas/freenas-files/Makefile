@@ -40,11 +40,6 @@ MAKE_JOBS_UNSAFE=yes
 .include <bsd.port.pre.mk>
 
 do-build:
-	(cd ${WRKSRC}/escrowd; \
-		${MAKE} cleandir && \
-		${MAKE} obj && \
-		${MAKE} depend all \
-	)
 	${MAKE} -C ${WRKSRC}/winacl   obj
 	${MAKE} -C ${WRKSRC}/winacl  all
 
@@ -57,11 +52,6 @@ do-install:
 .if defined(DEBUG_FLAGS)
 	mkdir -p ${STAGEDIR}${DEBUGDIR}${PREFIX}/boot/modules
 .endif
-	(cd ${WRKSRC}/escrowd; \
-		${MAKE} BINDIR=${STAGEDIR}${PREFIX}/usr/sbin \
-		MANDIR=${STAGEDIR}${PREFIX}/usr/share/man/man install \
-	)
-
 	${MAKE} -C ${WRKSRC}/winacl DESTDIR=${STAGEDIR} BINDIR=${PREFIX}/usr/local/bin install
 	#
 	# Adding autotune
