@@ -536,6 +536,8 @@ class FailoverService(ConfigService):
         """
         self.logger.debug('Sending database to standby controller')
         self.middleware.call_sync('failover.send_database')
+        self.logger.debug('Syncing cached keys')
+        self.middleware.call_sync('failover.sync_keys_with_remote_node')
         self.logger.debug('Sending license and pwenc files')
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
@@ -714,7 +716,7 @@ class FailoverService(ConfigService):
                 Dict(
                     'dataset_keys',
                     Str('name', required=True),
-                    Str('encryption_key', required=True),
+                    Str('passphrase', required=True),
                 )
             ], default=[]
         ),
@@ -1649,6 +1651,16 @@ async def hook_sync_geli(middleware, pool=None):
 
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
     await middleware.call('enclosure.sync_zpool', pool)
+    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
+
+
+async def hook_pool_post_import(middleware, pool):
+    if pool['encrypt'] == 2 and pool['passphrase']:
+        await middleware.call(
+            'failover.update_encryption_keys', {
+                'pools': [{'name': pool['name'], 'passphrase': pool['passphrase']}]
+            }
+        )
 
 
 async def hook_pool_lock(middleware, pool=None):
@@ -1787,6 +1799,7 @@ async def setup(middleware):
     middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
+    middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
     middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)

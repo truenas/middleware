@@ -1358,7 +1358,12 @@ class PoolService(CRUDService):
             await self.middleware.call('keyvalue.delete', key)
 
         await self.middleware.call('service.reload', 'disk')
-        await self.middleware.call_hook('pool.post_import', pool)
+        await self.middleware.call_hook(
+            'pool.post_import', {
+                'passphrase': data.get('passphrase'),
+                **(await self.middleware.call('pool.query', ['name', '=', pool['name']]))
+            }
+        )
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
 
         return True
@@ -2790,10 +2795,10 @@ class PoolDatasetService(CRUDService):
 
         dataset_data = {
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-            'key_format': encryption_dict.get('keyformat'), 'encrypted': bool(encryption_dict),
+            'key_format': encryption_dict.get('keyformat')
         }
         await self.insert_or_update_encrypted_record(dataset_data)
-        await self.middleware.call_hook('dataset.post_create', dataset_data)
+        await self.middleware.call_hook('dataset.post_create', {'encrypted': bool(encryption_dict), **dataset_data})
 
         data['id'] = data['name']
 
