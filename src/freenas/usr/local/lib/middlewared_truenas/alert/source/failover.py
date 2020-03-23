@@ -193,7 +193,7 @@ class FailoverAlertSource(ThreadedAlertSource):
                 pass
             try:
                 if len(fobj['phrasedvolumes']) > 0:
-                    keys = self.middleware.call_sync('failover.encryption_getkey')
+                    keys = self.middleware.call_sync('failover.encryption_keys')['geli']
                     not_found = False
                     for pool in fobj['phrasedvolumes']:
                         if pool not in keys:

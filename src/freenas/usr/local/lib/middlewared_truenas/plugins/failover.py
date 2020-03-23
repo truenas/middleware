@@ -6,7 +6,6 @@
 
 import asyncio
 import base64
-import contextlib
 import errno
 from lockfile import LockFile
 import logging
@@ -40,6 +39,7 @@ from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.plugins.system import SystemService
+from middlewared.utils.contextlib import asyncnullcontext
 
 BUFSIZE = 256
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
@@ -724,14 +724,12 @@ class FailoverService(ConfigService):
         Unlock pools in HA, syncing passphrase between controllers and forcing this controller
         to be MASTER importing the pools.
         """
-        for pool in options['pools']:
-            await self.middleware.call(
-                'failover.encryption_setkey', pool['name'], pool['passphrase'], {'sync': False}
-            )
-        await self.update_zfs_keys_cache([{'key_format': 'PASSPHRASE', **ds} for ds in options['datasets']])
-
-        with contextlib.suppress(Exception):
-            await self.sync_keys_with_remote_node()
+        await self.middleware.call(
+            'failover.update_encryption_keys', {
+                'pools': options['pools'],
+                'datasets': options['datasets'],
+            },
+        )
 
         return await self.middleware.call('failover.force_master')
 
@@ -739,45 +737,85 @@ class FailoverService(ConfigService):
     @job(lock=lambda args: f'failover_dataset_unlock_{args[0]}')
     async def unlock_zfs_datasets(self, job, pool_name):
         # We are going to unlock all zfs datasets we have keys in cache/database for the pool in question
-        keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
+        zfs_keys = (await self.encryption_keys())['zfs']
         unlock_job = await self.middleware.call(
             'pool.dataset.unlock', pool_name, {
                 'recursive': True,
-                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in keys.items()]
+                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()]
             }
         )
         return await job.wrap(unlock_job)
 
     @private
     @accepts()
-    async def encryption_getkey(self):
-        return await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
+    async def encryption_keys(self):
+        return await self.middleware.call(
+            'cache.get_or_put', 'failover_encryption_keys', 0, lambda: {'geli': {}, 'zfs': {}}
+        )
 
     @private
-    async def encryption_status(self, pool):
-        return pool in await self.encryption_getkey()
+    @accepts(
+        Dict(
+            'update_encryption_keys',
+            Bool('sync_keys', default=True),
+            List(
+                'pools', items=[
+                    Dict(
+                        'pool_geli_keys',
+                        Str('name', required=True),
+                        Str('passphrase', required=True),
+                    )
+                ], default=[]
+            ),
+            List(
+                'datasets', items=[
+                    Dict(
+                        'dataset_keys',
+                        Str('name', required=True),
+                        Str('passphrase', required=True),
+                    )
+                ], default=[]
+            ),
+        )
+    )
+    async def update_encryption_keys(self, options):
+        if not options['pools'] and not options['datasets']:
+            raise CallError('Please specify pools/datasets to update')
 
-    @private
-    @accepts(Str('pool'), Str('passphrase'), Dict('options', Bool('sync', default=True)))
-    async def encryption_setkey(self, pool, passphrase, options=None):
         async with ENCRYPTION_CACHE_LOCK:
-            keys = await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
-            keys[pool] = passphrase
-            await self.middleware.call('cache.put', 'failover_geli_keys', keys)
-
-        if options['sync']:
-            with contextlib.suppress(Exception):
-                await self.sync_keys_with_remote_node()
-
-        return True
+            keys = await self.encryption_keys()
+            for pool in options['pools']:
+                keys['geli'][pool['name']] = pool['passphrase']
+            for dataset in options['datasets']:
+                keys['zfs'][dataset['name']] = dataset['passphrase']
+            await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
+            if options['sync_keys']:
+                await self.sync_keys_with_remote_node(lock=False)
 
     @private
-    @accepts(Str('pool'))
-    async def encryption_clearkey(self, pool):
+    @accepts(
+        Dict(
+            'remove_encryption_keys',
+            Bool('sync_keys', default=True),
+            List('pools', items=[Str('pool')], default=[]),
+            List('datasets', items=[Str('dataset')], default=[]),
+        )
+    )
+    async def remove_encryption_keys(self, options):
+        if not options['pools'] and not options['datasets']:
+            raise CallError('Please specify pools/datasets to remove')
+
         async with ENCRYPTION_CACHE_LOCK:
-            keys = await self.middleware.call('cache.get_or_put', 'failover_geli_keys', 0, lambda: {})
-            keys.pop(pool, None)
-            await self.middleware.call('cache.put', 'failover_geli_keys', keys)
+            keys = await self.encryption_keys()
+            for pool in options['pools']:
+                keys['geli'].pop(pool, None)
+            for dataset in options['datasets']:
+                keys['zfs'] = {
+                    k: v for k, v in keys['zfs'].items() if k != dataset and not k.startswith(f'{dataset}/')
+                }
+            await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
+            if options['sync_keys']:
+                await self.sync_keys_with_remote_node(lock=False)
 
     @private
     @job()
@@ -790,7 +828,7 @@ class FailoverService(ConfigService):
         temp_files = []
         failed_drive = 0
         failed_volume = 0
-        geli_keys = self.middleware.call_sync('failover.encryption_getkey')
+        geli_keys = self.middleware.call_sync('failover.encryption_keys')['geli']
         for pool in pools:
             keyfile = pool['encryptkey_path']
             for encrypted_disk in self.middleware.call_sync(
@@ -856,8 +894,7 @@ class FailoverService(ConfigService):
                     os.unlink(FAILOVER_NEEDOP)
                 except FileNotFoundError:
                     pass
-                with contextlib.suppress(Exception):
-                    self.middleware.call_sync('failover.sync_keys_with_remote_node')
+                self.middleware.call_sync('failover.sync_keys_with_remote_node')
             else:
                 open(FAILOVER_NEEDOP, 'w').close()
         except Exception:
@@ -1198,38 +1235,17 @@ class FailoverService(ConfigService):
         return True
 
     @private
-    async def update_zfs_keys_cache(self, datasets):
+    async def sync_keys_with_remote_node(self, lock=True):
         if await self.middleware.call('failover.licensed'):
-            async with ENCRYPTION_CACHE_LOCK:
-                # We want to save the passphrase in cache so that we can unlock these datasets on failover
-                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                for ds in filter(lambda d: d['key_format'].upper() == 'PASSPHRASE', datasets):
-                    keys[ds['name']] = ds['encryption_key']
-                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
-            await self.sync_keys_with_remote_node()
-
-    @private
-    async def remove_zfs_keys_from_cache(self, datasets):
-        if await self.middleware.call('failover.licensed'):
-            async with ENCRYPTION_CACHE_LOCK:
-                keys = await self.middleware.call('cache.get_or_put', 'failover_zfs_keys', 0, lambda: {})
-                for dataset in datasets:
-                    keys = {k: v for k, v in keys.items() if k != dataset and not k.startswith(f'{dataset}/')}
-                await self.middleware.call('cache.put', 'failover_zfs_keys', keys)
-            await self.sync_keys_with_remote_node()
-
-    @private
-    async def sync_keys_with_remote_node(self):
-        if await self.middleware.call('failover.licensed'):
-            async with ENCRYPTION_CACHE_LOCK:
+            async with ENCRYPTION_CACHE_LOCK if lock else asyncnullcontext():
                 try:
-                    for cache_key in ('failover_zfs_keys', 'failover_geli_keys'):
-                        keys = await self.middleware.call('cache.get_or_put', cache_key, 0, lambda: {})
-                        await self.middleware.call('failover.call_remote', 'cache.put', [cache_key, keys])
+                    keys = await self.encryption_keys()
+                    await self.middleware.call(
+                        'failover.call_remote', 'cache.put', ['failover_encryption_keys', keys]
+                    )
                 except Exception as e:
                     await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
                     self.middleware.logger.error('Failed to sync keys with remote node: %s', str(e), exc_info=True)
-                    raise
                 else:
                     await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
 
@@ -1263,10 +1279,14 @@ async def hook_pool_change_passphrase(middleware, passphrase_data):
         return
     if passphrase_data['action'] == 'UPDATE':
         await middleware.call(
-            'failover.encryption_setkey', passphrase_data['pool'], passphrase_data['passphrase'], {'sync': True}
+            'failover.update_encryption_keys', {
+                'pools': [{
+                    'name': passphrase_data['pool'], 'passphrase': passphrase_data['passphrase']
+                }]
+            }
         )
     else:
-        await middleware.call('failover.encryption_clearkey', passphrase_data['pool'])
+        await middleware.call('failover.remove_encryption_keys', {'pools': [passphrase_data['pool']]})
 
 
 sql_queue = queue.Queue()
@@ -1638,38 +1658,54 @@ async def hook_pool_export(middleware, pool=None, *args, **kwargs):
 
 
 async def hook_pool_lock(middleware, pool=None):
-    await middleware.call('failover.encryption_clearkey', pool)
-    with contextlib.suppress(Exception):
-        await middleware.call('failover.sync_keys_with_remote_node')
+    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
 
 
 async def hook_pool_unlock(middleware, pool=None, passphrase=None):
     if passphrase:
-        await middleware.call('failover.encryption_setkey', pool, passphrase)
+        await middleware.call(
+            'failover.update_encryption_keys', {'pools': [{'name': pool, 'passphrase': passphrase}]}
+        )
 
 
 async def hook_pool_dataset_unlock(middleware, datasets):
-    await middleware.call('failover.update_zfs_keys_cache', datasets)
+    await middleware.call(
+        'failover.update_encryption_keys', {
+            'datasets': [
+                {'name': ds['name'], 'passphrase': ds['encryption_key']}
+                for ds in datasets if ds['key_format'].upper() == 'PASSPHRASE'
+            ]
+        }
+    )
 
 
 async def hook_pool_dataset_post_create(middleware, dataset_data):
-    await middleware.call('failover.update_zfs_keys_cache', [dataset_data])
+    if dataset_data['encrypted'] and str(dataset_data['key_format']).upper() == 'PASSPHRASE':
+        await middleware.call(
+            'failover.update_encryption_keys', {
+                'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]
+            }
+        )
 
 
 async def hook_pool_dataset_post_delete_lock(middleware, dataset):
-    await middleware.call('failover.remove_zfs_keys_from_cache', [dataset])
+    await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset]})
 
 
 async def hook_pool_dataset_change_key(middleware, dataset_data):
     if dataset_data['key_format'] == 'PASSPHRASE' or dataset_data['old_key_format'] == 'PASSPHRASE':
         if dataset_data['key_format'] == 'PASSPHRASE':
-            await middleware.call('failover.update_zfs_keys_cache', [dataset_data])
+            await middleware.call(
+                'failover.update_encryption_keys', {
+                    'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]
+                }
+            )
         else:
-            await middleware.call('failover.remove_zfs_keys_from_cache', [dataset_data['name']])
+            await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset_data['name']]})
 
 
 async def hook_pool_dataset_inherit_parent_encryption_root(middleware, dataset):
-    await middleware.call('failover.remove_zfs_keys_from_cache', [dataset])
+    await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset]})
 
 
 async def hook_pool_rekey(middleware, pool=None):
@@ -1712,8 +1748,7 @@ async def service_remote(middleware, service, verb, options):
 
 
 async def ready_system_sync_keys(middleware):
-    with contextlib.suppress(Exception):
-        await middleware.call('failover.call_remote', 'failover.sync_keys_with_remote_node')
+    await middleware.call('failover.call_remote', 'failover.sync_keys_with_remote_node')
 
 
 async def _event_system_ready(middleware, event_type, args):

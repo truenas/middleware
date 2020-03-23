@@ -718,7 +718,9 @@ class PoolService(CRUDService):
 
         pool = await self.get_instance(pool_id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
-        await self.middleware.call_hook('dataset.post_create', encrypted_dataset_data)
+        await self.middleware.call_hook(
+            'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
+        )
         return pool
 
     @accepts(Int('id'), Patch(
@@ -2189,7 +2191,7 @@ class PoolDatasetService(CRUDService):
         if unlocked:
             def dataset_data(unlocked_dataset):
                 return {
-                    'encryption_key': keys_supplied[unlocked_dataset], 'name': unlocked_dataset,
+                    'encryption_key': keys_supplied.get(unlocked_dataset), 'name': unlocked_dataset,
                     'key_format': datasets[unlocked_dataset]['key_format']['value'],
                 }
 
@@ -2198,7 +2200,7 @@ class PoolDatasetService(CRUDService):
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
             self.middleware.call_hook_sync(
-                'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked if ds in keys_supplied],
+                'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
             )
 
         return {'unlocked': unlocked, 'failed': failed}
@@ -2788,7 +2790,7 @@ class PoolDatasetService(CRUDService):
 
         dataset_data = {
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-            'key_format': encryption_dict.get('keyformat')
+            'key_format': encryption_dict.get('keyformat'), 'encrypted': bool(encryption_dict),
         }
         await self.insert_or_update_encrypted_record(dataset_data)
         await self.middleware.call_hook('dataset.post_create', dataset_data)
