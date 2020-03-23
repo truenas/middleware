@@ -824,65 +824,59 @@ class FailoverService(ConfigService):
         if not pools:
             return
 
-        procs = []
-        temp_files = []
         failed_drive = 0
         failed_volume = 0
         geli_keys = self.middleware.call_sync('failover.encryption_keys')['geli']
         for pool in pools:
-            keyfile = pool['encryptkey_path']
-            for encrypted_disk in self.middleware.call_sync(
-                'datastore.query',
-                'storage.encrypteddisk',
-                [('encrypted_volume', '=', pool['id'])]
-            ):
-
-                if encrypted_disk['encrypted_disk']:
-                    # gptid might change on the active head, so we need to rescan
-                    # See #16070
-                    try:
-                        open(
-                            f'/dev/{encrypted_disk["encrypted_disk"]["disk_name"]}', 'w'
-                        ).close()
-                    except Exception:
-                        self.logger.warning(
-                            'Failed to open dev %s to rescan.',
-                            encrypted_disk['encrypted_disk']['name'],
+            with tempfile.NamedTemporaryFile(mode='w+') as tmp:
+                tmp.file.write(geli_keys.get(pool['name'], ''))
+                tmp.file.flush()
+                keyfile = pool['encryptkey_path']
+                procs = []
+                for encrypted_disk in self.middleware.call_sync(
+                    'datastore.query',
+                    'storage.encrypteddisk',
+                    [('encrypted_volume', '=', pool['id'])]
+                ):
+                    if encrypted_disk['encrypted_disk']:
+                        # gptid might change on the active head, so we need to rescan
+                        # See #16070
+                        try:
+                            open(
+                                f'/dev/{encrypted_disk["encrypted_disk"]["disk_name"]}', 'w'
+                            ).close()
+                        except Exception:
+                            self.logger.warning(
+                                'Failed to open dev %s to rescan.',
+                                encrypted_disk['encrypted_disk']['name'],
+                            )
+                    provider = encrypted_disk['encrypted_provider']
+                    if not os.path.exists(f'/dev/{provider}.eli'):
+                        proc = subprocess.Popen(
+                            'geli attach {} -k {} {}'.format(
+                                f'-j {tmp.name}' if pool['encrypt'] == 2 else '-p',
+                                keyfile,
+                                provider,
+                            ),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            shell=True,
                         )
-                provider = encrypted_disk['encrypted_provider']
-                if not os.path.exists(f'/dev/{provider}.eli'):
-                    with tempfile.NamedTemporaryFile(mode='w+', delete=False) as tmp:
-                        tmp.file.write(geli_keys.get(pool['name'], ''))
-                        tmp.file.flush()
-                        temp_files.append(tmp.name)
-                    proc = subprocess.Popen(
-                        'geli attach {} -k {} {}'.format(
-                            f'-j {tmp.name}' if pool['encrypt'] == 2 else '-p',
-                            keyfile,
-                            provider,
-                        ),
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        shell=True,
-                    )
-                    procs.append(proc)
-            for proc, tmp_file in zip(procs, temp_files):
-                msg = proc.communicate()[1]
-                if proc.returncode != 0:
-                    job.set_progress(None, f'Unable to attach GELI provider: {msg}')
-                    self.logger.warn('Unable to attach GELI provider: %s', msg)
-                    failed_drive += 1
-                try:
-                    os.unlink(tmp_file)
-                except OSError:
-                    pass
+                        procs.append(proc)
+                for proc in procs:
+                    msg = proc.communicate()[1]
+                    if proc.returncode != 0:
+                        job.set_progress(None, f'Unable to attach GELI provider: {msg}')
+                        self.logger.warn('Unable to attach GELI provider: %s', msg)
+                        failed_drive += 1
 
-            job = self.middleware.call_sync('zfs.pool.import', pool['guid'], {
-                'altroot': '/mnt',
-            })
-            job.wait_sync()
-            if job.error:
-                failed_volume += 1
+                try:
+                    self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
+                        'altroot': '/mnt',
+                    })
+                except Exception as e:
+                    failed_volume += 1
+                    self.logger.error('Failed to import %s pool: %s', pool['name'], str(e))
 
         if failed_drive > 0:
             job.set_progress(None, f'{failed_drive} can not be attached.')
@@ -1664,7 +1658,7 @@ async def hook_pool_lock(middleware, pool=None):
 async def hook_pool_unlock(middleware, pool=None, passphrase=None):
     if passphrase:
         await middleware.call(
-            'failover.update_encryption_keys', {'pools': [{'name': pool, 'passphrase': passphrase}]}
+            'failover.update_encryption_keys', {'pools': [{'name': pool['name'], 'passphrase': passphrase}]}
         )
 
 

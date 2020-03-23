@@ -1511,7 +1511,7 @@ class PoolService(CRUDService):
             'pool.dataset.delete_encrypted_datasets_from_db',
             [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
-        await self.middleware.call('dataset.post_delete', pool['name'])
+        await self.middleware.call_hook('dataset.post_delete', pool['name'])
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
