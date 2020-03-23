@@ -149,7 +149,7 @@ def test_08_creating_ad_dataset_for_smb():
 
 @skip_ad_test
 def test_09_Changing_permissions_on_dataset():
-    global job_id
+    global job_id_09
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', {
         'acl': [],
         'mode': '777',
@@ -157,12 +157,12 @@ def test_09_Changing_permissions_on_dataset():
         'group': 'wheel'
     })
     assert results.status_code == 200, results.text
-    job_id = results.json()
+    job_id_09 = results.json()
 
 
 @skip_ad_test
 def test_10_verify_the_job_id_is_successfull():
-    job_status = wait_on_job(job_id, 180)
+    job_status = wait_on_job(job_id_09, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -556,12 +556,6 @@ def test_56_disable_activedirectory():
     results = PUT("/activedirectory/", payload)
     assert results.status_code == 200, results.text
     job_id_56 = results.json()['job_id']
-
-
-@skip_ad_test
-def test_57_verify_job_id_is_successfull():
-    job_status = wait_on_job(job_id_56, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @skip_ad_test
