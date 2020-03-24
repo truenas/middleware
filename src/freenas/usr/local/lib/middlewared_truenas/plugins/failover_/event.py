@@ -363,7 +363,8 @@ class FailoverService(Service):
                 # For reboots, /tmp is cleared by virtue of being a memory device.
                 # If someone does a kill -9 on the script while it's running the lockfile
                 # will get left dangling.
-                self.logger.warn('Aquired failover master lock')
+                self.middleware.call_sync('failover.call_remote', ['failover.sync_keys_with_remote_node'])
+                self.logger.warn('Acquired failover master lock')
                 self.logger.warn('Starting fenced')
                 if not user_override and not fasttrack and not forcetakeover:
                     error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced')
@@ -766,7 +767,7 @@ class FailoverService(Service):
                 if detach_all_job.error:
                     self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
-                # We don't sync keys in this case as we expect that cache is always in sync between nodes
+                self.middleware.call_sync('failover.call_remote', ['failover.sync_keys_with_remote_node'])
         except AlreadyLocked:
             self.logger.warn('Failover event handler failed to acquire backup lockfile')
 

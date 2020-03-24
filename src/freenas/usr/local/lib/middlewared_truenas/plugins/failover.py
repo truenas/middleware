@@ -682,9 +682,8 @@ class FailoverService(ConfigService):
          2. the quantity of disks are the same between
             controllers but serials do not match
         """
-        boot_pool = await self.middleware.call('boot.pool_name')
-        local_boot_disks = await self.middleware.call('zfs.pool.get_disks', boot_pool)
-        remote_boot_disks = await self.middleware.call('failover.call_remote', 'zfs.pool.get_disks', [boot_pool])
+        local_boot_disks = await self.middleware.call('boot.get_disks')
+        remote_boot_disks = await self.middleware.call('failover.call_remote', 'boot.get_disks')
         local_disks = set(
             v['ident']
             for k, v in (await self.middleware.call('device.get_info', 'DISK')).items()
@@ -1765,9 +1764,6 @@ async def _event_system_ready(middleware, event_type, args):
     """
     if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
         return
-
-    if args['id'] == 'ready':
-        asyncio.ensure_future(ready_system_sync_keys(middleware))
 
     if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
         middleware.send_event('failover.upgrade_pending', 'ADDED', {
