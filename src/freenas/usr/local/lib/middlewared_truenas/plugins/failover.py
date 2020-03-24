@@ -537,7 +537,7 @@ class FailoverService(ConfigService):
         self.logger.debug('Sending database to standby controller')
         self.middleware.call_sync('failover.send_database')
         self.logger.debug('Syncing cached keys')
-        self.middleware.call_sync('failover.sync_keys_with_remote_node')
+        self.middleware.call_sync('failover.sync_keys_to_remote_node')
         self.logger.debug('Sending license and pwenc files')
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
@@ -791,7 +791,7 @@ class FailoverService(ConfigService):
                 keys['zfs'][dataset['name']] = dataset['passphrase']
             await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
             if options['sync_keys']:
-                await self.sync_keys_with_remote_node(lock=False)
+                await self.sync_keys_to_remote_node(lock=False)
 
     @private
     @accepts(
@@ -816,7 +816,7 @@ class FailoverService(ConfigService):
                 }
             await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
             if options['sync_keys']:
-                await self.sync_keys_with_remote_node(lock=False)
+                await self.sync_keys_to_remote_node(lock=False)
 
     @private
     @job()
@@ -889,7 +889,7 @@ class FailoverService(ConfigService):
                     os.unlink(FAILOVER_NEEDOP)
                 except FileNotFoundError:
                     pass
-                self.middleware.call_sync('failover.sync_keys_with_remote_node')
+                self.middleware.call_sync('failover.sync_keys_to_remote_node')
             else:
                 with open(FAILOVER_NEEDOP, 'w') as f:
                     f.write('\n'.join(failed_volumes))
@@ -1231,7 +1231,7 @@ class FailoverService(ConfigService):
         return True
 
     @private
-    async def sync_keys_with_remote_node(self, lock=True):
+    async def sync_keys_to_remote_node(self, lock=True):
         if await self.middleware.call('failover.licensed'):
             async with ENCRYPTION_CACHE_LOCK if lock else asyncnullcontext():
                 try:
@@ -1754,7 +1754,7 @@ async def service_remote(middleware, service, verb, options):
 
 
 async def ready_system_sync_keys(middleware):
-    await middleware.call('failover.call_remote', 'failover.sync_keys_with_remote_node')
+    await middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
 
 
 async def _event_system_ready(middleware, event_type, args):

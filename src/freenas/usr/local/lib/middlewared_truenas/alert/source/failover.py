@@ -202,7 +202,7 @@ class FailoverAlertSource(ThreadedAlertSource):
                     if not_found:
                         # Kick a syncfrompeer if we don't.
                         self.middleware.call_sync(
-                            'failover.call_remote', 'failover.sync_keys_with_remote_node'
+                            'failover.call_remote', 'failover.sync_keys_to_remote_node'
                         )
             except Exception:
                 pass

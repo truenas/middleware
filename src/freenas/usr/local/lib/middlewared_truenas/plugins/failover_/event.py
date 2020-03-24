@@ -363,7 +363,6 @@ class FailoverService(Service):
                 # For reboots, /tmp is cleared by virtue of being a memory device.
                 # If someone does a kill -9 on the script while it's running the lockfile
                 # will get left dangling.
-                self.middleware.call_sync('failover.call_remote', ['failover.sync_keys_with_remote_node'])
                 self.logger.warn('Acquired failover master lock')
                 self.logger.warn('Starting fenced')
                 if not user_override and not fasttrack and not forcetakeover:
@@ -767,7 +766,7 @@ class FailoverService(Service):
                 if detach_all_job.error:
                     self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
-                self.middleware.call_sync('failover.call_remote', ['failover.sync_keys_with_remote_node'])
+                self.middleware.call_sync('failover.call_remote', 'failover.sync_keys_to_remote_node')
         except AlreadyLocked:
             self.logger.warn('Failover event handler failed to acquire backup lockfile')
 
