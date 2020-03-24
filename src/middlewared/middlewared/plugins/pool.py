@@ -3344,9 +3344,10 @@ class PoolDatasetService(CRUDService):
                     q['quota_value'] = 'none'
 
                 if not q["id"].isdigit():
+                    id_type = 'user' if quota_type.startswith('user') else 'group'
                     try:
-                        await self.middleware.call(f'{quota_type}.get_{quota_type}_obj',
-                                                   {f'{quota_type}name': q["id"]})
+                        await self.middleware.call(f'{id_type}.get_{id_type}_obj',
+                                                   {f'{id_type}name': q["id"]})
                     except Exception:
                         verrors.add(
                             f'quotas.{i}.id',
