@@ -827,7 +827,7 @@ class FailoverService(ConfigService):
             return
 
         failed_drive = 0
-        failed_volume = 0
+        failed_volumes = []
         geli_keys = self.middleware.call_sync('failover.encryption_keys')['geli']
         for pool in pools:
             with tempfile.NamedTemporaryFile(mode='w+') as tmp:
@@ -877,7 +877,7 @@ class FailoverService(ConfigService):
                         'altroot': '/mnt',
                     })
                 except Exception as e:
-                    failed_volume += 1
+                    failed_volumes.append(pool['name'])
                     self.logger.error('Failed to import %s pool: %s', pool['name'], str(e))
 
         if failed_drive > 0:
@@ -885,14 +885,15 @@ class FailoverService(ConfigService):
             self.logger.error('%d drive(s) can not be attached.', failed_drive)
 
         try:
-            if failed_volume == 0:
+            if not failed_volumes:
                 try:
                     os.unlink(FAILOVER_NEEDOP)
                 except FileNotFoundError:
                     pass
                 self.middleware.call_sync('failover.sync_keys_with_remote_node')
             else:
-                open(FAILOVER_NEEDOP, 'w').close()
+                with open(FAILOVER_NEEDOP, 'w') as f:
+                    f.write('\n'.join(failed_volumes))
         except Exception:
             pass
 

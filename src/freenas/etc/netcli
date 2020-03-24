@@ -1531,7 +1531,36 @@ def main_menu():
             Because one encrypted pool failed to import does not mean the node
             is supposed/allowed to unlock.
             """
-            print('WARNING: Failed to import encrypted pool(s)')
+            passphrase = (failover_status != 'MASTER')
+            if passphrase:
+                try:
+                    with Client() as c:
+                        passphrase &= (
+                            c.call('failover.call_remote', 'failover.status') != 'MASTER'
+                        )
+
+                except Exception:
+                    pass
+
+            with open('/tmp/.failover_needop', 'r') as f:
+                failed_pools = [p.strip() for p in f.read().strip().split('\n') if p.strip()]
+
+            if passphrase and failed_pools:
+                yes = input('Enter passphrase for pools which failed to decrypt ? (y/n)')
+                if yes.lower().startswith('y'):
+                    cache = []
+                    for pool in failed_pools:
+                        key = input(f'Please enter passphrase for "{pool}" pool: ')
+                        cache.append({'name': pool, 'passphrase': key})
+                    print('Forcing current node to become MASTER')
+                    print('Following passphrases will be used to decrypt pools:')
+                    for i, data in enumerate(cache):
+                        print(f'{i}) Decrypting "{data["name"]}" pool with "{data["passphrase"]}"')
+
+                    with Client() as c:
+                        c.call('failover.unlock', {'pools': cache})
+
+                    continue
 
         if not is_freenas:
             print(netcli_title())
