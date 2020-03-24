@@ -21,6 +21,8 @@ logging.getLogger('ws4py').setLevel(logging.WARN)
 logging.getLogger('git.cmd').setLevel(logging.WARN)
 # it prints credentials to logs
 logging.getLogger('requests_oauthlib.oauth2_session').setLevel(logging.INFO)
+# registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
+logging.getLogger('passlib.registry').setLevel(logging.INFO)
 
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'

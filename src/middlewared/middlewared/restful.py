@@ -18,19 +18,28 @@ from .service_exception import adapt_exception, CallError, ValidationError, Vali
 async def authenticate(middleware, req):
 
     auth = req.headers.get('Authorization')
-    if auth is None or not auth.startswith('Basic '):
-        raise web.HTTPUnauthorized()
-    try:
-        username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
-    except binascii.Error:
+    if auth is None:
         raise web.HTTPUnauthorized()
 
-    try:
-        if not await middleware.call('auth.check_user', username, password):
+    if auth.startswith('Basic '):
+        try:
+            username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
+        except binascii.Error:
             raise web.HTTPUnauthorized()
-    except web.HTTPUnauthorized:
-        raise
-    except Exception:
+
+        try:
+            if not await middleware.call('auth.check_user', username, password):
+                raise web.HTTPUnauthorized()
+        except web.HTTPUnauthorized:
+            raise
+        except Exception:
+            raise web.HTTPUnauthorized()
+    elif auth.startswith('Bearer '):
+        key = auth.split(' ', 1)[1]
+
+        if await middleware.call('api_key.authenticate', key) is None:
+            raise web.HTTPUnauthorized()
+    else:
         raise web.HTTPUnauthorized()
 
 
