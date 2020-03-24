@@ -821,7 +821,7 @@ class FailoverService(ConfigService):
 
     @private
     @job()
-    def encryption_attachall(self, job):
+    def attach_all_geli_providers(self, job):
         pools = self.middleware.call_sync('pool.query', [('encrypt', '>', 0)])
         if not pools:
             return
@@ -881,8 +881,8 @@ class FailoverService(ConfigService):
                     self.logger.error('Failed to import %s pool: %s', pool['name'], str(e))
 
         if failed_drive > 0:
-            job.set_progress(None, f'{failed_drive} can not be attached.')
-            self.logger.error('%d can not be attached.', failed_drive)
+            job.set_progress(None, f'{failed_drive} drive(s) can not be attached.')
+            self.logger.error('%d drive(s) can not be attached.', failed_drive)
 
         try:
             if failed_volume == 0:

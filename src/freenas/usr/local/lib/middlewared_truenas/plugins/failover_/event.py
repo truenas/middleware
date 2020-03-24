@@ -430,7 +430,7 @@ class FailoverService(Service):
 
                 self.logger.warn('Beginning volume imports.')
 
-                attach_all_job = self.middleware.call_sync('failover.encryption_attachall')
+                attach_all_job = self.middleware.call_sync('failover.attach_all_geli_providers')
                 attach_all_job.wait_sync()
                 if attach_all_job.error:
                     self.logger.error('Failed to attach geli providers: %s', attach_all_job.error)
