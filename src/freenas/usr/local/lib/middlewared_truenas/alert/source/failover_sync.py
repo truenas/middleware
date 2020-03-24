@@ -25,11 +25,10 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
 
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = "Automatic Keys Sync to Peer Failed"
+    title = "Syncing Encryption Keys to Peer Failed"
     text = (
-        "Failed to sync keys/passphrases configuration information to standby storage "
-        "controller. Use Sync to Peer on the System/Failover page to "
-        "perform a manual sync."
+        "The automatic synchronization of encryption passphrases with the standby "
+        "controller has failed. Please go to System > Failover and manually sync to peer."
     )
 
     products = ("ENTERPRISE",)

@@ -103,8 +103,8 @@ class CTLHALinkAlertClass(AlertClass):
 class NoFailoverPassphraseKeysAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "No Pool Passphrase Key for Failover"
-    text = "Passphrase key for %(pool)r not available for failover. Automatic failover disabled."
+    title = "Passphrase Missing For Legacy-Encrypted Pool"
+    text = "Failover is unavailable until a legacy encryption passphrase is added to %(pool)r."
 
     products = ("ENTERPRISE",)
 
