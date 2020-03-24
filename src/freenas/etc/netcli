@@ -1550,7 +1550,15 @@ def main_menu():
                 if yes.lower().startswith('y'):
                     cache = []
                     for pool in failed_pools:
-                        key = input(f'Please enter passphrase for "{pool}" pool: ')
+                        key = None
+                        while not key:
+                            try:
+                                key = input(f'Please enter passphrase for "{pool}" pool: ')
+                            except EOFError:
+                                print('Please provide a valid key')
+                            else:
+                                if not key:
+                                    print('Provided key is empty, please provide a valid key')
                         cache.append({'name': pool, 'passphrase': key})
                     print('Forcing current node to become MASTER')
                     print('Following passphrases will be used to decrypt pools:')
