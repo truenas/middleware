@@ -174,6 +174,10 @@ class LoginPasswordSessionManagerCredentials(SessionManagerCredentials):
     pass
 
 
+class ApiKeySessionManagerCredentials(SessionManagerCredentials):
+    pass
+
+
 class TokenSessionManagerCredentials(SessionManagerCredentials):
     def __init__(self, token_manager, token):
         self.token_manager = token_manager
@@ -326,6 +330,19 @@ class AuthService(Service):
         if valid:
             self.session_manager.login(app, LoginPasswordSessionManagerCredentials())
         return valid
+
+    @no_auth_required
+    @accepts(Str('api_key'))
+    @pass_app()
+    async def login_with_api_key(self, app, api_key):
+        """
+        Authenticate session using API Key.
+        """
+        if await self.middleware.call('api_key.authenticate', api_key):
+            self.session_manager.login(app, ApiKeySessionManagerCredentials())
+            return True
+
+        return False
 
     @accepts()
     @pass_app()

@@ -450,6 +450,11 @@ class FileApplication(object):
 
                 if token:
                     denied = False
+            elif auth.startswith('Bearer '):
+                key = auth.split(' ', 1)[1]
+
+                if await self.middleware.call('api_key.authenticate', key):
+                    denied = False
         else:
             qs = urllib.parse.parse_qs(request.query_string)
             if 'auth_token' in qs:
