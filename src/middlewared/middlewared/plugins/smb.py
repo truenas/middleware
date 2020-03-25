@@ -715,8 +715,9 @@ class SharingSMBService(CRUDService):
             diff = await self.middleware.call(
                 'sharing.smb.diff_middleware_and_registry', new['name'], new
             )
+            share_name = new['name'] if not new['home'] else 'homes'
             await self.middleware.call('sharing.smb.apply_conf_diff',
-                                       'REGISTRY', new['name'], diff)
+                                       'REGISTRY', share_name, diff)
 
         await self.extend(new)  # same here ?
 
