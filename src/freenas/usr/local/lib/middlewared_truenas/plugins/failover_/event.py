@@ -558,7 +558,6 @@ class FailoverService(Service):
                     if ret and ret[0] == 1:
                         self.run_call('service.restart', i, {'ha_propagate': False})
 
-                self.run_call('asigra.migrate_to_plugin')
                 self.run_call('jail.start_on_boot')
                 self.run_call('vm.start_on_boot')
 
