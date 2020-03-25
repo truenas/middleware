@@ -849,7 +849,7 @@ class FailoverService(ConfigService):
                         except Exception:
                             self.logger.warning(
                                 'Failed to open dev %s to rescan.',
-                                encrypted_disk['encrypted_disk']['name'],
+                                encrypted_disk['encrypted_disk']['disk_name'],
                             )
                     provider = encrypted_disk['encrypted_provider']
                     if not os.path.exists(f'/dev/{provider}.eli'):

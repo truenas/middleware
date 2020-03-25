@@ -1563,11 +1563,12 @@ def main_menu():
                     print('Forcing current node to become MASTER')
                     print('Following passphrases will be used to decrypt pools:')
                     for i, data in enumerate(cache):
-                        print(f'{i}) Decrypting "{data["name"]}" pool with "{data["passphrase"]}"')
+                        print(f'{i}) Decrypting "{data["name"]}" pool with "{data["passphrase"]}" passphrase')
 
                     with Client() as c:
                         c.call('failover.unlock', {'pools': cache})
 
+                    time.sleep(5)
                     continue
 
         if not is_freenas:

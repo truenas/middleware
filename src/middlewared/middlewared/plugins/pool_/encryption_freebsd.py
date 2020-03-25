@@ -419,7 +419,7 @@ class PoolService(Service):
         ):
             await self.middleware.call('disk.geli_detach_single', ed['encrypted_provider'])
 
-        await self.middleware.call_hook('pool.post_lock', pool=pool)
+        await self.middleware.call_hook('pool.post_lock', pool=pool['name'])
         await self.middleware.call('service.restart', 'system_datasets')
         return True
 
