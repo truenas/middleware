@@ -1553,7 +1553,7 @@ def main_menu():
                         key = None
                         while not key:
                             try:
-                                key = input(f'Please enter passphrase for "{pool}" pool: ')
+                                key = getpass.getpass(f'Please enter passphrase for "{pool}" pool: ')
                             except EOFError:
                                 print('Please provide a valid key')
                             else:
@@ -1561,9 +1561,6 @@ def main_menu():
                                     print('Provided key is empty, please provide a valid key')
                         cache.append({'name': pool, 'passphrase': key})
                     print('Forcing current node to become MASTER')
-                    print('Following passphrases will be used to decrypt pools:')
-                    for i, data in enumerate(cache):
-                        print(f'{i}) Decrypting "{data["name"]}" pool with "{data["passphrase"]}" passphrase')
 
                     with Client() as c:
                         c.call('failover.unlock', {'pools': cache})
