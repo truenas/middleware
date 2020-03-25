@@ -666,11 +666,12 @@ class PoolService(CRUDService):
                 {'prefix': 'vol_'},
             )
 
+            encrypted_dataset_data = {
+                'name': data['name'], 'encryption_key': encryption_dict.get('key'),
+                'key_format': encryption_dict.get('keyformat')
+            }
             encrypted_dataset_pk = await self.middleware.call(
-                'pool.dataset.insert_or_update_encrypted_record', {
-                    'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-                    'key_format': encryption_dict.get('keyformat')
-                }
+                'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
             )
 
             if osc.IS_FREEBSD:
@@ -717,6 +718,9 @@ class PoolService(CRUDService):
 
         pool = await self.get_instance(pool_id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
+        await self.middleware.call_hook(
+            'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
+        )
         return pool
 
     @accepts(Int('id'), Patch(
@@ -1354,7 +1358,12 @@ class PoolService(CRUDService):
             await self.middleware.call('keyvalue.delete', key)
 
         await self.middleware.call('service.reload', 'disk')
-        await self.middleware.call_hook('pool.post_import', pool)
+        await self.middleware.call_hook(
+            'pool.post_import', {
+                'passphrase': data.get('passphrase'),
+                **(await self.middleware.call('pool.query', ['name', '=', pool['name']]))
+            }
+        )
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
 
         return True
@@ -1507,6 +1516,7 @@ class PoolService(CRUDService):
             'pool.dataset.delete_encrypted_datasets_from_db',
             [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
+        await self.middleware.call_hook('dataset.post_delete', pool['name'])
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
@@ -1974,6 +1984,9 @@ class PoolDatasetService(CRUDService):
     @private
     @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
     def sync_db_keys(self, job, name=None):
+        if self.middleware.call_sync('failover.licensed') and self.middleware.call_sync('failover.status') == 'BACKUP':
+            # We don't want to do this for passive controller
+            return
         filters = [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else []
         db_datasets = self.query_encrypted_roots_keys(filters)
         encrypted_roots = {d['name']: d for d in self.query(filters) if d['name'] == d['encryption_root']}
@@ -2059,6 +2072,8 @@ class PoolDatasetService(CRUDService):
         await self.middleware.call(
             'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
         )
+
+        await self.middleware.call_hook('dataset.post_lock', id)
 
         return True
 
@@ -2179,13 +2194,19 @@ class PoolDatasetService(CRUDService):
             j.wait_sync()
 
         if unlocked:
+            def dataset_data(unlocked_dataset):
+                return {
+                    'encryption_key': keys_supplied.get(unlocked_dataset), 'name': unlocked_dataset,
+                    'key_format': datasets[unlocked_dataset]['key_format']['value'],
+                }
+
             for unlocked_dataset in filter(lambda d: d in keys_supplied, unlocked):
                 self.middleware.call_sync(
-                    'pool.dataset.insert_or_update_encrypted_record', {
-                        'encryption_key': keys_supplied[unlocked_dataset], 'name': unlocked_dataset,
-                        'key_format': datasets[unlocked_dataset]['key_format']['value'],
-                    }
+                    'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
+            self.middleware.call_hook_sync(
+                'dataset.post_unlock', datasets=[dataset_data(ds) for ds in unlocked],
+            )
 
         return {'unlocked': unlocked, 'failed': failed}
 
@@ -2417,11 +2438,13 @@ class PoolDatasetService(CRUDService):
 
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end
-        await self.insert_or_update_encrypted_record(
-            {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
-        )
+        data = {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
+        await self.insert_or_update_encrypted_record(data)
         if options['passphrase'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
             await self.middleware.call('pool.dataset.sync_db_keys', id)
+
+        data['old_key_format'] = ds['key_format']['value']
+        await self.middleware.call_hook('dataset.change_key', data)
 
     @accepts(Str('id'))
     async def inherit_parent_encryption_properties(self, id):
@@ -2461,6 +2484,7 @@ class PoolDatasetService(CRUDService):
 
         await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
         await self.middleware.call('pool.dataset.sync_db_keys', id)
+        await self.middleware.call_hook('dataset.inherit_parent_encryption_root', id)
 
     @private
     def _retrieve_keys_from_file(self, job):
@@ -2769,10 +2793,12 @@ class PoolDatasetService(CRUDService):
             'properties': props,
         })
 
-        await self.insert_or_update_encrypted_record({
+        dataset_data = {
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
             'key_format': encryption_dict.get('keyformat')
-        })
+        }
+        await self.insert_or_update_encrypted_record(dataset_data)
+        await self.middleware.call_hook('dataset.post_create', {'encrypted': bool(encryption_dict), **dataset_data})
 
         data['id'] = data['name']
 

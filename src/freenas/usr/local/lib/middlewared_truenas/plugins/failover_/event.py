@@ -363,7 +363,7 @@ class FailoverService(Service):
                 # For reboots, /tmp is cleared by virtue of being a memory device.
                 # If someone does a kill -9 on the script while it's running the lockfile
                 # will get left dangling.
-                self.logger.warn('Aquired failover master lock')
+                self.logger.warn('Acquired failover master lock')
                 self.logger.warn('Starting fenced')
                 if not user_override and not fasttrack and not forcetakeover:
                     error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/fenced')
@@ -429,10 +429,11 @@ class FailoverService(Service):
                         run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
 
                 self.logger.warn('Beginning volume imports.')
-                # TODO: now that we are all python, we should probably just absorb the code in.
-                run(
-                    'LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper attachall'
-                )
+
+                attach_all_job = self.middleware.call_sync('failover.attach_all_geli_providers')
+                attach_all_job.wait_sync()
+                if attach_all_job.error:
+                    self.logger.error('Failed to attach geli providers: %s', attach_all_job.error)
 
                 p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
                 p.start()
@@ -445,6 +446,15 @@ class FailoverService(Service):
                     if error:
                         self.logger.error('Failed to import %s: %s', volume, output)
                         open(FAILED_FILE, 'w').close()
+                    else:
+                        unlock_job = self.middleware.call_sync('failover.unlock_zfs_datasets', volume)
+                        unlock_job.wait_sync()
+                        if unlock_job.error:
+                            self.logger.error('Failed to unlock ZFS encrypted datasets: %s', unlock_job.error)
+                        elif unlock_job.result['failed']:
+                            self.logger.error(
+                                'Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed'])
+                            )
                     run(f'zpool set cachefile=/data/zfs/zpool.cache {volume}')
 
                 p.terminate()
@@ -641,7 +651,7 @@ class FailoverService(Service):
                 # For reboots, /tmp is cleared by virtue of being a memory device.
                 # If someone does a kill -9 on the script while it's running the lockfile
                 # will get left dangling.
-                self.logger.warn('Aquired failover backup lock')
+                self.logger.warn('Acquired failover backup lock')
                 run('pkill -9 -f fenced')
 
                 for iface in fobj['non_crit_interfaces']:
@@ -749,14 +759,29 @@ class FailoverService(Service):
                     if ret and ret[0]['srv_enable']:
                         self.run_call(f'service.{verb}', i, {'ha_propagate': False})
 
-                run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper detachall')
+                detach_all_job = self.middleware.call_sync('failover.encryption_detachall')
+                detach_all_job.wait_sync()
+                if detach_all_job.error:
+                    self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
-                if fobj['phrasedvolumes']:
-                    self.logger.warn('Setting passphrase from master')
-                    run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper syncfrompeer')
-
+                master_system_version = self.middleware.call_sync(
+                    'failover.call_remote', 'system.info'
+                )['version'].split('-')
+                if len(master_system_version) > 1 and master_system_version[1].startswith('11'):
+                    passphrase = self.middleware.call_sync('failover.call_remote', 'failover.encryption_getkey')
+                    self.middleware.call_sync(
+                        'failover.update_encryption_keys', {
+                            'pools': [
+                                {'name': p['name'], 'passphrase': passphrase or ''}
+                                for p in self.middleware.call_sync('pool.query', [('encrypt', '=', 2)])
+                            ],
+                            'sync_keys': False,
+                        }
+                    )
+                else:
+                    self.middleware.call_sync('failover.call_remote', 'failover.sync_keys_to_remote_node')
         except AlreadyLocked:
-            self.logger.warn('Failover event handler failed to aquire backup lockfile')
+            self.logger.warn('Failover event handler failed to acquire backup lockfile')
 
 
 async def devd_carp_hook(middleware, data):

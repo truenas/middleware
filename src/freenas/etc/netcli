@@ -1539,13 +1539,35 @@ def main_menu():
                             c.call('failover.call_remote', 'failover.status') != 'MASTER'
                         )
 
-                except Exception as e:
+                except Exception:
                     pass
 
-            if passphrase:
-                yes = input(_("Enter passphrase now? (y/n) "))
-                if yes.lower().startswith("y"):
-                    os.system("/usr/local/sbin/enc_helper interactive")
+            with open('/tmp/.failover_needop', 'r') as f:
+                failed_pools = [p.strip() for p in f.read().strip().split('\n') if p.strip()]
+
+            if passphrase and failed_pools:
+                yes = input('Enter passphrase for pools which failed to decrypt ? (y/n)')
+                if yes.lower().startswith('y'):
+                    cache = []
+                    for pool in failed_pools:
+                        key = None
+                        while not key:
+                            try:
+                                key = input(f'Please enter passphrase for "{pool}" pool: ')
+                            except EOFError:
+                                print('Please provide a valid key')
+                            else:
+                                if not key:
+                                    print('Provided key is empty, please provide a valid key')
+                        cache.append({'name': pool, 'passphrase': key})
+                    print('Forcing current node to become MASTER')
+                    print('Following passphrases will be used to decrypt pools:')
+                    for i, data in enumerate(cache):
+                        print(f'{i}) Decrypting "{data["name"]}" pool with "{data["passphrase"]}" passphrase')
+
+                    with Client() as c:
+                        c.call('failover.unlock', {'pools': cache})
+
                     time.sleep(5)
                     continue
 

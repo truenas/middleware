@@ -30,7 +30,7 @@ import time
 
 from functools import partial
 
-from middlewared.schema import accepts, Bool, Dict, Int, NOT_PROVIDED, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
@@ -39,112 +39,14 @@ from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.plugins.system import SystemService
+from middlewared.utils.contextlib import asyncnullcontext
 
 BUFSIZE = 256
+ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
 
 logger = logging.getLogger('failover')
-
-
-class LocalEscrowCtl:
-    def __init__(self):
-        server = '/tmp/escrowd.sock'
-        connected = False
-        retries = 5
-
-        # Start escrowd on demand
-        #
-        # Attempt to connect the server;
-        # if connection can not be established, startescrowd and
-        # retry.
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            sock.connect(server)
-            connected = True
-        except Exception:
-            subprocess.Popen(['escrowd'])
-            while retries > 0 and connected is False:
-                try:
-                    retries = retries - 1
-                    sock.connect(server)
-                    connected = True
-                except Exception:
-                    time.sleep(1)
-
-        if not connected:
-            raise RuntimeError('Can\'t connect to escrowd')
-
-        data = sock.recv(BUFSIZE).decode()
-        if data != '220 Ready, go ahead\n':
-            raise RuntimeError('server didn\'t send welcome message')
-        self.sock = sock
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, typ, value, traceback):
-        self.close()
-
-    def setkey(self, passphrase):
-        # Set key on local escrow daemon.
-        command = f'SETKEY {passphrase}\n'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        return (data == '250 setkey accepted.\n')
-
-    def clear(self):
-        # Clear key on local escrow daemon.
-        command = 'CLEAR'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        succeeded = (data == '200 clear succeeded.\n')
-        open(FAILOVER_NEEDOP, 'w')
-        return succeeded
-
-    def shutdown(self):
-        # Shutdown local escrow daemon.
-        command = 'SHUTDOWN'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        return (data == '250 Shutting down.\n')
-
-    def getkey(self):
-        # Get key from local escrow daemon. Returns None if not available.
-        command = 'REVEAL'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        lines = data.split('\n')
-        if lines[0] == '404 No passphrase present':
-            return None
-        elif lines[0] == '200 Approved':
-            if len(lines) > 2:
-                data = lines[1]
-            else:
-                data = self.sock.recv(BUFSIZE).decode()
-                data = data.split('\n')[0]
-            return data
-        else:
-            # Should never happen.
-            return None
-
-    def status(self):
-        # Get status of local escrow daemon.
-        # True -- Have key; False -- No key.
-        command = 'STATUS'
-        self.sock.sendall(command.encode())
-        data = self.sock.recv(BUFSIZE).decode()
-        return data == '200 keyd\n'
-
-    def close(self):
-        try:
-            if self.sock:
-                self.sock.close()
-        except OSError:
-            pass
-
-    def __del__(self):
-        self.close()
 
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
@@ -618,12 +520,7 @@ class FailoverService(ConfigService):
             return False
         for i in self.middleware.call_sync('interface.query', [('failover_critical', '!=', None)]):
             if i['failover_vhid']:
-                subprocess.run([
-                    'python',
-                    '/usr/local/libexec/truenas/carp-state-change-hook.py',
-                    f'{i["failover_vhid"]}@{i["name"]}',
-                    'forcetakeover',
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                self.middleware.call_sync('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
                 break
         return False
 
@@ -639,6 +536,8 @@ class FailoverService(ConfigService):
         """
         self.logger.debug('Sending database to standby controller')
         self.middleware.call_sync('failover.send_database')
+        self.logger.debug('Syncing cached keys')
+        self.middleware.call_sync('failover.sync_keys_to_remote_node')
         self.logger.debug('Sending license and pwenc files')
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
@@ -783,8 +682,8 @@ class FailoverService(ConfigService):
          2. the quantity of disks are the same between
             controllers but serials do not match
         """
-        local_boot_disks = await self.middleware.call('zfs.pool.get_disks', 'freenas-boot')
-        remote_boot_disks = await self.middleware.call('failover.call_remote', 'zfs.pool.get_disks', ['freenas-boot'])
+        local_boot_disks = await self.middleware.call('boot.get_disks')
+        remote_boot_disks = await self.middleware.call('failover.call_remote', 'boot.get_disks')
         local_disks = set(
             v['ident']
             for k, v in (await self.middleware.call('device.get_info', 'DISK')).items()
@@ -802,75 +701,144 @@ class FailoverService(ConfigService):
 
     @accepts(Dict(
         'options',
-        Str('passphrase', password=True, required=True),
+        List(
+            'pools', items=[
+                Dict(
+                    'pool_keys',
+                    Str('name', required=True),
+                    Str('passphrase', required=True)
+                )
+            ], default=[]
+        ),
+        List(
+            'datasets', items=[
+                Dict(
+                    'dataset_keys',
+                    Str('name', required=True),
+                    Str('passphrase', required=True),
+                )
+            ], default=[]
+        ),
     ))
-    def unlock(self, options):
+    async def unlock(self, options):
         """
         Unlock pools in HA, syncing passphrase between controllers and forcing this controller
         to be MASTER importing the pools.
         """
-        self.middleware.call('failover.encryption_setkey', options['passphrase'])
-        return self.middleware.call('failover.force_master')
+        await self.middleware.call(
+            'failover.update_encryption_keys', {
+                'pools': options['pools'],
+                'datasets': options['datasets'],
+            },
+        )
+
+        return await self.middleware.call('failover.force_master')
+
+    @private
+    @job(lock=lambda args: f'failover_dataset_unlock_{args[0]}')
+    async def unlock_zfs_datasets(self, job, pool_name):
+        # We are going to unlock all zfs datasets we have keys in cache/database for the pool in question
+        zfs_keys = (await self.encryption_keys())['zfs']
+        unlock_job = await self.middleware.call(
+            'pool.dataset.unlock', pool_name, {
+                'recursive': True,
+                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()]
+            }
+        )
+        return await job.wrap(unlock_job)
 
     @private
     @accepts()
-    def encryption_getkey(self):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.getkey()
+    async def encryption_keys(self):
+        return await self.middleware.call(
+            'cache.get_or_put', 'failover_encryption_keys', 0, lambda: {'geli': {}, 'zfs': {}}
+        )
 
     @private
-    def encryption_shutdown(self):
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.shutdown()
+    @accepts(
+        Dict(
+            'update_encryption_keys',
+            Bool('sync_keys', default=True),
+            List(
+                'pools', items=[
+                    Dict(
+                        'pool_geli_keys',
+                        Str('name', required=True),
+                        Str('passphrase', required=True),
+                    )
+                ], default=[]
+            ),
+            List(
+                'datasets', items=[
+                    Dict(
+                        'dataset_keys',
+                        Str('name', required=True),
+                        Str('passphrase', required=True),
+                    )
+                ], default=[]
+            ),
+        )
+    )
+    async def update_encryption_keys(self, options):
+        if not options['pools'] and not options['datasets']:
+            raise CallError('Please specify pools/datasets to update')
+
+        async with ENCRYPTION_CACHE_LOCK:
+            keys = await self.encryption_keys()
+            for pool in options['pools']:
+                keys['geli'][pool['name']] = pool['passphrase']
+            for dataset in options['datasets']:
+                keys['zfs'][dataset['name']] = dataset['passphrase']
+            await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
+            if options['sync_keys']:
+                await self.sync_keys_to_remote_node(lock=False)
 
     @private
-    def encryption_status(self):
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.status()
+    @accepts(
+        Dict(
+            'remove_encryption_keys',
+            Bool('sync_keys', default=True),
+            List('pools', items=[Str('pool')], default=[]),
+            List('datasets', items=[Str('dataset')], default=[]),
+        )
+    )
+    async def remove_encryption_keys(self, options):
+        if not options['pools'] and not options['datasets']:
+            raise CallError('Please specify pools/datasets to remove')
 
-    @private
-    @accepts(Str('passphrase'), Dict('options', Bool('sync', default=True)))
-    def encryption_setkey(self, passphrase, options=None):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            rv = escrowctl.setkey(passphrase)
-        if not rv:
-            return rv
-        if options['sync']:
-            try:
-                self.call_remote('failover.encryption_setkey', [passphrase, {'sync': False}])
-            except Exception as e:
-                self.logger.warn('Failed to set encryption key on standby node: %s', e)
-        return rv
-
-    @private
-    @accepts()
-    def encryption_clearkey(self):
-        # FIXME: we could get rid of escrow, middlewared can do that job
-        with LocalEscrowCtl() as escrowctl:
-            return escrowctl.clear()
+        async with ENCRYPTION_CACHE_LOCK:
+            keys = await self.encryption_keys()
+            for pool in options['pools']:
+                keys['geli'].pop(pool, None)
+            for dataset in options['datasets']:
+                keys['zfs'] = {
+                    k: v for k, v in keys['zfs'].items() if k != dataset and not k.startswith(f'{dataset}/')
+                }
+            await self.middleware.call('cache.put', 'failover_encryption_keys', keys)
+            if options['sync_keys']:
+                await self.sync_keys_to_remote_node(lock=False)
 
     @private
     @job()
-    def encryption_attachall(self, job):
+    def attach_all_geli_providers(self, job):
         pools = self.middleware.call_sync('pool.query', [('encrypt', '>', 0)])
         if not pools:
             return
-        with LocalEscrowCtl() as escrowctl, tempfile.NamedTemporaryFile(mode='w+') as tmp:
-            tmp.file.write(escrowctl.getkey() or "")
-            tmp.file.flush()
-            procs = []
-            failed_drive = 0
-            failed_volume = 0
-            for pool in pools:
+
+        failed_drive = 0
+        failed_volumes = []
+        geli_keys = self.middleware.call_sync('failover.encryption_keys')['geli']
+        for pool in pools:
+            with tempfile.NamedTemporaryFile(mode='w+') as tmp:
+                tmp.file.write(geli_keys.get(pool['name'], ''))
+                tmp.file.flush()
                 keyfile = pool['encryptkey_path']
+                procs = []
                 for encrypted_disk in self.middleware.call_sync(
                     'datastore.query',
                     'storage.encrypteddisk',
                     [('encrypted_volume', '=', pool['id'])]
                 ):
-
                     if encrypted_disk['encrypted_disk']:
                         # gptid might change on the active head, so we need to rescan
                         # See #16070
@@ -881,7 +849,7 @@ class FailoverService(ConfigService):
                         except Exception:
                             self.logger.warning(
                                 'Failed to open dev %s to rescan.',
-                                encrypted_disk['encrypted_disk']['name'],
+                                encrypted_disk['encrypted_disk']['disk_name'],
                             )
                     provider = encrypted_disk['encrypted_provider']
                     if not os.path.exists(f'/dev/{provider}.eli'):
@@ -903,36 +871,30 @@ class FailoverService(ConfigService):
                         self.logger.warn('Unable to attach GELI provider: %s', msg)
                         failed_drive += 1
 
-                job = self.middleware.call_sync('zfs.pool.import', pool['guid'], {
-                    'altroot': '/mnt',
-                })
-                job.wait_sync()
-                if job.error:
-                    failed_volume += 1
+                try:
+                    self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
+                        'altroot': '/mnt',
+                    })
+                except Exception as e:
+                    failed_volumes.append(pool['name'])
+                    self.logger.error('Failed to import %s pool: %s', pool['name'], str(e))
 
-            if failed_drive > 0:
-                job.set_progress(None, f'{failed_drive} can not be attached.')
-                self.logger.error('%d can not be attached.', failed_drive)
+        if failed_drive > 0:
+            job.set_progress(None, f'{failed_drive} drive(s) can not be attached.')
+            self.logger.error('%d drive(s) can not be attached.', failed_drive)
 
-            try:
-                if failed_volume == 0:
-                    try:
-                        os.unlink(FAILOVER_NEEDOP)
-                    except FileNotFoundError:
-                        pass
-                    passphrase = escrowctl.getkey()
-                    try:
-                        self.middleware.call_sync(
-                            'failover.call_remote', 'failover.encryption_setkey', [passphrase]
-                        )
-                    except Exception:
-                        self.logger.error(
-                            'Failed to set encryption key on standby node.', exc_info=True,
-                        )
-                else:
-                    open(FAILOVER_NEEDOP, 'w').close()
-            except Exception:
-                pass
+        try:
+            if not failed_volumes:
+                try:
+                    os.unlink(FAILOVER_NEEDOP)
+                except FileNotFoundError:
+                    pass
+                self.middleware.call_sync('failover.sync_keys_to_remote_node')
+            else:
+                with open(FAILOVER_NEEDOP, 'w') as f:
+                    f.write('\n'.join(failed_volumes))
+        except Exception:
+            pass
 
     @private
     @job()
@@ -1268,6 +1230,21 @@ class FailoverService(ConfigService):
         self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
         return True
 
+    @private
+    async def sync_keys_to_remote_node(self, lock=True):
+        if await self.middleware.call('failover.licensed'):
+            async with ENCRYPTION_CACHE_LOCK if lock else asyncnullcontext():
+                try:
+                    keys = await self.encryption_keys()
+                    await self.middleware.call(
+                        'failover.call_remote', 'cache.put', ['failover_encryption_keys', keys]
+                    )
+                except Exception as e:
+                    await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
+                    self.middleware.logger.error('Failed to sync keys with remote node: %s', str(e), exc_info=True)
+                else:
+                    await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
+
 
 async def ha_permission(middleware, app):
     # Skip if session was already authenticated
@@ -1290,16 +1267,22 @@ async def ha_permission(middleware, app):
         AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
 
 
-async def hook_geli_passphrase(middleware, passphrase):
+async def hook_pool_change_passphrase(middleware, passphrase_data):
     """
     Hook to set pool passphrase when its changed.
     """
     if not await middleware.call('failover.licensed'):
         return
-    if passphrase:
-        await middleware.call('failover.encryption_setkey', passphrase, {'sync': True})
+    if passphrase_data['action'] == 'UPDATE':
+        await middleware.call(
+            'failover.update_encryption_keys', {
+                'pools': [{
+                    'name': passphrase_data['pool'], 'passphrase': passphrase_data['passphrase']
+                }]
+            }
+        )
     else:
-        await middleware.call('failover.encryption_clearkey')
+        await middleware.call('failover.remove_encryption_keys', {'pools': [passphrase_data['pool']]})
 
 
 sql_queue = queue.Queue()
@@ -1668,19 +1651,67 @@ async def hook_sync_geli(middleware, pool=None):
 
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
     await middleware.call('enclosure.sync_zpool', pool)
+    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
+
+
+async def hook_pool_post_import(middleware, pool):
+    if pool['encrypt'] == 2 and pool['passphrase']:
+        await middleware.call(
+            'failover.update_encryption_keys', {
+                'pools': [{'name': pool['name'], 'passphrase': pool['passphrase']}]
+            }
+        )
 
 
 async def hook_pool_lock(middleware, pool=None):
-    await middleware.call('failover.encryption_clearkey')
-    try:
-        await middleware.call('failover.call_remote', 'failover.encryption_clearkey')
-    except Exception as e:
-        middleware.logger.warn('Failed to clear encryption key on standby node: %s', e)
+    await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
 
 
 async def hook_pool_unlock(middleware, pool=None, passphrase=None):
     if passphrase:
-        await middleware.call('failover.encryption_setkey', passphrase)
+        await middleware.call(
+            'failover.update_encryption_keys', {'pools': [{'name': pool['name'], 'passphrase': passphrase}]}
+        )
+
+
+async def hook_pool_dataset_unlock(middleware, datasets):
+    await middleware.call(
+        'failover.update_encryption_keys', {
+            'datasets': [
+                {'name': ds['name'], 'passphrase': ds['encryption_key']}
+                for ds in datasets if ds['key_format'].upper() == 'PASSPHRASE'
+            ]
+        }
+    )
+
+
+async def hook_pool_dataset_post_create(middleware, dataset_data):
+    if dataset_data['encrypted'] and str(dataset_data['key_format']).upper() == 'PASSPHRASE':
+        await middleware.call(
+            'failover.update_encryption_keys', {
+                'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]
+            }
+        )
+
+
+async def hook_pool_dataset_post_delete_lock(middleware, dataset):
+    await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset]})
+
+
+async def hook_pool_dataset_change_key(middleware, dataset_data):
+    if dataset_data['key_format'] == 'PASSPHRASE' or dataset_data['old_key_format'] == 'PASSPHRASE':
+        if dataset_data['key_format'] == 'PASSPHRASE':
+            await middleware.call(
+                'failover.update_encryption_keys', {
+                    'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]
+                }
+            )
+        else:
+            await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset_data['name']]})
+
+
+async def hook_pool_dataset_inherit_parent_encryption_root(middleware, dataset):
+    await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset]})
 
 
 async def hook_pool_rekey(middleware, pool=None):
@@ -1722,6 +1753,10 @@ async def service_remote(middleware, service, verb, options):
             middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)
 
 
+async def ready_system_sync_keys(middleware):
+    await middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
+
+
 async def _event_system_ready(middleware, event_type, args):
     """
     Method called when system is ready to issue an event in case
@@ -1729,6 +1764,7 @@ async def _event_system_ready(middleware, event_type, args):
     """
     if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
         return
+
     if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
         middleware.send_event('failover.upgrade_pending', 'ADDED', {
             'id': 'BACKUP', 'fields': {'pending': True},
@@ -1753,15 +1789,24 @@ async def setup(middleware):
     middleware.event_subscribe('system', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
-    middleware.register_hook('disk.post_geli_passphrase', hook_geli_passphrase, sync=False)
+    middleware.register_hook('pool.post_change_passphrase', hook_pool_change_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
+    middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
     middleware.register_hook('pool.post_lock', hook_pool_lock, sync=True)
     middleware.register_hook('pool.post_unlock', hook_pool_unlock, sync=True)
+    middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)
+    middleware.register_hook('dataset.post_delete', hook_pool_dataset_post_delete_lock, sync=True)
+    middleware.register_hook('dataset.post_lock', hook_pool_dataset_post_delete_lock, sync=True)
+    middleware.register_hook('dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
+    middleware.register_hook('dataset.change_key', hook_pool_dataset_change_key, sync=True)
+    middleware.register_hook(
+        'dataset.inherit_parent_encryption_root', hook_pool_dataset_inherit_parent_encryption_root, sync=True
+    )
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
@@ -1775,3 +1820,6 @@ async def setup(middleware):
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     asyncio.ensure_future(journal_ha(middleware))
+
+    if await middleware.call('system.ready'):
+        asyncio.ensure_future(ready_system_sync_keys(middleware))

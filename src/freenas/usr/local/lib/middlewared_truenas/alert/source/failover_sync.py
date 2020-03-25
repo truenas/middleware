@@ -18,3 +18,17 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     )
 
     products = ("ENTERPRISE",)
+
+
+class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = "Syncing Encryption Keys to Peer Failed"
+    text = (
+        "The automatic synchronization of encryption passphrases with the standby "
+        "controller has failed. Please go to System > Failover and manually sync to peer."
+    )
+
+    products = ("ENTERPRISE",)

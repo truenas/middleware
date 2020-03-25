@@ -100,11 +100,11 @@ class CTLHALinkAlertClass(AlertClass):
     products = ("ENTERPRISE",)
 
 
-class NoFailoverEscrowedPassphraseAlertClass(AlertClass):
+class NoFailoverPassphraseKeysAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
-    title = "No Escrowed Passphrase for Failover"
-    text = "No escrowed passphrase for failover. Automatic failover disabled."
+    title = "Passphrase Missing For Legacy-Encrypted Pool"
+    text = "Failover is unavailable until a legacy encryption passphrase is added to %(pool)r."
 
     products = ("ENTERPRISE",)
 
@@ -193,14 +193,17 @@ class FailoverAlertSource(ThreadedAlertSource):
                 pass
             try:
                 if len(fobj['phrasedvolumes']) > 0:
-                    if not self.middleware.call_sync('failover.encryption_status'):
-                        alerts.append(Alert(NoFailoverEscrowedPassphraseAlertClass))
+                    keys = self.middleware.call_sync('failover.encryption_keys')['geli']
+                    not_found = False
+                    for pool in fobj['phrasedvolumes']:
+                        if pool not in keys:
+                            not_found = True
+                            alerts.append(Alert(NoFailoverPassphraseKeysAlertClass, {'pool': pool}))
+                    if not_found:
                         # Kick a syncfrompeer if we don't.
-                        passphrase = self.middleware.call_sync(
-                            'failover.call_remote', 'failover.encryption_getkey'
+                        self.middleware.call_sync(
+                            'failover.call_remote', 'failover.sync_keys_to_remote_node'
                         )
-                        if passphrase:
-                            self.middleware.call_sync('failover.encryption_setkey', passphrase)
             except Exception:
                 pass
 
