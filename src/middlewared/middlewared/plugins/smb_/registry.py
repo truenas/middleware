@@ -43,7 +43,7 @@ class SharingSMBService(Service):
         if netconf.returncode != 0:
             self.logger.debug('netconf failure stdout: %s', netconf.stdout.decode())
             raise CallError(
-                f'net conf {action} failed with error: {netconf.stderr.decode()}'
+                f'net conf {action} [{share}] failed with error: {netconf.stderr.decode()}'
             )
 
         return netconf.stdout.decode()
@@ -168,7 +168,7 @@ class SharingSMBService(Service):
             data = await self.middleware.call('sharing.smb.query', [('name', '=', share)], {'get': True})
 
         share_conf = await self.share_to_smbconf(data)
-        reg_conf = await self.reg_showshare(share)
+        reg_conf = await self.reg_showshare(share if not data['home'] else 'homes')
         s_keys = set(share_conf.keys())
         r_keys = set(reg_conf.keys())
         intersect = s_keys.intersection(r_keys)
