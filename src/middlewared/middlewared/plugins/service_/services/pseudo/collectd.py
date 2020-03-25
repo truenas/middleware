@@ -44,12 +44,16 @@ class CollectDService(SimpleService):
 class RRDCacheDService(SimpleService):
     name = "rrdcached"
 
+    restartable = True
+
     freebsd_rc = "rrdcached"
 
-    async def _start_freebsd(self):
-        await super()._start_freebsd()
-        await self.middleware.call("service.start", "collectd")
-
-    async def _stop_freebsd(self):
+    async def stop(self):
         await self.middleware.call("service.stop", "collectd")
-        await super()._stop_freebsd()
+        await super().stop()
+
+    async def restart(self):
+        await self.stop()
+        await self.start()
+
+        await self.middleware.call("service.start", "collectd")
