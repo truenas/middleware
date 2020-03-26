@@ -1495,7 +1495,7 @@ class ActiveDirectoryService(ConfigService):
 
         netads = await run([SMBCmd.NET.value, '-U', data['username'], '-k', 'ads', 'leave'], check=False)
         if netads.returncode != 0:
-            raise CallError(f"Failed to leave domain: [{netads.stderr.decode()}]")
+            self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
 
         if smb_ha_mode != 'LEGACY':
             krb_princ = await self.middleware.call(
