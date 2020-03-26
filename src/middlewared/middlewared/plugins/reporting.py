@@ -26,7 +26,7 @@ from middlewared.i18n import _
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, filterable, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, run, start_daemon_thread
+from middlewared.utils import filter_list, osc, run
 from middlewared.validators import Range
 
 RE_COLON = re.compile('(.+):(.+)$')
@@ -1031,21 +1031,26 @@ class RealtimeEventSource(EventSource):
     @staticmethod
     def get_cpu_usages(cp_diff):
         cp_total = sum(cp_diff)
-        cpu_user = cp_diff[0] / cp_total * 100
-        cpu_nice = cp_diff[1] / cp_total * 100
-        cpu_system = cp_diff[2] / cp_total * 100
-        cpu_interrupt = cp_diff[3] / cp_total * 100
-        cpu_idle = cp_diff[4] / cp_total * 100
-        # Usage is the sum of user, nice, system and interrupt over total (including idle)
-        cpu_usage = (sum(cp_diff[:4]) / cp_total) * 100
-        return {
-            'usage': cpu_usage,
-            'user': cpu_user,
-            'nice': cpu_nice,
-            'system': cpu_system,
-            'interrupt': cpu_interrupt,
-            'idle': cpu_idle,
-        }
+        data = {}
+        data['user'] = cp_diff[0] / cp_total * 100
+        data['nice'] = cp_diff[1] / cp_total * 100
+        data['system'] = cp_diff[2] / cp_total * 100
+        if osc.IS_FREEBSD:
+            idle = 4
+            data['interrupt'] = cp_diff[3] / cp_total * 100
+            data['idle'] = cp_diff[4] / cp_total * 100
+        elif osc.IS_LINUX:
+            idle = 3
+            data['idle'] = cp_diff[3] / cp_total * 100
+            data['iowait'] = cp_diff[4] / cp_total * 100
+            data['irq'] = cp_diff[5] / cp_total * 100
+            data['softirq'] = cp_diff[6] / cp_total * 100
+            data['steal'] = cp_diff[7] / cp_total * 100
+            data['guest'] = cp_diff[8] / cp_total * 100
+            data['guest_nice'] = cp_diff[9] / cp_total * 100
+        # Usage is the sum of all but idle
+        data['usage'] = ((cp_total - cp_diff[idle]) / cp_total) * 100
+        return data
 
     def run(self):
 
@@ -1060,30 +1065,75 @@ class RealtimeEventSource(EventSource):
 
             data['cpu'] = {}
             # Get CPU usage %
-            # cp_times has values for all cores
-            cp_times = sysctl.filter('kern.cp_times')[0].value
-            # cp_time is the sum of all cores
-            cp_time = sysctl.filter('kern.cp_time')[0].value
-            if cp_times_last:
+            if osc.IS_FREEBSD:
+                num_times = 5
+                # cp_times has values for all cores
+                cp_times = sysctl.filter('kern.cp_times')[0].value
+                # cp_time is the sum of all cores
+                cp_time = sysctl.filter('kern.cp_time')[0].value
+            elif osc.IS_LINUX:
+                num_times = 10
+                with open('/proc/stat') as f:
+                    stat = f.read()
+                cp_times = []
+                cp_time = []
+                for line in stat.split('\n'):
+                    if line.startswith('cpu'):
+                        line_ints = [int(i) for i in line[5:].strip().split()]
+                        # cpu has a sum of all cpus
+                        if line[3] == ' ':
+                            cp_time = line_ints
+                        # cpuX is for each core
+                        else:
+                            cp_times += line_ints
+                    else:
+                        break
+            else:
+                cp_time = cp_times = None
+
+            if cp_time and cp_times and cp_times_last:
                 # Get the difference of times between the last check and the current one
                 # cp_time has a list with user, nice, system, interrupt and idle
                 cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_times, cp_times_last)))
-                cp_nums = int(len(cp_times) / 5)
+                cp_nums = int(len(cp_times) / num_times)
                 for i in range(cp_nums):
-                    data['cpu'][i] = self.get_cpu_usages(cp_diff[i * 5:i * 5 + 5])
+                    data['cpu'][i] = self.get_cpu_usages(cp_diff[i * num_times:i * num_times + num_times])
 
                 cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_time, cp_time_last)))
                 data['cpu']['average'] = self.get_cpu_usages(cp_diff)
+
             cp_time_last = cp_time
             cp_times_last = cp_times
 
             # CPU temperature
             data['cpu']['temperature'] = {}
-            for i in itertools.count():
-                v = sysctl.filter(f'dev.cpu.{i}.temperature')
-                if not v:
-                    break
-                data['cpu']['temperature'][i] = v[0].value
+            if osc.IS_FREEBSD:
+                for i in itertools.count():
+                    v = sysctl.filter(f'dev.cpu.{i}.temperature')
+                    if not v:
+                        break
+                    data['cpu']['temperature'][i] = v[0].value
+            elif osc.IS_LINUX:
+                cp = subprocess.run(['sensors', '-j'], capture_output=True, text=True)
+                try:
+                    sensors = json.loads(cp.stdout)
+                except json.decoder.JSONDecodeError:
+                    pass
+                except Exception:
+                    self.middleware.logger.error('Failed to read sensors output', exc_info=True)
+                else:
+                    for chip, value in sensors.items():
+                        for name, temps in value.items():
+                            if not name.startswith('Core '):
+                                continue
+                            core = name[5:].strip()
+                            if not core.isdigit():
+                                continue
+                            core = int(core)
+                            for temp, value in temps.items():
+                                if 'input' in temp:
+                                    data['cpu']['temperature'][core] = value
+                                    break
 
             if netif is not None:
                 # Interface related statistics
