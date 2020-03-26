@@ -394,7 +394,7 @@ class VMSupervisor:
         ahci_current_controller = controller_base.copy()
         virtio_current_controller = controller_base.copy()
 
-        for device in self.devices:
+        for device in filter(lambda d: not isinstance(d, VNC), self.devices):
             if isinstance(device, (DISK, CDROM, RAW)):
                 # We classify all devices in 2 types:
                 # 1) AHCI
@@ -695,17 +695,23 @@ class VNC(Device):
         self.web_process = None
 
     def xml(self, *args, **kwargs):
-        return create_element(
-            'graphics', type='vnc', port=str(self.data['attributes']['vnc_port']), attribute_dict={
-                'children': [
-                    create_element('listen', type='address', address=self.data['attributes']['vnc_bind']),
-                ]
-            }, **(
-                {} if not self.data['attributes']['vnc_password'] else {
-                    'passwd': self.data['attributes']['vnc_password']
-                }
-            )
-        ), create_element('controller', type='usb', model='nec-xhci'), create_element('input', type='tablet', bus='usb')
+        raise NotImplementedError
+
+    def bhyve_args(self):
+        attrs = self.data['attributes']
+        width, height = (attrs['vnc_resolution'] or '1024x768').split('x')
+        return '-s ' + ','.join(filter(
+            bool, [
+                '29',
+                'fbuf',
+                'vncserver',
+                f'tcp={attrs["vnc_bind"]}:{attrs["vnc_port"]}',
+                f'w={width}',
+                f'h={height}',
+                f'password={attrs["vnc_password"]}' if attrs['vnc_password'] else None,
+                'wait' if attrs.get('wait') else None,
+            ]
+        ))
 
     @staticmethod
     def get_vnc_web_port(vnc_port):
