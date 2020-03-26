@@ -752,7 +752,8 @@ class LDAPService(ConfigService):
             raise CallError(f'ldap.get_workgroup timed out after {ldap["timeout"]} seconds.', errno.ETIMEDOUT)
 
         if len(ret) > 1:
-            raise CallError(f'Multiple Samba Domains detected in LDAP environment: {ret}', errno.EINVAL)
+            self.logger.warning('Multiple Samba Domains detected in LDAP environment '
+                                'auto-configuration of workgroup map have failed: %s', ret)
 
         ret = ret[0]['data']['sambaDomainName'][0] if ret else []
 
