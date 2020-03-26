@@ -134,8 +134,8 @@ smb_func()
 	smbstatus -L | head -50
 	section_footer
 	
-	section_header "ACLs - 'sharesec --view-all'"
-	sharesec --view-all
+	section_header "ACLs - 'midclt call smb.sharesec.query'"
+	midclt call smb.sharesec.query | jq
 	section_footer
 
 	section_header "Local users in passdb.tdb"
