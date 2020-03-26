@@ -311,6 +311,22 @@ class VMSupervisor:
             attribute_dict={'children': domain_children}, nsmap=LIBVIRT_BHYVE_NSMAP,
         )
 
+    def commandline_xml(self):
+        commandline_args = self.commandline_args()
+        return create_element(
+            etree.QName(LIBVIRT_BHYVE_NAMESPACE, 'commandline'), attribute_dict={
+                'children': [
+                    create_element(
+                        etree.QName(LIBVIRT_BHYVE_NAMESPACE, 'arg'),
+                        value=cmd_arg, nsmap=LIBVIRT_BHYVE_NAMESPACE
+                    ) for cmd_arg in commandline_args
+                ]
+            }
+        ) if commandline_args else []
+
+    def commandline_args(self):
+        return []
+
     def os_xml(self):
         os_list = []
         children = [create_element('type', attribute_dict={'text': 'hvm'})]
