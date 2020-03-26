@@ -305,6 +305,8 @@ class VMSupervisor:
             create_element('clock', offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'),
             # Devices
             self.devices_xml(),
+            # Command line args
+            *self.commandline_xml(),
         ]
         return create_element(
             'domain', type='bhyve', id=str(self.vm_data['id']),
@@ -313,19 +315,22 @@ class VMSupervisor:
 
     def commandline_xml(self):
         commandline_args = self.commandline_args()
-        return create_element(
+        return [create_element(
             etree.QName(LIBVIRT_BHYVE_NAMESPACE, 'commandline'), attribute_dict={
                 'children': [
                     create_element(
                         etree.QName(LIBVIRT_BHYVE_NAMESPACE, 'arg'),
-                        value=cmd_arg, nsmap=LIBVIRT_BHYVE_NAMESPACE
+                        value=cmd_arg, nsmap=LIBVIRT_BHYVE_NSMAP
                     ) for cmd_arg in commandline_args
                 ]
             }
-        ) if commandline_args else []
+        )] if commandline_args else []
 
     def commandline_args(self):
-        return []
+        args = []
+        for device in filter(lambda d: isinstance(d, VNC), self.devices):
+            args.append(device.bhyve_args())
+        return args
 
     def os_xml(self):
         os_list = []
@@ -520,6 +525,9 @@ class Device(ABC):
     def post_stop_vm(self, *args, **kwargs):
         pass
 
+    def bhyve_args(self, *args, **kwargs):
+        pass
+
 
 class StorageDevice(Device):
 
@@ -697,7 +705,7 @@ class VNC(Device):
     def xml(self, *args, **kwargs):
         raise NotImplementedError
 
-    def bhyve_args(self):
+    def bhyve_args(self, *args, **kwargs):
         attrs = self.data['attributes']
         width, height = (attrs['vnc_resolution'] or '1024x768').split('x')
         return '-s ' + ','.join(filter(
