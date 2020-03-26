@@ -360,8 +360,12 @@ class SystemService(Service):
 
         CORE - TrueNAS Core, community version
         ENTERPRISE - TrueNAS Enterprise, appliance version
+        SCALE - TrueNAS SCALE
         """
         if self.__product_type is None:
+            if osc.IS_LINUX:
+                self.__product_type = 'SCALE'
+                return self.__product_type
             license = await self.middleware.run_in_thread(self._get_license)
             self.__product_type = 'CORE' if (
                 not license or
