@@ -43,7 +43,7 @@ FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
 RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
-RE_MEMWIDTH = re.compile(r'Total Width:\s*(\d*)')
+RE_ECC_MEMORY = re.compile(r'Error Correction Type:\s*(.*ECC.*)')
 
 
 class SystemAdvancedModel(sa.Model):
@@ -530,7 +530,9 @@ class SystemService(Service):
         )).communicate())[0].decode().strip() or None
 
         # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
-        ecc_results = RE_MEMWIDTH.findall((await run(['dmidecode', '-t', '17'])).stdout.decode())
+        # After discussing with nap, we determined that checking -t 17 did not work well with some systems,
+        # so we check -t 16 now only to see if it reports ECC memory
+        ecc_memory = bool(RE_ECC_MEMORY.findall((await run(['dmidecode', '-t', '16'])).stdout.decode()))
 
         return {
             'version': self.version(),
@@ -549,7 +551,7 @@ class SystemService(Service):
             'datetime': datetime.utcnow(),
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
-            'ecc_memory': all(dimm_module.strip() == '72' for dimm_module in (ecc_results or ['']))
+            'ecc_memory': ecc_memory,
         }
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
