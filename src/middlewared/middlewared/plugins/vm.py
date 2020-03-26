@@ -49,6 +49,8 @@ BUFSIZE = 65536
 
 LIBVIRT_URI = 'bhyve+unix:///system'
 LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
+LIBVIRT_BHYVE_NAMESPACE = 'http://libvirt.org/schemas/domain/bhyve/1.0'
+LIBVIRT_BHYVE_NSMAP = {'bhyve': LIBVIRT_BHYVE_NAMESPACE}
 SHUTDOWN_LOCK = asyncio.Lock()
 LIBVIRT_LOCK = asyncio.Lock()
 ZFS_ARC_MAX_INITIAL = None
@@ -268,48 +270,46 @@ class VMSupervisor:
         self.domain.destroy()
 
     def construct_xml(self):
-        domain = create_element(
-            'domain', type='bhyve', id=str(self.vm_data['id']), attribute_dict={
-                'children': [
-                    create_element('name', attribute_dict={'text': self.libvirt_domain_name}),
-                    create_element('title', attribute_dict={'text': self.vm_data['name']}),
-                    create_element('description', attribute_dict={'text': self.vm_data['description']}),
-                    # OS/boot related xml - returns an iterable
-                    *self.os_xml(),
-                    # VCPU related xml
-                    create_element('vcpu', attribute_dict={
-                        'text': str(self.vm_data['vcpus'] * self.vm_data['cores'] * self.vm_data['threads'])
-                    }),
-                    create_element(
-                        'cpu', attribute_dict={
-                            'children': [
-                                create_element(
-                                    'topology', sockets=str(self.vm_data['vcpus']), cores=str(self.vm_data['cores']),
-                                    threads=str(self.vm_data['threads'])
-                                )
-                            ]
-                        }
-                    ),
-                    # Memory related xml
-                    create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
-                    # Add features
-                    create_element(
-                        'features', attribute_dict={
-                            'children': [
-                                create_element('acpi'),
-                                create_element('apic'),
-                            ]
-                        }
-                    ),
-                    # Clock offset
-                    create_element('clock', offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'),
-                    # Devices
-                    self.devices_xml(),
-                ]
-            }
+        domain_children = [
+            create_element('name', attribute_dict={'text': self.libvirt_domain_name}),
+            create_element('title', attribute_dict={'text': self.vm_data['name']}),
+            create_element('description', attribute_dict={'text': self.vm_data['description']}),
+            # OS/boot related xml - returns an iterable
+            *self.os_xml(),
+            # VCPU related xml
+            create_element('vcpu', attribute_dict={
+                'text': str(self.vm_data['vcpus'] * self.vm_data['cores'] * self.vm_data['threads'])
+            }),
+            create_element(
+                'cpu', attribute_dict={
+                    'children': [
+                        create_element(
+                            'topology', sockets=str(self.vm_data['vcpus']), cores=str(self.vm_data['cores']),
+                            threads=str(self.vm_data['threads'])
+                        )
+                    ]
+                }
+            ),
+            # Memory related xml
+            create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
+            # Add features
+            create_element(
+                'features', attribute_dict={
+                    'children': [
+                        create_element('acpi'),
+                        create_element('apic'),
+                    ]
+                }
+            ),
+            # Clock offset
+            create_element('clock', offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'),
+            # Devices
+            self.devices_xml(),
+        ]
+        return create_element(
+            'domain', type='bhyve', id=str(self.vm_data['id']),
+            attribute_dict={'children': domain_children}, nsmap=LIBVIRT_BHYVE_NSMAP,
         )
-
-        return domain
 
     def os_xml(self):
         os_list = []
