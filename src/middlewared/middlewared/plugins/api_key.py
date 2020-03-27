@@ -1,3 +1,4 @@
+from datetime import datetime
 import random
 import string
 
@@ -15,6 +16,7 @@ class APIKeyModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(200))
     key = sa.Column(sa.Text())
+    created_at = sa.Column(sa.DateTime())
 
 
 class ApiKeyService(CRUDService):
@@ -46,6 +48,8 @@ class ApiKeyService(CRUDService):
 
         key = self._generate()
         data["key"] = pbkdf2_sha256.encrypt(key)
+
+        data["created_at"] = datetime.utcnow()
 
         data["id"] = await self.middleware.call(
             "datastore.insert",
