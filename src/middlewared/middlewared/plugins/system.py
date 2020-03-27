@@ -528,6 +528,11 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        product_version = (await(await Popen(
+            ['dmidecode', '-s', 'system-version'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
         manufacturer = (await(await Popen(
             ['dmidecode', '-s', 'system-manufacturer'],
             stdout=subprocess.PIPE,
@@ -550,6 +555,7 @@ class SystemService(Service):
             'uptime_seconds': time.time() - psutil.boot_time(),
             'system_serial': serial,
             'system_product': product,
+            'system_product_version': product_version,
             'license': await self.middleware.run_in_thread(self._get_license),
             'boottime': datetime.fromtimestamp(psutil.boot_time()),
             'datetime': datetime.utcnow(),
