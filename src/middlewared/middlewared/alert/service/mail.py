@@ -3,7 +3,7 @@ from middlewared.schema import Dict, Str
 
 
 class MailAlertService(AlertService):
-    title = "E-Mail"
+    title = "Email"
 
     schema = Dict(
         "mail_attributes",
@@ -16,7 +16,7 @@ class MailAlertService(AlertService):
         if not email:
             email = (await self.middleware.call("user.query", [("username", "=", "root")], {"get": True}))["email"]
         if not email:
-            self.logger.trace("E-Mail address for root not configured, not sending e-mail")
+            self.logger.trace("Email address for root not configured, not sending email")
             return
 
         text = await self._format_alerts(alerts, gone_alerts, new_alerts)
