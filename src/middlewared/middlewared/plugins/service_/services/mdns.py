@@ -10,6 +10,8 @@ class MDNSService(SimpleService):
     freebsd_rc = "avahi-daemon"
     freebsd_pidfile = "/var/run/avahi-daemon/pid"
 
+    systemd_unit = "avahi-daemon"
+
     async def start(self):
         announce = (await self.middleware.call("network.configuration.config"))["service_announcement"]
         if not announce["mdns"]:

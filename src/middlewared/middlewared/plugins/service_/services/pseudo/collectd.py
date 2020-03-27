@@ -13,6 +13,8 @@ class CollectDService(SimpleService):
 
     freebsd_rc = "collectd-daemon"
 
+    systemd_unit = "collectd"
+
     lock = asyncio.Lock()
 
     async def _get_state_freebsd(self):
@@ -21,21 +23,21 @@ class CollectDService(SimpleService):
             [],
         )
 
-    async def _start_freebsd(self, _lock=True):
+    async def start(self, _lock=True):
         async with (self.lock if _lock else asyncnullcontext()):
-            await self._freebsd_ensure_rrdcached()
-            await super()._start_freebsd()
+            await self._ensure_rrdcached()
+            await super().start()
 
-    async def _stop_freebsd(self, _lock=True):
+    async def stop(self, _lock=True):
         async with (self.lock if _lock else asyncnullcontext()):
-            await super()._stop_freebsd()
+            await super().stop()
 
-    async def _restart_freebsd(self, _lock=True):
+    async def restart(self, _lock=True):
         async with (self.lock if _lock else asyncnullcontext()):
-            await self._stop_freebsd(_lock=False)
-            await self._start_freebsd(_lock=False)
+            await self.stop(_lock=False)
+            await self.start(_lock=False)
 
-    async def _freebsd_ensure_rrdcached(self):
+    async def _ensure_rrdcached(self):
         if not await self.middleware.call("service.started", "rrdcached"):
             # Let's ensure that before we start collectd, rrdcached is always running
             await self.middleware.call("service.start", "rrdcached")
@@ -47,6 +49,8 @@ class RRDCacheDService(SimpleService):
     restartable = True
 
     freebsd_rc = "rrdcached"
+
+    systemd_unit = "rrdcached"
 
     async def stop(self):
         await self.middleware.call("service.stop", "collectd")

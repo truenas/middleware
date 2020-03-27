@@ -9,3 +9,5 @@ class RsyncService(SimpleService):
     freebsd_rc = "rsyncd"
     freebsd_pidfile = "/var/run/rsyncd.pid"
     freebsd_procname = "rsync"
+
+    systemd_unit = "rsync"

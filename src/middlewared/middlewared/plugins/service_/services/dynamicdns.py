@@ -7,3 +7,5 @@ class DynamicDNSService(SimpleService):
     etc = ["inadyn"]
 
     freebsd_rc = "inadyn"
+
+    systemd_unit = "inadyn"

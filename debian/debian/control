@@ -8,9 +8,13 @@ Homepage: http://www.truenas.com
 
 Package: truenas
 Architecture: all
-Depends: docker-ce,
+Depends: collectd,
+         docker-ce,
          glusterfs-server,
+         inadyn,
+         ladvd,
          libnginx-mod-http-uploadprogress,
+         libvirt-daemon-system,
          man-db,
          manpages,
          middlewared,
@@ -19,9 +23,16 @@ Depends: docker-ce,
          nfs-ganesha-gluster,
          nginx,
          openssh-server,
+         openvpn,
+         proftpd,
+         samba,
+         scstadmin,
+         snmpd,
          sudo,
+         tftpd-hpa,
          tmux,
          truenas-webui,
+         winbind,
          ${misc:Depends}
 Description: Main package for TrueNAS
  This package is supposed to hold all the dependencies required

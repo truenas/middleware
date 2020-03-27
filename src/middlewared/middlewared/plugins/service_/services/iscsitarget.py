@@ -17,6 +17,8 @@ class ISCSITargetService(SimpleService):
     freebsd_rc = "ctld"
     freebsd_pidfile = "/var/run/ctld.pid"
 
+    systemd_unit = "scst"
+
     async def before_stop(self):
         if osc.IS_FREEBSD:
             with contextlib.suppress(IndexError):

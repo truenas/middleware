@@ -9,6 +9,8 @@ class SNMPService(SimpleService):
     freebsd_rc = "snmpd"
     freebsd_pidfile = "/var/run/net_snmpd.pid"
 
+    systemd_unit = "snmpd"
+
     async def _start_freebsd(self):
         await self._freebsd_service("snmpd", "start")
         await self._freebsd_service("snmp-agent", "start")

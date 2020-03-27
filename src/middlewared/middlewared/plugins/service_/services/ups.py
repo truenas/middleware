@@ -20,6 +20,8 @@ class UPSService(SimpleService):
     freebsd_pidfile = "/var/db/nut/upsmon.pid"
     freebsd_procname = "upsmon"
 
+    systemd_unit = "nut-monitor"
+
     async def before_start(self):
         await self.middleware.call("ups.dismiss_alerts")
 

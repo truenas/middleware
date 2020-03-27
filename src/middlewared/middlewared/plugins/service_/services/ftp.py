@@ -8,3 +8,5 @@ class FTPService(SimpleService):
 
     freebsd_rc = "proftpd"
     freebsd_pidfile = "/var/run/proftpd.pid"
+
+    systemd_unit = "proftpd"
