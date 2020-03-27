@@ -16,7 +16,7 @@ async def asyncio_map(func, arguments, limit=None):
     return await asyncio.gather(*futures)
 
 
-def _noexec_wrapper(method, *args, **kwargs):
+def _noexec_wrapper(method, args, kwargs):
     try:
         return method(*args, **kwargs)
     except Exception as e:
@@ -35,7 +35,7 @@ async def async_run_in_executor(loop, executor, method, *args, **kwargs):
     # top and return them. Then we "catch" returned exceptions and re-raise them to
     # bridge the gap.
 
-    result = await loop.run_in_executor(executor, _noexec_wrapper, method, *args, **kwargs)
+    result = await loop.run_in_executor(executor, _noexec_wrapper, method, args, kwargs)
 
     if isinstance(result, Exception):
         raise result
