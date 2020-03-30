@@ -15,7 +15,7 @@ class DeviceService(Service, DeviceInfoBase):
 
     async def get_disks(self):
         disks = {}
-        klass = await self.middleware.call('device.retrieve_disk_geom_class')
+        klass = await self.middleware.call('device.retrieve_geom_class', 'DISK')
         if not klass:
             return disks
         for g in klass.geoms:
@@ -26,24 +26,28 @@ class DeviceService(Service, DeviceInfoBase):
         return disks
 
     @private
-    def retrieve_disk_geom_class(self):
+    def retrieve_geom_class(self, class_name):
         geom.scan()
-        return geom.class_by_name('DISK')
+        return geom.class_by_name(class_name)
 
     async def get_disk(self, name):
         disk = self.disk_default.copy()
-        disk_klass = await self.middleware.call('device.retrieve_disk_geom_class')
+        if name.startswith('multipath/'):
+            disk_klass = await self.middleware.call('device.retrieve_geom_class', 'MULTIPATH')
+        else:
+            disk_klass = await self.middleware.call('device.retrieve_geom_class', 'DISK')
         if not disk_klass:
             return None
-        disk_geom = next((g for g in disk_klass.geoms if g.name == name), None)
+        disk_geom = next((g for g in disk_klass.geoms if g.name == (
+            name if disk_klass.name == 'DISK' else name.split('/')[-1]
+        )), None)
         if not disk_geom:
             return None
-        return await self.get_disk_details(disk, disk_geom)
+        return await self.get_disk_details({**disk, 'name': name}, disk_geom)
 
     @private
     async def get_disk_details(self, disk, disk_geom):
         disk.update({
-            'name': disk_geom.name,
             'mediasize': disk_geom.provider.mediasize,
             'sectorsize': disk_geom.provider.sectorsize,
             'stripesize': disk_geom.provider.stripesize,
