@@ -6,7 +6,7 @@ from middlewared.service import (
     CallError, CRUDService, ValidationErrors, private
 )
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
+from middlewared.utils import osc, run
 from middlewared.utils.path import is_child
 from middlewared.validators import Range
 
@@ -15,7 +15,6 @@ import errno
 import hashlib
 import re
 import os
-import platform
 try:
     import sysctl
 except ImportError:
@@ -27,7 +26,6 @@ AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'CHAP': 'CHAP',
     'CHAP Mutual': 'CHAP_MUTUAL',
 })
-IS_LINUX = platform.system().lower() == 'linux'
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 
 
@@ -632,7 +630,7 @@ class iSCSITargetExtentService(CRUDService):
             if disk:
                 data['disk'] = disk[0]['name']
             else:
-                if IS_LINUX:
+                if osc.IS_LINUX:
                     data['disk'] = os.path.relpath(os.path.realpath(os.path.join('/dev', data['path'])), '/dev')
                 else:
                     data['disk'] = data['path']
@@ -1479,7 +1477,7 @@ class iSCSITargetToExtentService(CRUDService):
         else:
             lunid = data['lunid']
 
-        if IS_LINUX:
+        if osc.IS_LINUX:
             # FIXME: see if we need this in linux and if yes what value should be there
             lun_map_size = 1024
         else:
