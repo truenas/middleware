@@ -68,7 +68,6 @@ class HasUpdateAlertSource(ThreadedAlertSource):
         if not path:
             return
 
-
         updates = None
         try:
             if PendingUpdates:

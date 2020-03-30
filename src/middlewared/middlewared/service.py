@@ -578,7 +578,7 @@ class ServicePartBaseMeta(ServiceBase):
             else:
                 original_argspec = inspect.getfullargspec(original_method)
             if original_argspec != inspect.getfullargspec(new_method):
-                raise RuntimeError(f"Signature for method {name!r} does not match between {klass!r} and it's base " 
+                raise RuntimeError(f"Signature for method {name!r} does not match between {klass!r} and it's base "
                                    f"{base!r}")
 
             copy_function_metadata(original_method, new_method)
