@@ -25,7 +25,13 @@ async def resolve_hostname(middleware, verrors, name, hostname):
                 ip(hostname)
                 return hostname
             except ValueError:
-                return socket.gethostbyname(hostname)
+                # gethostbyadd() is called here so that if a short-hand IP
+                # was provided (i.e. 192.168), gethostaddr() will raise the
+                # exception as intended. The getaddrinfo() will auto-expand
+                # short-hand IP addresses which isn't desired.
+                socket.gethostbyaddr(hostname)
+                result = socket.getaddrinfo(hostname, None flags=socket.AI_CANONNAME)
+                return result[0][3] # canonical name
         except Exception:
             return False
 
@@ -38,7 +44,7 @@ async def resolve_hostname(middleware, verrors, name, hostname):
     if not result:
         verrors.add(
             name,
-            'Couldn\'t resolve hostname'
+            f'Unable to resolve {hostname} or invalid IP address'
         )
 
 
