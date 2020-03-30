@@ -501,10 +501,11 @@ class SystemService(Service):
         with open(LICENSE_FILE, 'w+') as f:
             f.write(license)
 
-        Path('/data/truenas-eula-pending').touch(exist_ok=True)
         self.middleware.call_sync('etc.generate', 'rc')
 
         self.__product_type = None
+        if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
+            Path('/data/truenas-eula-pending').touch(exist_ok=True)
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update'), wait=False,
         )
