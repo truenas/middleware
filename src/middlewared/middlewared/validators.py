@@ -3,10 +3,28 @@ import ipaddress
 import re
 from urllib.parse import urlparse
 import uuid
+import socket
 
 from zettarepl.snapshot.task.naming_schema import validate_snapshot_naming_schema
 
 EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+
+
+class ResolveHostOrIp:
+    def __call__(self, value):
+        if value is None:
+            return
+
+        try:
+            try:
+                ip = ipaddress.ip_address(value)
+                return ip
+            except ValueError:
+                socket.gethostbyaddr(value)
+                result = socket.getaddrinfo(value, None, flags=AI_CANONNAME)
+                return result[0][3]
+        except Exception as e:
+            raise ValueError(f'Unable to resolve {value} or invalid IP address: {e}')
 
 
 class Email:
