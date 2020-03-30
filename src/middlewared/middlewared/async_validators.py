@@ -30,7 +30,7 @@ async def resolve_hostname(middleware, verrors, name, hostname):
                 # exception as intended. The getaddrinfo() will auto-expand
                 # short-hand IP addresses which isn't desired.
                 socket.gethostbyaddr(hostname)
-                result = socket.getaddrinfo(hostname, None flags=socket.AI_CANONNAME)
+                result = socket.getaddrinfo(hostname, None, flags=socket.AI_CANONNAME)
                 return result[0][3] # canonical name
         except Exception:
             return False
