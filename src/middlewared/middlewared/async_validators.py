@@ -25,7 +25,9 @@ async def resolve_hostname(middleware, verrors, name, hostname):
                 ip(hostname)
                 return hostname
             except ValueError:
-                return socket.gethostbyname(hostname)
+                socket.gethostbyaddr(hostname)
+                result = socket.getaddrinfo(hostname, None, flags=socket.AI_CANONNAME)
+                return result[0][3]
         except Exception:
             return False
 
