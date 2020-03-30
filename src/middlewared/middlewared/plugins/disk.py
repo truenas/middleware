@@ -720,6 +720,8 @@ class DiskService(CRUDService):
 
     @private
     async def disks_for_temperature_monitoring(self):
+        devices = await camcontrol_list()
+
         return [
             disk['devname']
             for disk in await self.query([['devname', '!=', None],
@@ -728,6 +730,7 @@ class DiskService(CRUDService):
                                           # not allow them to go to sleep
                                           # automatically
                                           ['hddstandby', '=', 'ALWAYS ON']])
+            if devices.get(disk['devname'], {}).get('driver') != 'mpr'
         ]
 
     @accepts(
