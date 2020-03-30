@@ -57,6 +57,7 @@ class SystemAdvancedModel(sa.Model):
     adv_serialspeed = sa.Column(sa.String(120), default="9600")
     adv_powerdaemon = sa.Column(sa.Boolean(), default=False)
     adv_swapondrive = sa.Column(sa.Integer(), default=2)
+    adv_overprovision = sa.Column(sa.Integer(), nullable=True, default=None)
     adv_consolemsg = sa.Column(sa.Boolean(), default=True)
     adv_traceback = sa.Column(sa.Boolean(), default=True)
     adv_advancedmode = sa.Column(sa.Boolean(), default=False)
@@ -102,7 +103,7 @@ class SystemAdvancedService(ConfigService):
                 ports = {i: i for i in RE_LINUX_DMESG_TTY.findall(output)}
             else:
                 pipe = await Popen("/usr/sbin/devinfo -u | grep -A 99999 '^I/O ports:' | "
-                                   "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'", stdout=subprocess.PIPE,
+                                   "sed -En 's/ *([0-9a-fA-Fx]+).*\\(uart[0-9]+\\)/\\1/p'", stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, shell=True)
                 ports = {y: y for y in (await pipe.communicate())[0].decode().strip().strip('\n').split('\n') if y}
 
@@ -192,6 +193,7 @@ class SystemAdvancedService(ConfigService):
             Str('serialport'),
             Str('serialspeed', enum=['9600', '19200', '38400', '57600', '115200']),
             Int('swapondrive', validators=[Range(min=0)]),
+            Int('overprovision', validators=[Range(min=0)], null=True),
             Bool('traceback'),
             Bool('uploadcrash'),
             Bool('anonstats'),

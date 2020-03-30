@@ -16,6 +16,7 @@ import tempfile
 from collections import defaultdict
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.plugins.disk_.overprovision import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
     accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
@@ -606,6 +607,17 @@ class PoolService(CRUDService):
 
         if verrors:
             raise verrors
+
+        log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
+        if log_disks:
+            adv_config = await self.middleware.call('system.advanced.config')
+            if adv_config['overprovision']:
+                for i, disk in enumerate(log_disks):
+                    try:
+                        job.set_progress(10, f'Overprovisioning disks ({i}/{len(log_disks)})')
+                        await self.middleware.call('disk.overprovision', disk, adv_config['overprovision'], i == 0)
+                    except CanNotBeOverprovisionedException:
+                        pass
 
         formatted_disks = await self.middleware.call('pool.format_disks', job, disks)
 
@@ -1974,8 +1986,8 @@ class PoolDatasetService(CRUDService):
         return dict(map(
             normalize,
             filter(
-                lambda d: d['name'] == d['encryption_root'] and d['encrypted']
-                and f'{d["name"]}/'.startswith(f'{name}/') and check_key(d),
+                lambda d: d['name'] == d['encryption_root'] and d['encrypted'] and
+                f'{d["name"]}/'.startswith(f'{name}/') and check_key(d),
                 self.query()
             )
         ))
