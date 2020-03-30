@@ -13,7 +13,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, Popen, run
+from middlewared.utils import osc, run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -397,7 +397,8 @@ class DiskService(CRUDService):
 
         return 'SUCCESS'
 
-    async def __multipath_create(self, name, consumers, mode=None):
+    @private
+    async def multipath_create(self, name, consumers, mode=None):
         """
         Create an Active/Passive GEOM_MULTIPATH provider
         with name ``name`` using ``consumers`` as the consumers for it
@@ -413,10 +414,10 @@ class DiskService(CRUDService):
         cmd = ["/sbin/gmultipath", "label", name] + consumers
         if mode:
             cmd.insert(2, f'-{mode}')
-        p1 = await Popen(cmd, stdout=subprocess.PIPE)
-        if (await p1.wait()) != 0:
-            return False
-        return True
+        try:
+            await run(cmd, stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
+        except subprocess.CalledProcessError as e:
+            raise CallError(f"Error creating multipath: {e.stdout}")
 
     async def __multipath_next(self):
         """
@@ -509,7 +510,10 @@ class DiskService(CRUDService):
             if not len(disks) > 1:
                 continue
             name = await self.__multipath_next()
-            await self.__multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
+            try:
+                await self.multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
+            except CallError as e:
+                self.logger.error("Error creating multipath: %s", e.errmsg)
 
         # Scan again to take new multipaths into account
         await self.middleware.run_in_thread(geom.scan)
