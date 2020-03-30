@@ -20,8 +20,12 @@ class ResolveHostOrIp:
                 ip = ipaddress.ip_address(value)
                 return ip
             except ValueError:
+                # gethostbyaddr() is called here so that if a short-hand IP
+                # is provided (i.e. `192.168`), gethostbyaddr will raise the
+                # exception as intended. The getaddrinfo will auto-expand
+                # short-hand IP addresses which isn't desired.
                 socket.gethostbyaddr(value)
-                result = socket.getaddrinfo(value, None, flags=AI_CANONNAME)
+                result = socket.getaddrinfo(value, None, flags=socket.AI_CANONNAME)
                 return result[0][3]
         except Exception as e:
             raise ValueError(f'Unable to resolve {value} or invalid IP address: {e}')
