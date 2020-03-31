@@ -5,6 +5,7 @@ try:
 except ImportError:
     cam = None
 
+from middlewared.common.camcontrol import camcontrol_list
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.service import accepts, List, private, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
@@ -49,6 +50,8 @@ def get_temperature(stdout):
 class DiskService(Service):
     @private
     async def disks_for_temperature_monitoring(self):
+        devices = await camcontrol_list()
+
         return [
             disk['devname']
             for disk in await self.middleware.call(
@@ -66,6 +69,7 @@ class DiskService(Service):
                     ]
                 ]
             )
+            if devices.get(disk['devname'], {}).get('driver') != 'mpr'
         ]
 
     @accepts(
