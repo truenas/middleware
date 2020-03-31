@@ -257,7 +257,7 @@ class PluginService(CRUDService):
         self.middleware.call_sync(
             'jail.failover_checks', {
                 'id': jail_name, 'host_hostuuid': jail_name,
-                **self.middleware.call_sync('jail.default_configuration'),
+                **self.middleware.call_sync('jail.complete_default_configuration'),
                 **self.defaults({
                     'plugin': plugin_name, 'plugin_repository': plugin_repository, 'branch': branch, 'refresh': True
                 })['properties'],
@@ -647,11 +647,17 @@ class JailService(CRUDService):
         """
         Retrieve default configuration for iocage jails.
         """
+        return {
+            k: v for k, v in self.complete_default_configuration().items()
+            if k not in IOCJson.default_only_props
+        }
+
+    @private
+    def complete_default_configuration(self):
         if not self.iocage_set_up():
-            defaults = IOCJson.retrieve_default_props()
+            return IOCJson.retrieve_default_props()
         else:
-            defaults = self.query(filters=[['host_hostuuid', '=', 'default']], options={'get': True})
-        return {k: v for k, v in defaults.items() if k not in IOCJson.default_only_props}
+            return self.query(filters=[['host_hostuuid', '=', 'default']], options={'get': True})
 
     @accepts(
         Bool('remote', default=False),
@@ -716,7 +722,9 @@ class JailService(CRUDService):
             verrors = common_validation(self.middleware, options)
 
             self.failover_checks({
-                'id': uuid, 'host_hostuuid': uuid, **self.middleware.call_sync('jail.default_configuration'), **{
+                'id': uuid,
+                'host_hostuuid': uuid,
+                **self.middleware.call_sync('jail.complete_default_configuration'), **{
                     v.split('=')[0]: v.split('=')[-1] for v in options['props']
                 }
             }, verrors, 'options')
