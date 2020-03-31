@@ -57,8 +57,7 @@ class DiskService(Service, ServiceChangeMixin):
 
         await self.restart_services_after_sync()
 
-        if not await self.middleware.call('system.is_freenas'):
-            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+        await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
     @private
     @accepts()
@@ -128,8 +127,7 @@ class DiskService(Service, ServiceChangeMixin):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 changed = True
 
-            if not await self.middleware.call('system.is_freenas'):
-                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+            await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
             seen_disks[name] = disk
 
@@ -166,8 +164,7 @@ class DiskService(Service, ServiceChangeMixin):
                     disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
                     changed = True
 
-                if not await self.middleware.call('system.is_freenas'):
-                    await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+                await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
         if changed:
             await self.middleware.call('disk.restart_services_after_sync')
