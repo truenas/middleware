@@ -18,6 +18,7 @@ class GlusterPeerModel(sa.Model):
     hostname = sa.Column(sa.String(39))
     connected = sa.Column(sa.String(50))
 
+
 class GlusterPeerService(CRUDService):
 
     class Config:
@@ -93,10 +94,8 @@ class GlusterPeerService(CRUDService):
     @private
     def is_peer_in_db(self, hostname):
 
-        result = self.middleware.call_sync(
-                    'datastore.query',
-                    self._config.datastore,
-                    [('hostname', '=', hostname)])
+        result = self.middleware.call_sync('datastore.query',
+            self._config.datastore, [('hostname', '=', hostname)])
 
         if result:
             return True
@@ -117,7 +116,7 @@ class GlusterPeerService(CRUDService):
         loop = self.middleware.loop
         try:
             asyncio.run_coroutine_threadsafe(
-                    self.resolve_host_or_ip(hostname, verrors), loop).result()
+                self.resolve_host_or_ip(hostname, verrors), loop).result()
         except Exception:
             if verrors:
                 raise verrors
@@ -128,13 +127,13 @@ class GlusterPeerService(CRUDService):
 
         if in_cluster:
             verrors.add(
-                    f'common_validation',
-                    f'{hostname} already exists in the cluster')
+                f'common_validation',
+                f'{hostname} already exists in the cluster')
 
         if in_db:
             verrors.add(
-                    f'common_validation',
-                    f'{hostname} already exists in the database')
+                f'common_validation',
+                f'{hostname} already exists in the database')
 
         verrors.check()
 
@@ -167,8 +166,8 @@ class GlusterPeerService(CRUDService):
                         self.remove_peer_from_cluster(hostname)
                     except Exception:
                         self.logger.warning(
-                                f'Failed to remove {hostname} from cluster'
-                                'on rollback operation')
+                            f'Failed to remove {hostname} from cluster'
+                            'on rollback operation')
                         raise
             else:
                 return added_to_cluster
@@ -190,10 +189,9 @@ class GlusterPeerService(CRUDService):
 
         verrors = ValidationErrors()
 
-        data = self.middleware.call_sync(
-                'datastore.query',
-                self._config.datastore,
-                [('id', '=', id)])
+        data = self.middleware.call_sync('datastore.query',
+                    self._config.datastore,
+                    [('id', '=', id)])
 
         if data:
             db_hostname = data[0].get('hostname')
@@ -209,8 +207,8 @@ class GlusterPeerService(CRUDService):
             self.remove_peer_from_db(id)
         else:
             verrors.add(
-                    f'delete_peer',
-                    f'entry with id {id} was not found in the database')
+                f'delete_peer',
+                f'entry with id {id} was not found in the database')
 
         verrors.check()
 
