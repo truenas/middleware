@@ -1255,7 +1255,7 @@ class VMDeviceService(CRUDService):
                 '1024x768', '800x600', '640x480',
             ], default='1024x768'),
             Int('vnc_port', default=None, null=True),
-            Str('vnc_bind'),
+            Str('vnc_bind', default='0.0.0.0'),
             Bool('wait', default=False),
             Str('vnc_password', default=None, null=True, private=True),
             Bool('vnc_web', default=False),
