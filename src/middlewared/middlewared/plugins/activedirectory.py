@@ -1015,6 +1015,13 @@ class ActiveDirectoryService(ConfigService):
             await self.middleware.call('activedirectory.get_cache')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
+
+            if smb_ha_mode == "LEGACY" and (await self.middleware.call('failover.status')) == 'MASTER':
+                job.set_progress(95, 'starting active directory on standby controller')
+                try:
+                    await self.middleware.call('failover.call_remote', 'activedirectory.start')
+                except Exception:
+                    self.logger.warning('Failed to start active directory service on standby controller', exc_info=True)
         else:
             await self.set_state(DSStatus['FAULTED'])
             self.logger.warning('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
@@ -1035,6 +1042,11 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'])
+        if (await self.middleware.call('smb.get_smb_ha_mode')) == "LEGACY" and (await self.middleware.call('failover.status')) == 'MASTER':
+            try:
+                await self.middleware.call('failover.call_remote', 'activedirectory.stop')
+            except Exception:
+                self.logger.warning('Failed to stop active directory service on standby controller', exc_info=True)
 
     @private
     def validate_credentials(self, ad=None):
