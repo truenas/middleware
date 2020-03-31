@@ -94,8 +94,8 @@ class GlusterPeerService(CRUDService):
     @private
     def is_peer_in_db(self, hostname):
 
-        result = self.middleware.call_sync('datastore.query',
-            self._config.datastore, [('hostname', '=', hostname)])
+        result = self.middleware.call_sync(
+            'datastore.query', self._config.datastore, [('hostname', '=', hostname)])
 
         if result:
             return True
@@ -189,9 +189,8 @@ class GlusterPeerService(CRUDService):
 
         verrors = ValidationErrors()
 
-        data = self.middleware.call_sync('datastore.query',
-                    self._config.datastore,
-                    [('id', '=', id)])
+        data = self.middleware.call_sync(
+            'datastore.query', self._config.datastore, [('id', '=', id)])
 
         if data:
             db_hostname = data[0].get('hostname')
