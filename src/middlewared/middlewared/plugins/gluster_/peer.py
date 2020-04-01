@@ -56,7 +56,7 @@ class GlusterPeerService(CRUDService):
         loop = self.middleware.loop
         try:
             asyncio.run_coroutine_threadsafe(
-                    self.resolve_host_or_ip(hostname, verrors), loop).result()
+                self.resolve_host_or_ip(hostname, verrors), loop).result()
         except Exception:
             if verrors:
                 raise verrors
