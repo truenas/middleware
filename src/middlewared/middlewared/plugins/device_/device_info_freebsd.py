@@ -48,6 +48,7 @@ class DeviceService(Service, DeviceInfoBase):
     @private
     async def get_disk_details(self, disk, disk_geom):
         disk.update({
+            'name': disk_geom.name if not disk['name'] else disk['name'],
             'mediasize': disk_geom.provider.mediasize,
             'sectorsize': disk_geom.provider.sectorsize,
             'stripesize': disk_geom.provider.stripesize,
