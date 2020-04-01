@@ -11,14 +11,11 @@ from middlewared.service import accepts, Service
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 
+from .overprovision_base import CanNotBeOverprovisionedException
+
 
 def can_overprovision(devname):
     return devname.startswith(("ada", "da"))
-
-
-class CanNotBeOverprovisionedException(CallError):
-    def __init__(self, devname):
-        super().__init__(f"{devname} cannot be overprovisioned", errno.EINVAL)
 
 
 @asynccontextmanager

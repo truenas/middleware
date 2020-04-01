@@ -16,7 +16,7 @@ import tempfile
 from collections import defaultdict
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
-from middlewared.plugins.disk_.overprovision import CanNotBeOverprovisionedException
+from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
     accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
@@ -612,6 +612,8 @@ class PoolService(CRUDService):
         if log_disks:
             adv_config = await self.middleware.call('system.advanced.config')
             if adv_config['overprovision']:
+                if not osc.IS_FREEBSD:
+                    raise CallError('Overprovision not available in this platform')
                 for i, disk in enumerate(log_disks):
                     try:
                         job.set_progress(10, f'Overprovisioning disks ({i}/{len(log_disks)})')
