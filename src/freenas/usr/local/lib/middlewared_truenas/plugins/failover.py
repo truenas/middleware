@@ -39,6 +39,7 @@ from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.plugins.system import SystemService
+from middlewared.utils import osc
 from middlewared.utils.contextlib import asyncnullcontext
 
 BUFSIZE = 256
@@ -175,7 +176,8 @@ class FailoverService(ConfigService):
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         manufacturer = proc.communicate()[0].strip()
 
-        if manufacturer == b'BHYVE':
+        # TODO: should we handle HA virtualized with bhyve?
+        if osc.IS_FREEBSD and manufacturer == b'BHYVE':
             hardware = 'BHYVE'
             proc = subprocess.Popen(
                 ['/sbin/camcontrol', 'devlist'],
