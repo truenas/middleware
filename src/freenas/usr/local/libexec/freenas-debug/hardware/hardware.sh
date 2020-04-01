@@ -155,6 +155,10 @@ hardware_freebsd()
 	camcontrol devlist -v
 	section_footer
 
+	section_header "nvmecontrol devlist"
+	nvmecontrol devlist
+	section_footer
+
 	for disk in $(get_physical_disks_list)
 	do
 		if echo "${disk}" | egrep -q '^da[0-9]+'
