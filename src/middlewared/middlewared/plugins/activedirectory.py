@@ -1540,6 +1540,11 @@ class ActiveDirectoryService(ConfigService):
 
         await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
         await self.middleware.call('activedirectory.stop')
+        if smb_ha_mode == 'LEGACY' and (await self.middleware.call('failover.status')) == 'MASTER':
+            try:
+                await self.middleware.call('failover.call_remote', 'activedirectory.leave', [data])
+            except Exception:
+                self.logger.warning("Failed to leave AD domain on passive storage controller.", exc_info=True)
 
         self.logger.debug("Successfully left domain: %s", ad['domainname'])
 
