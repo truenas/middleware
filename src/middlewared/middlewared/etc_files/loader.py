@@ -52,7 +52,7 @@ def generate_serial_loader_config(middleware):
 def generate_user_loader_config(middleware):
     return [
         f'{tunable["var"]}=\"{tunable["value"]}\"' + (f' # {tunable["comment"]}' if tunable["comment"] else '')
-        for tunable in middleware.call_sync("tunable.query", [["type", "=", "LOADER"]])
+        for tunable in middleware.call_sync("tunable.query", [["type", "=", "LOADER"], ["enabled", "=", True]])
     ]
 
 
