@@ -44,6 +44,9 @@ async def datastore_test():
                 m["datastore.fetchall"] = ds.fetchall
 
                 m["datastore.query"] = ds.query
+                m["datastore.send_insert_events"] = ds.send_insert_events
+                m["datastore.send_update_events"] = ds.send_update_events
+                m["datastore.send_delete_events"] = ds.send_delete_events
 
                 yield ds
 
