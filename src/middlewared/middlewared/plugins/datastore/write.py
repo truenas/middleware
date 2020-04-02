@@ -1,4 +1,5 @@
 from sqlalchemy import and_, types
+from sqlalchemy.sql import sqltypes
 
 from middlewared.schema import accepts, Any, Dict, Str
 from middlewared.service import Service
@@ -29,10 +30,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         await self.middleware.call('datastore.execute_write', table.insert().values(**insert))
         pk_column = self._get_pk(table)
-        if isinstance(pk_column.type, (types.String, types.TEXT)):
-            pk = insert[pk_column.name]
-        else:
+        if type(pk_column.type) == sqltypes.Integer:
             pk = (await self.middleware.call('datastore.fetchall', 'SELECT last_insert_rowid()'))[0][0]
+        else:
+            pk = insert[pk_column.name]
 
         await self._handle_relationships(pk, relationships)
 

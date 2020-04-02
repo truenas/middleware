@@ -646,10 +646,10 @@ class StringPrimaryKeyModel(Model):
     value = sa.Column(sa.Integer(), nullable=True)
 
 
-class IntegerPrimaryKeyModel(Model):
-    __tablename__ = 'test_integerprimarykey'
+class BigIntegerPrimaryKeyModel(Model):
+    __tablename__ = 'test_bigintegerprimarykey'
 
-    integer_id = sa.Column(sa.String(100), primary_key=True)
+    integer_id = sa.Column(sa.BigInteger(), primary_key=True)
     value = sa.Column(sa.Integer(), nullable=True)
 
 
@@ -672,9 +672,9 @@ async def test__insert_default_integer_pk_value():
 @pytest.mark.asyncio
 async def test__insert_integer_pk_record():
     async with datastore_test() as ds:
-        pk = await ds.insert("test.integerprimarykey", {"integer_id": 1, "value": 1})
+        pk = await ds.insert("test.bigintegerprimarykey", {"integer_id": 120093877, "value": 1})
 
-        assert len(await ds.query("test.integerprimarykey", [["integer_id", "=", pk]])) == 1
+        assert len(await ds.query("test.bigintegerprimarykey", [["integer_id", "=", pk]])) == 1
 
 
 class SMBModel(Model):
