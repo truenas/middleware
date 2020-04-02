@@ -11,6 +11,8 @@ class SSHService(SimpleService):
     freebsd_procname = "sshd"
     freebsd_pidfile = "/var/run/sshd.pid"
 
+    systemd_unit = "ssh"
+
     async def before_start(self):
         await self.middleware.call("service.reload", "mdns")
 

@@ -8,3 +8,5 @@ class LLDPService(SimpleService):
 
     freebsd_rc = "ladvd"
     freebsd_pidfile = "/var/run/ladvd.pid"
+
+    systemd_unit = "ladvd"

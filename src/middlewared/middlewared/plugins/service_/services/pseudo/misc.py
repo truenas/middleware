@@ -4,6 +4,7 @@ from middlewared.utils import osc, run
 
 from middlewared.plugins.service_.services.base import ServiceState, ServiceInterface, SimpleService
 from middlewared.plugins.service_.services.base_freebsd import freebsd_service
+from middlewared.plugins.service_.services.base_linux import systemd_unit
 
 
 class PseudoServiceBase(ServiceInterface):
@@ -35,6 +36,8 @@ class DiskService(PseudoServiceBase):
         if osc.IS_FREEBSD:
             await freebsd_service("mountlate", "start")
 
+        # FIXME: Linux
+
         asyncio.ensure_future(self.middleware.call("service.restart", "collectd"))
 
 
@@ -47,6 +50,8 @@ class FailoverService(PseudoServiceBase):
     async def restart(self):
         if osc.IS_FREEBSD:
             await freebsd_service("devd", "restart")
+
+        # FIXME: Linux
 
 
 class KmipService(PseudoServiceBase):
@@ -83,11 +88,15 @@ class HostnameService(PseudoServiceBase):
     reloadable = True
 
     async def reload(self):
-        await run(["hostname", ""])
+        if osc.IS_FREEBSD:
+            await run(["hostname", ""])
         await self.middleware.call("etc.generate", "hostname")
         await self.middleware.call("etc.generate", "rc")
         if osc.IS_FREEBSD:
             await freebsd_service("hostname", "start")
+        if osc.IS_LINUX:
+            config = await self.middleware.call("network.configuration.config")
+            await run(["hostname"], f'{config["hostname_local"]}.{config["domain"]}')
         await self.middleware.call("service.restart", "mdns")
         await self.middleware.call("service.restart", "collectd")
 
@@ -103,11 +112,15 @@ class HttpService(PseudoServiceBase):
         await self.middleware.call("service.reload", "mdns")
         if osc.IS_FREEBSD:
             await freebsd_service("nginx", "restart")
+        if osc.IS_LINUX:
+            await systemd_unit("nginx", "restart")
 
     async def reload(self):
         await self.middleware.call("service.reload", "mdns")
         if osc.IS_FREEBSD:
             await freebsd_service("nginx", "reload")
+        if osc.IS_LINUX:
+            await systemd_unit("nginx", "reload")
 
 
 class NetworkService(PseudoServiceBase):
@@ -128,6 +141,8 @@ class NetworkGeneralService(PseudoServiceBase):
         if osc.IS_FREEBSD:
             await freebsd_service("routing", "restart")
 
+        # FIXME: Linux
+
 
 class NtpdService(SimpleService):
     name = "ntpd"
@@ -137,6 +152,8 @@ class NtpdService(SimpleService):
 
     freebsd_rc = "ntpd"
 
+    systemd_unit = "ntp"
+
 
 class PowerdService(SimpleService):
     name = "powerd"
@@ -144,6 +161,8 @@ class PowerdService(SimpleService):
     etc = ["rc"]
 
     freebsd_rc = "powerd"
+
+    # FIXME: Linux
 
 
 class RcService(PseudoServiceBase):
@@ -173,6 +192,8 @@ class RoutingService(SimpleService):
 
     freebsd_rc = "routing"
 
+    # FIXME: Linux
+
 
 class SslService(PseudoServiceBase):
     name = "ssl"
@@ -190,6 +211,8 @@ class SysconsService(SimpleService):
     restartable = True
 
     freebsd_rc = "syscons"
+
+    # FIXME: Linux
 
 
 class SysctlService(PseudoServiceBase):
@@ -210,6 +233,8 @@ class SyslogdService(SimpleService):
     reloadable = True
 
     freebsd_rc = "syslog-ng"
+
+    systemd_unit = "syslog-ng"
 
 
 class SystemService(PseudoServiceBase):

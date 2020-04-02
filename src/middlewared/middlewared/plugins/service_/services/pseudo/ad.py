@@ -2,6 +2,7 @@ from middlewared.utils import osc
 
 from middlewared.plugins.service_.services.base import ServiceInterface, ServiceState
 from middlewared.plugins.service_.services.base_freebsd import freebsd_service
+from middlewared.plugins.service_.services.base_linux import systemd_unit
 
 
 class PseudoServiceBase(ServiceInterface):
@@ -35,6 +36,8 @@ class ActiveDirectoryService(PseudoServiceBase):
     async def reload(self):
         if osc.IS_FREEBSD:
             await freebsd_service("winbindd", "quietreload")
+        if osc.IS_LINUX:
+            await systemd_unit("winbind", "restart")
 
 
 class LdapService(PseudoServiceBase):

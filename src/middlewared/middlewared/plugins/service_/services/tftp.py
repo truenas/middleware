@@ -8,3 +8,5 @@ class TFTPService(SimpleService):
 
     freebsd_rc = "inetd"
     freebsd_pidfile = "/var/run/inetd.pid"
+
+    systemd_unit = "tftpd-hpa"

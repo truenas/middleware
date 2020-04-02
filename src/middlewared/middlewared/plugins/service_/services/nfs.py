@@ -9,6 +9,8 @@ class NFSService(SimpleService):
 
     freebsd_rc = "nfsd"
 
+    systemd_unit = "nfs-ganesha"
+
     async def _start_freebsd(self):
         await self._freebsd_service("rpcbind", "start")
         await self.middleware.call("nfs.setup_v4")

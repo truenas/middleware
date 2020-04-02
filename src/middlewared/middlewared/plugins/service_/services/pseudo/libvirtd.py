@@ -6,6 +6,8 @@ class LibvirtdService(SimpleService):
 
     freebsd_rc = "libvirtd"
 
+    systemd_unit = "libvirtd"
+
     async def _get_state_freebsd(self):
         return ServiceState(
             (await self._freebsd_service("libvirtd", "status")).returncode == 0,
