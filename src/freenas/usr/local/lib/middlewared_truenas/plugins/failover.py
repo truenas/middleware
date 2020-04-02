@@ -1756,7 +1756,8 @@ async def service_remote(middleware, service, verb, options):
 
 
 async def ready_system_sync_keys(middleware):
-    await middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
+    if await middleware.call('failover.licensed'):
+        await middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
 
 
 async def _event_system_ready(middleware, event_type, args):
