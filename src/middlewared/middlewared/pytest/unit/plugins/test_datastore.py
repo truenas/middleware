@@ -656,8 +656,10 @@ class BigIntegerPrimaryKeyModel(Model):
 @pytest.mark.asyncio
 async def test__insert_string_pk_record():
     async with datastore_test() as ds:
-        pk = await ds.insert("test.stringprimarykey", {"string_id": "unique_key", "value": 1})
+        payload = {"string_id": "unique_key", "value": 1}
+        pk = await ds.insert("test.stringprimarykey", payload)
 
+        assert pk == payload["string_id"]
         assert len(await ds.query("test.stringprimarykey", [["string_id", "=", pk]])) == 1
 
 
@@ -672,8 +674,10 @@ async def test__insert_default_integer_pk_value():
 @pytest.mark.asyncio
 async def test__insert_integer_pk_record():
     async with datastore_test() as ds:
-        pk = await ds.insert("test.bigintegerprimarykey", {"integer_id": 120093877, "value": 1})
+        payload = {"integer_id": 120093877, "value": 1}
+        pk = await ds.insert("test.bigintegerprimarykey", payload)
 
+        assert pk == payload["integer_id"]
         assert len(await ds.query("test.bigintegerprimarykey", [["integer_id", "=", pk]])) == 1
 
 
