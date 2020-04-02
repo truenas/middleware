@@ -44,6 +44,9 @@ async def datastore_test():
                 m["datastore.fetchall"] = ds.fetchall
 
                 m["datastore.query"] = ds.query
+                m["datastore.send_insert_events"] = ds.send_insert_events
+                m["datastore.send_update_events"] = ds.send_update_events
+                m["datastore.send_delete_events"] = ds.send_delete_events
 
                 yield ds
 
@@ -634,6 +637,48 @@ async def test__insert_default_has_value():
         await ds.insert("test.default", {"string": "VALUE"})
 
         assert (await ds.query("test.default", [], {"get": True}))["string"] == "VALUE"
+
+
+class StringPrimaryKeyModel(Model):
+    __tablename__ = 'test_stringprimarykey'
+
+    string_id = sa.Column(sa.String(100), primary_key=True)
+    value = sa.Column(sa.Integer(), nullable=True)
+
+
+class BigIntegerPrimaryKeyModel(Model):
+    __tablename__ = 'test_bigintegerprimarykey'
+
+    integer_id = sa.Column(sa.BigInteger(), primary_key=True)
+    value = sa.Column(sa.Integer(), nullable=True)
+
+
+@pytest.mark.asyncio
+async def test__insert_string_pk_record():
+    async with datastore_test() as ds:
+        payload = {"string_id": "unique_key", "value": 1}
+        pk = await ds.insert("test.stringprimarykey", payload)
+
+        assert pk == payload["string_id"]
+        assert len(await ds.query("test.stringprimarykey", [["string_id", "=", pk]])) == 1
+
+
+@pytest.mark.asyncio
+async def test__insert_default_integer_pk_value():
+    async with datastore_test() as ds:
+        pk = await ds.insert("test.default", {"string": "VALUE"})
+
+        assert len(await ds.query("test.default", [["id", "=", pk]])) == 1
+
+
+@pytest.mark.asyncio
+async def test__insert_integer_pk_record():
+    async with datastore_test() as ds:
+        payload = {"integer_id": 120093877, "value": 1}
+        pk = await ds.insert("test.bigintegerprimarykey", payload)
+
+        assert pk == payload["integer_id"]
+        assert len(await ds.query("test.bigintegerprimarykey", [["integer_id", "=", pk]])) == 1
 
 
 class SMBModel(Model):

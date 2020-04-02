@@ -161,7 +161,7 @@ class DiskService(Service, ServiceChangeMixin):
                         await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                         changed = True
                 else:
-                    disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
+                    await self.middleware.call('datastore.insert', 'storage.disk', disk)
                     changed = True
 
                 await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
