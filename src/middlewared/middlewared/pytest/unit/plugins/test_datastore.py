@@ -639,6 +639,44 @@ async def test__insert_default_has_value():
         assert (await ds.query("test.default", [], {"get": True}))["string"] == "VALUE"
 
 
+class StringPrimaryKeyModel(Model):
+    __tablename__ = 'test_stringprimarykey'
+
+    string_id = sa.Column(sa.String(100), primary_key=True)
+    value = sa.Column(sa.Integer(), nullable=True)
+
+
+class IntegerPrimaryKeyModel(Model):
+    __tablename__ = 'test_integerprimarykey'
+
+    integer_id = sa.Column(sa.String(100), primary_key=True)
+    value = sa.Column(sa.Integer(), nullable=True)
+
+
+@pytest.mark.asyncio
+async def test__insert_string_pk_record():
+    async with datastore_test() as ds:
+        pk = await ds.insert("test.stringprimarykey", {"string_id": "unique_key", "value": 1})
+
+        assert len(await ds.query("test.stringprimarykey", [["string_id", "=", pk]])) == 1
+
+
+@pytest.mark.asyncio
+async def test__insert_default_integer_pk_value():
+    async with datastore_test() as ds:
+        pk = await ds.insert("test.default", {"string": "VALUE"})
+
+        assert len(await ds.query("test.default", [["id", "=", pk]])) == 1
+
+
+@pytest.mark.asyncio
+async def test__insert_integer_pk_record():
+    async with datastore_test() as ds:
+        pk = await ds.insert("test.integerprimarykey", {"integer_id": 1, "value": 1})
+
+        assert len(await ds.query("test.integerprimarykey", [["integer_id", "=", pk]])) == 1
+
+
 class SMBModel(Model):
     __tablename__ = 'test_smb'
 
