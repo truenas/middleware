@@ -73,6 +73,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		freenas-pkgtools>0:freenas/freenas-pkgtools \
 		freenas-migrate93>0:freenas/freenas-migrate93 \
 		freenas-migrate113>0:freenas/freenas-migrate113 \
+		tc-stats>0:freenas/tc-stats \
 		${PYTHON_PKGNAMEPREFIX}iocage>0:sysutils/iocage@${PY_FLAVOR} \
 		git-lite>0:devel/git-lite \
 		oath-toolkit>0:security/oath-toolkit \
