@@ -70,13 +70,7 @@ def test_03_Checking_Active_Directory():
 
 
 @ad_test_cfg
-def test_04_Checking_to_see_if_SMB_service_is_enabled():
-    results = GET("/services/services/cifs/")
-    assert results.json()["srv_state"] == "RUNNING", results.text
-
-
-@ad_test_cfg
-def test_05_Enabling_SMB_service():
+def test_04_Enabling_SMB_service():
     payload = {"cifs_srv_description": "Test FreeNAS Server",
                "cifs_srv_guest": "nobody",
                "cifs_hostname_lookup": False,
@@ -87,10 +81,16 @@ def test_05_Enabling_SMB_service():
 
 # Now start the service
 @ad_test_cfg
-def test_06_Starting_SMB_service():
+def test_05_Starting_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": "true"})
     assert results.status_code == 200, results.text
     sleep(1)
+
+
+@ad_test_cfg
+def test_06_Checking_to_see_if_SMB_service_is_enabled():
+    results = GET("/services/services/cifs/")
+    assert results.json()["srv_state"] == "RUNNING", results.text
 
 
 @ad_test_cfg
