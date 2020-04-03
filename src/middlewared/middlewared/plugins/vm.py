@@ -55,8 +55,8 @@ SHUTDOWN_LOCK = asyncio.Lock()
 LIBVIRT_LOCK = asyncio.Lock()
 LIBVIRT_HOSTDEV = False  # Whether libvirt supports hostdev for bhyve or not
 PPT_BASE_NAME = 'ppt'
-RE_PCICONF_PPTDEVS = re.compile(r'^(' + re.escape(PPT_BASE_NAME) \
-                                + '[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$', flags=re.I)
+RE_PCICONF_PPTDEVS = re.compile(
+    r'^(' + re.escape(PPT_BASE_NAME) + '[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$', flags=re.I)
 ZFS_ARC_MAX_INITIAL = None
 
 ZVOL_CLONE_SUFFIX = '_clone'
