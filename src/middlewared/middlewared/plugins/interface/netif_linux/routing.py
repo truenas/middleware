@@ -142,6 +142,6 @@ class RoutingTable:
         kwargs = dict(dst=f"{route.network}/{prefixlen}",
                       gateway=str(route.gateway))
         if route.interface is not None:
-            kwargs["oif"] = self._interfaces().inv(route.interface)
+            kwargs["oif"] = self._interfaces().inv[route.interface]
 
         ip.route(op, **kwargs)
