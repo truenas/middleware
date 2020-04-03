@@ -20,7 +20,7 @@ class SMARTDService(SimpleService):
     freebsd_pidfile = "/var/run/smartd-daemon.pid"
     freebsd_procname = "smartd"
 
-    systemd_unit = "smartd"
+    systemd_unit = "smartmontools"
 
     async def _get_state_freebsd(self):
         result = await super()._get_state_freebsd()

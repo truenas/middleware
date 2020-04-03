@@ -2,7 +2,7 @@
 Description=Sync Disk Cache Table
 DefaultDependencies=no
 
-After=systemd-modules-load.service local-fs.target middlewared.service
+After=middlewared.service
 Before=ix-etc.service
 
 [Service]
