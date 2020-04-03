@@ -131,6 +131,7 @@ class EtcService(Service):
         ],
         'rc': [
             {'type': 'py', 'path': 'rc.conf', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'systemd', 'platform': 'Linux'},
         ],
         'sysctl': [
             {'type': 'py', 'path': 'sysctl_config', 'platform': 'FreeBSD'},
@@ -217,7 +218,8 @@ class EtcService(Service):
             {'type': 'py', 'path': 'syslogd'},
         ],
         'hostname': [
-            {'type': 'mako', 'path': 'hosts'}
+            {'type': 'mako', 'path': 'hosts'},
+            {'type': 'py', 'path': 'hostname', 'platform': 'Linux'},
         ],
         'ssh': [
             {'type': 'mako', 'path': 'local/ssh/sshd_config'},
