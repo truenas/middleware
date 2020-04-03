@@ -1,18 +1,17 @@
 [Unit]
-Description=Setup TrueNAS Network
+Description=Execute TrueNAS custom pre-init tasks
 DefaultDependencies=no
 
 Before=network-pre.target
 
 After=middlewared.service
 Before=local-fs.target
-Conflicts=systemd-networkd.service
 
 [Service]
 Type=oneshot
-ExecStart=midclt -t 120 call interfaces.sync true
-ExecStartPost=midclt call etc.generate nginx
+ExecStart=midclt call -job initshutdownscript.execute_init_tasks PREINIT
 StandardOutput=null
+StandardError=null
 
 [Install]
 WantedBy=multi-user.target
