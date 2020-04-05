@@ -2583,6 +2583,7 @@ class PoolDatasetService(CRUDService):
                 ('used', None, None),
                 ('available', None, None),
                 ('special_small_blocks', 'special_small_block_size', None),
+                ('pbkdf2iters', None, None),
             ):
                 if orig_name not in dataset['properties']:
                     continue
