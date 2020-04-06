@@ -13,7 +13,6 @@ class GlusterPeerService(CRUDService):
 
     class Config:
         namespace = 'gluster.peer'
-        datastore = 'gluster_peers'
 
     def __peer_wrapper(self, method, host=None):
 
