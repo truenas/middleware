@@ -1,6 +1,6 @@
 import asyncio
-from gluster.cli import peer
-from gluster.cli.utils import GlusterCmdException
+from gfs.cli import peer
+from gfs.cli.utils import GlusterCmdException
 
 from middlewared.async_validators import resolve_hostname
 from middlewared.schema import Dict, Str
