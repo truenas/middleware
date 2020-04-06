@@ -1,3 +1,4 @@
+import requests
 import subprocess
 
 import middlewared.sqlalchemy as sa
@@ -26,6 +27,7 @@ class TrueCommandModel(sa.Model):
 class TrueCommandService(ConfigService):
 
     POLLING_GAP_MINUTES = 5
+    PORTAL_URI = 'https://portal.ixsystems.com/api'
 
     class Config:
         service = 'truecommand'
@@ -46,8 +48,7 @@ class TrueCommandService(ConfigService):
         )
     )
     async def do_update(self, data):
-        internal_config = await self.middleware.call('datastore.config', self._config.datastore)
-        old = await self.config()
+        old = await self.middleware.call('datastore.config', self._config.datastore)
         new = old.copy()
         new.update(data)
 
@@ -60,8 +61,13 @@ class TrueCommandService(ConfigService):
 
         verrors.check()
 
-        if new['enabled'] and (not internal_config['wg_public_key'] or not internal_config['wg_private_key']):
-            new.update(**(await self.generate_wg_keys()))
+        if new['enabled']:
+            if not old['wg_public_key'] or not old['wg_private_key']:
+                new.update(**(await self.generate_wg_keys()))
+
+            if old['api_key'] != new['api_key']:
+                self.middleware.call_sync('truecommand.register_with_portal', new)
+                # Registration succeeded, we are good to poll now
 
         await self.middleware.call(
             'datastore.update',
@@ -70,14 +76,42 @@ class TrueCommandService(ConfigService):
             new
         )
 
-        if new['enabled']:
-            # We are going to perform following steps when tc service is enabled
-            # 1) Send a post request to portal to register new api key ( only if it differs from the old one )
-            # 2) Get status of existing api key ( if we already had it and it was maybe just disabled )
-            if old['api_key'] != new['api_key']:
-                pass
+        if new['enabled'] and any(old[k] != new[k] for k in ('api_key', 'enabled')):
+            # We are going to poll only here
+            pass
 
         return await self.config()
+
+    @private
+    def register_with_portal(self, config):
+        # We are going to register the api key with the portal and if it fails,
+        # We are going to fail hard and fast without saving any information in the database if we fail to
+        # register for whatever reason.
+        sys_info = self.middleware.call_sync('system.info')
+        response = requests.post(
+            self.PORTAL_URI, json={
+                'action': 'add-truecommand-wg-key',
+                'apikey': config['api_key'],
+                'nas_pubkey': config['wg_public_key'],
+                'hostname': sys_info['hostname'],
+                'sysversion': sys_info['version'],
+            }, timeout=15
+        )
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            raise CallError(f'Failed to register API Key with portal ({response.status_code} Error Code): {e}')
+        else:
+            response = response.json()
+
+        if 'status' not in response or str(response['status']).lower() not in ('pending', 'duplicate', 'denied'):
+            raise CallError(f'Unknown response got from iX portal API: {response}')
+        elif response['status'].lower() == 'duplicate':
+            raise CallError(f'This API Key has already been registered with iX Portal.')
+        elif response['status'].lower() == 'denied':
+            # Discussed with Ken and he said it's safe to assume that if we get denied
+            # we should assume the API Key is invalid
+            raise CallError(f'The provided API Key is invalid.')
 
     @private
     async def generate_wg_keys(self):
