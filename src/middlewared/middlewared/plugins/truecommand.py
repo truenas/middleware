@@ -1,3 +1,4 @@
+import asyncio
 import requests
 import subprocess
 
@@ -7,6 +8,9 @@ from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, private, ConfigService, ValidationErrors
 from middlewared.utils import Popen
 from middlewared.validators import Range
+
+TRUECOMMAND_FLAG_POLL_LOCK = asyncio.Lock()
+TRUECOMMAND_UPDATE_LOCK = asyncio.Lock()
 
 
 class TrueCommandModel(sa.Model):
@@ -27,6 +31,8 @@ class TrueCommandModel(sa.Model):
 class TrueCommandService(ConfigService):
 
     POLLING_GAP_MINUTES = 5
+    POLLING_FLAG = False
+    POLLING_ACTIVE = False
     PORTAL_URI = 'https://portal.ixsystems.com/api'
 
     class Config:
@@ -48,39 +54,65 @@ class TrueCommandService(ConfigService):
         )
     )
     async def do_update(self, data):
-        old = await self.middleware.call('datastore.config', self._config.datastore)
-        new = old.copy()
-        new.update(data)
+        with TRUECOMMAND_UPDATE_LOCK:
+            old = await self.middleware.call('datastore.config', self._config.datastore)
+            new = old.copy()
+            new.update(data)
 
-        verrors = ValidationErrors()
-        if new['enabled'] and not new['api_key']:
-            verrors.add(
-                'truecommand_update.api_key',
-                'API Key must be provided when Truecommand service is enabled.'
+            verrors = ValidationErrors()
+            if new['enabled'] and not new['api_key']:
+                verrors.add(
+                    'truecommand_update.api_key',
+                    'API Key must be provided when Truecommand service is enabled.'
+                )
+
+            verrors.check()
+
+            with TRUECOMMAND_FLAG_POLL_LOCK:
+                self.POLLING_FLAG = False
+
+            while self.POLLING_ACTIVE:
+                await asyncio.sleep(1)
+
+            if new['enabled']:
+                if not old['wg_public_key'] or not old['wg_private_key']:
+                    new.update(**(await self.generate_wg_keys()))
+
+                if old['api_key'] != new['api_key']:
+                    self.middleware.call_sync('truecommand.register_with_portal', new)
+                    # Registration succeeded, we are good to poll now
+
+            await self.middleware.call(
+                'datastore.update',
+                self._config.datastore,
+                old['id'],
+                new
             )
 
-        verrors.check()
+            if new['enabled'] and any(old[k] != new[k] for k in ('api_key', 'enabled')):
+                # We are going to start polling here
+                asyncio.ensure_future(self.poll_api_for_status())
 
-        if new['enabled']:
-            if not old['wg_public_key'] or not old['wg_private_key']:
-                new.update(**(await self.generate_wg_keys()))
+            return await self.config()
 
-            if old['api_key'] != new['api_key']:
-                self.middleware.call_sync('truecommand.register_with_portal', new)
-                # Registration succeeded, we are good to poll now
+    @private
+    async def poll_api_for_status(self):
+        with TRUECOMMAND_FLAG_POLL_LOCK:
+            self.POLLING_ACTIVE = True
+            self.POLLING_FLAG = True
 
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            old['id'],
-            new
-        )
+        config = await self.middleware.call('datastore.config', self._config.datastore)
+        while config['enabled'] and self.POLLING_FLAG:
+            await self.middleware.call('truecommand.poll_once', config)
+            await asyncio.sleep(self.POLLING_GAP_MINUTES * 60)
+            config = await self.middleware.call_sync('datastore.config', self._config.datastore)
 
-        if new['enabled'] and any(old[k] != new[k] for k in ('api_key', 'enabled')):
-            # We are going to poll only here
-            pass
+        with TRUECOMMAND_FLAG_POLL_LOCK:
+            self.POLLING_ACTIVE = self.POLLING_FLAG = False
 
-        return await self.config()
+    @private
+    def poll_once(self, config):
+        pass
 
     @private
     def register_with_portal(self, config):
