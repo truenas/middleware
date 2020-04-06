@@ -19,13 +19,13 @@ else:
 
 
 repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
-index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/11.3-RELEASE/INDEX'
+index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/master/INDEX'
 plugin_index = GET(index_url).json()
 plugin_list = list(plugin_index.keys())
 
 # custom URL
 repos_url2 = 'https://github.com/ericbsd/iocage-ix-plugins.git'
-index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-ix-plugins/11.3-RELEASE/INDEX'
+index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-ix-plugins/master/INDEX'
 plugin_index2 = GET(index_url2).json()
 plugin_list2 = list(plugin_index.keys())
 
@@ -90,18 +90,18 @@ def test_07_verify_available_plugin_(plugin):
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_08_verify_available_plugins_rslsync_is_not_na_with(prop):
+def test_08_verify_available_plugins_transmission_is_not_na_with(prop):
     for plugin_info in job_results['result']:
-        if 'rslsync' in plugin_info['plugin']:
+        if 'transmission' in plugin_info['plugin']:
             break
     assert plugin_info[prop] != 'N/A', str(job_results)
 
 
-def test_09_add_rslsync_plugins():
+def test_09_add_transmission_plugins():
     global JOB_ID
     payload = {
-        "plugin_name": "rslsync",
-        "jail_name": "rslsync",
+        "plugin_name": "transmission",
+        "jail_name": "transmission",
         'props': [
             'nat=1'
         ],
@@ -112,49 +112,49 @@ def test_09_add_rslsync_plugins():
     JOB_ID = results.json()
 
 
-def test_10_verify_rslsync_plugin_job_is_successfull():
+def test_10_verify_transmission_plugin_job_is_successfull():
     job_status = wait_on_job(JOB_ID, 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_11_search_plugin_rslsync_id():
-    results = GET('/plugin/?id=rslsync')
+def test_11_search_plugin_transmission_id():
+    results = GET('/plugin/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
-def test_12_get_rslsync_plugin_info():
-    global rslsync_plugin
-    results = GET('/plugin/id/rslsync/')
+def test_12_get_transmission_plugin_info():
+    global transmission_plugin
+    results = GET('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    rslsync_plugin = results.json()
+    transmission_plugin = results.json()
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_13_verify_rslsync_plugin_value_is_not_na_for_(prop):
-    assert rslsync_plugin[prop] != 'N/A', str(rslsync_plugin)
+def test_13_verify_transmission_plugin_value_is_not_na_for_(prop):
+    assert transmission_plugin[prop] != 'N/A', str(transmission_plugin)
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_14_verify_rslsync_plugins_installed_and_available_value_(prop):
+def test_14_verify_transmission_plugins_installed_and_available_value_(prop):
     for plugin_info in job_results['result']:
-        if 'rslsync' in plugin_info['plugin']:
+        if 'transmission' in plugin_info['plugin']:
             break
-    assert plugin_info[prop] == rslsync_plugin[prop], str(plugin_info)
+    assert plugin_info[prop] == transmission_plugin[prop], str(plugin_info)
 
 
-def test_15_get_rslsync_jail_info():
-    global rslsync_jail, results
-    results = GET("/jail/id/rslsync")
+def test_15_get_transmission_jail_info():
+    global transmission_jail, results
+    results = GET("/jail/id/transmission")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    rslsync_jail = results.json()
+    transmission_jail = results.json()
 
 
 @pytest.mark.parametrize('prop', plugin_objects)
-def test_16_verify_rslsync_plugin_value_with_jail_value_of_(prop):
-    assert rslsync_jail[prop] == rslsync_plugin[prop], results.text
+def test_16_verify_transmission_plugin_value_with_jail_value_of_(prop):
+    assert transmission_jail[prop] == transmission_plugin[prop], results.text
 
 
 def test_17_get_list_of_available_plugins_without_cache():
@@ -182,10 +182,10 @@ def test_19_verify_available_plugin_without_cache_(plugin):
     assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
-def test_20_stop_rslsync_jail():
+def test_20_stop_transmission_jail():
     global JOB_ID
     payload = {
-        "jail": "rslsync",
+        "jail": "transmission",
         "force": True
     }
     results = POST('/jail/stop/', payload)
@@ -193,32 +193,32 @@ def test_20_stop_rslsync_jail():
     JOB_ID = results.json()
 
 
-def test_21_wait_for_rslsync_plugin_to_be_down():
+def test_21_wait_for_transmission_plugin_to_be_down():
     job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = GET('/plugin/id/rslsync/')
+    results = GET('/plugin/id/transmission/')
     assert results.json()['state'] == 'down', results.text
 
 
-def test_22_start_rslsync_jail():
+def test_22_start_transmission_jail():
     global JOB_ID
-    payload = "rslsync"
+    payload = "transmission"
     results = POST('/jail/start/', payload)
     assert results.status_code == 200, results.text
     JOB_ID = results.json()
 
 
-def test_23_wait_for_rslsync_plugin_to_be_up():
+def test_23_wait_for_transmission_plugin_to_be_up():
     job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = GET('/plugin/id/rslsync/')
+    results = GET('/plugin/id/transmission/')
     assert results.json()['state'] == 'up', results.text
 
 
-def test_24_stop_rslsync_jail_before_deleteing():
+def test_24_stop_transmission_jail_before_deleteing():
     global JOB_ID
     payload = {
-        "jail": "rslsync",
+        "jail": "transmission",
         "force": True
     }
     results = POST('/jail/stop/', payload)
@@ -226,25 +226,25 @@ def test_24_stop_rslsync_jail_before_deleteing():
     JOB_ID = results.json()
 
 
-def test_25_wait_for_rslsync_plugin_to_be_down():
+def test_25_wait_for_transmission_plugin_to_be_down():
     job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = GET('/plugin/id/rslsync/')
+    results = GET('/plugin/id/transmission/')
     assert results.json()['state'] == 'down', results.text
 
 
-def test_26_delete_rslsync_plugin():
-    results = DELETE('/plugin/id/rslsync/')
+def test_26_delete_transmission_plugin():
+    results = DELETE('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
 
 
-def test_27_looking_rslsync_jail_id_is_delete():
-    results = GET('/jail/id/rslsync/')
+def test_27_looking_transmission_jail_id_is_delete():
+    results = GET('/jail/id/transmission/')
     assert results.status_code == 404, results.text
 
 
-def test_28_looking_rslsync_plugin_id_is_delete():
-    results = GET('/plugin/id/rslsync/')
+def test_28_looking_transmission_plugin_id_is_delete():
+    results = GET('/plugin/id/transmission/')
     assert results.status_code == 404, results.text
 
 
@@ -274,18 +274,18 @@ def test_31_verify_available_plugin_(plugin):
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
-def test_32_verify_available_plugins_rslsync_is_not_na_(prop):
+def test_32_verify_available_plugins_transmission_is_not_na_(prop):
     for plugin_info in job_results['result']:
-        if 'rslsync' in plugin_info['plugin']:
+        if 'transmission' in plugin_info['plugin']:
             break
     assert plugin_info[prop] != 'N/A', str(job_results)
 
 
-def test_33_add_rslsync_plugins():
+def test_33_add_transmission_plugins():
     global JOB_ID
     payload = {
-        "plugin_name": "rslsync",
-        "jail_name": "rslsync",
+        "plugin_name": "transmission",
+        "jail_name": "transmission",
         'props': [
             'nat=1'
         ],
@@ -297,38 +297,38 @@ def test_33_add_rslsync_plugins():
     JOB_ID = results.json()
 
 
-def test_34_verify_rslsync_plugin_job_is_successfull():
+def test_34_verify_transmission_plugin_job_is_successfull():
     job_status = wait_on_job(JOB_ID, 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_35_search_plugin_rslsync_id():
-    results = GET('/plugin/?id=rslsync')
+def test_35_search_plugin_transmission_id():
+    results = GET('/plugin/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
-def test_36_verify_rslsync_plugin_id_exist():
-    results = GET('/plugin/id/rslsync/')
+def test_36_verify_transmission_plugin_id_exist():
+    results = GET('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
-def test_37_verify_the_rslsync_jail_id_exist():
-    results = GET(f'/jail/id/rslsync/')
+def test_37_verify_the_transmission_jail_id_exist():
+    results = GET(f'/jail/id/transmission/')
     assert results.status_code == 200, results.text
 
 
-def test_38_delete_rslsync_jail():
+def test_38_delete_transmission_jail():
     payload = {
         'force': True
     }
-    results = DELETE(f'/jail/id/rslsync/', payload)
+    results = DELETE(f'/jail/id/transmission/', payload)
     assert results.status_code == 200, results.text
 
 
-def test_39_verify_the_rslsync_jail_id_is_delete():
-    results = GET(f'/jail/id/rslsync/')
+def test_39_verify_the_transmission_jail_id_is_delete():
+    results = GET(f'/jail/id/transmission/')
     assert results.status_code == 404, results.text
 
 
