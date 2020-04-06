@@ -24,8 +24,8 @@ class GlusterPeerService(CRUDService):
             rc, out, err = e.args[0]
             err = err if err else out
             raise CallError(f'{err.decode().strip()}')
-        except Exception as e:
-            raise e
+        except Exception:
+            raise
 
         if isinstance(result, bytes):
             return result.decode().strip()
@@ -82,9 +82,6 @@ class GlusterPeerService(CRUDService):
 
         result = self.add_peer_to_cluster(hostname)
 
-        if 'localhost not needed' in result:
-            return result
-
         return result
 
     @accepts(
@@ -104,9 +101,6 @@ class GlusterPeerService(CRUDService):
         self.common_validation(hostname)
 
         result = self.remove_peer_from_cluster(hostname)
-
-        if 'is localhost' in result:
-            return result
 
         return result
 
