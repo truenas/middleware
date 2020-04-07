@@ -23,6 +23,7 @@ case "$1" in
         if [ ! -f /data/freenas-v1.db ]; then
             cp /data/factory-v1.db /data/freenas-v1.db
         fi
+        touch /data/need-update
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
