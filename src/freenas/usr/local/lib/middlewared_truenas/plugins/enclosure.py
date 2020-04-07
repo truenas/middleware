@@ -327,7 +327,7 @@ class EnclosureService(CRUDService):
         return Enclosures(self.__get_enclosures_stat(), {
             label["encid"]: label["label"]
             for label in self.middleware.call_sync("datastore.query", "truenas.enclosurelabel")
-        })
+        }, self.middleware.call_sync("system.info"))
 
     def __get_enclosures_stat(self):
         """
@@ -365,11 +365,17 @@ class EnclosureService(CRUDService):
 
 class Enclosures(object):
 
-    def __init__(self, stat, labels):
+    def __init__(self, stat, labels, system_info):
+        blacklist = [
+            "VirtualSES",
+        ]
+        if system_info["system_product"].startswith("TRUENAS-"):
+            blacklist.append("AHCI SGPIO Enclosure 2.00")
+
         self.__enclosures = []
         for num, data in stat.items():
             enclosure = Enclosure(num=num, data=data, labels=labels)
-            if "VirtualSES" in enclosure.encname:
+            if any(s in enclosure.encname for s in blacklist):
                 continue
 
             self.__enclosures.append(enclosure)
