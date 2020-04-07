@@ -230,6 +230,7 @@ class Job(object):
         self.error = None
         self.exception = None
         self.exc_info = None
+        self.aborted = False
         self.state = State.WAITING
         self.on_progress_cb = on_progress_cb
         self.progress = {
@@ -329,6 +330,8 @@ class Job(object):
     def abort(self):
         if self.loop is not None and self.future is not None:
             self.loop.call_soon_threadsafe(self.future.cancel)
+        elif self.state == State.WAITING:
+            self.aborted = True
 
     async def run(self, queue):
         """
@@ -342,8 +345,12 @@ class Job(object):
             self.logs_path = os.path.join(logs_dir, f"{self.id}.log")
             self.logs_fd = open(self.logs_path, "wb", buffering=0)
 
-        self.set_state('RUNNING')
         try:
+            if self.aborted:
+                raise asyncio.CancelledError()
+            else:
+                self.set_state('RUNNING')
+
             self.future = asyncio.ensure_future(self.__run_body())
             try:
                 await self.future
