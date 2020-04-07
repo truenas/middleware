@@ -251,6 +251,9 @@ class EtcService(Service):
         ],
         'kmip': [
             {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
+        ],
+        'truecommand': [
+            {'type': 'mako', 'path': 'wireguard/wg0.conf'}
         ]
     }
 
