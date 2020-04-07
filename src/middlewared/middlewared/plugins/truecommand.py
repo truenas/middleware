@@ -6,11 +6,10 @@ import subprocess
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, Str
-from middlewared.service import accepts, CallError, private, ConfigService, ValidationErrors
+from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 from middlewared.utils import filter_list, Popen
 from middlewared.validators import Range
 
-TRUECOMMAND_FLAG_POLL_LOCK = asyncio.Lock()
 TRUECOMMAND_UPDATE_LOCK = asyncio.Lock()
 
 
@@ -53,8 +52,6 @@ class TrueCommandModel(sa.Model):
 class TrueCommandService(ConfigService):
 
     POLLING_GAP_MINUTES = 5
-    POLLING_FLAG = False
-    POLLING_ACTIVE = False
     PORTAL_URI = 'https://portal.ixsystems.com/api'
     STATUS = Status.DISABLED
 
@@ -69,7 +66,7 @@ class TrueCommandService(ConfigService):
             config.pop(key)
         config.update({
             'status': self.STATUS.value,
-            'status_reason': StatusReason.__members__[self.STATUS.value]
+            'status_reason': StatusReason.__members__[self.STATUS.value].value
         })
         return config
 
@@ -122,11 +119,13 @@ class TrueCommandService(ConfigService):
                 # Nothing changed
                 return await self.config()
 
-            with TRUECOMMAND_FLAG_POLL_LOCK:
-                self.POLLING_FLAG = False
-
-            while self.POLLING_ACTIVE:
-                await asyncio.sleep(1)
+            polling_jobs = await self.middleware.call(
+                'core.get_jobs', [
+                    ['method', '=', 'truecommand.poll_api_for_status'], ['state', 'in', ['WAITING', 'RUNNING']]
+                ]
+            )
+            for polling_job in polling_jobs:
+                await self.middleware.call('core.job_abort', polling_job['id'])
 
             if new['enabled']:
                 if not old['wg_public_key'] or not old['wg_private_key']:
@@ -157,7 +156,7 @@ class TrueCommandService(ConfigService):
 
             if new['enabled'] and any(old[k] != new[k] for k in ('api_key', 'enabled')):
                 # We are going to start polling here
-                asyncio.ensure_future(self.poll_api_for_status())
+                await self.middleware.call('truecommand.poll_api_for_status')
 
             return await self.config()
 
@@ -167,71 +166,65 @@ class TrueCommandService(ConfigService):
             await self.middleware.call('alert.oneshot_delete', klass)
 
     @private
-    async def poll_api_for_status(self):
-        with TRUECOMMAND_FLAG_POLL_LOCK:
-            self.POLLING_ACTIVE = True
-            self.POLLING_FLAG = True
-            self.STATUS = Status.CONNECTING
+    @job(lock='poll_ix_portal_api_truecommand')
+    async def poll_api_for_status(self, job):
+        self.STATUS = Status.CONNECTING
 
-        try:
-            config = await self.middleware.call('datastore.config', self._config.datastore)
-            while config['enabled'] and self.POLLING_FLAG:
-                try:
-                    status = await self.middleware.call('truecommand.poll_once', config)
-                except Exception as e:
-                    status = {
-                        'error': f'Failed to poll for status of API Key: {e}',
-                        'state': PortalResponseState.FAILED,
+        config = await self.middleware.call('datastore.config', self._config.datastore)
+        while config['enabled']:
+            try:
+                status = await self.middleware.call('truecommand.poll_once', config)
+            except Exception as e:
+                status = {
+                    'error': f'Failed to poll for status of API Key: {e}',
+                    'state': PortalResponseState.FAILED,
+                }
+
+            if status['state'] == PortalResponseState.ACTIVE:
+                await self.middleware.call(
+                    'datastore.update',
+                    self._config.datastore,
+                    config['id'], {
+                        'tc_public_key': status['tc_pubkey'],
+                        'remote_address': status['wg_netaddr'],
+                        'endpoint': status['wg_accesspoint'],
                     }
+                )
+                self.STATUS = Status.CONNECTED
+                await self.dismiss_alerts()
+                break
 
-                if status['state'] == PortalResponseState.ACTIVE:
-                    await self.middleware.call(
-                        'datastore.update',
-                        self._config.datastore,
-                        config['id'], {
-                            'tc_public_key': status['tc_pubkey'],
-                            'remote_address': status['wg_netaddr'],
-                            'endpoint': status['wg_accesspoint'],
-                        }
-                    )
-                    self.STATUS = Status.CONNECTED
-                    await self.dismiss_alerts()
-                    break
+            elif status['state'] == PortalResponseState.UNKNOWN:
+                # We are not going to poll anymore as this definitely means
+                # that iX Portal has deactivated this key and is not going to work with this
+                # api key again
+                # Clear connection pending alert if any
+                await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionPending')
+                await self.middleware.call(
+                    'alert.oneshot_create', 'TruecommandConnectionDisabled', {
+                        'error': status['error'],
+                    }
+                )
+                self.middleware.logger.debug('iX Portal has disabled API Key: %s', status['error'])
+                self.STATUS = Status.FAILED
+                break
 
-                elif status['state'] == PortalResponseState.UNKNOWN:
-                    # We are not going to poll anymore as this definitely means
-                    # that iX Portal has deactivated this key and is not going to work with this
-                    # api key again
-                    # Clear connection pending alert if any
-                    await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionPending')
-                    await self.middleware.call(
-                        'alert.oneshot_create', 'TruecommandConnectionDisabled', {
-                            'error': status['error'],
-                        }
-                    )
-                    self.middleware.logger.debug('iX Portal has disabled API Key: %s', status['error'])
-                    self.STATUS = Status.FAILED
-                    break
+            elif not filter_list(
+                await self.middleware.call('alert.list'), [
+                    ['klass', '=', 'TruecommandConnectionPending'], ['args.error', '=', status['error']]
+                ]
+            ):
+                await self.middleware.call(
+                    'alert.oneshot_create', 'TruecommandConnectionPending', {
+                        'error': status['error']
+                    }
+                )
+                self.middleware.logger.debug(
+                    'Pending Confirmation From iX Portal for Truecommand API Key: %s', status['error']
+                )
 
-                elif not filter_list(
-                    await self.middleware.call('alert.list'), [
-                        ['klass', '=', 'TruecommandConnectionPending'], ['args.error', '=', status['error']]
-                    ]
-                ):
-                    await self.middleware.call(
-                        'alert.oneshot_create', 'TruecommandConnectionPending', {
-                            'error': status['error']
-                        }
-                    )
-                    self.middleware.logger.debug(
-                        'Pending Confirmation From iX Portal for Truecommand API Key: %s', status['error']
-                    )
-
-                await asyncio.sleep(self.POLLING_GAP_MINUTES * 60)
-                config = await self.middleware.call_sync('datastore.config', self._config.datastore)
-        finally:
-            with TRUECOMMAND_FLAG_POLL_LOCK:
-                self.POLLING_ACTIVE = self.POLLING_FLAG = False
+            await asyncio.sleep(self.POLLING_GAP_MINUTES * 60)
+            config = await self.middleware.call_sync('datastore.config', self._config.datastore)
 
     @private
     def poll_once(self, config):
