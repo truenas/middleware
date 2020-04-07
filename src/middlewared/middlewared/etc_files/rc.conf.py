@@ -363,6 +363,10 @@ def truenas_config(middleware, context):
         yield 'failover_enable="YES"'
 
 
+def truecommand_config(middleware, context):
+    return ['wireguard_interfaces="wg0"'] if middleware.call_sync('truecommand.config')['enabled'] else []
+
+
 def tunable_config(middleware, context):
     for tun in middleware.call_sync('tunable.query', [
         ('type', '=', 'RC'), ('enabled', '=', True)
@@ -459,6 +463,7 @@ def render(service, middleware):
         snmp_config,
         staticroute_config,
         tftp_config,
+        truecommand_config,
         truenas_config,
         tunable_config,
         vmware_config,
