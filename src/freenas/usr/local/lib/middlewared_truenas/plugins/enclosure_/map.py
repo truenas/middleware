@@ -41,6 +41,20 @@ MAPPINGS = [
             MappingSlot(0, 6, False),
         ]),
     ]),
+    ProductMapping(re.compile(r"FREENAS-MINI-3.0-XL\+$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(1, 4, False),
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+            MappingSlot(0, 2, False),
+            MappingSlot(0, 3, False),
+            MappingSlot(0, 4, False),
+            MappingSlot(0, 5, False),
+            MappingSlot(0, 6, False),
+            MappingSlot(0, 7, False),
+            MappingSlot(1, 3, False),
+        ]),
+    ]),
 ]
 
 
