@@ -7,16 +7,32 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, private, ConfigService, ValidationErrors
-from middlewared.utils import Popen
+from middlewared.utils import filter_list, Popen
 from middlewared.validators import Range
 
 TRUECOMMAND_FLAG_POLL_LOCK = asyncio.Lock()
 TRUECOMMAND_UPDATE_LOCK = asyncio.Lock()
 
 
-class ApiKeyStates(enum.Enum):
+class Status(enum.Enum):
+    CONNECTED = 'CONNECTED'
+    CONNECTING = 'CONNECTING'
+    DISABLED = 'DISABLED'
+    FAILED = 'FAILED'
+
+
+class StatusReason(enum.Enum):
+    CONNECTED = 'Truecommand service is connected.'
+    CONNECTING = 'Pending Confirmation From iX Portal for Truecommand API Key.'
+    DISABLED = 'Truecommand service is disabled.'
+    FAILED = 'Truecommand API Key Disabled by iX Portal.'
+
+
+class PortalResponseState(enum.Enum):
     ACTIVE = 'ACTIVE'
-    DEACTIVATED = 'DEACTIVATED'
+    FAILED = 'FAILED'  # This is not given by the API but is our internal check
+    PENDING = 'PENDING'
+    UNKNOWN = 'UNKNOWN'
 
 
 class TrueCommandModel(sa.Model):
@@ -40,6 +56,7 @@ class TrueCommandService(ConfigService):
     POLLING_FLAG = False
     POLLING_ACTIVE = False
     PORTAL_URI = 'https://portal.ixsystems.com/api'
+    STATUS = Status.DISABLED
 
     class Config:
         service = 'truecommand'
@@ -50,6 +67,10 @@ class TrueCommandService(ConfigService):
     async def tc_extend(self, config):
         for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint'):
             config.pop(key)
+        config.update({
+            'status': self.STATUS.value,
+            'status_reason': StatusReason.__members__[self.STATUS.value]
+        })
         return config
 
     @accepts(
@@ -60,6 +81,29 @@ class TrueCommandService(ConfigService):
         )
     )
     async def do_update(self, data):
+        # We have following cases worth mentioning wrt updating TC credentials
+        # 1) User enters API Key and enables the service
+        # 2) User disables the service
+        # 3) User changes API Key and service is enabled
+        #
+        # Another point to document is how we intend to poll, we are going to send a request to iX Portal
+        # and if it returns active state with the data we require for wireguard connection, we mark the
+        # API Key as connected. As long as we keep polling iX portal, we are going to be in a connecting state,
+        # no matter what errors we are getting from the polling bits. The failure case is when iX Portal sends
+        # us the state "unknown", which after confirming with Ken means that the portal has revoked the api key
+        # in question and we no longer use it. In this case we are going to stop polling and mark the connection
+        # as failed.
+        #
+        # For case (1), when user enters API key and enables the service, we are first going to generate wg keys
+        # if they haven't been generated already. Then we are going to register the new api key with ix portal.
+        # Once done, we are going to start polling. If polling gets us in success state, we are going to start
+        # wireguard connection, for the other case, we are going to emit an event with truecommand failure status.
+        #
+        # For case (2), if the service was running previously, we do nothing except for stopping wireguard and
+        # ensuring it is not started at boot as well. The connection details remain secure in the database.
+        #
+        # For case (3), everything is similar to how we handle case (1), however we are going to stop wireguard
+        # if it was running with previous api key credentials.
         with TRUECOMMAND_UPDATE_LOCK:
             old = await self.middleware.call('datastore.config', self._config.datastore)
             new = old.copy()
@@ -73,6 +117,10 @@ class TrueCommandService(ConfigService):
                 )
 
             verrors.check()
+
+            if all(old[k] == new[k] for k in ('enabled', 'api_key')):
+                # Nothing changed
+                return await self.config()
 
             with TRUECOMMAND_FLAG_POLL_LOCK:
                 self.POLLING_FLAG = False
@@ -89,7 +137,16 @@ class TrueCommandService(ConfigService):
                     # Registration succeeded, we are good to poll now
 
             if old['api_key'] != new['api_key']:
-                new['api_key_state'] = ApiKeyStates.DEACTIVATED.value
+                self.STATUS = Status.DISABLED
+                new.update({
+                    'remote_address': None,
+                    'endpoint': None,
+                    'tc_public_key': None,
+                })
+                await self.dismiss_alerts()
+
+            if not new['enabled']:
+                self.STATUS = Status.DISABLED
 
             await self.middleware.call(
                 'datastore.update',
@@ -105,10 +162,16 @@ class TrueCommandService(ConfigService):
             return await self.config()
 
     @private
+    async def dismiss_alerts(self):
+        for klass in ('TruecommandConnectionDisabled', 'TruecommandConnectionPending'):
+            await self.middleware.call('alert.oneshot_delete', klass)
+
+    @private
     async def poll_api_for_status(self):
         with TRUECOMMAND_FLAG_POLL_LOCK:
             self.POLLING_ACTIVE = True
             self.POLLING_FLAG = True
+            self.STATUS = Status.CONNECTING
 
         try:
             config = await self.middleware.call('datastore.config', self._config.datastore)
@@ -116,9 +179,12 @@ class TrueCommandService(ConfigService):
                 try:
                     status = await self.middleware.call('truecommand.poll_once', config)
                 except Exception as e:
-                    status = {'error': f'Failed to poll for status of API Key: {e}', 'continue_loop': True}
+                    status = {
+                        'error': f'Failed to poll for status of API Key: {e}',
+                        'state': PortalResponseState.FAILED,
+                    }
 
-                if not status['continue_loop'] and status['state'].lower() == 'active':
+                if status['state'] == PortalResponseState.ACTIVE:
                     await self.middleware.call(
                         'datastore.update',
                         self._config.datastore,
@@ -126,14 +192,40 @@ class TrueCommandService(ConfigService):
                             'tc_public_key': status['tc_pubkey'],
                             'remote_address': status['wg_netaddr'],
                             'endpoint': status['wg_accesspoint'],
-                            'api_key_state': ApiKeyStates.ACTIVE.value,
                         }
                     )
+                    self.STATUS = Status.CONNECTED
+                    await self.dismiss_alerts()
                     break
 
-                if status['error']:
-                    # TODO: Raise an alert please
-                    pass
+                elif status['state'] == PortalResponseState.UNKNOWN:
+                    # We are not going to poll anymore as this definitely means
+                    # that iX Portal has deactivated this key and is not going to work with this
+                    # api key again
+                    # Clear connection pending alert if any
+                    await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionPending')
+                    await self.middleware.call(
+                        'alert.oneshot_create', 'TruecommandConnectionDisabled', {
+                            'error': status['error'],
+                        }
+                    )
+                    self.middleware.logger.debug('iX Portal has disabled API Key: %s', status['error'])
+                    self.STATUS = Status.FAILED
+                    break
+
+                elif not filter_list(
+                    await self.middleware.call('alert.list'), [
+                        ['klass', '=', 'TruecommandConnectionPending'], ['args.error', '=', status['error']]
+                    ]
+                ):
+                    await self.middleware.call(
+                        'alert.oneshot_create', 'TruecommandConnectionPending', {
+                            'error': status['error']
+                        }
+                    )
+                    self.middleware.logger.debug(
+                        'Pending Confirmation From iX Portal for Truecommand API Key: %s', status['error']
+                    )
 
                 await asyncio.sleep(self.POLLING_GAP_MINUTES * 60)
                 config = await self.middleware.call_sync('datastore.config', self._config.datastore)
@@ -163,23 +255,35 @@ class TrueCommandService(ConfigService):
                 error_msg = f'Failed to poll for status of API Key: {e}'
             else:
                 response = response.json()
-                if 'state' not in response or response['state'] not in ('active', 'pending', 'unknown'):
+                if 'state' not in response or response['state'].upper() not in PortalResponseState.__members__.values():
                     error_msg = 'Malformed response returned by iX Portal'
 
-        status_dict = {'error': error_msg, 'continue_loop': True}
-        if not error_msg:
-            # There are 3 states here which the api can give us - active, pending, unknown
-            if response['state'].lower() == 'active':
-                if any(k not in response for k in ('tc_pubkey', 'wg_netaddr', 'wg_accesspoint', 'nas_pubkey')):
-                    status_dict['error'] = 'Malformed ACTIVE response received by iX Portal ' \
-                                           f'with {", ".join(response)} keys'
-                elif response['nas_pubkey'] != config['wg_public_key']:
-                    status_dict['error'] = f'Public key "{response["nas_pubkey"]}" of TN from iX Portal ' \
-                                           f'does not match TN Config public key "{config["wg_public_key"]}".'
-                else:
-                    status_dict.update({**response, 'continue_loop': False})
-            elif response['state'].lower() == 'unknown':
-                status_dict['error'] = response.get('details') or 'API Key has been disabled by the iX Portal'
+        if error_msg:
+            # Either request failed or we got bad response
+            response = {'state': PortalResponseState.FAILED.value}
+
+        status_dict = {'error': error_msg, 'state': PortalResponseState(response.pop('state').upper())}
+
+        # There are 3 states here which the api can give us - active, pending, unknown
+        if response['state'] == PortalResponseState.ACTIVE:
+            if any(k not in response for k in ('tc_pubkey', 'wg_netaddr', 'wg_accesspoint', 'nas_pubkey')):
+                status_dict.update({
+                    'state': PortalResponseState.FAILED,
+                    'error': f'Malformed ACTIVE response received by iX Portal with {", ".join(response)} keys'
+                })
+            elif response['nas_pubkey'] != config['wg_public_key']:
+                status_dict.update({
+                    'state': PortalResponseState.FAILED,
+                    'error': f'Public key "{response["nas_pubkey"]}" of TN from iX Portal does not '
+                             f'match TN Config public key "{config["wg_public_key"]}".'
+                })
+            else:
+                status_dict.update(response)
+        elif response['state'] == PortalResponseState.UNKNOWN:
+            status_dict['error'] = response.get('details') or 'API Key has been disabled by the iX Portal'
+        elif response['state'] == PortalResponseState.PENDING:
+            # This is pending now
+            status_dict['error'] = 'Waiting for iX Portal to confirm API Key'
 
         return status_dict
 
