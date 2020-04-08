@@ -333,3 +333,25 @@ class TrueCommandService(ConfigService):
             )
 
         return {'wg_public_key': public_key.decode().strip(), 'wg_private_key': private_key.decode().strip()}
+
+    @private
+    async def start_truecommand_service(self):
+        config = await self.config()
+        if config['enabled'] and Status(config['status']) == Status.CONNECTED and all(
+            config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
+        ):
+            await self.middleware.call('service.start', 'truecommand')
+
+
+async def _event_system(middleware, event_type, args):
+    if args['id'] == 'ready':
+        await middleware.call('truecommand.start_truecommand_service')
+    elif args['id'] == 'shutdown' and await middleware.call('service.started', 'truecommand'):
+        # Stop wireguard here please if we have it enabled
+        await middleware.call('service.stop', 'truecommand')
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system', _event_system)
+    if await middleware.call('system.ready') and not await middleware.call('service.started', 'truecommand'):
+        asyncio.ensure_future(middleware.call('truecommand.start_truecommand_service'))
