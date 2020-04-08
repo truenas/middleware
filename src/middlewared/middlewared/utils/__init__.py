@@ -398,7 +398,8 @@ class LoadPluginsMixin(object):
                 if on_module_end:
                     on_module_end(mod)
 
-        key = lambda service: service._config.namespace
+        def key(service):
+            return service._config.namespace
         for name, parts in itertools.groupby(sorted(set(services), key=key), key=key):
             parts = list(parts)
 

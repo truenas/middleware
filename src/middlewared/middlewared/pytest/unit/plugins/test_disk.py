@@ -1,11 +1,10 @@
 import textwrap
-from unittest.mock import patch
 
 from asynctest import CoroutineMock, Mock
 import pytest
 
-from middlewared.plugins.disk_.smart_attributes import DiskService as SmartAttributesTemperatureDiskService
-from middlewared.plugins.disk_.temperature import get_temperature, DiskService as TemperatureDiskService
+from middlewared.plugins.disk_.smart_attributes import DiskService as SmartAttributesDiskService
+from middlewared.plugins.disk_.temperature import get_temperature
 from middlewared.pytest.unit.middleware import Middleware
 
 
@@ -55,4 +54,4 @@ async def test__disk_service__sata_dom_lifetime_left():
 
     """))
 
-    assert abs(await SmartAttributesTemperatureDiskService(m).sata_dom_lifetime_left("ada1") - 0.8926) < 1e-4
+    assert abs(await SmartAttributesDiskService(m).sata_dom_lifetime_left("ada1") - 0.8926) < 1e-4
