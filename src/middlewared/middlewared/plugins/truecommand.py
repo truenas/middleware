@@ -6,7 +6,7 @@ import subprocess
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, Str
-from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
+from middlewared.service import accepts, CallError, job, periodic, private, ConfigService, ValidationErrors
 from middlewared.utils import filter_list, Popen
 from middlewared.validators import Range
 
@@ -147,6 +147,12 @@ class TrueCommandService(ConfigService):
             if not new['enabled']:
                 self.STATUS = Status.DISABLED
 
+            # We are going to stop truecommand service with this update anyways as only 2 possible actions
+            # can happen on update
+            # 1) Service enabled/disabled
+            # 2) Api Key changed
+            await self.middleware.call_hook('truecommand.service.events', data={'action': 'STOP'})
+
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
@@ -192,6 +198,7 @@ class TrueCommandService(ConfigService):
                 )
                 self.STATUS = Status.CONNECTED
                 await self.dismiss_alerts()
+                await self.middleware.call_hook('truecommand.service.events', data={'action': 'START'})
                 break
 
             elif status['state'] == PortalResponseState.UNKNOWN:
@@ -351,7 +358,15 @@ async def _event_system(middleware, event_type, args):
         await middleware.call('service.stop', 'truecommand')
 
 
+async def truecommand_service_hook(middleware, data):
+    if data['action'] == 'START':
+        await middleware.call('truecommand.start_truecommand_service')
+    elif data['action'] == 'STOP':
+        await middleware.call('service.stop', 'truecommand')
+
+
 async def setup(middleware):
     middleware.event_subscribe('system', _event_system)
     if await middleware.call('system.ready') and not await middleware.call('service.started', 'truecommand'):
         asyncio.ensure_future(middleware.call('truecommand.start_truecommand_service'))
+    middleware.register_hook('truecommand.service.events', truecommand_service_hook)
