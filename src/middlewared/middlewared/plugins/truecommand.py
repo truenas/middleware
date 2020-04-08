@@ -1,5 +1,6 @@
 import asyncio
 import enum
+import json
 import re
 import requests
 import subprocess
@@ -286,32 +287,27 @@ class TrueCommandService(ConfigService):
     def poll_once(self, config):
         # If this function returns state = True, we are going to assume we are good and no more polling
         # is required, for false, we will continue the loop
-        error_msg = None
-        try:
-            response = requests.post(
-                self.PORTAL_URI, json={
-                    'action': 'status-wireguard-key',
-                    'apikey': config['api_key'],
-                    'nas_pubkey': config['wg_public_key'],
-                }, timeout=15
-            )
-        except requests.exceptions.Timeout:
-            error_msg = 'Failed to poll for status of API Key in 15 seconds'
+        response = self.post_call(payload={
+            'action': 'status-wireguard-key',
+            'apikey': config['api_key'],
+            'nas_pubkey': config['wg_public_key'],
+        })
+        if response['error']:
+            response.update({
+                'state': PortalResponseState.FAILED.value,
+                'error': f'Failed to poll for status of API Key: {response["error"]}'
+            })
         else:
-            try:
-                response.raise_for_status()
-            except requests.HTTPError as e:
-                error_msg = f'Failed to poll for status of API Key: {e}'
+            response = response['response']
+            if 'state' not in response or response['state'].upper() not in PortalResponseState.__members__.values():
+                response.update({
+                    'state': PortalResponseState.FAILED.value,
+                    'error': 'Malformed response returned by iX Portal'
+                })
             else:
-                response = response.json()
-                if 'state' not in response or response['state'].upper() not in PortalResponseState.__members__.values():
-                    error_msg = 'Malformed response returned by iX Portal'
+                response['error'] = None
 
-        if error_msg:
-            # Either request failed or we got bad response
-            response = {'state': PortalResponseState.FAILED.value}
-
-        status_dict = {'error': error_msg, 'state': PortalResponseState(response.pop('state').upper())}
+        status_dict = {'error': response.pop('error'), 'state': PortalResponseState(response.pop('state').upper())}
 
         # There are 3 states here which the api can give us - active, pending, unknown
         if response['state'] == PortalResponseState.ACTIVE:
@@ -342,24 +338,18 @@ class TrueCommandService(ConfigService):
         # We are going to fail hard and fast without saving any information in the database if we fail to
         # register for whatever reason.
         sys_info = self.middleware.call_sync('system.info')
-        try:
-            response = requests.post(
-                self.PORTAL_URI, json={
-                    'action': 'add-truecommand-wg-key',
-                    'apikey': config['api_key'],
-                    'nas_pubkey': config['wg_public_key'],
-                    'hostname': sys_info['hostname'],
-                    'sysversion': sys_info['version'],
-                }, timeout=15
-            )
-        except requests.exceptions.Timeout:
-            raise CallError('Failed to register api key with iX portal in 15 seconds.')
-        try:
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            raise CallError(f'Failed to register API Key with portal ({response.status_code} Error Code): {e}')
+        response = self.post_call(payload={
+            'action': 'add-truecommand-wg-key',
+            'apikey': config['api_key'],
+            'nas_pubkey': config['wg_public_key'],
+            'hostname': sys_info['hostname'],
+            'sysversion': sys_info['version'],
+        })
+
+        if response['error']:
+            raise CallError(f'Failed to register API Key with portal: {response["error"]}')
         else:
-            response = response.json()
+            response = response['response']
 
         if 'status' not in response or str(response['status']).lower() not in ('pending', 'duplicate', 'denied'):
             raise CallError(f'Unknown response got from iX portal API: {response}')
@@ -369,6 +359,26 @@ class TrueCommandService(ConfigService):
             # Discussed with Ken and he said it's safe to assume that if we get denied
             # we should assume the API Key is invalid
             raise CallError(f'The provided API Key is invalid.')
+
+    @private
+    def post_call(self, options=None, payload=None):
+        options = options or {}
+        timeout = options.get('timeout', 15)
+        response = {'error': None, 'response': {}}
+        try:
+            req = requests.post(
+                options.get('url', self.PORTAL_URI), data=json.dumps(payload or {}), timeout=timeout
+            )
+        except requests.exceptions.Timeout:
+            response['error'] = f'Unable to connect with iX portal in {timeout} seconds.'
+        else:
+            try:
+                req.raise_for_status()
+            except requests.HTTPError as e:
+                response['error'] = f'Error Code ({req.status_code}): {e}'
+            else:
+                response['response'] = req.json()
+        return response
 
     @private
     async def generate_wg_keys(self):
