@@ -62,7 +62,7 @@ class TrueCommandService(ConfigService):
 
     @private
     async def tc_extend(self, config):
-        for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint'):
+        for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint', 'api_key_state'):
             config.pop(key)
         config.update({
             'status': self.STATUS.value,
@@ -141,6 +141,7 @@ class TrueCommandService(ConfigService):
                     'remote_address': None,
                     'endpoint': None,
                     'tc_public_key': None,
+                    'api_key_state': Status.DISABLED.value,
                 })
                 await self.dismiss_alerts()
 
@@ -194,6 +195,7 @@ class TrueCommandService(ConfigService):
                         'tc_public_key': status['tc_pubkey'],
                         'remote_address': status['wg_netaddr'],
                         'endpoint': status['wg_accesspoint'],
+                        'api_key_state': Status.CONNECTED.value,
                     }
                 )
                 self.STATUS = Status.CONNECTED
@@ -366,6 +368,10 @@ async def truecommand_service_hook(middleware, data):
 
 
 async def setup(middleware):
+    tc_config = await middleware.call('datastore.config', 'system.truecommand')
+    if tc_config['api_key_state'] == 'CONNECTED':
+        TrueCommandService.STATUS = Status.CONNECTED
+
     middleware.event_subscribe('system', _event_system)
     if await middleware.call('system.ready') and not await middleware.call('service.started', 'truecommand'):
         asyncio.ensure_future(middleware.call('truecommand.start_truecommand_service'))
