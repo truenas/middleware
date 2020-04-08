@@ -71,8 +71,7 @@ class TrueCommandService(ConfigService):
         # The purpose of this method is to ensure that the wireguard connection
         # is active. If wireguard service is running, we want to make sure that the last
         # handshake we have had was under 30 minutes.
-        config = await self.middleware.call('truecommand.config')
-        if Status(config['status']) != Status.CONNECTED:
+        if self.STATUS != Status.CONNECTED:
             return
 
         health_error = not (await self.middleware.call('service.started', 'truecommand'))
@@ -95,8 +94,10 @@ class TrueCommandService(ConfigService):
         if health_error:
             # Stop wireguard if it's running and start polling the api to see what's up
             await self.stop_truecommand_service()
-            await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth')
+            await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth', None)
             await self.middleware.call('truecommand.poll_api_for_status')
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
 
     @private
     async def tc_extend(self, config):
@@ -214,7 +215,7 @@ class TrueCommandService(ConfigService):
     @private
     async def dismiss_alerts(self):
         for klass in ('TruecommandConnectionDisabled', 'TruecommandConnectionPending', 'TruecommandConnectionHealth'):
-            await self.middleware.call('alert.oneshot_delete', klass)
+            await self.middleware.call('alert.oneshot_delete', klass, None)
 
     @private
     @job(lock='poll_ix_portal_api_truecommand')
@@ -253,7 +254,7 @@ class TrueCommandService(ConfigService):
                 # that iX Portal has deactivated this key and is not going to work with this
                 # api key again
                 # Clear connection pending alert if any
-                await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionPending')
+                await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionPending', None)
                 await self.middleware.call(
                     'alert.oneshot_create', 'TruecommandConnectionDisabled', {
                         'error': status['error'],
