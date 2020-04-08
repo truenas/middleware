@@ -393,10 +393,16 @@ class TrueCommandService(ConfigService):
     @private
     async def start_truecommand_service(self):
         config = await self.config()
-        if config['enabled'] and Status(config['status']) == Status.CONNECTED and all(
-            config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
-        ):
-            await self.middleware.call('service.start', 'truecommand')
+        if config['enabled']:
+            if Status(config['status']) == Status.CONNECTED and all(
+                config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
+            ):
+                await self.middleware.call('service.start', 'truecommand')
+            else:
+                # start polling iX Portal to see what's up and why we don't have these values set
+                # This can happen in instances where system was polling and then was rebooted,
+                # So we should continue polling in this case
+                await self.middleware.call('truecommand.poll_api_for_status')
 
 
 async def _event_system(middleware, event_type, args):
@@ -408,9 +414,9 @@ async def _event_system(middleware, event_type, args):
 
 
 async def setup(middleware):
-    tc_config = await middleware.call('datastore.config', 'system.truecommand')
-    if tc_config['api_key_state'] == 'CONNECTED':
-        TrueCommandService.STATUS = Status.CONNECTED
+    TrueCommandService.STATUS = Status(
+        (await middleware.call('datastore.config', 'system.truecommand'))['api_key_state']
+    )
 
     middleware.event_subscribe('system', _event_system)
     if await middleware.call('system.ready') and not await middleware.call('service.started', 'truecommand'):
