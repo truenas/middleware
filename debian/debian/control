@@ -34,6 +34,7 @@ Depends: collectd,
          tmux,
          truenas-webui,
          winbind,
+         wireguard,
          zsh,
          ${misc:Depends}
 Description: Main package for TrueNAS

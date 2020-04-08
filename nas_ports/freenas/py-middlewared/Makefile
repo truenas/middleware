@@ -84,7 +84,8 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		ifstat>0:net/ifstat \
 		pyvmomi>0:net/py-pyvmomi \
 		samba>=0:net/samba \
-		swagger-ui>0:freenas/swagger-ui
+		swagger-ui>0:freenas/swagger-ui \
+		wireguard>0:net/wireguard
 
 USE_RC_SUBR=	middlewared
 
