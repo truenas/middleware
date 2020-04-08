@@ -1,0 +1,16 @@
+#!/bin/bash -e
+
+readonly UPDATE_FAILED_LOG="/data/update.failed"
+
+if [ ! -f /data/need-update ]
+then
+    exit 0
+fi
+
+migrate > $UPDATE_FAILED_LOG 2>&1
+
+echo "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')" | sqlite3 /data/freenas-v1.db
+
+rm -f $UPDATE_FAILED_LOG
+
+rm /data/need-update
