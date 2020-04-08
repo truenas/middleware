@@ -1,16 +1,19 @@
 import asyncio
 import enum
+import re
 import requests
 import subprocess
+import time
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, Str
 from middlewared.service import accepts, CallError, job, periodic, private, ConfigService, ValidationErrors
-from middlewared.utils import filter_list, Popen
+from middlewared.utils import filter_list, Popen, run
 from middlewared.validators import Range
 
 TRUECOMMAND_UPDATE_LOCK = asyncio.Lock()
+WIREGUARD_HEALTH_RE = re.compile(r'=\s*(.*)')
 
 
 class Status(enum.Enum):
@@ -51,6 +54,7 @@ class TrueCommandModel(sa.Model):
 
 class TrueCommandService(ConfigService):
 
+    HEALTH_CHECK_SECONDS = 1800
     POLLING_GAP_MINUTES = 5
     PORTAL_URI = 'https://portal.ixsystems.com/api'
     STATUS = Status.DISABLED
@@ -59,6 +63,38 @@ class TrueCommandService(ConfigService):
         service = 'truecommand'
         datastore = 'system.truecommand'
         datastore_extend = 'truecommand.tc_extend'
+
+    @private
+    @periodic(1800, run_on_start=False)
+    async def health_check(self):
+        # The purpose of this method is to ensure that the wireguard connection
+        # is active. If wireguard service is running, we want to make sure that the last
+        # handshake we have had was under 30 minutes.
+        config = await self.middleware.call('truecommand.config')
+        if Status(config['status']) != Status.CONNECTED:
+            return
+
+        health_error = not (await self.middleware.call('service.started', 'truecommand'))
+        if not health_error:
+            cp = await run(['wg', 'show', 'wg0', 'latest-handshakes'], encoding='utf8', check=False)
+            if cp.returncode:
+                health_error = True
+            else:
+                timestamp = WIREGUARD_HEALTH_RE.findall(cp.stdout)
+                if not timestamp:
+                    health_error = True
+                else:
+                    timestamp = timestamp[0].strip()
+                if timestamp == '0' or not timestamp.isdigit() or (
+                    int(time.time()) - int(timestamp)
+                ) > self.HEALTH_CHECK_SECONDS:
+                    # We never established handshake with TC, error out please
+                    health_error = True
+
+        if health_error:
+            # Stop wireguard if it's running and start polling the api to see what's up
+            await self.middleware.call('service.stop', 'truecommand')
+            await self.middleware.call('truecommand.poll_api_for_status')
 
     @private
     async def tc_extend(self, config):
