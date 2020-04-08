@@ -95,6 +95,7 @@ class TrueCommandService(ConfigService):
         if health_error:
             # Stop wireguard if it's running and start polling the api to see what's up
             await self.middleware.call('service.stop', 'truecommand')
+            await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth')
             await self.middleware.call('truecommand.poll_api_for_status')
 
     @private
@@ -206,7 +207,7 @@ class TrueCommandService(ConfigService):
 
     @private
     async def dismiss_alerts(self):
-        for klass in ('TruecommandConnectionDisabled', 'TruecommandConnectionPending'):
+        for klass in ('TruecommandConnectionDisabled', 'TruecommandConnectionPending', 'TruecommandConnectionHealth'):
             await self.middleware.call('alert.oneshot_delete', klass)
 
     @private
