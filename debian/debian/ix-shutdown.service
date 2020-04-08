@@ -1,17 +1,17 @@
 [Unit]
 Description=Exec TrueNAS shutdown tasks
-DefaultDependencies=no
 
 After=network.target
-Before=middlewared.service
 
 [Service]
 Type=oneshot
-ExecStart=/bin/true
+RemainAfterExit=yes
+ExecStart=true
 ExecStop=midclt call core.event_send system ADDED '{"id": "shutdown"}'
 ExecStop=midclt call -job initshutdownscript.execute_init_tasks SHUTDOWN
 StandardOutput=null
 StandardError=null
+TimeoutStopSec=0
 
 [Install]
 WantedBy=multi-user.target
