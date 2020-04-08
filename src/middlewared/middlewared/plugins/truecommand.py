@@ -188,7 +188,7 @@ class TrueCommandService(ConfigService):
             # can happen on update
             # 1) Service enabled/disabled
             # 2) Api Key changed
-            await self.middleware.call_hook('truecommand.service.events', data={'action': 'STOP'})
+            await self.middleware.call('service.stop', 'truecommand')
 
             await self.middleware.call(
                 'datastore.update',
@@ -236,7 +236,7 @@ class TrueCommandService(ConfigService):
                 )
                 self.STATUS = Status.CONNECTED
                 await self.dismiss_alerts()
-                await self.middleware.call_hook('truecommand.service.events', data={'action': 'START'})
+                await self.start_truecommand_service()
                 break
 
             elif status['state'] == PortalResponseState.UNKNOWN:
@@ -252,6 +252,17 @@ class TrueCommandService(ConfigService):
                 )
                 self.middleware.logger.debug('iX Portal has disabled API Key: %s', status['error'])
                 self.STATUS = Status.FAILED
+                # Let's remove TC's address if they are there and if the api key state was enabled
+                # Also let's make sure truecommand service is not running, it shouldn't be but still enforce it
+                await self.middleware.call(
+                    'datastore.update',
+                    self._config.datastore,
+                    config['id'], {
+                        **{k: None for k in ('tc_public_key', 'remote_address', 'endpoint')},
+                        'api_key_state': Status.DISABLED.value,
+                    }
+                )
+                await self.middleware.call('service.stop', 'truecommand')
                 break
 
             elif not filter_list(
@@ -396,13 +407,6 @@ async def _event_system(middleware, event_type, args):
         await middleware.call('service.stop', 'truecommand')
 
 
-async def truecommand_service_hook(middleware, data):
-    if data['action'] == 'START':
-        await middleware.call('truecommand.start_truecommand_service')
-    elif data['action'] == 'STOP':
-        await middleware.call('service.stop', 'truecommand')
-
-
 async def setup(middleware):
     tc_config = await middleware.call('datastore.config', 'system.truecommand')
     if tc_config['api_key_state'] == 'CONNECTED':
@@ -411,4 +415,3 @@ async def setup(middleware):
     middleware.event_subscribe('system', _event_system)
     if await middleware.call('system.ready') and not await middleware.call('service.started', 'truecommand'):
         asyncio.ensure_future(middleware.call('truecommand.start_truecommand_service'))
-    middleware.register_hook('truecommand.service.events', truecommand_service_hook)
