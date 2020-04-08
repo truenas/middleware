@@ -16,7 +16,7 @@ class Middleware(dict):
         self.call_hook = CoroutineMock()
         self.call_hook_inline = Mock()
 
-    async def _call(self, name, serviceobj, method, args):
+    async def _call(self, name, serviceobj, method, args, app=None):
         to_resolve = [getattr(serviceobj, attr) for attr in dir(serviceobj) if attr != 'query']
         resolve_methods(self.__schemas, to_resolve)
         return await method(*args)

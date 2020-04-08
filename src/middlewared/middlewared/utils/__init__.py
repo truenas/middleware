@@ -1,10 +1,11 @@
 import asyncio
-import imp
+import importlib
 import inspect
 import itertools
+import logging
 import os
-import re
 import sys
+import re
 import subprocess
 import threading
 from datetime import datetime, timedelta
@@ -17,6 +18,8 @@ from middlewared.utils import osc
 
 BUILDTIME = None
 VERSION = None
+
+logger = logging.getLogger(__name__)
 
 
 def bisect(condition, iterable):
@@ -307,11 +310,24 @@ class cache_with_autorefresh(object):
 
 
 def load_modules(directory, base=None, depth=0):
+    directory = os.path.normpath(directory)
     if base is None:
-        base = '.'.join(
-            ['middlewared'] +
-            os.path.relpath(directory, os.path.dirname(os.path.dirname(__file__))).split('/')
-        )
+        middlewared_root = os.path.dirname(os.path.dirname(__file__))
+        if os.path.commonprefix((f'{directory}/', f'{middlewared_root}/')) == f'{middlewared_root}/':
+            base = '.'.join(
+                ['middlewared'] +
+                os.path.relpath(directory, middlewared_root).split('/')
+            )
+        else:
+            for new_module_path in sys.path:
+                if os.path.commonprefix((f'{directory}/', f'{new_module_path}/')) == f'{new_module_path}/':
+                    break
+            else:
+                new_module_path = os.path.dirname(directory)
+                logger.debug("Registering new module path %r", new_module_path)
+                sys.path.insert(0, new_module_path)
+
+            base = '.'.join(os.path.relpath(directory, new_module_path).split('/'))
 
     _, dirs, files = next(os.walk(directory))
 
@@ -329,15 +345,7 @@ def load_modules(directory, base=None, depth=0):
         else:
             mod_name = f'{base}.{name}'
 
-        if mod_name in sys.modules:
-            yield sys.modules[mod_name]
-        else:
-            fp, pathname, description = imp.find_module(name, [directory])
-            try:
-                yield imp.load_module(mod_name, fp, pathname, description)
-            finally:
-                if fp:
-                    fp.close()
+        yield importlib.import_module(mod_name)
 
     for f in dirs:
         if depth > 0:
@@ -390,7 +398,8 @@ class LoadPluginsMixin(object):
                 if on_module_end:
                     on_module_end(mod)
 
-        key = lambda service: service._config.namespace
+        def key(service):
+            return service._config.namespace
         for name, parts in itertools.groupby(sorted(set(services), key=key), key=key):
             parts = list(parts)
 
@@ -406,6 +415,9 @@ class LoadPluginsMixin(object):
 
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
+        self._resolve_methods()
+
+    def _resolve_methods(self):
         from middlewared.schema import resolve_methods  # Lazy import so namespace match
         to_resolve = []
         for service in list(self._services.values()):

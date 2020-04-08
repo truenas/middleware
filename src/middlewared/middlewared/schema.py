@@ -198,7 +198,7 @@ class Str(EnumMixin, Attribute):
 
         verrors = ValidationErrors()
 
-        if value and len(value) > self.max_length:
+        if value and len(str(value)) > self.max_length:
             verrors.add(self.name, f'Value greater than {self.max_length} not allowed')
 
         verrors.check()
@@ -803,7 +803,7 @@ class Ref(object):
         schema = schemas.get(self.name)
         if not schema:
             raise ResolverError('Schema {0} does not exist'.format(self.name))
-        schema = copy.deepcopy(schema)
+        schema = schema.copy()
         schema.register = False
         return schema
 

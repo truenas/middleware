@@ -15,6 +15,8 @@ areca_lock = Lock()
 
 if osc.IS_FREEBSD:
     from nvme import get_nsid
+else:
+    get_nsid = None
 
 
 async def get_smartctl_args(middleware, devices, disk):
