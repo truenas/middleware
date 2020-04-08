@@ -94,13 +94,13 @@ class TrueCommandService(ConfigService):
 
         if health_error:
             # Stop wireguard if it's running and start polling the api to see what's up
-            await self.middleware.call('service.stop', 'truecommand')
+            await self.stop_truecommand_service()
             await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth')
             await self.middleware.call('truecommand.poll_api_for_status')
 
     @private
     async def tc_extend(self, config):
-        for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint', 'api_key_state'):
+        for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint', 'api_key_state', 'wg_address'):
             config.pop(key)
         config.update({
             'status': self.STATUS.value,
@@ -139,7 +139,7 @@ class TrueCommandService(ConfigService):
         #
         # For case (3), everything is similar to how we handle case (1), however we are going to stop wireguard
         # if it was running with previous api key credentials.
-        with TRUECOMMAND_UPDATE_LOCK:
+        async with TRUECOMMAND_UPDATE_LOCK:
             old = await self.middleware.call('datastore.config', self._config.datastore)
             new = old.copy()
             new.update(data)
@@ -170,7 +170,7 @@ class TrueCommandService(ConfigService):
                     new.update(**(await self.generate_wg_keys()))
 
                 if old['api_key'] != new['api_key']:
-                    self.middleware.call_sync('truecommand.register_with_portal', new)
+                    await self.middleware.call('truecommand.register_with_portal', new)
                     # Registration succeeded, we are good to poll now
 
             if old['api_key'] != new['api_key']:
@@ -180,6 +180,7 @@ class TrueCommandService(ConfigService):
                     'endpoint': None,
                     'tc_public_key': None,
                     'api_key_state': Status.DISABLED.value,
+                    'wg_address': None,
                 })
                 await self.dismiss_alerts()
 
@@ -190,7 +191,7 @@ class TrueCommandService(ConfigService):
             # can happen on update
             # 1) Service enabled/disabled
             # 2) Api Key changed
-            await self.middleware.call('service.stop', 'truecommand')
+            await self.stop_truecommand_service()
 
             await self.middleware.call(
                 'datastore.update',
@@ -204,6 +205,11 @@ class TrueCommandService(ConfigService):
                 await self.middleware.call('truecommand.poll_api_for_status')
 
             return await self.config()
+
+    @private
+    async def stop_truecommand_service(self):
+        if await self.middleware.call('service.started', 'truecommand'):
+            await self.middleware.call('service.stop', 'truecommand')
 
     @private
     async def dismiss_alerts(self):
@@ -231,7 +237,8 @@ class TrueCommandService(ConfigService):
                     self._config.datastore,
                     config['id'], {
                         'tc_public_key': status['tc_pubkey'],
-                        'remote_address': status['wg_netaddr'],
+                        'wg_address': status['wg_netaddr'],
+                        'remote_address': status['tc_wg_netaddr'],
                         'endpoint': status['wg_accesspoint'],
                         'api_key_state': Status.CONNECTED.value,
                     }
@@ -264,7 +271,7 @@ class TrueCommandService(ConfigService):
                         'api_key_state': Status.DISABLED.value,
                     }
                 )
-                await self.middleware.call('service.stop', 'truecommand')
+                await self.stop_truecommand_service()
                 break
 
             elif not filter_list(
@@ -300,7 +307,7 @@ class TrueCommandService(ConfigService):
             })
         else:
             response = response['response']
-            if 'state' not in response or response['state'].upper() not in PortalResponseState.__members__.values():
+            if 'state' not in response or response['state'].upper() not in PortalResponseState.__members__:
                 response.update({
                     'state': PortalResponseState.FAILED.value,
                     'error': 'Malformed response returned by iX Portal'
@@ -311,8 +318,10 @@ class TrueCommandService(ConfigService):
         status_dict = {'error': response.pop('error'), 'state': PortalResponseState(response.pop('state').upper())}
 
         # There are 3 states here which the api can give us - active, pending, unknown
-        if response['state'] == PortalResponseState.ACTIVE:
-            if any(k not in response for k in ('tc_pubkey', 'wg_netaddr', 'wg_accesspoint', 'nas_pubkey')):
+        if status_dict['state'] == PortalResponseState.ACTIVE:
+            if any(
+                k not in response for k in ('tc_pubkey', 'wg_netaddr', 'wg_accesspoint', 'nas_pubkey', 'tc_wg_netaddr')
+            ):
                 status_dict.update({
                     'state': PortalResponseState.FAILED,
                     'error': f'Malformed ACTIVE response received by iX Portal with {", ".join(response)} keys'
@@ -325,9 +334,9 @@ class TrueCommandService(ConfigService):
                 })
             else:
                 status_dict.update(response)
-        elif response['state'] == PortalResponseState.UNKNOWN:
+        elif status_dict['state'] == PortalResponseState.UNKNOWN:
             status_dict['error'] = response.get('details') or 'API Key has been disabled by the iX Portal'
-        elif response['state'] == PortalResponseState.PENDING:
+        elif status_dict['state'] == PortalResponseState.PENDING:
             # This is pending now
             status_dict['error'] = 'Waiting for iX Portal to confirm API Key'
 
@@ -403,10 +412,10 @@ class TrueCommandService(ConfigService):
 
     @private
     async def start_truecommand_service(self):
-        config = await self.config()
+        config = await self.middleware.call('datastore.config', 'system.truecommand')
         if config['enabled']:
-            if Status(config['status']) == Status.CONNECTED and all(
-                config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
+            if self.STATUS == Status.CONNECTED and all(
+                config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
                 await self.middleware.call('service.start', 'truecommand')
             else:
@@ -419,16 +428,19 @@ class TrueCommandService(ConfigService):
 async def _event_system(middleware, event_type, args):
     if args['id'] == 'ready':
         await middleware.call('truecommand.start_truecommand_service')
-    elif args['id'] == 'shutdown' and await middleware.call('service.started', 'truecommand'):
+    elif args['id'] == 'shutdown':
         # Stop wireguard here please if we have it enabled
-        await middleware.call('service.stop', 'truecommand')
+        await middleware.call('truecommand.stop_truecommand_service')
 
 
 async def setup(middleware):
+    config = await middleware.call('truecommand.config')
     TrueCommandService.STATUS = Status(
         (await middleware.call('datastore.config', 'system.truecommand'))['api_key_state']
     )
 
     middleware.event_subscribe('system', _event_system)
-    if await middleware.call('system.ready') and not await middleware.call('service.started', 'truecommand'):
+    if await middleware.call('system.ready') and config['enabled'] and not await middleware.call(
+        'service.started', 'truecommand'
+    ):
         asyncio.ensure_future(middleware.call('truecommand.start_truecommand_service'))
