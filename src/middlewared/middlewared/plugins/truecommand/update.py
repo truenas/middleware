@@ -106,6 +106,8 @@ class TruecommandService(ConfigService):
             for polling_job in polling_jobs:
                 await self.middleware.call('core.job_abort', polling_job['id'])
 
+            self.STATUS = Status.DISABLED
+
             if new['enabled']:
                 if not old['wg_public_key'] or not old['wg_private_key']:
                     new.update(**(await self.middleware.call('truecommand.generate_wg_keys')))
@@ -113,8 +115,12 @@ class TruecommandService(ConfigService):
                 if old['api_key'] != new['api_key']:
                     await self.middleware.call('truecommand.register_with_portal', new)
                     # Registration succeeded, we are good to poll now
+                elif all(
+                    new[k] for k in ('wg_address', 'wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
+                ):
+                    # Api key hasn't changed and we have wireguard details, let's please start wireguard in this case
+                    self.STATUS = Status.CONNECTED
 
-            self.STATUS = Status.DISABLED
             new['api_key_state'] = self.STATUS.value
 
             if old['api_key'] != new['api_key']:
@@ -124,7 +130,7 @@ class TruecommandService(ConfigService):
                     'tc_public_key': None,
                     'wg_address': None,
                 })
-                await self.middleware.call('truecommand.dismiss_alerts')
+                await self.dismiss_alerts()
 
             await self.middleware.call(
                 'datastore.update',
@@ -139,9 +145,18 @@ class TruecommandService(ConfigService):
             # 2) Api Key changed
             await self.middleware.call('truecommand.stop_truecommand_service')
 
-            if new['enabled'] and any(old[k] != new[k] for k in ('api_key', 'enabled')):
-                # We are going to start polling here
-                await self.middleware.call('truecommand.poll_api_for_status')
+            if new['enabled']:
+                if new['api_key'] != old['api_key'] or any(
+                    not new[k] for k in ('wg_address', 'wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
+                ):
+                    # We are going to start polling here
+                    await self.middleware.call('truecommand.poll_api_for_status')
+                else:
+                    # User just enabled the service after disabling it - we have wireguard details and
+                    # we can initiate the connection. If it is not good, health check will fail and we will
+                    # poll iX Portal to see what's up. Let's just start wireguard now
+                    await self.dismiss_alerts()
+                    await self.middleware.call('truecommand.start_truecommand_service')
 
             return await self.config()
 
