@@ -125,6 +125,10 @@ class DeviceService(Service, DeviceInfoBase):
         if os.path.exists(type_path):
             with open(type_path, 'r') as f:
                 disk['type'] = 'SSD' if f.read().strip() == '0' else 'HDD'
+        else:
+            self.middleware.logger.debug(
+                'Unable to retrieve "%s" disk rotational details at %s', disk['name'], type_path
+            )
 
         if block_device.path in lshw_disks:
             disk_data = lshw_disks[block_device.path]
