@@ -1,7 +1,6 @@
 import asyncio
 
 from middlewared.service import CallError, job, private, Service
-from middlewared.utils import filter_list
 
 from .connection import TruecommandAPIMixin
 from .enums import PortalResponseState, Status
@@ -20,6 +19,8 @@ class TruecommandService(Service, TruecommandAPIMixin):
         while config['enabled']:
             try:
                 status = await self.middleware.call('truecommand.poll_once', config)
+            except asyncio.CancelledError:
+                raise
             except Exception as e:
                 status = {
                     'error': f'Failed to poll for status of API Key: {e}',
@@ -69,11 +70,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                 await self.middleware.call('truecommand.stop_truecommand_service')
                 break
 
-            elif not filter_list(
-                await self.middleware.call('alert.list'), [
-                    ['klass', '=', 'TruecommandConnectionPending'], ['args.error', '=', status['error']]
-                ]
-            ):
+            else:
                 await self.middleware.call(
                     'alert.oneshot_create', 'TruecommandConnectionPending', {
                         'error': status['error']
@@ -123,8 +120,8 @@ class TruecommandService(Service, TruecommandAPIMixin):
             elif response['nas_pubkey'] != config['wg_public_key']:
                 status_dict.update({
                     'state': PortalResponseState.FAILED,
-                    'error': f'Public key "{response["nas_pubkey"]}" of TN from iX Portal does not '
-                             f'match TN Config public key "{config["wg_public_key"]}".'
+                    'error': f'Public key "{response["nas_pubkey"]}" of TrueNAS from iX Portal does not '
+                             f'match TrueNAS Config public key "{config["wg_public_key"]}".'
                 })
             else:
                 status_dict.update(response)

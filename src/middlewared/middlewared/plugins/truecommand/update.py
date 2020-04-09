@@ -18,7 +18,7 @@ class TrueCommandModel(sa.Model):
     api_key = sa.Column(sa.String(128), default=None, nullable=True)
     api_key_state = sa.Column(sa.String(128), default='DISABLED', nullable=True)
     wg_public_key = sa.Column(sa.String(255), default=None, nullable=True)
-    wg_private_key = sa.Column(sa.String(255), default=None, nullable=True)
+    wg_private_key = sa.Column(sa.EncryptedText(255), default=None, nullable=True)
     wg_address = sa.Column(sa.String(255), default=None, nullable=True)
     tc_public_key = sa.Column(sa.String(255), default=None, nullable=True)
     endpoint = sa.Column(sa.String(255), default=None, nullable=True)
