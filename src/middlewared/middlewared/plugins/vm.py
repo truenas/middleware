@@ -399,7 +399,7 @@ class VMSupervisor:
         ahci_current_controller = controller_base.copy()
         virtio_current_controller = controller_base.copy()
 
-        for device in filter(lambda d: not isinstance(d, VNC), self.devices):
+        for device in self.devices:
             if isinstance(device, (DISK, CDROM, RAW)):
                 # We classify all devices in 2 types:
                 # 1) AHCI
@@ -703,7 +703,9 @@ class VNC(Device):
         self.web_process = None
 
     def xml(self, *args, **kwargs):
-        raise NotImplementedError
+        return create_element(
+            'controller', type='usb', model='nec-xhci'
+        ), create_element('input', type='tablet', bus='usb')
 
     def bhyve_args(self, *args, **kwargs):
         attrs = self.data['attributes']
