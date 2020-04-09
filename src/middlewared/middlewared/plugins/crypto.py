@@ -1174,6 +1174,8 @@ class CertificateService(CRUDService):
             else:
                 self.logger.debug(f'Failed to load privatekey of {cert["name"]}', exc_info=True)
                 cert['key_length'] = cert['key_type'] = None
+        else:
+            cert['key_length'] = cert['key_type'] = None
 
         if cert['type'] == CERT_TYPE_CSR:
             csr_data = await self.middleware.call('cryptokey.load_certificate_request', cert['CSR'])
@@ -1228,7 +1230,12 @@ class CertificateService(CRUDService):
                     f'{cert["name"]} certificate is malformed'
                 )
 
-            if not cert['key_length']:
+            if not cert['privatekey']:
+                verrors.add(
+                    schema_name,
+                    'Selected certificate does not have a private key'
+                )
+            elif not cert['key_length']:
                 verrors.add(
                     schema_name,
                     'Failed to parse certificate\'s private key'
