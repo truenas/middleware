@@ -8,6 +8,7 @@ from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.validators import Range
+from middlewared.plugins.smb import SMBCmd
 
 
 class DSType(enum.Enum):
@@ -23,6 +24,12 @@ class DSType(enum.Enum):
     DS_TYPE_NIS = 3
     DS_TYPE_FREEIPA = 4
     DS_TYPE_DEFAULT_DOMAIN = 5
+
+
+class IDType(enum.Enum):
+    USER = "USER"
+    GROUP = "GROUP"
+    BOTH = "BOTH"
 
 
 class IdmapBackend(enum.Enum):
@@ -662,3 +669,34 @@ class IdmapDomainService(CRUDService):
             entry = await self._get_instance(id)
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
         await self.middleware.call("datastore.delete", self._config.datastore, id)
+
+    @private
+    async def sid_to_name(self, sid_str):
+        rv = None
+        gid = None
+        uid = None
+        wb = await run([SMBCmd.WBINFO.value, '--sid-to-gid', sid_str], check=False)
+        if wb.returncode == 0:
+            gid = int(wb.stdout.decode().strip())
+
+        wb = await run([SMBCmd.WBINFO.value, '--sid-to-uid', sid_str], check=False)
+        if wb.returncode == 0:
+            uid = int(wb.stdout.decode().strip())
+
+        if gid and (gid == uid):
+            rv = {"id_type": "BOTH", "id": gid}
+        elif gid:
+            rv = {"id_type": "GROUP", "id": gid}
+        elif uid:
+            rv = {"id_type": "USER", "id": uid}
+
+        return rv
+
+    @private
+    async def name_to_sid(self, name):
+        wb = await run([SMBCmd.WBINFO.value, '--name-to-sid', name], check=False)
+        if wb.returncode != 0:
+            self.logger.debug("wbinfo failed with error: %s",
+                              wb.stderr.decode().strip())
+
+        return wb.stdout.decode().strip()

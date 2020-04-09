@@ -50,6 +50,7 @@ class SMBCmd(enum.Enum):
     NET = 'net'
     PDBEDIT = 'pdbedit'
     SHARESEC = 'sharesec'
+    SMBCACLS = 'smbcacls'
     SMBCONTROL = 'smbcontrol'
     SMBPASSWD = 'smbpasswd'
     STATUS = 'smbstatus'
