@@ -417,7 +417,7 @@ class FilesystemService(Service):
         a path on a tmpfs filesystem).
         """
         if not os.path.exists(path):
-            raise CallError('Path not found.', errno.ENOENT)
+            raise CallError(f'Path not found [{path}].', errno.ENOENT)
 
         has_nfs4_acl_support = os.pathconf(path, 64)
         if not has_nfs4_acl_support:
