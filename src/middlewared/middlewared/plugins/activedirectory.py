@@ -1199,6 +1199,9 @@ class ActiveDirectoryService(ConfigService):
 
             raise CallError(wberr, err)
 
+        if (await self.get_state()) != 'HEALTHY':
+            await self.set_state(DSStatus['HEALTHY'])
+
         return True
 
     @private
