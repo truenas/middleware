@@ -18,7 +18,7 @@ class ActiveDirectoryDomainHealthAlertClass(AlertClass):
     category = AlertCategory.DIRECTORY_SERVICE
     level = AlertLevel.WARNING
     title = "Active Directory Domain Validation Failed"
-    text = "Domain validation failed with error: %(verrs)s."
+    text = "Domain validation failed with error: %(verrs)s"
 
 
 class ActiveDirectoryDomainOfflineAlertClass(AlertClass, SimpleOneShotAlertClass):
