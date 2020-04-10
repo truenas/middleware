@@ -18,7 +18,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
 
         while config['enabled']:
             try:
-                status = await self.middleware.call('truecommand.poll_once', config)
+                status = await self.poll_once(config)
             except asyncio.CancelledError:
                 raise
             except Exception as e:
@@ -84,8 +84,8 @@ class TruecommandService(Service, TruecommandAPIMixin):
             config = await self.middleware.call('datastore.config', 'system.truecommand')
 
     @private
-    def poll_once(self, config):
-        response = self._post_call(payload={
+    async def poll_once(self, config):
+        response = await self._post_call(payload={
             'action': 'status-wireguard-key',
             'apikey': config['api_key'],
             'nas_pubkey': config['wg_public_key'],
@@ -134,12 +134,12 @@ class TruecommandService(Service, TruecommandAPIMixin):
         return status_dict
 
     @private
-    def register_with_portal(self, config):
+    async def register_with_portal(self, config):
         # We are going to register the api key with the portal and if it fails,
         # We are going to fail hard and fast without saving any information in the database if we fail to
         # register for whatever reason.
-        sys_info = self.middleware.call_sync('system.info')
-        response = self._post_call(payload={
+        sys_info = await self.middleware.call('system.info')
+        response = await self._post_call(payload={
             'action': 'add-truecommand-wg-key',
             'apikey': config['api_key'],
             'nas_pubkey': config['wg_public_key'],
