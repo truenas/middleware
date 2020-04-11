@@ -119,12 +119,21 @@ class InterfaceService(Service):
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
 
+        if dhclient_running and not data['int_dhcp']:
+            self.logger.debug('Killing dhclient for {}'.format(name))
+            os.kill(dhclient_pid, signal.SIGTERM)
+
         # Remove addresses configured and not in database
-        for addr in (addrs_configured - addrs_database):
+        for addr in addrs_configured:
             if has_ipv6 and str(addr.address).startswith('fe80::'):
                 continue
-            self.logger.debug('{}: removing {}'.format(name, addr))
-            iface.remove_address(addr)
+            if addr not in addrs_database:
+                self.logger.debug('{}: removing {}'.format(name, addr))
+                iface.remove_address(addr)
+            else:
+                if osc.IS_LINUX and not data['int_dhcp']:
+                    self.logger.debug('{}: removing possible valid_lft and preferred_lft on {}'.format(name, addr))
+                    iface.replace_address(addr)
 
         # carp must be configured after removing addresses
         # in case removing the address removes the carp
@@ -174,9 +183,6 @@ class InterfaceService(Service):
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
             self.middleware.call_sync('interface.dhclient_start', data['int_interface'], wait_dhcp, wait=wait_dhcp)
-        elif dhclient_running and not data['int_dhcp']:
-            self.logger.debug('Killing dhclient for {}'.format(name))
-            os.kill(dhclient_pid, signal.SIGTERM)
 
         if osc.IS_FREEBSD:
             if data['int_ipv6auto']:

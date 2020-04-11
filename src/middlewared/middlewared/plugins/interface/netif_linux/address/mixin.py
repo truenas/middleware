@@ -21,6 +21,9 @@ class AddressMixin:
     def remove_address(self, address):
         self._address_op("del", address)
 
+    def replace_address(self, address):
+        self._address_op("replace", address)
+
     def _address_op(self, op, address):
         if isinstance(address.address, LinkAddress):
             return
