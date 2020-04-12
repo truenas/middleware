@@ -1998,7 +1998,7 @@ class PoolDatasetService(CRUDService):
     @private
     @job(lock=lambda args: f'sync_encrypted_pool_dataset_keys_{args}')
     def sync_db_keys(self, job, name=None):
-        if self.middleware.call_sync('failover.licensed') and self.middleware.call_sync('failover.status') == 'BACKUP':
+        if self.middleware.call_sync('failover.is_backup_node'):
             # We don't want to do this for passive controller
             return
         filters = [['OR', [['name', '=', name], ['name', '^', f'{name}/']]]] if name else []

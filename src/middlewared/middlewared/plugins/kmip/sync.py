@@ -51,7 +51,8 @@ class KMIPService(Service, KMIPServerMixin):
         """
         Sync ZFS/SED keys between KMIP Server and TN database.
         """
-        if not await self.middleware.call('kmip.kmip_sync_pending'):
+        if not await self.middleware.call('kmip.kmip_sync_pending') or \
+                await self.middleware.call('failover.is_backup_node'):
             return
         await self.middleware.call('kmip.sync_zfs_keys')
         await self.middleware.call('kmip.sync_sed_keys')
@@ -80,7 +81,7 @@ class KMIPService(Service, KMIPServerMixin):
     @job(lock='initialize_kmip_keys')
     async def initialize_keys(self, job):
         kmip_config = await self.middleware.call('kmip.config')
-        if kmip_config['enabled']:
+        if kmip_config['enabled'] and not await self.middleware.call('failover.is_backup_node'):
             connection_success = await self.middleware.call(
                 'kmip.test_connection', None, kmip_config['manage_zfs_keys'] or kmip_config['manage_sed_disks']
             )
