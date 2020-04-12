@@ -1260,9 +1260,12 @@ class FailoverService(ConfigService):
                         'failover.call_remote', 'kmip.update_memory_keys', [kmip_keys]
                     )
                 except Exception as e:
+                    await self.middleware.call('alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', None)
                     self.middleware.logger.error(
                         'Failed to sync KMIP keys with remote node: %s', str(e), exc_info=True
                     )
+                else:
+                    await self.middleware.call('alert.oneshot_delete', 'FailoverKMIPKeysSyncFailed', None)
 
 
 async def ha_permission(middleware, app):
