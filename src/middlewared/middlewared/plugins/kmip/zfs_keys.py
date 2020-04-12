@@ -155,3 +155,7 @@ class KMIPService(Service, KMIPServerMixin):
                 self.middleware.logger.debug(
                     f'Failed to remove encryption key from KMIP server for "{dataset}" Dataset: {e}'
                 )
+
+    @private
+    async def update_zfs_keys(self, zfs_keys):
+        self.zfs_keys = zfs_keys

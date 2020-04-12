@@ -96,3 +96,13 @@ class KMIPService(Service, KMIPServerMixin):
             'zfs': await self.middleware.call('kmip.retrieve_zfs_keys'),
             'sed': await self.middleware.call('kmip.sed_keys'),
         }
+
+    @private
+    async def update_memory_keys(self, data):
+        for key, method in filter(
+            lambda k: k[0] in data, (
+                ('zfs', 'update_zfs_keys'),
+                ('sed', 'update_sed_keys'),
+            )
+        ):
+            await self.middleware.call(f'kmip.{method}', data[key])
