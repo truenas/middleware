@@ -209,7 +209,7 @@ class SharingSMBService(Service):
         conf = {}
 
         if data['home'] and gl['ad_enabled']:
-            data['path_suffix'] = '%d/%U'
+            data['path_suffix'] = '%D/%U'
         elif data['home']:
             data['path_suffix'] = '%U'
 
