@@ -330,6 +330,13 @@ class KMIPService(Service, KMIPServerMixin):
                 self.global_sed_key = key
 
     @private
+    async def sed_keys(self):
+        return {
+            'global_password': await self.sed_global_password(),
+            'sed_disks_keys': await self.retrieve_sed_disks_keys(),
+        }
+
+    @private
     async def sed_global_password(self):
         return self.global_sed_key
 

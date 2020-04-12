@@ -89,3 +89,10 @@ class KMIPService(Service, KMIPServerMixin):
                 await self.middleware.call('kmip.initialize_zfs_keys', connection_success)
             if kmip_config['manage_sed_disks']:
                 await self.middleware.call('kmip.initialize_sed_keys', connection_success)
+
+    @private
+    async def kmip_memory_keys(self):
+        return {
+            'zfs': await self.middleware.call('kmip.retrieve_zfs_keys'),
+            'sed': await self.middleware.call('kmip.sed_keys'),
+        }
