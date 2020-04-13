@@ -92,9 +92,7 @@ DEF_KNOBS = {
         'net.inet.tcp.recvbuf_max',
         'net.inet.tcp.sendbuf_max',
         'vfs.zfs.arc_max',
-        'vfs.zfs.l2arc_headroom',
         'vfs.zfs.l2arc_noprefetch',
-        'vfs.zfs.l2arc_norw',
         'vfs.zfs.l2arc_write_max',
         'vfs.zfs.l2arc_write_boost',
         'net.inet.tcp.mssdflt',
@@ -179,15 +177,7 @@ def guess_vfs_zfs_arc_max():
                        MIN_ZFS_RESERVED_MEM))
 
 
-def guess_vfs_zfs_l2arc_headroom():
-    return 2
-
-
 def guess_vfs_zfs_l2arc_noprefetch():
-    return 0
-
-
-def guess_vfs_zfs_l2arc_norw():
     return 0
 
 
