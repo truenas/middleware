@@ -227,17 +227,48 @@ def test_18_lock_passphrase_encrypted_datasets_and_ensure_they_get_locked():
 def test_19_unlock_passphrase_encrypted_datasets_and_ensure_they_get_unlocked():
     payload = {
         "id": dataset,
+        "unlock_options": {
+            "recursive": True,
+            "datasets": [
+                {
+                    "name": dataset,
+                    "passphrase": "my_passphrase"
+                }
+            ]
+        }
     }
     results = POST('/pool/dataset/unlock', payload)
     assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 60)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_20_delete_encrypted_dataset():
+def test_20_verify_encryption_summary_reports_accurate_results():
+    payload = {
+        "id": dataset
+    }
+    results = POST('/pool/dataset/encryption_summary', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 60)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    job_status_result = job_status['results']['result']
+    for dictionary in job_status_result:
+        if dictionary['name'] == dataset:
+            assert dictionary['key_format'] == 'PASSPHRASE', str(job_status_result)
+            assert dictionary['unlock_successful'] is True, str(job_status_result)
+            break
+    else:
+        assert False, str(job_status_result)
+
+
+def test_21_delete_encrypted_dataset():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_21_delete_pool():
+def test_22_delete_pool():
     payload = {
         "cascade": True,
         "restart_services": True,
@@ -250,7 +281,7 @@ def test_21_delete_pool():
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_22_creating_a_passphrase_encrypted_pool():
+def test_23_creating_a_passphrase_encrypted_pool():
     global pool_id
     payload = {
         "name": pool_name,
