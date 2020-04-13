@@ -716,7 +716,7 @@ class ZettareplService(Service):
                         channel.put(message)
 
                 if isinstance(message, ReplicationTaskSnapshotStart):
-                    self.state[f"replication_{message.task_id}"] = {
+                    self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "RUNNING",
                         "datetime": datetime.utcnow(),
                         "progress": {
@@ -728,9 +728,9 @@ class ZettareplService(Service):
                             "bytes_total": 0,
                             # legacy
                             "current": 0,
-                            "total": 9,
+                            "total": 0,
                         }
-                    }
+                    })
 
                     for channel in self.replication_jobs_channels[message.task_id]:
                         channel.put(message)
