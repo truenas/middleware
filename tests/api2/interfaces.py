@@ -85,7 +85,12 @@ def test_06_get_interface_ipv4_in_use():
 
 @pytest.mark.parametrize('dkey', ['type', 'address', 'netmask', 'broadcast'])
 def test_07_look_at_interface_ipv4_in_use_output_(dkey):
-    assert results.json()[0][dkey] == aliases[dkey], results.text
+    for dictionary in results.json():
+        if dictionary[dkey] == aliases[dkey]:
+            assert dictionary[dkey] == aliases[dkey], results.text
+            break
+    else:
+        assert False, results.text
 
 
 def test_08_set_main_interface_ipv4_to_false():
