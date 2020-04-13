@@ -456,7 +456,7 @@ def test_36_change_a_key_encrypted_dataset_to_passphrase_on_key_encrypted_pool()
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_37_change_a_key_encrypted_dataset_to_passphrase():
+def test_37_change_a_key_encrypted_dataset_to_passphrase_on_key_encrypted_pool():
     payload = {
         'id': dataset,
         'change_key_options': {
@@ -534,7 +534,7 @@ def test_44_delete_encrypted_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_45_create_an_encrypted_dataset_with_generate_key():
+def test_45_create_an_encrypted_dataset_with_generate_key_on_key_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption_options': {
