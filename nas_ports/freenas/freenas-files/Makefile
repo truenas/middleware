@@ -62,6 +62,7 @@ do-install:
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
 	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
+		| ${GREP} -v "/debian/" \
 		| ${GREP} -v "/netcli.sh" \
 		| ${GREP} -v "/systemd/" \
 		| ${SED} -e 's,^\./,,g' \
