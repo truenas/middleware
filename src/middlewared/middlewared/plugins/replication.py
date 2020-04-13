@@ -70,8 +70,8 @@ class ReplicationPeriodicSnapshotTaskModel(sa.Model):
     __tablename__ = 'storage_replication_repl_periodic_snapshot_tasks'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    replication_id = sa.Column(sa.ForeignKey('storage_replication.id'))
-    task_id = sa.Column(sa.ForeignKey('storage_task.id'))
+    replication_id = sa.Column(sa.ForeignKey('storage_replication.id', ondelete='CASCADE'), index=True)
+    task_id = sa.Column(sa.ForeignKey('storage_task.id', ondelete='CASCADE'), index=True)
 
 
 class ReplicationService(CRUDService):
