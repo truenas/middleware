@@ -21,7 +21,7 @@ class CIFSService(SimpleService):
             [],
         )
 
-    async def _start_freebsd(self):
+    async def start(self):
         announce = (await self.middleware.call("network.configuration.config"))["service_announcement"]
         if osc.IS_FREEBSD:
             await self._freebsd_service("smbd", "start", force=True)
@@ -49,7 +49,7 @@ class CIFSService(SimpleService):
         except Exception as e:
             raise CallError(e)
 
-    async def _stop_freebsd(self):
+    async def stop(self):
         if osc.IS_FREEBSD:
             await self._freebsd_service("smbd", "stop", force=True)
             await self._freebsd_service("winbindd", "stop", force=True)

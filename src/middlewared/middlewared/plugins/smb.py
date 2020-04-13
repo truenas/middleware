@@ -532,7 +532,7 @@ class SharingSMBModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     cifs_purpose = sa.Column(sa.String(120))
     cifs_path = sa.Column(sa.String(255), nullable=True)
-    cifs_path_suffix = sa.Column(sa.String(255), nullable=True)
+    cifs_path_suffix = sa.Column(sa.String(255), nullable=False)
     cifs_home = sa.Column(sa.Boolean(), default=False)
     cifs_name = sa.Column(sa.String(120))
     cifs_comment = sa.Column(sa.String(120))
