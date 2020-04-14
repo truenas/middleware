@@ -268,7 +268,7 @@ async def run_script(job, env, hook, script_name):
             [name],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            env=env,
+            env=dict(os.environ, **env),
         )
         future = asyncio.ensure_future(run_script_check(job, proc, script_name))
         await proc.wait()
