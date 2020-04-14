@@ -297,7 +297,7 @@ class VMSupervisor:
                 'features', attribute_dict={
                     'children': [
                         create_element('acpi'),
-                        create_element('apic'),
+                        create_element('msrs', unknown='ignore'),
                     ]
                 }
             ),
