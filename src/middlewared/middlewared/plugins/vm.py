@@ -704,7 +704,9 @@ class VNC(Device):
 
     def xml(self, *args, **kwargs):
         return create_element(
-            'controller', type='usb', model='nec-xhci'
+            'controller', type='usb', model='nec-xhci', attribute_dict={
+                'children': [create_element('address', type='pci', slot='30')]
+            }
         ), create_element('input', type='tablet', bus='usb')
 
     def bhyve_args(self, *args, **kwargs):
