@@ -121,9 +121,11 @@ class GlusterVolumeService(CRUDService):
 
         volname = data.get('volname')
 
-        args = (volname,)
-
-        result = self.__volume_wrapper(volume.info, args)
+        if volname:
+            args = (volname,)
+            result = self.__volume_wrapper(volume.info, args)
+        else:
+            result = self.__volume_wrapper(volume.info)
 
         return result
 
