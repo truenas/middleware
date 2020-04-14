@@ -173,11 +173,11 @@ class LDAPQuery(object):
                     if self.ldap['certificate']:
                         ldap.set_option(
                             ldap.OPT_X_TLS_CERTFILE,
-                            f"/etc/certificates/{self.ldap['certificate']}.crt"
+                            f"/etc/certificates/{self.ldap['cert_name']}.crt"
                         )
                         ldap.set_option(
                             ldap.OPT_X_TLS_KEYFILE,
-                            f"/etc/certificates/{self.ldap['certificate']}.key"
+                            f"/etc/certificates/{self.ldap['cert_name']}.key"
                         )
 
                     ldap.set_option(
@@ -405,9 +405,12 @@ class LDAPService(ConfigService):
         for key in ["ssl", "schema"]:
             data[key] = data[key].upper()
 
-        for key in ["certificate", "kerberos_realm"]:
-            if data[key] is not None:
-                data[key] = data[key]["id"]
+        if data["certificate"] is not None:
+            data["cert_name"] = data['certificate']['cert_name']
+            data["certificate"] = data['certificate']['id']
+
+        if data["kerberos_realm"] is not None:
+            data["kerberos_realm"] = data["kerberos_realm"]["id"]
 
         data['uri_list'] = await self.hostnames_to_uris(data)
 
@@ -423,6 +426,7 @@ class LDAPService(ConfigService):
             data.pop('bindpw')
 
         data.pop('uri_list')
+        data.pop('cert_name')
 
         return data
 
