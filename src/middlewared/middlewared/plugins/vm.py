@@ -53,7 +53,6 @@ LIBVIRT_BHYVE_NAMESPACE = 'http://libvirt.org/schemas/domain/bhyve/1.0'
 LIBVIRT_BHYVE_NSMAP = {'bhyve': LIBVIRT_BHYVE_NAMESPACE}
 SHUTDOWN_LOCK = asyncio.Lock()
 LIBVIRT_LOCK = asyncio.Lock()
-LIBVIRT_HOSTDEV = False  # Whether libvirt supports hostdev for bhyve or not
 PPT_BASE_NAME = 'ppt'
 RE_PCICONF_PPTDEVS = re.compile(
     r'^(' + re.escape(PPT_BASE_NAME) + '[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$', flags=re.I)
@@ -693,50 +692,45 @@ class PCI(Device):
         }
 
     def xml(self, *args, **kwargs):
-        if LIBVIRT_HOSTDEV:
-            # Generate xml if libvirt supports hostdev for bhyve.
-            # If passthru is performed by means of additional command-line arguments
-            # to the bhyve process using the <bhyve:commanline> element under domain,
-            # the xml is TYPICALLY not needed. An EXCEPTION is when there are devices
-            # for which the pci address is not under the control of and set by
-            # middleware and generation of the xml can reduce the risk for conflicts.
-            # It appears that when assigning addresses to other devices libvirt avoids
-            # the pci address provided in the xml also when libvirt does not (fully)
-            # support hostdev for bhyve.
-            host_bsf = self.ppt_map['host_bsf']
-            guest_bsf = self.ppt_map['guest_bsf']
+        # If passthru is performed by means of additional command-line arguments
+        # to the bhyve process using the <bhyve:commanline> element under domain,
+        # the xml is TYPICALLY not needed. An EXCEPTION is when there are devices
+        # for which the pci address is not under the control of and set by
+        # middleware and generation of the xml can reduce the risk for conflicts.
+        # It appears that when assigning addresses to other devices libvirt avoids
+        # the pci address provided in the xml also when libvirt does not (fully)
+        # support hostdev for bhyve.
+        host_bsf = self.ppt_map['host_bsf']
+        guest_bsf = self.ppt_map['guest_bsf']
 
-            return create_element(
-                'hostdev', mode='subsystem', type='pci', managed='no', attribute_dict={
-                    'children': [
-                        create_element(
-                            'source', attribute_dict={
-                                'children': [
-                                    create_element('address', domain='0x0000',
-                                                   bus='0x{:04x}'.format(host_bsf[0]),
-                                                   slot='0x{:04x}'.format(host_bsf[1]),
-                                                   function='0x{:04x}'.format(host_bsf[2])),
-                                ]
-                            }
-                        ),
-                        create_element('address', type='pci', domain='0x0000',
-                                       bus='0x{:04x}'.format(guest_bsf[0]),
-                                       slot='0x{:04x}'.format(guest_bsf[1]),
-                                       function='0x{:04x}'.format(guest_bsf[2])),
-                    ]
-                }
-            ) if guest_bsf is not None else None
+        return create_element(
+            'hostdev', mode='subsystem', type='pci', managed='no', attribute_dict={
+                'children': [
+                    create_element(
+                        'source', attribute_dict={
+                            'children': [
+                                create_element('address', domain='0x0000',
+                                               bus='0x{:04x}'.format(host_bsf[0]),
+                                               slot='0x{:04x}'.format(host_bsf[1]),
+                                               function='0x{:04x}'.format(host_bsf[2])),
+                            ]
+                        }
+                    ),
+                    create_element('address', type='pci', domain='0x0000',
+                                   bus='0x{:04x}'.format(guest_bsf[0]),
+                                   slot='0x{:04x}'.format(guest_bsf[1]),
+                                   function='0x{:04x}'.format(guest_bsf[2])),
+                ]
+            }
+        ) if guest_bsf is not None else None
 
     def bhyve_args(self, *args, **kwargs):
-        if not LIBVIRT_HOSTDEV:
-            # Unless libvirt supports hostdev for bhyve, we need to pass pci devices
-            # through to guest by means of additional command-line arguments to the
-            # bhyve process using the <bhyve:commandline> element under domain.
-            return '-s {g[1]}:{g[2]},passthru,{h[0]}/{h[1]}/{h[2]}'.format(
-                g=self.ppt_map['guest_bsf'], h=self.ppt_map['host_bsf']
-            ) if self.ppt_map['guest_bsf'] is not None else None
-        else:
-            return None
+        # Unless libvirt supports hostdev for bhyve, we need to pass pci devices
+        # through to guest by means of additional command-line arguments to the
+        # bhyve process using the <bhyve:commandline> element under domain.
+        return '-s {g[1]}:{g[2]},passthru,{h[0]}/{h[1]}/{h[2]}'.format(
+            g=self.ppt_map['guest_bsf'], h=self.ppt_map['host_bsf']
+        ) if self.ppt_map['guest_bsf'] is not None else None
 
 
 class NIC(Device):
