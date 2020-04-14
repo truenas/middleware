@@ -4,6 +4,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
+from middlewared.utils.osc import IS_FREEBSD
 from middlewared.validators import Email
 
 import asyncio
@@ -169,7 +170,7 @@ class UserService(CRUDService):
         Bool('group_create', default=False),
         Str('home', default='/nonexistent'),
         Str('home_mode', default='755'),
-        Str('shell', default='/bin/csh'),
+        Str('shell', default='/bin/csh' if IS_FREEBSD else '/usr/bin/zsh'),
         Str('full_name', required=True),
         Str('email', validators=[Email()], null=True, default=None),
         Str('password', private=True),
