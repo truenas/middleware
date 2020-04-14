@@ -286,6 +286,12 @@ class CryptoKeyService(Service):
                     'Please enable ca when key_cert_sign is set in KeyUsage as per RFC 5280.'
                 )
 
+        if extensions_data['ExtendedKeyUsage']['enabled'] and not extensions_data['ExtendedKeyUsage']['usages']:
+            verrors.add(
+                f'{schema}.ExtendedKeyUsage',
+                'Please specify at least one USAGE for this extension.'
+            )
+
         return verrors
 
     def validate_cert_with_chain(self, cert, chain):
@@ -569,7 +575,7 @@ class CryptoKeyService(Service):
                 ),
                 Dict(
                     'ExtendedKeyUsage',
-                    List('usages', items=[Str('usage', enum=EKU_OIDS)]),
+                    List('usages', items=[Str('usage', enum=EKU_OIDS)], default=[]),
                     Bool('enabled', default=False),
                     Bool('extension_critical', default=False)
                 ),

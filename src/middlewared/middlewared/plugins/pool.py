@@ -1375,7 +1375,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook(
             'pool.post_import', {
                 'passphrase': data.get('passphrase'),
-                **(await self.middleware.call('pool.query', [['name', '=', pool['name']]]))
+                **(await self.middleware.call('pool.query', [['name', '=', pool['name']]], {'get': True}))
             }
         )
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
