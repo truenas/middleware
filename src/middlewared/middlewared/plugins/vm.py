@@ -1866,6 +1866,14 @@ class VMDeviceService(CRUDService):
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
 
+    class NotSet:
+        pass
+
+    def __init__(self, *args, **kwargs):
+        super(VMDeviceService, self).__init__(*args, **kwargs)
+        self.pptdevs = self.NotSet
+        self.iommu_type = self.NotSet
+
     @private
     async def failover_nic_check(self, vm_device, verrors, schema):
         if not await self.middleware.call('system.is_freenas') and await self.middleware.call('failover.licensed'):
@@ -1938,24 +1946,24 @@ class VMDeviceService(CRUDService):
         """
         Available choices for PCI passthru device.
         """
-        proc = subprocess.Popen(['/usr/sbin/pciconf', '-l'],
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL, text=True)
+        if self.pptdevs is self.NotSet:
+            proc = subprocess.Popen(['/usr/sbin/pciconf', '-l'],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.DEVNULL, text=True)
+            try:
+                outs, errs = proc.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                outs, errs = proc.communicate()
 
-        try:
-            outs, errs = proc.communicate(timeout=5)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            outs, errs = proc.communicate()
-
-        lines = outs.split('\n')
-        pptdevs = {}
-        for line in lines:
-            object = RE_PCICONF_PPTDEVS.match(line)
-            if object:
-                pptdev = object.group(2).replace(':', '/')
-                pptdevs[pptdev] = pptdev
-        return pptdevs
+            lines = outs.split('\n')
+            self.pptdevs = {}
+            for line in lines:
+                object = RE_PCICONF_PPTDEVS.match(line)
+                if object:
+                    pptdev = object.group(2).replace(':', '/')
+                    self.pptdevs[pptdev] = pptdev
+        return self.pptdevs
 
     @accepts()
     def vnc_bind_choices(self):
@@ -2172,10 +2180,12 @@ class VMDeviceService(CRUDService):
                     return type
             return None
 
-        for type in ['VT-d', 'amdvi']:
-            if check_iommu(type):
-                return type
-        return None
+        if self.iommu_type is self.NotSet:
+            for type in ['VT-d', 'amdvi']:
+                self.iommu_type = check_iommu(type)
+                if self.iommu_type is not None:
+                    break
+        return self.iommu_type
 
     @private
     async def validate_device(self, device, old=None, vm_instance=None):
