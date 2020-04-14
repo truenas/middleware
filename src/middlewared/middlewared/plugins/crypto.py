@@ -288,7 +288,7 @@ class CryptoKeyService(Service):
 
         if extensions_data['ExtendedKeyUsage']['enabled'] and not extensions_data['ExtendedKeyUsage']['usages']:
             verrors.add(
-                f'{schema}.ExtendedKeyUsage',
+                f'{schema}.ExtendedKeyUsage.usages',
                 'Please specify at least one USAGE for this extension.'
             )
 
@@ -688,20 +688,7 @@ class CryptoKeyService(Service):
 
         cert = self.generate_builder(builder_data)
 
-        cert = cert.add_extension(
-            x509.BasicConstraints(True, 0 if ca_key else None), True
-        ).add_extension(
-            x509.KeyUsage(
-                digital_signature=False, content_commitment=False, key_encipherment=False, data_encipherment=False,
-                key_agreement=False, key_cert_sign=True, crl_sign=True, encipher_only=False, decipher_only=False
-            ), True
-        ).add_extension(
-            x509.SubjectKeyIdentifier.from_public_key(key.public_key()), False
-        ).add_extension(
-            x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), False
-        ).public_key(
-            key.public_key()
-        )
+        cert = self.add_extensions(cert, data.get('cert_extensions'), key, issuer)
 
         cert = cert.sign(
             ca_key or key, self.retrieve_signing_algorithm(data, ca_key or key), default_backend()
@@ -2104,6 +2091,11 @@ class CertificateAuthorityService(CRUDService):
                     'enabled': True,
                     'ca': True,
                     'extension_critical': True
+                },
+                'ExtendedKeyUsage': {
+                    'enabled': True,
+                    'extension_critical': False,
+                    'usages': ['SERVER_AUTH']
                 }
             },
             'key_length': 2048,
@@ -2127,6 +2119,11 @@ class CertificateAuthorityService(CRUDService):
                     'enabled': True,
                     'ca': True,
                     'extension_critical': True
+                },
+                'ExtendedKeyUsage': {
+                    'enabled': True,
+                    'extension_critical': False,
+                    'usages': ['SERVER_AUTH']
                 }
             }
         }
@@ -2297,12 +2294,13 @@ class CertificateAuthorityService(CRUDService):
 
     def _set_cert_extensions_defaults(name):
         def set_defaults(attr):
-            for ext, keys in (
-                ('BasicConstraints', ('enabled', 'ca', 'extension_critical')),
-                ('KeyUsage', ('enabled', 'key_cert_sign', 'crl_sign', 'extension_critical'))
+            for ext, keys, values in (
+                ('BasicConstraints', ('enabled', 'ca', 'extension_critical'), [True] * 3),
+                ('KeyUsage', ('enabled', 'key_cert_sign', 'crl_sign', 'extension_critical'), [True] * 4),
+                ('ExtendedKeyUsage', ('enabled', 'usages'), (True, ['SERVER_AUTH']))
             ):
-                for k in keys:
-                    attr.attrs[ext].attrs[k].default = True
+                for k, v in zip(keys, values):
+                    attr.attrs[ext].attrs[k].default = v
 
         return {'name': name, 'method': set_defaults}
 
