@@ -241,15 +241,7 @@ class DiskService(Service):
             for vdev in vdevs:
                 new_size = 2
                 if vdev['type'] == 'MIRROR':
-                    mirror_size = len(vdev['children'])
-                    # if there's only one pool and it's one vdev only,
-                    # make group size equals to mirror size
-                    if len(pools) == 1 and len(vdevs) == 1:
-                        new_size = mirror_size
-                    # if there're multiple pools or vdevs, make it bigger than mirror size
-                    # to make sure system won't crash even when this pool failed
-                    else:
-                        new_size = mirror_size + 1
+                    new_size = len(vdev['children'])
                 if vdev['type'] == 'RAIDZ2':
                     new_size = 3
                 if vdev['type'] == 'RAIDZ3':
