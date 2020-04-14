@@ -62,9 +62,11 @@ class GlusterVolumeService(CRUDService):
         )
 
         if peer_job:
-            verrors.add('validate_gluster_jobs',
+            verrors.add(
+                'validate_gluster_jobs',
                 'There is an ongoing gluster peer operation. '
-                'Please wait for it to complete and then try again.')
+                'Please wait for it to complete and then try again.'
+            )
             raise verrors
 
         volume_job = self.middleware.call_sync(
@@ -76,9 +78,11 @@ class GlusterVolumeService(CRUDService):
         )
 
         if volume_job:
-            verrors.add('validate_gluster_jobs',
+            verrors.add(
+                'validate_gluster_jobs',
                 'There is an ongoing gluster volume operation. '
-                'Please wait for it to complete and then try again.')
+                'Please wait for it to complete and then try again.'
+            )
             raise verrors
 
     @private
