@@ -25,7 +25,7 @@ child_dataset = f'{dataset}/child'
 child_dataset_url = child_dataset.replace('/', '%2F')
 
 
-def test_01_creating_an_pool():
+def test_01_create_a_normal_pool():
     global pool_id
     payload = {
         'name': pool_name,
@@ -44,7 +44,7 @@ def test_01_creating_an_pool():
     pool_id = job_status['results']['result']['id']
 
 
-def test_02_creating_a_passphrase_encrypted_dataset():
+def test_02_create_a_passphrase_encrypted_root_on_normal_pool():
     payload = {
         'name': dataset,
         'encryption_options': {
@@ -239,7 +239,7 @@ def test_19_unlock_passphrase_encrypted_datasets_and_ensure_they_get_unlocked():
             ]
         }
     }
-    results = POST('/pool/dataset/unlock', payload)
+    results = POST('/pool/dataset/unlock/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
@@ -250,7 +250,7 @@ def test_20_verify_encryption_summary_reports_accurate_results():
     payload = {
         'id': dataset
     }
-    results = POST('/pool/dataset/encryption_summary', payload)
+    results = POST('/pool/dataset/encryption_summary/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
@@ -496,7 +496,7 @@ def test_39_unlock_passphrase_encrypted_datasets_and_ensure_they_get_unlocked():
             ]
         }
     }
-    results = POST('/pool/dataset/unlock', payload)
+    results = POST('/pool/dataset/unlock/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
@@ -554,7 +554,7 @@ def test_46_delete_generate_key_encrypted_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_47_create_a_passphrase_encrypted_dataset_on_key_encrypted_pool():
+def test_47_create_a_passphrase_encrypted_root_dataset_parrent():
     payload = {
         'name': dataset,
         'encryption_options': {
@@ -567,11 +567,32 @@ def test_47_create_a_passphrase_encrypted_dataset_on_key_encrypted_pool():
     assert results.status_code == 200, results.text
 
 
-def test_48_verify_encryption_summary_reports_accurate_results():
+def test_48_create_a_passphrase_encrypted_root_child_of_passphrase_parent():
+    payload = {
+        'name': child_dataset,
+        'encryption_options': {
+            'passphrase': 'my_passphrase2',
+        },
+        'encryption': True,
+        'inherit_encryption': False
+    }
+    results = POST('/pool/dataset/', payload)
+    assert results.status_code == 200, results.text
+
+
+def test_49_lock_passphrase_encrypted_root_with_is_child():
+    payload = {
+        'id': dataset,
+    }
+    results = POST('/pool/dataset/lock', payload)
+    assert results.status_code == 200, results.text
+
+
+def test_51_verify_the_parrent_encrypted_root_is_locked():
     payload = {
         'id': dataset
     }
-    results = POST('/pool/dataset/encryption_summary', payload)
+    results = POST('/pool/dataset/encryption_summary/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
@@ -579,19 +600,138 @@ def test_48_verify_encryption_summary_reports_accurate_results():
     job_status_result = job_status['results']['result']
     for dictionary in job_status_result:
         if dictionary['name'] == dataset:
-            assert dictionary['key_format'] == 'PASSPHRASE', str(job_status_result)
-            assert dictionary['unlock_successful'] is True, str(job_status_result)
+            assert dictionary['locked'] is True, str(job_status_result)
             break
     else:
         assert False, str(job_status_result)
 
 
-def test_49_delete_encrypted_dataset():
-    results = DELETE(f'/pool/dataset/id/{dataset_url}/')
+def test_52_verify_the_chid_of_the_encrypted_root_parent_is_locked():
+    payload = {
+        'id': child_dataset
+    }
+    results = POST('/pool/dataset/encryption_summary/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    job_status_result = job_status['results']['result']
+    for dictionary in job_status_result:
+        if dictionary['name'] == child_dataset:
+            assert dictionary['locked'] is True, str(job_status_result)
+            break
+    else:
+        assert False, str(job_status_result)
+
+
+def test_53_try_to_unlock_the_child_of_lock_parent_encrypted_root():
+    payload = {
+        'id': child_dataset,
+        'unlock_options': {
+            'recursive': True,
+            'datasets': [
+                {
+                    'name': child_dataset,
+                    'passphrase': 'my_passphrase2'
+                }
+            ]
+        }
+    }
+    results = POST('/pool/dataset/unlock/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'FAILED', str(job_status['results'])
+    assert f'{child_dataset} has locked parents' in str(job_status['results']), str(job_status['results'])
+
+
+def test_54_Verify_chid_is_still_locked():
+    payload = {
+        'id': child_dataset
+    }
+    results = POST('/pool/dataset/encryption_summary/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    job_status_result = job_status['results']['result']
+    for dictionary in job_status_result:
+        if dictionary['name'] == child_dataset:
+            assert dictionary['locked'] is True, str(job_status_result)
+            break
+    else:
+        assert False, str(job_status_result)
+
+
+def test_55_unlock_parent_dataset_with_child_recursively():
+    payload = {
+        'id': dataset,
+        'unlock_options': {
+            'recursive': True,
+            'datasets': [
+                {
+                    'name': dataset,
+                    'passphrase': 'my_passphrase'
+                },
+                {
+                    'name': child_dataset,
+                    'passphrase': 'my_passphrase2'
+                }
+            ]
+        }
+    }
+    results = POST('/pool/dataset/unlock/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_56_verify_the_parent_dataset_is_unlocked():
+    payload = {
+        'id': dataset
+    }
+    results = POST('/pool/dataset/encryption_summary/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    job_status_result = job_status['results']['result']
+    for dictionary in job_status_result:
+        if dictionary['name'] == dataset:
+            assert dictionary['locked'] is False, str(job_status_result)
+            break
+    else:
+        assert False, str(job_status_result)
+
+
+def test_57_verify_the_child_dataset_is_unlocked():
+    payload = {
+        'id': child_dataset
+    }
+    results = POST('/pool/dataset/encryption_summary/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    job_status_result = job_status['results']['result']
+    for dictionary in job_status_result:
+        if dictionary['name'] == child_dataset:
+            assert dictionary['locked'] is False, str(job_status_result)
+            break
+    else:
+        assert False, str(job_status_result)
+
+
+def test_58_delete_dataset_with_is_child_recursive():
+    payload = {
+        "recursive": True,
+    }
+    results = DELETE(f'/pool/dataset/id/{dataset_url}/', payload)
     assert results.status_code == 200, results.text
 
 
-def test_50_creating_a_key_encrypted_dataset_on_key_encrypted_pool():
+def test_59_creating_a_key_encrypted_dataset_on_key_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption_options': {
@@ -604,7 +744,7 @@ def test_50_creating_a_key_encrypted_dataset_on_key_encrypted_pool():
     assert results.status_code == 200, results.text
 
 
-def test_51_create_a_passphrase_encrypted_root_from_key_encrypted_root():
+def test_60_create_a_passphrase_encrypted_root_from_key_encrypted_root():
     payload = {
         'name': child_dataset,
         'encryption_options': {
@@ -617,32 +757,24 @@ def test_51_create_a_passphrase_encrypted_root_from_key_encrypted_root():
     assert results.status_code == 200, results.text
 
 
-def test_52_verify_the_new_passprase_encrypted_root_is_passphrase():
+def test_61_verify_the_new_passprase_encrypted_root_is_passphrase():
     results = GET(f'/pool/dataset/id/{child_dataset_url}')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
-def test_53_run_inherit_parent_encryption_properties_on_the_passprase():
+def test_62_run_inherit_parent_encryption_properties_on_the_passprase():
     results = POST('/pool/dataset/inherit_parent_encryption_properties', child_dataset)
     assert results.status_code == 200, results.text
 
 
-def test_54_verify_the_the_child_got_props_by_the_parent_root():
+def test_63_verify_the_the_child_got_props_by_the_parent_root():
     results = GET(f'/pool/dataset/id/{child_dataset_url}')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-def test_55_delete_encrypted_dataset_with_child_recursively():
-    payload = {
-        "recursive": True,
-    }
-    results = DELETE(f'/pool/dataset/id/{dataset_url}/', payload)
-    assert results.status_code == 200, results.text
-
-
-def test_56_delete_the_key_encrypted_pool():
+def test_64_delete_the_key_encrypted_pool_with_all_the_dataset():
     payload = {
         'cascade': True,
         'restart_services': True,
