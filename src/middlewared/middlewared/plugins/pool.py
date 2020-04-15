@@ -2138,6 +2138,11 @@ class PoolDatasetService(CRUDService):
                     f'unlock_options.datasets.{i}.dataset.key',
                     f'Must not be specified when passphrase for {ds["name"]} is supplied'
                 )
+            elif not any(ds.get(k) for k in ('key', 'passphrase')):
+                verrors.add(
+                    f'unlock_options.datasets.{i}.dataset',
+                    f'Passphrase or key must be specified for {ds["name"]}'
+                )
             keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
 
         if '/' in id or not options['recursive']:
