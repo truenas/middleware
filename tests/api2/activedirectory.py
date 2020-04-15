@@ -575,6 +575,7 @@ def test_59_re_enable_activedirectory():
     job_id = results.json()['job_id']
 
 
+@skip_ad_test
 def test_60_verify_job_id_is_successfull():
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
