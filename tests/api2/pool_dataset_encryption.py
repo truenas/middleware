@@ -21,6 +21,8 @@ dataset_token_hex = secrets.token_hex(32)
 dataset_token_hex2 = secrets.token_hex(32)
 dataset = f'{pool_name}/encrypted'
 dataset_url = dataset.replace('/', '%2F')
+child_dataset = f'{dataset}/child'
+child_dataset_url = child_dataset.replace('/', '%2F')
 
 
 def test_01_creating_an_pool():
@@ -37,7 +39,7 @@ def test_01_creating_an_pool():
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     pool_id = job_status['results']['result']['id']
 
@@ -76,7 +78,7 @@ def test_04_change_a_passphrase_encrypted_dataset_key():
     results = POST(f'/pool/dataset/change_key/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -209,7 +211,7 @@ def test_17_change_a_key_encrypted_dataset_to_passphrase():
     results = POST('/pool/dataset/change_key/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -240,7 +242,7 @@ def test_19_unlock_passphrase_encrypted_datasets_and_ensure_they_get_unlocked():
     results = POST('/pool/dataset/unlock', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -251,7 +253,7 @@ def test_20_verify_encryption_summary_reports_accurate_results():
     results = POST('/pool/dataset/encryption_summary', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     job_status_result = job_status['results']['result']
     for dictionary in job_status_result:
@@ -277,7 +279,7 @@ def test_22_delete_pool():
     results = POST(f'/pool/id/{pool_id}/export/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -299,7 +301,7 @@ def test_23_creating_a_passphrase_encrypted_pool():
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     pool_id = job_status['results']['result']['id']
 
@@ -330,7 +332,7 @@ def test_25_change_a_passphrase_encrypted_dataset_to_key_on_passphrase_encrypted
     results = POST(f'/pool/dataset/change_key/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -402,7 +404,7 @@ def test_33_delete_the_passphrase_encrypted_pool():
     results = POST(f'/pool/id/{pool_id}/export/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -424,7 +426,7 @@ def test_34_creating_a_key_encrypted_pool():
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     pool_id = job_status['results']['result']['id']
 
@@ -452,7 +454,7 @@ def test_36_change_a_key_encrypted_dataset_to_passphrase_on_key_encrypted_pool()
     results = POST(f'/pool/dataset/change_key/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -466,7 +468,7 @@ def test_37_change_a_key_encrypted_dataset_to_passphrase_on_key_encrypted_pool()
     results = POST('/pool/dataset/change_key/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -497,7 +499,7 @@ def test_39_unlock_passphrase_encrypted_datasets_and_ensure_they_get_unlocked():
     results = POST('/pool/dataset/unlock', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
@@ -572,7 +574,7 @@ def test_48_verify_encryption_summary_reports_accurate_results():
     results = POST('/pool/dataset/encryption_summary', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     job_status_result = job_status['results']['result']
     for dictionary in job_status_result:
@@ -589,7 +591,50 @@ def test_49_delete_encrypted_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_50_delete_the_key_encrypted_pool():
+def test_50_creating_a_key_encrypted_dataset_on_key_encrypted_pool():
+    payload = {
+        'name': dataset,
+        'encryption_options': {
+            'key': dataset_token_hex,
+        },
+        'encryption': True,
+        'inherit_encryption': False
+    }
+    results = POST('/pool/dataset/', payload)
+    assert results.status_code == 200, results.text
+
+
+def test_51_create_a_passphrase_encrypted_root_from_key_encrypted_root():
+    payload = {
+        'name': child_dataset,
+        'encryption_options': {
+            'passphrase': 'my_passphrase',
+        },
+        'encryption': True,
+        'inherit_encryption': False
+    }
+    results = POST('/pool/dataset/', payload)
+    assert results.status_code == 200, results.text
+
+
+def test_52_verify_the_new_passprase_encrypted_root_is_passphrase():
+    results = GET(f'/pool/dataset/id/{child_dataset_url}')
+    assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
+
+
+def test_53_run_inherit_parent_encryption_properties_on_the_passprase():
+    results = POST('/pool/dataset/inherit_parent_encryption_properties', child_dataset)
+    assert results.status_code == 200, results.text
+
+
+def test_54_verify_the_the_child_got_props_by_the_parent_root():
+    results = GET(f'/pool/dataset/id/{child_dataset_url}')
+    assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] == 'HEX', results.text
+
+
+def test_55_delete_the_key_encrypted_pool():
     payload = {
         'cascade': True,
         'restart_services': True,
@@ -598,5 +643,5 @@ def test_50_delete_the_key_encrypted_pool():
     results = POST(f'/pool/id/{pool_id}/export/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
-    job_status = wait_on_job(job_id, 60)
+    job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
