@@ -83,6 +83,13 @@ zfs_func()
 	do
 		section_header "${s}"
 		zfs get all "${s}"
+		if is_freebsd; then
+			echo "Mountpoint ACL:"
+			mp=$(zfs get -H -o value mountpoint "${s}")
+			if [ "${mp}" != "legacy" ]; then
+				getfacl "${mp}"
+			fi
+		fi
 		section_footer
 	done
 	section_footer
