@@ -634,7 +634,15 @@ def test_54_verify_the_the_child_got_props_by_the_parent_root():
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-def test_55_delete_the_key_encrypted_pool():
+def test_55_delete_encrypted_dataset_with_child_recursively():
+    payload = {
+        "recursive": True,
+    }
+    results = DELETE(f'/pool/dataset/id/{dataset_url}/', payload)
+    assert results.status_code == 200, results.text
+
+
+def test_56_delete_the_key_encrypted_pool():
     payload = {
         'cascade': True,
         'restart_services': True,
