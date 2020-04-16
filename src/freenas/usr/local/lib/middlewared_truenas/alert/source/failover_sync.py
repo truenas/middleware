@@ -32,3 +32,17 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     )
 
     products = ("ENTERPRISE",)
+
+
+class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = "Syncing KMIP Keys to Peer Failed"
+    text = (
+        "The automatic synchronization of KMIP keys with the standby "
+        "controller has failed. Please go to System > Failover and manually sync to peer."
+    )
+
+    products = ("ENTERPRISE",)
