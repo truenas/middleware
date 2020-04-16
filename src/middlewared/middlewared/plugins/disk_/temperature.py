@@ -80,7 +80,7 @@ class DiskService(Service):
         """
         Returns temperature for device `name` using specified S.M.A.R.T. `powermode`.
         """
-        if name.startswith('da') and False:
+        if name.startswith('da'):
             smartctl_args = await self.middleware.call('disk.smartctl_args', name) or []
             if not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
                 try:
