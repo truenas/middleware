@@ -1951,13 +1951,17 @@ class VMDeviceService(CRUDService):
                 self.logger.warn(f'An error occured when checking the PCI configuration '
                                  f'for devices available for PCI passthru. {e}.')
             else:
-                lines = outs.split('\n')
-                for line in lines:
-                    object = RE_PCICONF_PPTDEVS.match(line)
-                    if object:
-                        pptdev = object.group(2).replace(':', '/')
-                        self.pptdevs[pptdev] = pptdev
-
+                if proc.returncode < 1:
+                    lines = outs.split('\n')
+                    for line in lines:
+                        object = RE_PCICONF_PPTDEVS.match(line)
+                        if object:
+                            pptdev = object.group(2).replace(':', '/')
+                            self.pptdevs[pptdev] = pptdev
+                else:
+                    self.logger.warn(f'An error occured when checking the PCI configuration '
+                                     f'for devices available for PCI passthru. '
+                                     f'The subprocess ({proc.args}) exited with status {proc.returncode}.')
         return self.pptdevs
 
     @accepts()
@@ -2178,8 +2182,15 @@ class VMDeviceService(CRUDService):
                         proc1.kill()
                     self.logger.warn(f'An error occured when checking for iommu ({iommu_type}). {e}.')
                 else:
-                    if outs:
-                        return iommu_type
+                    if proc1.poll() is None:  # make sure proc1 has terminated
+                        proc1.kill()
+                    if proc1.returncode < 1 and proc2.returncode < 2:
+                        if outs:
+                            return iommu_type
+                    else:
+                        self.logger.warn(f'An error occured when checking for iommu ({iommu_type}). '
+                                         f'Subprocess 1 ({proc1.args}) exited with status {proc1.returncode}; '
+                                         f'Subprocess 2 ({proc2.args}) exited with status {proc2.returncode}.')
             return None
 
         if self.iommu_type is None:
