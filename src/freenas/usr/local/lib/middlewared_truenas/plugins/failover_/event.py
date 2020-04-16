@@ -573,6 +573,13 @@ class FailoverService(Service):
 
                 self.run_call('alert.block_failover_alerts')
                 self.run_call('alert.initialize', False)
+                kmip_config = self.run_call('kmip.config')
+                if kmip_config and kmip_config['enabled']:
+                    # Even though we keep keys in sync, it's best that we do this as well
+                    # to ensure that the system is up to date with the latest keys available
+                    # from KMIP. If it's unaccessible, the already synced memory keys are used
+                    # meanwhile.
+                    self.run_call('kmip.initialize_keys')
 
                 conn.close()
 
