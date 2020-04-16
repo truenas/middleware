@@ -2406,27 +2406,51 @@ class PoolDatasetService(CRUDService):
         elif ds['locked']:
             verrors.add('id', 'Dataset must be unlocked before key can be changed')
 
-        if not verrors and options['passphrase']:
-            if any(
-                d['name'] == d['encryption_root']
-                for d in await self.middleware.run_in_thread(
-                    self.query, [
-                        ['id', '^', f'{id}/'], ['encrypted', '=', True],
-                        ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
+        if not verrors:
+            if options['passphrase']:
+                if options['generate_key'] or options['key']:
+                    verrors.add(
+                        'change_key_options.key',
+                        f'Must not be specified when passphrase for {id} is supplied.'
+                    )
+                elif any(
+                    d['name'] == d['encryption_root']
+                    for d in await self.middleware.run_in_thread(
+                        self.query, [
+                            ['id', '^', f'{id}/'], ['encrypted', '=', True],
+                            ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
+                        ]
+                    )
+                ):
+                    verrors.add(
+                        'change_key_options.passphrase',
+                        f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
+                        'roots which are encrypted with a key as children for passphrase encrypted datasets.'
+                    )
+                elif id == (await self.middleware.call('systemdataset.config'))['pool']:
+                    verrors.add(
+                        'id',
+                        f'{id} contains the system dataset. Please move the system dataset to a '
+                        'different pool before changing key_format.'
+                    )
+            else:
+                if not options['generate_key'] and not options['key']:
+                    for k in ('key', 'passphrase', 'generate_key'):
+                        verrors.add(
+                            f'change_key_options.{k}',
+                            'Either Key or passphrase must be provided.'
+                        )
+                elif id.count('/') and await self.middleware.call(
+                    'pool.dataset.query', [
+                        ['id', 'in', [id.rsplit('/', i)[0] for i in range(1, id.count('/') + 1)]],
+                        ['key_format.value', '=', ZFSKeyFormat.PASSPHRASE.value], ['encrypted', '=', True]
                     ]
-                )
-            ):
-                verrors.add(
-                    'change_key_options.passphrase',
-                    f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
-                    'roots which are encrypted with a key as children for passphrase encrypted datasets.'
-                )
-            elif id == (await self.middleware.call('systemdataset.config'))['pool']:
-                verrors.add(
-                    'id',
-                    f'{id} contains the system dataset. Please move the system dataset to a '
-                    'different pool before changing key_format.'
-                )
+                ):
+                    verrors.add(
+                        'change_key_options.key',
+                        f'{id} has parent(s) which are encrypted with a passphrase. It is not allowed to have '
+                        'encrypted roots which are encrypted with a key as children for passphrase encrypted datasets.'
+                    )
 
         verrors.check()
 
