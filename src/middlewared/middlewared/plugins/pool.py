@@ -2408,7 +2408,12 @@ class PoolDatasetService(CRUDService):
 
         if not verrors:
             if options['passphrase']:
-                if any(
+                if options['generate_key'] or options['key']:
+                    verrors.add(
+                        'change_key_options.key',
+                        f'Must not be specified when passphrase for {id} is supplied.'
+                    )
+                elif any(
                     d['name'] == d['encryption_root']
                     for d in await self.middleware.run_in_thread(
                         self.query, [
