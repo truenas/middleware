@@ -1860,13 +1860,10 @@ class VMDeviceService(CRUDService):
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
 
-    class NotSet:
-        pass
-
     def __init__(self, *args, **kwargs):
         super(VMDeviceService, self).__init__(*args, **kwargs)
-        self.pptdevs = self.NotSet
-        self.iommu_type = self.NotSet
+        self.pptdevs = {}
+        self.iommu_type = None
 
     @private
     async def failover_nic_check(self, vm_device, verrors, schema):
@@ -1940,23 +1937,27 @@ class VMDeviceService(CRUDService):
         """
         Available choices for PCI passthru device.
         """
-        if self.pptdevs is self.NotSet:
-            proc = subprocess.Popen(['/usr/sbin/pciconf', '-l'],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL, text=True)
+        if not self.pptdevs:
+            proc = None
             try:
+                proc = subprocess.Popen(['/usr/sbin/pciconf', '-l'],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.DEVNULL, text=True)
                 outs, errs = proc.communicate(timeout=5)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                outs, errs = proc.communicate()
+            except (subprocess.TimeoutExpired, OSError, ValueError) as e:
+                if proc is not None:
+                    proc.kill()
+                    outs, errs = proc.communicate()
+                self.logger.warn(f'An error occured when checking the PCI configuration '
+                                 f'for devices available for PCI passthru. {e}.')
+            else:
+                lines = outs.split('\n')
+                for line in lines:
+                    object = RE_PCICONF_PPTDEVS.match(line)
+                    if object:
+                        pptdev = object.group(2).replace(':', '/')
+                        self.pptdevs[pptdev] = pptdev
 
-            lines = outs.split('\n')
-            self.pptdevs = {}
-            for line in lines:
-                object = RE_PCICONF_PPTDEVS.match(line)
-                if object:
-                    pptdev = object.group(2).replace(':', '/')
-                    self.pptdevs[pptdev] = pptdev
         return self.pptdevs
 
     @accepts()
@@ -2151,32 +2152,39 @@ class VMDeviceService(CRUDService):
 
     @private
     def get_iommu_type(self):
-        def check_iommu(type):
+        def check_iommu(iommu_type):
             IOMMU_TEST = {'VT-d': {'arglist': ['/usr/sbin/acpidump', '-t'],
                                    'string': 'DMAR'},
                           'amdvi': {'arglist': ['/sbin/sysctl', 'hw'],
                                     'string': 'vmm.amdvi.enable: 1'}}
-            if type in IOMMU_TEST:
-                proc1 = subprocess.Popen(IOMMU_TEST[type]['arglist'],
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.DEVNULL)
-                proc2 = subprocess.Popen(['/usr/bin/grep', IOMMU_TEST[type]['string']],
-                                         stdin=proc1.stdout,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.DEVNULL)
-                proc1.stdout.close()  # Allow proc1 to receive a SIGPIPE if proc2 exits.
+            if iommu_type in IOMMU_TEST:
+                proc1 = None
+                proc2 = None
                 try:
+                    proc1 = subprocess.Popen(IOMMU_TEST[iommu_type]['arglist'],
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.DEVNULL)
+                    proc2 = subprocess.Popen(['/usr/bin/grep', IOMMU_TEST[iommu_type]['string']],
+                                             stdin=proc1.stdout,
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.DEVNULL)
+                    proc1.stdout.close()  # Allow proc1 to receive a SIGPIPE if proc2 exits.
                     outs, errs = proc2.communicate(timeout=5)
-                except subprocess.TimeoutExpired:
-                    proc2.kill()
-                    outs, errs = proc2.communicate()
-                if outs:
-                    return type
+                except (subprocess.TimeoutExpired, OSError, ValueError) as e:
+                    if proc2 is not None:
+                        proc2.kill()
+                        outs, errs = proc2.communicate()
+                    elif proc1 is not None:
+                        proc1.kill()
+                    self.logger.warn(f'An error occured when checking for iommu ({iommu_type}). {e}.')
+                else:
+                    if outs:
+                        return iommu_type
             return None
 
-        if self.iommu_type is self.NotSet:
-            for type in ['VT-d', 'amdvi']:
-                self.iommu_type = check_iommu(type)
+        if self.iommu_type is None:
+            for item in ['VT-d', 'amdvi']:
+                self.iommu_type = check_iommu(item)
                 if self.iommu_type is not None:
                     break
         return self.iommu_type
