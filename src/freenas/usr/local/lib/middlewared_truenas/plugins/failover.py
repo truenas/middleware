@@ -1256,7 +1256,9 @@ class FailoverService(ConfigService):
                         'failover.call_remote', 'kmip.update_memory_keys', [kmip_keys]
                     )
                 except Exception as e:
-                    await self.middleware.call('alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', None)
+                    await self.middleware.call(
+                        'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
+                    )
                     self.middleware.logger.error(
                         'Failed to sync KMIP keys with remote node: %s', str(e), exc_info=True
                     )

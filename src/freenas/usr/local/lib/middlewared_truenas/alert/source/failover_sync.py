@@ -4,11 +4,13 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import (
+    Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, OneShotAlertClass
+)
 
 
 class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
-    category = AlertCategory.HARDWARE
+    category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Automatic Sync to Peer Failed"
     text = (
@@ -23,7 +25,7 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
 class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     deleted_automatically = False
 
-    category = AlertCategory.HARDWARE
+    category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Syncing Encryption Keys to Peer Failed"
     text = (
@@ -34,15 +36,21 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     products = ("ENTERPRISE",)
 
 
-class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
+class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
 
-    category = AlertCategory.HARDWARE
+    category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = "Syncing KMIP Keys to Peer Failed"
     text = (
         "The automatic synchronization of KMIP keys with the standby "
-        "controller has failed. Please go to System > Failover and manually sync to peer."
+        "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
     )
 
     products = ("ENTERPRISE",)
+
+    async def create(self, args):
+        return Alert(FailoverKMIPKeysSyncFailedAlertClass, args)
+
+    async def delete(self, alerts, query):
+        return []
