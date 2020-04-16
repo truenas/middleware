@@ -30,20 +30,39 @@ def generate_loader_config(middleware):
     return config
 
 
+def list_efi_consoles():
+    def efivar(*args):
+        out = subprocess.run(['efivar', *args], capture_output=True, text=True)
+        return out.strip()
+
+    for var in efivar('-l').splitlines():
+        if var.endswith('ConOut'):
+            return efivar('-Nd', var).split(',/')
+    return []
+
+
 def generate_serial_loader_config(middleware):
     advanced = middleware.call_sync("system.advanced.config")
     if advanced["serialconsole"]:
         if sysctl.filter("machdep.bootmethod")[0].value == "UEFI":
-            videoconsole = "efi"
+            # The efi console driver can do both video and serial output.
+            # Don't enable it if it has a serial output, otherwise we may
+            # output twice to the same serial port in loader.
+            consoles = list_efi_consoles()
+            if any(path.find('Serial') != -1 for path in consoles):
+                # Firmware gave efi a serial port.
+                # Use only comconsole to avoid duplicating output.
+                console = "comconsole"
+            else:
+                console = "comconsole,efi"
         else:
-            videoconsole = "vidconsole"
-
+            console = "comconsole,vidconsole"
         return [
             f'comconsole_port="{advanced["serialport"]}"',
             f'comconsole_speed="{advanced["serialspeed"]}"',
             'boot_multicons="YES"',
             'boot_serial="YES"',
-            f'console="comconsole,{videoconsole}"',
+            f'console="{console}"',
         ]
 
     return []
