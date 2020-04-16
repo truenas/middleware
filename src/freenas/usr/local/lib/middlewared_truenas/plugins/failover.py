@@ -1574,6 +1574,7 @@ async def hook_license_update(middleware, *args, **kwargs):
             etc_generate += ['loader']
         try:
             await middleware.call('failover.send_small_file', '/data/license')
+            await middleware.call('failover.call_remote', 'failover.ensure_remote_client')
             for etc in etc_generate:
                 await middleware.call('falover.call_remote', 'etc.generate', [etc])
         except Exception:
