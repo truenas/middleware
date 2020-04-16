@@ -112,6 +112,7 @@ class KMIPService(Service, KMIPServerMixin):
             self.middleware.call_sync(
                 'alert.oneshot_create', 'KMIPZFSDatasetsSyncFailure', {'datasets': ','.join(failed)}
             )
+        self.middleware.call_hook_sync('kmip.zfs_keys_sync')
         return failed
 
     @private

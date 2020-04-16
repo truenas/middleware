@@ -275,6 +275,7 @@ class KMIPService(Service, KMIPServerMixin):
                 self.middleware.call_sync(
                     'alert.oneshot_create', 'KMIPSEDDisksSyncFailure', {'disks': ','.join(failed)}
                 )
+        self.middleware.call_hook_sync('kmip.sed_keys_sync')
         return ret_failed
 
     @private

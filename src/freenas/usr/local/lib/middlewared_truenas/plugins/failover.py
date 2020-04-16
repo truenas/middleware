@@ -1709,12 +1709,17 @@ async def hook_pool_dataset_unlock(middleware, datasets):
 
 
 async def hook_pool_dataset_post_create(middleware, dataset_data):
-    if dataset_data['encrypted'] and str(dataset_data['key_format']).upper() == 'PASSPHRASE':
-        await middleware.call(
-            'failover.update_encryption_keys', {
-                'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]
-            }
-        )
+    if dataset_data['encrypted']:
+        if str(dataset_data['key_format']).upper() == 'PASSPHRASE':
+            await middleware.call(
+                'failover.update_encryption_keys', {
+                    'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]
+                }
+            )
+        else:
+            kmip = await middleware.call('kmip.config')
+            if kmip['enabled'] and kmip['manage_zfs_keys']:
+                await middleware.call('failover.sync_keys_to_remote_node')
 
 
 async def hook_pool_dataset_post_delete_lock(middleware, dataset):
@@ -1731,10 +1736,18 @@ async def hook_pool_dataset_change_key(middleware, dataset_data):
             )
         else:
             await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset_data['name']]})
+    else:
+        kmip = await middleware.call('kmip.config')
+        if kmip['enabled'] and kmip['manage_zfs_keys']:
+            await middleware.call('failover.sync_keys_to_remote_node')
 
 
 async def hook_pool_dataset_inherit_parent_encryption_root(middleware, dataset):
     await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset]})
+
+
+async def hook_kmip_sync(middleware, *args, **kwargs):
+    await middleware.call('failover.sync_keys_to_remote_node')
 
 
 async def hook_pool_rekey(middleware, pool=None):
@@ -1831,6 +1844,8 @@ async def setup(middleware):
     middleware.register_hook(
         'dataset.inherit_parent_encryption_root', hook_pool_dataset_inherit_parent_encryption_root, sync=True
     )
+    middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
+    middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
     middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
