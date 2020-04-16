@@ -930,11 +930,7 @@ class FailoverService(ConfigService):
 
     @private
     async def is_backup_node(self):
-        return (
-            await self.middleware.call('failover.licensed') and (
-                await self.middleware.call('failover.status')
-            ) == 'BACKUP'
-        )
+        return (await self.middleware.call('failover.status')) == 'BACKUP'
 
     @accepts(
         Str('action', enum=['ENABLE', 'DISABLE']),

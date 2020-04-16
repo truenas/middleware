@@ -335,7 +335,7 @@ class KMIPService(Service, KMIPServerMixin):
         if 'global_password' in data:
             self.global_sed_key = data['global_password']
         if 'sed_disks_keys' in data:
-            self.disks_keys = data
+            self.disks_keys = data['sed_disks_keys']
 
     @private
     async def sed_keys(self):
@@ -369,6 +369,7 @@ class KMIPService(Service, KMIPServerMixin):
                 self.middleware.logger.debug(
                     f'Failed to remove password from KMIP server for {disk_id}: {e}'
                 )
+        await self.middleware.call_hook('kmip.sed_keys_sync')
 
     @private
     async def retrieve_sed_disks_keys(self):
