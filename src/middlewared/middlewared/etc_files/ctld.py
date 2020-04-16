@@ -3,6 +3,7 @@ from middlewared.client.utils import Struct
 import contextlib
 import logging
 import os
+import subprocess
 import sysctl
 
 logger = logging.getLogger(__name__)
@@ -398,6 +399,14 @@ def main(middleware):
 
 
 def set_ctl_ha_peer(middleware):
+
+    def set_sysctl(sysctl_key, value):
+        cp = subprocess.run(["sysctl", f"{sysctl_key}={value}"], stderr=subprocess.PIPE)
+        if cp.returncode:
+            middleware.logger.error(
+                "Failed to set sysctl '%s' to '%s': %s", sysctl, str(value), str(cp.stderr.decode())
+            )
+
     with contextlib.suppress(IndexError):
         if middleware.call_sync("iscsi.global.alua_enabled"):
             node = middleware.call_sync("failover.node")
@@ -407,12 +416,9 @@ def set_ctl_ha_peer(middleware):
             # websocket connections do not have the opportunity
             # to interfere.
             sysctl.filter("net.inet.ip.portrange.lowfirst")[0].value = 998
-            if node == "A":
-                sysctl.filter("kern.cam.ctl.ha_peer")[0].value = "listen 169.254.10.1"
-            if node == "B":
-                sysctl.filter("kern.cam.ctl.ha_peer")[0].value = "connect 169.254.10.1"
+            set_sysctl("kern.cam.ctl.ha_peer", "listen 169.254.10.1" if node == "A" else "connect 169.254.10.1")
         else:
-            sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""
+            set_sysctl("kern.cam.ctl.ha_peer", "")
 
 
 def render(service, middleware):
