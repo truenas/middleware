@@ -35,7 +35,6 @@ def bisect(condition, iterable):
 
 
 def Popen(args, **kwargs):
-    kwargs.setdefault('encoding', 'utf8')
     shell = kwargs.pop('shell', None)
     if shell:
         return asyncio.create_subprocess_shell(args, **kwargs)
@@ -49,13 +48,15 @@ async def run(*args, **kwargs):
     kwargs.setdefault('stdout', subprocess.PIPE)
     kwargs.setdefault('stderr', subprocess.PIPE)
     check = kwargs.pop('check', True)
+    encoding = kwargs.pop('encoding', None)
+    errors = kwargs.pop('errors', None) or 'strict'
     proc = await asyncio.create_subprocess_exec(*args, **kwargs)
     stdout, stderr = await proc.communicate()
-    if "encoding" in kwargs:
+    if encoding:
         if stdout is not None:
-            stdout = stdout.decode(kwargs["encoding"], kwargs.get("errors") or "strict")
+            stdout = stdout.decode(encoding, errors)
         if stderr is not None:
-            stderr = stderr.decode(kwargs["encoding"], kwargs.get("errors") or "strict")
+            stderr = stderr.decode(encoding, errors)
     cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
     if check:
         cp.check_returncode()
