@@ -723,7 +723,7 @@ class IdmapDomainService(CRUDService):
         """
         unixid = data.get("id")
         id = IDType[data.get("id_type", "GROUP")]
-        wb = None
+
         if id == IDType.USER:
             wb = await run([SMBCmd.WBINFO.value, '--uid-to-sid', str(unixid)], check=False)
         else:
@@ -735,7 +735,7 @@ class IdmapDomainService(CRUDService):
             if WBCErr.DOMAIN_NOT_FOUND.err() in wb.stderr.decode():
                 is_local = await self.middleware.call(
                     f'{"user" if id == IDType.USER else "group"}.query',
-                    [(f'{"uid" if id == IDType.USER else "gid"}', '=', unixid)],
+                    [("uid" if id == IDType.USER else "gid", '=', unixid)],
                     {"count": True}
                 )
                 if is_local:

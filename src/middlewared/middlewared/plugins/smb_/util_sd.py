@@ -112,8 +112,16 @@ class ACLPerms(enum.Enum):
             "CHANGE": defaults.copy(),
             "FULL": {x.value[1][0]: True for x in ACLPerms}
         }
-        std_perms["READ"].update({"READ": True, "EXECUTE": True})
-        std_perms["CHANGE"].update({"READ": True, "EXECUTE": True, "DELETE": True, "WRITE": True})
+        std_perms["READ"].update({
+            "READ": True,
+            "EXECUTE": True
+        })
+        std_perms["CHANGE"].update({
+            "READ": True,
+            "EXECUTE": True,
+            "DELETE": True,
+            "WRITE": True
+        })
         for k, v in std_perms.items():
             if v == in_perms:
                 return k
@@ -251,14 +259,16 @@ class SMBService(Service):
                 "DACL Protected": False,
                 "SACL Auto Inherited": False,
                 "DACL Auto Inherited": False,
+                "SACL Inheritance Required": False,
+                "DACL Inheritance Required": False,
                 "Server Security": False,
                 "DACL Trusted": False,
                 "SACL Defaulted": False,
                 "SACL Present": False,
                 "DACL Defaulted": False,
                 "DACL Present": True,
-                "Group Defaulted": True,
-                "Owner Defaulted": True,
+                "Group Defaulted": False,
+                "Owner Defaulted": False,
             }
         }
         for x in [("owner", "uid", "user"), ("group", "gid", "group")]:
@@ -275,6 +285,10 @@ class SMBService(Service):
             must_special_convert = entry["trustee"]["sid"] in ["S-1-3-0", "S-1-3-1"]
             entry["type"] = "ALLOWED" if ace["type"] == "ALLOW" else "DENIED"
             entry["access_mask"]["special"] = ACLPerms.convert("NFSV4", ace["perms"])
+
+            if entry["type"] == "ALLOWED":
+                entry["access_mask"]["special"]["SYNCHRONIZE"] = True
+
             entry["access_mask"]["standard"] = ACLPerms.to_standard(entry["access_mask"]["special"])
             entry["access_mask"]["hex"] = ACLPerms.to_hex("SMB", entry["access_mask"]["special"])
             entry["flags"] = ACLFlags.convert("NFSV4", ace["flags"])
@@ -297,7 +311,7 @@ class SMBService(Service):
             else:
                 sd_out['dacl'].append(entry)
 
-        if inherited_present:
+        if not inherited_present:
             sd_out['control']['DACL Protected'] = True
 
         return {"acl_type": "SMB", "acl_data": sd_out}
