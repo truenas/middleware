@@ -2,7 +2,7 @@
 TrueCommand Service Model
 
 Revision ID: 58339783792c
-Revises: 29e866803c47
+Revises: 171f5b91c36e
 Create Date: 2020-04-06 07:59:08.663553+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 revision = '58339783792c'
-down_revision = '29e866803c47'
+down_revision = '171f5b91c36e'
 branch_labels = None
 depends_on = None
 
