@@ -350,6 +350,9 @@ def load_modules(directory, base=None, depth=0):
 
     for f in dirs:
         if depth > 0:
+            if f.endswith(('_freebsd', '_linux')):
+                if f.rsplit('_', 1)[-1].upper() != osc.SYSTEM:
+                    continue
             path = os.path.join(directory, f)
             yield from load_modules(path, f'{base}.{f}', depth - 1)
 
