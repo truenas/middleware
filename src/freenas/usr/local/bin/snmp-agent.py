@@ -604,7 +604,7 @@ if __name__ == "__main__":
                 row.setRowCell(4, agent.Integer32(volsize))
                 row.setRowCell(5, agent.Integer32(used))
                 row.setRowCell(6, agent.Integer32(available))
-                row.setRowCell(6, agent.Integer32(referenced))
+                row.setRowCell(7, agent.Integer32(referenced))
 
             temp_sensors_table.clear()
             temperatures = []
