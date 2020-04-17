@@ -14,7 +14,7 @@ class GlusterVolumeService(CRUDService):
 
     def __volume_wrapper(self, method, args=None, kwargs=None):
 
-        result = ''
+        result = b''
 
         try:
             if args and not kwargs:
@@ -32,10 +32,7 @@ class GlusterVolumeService(CRUDService):
         except Exception:
             raise
 
-        if isinstance(result, bytes):
-            return result.decode().strip()
-
-        return result
+        return result.decode().strip()
 
     @private
     def common_validation(self, job):
