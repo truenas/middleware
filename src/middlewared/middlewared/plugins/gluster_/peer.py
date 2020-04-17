@@ -25,7 +25,7 @@ class GlusterPeerService(CRUDService):
         except Exception:
             raise
 
-        return result
+        return result.decode().strip()
 
     @private
     def remove_peer_from_cluster(self, hostname):
