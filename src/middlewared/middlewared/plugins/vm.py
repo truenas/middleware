@@ -1948,10 +1948,10 @@ class VMDeviceService(CRUDService):
                 if proc is not None:
                     proc.kill()
                     outs, errs = proc.communicate()
-                self.logger.warn(f'An error occured when checking the PCI configuration '
-                                 f'for devices available for PCI passthru. {e}.')
+                self.middleware.logger.error('An error occured when checking the PCI configuration '
+                                             f'for devices available for PCI passthru: {e}.')
             else:
-                if proc.returncode < 1:
+                if proc.returncode == 0:
                     lines = outs.split('\n')
                     for line in lines:
                         object = RE_PCICONF_PPTDEVS.match(line)
@@ -1959,9 +1959,9 @@ class VMDeviceService(CRUDService):
                             pptdev = object.group(2).replace(':', '/')
                             self.pptdevs[pptdev] = pptdev
                 else:
-                    self.logger.warn(f'An error occured when checking the PCI configuration '
-                                     f'for devices available for PCI passthru. '
-                                     f'The subprocess ({proc.args}) exited with status {proc.returncode}.')
+                    self.middleware.logger.error('An error occured when checking the PCI configuration '
+                                                 'for devices available for PCI passthru. The subprocess '
+                                                 f'({proc.args}) exited with status {proc.returncode}.')
         return self.pptdevs
 
     @accepts()
@@ -2180,17 +2180,18 @@ class VMDeviceService(CRUDService):
                         outs, errs = proc2.communicate()
                     elif proc1 is not None:
                         proc1.kill()
-                    self.logger.warn(f'An error occured when checking for iommu ({iommu_type}). {e}.')
+                    self.middleware.logger.error(f'An error occured when checking for iommu ({iommu_type}): {e}.')
                 else:
                     if proc1.poll() is None:  # make sure proc1 has terminated
                         proc1.kill()
-                    if proc1.returncode < 1 and proc2.returncode < 2:
+                    if proc1.returncode == 0 and (proc2.returncode == 0 or proc2.returncode == 1):
                         if outs:
                             return iommu_type
                     else:
-                        self.logger.warn(f'An error occured when checking for iommu ({iommu_type}). '
-                                         f'Subprocess 1 ({proc1.args}) exited with status {proc1.returncode}; '
-                                         f'Subprocess 2 ({proc2.args}) exited with status {proc2.returncode}.')
+                        self.middleware.logger.error(f'An error occured when checking for iommu ({iommu_type}). '
+                                                     f'Subprocess 1 ({proc1.args}) exited with status '
+                                                     f'{proc1.returncode}; Subprocess 2 ({proc2.args}) '
+                                                     f'exited with status {proc2.returncode}.')
             return None
 
         if self.iommu_type is None:
