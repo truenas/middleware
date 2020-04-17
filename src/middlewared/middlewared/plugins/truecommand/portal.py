@@ -152,11 +152,9 @@ class TruecommandService(Service, TruecommandAPIMixin):
         else:
             response = response['response']
 
-        if 'status' not in response or str(response['status']).lower() not in ('pending', 'duplicate', 'denied'):
+        if 'state' not in response or str(response['state']).lower() not in ('pending', 'duplicate', 'denied'):
             raise CallError(f'Unknown response got from iX portal API: {response}')
-        elif response['status'].lower() == 'duplicate':
-            raise CallError(f'This API Key has already been registered with iX Portal.')
-        elif response['status'].lower() == 'denied':
+        elif response['state'].lower() == 'denied':
             # Discussed with Ken and he said it's safe to assume that if we get denied
             # we should assume the API Key is invalid
             raise CallError(f'The provided API Key is invalid.')

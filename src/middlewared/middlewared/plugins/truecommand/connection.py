@@ -19,7 +19,7 @@ class TruecommandAPIMixin:
                     raise_for_status=True
                 ) as session:
                     req = await session.post(
-                        'https://usage.freenas.org/submit',
+                        self.PORTAL_URI,
                         data=json.dumps(payload or {}),
                         headers={'Content-type': 'application/json'},
                         proxy=os.environ.get('http_proxy'),
@@ -29,5 +29,5 @@ class TruecommandAPIMixin:
         except aiohttp.ClientResponseError as e:
             response['error'] = f'Error Code ({req.status}): {e}'
         else:
-            response['response'] = req.json()
+            response['response'] = await req.json()
         return response
