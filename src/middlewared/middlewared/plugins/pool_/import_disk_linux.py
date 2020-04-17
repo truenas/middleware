@@ -47,7 +47,6 @@ async def mount(device, path, fs_type, fs_options, options):
         [executable] + arguments + [device, path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        encoding="utf8",
     )
     output = await proc.communicate()
 
