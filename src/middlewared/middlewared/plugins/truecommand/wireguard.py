@@ -41,6 +41,7 @@ class TruecommandService(Service):
         # is active. If wireguard service is running, we want to make sure that the last
         # handshake we have had was under 30 minutes.
         if Status((await self.middleware.call('truecommand.config'))['status']) != Status.CONNECTED:
+            await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
             return
 
         health_error = not (await self.middleware.call('service.started', 'truecommand'))

@@ -130,7 +130,8 @@ class TruecommandService(ConfigService):
                     'tc_public_key': None,
                     'wg_address': None,
                 })
-                await self.dismiss_alerts()
+
+            await self.dismiss_alerts(True)
 
             await self.middleware.call(
                 'datastore.update',
@@ -155,7 +156,7 @@ class TruecommandService(ConfigService):
                     # User just enabled the service after disabling it - we have wireguard details and
                     # we can initiate the connection. If it is not good, health check will fail and we will
                     # poll iX Portal to see what's up. Let's just start wireguard now
-                    await self.dismiss_alerts()
+                    await self.dismiss_alerts(True)
                     await self.middleware.call('truecommand.start_truecommand_service')
 
             return await self.config()
@@ -166,6 +167,11 @@ class TruecommandService(ConfigService):
         self.STATUS = Status(new_status)
 
     @private
-    async def dismiss_alerts(self):
-        for klass in ('TruecommandConnectionDisabled', 'TruecommandConnectionPending', 'TruecommandConnectionHealth'):
+    async def dismiss_alerts(self, dismiss_health=False):
+        # We do not dismiss health by default because it's possible that the key has not been revoked
+        # and it's just that TC has not connected to TN in 30 minutes, so we only should dismiss it when
+        # we update TC service or the health is okay now with the service running or when service is not running
+        for klass in [
+            'TruecommandConnectionDisabled', 'TruecommandConnectionPending'
+        ] + (['TruecommandConnectionHealth'] if dismiss_health else []):
             await self.middleware.call('alert.oneshot_delete', klass, None)
