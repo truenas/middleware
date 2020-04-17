@@ -15,7 +15,8 @@ class GlusterPeerService(CRUDService):
 
     def __peer_wrapper(self, method, host=None):
 
-        result = ''
+        result = b''
+
         try:
             result = method(host) if host else method()
         except GlusterCmdException as e:
@@ -25,10 +26,7 @@ class GlusterPeerService(CRUDService):
         except Exception:
             raise
 
-        if isinstance(result, bytes):
-            return result.decode().strip()
-
-        return result
+        return result.decode().strip()
 
     @private
     def remove_peer_from_cluster(self, hostname):
