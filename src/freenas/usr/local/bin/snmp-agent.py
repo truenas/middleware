@@ -297,6 +297,7 @@ zvol_table = agent.Table(
         (4, agent.Integer32()),
         (5, agent.Integer32()),
         (6, agent.Integer32()),
+        (7, agent.Integer32()),
     ],
 )
 
@@ -591,16 +592,19 @@ if __name__ == "__main__":
                 allocation_units, (
                     volsize,
                     used,
-                    available
+                    available,
+                    referenced
                 ) = calculate_allocation_units(
                     int(zvol.properties["volsize"].rawvalue),
                     int(zvol.properties["used"].rawvalue),
                     int(zvol.properties["available"].rawvalue),
+                    int(zvol.properties["referenced"].rawvalue),
                 )
                 row.setRowCell(3, agent.Integer32(allocation_units))
                 row.setRowCell(4, agent.Integer32(volsize))
                 row.setRowCell(5, agent.Integer32(used))
                 row.setRowCell(6, agent.Integer32(available))
+                row.setRowCell(6, agent.Integer32(referenced))
 
             temp_sensors_table.clear()
             temperatures = []
