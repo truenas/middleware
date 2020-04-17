@@ -37,7 +37,8 @@ class TruecommandConnectionHealthAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
     title = 'Truecommand Service Failed Scheduled Health Check'
-    text = 'Truecommand service failed scheduled health check, connecting with iX Portal to get details'
+    text = 'Truecommand service failed scheduled health check, please confirm NAS ' \
+           'has been registered with Truecommand and Truecommand is able to access NAS.'
 
     async def create(self, args):
         return Alert(TruecommandConnectionHealthAlertClass, args)
