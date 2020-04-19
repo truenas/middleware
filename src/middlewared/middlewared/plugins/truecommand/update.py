@@ -156,7 +156,6 @@ class TruecommandService(ConfigService):
                     # User just enabled the service after disabling it - we have wireguard details and
                     # we can initiate the connection. If it is not good, health check will fail and we will
                     # poll iX Portal to see what's up. Let's just start wireguard now
-                    await self.dismiss_alerts(True)
                     await self.middleware.call('truecommand.start_truecommand_service')
 
             return await self.config()

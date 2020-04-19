@@ -7,12 +7,11 @@ from middlewared.utils import Popen, run
 
 from .enums import Status
 
+HEALTH_CHECK_SECONDS = 1800
 WIREGUARD_HEALTH_RE = re.compile(r'=\s*(.*)')
 
 
 class TruecommandService(Service):
-
-    HEALTH_CHECK_SECONDS = 1800
 
     @private
     async def generate_wg_keys(self):
@@ -35,7 +34,7 @@ class TruecommandService(Service):
         return {'wg_public_key': public_key.decode().strip(), 'wg_private_key': private_key.decode().strip()}
 
     @private
-    @periodic(1800, run_on_start=False)
+    @periodic(HEALTH_CHECK_SECONDS, run_on_start=False)
     async def health_check(self):
         # The purpose of this method is to ensure that the wireguard connection
         # is active. If wireguard service is running, we want to make sure that the last
@@ -56,8 +55,8 @@ class TruecommandService(Service):
                 else:
                     timestamp = timestamp[0].strip()
                 if timestamp == '0' or not timestamp.isdigit() or (
-                        int(time.time()) - int(timestamp)
-                ) > self.HEALTH_CHECK_SECONDS:
+                    int(time.time()) - int(timestamp)
+                ) > HEALTH_CHECK_SECONDS:
                     # We never established handshake with TC if timestamp is 0, otherwise it's been more
                     # then 30 minutes, error out please
                     health_error = True
