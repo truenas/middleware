@@ -48,8 +48,8 @@ class TruecommandService(Service, TruecommandAPIMixin):
                 # We are not going to poll anymore as this definitely means
                 # that iX Portal has deactivated this key and is not going to work with this
                 # api key again
-                # Clear connection pending alert if any
-                await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionPending', None)
+                # Clear TC pending alerts if any, what only matters now is that key has been disabled by portal
+                await self.middleware.call('truecommand.dismiss_alerts', True)
                 await self.middleware.call(
                     'alert.oneshot_create', 'TruecommandConnectionDisabled', {
                         'error': status['error'],

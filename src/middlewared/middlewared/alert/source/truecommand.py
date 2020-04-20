@@ -6,8 +6,8 @@ class TruecommandConnectionDisabledAlertClass(AlertClass, OneShotAlertClass):
 
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = 'Truecommand API Key Disabled by iX Portal'
-    text = 'Truecommand API Key has been disabled by iX Portal: %(error)s'
+    title = 'TrueCommand API Key Disabled by iX Portal'
+    text = 'TrueCommand API Key has been disabled by iX Portal: %(error)s'
 
     async def create(self, args):
         return Alert(TruecommandConnectionDisabledAlertClass, args)
@@ -21,8 +21,8 @@ class TruecommandConnectionPendingAlertClass(AlertClass, OneShotAlertClass):
 
     category = AlertCategory.SYSTEM
     level = AlertLevel.INFO
-    title = 'Pending Confirmation From iX Portal for Truecommand API Key'
-    text = 'Confirmation is pending for Truecommand API Key from iX Portal: %(error)s'
+    title = 'Pending Confirmation From iX Portal for TrueCommand API Key'
+    text = 'Confirmation is pending for TrueCommand API Key from iX Portal: %(error)s'
 
     async def create(self, args):
         return Alert(TruecommandConnectionPendingAlertClass, args)
@@ -36,9 +36,9 @@ class TruecommandConnectionHealthAlertClass(AlertClass, OneShotAlertClass):
 
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = 'Truecommand Service Failed Scheduled Health Check'
-    text = 'Truecommand service failed scheduled health check, please confirm NAS ' \
-           'has been registered with Truecommand and Truecommand is able to access NAS.'
+    title = 'TrueCommand Service Failed Scheduled Health Check'
+    text = 'TrueCommand service failed scheduled health check, please confirm NAS ' \
+           'has been registered with TrueCommand and TrueCommand is able to access NAS.'
 
     async def create(self, args):
         return Alert(TruecommandConnectionHealthAlertClass, args)

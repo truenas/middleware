@@ -20,10 +20,10 @@ def upgrade():
     op.create_table(
         'system_truecommand',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('api_key', sa.String(length=128), nullable=True),
+        sa.Column('api_key', sa.TEXT(), nullable=True),
         sa.Column('api_key_state', sa.String(length=128), nullable=True),
         sa.Column('wg_public_key', sa.String(length=255), nullable=True),
-        sa.Column('wg_private_key', sa.String(length=255), nullable=True),
+        sa.Column('wg_private_key', sa.TEXT(), nullable=True),
         sa.Column('wg_address', sa.String(length=255), nullable=True),
         sa.Column('tc_public_key', sa.String(length=255), nullable=True),
         sa.Column('endpoint', sa.String(length=255), nullable=True),

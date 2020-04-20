@@ -1,7 +1,6 @@
 import aiohttp
 import async_timeout
 import asyncio
-import os
 import json
 
 
@@ -16,13 +15,12 @@ class TruecommandAPIMixin:
         try:
             async with async_timeout.timeout(timeout):
                 async with aiohttp.ClientSession(
-                    raise_for_status=True
+                    raise_for_status=True, trust_env=True,
                 ) as session:
                     req = await session.post(
                         self.PORTAL_URI,
                         data=json.dumps(payload or {}),
                         headers={'Content-type': 'application/json'},
-                        proxy=os.environ.get('http_proxy'),
                     )
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with iX portal in {timeout} seconds.'
