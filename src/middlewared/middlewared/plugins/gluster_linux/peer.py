@@ -26,7 +26,10 @@ class GlusterPeerService(CRUDService):
         except Exception:
             raise
 
-        return result.decode().strip()
+        if isinstance(result, bytes):
+            return result.decode().strip()
+
+        return result
 
     @private
     def remove_peer_from_cluster(self, hostname):
@@ -100,7 +103,8 @@ class GlusterPeerService(CRUDService):
         return result
 
     @accepts()
-    def status(self):
+    @job(lock='peer_status')
+    def status(self, job):
         """
         List the status of peers in the Trusted Storage Pool
         excluding localhost.
@@ -109,7 +113,8 @@ class GlusterPeerService(CRUDService):
         return self.__peer_wrapper(peer.status)
 
     @accepts()
-    def pool(self):
+    @job(lock='peer_pool')
+    def pool(self, job):
         """
         List the status of peers in the Trusted Storage Pool
         including localhost.
