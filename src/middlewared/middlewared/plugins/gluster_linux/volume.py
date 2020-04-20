@@ -44,11 +44,7 @@ class GlusterVolumeService(CRUDService):
     @private
     def validate_gluster_jobs(self, verrors, job):
         """
-        When there is another gluster operation ongoing,
-        there is a 120 second timeout. During this timeout,
-        other gluster related operations will not work and can fail.
-
-        Since this is by design, accommodate for it.
+        Gluster CLI operations need to run synchronously.
         """
 
         peer_job = self.middleware.call_sync(
@@ -92,8 +88,8 @@ class GlusterVolumeService(CRUDService):
         for i in volbricks:
             peer = i.get('peer_name')
             path = i.get('peer_path')
-            final = peer + ':' + path
-            bricks.append(final)
+            brick = peer + ':' + path
+            bricks.append(brick)
 
         args = (volname, bricks)
         kwargs = data
