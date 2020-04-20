@@ -167,8 +167,7 @@ class GlusterVolumeService(CRUDService):
         volname = data.get('volname')
 
         if volname:
-            kwargs = data
-            result = self.__volume_wrapper(volume.status_detail, kwargs)
+            result = self.__volume_wrapper(volume.status_detail, kwargs=data)
         else:
             result = self.__volume_wrapper(volume.status_detail)
 
