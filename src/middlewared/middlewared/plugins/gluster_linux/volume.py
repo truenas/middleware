@@ -169,6 +169,35 @@ class GlusterVolumeService(CRUDService):
 
         return result
 
+    @private
+    def list_volumes(self):
+
+        result = self.__volume_wrapper(volume.vollist)
+
+        return result
+
+    @private
+    def optreset_volume(self, data):
+
+        volname = data.pop('volname')
+
+        args = (volname,)
+
+        result = self.__volume_wrapper(volume.optreset, args, kwargs=data)
+
+        return result
+
+    @private
+    def optset_volume(self, data):
+
+        volname = data.pop('volname')
+
+        args = (volname,)
+
+        result = self.__volume_wrapper(volume.optset, args, kwargs=data)
+
+        return result
+
     @accepts(Dict(
         'glustervolume_create',
         Str('volname', required=True),
@@ -331,5 +360,65 @@ class GlusterVolumeService(CRUDService):
         self.common_validation(job)
 
         result = self.status_volume(data)
+
+        return result
+
+    @accepts()
+    @job(lock='gluster_volume_list')
+    def list(self, job):
+        """
+        Return list of gluster volumes.
+        """
+
+        self.common_validation(job)
+
+        result = self.list_volumes()
+
+        return result
+
+    @accepts(Dict(
+        'glustervolume_optreset',
+        Str('volname', required=True),
+        Str('opt', default=None),
+        Bool('force', default=False),
+    ))
+    @job(lock='gluster_volume_optreset')
+    def optreset(self, job, data):
+        """
+        Reset volumes options.
+            If `opt` is not provided, then all options
+            will be reset.
+
+        `volname` Name of the gluster volume
+        `opt` Name of the option to reset
+        `force` Forcefully reset option(s)
+        """
+
+        self.common_validation(job)
+
+        result = self.optreset_volume(data)
+
+        return result
+
+    @accepts(Dict(
+        'glustervolume_optset',
+        Str('volname', required=True),
+        Dict('opts', required=True, additional_attrs=True),
+    ))
+    @job(lock='gluster_volume_optset')
+    def optset(self, job, data):
+        """
+        Set gluster volume options.
+
+        `volname` Name of the gluster volume
+        `opts` Dict where
+            --key-- is the name of the option and
+            --value-- is the value the option should be set to
+        `force` Forcefully reset option(s)
+        """
+
+        self.common_validation(job)
+
+        result = self.optset_volume(data)
 
         return result
