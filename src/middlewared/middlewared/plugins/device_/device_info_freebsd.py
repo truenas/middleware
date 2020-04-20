@@ -67,7 +67,7 @@ class DeviceService(Service, DeviceInfoBase):
                     disk['type'] = 'SSD'
                 else:
                     disk['type'] = 'HDD'
-            else:
+            elif disk_geom.provider.config.get('rotationrate') != 'unknown':
                 self.middleware.logger.debug(
                     'Unable to retrieve rotation rate for %s. Rotation rate reported by DISK geom is "%s"',
                     disk['name'], disk_geom.provider.config.get('rotationrate')
