@@ -110,6 +110,42 @@ class GlusterVolumeService(CRUDService):
         return result
 
     @private
+    def start_volume(self, data):
+
+        volname = data.pop('volname')
+
+        args = (volname,)
+        kwargs = data
+
+        result = self.__volume_wrapper(volume.start, args, kwargs)
+
+        return result
+
+    @private
+    def stop_volume(self, data):
+
+        volname = data.pop('volname')
+
+        args = (volname,)
+        kwargs = data
+
+        result = self.__volume_wrapper(volume.stop, args, kwargs)
+
+        return result
+
+    @private
+    def restart_volume(self, data):
+
+        volname = data.pop('volname')
+
+        args = (volname,)
+        kwargs = data
+
+        result = self.__volume_wrapper(volume.restart, args, kwargs)
+
+        return result
+
+    @private
     def info_volume(self, data):
 
         volname = data.get('volname')
@@ -168,8 +204,68 @@ class GlusterVolumeService(CRUDService):
         return self.create_volume(data)
 
     @accepts(Dict(
+        'glustervolume_start',
+        Str('volname', required=True),
+        Bool('force', default=False),
+    ))
+    @job(lock='gluster_volume_start')
+    def start(self, job, data):
+        """
+        Start a gluster volume.
+
+        `volname` Name of gluster volume
+        `force` Forcefully start the gluster volume
+        """
+
+        self.common_validation(job)
+
+        result = self.start_volume(data)
+
+        return result
+
+    @accepts(Dict(
+        'glustervolume_restart',
+        Str('volname', required=True),
+        Bool('force', default=False),
+    ))
+    @job(lock='gluster_volume_restart')
+    def restart(self, job, data):
+        """
+        Restart a gluster volume.
+
+        `volname` Name of gluster volume
+        `force` Forcefully restart the gluster volume
+        """
+
+        self.common_validation(job)
+
+        result = self.restart_volume(data)
+
+        return result
+
+    @accepts(Dict(
+        'glustervolume_stop',
+        Str('volname', required=True),
+        Bool('force', default=False),
+    ))
+    @job(lock='gluster_volume_stop')
+    def stop(self, job, data):
+        """
+        Stop a gluster volume.
+
+        `volname` Name of gluster volume
+        `force` Forcefully stop the gluster volume
+        """
+
+        self.common_validation(job)
+
+        result = self.stop_volume(data)
+
+        return result
+
+    @accepts(Dict(
         'glustervolume_delete',
-        Str('volname', required=True)
+        Str('volname', required=True),
     ))
     @job(lock='gluster_volume_delete')
     def do_delete(self, job, data):
