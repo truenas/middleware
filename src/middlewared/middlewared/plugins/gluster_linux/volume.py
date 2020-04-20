@@ -32,7 +32,10 @@ class GlusterVolumeService(CRUDService):
         except Exception:
             raise
 
-        return result.decode().strip()
+        if isinstance(result, bytes):
+            return result.decode().strip()
+
+        return result
 
     @private
     def common_validation(self, job):
@@ -155,6 +158,19 @@ class GlusterVolumeService(CRUDService):
             result = self.__volume_wrapper(volume.info, args)
         else:
             result = self.__volume_wrapper(volume.info)
+
+        return result
+
+    @private
+    def status_volume(self, data):
+
+        volname = data.get('volname')
+
+        if volname:
+            kwargs = data
+            result = self.__volume_wrapper(volume.status_detail, kwargs)
+        else:
+            result = self.__volume_wrapper(volume.status_detail)
 
         return result
 
@@ -299,5 +315,26 @@ class GlusterVolumeService(CRUDService):
         self.common_validation(job)
 
         result = self.info_volume(data)
+
+        return result
+
+    @accepts(Dict(
+        'glustervolume_status',
+        Str('volname', default='')
+    ))
+    @job(lock='gluster_volume_status')
+    def status(self, job, data):
+        """
+        Return detailed information about gluster volume(s).
+        If a gluster volume name has not been given,
+        this will return detailed information about all volumes
+        detected in the cluster.
+
+        `volname` Name of the gluster volume
+        """
+
+        self.common_validation(job)
+
+        result = self.status_volume(data)
 
         return result
