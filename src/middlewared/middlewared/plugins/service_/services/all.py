@@ -15,6 +15,7 @@ from .smartd import SMARTDService
 from .snmp import SNMPService
 from .ssh import SSHService
 from .tftp import TFTPService
+from .truecommand import TruecommandService
 from .ups import UPSService
 from .webdav import WebDAVService
 from .wsd import WSDService
@@ -98,6 +99,7 @@ all_services = [
     SystemService,
     SystemDatasetsService,
     TimeservicesService,
+    TruecommandService,
     TtysService,
     UserService,
 ]
