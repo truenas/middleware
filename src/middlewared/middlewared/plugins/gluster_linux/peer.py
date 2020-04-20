@@ -7,6 +7,8 @@ from middlewared.service import (accepts, private, job,
                                  CallError, CRUDService,
                                  ValidationErrors)
 
+from .utils import validate_gluster_jobs
+
 
 class GlusterPeerService(CRUDService):
 
@@ -48,17 +50,20 @@ class GlusterPeerService(CRUDService):
         return await resolve_hostname(*args)
 
     @private
-    def common_validation(self, hostname):
+    def common_validation(self, job, hostname=None):
 
         verrors = ValidationErrors()
 
-        try:
-            self.middleware.call_sync(
-                'gluster.peer.resolve_host_or_ip', hostname, verrors)
-        except Exception:
-            if verrors:
-                raise verrors
-            raise
+        if hostname:
+            try:
+                self.middleware.call_sync(
+                    'gluster.peer.resolve_host_or_ip', hostname, verrors)
+            except Exception:
+                if verrors:
+                    raise verrors
+                raise
+
+        validate_gluster_jobs(self, verrors, job)
 
     @accepts(
         Dict(
@@ -76,7 +81,7 @@ class GlusterPeerService(CRUDService):
 
         hostname = data.get('hostname')
 
-        self.common_validation(hostname)
+        self.common_validation(job, hostname=hostname)
 
         result = self.add_peer_to_cluster(hostname)
 
@@ -96,7 +101,7 @@ class GlusterPeerService(CRUDService):
 
         hostname = data.get('hostname')
 
-        self.common_validation(hostname)
+        self.common_validation(job, hostname=hostname)
 
         result = self.remove_peer_from_cluster(hostname)
 
@@ -110,6 +115,8 @@ class GlusterPeerService(CRUDService):
         excluding localhost.
         """
 
+        self.common_validation(job)
+
         return self.__peer_wrapper(peer.status)
 
     @accepts()
@@ -119,5 +126,7 @@ class GlusterPeerService(CRUDService):
         List the status of peers in the Trusted Storage Pool
         including localhost.
         """
+
+        self.common_validation(job)
 
         return self.__peer_wrapper(peer.pool)
