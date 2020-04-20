@@ -414,7 +414,6 @@ class GlusterVolumeService(CRUDService):
         `opts` Dict where
             --key-- is the name of the option and
             --value-- is the value the option should be set to
-        `force` Forcefully reset option(s)
         """
 
         self.common_validation(job)
