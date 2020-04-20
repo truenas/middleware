@@ -6,6 +6,8 @@ from middlewared.service import (CRUDService, accepts,
                                  CallError)
 from middlewared.schema import Dict, Str, Int, Bool, List
 
+from .utils import validate_gluster_jobs
+
 
 class GlusterVolumeService(CRUDService):
 
@@ -42,44 +44,7 @@ class GlusterVolumeService(CRUDService):
 
         verrors = ValidationErrors()
 
-        self.validate_gluster_jobs(verrors, job)
-
-    @private
-    def validate_gluster_jobs(self, verrors, job):
-        """
-        Gluster CLI operations need to run synchronously.
-        """
-
-        peer_job = self.middleware.call_sync(
-            'core.get_jobs', [
-                ['method', '^', 'gluster.peer'],
-                ['state', 'in', ['RUNNING']],
-            ]
-        )
-
-        if peer_job:
-            verrors.add(
-                'validate_gluster_jobs',
-                'There is an ongoing gluster peer operation. '
-                'Please wait for it to complete and then try again.'
-            )
-            raise verrors
-
-        volume_job = self.middleware.call_sync(
-            'core.get_jobs', [
-                ['method', '^', 'gluster.volume'],
-                ['state', 'in', ['RUNNING']],
-                ['id', '!=', job.id],
-            ]
-        )
-
-        if volume_job:
-            verrors.add(
-                'validate_gluster_jobs',
-                'There is an ongoing gluster volume operation. '
-                'Please wait for it to complete and then try again.'
-            )
-            raise verrors
+        validate_gluster_jobs(self, verrors, job)
 
     @private
     def create_volume(self, data):
