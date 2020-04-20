@@ -852,11 +852,11 @@ class CoreService(Service):
                 error = None
 
                 if isinstance(msg, Job):
-                    job = msg
+                    b_job = msg
                     msg = await msg.wait()
 
-                    if job.error:
-                        error = job.error
+                    if b_job.error:
+                        error = b_job.error
 
                 statuses.append({"result": msg, "error": error})
             except Exception as e:
