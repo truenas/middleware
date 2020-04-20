@@ -95,9 +95,8 @@ class GlusterVolumeService(CRUDService):
             bricks.append(brick)
 
         args = (volname, bricks)
-        kwargs = data
 
-        result = self.__volume_wrapper(volume.create, args, kwargs)
+        result = self.__volume_wrapper(volume.create, args, kwargs=data)
 
         return result
 
@@ -118,9 +117,8 @@ class GlusterVolumeService(CRUDService):
         volname = data.pop('volname')
 
         args = (volname,)
-        kwargs = data
 
-        result = self.__volume_wrapper(volume.start, args, kwargs)
+        result = self.__volume_wrapper(volume.start, args, kwargs=data)
 
         return result
 
@@ -130,9 +128,8 @@ class GlusterVolumeService(CRUDService):
         volname = data.pop('volname')
 
         args = (volname,)
-        kwargs = data
 
-        result = self.__volume_wrapper(volume.stop, args, kwargs)
+        result = self.__volume_wrapper(volume.stop, args, kwargs=data)
 
         return result
 
@@ -142,9 +139,8 @@ class GlusterVolumeService(CRUDService):
         volname = data.pop('volname')
 
         args = (volname,)
-        kwargs = data
 
-        result = self.__volume_wrapper(volume.restart, args, kwargs)
+        result = self.__volume_wrapper(volume.restart, args, kwargs=data)
 
         return result
 
