@@ -382,7 +382,15 @@ def test_25_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool():
 
 
 @skip_for_ha
-def test_26_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypted_pool():
+def test_26_verify_the_pool_dataset_is_passphrase_encrypted_and_algorithm_encryption():
+    results = GET(f'/pool/dataset/id/{pool_name}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
+    assert results.json()['encryption_algorithm']['value'] == 'AES-128-CCM', results.text
+
+
+@skip_for_ha
+def test_27_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypted_pool():
     payload = {
         'id': dataset,
         'change_key_options': {
@@ -393,39 +401,42 @@ def test_26_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypted_po
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    assert job_status['state'] == 'FAILED', str(job_status['results'])
 
 
 @skip_for_ha
-def test_26_delete_encrypted_dataset():
+def test_29_delete_encrypted_dataset():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
 @skip_for_ha
-def test_27_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool():
+def test_30_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption': False,
+        'inherit_encryption': False
     }
     results = POST('/pool/dataset/', payload)
     assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] is None, results.text
 
 
 @skip_for_ha
-def test_28_delete_not_encrypted_dataset():
+def test_31_delete_not_encrypted_dataset():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
 @skip_for_ha
-def test_29_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool():
+def test_32_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool():
     payload = {
         'name': dataset,
         'inherit_encryption': True
     }
     results = POST('/pool/dataset/', payload)
     assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
 @skip_for_ha
