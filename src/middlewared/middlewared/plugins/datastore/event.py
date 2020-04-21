@@ -18,6 +18,7 @@ class DatastoreService(Service):
         Str("plugin", required=True),
         Str("prefix", default=""),
         Str("id", default="id"),
+        Str("process_event", null=True, default=None),
         strict=True,
     ))
     async def register_event(self, options):
@@ -27,31 +28,32 @@ class DatastoreService(Service):
 
     async def send_insert_events(self, datastore, row):
         for options in self.events[datastore]:
-            self.middleware.send_event(
-                f"{options['plugin']}.query",
+            await self._send_event(
+                options,
                 "ADDED",
                 id=row[options["prefix"] + options["id"]],
                 fields=await self._fields(options, row),
             )
 
-    async def send_update_events(self, datastore, row):
+    async def send_update_events(self, datastore, id):
         for options in self.events[datastore]:
-            fields = await self._fields(options, row, False)
+            fields = await self._fields(options, {options["prefix"] + options["id"]: id}, False)
             if not fields:
                 # It is possible the row in question got deleted with the update
                 # event still pending, in this case we skip sending update event
                 continue
-            self.middleware.send_event(
-                f"{options['plugin']}.query",
+
+            await self._send_event(
+                options,
                 "CHANGED",
-                id=row[options["prefix"] + options["id"]],
+                id=id,
                 fields=fields[0],
             )
 
     async def send_delete_events(self, datastore, id):
         for options in self.events[datastore]:
-            self.middleware.send_event(
-                f"{options['plugin']}.query",
+            await self._send_event(
+                options,
                 "CHANGED",
                 id=id,
                 cleared=True,
@@ -62,4 +64,18 @@ class DatastoreService(Service):
             f"{options['plugin']}.query",
             [[options["id"], "=", row[options["prefix"] + options["id"]]]],
             {"get": get},
+        )
+
+    async def _send_event(self, options, type, **kwargs):
+        if options["process_event"]:
+            processed = await self.middleware.call(options["process_event"], type, kwargs)
+            if processed is None:
+                return
+
+            type, kwargs = processed
+
+        self.middleware.send_event(
+            f"{options['plugin']}.query",
+            type,
+            **kwargs,
         )
