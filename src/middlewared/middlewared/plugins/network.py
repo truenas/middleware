@@ -1499,9 +1499,6 @@ class InterfaceService(CRUDService):
             'datastore.delete', 'network.interfaces', [('int_interface', '=', oid)]
         )
 
-        # Let's finally delete the interface
-        await self.middleware.call('interface.destroy', oid)
-
         return oid
 
     @accepts()
