@@ -163,6 +163,76 @@ class GlusterVolumeService(CRUDService):
 
         return result
 
+    @private
+    def addbrick_volume(self, data):
+
+        volname = data.pop('volname')
+        volbricks = data.pop('bricks')
+
+        bricks = []
+        for i in volbricks:
+            peer = i.get('peer_name')
+            path = i.get('peer_path')
+            brick = peer + ':' + path
+            bricks.append(brick)
+
+        args = (volname, bricks)
+
+        result = self.__volume_wrapper(volume.bricks.add, args, kwargs=data)
+
+        return result
+
+    @private
+    def removebrick_volume(self, data):
+
+        volname = data.pop('volname')
+        volbricks = data.pop('bricks')
+        op = data.pop('operation')
+
+        bricks = []
+        for i in volbricks:
+            peer = i.get('peer_name')
+            path = i.get('peer_path')
+            brick = peer + ':' + path
+            bricks.append(brick)
+
+        args = (volname, bricks)
+
+        if op.lower() == 'start':
+            result = self.__volume_wrapper(volume.bricks.remove_start, args, kwargs=data)
+
+        if op.lower() == 'stop':
+            result = self.__volume_wrapper(volume.bricks.remove_stop, args, kwargs=data)
+
+        if op.lower() == 'commit':
+            result = self.__volume_wrapper(volume.bricks.remove_commit, args, kwargs=data)
+
+        if op.lower() == 'status':
+            result = self.__volume_wrapper(volume.bricks.remove_status, args, kwargs=data)
+
+        return result
+
+    @private
+    def replacebrick_volume(self, data):
+
+        volname = data.pop('volname')
+        src = data.pop('src_brick')
+        new = data.pop('new_brick')
+
+        src_peer = src.get('peer_name')
+        src_path = src.get('peer_path')
+        src_brick = src_peer + ':' + src_path
+
+        new_peer = new.get('peer_name')
+        new_path = new.get('peer_path')
+        new_brick = new_peer + ':' + new_path
+
+        args = (volname, src_brick, new_brick)
+
+        result = self.__volume_wrapper(volume.bricks.replace_commit, args, kwargs=data)
+
+        return result
+
     @accepts(Dict(
         'glustervolume_create',
         Str('volname', required=True),
@@ -181,19 +251,15 @@ class GlusterVolumeService(CRUDService):
         Int('redundancy', default=0),
         Bool('force', default=False),
     ))
-    @job(lock='gluster_volume_create')
+    @job(lock='glustervolume_create')
     def do_create(self, job, data):
         """
         Create a gluster volume.
 
         `volname` Name to be given to the gluster volume
-        `volbricks` List of brick paths for the gluster volume
-
-            `peer_name` IP or DNS name of the peer in the
-                trusted storage pool.
-
-            `peer_path` The full path of the dataset to be exported
-                for the gluster volume.
+        `volbricks` List of brick paths
+            `peer_name` IP or DNS name of the peer.
+            `peer_path` The full path of the brick
 
         `replica` Number of replica bricks
         `stripe` Number of stripe bricks
@@ -213,7 +279,7 @@ class GlusterVolumeService(CRUDService):
         Str('volname', required=True),
         Bool('force', default=False),
     ))
-    @job(lock='gluster_volume_start')
+    @job(lock='glustervolume_start')
     def start(self, job, data):
         """
         Start a gluster volume.
@@ -233,7 +299,7 @@ class GlusterVolumeService(CRUDService):
         Str('volname', required=True),
         Bool('force', default=False),
     ))
-    @job(lock='gluster_volume_restart')
+    @job(lock='glustervolume_restart')
     def restart(self, job, data):
         """
         Restart a gluster volume.
@@ -253,7 +319,7 @@ class GlusterVolumeService(CRUDService):
         Str('volname', required=True),
         Bool('force', default=False),
     ))
-    @job(lock='gluster_volume_stop')
+    @job(lock='glustervolume_stop')
     def stop(self, job, data):
         """
         Stop a gluster volume.
@@ -272,7 +338,7 @@ class GlusterVolumeService(CRUDService):
         'glustervolume_delete',
         Str('volname', required=True),
     ))
-    @job(lock='gluster_volume_delete')
+    @job(lock='glustervolume_delete')
     def do_delete(self, job, data):
         """
         Delete a gluster volume.
@@ -290,7 +356,7 @@ class GlusterVolumeService(CRUDService):
         'glustervolume_info',
         Str('volname', default='')
     ))
-    @job(lock='gluster_volume_info')
+    @job(lock='glustervolume_info')
     def info(self, job, data):
         """
         Return information about gluster volume(s).
@@ -311,7 +377,7 @@ class GlusterVolumeService(CRUDService):
         'glustervolume_status',
         Str('volname', default='')
     ))
-    @job(lock='gluster_volume_status')
+    @job(lock='glustervolume_status')
     def status(self, job, data):
         """
         Return detailed information about gluster volume(s).
@@ -329,7 +395,7 @@ class GlusterVolumeService(CRUDService):
         return result
 
     @accepts()
-    @job(lock='gluster_volume_list')
+    @job(lock='glustervolume_list')
     def list(self, job):
         """
         Return list of gluster volumes.
@@ -347,7 +413,7 @@ class GlusterVolumeService(CRUDService):
         Str('opt', default=None),
         Bool('force', default=False),
     ))
-    @job(lock='gluster_volume_optreset')
+    @job(lock='glustervolume_optreset')
     def optreset(self, job, data):
         """
         Reset volumes options.
@@ -370,7 +436,7 @@ class GlusterVolumeService(CRUDService):
         Str('volname', required=True),
         Dict('opts', required=True, additional_attrs=True),
     ))
-    @job(lock='gluster_volume_optset')
+    @job(lock='glustervolume_optset')
     def optset(self, job, data):
         """
         Set gluster volume options.
@@ -384,5 +450,120 @@ class GlusterVolumeService(CRUDService):
         self.common_validation(job)
 
         result = self.optset_volume(data)
+
+        return result
+
+    @accepts(Dict(
+        'glustervolume_addbrick',
+        Str('volname', required=True),
+        List('bricks', items=[
+            Dict(
+                'brick',
+                Str('peer_name', required=True),
+                Str('peer_path', required=True),
+            ),
+        ], required=True),
+        Int('stripe', default=None),
+        Int('replica', default=None),
+        Int('arbiter', default=None),
+        Bool('force', default=False),
+    ))
+    @job(lock='glustervolume_addbrick')
+    def addbrick(self, job, data):
+        """
+        Add bricks to a gluster volume.
+
+        `volname` Gluster volume name
+        `bricks` List of brick paths.
+            `peer_name` IP or DNS name of the peer in the
+            `peer_path` The full path of the brick to be added
+
+        `stripe` Stripe count
+        `repica` Replica count
+        `arbiter` Arbiter count
+        `force` Forcefully add brick(s)
+        """
+
+        self.common_validation(job)
+
+        result = self.addbrick_volume(data)
+
+        return result
+
+    @accepts(Dict(
+        'glustervolume_removebrick',
+        Str('volname', required=True),
+        List('bricks', items=[
+            Dict(
+                'brick',
+                Str('peer_name', required=True),
+                Str('peer_path', required=True),
+            ),
+        ], required=True),
+        Str('operation', enum=['START', 'STOP', 'COMMIT', 'STATUS'], required=True),
+        Int('replica', default=None),
+        Bool('force', default=False),
+    ))
+    @job(lock='glustervolume_removebrick')
+    def removebrick(self, job, data):
+        """
+        Perform a remove operation on the brick(s) in the gluster volume.
+
+        `volname` Gluster volume name
+        `bricks` List of brick paths.
+            `peer_name` IP or DNS name of the peer
+            `peer_path` The full path of the brick
+
+        `operation` The operation to be performed
+            `START` Start the removal of the brick(s)
+            `STOP` Stop the removal of the brick(s)
+            `COMMIT` Commit the removal of the brick(s)
+            `STATUS` Display status of the removal of the brick(s)
+
+        `repica` Replica count
+        `force` Forcefully run the removal operation.
+        """
+
+        self.common_validation(job)
+
+        result = self.removebrick_volume(data)
+
+        return result
+
+    @accepts(Dict(
+        'glustervolume_replacebrick',
+        Str('volname', required=True),
+        Dict(
+            'src_brick',
+            Str('peer_name', required=True),
+            Str('peer_path', required=True),
+        ),
+        Dict(
+            'new_brick',
+            Str('peer_name', required=True),
+            Str('peer_path', required=True),
+        ),
+        Bool('force', default=True),
+    ))
+    @job(lock='glustervolume_replacebrick')
+    def replacebrick(self, job, data):
+        """
+        Commit the replacement of a brick.
+
+        `volname` Gluster volume name
+        `src_brick` Brick to be replaced
+            `peer_name` IP or DNS name of the peer
+            `peer_path` The full path of the brick
+
+        `new_brick` New replacement brick
+            `peer_name` IP or DNS name of the peer
+            `peer_path` The full path of the brick
+
+        `force` Forcefully remove brick(s)
+        """
+
+        self.common_validation(job)
+
+        result = self.replacebrick_volume(data)
 
         return result
