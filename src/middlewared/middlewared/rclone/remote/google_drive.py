@@ -6,6 +6,8 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
     name = "GOOGLE_DRIVE"
     title = "Google Drive"
 
+    fast_list = True
+
     rclone_type = "drive"
 
     credentials_schema = [
