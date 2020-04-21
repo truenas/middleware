@@ -1711,6 +1711,11 @@ class PoolService(CRUDService):
             self.logger.warn('Failed to configure collectd', exc_info=True)
 
         try:
+            self.middleware.call_sync('etc.generate', 'ftp')
+        except Exception:
+            self.logger.warn('Failed to configure ftp', exc_info=True)
+
+        try:
             self.middleware.call_sync('etc.generate', 'syslogd')
         except Exception:
             self.logger.warn('Failed to configure syslogd', exc_info=True)

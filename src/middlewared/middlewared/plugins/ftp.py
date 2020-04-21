@@ -213,3 +213,14 @@ class FTPService(SystemServiceService):
             await self.middleware.call('service.start', 'ssl')
 
         return new
+
+
+async def pool_post_import(middleware, pool):
+    """
+    We don't set up anonymous FTP if pool is not imported yet.
+    """
+    await middleware.call("service.reload", "ftp")
+
+
+async def setup(middleware):
+    middleware.register_hook("pool.post_import", pool_post_import, sync=True)
