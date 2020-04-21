@@ -14,7 +14,7 @@ async def devd_loop(middleware):
             await devd_listen(middleware)
         except ConnectionRefusedError:
             middleware.logger.warn('devd connection refused, retrying...')
-        except OSError:
+        except Exception:
             middleware.logger.warn('devd pipe error, retrying...', exc_info=True)
         await asyncio.sleep(1)
 
@@ -38,10 +38,12 @@ def parse_devd_message(msg):
 async def devd_listen(middleware):
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     s.connect(DEVD_SOCKETFILE)
-    reader, writer = await asyncio.open_unix_connection(sock=s)
+    # reader, writer = await asyncio.open_unix_connection(sock=s)
+    reader = s.makefile('rb')
 
     while True:
-        line = await reader.readline()
+        # line = await reader.readline()
+        line = await middleware.run_in_thread(reader.readline)
         line = line.decode(errors='ignore')
         if line == "":
             break
