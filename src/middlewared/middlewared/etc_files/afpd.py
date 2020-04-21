@@ -132,6 +132,10 @@ def render(service, middleware):
     cf_contents.append("\n")
 
     for share in middleware.call_sync('datastore.query', 'sharing.afp_share', [['afp_enabled', '=', True]]):
+        if not os.path.exists(share['afp_path']):
+            middleware.logger.warning("Path [%s] to share [%s] does not exist",
+                                      share["afp_path"], share["afp_name"])
+            continue
         share = Struct(share)
         if share.afp_home:
             cf_contents.append("[Homes]\n")
