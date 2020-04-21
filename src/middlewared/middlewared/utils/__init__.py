@@ -521,6 +521,9 @@ class LoadPluginsMixin(object):
 
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
+        self._resolve_methods()
+
+    def _resolve_methods(self):
         from middlewared.schema import resolve_methods  # Lazy import so namespace match
         to_resolve = []
         for service in list(self._services.values()):

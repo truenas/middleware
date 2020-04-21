@@ -75,13 +75,13 @@ async def test_ipmi_sel_alert_source__works():
     source = IPMISELAlertSource(middleware)
 
     assert await source._produce_alerts_for_ipmitool_output(textwrap.dedent("""\
-        9,04/20/2017,06:03:07,Watchdog2 #0xca,Timer interrupt (),Asserted
+        9,04/20/2017,06:03:07,Power Unit #0xca,Failure detected,Asserted
     """)) == [
         Alert(
             IPMISELAlertClass,
             args=dict(
-                sensor="Watchdog2 #0xca",
-                event="Timer interrupt ()",
+                sensor="Power Unit #0xca",
+                event="Failure detected",
                 direction="Asserted",
                 verbose=None
             ),
@@ -106,14 +106,14 @@ async def test_ipmi_sel_alert_source__works_filters_dismissed_events():
     source = IPMISELAlertSource(middleware)
 
     assert await source._produce_alerts_for_ipmitool_output(textwrap.dedent("""\
-        9,04/20/2017,06:03:07,Watchdog2 #0xca,Timer interrupt (),Asserted
-        9,04/20/2017,06:03:08,Watchdog2 #0xca,Timer interrupt (),Asserted
+        9,04/20/2017,06:03:07,Power Unit #0xca,Failure detected,Asserted
+        9,04/20/2017,06:03:08,Power Unit #0xca,Failure detected,Asserted
     """)) == [
         Alert(
             IPMISELAlertClass,
             args=dict(
-                sensor="Watchdog2 #0xca",
-                event="Timer interrupt ()",
+                sensor="Power Unit #0xca",
+                event="Failure detected",
                 direction="Asserted",
                 verbose=None
             ),
@@ -139,7 +139,7 @@ async def test_ipmi_sel_alert_source__first_run():
     source = IPMISELAlertSource(middleware)
 
     assert await source._produce_alerts_for_ipmitool_output(textwrap.dedent("""\
-        9,04/20/2017,06:03:07,Watchdog2 #0xca,Timer interrupt (),Asserted
+        9,04/20/2017,06:03:07,Power Unit #0xca,Failure detected,Asserted
     """)) == []
 
     m2.assert_called_once_with("alert:ipmi_sel:dismissed_datetime", datetime(2017, 4, 20, 6, 3, 7))

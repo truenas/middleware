@@ -33,7 +33,7 @@ async def test__disk_service__sata_dom_lifetime_left():
 
     m = Middleware()
 
-    with patch("middlewared.plugins.disk.run", CoroutineMock(return_value=Mock(stdout=textwrap.dedent("""\
+    with patch("middlewared.plugins.disk.smartctl", CoroutineMock(return_value=Mock(stdout=textwrap.dedent("""\
         smartctl 6.6 2017-11-05 r4594 [FreeBSD 11.2-STABLE amd64] (local build)
         Copyright (C) 2002-17, Bruce Allen, Christian Franke, www.smartmontools.org
 

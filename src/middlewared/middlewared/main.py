@@ -1117,6 +1117,13 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
                 except Exception:
                     return args
 
+        if (not hasattr(method, 'accepts') and
+                method.__name__ in ['create', 'update', 'delete'] and
+                hasattr(method, '__self__')):
+            child_method = getattr(method.__self__, f'do_{method.__name__}', None)
+            if child_method is not None:
+                method = child_method
+
         if not hasattr(method, 'accepts'):
             return args
 
