@@ -443,8 +443,8 @@ class GlusterVolumeService(CRUDService):
 
         `volname` Name of the gluster volume
         `opts` Dict where
-            --key-- is the name of the option and
-            --value-- is the value the option should be set to
+            --key-- is the name of the option
+            --value-- is the value to be given to the option
         """
 
         self.common_validation(job)
@@ -475,7 +475,7 @@ class GlusterVolumeService(CRUDService):
 
         `volname` Gluster volume name
         `bricks` List of brick paths.
-            `peer_name` IP or DNS name of the peer in the
+            `peer_name` IP or DNS name of the peer
             `peer_path` The full path of the brick to be added
 
         `stripe` Stripe count
@@ -559,7 +559,7 @@ class GlusterVolumeService(CRUDService):
             `peer_name` IP or DNS name of the peer
             `peer_path` The full path of the brick
 
-        `force` Forcefully remove brick(s)
+        `force` Forcefully replace bricks
         """
 
         self.common_validation(job)
