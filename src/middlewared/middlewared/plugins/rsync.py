@@ -29,7 +29,6 @@ import asyncssh
 import contextlib
 import glob
 import os
-import re
 import shlex
 
 from middlewared.async_validators import check_path_resides_within_volume
@@ -200,7 +199,7 @@ class RsyncTaskService(CRUDService):
 
     @private
     async def rsync_task_extend(self, data, context):
-        data['extra'] = list(filter(None, re.split(r"\s+", data["extra"])))
+        data['extra'] = shlex.split(data['extra'].replace('"', r'"\"').replace("'", r'"\"'))
         for field in ('mode', 'direction'):
             data[field] = data[field].upper()
         Cron.convert_db_format_to_schedule(data)
