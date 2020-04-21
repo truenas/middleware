@@ -39,6 +39,10 @@ class InterfaceService(Service, InterfaceTypeBase):
         if type == InterfaceType.LINK_AGGREGATION:
             if not (name.startswith('lagg') and name[4:].isdigit()):
                 raise ValueError('Link aggregation interface must start with "lagg" followed by an unique number.')
+            else:
+                # lagg0 is allowed, lagg0X is not
+                if len(name) > 5 and name[4] == '0':
+                    raise ValueError('Link aggregation interface name cannot start with "lagg0".')
 
         if type == InterfaceType.VLAN:
             if not (name.startswith('vlan') and name[4:].isdigit()):
