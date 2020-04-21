@@ -125,13 +125,13 @@ class QuotaAlertSource(ThreadedAlertSource):
         if dataset["mounted"]["value"] == "yes":
             if dataset["mountpoint"]["value"] == "legacy":
                 for m in (getmntinfo() if getmntinfo else []):
-                    if m.source == dataset["name"]["value"]:
+                    if m.source == dataset["name"]:
                         mountpoint = m.dest
                         break
             else:
                 mountpoint = dataset["mountpoint"]["value"]
         if mountpoint is None:
-            logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root", dataset["name"]["value"])
+            logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root", dataset["name"])
             uid = 0
         else:
             try:
