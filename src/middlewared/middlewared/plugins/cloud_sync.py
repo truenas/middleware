@@ -175,7 +175,7 @@ async def rclone(middleware, job, cloud_sync):
                 await middleware.call("zfs.snapshot.create", dict(snapshot, recursive=recursive))
 
                 relpath = os.path.relpath(path, dataset["mountpoint"])
-                path = os.path.join(dataset["mountpoint"], ".zfs", "snapshot", snapshot_name, relpath)
+                path = os.path.normpath(os.path.join(dataset["mountpoint"], ".zfs", "snapshot", snapshot_name, relpath))
 
             args.extend([path, config.remote_path])
         else:
