@@ -113,10 +113,10 @@ def filter_list(_list, filters=None, options=None):
         'nin': lambda x, y: x not in y,
         'rin': lambda x, y: x is not None and y in x,
         'rnin': lambda x, y: x is not None and y not in x,
-        '^': lambda x, y: x.startswith(y),
-        '!^': lambda x, y: not x.startswith(y),
-        '$': lambda x, y: x.endswith(y),
-        '!$': lambda x, y: not x.endswith(y),
+        '^': lambda x, y: x is not None and x.startswith(y),
+        '!^': lambda x, y: x is not None and not x.startswith(y),
+        '$': lambda x, y: x is not None and x.endswith(y),
+        '!$': lambda x, y: x is not None and not x.endswith(y),
     }
 
     if filters is None:
