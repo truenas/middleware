@@ -462,6 +462,12 @@ class LDAPService(ConfigService):
                 new["certificate"], "ldap_update.certificate", False
             ))
 
+        if not new["bindpw"] and new["has_samba_schema"]:
+            verrors.add(
+                "ldap_update.bindpw",
+                "Bind credentials are required in order to use samba schema."
+            )
+
         if not new["bindpw"] and not new["kerberos_principal"] and not new["anonbind"]:
             verrors.add(
                 "ldap_update.binddn",
