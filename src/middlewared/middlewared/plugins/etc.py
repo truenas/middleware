@@ -64,6 +64,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'group'},
             {'type': 'mako', 'path': 'master.passwd'},
             {'type': 'py', 'path': 'pwd_db'},
+            {'type': 'mako', 'path': 'local/smbusername.map'},
         ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
@@ -167,7 +168,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/smb4_share.conf'},
         ],
         'smb_configure': [
-            {'type': 'mako', 'path': 'local/smbusername.map'},
             {'type': 'py', 'path': 'smb_configure'},
         ],
         'snmpd': [
