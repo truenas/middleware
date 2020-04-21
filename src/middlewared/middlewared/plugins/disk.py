@@ -770,7 +770,9 @@ class DiskService(CRUDService):
     async def __get_temperature(self, disk, smartctl_args):
         if disk.startswith('da') and not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
             try:
-                return await self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
+                temperature = await self.middleware.run_in_thread(lambda: cam.CamDevice(disk).get_temperature())
+                if temperature is not None:
+                    return temperature
             except Exception:
                 pass
 
