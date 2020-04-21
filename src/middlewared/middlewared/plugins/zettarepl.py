@@ -650,7 +650,7 @@ class ZettareplService(Service):
             message = self.observer_queue.get()
 
             try:
-                self.logger.debug("Observer queue got %r", message)
+                self.logger.trace("Observer queue got %r", message)
 
                 # Global events
 
