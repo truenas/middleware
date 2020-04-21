@@ -10,7 +10,7 @@ except ImportError:
     geom = None
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import private, CallError, CRUDService
+from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
@@ -64,8 +64,16 @@ class DiskService(CRUDService):
         datastore = 'storage.disk'
         datastore_prefix = 'disk_'
         datastore_extend = 'disk.disk_extend'
-        datastore_filters = [('expiretime', '=', None)]
         datastore_extend_context = 'disk.disk_extend_context'
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        filters = filters or []
+        options = options or {}
+        if options.pop('include_expired', False):
+            filters += [('expiretime', '=', None)]
+
+        return await super().query(filters, options)
 
     @private
     async def disk_extend(self, disk, context):

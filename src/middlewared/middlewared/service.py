@@ -195,7 +195,6 @@ class ServiceBase(type):
       - datastore: name of the datastore mainly used in the service
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
-      - datastore_filters: datastore default filters to be used in `query` method
       - service: system service `name` option used by `SystemServiceService`
       - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
       - service_verb: verb to be used on update (default to `reload`)
@@ -227,7 +226,6 @@ class ServiceBase(type):
             'datastore_prefix': '',
             'datastore_extend': None,
             'datastore_extend_context': None,
-            'datastore_filters': None,
             'service': None,
             'service_model': None,
             'service_verb': 'reload',
@@ -408,7 +406,6 @@ class CRUDService(ServiceChangeMixin, Service):
 
         if not filters:
             filters = []
-        filters += self._config.datastore_filters or []
 
         options = options or {}
         options['extend'] = self._config.datastore_extend

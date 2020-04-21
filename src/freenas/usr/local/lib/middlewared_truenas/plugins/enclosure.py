@@ -172,8 +172,9 @@ class EnclosureService(CRUDService):
             enclosure, element = self._get_slot_for_disk(disk)
         except MatchNotFound:
             disk = self.middleware.call_sync(
-                "disk.query", [["devname", "=", disk]],
-                {"get": True, "order_by": ["expiretime"]},
+                "disk.query",
+                [["devname", "=", disk]],
+                {"get": True, "include_expired": True, "order_by": ["expiretime"]},
             )
             if disk["enclosure"]:
                 enclosure, element = self._get_slot(lambda element: element["slot"] == disk["enclosure"]["slot"],
@@ -192,7 +193,11 @@ class EnclosureService(CRUDService):
 
     @private
     def sync_disk(self, id):
-        disk = self.middleware.call_sync('disk.query', [['identifier', '=', id]], {'get': True})
+        disk = self.middleware.call_sync(
+            'disk.query',
+            [['identifier', '=', id]],
+            {'get': True, 'include_expired': True}
+        )
 
         try:
             enclosure, element = self._get_slot_for_disk(disk["name"])
@@ -307,8 +312,9 @@ class EnclosureService(CRUDService):
             if disk.startswith("multipath/"):
                 try:
                     disks.append(self.middleware.call_sync(
-                        "disk.query", [["devname", "=", disk]],
-                        {"get": True, "order_by": ["expiretime"]}
+                        "disk.query",
+                        [["devname", "=", disk]],
+                        {"get": True, "include_expired": True, "order_by": ["expiretime"]},
                     )["name"])
                 except IndexError:
                     pass
