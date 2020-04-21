@@ -14,25 +14,19 @@ class GlusterVolumeService(CRUDService):
     class Config:
         namespace = 'gluster.volume'
 
-    def __volume_wrapper(self, method, args=None, kwargs=None):
+    def __volume_wrapper(self, method, *args, **kwargs):
 
         result = b''
 
+        args = args or ()
+        kwargs = kwargs or {}
+
         try:
-            if args and not kwargs:
-                result = method(*args)
-            if kwargs and not args:
-                result = method(**kwargs)
-            if args and kwargs:
-                result = method(*args, **kwargs)
-            if not args and not kwargs:
-                result = method()
+            result = method(*args, **kwargs)
         except GlusterCmdException as e:
             rc, out, err = e.args[0]
             err = err if err else out
             raise CallError(f'{err.decode().strip()}')
-        except Exception:
-            raise
 
         if isinstance(result, bytes):
             return result.decode().strip()
@@ -59,9 +53,8 @@ class GlusterVolumeService(CRUDService):
             brick = peer + ':' + path
             bricks.append(brick)
 
-        args = (volname, bricks)
-
-        result = self.__volume_wrapper(volume.create, args, kwargs=data)
+        result = self.__volume_wrapper(
+            volume.create, volname, bricks, data)
 
         return result
 
@@ -70,9 +63,7 @@ class GlusterVolumeService(CRUDService):
 
         volname = data.get('volname')
 
-        args = (volname,)
-
-        result = self.__volume_wrapper(volume.delete, args)
+        result = self.__volume_wrapper(volume.delete, volname)
 
         return result
 
@@ -81,9 +72,7 @@ class GlusterVolumeService(CRUDService):
 
         volname = data.pop('volname')
 
-        args = (volname,)
-
-        result = self.__volume_wrapper(volume.start, args, kwargs=data)
+        result = self.__volume_wrapper(volume.start, volname, data)
 
         return result
 
@@ -92,9 +81,7 @@ class GlusterVolumeService(CRUDService):
 
         volname = data.pop('volname')
 
-        args = (volname,)
-
-        result = self.__volume_wrapper(volume.stop, args, kwargs=data)
+        result = self.__volume_wrapper(volume.stop, volname, data)
 
         return result
 
@@ -103,34 +90,22 @@ class GlusterVolumeService(CRUDService):
 
         volname = data.pop('volname')
 
-        args = (volname,)
-
-        result = self.__volume_wrapper(volume.restart, args, kwargs=data)
+        result = self.__volume_wrapper(volume.restart, volname, data)
 
         return result
 
     @private
     def info_volume(self, data):
 
-        volname = data.get('volname')
-
-        if volname:
-            args = (volname,)
-            result = self.__volume_wrapper(volume.info, args)
-        else:
-            result = self.__volume_wrapper(volume.info)
+        result = self.__volume_wrapper(volume.info, data)
 
         return result
 
     @private
     def status_volume(self, data):
 
-        volname = data.get('volname')
-
-        if volname:
-            result = self.__volume_wrapper(volume.status_detail, kwargs=data)
-        else:
-            result = self.__volume_wrapper(volume.status_detail)
+        result = self.__volume_wrapper(
+            volume.status_detail, data)
 
         return result
 
@@ -146,9 +121,7 @@ class GlusterVolumeService(CRUDService):
 
         volname = data.pop('volname')
 
-        args = (volname,)
-
-        result = self.__volume_wrapper(volume.optreset, args, kwargs=data)
+        result = self.__volume_wrapper(volume.optreset, volname, data)
 
         return result
 
@@ -157,9 +130,7 @@ class GlusterVolumeService(CRUDService):
 
         volname = data.pop('volname')
 
-        args = (volname,)
-
-        result = self.__volume_wrapper(volume.optset, args, kwargs=data)
+        result = self.__volume_wrapper(volume.optset, volname, data)
 
         return result
 
@@ -176,9 +147,8 @@ class GlusterVolumeService(CRUDService):
             brick = peer + ':' + path
             bricks.append(brick)
 
-        args = (volname, bricks)
-
-        result = self.__volume_wrapper(volume.bricks.add, args, kwargs=data)
+        result = self.__volume_wrapper(
+            volume.bricks.add, volname, bricks, data)
 
         return result
 
@@ -196,19 +166,21 @@ class GlusterVolumeService(CRUDService):
             brick = peer + ':' + path
             bricks.append(brick)
 
-        args = (volname, bricks)
-
         if op.lower() == 'start':
-            result = self.__volume_wrapper(volume.bricks.remove_start, args, kwargs=data)
+            result = self.__volume_wrapper(
+                volume.bricks.remove_start, volname, bricks, data)
 
         if op.lower() == 'stop':
-            result = self.__volume_wrapper(volume.bricks.remove_stop, args, kwargs=data)
+            result = self.__volume_wrapper(
+                volume.bricks.remove_stop, volname, bricks, data)
 
         if op.lower() == 'commit':
-            result = self.__volume_wrapper(volume.bricks.remove_commit, args, kwargs=data)
+            result = self.__volume_wrapper(
+                volume.bricks.remove_commit, volname, bricks, data)
 
         if op.lower() == 'status':
-            result = self.__volume_wrapper(volume.bricks.remove_status, args, kwargs=data)
+            result = self.__volume_wrapper(
+                volume.bricks.remove_status, volname, bricks, data)
 
         return result
 
@@ -227,9 +199,12 @@ class GlusterVolumeService(CRUDService):
         new_path = new.get('peer_path')
         new_brick = new_peer + ':' + new_path
 
-        args = (volname, src_brick, new_brick)
-
-        result = self.__volume_wrapper(volume.bricks.replace_commit, args, kwargs=data)
+        result = self.__volume_wrapper(
+            volume.bricks.replace_commit,
+            volname,
+            src_brick,
+            new_brick,
+            data)
 
         return result
 
