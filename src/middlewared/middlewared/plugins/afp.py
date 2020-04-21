@@ -97,6 +97,15 @@ class AFPService(SystemServiceService):
 
         return await self.config()
 
+    @accepts()
+    async def bindip_choices(self):
+        """
+        List of valid choices for IP addresses to which to bind the AFP service.
+        """
+        return {
+            d['address']: d['address'] for d in await self.middleware.call('interface.ip_in_use')
+        }
+
 
 class SharingAFPModel(sa.Model):
     __tablename__ = 'sharing_afp_share'
