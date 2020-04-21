@@ -185,7 +185,10 @@ class AFPForm(MiddlewareModelForm, ModelForm):
                     'afp_srv_bindip',
                     self.data['afp_srv_bindip'].split(',')
                 )
-        self.fields['afp_srv_bindip'].choices = list(choices.IPChoices())
+
+        with client as c:
+            self.fields['afp_srv_bindip'].choices = (c.call('afp.bindip_choices')).items()
+
         if self.instance.id and self.instance.afp_srv_bindip:
             bindips = []
             for ip in self.instance.afp_srv_bindip:
