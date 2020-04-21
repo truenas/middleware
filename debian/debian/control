@@ -34,7 +34,9 @@ Depends: collectd,
          tmux,
          truenas-webui,
          winbind,
-         wireguard,
+# Wireguard needs to be fixed because it needs extra dependencies to build the module during install
+# We should likely build the modules into the package and not use dkms
+#        wireguard,
          zsh,
          ${misc:Depends}
 Description: Main package for TrueNAS
