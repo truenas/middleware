@@ -133,12 +133,10 @@ def watch_parent():
     os._exit(1)
 
 
-def receive_environ():
-    def callback(*args, **kwargs):
-        environ_update(kwargs['fields'])
-
+def receive_events():
     c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
-    c.subscribe('core.environ', callback)
+    c.subscribe('core.environ', lambda *args, **kwargs: environ_update(kwargs['fields']))
+    c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: logger.reconfigure_logging())
 
     environ_update(c.call('core.environ'))
 
@@ -152,4 +150,4 @@ def worker_init(overlay_dirs, debug_level, log_handler):
     setproctitle.setproctitle('middlewared (worker)')
     threading.Thread(target=watch_parent, daemon=True).start()
     logger.setup_logging('worker', debug_level, log_handler)
-    receive_environ()
+    receive_events()

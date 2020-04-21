@@ -5,11 +5,9 @@ import asyncio
 import errno
 import inspect
 import json
-import logging
 import os
 import re
 import socket
-import sys
 import threading
 import time
 import traceback
@@ -19,7 +17,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
-from middlewared.logger import Logger
+from middlewared.logger import Logger, reconfigure_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 
@@ -725,17 +723,8 @@ class CoreService(Service):
         we need to make sure the log file is reopened because
         of the new location
         """
-        handler = logging._handlers.get('file')
-        if handler:
-            stream = handler.stream
-            handler.stream = handler._open()
-            if sys.stdout is stream:
-                sys.stdout = handler.stream
-                sys.stderr = handler.stream
-            try:
-                stream.close()
-            except Exception:
-                pass
+        reconfigure_logging()
+        self.middleware.send_event('core.reconfigure_logging', 'CHANGED')
 
     @private
     @accepts(Dict(
