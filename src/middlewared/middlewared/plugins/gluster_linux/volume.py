@@ -219,13 +219,13 @@ class GlusterVolumeService(CRUDService):
                 Str('peer_path', required=True),
             ),
         ], required=True),
-        Int('replica', required=False),
-        Int('stripe', required=False),
-        Int('arbiter', required=False),
-        Int('disperse', required=False),
-        Int('disperse_data', required=False),
-        Int('redundancy', required=False),
-        Bool('force', required=False),
+        Int('replica'),
+        Int('stripe'),
+        Int('arbiter'),
+        Int('disperse'),
+        Int('disperse_data'),
+        Int('redundancy'),
+        Bool('force'),
     ))
     @job(lock='glustervolume_create')
     def do_create(self, job, data):
@@ -253,7 +253,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(Dict(
         'glustervolume_start',
         Str('volname', required=True),
-        Bool('force', required=False),
+        Bool('force'),
     ))
     @job(lock='glustervolume_start')
     def start(self, job, data):
@@ -273,7 +273,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(Dict(
         'glustervolume_restart',
         Str('volname', required=True),
-        Bool('force', required=False),
+        Bool('force'),
     ))
     @job(lock='glustervolume_restart')
     def restart(self, job, data):
@@ -293,7 +293,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(Dict(
         'glustervolume_stop',
         Str('volname', required=True),
-        Bool('force', required=False),
+        Bool('force'),
     ))
     @job(lock='glustervolume_stop')
     def stop(self, job, data):
@@ -330,7 +330,7 @@ class GlusterVolumeService(CRUDService):
 
     @accepts(Dict(
         'glustervolume_info',
-        Str('volname', required=False)
+        Str('volname')
     ))
     @job(lock='glustervolume_info')
     def info(self, job, data):
@@ -351,7 +351,7 @@ class GlusterVolumeService(CRUDService):
 
     @accepts(Dict(
         'glustervolume_status',
-        Str('volname', required=False)
+        Str('volname')
     ))
     @job(lock='glustervolume_status')
     def status(self, job, data):
@@ -386,8 +386,8 @@ class GlusterVolumeService(CRUDService):
     @accepts(Dict(
         'glustervolume_optreset',
         Str('volname', required=True),
-        Str('opt', required=False),
-        Bool('force', required=False),
+        Str('opt'),
+        Bool('force'),
     ))
     @job(lock='glustervolume_optreset')
     def optreset(self, job, data):
@@ -439,10 +439,10 @@ class GlusterVolumeService(CRUDService):
                 Str('peer_path', required=True),
             ),
         ], required=True),
-        Int('stripe', required=False),
-        Int('replica', required=False),
-        Int('arbiter', required=False),
-        Bool('force', required=False),
+        Int('stripe'),
+        Int('replica'),
+        Int('arbiter'),
+        Bool('force'),
     ))
     @job(lock='glustervolume_addbrick')
     def addbrick(self, job, data):
@@ -477,7 +477,7 @@ class GlusterVolumeService(CRUDService):
             ),
         ], required=True),
         Str('operation', enum=['START', 'STOP', 'COMMIT', 'STATUS'], required=True),
-        Int('replica', required=False),
+        Int('replica'),
     ))
     @job(lock='glustervolume_removebrick')
     def removebrick(self, job, data):
@@ -518,7 +518,7 @@ class GlusterVolumeService(CRUDService):
             Str('peer_name', required=True),
             Str('peer_path', required=True),
         ),
-        Bool('force', required=False),
+        Bool('force'),
     ))
     @job(lock='glustervolume_replacebrick')
     def replacebrick(self, job, data):
