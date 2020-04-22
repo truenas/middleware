@@ -6,7 +6,7 @@ def validate_gluster_jobs(self, verrors, job):
     peer_job = self.middleware.call_sync(
         'core.get_jobs', [
             ['method', '^', 'gluster.peer'],
-            ['state', 'in', ['RUNNING']],
+            ['state', '=', ['RUNNING']],
             ['id', '!=', job.id]
         ]
     )
@@ -22,7 +22,7 @@ def validate_gluster_jobs(self, verrors, job):
     volume_job = self.middleware.call_sync(
         'core.get_jobs', [
             ['method', '^', 'gluster.volume'],
-            ['state', 'in', ['RUNNING']],
+            ['state', '=', ['RUNNING']],
             ['id', '!=', job.id]
         ]
     )
