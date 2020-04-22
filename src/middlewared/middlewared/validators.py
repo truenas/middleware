@@ -4,7 +4,7 @@ import re
 from urllib.parse import urlparse
 import uuid
 
-from zettarepl.snapshot.task.naming_schema import validate_snapshot_naming_schema
+from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
 
