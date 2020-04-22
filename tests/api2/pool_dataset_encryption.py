@@ -279,7 +279,49 @@ def test_22_verify_passphrase_encrypted_root_is_locked():
 
 
 @skip_for_ha
-def test_23_unlock_passphrase_encrypted_datasets_and_ensure_they_get_unlocked():
+def test_23_unlock_passphrase_encrypted_datasets_with_wrong_passphrase():
+    payload = {
+        'id': dataset,
+        'unlock_options': {
+            'recursive': True,
+            'datasets': [
+                {
+                    'name': dataset,
+                    'passphrase': 'bad_passphrase'
+                }
+            ]
+        }
+    }
+    results = POST('/pool/dataset/unlock/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'FAILED', str(job_status['results'])
+
+
+@skip_for_ha
+def test_24_verify_passphrase_encrypted_root_still_locked():
+    payload = {
+        'id': dataset
+    }
+    results = POST('/pool/dataset/encryption_summary/', payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    job_status_result = job_status['results']['result']
+    for dictionary in job_status_result:
+        if dictionary['name'] == dataset:
+            assert dictionary['key_format'] == 'PASSPHRASE', str(job_status_result)
+            assert dictionary['unlock_successful'] is False, str(job_status_result)
+            assert dictionary['locked'] is True, str(job_status_result)
+            break
+    else:
+        assert False, str(job_status_result)
+
+
+@skip_for_ha
+def test_25_unlock_passphrase_encrypted_datasets():
     payload = {
         'id': dataset,
         'unlock_options': {
@@ -300,7 +342,7 @@ def test_23_unlock_passphrase_encrypted_datasets_and_ensure_they_get_unlocked():
 
 
 @skip_for_ha
-def test_24_verify_passphrase_encrypted_root_is_unlocked():
+def test_26_verify_passphrase_encrypted_root_is_unlocked():
     payload = {
         'id': dataset
     }
@@ -321,13 +363,13 @@ def test_24_verify_passphrase_encrypted_root_is_unlocked():
 
 
 @skip_for_ha
-def test_25_delete_encrypted_dataset():
+def test_27_delete_encrypted_dataset():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
 @skip_for_ha
-def test_26_delete_pool():
+def test_28_delete_pool():
     payload = {
         'cascade': True,
         'restart_services': True,
@@ -341,7 +383,7 @@ def test_26_delete_pool():
 
 
 @skip_for_ha
-def test_27_create_a_passphrase_encrypted_pool():
+def test_29_create_a_passphrase_encrypted_pool():
     global pool_id
     payload = {
         'name': pool_name,
@@ -365,7 +407,15 @@ def test_27_create_a_passphrase_encrypted_pool():
 
 
 @skip_for_ha
-def test_25_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool():
+def test_30_verify_the_pool_dataset_is_passphrase_encrypted_and_algorithm_encryption():
+    results = GET(f'/pool/dataset/id/{pool_name}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
+    assert results.json()['encryption_algorithm']['value'] == 'AES-128-CCM', results.text
+
+
+@skip_for_ha
+def test_31_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption_options': {
@@ -382,15 +432,7 @@ def test_25_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool():
 
 
 @skip_for_ha
-def test_26_verify_the_pool_dataset_is_passphrase_encrypted_and_algorithm_encryption():
-    results = GET(f'/pool/dataset/id/{pool_name}/')
-    assert results.status_code == 200, results.text
-    assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
-    assert results.json()['encryption_algorithm']['value'] == 'AES-128-CCM', results.text
-
-
-@skip_for_ha
-def test_27_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypted_pool():
+def test_32_try_to_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypted_pool():
     payload = {
         'id': dataset,
         'change_key_options': {
@@ -405,13 +447,13 @@ def test_27_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypted_po
 
 
 @skip_for_ha
-def test_29_delete_encrypted_dataset():
+def test_33_delete_encrypted_dataset():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
 @skip_for_ha
-def test_30_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool():
+def test_34_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption': False,
@@ -423,13 +465,13 @@ def test_30_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool():
 
 
 @skip_for_ha
-def test_31_delete_not_encrypted_dataset():
+def test_35_delete_not_encrypted_dataset():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
 @skip_for_ha
-def test_32_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool():
+def test_36_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool():
     payload = {
         'name': dataset,
         'inherit_encryption': True
@@ -440,13 +482,13 @@ def test_32_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted
 
 
 @skip_for_ha
-def test_30_delete_encrypted_dataset():
+def test_37_delete_encrypted_dataset():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
 @skip_for_ha
-def test_31_try_to_create_an_encrypted_root_with_generate_key_on_passphrase_encrypted_pool():
+def test_38_try_to_create_an_encrypted_root_with_generate_key_on_passphrase_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption_options': {
@@ -460,7 +502,7 @@ def test_31_try_to_create_an_encrypted_root_with_generate_key_on_passphrase_encr
 
 
 @skip_for_ha
-def test_32_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_pool():
+def test_39_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption_options': {
@@ -474,7 +516,7 @@ def test_32_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_poo
 
 
 @skip_for_ha
-def test_33_delete_the_passphrase_encrypted_pool_with_is_datasets():
+def test_40_delete_the_passphrase_encrypted_pool_with_is_datasets():
     payload = {
         'cascade': True,
         'restart_services': True,
@@ -488,7 +530,7 @@ def test_33_delete_the_passphrase_encrypted_pool_with_is_datasets():
 
 
 @skip_for_ha
-def test_34_creating_a_key_encrypted_pool():
+def test_42_creating_a_key_encrypted_pool():
     global pool_id
     payload = {
         'name': pool_name,
@@ -512,7 +554,15 @@ def test_34_creating_a_key_encrypted_pool():
 
 
 @skip_for_ha
-def test_35_creating_a_key_encrypted_root_on_key_encrypted_pool():
+def test_43_verify_the_pool_dataset_is_hex_key_encrypted_and_algorithm_encryption():
+    results = GET(f'/pool/dataset/id/{pool_name}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] == 'HEX', results.text
+    assert results.json()['encryption_algorithm']['value'] == 'AES-128-CCM', results.text
+
+
+@skip_for_ha
+def test_44_creating_a_key_encrypted_root_on_key_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption_options': {
@@ -523,10 +573,11 @@ def test_35_creating_a_key_encrypted_root_on_key_encrypted_pool():
     }
     results = POST('/pool/dataset/', payload)
     assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
 @skip_for_ha
-def test_36_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool():
+def test_45_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool():
     payload = {
         'id': dataset,
         'change_key_options': {
@@ -541,7 +592,14 @@ def test_36_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool():
 
 
 @skip_for_ha
-def test_37_lock_passphrase_encrypted_dataset():
+def test_46_verify_the_pool_dataset_changed_to_passphrase():
+    results = GET(f'/pool/dataset/id/{dataset_url}/')
+    assert results.status_code == 200, results.text
+    assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
+
+
+@skip_for_ha
+def test_47_lock_passphrase_encrypted_dataset():
     payload = {
         'id': dataset,
         'lock_options': {
@@ -553,7 +611,7 @@ def test_37_lock_passphrase_encrypted_dataset():
 
 
 @skip_for_ha
-def test_38_verify_passphrase_encrypted_root_is_locked():
+def test_48_verify_passphrase_encrypted_root_is_locked():
     payload = {
         'id': dataset
     }
@@ -565,6 +623,7 @@ def test_38_verify_passphrase_encrypted_root_is_locked():
     job_status_result = job_status['results']['result']
     for dictionary in job_status_result:
         if dictionary['name'] == dataset:
+            assert dictionary['unlock_successful'] is False, str(job_status_result)
             assert dictionary['locked'] is True, str(job_status_result)
             break
     else:
@@ -572,7 +631,7 @@ def test_38_verify_passphrase_encrypted_root_is_locked():
 
 
 @skip_for_ha
-def test_39_unlock_passphrase_encrypted_datasets():
+def test_49_unlock_passphrase_encrypted_datasets():
     payload = {
         'id': dataset,
         'unlock_options': {
@@ -593,7 +652,7 @@ def test_39_unlock_passphrase_encrypted_datasets():
 
 
 @skip_for_ha
-def test_40_verify_passphrase_encrypted_root_is_unlocked():
+def test_50_verify_passphrase_encrypted_root_is_unlocked():
     payload = {
         'id': dataset
     }
@@ -605,6 +664,7 @@ def test_40_verify_passphrase_encrypted_root_is_unlocked():
     job_status_result = job_status['results']['result']
     for dictionary in job_status_result:
         if dictionary['name'] == dataset:
+            assert dictionary['unlock_successful'] is True, str(job_status_result)
             assert dictionary['locked'] is False, str(job_status_result)
             break
     else:
@@ -622,6 +682,7 @@ def test_42_create_an_not_encrypted_dataset_on_a_key_encrypted_pool():
     payload = {
         'name': dataset,
         'encryption': False,
+        'inherit_encryption': False
     }
     results = POST('/pool/dataset/', payload)
     assert results.status_code == 200, results.text
