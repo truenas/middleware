@@ -8,6 +8,7 @@ async def _event_system(middleware, event_type, args):
 
 async def setup(middleware):
     await middleware.call('truecommand.config')
+    middleware.event_register('truecommand.config', 'Sent on TrueCommand configuration changes.')
     await middleware.call(
         'truecommand.set_status',
         (await middleware.call('datastore.config', 'system.truecommand'))['api_key_state']
