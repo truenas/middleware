@@ -55,13 +55,10 @@ class GlusterPeerService(CRUDService):
         verrors = ValidationErrors()
 
         if hostname:
-            try:
-                self.middleware.call_sync(
-                    'gluster.peer.resolve_host_or_ip', hostname, verrors)
-            except Exception:
-                if verrors:
-                    raise verrors
-                raise
+            self.middleware.call_sync(
+                'gluster.peer.resolve_host_or_ip', hostname, verrors)
+
+        verrors.check()
 
         validate_gluster_jobs(self, verrors, job)
 
