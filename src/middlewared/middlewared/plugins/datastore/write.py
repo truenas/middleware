@@ -74,7 +74,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             if result.rowcount != 1:
                 raise RuntimeError('No rows were updated')
 
-            await self.middleware.call('datastore.send_update_events', name, update)
+            await self.middleware.call('datastore.send_update_events', name, id)
 
         await self._handle_relationships(id, relationships)
 

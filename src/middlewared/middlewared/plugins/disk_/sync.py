@@ -185,12 +185,45 @@ class DiskService(Service, ServiceChangeMixin):
         await self._service_change('smartd', 'restart')
         await self._service_change('snmp', 'restart')
 
+    expired_disks = set()
+
+    @private
+    async def init_datastore_events_processor(self):
+        self.expired_disks = {
+            disk["identifier"]
+            for disk in await self.middleware.call(
+                "datastore.query",
+                "storage.disk",
+                [("expiretime", "!=", None)],
+                {"prefix": "disk_"},
+            )
+        }
+
+    @private
+    async def process_datastore_event(self, type, kwargs):
+        if type == "CHANGED":
+            if kwargs["fields"]["expiretime"] is not None:
+                if kwargs["fields"]["identifier"] not in self.expired_disks:
+                    self.expired_disks.add(kwargs["fields"]["identifier"])
+                    return "CHANGED", {"id": kwargs["id"], "cleared": True}
+
+                return None
+            else:
+                if kwargs["fields"]["identifier"] in self.expired_disks:
+                    self.expired_disks.remove(kwargs["fields"]["identifier"])
+                    return "ADDED", {"id": kwargs["id"], "fields": kwargs["fields"]}
+
+        return type, kwargs
+
 
 async def setup(middleware):
+    await middleware.call("disk.init_datastore_events_processor")
+
     await middleware.call("datastore.register_event", {
         "description": "Sent on disk changes.",
         "datastore": "storage.disk",
         "plugin": "disk",
         "prefix": "disk_",
         "id": "identifier",
+        "process_event": "disk.process_datastore_event",
     })

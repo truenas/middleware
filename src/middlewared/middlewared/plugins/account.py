@@ -136,7 +136,6 @@ class UserService(CRUDService):
         """
         if not filters:
             filters = []
-        filters += self._config.datastore_filters or []
 
         options = options or {}
         options['extend'] = self._config.datastore_extend
@@ -885,7 +884,6 @@ class GroupService(CRUDService):
         """
         if not filters:
             filters = []
-        filters += self._config.datastore_filters or []
 
         options = options or {}
         options['extend'] = self._config.datastore_extend
