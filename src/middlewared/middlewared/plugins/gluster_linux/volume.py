@@ -46,7 +46,7 @@ class GlusterVolumeService(CRUDService):
         bricks = []
         for i in volbricks:
             peer = i['peer_name']
-            path = i['peer_path']]
+            path = i['peer_path']
             brick = peer + ':' + path
             bricks.append(brick)
 
