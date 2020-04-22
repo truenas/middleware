@@ -68,7 +68,7 @@ class GlusterVolumeService(CRUDService):
     @private
     def removebrick_volume(self, data):
 
-        name = data.pop('volname')
+        name = data.pop('name')
         bricks = data.pop('bricks')
         op = data.pop('operation')
 
@@ -82,7 +82,7 @@ class GlusterVolumeService(CRUDService):
         # glustercli-python has a bug where if provided the "force"
         # option, it will concatenate it with the "start" option
         # This is wrong, you can choose "start" or "force" exclusively
-        # (i.e. gluster volume volname remove-brick peer:path start OR force)
+        # (i.e. gluster volume name remove-brick peer:path start OR force)
         if op.lower() == 'start':
             result = self.__volume_wrapper(
                 volume.bricks.remove_start, name, bricks, **data)
@@ -104,7 +104,7 @@ class GlusterVolumeService(CRUDService):
     @private
     def replacebrick_volume(self, data):
 
-        name = data.pop('volname')
+        name = data.pop('name')
         src = data.pop('src_brick')
         new = data.pop('new_brick')
 
@@ -198,7 +198,7 @@ class GlusterVolumeService(CRUDService):
         `force` Forcefully restart the gluster volume
         """
 
-        name = data.pop('volname')
+        name = data.pop('name')
 
         result = self.__volume_wrapper(volume.restart, name, **data)
 
@@ -426,11 +426,13 @@ class GlusterVolumeService(CRUDService):
             'src_brick',
             Str('peer_name', required=True),
             Str('peer_path', required=True),
+            required=True,
         ),
         Dict(
             'new_brick',
             Str('peer_name', required=True),
             Str('peer_path', required=True),
+            required=True,
         ),
         Bool('force'),
     ))
@@ -439,7 +441,7 @@ class GlusterVolumeService(CRUDService):
         """
         Commit the replacement of a brick.
 
-        `volname` Gluster volume name
+        `name` Gluster volume name
         `src_brick` Brick to be replaced
             `peer_name` IP or DNS name of the peer
             `peer_path` The full path of the brick
