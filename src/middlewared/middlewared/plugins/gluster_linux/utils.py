@@ -22,7 +22,7 @@ def validate_gluster_jobs(self, verrors, job):
     volume_job = self.middleware.call_sync(
         'core.get_jobs', [
             ['method', '^', 'gluster.volume'],
-            ['state', '=', ['RUNNING']],
+            ['state', '=', 'RUNNING'],
             ['id', '!=', job.id]
         ]
     )
