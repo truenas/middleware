@@ -56,80 +56,6 @@ class GlusterVolumeService(CRUDService):
         return result
 
     @private
-    def delete_volume(self, data):
-
-        result = self.__volume_wrapper(volume.delete, data['volname'])
-
-        return result
-
-    @private
-    def start_volume(self, data):
-
-        volname = data.pop('volname')
-
-        result = self.__volume_wrapper(volume.start, volname, **data)
-
-        return result
-
-    @private
-    def stop_volume(self, data):
-
-        volname = data.pop('volname')
-
-        result = self.__volume_wrapper(volume.stop, volname, **data)
-
-        return result
-
-    @private
-    def restart_volume(self, data):
-
-        volname = data.pop('volname')
-
-        result = self.__volume_wrapper(volume.restart, volname, **data)
-
-        return result
-
-    @private
-    def info_volume(self, data):
-
-        result = self.__volume_wrapper(volume.info, **data)
-
-        return result
-
-    @private
-    def status_volume(self, data):
-
-        result = self.__volume_wrapper(
-            volume.status_detail, **data)
-
-        return result
-
-    @private
-    def list_volumes(self):
-
-        result = self.__volume_wrapper(volume.vollist)
-
-        return result
-
-    @private
-    def optreset_volume(self, data):
-
-        volname = data.pop('volname')
-
-        result = self.__volume_wrapper(volume.optreset, volname, **data)
-
-        return result
-
-    @private
-    def optset_volume(self, data):
-
-        volname = data.pop('volname')
-
-        result = self.__volume_wrapper(volume.optset, volname, **data)
-
-        return result
-
-    @private
     def addbrick_volume(self, data):
 
         volname = data.pop('volname')
@@ -264,7 +190,9 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.start_volume(data)
+        volname = data.pop('volname')
+
+        result = self.__volume_wrapper(volume.start, volname, **data)
 
         return result
 
@@ -284,7 +212,9 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.restart_volume(data)
+        volname = data.pop('volname')
+
+        result = self.__volume_wrapper(volume.restart, volname, **data)
 
         return result
 
@@ -304,7 +234,9 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.stop_volume(data)
+        volname = data.pop('volname')
+
+        result = self.__volume_wrapper(volume.stop, volname, **data)
 
         return result
 
@@ -322,7 +254,7 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.delete_volume(data)
+        result = self.__volume_wrapper(volume.delete, data['volname'])
 
         return result
 
@@ -343,7 +275,7 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.info_volume(data)
+        result = self.__volume_wrapper(volume.info, **data)
 
         return result
 
@@ -364,7 +296,7 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.status_volume(data)
+        result = self.__volume_wrapper(volume.status_detail, **data)
 
         return result
 
@@ -377,7 +309,7 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.list_volumes()
+        result = self.__volume_wrapper(volume.vollist)
 
         return result
 
@@ -401,7 +333,9 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.optreset_volume(data)
+        volname = data.pop('volname')
+
+        result = self.__volume_wrapper(volume.optreset, volname, **data)
 
         return result
 
@@ -423,7 +357,9 @@ class GlusterVolumeService(CRUDService):
 
         self.common_validation(job)
 
-        result = self.optset_volume(data)
+        volname = data.pop('volname')
+
+        result = self.__volume_wrapper(volume.optset, volname, **data)
 
         return result
 
