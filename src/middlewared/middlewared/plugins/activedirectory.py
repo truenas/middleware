@@ -1275,6 +1275,16 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def _net_ads_testjoin(self, workgroup):
+        """
+        If neterr.NOTJOINED is returned then we will proceed with joining (or re-joining)
+        the AD domain. There are currently two reasons to do this:
+        1) we're not joined to AD
+        2) our computer account was deleted out from under us
+        It's generally better to report an error condition to the end user and let them
+        fix it, but situation (2) above is straightforward enough to automatically re-join.
+        In this case, the error message presents oddly because stale credentials are stored in
+        the secrets.tdb file and the message is passed up from underlying KRB5 library.
+        """
         ad = await self.config()
         netads = await run([
             SMBCmd.NET.value, '-k', '-w', workgroup,
@@ -1284,7 +1294,7 @@ class ActiveDirectoryService(ConfigService):
         if netads.returncode != 0:
             errout = netads.stderr.decode().strip()
             self.logger.debug(f'net ads testjoin failed with error: [{errout}]')
-            if '0xfffffff6' in errout:
+            if '0xfffffff6' in errout or 'The name provided is not a properly formed account name' in errout:
                 return neterr.NOTJOINED
             else:
                 return neterr.FAULT
