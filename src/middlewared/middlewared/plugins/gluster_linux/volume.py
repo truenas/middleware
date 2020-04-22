@@ -58,9 +58,7 @@ class GlusterVolumeService(CRUDService):
     @private
     def delete_volume(self, data):
 
-        volname = data.get('volname')
-
-        result = self.__volume_wrapper(volume.delete, volname)
+        result = self.__volume_wrapper(volume.delete, data['volname'])
 
         return result
 
@@ -192,12 +190,12 @@ class GlusterVolumeService(CRUDService):
         src = data.pop('src_brick')
         new = data.pop('new_brick')
 
-        src_peer = src.get('peer_name')
-        src_path = src.get('peer_path')
+        src_peer = src['peer_name']
+        src_path = src['peer_path']
         src_brick = src_peer + ':' + src_path
 
-        new_peer = new.get('peer_name')
-        new_path = new.get('peer_path')
+        new_peer = new['peer_name']
+        new_path = new['peer_path']
         new_brick = new_peer + ':' + new_path
 
         result = self.__volume_wrapper(
