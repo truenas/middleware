@@ -106,7 +106,7 @@ class TruecommandService(ConfigService):
             for polling_job in polling_jobs:
                 await self.middleware.call('core.job_abort', polling_job['id'])
 
-            self.STATUS = Status.DISABLED
+            await self.set_status(Status.DISABLED.value)
 
             if new['enabled']:
                 if not old['wg_public_key'] or not old['wg_private_key']:
@@ -119,7 +119,7 @@ class TruecommandService(ConfigService):
                     new[k] for k in ('wg_address', 'wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
                 ):
                     # Api key hasn't changed and we have wireguard details, let's please start wireguard in this case
-                    self.STATUS = Status.CONNECTED
+                    await self.set_status(Status.CONNECTED.value)
 
             new['api_key_state'] = self.STATUS.value
 
@@ -139,6 +139,8 @@ class TruecommandService(ConfigService):
                 old['id'],
                 new
             )
+
+            self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.config()))
 
             # We are going to stop truecommand service with this update anyways as only 2 possible actions
             # can happen on update
@@ -164,6 +166,7 @@ class TruecommandService(ConfigService):
     async def set_status(self, new_status):
         assert new_status in Status.__members__
         self.STATUS = Status(new_status)
+        self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.config()))
 
     @private
     async def dismiss_alerts(self, dismiss_health=False):
