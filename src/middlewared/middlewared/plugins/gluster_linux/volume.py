@@ -2,11 +2,10 @@ from gfs.cli import volume
 from gfs.cli.utils import GlusterCmdException
 
 from middlewared.service import (CRUDService, accepts,
-                                 job, private, ValidationErrors,
-                                 CallError)
+                                 job, private, CallError)
 from middlewared.schema import Dict, Str, Int, Bool, List
 
-from .utils import validate_gluster_jobs
+from .utils import GLUSTER_JOB_LOCK
 
 
 class GlusterVolumeService(CRUDService):
@@ -29,13 +28,6 @@ class GlusterVolumeService(CRUDService):
             return result.decode().strip()
 
         return result
-
-    @private
-    def common_validation(self, job):
-
-        verrors = ValidationErrors()
-
-        validate_gluster_jobs(self, verrors, job)
 
     @private
     def create_volume(self, data):
@@ -151,7 +143,7 @@ class GlusterVolumeService(CRUDService):
         Int('redundancy'),
         Bool('force'),
     ))
-    @job(lock='glustervolume_create')
+    @job(lock=GLUSTER_JOB_LOCK)
     def do_create(self, job, data):
         """
         Create a gluster volume.
@@ -170,8 +162,6 @@ class GlusterVolumeService(CRUDService):
         `force` Create volume forcefully, ignoring potential warnings
         """
 
-        self.common_validation(job)
-
         return self.create_volume(data)
 
     @accepts(Dict(
@@ -179,7 +169,7 @@ class GlusterVolumeService(CRUDService):
         Str('volname', required=True),
         Bool('force'),
     ))
-    @job(lock='glustervolume_start')
+    @job(lock=GLUSTER_JOB_LOCK)
     def start(self, job, data):
         """
         Start a gluster volume.
@@ -187,8 +177,6 @@ class GlusterVolumeService(CRUDService):
         `volname` Name of gluster volume
         `force` Forcefully start the gluster volume
         """
-
-        self.common_validation(job)
 
         volname = data.pop('volname')
 
@@ -201,7 +189,7 @@ class GlusterVolumeService(CRUDService):
         Str('volname', required=True),
         Bool('force'),
     ))
-    @job(lock='glustervolume_restart')
+    @job(lock=GLUSTER_JOB_LOCK)
     def restart(self, job, data):
         """
         Restart a gluster volume.
@@ -209,8 +197,6 @@ class GlusterVolumeService(CRUDService):
         `volname` Name of gluster volume
         `force` Forcefully restart the gluster volume
         """
-
-        self.common_validation(job)
 
         volname = data.pop('volname')
 
@@ -223,7 +209,7 @@ class GlusterVolumeService(CRUDService):
         Str('volname', required=True),
         Bool('force'),
     ))
-    @job(lock='glustervolume_stop')
+    @job(lock=GLUSTER_JOB_LOCK)
     def stop(self, job, data):
         """
         Stop a gluster volume.
@@ -231,8 +217,6 @@ class GlusterVolumeService(CRUDService):
         `volname` Name of gluster volume
         `force` Forcefully stop the gluster volume
         """
-
-        self.common_validation(job)
 
         volname = data.pop('volname')
 
@@ -244,15 +228,13 @@ class GlusterVolumeService(CRUDService):
         'glustervolume_delete',
         Str('volname', required=True),
     ))
-    @job(lock='glustervolume_delete')
+    @job(lock=GLUSTER_JOB_LOCK)
     def do_delete(self, job, data):
         """
         Delete a gluster volume.
 
         `volname` Name of the volume to be deleted
         """
-
-        self.common_validation(job)
 
         result = self.__volume_wrapper(volume.delete, data['volname'])
 
@@ -262,7 +244,7 @@ class GlusterVolumeService(CRUDService):
         'glustervolume_info',
         Str('volname')
     ))
-    @job(lock='glustervolume_info')
+    @job(lock=GLUSTER_JOB_LOCK)
     def info(self, job, data):
         """
         Return information about gluster volume(s).
@@ -273,8 +255,6 @@ class GlusterVolumeService(CRUDService):
         `volname` Name of the gluster volume
         """
 
-        self.common_validation(job)
-
         result = self.__volume_wrapper(volume.info, **data)
 
         return result
@@ -283,7 +263,7 @@ class GlusterVolumeService(CRUDService):
         'glustervolume_status',
         Str('volname')
     ))
-    @job(lock='glustervolume_status')
+    @job(lock=GLUSTER_JOB_LOCK)
     def status(self, job, data):
         """
         Return detailed information about gluster volume(s).
@@ -294,20 +274,16 @@ class GlusterVolumeService(CRUDService):
         `volname` Name of the gluster volume
         """
 
-        self.common_validation(job)
-
         result = self.__volume_wrapper(volume.status_detail, **data)
 
         return result
 
     @accepts()
-    @job(lock='glustervolume_list')
+    @job(lock=GLUSTER_JOB_LOCK)
     def list(self, job):
         """
         Return list of gluster volumes.
         """
-
-        self.common_validation(job)
 
         result = self.__volume_wrapper(volume.vollist)
 
@@ -319,7 +295,7 @@ class GlusterVolumeService(CRUDService):
         Str('opt'),
         Bool('force'),
     ))
-    @job(lock='glustervolume_optreset')
+    @job(lock=GLUSTER_JOB_LOCK)
     def optreset(self, job, data):
         """
         Reset volumes options.
@@ -330,8 +306,6 @@ class GlusterVolumeService(CRUDService):
         `opt` Name of the option to reset
         `force` Forcefully reset option(s)
         """
-
-        self.common_validation(job)
 
         volname = data.pop('volname')
 
@@ -344,7 +318,7 @@ class GlusterVolumeService(CRUDService):
         Str('volname', required=True),
         Dict('opts', required=True, additional_attrs=True),
     ))
-    @job(lock='glustervolume_optset')
+    @job(lock=GLUSTER_JOB_LOCK)
     def optset(self, job, data):
         """
         Set gluster volume options.
@@ -354,8 +328,6 @@ class GlusterVolumeService(CRUDService):
             --key-- is the name of the option
             --value-- is the value to be given to the option
         """
-
-        self.common_validation(job)
 
         volname = data.pop('volname')
 
@@ -378,7 +350,7 @@ class GlusterVolumeService(CRUDService):
         Int('arbiter'),
         Bool('force'),
     ))
-    @job(lock='glustervolume_addbrick')
+    @job(lock=GLUSTER_JOB_LOCK)
     def addbrick(self, job, data):
         """
         Add bricks to a gluster volume.
@@ -393,8 +365,6 @@ class GlusterVolumeService(CRUDService):
         `arbiter` Arbiter count
         `force` Forcefully add brick(s)
         """
-
-        self.common_validation(job)
 
         result = self.addbrick_volume(data)
 
@@ -413,7 +383,7 @@ class GlusterVolumeService(CRUDService):
         Str('operation', enum=['START', 'STOP', 'COMMIT', 'STATUS'], required=True),
         Int('replica'),
     ))
-    @job(lock='glustervolume_removebrick')
+    @job(lock=GLUSTER_JOB_LOCK)
     def removebrick(self, job, data):
         """
         Perform a remove operation on the brick(s) in the gluster volume.
@@ -432,8 +402,6 @@ class GlusterVolumeService(CRUDService):
         `repica` Replica count
         `force` Forcefully run the removal operation.
         """
-
-        self.common_validation(job)
 
         result = self.removebrick_volume(data)
 
@@ -454,7 +422,7 @@ class GlusterVolumeService(CRUDService):
         ),
         Bool('force'),
     ))
-    @job(lock='glustervolume_replacebrick')
+    @job(lock=GLUSTER_JOB_LOCK)
     def replacebrick(self, job, data):
         """
         Commit the replacement of a brick.
@@ -470,8 +438,6 @@ class GlusterVolumeService(CRUDService):
 
         `force` Forcefully replace bricks
         """
-
-        self.common_validation(job)
 
         result = self.replacebrick_volume(data)
 

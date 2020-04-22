@@ -7,7 +7,7 @@ from middlewared.service import (accepts, private, job,
                                  CallError, CRUDService,
                                  ValidationErrors)
 
-from .utils import validate_gluster_jobs
+from .utils import GLUSTER_JOB_LOCK
 
 
 class GlusterPeerService(CRUDService):
@@ -50,7 +50,7 @@ class GlusterPeerService(CRUDService):
         return await resolve_hostname(*args)
 
     @private
-    def common_validation(self, job, hostname=None):
+    def common_validation(self, hostname=None):
 
         verrors = ValidationErrors()
 
@@ -60,15 +60,13 @@ class GlusterPeerService(CRUDService):
 
         verrors.check()
 
-        validate_gluster_jobs(self, verrors, job)
-
     @accepts(
         Dict(
             'probe_peer_create',
             Str('hostname', required=True, max_length=253)
         )
     )
-    @job(lock='probe_peer_create')
+    @job(lock=GLUSTER_JOB_LOCK)
     def do_create(self, job, data):
         """
         Add peer to the Trusted Storage Pool.
@@ -78,7 +76,7 @@ class GlusterPeerService(CRUDService):
 
         hostname = data.get('hostname')
 
-        self.common_validation(job, hostname=hostname)
+        self.common_validation(hostname=hostname)
 
         result = self.add_peer_to_cluster(hostname)
 
@@ -90,7 +88,7 @@ class GlusterPeerService(CRUDService):
             Str('hostname', required=True, max_length=253)
         )
     )
-    @job(lock='probe_peer_delete')
+    @job(lock=GLUSTER_JOB_LOCK)
     def do_delete(self, job, data):
         """
         Remove peer of `hostname` from the Trusted Storage Pool.
@@ -98,32 +96,28 @@ class GlusterPeerService(CRUDService):
 
         hostname = data.get('hostname')
 
-        self.common_validation(job, hostname=hostname)
+        self.common_validation(hostname=hostname)
 
         result = self.remove_peer_from_cluster(hostname)
 
         return result
 
     @accepts()
-    @job(lock='peer_status')
+    @job(lock=GLUSTER_JOB_LOCK)
     def status(self, job):
         """
         List the status of peers in the Trusted Storage Pool
         excluding localhost.
         """
 
-        self.common_validation(job)
-
         return self.__peer_wrapper(peer.status)
 
     @accepts()
-    @job(lock='peer_pool')
+    @job(lock=GLUSTER_JOB_LOCK)
     def pool(self, job):
         """
         List the status of peers in the Trusted Storage Pool
         including localhost.
         """
-
-        self.common_validation(job)
 
         return self.__peer_wrapper(peer.pool)
