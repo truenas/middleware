@@ -373,7 +373,7 @@ class GlusterVolumeService(CRUDService):
             `peer_path` The full path of the brick to be added
 
         `stripe` Stripe count
-        `repica` Replica count
+        `replica` Replica count
         `arbiter` Arbiter count
         `force` Forcefully add brick(s)
         """
@@ -411,7 +411,7 @@ class GlusterVolumeService(CRUDService):
             `COMMIT` Commit the removal of the brick(s)
             `STATUS` Display status of the removal of the brick(s)
 
-        `repica` Replica count
+        `replica` Replica count
         `force` Forcefully run the removal operation.
         """
 
