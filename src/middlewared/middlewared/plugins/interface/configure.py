@@ -18,7 +18,9 @@ class InterfaceService(Service):
         namespace_alias = 'interfaces'
 
     @private
-    def configure(self, data, aliases, wait_dhcp=False, **kwargs):
+    def configure(self, data, aliases, wait_dhcp=False, options=None):
+        options = options or {}
+
         name = data['int_interface']
 
         iface = netif.get_interface(name)
@@ -163,7 +165,7 @@ class InterfaceService(Service):
 
         # In case there is no MTU in interface and it is currently
         # different than the default of 1500, revert it
-        if not kwargs.get('skip_mtu'):
+        if not options.get('skip_mtu'):
             if data['int_mtu']:
                 if iface.mtu != data['int_mtu']:
                     iface.mtu = data['int_mtu']

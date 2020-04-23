@@ -1732,7 +1732,7 @@ class InterfaceService(CRUDService):
             key=lambda x: 2 if x.startswith('bridge') else (1 if x.startswith('vlan') else 0)
         ):
             try:
-                await self.sync_interface(interface, wait_dhcp, **sync_interface_opts[interface])
+                await self.sync_interface(interface, wait_dhcp, sync_interface_opts[interface])
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
@@ -1777,7 +1777,9 @@ class InterfaceService(CRUDService):
         await self.middleware.call_hook('interface.post_sync')
 
     @private
-    async def sync_interface(self, name, wait_dhcp=False, **kwargs):
+    async def sync_interface(self, name, wait_dhcp=False, options=None):
+        options = options or {}
+
         try:
             data = await self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
         except IndexError:
@@ -1786,7 +1788,7 @@ class InterfaceService(CRUDService):
 
         aliases = await self.middleware.call('datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])])
 
-        await self.middleware.call('interface.configure', data, aliases, wait_dhcp, **kwargs)
+        await self.middleware.call('interface.configure', data, aliases, wait_dhcp, options)
 
     @accepts(
         Dict(
