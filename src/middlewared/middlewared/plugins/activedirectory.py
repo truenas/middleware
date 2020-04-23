@@ -837,6 +837,9 @@ class ActiveDirectoryService(ConfigService):
 
             try:
                 await self.middleware.run_in_thread(self.validate_domain, new)
+            except ntplib.NTPException:
+                self.logger.warning("NTP request to Domain Controller failed.",
+                                    exc_info=True)
             except Exception as e:
                 raise ValidationError(
                     "activedirectory_update",
