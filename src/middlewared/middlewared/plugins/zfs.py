@@ -501,6 +501,16 @@ class ZFSDatasetService(CRUDService):
         if not ds.encrypted:
             raise CallError(f'{id} is not encrypted')
 
+    def path_to_dataset(self, path):
+        with libzfs.ZFS() as zfs:
+            try:
+                zh = zfs.get_dataset_by_path(path)
+                ds_name = zh.name
+            except libzfs.ZFSException:
+                ds_name = None
+
+        return ds_name
+
     def get_quota(self, ds, quota_type):
         if quota_type == 'dataset':
             dataset = self.query([('id', '=', ds)], {'get': True})

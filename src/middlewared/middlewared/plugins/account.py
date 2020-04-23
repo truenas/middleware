@@ -419,7 +419,7 @@ class UserService(CRUDService):
                 try:
                     # Strip ACL before chmod. This is required when aclmode = restricted
                     setfacl = subprocess.run(['/bin/setfacl', '-b', user['home']], check=False)
-                    if setfacl.returncode != 0:
+                    if setfacl.returncode != 0 and setfacl.stderr:
                         self.logger.debug('Failed to strip ACL: %s', setfacl.stderr.decode())
                     os.chmod(user['home'], int(home_mode, 8))
                 except OSError:
@@ -699,6 +699,11 @@ class UserService(CRUDService):
                         f'{schema}.home',
                         f'The path for the home directory "({data["home"]})" '
                         'must include a volume or dataset.'
+                    )
+                elif await self.middleware.call('filesystem.path_is_encrypted', data['home']):
+                    verrors.add(
+                        f'{schema}.home',
+                        'Path component for "Home Directory" is currently encrypted and locked'
                     )
 
         if 'home_mode' in data:

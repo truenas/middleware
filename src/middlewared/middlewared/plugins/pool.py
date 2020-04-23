@@ -5,6 +5,7 @@ import errno
 import json
 import logging
 from datetime import datetime, time, timedelta
+from pathlib import Path
 import os
 import psutil
 import re
@@ -3097,6 +3098,28 @@ class PoolDatasetService(CRUDService):
         if not dataset[0]['properties']['origin']['value']:
             raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
         return await self.middleware.call('zfs.dataset.promote', id)
+
+    @private
+    async def from_path(self, path, check_parents):
+        p = Path(path)
+        if not p.is_absolute():
+            raise CallError(f"[{path}] is not an absolute path.", errno.EINVAL)
+
+        if not p.exists() and check_parents:
+            for parent in p.parents:
+                if parent.exists():
+                    p = parent
+                    break
+
+        ds_name = await self.middleware.call("zfs.dataset.path_to_dataset", p.as_posix())
+        if not ds_name:
+            raise CallError(f"Failed to convert path [{path}] to ZFS dataset.")
+
+        return await self.middleware.call(
+            "pool.dataset.query",
+            [("id", "=", ds_name)],
+            {"get": True}
+        )
 
     @accepts(
         Str('id', required=True),

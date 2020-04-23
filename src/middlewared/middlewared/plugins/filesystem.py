@@ -878,6 +878,35 @@ class FilesystemService(Service):
         self._winacl(data['path'], 'clone', uid, gid, options)
         job.set_progress(100, 'Finished setting ACL.')
 
+    @private
+    async def children_are_locked(self, path, child):
+        if child["locked"] and path.startswith(child["mountpoint"]):
+            return True
+
+        if not path.startswith(child["mountpoint"]):
+            return False
+
+        if child.get("children"):
+            for c in child["children"]:
+                is_locked = await self.children_are_locked(path, c)
+
+                if is_locked:
+                    return True
+
+        return False
+
+    @private
+    async def path_is_encrypted(self, path):
+        ds = await self.middleware.call("pool.dataset.from_path", path, True)
+
+        if ds["locked"]:
+            return True
+
+        if not ds["children"]:
+            return False
+
+        return await self.children_are_locked(path, ds)
+
 
 class FileFollowTailEventSource(EventSource):
 
