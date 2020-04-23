@@ -12,7 +12,6 @@ import pwd
 import select
 import shutil
 import subprocess
-from pathlib import Path
 
 from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accepts
@@ -880,19 +879,33 @@ class FilesystemService(Service):
         job.set_progress(100, 'Finished setting ACL.')
 
     @private
-    async def path_is_encrypted(self, path):
-        p = Path(path)
-        if not p.is_absolute():
-            raise CallError(f"[{path}] is not an absolute path.", errno.EINVAL)
+    async def children_are_locked(self, path, child):
+        if child["locked"] and path.startswith(child["mountpoint"]):
+            return True
 
-        rp = p.resolve()
-        our_pool = p.parts[2]
+        if not path.startswith(child["mountpoint"]):
+            return False
 
-        for ds in await self.middleware.call('pool.dataset.query', [('pool', '=', our_pool)]):
-            if ds["locked"] and rp.as_posix().startswith(ds["mountpoint"]):
-                return True
+        if child.get("children"):
+            for c in child["children"]:
+                is_locked = await self.children_are_locked(path, c)
+
+                if is_locked:
+                    return True
 
         return False
+
+    @private
+    async def path_is_encrypted(self, path):
+        ds = await self.middleware.call("pool.dataset.from_path", path, True)
+
+        if ds["locked"]:
+            return True
+
+        if not ds["children"]:
+            return False
+
+        return await self.children_are_locked(path, ds)
 
 
 class FileFollowTailEventSource(EventSource):
