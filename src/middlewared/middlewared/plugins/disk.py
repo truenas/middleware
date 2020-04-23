@@ -70,7 +70,7 @@ class DiskService(CRUDService):
     async def query(self, filters=None, options=None):
         filters = filters or []
         options = options or {}
-        if options.pop('include_expired', False):
+        if not options.get('extra', {}).get('include_expired', False):
             filters += [('expiretime', '=', None)]
 
         return await super().query(filters, options)
