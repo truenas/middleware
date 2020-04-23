@@ -1364,7 +1364,7 @@ class VMService(CRUDService):
             raise CallError('Failed to connect to libvirt')
 
     @item_method
-    @accepts(Int('id'), Dict('options', Bool('overcommit')))
+    @accepts(Int('id'), Dict('options', Bool('overcommit', default=False)))
     def start(self, id, options):
         """
         Start a VM.
@@ -1395,13 +1395,8 @@ class VMService(CRUDService):
                 'This system does not support virtualization.'
             )
 
-        overcommit = options.get('overcommit')
-
-        if overcommit is None:
-            # Perhaps we should have a default config option for VMs?
-            overcommit = False
-
-        self.middleware.call_sync('vm.init_guest_vmemory', vm, overcommit)
+        # Perhaps we should have a default config option for VMs?
+        self.middleware.call_sync('vm.init_guest_vmemory', vm, options['overcommit'])
 
         # Passing vm_data will ensure that the domain/vm is started with latest changes registered
         # to the vm object
@@ -1709,17 +1704,11 @@ class VMService(CRUDService):
 
     @private
     async def start_on_boot(self):
-
-        async def start_vm(vm):
+        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
             try:
                 await self.middleware.call('vm.start', vm['id'])
             except Exception as e:
                 self.middleware.logger.debug(f'Failed to start VM {vm["name"]}: {e}')
-
-        await asyncio_map(
-            start_vm,
-            (await self.middleware.call('vm.query', [('autostart', '=', True)])), 16
-        )
 
 
 class VMDeviceService(CRUDService):
@@ -2174,7 +2163,7 @@ async def __event_system_ready(middleware, event_type, args):
         if not await middleware.call('system.is_freenas') and await middleware.call('failover.licensed'):
             return
 
-        await middleware.call('vm.start_on_boot')
+        asyncio.ensure_future(middleware.call('vm.start_on_boot'))
     elif args['id'] == 'shutdown':
         async with SHUTDOWN_LOCK:
             await asyncio_map(
