@@ -1132,7 +1132,7 @@ class FailoverService(ConfigService):
                 raise CallError('Could not find current boot environment.')
             self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
 
-        job.set_progress(None, 'Waiting Standby Controller to reboot.')
+        job.set_progress(None, 'Waiting on the Standby Controller to reboot.')
 
         # Wait enough that standby controller has stopped receiving new connections and is
         # rebooting.
