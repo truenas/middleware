@@ -18,3 +18,6 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
     ]
     credentials_oauth = True
     refresh_credentials = ["token"]
+
+    async def get_credentials_extra(self, credentials):
+        return dict(root_folder_id="root")
