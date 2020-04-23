@@ -1025,7 +1025,8 @@ class ReportingService(ConfigService):
 class RealtimeEventSource(EventSource):
 
     """
-    Retrieve real time statistics for CPU, network and memory.
+    Retrieve real time statistics for CPU, network,
+    virtual memory and zfs arc.
     """
 
     @staticmethod
@@ -1060,8 +1061,20 @@ class RealtimeEventSource(EventSource):
 
         while not self._cancel.is_set():
             data = {}
+
             # Virtual memory use
             data['virtual_memory'] = psutil.virtual_memory()._asdict()
+
+            # ZFS ARC Size (raw value is in Bytes)
+            data['zfs'] = {}
+            if osc.IS_FREEBSD:
+                data['zfs']['arc_size'] = sysctl.filter('kstat.zfs.misc.arcstats.size')[0].value
+            elif osc.IS_LINUX:
+                with open('/proc/spl/kstat/zfs/arcstats') as f:
+                    rv = f.read()
+                    for l in rv.split('\n'):
+                        if l.startswith('size'):
+                            data['zfs']['arc_size'] = int(l.strip().split()[-1])
 
             data['cpu'] = {}
             # Get CPU usage %
