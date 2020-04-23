@@ -12,6 +12,7 @@ import pwd
 import select
 import shutil
 import subprocess
+from pathlib import Path
 
 from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accepts
@@ -877,6 +878,21 @@ class FilesystemService(Service):
         job.set_progress(10, f'Recursively setting ACL on {data["path"]}.')
         self._winacl(data['path'], 'clone', uid, gid, options)
         job.set_progress(100, 'Finished setting ACL.')
+
+    @private
+    async def path_is_encrypted(self, path):
+        p = Path(path)
+        if not p.is_absolute():
+            raise CallError(f"[{path}] is not an absolute path.", errno.EINVAL)
+
+        rp = p.resolve()
+        our_pool = p.parts[2]
+
+        for ds in await self.middleware.call('pool.dataset.query', [('pool', '=', our_pool)]):
+            if ds["locked"] and rp.as_posix().startswith(ds["mountpoint"]):
+                return True
+
+        return False
 
 
 class FileFollowTailEventSource(EventSource):
