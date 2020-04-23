@@ -174,7 +174,7 @@ class EnclosureService(CRUDService):
             disk = self.middleware.call_sync(
                 "disk.query",
                 [["devname", "=", disk]],
-                {"get": True, "include_expired": True, "order_by": ["expiretime"]},
+                {"get": True, "extra": {"include_expired": True}, "order_by": ["expiretime"]},
             )
             if disk["enclosure"]:
                 enclosure, element = self._get_slot(lambda element: element["slot"] == disk["enclosure"]["slot"],
@@ -196,7 +196,7 @@ class EnclosureService(CRUDService):
         disk = self.middleware.call_sync(
             'disk.query',
             [['identifier', '=', id]],
-            {'get': True, 'include_expired': True}
+            {'get': True, "extra": {'include_expired': True}}
         )
 
         try:
@@ -314,7 +314,7 @@ class EnclosureService(CRUDService):
                     disks.append(self.middleware.call_sync(
                         "disk.query",
                         [["devname", "=", disk]],
-                        {"get": True, "include_expired": True, "order_by": ["expiretime"]},
+                        {"get": True, "extra": {"include_expired": True}, "order_by": ["expiretime"]},
                     )["name"])
                 except IndexError:
                     pass
