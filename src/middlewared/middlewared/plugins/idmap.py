@@ -8,7 +8,7 @@ from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.validators import Range
-from middlewared.plugins.smb import SMBCmd
+from middlewared.plugins.smb import SMBCmd, WBCErr
 
 
 class DSType(enum.Enum):
@@ -671,7 +671,28 @@ class IdmapDomainService(CRUDService):
         await self.middleware.call("datastore.delete", self._config.datastore, id)
 
     @private
-    async def sid_to_name(self, sid_str):
+    async def name_to_sid(self, name):
+        wb = await run([SMBCmd.WBINFO.value, '--name-to-sid', name], check=False)
+        if wb.returncode != 0:
+            self.logger.debug("wbinfo failed with error: %s",
+                              wb.stderr.decode().strip())
+
+        return wb.stdout.decode().strip()
+
+    @private
+    async def sid_to_name(self, sid):
+        """
+        Last two characters of name string encode the account type.
+        """
+        wb = await run([SMBCmd.WBINFO.value, '--sid-to-name', sid], check=False)
+        if wb.returncode != 0:
+            self.logger.debug("wbinfo failed with error: %s",
+                              wb.stderr.decode().strip())
+
+        return wb.stdout.decode().strip()[:-2]
+
+    @private
+    async def sid_to_unixid(self, sid_str):
         rv = None
         gid = None
         uid = None
@@ -693,10 +714,33 @@ class IdmapDomainService(CRUDService):
         return rv
 
     @private
-    async def name_to_sid(self, name):
-        wb = await run([SMBCmd.WBINFO.value, '--name-to-sid', name], check=False)
+    async def unixid_to_sid(self, data):
+        """
+        Samba generates SIDs for local accounts that lack explicit mapping in
+        passdb.tdb or group_mapping.tdb with a prefix of S-1-22-1 (users) and
+        S-1-22-2 (groups). This is not returned by wbinfo, but for consistency
+        with what appears when viewed over SMB protocol we'll do the same here.
+        """
+        unixid = data.get("id")
+        id = IDType[data.get("id_type", "GROUP")]
+
+        if id == IDType.USER:
+            wb = await run([SMBCmd.WBINFO.value, '--uid-to-sid', str(unixid)], check=False)
+        else:
+            wb = await run([SMBCmd.WBINFO.value, '--gid-to-sid', str(unixid)], check=False)
+
         if wb.returncode != 0:
-            self.logger.debug("wbinfo failed with error: %s",
-                              wb.stderr.decode().strip())
+            self.logger.warning("Could not convert [%d] to SID: %s",
+                                unixid, wb.stderr.decode().strip())
+            if WBCErr.DOMAIN_NOT_FOUND.err() in wb.stderr.decode():
+                is_local = await self.middleware.call(
+                    f'{"user" if id == IDType.USER else "group"}.query',
+                    [("uid" if id == IDType.USER else "gid", '=', unixid)],
+                    {"count": True}
+                )
+                if is_local:
+                    return f'S-1-22-{1 if id == IDType.USER else 2}-{unixid}'
+
+            return None
 
         return wb.stdout.decode().strip()
