@@ -727,12 +727,13 @@ class FailoverService(ConfigService):
         Unlock pools in HA, syncing passphrase between controllers and forcing this controller
         to be MASTER importing the pools.
         """
-        await self.middleware.call(
-            'failover.update_encryption_keys', {
-                'pools': options['pools'],
-                'datasets': options['datasets'],
-            },
-        )
+        if options['pools'] or options['datasets']:
+            await self.middleware.call(
+                'failover.update_encryption_keys', {
+                    'pools': options['pools'],
+                    'datasets': options['datasets'],
+                },
+            )
 
         return await self.middleware.call('failover.force_master')
 
@@ -1696,14 +1697,12 @@ async def hook_pool_unlock(middleware, pool=None, passphrase=None):
 
 
 async def hook_pool_dataset_unlock(middleware, datasets):
-    await middleware.call(
-        'failover.update_encryption_keys', {
-            'datasets': [
-                {'name': ds['name'], 'passphrase': ds['encryption_key']}
-                for ds in datasets if ds['key_format'].upper() == 'PASSPHRASE'
-            ]
-        }
-    )
+    datasets = [
+        {'name': ds['name'], 'passphrase': ds['encryption_key']}
+        for ds in datasets if ds['key_format'].upper() == 'PASSPHRASE'
+    ]
+    if datasets:
+        await middleware.call('failover.update_encryption_keys', {'datasets': datasets})
 
 
 async def hook_pool_dataset_post_create(middleware, dataset_data):
