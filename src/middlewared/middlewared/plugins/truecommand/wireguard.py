@@ -2,7 +2,7 @@ import re
 import subprocess
 import time
 
-from middlewared.service import CallError, periodic, private, Service
+from middlewared.service import accepts, CallError, no_auth_required, periodic, private, Service
 from middlewared.utils import Popen, run
 
 from .enums import Status
@@ -43,6 +43,20 @@ class TruecommandService(Service):
             await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
             return
 
+        if not await self.wireguard_connection_health():
+            # Stop wireguard if it's running and start polling the api to see what's up
+            await self.stop_truecommand_service()
+            await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth', None)
+            await self.middleware.call('truecommand.poll_api_for_status')
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
+
+    @private
+    async def wireguard_connection_health(self):
+        """
+        Returns true if we are connected and wireguard connection has have had a handshake within last
+        HEALTH_CHECK_SECONDS
+        """
         health_error = not (await self.middleware.call('service.started', 'truecommand'))
         if not health_error:
             cp = await run(['wg', 'show', 'wg0', 'latest-handshakes'], encoding='utf8', check=False)
@@ -60,14 +74,19 @@ class TruecommandService(Service):
                     # We never established handshake with TC if timestamp is 0, otherwise it's been more
                     # then 30 minutes, error out please
                     health_error = True
+        return not health_error
 
-        if health_error:
-            # Stop wireguard if it's running and start polling the api to see what's up
-            await self.stop_truecommand_service()
-            await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth', None)
-            await self.middleware.call('truecommand.poll_api_for_status')
-        else:
-            await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
+    @no_auth_required
+    @accepts()
+    async def connected(self):
+        """
+        Returns a boolean value which when set indicates that system has an authenticated api key
+        and has initiated a VPN connection with TrueCommand.
+        """
+        return (
+            (await self.middleware.call('truecommand.config'))['status'] == Status.CONNECTED and
+            await self.wireguard_connection_health()
+        )
 
     @private
     async def start_truecommand_service(self):

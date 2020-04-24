@@ -3,7 +3,7 @@ import asyncio
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, Str
-from middlewared.service import accepts, private, ConfigService, ValidationErrors
+from middlewared.service import accepts, ConfigService, private, ValidationErrors
 from middlewared.validators import Range
 
 from .enums import Status, StatusReason
