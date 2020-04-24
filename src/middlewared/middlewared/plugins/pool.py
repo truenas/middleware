@@ -636,6 +636,7 @@ class PoolService(CRUDService):
         fsoptions = {
             'compression': 'lz4',
             'aclinherit': 'passthrough',
+            'aclmode': 'passthrough',
             'mountpoint': f'/{data["name"]}',
             **encryption_dict
         }
