@@ -2,13 +2,17 @@ import re
 import subprocess
 import time
 
-from middlewared.service import accepts, CallError, no_auth_required, periodic, private, Service
+from middlewared.service import accepts, CallError, no_auth_required, periodic, pass_app, private, Service, throttle
 from middlewared.utils import Popen, run
 
 from .enums import Status
 
 HEALTH_CHECK_SECONDS = 1800
 WIREGUARD_HEALTH_RE = re.compile(r'=\s*(.*)')
+
+
+def throttle_condition(middleware, app, *args, **kwargs):
+    return app is None or (app and app.authenticated), None
 
 
 class TruecommandService(Service):
@@ -77,16 +81,20 @@ class TruecommandService(Service):
         return not health_error
 
     @no_auth_required
+    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
-    async def connected(self):
+    @pass_app()
+    async def connected(self, app):
         """
-        Returns a boolean value which when set indicates that system has an authenticated api key
+        Returns information which shows if system has an authenticated api key
         and has initiated a VPN connection with TrueCommand.
         """
-        return (
-            (await self.middleware.call('truecommand.config'))['status'] == Status.CONNECTED and
-            await self.wireguard_connection_health()
-        )
+        tc_config = await self.middleware.call('truecommand.config')
+        connected = Status(tc_config['status']) == Status.CONNECTED and await self.wireguard_connection_health()
+        return {
+            'connected': connected,
+            'truecommand_ip': tc_config['remote_address'] if connected else None,
+        }
 
     @private
     async def start_truecommand_service(self):
