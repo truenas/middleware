@@ -1549,7 +1549,7 @@ class PoolService(CRUDService):
         share, asking for confirmation.
         """
         pool = await self.get_instance(oid)
-        return await self.middleware.call('pool.dataset.attachments', pool['name'])
+        return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
 
     @item_method
     @accepts(Int('id'))
@@ -3533,9 +3533,12 @@ class PoolDatasetService(CRUDService):
           }
         ]
         """
-        result = []
         dataset = await self.get_instance(oid)
-        path = self.__attachments_path(dataset)
+        return await self.attachments_with_path(self.__attachments_path(dataset))
+
+    @private
+    async def attachments_with_path(self, path):
+        result = []
         if path:
             for delegate in self.attachment_delegates:
                 attachments = {"type": delegate.title, "service": delegate.service, "attachments": []}
