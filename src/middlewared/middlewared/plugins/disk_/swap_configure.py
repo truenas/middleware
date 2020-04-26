@@ -235,7 +235,7 @@ class DiskService(Service):
     @private
     async def swap_redundancy(self):
         group_size = 2
-        pools = await self.middleware.call('pool.query')
+        pools = await self.middleware.call('pool.query', [['status', 'nin', ('OFFLINE', 'FAULTED')]])
         for pool in pools:
             vdevs = pool['topology']['data']
             for vdev in vdevs:
