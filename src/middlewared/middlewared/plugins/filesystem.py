@@ -16,7 +16,7 @@ import subprocess
 from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, List, Str, UnixPerm, accepts
 from middlewared.service import private, CallError, Service, job
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, osc
 from middlewared.plugins.smb import SMBBuiltin
 
 
@@ -416,6 +416,9 @@ class FilesystemService(Service):
         any access rules, or if the path does not support NFSv4 ACLs (for example
         a path on a tmpfs filesystem).
         """
+        if osc.IS_LINUX:
+            return True
+
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 
@@ -680,6 +683,9 @@ class FilesystemService(Service):
         expectations regarding permissions inheritance. This entry is removed from NT ACL returned
         to SMB clients when 'ixnas' samba VFS module is enabled. We also remove it here to avoid confusion.
         """
+        if osc.IS_LINUX:
+            raise CallError("ACLS are not currently implemented on Linux", errno.EOPNOTSUPP)
+
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
 
@@ -813,6 +819,9 @@ class FilesystemService(Service):
         job.set_progress(0, 'Preparing to set acl.')
         options = data['options']
         dacl = data.get('dacl', [])
+
+        if osc.IS_LINUX:
+            raise CallError("ACLS are not currently implemented on Linux", errno.EOPNOTSUPP)
 
         self._common_perm_path_validate(data['path'])
 
