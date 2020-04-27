@@ -46,6 +46,7 @@ BUFSIZE = 256
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
+TRUENAS_VERS = re.compile(r'\d*\.?\d+')
 
 logger = logging.getLogger('failover')
 
@@ -978,13 +979,13 @@ class FailoverService(ConfigService):
         """
         Upgrades both controllers.
 
-        Files will be downloaded in the Active Controller and then transferred to the Standby
+        Files will be downloaded to the Active Controller and then transferred to the Standby
         Controller.
 
         Upgrade process will start concurrently on both nodes.
 
-        Once both upgrades are applied the Standby Controller will reboot and this job will wait for it
-        to complete the boot process, finalizing this job.
+        Once both upgrades are applied, the Standby Controller will reboot. This job will wait for
+        that job to complete before finalizing.
         """
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
@@ -1013,7 +1014,7 @@ class FailoverService(ConfigService):
 
         try:
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
-                raise CallError('Standby Controller is not ready, wait boot process.')
+                raise CallError('Standby Controller is not ready.')
 
             legacy_upgrade = False
             try:
@@ -1183,48 +1184,64 @@ class FailoverService(ConfigService):
         """
         Verify if HA upgrade is pending.
 
-        `upgrade_finish` needs to be called to finish HA upgrade if this method returns true.
+        `upgrade_finish` needs to be called to finish
+        the HA upgrade process if this method returns true.
         """
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
-            raise CallError('Upgrade can only run on Active Controller.')
+            raise CallError('Upgrade can only be run from the Active Controller.')
 
         if not self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False):
             return False
+
         try:
             assert self.call_remote('core.ping') == 'pong'
         except Exception:
-            return True
+            return False
+
         local_version = self.middleware.call_sync('system.version')
         remote_version = self.call_remote('system.version')
+
         if local_version == remote_version:
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
             return False
 
-        local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
-        if local_bootenv:
-            remote_bootenv = self.call_remote('bootenv.query', [[
-                ('id', '=', local_bootenv[0]['id']),
-            ]])
-            if remote_bootenv:
-                return True
+        local_bootenv = self.middleware.call_sync(
+            'bootenv.query', [('active', 'rin', 'N')])
+
+        rem_bootenv = self.call_remote(
+            'bootenv.query', [[('id', '=', local_bootenv[0]['id'])]])
+
+        if not local_bootenv or not rem_bootenv:
+            raise CallError('Unable to determine installed version of software')
+
+        loc_findall = TRUENAS_VERS.findall(local_bootenv[0]['id'])
+        rem_findall = TRUENAS_VERS.findall(rem_bootenv[0]['id'])
+
+        loc_vers = tuple(float(i) for i in loc_findall)
+        rem_vers = tuple(float(i) for i in rem_findall)
+
+        if loc_vers > rem_vers:
+            return True
+
         return False
 
     @accepts()
     @job(lock='failover_upgrade_finish')
     def upgrade_finish(self, job):
         """
-        Perform last stage of HA upgrade.
+        Perform the last stage of an HA upgrade.
 
-        This will activate the new boot environment in Standby Controller and reboot it.
+        This will activate the new boot environment on the
+        Standby Controller and reboot it.
         """
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
             raise CallError('Upgrade can only run on Active Controller.')
 
-        job.set_progress(None, 'Waiting for Standby Controller to boot')
+        job.set_progress(None, 'Ensuring the Standby Controller is booted')
         if not self.upgrade_waitstandby():
-            raise CallError('Timed out waiting Standby Controller to boot.')
+            raise CallError('Timed out waiting for the Standby Controller to boot.')
 
         job.set_progress(None, 'Activating new boot environment')
         local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
