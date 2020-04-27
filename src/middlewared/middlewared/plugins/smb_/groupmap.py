@@ -128,7 +128,7 @@ class SMBService(Service):
         groups = await self.middleware.call('group.query', [('builtin', '=', False), ('smb', '=', True)])
         for g in groups:
             if not any(filter(lambda x: g['group'].upper() == x['ntgroup'].upper(), groupmap)):
-                await self.smb.groupmap_add(g['group'])
+                await self.groupmap_add(g['group'])
 
         if must_remove_cache:
             if os.path.exists(f'{SMBPath.STATEDIR.platform()}/winbindd_cache.tdb'):

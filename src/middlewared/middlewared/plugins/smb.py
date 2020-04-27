@@ -70,8 +70,8 @@ class SMBBuiltin(enum.Enum):
 
 
 class SMBPath(enum.Enum):
-    GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb.conf', 0o755, False)
-    SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb_share.conf', 0o755, False)
+    GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb4.conf', 0o755, False)
+    SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb4_share.conf', 0o755, False)
     STATEDIR = ('/var/db/system/samba4', '/var/db/system/samba4', 0o755, True)
     PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4', 0o700, True)
     LEGACYSTATE = ('/root/samba', '/root/samba', 0o755, True)
@@ -373,6 +373,12 @@ class SMBService(SystemServiceService):
         data = await self.config()
         job.set_progress(10, 'Generating SMB config.')
         await self.middleware.call('etc.generate', 'smb')
+
+        # Following hack will be removed once we make our own samba package
+        if osc.IS_LINUX:
+            os.remove("/etc/samba/smb.conf")
+            os.symlink("/etc/smb4.conf", "etc/samba/smb.conf")
+
         job.set_progress(20, 'Setting up SMB directories.')
         await self.setup_directories()
         job.set_progress(30, 'Setting up server SID.')

@@ -2681,7 +2681,7 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
-        Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
+        Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED'], default='PASSTHROUGH'),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         Str('xattr', enum=['ON', 'SA']),
         Ref('encryption_options'),
@@ -2742,9 +2742,7 @@ class PoolDatasetService(CRUDService):
 
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
-            # FIXME: aclmode not available in Linux (yet?)
-            if osc.IS_FREEBSD:
-                data['aclmode'] = 'RESTRICTED'
+            data['aclmode'] = 'RESTRICTED'
             data['xattr'] = 'SA'
 
         if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
@@ -2838,6 +2836,9 @@ class PoolDatasetService(CRUDService):
             props[name] = data[i] if not transform else transform(data[i])
 
         props.update(encryption_dict)
+
+        if osc.IS_LINUX:
+            props.pop('aclmode')
 
         await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
@@ -2962,6 +2963,9 @@ class PoolDatasetService(CRUDService):
                 props[name] = {'source': 'INHERIT'}
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
+
+        if osc.IS_LINUX:
+            props.pop('aclmode')
 
         try:
             rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})

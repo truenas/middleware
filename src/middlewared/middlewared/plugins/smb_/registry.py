@@ -2,6 +2,7 @@ from middlewared.service import private, Service
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd, SMBSharePreset
+from middlewared.utils import osc
 
 import errno
 
@@ -214,7 +215,11 @@ class SharingSMBService(Service):
             data['path_suffix'] = '%U'
 
         conf['path'] = '/'.join([data['path'], data['path_suffix']]) if data['path_suffix'] else data['path']
-        data['vfsobjects'] = ['aio_fbsd']
+        if osc.IS_FREEBSD:
+            data['vfsobjects'] = ['aio_fbsd']
+        else:
+            data['vfsobjects'] = []
+
         if data['comment']:
             conf["comment"] = data['comment']
         if not data['browsable']:
@@ -251,7 +256,10 @@ class SharingSMBService(Service):
             data['vfsobjects'].append('fruit')
 
         if data['acl']:
-            data['vfsobjects'].append('ixnas')
+            if osc.IS_FREEBSD:
+                data['vfsobjects'].append('ixnas')
+            else:
+                data['vfsobjects'].append('acl_xattr')
         else:
             data['vfsobjects'].append('noacl')
 
