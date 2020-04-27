@@ -1,4 +1,4 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -1590,16 +1590,6 @@ async def interface_pre_sync_hook(middleware):
     )
 
 
-async def hook_restart_devd(middleware, *args, **kwargs):
-    """
-    We need to restart devd when SSH or UI settings are updated because of pf.conf.block rules
-    might change.
-    """
-    if not await middleware.call('failover.licensed'):
-        return
-    await middleware.call('service.restart', 'failover')
-
-
 async def hook_license_update(middleware, *args, **kwargs):
     FailoverService.HA_MODE = None
     if await middleware.call('failover.licensed'):
@@ -1861,8 +1851,6 @@ async def setup(middleware):
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('pool.rekey_done', hook_pool_rekey, sync=True)
-    middleware.register_hook('ssh.post_update', hook_restart_devd, sync=False)
-    middleware.register_hook('system.general.post_update', hook_restart_devd, sync=False)
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
 

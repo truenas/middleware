@@ -1,4 +1,4 @@
-# Copyright (c) 2015 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -532,16 +532,6 @@ class FailoverService(Service):
 
                 self.logger.warn('Service restarts complete.')
 
-                # TODO: This is 4 years old at this point.  Is it still needed?
-                # There appears to be a small lag if we allow NFS traffic right away. During
-                # this time, we fail NFS requests with ESTALE to the remote system. This
-                # gives remote clients heartburn, so rather than try to deal with the
-                # downstream effect of that, instead we take a chill pill for 1 seconds.
-                time.sleep(1)
-
-                run('/sbin/pfctl -d')
-
-                self.logger.warn('Allowing network traffic.')
                 run_async('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
 
                 try:
@@ -673,8 +663,6 @@ class FailoverService(Service):
                         for vhid in output.split():
                             self.logger.warn('Setting advskew to 100 on critical interface %s', interface)
                             run(f'ifconfig {interface} vhid {vhid} advskew 100')
-
-                run('/sbin/pfctl -ef /etc/pf.conf.block')
 
                 run('/usr/sbin/service watchdogd quietstop')
 
