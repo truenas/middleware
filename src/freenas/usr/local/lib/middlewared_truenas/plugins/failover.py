@@ -1209,14 +1209,14 @@ class FailoverService(ConfigService):
         local_bootenv = self.middleware.call_sync(
             'bootenv.query', [('active', 'rin', 'N')])
 
-        rem_bootenv = self.call_remote(
+        remote_bootenv = self.call_remote(
             'bootenv.query', [[('id', '=', local_bootenv[0]['id'])]])
 
-        if not local_bootenv or not rem_bootenv:
+        if not local_bootenv or not remote_bootenv:
             raise CallError('Unable to determine installed version of software')
 
         loc_findall = TRUENAS_VERS.findall(local_bootenv[0]['id'])
-        rem_findall = TRUENAS_VERS.findall(rem_bootenv[0]['id'])
+        rem_findall = TRUENAS_VERS.findall(remote_bootenv[0]['id'])
 
         loc_vers = tuple(float(i) for i in loc_findall)
         rem_vers = tuple(float(i) for i in rem_findall)
