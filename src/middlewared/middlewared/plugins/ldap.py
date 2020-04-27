@@ -319,17 +319,20 @@ class LDAPQuery(object):
         res = []
         for r in results:
             parsed_data = {}
-            for k, v in r[1].items():
-                try:
-                    v = list(i.decode() for i in v)
-                except Exception:
-                    v = list(str(i) for i in v)
-                parsed_data.update({k: v})
+            if len(r) > 1 and isinstance(r[1], dict):
+                for k, v in r[1].items():
+                    try:
+                        v = list(i.decode() for i in v)
+                    except Exception:
+                        v = list(str(i) for i in v)
+                    parsed_data.update({k: v})
 
-            res.append({
-                'dn': r[0],
-                'data': parsed_data
-            })
+                res.append({
+                    'dn': r[0],
+                    'data': parsed_data
+                })
+            else:
+                self.logger.debug("Unable to parse results: %s", r)
 
         return res
 
