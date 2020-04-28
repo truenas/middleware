@@ -24,7 +24,6 @@ import subprocess
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 
-RE_HWADDR = re.compile(r'hwaddr ([0-9a-f:]+)')
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
 
@@ -1593,12 +1592,28 @@ class InterfaceService(CRUDService):
         # LAGG comes first and then VLAN
         laggs = await self.middleware.call('datastore.query', 'network.lagginterface')
         for lagg in laggs:
+            members = await self.middleware.call(
+                'datastore.query',
+                'network.lagginterfacemembers',
+                [('lagg_interfacegroup_id', '=', lagg['id'])],
+                {'order_by': ['lagg_physnic']},
+            )
+
             name = lagg['lagg_interface']['int_interface']
             cloned_interfaces.append(name)
             self.logger.info('Setting up {}'.format(name))
             try:
                 iface = netif.get_interface(name)
             except KeyError:
+                iface = None
+            else:
+                first_port = next(iface.ports)
+                if first_port is None or first_port[0] != members[0]['lagg_physnic']:
+                    self.logger.info('Destroying existing %s as its first port has changed', name)
+                    netif.destroy_interface(name)
+                    iface = None
+
+            if iface is None:
                 netif.create_interface(name)
                 iface = netif.get_interface(name)
 
@@ -1610,53 +1625,23 @@ class InterfaceService(CRUDService):
                 self.logger.info('{}: changing protocol to {}'.format(name, protocol))
                 iface.protocol = protocol
 
-            ether = None
-            members_database = set()
+            members_database = []
             members_configured = set(p[0] for p in iface.ports)
-            for member in await self.middleware.call(
-                'datastore.query',
-                'network.lagginterfacemembers',
-                [('lagg_interfacegroup_id', '=', lagg['id'])],
-                {'order_by': ['lagg_physnic']},
-            ):
+            for member in members:
                 # For Link Aggregation MTU is configured in parent, not ports
                 sync_interface_opts[member['lagg_physnic']]['skip_mtu'] = True
-                members_database.add(member['lagg_physnic'])
-                try:
-                    member_iface = netif.get_interface(member['lagg_physnic'])
-                except KeyError:
-                    self.logger.warn('Could not find {} from {}'.format(member['lagg_physnic'], name))
-                    continue
-
-                if ether is None:
-                    try:
-                        result = await run('ifconfig', member['lagg_physnic'], encoding='utf-8', errors='ignore')
-                        m = RE_HWADDR.search(result.stdout)
-                        if m:
-                            ether = m.group(1)
-                    except Exception:
-                        self.logger.warning('Could not get hardware address from %r', member_iface, exc_info=True)
-
-                lagg_mtu = lagg['lagg_interface']['int_mtu'] or 1500
-                if member_iface.mtu != lagg_mtu:
-                    member_name = member['lagg_physnic']
-                    if member_name in members_configured:
-                        iface.delete_port(member_name)
-                        members_configured.remove(member_name)
-                    member_iface.mtu = lagg_mtu
+                members_database.append(member['lagg_physnic'])
 
             # Remove member configured but not in database
-            for member in (members_configured - members_database):
+            for member in (members_configured - set(members_database)):
                 iface.delete_port(member)
 
             # Add member in database but not configured
-            for member in (members_database - members_configured):
-                iface.add_port(member)
+            for member in members_database:
+                if member in members_configured:
+                    continue
 
-            if ether is not None:
-                result = await run('ifconfig', name, 'ether', ether, check=False, encoding='utf-8', errors='ignore')
-                if result.returncode != 0:
-                    self.logger.warning('Unable to set ethernet address %r for %r: %s', ether, name, result.stderr)
+                iface.add_port(member)
 
             for port in iface.ports:
                 try:
