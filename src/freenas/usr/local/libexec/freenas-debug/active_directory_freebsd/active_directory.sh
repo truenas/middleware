@@ -208,7 +208,7 @@ __EOF__
 	wbinfo -P
 	section_footer
 	section_header "Active Directory trusted domains - 'wbinfo -m'"
-	wbinfo -m
+	wbinfo -m --verbose
 	section_footer
 	section_header "Active Directory all domains - 'wbinfo --all-domains'"
 	wbinfo --all-domains
@@ -257,4 +257,21 @@ __EOF__
 	midclt call activedirectory.check_clockskew | jq
 	section_footer
 	fi
+
+	#
+	#	Dump Kerberos SPNs
+	#
+	if [ "${enabled}" = "ENABLED" ]
+	section_header "Active Directory SPN list"
+	then
+	midclt call activedirectory.get_spn_list | jq
+	section_footer
+	fi
+
+	#
+	#	Dump idmap settings
+	#
+	section_header "idmap settings"
+	midclt call idmap.query | jq
+	section_footer
 }

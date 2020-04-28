@@ -79,7 +79,7 @@ smb_func()
 	section_footer
 
 	section_header "${SAMBA_SHARE_CONF}"
-	sc "${SAMBA_SHARE_CONF}"
+	net conf list
 	section_footer
 
 	local IFS="|"
@@ -140,5 +140,10 @@ smb_func()
 
 	section_header "Local users in passdb.tdb"
 	pdbedit -Lv
+	section_footer
+
+	section_header "Database Dump"
+	midclt call smb.config | jq
+	midclt call sharing.smb.query | jq
 	section_footer
 }
