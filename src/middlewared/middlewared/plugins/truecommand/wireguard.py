@@ -43,7 +43,9 @@ class TruecommandService(Service):
         # The purpose of this method is to ensure that the wireguard connection
         # is active. If wireguard service is running, we want to make sure that the last
         # handshake we have had was under 30 minutes.
-        if Status((await self.middleware.call('truecommand.config'))['status']) != Status.CONNECTED:
+        if Status(
+            (await self.middleware.call('datastore.config', 'system.truecommand'))['api_key_state']
+        ) != Status.CONNECTED:
             await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
             return
 
@@ -53,6 +55,10 @@ class TruecommandService(Service):
             await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth', None)
             await self.middleware.call('truecommand.poll_api_for_status')
         else:
+            # Mark the connection as connected - we do this for just in case user never called
+            # truecommand.config and is in WAITING state right now assuming that an event will be
+            # raised when TC finally connects
+            await self.middleware.call('truecommand.set_status', Status.CONNECTED.value)
             await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
 
     @private
@@ -90,17 +96,19 @@ class TruecommandService(Service):
         and has initiated a VPN connection with TrueCommand.
         """
         tc_config = await self.middleware.call('truecommand.config')
-        connected = Status(tc_config['status']) == Status.CONNECTED and await self.wireguard_connection_health()
+        connected = Status(tc_config['status']) == Status.CONNECTED
         return {
             'connected': connected,
             'truecommand_ip': tc_config['remote_address'] if connected else None,
+            'status': tc_config['status'],
+            'status_reason': tc_config['status_reason'],
         }
 
     @private
     async def start_truecommand_service(self):
         config = await self.middleware.call('datastore.config', 'system.truecommand')
         if config['enabled']:
-            if Status((await self.middleware.call('truecommand.config'))['status']) == Status.CONNECTED and all(
+            if Status(config['api_key_state']) == Status.CONNECTED and all(
                 config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
                 await self.middleware.call('service.start', 'truecommand')

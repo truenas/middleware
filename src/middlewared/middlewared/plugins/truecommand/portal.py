@@ -39,7 +39,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                         'api_key_state': Status.CONNECTED.value,
                     }
                 )
-                await self.middleware.call('truecommand.set_status', Status.CONNECTED.value)
+                await self.middleware.call('truecommand.set_status', Status.WAITING.value)
                 await self.middleware.call('truecommand.dismiss_alerts')
                 await self.middleware.call('truecommand.start_truecommand_service')
                 break

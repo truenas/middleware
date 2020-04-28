@@ -1,5 +1,7 @@
 import asyncio
 
+from .enums import Status
+
 
 async def _event_system(middleware, event_type, args):
     if args['id'] == 'ready':
@@ -9,10 +11,12 @@ async def _event_system(middleware, event_type, args):
 async def setup(middleware):
     await middleware.call('truecommand.config')
     middleware.event_register('truecommand.config', 'Sent on TrueCommand configuration changes.')
-    await middleware.call(
-        'truecommand.set_status',
-        (await middleware.call('datastore.config', 'system.truecommand'))['api_key_state']
-    )
+
+    status = Status((await middleware.call('datastore.config', 'system.truecommand'))['api_key_state'])
+    if status == Status.CONNECTED:
+        status = Status.WAITING
+
+    await middleware.call('truecommand.set_status', status.value)
 
     middleware.event_subscribe('system', _event_system)
     if await middleware.call('system.ready'):

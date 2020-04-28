@@ -38,6 +38,10 @@ class TruecommandService(ConfigService):
     async def tc_extend(self, config):
         for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint', 'api_key_state', 'wg_address'):
             config.pop(key)
+
+        if self.STATUS == Status.WAITING and await self.middleware.call('truecommand.wireguard_connection_health'):
+            await self.set_status(Status.CONNECTED.value)
+
         config.update({
             'status': self.STATUS.value,
             'status_reason': StatusReason.__members__[self.STATUS.value].value
@@ -129,6 +133,7 @@ class TruecommandService(ConfigService):
                     'endpoint': None,
                     'tc_public_key': None,
                     'wg_address': None,
+                    'api_key_state': Status.DISABLED.value,
                 })
 
             await self.dismiss_alerts(True)
