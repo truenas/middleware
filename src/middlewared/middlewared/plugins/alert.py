@@ -109,6 +109,14 @@ class AlertPolicy:
         return gone_alerts, new_alerts
 
 
+def get_alert_level(alert, classes):
+    return AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)]
+
+
+def get_alert_policy(alert, classes):
+    return classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY)
+
+
 class AlertSerializer:
     def __init__(self, middleware):
         self.middleware = middleware
@@ -387,22 +395,27 @@ class AlertService(Service):
 
             for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice",
                                                                  [["enabled", "=", True]]):
+                service_level = AlertLevel[alert_service_desc["level"]]
+
+                service_alerts = [
+                    alert for alert in self.alerts
+                    if (
+                        get_alert_level(alert, classes).value >= service_level.value and
+                        get_alert_policy(alert, classes) != "NEVER"
+                    )
+                ]
                 service_gone_alerts = [
                     alert for alert in gone_alerts
                     if (
-                        AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
-                        AlertLevel[alert_service_desc["level"]].value and
-
-                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
+                        get_alert_level(alert, classes).value >= service_level.value and
+                        get_alert_policy(alert, classes) == policy_name
                     )
                 ]
                 service_new_alerts = [
                     alert for alert in new_alerts
                     if (
-                        AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)].value >=
-                        AlertLevel[alert_service_desc["level"]].value and
-
-                        classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY) == policy_name
+                        get_alert_level(alert, classes).value >= service_level.value and
+                        get_alert_policy(alert, classes) == policy_name
                     )
                 ]
                 for gone_alert in list(service_gone_alerts):
@@ -427,7 +440,7 @@ class AlertService(Service):
                                       alert_service_desc["type"], alert_service_desc["attributes"], exc_info=True)
                     continue
 
-                alerts = [alert for alert in self.alerts if not alert.dismissed]
+                alerts = [alert for alert in service_alerts if not alert.dismissed]
                 service_gone_alerts = [alert for alert in service_gone_alerts if not alert.dismissed]
                 service_new_alerts = [alert for alert in service_new_alerts if not alert.dismissed]
 
