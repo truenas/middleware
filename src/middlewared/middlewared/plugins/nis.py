@@ -120,6 +120,7 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
+        await self.middleware.call('etc.generate', 'user')
         setnisdomain = await run(['/bin/domainname', nis['domain']], check=False)
         if setnisdomain.returncode != 0:
             await self.set_state(DSStatus['FAULTED'])
@@ -186,6 +187,7 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('etc.generate', 'nss')
+        await self.middleware.call('etc.generate', 'user')
         await self.set_state(DSStatus['DISABLED'])
         self.logger.debug(f'NIS service successfully stopped. Setting state to DISABLED.')
         return True
