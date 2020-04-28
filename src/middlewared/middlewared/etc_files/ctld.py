@@ -424,4 +424,5 @@ def set_ctl_ha_peer(middleware):
 
 def render(service, middleware):
     main(middleware)
-    set_ctl_ha_peer(middleware)
+    if middleware.call_sync('failover.licensed'):
+        set_ctl_ha_peer(middleware)
