@@ -285,7 +285,7 @@ def fixsid(middleware, conf, groupmap):
 def validate_group_mappings(middleware, conf):
     groupmap = middleware.call_sync('smb.groupmap_list')
     if groupmap:
-        sids_fixed = fixsid(middleware, conf, groupmap)
+        sids_fixed = fixsid(middleware, conf, groupmap.values())
         if not sids_fixed:
             groupmap = []
     groups = get_groups(middleware)
