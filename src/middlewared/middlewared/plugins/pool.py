@@ -2742,7 +2742,9 @@ class PoolDatasetService(CRUDService):
 
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
-            data['aclmode'] = 'RESTRICTED'
+            if osc.IS_FREEBSD:
+                data['aclmode'] = 'RESTRICTED'
+
             data['xattr'] = 'SA'
 
         if (await self.get_instance(data['name'].rsplit('/', 1)[0]))['locked']:
@@ -2836,9 +2838,6 @@ class PoolDatasetService(CRUDService):
             props[name] = data[i] if not transform else transform(data[i])
 
         props.update(encryption_dict)
-
-        if osc.IS_LINUX:
-            props.pop('aclmode')
 
         await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
@@ -2964,9 +2963,6 @@ class PoolDatasetService(CRUDService):
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
 
-        if osc.IS_LINUX:
-            props.pop('aclmode')
-
         try:
             rv = await self.middleware.call('zfs.dataset.update', id, {'properties': props})
         except ZFSSetPropertyError as e:
@@ -2997,6 +2993,9 @@ class PoolDatasetService(CRUDService):
             parent = parent[0]
 
         if data['type'] == 'FILESYSTEM':
+            if data.get("aclmode") and osc.IS_LINUX:
+                verrors.add(f'{schema}.aclmode', 'This field is not valid for TrueNAS Scale')
+
             for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
