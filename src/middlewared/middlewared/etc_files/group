@@ -14,6 +14,6 @@
 % for group in middleware.call_sync('group.query', [], {'order_by': ['-builtin', 'gid']}):
 ${group['group']}:*:${group['gid']}:${get_usernames(group)}
 % endfor
-% if middleware.call_sync('notifier.common', 'system', 'nis_enabled'):
+% if middleware.call_sync('nis.config')['enable']:
 +:*::\
 % endif
