@@ -644,8 +644,12 @@ class InterfaceService(CRUDService):
             return
         if await self.middleware.call('failover.status') == 'SINGLE':
             return
-        if not (await self.middleware.call('failover.config'))['disabled']:
-            raise CallError('Disable failover before performing interfaces changes.')
+        if await self.middleware.call('failover.licensed'):
+            crit_ints = await self.middleware.call(
+                'interfaces.query', [('failover_critical', '=', True)])
+            if crit_ints:
+                if not (await self.middleware.call('failover.config'))['disabled']:
+                    raise CallError('Disable failover before performing interfaces changes.')
 
     async def __check_dhcp_or_aliases(self):
         for iface in await self.middleware.call('interface.query'):
