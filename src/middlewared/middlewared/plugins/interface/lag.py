@@ -12,8 +12,6 @@ class InterfaceService(Service):
         name = lagg['lagg_interface']['int_interface']
         self.logger.info('Setting up {}'.format(name))
 
-        lagg_mtu = lagg['lagg_interface']['int_mtu'] or 1500
-
         try:
             iface = netif.get_interface(name)
         except KeyError:
@@ -24,16 +22,6 @@ class InterfaceService(Service):
                 self.logger.info('Destroying existing %s as its first port has changed', name)
                 netif.destroy_interface(name)
                 iface = None
-            else:
-                try:
-                    member_iface = netif.get_interface(name)
-                except KeyError:
-                    self.logger.warn('Could not find {} from {}'.format(members[0]['lagg_physnic'], name))
-                else:
-                    if member_iface.mtu != lagg_mtu:
-                        self.logger.info('Destroying existing %s as its first port MTU has changed', name)
-                        netif.destroy_interface(name)
-                        iface = None
 
         if iface is None:
             netif.create_interface(name)
@@ -53,18 +41,6 @@ class InterfaceService(Service):
             # For Link Aggregation MTU is configured in parent, not ports
             sync_interface_opts[member['lagg_physnic']]['skip_mtu'] = True
             members_database.append(member['lagg_physnic'])
-            try:
-                member_iface = netif.get_interface(member['lagg_physnic'])
-            except KeyError:
-                self.logger.warn('Could not find {} from {}'.format(member['lagg_physnic'], name))
-                continue
-
-            if member_iface.mtu != lagg_mtu:
-                member_name = member['lagg_physnic']
-                if member_name in members_configured:
-                    iface.delete_port(member_name)
-                    members_configured.remove(member_name)
-                member_iface.mtu = lagg_mtu
 
         # Remove member configured but not in database
         for member in (members_configured - set(members_database)):
