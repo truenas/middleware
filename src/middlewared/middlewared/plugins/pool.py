@@ -2681,7 +2681,7 @@ class PoolDatasetService(CRUDService):
             '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
-        Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED'], default='PASSTHROUGH'),
+        Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         Str('xattr', enum=['ON', 'SA']),
         Ref('encryption_options'),
