@@ -141,4 +141,9 @@ smb_func()
 	section_header "Local users in passdb.tdb"
 	pdbedit -Lv
 	section_footer
+
+	section_header "Database Dump"
+	midclt call smb.config | jq
+	midclt call sharing.smb.query | jq
+	section_footer
 }
