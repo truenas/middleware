@@ -530,7 +530,8 @@ class PluginService(CRUDService):
         try:
             conn = sqlite3.connect(db)
         except sqlite3.Error as e:
-            raise CallError(e)
+            self.middleware.logger.error('Failed to connect to %r database : %s', db, str(e))
+            return []
 
         with conn:
             cur = conn.cursor()
