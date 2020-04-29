@@ -32,33 +32,14 @@ active_directory_help() { echo "Dump Active Directory Configuration"; }
 active_directory_directory() { echo "ActiveDirectory"; }
 active_directory_func()
 {
-	local workgroup
-	local netbiosname
-	local adminname
-	local domainname
-	local dcname
-	local pamfiles
-	local onoff
+	local AD_CONF=$(midclt call activedirectory.config | jq 'del(.bindpw)')
+	local domainname=$(echo ${AD_CONF} | jq ".domainname")
+	local onoff=$(echo ${AD_CONF} | jq ".enable")
 	local enabled="DISABLED"
 	local cifs_onoff
 
-
-	#
-	#	Second, check if the Active Directory is enabled.
-	#
-	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_enable
-	FROM
-		directoryservice_activedirectory
-	ORDER BY
-		-id
-
-	LIMIT 1
-	")
-
 	enabled="DISABLED"
-	if [ "${onoff}" = "1" ]
+	if [ "${onoff}" == "true" ]
 	then
 		enabled="ENABLED"
 	fi
@@ -96,57 +77,8 @@ active_directory_func()
 	echo "SMB will $cifs_enabled"
 	section_footer
 
-	#
-	#	Next, dump Active Directory configuration
-	#
-	local IFS="|"
-	read domainname bindname ssl allow_trusted_doms use_default_domain \
-		validate_certs cert krb_realm krb_princ create_computer \
-		sasl_wrapping timeout dns_timeout <<-__AD__
-	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_domainname,
-		ad_bindname,
-		ad_ssl,
-		ad_allow_trusted_doms,
-		ad_use_default_domain,
-		ad_validate_certificates,
-		ad_certificate_id,
-		ad_kerberos_realm_id,
-		ad_kerberos_principal,
-		ad_createcomputer,
-		ad_ldap_sasl_wrapping,
-		ad_timeout,
-		ad_dns_timeout
-
-	FROM
-		directoryservice_activedirectory
-
-	ORDER BY
-		-id
-
-	LIMIT 1
-	")
-__AD__
-
-	IFS="
-"
-
 	section_header "Active Directory Settings"
-	cat<<-__EOF__
-	Domain:                 ${domainname}
-	Bind name:              ${bindname}
-	Trusted domains:        ${allow_trusted_doms}
-	SSL:                    ${ssl}
-	Cert:                   ${cert}
-	Validate_certs:         ${validate_certs}
-	Kerberos_realm:         ${krb_realm}
-	Kerberos_principal:     ${krb_princ}
-	Default_computer_OU:    ${create_computer}
-	LDAP_SASL_Wrapping:     ${sasl_wrapping}
-	Timeout:                ${timeout}
-	DNS Timeout:            ${dns_timeout}
-__EOF__
+	echo ${AD_CONF} | jq
 	section_footer
 
 	#

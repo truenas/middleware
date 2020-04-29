@@ -165,4 +165,8 @@ network_func()
 	section_header "Open connections and listening sockets (sockstat)"
 	sockstat
 	section_footer
+
+	section_header "Network configuration"
+	midclt call network.configuration.config | jq
+	section_footer
 }
