@@ -946,7 +946,7 @@ class CertificateService(CRUDService):
         datastore_prefix = 'cert_'
 
     PROFILES = {
-        'openvpn_server_certificate': {
+        'Openvpn Server Certificate': {
             'cert_extensions': {
                 'BasicConstraints': {
                     'enabled': True,
@@ -977,7 +977,7 @@ class CertificateService(CRUDService):
             'lifetime': NOT_VALID_AFTER_DEFAULT,
             'digest_algorithm': 'SHA256'
         },
-        'openvpn_client_certificate': {
+        'Openvpn Client Certificate': {
             'cert_extensions': {
                 'BasicConstraints': {
                     'enabled': True,
@@ -2074,7 +2074,7 @@ class CertificateAuthorityService(CRUDService):
         datastore_prefix = 'cert_'
 
     PROFILES = {
-        'openvpn_root_ca': {
+        'Openvpn Root CA': {
             'cert_extensions': {
                 'AuthorityKeyIdentifier': {
                     'enabled': True,
@@ -2103,7 +2103,7 @@ class CertificateAuthorityService(CRUDService):
             'lifetime': NOT_VALID_AFTER_DEFAULT,
             'digest_algorithm': 'SHA256'
         },
-        'ca': {
+        'CA': {
             'key_length': 2048,
             'key_type': 'RSA',
             'lifetime': NOT_VALID_AFTER_DEFAULT,
