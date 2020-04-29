@@ -73,6 +73,9 @@ def host_config(middleware, context):
                 config['netwait_ip'] = config['ipv4gateway']
             elif config['ipv6gateway']:
                 config['netwait_ip'] = config['ipv6gateway']
+        else:
+            config['netwait_ip'] = ' '.join(config["netwait_ip"])
+
         yield f'netwait_ip="{config["netwait_ip"]}"'
 
 
