@@ -39,7 +39,6 @@ class TruecommandService(Service, TruecommandAPIMixin):
                         'api_key_state': Status.CONNECTED.value,
                     }
                 )
-                await self.middleware.call('truecommand.set_status', Status.CONNECTED.value)
                 await self.middleware.call('truecommand.dismiss_alerts')
                 await self.middleware.call('truecommand.start_truecommand_service')
                 break
@@ -64,7 +63,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                     'system.truecommand',
                     config['id'], {
                         **{k: None for k in ('tc_public_key', 'remote_address', 'endpoint', 'wg_address')},
-                        'api_key_state': Status.DISABLED.value,
+                        'api_key_state': Status.FAILED.value,
                     }
                 )
                 await self.middleware.call('truecommand.stop_truecommand_service')

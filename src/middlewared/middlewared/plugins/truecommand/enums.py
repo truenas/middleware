@@ -7,6 +7,18 @@ class Status(enum.Enum):
     DISABLED = 'DISABLED'
     FAILED = 'FAILED'
 
+# In the database we save 3 states, CONNECTED/DISABLED/FAILED
+# Connected is saved when portal has approved an api key
+# Disabled is saved when TC service is disabled
+# Failed is saved when portal revokes an api key
+#
+# We report CONNECTED to the user when we have an active wireguard
+# connection with TC which is not failing a health check.
+# If portal has not approved the api key yet but has registered it
+# we report CONNECTING to the user.
+# Connecting is also reported when wireguard connection fails health
+# check
+
 
 class StatusReason(enum.Enum):
     CONNECTED = 'Truecommand service is connected.'
