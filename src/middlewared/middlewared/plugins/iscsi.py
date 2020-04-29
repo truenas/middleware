@@ -358,6 +358,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         verrors = ValidationErrors()
         await self.validate(new, 'iscsi_auth_update', verrors)
+        if new['tag'] != old['tag'] and not await self.query([['tag', '=', old['tag'], ['id', '!=', id]]]):
+            usages = await self.is_in_use_by_portals_targets(id)
+            if usages['in_use']:
+                verrors.add('iscsi_auth_update.tag', usages['usages'])
 
         if verrors:
             raise verrors
@@ -376,10 +380,37 @@ class iSCSITargetAuthCredentialService(CRUDService):
         """
         Delete iSCSI Authorized Access of `id`.
         """
-        await self._get_instance(id)
+        config = await self._get_instance(id)
+        if not await self.query([['tag', '=', config['tag'], ['id', '!=', id]]]):
+            usages = await self.is_in_use_by_portals_targets(id)
+            if usages['in_use']:
+                raise CallError(f'Authorized access "{id}" is in use by following object(s): {usages["usages"]}')
+
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
         )
+
+    @private
+    async def is_in_use_by_portals_targets(self, id):
+        config = await self.get_instance(id)
+        usages = []
+        portals = await self.middleware.call(
+            'iscsi.portal.query', [['discovery_authgroup', '=', config['tag']]], {'select': ['id']}
+        )
+        if portals:
+            usages.append(
+                f'Authorized access of {id} is being used by portal(s): {", ".join(p["id"] for p in portals)}'
+            )
+        groups = await self.middleware.call(
+            'datastore.query', 'services.iscsitargetgroups', [['iscsi_target_authgroup', '=', config['tag']]]
+        )
+        if groups:
+            usages.append(
+                'Authorized access of {id} is being used by following target(s): '
+                f'{", ".join(g["iscsi_target"]["id"] for g in groups)}'
+            )
+
+        return {'in_use': bool(usages), 'usages': '\n'.join(usages)}
 
     @private
     async def validate(self, data, schema_name, verrors):
