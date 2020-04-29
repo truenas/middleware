@@ -297,4 +297,4 @@ class UserService(PseudoServiceBase):
     reloadable = True
 
     async def reload(self):
-        await self.middleware.call("service.reload", "cifs")
+        pass
