@@ -1,6 +1,6 @@
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
-from middlewared.service import (SystemServiceService, ValidationErrors,
+from middlewared.service import (SystemServiceService, ValidationErrors, job,
                                  accepts, filterable, private, periodic, CRUDService)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
@@ -499,7 +499,14 @@ class SMBService(SystemServiceService):
                 raise CallError(f'Failed to enable {username}: {enableacct.stderr.decode()}')
 
     @private
-    async def synchronize_passdb(self):
+    async def remove_passdb_user(self, username):
+        deluser = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-x', username], check=False)
+        if deluser.returncode != 0:
+            raise CallError(f'Failed to delete user [{username}]: {deluser.stderr.decode()}')
+
+    @private
+    @job(lock="passdb_sync")
+    async def synchronize_passdb(self, job):
         """
         Create any missing entries in the passdb.tdb.
         Replace NT hashes of users if they do not match what is the the config file.
@@ -516,16 +523,14 @@ class SMBService(SystemServiceService):
             ]]
         ])
         for u in conf_users:
-            await self.middleware.call('smb.update_passdb_user', u['username'])
+            await self.update_passdb_user(u['username'])
 
         pdb_users = await self.passdb_list()
         if len(pdb_users) > len(conf_users):
             for entry in pdb_users:
                 if not any(filter(lambda x: entry['username'] == x['username'], conf_users)):
                     self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry['username'])
-                    deluser = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-x', entry['username']], check=False)
-                    if deluser.returncode != 0:
-                        raise CallError(f'Failed to delete user {entry["username"]}: {deluser.stderr.decode()}')
+                    await self.remove_passdb_user(entry['username'])
 
     @private
     def getparm(self, parm, section):
