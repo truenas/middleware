@@ -323,14 +323,15 @@ class SMBService(SystemServiceService):
 
     @private
     async def groupmap_list(self):
-        groupmap = []
+        groupmap = {}
         out = await run([SMBCmd.NET.value, 'groupmap', 'list'], check=False)
         if out.returncode != 0:
             raise CallError(f'groupmap list failed with error {out.stderr.decode()}')
         for line in (out.stdout.decode()).splitlines():
             m = RE_NETGROUPMAP.match(line)
             if m:
-                groupmap.append(m.groupdict())
+                entry = m.groupdict()
+                groupmap[entry['unixgroup']] = entry
 
         return groupmap
 
@@ -350,7 +351,7 @@ class SMBService(SystemServiceService):
         existing_groupmap = await self.middleware.call('smb.groupmap_list')
         for user in (await self.middleware.call('user.query')):
             disallowed_list.append(user['username'].upper())
-        for g in existing_groupmap:
+        for g in existing_groupmap.values():
             disallowed_list.append(g['ntgroup'].upper())
 
         if group.upper() in disallowed_list:
@@ -364,6 +365,30 @@ class SMBService(SystemServiceService):
             raise CallError(
                 f'Failed to generate groupmap for [{group}]: ({gm_add.stderr.decode()})'
             )
+
+    @private
+    async def groupmap_delete(self, data):
+        ntgroup = data.get("ntgroup")
+        sid = data.get("sid")
+        if not ntgroup and not sid:
+            raise CallError("ntgroup or sid is required")
+
+        if ntgroup:
+            target = f"ntgroup={ntgroup}"
+        elif sid:
+            if sid.startswith("S-1-5-32"):
+                self.logger.debug("Refusing to delete group mapping for BUILTIN group: %s", sid)
+                return
+
+            target = f"sid={sid}"
+
+        gm_delete = await run(
+            [SMBCmd.NET.value, '-d' '0', 'groupmap', 'delete', target], check=False
+        )
+
+        if gm_delete.returncode != 0:
+            self.logger.debug('Failed to delete groupmap for [{target}]: %s',
+                              gm_delete.stderr.decode())
 
     @private
     async def passdb_list(self, verbose=False):
