@@ -3,7 +3,7 @@ import subprocess
 import time
 
 from middlewared.service import accepts, CallError, no_auth_required, periodic, pass_app, private, Service, throttle
-from middlewared.utils import Popen, run
+from middlewared.utils import osc, Popen, run
 
 from .enums import Status
 
@@ -84,6 +84,20 @@ class TruecommandService(Service):
                     # We never established handshake with TC if timestamp is 0, otherwise it's been more
                     # then 30 minutes, error out please
                     health_error = True
+                else:
+                    # It's possible that IP of TC changed and we just need to get up to speed with the
+                    # new IP. So if we have a correct handshake, we should ping the TC IP to see if it's
+                    # still reachable
+                    config = await self.middleware.call('datastore.config', 'system.truecommand')
+                    cp = await run(
+                        [
+                            'ping', '-t' if osc.IS_FREEBSD else '-w', '5',
+                            '-q', str(config['remote_address']).split('/', 1)[0]
+                        ], check=False
+                    )
+                    if cp.returncode:
+                        # We have return code of 0 if we heard at least one response from the host
+                        health_error = True
         return not health_error
 
     @no_auth_required
