@@ -14,7 +14,7 @@ async def setup(middleware):
 
     status = Status((await middleware.call('datastore.config', 'system.truecommand'))['api_key_state'])
     if status == Status.CONNECTED:
-        status = Status.WAITING
+        status = Status.CONNECTING
 
     await middleware.call('truecommand.set_status', status.value)
 

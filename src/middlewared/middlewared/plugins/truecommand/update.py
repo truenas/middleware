@@ -36,15 +36,25 @@ class TruecommandService(ConfigService):
 
     @private
     async def tc_extend(self, config):
-        for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint', 'api_key_state', 'wg_address'):
+        for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint', 'wg_address'):
             config.pop(key)
 
-        if self.STATUS == Status.WAITING and await self.middleware.call('truecommand.wireguard_connection_health'):
-            await self.set_status(Status.CONNECTED.value)
+        # In database we will have CONNECTED when the portal has approved the key
+        # Connecting basically represents 2 phases - where we wait for TC to connect to
+        # NAS and where we are waiting to hear back from the portal after registration
+        status_reason = None
+        if Status(config.pop('api_key_state')) == self.STATUS.CONNECTED and self.STATUS == Status.CONNECTING:
+            if await self.middleware.call('truecommand.wireguard_connection_health'):
+                await self.set_status(Status.CONNECTED.value)
+            else:
+                status_reason = 'Waiting for connection from Truecommand.'
+
+        if config['remote_address']:
+            config['remote_address'] = config['remote_address'].split('/', 1)[0]
 
         config.update({
             'status': self.STATUS.value,
-            'status_reason': StatusReason.__members__[self.STATUS.value].value
+            'status_reason': status_reason or StatusReason.__members__[self.STATUS.value].value
         })
         return config
 
@@ -124,6 +134,8 @@ class TruecommandService(ConfigService):
                 ):
                     # Api key hasn't changed and we have wireguard details, let's please start wireguard in this case
                     await self.set_status(Status.CONNECTED.value)
+            else:
+                new['api_key_state'] = Status.DISABLED.value
 
             new['api_key_state'] = self.STATUS.value
 

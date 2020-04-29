@@ -6,7 +6,6 @@ class Status(enum.Enum):
     CONNECTING = 'CONNECTING'
     DISABLED = 'DISABLED'
     FAILED = 'FAILED'
-    WAITING = 'WAITING'
 
 
 class StatusReason(enum.Enum):
@@ -14,7 +13,6 @@ class StatusReason(enum.Enum):
     CONNECTING = 'Pending Confirmation From iX Portal for Truecommand API Key.'
     DISABLED = 'Truecommand service is disabled.'
     FAILED = 'Truecommand API Key Disabled by iX Portal.'
-    WAITING = 'Waiting for connection from Truecommand.'
 
 
 class PortalResponseState(enum.Enum):
