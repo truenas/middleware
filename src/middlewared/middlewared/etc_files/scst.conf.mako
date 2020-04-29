@@ -7,7 +7,7 @@
 	targets = middleware.call_sync('iscsi.target.query')
 	extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]])}
 	portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
-	initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query', [['initiators', '!=', []]])}
+	initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
 	associated_targets = defaultdict(list)
 	for a_tgt in filter(lambda a: a['extent'] in extents, middleware.call_sync('iscsi.targetextent.query')):
 		associated_targets[a_tgt['target']].append(a_tgt)
@@ -58,6 +58,8 @@ TARGET_DRIVER iscsi {
 	TARGET ${global_config['basename']}:${target['name']} {
 %	if associated_targets:
 		enabled 1
+		per_portal_acl 1
+
 %	endif
 %	for group in target['groups']:
 <%
@@ -67,28 +69,21 @@ TARGET_DRIVER iscsi {
 			# SCST uses wildcard patterns
 			# FIXME: Please investigate usage of ipv6 patterns
 			# https://github.com/truenas/scst/blob/e945943861687d16ae0415207306f75a55bcfd2b/iscsi-scst/usr/target.c#L139-L138
-			addresses = []
+			addresses = [{**addr, 'ip': '*'}]
 			break
 		addresses.append({**addr, 'ip': f'[{addr["ip"]}]' if ':' in addr['ip'] else addr['ip']})
 		# FIXME: SCST does not seem to respect port values for portals, please look for alternatives
 		# Refer to above git link please for this fixme
 %>\
-		% for addr in addresses:
-		allowed_portal ${addr['ip']}
-		% endfor
-%	endfor
-%	if any(g['initiator'] not in initiators for g in target['groups']):
-${retrieve_luns(target['id'])}\
-%	else:
-%		for group in target['groups']:
-		GROUP ${target['name']}_${group['initiator']} {
-%			for initiator in initiators[group['initiator']]['initiators']:
-			INITIATOR ${initiator}
+%       for index, addr in enumerate(addresses):
+		GROUP ${target['name']}_portal_${group['portal']}_${index} {
+%			for initiator in (initiators[group['initiator']]['initiators'] or ['*']):
+			INITIATOR ${initiator}\#${addr['ip']}
 %			endfor
 ${retrieve_luns(target['id'], '\t')}\
 		}
-%		endfor
-%	endif
+%       endfor
+%	endfor
 	}
 % endfor
 }

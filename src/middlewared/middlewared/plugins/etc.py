@@ -146,7 +146,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux'}
+            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'local_path': 'scst.conf.mako'}
         ],
         'webdav': [
             {
