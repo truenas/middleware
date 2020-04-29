@@ -8,6 +8,10 @@
 	extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]])}
 	portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
 	initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
+	authenticators = defaultdict(list)
+	for auth in middleware.call_sync('iscsi.auth.query'):
+		authenticators[auth['tag']].append(auth)
+
 	associated_targets = defaultdict(list)
 	for a_tgt in filter(lambda a: a['extent'] in extents, middleware.call_sync('iscsi.targetextent.query')):
 		associated_targets[a_tgt['target']].append(a_tgt)
@@ -56,11 +60,31 @@ TARGET_DRIVER iscsi {
 </%def>\
 % for target in targets:
 	TARGET ${global_config['basename']}:${target['name']} {
+<%
+	# SCST does not allow us to set authentication at a group level, so it is going to be set at
+	# target level which we are moving forward with right now. Also for mutual-chap, we can only set
+	# one user which the initiator can authenticate on it's end. So if any group in the target
+	# desires mutual chap, we take the first one and use it's peer credentials
+	mutual_chap = None
+	chap_users = set()
+	for group in filter(lambda g: g['authmethod'] != 'NONE' and authenticators[group['auth']], target['groups']):
+		auth_list = authenticators[group['auth']]
+		if group['CHAP_MUTUAL'] and not mutual_chap:
+			mutual_chap = f'{auth_list[0]["peeruser"]} {auth_list[0]["peersecret"]}'
+
+		chap_users.update(f'{auth["user"]} {auth["secret"]}' for auth in auth_list)
+%>\
 %	if associated_targets:
 		enabled 1
 		per_portal_acl 1
-
 %	endif
+%	for chap_auth in chap_users:
+		IncomingUser "${chap_auth}"
+%	endfor
+%	if mutual_chap:
+		OutgoingUser "${mutual_chap}"
+%	endif
+
 %	for group in target['groups']:
 <%
 	addresses = []
