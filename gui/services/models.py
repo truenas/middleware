@@ -40,7 +40,7 @@ from freenasUI import choices
 from freenasUI.freeadmin.models import (
     Model, UserField, GroupField, PathField
 )
-from freenasUI.freeadmin.models.fields import MultiSelectField
+from freenasUI.freeadmin.models.fields import EncryptedCharField, EncryptedTextField, MultiSelectField
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
@@ -1085,7 +1085,7 @@ class SNMP(Model):
         max_length=3,
         verbose_name=_('Authentication Type'),
     )
-    snmp_v3_password = models.CharField(
+    snmp_v3_password = EncryptedCharField(
         blank=True,
         max_length=50,
         verbose_name=_('Password'),
@@ -1100,7 +1100,7 @@ class SNMP(Model):
         null=True,
         verbose_name=_('Privacy Protocol'),
     )
-    snmp_v3_privpassphrase = models.CharField(
+    snmp_v3_privpassphrase = EncryptedCharField(
         blank=True,
         max_length=100,
         null=True,
@@ -1622,7 +1622,7 @@ class SSH(Model):
         verbose_name=_("Compress Connections"),
         default=False,
     )
-    ssh_privatekey = models.TextField(
+    ssh_privatekey = EncryptedTextField(
         max_length=1024,
         verbose_name=_("Host Private Key"),
         blank=True,
@@ -1655,7 +1655,7 @@ class SSH(Model):
                     "empty). Note, incorrect entered options prevent SSH "
                     "service to be started."),
     )
-    ssh_host_dsa_key = models.TextField(
+    ssh_host_dsa_key = EncryptedTextField(
         max_length=1024,
         editable=False,
         blank=True,
@@ -1674,7 +1674,7 @@ class SSH(Model):
         editable=False,
         verbose_name='ssh_host_dsa_key-cert.pub',
     )
-    ssh_host_ecdsa_key = models.TextField(
+    ssh_host_ecdsa_key = EncryptedTextField(
         max_length=1024,
         editable=False,
         blank=True,
@@ -1699,7 +1699,7 @@ class SSH(Model):
         blank=True,
         null=True,
     )
-    ssh_host_ed25519_key = models.TextField(
+    ssh_host_ed25519_key = EncryptedTextField(
         max_length=1024,
         editable=False,
         blank=True,
@@ -1712,7 +1712,7 @@ class SSH(Model):
         editable=False,
         verbose_name='ssh_host_ed25519_key-cert.pub',
     )
-    ssh_host_key = models.TextField(
+    ssh_host_key = EncryptedTextField(
         max_length=1024,
         editable=False,
         blank=True,
@@ -1724,7 +1724,7 @@ class SSH(Model):
         blank=True,
         null=True,
     )
-    ssh_host_rsa_key = models.TextField(
+    ssh_host_rsa_key = EncryptedTextField(
         max_length=1024,
         editable=False,
         blank=True,
@@ -2061,7 +2061,7 @@ class S3(Model):
         default='',
         help_text=_("S3 username")
     )
-    s3_secret_key = models.CharField(
+    s3_secret_key = EncryptedCharField(
         verbose_name=_("Secret key of 8 to 40 characters in length"),
         max_length=128,
         blank=True,

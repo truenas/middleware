@@ -109,6 +109,56 @@ class EncryptedDictField(models.Field):
         return value
 
 
+class EncryptedTextField(models.TextField):
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if value is None:
+            return None
+        if value == '':
+            return ''
+        try:
+            return notifier().pwenc_encrypt(value)
+        except Exception:
+            return ''
+
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
+    def to_python(self, value):
+        if value is None:
+            return None
+        if value == '':
+            return ''
+        if isinstance(value, str):
+            try:
+                return notifier().pwenc_decrypt(value)
+            except Exception:
+                return ''
+        return value
+
+
+class EncryptedCharField(models.CharField):
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if not value:
+            value = ''
+        try:
+            return notifier().pwenc_encrypt(value)
+        except Exception:
+            return ''
+
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
+    def to_python(self, value):
+        if not value:
+            return ''
+        if isinstance(value, str):
+            try:
+                return notifier().pwenc_decrypt(value)
+            except Exception:
+                return ''
+        return value
+
+
 class UserField(models.CharField):
     def __init__(self, *args, **kwargs):
         self._exclude = kwargs.pop('exclude', [])
