@@ -32,7 +32,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, EncryptedDictField, ListField, Model
+from freenasUI.freeadmin.models import DictField, EncryptedDictField, EncryptedTextField, ListField, Model
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support.utils import get_license
 
@@ -641,7 +641,7 @@ class CertificateBase(Model):
         verbose_name=_("Certificate"),
         help_text=_("Cut and paste the contents of your certificate here"),
     )
-    cert_privatekey = models.TextField(
+    cert_privatekey = EncryptedTextField(
         blank=True,
         null=True,
         verbose_name=_("Private Key"),
