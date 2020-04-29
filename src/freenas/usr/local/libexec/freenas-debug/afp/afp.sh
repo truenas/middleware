@@ -94,4 +94,9 @@ afp_func()
 		getfacl "${afp_path}"
 	done
 	section_footer
+
+	section_header "AFP Configuration"
+	midclt call afp.config | jq
+	midclt call sharing.afp.query | jq
+	section_footer
 }
