@@ -88,11 +88,10 @@ class TruecommandService(Service):
                     # It's possible that IP of TC changed and we just need to get up to speed with the
                     # new IP. So if we have a correct handshake, we should ping the TC IP to see if it's
                     # still reachable
-                    config = await self.middleware.call('datastore.config', 'system.truecommand')
+                    config = await self.middleware.call('truecommand.config')
                     cp = await run(
                         [
-                            'ping', '-t' if osc.IS_FREEBSD else '-w', '5',
-                            '-q', str(config['remote_address']).split('/', 1)[0]
+                            'ping', '-t' if osc.IS_FREEBSD else '-w', '5', '-q', str(config['remote_ip_address'])
                         ], check=False
                     )
                     if cp.returncode:
@@ -113,7 +112,8 @@ class TruecommandService(Service):
         connected = Status(tc_config['status']) == Status.CONNECTED
         return {
             'connected': connected,
-            'truecommand_ip': tc_config['remote_address'] if connected else None,
+            'truecommand_ip': tc_config['remote_ip_address'] if connected else None,
+            'truecommand_url': tc_config['remote_url'] if connected else None,
             'status': tc_config['status'],
             'status_reason': tc_config['status_reason'],
         }

@@ -49,8 +49,10 @@ class TruecommandService(ConfigService):
             else:
                 status_reason = 'Waiting for connection from Truecommand.'
 
-        if config['remote_address']:
-            config['remote_address'] = config['remote_address'].split('/', 1)[0]
+        config['remote_ip_address'] = config['remote_url'] = config.pop('remote_address')
+        if config['remote_ip_address']:
+            config['remote_ip_address'] = config.pop('remote_ip_address').split('/', 1)[0]
+            config['remote_url'] = f'http://{config["remote_ip_address"]}/'
 
         config.update({
             'status': self.STATUS.value,
