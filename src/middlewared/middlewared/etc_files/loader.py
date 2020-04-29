@@ -32,8 +32,8 @@ def generate_loader_config(middleware):
 
 def list_efi_consoles():
     def efivar(*args):
-        out = subprocess.run(['efivar', *args], capture_output=True, text=True)
-        return out.strip()
+        cmd = subprocess.run(['efivar', *args], capture_output=True, text=True)
+        return cmd.stdout.strip()
 
     for var in efivar('-l').splitlines():
         if var.endswith('ConOut'):
