@@ -586,7 +586,7 @@ class KerberosKeytabModel(sa.Model):
     __tablename__ = 'directoryservice_kerberoskeytab'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    keytab_file = sa.Column(sa.Text())
+    keytab_file = sa.Column(sa.EncryptedText())
     keytab_name = sa.Column(sa.String(120))
 
 
@@ -594,18 +594,7 @@ class KerberosKeytabService(CRUDService):
     class Config:
         datastore = 'directoryservice.kerberoskeytab'
         datastore_prefix = 'keytab_'
-        datastore_extend = 'kerberos.keytab.kerberos_keytab_extend'
         namespace = 'kerberos.keytab'
-
-    @private
-    async def kerberos_keytab_extend(self, data):
-        data['file'] = await self.middleware.call('pwenc.decrypt', data['file'])
-        return data
-
-    @private
-    async def kerberos_keytab_compress(self, data):
-        data['file'] = await self.middleware.call('pwenc.encrypt', data['file'])
-        return data
 
     @accepts(
         Dict(
@@ -630,7 +619,6 @@ class KerberosKeytabService(CRUDService):
         if verrors:
             raise verrors
 
-        data = await self.kerberos_keytab_compress(data)
         data["id"] = await self.middleware.call(
             "datastore.insert", self._config.datastore, data,
             {
@@ -665,7 +653,6 @@ class KerberosKeytabService(CRUDService):
         if verrors:
             raise verrors
 
-        new = await self.kerberos_keytab_compress(data)
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
@@ -909,17 +896,17 @@ class KerberosKeytabService(CRUDService):
             self.logger.debug(f"Failed to generate b64encoded version of {keytab['SAMBA'].name}")
             return False
 
-        encrypted_keytab = await self.middleware.call('pwenc.encrypt', encoded_keytab.decode())
+        keytab_file = encoded_keytab.decode()
         entry = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
         if not entry:
             await self.middleware.call(
                 'datastore.insert',
                 'directoryservice.kerberoskeytab',
-                {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': encrypted_keytab}
+                {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': keytab_file}
             )
         else:
             id = entry[0]['id']
-            updated_entry = {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': encrypted_keytab}
+            updated_entry = {'keytab_name': 'AD_MACHINE_ACCOUNT', 'keytab_file': keytab_file}
             await self.middleware.call('datastore.update', 'directoryservice.kerberoskeytab', id, updated_entry)
 
         sambakt = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])

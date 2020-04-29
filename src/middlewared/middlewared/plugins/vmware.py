@@ -21,7 +21,7 @@ class VMWareModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     hostname = sa.Column(sa.String(200))
     username = sa.Column(sa.String(200))
-    password = sa.Column(sa.String(200))
+    password = sa.Column(sa.EncryptedText())
     filesystem = sa.Column(sa.String(200))
     datastore = sa.Column(sa.String(200))
 
@@ -30,12 +30,6 @@ class VMWareService(CRUDService):
 
     class Config:
         datastore = 'storage.vmwareplugin'
-        datastore_extend = 'vmware.item_extend'
-
-    @private
-    async def item_extend(self, item):
-        item['password'] = await self.middleware.call('pwenc.decrypt', item['password'])
-        return item
 
     @private
     async def validate_data(self, data, schema_name):
@@ -98,8 +92,6 @@ class VMWareService(CRUDService):
         """
         await self.validate_data(data, 'vmware_create')
 
-        data['password'] = await self.middleware.call('pwenc.encrypt', data['password'])
-
         data['id'] = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
@@ -122,8 +114,6 @@ class VMWareService(CRUDService):
         new.update(data)
 
         await self.validate_data(new, 'vmware_update')
-
-        new['password'] = await self.middleware.call('pwenc.encrypt', new['password'])
 
         await self.middleware.call(
             'datastore.update',

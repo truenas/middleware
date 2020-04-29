@@ -372,7 +372,7 @@ class TwoFactorAuthModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     otp_digits = sa.Column(sa.Integer(), default=6)
-    secret = sa.Column(sa.String(16), nullable=True, default=None)
+    secret = sa.Column(sa.EncryptedText(), nullable=True, default=None)
     window = sa.Column(sa.Integer(), default=0)
     interval = sa.Column(sa.Integer(), default=30)
     services = sa.Column(sa.JSON(), default={})
@@ -388,8 +388,6 @@ class TwoFactorAuthService(ConfigService):
 
     @private
     async def two_factor_extend(self, data):
-        data['secret'] = await self.middleware.call('pwenc.decrypt', data['secret'])
-
         for srv in ['ssh']:
             data['services'].setdefault(srv, False)
 
@@ -428,8 +426,6 @@ class TwoFactorAuthService(ConfigService):
             config['secret'] = await self.middleware.run_in_thread(
                 self.generate_base32_secret
             )
-
-        config['secret'] = await self.middleware.call('pwenc.encrypt', config['secret'])
 
         await self.middleware.call(
             'datastore.update',
@@ -471,7 +467,7 @@ class TwoFactorAuthService(ConfigService):
             'datastore.update',
             self._config.datastore,
             config['id'], {
-                'secret': self.middleware.call_sync('pwenc.encrypt', self.generate_base32_secret())
+                'secret': self.generate_base32_secret()
             }
         )
 

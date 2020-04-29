@@ -10,7 +10,7 @@ class DynDNSModel(sa.Model):
     ddns_provider = sa.Column(sa.String(120), default='dyndns@3322.org')
     ddns_domain = sa.Column(sa.String(120))
     ddns_username = sa.Column(sa.String(120))
-    ddns_password = sa.Column(sa.String(120))
+    ddns_password = sa.Column(sa.EncryptedText())
     ddns_checkip_ssl = sa.Column(sa.Boolean())
     ddns_checkip_server = sa.Column(sa.String(150))
     ddns_checkip_path = sa.Column(sa.String(150))
@@ -29,7 +29,6 @@ class DynDNSService(SystemServiceService):
 
     @private
     async def dyndns_extend(self, dyndns):
-        dyndns["password"] = await self.middleware.call("pwenc.decrypt", dyndns["password"])
         dyndns["domain"] = dyndns["domain"].replace(',', ' ').replace(';', ' ').split()
         return dyndns
 
@@ -124,7 +123,6 @@ class DynDNSService(SystemServiceService):
         await self.validate_data(new, 'dyndns_update')
 
         new["domain"] = " ".join(new["domain"])
-        new["password"] = await self.middleware.call("pwenc.encrypt", new["password"])
 
         await self._update_service(old, new)
 

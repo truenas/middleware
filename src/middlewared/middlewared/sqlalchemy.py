@@ -33,12 +33,18 @@ class EncryptedText(UserDefinedType):
         return "TEXT"
 
     def _bind_processor(self, value):
+        if value is None:
+            return None
+
         return encrypt(value) if value else ''
 
     def bind_processor(self, dialect):
         return self._bind_processor
 
     def _result_processor(self, value):
+        if value is None:
+            return None
+
         return decrypt(value) if value else ''
 
     def result_processor(self, dialect, coltype):
