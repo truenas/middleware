@@ -290,7 +290,7 @@ class UPSService(SystemServiceService):
                 hostname = (await self.middleware.call('system.info'))['hostname']
                 current_time = datetime.datetime.now(tz=dateutil.tz.tzlocal()).strftime('%a %b %d %H:%M:%S %Z %Y')
                 ups_subject = config['subject'].replace('%d', current_time).replace('%h', hostname)
-                body = f'NOTIFICATION: {notify_type!r}<br>UPS: {ups_name!r}<br><br>'
+                body = f'NOTIFICATION: {notify_type!r}\n\nUPS: {ups_name!r}\n\n'
 
                 # Let's gather following stats
                 data_points = {
@@ -311,14 +311,14 @@ class UPSService(SystemServiceService):
                 )
 
                 if recovered_stats:
-                    body += 'Statistics recovered:<br><br>'
+                    body += 'Statistics recovered:\n\n'
                     # recovered_stats is expected to be a list in this format
                     # [('battery.charge', '5'), ('battery.charge.low', '10'), ('battery.runtime', '1860')]
                     for index, stat in enumerate(recovered_stats):
-                        body += f'{index + 1}) {data_points[stat[0]]}<br>  {stat[0]}: {stat[1]}<br><br>'
+                        body += f'{index + 1}) {data_points[stat[0]]}\n  {stat[0]}: {stat[1]}\n\n'
 
                 else:
-                    body += 'Statistics could not be recovered<br>'
+                    body += 'Statistics could not be recovered\n'
 
                 # Subject and body defined, send email
                 job = await self.middleware.call(
