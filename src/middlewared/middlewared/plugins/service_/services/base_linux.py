@@ -49,7 +49,7 @@ class SimpleServiceLinux:
         await self._unit_action("Restart")
 
     async def _reload_linux(self):
-        await self._unit_action("Reload", False)
+        await self._unit_action("Reload")
 
     async def _identify_linux(self, procname):
         pass
