@@ -58,6 +58,17 @@ class QuotaAlertSource(ThreadedAlertSource):
 
                 if quota_property == "quota":
                     # We can't use "used" property since it includes refreservation
+
+                    # But if "refquota" is smaller than "quota", then "available" will be reported with regards to
+                    # that smaller value, and we will get false positive
+                    try:
+                        refquota_value = int(dataset["refquota"]["rawvalue"])
+                    except (AttributeError, KeyError, ValueError):
+                        continue
+                    else:
+                        if refquota_value and refquota_value < quota_value:
+                            continue
+
                     used = quota_value - int(dataset["available"]["rawvalue"])
                 elif quota_property == "refquota":
                     used = int(dataset["usedbydataset"]["rawvalue"])
@@ -82,8 +93,8 @@ class QuotaAlertSource(ThreadedAlertSource):
                     "name": quota_name,
                     "dataset": dataset["name"],
                     "used_fraction": used_fraction,
-                    "used": humanfriendly.format_size(used),
-                    "quota_value": humanfriendly.format_size(quota_value),
+                    "used": humanfriendly.format_size(used, binary=True),
+                    "quota_value": humanfriendly.format_size(quota_value, binary=True),
                 }
 
                 mail = None
