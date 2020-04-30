@@ -190,6 +190,7 @@ class ServiceService(CRUDService):
             else:
                 await self.middleware.call('service.notify_running', service)
                 self.logger.error("Service %r not running after restart", service)
+                return False
         else:
             await service_object.before_stop()
             await service_object.stop()
@@ -235,6 +236,7 @@ class ServiceService(CRUDService):
                 return True
             else:
                 self.logger.error("Service %r not running after reload", service)
+                return False
         else:
             return await self._restart(service, service_object)
 
