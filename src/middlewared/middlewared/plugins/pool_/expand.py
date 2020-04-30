@@ -92,14 +92,14 @@ class PoolService(Service):
                     else:
                         await run('camcontrol', 'reprobe', vdev['disk'])
                         await run('gpart', 'recover', vdev['disk'])
-                        await run('gpart', 'resize', '-i', str(partition_number), vdev['disk'])
+                        await run('gpart', 'resize', '-a', '4k', '-i', str(partition_number), vdev['disk'])
 
                     if osc.IS_FREEBSD and pool['encrypt']:
                         geli_resize_cmd = (
-                            'geli', 'resize', '-s', str(part_data['size']), vdev['device']
+                            'geli', 'resize', '-a', '4k', '-s', str(part_data['size']), vdev['device']
                         )
                         rollback_cmd = (
-                            'gpart', 'resize', '-i', str(partition_number),
+                            'gpart', 'resize', '-a', '4k', '-i', str(partition_number),
                             '-s', str(part_data['size']), vdev['disk']
                         )
 
