@@ -932,16 +932,20 @@ class DiskService(CRUDService):
                 disk['disk_serial'] = g.provider.config['ident']
             if g.provider.mediasize:
                 disk['disk_size'] = g.provider.mediasize
+
+            disk['disk_type'] = 'UNKNOWN'
+            disk['disk_rotationrate'] = None
+
             try:
                 if g.provider.config['rotationrate'] == '0':
                     disk['disk_rotationrate'] = None
                     disk['disk_type'] = 'SSD'
-                else:
+                elif str(g.provider.config['rotationrate']).lower() != 'unknown':
                     disk['disk_rotationrate'] = int(g.provider.config['rotationrate'])
                     disk['disk_type'] = 'HDD'
-            except ValueError:
-                disk['disk_type'] = 'UNKNOWN'
-                disk['disk_rotationrate'] = None
+            except (ValueError, TypeError) as e:
+                self.middleware.logger.debug('Unable to determine %s disk type/rotationrate: %s', name, str(e))
+
             disk['disk_model'] = g.provider.config['descr'] or None
 
         if not disk.get('disk_serial'):
