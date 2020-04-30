@@ -205,7 +205,9 @@ class UserService(CRUDService):
             if group:
                 group = group[0]
             else:
-                group = await self.middleware.call('group.create', {'name': data['username']})
+                group = await self.middleware.call('group.create_internal',
+                                                   {'name': data['username'], 'allow_duplicate_gid': False, 'sudo': False},
+                                                   False)
                 group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
             data['group'] = group['id']
         else:
@@ -837,6 +839,23 @@ class GroupService(CRUDService):
 
         `users` is a list of user ids (`id` attribute from `user.query`).
         """
+        return await self.create_internal(data)
+
+    @private
+    async def create_internal(self, data, do_smb=True):
+        """
+        This wrapper function exists to give a mechanism to avoid writing auto-generated
+        primary groups to Samba's group_mapping.tdb file. Adding these groups is
+        generally undesirable because:
+
+        1) You end up with two identically named principals with different SIDs
+           which is confusing for end-users.
+        2) It increases the amount of churn in the group-mapping database for something
+           that users generally don't care about.
+
+        In TrueNAS 12 this workaround is not required because an extra "smb" field has
+        been added to group entries to indicate whether the group should be mapped.
+        """
         allow_duplicate_gid = data['allow_duplicate_gid']
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_create')
@@ -856,20 +875,22 @@ class GroupService(CRUDService):
         for user in users:
             await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': user})
 
-        await self.middleware.call('service.reload', 'user')
+        if do_smb:
+            await self.middleware.call('service.reload', 'user')
 
-        try:
-            await self.middleware.call('smb.groupmap_add', data['name'])
-        except Exception:
-            """
-            Samba's group mapping database does not allow duplicate gids.
-            Unfortunately, we don't get a useful error message at -d 0.
-            """
-            if not allow_duplicate_gid:
-                raise
-            else:
-                self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
-                                  data['name'], data['gid'])
+        if do_smb:
+            try:
+                await self.middleware.call('smb.groupmap_add', data['name'])
+            except Exception:
+                """
+                Samba's group mapping database does not allow duplicate gids.
+                Unfortunately, we don't get a useful error message at -d 0.
+                """
+                if not allow_duplicate_gid:
+                    raise
+                else:
+                    self.logger.debug('Refusing to generate duplicate gid mapping in group_mapping.tdb: %s -> %s',
+                                      data['name'], data['gid'])
 
         return pk
 
