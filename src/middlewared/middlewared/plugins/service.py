@@ -961,7 +961,6 @@ class ServiceService(CRUDService):
         await self.middleware.call("etc.generate", "user")
         await self.middleware.call('etc.generate', 'aliases')
         await self.middleware.call('etc.generate', 'sudoers')
-        await self.reload("cifs", kwargs)
 
     async def _restart_system_datasets(self, **kwargs):
         systemdataset = await self.middleware.call('systemdataset.setup')
