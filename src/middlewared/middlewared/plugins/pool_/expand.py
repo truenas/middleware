@@ -59,8 +59,6 @@ class PoolService(Service):
             if osc.IS_FREEBSD:
                 sysctl.filter('kern.geom.debugflags')[0].value = 16
             geli_resize = []
-            # spare/cache devices cannot be expanded
-            topology = {k: v for k, v in pool['topology'].items() if k not in ('spare', 'cache')}
             vdevs = []
             try:
                 for vdev in sum(pool['topology'].values(), []):
@@ -90,13 +88,13 @@ class PoolService(Service):
                             break
                         else:
                             partitions.append(part_data)
+                            vdevs.append(child['guid'])
 
                     if skip_vdev:
                         logger.debug('Not expanding vdev(%r): %r', vdev['guid'], skip_vdev)
 
                     for part_data in partitions:
                         await self._resize_disk(part_data, pool['encrypt'], geli_resize)
-                    vdevs.append(vdev['guid'])
             finally:
                 if osc.IS_FREEBSD and geli_resize:
                     await self.__geli_resize(pool, geli_resize, options)
@@ -104,11 +102,18 @@ class PoolService(Service):
             if osc.IS_FREEBSD:
                 sysctl.filter('kern.geom.debugflags')[0].value = 0
 
-        for vdev in sum(topology.values(), []):
-            if vdev['guid'] in vdevs or vdev['status'] != 'ONLINE':
-                continue
-
-            await self.middleware.call('zfs.pool.online', pool['name'], vdev['guid'], True)
+        # spare/cache devices cannot be expanded
+        # We resize them anyways, for cache devices, whenever we are going to import the pool
+        # next, it will register the new capacity. For spares, whenever that spare is going to
+        # be used, it will register the new capacity as desired.
+        for topology_type in filter(
+            lambda t: t not in ('spare', 'cache') and pool['topology'][t], pool['topology']
+        ):
+            for vdev in pool['topology'][topology_type]:
+                for c_vd in filter(
+                    lambda v: v['guid'] in vdevs, vdev['children'] if vdev['type'] != 'DISK' else [vdev]
+                ):
+                    await self.middleware.call('zfs.pool.online', pool['name'], c_vd['guid'], True)
 
     async def _resize_disk(self, part_data, encrypted_pool, geli_resize):
         partition_number = part_data['partition_number']
