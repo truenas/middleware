@@ -17,14 +17,15 @@ class SMBService(Service):
 
     @private
     async def groupmap_list(self):
-        groupmap = []
+        groupmap = {}
         out = await run([SMBCmd.NET.value, 'groupmap', 'list'], check=False)
         if out.returncode != 0:
             raise CallError(f'groupmap list failed with error {out.stderr.decode()}')
         for line in (out.stdout.decode()).splitlines():
             m = RE_NETGROUPMAP.match(line)
             if m:
-                groupmap.append(m.groupdict())
+                entry = m.groupdict()
+                groupmap[entry['unixgroup']] = entry
 
         return groupmap
 
@@ -59,12 +60,9 @@ class SMBService(Service):
             return await self.add_builtin_group(group)
 
         disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
-        existing_groupmap = await self.middleware.call('smb.groupmap_list')
+        existing_groupmap = await self.groupmap_list()
 
-        for user in (await self.middleware.call('user.query')):
-            disallowed_list.append(user['username'].upper())
-
-        for g in existing_groupmap:
+        for g in existing_groupmap.values():
             disallowed_list.append(g['ntgroup'].upper())
 
         if group.upper() in disallowed_list:
@@ -80,13 +78,19 @@ class SMBService(Service):
             )
 
     @private
-    async def groupmap_delete(self, ntgroup=None, sid=None):
+    async def groupmap_delete(self, data):
+        ntgroup = data.get("ntgroup")
+        sid = data.get("sid")
         if not ntgroup and not sid:
             raise CallError("ntgroup or sid is required")
 
         if ntgroup:
             target = f"ntgroup={ntgroup}"
         elif sid:
+            if sid.startswith("S-1-5-32"):
+                self.logger.debug("Refusing to delete group mapping for BUILTIN group: %s", sid)
+                return
+
             target = f"sid={sid}"
 
         gm_delete = await run(
@@ -101,7 +105,7 @@ class SMBService(Service):
         if await self.middleware.call('ldap.get_state') != "DISABLED":
             return
 
-        groupmap = await self.groupmap_list()
+        groupmap = (await self.groupmap_list()).values()
         must_remove_cache = False
         if groupmap:
             sids_fixed = await self.middleware.call('smb.fixsid', groupmap)
