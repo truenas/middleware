@@ -59,8 +59,10 @@ class PoolService(Service):
             if osc.IS_FREEBSD:
                 sysctl.filter('kern.geom.debugflags')[0].value = 16
             geli_resize = []
+            # spare/cache devices cannot be expanded
+            topology = {k: v for k, v in pool['topology'].items() if k not in ('spare', 'cache')}
             try:
-                for vdev in sum(pool['topology'].values(), []):
+                for vdev in sum(topology.values(), []):
                     if vdev['type'] != 'DISK':
                         logger.debug('Not expanding vdev of type %r', vdev['type'])
                         continue
@@ -97,7 +99,8 @@ class PoolService(Service):
                             'geli', 'resize', '-s', str(part_data['size']), vdev['device']
                         )
                         rollback_cmd = (
-                            'gpart', 'resize', '-i', str(partition_number), '-s', str(part_data['size']), vdev['disk']
+                            'gpart', 'resize', '-i', str(partition_number),
+                            '-s', str(part_data['size']), vdev['disk']
                         )
 
                         logger.warning('It will be obligatory to notify GELI that the provider has been resized: %r',
@@ -112,7 +115,7 @@ class PoolService(Service):
             if osc.IS_FREEBSD:
                 sysctl.filter('kern.geom.debugflags')[0].value = 0
 
-        for vdev in sum(pool['topology'].values(), []):
+        for vdev in sum(topology.values(), []):
             if vdev['type'] != 'DISK' or vdev['status'] != 'ONLINE':
                 continue
 
