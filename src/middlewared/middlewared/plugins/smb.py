@@ -105,6 +105,9 @@ class SMBService(SystemServiceService):
 
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
 
+        if smb['bindip'] is None:
+            smb['bindip'] = []
+
         return smb
 
     async def __validate_netbios_name(self, name):
