@@ -12,7 +12,7 @@ class ISCSITargetService(SimpleService):
     name = "iscsitarget"
     reloadable = True
 
-    etc = ["ctld"]
+    etc = ["ctld", "scst"]
 
     freebsd_rc = "ctld"
     freebsd_pidfile = "/var/run/ctld.pid"

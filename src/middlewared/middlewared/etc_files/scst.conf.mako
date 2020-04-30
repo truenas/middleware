@@ -67,9 +67,9 @@ TARGET_DRIVER iscsi {
 	# desires mutual chap, we take the first one and use it's peer credentials
 	mutual_chap = None
 	chap_users = set()
-	for group in filter(lambda g: g['authmethod'] != 'NONE' and authenticators[group['auth']], target['groups']):
+	for group in filter(lambda g: g['authmethod'] != 'NONE' and authenticators[g['auth']], target['groups']):
 		auth_list = authenticators[group['auth']]
-		if group['CHAP_MUTUAL'] and not mutual_chap:
+		if group['authmethod'] == 'CHAP_MUTUAL' and not mutual_chap:
 			mutual_chap = f'{auth_list[0]["peeruser"]} {auth_list[0]["peersecret"]}'
 
 		chap_users.update(f'{auth["user"]} {auth["secret"]}' for auth in auth_list)
