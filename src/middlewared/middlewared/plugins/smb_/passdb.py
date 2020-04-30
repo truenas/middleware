@@ -122,6 +122,12 @@ class SMBService(Service):
                 raise CallError(f'Failed to enable {username}: {enableacct.stderr.decode()}')
 
     @private
+    async def remove_passdb_user(self, username):
+        deluser = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-x', username], check=False)
+        if deluser.returncode != 0:
+            raise CallError(f'Failed to delete user [{username}]: {deluser.stderr.decode()}')
+
+    @private
     async def synchronize_passdb(self):
         """
         Create any missing entries in the passdb.tdb.
@@ -146,6 +152,4 @@ class SMBService(Service):
             for entry in pdb_users:
                 if not any(filter(lambda x: entry['username'] == x['username'], conf_users)):
                     self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry['username'])
-                    deluser = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-x', entry['username']], check=False)
-                    if deluser.returncode != 0:
-                        raise CallError(f'Failed to delete user {entry["username"]}: {deluser.stderr.decode()}')
+                    await self.remove_passdb_user(entry['username'])

@@ -382,6 +382,20 @@ class UserService(CRUDService):
 
         verrors.check()
 
+        must_change_pdb_entry = False
+        for k in ('username', 'password', 'locked'):
+            new_val = data.get(k)
+            old_val = user.get(k)
+            if new_val is not None and old_val != new_val:
+                if k == 'username':
+                    try:
+                        await self.middleware.call("smb.remove_passdb_user", old_val)
+                    except Exception:
+                        self.logger.debug("Failed to remove passdb entry for user [%s]",
+                                          old_val, exc_info=True)
+
+                must_change_pdb_entry = True
+
         # Copy the home directory if it changed
         if (
             has_home and
@@ -465,7 +479,7 @@ class UserService(CRUDService):
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
         await self.middleware.call('service.reload', 'user')
-        if user['smb']:
+        if user['smb'] and must_change_pdb_entry:
             await self.__set_smbpasswd(user['username'])
 
         return pk
