@@ -127,6 +127,11 @@ system_func()
 	midclt call alert.list | jq .
 	section_footer
 
+	section_header "Dump configuration"
+	midclt call system.general.config | jq 'del(.ui_certificate.privatekey)'
+	midclt call system.advanced.config | jq 'del(.sed_user, .sed_passwd)'
+	section_footer
+
 	section_header "Middleware Jobs - 'midclt call core.get_jobs'"
 	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' | jq .
 	section_footer

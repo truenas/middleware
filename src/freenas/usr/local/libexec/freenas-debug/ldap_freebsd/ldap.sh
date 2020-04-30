@@ -32,22 +32,12 @@ ldap_help() { echo "Dump LDAP Configuration"; }
 ldap_directory() { echo "LDAP"; }
 ldap_func()
 {
-	local onoff
-
-	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ldap_enable
-	FROM
-		directoryservice_ldap
-
-	ORDER BY
-		-id
-
-	LIMIT 1
-	")
+	local CONF=$(midclt call ldap.config | jq 'del(.bindpw)')
+	local onoff=$(echo ${CONF} | jq ".enable")
+	local has_samba_schema=$(echo ${CONF} | jq ".has_samba_schema")
 
 	enabled="DISABLED"
-	if [ "${onoff}" = "1" ]
+	if [ "${onoff}" == "true" ]
 	then
 		enabled="ENABLED"
 	fi
@@ -59,49 +49,8 @@ ldap_func()
 	#
 	#	dump LDAP configuration
 	#
-	local IFS="|"
-	read hostname basedn binddn anonbind \
-		cert validate_certs krb_realm krb_princ \
-		ssl has_samba_schema <<-__LDAP__
-	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ldap_hostname,
-		ldap_basedn,
-		ldap_binddn,
-		ldap_anonbind,
-		ldap_certificate_id,
-		ldap_validate_certificates,
-		ldap_kerberos_realm_id,
-		ldap_kerberos_principal,
-		ldap_ssl,
-		ldap_has_samba_schema
-
-	FROM
-		directoryservice_ldap
-
-	ORDER BY
-		-id
-
-	LIMIT 1
-	")
-__LDAP__
-
-	IFS="
-"
-
 	section_header "LDAP Settings"
-	cat<<-__EOF__
-	Hostname:               ${hostname}
-	Base DN:                ${basedn}
-	Bind DN:                ${binddn}
-	Anonymous Bind:         ${anonbind}
-	SSL:                    ${ssl}
-	Cert:			${cert}
-	Validate Certificates	${validate_certs}
-	Kerberos realm		${krb_realm}
-	Kerberos principal	${krb_princ}
-	Samba Schema:           ${has_samba_schema}
-__EOF__
+	echo ${CONF} | jq
 	section_footer
 
 	#
@@ -146,7 +95,7 @@ __EOF__
 	#	Dump NSLCD configuration
 	#
 	section_header "${NSLCD_CONF}"
-	sc "${NSLCD_CONF}" | grep -iv ldap_default_authtok
+	sc "${NSLCD_CONF}" | grep -iv bindpw
 	section_footer
 
 	#
@@ -163,6 +112,17 @@ __EOF__
 	then
 	section_header "NSLCD health check - midclt call ldap.get_nslcd_status"
 	midclt call ldap.get_nslcd_status | jq
+	section_footer
+
+	section_header "ROOT DSE"
+	midclt call ldap.get_root_DSE | jq
+	section_footer
+	fi
+
+	if [ "${enabled}" = "ENABLED" ] && [ "${has_samba_schema}" = "true" ]
+	then
+	section_header "sambaDomains"
+	midclt call ldap.get_samba_domains | jq
 	section_footer
 	fi
 

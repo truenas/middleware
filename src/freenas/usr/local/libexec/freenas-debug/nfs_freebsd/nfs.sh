@@ -89,4 +89,9 @@ nfs_func()
 	section_header "nfsv4 locks: nfsdumpstate"
 	nfsdumpstate
 	section_footer
+
+	section_header "Configuration"
+	midclt call nfs.config | jq
+	midclt call sharing.nfs.query | jq
+	section_footer
 }
