@@ -36,7 +36,7 @@ class UPSModel(sa.Model):
     ups_shutdown = sa.Column(sa.String(120), default='batt')
     ups_shutdowntimer = sa.Column(sa.Integer(), default=30)
     ups_monuser = sa.Column(sa.String(50), default='upsmon')
-    ups_monpwd = sa.Column(sa.String(30), default="fixmepass")
+    ups_monpwd = sa.Column(sa.EncryptedText(), default='fixmepass')
     ups_extrausers = sa.Column(sa.Text())
     ups_rmonitor = sa.Column(sa.Boolean(), default=False)
     ups_emailnotify = sa.Column(sa.Boolean(), default=False)

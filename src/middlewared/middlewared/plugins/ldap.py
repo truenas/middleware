@@ -378,7 +378,7 @@ class LDAPModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     ldap_hostname = sa.Column(sa.String(120))
     ldap_basedn = sa.Column(sa.String(120))
-    ldap_binddn = sa.Column(sa.String(256))
+    ldap_binddn = sa.Column(sa.EncryptedText())
     ldap_bindpw = sa.Column(sa.String(120))
     ldap_anonbind = sa.Column(sa.Boolean())
     ldap_ssl = sa.Column(sa.String(120))

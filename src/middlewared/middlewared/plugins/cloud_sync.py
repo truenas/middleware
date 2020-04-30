@@ -651,8 +651,8 @@ class CloudSyncModel(sa.Model):
     transfer_mode = sa.Column(sa.String(20), default='sync')
     encryption = sa.Column(sa.Boolean())
     filename_encryption = sa.Column(sa.Boolean(), default=True)
-    encryption_password = sa.Column(sa.String(256))
-    encryption_salt = sa.Column(sa.String(256))
+    encryption_password = sa.Column(sa.EncryptedText())
+    encryption_salt = sa.Column(sa.EncryptedText())
     args = sa.Column(sa.Text())
     post_script = sa.Column(sa.Text())
     pre_script = sa.Column(sa.Text())
@@ -705,13 +705,6 @@ class CloudSyncService(CRUDService):
     async def extend(self, cloud_sync):
         cloud_sync["credentials"] = cloud_sync.pop("credential")
 
-        cloud_sync["encryption_password"] = await self.middleware.call(
-            "pwenc.decrypt", cloud_sync["encryption_password"]
-        )
-        cloud_sync["encryption_salt"] = await self.middleware.call(
-            "pwenc.decrypt", cloud_sync["encryption_salt"]
-        )
-
         Cron.convert_db_format_to_schedule(cloud_sync)
 
         return cloud_sync
@@ -719,13 +712,6 @@ class CloudSyncService(CRUDService):
     @private
     async def _compress(self, cloud_sync):
         cloud_sync["credential"] = cloud_sync.pop("credentials")
-
-        cloud_sync["encryption_password"] = await self.middleware.call(
-            "pwenc.encrypt", cloud_sync["encryption_password"]
-        )
-        cloud_sync["encryption_salt"] = await self.middleware.call(
-            "pwenc.encrypt", cloud_sync["encryption_salt"]
-        )
 
         Cron.convert_schedule_to_db_format(cloud_sync)
 

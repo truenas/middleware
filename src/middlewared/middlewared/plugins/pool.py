@@ -1848,7 +1848,7 @@ class PoolDatasetEncryptionModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
-    encryption_key = sa.Column(sa.Text(), nullable=True)
+    encryption_key = sa.Column(sa.EncryptedText(), nullable=True)
     kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
@@ -1889,7 +1889,7 @@ class PoolDatasetService(CRUDService):
             [['id', '=', ds_id]] if ds_id else [['name', '=', data['name']]]
         )
 
-        data['encryption_key'] = await self.middleware.call('pwenc.encrypt', data['encryption_key'])
+        data['encryption_key'] = data['encryption_key']
 
         pk = ds[0]['id'] if ds else None
         if ds:
@@ -1923,7 +1923,7 @@ class PoolDatasetService(CRUDService):
         keys = {}
         for ds in datasets:
             if ds['encryption_key']:
-                keys[ds['name']] = self.middleware.call_sync('pwenc.decrypt', ds['encryption_key'])
+                keys[ds['name']] = ds['encryption_key']
             elif ds['name'] in zfs_keys:
                 keys[ds['name']] = zfs_keys[ds['name']]
         return keys

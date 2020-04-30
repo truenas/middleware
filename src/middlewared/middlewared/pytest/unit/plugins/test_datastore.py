@@ -397,7 +397,7 @@ class EncryptedTextModel(Model):
     __tablename__ = 'test_encryptedtext'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    object = sa.Column(EncryptedText())
+    object = sa.Column(EncryptedText(), nullable=True)
 
 
 def decrypt(s, _raise=False):
@@ -474,6 +474,30 @@ async def test__encrypted_text_save():
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
             ['!Text']
+        )
+
+
+@pytest.mark.asyncio
+async def test__encrypted_text_load_null():
+    async with datastore_test() as ds:
+        await ds.execute("INSERT INTO test_encryptedtext VALUES (1, NULL)")
+
+        with patch("middlewared.sqlalchemy.decrypt", decrypt_safe):
+            assert (await ds.query("test.encryptedtext", [], {"get": True}))["object"] is None
+
+
+@pytest.mark.asyncio
+async def test__encrypted_text_save_null():
+    async with datastore_test() as ds:
+        with patch("middlewared.sqlalchemy.encrypt", encrypt):
+            await ds.insert("test.encryptedtext", {"object": None})
+
+        assert (await ds.fetchall("SELECT * FROM test_encryptedtext"))[0]["object"] is None
+
+        ds.middleware.call_hook_inline.assert_called_once_with(
+            "datastore.post_execute_write",
+            "INSERT INTO test_encryptedtext (object) VALUES (?)",
+            [None]
         )
 
 
