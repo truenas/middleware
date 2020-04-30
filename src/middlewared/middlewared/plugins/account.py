@@ -992,11 +992,15 @@ class GroupService(CRUDService):
         verrors.check()
 
         group.update(data)
-        delete_groupmap = False
         group.pop('users', None)
 
         if 'name' in data and data['name'] != group['group']:
-            delete_groupmap = group['group']
+            if g := (await self.middleware.call('smb.groupmap_list')).get(group['group']):
+                await self.middleware.call(
+                    'smb.groupmap_delete',
+                    {"sid": g['SID']}
+                )
+
             group['group'] = group.pop('name')
         else:
             group.pop('name', None)
@@ -1014,9 +1018,6 @@ class GroupService(CRUDService):
             for i in to_add:
                 await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': i})
 
-        if delete_groupmap:
-            await self.middleware.call('smb.groupmap_delete', delete_groupmap)
-
         await self.middleware.call('service.reload', 'user')
 
         if group['smb']:
@@ -1033,8 +1034,8 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        if group['smb']:
-            await self.middleware.call('smb.groupmap_delete', group['group'])
+        if group['smb'] and (g := (await self.middleware.call('smb.groupmap.list')).get(group['group'])):
+            await self.middleware.call('smb.groupmap_delete', g['SID'])
 
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)

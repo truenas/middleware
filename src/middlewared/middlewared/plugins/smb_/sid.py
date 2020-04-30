@@ -69,7 +69,7 @@ class SMBService(Service):
     @private
     async def fixsid(self, groupmap=None):
         if groupmap is None:
-            groupmap = await self.groupmap_list()
+            groupmap = (await self.middleware.call('smb.groupmap_list').values())
 
         conf = await self.middleware.call('smb.config')
         well_known_SID_prefix = "S-1-5-32"
