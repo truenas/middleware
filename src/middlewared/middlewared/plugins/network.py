@@ -1451,15 +1451,10 @@ class InterfaceService(CRUDService):
     async def do_delete(self, oid):
         """
         Delete Interface of `id`.
-
-        It should be noted that only virtual interfaces can be deleted.
         """
         await self.__check_failover_disabled()
 
         iface = await self._get_instance(oid)
-
-        if iface['type'] == 'PHYSICAL':
-            raise CallError('Only virtual interfaces can be deleted.')
 
         await self.__save_datastores()
 
