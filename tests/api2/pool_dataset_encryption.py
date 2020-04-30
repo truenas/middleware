@@ -297,6 +297,7 @@ def test_23_unlock_passphrase_encrypted_datasets_with_wrong_passphrase():
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    assert job_status['results']['result']['failed']['tank/encrypted']['error'] == 'Invalid Key', str(job_status['results'])
 
 
 @skip_for_ha
@@ -339,6 +340,7 @@ def test_25_unlock_passphrase_encrypted_datasets():
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    assert job_status['results']['result']['unlocked'] == [dataset], str(job_status['results'])
 
 
 @skip_for_ha
@@ -656,6 +658,7 @@ def test_50_unlock_passphrase_encrypted_datasets():
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    assert job_status['results']['result']['unlocked'] == [dataset], str(job_status['results'])
 
 
 @skip_for_ha
@@ -844,6 +847,7 @@ def test_66_try_to_unlock_the_child_of_lock_parent_encrypted_root():
     job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'FAILED', str(job_status['results'])
     assert f'{child_dataset} has locked parents' in str(job_status['results']), str(job_status['results'])
+    assert job_status['results']['result'] is None, str(job_status['results'])
 
 
 def test_67_Verify_chid_unlock_successful_is_still_false():
@@ -887,6 +891,7 @@ def test_68_unlock_parent_dataset_with_child_recursively():
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    assert job_status['results']['result']['unlocked'] == [dataset, child_dataset], str(job_status['results'])
 
 
 def test_69_verify_the_parent_dataset_unlock_successful_is_true():
