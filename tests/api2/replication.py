@@ -9,7 +9,8 @@ import pytest
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, PUT, POST, DELETE
+from auto_config import user, password, ip
+from functions import GET, PUT, POST, DELETE, SSH_TEST
 
 BASE_REPLICATION = {
     "direction": "PUSH",
@@ -210,6 +211,13 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
           retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK"), None),
 ])
 def test_create_replication(credentials, periodic_snapshot_tasks, req, error):
+    if req.get("transport") == "LEGACY":
+        cmd = "midclt call system.is_freenas"
+        results = SSH_TEST(cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+        if results['output'].strip() == 'false':
+            req["readonly"] = "IGNORE"
+
     if "ssh_credentials" in req:
         req["ssh_credentials"] = credentials["id"]
 
