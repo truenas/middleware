@@ -1688,8 +1688,21 @@ class InterfaceService(CRUDService):
                 netif.create_interface(name)
                 iface = netif.get_interface(name)
 
+            mtu = bridge['interface']['int_mtu'] or 1500
+
             members = set(iface.members)
             members_database = set(bridge['members'])
+
+            for member in members_database:
+                try:
+                    member_iface = netif.get_interface(member)
+                except KeyError:
+                    self.logger.error('Bridge member %s not found', member)
+                    continue
+
+                if member_iface.mtu != mtu:
+                    member_iface.mtu = mtu
+                sync_interface_opts[member]['skip_mtu'] = True
 
             for member in members_database - members:
                 try:
@@ -1702,6 +1715,9 @@ class InterfaceService(CRUDService):
                 if member.startswith(('vnet', 'epair', 'tap')):
                     continue
                 iface.delete_member(member)
+
+            if iface.mtu != mtu:
+                iface.mtu = mtu
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         # Configure VLAN before BRIDGE so MTU is configured in correct order
