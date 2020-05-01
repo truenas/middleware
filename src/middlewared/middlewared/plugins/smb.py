@@ -179,7 +179,7 @@ class SMBModel(sa.Model):
     cifs_srv_filemask = sa.Column(sa.String(120))
     cifs_srv_dirmask = sa.Column(sa.String(120))
     cifs_srv_smb_options = sa.Column(sa.Text())
-    cifs_srv_bindip = sa.Column(sa.MultiSelectField(), nullable=True)
+    cifs_srv_bindip = sa.Column(sa.MultiSelectField())
     cifs_SID = sa.Column(sa.String(120), nullable=True)
     cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
     cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)
