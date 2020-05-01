@@ -1310,7 +1310,7 @@ class ActiveDirectoryService(ConfigService):
         Only automatically add NFS SPN entries on domain join
         if kerberized nfsv4 is enabled.
         """
-        if not (await self.middleware.call('nfs.config'))['v4_krb']:
+        if not (await self.middleware.call('nfs.config'))['v4_krb_enabled']:
             return False
 
         for spn in spn_list:
