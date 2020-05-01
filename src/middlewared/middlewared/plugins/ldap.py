@@ -411,6 +411,8 @@ class LDAPService(ConfigService):
         if data["certificate"] is not None:
             data["cert_name"] = data['certificate']['cert_name']
             data["certificate"] = data['certificate']['id']
+        else:
+            data["cert_name"] = None
 
         if data["kerberos_realm"] is not None:
             data["kerberos_realm"] = data["kerberos_realm"]["id"]
