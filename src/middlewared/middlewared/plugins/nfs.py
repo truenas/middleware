@@ -24,12 +24,16 @@ class NFSService(SystemServiceService):
         datastore_extend = 'nfs.nfs_extend'
 
     @private
-    def nfs_extend(self, nfs):
+    async def nfs_extend(self, nfs):
+        nfs["v4_krb_enabled"] = (
+            nfs["v4_krb"] or await self.middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+        )
         nfs["userd_manage_gids"] = nfs.pop("16")
         return nfs
 
     @private
-    def nfs_compress(self, nfs):
+    async def nfs_compress(self, nfs):
+        nfs.pop("v4_krb_enabled")
         nfs["16"] = nfs.pop("userd_manage_gids")
         return nfs
 
@@ -65,6 +69,8 @@ class NFSService(SystemServiceService):
 
         `v4_v3owner` when set means that system will use NFSv3 ownership model for NFSv4.
 
+        `v4_krb` will force NFS shares to fail if the Kerberos ticket is unavailable.
+
         `mountd_port` specifies the port mountd(8) binds to.
 
         `rpcstatd_port` specifies the port rpc.statd(8) binds to.
@@ -98,7 +104,11 @@ class NFSService(SystemServiceService):
 
         verrors = ValidationErrors()
 
-        if new["v4"] and new["v4_krb"] and not await self.middleware.call("system.is_freenas"):
+        new_v4_krb_enabled = (
+            new["v4_krb"] or await self.middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+        )
+
+        if new["v4"] and new_v4_krb_enabled and not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("failover.licensed"):
                 gc = await self.middleware.call("datastore.config", "network.globalconfiguration")
                 if not gc["gc_hostname_virtual"] or gc["gc_domain"]:
@@ -108,7 +118,7 @@ class NFSService(SystemServiceService):
                         "domain"
                     )
 
-        if new["v4"] and new["v4_krb"] and await self.middleware.call('activedirectory.get_state') != "DISABLED":
+        if new["v4"] and new_v4_krb_enabled and await self.middleware.call('activedirectory.get_state') != "DISABLED":
             """
             In environments with kerberized NFSv4 enabled, we need to tell winbindd to not prefix
             usernames with the short form of the AD domain. Directly update the db and regenerate
@@ -116,7 +126,7 @@ class NFSService(SystemServiceService):
             """
             if await self.middleware.call('smb.get_smb_ha_mode') == 'LEGACY':
                 raise ValidationError(
-                    'nfs_update.v4_krb',
+                    'nfs_update.v4',
                     'Enabling kerberos authentication on TrueNAS HA requires '
                     'the system dataset to be located on a data pool.'
                 )
@@ -140,11 +150,11 @@ class NFSService(SystemServiceService):
         if verrors:
             raise verrors
 
-        self.nfs_compress(new)
+        await self.nfs_compress(new)
 
         await self._update_service(old, new)
 
-        self.nfs_extend(new)
+        await self.nfs_extend(new)
 
         return new
 
@@ -152,7 +162,7 @@ class NFSService(SystemServiceService):
     def setup_v4(self):
         config = self.middleware.call_sync("nfs.config")
 
-        if config["v4_krb"]:
+        if config["v4_krb_enabled"]:
             subprocess.run(["service", "gssd", "onerestart"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         else:
             subprocess.run(["service", "gssd", "forcestop"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
