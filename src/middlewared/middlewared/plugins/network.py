@@ -682,7 +682,7 @@ class InterfaceService(CRUDService):
         # This breaks `failover.status` on TrueNAS HA systems.
         # Because of this, we need to manually sync the database to the standby
         # controller.
-        await self.middleware.call_hook('interfaces.pre_rollback')
+        await self.middleware.call_hook('interface.pre_rollback')
 
         await self.sync()
 
