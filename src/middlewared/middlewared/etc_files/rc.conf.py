@@ -225,7 +225,7 @@ def nfs_config(middleware, context):
     if nfs['v4']:
         yield 'nfsv4_server_enable="YES"'
 
-        if nfs['v4_krb'] and middleware.call_sync('datastore.query', 'directoryservice.kerberoskeytab'):
+        if nfs['v4_krb_enabled']:
             if enabled:
                 yield f'gssd_enable="YES"'
 
