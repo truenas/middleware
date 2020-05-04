@@ -59,7 +59,7 @@ class SMARTDService(SimpleService):
     async def _stop_freebsd(self):
         pid = await self.middleware.run_in_thread(self._freebsd_initializing_smartd_pid)
         if pid is None:
-            return await super()._start_freebsd()
+            return await super()._stop_freebsd()
 
         os.kill(pid, signal.SIGKILL)
 
