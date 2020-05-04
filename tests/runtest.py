@@ -162,7 +162,7 @@ def get_tests():
         sv = ['network', 'ssh', 'storage']
     elif api == '2.0':
         if ha is True:
-            skip_tests = ['interfaces', 'network', 'delete_interfaces']
+            skip_tests = ['interfaces', 'network', 'delete_interfaces', 'jail', 'plugin']
         else:
             skip_tests = []
         apidir = 'api2/'
@@ -176,8 +176,7 @@ def get_tests():
         if filename.endswith('.py') and \
                 not filename.startswith('__init__'):
             filename = re.sub('.py$', '', filename)
-            if (filename not in skip_tests and filename not in sv and
-                    filename not in ev):
+            if (filename not in skip_tests and filename not in sv and filename not in ev):
                 rv.append(filename)
     rv.sort()
     return sv + rv + ev
