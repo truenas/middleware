@@ -410,7 +410,10 @@ save_serial_settings()
 	# Do nothing if we booted with video as the primary console.
 	return 0
 	;;
-    $SERIAL_ONLY|$SER_VID_BOTH)
+    $SERIAL_ONLY)
+	local console="comconsole"
+	;;
+    $SER_VID_BOTH)
 	if [ "$(kenv console)" = "comconsole" ]; then
 	    # We used the serial boot menu entry and efi has a serial port.
 	    # Enable only comconsole so loader output is not duplicated.
