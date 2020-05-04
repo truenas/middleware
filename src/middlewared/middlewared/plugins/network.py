@@ -677,6 +677,13 @@ class InterfaceService(CRUDService):
         # We do not check for failover disabled in here because we may be reverting
         # the first time HA is being set up and this was already checked during commit.
         await self.__restore_datastores()
+
+        # All entries are deleted from the network tables on a rollback operation.
+        # This breaks `failover.status` on TrueNAS HA systems.
+        # Because of this, we need to manually sync the database to the standby
+        # controller.
+        await self.middleware.call_hook('interface.post_rollback')
+
         await self.sync()
 
     @accepts()

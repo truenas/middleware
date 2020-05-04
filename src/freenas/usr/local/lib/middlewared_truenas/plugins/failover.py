@@ -1618,6 +1618,23 @@ async def hook_license_update(middleware, *args, **kwargs):
     await middleware.call('service.restart', 'failover')
     await middleware.call('failover.status_refresh')
 
+async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
+    """
+    This hook needs to be run after a NIC rollback operation and before
+    an `interfaces.sync` operation on a TrueNAS HA system
+    """
+    if not await middleware.call('failover.licensed'):
+        return
+
+    try:
+        await middleware.call('failover.call_remote', 'core.ping')
+    except Exception:
+        middleware.logger.debug('[HA] Failed to contact standby controller', exc_info=True)
+        return
+
+    await middleware.call('failover.send_database')
+
+    middleware.logger.debug('[HA] Successfully sent database to standby controller')
 
 async def hook_setup_ha(middleware, *args, **kwargs):
 
@@ -1843,6 +1860,7 @@ async def setup(middleware):
     middleware.register_hook('pool.post_change_passphrase', hook_pool_change_passphrase, sync=False)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
+    middleware.register_hook('interface.post_rollback', hook_post_rollback_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_create_or_update', hook_sync_geli, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
