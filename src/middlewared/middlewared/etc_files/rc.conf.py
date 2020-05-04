@@ -468,10 +468,10 @@ def render(service, middleware):
         tftp_config,
         truecommand_config,
         truenas_config,
-        tunable_config,
         vmware_config,
         watchdog_config,
         zfs_config,
+        tunable_config,
     ):
         try:
             rcs += list(i(middleware, context))
