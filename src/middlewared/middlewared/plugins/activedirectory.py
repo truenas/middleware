@@ -177,6 +177,29 @@ class ActiveDirectory_LDAP(object):
         if self._isopen:
             self._close()
 
+    def _convert_exception(self, ex):
+        if issubclass(type(ex), ldap.LDAPError) and ex.args:
+            errmsg = f"{ex.args[0].get('desc')}: {ex.args[0].get('info', '')}"
+
+            if type(ex) == ldap.SERVER_DOWN:
+                if SSL(self.ad['ssl']) != SSL.NOSSL:
+                    raise CallError(f"{errmsg}. This error may indicate that the remote Domain Controller "
+                                    "is not configured to provide TLS-protected transport.", errno.ECONNRESET)
+                else:
+                    raise CallError(errmsg, errno.ECONNRESET)
+
+            if type(ex) == ldap.STRONG_AUTH_REQUIRED:
+                if self.ad['ldap_sasl_wrapping'] == 'PLAIN':
+                    raise CallError(f"{errmsg}. Client is currently configured with PLAIN (unencrypted and unsigned) "
+                                    "LDAP SASL wrapping.", errno.EPERM)
+                else:
+                    raise CallError(f"{errmsg}. This error may indicate that the remote Domain Contoller "
+                                    "requires LDAP channel binding support")
+
+            raise CallError(f"{errmsg} {type(ex)}")
+        else:
+            raise CallError(str(ex))
+
     def _open(self):
         """
         We can only intialize a single host. In this case,
@@ -314,7 +337,7 @@ class ActiveDirectory_LDAP(object):
             if res:
                 self._isopen = True
             elif saved_bind_error:
-                raise CallError(saved_bind_error)
+                self._convert_exception(saved_bind_error)
 
         return (self._isopen is True)
 
@@ -832,7 +855,7 @@ class ActiveDirectoryService(ConfigService):
             except Exception as e:
                 raise ValidationError(
                     "activedirectory_update.bindpw",
-                    f"Failed to validate bind credentials: {e}"
+                    f"Failed to validate bind credentials: {e.errmsg}"
                 )
 
             try:
@@ -843,7 +866,7 @@ class ActiveDirectoryService(ConfigService):
             except Exception as e:
                 raise ValidationError(
                     "activedirectory_update",
-                    f"Failed to validate domain configuration: {e}"
+                    f"Failed to validate domain configuration: {e.errmsg}"
                 )
 
         new = await self.ad_compress(new)
@@ -1230,6 +1253,24 @@ class ActiveDirectoryService(ConfigService):
                               hostname, to_register, netdns.stderr.decode())
 
     @private
+    async def _parse_join_err(self, msg):
+        if len(msg) < 2:
+            raise CallError(msg)
+
+        if "Invalid configuration" in msg[1]:
+            """
+            ./source3/libnet/libnet_join.c will return configuration erros for the
+            following situations:
+            - incorrect workgroup
+            - incorrect realm
+            - incorrect security settings
+            Unless users set auxiliary parameters, only the first should be a possibility.
+            """
+            raise CallError(f'{msg[1].rsplit(")",1)[0]}).', errno.EINVAL)
+        else:
+            raise CallError(msg[1])
+
+    @private
     async def _net_ads_join(self):
         ad = await self.config()
         if ad['createcomputer']:
@@ -1244,7 +1285,7 @@ class ActiveDirectoryService(ConfigService):
 
         if netads.returncode != 0:
             await self.set_state(DSStatus['FAULTED'])
-            raise CallError(f'Failed to join [{ad["domainname"]}]: [{netads.stdout.decode().strip()}]')
+            await self._parse_join_err(netads.stdout.decode().split(':', 1))
 
     @private
     async def _net_ads_testjoin(self, workgroup):
@@ -1265,8 +1306,10 @@ class ActiveDirectoryService(ConfigService):
             check=False
         )
         if netads.returncode != 0:
-            errout = netads.stderr.decode().strip()
-            self.logger.debug(f'net ads testjoin failed with error: [{errout}]')
+            errout = netads.stderr.decode()
+            with open(f"/var/log/samba4/domain_testjoin_{int(datetime.datetime.now().timestamp())}.log", "w") as f:
+                f.write(errout)
+
             if '0xfffffff6' in errout or 'The name provided is not a properly formed account name' in errout:
                 return neterr.NOTJOINED
             else:
@@ -1528,10 +1571,10 @@ class ActiveDirectoryService(ConfigService):
         if smb_ha_mode != 'LEGACY':
             krb_princ = await self.middleware.call(
                 'kerberos.keytab.query',
-                [('name', '=', 'AD_MACHINE_ACCOUNT')],
-                {'get': True}
+                [('name', '=', 'AD_MACHINE_ACCOUNT')]
             )
-            await self.middleware.call('kerberos.keytab.delete', krb_princ['id'])
+            if krb_princ:
+                await self.middleware.call('kerberos.keytab.delete', krb_princ[0]['id'])
 
         await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
         await self.middleware.call('activedirectory.stop')
