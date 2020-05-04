@@ -1718,7 +1718,7 @@ class InterfaceService(CRUDService):
             name = bridge['interface']['int_interface']
 
             cloned_interfaces.append(name)
-            await self.middleware.call('interface.bridge_setup', bridge)
+            await self.middleware.call('interface.bridge_setup', bridge, sync_interface_opts)
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         # Configure VLAN before BRIDGE so MTU is configured in correct order
