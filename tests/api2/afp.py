@@ -12,7 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from functions import dns_service_resolve
-from auto_config import ip, pool_name, hostname, domain, ha
+from auto_config import ip, pool_name, hostname, ha
 from config import *
 
 if "BRIDGEHOST" in locals():
@@ -35,6 +35,7 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        ]) is False, reason=OSXReason)
 
 skip_on_ha = pytest.mark.skipif(ha, reason='Skiping on HA')
+
 
 # have to wait for the volume api
 def test_01_creating_afp_dataset():
@@ -150,13 +151,13 @@ def test_17_restart_afp_service():
     sleep(1)
 
 
-@skip_on_ha
 def test_18_verify_if_afp_service_is_running_after_restart():
     results = GET("/service?service=afp")
     assert results.json()[0]['state'] == "RUNNING", results.text
 
 
-def test_18_verify_adisk_mdns_service_record():
+@skip_on_ha
+def test_19_verify_adisk_mdns_service_record():
     results = dns_service_resolve(hostname, 'local', '_adisk._tcp.')
     assert results['status'] is True, str(results['results'])
     assert results['results']['port'] == 9, str(results['results'])
