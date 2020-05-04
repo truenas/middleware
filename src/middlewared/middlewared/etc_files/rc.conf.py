@@ -444,10 +444,10 @@ def render(service, middleware):
         staticroute_config,
         tftp_config,
         truenas_config,
-        tunable_config,
         vmware_config,
         watchdog_config,
         zfs_config,
+        tunable_config,
     ):
         try:
             rcs += list(i(middleware, context))
