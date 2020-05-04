@@ -1048,7 +1048,7 @@ class GroupService(CRUDService):
         """
 
         group = await self._get_instance(pk)
-        if group['smb'] and (g := (await self.middleware.call('smb.groupmap.list')).get(group['group'])):
+        if group['smb'] and (g := (await self.middleware.call('smb.groupmap_list')).get(group['group'])):
             await self.middleware.call('smb.groupmap_delete', g['SID'])
 
         if group['builtin']:
