@@ -1049,7 +1049,7 @@ class GroupService(CRUDService):
 
         group = await self._get_instance(pk)
         if group['smb'] and (g := (await self.middleware.call('smb.groupmap_list')).get(group['group'])):
-            await self.middleware.call('smb.groupmap_delete', g['SID'])
+            await self.middleware.call('smb.groupmap_delete', {"sid": g['SID']})
 
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
