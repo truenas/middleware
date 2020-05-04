@@ -3118,7 +3118,7 @@ class PoolDatasetService(CRUDService):
 
         ds_name = await self.middleware.call("zfs.dataset.path_to_dataset", p.as_posix())
         if not ds_name:
-            raise CallError(f"Failed to convert path [{path}] to ZFS dataset.")
+            raise CallError(f"Failed to convert path [{path}] to ZFS dataset.", errno.ENOENT)
 
         return await self.middleware.call(
             "pool.dataset.query",
