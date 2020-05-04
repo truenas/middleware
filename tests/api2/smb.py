@@ -12,7 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from functions import dns_service_resolve
-from auto_config import ip, pool_name, password, user, hostname
+from auto_config import ip, pool_name, password, user, hostname, ha
 from config import *
 
 
@@ -34,6 +34,8 @@ osx_host_cfg = pytest.mark.skipif(all(["OSX_HOST" in locals(),
                                        "OSX_USERNAME" in locals(),
                                        "OSX_PASSWORD" in locals()
                                        ]) is False, reason=OSXReason)
+
+skip_on_ha = pytest.mark.skipif(ha, reason='Skiping on HA')
 
 smb_acl = [
     {
@@ -160,6 +162,7 @@ def test_011_checking_to_see_if_smb_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
+@skip_on_ha
 def test_012_verify_smb_mdns_service_record():
     results = dns_service_resolve(hostname, 'local', '_smb._tcp.')
     assert results['status'] is True, str(results['results'])
@@ -686,6 +689,7 @@ def test_084_checking_to_see_if_smb_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
+@skip_on_ha
 def test_085_verify_adisk_mdns_service_record():
     results = dns_service_resolve(hostname, 'local', '_adisk._tcp.')
     assert results['status'] is True, str(results['results'])
