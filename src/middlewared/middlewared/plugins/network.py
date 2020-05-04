@@ -637,6 +637,13 @@ class InterfaceService(CRUDService):
         for i in self._original_datastores['laggmembers']:
             await self.middleware.call('datastore.insert', 'network.lagginterfacemembers', i)
 
+        # Since all entries are deleted from the network tables, this
+        # breaks `failover.status` on TrueNAS HA systems. This means the
+        # following `datastore.insert` operations fail because we can't
+        # determine the Active/Standby controller.
+        if await self.middleware.call('failover.licensed'):
+            await self.middleware.call('failover.sync_to_peer')
+
         self._original_datastores.clear()
 
     async def __check_failover_disabled(self):
