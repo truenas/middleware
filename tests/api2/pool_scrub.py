@@ -5,13 +5,15 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, DELETE
+from functions import GET, PUT, POST, DELETE
+from auto_config import pool_name
+
+pool_id = GET(f"/pool/?name={pool_name}").json()[0]["id"]
 
 
-@pytest.mark.skip("Need to be fix")
 def test_01_create_scrub_for_same_pool():
     result = POST("/pool/scrub/", {
-        "pool": 1,
+        "pool": pool_id,
         "threshold": 1,
         "description": "",
         "schedule": {
@@ -30,7 +32,7 @@ def test_01_create_scrub_for_same_pool():
 
 def test_02_update_scrub():
     result = PUT("/pool/scrub/id/1/", {
-        "pool": 1,
+        "pool": pool_id,
         "threshold": 2,
         "description": "",
         "schedule": {
@@ -52,7 +54,7 @@ def test_03_delete_scrub():
 
 def test_04_create_scrub():
     result = POST("/pool/scrub/", {
-        "pool": 1,
+        "pool": pool_id,
         "threshold": 1,
         "description": "",
         "schedule": {
