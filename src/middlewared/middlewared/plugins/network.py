@@ -641,8 +641,7 @@ class InterfaceService(CRUDService):
         # breaks `failover.status` on TrueNAS HA systems. This means the
         # following `datastore.insert` operations fail because we can't
         # determine the Active/Standby controller.
-        if await self.middleware.call('failover.licensed'):
-            await self.middleware.call('failover.sync_to_peer')
+        await self.middleware.call_hook('rollback.post_sync')
 
         self._original_datastores.clear()
 
