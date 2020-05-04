@@ -1696,11 +1696,16 @@ class VMService(CRUDService):
 
         # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
-        for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm') if self.libvirt_connection else ():
-            vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
-            with contextlib.suppress(CallError, libvirt.libvirtError):
-                # Whatever happens, we don't want middlewared not booting
-                self.vms[vm_data['name']] = VMSupervisor(vm_data, self.libvirt_connection, self.middleware)
+        if self.libvirt_connection:
+            for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm'):
+                vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
+                try:
+                    self.vms[vm_data['name']] = VMSupervisor(vm_data, self.libvirt_connection, self.middleware)
+                except Exception as e:
+                    # Whatever happens, we don't want middlewared not booting
+                    self.middleware.logger.error('Unable to setup %r VM object: %s', vm_data['name'], str(e))
+        else:
+            self.middleware.logger.error('Failed to establish libvirt connection')
 
     @private
     async def start_on_boot(self):
