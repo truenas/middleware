@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.schedule import IntervalSchedule
 
 
 class ISCSIPortalIPAlertClass(AlertClass):
@@ -9,6 +12,8 @@ class ISCSIPortalIPAlertClass(AlertClass):
 
 
 class ISCSIPortalIPAlertSource(AlertSource):
+    schedule = IntervalSchedule(timedelta(minutes=60))
+
     async def check(self):
         if not await self.middleware.call('service.started', 'iscsitarget'):
             return

@@ -665,10 +665,7 @@ class iSCSITargetExtentService(CRUDService):
             if data['path'] in context['disks']:
                 data['disk'] = context['disks'][data['path']]['name']
             else:
-                if osc.IS_LINUX:
-                    data['disk'] = os.path.relpath(os.path.realpath(os.path.join('/dev', data['path'])), '/dev')
-                else:
-                    data['disk'] = data['path']
+                data['disk'] = data['path']
         else:
             extent_size = data['filesize']
 
