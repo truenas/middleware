@@ -11,7 +11,7 @@ import subprocess
 import threading
 
 from dns import resolver
-from middlewared.plugins.smb import SMBCmd, WBCErr
+from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
@@ -180,7 +180,7 @@ class ActiveDirectory_CLDAP(object):
         self.netctx = Net(creds=self.cred, lp=LP_CTX)
 
     def _init_creds(self):
-        LP_CTX.load("/usr/local/etc/smb4.conf")
+        LP_CTX.load(SMBPath.GLOBALCONF.platform())
         self.cred.set_gensec_features(self.cred.get_gensec_features() | gensec.FEATURE_SEAL)
         self.cred.guess()
 
