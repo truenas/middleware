@@ -1342,6 +1342,18 @@ class iSCSITargetService(CRUDService):
             'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target', '=', id]]
         )
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
+
+        if osc.IS_LINUX and await self.middleware.call('service.started', 'iscsitarget'):
+            # We explicitly need to do this unfortunately as scst does not accept these changes with a reload
+            # So this is the best way to do this without going through a restart of the service
+            g_config = await self.middleware.call('iscsi.global.config')
+            cp = await run([
+                'scstadmin', '-force', '-noprompt', '-rem_target',
+                f'{g_config["basename"]}:{target["name"]}', '-driver', 'iscsi'
+            ], check=False)
+            if cp.returncode:
+                self.middleware.logger.error('Failed to remove %r target: %s', target['name'], cp.stderr.decode())
+
         await self._service_change('iscsitarget', 'reload')
         return rv
 

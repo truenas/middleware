@@ -88,7 +88,7 @@ TARGET_DRIVER iscsi {
 				address = (f'[{addr["ip"]}]' if ':' in addr['ip'] else addr['ip'])
 				# FIXME: SCST does not seem to respect port values for portals, please look for alternatives
 
-			for initiator in (initiators[group['initiator']]['initiators'] or ['*']):
+			for initiator in ((initiators[group['initiator']]['initiators'] if group['initiator'] else []) or ['*']):
 				initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
 %	if associated_targets:
