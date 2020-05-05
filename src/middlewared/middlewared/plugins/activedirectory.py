@@ -2,10 +2,7 @@ import datetime
 import enum
 import errno
 import grp
-import ipaddress
 import json
-import ldap
-import ldap.sasl
 import ntplib
 import os
 import pwd
@@ -14,7 +11,6 @@ import subprocess
 import threading
 
 from dns import resolver
-from ldap.controls import SimplePagedResultsControl
 from middlewared.plugins.smb import SMBCmd, WBCErr
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
@@ -24,10 +20,24 @@ from middlewared.utils import run, Popen
 from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 import middlewared.utils.osc as osc
+
 try:
     from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
+    from samba.credentials import Credentials, MUST_USE_KERBEROS
+    from samba.net import Net
+    from samba.samba3 import param
+    from samba.dcerpc import nbt
+    from samba import gensec
 except ImportError:
     MSG_WINBIND_ONLINE = 9
+    MUST_USE_KERBEROS = 2
+    param = None
+    Net = None
+    Credentials = None
+    nbt = None
+    gensec = None
+
+LP_CTX = param.get_context()
 
 
 class neterr(enum.Enum):
@@ -160,380 +170,38 @@ class ActiveDirectory_DNS(object):
         return found_servers
 
 
-class ActiveDirectory_LDAP(object):
+class ActiveDirectory_CLDAP(object):
     def __init__(self, **kwargs):
-        super(ActiveDirectory_LDAP, self).__init__()
-        self.ad = kwargs.get('ad_conf')
-        self.hosts = kwargs.get('hosts')
-        self.interfaces = kwargs.get('interfaces')
+        super(ActiveDirectory_CLDAP, self).__init__()
+        self.ad = kwargs.get('conf')
         self.logger = kwargs.get('logger')
-        self.pagesize = 1024
-        self._isopen = False
-        self._handle = None
-        self._rootDSE = None
-        self._rootDomainNamingContext = None
-        self._configurationNamingContext = None
-        self._defaultNamingContext = None
+        self.cred = Credentials()
+        self._init_creds()
+        self.netctx = Net(creds=self.cred, lp=LP_CTX)
 
-    def __enter__(self):
-        return self
+    def _init_creds(self):
+        LP_CTX.load("/usr/local/etc/smb4.conf")
+        self.cred.set_gensec_features(self.cred.get_gensec_features() | gensec.FEATURE_SEAL)
+        self.cred.guess()
 
-    def __exit__(self, typ, value, traceback):
-        if self._isopen:
-            self._close()
-
-    def _open(self):
-        """
-        We can only intialize a single host. In this case,
-        we iterate through a list of hosts until we get one that
-        works and then use that to set our LDAP handle.
-        """
-        res = None
-        if self._isopen:
-            return True
-
-        if self.hosts:
-            saved_bind_error = None
-            for server in self.hosts:
-                proto = 'ldaps' if SSL(self.ad['ssl']) == SSL.USESSL else 'ldap'
-                uri = f"{proto}://{server['host']}:{server['port']}"
-                try:
-                    self._handle = ldap.initialize(uri)
-                except Exception as e:
-                    self.logger.debug(
-                        f'Failed to initialize ldap connection to [{uri}]: ({e}). Moving to next server.'
-                    )
-                    continue
-
-                if self.ad['verbose_logging']:
-                    self.logger.debug(f'Successfully initialized LDAP server: [{uri}]')
-
-                res = None
-                ldap.protocol_version = ldap.VERSION3
-                ldap.set_option(ldap.OPT_REFERRALS, 0)
-                ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, self.ad['dns_timeout'])
-
-                if SSL(self.ad['ssl']) != SSL.NOSSL:
-                    if self.ad['certificate']:
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_CERTFILE,
-                            f"/etc/certificates/{self.ad['certificate']}.crt"
-                        )
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_KEYFILE,
-                            f"/etc/certificates/{self.ad['certificate']}.key"
-                        )
-
-                    ldap.set_option(
-                        ldap.OPT_X_TLS_CACERTFILE,
-                        '/etc/ssl/truenas_cacerts.pem'
-                    )
-                    if self.ad['validate_certificates']:
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_REQUIRE_CERT,
-                            ldap.OPT_X_TLS_DEMAND
-                        )
-                    else:
-                        ldap.set_option(
-                            ldap.OPT_X_TLS_REQUIRE_CERT,
-                            ldap.OPT_X_TLS_ALLOW
-                        )
-
-                    ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
-
-                if SSL(self.ad['ssl']) == SSL.USESTARTTLS:
-                    try:
-                        self._handle.start_tls_s()
-
-                    except ldap.LDAPError as e:
-                        saved_bind_error = e
-                        self.logger.debug('Failed to initialize start_tls: %s', e)
-                        continue
-
-                if self.ad['certificate'] and SSL(self.ad['ssl']) != SSL.NOSSL:
-                    """
-                    Active Directory permits two means of establishing an
-                    SSL/TLS-protected connection to a DC. The first is by
-                    connecting to a DC on a protected LDAPS port (TCP ports 636
-                    and 3269 in AD DS, and a configuration-specific port in AD
-                    LDS). The second is by connecting to a DC on a regular LDAP
-                    port (TCP ports 389 or 3268 in AD DS, and a configuration-
-                    specific port in AD LDS), and later sending an
-                    LDAP_SERVER_START_TLS_OID extended operation [RFC2830]. In
-                    both cases, the DC requests (but does not require) the
-                    client's certificate as part of the SSL/TLS handshake
-                    [RFC2246]. If the client presents a valid certificate to
-                    the DC at that time, it can be used by the DC to
-                    authenticate (bind) the connection as the credentials
-                    represented by the certificate. See MS-ADTS 5.1.1.2
-
-                    See also RFC2829 7.1: Following the successful completion
-                    of TLS negotiation, the client sends an LDAP bind
-                    request with the SASL "EXTERNAL" mechanism.
-                    """
-                    try:
-                        res = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
-                        if self.ad['verbose_logging']:
-                            self.logger.debug(
-                                'Successfully bound to [%s] using client certificate.', uri
-                            )
-                        break
-
-                    except Exception as e:
-                        saved_bind_error = e
-                        self.logger.debug('Certificate-based bind failed.', exc_info=True)
-                        continue
-
-                try:
-                    """
-                    While Active Directory permits SASL binds to be performed
-                    on an SSL/TLS-protected connection, it does not permit the
-                    use of SASL-layer encryption/integrity verification
-                    mechanisms on such a connection. While this restriction is
-                    present in Active Directory on Windows 2000 Server
-                    operating system and later, versions prior to Windows
-                    Server 2008 operating system can fail to reject an LDAP
-                    bind that is requesting SASL-layer encryption/integrity
-                    verification mechanisms when that bind request is sent on a
-                    SSL/TLS-protected connection. See MS-ADTS 5.1.1.1.2
-
-                    Samba AD Domain controllers also require the following
-                    smb.conf parameter in order to permit SASL_GSSAPI on an SSL/
-                    TLS-protected connection:
-
-                    'ldap server require strong auth = allow_sasl_over_tls'
-                    """
-                    self._handle.set_option(ldap.OPT_X_SASL_NOCANON, 1)
-                    if SSL(self.ad['ssl']) != SSL.NOSSL:
-                        self._handle.set_option(ldap.OPT_X_SASL_SSF_MAX, 0)
-
-                    self._handle.sasl_gssapi_bind_s()
-                    if self.ad['verbose_logging']:
-                        self.logger.debug('Successfully bound to [%s] using SASL GSSAPI.', uri)
-                    res = True
-                    break
-                except Exception as e:
-                    saved_bind_error = e
-                    self.logger.debug('SASL GSSAPI bind failed.', exc_info=True)
-
-            if res:
-                self._isopen = True
-            elif saved_bind_error:
-                raise CallError(saved_bind_error)
-
-        return (self._isopen is True)
-
-    def _close(self):
-        self._isopen = False
-        if self._handle:
-            self._handle.unbind()
-            self._handle = None
-
-    def _search(self, basedn='', scope=ldap.SCOPE_SUBTREE, filter='', timeout=-1, sizelimit=0):
-        if not self._handle:
-            self._open()
-
-        result = []
-        serverctrls = None
-        clientctrls = None
-        paged = SimplePagedResultsControl(
-            criticality=False,
-            size=self.pagesize,
-            cookie=''
+    def _do_cldap(self):
+        cldap_ret = self.netctx.finddc(
+            domain=self.ad['domainname'].upper(),
+            flags=nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS | nbt.NBT_SERVER_WRITABLE
         )
-        paged_ctrls = {SimplePagedResultsControl.controlType: SimplePagedResultsControl}
+        return cldap_ret
 
-        page = 0
-        while True:
-            serverctrls = [paged]
+    def get_site(self):
+        cldap_ret = self._do_cldap()
+        return cldap_ret.client_site
 
-            id = self._handle.search_ext(
-                basedn,
-                scope,
-                filterstr=filter,
-                attrlist=None,
-                attrsonly=0,
-                serverctrls=serverctrls,
-                clientctrls=clientctrls,
-                timeout=timeout,
-                sizelimit=sizelimit
-            )
+    def get_pdc(self):
+        cldap_ret = self._do_cldap()
+        return cldap_ret.pdc_dns_name
 
-            (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
-                id, resp_ctrl_classes=paged_ctrls
-            )
-
-            result.extend(rdata)
-
-            paged.size = 0
-            paged.cookie = cookie = None
-            for sc in serverctrls:
-                if sc.controlType == SimplePagedResultsControl.controlType:
-                    cookie = sc.cookie
-                    if cookie:
-                        paged.cookie = cookie
-                        paged.size = self.pagesize
-
-                        break
-
-            if not cookie:
-                break
-
-            page += 1
-
-        return result
-
-    def _get_sites(self, distinguishedname):
-        sites = []
-        basedn = f'CN=Sites,{self._configurationNamingContext}'
-        filter = f'(&(objectClass=site)(distinguishedname={distinguishedname}))'
-        results = self._search(basedn, ldap.SCOPE_SUBTREE, filter)
-        if results:
-            for r in results:
-                if r[0]:
-                    sites.append(r)
-        return sites
-
-    def _get_subnets(self):
-        subnets = []
-        ipv4_subnet_info_lst = []
-        ipv6_subnet_info_lst = []
-        baseDN = f'CN=Subnets,CN=Sites,{self._configurationNamingContext}'
-        results = self._search(baseDN, ldap.SCOPE_SUBTREE, '(objectClass=subnet)')
-        if results:
-            for r in results:
-                if r[0]:
-                    subnets.append(r)
-
-        for s in subnets:
-            if not s or len(s) < 2:
-                continue
-
-            network = site_dn = None
-            if 'cn' in s[1]:
-                network = s[1]['cn'][0]
-                if isinstance(network, bytes):
-                    network = network.decode('utf-8')
-
-            else:
-                # if the network is None no point calculating
-                # anything more so ....
-                continue
-            if 'siteObject' in s[1]:
-                site_dn = s[1]['siteObject'][0]
-                if isinstance(site_dn, bytes):
-                    site_dn = site_dn.decode('utf-8')
-
-            # Note should/can we do the same skip as done for `network`
-            # the site_dn none too?
-            st = ipaddress.ip_network(network)
-
-            if st.version == 4:
-                ipv4_subnet_info_lst.append({'site_dn': site_dn, 'network': st})
-            elif st.version == 6:
-                ipv4_subnet_info_lst.append({'site_dn': site_dn, 'network': st})
-
-        if self.ad['verbose_logging']:
-            self.logger.debug(f'ipv4_subnet_info: {ipv4_subnet_info_lst}')
-            self.logger.debug(f'ipv6_subnet_info: {ipv6_subnet_info_lst}')
-        return {'ipv4_subnet_info': ipv4_subnet_info_lst, 'ipv6_subnet_info': ipv6_subnet_info_lst}
-
-    def _initialize_naming_context(self):
-        self._rootDSE = self._search('', ldap.SCOPE_BASE, "(objectclass=*)")
-        try:
-            self._rootDomainNamingContext = self._rootDSE[0][1]['rootDomainNamingContext'][0].decode()
-        except Exception as e:
-            self.logger.debug(f'Failed to get rootDN: [{e}]')
-
-        try:
-            self._defaultNamingContext = self._rootDSE[0][1]['defaultNamingContext'][0].decode()
-        except Exception as e:
-            self.logger.debug(f'Failed to get baseDN: [{e}]')
-
-        try:
-            self._configurationNamingContext = self._rootDSE[0][1]['configurationNamingContext'][0].decode()
-        except Exception as e:
-            self.logger.debug(f'Failed to get configrationNamingContext: [{e}]')
-
-        if self.ad['verbose_logging']:
-            self.logger.debug(f'initialized naming context: rootDN:[{self._rootDomainNamingContext}]')
-            self.logger.debug(f'baseDN:[{self._defaultNamingContext}], config:[{self._configurationNamingContext}]')
-
-    def get_netbios_name(self):
-        """
-        :get_netbios_domain_name: returns the short form of the AD domain name. Confusingly
-        titled 'nETBIOSName'. Must not be confused with the netbios hostname of the
-        server. For this reason, API calls it 'netbios_domain_name'.
-        """
-        if not self._handle:
-            self._open()
-        self._initialize_naming_context()
-        filter = f'(&(objectcategory=crossref)(nCName={self._defaultNamingContext}))'
-        results = self._search(self._configurationNamingContext, ldap.SCOPE_SUBTREE, filter)
-        try:
-            netbios_name = results[0][1]['nETBIOSName'][0].decode()
-
-        except Exception as e:
-            self._close()
-            self.logger.debug(f'Failed to discover short form of domain name: [{e}] res: [{results}]')
-            netbios_name = None
-
-        self._close()
-        if self.ad['verbose_logging']:
-            self.logger.debug(f'Query for nETBIOSName from LDAP returned: [{netbios_name}]')
-        return netbios_name
-
-    def locate_site(self):
-        """
-        Returns the AD site that the NAS is a member of. AD sites are used
-        to break up large domains into managable chunks typically based on physical location.
-        Although samba handles AD sites independent of the middleware. We need this
-        information to determine which kerberos servers to use in the krb5.conf file to
-        avoid communicating with a KDC on the other side of the world.
-        In Windows environment, this is discovered via CLDAP query for closest DC. We
-        can't do this, and so we have to rely on comparing our network configuration with
-        site and subnet information obtained through LDAP queries.
-        """
-        if not self._handle:
-            self._open()
-        ipv4_site = None
-        ipv6_site = None
-        self._initialize_naming_context()
-        subnets = self._get_subnets()
-        for nic in self.interfaces:
-            for alias in nic['aliases']:
-                if alias['type'] == 'INET':
-                    if ipv4_site is not None:
-                        continue
-                    ipv4_addr_obj = ipaddress.ip_address(alias['address'])
-                    for subnet in subnets['ipv4_subnet_info']:
-                        if ipv4_addr_obj in subnet['network']:
-                            sinfo = self._get_sites(distinguishedname=subnet['site_dn'])[0]
-                            if sinfo and len(sinfo) > 1:
-                                ipv4_site = sinfo[1]['cn'][0].decode()
-                                break
-
-                if alias['type'] == 'INET6':
-                    if ipv6_site is not None:
-                        continue
-                    ipv6_addr_obj = ipaddress.ip_address(alias['address'])
-                    for subnet in subnets['ipv6_subnet_info']:
-                        if ipv6_addr_obj in subnet['network']:
-                            sinfo = self._get_sites(distinguishedname=subnet['site_dn'])[0]
-                            if sinfo and len(sinfo) > 1:
-                                ipv6_site = sinfo[1]['cn'][0].decode()
-                                break
-
-        if ipv4_site and ipv6_site and ipv4_site == ipv6_site:
-            return ipv4_site
-
-        if ipv4_site:
-            return ipv4_site
-
-        if not ipv4_site and ipv6_site:
-            return ipv6_site
-
-        return None
+    def get_domain(self):
+        cldap_ret = self._do_cldap()
+        return cldap_ret.domain_name
 
 
 class ActiveDirectoryModel(sa.Model):
@@ -1145,20 +813,18 @@ class ActiveDirectoryService(ConfigService):
         if not ad:
             ad = self.middleware.call_sync('activedirectory.config')
 
-        pdc = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['PDC'], 1)
+        pdc = ActiveDirectory_CLDAP(conf=ad, logger=self.logger).get_pdc()
         if not pdc:
-            # This should never happen in real life. It means that the AD domain
-            # is significantly broken.
             self.logger.warning("Unable to find PDC emulator via DNS.")
             return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
 
         c = ntplib.NTPClient()
-        response = c.request(pdc[0]['host'])
+        response = c.request(pdc)
         ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
         clockskew = abs(ntp_time - nas_time)
         if clockskew > permitted_clockskew:
-            raise CallError(f'Clockskew between {pdc[0]["host"]} and NAS exceeds 3 minutes: {clockskew}')
-        return {'pdc': str(pdc[0]['host']), 'timestamp': str(ntp_time), 'clockskew': str(clockskew)}
+            raise CallError(f'Clockskew between {pdc} and NAS exceeds 3 minutes: {clockskew}')
+        return {'pdc': pdc, 'timestamp': str(ntp_time), 'clockskew': str(clockskew)}
 
     @private
     def validate_domain(self, data=None):
@@ -1166,35 +832,6 @@ class ActiveDirectoryService(ConfigService):
         Methods used to determine AD domain health.
         """
         self.middleware.call_sync('activedirectory.check_clockskew', data)
-
-    @private
-    async def _get_cached_srv_records(self, srv=SRV['DOMAINCONTROLLER']):
-        """
-        Avoid unecessary DNS lookups. These can potentially be expensive if DNS
-        is flaky. Try site-specific results first, then try domain-wide ones.
-        """
-        servers = []
-        if await self.middleware.call('cache.has_key', f'SRVCACHE_{srv.name}_SITE'):
-            servers = await self.middleware.call('cache.get', f'SRVCACHE_{srv.name}_SITE')
-
-        if not servers and await self.middleware.call('cache.has_key', f'SRVCACHE_{srv.name}'):
-            servers = await self.middleware.call('cache.get', f'SRVCACHE_{srv.name}')
-
-        return servers
-
-    @private
-    async def _set_cached_srv_records(self, srv=None, site=None, results=None):
-        """
-        Cache srv record lookups for 24 hours
-        """
-        if not srv:
-            raise CallError('srv record type not specified', errno.EINVAL)
-
-        if site:
-            await self.middleware.call('cache.put', f'SRVCACHE_{srv.name}_SITE', results, 86400)
-        else:
-            await self.middleware.call('cache.put', f'SRVCACHE_{srv.name}', results, 86400)
-        return True
 
     @accepts()
     async def started(self):
@@ -1399,27 +1036,12 @@ class ActiveDirectoryService(ConfigService):
         ret = False
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
-        dcs = self.middleware.call_sync('activedirectory._get_cached_srv_records', SRV['DOMAINCONTROLLER'])
-        set_new_cache = True if not dcs else False
 
-        if not dcs:
-            dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
+        domain = ActiveDirectory_CLDAP(conf=ad, logger=self.logger).get_domain()
 
-        if set_new_cache:
-            self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], ad['site'], dcs)
-
-        if ad['certificate']:
-            ad['certificate'] = self.middleware.call_sync(
-                'certificate.query',
-                [('id', '=', ad['certificate'])],
-                {'get': True}
-            )['name']
-        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs) as AD_LDAP:
-            ret = AD_LDAP.get_netbios_name()
-
-        if ret and smb['workgroup'] != ret:
+        if domain and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the short form of the AD domain [{ret}]')
-            self.middleware.call_sync('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': ret})
+            self.middleware.call_sync('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_workgroup': domain})
 
         return ret
 
@@ -1449,7 +1071,7 @@ class ActiveDirectoryService(ConfigService):
     def set_kerberos_servers(self, ad):
         if not ad:
             ad = self.config()
-        site_indexed_kerberos_servers = self.middleawre.call_sync('get_kerberos_servers')
+        site_indexed_kerberos_servers = self.middleware.call_sync('get_kerberos_servers')
         if site_indexed_kerberos_servers:
             self.middleware.call_sync(
                 'datastore.update',
@@ -1474,13 +1096,13 @@ class ActiveDirectoryService(ConfigService):
             return
 
         ad = self.middleware.call_sync('activedirectory.config')
-        pdc = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['PDC'], 1)
+        pdc = ActiveDirectory_CLDAP(conf=ad, logger=self.logger).get_pdc()
         if not pdc:
             self.logger.warning("Unable to detect PDC emulator for domain. "
                                 "Failed to automatically set time source.")
             return
 
-        self.middleware.call_sync('system.ntpserver.create', {'address': pdc[0]['host'], 'prefer': True})
+        self.middleware.call_sync('system.ntpserver.create', {'address': pdc, 'prefer': True})
 
     @private
     def get_site(self):
@@ -1490,29 +1112,7 @@ class ActiveDirectoryService(ConfigService):
         Then, perform an LDAP query to determine our AD site
         """
         ad = self.middleware.call_sync('activedirectory.config')
-        i = self.middleware.call_sync('interfaces.query')
-        dcs = self.middleware.call_sync('activedirectory._get_cached_srv_records', SRV['DOMAINCONTROLLER'])
-        set_new_cache = True if not dcs else False
-
-        if not dcs:
-            dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
-        if not dcs:
-            raise CallError('Failed to open LDAP socket to any DC in domain.')
-
-        if set_new_cache:
-            self.middleware.call_sync('activedirectory._set_cached_srv_records', SRV['DOMAINCONTROLLER'], ad['site'], dcs)
-
-        if ad['certificate']:
-            ad['certificate'] = self.middleware.call_sync(
-                'certificate.query',
-                [('id', '=', ad['certificate'])],
-                {'get': True}
-            )['name']
-        with ActiveDirectory_LDAP(ad_conf=ad, logger=self.logger, hosts=dcs, interfaces=i) as AD_LDAP:
-            site = AD_LDAP.locate_site()
-
-        if not site:
-            site = 'Default-First-Site-Name'
+        site = ActiveDirectory_CLDAP(conf=ad, logger=self.logger).get_site()
 
         if not ad['site']:
             self.middleware.call_sync(
