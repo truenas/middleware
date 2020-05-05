@@ -2,7 +2,7 @@ import glob
 import os
 
 from middlewared.service import Service
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, run
 
 from .global_base import GlobalActionsBase
 
@@ -73,8 +73,26 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
                 sessions.append(session_dict)
         return filter_list(sessions, filters, options)
 
-    def alua_enabled(self):
-        raise NotImplementedError()
+    async def terminate_luns_for_pool(self, pool_name):
+        if not await self.middleware.call('service.started', 'iscsitarget'):
+            return
 
-    def terminate_luns_for_pool(self, pool_name):
-        raise NotImplementedError()
+        g_config = await self.middleware.call('iscsi.global.config')
+        targets = {t['id']: t for t in await self.middleware.call('iscsi.target.query')}
+        extents = {t['id']: t for t in await self.middleware.call('iscsi.extent.query')}
+
+        for associated_target in filter(
+            lambda a: extents[a['extent']]['path'].startswith(f'zvol/{pool_name}/'),
+            await self.middleware.call('iscsi.targetextent.query')
+        ):
+            self.middleware.logger.debug('Terminating associated target %r', associated_target['id'])
+            cp = await run([
+                'scstadmin', '-noprompt', '-rem_lun', str(associated_target['lunid']), '-driver',
+                'iscsi', '-target', f'{g_config["basename"]}:{targets[associated_target["target"]]["name"]}',
+                '-group', 'security_group'
+            ], check=False)
+
+            if cp.returncode:
+                self.middleware.logger.error(
+                    'Failed to remove associated target %r : %s', associated_target['id'], cp.stderr.decode()
+                )
