@@ -27,6 +27,8 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
                 ip_file = glob.glob(f'{session_dir}/*/ip')
                 if not ip_file:
                     continue
+
+                # Initiator alias is another name sent by initiator but we are unable to retrieve it in scst
                 session_dict = {
                     'initiator': session.rsplit('#', 1)[0],
                     'initiator_alias': None,
@@ -40,8 +42,8 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
                     'max_burst_length': None,
                     'first_burst_length': None,
                     'immediate_data': False,
-                    'iser': None,  # FIXME: Implement me and offload please, look at initiator_alias too please
-                    'offload': None,
+                    'iser': False,
+                    'offload': False,  # It is a chelsio NIC driver to offload iscsi, we are not using it so far
                 }
                 with open(ip_file[0], 'r') as f:
                     session_dict['initiator_addr'] = f.read().strip()

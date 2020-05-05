@@ -480,6 +480,7 @@ class iSCSITargetExtentService(CRUDService):
         datastore = 'services.iscsitargetextent'
         datastore_prefix = 'iscsi_target_extent_'
         datastore_extend = 'iscsi.extent.extend'
+        datastore_extend_context = 'iscsi.extent.extent_extend_context'
 
     @accepts(Dict(
         'iscsi_extent_create',
@@ -647,7 +648,11 @@ class iSCSITargetExtentService(CRUDService):
         return data
 
     @private
-    async def extend(self, data):
+    async def extent_extend_context(self, extra):
+        return {'disks': {d['identifier']: d for d in await self.middleware.call('disk.query')}}
+
+    @private
+    async def extend(self, data, context):
         extent_type = data['type'].upper()
         extent_rpm = data['rpm'].upper()
 
@@ -657,9 +662,8 @@ class iSCSITargetExtentService(CRUDService):
             extent_type = 'DISK'
             # If extent is set to a disk ( not ZVOL and HAST ) - let's reflect this in the output
 
-            disk = await self.middleware.call('disk.query', [['identifier', '=', data['path']]])
-            if disk:
-                data['disk'] = disk[0]['name']
+            if data['path'] in context['disks']:
+                data['disk'] = context['disks'][data['path']]['name']
             else:
                 if osc.IS_LINUX:
                     data['disk'] = os.path.relpath(os.path.realpath(os.path.join('/dev', data['path'])), '/dev')
@@ -908,7 +912,7 @@ class iSCSITargetExtentService(CRUDService):
                     disk_object = (await self.middleware.call('disk.query',
                                                               disk_filters))[0]
                     disk_identifier = disk_object.get('identifier', None)
-                    data['path'] = disk_identifier if osc.IS_FREEBSD else disk_object['devname']
+                    data['path'] = disk_identifier
 
                     if osc.IS_FREEBSD and disk_identifier.startswith('{devicename}') or disk_identifier.startswith(
                         '{uuid}'
