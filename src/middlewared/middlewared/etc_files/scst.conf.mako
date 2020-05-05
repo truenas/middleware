@@ -52,6 +52,9 @@ HANDLER ${handler} {
 
 TARGET_DRIVER iscsi {
 	enabled 1
+## We are supposed to set iSNS server here but unfortunately that is not working
+## An issue has been opened with scst regarding that and duplicating of target reporting on each new portal
+## https://sourceforge.net/p/scst/tickets/38/ ( let's please fix this once we hear back from them )
 
 <%def name="retrieve_luns(target_id, spacing='')">
 	% for associated_target in associated_targets[target_id]:
