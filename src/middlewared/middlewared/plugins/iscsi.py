@@ -900,16 +900,17 @@ class iSCSITargetExtentService(CRUDService):
                 await wipe_job.wait()
                 if wipe_job.error:
                     raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
-                await self.middleware.call('disk.label', disk, f'extent_{disk}')
+                if osc.IS_FREEBSD:
+                    await self.middleware.call('disk.label', disk, f'extent_{disk}')
             elif not disk.startswith('hast') and not disk.startswith('zvol'):
                 disk_filters = [('name', '=', disk), ('expiretime', '=', None)]
                 try:
                     disk_object = (await self.middleware.call('disk.query',
                                                               disk_filters))[0]
                     disk_identifier = disk_object.get('identifier', None)
-                    data['path'] = disk_identifier
+                    data['path'] = disk_identifier if osc.IS_FREEBSD else disk_object['devname']
 
-                    if disk_identifier.startswith('{devicename}') or disk_identifier.startswith(
+                    if osc.IS_FREEBSD and disk_identifier.startswith('{devicename}') or disk_identifier.startswith(
                         '{uuid}'
                     ):
                         try:
