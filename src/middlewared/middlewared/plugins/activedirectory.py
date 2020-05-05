@@ -1528,10 +1528,10 @@ class ActiveDirectoryService(ConfigService):
         if smb_ha_mode != 'LEGACY':
             krb_princ = await self.middleware.call(
                 'kerberos.keytab.query',
-                [('name', '=', 'AD_MACHINE_ACCOUNT')],
-                {'get': True}
+                [('name', '=', 'AD_MACHINE_ACCOUNT')]
             )
-            await self.middleware.call('kerberos.keytab.delete', krb_princ['id'])
+            if krb_princ:
+                await self.middleware.call('kerberos.keytab.delete', krb_princ[0]['id'])
 
         await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
         await self.middleware.call('activedirectory.stop')
