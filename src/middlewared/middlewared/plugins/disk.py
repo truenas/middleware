@@ -598,12 +598,6 @@ class DiskService(CRUDService):
         return disks_cache
 
     @private
-    async def label(self, dev, label):
-        cp = await run('geom', 'label', 'label', label, dev, check=False)
-        if cp.returncode != 0:
-            raise CallError(f'Failed to label {dev}: {cp.stderr.decode()}')
-
-    @private
     async def configure_power_management(self):
         """
         This runs on boot to properly configure all power management options
