@@ -67,12 +67,27 @@ TARGET_DRIVER iscsi {
 	# desires mutual chap, we take the first one and use it's peer credentials
 	mutual_chap = None
 	chap_users = set()
-	for group in filter(lambda g: g['authmethod'] != 'NONE' and authenticators[g['auth']], target['groups']):
-		auth_list = authenticators[group['auth']]
-		if group['authmethod'] == 'CHAP_MUTUAL' and not mutual_chap:
-			mutual_chap = f'{auth_list[0]["peeruser"]} {auth_list[0]["peersecret"]}'
+	initiator_portal_access = set()
+	for group in target['groups']:
+		if group['authmethod'] != 'NONE' and authenticators[group['auth']]:
+			auth_list = authenticators[group['auth']]
+			if group['authmethod'] == 'CHAP_MUTUAL' and not mutual_chap:
+				mutual_chap = f'{auth_list[0]["peeruser"]} {auth_list[0]["peersecret"]}'
 
-		chap_users.update(f'{auth["user"]} {auth["secret"]}' for auth in auth_list)
+			chap_users.update(f'{auth["user"]} {auth["secret"]}' for auth in auth_list)
+
+		for addr in portals[group['portal']]['listen']:
+			if addr['ip'] == '0.0.0.0':
+				# SCST uses wildcard patterns
+				# FIXME: Please investigate usage of ipv6 patterns
+				# https://github.com/truenas/scst/blob/e945943861687d16ae0415207306f75a55bcfd2b/iscsi-scst/usr/target.c#L139-L138
+				address = '*'
+			else:
+				address = (f'[{addr["ip"]}]' if ':' in addr['ip'] else addr['ip'])
+				# FIXME: SCST does not seem to respect port values for portals, please look for alternatives
+
+			for initiator in (initiators[group['initiator']]['initiators'] or ['*']):
+				initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
 %	if associated_targets:
 		enabled 1
@@ -85,29 +100,12 @@ TARGET_DRIVER iscsi {
 		OutgoingUser "${mutual_chap}"
 %	endif
 
-%	for group in target['groups']:
-<%
-	addresses = []
-	for addr in portals[group['portal']]['listen']:
-		if addr['ip'] == '0.0.0.0':
-			# SCST uses wildcard patterns
-			# FIXME: Please investigate usage of ipv6 patterns
-			# https://github.com/truenas/scst/blob/e945943861687d16ae0415207306f75a55bcfd2b/iscsi-scst/usr/target.c#L139-L138
-			addresses = [{**addr, 'ip': '*'}]
-			break
-		addresses.append({**addr, 'ip': f'[{addr["ip"]}]' if ':' in addr['ip'] else addr['ip']})
-		# FIXME: SCST does not seem to respect port values for portals, please look for alternatives
-		# Refer to above git link please for this fixme
-%>\
-%       for index, addr in enumerate(addresses):
-		GROUP ${target['name']}_portal_${group['portal']}_${index} {
-%			for initiator in (initiators[group['initiator']]['initiators'] or ['*']):
-			INITIATOR ${initiator}\#${addr['ip']}
-%			endfor
+		GROUP security_group {
+%	for access_control in initiator_portal_access:
+			INITIATOR ${access_control}
+%	endfor
 ${retrieve_luns(target['id'], '\t')}\
 		}
-%       endfor
-%	endfor
 	}
 % endfor
 }
