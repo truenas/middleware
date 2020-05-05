@@ -1565,7 +1565,8 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
 
         await self._service_change('iscsitarget', 'reload')
 
-        for lun_id in lun_ids:
+        # For SCALE, reload action will remove existing LUN(s)
+        for lun_id in (lun_ids if osc.IS_FREEBSD else ()):
             await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
 
     async def toggle(self, attachments, enabled):
@@ -1579,7 +1580,7 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
 
         await self._service_change('iscsitarget', 'reload')
 
-        if not enabled:
+        if osc.IS_FREEBSD and not enabled:
             for lun_id in lun_ids:
                 await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
 
