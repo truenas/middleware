@@ -66,13 +66,13 @@ class PoolService(Service):
                         logger.debug('Not expanding vdev(%r) that is %r', vdev['guid'], vdev['status'])
                         continue
 
-                    partitions = []
+                    c_vdevs = []
                     disks = vdev['children'] if vdev['type'] != 'DISK' else [vdev]
                     skip_vdev = None
                     for child in disks:
                         if child['status'] != 'ONLINE':
                             skip_vdev = f'Device "{child["device"]}" status is not ONLINE ' \
-                                        f'( Reported status is {child["status"]})'
+                                        f'(Reported status is {child["status"]})'
                             break
 
                         part_data = all_partitions.get(child['device'])
@@ -87,14 +87,15 @@ class PoolService(Service):
                         if skip_vdev:
                             break
                         else:
-                            partitions.append(part_data)
-                            vdevs.append(child['guid'])
+                            c_vdevs.append((child['guid'], part_data))
 
                     if skip_vdev:
                         logger.debug('Not expanding vdev(%r): %r', vdev['guid'], skip_vdev)
+                        continue
 
-                    for part_data in partitions:
+                    for guid, part_data in c_vdevs:
                         await self._resize_disk(part_data, pool['encrypt'], geli_resize)
+                        vdevs.append(guid)
             finally:
                 if osc.IS_FREEBSD and geli_resize:
                     await self.__geli_resize(pool, geli_resize, options)
