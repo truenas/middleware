@@ -215,7 +215,7 @@ def test_create_replication(credentials, periodic_snapshot_tasks, req, error):
         cmd = "midclt call system.is_freenas"
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
-        if results['output'].strip() == 'false':
+        if results['output'].strip() == 'False':
             req["readonly"] = "IGNORE"
 
     if "ssh_credentials" in req:
