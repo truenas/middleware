@@ -150,7 +150,7 @@ def get_tests():
     skip_tests = []
 
     if ha is True:
-        skip_tests += ['interfaces', 'network', 'delete_interfaces']
+        skip_tests += ['interfaces', 'network', 'delete_interfaces', 'jail', 'plugin']
     if scale is True:
         skip_tests += ['jail', 'plugin']
     apidir = 'api2/'

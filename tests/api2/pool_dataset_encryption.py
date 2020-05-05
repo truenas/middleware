@@ -6,7 +6,6 @@ import pytest
 import sys
 import os
 import secrets
-# import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job
@@ -190,13 +189,11 @@ def test_15_create_an_encrypted_root_with_generate_key():
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-@skip_for_ha
 def test_16_delete_generate_key_encrypted_root():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-@skip_for_ha
 def test_17_create_an_encrypted_root_with_a_key():
     payload = {
         'name': dataset,
@@ -211,7 +208,6 @@ def test_17_create_an_encrypted_root_with_a_key():
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-@skip_for_ha
 def test_18_make_sure_we_are_not_able_to_lock_key_encrypted_dataset():
     payload = {
         'id': dataset,
@@ -224,7 +220,6 @@ def test_18_make_sure_we_are_not_able_to_lock_key_encrypted_dataset():
     assert 'Only datasets which are encrypted with passphrase can be locked' in results.text, results.text
 
 
-@skip_for_ha
 def test_19_change_a_key_encrypted_dataset_to_passphrase():
     payload = {
         'id': dataset,
@@ -245,7 +240,6 @@ def test_20_verify_that_the_dataset_changed_to_passphrase():
     assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
-@skip_for_ha
 def test_21_lock_passphrase_encrypted_datasets_and_ensure_they_get_locked():
     payload = {
         'id': dataset,
@@ -257,7 +251,6 @@ def test_21_lock_passphrase_encrypted_datasets_and_ensure_they_get_locked():
     assert results.status_code == 200, results.text
 
 
-@skip_for_ha
 def test_22_verify_passphrase_encrypted_root_is_locked():
     payload = {
         'id': dataset
@@ -278,7 +271,6 @@ def test_22_verify_passphrase_encrypted_root_is_locked():
         assert False, str(job_status_result)
 
 
-@skip_for_ha
 def test_23_unlock_passphrase_encrypted_datasets_with_wrong_passphrase():
     payload = {
         'id': dataset,
@@ -300,7 +292,6 @@ def test_23_unlock_passphrase_encrypted_datasets_with_wrong_passphrase():
     assert job_status['results']['result']['failed']['tank/encrypted']['error'] == 'Invalid Key', str(job_status['results'])
 
 
-@skip_for_ha
 def test_24_verify_passphrase_encrypted_root_still_locked():
     payload = {
         'id': dataset
@@ -321,7 +312,6 @@ def test_24_verify_passphrase_encrypted_root_still_locked():
         assert False, str(job_status_result)
 
 
-@skip_for_ha
 def test_25_unlock_passphrase_encrypted_datasets():
     payload = {
         'id': dataset,
@@ -343,7 +333,6 @@ def test_25_unlock_passphrase_encrypted_datasets():
     assert job_status['results']['result']['unlocked'] == [dataset], str(job_status['results'])
 
 
-@skip_for_ha
 def test_26_verify_passphrase_encrypted_root_is_unlocked():
     payload = {
         'id': dataset
@@ -364,7 +353,6 @@ def test_26_verify_passphrase_encrypted_root_is_unlocked():
         assert False, str(job_status_result)
 
 
-@skip_for_ha
 def test_27_delete_encrypted_dataset():
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
@@ -742,6 +730,7 @@ def test_58_delete_generate_key_encrypted_dataset():
     assert results.status_code == 200, results.text
 
 
+@skip_for_ha
 def test_59_create_a_passphrase_encrypted_root_dataset_parrent():
     payload = {
         'name': dataset,
@@ -755,6 +744,7 @@ def test_59_create_a_passphrase_encrypted_root_dataset_parrent():
     assert results.status_code == 200, results.text
 
 
+@skip_for_ha
 def test_60_create_a_passphrase_encrypted_root_child_of_passphrase_parent():
     payload = {
         'name': child_dataset,
@@ -768,6 +758,7 @@ def test_60_create_a_passphrase_encrypted_root_child_of_passphrase_parent():
     assert results.status_code == 200, results.text
 
 
+@skip_for_ha
 def test_61_lock_passphrase_encrypted_root_with_is_child():
     payload = {
         'id': dataset,
@@ -776,6 +767,7 @@ def test_61_lock_passphrase_encrypted_root_with_is_child():
     assert results.status_code == 200, results.text
 
 
+@skip_for_ha
 def test_62_verify_the_parrent_encrypted_root_unlock_successful_is_false():
     payload = {
         'id': dataset
@@ -802,6 +794,7 @@ def test_63_verify_the_dataset_is_locked():
     assert results.json()['locked'] is True, results.text
 
 
+@skip_for_ha
 def test_64_verify_the_chid_of_the_encrypted_root_parent_unlock_successful_is_false():
     payload = {
         'id': child_dataset
@@ -828,6 +821,7 @@ def test_65_verify_the_child_dataset_is_locked():
     assert results.json()['locked'] is True, results.text
 
 
+@skip_for_ha
 def test_66_try_to_unlock_the_child_of_lock_parent_encrypted_root():
     payload = {
         'id': child_dataset,
@@ -850,6 +844,7 @@ def test_66_try_to_unlock_the_child_of_lock_parent_encrypted_root():
     assert job_status['results']['result'] is None, str(job_status['results'])
 
 
+@skip_for_ha
 def test_67_Verify_chid_unlock_successful_is_still_false():
     payload = {
         'id': child_dataset
@@ -869,6 +864,7 @@ def test_67_Verify_chid_unlock_successful_is_still_false():
         assert False, str(job_status_result)
 
 
+@skip_for_ha
 def test_68_unlock_parent_dataset_with_child_recursively():
     payload = {
         'id': dataset,
@@ -894,6 +890,7 @@ def test_68_unlock_parent_dataset_with_child_recursively():
     assert job_status['results']['result']['unlocked'] == [dataset, child_dataset], str(job_status['results'])
 
 
+@skip_for_ha
 def test_69_verify_the_parent_dataset_unlock_successful_is_true():
     payload = {
         'id': dataset
@@ -920,6 +917,7 @@ def test_70_verify_the_dataset_is_unlocked():
     assert results.json()['locked'] is False, results.text
 
 
+@skip_for_ha
 def test_71_verify_the_child_dataset_unlock_successful_is_true():
     payload = {
         'id': child_dataset
@@ -946,6 +944,7 @@ def test_72_verify_the_child_dataset_is_unlocked():
     assert results.json()['locked'] is False, results.text
 
 
+@skip_for_ha
 def test_73_delete_dataset_with_is_child_recursive():
     payload = {
         "recursive": True,
@@ -954,6 +953,7 @@ def test_73_delete_dataset_with_is_child_recursive():
     assert results.status_code == 200, results.text
 
 
+@skip_for_ha
 def test_74_creating_a_key_encrypted_dataset_on_key_encrypted_pool():
     payload = {
         'name': dataset,
@@ -967,6 +967,7 @@ def test_74_creating_a_key_encrypted_dataset_on_key_encrypted_pool():
     assert results.status_code == 200, results.text
 
 
+@skip_for_ha
 def test_75_create_a_passphrase_encrypted_root_from_key_encrypted_root():
     payload = {
         'name': child_dataset,
@@ -980,17 +981,20 @@ def test_75_create_a_passphrase_encrypted_root_from_key_encrypted_root():
     assert results.status_code == 200, results.text
 
 
+@skip_for_ha
 def test_76_verify_the_new_passprase_encrypted_root_is_passphrase():
     results = GET(f'/pool/dataset/id/{child_dataset_url}')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
+@skip_for_ha
 def test_77_run_inherit_parent_encryption_properties_on_the_passprase():
     results = POST('/pool/dataset/inherit_parent_encryption_properties', child_dataset)
     assert results.status_code == 200, results.text
 
 
+@skip_for_ha
 def test_78_verify_the_the_child_got_props_by_the_parent_root():
     results = GET(f'/pool/dataset/id/{child_dataset_url}')
     assert results.status_code == 200, results.text
