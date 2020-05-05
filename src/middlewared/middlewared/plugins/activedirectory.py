@@ -27,7 +27,7 @@ try:
     from samba.net import Net
     from samba.samba3 import param
     from samba.dcerpc import nbt
-    from samba import gensec
+    from samba import (gensec, ntstatus, NTSTATUSError)
 except ImportError:
     MSG_WINBIND_ONLINE = 9
     MUST_USE_KERBEROS = 2
@@ -185,10 +185,20 @@ class ActiveDirectory_CLDAP(object):
         self.cred.guess()
 
     def _do_cldap(self):
-        cldap_ret = self.netctx.finddc(
-            domain=self.ad['domainname'].upper(),
-            flags=nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS | nbt.NBT_SERVER_WRITABLE
-        )
+        try:
+            cldap_ret = self.netctx.finddc(
+                domain=self.ad['domainname'].upper(),
+                flags=nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS | nbt.NBT_SERVER_WRITABLE
+            )
+        except NTSTATUSError as e:
+            if e.args[0] == ntstatus.NT_STATUS_OBJECT_NAME_NOT_FOUND:
+                raise CallError(f"cldap connection to domain [{self.ad['domainname']}] "
+                                f"failed with error: {e.args[1]} This may indicate a DNS error.",
+                                errno.ENOENT)
+            else:
+                raise CallError(f"cldap connection to domain [{self.ad['domainname']}] "
+                                f"failed with error: {e[1]}.")
+
         return cldap_ret
 
     def get_site(self):
