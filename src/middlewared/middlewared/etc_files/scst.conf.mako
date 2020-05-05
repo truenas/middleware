@@ -28,6 +28,11 @@
 		else:
 			extent['extent_path'] = extent['path']
 			extents_io['vdisk_fileio'].append(extent)
+
+		extent['t10_dev_id'] = extent['serial']
+		if not extent['xen']:
+			extent['t10_dev_id'] = extent['serial'].ljust(31 - len(extent['serial']), ' ')
+
 	# FIXME: SSD is not being reflected in the initiator, please look into it
 	# FIXME: Authorized networks for initiators has not been implemented yet, please look for alternatives in SCST
 %>\
@@ -44,6 +49,8 @@ HANDLER ${handler} {
 %		if extent['rpm'] != 'SSD':
 		rotational ${extent['rpm']}
 %		endif
+		t10_vend_id ${extent['vendor']}
+		t10_dev_id ${extent['t10_dev_id']}
 	}
 
 %	endfor
