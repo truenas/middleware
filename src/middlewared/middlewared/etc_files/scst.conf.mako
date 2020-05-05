@@ -80,9 +80,8 @@ TARGET_DRIVER iscsi {
 			chap_users.update(f'{auth["user"]} {auth["secret"]}' for auth in auth_list)
 
 		for addr in portals[group['portal']]['listen']:
-			if addr['ip'] == '0.0.0.0':
+			if addr['ip'] in ('0.0.0.0', '::'):
 				# SCST uses wildcard patterns
-				# FIXME: Please investigate usage of ipv6 patterns
 				# https://github.com/truenas/scst/blob/e945943861687d16ae0415207306f75a55bcfd2b/iscsi-scst/usr/target.c#L139-L138
 				address = '*'
 			else:

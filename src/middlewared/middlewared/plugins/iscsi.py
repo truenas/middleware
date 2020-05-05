@@ -1509,9 +1509,10 @@ class iSCSITargetToExtentService(CRUDService):
         else:
             lunid = data['lunid']
 
+        # For Linux we have
+        # http://github.com/bvanassche/scst/blob/d483590da4de7d32c8371e0712fc186f3d8c509c/scst/include/scst_const.h#L69
         if osc.IS_LINUX:
-            # FIXME: see if we need this in linux and if yes what value should be there
-            lun_map_size = 1024
+            lun_map_size = 16383
         else:
             lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
 
