@@ -28,7 +28,7 @@ class ISCSIGlobalService(Service, GlobalActionsBase):
                 if not ip_file:
                     continue
                 session_dict = {
-                    'initiator': session,
+                    'initiator': session.rsplit('#', 1)[0],
                     'initiator_alias': None,
                     'target': target,
                     'target_alias': target.rsplit(':', 1)[-1],
