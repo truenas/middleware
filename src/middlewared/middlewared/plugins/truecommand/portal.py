@@ -39,6 +39,9 @@ class TruecommandService(Service, TruecommandAPIMixin):
                         'api_key_state': Status.CONNECTED.value,
                     }
                 )
+                self.middleware.send_event(
+                    'truecommand.config', 'CHANGED', fields=(await self.middleware.call('truecommand.config'))
+                )
                 await self.middleware.call('truecommand.dismiss_alerts')
                 await self.middleware.call('truecommand.start_truecommand_service')
                 break
@@ -65,6 +68,9 @@ class TruecommandService(Service, TruecommandAPIMixin):
                         **{k: None for k in ('tc_public_key', 'remote_address', 'endpoint', 'wg_address')},
                         'api_key_state': Status.FAILED.value,
                     }
+                )
+                self.middleware.send_event(
+                    'truecommand.config', 'CHANGED', fields=(await self.middleware.call('truecommand.config'))
                 )
                 await self.middleware.call('truecommand.stop_truecommand_service')
                 break

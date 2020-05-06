@@ -137,6 +137,7 @@ class TruecommandService(ConfigService):
                 ):
                     # Api key hasn't changed and we have wireguard details, let's please start wireguard in this case
                     await self.set_status(Status.CONNECTING.value)
+                    new['api_key_state'] = Status.CONNECTED.value
 
             if old['api_key'] != new['api_key']:
                 new.update({
