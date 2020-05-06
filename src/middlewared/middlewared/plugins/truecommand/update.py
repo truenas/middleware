@@ -123,6 +123,7 @@ class TruecommandService(ConfigService):
                 await self.middleware.call('core.job_abort', polling_job['id'])
 
             await self.set_status(Status.DISABLED.value)
+            new['api_key_state'] = Status.DISABLED.value
 
             if new['enabled']:
                 if not old['wg_public_key'] or not old['wg_private_key']:
@@ -135,11 +136,7 @@ class TruecommandService(ConfigService):
                     new[k] for k in ('wg_address', 'wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
                 ):
                     # Api key hasn't changed and we have wireguard details, let's please start wireguard in this case
-                    await self.set_status(Status.CONNECTED.value)
-            else:
-                new['api_key_state'] = Status.DISABLED.value
-
-            new['api_key_state'] = self.STATUS.value
+                    await self.set_status(Status.CONNECTING.value)
 
             if old['api_key'] != new['api_key']:
                 new.update({
