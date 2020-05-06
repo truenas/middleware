@@ -21,21 +21,12 @@ from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 import middlewared.utils.osc as osc
 
-try:
-    from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
-    from samba.credentials import Credentials, MUST_USE_KERBEROS
-    from samba.net import Net
-    from samba.samba3 import param
-    from samba.dcerpc import nbt
-    from samba import (gensec, ntstatus, NTSTATUSError)
-except ImportError:
-    MSG_WINBIND_ONLINE = 9
-    MUST_USE_KERBEROS = 2
-    param = None
-    Net = None
-    Credentials = None
-    nbt = None
-    gensec = None
+from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
+from samba.credentials import Credentials, MUST_USE_KERBEROS
+from samba.net import Net
+from samba.samba3 import param
+from samba.dcerpc import (nbt, netlogon)
+from samba import (gensec, ntstatus, NTSTATUSError)
 
 LP_CTX = param.get_context()
 
@@ -170,9 +161,9 @@ class ActiveDirectory_DNS(object):
         return found_servers
 
 
-class ActiveDirectory_CLDAP(object):
+class ActiveDirectory_Conn(object):
     def __init__(self, **kwargs):
-        super(ActiveDirectory_CLDAP, self).__init__()
+        super(ActiveDirectory_Conn, self).__init__()
         self.ad = kwargs.get('conf')
         self.logger = kwargs.get('logger')
         self.cred = Credentials()
@@ -183,6 +174,25 @@ class ActiveDirectory_CLDAP(object):
         LP_CTX.load(SMBPath.GLOBALCONF.platform())
         self.cred.set_gensec_features(self.cred.get_gensec_features() | gensec.FEATURE_SEAL)
         self.cred.guess()
+
+    def _init_machine_secrets(self):
+        try:
+            self.cred.set_machine_account(LP_CTX)
+        except NTSTATUSError as e:
+            if e.args[0] == ntstatus.NT_STATUS_CANT_ACCESS_DOMAIN_INFO:
+                return e.args[0]
+            else:
+                raise CallError(f"Failed to initialize machine account secrets: {e.args[1]}")
+
+        return ntstatus.NT_STATUS_SUCCESS
+
+    def _extend_creds(self):
+        status = self._init_machine_secrets()
+        if status == ntstatus.NT_STATUS_CANT_ACCESS_DOMAIN_INFO:
+            self.logger.warning(f"Failed to initialize secrets for domain [{self.ad['domainname']}]. "
+                                "attempting to use credentials from config file.")
+            self.cred.set_username(f"{self.ad['bindname']}@{self.ad['domainname'].upper()}")
+            self.cred.set_password(self.ad['bindpw'])
 
     def _do_cldap(self):
         try:
@@ -200,6 +210,15 @@ class ActiveDirectory_CLDAP(object):
                                 f"failed with error: {e[1]}.")
 
         return cldap_ret
+
+    def conn_check(self, dc=None):
+        self._extend_creds()
+        if dc is None:
+            dc = self.get_pdc()
+        nl = netlogon.netlogon(f"ncacn_ip_tcp:{dc}[schannel,seal]",
+                               LP_CTX, self.cred)
+        self.cred.new_client_authenticator()
+        return True
 
     def get_site(self):
         cldap_ret = self._do_cldap()
@@ -823,7 +842,7 @@ class ActiveDirectoryService(ConfigService):
         if not ad:
             ad = self.middleware.call_sync('activedirectory.config')
 
-        pdc = ActiveDirectory_CLDAP(conf=ad, logger=self.logger).get_pdc()
+        pdc = ActiveDirectory_Conn(conf=ad, logger=self.logger).get_pdc()
         if not pdc:
             self.logger.warning("Unable to find PDC emulator via DNS.")
             return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
@@ -842,6 +861,18 @@ class ActiveDirectoryService(ConfigService):
         Methods used to determine AD domain health.
         """
         self.middleware.call_sync('activedirectory.check_clockskew', data)
+
+    @private
+    def conn_check(self, data=None, dc=None):
+        if data is None:
+            data = self.middleware.call_sync("activedirectory.config")
+        if dc is None:
+            AD_DNS = ActiveDirectory_DNS(conf=data, logger=self.logger)
+            res = AD_DNS.get_n_working_servers(SRV['DOMAINCONTROLLER'], 1)
+            if res:
+                dc = res[0]['host']
+
+        return ActiveDirectory_Conn(conf=data, logger=self.logger).conn_check(dc)
 
     @accepts()
     async def started(self):
@@ -870,19 +901,7 @@ class ActiveDirectoryService(ConfigService):
             raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
                             errno.EINVAL)
 
-        netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
-        if netlogon_ping.returncode != 0:
-            wberr = netlogon_ping.stderr.decode().strip('\n')
-            err = errno.EFAULT
-            for wb in WBCErr:
-                if wb.err() in wberr:
-                    wberr = wberr.replace(wb.err(), wb.value[0])
-                    err = wb.value[1] if wb.value[1] else errno.EFAULT
-                    break
-
-            raise CallError(wberr, err)
-
-        return True
+        return await self.middleware.call('activedirectory.conn_check', config)
 
     @private
     async def _register_virthostname(self, ad, smb, smb_ha_mode):
@@ -1047,7 +1066,7 @@ class ActiveDirectoryService(ConfigService):
         ad = self.middleware.call_sync('activedirectory.config')
         smb = self.middleware.call_sync('smb.config')
 
-        domain = ActiveDirectory_CLDAP(conf=ad, logger=self.logger).get_domain()
+        domain = ActiveDirectory_Conn(conf=ad, logger=self.logger).get_domain()
 
         if domain and smb['workgroup'] != ret:
             self.logger.debug(f'Updating SMB workgroup to match the short form of the AD domain [{ret}]')
@@ -1106,7 +1125,7 @@ class ActiveDirectoryService(ConfigService):
             return
 
         ad = self.middleware.call_sync('activedirectory.config')
-        pdc = ActiveDirectory_CLDAP(conf=ad, logger=self.logger).get_pdc()
+        pdc = ActiveDirectory_Conn(conf=ad, logger=self.logger).get_pdc()
         if not pdc:
             self.logger.warning("Unable to detect PDC emulator for domain. "
                                 "Failed to automatically set time source.")
@@ -1122,7 +1141,7 @@ class ActiveDirectoryService(ConfigService):
         Then, perform an LDAP query to determine our AD site
         """
         ad = self.middleware.call_sync('activedirectory.config')
-        site = ActiveDirectory_CLDAP(conf=ad, logger=self.logger).get_site()
+        site = ActiveDirectory_Conn(conf=ad, logger=self.logger).get_site()
 
         if not ad['site']:
             self.middleware.call_sync(
