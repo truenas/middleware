@@ -26,9 +26,10 @@ from samba.credentials import Credentials, MUST_USE_KERBEROS
 from samba.net import Net
 from samba.samba3 import param
 from samba.dcerpc import (nbt, netlogon)
-from samba import (gensec, ntstatus, NTSTATUSError)
+from samba import (ntstatus, NTSTATUSError)
 
 LP_CTX = param.get_context()
+FEATURE_SEAL = 4
 
 
 class neterr(enum.Enum):
@@ -172,7 +173,7 @@ class ActiveDirectory_Conn(object):
 
     def _init_creds(self):
         LP_CTX.load(SMBPath.GLOBALCONF.platform())
-        self.cred.set_gensec_features(self.cred.get_gensec_features() | gensec.FEATURE_SEAL)
+        self.cred.set_gensec_features(self.cred.get_gensec_features() | FEATURE_SEAL)
         self.cred.guess()
 
     def _init_machine_secrets(self):
@@ -794,39 +795,20 @@ class ActiveDirectoryService(ConfigService):
         if ad is None:
             ad = self.middleware.call_sync('activedirectory.config')
 
-        if ad['kerberos_principal']:
-            self.middleware.call_sync('etc.generate', 'kerberos')
-            kinit = subprocess.run(['kinit', '--renewable', '-k', ad['kerberos_principal']], capture_output=True)
-            if kinit.returncode != 0:
-                raise CallError(
-                    f'kinit with principal {ad["kerberos_principal"]} failed with error {kinit.stderr.decode()}'
-                )
-        else:
-            if not self.middleware.call_sync('kerberos.realm.query', [('realm', '=', ad['domainname'])]):
-                self.middleware.call_sync(
-                    'datastore.insert',
-                    'directoryservice.kerberosrealm',
-                    {'krb_realm': ad['domainname'].upper()}
-                )
-            self.middleware.call_sync('etc.generate', 'kerberos')
-            kinit = subprocess.run([
-                '/usr/bin/kinit',
-                '--renewable',
-                '--password-file=STDIN',
-                f'{ad["bindname"]}@{ad["domainname"]}'],
-                input=ad['bindpw'].encode(),
-                capture_output=True
+        data = ad.copy()
+        data['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
+
+        try:
+            self.middleware.call_sync('kerberos.do_kinit', data)
+        except Exception:
+            realm = self.middleware.call_sync(
+                'kerberos.realm.query',
+                [('realm', '=', ad['domainname'])],
+                {'get': True}
             )
-            if kinit.returncode != 0:
-                realm = self.middleware.call_sync(
-                    'kerberos.realm.query',
-                    [('realm', '=', ad['domainname'])],
-                    {'get': True}
-                )
-                self.middleware.call_sync('kerberos.realm.delete', realm['id'])
-                raise CallError(
-                    f"kinit for domain [{ad['domainname']}] with password failed: {kinit.stderr.decode()}"
-                )
+            self.middleware.call_sync('kerberos.realm.delete', realm['id'])
+            raise
+        return True
 
     @private
     def check_clockskew(self, ad=None):
@@ -1172,13 +1154,9 @@ class ActiveDirectoryService(ConfigService):
         ad = await self.config()
         principal = f'{data["username"]}@{ad["domainname"]}'
         smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        ad_kinit = await Popen(
-            ['/usr/bin/kinit', '--renewable', '--password-file=STDIN', principal],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
-        )
-        output = await ad_kinit.communicate(input=data['password'].encode())
-        if ad_kinit.returncode != 0:
-            raise CallError(f"kinit for domain [{ad['domainname']}] with password failed: {output[1].decode()}")
+
+        ad['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
+        await self.middleware.call('kerberos.do_kinit', ad)
 
         netads = await run([SMBCmd.NET.value, '-U', data['username'], '-k', 'ads', 'leave'], check=False)
         if netads.returncode != 0:
@@ -1187,10 +1165,10 @@ class ActiveDirectoryService(ConfigService):
         if smb_ha_mode != 'LEGACY':
             krb_princ = await self.middleware.call(
                 'kerberos.keytab.query',
-                [('name', '=', 'AD_MACHINE_ACCOUNT')],
-                {'get': True}
+                [('name', '=', 'AD_MACHINE_ACCOUNT')]
             )
-            await self.middleware.call('kerberos.keytab.delete', krb_princ['id'])
+            if krb_princ:
+                await self.middleware.call('kerberos.keytab.delete', krb_princ[0]['id'])
 
         await self.middleware.call('datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm'])
         await self.middleware.call('activedirectory.stop')
@@ -1429,7 +1407,7 @@ class WBStatusThread(threading.Thread):
 
     def read_messages(self):
         while not self.finished.is_set():
-            with open('/var/run/samba4/.wb_fifo') as f:
+            with open(f'{SMBPath.RUNDIR.platform()}/.wb_fifo') as f:
                 data = f.read()
                 self.parse_msg(data)
 
@@ -1443,15 +1421,15 @@ class WBStatusThread(threading.Thread):
             self.logger.debug('Failed to run monitor thread %s', e, exc_info=True)
 
     def setup(self):
-        if not os.path.exists('/var/run/samba4/.wb_fifo'):
-            os.mkfifo('/var/run/samba4/.wb_fifo')
+        if not os.path.exists(f'{SMBPath.RUNDIR.platform()}/.wb_fifo'):
+            os.mkfifo(f'{SMBPath.RUNDIR.platform()}/.wb_fifo')
 
     def cancel(self):
         """
         Write to named pipe to unblock open() in thread and exit cleanly.
         """
         self.finished.set()
-        with open('/var/run/samba4/.wb_fifo', 'w') as f:
+        with open(f'{SMBPath.RUNDIR.platform()}/.wb_fifo', 'w') as f:
             f.write(str(DSStatus.LEAVING.value))
 
 
