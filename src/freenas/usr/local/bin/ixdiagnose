@@ -114,7 +114,6 @@ done
 # Make our staging directory.
 # We will then make a directory called ixdiagnose under it
 # so that the tarball extracts nicely.
-set -x
 if [ -z "${topdir}" ] ; then
 	topdir=`env TMPDIR="${tmpdir}" mktemp -d -t ixdiagnose`
 else
