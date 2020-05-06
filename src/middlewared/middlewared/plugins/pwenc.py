@@ -8,7 +8,7 @@ from middlewared.service import Service
 
 
 PWENC_BLOCK_SIZE = 32
-PWENC_FILE_SECRET = '/data/pwenc_secret'
+PWENC_FILE_SECRET = os.environ.get('FREENAS_PWENC_SECRET', '/data/pwenc_secret')
 PWENC_PADDING = b'{'
 PWENC_CHECK = 'Donuts!'
 

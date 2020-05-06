@@ -9,8 +9,8 @@ export PYBUILD_NAME=middlewared
 override_dh_auto_build:
 	dh_auto_build
 	env FREENAS_INSTALL=yes /usr/sbin/migrate93 -f freenas-v1.db -s pwenc_secret
-	env FREENAS_INSTALL=yes PYTHONPATH=. /usr/sbin/migrate113 -f freenas-v1.db
-	cd middlewared && env PYTHONPATH=.. FREENAS_DATABASE=../freenas-v1.db alembic upgrade head
+	env FREENAS_INSTALL=yes PYTHONPATH=. /usr/sbin/migrate113 -f freenas-v1.db -s pwenc_secret
+	cd middlewared && env PYTHONPATH=.. FREENAS_DATABASE=../freenas-v1.db FREENAS_PWENC_SECRET=../pwenc_secret alembic upgrade head
 
 override_dh_install:
 	dh_install
