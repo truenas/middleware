@@ -2156,6 +2156,11 @@ class VMDeviceService(CRUDService):
 
     @private
     def get_iommu_type(self):
+        IOMMU_TESTS = {'VT-d': {'cmd_args': ['/usr/sbin/acpidump', '-t'],
+                                'pattern': r'DMAR'},
+                       'amdvi': {'cmd_args': ['/sbin/sysctl', '-i', 'hw.vmm.amdvi.enable'],
+                                 'pattern': r'vmm\.amdvi\.enable: 1'}}
+
         async def check_util_output(proc, pattern):
             found = False
             while True:
@@ -2189,18 +2194,9 @@ class VMDeviceService(CRUDService):
                                                  f'exited with status {proc.returncode}.')
             return None
 
-        async def int_sysctl(iommu_type, iou):
-            res = sysctl.filter(iou)
-            return True if res and res[0].value else False
-
-        IOMMU_TESTS = {'VT-d': {'mech': ext_util,
-                                'args': {'cmd_args': ['/usr/sbin/acpidump', '-t'],
-                                         'pattern': r'DMAR'}},
-                       'amdvi': {'mech': int_sysctl,
-                                 'args': {'iou': 'hw.vmm.amdvi.enable'}}}
         if self.iommu_type is None:
             for key, value in IOMMU_TESTS.items():
-                if asyncio.run(value['mech'](key, **value['args'])):
+                if asyncio.run(ext_util(key, **value)):
                     self.iommu_type = key
                     break
         return self.iommu_type
