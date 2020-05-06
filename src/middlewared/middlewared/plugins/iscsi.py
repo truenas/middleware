@@ -384,7 +384,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         if not await self.query([['tag', '=', config['tag'], ['id', '!=', id]]]):
             usages = await self.is_in_use_by_portals_targets(id)
             if usages['in_use']:
-                raise CallError(f'Authorized access "{id}" is in use by following object(s): {usages["usages"]}')
+                raise CallError(usages['usages'])
 
         return await self.middleware.call(
             'datastore.delete', self._config.datastore, id
@@ -470,7 +470,7 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_rpm = sa.Column(sa.String(20), default='SSD')
     iscsi_target_extent_ro = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_enabled = sa.Column(sa.Boolean(), default=True)
-    iscsi_target_extent_vendor = sa.Column(sa.Text(), default='TrueNAS')
+    iscsi_target_extent_vendor = sa.Column(sa.Text(), nullable=True)
 
 
 class iSCSITargetExtentService(CRUDService):
@@ -530,7 +530,7 @@ class iSCSITargetExtentService(CRUDService):
         await self.save(data, 'iscsi_extent_create', verrors)
 
         data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
+            'datastore.insert', self._config.datastore, {**data, 'vendor': 'TrueNAS'},
             {'prefix': self._config.datastore_prefix}
         )
 

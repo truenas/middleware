@@ -19,7 +19,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('services_iscsitargetextent', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('iscsi_target_extent_vendor', sa.TEXT(), nullable=True, default='TrueNAS'))
+        batch_op.add_column(sa.Column('iscsi_target_extent_vendor', sa.TEXT(), nullable=True))
 
     conn = op.get_bind()
     for extent in conn.execute("SELECT * FROM services_iscsitargetextent").fetchall():
