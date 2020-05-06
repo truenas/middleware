@@ -1173,7 +1173,7 @@ class FailoverService(ConfigService):
                     continue
                 return True
             except CallError as e:
-                if e.errno in (errno.ECONNREFUSED, errno.EHOSTDOWN):
+                if e.errno in (errno.ECONNREFUSED, errno.ECONNRESET):
                     time.sleep(5)
                     continue
                 raise
@@ -1434,7 +1434,7 @@ class JournalSync:
             try:
                 self.middleware.call_sync('failover.call_remote', 'datastore.sql', [query, params])
             except Exception as e:
-                if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.EHOSTDOWN]:
+                if isinstance(e, CallError) and e.errno in [errno.ECONNREFUSED, errno.ECONNRESET]:
                     logger.trace('Skipping journal sync, node down')
                 else:
                     if not self.last_query_failed:
@@ -1816,7 +1816,7 @@ async def service_remote(middleware, service, verb, options):
             f'service.{verb}', [[service, options]]
         ])
     except Exception as e:
-        if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.EHOSTDOWN)):
+        if not (isinstance(e, CallError) and e.errno in (errno.ECONNREFUSED, errno.ECONNRESET)):
             middleware.logger.warn(f'Failed to run {verb}({service})', exc_info=True)
 
 
