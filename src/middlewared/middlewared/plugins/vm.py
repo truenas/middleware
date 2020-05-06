@@ -2194,7 +2194,7 @@ class VMDeviceService(CRUDService):
             return True if res and res[0].value else False
 
         IOMMU_TESTS = {'VT-d': {'mech': ext_util,
-                                'args': {'cmd_args': ['/usr/sbin/acpiXdump', '-t'],
+                                'args': {'cmd_args': ['/usr/sbin/acpidump', '-t'],
                                          'pattern': r'DMAR'}},
                        'amdvi': {'mech': int_sysctl,
                                  'args': {'iou': 'hw.vmm.amdvi.enable'}}}
