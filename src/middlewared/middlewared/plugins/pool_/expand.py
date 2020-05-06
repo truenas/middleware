@@ -59,52 +59,43 @@ class PoolService(Service):
             if osc.IS_FREEBSD:
                 sysctl.filter('kern.geom.debugflags')[0].value = 16
             geli_resize = []
+            vdevs = []
             try:
                 for vdev in sum(pool['topology'].values(), []):
-                    if vdev['type'] != 'DISK':
-                        logger.debug('Not expanding vdev of type %r', vdev['type'])
-                        continue
-
                     if vdev['status'] != 'ONLINE':
-                        logger.debug('Not expanding vdev that is %r', vdev['status'])
+                        logger.debug('Not expanding vdev(%r) that is %r', vdev['guid'], vdev['status'])
                         continue
 
-                    part_data = all_partitions.get(vdev['device'])
-                    if not part_data:
-                        logger.debug('Unable to find partition data for %s', vdev['device'])
+                    c_vdevs = []
+                    disks = vdev['children'] if vdev['type'] != 'DISK' else [vdev]
+                    skip_vdev = None
+                    for child in disks:
+                        if child['status'] != 'ONLINE':
+                            skip_vdev = f'Device "{child["device"]}" status is not ONLINE ' \
+                                        f'(Reported status is {child["status"]})'
+                            break
 
-                    partition_number = part_data['partition_number']
-                    if not partition_number:
-                        logger.debug('Could not parse partition number from %r', vdev['device'])
+                        part_data = all_partitions.get(child['device'])
+                        if not part_data:
+                            skip_vdev = f'Unable to find partition data for {child["device"]}'
+                        elif not part_data['partition_number']:
+                            skip_vdev = f'Could not parse partition number from {child["device"]}'
+                        elif part_data['disk'] != child['disk']:
+                            skip_vdev = f'Retrieved partition data for device {child["device"]} ' \
+                                        f'({part_data["disk"]}) does not match with disk ' \
+                                        f'reported by ZFS ({child["disk"]})'
+                        if skip_vdev:
+                            break
+                        else:
+                            c_vdevs.append((child['guid'], part_data))
+
+                    if skip_vdev:
+                        logger.debug('Not expanding vdev(%r): %r', vdev['guid'], skip_vdev)
                         continue
 
-                    assert part_data['disk'] == vdev['disk']
-
-                    if osc.IS_LINUX:
-                        await run(
-                            'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0',
-                            '-c', '2:', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
-                            '-t', f'{partition_number}:BF01', part_data['path']
-                        )
-                        await run('partprobe', os.path.join('/dev', part_data['disk']))
-                    else:
-                        await run('camcontrol', 'reprobe', vdev['disk'])
-                        await run('gpart', 'recover', vdev['disk'])
-                        await run('gpart', 'resize', '-i', str(partition_number), vdev['disk'])
-
-                    if osc.IS_FREEBSD and pool['encrypt']:
-                        geli_resize_cmd = (
-                            'geli', 'resize', '-s', str(part_data['size']), vdev['device']
-                        )
-                        rollback_cmd = (
-                            'gpart', 'resize', '-i', str(partition_number), '-s', str(part_data['size']), vdev['disk']
-                        )
-
-                        logger.warning('It will be obligatory to notify GELI that the provider has been resized: %r',
-                                       join_commandline(geli_resize_cmd))
-                        logger.warning('Or to resize provider back: %r',
-                                       join_commandline(rollback_cmd))
-                        geli_resize.append((geli_resize_cmd, rollback_cmd))
+                    for guid, part_data in c_vdevs:
+                        await self._resize_disk(part_data, pool['encrypt'], geli_resize)
+                        vdevs.append(guid)
             finally:
                 if osc.IS_FREEBSD and geli_resize:
                     await self.__geli_resize(pool, geli_resize, options)
@@ -112,11 +103,47 @@ class PoolService(Service):
             if osc.IS_FREEBSD:
                 sysctl.filter('kern.geom.debugflags')[0].value = 0
 
-        for vdev in sum(pool['topology'].values(), []):
-            if vdev['type'] != 'DISK' or vdev['status'] != 'ONLINE':
-                continue
+        # spare/cache devices cannot be expanded
+        # We resize them anyways, for cache devices, whenever we are going to import the pool
+        # next, it will register the new capacity. For spares, whenever that spare is going to
+        # be used, it will register the new capacity as desired.
+        for topology_type in filter(
+            lambda t: t not in ('spare', 'cache') and pool['topology'][t], pool['topology']
+        ):
+            for vdev in pool['topology'][topology_type]:
+                for c_vd in filter(
+                    lambda v: v['guid'] in vdevs, vdev['children'] if vdev['type'] != 'DISK' else [vdev]
+                ):
+                    await self.middleware.call('zfs.pool.online', pool['name'], c_vd['guid'], True)
 
-            await self.middleware.call('zfs.pool.online', pool['name'], vdev['guid'], True)
+    async def _resize_disk(self, part_data, encrypted_pool, geli_resize):
+        partition_number = part_data['partition_number']
+        if osc.IS_LINUX:
+            await run(
+                'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0',
+                '-c', '2:', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
+                '-t', f'{partition_number}:BF01', part_data['path']
+            )
+            await run('partprobe', os.path.join('/dev', part_data['disk']))
+        else:
+            await run('camcontrol', 'reprobe', part_data['disk'])
+            await run('gpart', 'recover', part_data['disk'])
+            await run('gpart', 'resize', '-a', '4k', '-i', str(partition_number), part_data['disk'])
+
+        if osc.IS_FREEBSD and encrypted_pool:
+            geli_resize_cmd = (
+                'geli', 'resize', '-a', '4k', '-s', str(part_data['size']), part_data['name']
+            )
+            rollback_cmd = (
+                'gpart', 'resize', '-a', '4k', '-i', str(partition_number),
+                '-s', str(part_data['size']), part_data['disk']
+            )
+
+            logger.warning('It will be obligatory to notify GELI that the provider has been resized: %r',
+                           join_commandline(geli_resize_cmd))
+            logger.warning('Or to resize provider back: %r',
+                           join_commandline(rollback_cmd))
+            geli_resize.append((geli_resize_cmd, rollback_cmd))
 
     async def __geli_resize(self, pool, geli_resize, options):
         failed_rollback = []
