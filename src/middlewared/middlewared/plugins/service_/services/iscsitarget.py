@@ -1,9 +1,4 @@
-import contextlib
-
 from middlewared.utils import osc, run
-
-if osc.IS_FREEBSD:
-    import sysctl
 
 from .base import SimpleService
 
@@ -21,8 +16,11 @@ class ISCSITargetService(SimpleService):
 
     async def before_stop(self):
         if osc.IS_FREEBSD:
-            with contextlib.suppress(IndexError):
-                sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""
+            cp = await run(["sysctl", "kern.cam.ctl.ha_peer=''"], check=False)
+            if cp.returncode and "unknown oid" not in cp.stderr.decode().lower():
+                self.middleware.logger.error(
+                    "Failed to set sysctl kern.cam.ctl.ha_peer : %s", cp.stderr.decode()
+                )
 
     async def reload(self):
         if osc.IS_LINUX:
