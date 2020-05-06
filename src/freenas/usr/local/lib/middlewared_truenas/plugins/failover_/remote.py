@@ -116,13 +116,13 @@ class RemoteClient(object):
         try:
             if not self.connected.wait(timeout=20):
                 if self.remote_ip is None:
-                    raise CallError('Unable to determine remote node IP')
+                    raise CallError('Unable to determine remote node IP', errno.EBADRPC)
                 raise CallError('Remote connection unavailable', errno.ECONNREFUSED)
             return self.client.call(*args, **kwargs)
         except AttributeError as e:
             # ws4py traceback which can happen when connection is lost
             if "'NoneType' object has no attribute 'text_message'" in str(e):
-                raise CallError('Remote connection closed.', errno.EREMOTE)
+                raise CallError('Remote connection closed.', errno.ECONNRESET)
             else:
                 raise
         except ClientException as e:
