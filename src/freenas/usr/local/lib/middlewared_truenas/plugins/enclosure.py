@@ -88,6 +88,7 @@ class EnclosureService(CRUDService):
                         "name": elem.name,
                         "descriptor": elem.descriptor,
                         "status": elem.status,
+                        "value": elem.value,
                         "value_raw": hex(elem.value_raw),
                     }
                     if hasattr(elem, "device_slot_set"):

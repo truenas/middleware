@@ -99,6 +99,7 @@ class EnclosureService(Service):
                 "name": "Array Device Slot",
                 "descriptor": f"Disk #{slot}",
                 "status": original_slot["status"],
+                "value": original_slot["value"],
                 "value_raw": original_slot["value_raw"],
                 "original": {
                     "enclosure_id": original_enclosure["id"],
