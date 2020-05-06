@@ -78,6 +78,7 @@ class EnclosureService(Service):
                 "name": "Array Device Slot",
                 "descriptor": f"Disk #{slot}",
                 "status": status,
+                "value": "None",
                 "value_raw": value_raw,
             })
 
