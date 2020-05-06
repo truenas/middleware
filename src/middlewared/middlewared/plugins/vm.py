@@ -2156,48 +2156,52 @@ class VMDeviceService(CRUDService):
 
     @private
     def get_iommu_type(self):
-        def check_iommu(iommu_type):
-            IOMMU_TEST = {'VT-d': {'arglist': ['/usr/sbin/acpidump', '-t'],
-                                   'string': 'DMAR'},
-                          'amdvi': {'arglist': ['/sbin/sysctl', 'hw'],
-                                    'string': 'vmm.amdvi.enable: 1'}}
-            if iommu_type in IOMMU_TEST:
-                proc1 = None
-                proc2 = None
-                try:
-                    proc1 = subprocess.Popen(IOMMU_TEST[iommu_type]['arglist'],
-                                             stdout=subprocess.PIPE,
-                                             stderr=subprocess.DEVNULL)
-                    proc2 = subprocess.Popen(['/usr/bin/grep', IOMMU_TEST[iommu_type]['string']],
-                                             stdin=proc1.stdout,
-                                             stdout=subprocess.PIPE,
-                                             stderr=subprocess.DEVNULL)
-                    proc1.stdout.close()  # Allow proc1 to receive a SIGPIPE if proc2 exits.
-                    outs, errs = proc2.communicate(timeout=5)
-                except (subprocess.TimeoutExpired, OSError, ValueError) as e:
-                    if proc2 is not None:
-                        proc2.kill()
-                        outs, errs = proc2.communicate()
-                    elif proc1 is not None:
-                        proc1.kill()
-                    self.middleware.logger.error(f'An error occured when checking for iommu ({iommu_type}): {e}.')
+        async def check_util_output(proc, pattern):
+            found = False
+            while True:
+                line = await proc.stdout.readline()
+                if line:
+                    if re.search(pattern, line.decode('utf-8')):
+                        found = True
                 else:
-                    if proc1.poll() is None:  # make sure proc1 has terminated
-                        proc1.kill()
-                    if proc1.returncode == 0 and (proc2.returncode == 0 or proc2.returncode == 1):
-                        if outs:
-                            return iommu_type
-                    else:
-                        self.middleware.logger.error(f'An error occured when checking for iommu ({iommu_type}). '
-                                                     f'Subprocess 1 ({proc1.args}) exited with status '
-                                                     f'{proc1.returncode}; Subprocess 2 ({proc2.args}) '
-                                                     f'exited with status {proc2.returncode}.')
+                    break  # Reached EOF
+            return found
+
+        async def ext_util(iommu_type, cmd_args, pattern):
+            found = False
+            proc = None
+            try:
+                proc = await asyncio.create_subprocess_exec(*cmd_args,
+                                                            stdout=asyncio.subprocess.PIPE,
+                                                            stderr=asyncio.subprocess.DEVNULL)
+                found = await asyncio.wait_for(check_util_output(proc, pattern), timeout=5)
+            except (asyncio.TimeoutError, OSError, ValueError) as e:
+                if proc is not None:
+                    proc.kill()
+                self.middleware.logger.error('An error occured when checking for iommu '
+                                             f'({iommu_type}): {e}.')
+            else:
+                if proc.returncode == 0:
+                    return found
+                else:
+                    self.middleware.logger.error('An error occured when checking for iommu '
+                                                 f'({iommu_type}): Subprocess ({cmd_args}) '
+                                                 f'exited with status {proc.returncode}.')
             return None
 
+        async def int_sysctl(iommu_type, iou):
+            res = sysctl.filter(iou)
+            return True if res and res[0].value else False
+
+        IOMMU_TESTS = {'VT-d': {'mech': ext_util,
+                                'args': {'cmd_args': ['/usr/sbin/acpiXdump', '-t'],
+                                         'pattern': r'DMAR'}},
+                       'amdvi': {'mech': int_sysctl,
+                                 'args': {'iou': 'hw.vmm.amdvi.enable'}}}
         if self.iommu_type is None:
-            for item in ['VT-d', 'amdvi']:
-                self.iommu_type = check_iommu(item)
-                if self.iommu_type is not None:
+            for key, value in IOMMU_TESTS.items():
+                if asyncio.run(value['mech'](key, **value['args'])):
+                    self.iommu_type = key
                     break
         return self.iommu_type
 
