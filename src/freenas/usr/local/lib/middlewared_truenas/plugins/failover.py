@@ -1191,7 +1191,7 @@ class FailoverService(ConfigService):
         if self.middleware.call_sync('failover.status') != 'MASTER':
             raise CallError('Upgrade can only be run from the Active Controller.')
 
-        if not self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False):
+        if self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False) is not True:
             return False
 
         try:
@@ -1210,7 +1210,7 @@ class FailoverService(ConfigService):
             'bootenv.query', [('active', 'rin', 'N')])
 
         remote_bootenv = self.call_remote(
-            'bootenv.query', [[('id', '=', local_bootenv[0]['id'])]])
+            'bootenv.query', [[('active', '=', 'NR')]])
 
         if not local_bootenv or not remote_bootenv:
             raise CallError('Unable to determine installed version of software')
