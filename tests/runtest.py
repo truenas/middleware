@@ -156,7 +156,7 @@ def get_tests():
     apidir = 'api2/'
     if ha is True:
         sv = ['ssh', 'pool', 'user']
-        ev = ['update', 'delete_user']
+        ev = ['delete_user']
     else:
         sv = ['ssh', 'interfaces', 'network', 'pool_dataset_encryption', 'pool', 'user']
         ev = ['update', 'delete_interfaces', 'delete_user']
