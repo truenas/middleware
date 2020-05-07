@@ -60,13 +60,14 @@ def test_02_Enabling_Active_Directory():
     }
     results = PUT("/directoryservice/activedirectory/1/", payload)
     assert results.status_code == 200, results.text
+    sleep(10)
 
 
 @ad_test_cfg
 def test_03_Checking_Active_Directory():
     results = GET("/directoryservice/activedirectory/")
     assert results.json()["ad_enable"] is True, results.text
-    sleep(1)
+    sleep(2)
 
 
 @ad_test_cfg
@@ -84,7 +85,7 @@ def test_04_Enabling_SMB_service():
 def test_05_Starting_SMB_service():
     results = PUT("/services/services/cifs/", {"srv_enable": "true"})
     assert results.status_code == 200, results.text
-    sleep(1)
+    sleep(2)
 
 
 @ad_test_cfg
