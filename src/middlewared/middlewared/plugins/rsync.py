@@ -583,7 +583,7 @@ class RsyncTaskService(CRUDService):
         path = shlex.quote(rsync['path'])
 
         line = [
-            '/usr/bin/lockf', '-s', '-t', '0', '-k', path, '/usr/local/bin/rsync'
+            '/usr/local/bin/rsync'
         ]
         for name, flag in (
             ('archive', '-a'),
