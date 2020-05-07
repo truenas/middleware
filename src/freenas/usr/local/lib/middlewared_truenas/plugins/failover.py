@@ -1195,12 +1195,12 @@ class FailoverService(ConfigService):
             return False
 
         try:
-            assert self.call_remote('core.ping') == 'pong'
+            assert self.middleware.call_sync('failover.call_remote', 'core.ping') == 'pong'
         except Exception:
             return False
 
         local_version = self.middleware.call_sync('system.version')
-        remote_version = self.call_remote('system.version')
+        remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
 
         if local_version == remote_version:
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
@@ -1209,7 +1209,7 @@ class FailoverService(ConfigService):
         local_bootenv = self.middleware.call_sync(
             'bootenv.query', [('active', 'rin', 'N')])
 
-        remote_bootenv = self.call_remote(
+        remote_bootenv = self.middleware.call_sync('failover.call_remote',
             'bootenv.query', [[('active', '=', 'NR')]])
 
         if not local_bootenv or not remote_bootenv:
@@ -1247,10 +1247,10 @@ class FailoverService(ConfigService):
         local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
         if not local_bootenv:
             raise CallError('Could not find current boot environment.')
-        self.call_remote('bootenv.activate', [local_bootenv[0]['id']])
+        self.middleware.call_sync('failover.call_remote', 'bootenv.activate', [local_bootenv[0]['id']])
 
         job.set_progress(None, 'Rebooting Standby Controller')
-        self.call_remote('system.reboot', [{'delay': 10}])
+        self.middleware.call_sync('failover.call_remote', 'system.reboot', [{'delay': 10}])
         self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
         return True
 
