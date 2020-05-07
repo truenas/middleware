@@ -548,7 +548,8 @@ class SystemService(Service):
         )).communicate())[0].decode().strip() or None
 
         birthday_date = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
-        
+        timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
+
         # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
         # After discussing with nap, we determined that checking -t 17 did not work well with some systems,
         # so we check -t 16 now only to see if it reports ECC memory
@@ -571,7 +572,7 @@ class SystemService(Service):
             'boottime': datetime.fromtimestamp(psutil.boot_time()),
             'datetime': datetime.utcnow(),
             'birthday': birthday_date,
-            'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
+            'timezone': timezone_setting,
             'system_manufacturer': manufacturer,
             'ecc_memory': ecc_memory,
         }
