@@ -16,6 +16,7 @@ import re
 import subprocess
 import uuid
 from samba import param
+from samba import is_valid_netbios_char
 
 LOGLEVEL_MAP = {
     '0': 'NONE',
@@ -24,7 +25,6 @@ LOGLEVEL_MAP = {
     '3': 'FULL',
     '10': 'DEBUG',
 }
-RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 RE_NETGROUPMAP = re.compile(r"^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$")
 RE_SHAREACLENTRY = re.compile(r"^ACL:(?P<ae_who_sid>.+):(?P<ae_type>.+)\/0x0\/(?P<ae_perm>.+)$")
 
@@ -111,7 +111,7 @@ class SMBService(SystemServiceService):
         return smb
 
     async def __validate_netbios_name(self, name):
-        return RE_NETBIOSNAME.match(name)
+        return is_valid_netbios_char(name)
 
     async def unixcharset_choices(self):
         return await self.generate_choices(
