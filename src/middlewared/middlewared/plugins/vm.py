@@ -1933,35 +1933,22 @@ class VMDeviceService(CRUDService):
         return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
 
     @accepts()
-    def pptdev_choices(self):
+    async def pptdev_choices(self):
         """
         Available choices for PCI passthru device.
         """
         if not self.pptdevs:
             proc = None
-            try:
-                proc = subprocess.Popen(['/usr/sbin/pciconf', '-l'],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.DEVNULL, text=True)
-                outs, errs = proc.communicate(timeout=5)
-            except (subprocess.TimeoutExpired, OSError, ValueError) as e:
-                if proc is not None:
-                    proc.kill()
-                    outs, errs = proc.communicate()
-                self.middleware.logger.error('An error occured when checking the PCI configuration '
-                                             f'for devices available for PCI passthru: {e}.')
+            sp = await run('/usr/sbin/pciconf', '-l', check=False)
+            if sp.returncode:
+                raise CallError(f'Failed to detect devices available for PCI passthru: {sp.stderr.decode()}')
             else:
-                if proc.returncode == 0:
-                    lines = outs.split('\n')
-                    for line in lines:
-                        object = RE_PCICONF_PPTDEVS.match(line)
-                        if object:
-                            pptdev = object.group(2).replace(':', '/')
-                            self.pptdevs[pptdev] = pptdev
-                else:
-                    self.middleware.logger.error('An error occured when checking the PCI configuration '
-                                                 'for devices available for PCI passthru. The subprocess '
-                                                 f'({proc.args}) exited with status {proc.returncode}.')
+                lines = sp.stdout.decode().split('\n')
+                for line in lines:
+                    object = RE_PCICONF_PPTDEVS.match(line)
+                    if object:
+                        pptdev = object.group(2).replace(':', '/')
+                        self.pptdevs[pptdev] = pptdev
         return self.pptdevs
 
     @accepts()
@@ -2161,44 +2148,15 @@ class VMDeviceService(CRUDService):
                        'amdvi': {'cmd_args': ['/sbin/sysctl', '-i', 'hw.vmm.amdvi.enable'],
                                  'pattern': r'vmm\.amdvi\.enable: 1'}}
 
-        async def check_util_output(proc, pattern):
-            found = False
-            while True:
-                line = await proc.stdout.readline()
-                if line:
-                    if re.search(pattern, line.decode('utf-8')):
-                        found = True
-                else:
-                    break  # Reached EOF
-            return found
-
-        async def ext_util(iommu_type, cmd_args, pattern):
-            found = False
-            proc = None
-            try:
-                proc = await asyncio.create_subprocess_exec(*cmd_args,
-                                                            stdout=asyncio.subprocess.PIPE,
-                                                            stderr=asyncio.subprocess.DEVNULL)
-                found = await asyncio.wait_for(check_util_output(proc, pattern), timeout=5)
-            except (asyncio.TimeoutError, OSError, ValueError) as e:
-                if proc is not None:
-                    proc.kill()
-                self.middleware.logger.error('An error occured when checking for iommu '
-                                             f'({iommu_type}): {e}.')
-            else:
-                if proc.returncode == 0:
-                    return found
-                else:
-                    self.middleware.logger.error('An error occured when checking for iommu '
-                                                 f'({iommu_type}): Subprocess ({cmd_args}) '
-                                                 f'exited with status {proc.returncode}.')
-            return None
-
         if self.iommu_type is None:
             for key, value in IOMMU_TESTS.items():
-                if await ext_util(key, **value):
-                    self.iommu_type = key
-                    break
+                sp = await run(*value['cmd_args'], check=False)
+                if sp.returncode:
+                    raise CallError(f'Failed to check support for iommu ({key}): {sp.stderr.decode()}')
+                else:
+                    if re.search(value['pattern'], sp.stdout.decode()):
+                        self.iommu_type = key
+                        break
         return self.iommu_type
 
     @private
