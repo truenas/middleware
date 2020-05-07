@@ -353,6 +353,8 @@ class bsdUsersForm(ModelForm):
         return mode or None
 
     def clean_bsdusr_sshpubkey(self):
+        if 'bsdusr_sshpubkey' not in self.data:
+            return self.fields['bsdusr_sshpubkey'].initial
         ssh = self.cleaned_data.get('bsdusr_sshpubkey', '')
         ssh = ssh.strip(' ').strip('\n')
         ssh = re.sub(r'[ ]{2,}', ' ', ssh, re.M)
