@@ -6,7 +6,7 @@ from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
+from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc, sync_clock
 from middlewared.validators import Range
 
 import csv
@@ -547,6 +547,8 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        birthday_date = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
+        
         # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
         # After discussing with nap, we determined that checking -t 17 did not work well with some systems,
         # so we check -t 16 now only to see if it reports ECC memory
@@ -568,6 +570,7 @@ class SystemService(Service):
             'license': await self.middleware.run_in_thread(self._get_license),
             'boottime': datetime.fromtimestamp(psutil.boot_time()),
             'datetime': datetime.utcnow(),
+            'birthday': birthday_date,
             'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
             'system_manufacturer': manufacturer,
             'ecc_memory': ecc_memory,
@@ -768,6 +771,7 @@ class SystemGeneralModel(sa.Model):
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
     stg_language = sa.Column(sa.String(120), default="en")
     stg_kbdmap = sa.Column(sa.String(120))
+    stg_birthday = sa.Column(sa.DateTime(), nullable=True)
     stg_timezone = sa.Column(sa.String(120), default="America/Los_Angeles")
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
@@ -1134,6 +1138,7 @@ class SystemGeneralService(ConfigService):
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
                                      'F_INFO', 'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
+            Str('birthday', empty=False),
             Str('timezone', empty=False),
             Bool('crash_reporting', null=True),
             Bool('usage_collection', null=True),
@@ -1519,6 +1524,10 @@ async def setup(middleware):
 
         if os.path.exists('/usr/local/sbin/beadm'):
             await firstboot(middleware)
+
+            # Sync clock
+            middleware.logger.debug('Synchornization the clock for system birthday')
+            sync_clock()
 
         if autotune_rv == 2:
             await run('shutdown', '-r', 'now', check=False)
