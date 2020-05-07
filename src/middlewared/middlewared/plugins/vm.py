@@ -1938,7 +1938,6 @@ class VMDeviceService(CRUDService):
         Available choices for PCI passthru device.
         """
         if not self.pptdevs:
-            proc = None
             sp = await run('/usr/sbin/pciconf', '-l', check=False)
             if sp.returncode:
                 raise CallError(f'Failed to detect devices available for PCI passthru: {sp.stderr.decode()}')
