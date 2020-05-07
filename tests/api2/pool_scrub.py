@@ -30,8 +30,15 @@ def test_01_create_scrub_for_same_pool():
     assert result.json()["pool_scrub_create.pool"][0]["message"] == text, result.text
 
 
-def test_02_update_scrub():
-    result = PUT("/pool/scrub/id/1/", {
+def test_02_get_pool_name_scrub_id():
+    global scrub_id
+    result = GET(f"/pool/scrub/?pool_name={pool_name}")
+    assert result.status_code == 200, result.text
+    scrub_id = result.json()[0]['id']
+
+
+def test_03_update_scrub():
+    result = PUT(f"/pool/scrub/id/{scrub_id}/", {
         "pool": pool_id,
         "threshold": 2,
         "description": "",
@@ -47,12 +54,12 @@ def test_02_update_scrub():
     assert result.status_code == 200, result.text
 
 
-def test_03_delete_scrub():
-    result = DELETE("/pool/scrub/id/1/")
+def test_04_delete_scrub():
+    result = DELETE(f"/pool/scrub/id/{scrub_id}/")
     assert result.status_code == 200, result.text
 
 
-def test_04_create_scrub():
+def test_05_create_scrub():
     result = POST("/pool/scrub/", {
         "pool": pool_id,
         "threshold": 1,
