@@ -1394,14 +1394,15 @@ class ActiveDirectoryService(ConfigService):
         return ret
 
     @private
-    def get_kerberos_servers(self):
+    def get_kerberos_servers(self, ad=None):
         """
         This returns at most 3 kerberos servers located in our AD site. This is to optimize
         kerberos configuration for locations where kerberos servers may span the globe and
         have equal DNS weighting. Since a single kerberos server may represent an unacceptable
         single point of failure, fall back to relying on normal DNS queries in this case.
         """
-        ad = self.middleware.call_sync('activedirectory.config')
+        if ad is None:
+            ad = self.middleware.call_sync('activedirectory.config')
         AD_DNS = ActiveDirectory_DNS(conf=ad, logger=self.logger)
         krb_kdc = AD_DNS.get_n_working_servers(SRV['KERBEROSDOMAINCONTROLLER'], 3)
         krb_admin_server = AD_DNS.get_n_working_servers(SRV['KERBEROS'], 3)
@@ -1413,18 +1414,22 @@ class ActiveDirectoryService(ConfigService):
             if len(servers) == 1:
                 return None
 
-        return {'krb_kdc': kdc, 'krb_admin_server': admin_server, 'krb_kpasswd_server': kpasswd}
+        return {
+            'krb_kdc': ' '.join(kdc),
+            'krb_admin_server': ' '.join(admin_server),
+            'krb_kpasswd_server': ' '.join(kpasswd)
+        }
 
     @private
-    def set_kerberos_servers(self, ad):
+    def set_kerberos_servers(self, ad=None):
         if not ad:
-            ad = self.config()
-        site_indexed_kerberos_servers = self.middleawre.call_sync('get_kerberos_servers')
+            ad = self.middleware.call_sync('activedirectory.config')
+        site_indexed_kerberos_servers = self.get_kerberos_servers(ad)
         if site_indexed_kerberos_servers:
             self.middleware.call_sync(
                 'datastore.update',
                 'directoryservice.kerberosrealm',
-                ad['kerberos_realm']['id'],
+                ad['kerberos_realm'],
                 site_indexed_kerberos_servers
             )
             self.middleware.call_sync('etc.generate', 'kerberos')
