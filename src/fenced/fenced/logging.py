@@ -32,10 +32,7 @@ def setup_logging(foreground):
         'disable_existing_loggers': False,
         'formatters': {
             'simple': {
-                'format': '[%(name)s:%(lineno)s] %(message)s',
-            },
-            'simple-file': {
-                'format': '[%(asctime)s %(name)s:%(lineno)s] %(message)s',
+                'format': '[%(asctime)s - %(name)s:%(lineno)s] %(message)s',
                 'datefmt': '%Y-%m-%d %H:%M:%S',
             },
         },
@@ -49,8 +46,8 @@ def setup_logging(foreground):
             },
             'file': {
                 'class': 'logging.handlers.RotatingFileHandler',
-                'formatter': 'simple-file',
-                'level': 'ERROR',
+                'formatter': 'simple',
+                'level': 'INFO',
                 'filename': LOG_FILE,
                 'maxBytes': 1000000, # 1MB size
                 'backupCount': '3',
