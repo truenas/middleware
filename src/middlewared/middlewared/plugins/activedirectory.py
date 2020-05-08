@@ -658,9 +658,15 @@ class ActiveDirectoryService(ConfigService):
             realms = await self.middleware.call('kerberos.realm.query', [('realm', '=', ad['domainname'])])
 
             if realms:
-                await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_kerberos_realm': realms[0]['id']})
+                realm_id = realms[0]['id']
             else:
-                await self.middleware.call('datastore.insert', 'directoryservice.kerberosrealm', {'krb_realm': ad['domainname'].upper()})
+                realm_id = await self.middleware.call('datastore.insert',
+                                                      'directoryservice.kerberosrealm',
+                                                      {'krb_realm': ad['domainname'].upper()})
+
+            await self.middleware.call('datastore.update',
+                                       self._config.datastore,
+                                       ad['id'], {'ad_kerberos_realm': realm_id})
             ad = await self.config()
 
         if not await self.middleware.call('kerberos._klist_test'):
@@ -1157,10 +1163,12 @@ class ActiveDirectoryService(ConfigService):
         used to perform the actual removal from the domain.
         """
         ad = await self.config()
-        principal = f'{data["username"]}@{ad["domainname"]}'
         smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
 
         ad['dstype'] = DSType.DS_TYPE_ACTIVEDIRECTORY.value
+        ad['bindname'] = data.get("username", "")
+        ad['bindpw'] = data.get("password", "")
+
         await self.middleware.call('kerberos.do_kinit', ad)
 
         netads = await run([SMBCmd.NET.value, '-U', data['username'], '-k', 'ads', 'leave'], check=False)
