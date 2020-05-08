@@ -112,13 +112,19 @@ expect {
     send "B"
   }
 
-  "succeeded!" {
+  "installation on sda succeeded!" {
     send_user "Bhyve installation finished."
     sleep 5
     exit 0
   }
 
-  "failed." {
+  "installation on sda failed." {
+    send_user "Bhyve installation failed."
+    sleep 5
+    exit 1
+  }
+
+  "has failed. Press enter to continue" {
     send_user "Bhyve installation failed."
     sleep 5
     exit 1
@@ -126,7 +132,7 @@ expect {
 }
 
 # ┌────────────────────────────────────────────────────────────────────────┐
-# │ The FreeNAS installation on vtbd0 succeeded!                           |
+# │ The FreeNAS installation on ada0 succeeded!                           |
 # │                                                                        │
 # ├────────────────────────────────────────────────────────────────────────┤
 # │                               <  OK  >                                 │
@@ -135,7 +141,7 @@ expect {
 # Or
 
 # ┌────────────────────────────────────────────────────────────────────────┐
-# │ The FreeNAS installation on vtbd0 failed.                              |
+# │ The FreeNAS installation on ada0 failed.                              |
 # │                                                                        │
 # ├────────────────────────────────────────────────────────────────────────┤
 # │                               <  OK  >                                 │
@@ -143,13 +149,13 @@ expect {
 
 # Installation complete!
 expect {
-  "succeeded!" {
+  "installation on ada0 succeeded!" {
     send_user "Bhyve installation finished."
     sleep 5
     exit 0
   }
 
-  "failed." {
+  "installation on ada0 failed." {
     send_user "Bhyve installation failed."
     sleep 5
     exit 1
