@@ -8,7 +8,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import Nid, osc, Popen, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
-from middlewared.validators import Range
+from middlewared.validators import Range, Match
 
 import middlewared.logger
 import asyncio
@@ -53,6 +53,9 @@ LIBVIRT_BHYVE_NAMESPACE = 'http://libvirt.org/schemas/domain/bhyve/1.0'
 LIBVIRT_BHYVE_NSMAP = {'bhyve': LIBVIRT_BHYVE_NAMESPACE}
 SHUTDOWN_LOCK = asyncio.Lock()
 LIBVIRT_LOCK = asyncio.Lock()
+PPT_BASE_NAME = 'ppt'
+RE_PCICONF_PPTDEVS = re.compile(
+    r'^(' + re.escape(PPT_BASE_NAME) + '[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$', flags=re.I)
 ZFS_ARC_MAX_INITIAL = None
 
 ZVOL_CLONE_SUFFIX = '_clone'
@@ -269,6 +272,34 @@ class VMSupervisor:
         self._before_stopping_checks()
         self.domain.destroy()
 
+    def guest_pptdev(self, ppt_maps, nid, host_bsf):
+
+        # Multi-function PCI devices are not always independent. For some (but
+        # not all) adapters the mappings of functions must be the same in the
+        # guest. For simplicity, we map functions of the same host slot on one
+        # guest slot.
+
+        # Compile list of already assigned devices with same source slot
+        mylist = (item for item in ppt_maps if item['host_bsf'][0:2] == host_bsf[0:2])
+        item = next(mylist, None)
+        if item is None:
+            # Source bus/slot not seen before. Map on new guest slot.
+            guest_slot = nid()
+        else:
+            # Source bus/slot seen before. Reuse the old guest slot.
+            guest_slot = item['guest_bsf'][1]
+            # Check if the function has already been mapped.
+            # No need to map the same bus/slot/function more than once.
+            while (item is not None and item['host_bsf'] != host_bsf):
+                # Not same function. Check next item.
+                item = next(mylist, None)
+        if item is None:
+            # This host bus/slot/function is not mapped yet.
+            # Add passthru device
+            guest_bsf = [0, guest_slot, host_bsf[2]]
+            return guest_bsf
+        return None
+
     def construct_xml(self):
         domain_children = [
             create_element('name', attribute_dict={'text': self.libvirt_domain_name}),
@@ -308,6 +339,25 @@ class VMSupervisor:
             # Command line args
             *self.commandline_xml(),
         ]
+
+        # Wire memory if PCI passthru device is configured
+        #   Implicit configuration for now.
+        #
+        #   To avoid surprising side effects from implicit configuration, wiring of memory
+        #   should preferably be an explicit vm configuration option and trigger error
+        #   message if not selected when PCI passthru is configured.
+        #
+        if any(isinstance(device, PCI) for device in self.devices):
+            domain_children.append(
+                create_element(
+                    'memoryBacking', attribute_dict={
+                        'children': [
+                            create_element('locked'),
+                        ]
+                    }
+                )
+            )
+
         return create_element(
             'domain', type='bhyve', id=str(self.vm_data['id']),
             attribute_dict={'children': domain_children}, nsmap=LIBVIRT_BHYVE_NSMAP,
@@ -328,8 +378,8 @@ class VMSupervisor:
 
     def commandline_args(self):
         args = []
-        for device in filter(lambda d: isinstance(d, VNC), self.devices):
-            args.append(device.bhyve_args())
+        for device in filter(lambda d: isinstance(d, (PCI, VNC)), self.devices):
+            args += filter(None, [device.bhyve_args()])
         return args
 
     def os_xml(self):
@@ -398,6 +448,7 @@ class VMSupervisor:
         controller_base = {'index': None, 'slot': None, 'function': 0, 'devices': 0}
         ahci_current_controller = controller_base.copy()
         virtio_current_controller = controller_base.copy()
+        ppt_maps = []
 
         for device in self.devices:
             if isinstance(device, (DISK, CDROM, RAW)):
@@ -481,10 +532,24 @@ class VMSupervisor:
                 device_xml = device.xml(child_element=create_element('address', **address_dict))
             elif isinstance(device, NIC):
                 device_xml = device.xml(slot=pci_slot())
+            elif isinstance(device, PCI):
+                # PCI passthru section begins here
+                # Check if ppt device is available for passthru. Map, only if available.
+                host_bsf = device.ppt_map['host_bsf']
+                if host_bsf is not None:
+                    guest_bsf = self.guest_pptdev(ppt_maps, pci_slot, host_bsf)
+                else:
+                    guest_bsf = None
+                device.ppt_map['guest_bsf'] = guest_bsf
+                if guest_bsf is not None:
+                    ppt_maps.append(device.ppt_map)
+                device_xml = device.xml()
+                # PCI passthru section ends here
             else:
                 device_xml = device.xml()
 
-            devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
+            if device_xml is not None:
+                devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
 
         devices.append(
             create_element(
@@ -603,6 +668,69 @@ class RAW(StorageDevice):
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
     )
+
+
+class PCI(Device):
+
+    schema = Dict(
+        'attributes',
+        Str('pptdev', required=True, validators=[Match(r'([0-9]+/){2}[0-9]+')]),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_ppt_map()
+
+    def init_ppt_map(self):
+        iommu_type = self.middleware.call_sync('vm.device.get_iommu_type')
+        pptdevs = self.middleware.call_sync('vm.device.pptdev_choices')
+        pptdev = self.data['attributes'].get('pptdev')
+        self.ppt_map = {
+            'host_bsf': list(
+                map(int, pptdev.split('/'))) if pptdev in pptdevs and iommu_type else None,
+            'guest_bsf': None
+        }
+
+    def xml(self, *args, **kwargs):
+        # If passthru is performed by means of additional command-line arguments
+        # to the bhyve process using the <bhyve:commanline> element under domain,
+        # the xml is TYPICALLY not needed. An EXCEPTION is when there are devices
+        # for which the pci address is not under the control of and set by
+        # middleware and generation of the xml can reduce the risk for conflicts.
+        # It appears that when assigning addresses to other devices libvirt avoids
+        # the pci address provided in the xml also when libvirt does not (fully)
+        # support hostdev for bhyve.
+        host_bsf = self.ppt_map['host_bsf']
+        guest_bsf = self.ppt_map['guest_bsf']
+
+        return create_element(
+            'hostdev', mode='subsystem', type='pci', managed='no', attribute_dict={
+                'children': [
+                    create_element(
+                        'source', attribute_dict={
+                            'children': [
+                                create_element('address', domain='0x0000',
+                                               bus='0x{:04x}'.format(host_bsf[0]),
+                                               slot='0x{:04x}'.format(host_bsf[1]),
+                                               function='0x{:04x}'.format(host_bsf[2])),
+                            ]
+                        }
+                    ),
+                    create_element('address', type='pci', domain='0x0000',
+                                   bus='0x{:04x}'.format(guest_bsf[0]),
+                                   slot='0x{:04x}'.format(guest_bsf[1]),
+                                   function='0x{:04x}'.format(guest_bsf[2])),
+                ]
+            }
+        ) if guest_bsf is not None else None
+
+    def bhyve_args(self, *args, **kwargs):
+        # Unless libvirt supports hostdev for bhyve, we need to pass pci devices
+        # through to guest by means of additional command-line arguments to the
+        # bhyve process using the <bhyve:commandline> element under domain.
+        return '-s {g[1]}:{g[2]},passthru,{h[0]}/{h[1]}/{h[2]}'.format(
+            g=self.ppt_map['guest_bsf'], h=self.ppt_map['host_bsf']
+        ) if self.ppt_map['guest_bsf'] is not None else None
 
 
 class NIC(Device):
@@ -1723,6 +1851,7 @@ class VMDeviceService(CRUDService):
         'RAW': RAW.schema,
         'DISK': DISK.schema,
         'NIC': NIC.schema,
+        'PCI': PCI.schema,
         'VNC': VNC.schema,
     }
 
@@ -1730,6 +1859,11 @@ class VMDeviceService(CRUDService):
         namespace = 'vm.device'
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
+
+    def __init__(self, *args, **kwargs):
+        super(VMDeviceService, self).__init__(*args, **kwargs)
+        self.pptdevs = {}
+        self.iommu_type = None
 
     @private
     async def failover_nic_check(self, vm_device, verrors, schema):
@@ -1799,6 +1933,24 @@ class VMDeviceService(CRUDService):
         return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
 
     @accepts()
+    async def pptdev_choices(self):
+        """
+        Available choices for PCI passthru device.
+        """
+        if not self.pptdevs:
+            sp = await run('/usr/sbin/pciconf', '-l', check=False)
+            if sp.returncode:
+                raise CallError(f'Failed to detect devices available for PCI passthru: {sp.stderr.decode()}')
+            else:
+                lines = sp.stdout.decode().split('\n')
+                for line in lines:
+                    object = RE_PCICONF_PPTDEVS.match(line)
+                    if object:
+                        pptdev = object.group(2).replace(':', '/')
+                        self.pptdevs[pptdev] = pptdev
+        return self.pptdevs
+
+    @accepts()
     def vnc_bind_choices(self):
         """
         Available choices for VNC Bind attribute.
@@ -1849,7 +2001,8 @@ class VMDeviceService(CRUDService):
     @accepts(
         Dict(
             'vmdevice_create',
-            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'VNC', 'RAW'], required=True),
+            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'VNC', 'RAW'],
+                required=True),
             Int('vm', required=True),
             Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None, null=True),
@@ -1988,6 +2141,24 @@ class VMDeviceService(CRUDService):
             return False
 
     @private
+    async def get_iommu_type(self):
+        IOMMU_TESTS = {'VT-d': {'cmd_args': ['/usr/sbin/acpidump', '-t'],
+                                'pattern': br'DMAR'},
+                       'amdvi': {'cmd_args': ['/sbin/sysctl', '-i', 'hw.vmm.amdvi.enable'],
+                                 'pattern': br'vmm\.amdvi\.enable: 1'}}
+
+        if self.iommu_type is None:
+            for key, value in IOMMU_TESTS.items():
+                sp = await run(*value['cmd_args'], check=False)
+                if sp.returncode:
+                    raise CallError(f'Failed to check support for iommu ({key}): {sp.stderr.decode()}')
+                else:
+                    if re.search(value['pattern'], sp.stdout):
+                        self.iommu_type = key
+                        break
+        return self.iommu_type
+
+    @private
     async def validate_device(self, device, old=None, vm_instance=None):
         # We allow vm_instance to be passed for cases where VM devices are being updated via VM and
         # the device checks should be performed with the modified vm_instance object not the one db holds
@@ -2105,6 +2276,12 @@ class VMDeviceService(CRUDService):
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
             await self.failover_nic_check(device, verrors, 'attributes')
+        elif device.get('dtype') == 'PCI':
+            if device['attributes'].get('pptdev') not in (
+                    await self.middleware.call('vm.device.pptdev_choices')):
+                verrors.add('attribute.pptdev', 'Not a valid choice. The PCI device is not available for passthru.')
+            if (await self.middleware.call('vm.device.get_iommu_type')) is None:
+                verrors.add('attribute.pptdev', 'IOMMU support is required.')
         elif device.get('dtype') == 'VNC':
             if vm_instance:
                 if vm_instance['bootloader'] != 'UEFI':
