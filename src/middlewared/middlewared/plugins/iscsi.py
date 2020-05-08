@@ -10,6 +10,7 @@ from middlewared.utils import osc, run
 from middlewared.utils.path import is_child
 from middlewared.validators import Range
 
+import asyncio
 import bidict
 import errno
 import hashlib
@@ -1581,8 +1582,8 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
         await self._service_change('iscsitarget', 'reload')
 
         # For SCALE, reload action will remove existing LUN(s)
-        for lun_id in (lun_ids if osc.IS_FREEBSD else ()):
-            await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
+        if osc.IS_FREEBSD:
+            await asyncio.sleep(5)
 
     async def toggle(self, attachments, enabled):
         lun_ids = []
@@ -1596,8 +1597,7 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
         await self._service_change('iscsitarget', 'reload')
 
         if osc.IS_FREEBSD and not enabled:
-            for lun_id in lun_ids:
-                await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
+            await asyncio.sleep(5)
 
 
 async def setup(middleware):
