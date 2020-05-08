@@ -2143,9 +2143,9 @@ class VMDeviceService(CRUDService):
     @private
     async def get_iommu_type(self):
         IOMMU_TESTS = {'VT-d': {'cmd_args': ['/usr/sbin/acpidump', '-t'],
-                                'pattern': r'DMAR'},
+                                'pattern': br'DMAR'},
                        'amdvi': {'cmd_args': ['/sbin/sysctl', '-i', 'hw.vmm.amdvi.enable'],
-                                 'pattern': r'vmm\.amdvi\.enable: 1'}}
+                                 'pattern': br'vmm\.amdvi\.enable: 1'}}
 
         if self.iommu_type is None:
             for key, value in IOMMU_TESTS.items():
@@ -2153,7 +2153,7 @@ class VMDeviceService(CRUDService):
                 if sp.returncode:
                     raise CallError(f'Failed to check support for iommu ({key}): {sp.stderr.decode()}')
                 else:
-                    if re.search(value['pattern'], sp.stdout.decode()):
+                    if re.search(value['pattern'], sp.stdout):
                         self.iommu_type = key
                         break
         return self.iommu_type
