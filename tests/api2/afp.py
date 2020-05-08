@@ -11,7 +11,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name
+from auto_config import ip, pool_name, scale
 from config import *
 
 if "BRIDGEHOST" in locals():
@@ -20,7 +20,7 @@ dataset = f"{pool_name}/afp"
 dataset_url = dataset.replace('/', '%2F')
 AFP_NAME = "MyAFPShare"
 AFP_PATH = f"/mnt/{dataset}"
-VOL_GROUP = "wheel"
+group = 'root' if scale else 'wheel'
 Reason = "BRIDGEHOST is missing in ixautomation.conf"
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
 
@@ -45,7 +45,7 @@ def test_02_changing__dataset_permissions_of_afp_dataset():
         "acl": [],
         "mode": "777",
         "user": "root",
-        "group": "wheel"
+        "group": group
     }
     results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
     assert results.status_code == 200, results.text
