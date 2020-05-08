@@ -8,13 +8,14 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, wait_on_job
-from auto_config import pool_name
+from auto_config import pool_name, scale
 
 dataset = f'{pool_name}/webdav-osx-share'
 dataset_url = dataset.replace('/', '%2F')
 dataset_path = f'/mnt/{dataset}'
 TMP_FILE = '/tmp/testfile.txt'
 SHARE_NAME = 'webdavshare'
+group = 'root' if scale else 'wheel'
 
 
 @pytest.fixture(scope='module')
@@ -50,7 +51,7 @@ def test_03_Changing_permissions_on_dataset():
         'acl': [],
         'mode': '777',
         'user': 'root',
-        'group': 'wheel'
+        'group': group
     })
     assert results.status_code == 200, results.text
     global job_id
