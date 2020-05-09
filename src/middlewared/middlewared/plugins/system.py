@@ -1141,7 +1141,7 @@ class SystemGeneralService(ConfigService):
             Str('sysloglevel', enum=['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE',
                                      'F_INFO', 'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
-            Str('birthday', empty=False),
+            Str('timezone', empty=False),
             Bool('crash_reporting', null=True),
             Bool('usage_collection', null=True),
             update=True,
