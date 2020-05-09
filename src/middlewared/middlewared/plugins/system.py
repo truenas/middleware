@@ -6,7 +6,9 @@ from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc, sync_clock
+from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
+from middlewared.utils.clock import sync_clock
+
 from middlewared.validators import Range
 
 import csv
@@ -772,7 +774,7 @@ class SystemGeneralModel(sa.Model):
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
     stg_language = sa.Column(sa.String(120), default="en")
     stg_kbdmap = sa.Column(sa.String(120))
-    stg_birthday = sa.Column(sa.DateTime(), nullable=True)
+    stg_birthday = sa.Column(sa.DateTime())
     stg_timezone = sa.Column(sa.String(120), default="America/Los_Angeles")
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
@@ -1140,7 +1142,6 @@ class SystemGeneralService(ConfigService):
                                      'F_INFO', 'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
             Str('birthday', empty=False),
-            Str('timezone', empty=False),
             Bool('crash_reporting', null=True),
             Bool('usage_collection', null=True),
             update=True,
@@ -1364,12 +1365,35 @@ class SystemGeneralService(ConfigService):
     def set_crash_reporting(self):
         CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
+# Update Birthday Date
+async def _update_birthday(middleware):
+    # Sync clock
+    middleware.logger.debug('Synchornization the clock for system birthday')
+    birthday = None
+    timeout=60
+
+    while birthday == None:
+        birthday = sync_clock()
+        # Wait until be able to sync the clock
+        if birthday is None:
+            await asyncio.sleep(timeout)
+
+    settings = middleware.call_sync('datastore.config', 'system.settings')
+    middleware.call_sync('datastore.update', 'system.settings', settings['id'], {
+        'stg_birthday': birthday,
+    })
+
 
 async def _event_system(middleware, event_type, args):
     global SYSTEM_READY
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
+        # Check if birthday is already setted 
+        birthday = middleware.sync_call('system.info')['birthday']
+        # If it is not defined yet, it will try to define
+        if birthday is None:
+            asyncio.ensure_future(_update_birthday())
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
@@ -1525,10 +1549,6 @@ async def setup(middleware):
 
         if os.path.exists('/usr/local/sbin/beadm'):
             await firstboot(middleware)
-
-            # Sync clock
-            middleware.logger.debug('Synchornization the clock for system birthday')
-            sync_clock()
 
         if autotune_rv == 2:
             await run('shutdown', '-r', 'now', check=False)

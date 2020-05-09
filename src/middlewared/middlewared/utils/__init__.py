@@ -443,20 +443,3 @@ class LoadPluginsMixin(object):
     def get_services(self):
         return self._services
 
-# Sync the clock
-def sync_clock():
-    DEFAULT_NTP_SERVER="freebsd.pool.ntp.org"
-    client = ntplib.NTPClient()
-    server_alive = False
-    clock = None
-    try:
-        response = client.request(DEFAULT_NTP_SERVER)
-        if response.version:
-            server_alive = True
-            clock = response.tx_time
-            
-    except Exception:
-        # Internet not available, get datetime from host
-        clock = datetime.datetime.now()
-    
-    return clock
