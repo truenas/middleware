@@ -11,6 +11,7 @@ import socket
 import threading
 import time
 import traceback
+from subprocess import run
 
 from middlewared.common.environ import environ_update
 import middlewared.main
@@ -870,6 +871,29 @@ class CoreService(Service):
         "ping" protocol message.
         """
         return 'pong'
+    
+
+    def _ping_host(self, host, count, timeout):
+        process = run(['ping', '-c', f'{count}', '-W',  f'{timeout}', host])
+        if process.returncode != 0:
+            return False
+        else:
+            return True
+
+    @accepts(
+        Str('hostname'),
+        Int('timeout', default=10000),
+    )
+    def ping_remote(self, hostname, timeout):
+        """
+        Utility method call a ping in the other node. 
+        The other node will just return "pong".
+        """
+        ping_host = self._ping_host(hostname, 1, timeout)
+        if ping_host:
+            return 'pong'
+        else:
+            return 'failed'
 
     @accepts(
         Str('method'),
