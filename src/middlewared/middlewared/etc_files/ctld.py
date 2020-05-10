@@ -283,14 +283,7 @@ def main(middleware):
         # We can't change the vendor name of existing
         # LUNs without angering VMWare, but we can
         # use the right names going forward.
-        if extent.iscsi_target_extent_legacy is True:
-            addline('\toption "vendor" "FreeBSD"\n')
-        else:
-            if middleware.call_sync('system.is_freenas'):
-                addline('\toption "vendor" "FreeNAS"\n')
-            else:
-                addline('\toption "vendor" "TrueNAS"\n')
-
+        addline(f'\toption "vendor" "{extent.iscsi_target_extent_vendor}"\n')
         addline('\toption "product" "iSCSI Disk"\n')
         addline('\toption "revision" "0123"\n')
         addline('\toption "naa" "%s"\n' % extent.iscsi_target_extent_naa)
