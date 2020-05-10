@@ -1,5 +1,9 @@
 import ntplib
-import datetime
+from datetime import datetime, timezone
+
+
+def _convert_datetime(response, timezone_setting=timezone.utc):
+    return datetime.fromtimestamp(response.tx_time, timezone_setting)
 
 # Sync the clock
 def sync_clock(middleware):
@@ -13,7 +17,7 @@ def sync_clock(middleware):
         response = client.request("localhost")
         if response.version:
             server_alive = True
-            clock = response.tx_time
+            clock = _convert_datetime(response)
     except Exception:
         # Cannot connect to NTP server 
         pass  
@@ -28,7 +32,7 @@ def sync_clock(middleware):
             response = client.request(server)
             if response.version:
                 server_alive = True
-                clock = response.tx_time
+                clock = _convert_datetime(response)
                 # Get the time, it could stop now
                 break
                 

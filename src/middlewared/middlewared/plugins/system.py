@@ -1373,13 +1373,16 @@ async def _update_birthday(middleware):
     timeout=60
 
     while birthday == None:
-        birthday = sync_clock()
+        birthday = sync_clock(middleware)
         # Wait until be able to sync the clock
         if birthday is None:
             await asyncio.sleep(timeout)
 
     settings = middleware.call_sync('datastore.config', 'system.settings')
     middleware.call_sync('datastore.update', 'system.settings', settings['id'], {
+        'stg_birthday': birthday,
+    })
+    c.call('datastore.update', 'system.settings', settings['id'], {
         'stg_birthday': birthday,
     })
 
