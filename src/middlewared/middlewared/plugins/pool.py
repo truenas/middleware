@@ -3577,7 +3577,18 @@ class PoolDatasetService(CRUDService):
         ]
         """
         result = []
-        dataset = await self.get_instance(oid)
+        dataset = None
+        path=None
+
+        try:
+            dataset = await self.get_instance(oid)
+        except ValidationError as e:
+            if e.errno == errno.ENOENT:
+                # Dataset might not exist (e.g. not online), this is not an error
+                pass
+        if dataset is None:
+            return result
+        
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
