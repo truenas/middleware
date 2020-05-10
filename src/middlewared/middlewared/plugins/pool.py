@@ -3586,6 +3586,9 @@ class PoolDatasetService(CRUDService):
             if e.errno == errno.ENOENT:
                 # Dataset might not exist (e.g. not online), this is not an error
                 pass
+            else:
+                raise
+            
         if dataset is None:
             return result
         
