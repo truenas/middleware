@@ -351,7 +351,7 @@ class SMBService(SystemServiceService):
             return
 
         disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
-        existing_groupmap = await self.middleware.call('smb.groupmap_list')
+        existing_groupmap = await self.groupmap_list()
         for user in (await self.middleware.call('user.query')):
             disallowed_list.append(user['username'].upper())
         for g in existing_groupmap.values():
@@ -360,6 +360,7 @@ class SMBService(SystemServiceService):
         if group.upper() in disallowed_list:
             self.logger.debug('Setting group map for %s is not permitted', group)
             return False
+
         gm_add = await run(
             [SMBCmd.NET.value, '-d', '0', 'groupmap', 'add', 'type=local', f'unixgroup={group}', f'ntgroup={group}'],
             check=False

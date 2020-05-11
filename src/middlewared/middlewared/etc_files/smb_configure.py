@@ -199,30 +199,6 @@ def set_SID(middleware, config):
 
 
 """
-    Validate contents of group_mapping.tdb, which maps local Unix groups to Windows group
-    SIDs. This file should:
-    1) contain no duplicate or inconsistent entries
-    2) contain no group names that are identical to usernames
-
-    To do: add validation of SID values in the tdb file.
-"""
-
-
-def get_groups(middleware):
-    _groups = {}
-    groups = middleware.call_sync('group.query', [('builtin', '=', False)])
-    for g in groups:
-        key = str(g['group'])
-        _groups[key] = []
-        members = middleware.call_sync('user.query', [["id", "in", g["users"]]])
-
-        for m in members:
-            _groups[key].append(str(m['username']))
-
-    return _groups
-
-
-"""
     The Windows Security Identifier (SID) is a unique value of variable length.
     Example: S-1-5-21-3623811015-3361044348-30300820-1013
     In the context of Samba group mappings, the group SID can be broken up as follows:
@@ -283,14 +259,20 @@ def fixsid(middleware, conf, groupmap):
 
 
 def validate_group_mappings(middleware, conf):
+    users = {}
+    users.update({x['username']: x for x in conf["smb_users"]})
     groupmap = middleware.call_sync('smb.groupmap_list')
     if groupmap:
         sids_fixed = fixsid(middleware, conf, groupmap.values())
         if not sids_fixed:
-            groupmap = []
-    groups = get_groups(middleware)
+            groupmap = {}
+
+    groups = [g["group"] for g in middleware.call_sync("group.query", [("builtin", "=", False)])]
     for g in groups:
-        if not any(filter(lambda x: g.upper() == x['ntgroup'].upper(), groupmap)):
+        if users.get(g):
+            continue
+
+        if not groupmap.get(g):
             middleware.call_sync('smb.groupmap_add', g)
 
 
