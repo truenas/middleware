@@ -96,9 +96,9 @@ def generate_ha_syslog(middleware):
     with open("/etc/newsyslog.conf") as f:
         newsyslog_conf = f.read()
 
-    newsyslog_conf += f"{controller_file}		640  10	   200	@0101T JC"
-    newsyslog_conf += f"{FENCED_LOG}		        640  10	   200	* JC"
-    newsyslog_conf += f"{FAILOVER_LOG}		        640  10	   200	* JC"
+    newsyslog_conf += f"{controller_file}               640  10   200	@0101T JC"
+    newsyslog_conf += f"{FENCED_LOG}                    640  10   200   * JC"
+    newsyslog_conf += f"{FAILOVER_LOG}                  640  10   200   * JC"
 
     with open("/etc/newsyslog.conf", "w") as f:
         f.write(newsyslog_conf)
