@@ -1,5 +1,5 @@
-from gfs.cli import volume
-from gfs.cli.utils import GlusterCmdException
+from glustercli.cli import volume
+from glustercli.cli.utils import GlusterCmdException
 
 from middlewared.service import (CRUDService, accepts,
                                  job, private, CallError,

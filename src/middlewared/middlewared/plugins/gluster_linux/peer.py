@@ -1,5 +1,5 @@
-from gfs.cli import peer
-from gfs.cli.utils import GlusterCmdException
+from glustercli.cli import peer
+from glustercli.cli.utils import GlusterCmdException
 
 from middlewared.async_validators import resolve_hostname
 from middlewared.schema import Dict, Str
