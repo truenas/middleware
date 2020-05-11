@@ -7,6 +7,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str, ValidationEr
 from middlewared.validators import Range
 from middlewared.service import private, SystemServiceService
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc
 
 
 class SSHModel(sa.Model):
@@ -143,7 +144,10 @@ class SSHService(SystemServiceService):
             "ssh_host_ed25519_key.pub",
             "ssh_host_ed25519_key-cert.pub",
         ]:
-            path = os.path.join("/usr/local/etc/ssh", i)
+            if osc.IS_FREEBSD:
+                path = os.path.join("/usr/local/etc/ssh", i)
+            else:
+                path = os.path.join("/etc/ssh", i)
             if os.path.exists(path):
                 with open(path, "rb") as f:
                     data = base64.b64encode(f.read()).decode("ascii")

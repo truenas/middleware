@@ -1,19 +1,22 @@
 # -*- coding=utf-8 -*-
+import re
+import json
 import logging
-
-import apt
 
 logger = logging.getLogger(__name__)
 
 __all__ = ['get_app_version']
 
+RE_UNSTABLE = re.compile('.+-[0-9]{12}$')
+
 
 def get_app_version():
-    cache = apt.Cache()
-    package = cache.get('truenas')
+    with open('/data/manifest.json') as f:
+        manifest = json.load(f)
+
     return {
-        'stable': 'git' not in package.installed.version,
-        'version': package.installed.version,
-        'fullname': f'TrueNAS-{package.installed.version.split("+")[0]}',
+        'stable': not RE_UNSTABLE.match(manifest['version']),
+        'version': manifest['version'][len('TrueNAS-'):],
+        'fullname': manifest['version'],
         'buildtime': None,
     }

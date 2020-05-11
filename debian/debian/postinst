@@ -1,5 +1,7 @@
 #!/bin/sh
+dpkg-divert --add --package truenas --rename --divert /etc/grub.d__10_linux /etc/grub.d/10_linux
 
 # It unconfigures interfaces we've just configured even if it is instructed to do not touch anything
 systemctl disable systemd-networkd
+
 #DEBHELPER#
