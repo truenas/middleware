@@ -8,6 +8,9 @@ import textwrap
 
 logger = logging.getLogger(__name__)
 
+FENCED_LOG = '/root/syslog/fenced.log'
+FAILOVER_LOG = '/root/syslog/failover.log'
+
 
 def generate_syslog_conf(middleware):
     # In 12.0 we can have /conf/base/usr__local__etc as the base point for /usr/local/etc/tmpfs
@@ -94,6 +97,8 @@ def generate_ha_syslog(middleware):
         newsyslog_conf = f.read()
 
     newsyslog_conf += f"{controller_file}		640  10	   200	@0101T JC"
+    newsyslog_conf += f"{FENCED_LOG}		        640  10	   200	* JC"
+    newsyslog_conf += f"{FAILOVER_LOG}		        640  10	   200	* JC"
 
     with open("/etc/newsyslog.conf", "w") as f:
         f.write(newsyslog_conf)
