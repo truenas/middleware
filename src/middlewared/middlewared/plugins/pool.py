@@ -3578,7 +3578,7 @@ class PoolDatasetService(CRUDService):
         """
         result = []
         dataset = None
-        path=None
+        path = None
 
         try:
             dataset = await self.get_instance(oid)
