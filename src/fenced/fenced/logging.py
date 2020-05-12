@@ -7,8 +7,10 @@
 import logging
 import logging.config
 import logging.handlers
+import os
 
 LOG_FILE = '/root/syslog/fenced.log'
+
 
 class FaultSysLogHandler(logging.handlers.SysLogHandler):
     """
@@ -24,6 +26,19 @@ class FaultSysLogHandler(logging.handlers.SysLogHandler):
         if self.sock:
             self.sock.close()
             self.sock = None
+
+
+def ensure_logdir_exists():
+    """
+    We need to ensure that the directory in `LOG_FILE` exists
+    so logging works
+    """
+    dirname = os.path.dirname(LOG_FILE)
+
+    if not os.path.exists(dirname):
+        os.makedirs(dirname, exist_ok=True)
+
+    return
 
 
 def setup_logging(foreground):
@@ -49,7 +64,7 @@ def setup_logging(foreground):
                 'formatter': 'simple',
                 'level': 'ERROR',
                 'filename': LOG_FILE,
-                'maxBytes': 1000000, # 1MB size
+                'maxBytes': 1000000,  # 1MB size
                 'backupCount': '3',
             },
             'console': {
@@ -67,4 +82,3 @@ def setup_logging(foreground):
             },
         },
     })
-

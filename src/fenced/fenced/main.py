@@ -17,7 +17,7 @@ import time
 
 from fenced.exceptions import PanicExit
 from fenced.fence import Fence, ExitCode
-from fenced.logging import setup_logging
+from fenced.logging import ensure_logdir_exists, setup_logging
 
 logger = logging.getLogger(__name__)
 ALERT_FILE = '/data/sentinels/.fenced-alert'
@@ -90,6 +90,7 @@ def main():
     )
     args = parser.parse_args()
 
+    ensure_logdir_exists()
     setup_logging(args.foreground)
 
     if is_running():
