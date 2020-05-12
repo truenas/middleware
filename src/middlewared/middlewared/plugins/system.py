@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
@@ -7,10 +7,10 @@ from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import CallError, ConfigService, no_auth_required, job, private, Service, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
-from middlewared.utils.clock import sync_clock
 
 from middlewared.validators import Range
 
+import ntplib
 import csv
 import io
 import os
@@ -578,6 +578,48 @@ class SystemService(Service):
             'system_manufacturer': manufacturer,
             'ecc_memory': ecc_memory,
         }
+
+    async def _convert_datetime(self, response, timezone_setting=timezone.utc):
+        return datetime.fromtimestamp(response.tx_time, timezone_setting)
+
+    # Sync the clock
+    @private
+    async def sync_clock(self):
+        
+        client = ntplib.NTPClient()
+        server_alive = False
+        clock = None
+        
+        # Tries to get default ntpd server
+        try:
+            response = client.request("localhost")
+            if response.version:
+                server_alive = True
+                clock = await self._convert_datetime(response)
+        except Exception:
+            # Cannot connect to NTP server 
+            pass  
+        
+        if clock is not None: 
+            return clock
+
+        # If it fails, tries the list of default ntp servers configurable
+        ntp_servers = self.middleware.call_sync('system.ntpserver.query')
+        for server in ntp_servers:
+            try:
+                response = client.request(server)
+                if response.version:
+                    server_alive = True
+                    clock = await self._convert_datetime(response)
+                    # Get the time, it could stop now
+                    break
+                    
+            except Exception:
+                # Cannot connect to the ntp server 
+                pass 
+        
+        return clock
+
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
     async def feature_enabled(self, name):
@@ -1373,16 +1415,13 @@ async def _update_birthday(middleware):
     timeout=60
 
     while birthday == None:
-        birthday = sync_clock(middleware)
+        birthday = await sync_clock(middleware)
         # Wait until be able to sync the clock
         if birthday is None:
             await asyncio.sleep(timeout)
 
     settings = middleware.call_sync('datastore.config', 'system.settings')
     middleware.call_sync('datastore.update', 'system.settings', settings['id'], {
-        'stg_birthday': birthday,
-    })
-    c.call('datastore.update', 'system.settings', settings['id'], {
         'stg_birthday': birthday,
     })
 
