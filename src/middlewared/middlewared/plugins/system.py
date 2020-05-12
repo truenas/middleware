@@ -585,22 +585,18 @@ class SystemService(Service):
     # Sync the clock
     @private
     async def sync_clock(self):
-        
         client = ntplib.NTPClient()
-        server_alive = False
         clock = None
-        
         # Tries to get default ntpd server
         try:
             response = client.request("localhost")
             if response.version:
-                server_alive = True
                 clock = await self._convert_datetime(response)
         except Exception:
-            # Cannot connect to NTP server 
-            pass  
-        
-        if clock is not None: 
+            # Cannot connect to NTP server
+            pass
+
+        if clock is not None:
             return clock
 
         # If it fails, tries the list of default ntp servers configurable
@@ -609,17 +605,14 @@ class SystemService(Service):
             try:
                 response = client.request(server)
                 if response.version:
-                    server_alive = True
                     clock = await self._convert_datetime(response)
                     # Get the time, it could stop now
                     break
-                    
             except Exception:
-                # Cannot connect to the ntp server 
-                pass 
-        
-        return clock
+                # Cannot connect to the ntp server
+                pass
 
+        return clock
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
     async def feature_enabled(self, name):
@@ -1407,15 +1400,16 @@ class SystemGeneralService(ConfigService):
     def set_crash_reporting(self):
         CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
+
 # Update Birthday Date
 async def _update_birthday(middleware):
     # Sync clock
     middleware.logger.debug('Synchornization the clock for system birthday')
     birthday = None
-    timeout=60
+    timeout = 60
 
-    while birthday == None:
-        birthday = await sync_clock(middleware)
+    while birthday is None:
+        birthday = await middleware.call('system.sync_clock')
         # Wait until be able to sync the clock
         if birthday is None:
             await asyncio.sleep(timeout)
@@ -1431,7 +1425,7 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
-        # Check if birthday is already setted 
+        # Check if birthday is already setted
         birthday = middleware.sync_call('system.info')['birthday']
         # If it is not defined yet, it will try to define
         if birthday is None:
