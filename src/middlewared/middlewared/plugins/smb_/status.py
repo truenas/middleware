@@ -7,6 +7,7 @@ import json
 
 
 class InfoLevel(enum.Enum):
+    AUTH_LOG = 'l'
     ALL = ''
     SESSIONS = 'p'
     SHARES = 'S'
@@ -46,6 +47,23 @@ class SMBService(Service):
         properly. `restrict_user` specifies the limits results to the specified
         user.
         """
+
+        if InfoLevel[info_level] == InfoLevel.AUTH_LOG:
+            ret = []
+            try:
+                with open("/var/log/samba4/auth_audit.log", "r") as f:
+                    logfile_entries = f.read()
+            except FileNotFoundError:
+                self.logger.warning("SMB auth audit log does not exist "
+                                    "this is expected if users have never "
+                                    "authenticated to this server.")
+                return ret
+
+            for e in logfile_entries.splitlines():
+                ret.append(json.loads(e.strip()))
+
+            return filter_list(ret, filters, options)
+
         flags = '-j'
         flags = flags + InfoLevel[info_level].value
         flags = flags + 'v' if status_options['verbose'] else flags
