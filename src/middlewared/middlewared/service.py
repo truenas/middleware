@@ -17,7 +17,7 @@ from middlewared.common.environ import environ_update
 import middlewared.main
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.logger import Logger, reconfigure_logging
 from middlewared.job import Job
@@ -874,7 +874,11 @@ class CoreService(Service):
     
 
     def _ping_host(self, host, count, timeout):
-        process = run(['ping', '-c', f'{count}', '-W',  f'{timeout}', host])
+        if osc.IS_LINUX:
+            process = run(['ping', '-c', f'{count}', '-w',  f'{timeout}', host])
+        else:
+            process = run(['ping', '-c', f'{count}', '-t',  f'{timeout}', host])
+
         if process.returncode != 0:
             return False
         else:
@@ -882,7 +886,7 @@ class CoreService(Service):
 
     @accepts(
         Str('hostname'),
-        Int('timeout', default=10000),
+        Int('timeout', default=10), # seconds
     )
     def ping_remote(self, hostname, timeout):
         """
