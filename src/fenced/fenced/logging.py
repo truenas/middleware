@@ -34,11 +34,7 @@ def ensure_logdir_exists():
     so logging works
     """
     dirname = os.path.dirname(LOG_FILE)
-
-    if not os.path.exists(dirname):
-        os.makedirs(dirname, exist_ok=True)
-
-    return
+    os.makedirs(dirname, exist_ok=True)
 
 
 def setup_logging(foreground):
