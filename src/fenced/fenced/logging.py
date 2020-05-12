@@ -42,6 +42,9 @@ def ensure_logdir_exists():
 
 
 def setup_logging(foreground):
+
+    ensure_logdir_exists()
+
     logging.config.dictConfig({
         'version': 1,
         'disable_existing_loggers': False,
