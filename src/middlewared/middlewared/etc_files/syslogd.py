@@ -110,6 +110,12 @@ def generate_ha_syslog(middleware):
         syslog_conf = f.read()
 
     syslog_conf += textwrap.dedent(f"""\
+        #
+        # filter smbd related messages across HA syslog connection
+        #
+        filter f_not_smb { not program("smbd"); };
+
+
         source this_controller {{
             udp(ip({controller_ip}) port({controller_port}));
             udp(default-facility(syslog) default-priority(emerg));
@@ -123,7 +129,7 @@ def generate_ha_syslog(middleware):
         destination other_controller_file {{ file("{controller_file}"); }};
         destination other_controller {{ udp("{controller_other_ip}" port({controller_port})); }};
 
-        log {{ source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); destination(other_controller); }};
+        log {{ source(src); filter(f_not_smb); filter(f_not_mdnsresponder); filter(f_not_nginx); destination(other_controller); }};
     """)
 
     with open("/etc/local/syslog-ng.conf", "w") as f:
