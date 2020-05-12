@@ -113,7 +113,7 @@ def generate_ha_syslog(middleware):
         #
         # filter smbd related messages across HA syslog connection
         #
-        filter f_not_smb { not program("smbd"); };
+        filter f_not_smb {{ not program("smbd"); }};
 
 
         source this_controller {{
