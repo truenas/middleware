@@ -871,13 +871,12 @@ class CoreService(Service):
         "ping" protocol message.
         """
         return 'pong'
-    
 
     def _ping_host(self, host, count, timeout):
         if osc.IS_LINUX:
-            process = run(['ping', '-c', f'{count}', '-w',  f'{timeout}', host])
+            process = run(['ping', '-c', f'{count}', '-w', f'{timeout}', host])
         else:
-            process = run(['ping', '-c', f'{count}', '-t',  f'{timeout}', host])
+            process = run(['ping', '-c', f'{count}', '-t', f'{timeout}', host])
 
         if process.returncode != 0:
             return False
@@ -886,11 +885,11 @@ class CoreService(Service):
 
     @accepts(
         Str('hostname'),
-        Int('timeout', default=10), # seconds
+        Int('timeout', default=10),  # seconds
     )
     def ping_remote(self, hostname, timeout):
         """
-        Utility method call a ping in the other node. 
+        Utility method call a ping in the other node.
         The other node will just return "pong".
         """
         ping_host = self._ping_host(hostname, 1, timeout)
