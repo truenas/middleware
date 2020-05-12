@@ -38,7 +38,7 @@ def test_04_degrading_a_pool_to_create_an_alert():
     assert results['result'] is True, results['output']
 
 
-def test_05_ensure_the_pool_is_degraded():
+def test_05_verify_the_pool_is_degraded():
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -100,7 +100,7 @@ def test_12_clear_the_pool_degradation():
     assert results['result'] is True, results['output']
 
 
-def test_13_ensure_the_pool_is_not_degraded():
+def test_13_verify_the_pool_is_not_degraded():
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
