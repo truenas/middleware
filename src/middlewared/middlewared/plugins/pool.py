@@ -1559,7 +1559,17 @@ class PoolService(CRUDService):
         Returns a list of running processes using this pool.
         """
         pool = await self.get_instance(oid)
-        return await self.middleware.call('pool.dataset.processes', pool['name'])
+        processes = []
+        try:
+            processes = await self.middleware.call('pool.dataset.processes', pool['name'])
+        except ValidationError as e:
+            if e.errno == errno.ENOENT:
+                # Dataset might not exist (e.g. not online), this is not an error
+                pass
+            else:
+                raise
+
+        return processes
 
     def __dtrace_read(self, job, proc):
         while True:
@@ -3577,21 +3587,7 @@ class PoolDatasetService(CRUDService):
         ]
         """
         result = []
-        dataset = None
-        path = None
-
-        try:
-            dataset = await self.get_instance(oid)
-        except ValidationError as e:
-            if e.errno == errno.ENOENT:
-                # Dataset might not exist (e.g. not online), this is not an error
-                pass
-            else:
-                raise
-            
-        if dataset is None:
-            return result
-        
+        dataset = await self.get_instance(oid)
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
         if path:
