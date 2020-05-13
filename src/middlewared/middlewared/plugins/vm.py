@@ -932,8 +932,10 @@ class VMService(CRUDService):
         ug = sysctl.filter('hw.vmm.vmx.cap.unrestricted_guest')
         data['unrestricted_guest'] = True if ug and ug[0].value else False
 
+        # If virtualisation is not supported on AMD, the sysctl value will be -1 but as an unsigned integer
+        # we should make sure we check that accordingly.
         rvi = sysctl.filter('hw.vmm.svm.features')
-        data['amd_rvi'] = True if rvi and rvi[0].value != 0 and not intel \
+        data['amd_rvi'] = True if rvi and rvi[0].value != 0xffffffff and not intel \
             else False
 
         asids = sysctl.filter('hw.vmm.svm.num_asids')
