@@ -579,9 +579,6 @@ class SystemService(Service):
             'ecc_memory': ecc_memory,
         }
 
-    def _convert_datetime(self, response, timezone_setting=timezone.utc):
-        return datetime.fromtimestamp(response.tx_time, timezone_setting)
-
     # Sync the clock
     @private
     def sync_clock(self):
@@ -591,7 +588,7 @@ class SystemService(Service):
         try:
             response = client.request("localhost")
             if response.version:
-                clock = self._convert_datetime(response)
+                clock = datetime.fromtimestamp(response.tx_time, timezone.utc)
         except Exception:
             # Cannot connect to NTP server
             pass
@@ -1385,9 +1382,20 @@ class SystemGeneralService(ConfigService):
 
 
 async def _update_birthday_data(middleware, birthday=None):
+    middleware.logger.debug('Synchornization _update_birthday_data interface')
+    # Check if it is exists already
+    system_obj = (await middleware.call('system.info'))
+    birthday_obj = system_obj['birthday']
+    if birthday_obj is not None:
+        # Already setted before.
+        return
+
+    # If it is not defined yet, it will try to define
     if birthday is None:
         birthday = (await middleware.call('system.sync_clock'))
+
     if birthday is not None:
+        # Update System Settings
         settings = await middleware.call('datastore.config', 'system.settings')
         await middleware.call('datastore.update', 'system.settings', settings['id'], {
             'stg_birthday': birthday,
@@ -1397,7 +1405,7 @@ async def _update_birthday_data(middleware, birthday=None):
 # Update Birthday Date
 async def _update_birthday(middleware):
     # Sync clock
-    middleware.logger.debug('Synchornization the clock for system birthday')
+    middleware.logger.debug('Synchronization the clock for system birthday')
     birthday = None
     timeout = 3600 * 24
 
@@ -1409,6 +1417,7 @@ async def _update_birthday(middleware):
         # Wait until be able to sync the clock
         if birthday is None:
             await asyncio.sleep(timeout)
+
     await _update_birthday_data(middleware, birthday)
 
 
