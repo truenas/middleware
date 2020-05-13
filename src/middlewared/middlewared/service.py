@@ -892,7 +892,7 @@ class CoreService(Service):
         Utility method call a ping in the other node.
         The other node will just return "pong".
         """
-        ping_host = self._ping_host(hostname, 1, timeout)
+        ping_host = self._ping_host(hostname, 3, timeout)
         if ping_host:
             return 'pong'
         else:
