@@ -74,7 +74,7 @@ class UserModel(sa.Model):
     bsdusr_uid = sa.Column(sa.Integer())
     bsdusr_username = sa.Column(sa.String(16), default='User &')
     bsdusr_unixhash = sa.Column(sa.String(128), default='*')
-    bsdusr_smbhash = sa.Column(sa.String(128), default='*')
+    bsdusr_smbhash = sa.Column(sa.EncryptedText(), default='*')
     bsdusr_home = sa.Column(sa.String(255), default="/nonexistent")
     bsdusr_shell = sa.Column(sa.String(120), default='/bin/csh')
     bsdusr_full_name = sa.Column(sa.String(120))

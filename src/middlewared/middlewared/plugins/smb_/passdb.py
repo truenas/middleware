@@ -74,15 +74,20 @@ class SMBService(Service):
 
         bsduser = await self.middleware.call('user.query', [
             ('username', '=', username),
-            ['OR', [
-                ('smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
-                ('smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
-            ]]
+            ('smb', '=', True),
         ])
         if not bsduser:
             self.logger.debug(f'{username} is not an SMB user, bypassing passdb import')
             return
+
         smbpasswd_string = bsduser[0]['smbhash'].split(':')
+        if len(smbpasswd_string) != 7:
+            self.logger.warning("SMB hash for user [%s] is invalid. Authentication for SMB "
+                                "sessions for this user will fail until this is repaired. "
+                                "This may indicate that configuration was restored without a secret "
+                                "seed, and may be repaired by resetting the user password.", username)
+            return
+
         p = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-Lw', username], check=False)
         if p.returncode != 0:
             CallError(f'Failed to retrieve passdb entry for {username}: {p.stderr.decode()}')
@@ -138,12 +143,7 @@ class SMBService(Service):
         if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
             return
 
-        conf_users = await self.middleware.call('user.query', [
-            ['OR', [
-                ('smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
-                ('smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
-            ]]
-        ])
+        conf_users = await self.middleware.call('user.query', [("smb", "=", True)])
         for u in conf_users:
             await self.middleware.call('smb.update_passdb_user', u['username'])
 
