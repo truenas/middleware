@@ -579,39 +579,22 @@ class SystemService(Service):
             'ecc_memory': ecc_memory,
         }
 
-    async def _convert_datetime(self, response, timezone_setting=timezone.utc):
+    def _convert_datetime(self, response, timezone_setting=timezone.utc):
         return datetime.fromtimestamp(response.tx_time, timezone_setting)
 
     # Sync the clock
     @private
-    async def sync_clock(self):
+    def sync_clock(self):
         client = ntplib.NTPClient()
         clock = None
         # Tries to get default ntpd server
         try:
             response = client.request("localhost")
             if response.version:
-                clock = await self._convert_datetime(response)
+                clock = self._convert_datetime(response)
         except Exception:
             # Cannot connect to NTP server
             pass
-
-        if clock is not None:
-            return clock
-
-        # If it fails, tries the list of default ntp servers configurable
-        ntp_servers = self.middleware.call_sync('system.ntpserver.query')
-        for server in ntp_servers:
-            try:
-                response = client.request(server)
-                if response.version:
-                    clock = await self._convert_datetime(response)
-                    # Get the time, it could stop now
-                    break
-            except Exception:
-                # Cannot connect to the ntp server
-                pass
-
         return clock
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
@@ -1401,35 +1384,47 @@ class SystemGeneralService(ConfigService):
         CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
+async def _update_birthday_data(middleware, birthday=None):
+    if birthday is None:
+        birthday = (await middleware.call('system.sync_clock'))
+    if birthday is not None:
+        settings = await middleware.call('datastore.config', 'system.settings')
+        await middleware.call('datastore.update', 'system.settings', settings['id'], {
+            'stg_birthday': birthday,
+        })
+
+
 # Update Birthday Date
 async def _update_birthday(middleware):
     # Sync clock
     middleware.logger.debug('Synchornization the clock for system birthday')
     birthday = None
-    timeout = 60
+    timeout = 3600 * 24
+
+    middleware.register_hook('interface.post_sync', _update_birthday_data)
 
     while birthday is None:
-        birthday = await middleware.call('system.sync_clock')
+        birthday = (await middleware.call('system.sync_clock'))
+
         # Wait until be able to sync the clock
         if birthday is None:
             await asyncio.sleep(timeout)
-
-    settings = middleware.call_sync('datastore.config', 'system.settings')
-    middleware.call_sync('datastore.update', 'system.settings', settings['id'], {
-        'stg_birthday': birthday,
-    })
+    await _update_birthday_data(middleware, birthday)
 
 
 async def _event_system(middleware, event_type, args):
+
     global SYSTEM_READY
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
         # Check if birthday is already setted
-        birthday = middleware.sync_call('system.info')['birthday']
+        system_obj = (await middleware.call('system.info'))
+        birthday = system_obj['birthday']
+
         # If it is not defined yet, it will try to define
         if birthday is None:
-            asyncio.ensure_future(_update_birthday())
+            asyncio.ensure_future(_update_birthday(middleware))
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
@@ -1610,6 +1605,7 @@ async def setup(middleware):
                 f'{srv}.post_{event}',
                 update_timeout_value
             )
+    middleware.logger.debug('Event SUBSCRIBE _event_system')
 
     middleware.event_subscribe('system', _event_system)
     middleware.register_event_source('system.health', SystemHealthEventSource)
