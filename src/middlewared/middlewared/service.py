@@ -23,7 +23,7 @@ from middlewared.logger import Logger, reconfigure_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 from middlewared.utils.type import copy_function_metadata
-
+from middlewared.validators import Range
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 get_or_insert_lock = asyncio.Lock()
@@ -872,11 +872,11 @@ class CoreService(Service):
         """
         return 'pong'
 
-    def _ping_host(self, host, count, timeout):
+    def _ping_host(self, host, timeout):
         if osc.IS_LINUX:
-            process = run(['ping', '-c', f'{count}', '-w', f'{timeout}', host])
+            process = run(['ping', '-w', f'{timeout}', host])
         else:
-            process = run(['ping', '-c', f'{count}', '-t', f'{timeout}', host])
+            process = run(['ping', '-t', f'{timeout}', host])
 
         if process.returncode != 0:
             return False
@@ -885,14 +885,14 @@ class CoreService(Service):
 
     @accepts(
         Str('hostname'),
-        Int('timeout', default=10),  # seconds
+        Int('timeout', validators=[Range(min=1, max=60)], default=10),  # seconds
     )
     def ping_remote(self, hostname, timeout):
         """
-        Utility method call a ping in the other node.
-        The other node will just return "pong".
+        Method that will send an ICMPv4 echo request to "hostname"
+        and will wait up to "timeout" for a reply.
         """
-        ping_host = self._ping_host(hostname, 3, timeout)
+        ping_host = self._ping_host(hostname, timeout)
         if ping_host:
             return 'pong'
         else:
