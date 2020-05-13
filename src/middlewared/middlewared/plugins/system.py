@@ -591,6 +591,7 @@ class SystemService(Service):
                 clock = datetime.fromtimestamp(response.tx_time, timezone.utc)
         except Exception:
             # Cannot connect to NTP server
+            self.middleware.logger.debug('Error while connecting to NTP server')
             pass
         return clock
 
@@ -1382,9 +1383,9 @@ class SystemGeneralService(ConfigService):
 
 
 async def _update_birthday_data(middleware, birthday=None):
-    middleware.logger.debug('Synchornization _update_birthday_data interface')
+    middleware.logger.debug('Synchronization/update birthday data')
     # Check if it is exists already
-    system_obj = (await middleware.call('system.info'))
+    system_obj = await middleware.call('system.info')
     birthday_obj = system_obj['birthday']
     if birthday_obj is not None:
         # Already setted before.
@@ -1392,7 +1393,7 @@ async def _update_birthday_data(middleware, birthday=None):
 
     # If it is not defined yet, it will try to define
     if birthday is None:
-        birthday = (await middleware.call('system.sync_clock'))
+        birthday = await middleware.call('system.sync_clock')
 
     if birthday is not None:
         # Update System Settings
@@ -1412,7 +1413,7 @@ async def _update_birthday(middleware):
     middleware.register_hook('interface.post_sync', _update_birthday_data)
 
     while birthday is None:
-        birthday = (await middleware.call('system.sync_clock'))
+        birthday = await middleware.call('system.sync_clock')
 
         # Wait until be able to sync the clock
         if birthday is None:
@@ -1428,7 +1429,7 @@ async def _event_system(middleware, event_type, args):
     if args['id'] == 'ready':
         SYSTEM_READY = True
         # Check if birthday is already setted
-        system_obj = (await middleware.call('system.info'))
+        system_obj = await middleware.call('system.info')
         birthday = system_obj['birthday']
 
         # If it is not defined yet, it will try to define
