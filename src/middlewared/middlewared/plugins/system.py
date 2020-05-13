@@ -1605,7 +1605,6 @@ async def setup(middleware):
                 f'{srv}.post_{event}',
                 update_timeout_value
             )
-    middleware.logger.debug('Event SUBSCRIBE _event_system')
 
     middleware.event_subscribe('system', _event_system)
     middleware.register_event_source('system.health', SystemHealthEventSource)
