@@ -88,12 +88,12 @@ class Disks(dict):
 
         def callback(i, fs, failed):
             try:
-                host_key, remote_keys = i.result()
+                host_key, remote_key = i.result()
+                remote_keys.update(remote_key)
                 if host_key is None:
                     failed.add(fs[i])
                     return
                 keys.add(host_key)
-                remote_keys.union(remote_keys)
             except Exception:
                 failed.add(fs[i])
 
