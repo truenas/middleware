@@ -426,7 +426,7 @@ class SystemDatasetService(ConfigService):
 
                     os.rmdir('/tmp/system.new')
                 else:
-                    raise CallError('Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
+                    raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
         finally:
 
             restart.reverse()
