@@ -453,6 +453,7 @@ class CRUDService(ServiceChangeMixin, Service):
         await self.middleware.call_hook(f'{self._config.namespace}.post_delete', rv)
         return rv
 
+    @private
     async def get_instance(self, id):
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
