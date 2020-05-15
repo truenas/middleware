@@ -16,7 +16,7 @@
 # future, these defaults may change to more conservative ones.
 #
 # logfilename          [owner:group]    mode count size when  flags [/pid_file] [sig_num]
-/var/log/afp.log			640  7	   *	@T00  JN
+/var/log/afp.log			640  7	   *	@T00  J     /var/run/netatalk.pid 
 /var/log/all.log			600  2	   *	@T00  J
 /var/log/amd.log			644  2	   100	*     J
 /var/log/auth.log			600  7     100  @0101T JC
