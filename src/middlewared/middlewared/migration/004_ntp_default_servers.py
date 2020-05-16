@@ -2,6 +2,8 @@ async def migrate(middleware):
     if await middleware.call('system.product') != 'SCALE':
         return
 
+    # There is a drawback with this approach, it will virtually not allow any user to use freebsd ntp server
+    # TODO: Discuss this please and how best we should take care of this case
     servers = await middleware.call(
         'datastore.query', 'system.ntpserver', [['ntp_address', 'in', [f'{i}.freebsd.pool.ntp.org' for i in range(3)]]]
     )

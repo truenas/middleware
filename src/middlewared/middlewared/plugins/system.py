@@ -959,7 +959,11 @@ class SystemGeneralService(ConfigService):
             shell=True
         )
         self._timezone_choices = (await pipe.communicate())[0].decode().strip().split('\n')
-        self._timezone_choices = {x[20:]: x[20:] for x in self._timezone_choices}
+        self._timezone_choices = {
+            x[20:]: x[20:] for x in self._timezone_choices if osc.IS_FREEBSD or (
+                not x[20:].startswith(('right/', 'posix/')) and '.' not in x[20:]
+            )
+        }
 
     @accepts()
     async def timezone_choices(self):
