@@ -1,3 +1,4 @@
+import contextlib
 import os
 import shutil
 import subprocess
@@ -11,13 +12,17 @@ def localtime_configuration(middleware):
         system_config['timezone'] = 'America/Los_Angeles'
 
     if osc.IS_LINUX:
+        with contextlib.suppress(OSError):
+            os.unlink('/etc/localtime')
+        os.symlink(os.path.join('/usr/share/zoneinfo', system_config['timezone']), '/etc/localtime')
         cp = subprocess.Popen(
-            ['timedatectl', 'set-timezone', system_config['timezone']],
-            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
+            ['systemctl', 'daemon-reload'], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
         )
         _, stderr = cp.communicate()
         if cp.returncode:
-            middleware.logger.error('Failed to setup timezone to %r: %s', system_config['timezone'], stderr.decode())
+            middleware.logger.error(
+                'Failed to reload systemctl daemon after timezone configuration: %s', stderr.decode()
+            )
     else:
         shutil.copy(
             os.path.join('/usr/share/zoneinfo/', system_config['timezone']),

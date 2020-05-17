@@ -1,5 +1,5 @@
 async def migrate(middleware):
-    if await middleware.call('system.product') != 'SCALE':
+    if await middleware.call('system.product_type') != 'SCALE':
         return
 
     # There is a drawback with this approach, it will virtually not allow any user to use freebsd ntp server
