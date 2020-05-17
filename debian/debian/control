@@ -9,6 +9,7 @@ Homepage: http://www.truenas.com
 Package: truenas
 Architecture: all
 Depends: collectd,
+         cpuid,
          docker-ce,
          gdb,
          glusterfs-server,

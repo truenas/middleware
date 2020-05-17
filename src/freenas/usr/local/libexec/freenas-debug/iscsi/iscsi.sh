@@ -110,23 +110,23 @@ iscsi_func()
         section_footer
     else
         section_header "/etc/ctl.conf"
-	sc "/etc/ctl.conf.shadow"
-	section_footer
+        sc "/etc/ctl.conf.shadow"
+        section_footer
 
-	section_header "ctladm devlist -v"
-	ctladm devlist -v
-	section_footer
+        section_header "ctladm devlist -v"
+        ctladm devlist -v
+        section_footer
 
-	section_header "ctladm islist"
-	ctladm islist
-	section_footer
+        section_header "ctladm islist"
+        ctladm islist
+        section_footer
 
-	section_header "ctladm portlist -v"
-	ctladm portlist -v
-	section_footer
+        section_header "ctladm portlist -v"
+        ctladm portlist -v
+        section_footer
 
-	section_header "ctladm port -l"
-	ctladm port -l
-	section_footer
+        section_header "ctladm port -l"
+        ctladm port -l
+        section_footer
     fi
 }
