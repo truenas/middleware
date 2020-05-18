@@ -2435,7 +2435,6 @@ class ReplicationForm(MiddlewareModelForm, ModelForm):
             data["naming_schema"] = []
             data["also_include_naming_schema"] = []
             data["only_matching_schedule"] = False
-            data["dedup"] = False
             data["large_block"] = False
             data["embed"] = False
             data["compressed"] = False

@@ -200,7 +200,6 @@ class ReplicationService(CRUDService):
             Str("lifetime_unit", null=True, default=None, enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]),
             Str("compression", enum=["LZ4", "PIGZ", "PLZIP"], null=True, default=None),
             Int("speed_limit", null=True, default=None, validators=[Range(min=1)]),
-            Bool("dedup", default=False),
             Bool("large_block", default=True),
             Bool("embed", default=False),
             Bool("compressed", default=True),
@@ -258,7 +257,7 @@ class ReplicationService(CRUDService):
           * `NONE` does not delete any snapshots
         * `compression` compresses SSH stream. Available only for SSH transport
         * `speed_limit` limits speed of SSH stream. Available only for SSH transport
-        * `dedup`, `large_block`, `embed` and `compressed` are various ZFS stream flag documented in `man zfs send`
+        * `large_block`, `embed` and `compressed` are various ZFS stream flag documented in `man zfs send`
         * `retries` specifies number of retries before considering replication failed
 
         .. examples(websocket)::
@@ -557,7 +556,7 @@ class ReplicationService(CRUDService):
                     verrors.add(should_be_true, "Legacy replication does not support disabling this option")
 
             for should_be_false in ["exclude", "periodic_snapshot_tasks", "naming_schema", "also_include_naming_schema",
-                                    "only_matching_schedule", "dedup", "large_block", "embed", "compressed"]:
+                                    "only_matching_schedule", "large_block", "embed", "compressed"]:
                 if data[should_be_false]:
                     verrors.add(should_be_false, "Legacy replication does not support this option")
 
