@@ -889,7 +889,12 @@ class ActiveDirectoryService(ConfigService):
             raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
                             errno.EINVAL)
 
-        return await self.middleware.call('activedirectory.conn_check', config)
+        await self.middleware.call('activedirectory.conn_check', config)
+
+        if (await self.get_state()) != 'HEALTHY':
+            await self.set_state(DSStatus['HEALTHY'])
+
+        return True
 
     @private
     async def _register_virthostname(self, ad, smb, smb_ha_mode):
