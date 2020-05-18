@@ -53,11 +53,11 @@ class DiskService(Service):
         devices = await camcontrol_list()
 
         return [
-            disk['devname']
+            disk['name']
             for disk in await self.middleware.call(
                 'disk.query',
                 [
-                    ['devname', '!=', None],
+                    ['name', '!=', None],
                     ['togglesmart', '=', True],
                     # Polling for disk temperature does not allow them to go to sleep automatically unless
                     # hddstandby_force is used
@@ -69,7 +69,7 @@ class DiskService(Service):
                     ]
                 ]
             )
-            if devices.get(disk['devname'], {}).get('driver') != 'mpr'
+            if devices.get(disk['name'], {}).get('driver') != 'mpr'
         ]
 
     @accepts(
