@@ -1,4 +1,4 @@
-from middlewared.service import Service, private
+from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd, SMBBuiltin, SMBPath
@@ -107,21 +107,22 @@ class SMBService(Service):
             self.logger.debug(f'Failed to delete groupmap for [{target}]: ({gm_delete.stderr.decode()})')
 
     @private
-    async def synchronize_group_mappings(self):
+    @job(lock="groupmap_sync")
+    async def synchronize_group_mappings(self, job):
         if await self.middleware.call('ldap.get_state') != "DISABLED":
             return
 
-        groupmap = (await self.groupmap_list()).values()
+        groupmap = await self.groupmap_list()
         must_remove_cache = False
         passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
 
         if groupmap:
-            sids_fixed = await self.middleware.call('smb.fixsid', groupmap)
+            sids_fixed = await self.middleware.call('smb.fixsid', groupmap.values())
             if not sids_fixed:
                 groupmap = []
 
         for b in SMBBuiltin:
-            entry = list(filter(lambda x: b.value[0] == x['unixgroup'], groupmap))
+            entry = groupmap.get(b.value[0])
             if b.name == 'ADMINISTRATORS':
                 if len(await self.middleware.call('group.query', [('gid', '=', 544)])) > 1:
                     # Creating an SMB administrators mapping for a duplicate ID is potentially a security issue.
@@ -130,7 +131,7 @@ class SMBService(Service):
                     continue
 
             if not entry:
-                stale_entry = list(filter(lambda x: b.name.lower().capitalize() == x['ntgroup'], groupmap))
+                stale_entry = list(filter(lambda x: b.name.lower().capitalize() == x['ntgroup'], groupmap.values()))
                 if stale_entry:
                     must_remove_cache = True
                     await self.groupmap_delete(b.name.lower().capitalize())

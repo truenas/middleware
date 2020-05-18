@@ -385,10 +385,11 @@ class SMBService(SystemServiceService):
         await self.middleware.call('smb.set_sid', data['cifs_SID'])
 
         if await self.middleware.call("smb.getparm", "passdb backend", "global") == "tdbsam":
-            job.set_progress(40, 'Synchronizing passdb.')
-            await self.middleware.call("smb.synchronize_passdb")
-            job.set_progress(50, 'Synchronizing group mappings.')
-            await self.middleware.call("smb.synchronize_group_mappings")
+            job.set_progress(40, 'Synchronizing passdb and groupmap.')
+            pdb_job = await self.middleware.call("smb.synchronize_passdb")
+            grp_job = await self.middleware.call("smb.synchronize_group_mappings")
+            await pdb_job.wait()
+            await grp_job.wait()
             await self.middleware.call("admonitor.start")
             job.set_progress(60, 'generating SMB share configuration.')
             await self.middleware.call("etc.generate", "smb_share")

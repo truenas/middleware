@@ -1,4 +1,4 @@
-from middlewared.service import Service, private
+from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
 from middlewared.plugins.smb import SMBCmd
@@ -133,7 +133,8 @@ class SMBService(Service):
             raise CallError(f'Failed to delete user [{username}]: {deluser.stderr.decode()}')
 
     @private
-    async def synchronize_passdb(self):
+    @job(lock="passdb_sync")
+    async def synchronize_passdb(self, job):
         """
         Create any missing entries in the passdb.tdb.
         Replace NT hashes of users if they do not match what is the the config file.
