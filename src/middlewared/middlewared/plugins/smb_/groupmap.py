@@ -62,12 +62,16 @@ class SMBService(Service):
         disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
         existing_groupmap = await self.groupmap_list()
 
-        for g in existing_groupmap.values():
-            disallowed_list.append(g['ntgroup'].upper())
+        if existing_groupmap.get(group):
+            self.logger.debug('Setting group map for %s is not permitted. '
+                              'Entry already exists.', group)
+            return False
 
         if group.upper() in disallowed_list:
-            self.logger.debug('Setting group map for %s is not permitted', group)
+            self.logger.debug('Setting group map for %s is not permitted. '
+                              'Entry mirrors existing builtin groupmap.', group)
             return False
+
         gm_add = await run(
             [SMBCmd.NET.value, '-d', '0', 'groupmap', 'add', 'type=local', f'unixgroup={group}', f'ntgroup={group}'],
             check=False
@@ -131,7 +135,7 @@ class SMBService(Service):
 
         groups = await self.middleware.call('group.query', [('builtin', '=', False), ('smb', '=', True)])
         for g in groups:
-            if not any(filter(lambda x: g['group'].upper() == x['ntgroup'].upper(), groupmap)):
+            if not groupmap.get(g['group']):
                 await self.groupmap_add(g['group'])
 
         if must_remove_cache:

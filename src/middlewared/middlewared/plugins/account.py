@@ -6,6 +6,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.utils.osc import IS_FREEBSD
 from middlewared.validators import Email
+from middlewared.plugins.smb import SMBBuiltin
 
 import asyncio
 import binascii
@@ -677,6 +678,19 @@ class UserService(CRUDService):
                     f'The username "{data["username"]}" already exists.',
                     errno.EEXIST
                 )
+            if 'smb' in data:
+                smb_users = await self.middleware.call('datastore.query',
+                                                       'account.bsdusers',
+                                                       [('smb', '=', True)] + exclude_filter,
+                                                       {'prefix': 'bsdusr_'})
+
+                if any(filter(lambda x: data['username'].casefold() == x['username'].casefold(), smb_users)):
+                    verrors.add(
+                        f'{schema}.smb',
+                        f'Username "{data["username"]}" conflicts with existing SMB user. Note that SMB '
+                        f'usernames are case-insensitive.',
+                        errno.EEXIST,
+                    )
 
         password = data.get('password')
         if password and '?' in password:
@@ -1100,6 +1114,29 @@ class GroupService(CRUDService):
         exclude_filter = [('id', '!=', pk)] if pk else []
 
         if 'name' in data:
+            if 'smb' in data:
+                if data['name'].upper() in [x.name for x in SMBBuiltin]:
+                    verrors.add(
+                        f'{schema}.name',
+                        f'Group name "{data["name"]}" conflicts with existing SMB Builtin entry. '
+                        f'SMB group mapping is not permitted for this group.',
+                        errno.EEXIST,
+                    )
+
+                smb_groups = await self.middleware.call('datastore.query',
+                                                        'account.bsdgroups',
+                                                        [('smb', '=', True)] + exclude_filter,
+                                                        {'prefix': 'bsdgrp_'})
+
+                if any(filter(lambda x: data['name'].casefold() == x['group'].casefold(), smb_groups)):
+                    verrors.add(
+                        f'{schema}.name',
+                        f'Group name "{data["name"]}" conflicts with existing groupmap entry. '
+                        f'SMB group mapping is not permitted for this group. Note that SMB '
+                        f'group names are case-insensitive.',
+                        errno.EEXIST,
+                    )
+
             existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name'])] + exclude_filter, {'prefix': 'bsdgrp_'})
             if existing:
                 verrors.add(
