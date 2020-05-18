@@ -872,11 +872,22 @@ class CoreService(Service):
         """
         return 'pong'
 
-    def _ping_host(self, host, timeout):
+    def _ping_host(self, host, timeout, counter=3):
         if osc.IS_LINUX:
-            process = run(['ping', '-w', f'{timeout}', host])
+            process = run(['ping', '-w', f'{timeout}', '-c', f'{counter}', host])
         else:
-            process = run(['ping', '-t', f'{timeout}', host])
+            process = run(['ping', '-t', f'{timeout}', '-c', f'{counter}', host])
+
+        if process.returncode != 0:
+            return False
+        else:
+            return True
+
+    def _ping6_host(self, host, timeout, counter=3):
+        if osc.IS_LINUX:
+            process = run(['ping6', '-w', f'{timeout}', '-c', f'{counter}', host])
+        else:
+            process = run(['ping6', '-X', f'{timeout}', '-c', f'{counter}', host])
 
         if process.returncode != 0:
             return False
@@ -884,19 +895,27 @@ class CoreService(Service):
             return True
 
     @accepts(
-        Str('hostname'),
-        Int('timeout', validators=[Range(min=1, max=60)], default=10),  # seconds
+        Dict(
+            'options',
+            Str('type', enum=['ICMP', 'ICMPV4', 'ICMPV6'], default='ICMP'),
+            Str('hostname', required=True),
+            Int('timeout', validators=[Range(min=1, max=60)], default=10),
+        ),
     )
-    def ping_remote(self, hostname, timeout):
+    def ping_remote(self, options):
         """
-        Method that will send an ICMPv4 echo request to "hostname"
+        Method that will send an ICMP echo request to "hostname"
         and will wait up to "timeout" for a reply.
         """
-        ping_host = self._ping_host(hostname, timeout)
+        if options['type'] == 'ICMP' or options['type'] == 'ICMPV4':
+            ping_host = self._ping_host(options['hostname'], options['timeout'])
+        elif options['type'] == 'ICMPV6':
+            ping_host = self._ping6_host(options['hostname'], options['timeout'])
+
         if ping_host:
-            return 'pong'
+            return True
         else:
-            return 'failed'
+            return False
 
     @accepts(
         Str('method'),
