@@ -3,7 +3,7 @@
 #
 # options
 #
-options { chain_hostnames(off); flush_lines(0); threaded(yes); use-fqdn(no); stats-freq(0); };
+options { suppress(60); chain_hostnames(off); flush_lines(0); threaded(yes); use-fqdn(no); stats-freq(0); };
 
 #
 # sources
