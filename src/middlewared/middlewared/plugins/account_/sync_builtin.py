@@ -120,6 +120,8 @@ class UserService(Service):
                 [("id", "in", remove_group_ids)],
             )
 
+        # Insert new users or update GID for existing groups
+
         with open(os.path.join(path, "passwd")) as f:
             for name, _, uid, gid, gecos, home, shell in (
                     map(lambda s: s.split(":", 6), filter(None, f.read().strip().split("\n")))
@@ -212,3 +214,17 @@ class UserService(Service):
                             },
                             {"prefix": "bsdgrpmember_"},
                         )
+
+        # Remove gone users
+
+        remove_users = list(remove_users.values())
+        if remove_users:
+            self.logger.info("Removing users %r", [user["username"] for user in remove_users])
+
+            remove_user_ids = [user["id"] for user in remove_users]
+
+            self.middleware.call_sync(
+                "datastore.delete",
+                "account.bsdusers",
+                [("id", "in", remove_user_ids)],
+            )
