@@ -1,4 +1,4 @@
-from middlewared.service import Service, private
+from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.smb import SMBCmd, SMBBuiltin, SMBPath
@@ -45,15 +45,17 @@ class SMBService(Service):
             )
 
     @private
-    async def groupmap_add(self, group):
+    async def groupmap_add(self, group, passdb_backend=None):
         """
         Map Unix group to NT group. This is required for group members to be
         able to access the SMB share. Name collisions with well-known and
         builtin groups must be avoided. Mapping groups with the same
         names as users should also be avoided.
         """
-        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
-        if passdb_backend == 'ldapsam':
+        if passdb_backend is None:
+            passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+
+        if passdb_backend != 'tdbsam':
             return
 
         if group in SMBBuiltin.unix_groups():
@@ -62,12 +64,16 @@ class SMBService(Service):
         disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
         existing_groupmap = await self.groupmap_list()
 
-        for g in existing_groupmap.values():
-            disallowed_list.append(g['ntgroup'].upper())
+        if existing_groupmap.get(group):
+            self.logger.debug('Setting group map for %s is not permitted. '
+                              'Entry already exists.', group)
+            return False
 
         if group.upper() in disallowed_list:
-            self.logger.debug('Setting group map for %s is not permitted', group)
+            self.logger.debug('Setting group map for %s is not permitted. '
+                              'Entry mirrors existing builtin groupmap.', group)
             return False
+
         gm_add = await run(
             [SMBCmd.NET.value, '-d', '0', 'groupmap', 'add', 'type=local', f'unixgroup={group}', f'ntgroup={group}'],
             check=False
@@ -101,19 +107,22 @@ class SMBService(Service):
             self.logger.debug(f'Failed to delete groupmap for [{target}]: ({gm_delete.stderr.decode()})')
 
     @private
-    async def synchronize_group_mappings(self):
+    @job(lock="groupmap_sync")
+    async def synchronize_group_mappings(self, job):
         if await self.middleware.call('ldap.get_state') != "DISABLED":
             return
 
-        groupmap = (await self.groupmap_list()).values()
+        groupmap = await self.groupmap_list()
         must_remove_cache = False
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+
         if groupmap:
-            sids_fixed = await self.middleware.call('smb.fixsid', groupmap)
+            sids_fixed = await self.middleware.call('smb.fixsid', groupmap.values())
             if not sids_fixed:
                 groupmap = []
 
         for b in SMBBuiltin:
-            entry = list(filter(lambda x: b.value[0] == x['unixgroup'], groupmap))
+            entry = groupmap.get(b.value[0])
             if b.name == 'ADMINISTRATORS':
                 if len(await self.middleware.call('group.query', [('gid', '=', 544)])) > 1:
                     # Creating an SMB administrators mapping for a duplicate ID is potentially a security issue.
@@ -122,17 +131,17 @@ class SMBService(Service):
                     continue
 
             if not entry:
-                stale_entry = list(filter(lambda x: b.name.lower().capitalize() == x['ntgroup'], groupmap))
+                stale_entry = list(filter(lambda x: b.name.lower().capitalize() == x['ntgroup'], groupmap.values()))
                 if stale_entry:
                     must_remove_cache = True
                     await self.groupmap_delete(b.name.lower().capitalize())
 
-                await self.groupmap_add(b.value[0])
+                await self.groupmap_add(b.value[0], passdb_backend)
 
         groups = await self.middleware.call('group.query', [('builtin', '=', False), ('smb', '=', True)])
         for g in groups:
-            if not any(filter(lambda x: g['group'].upper() == x['ntgroup'].upper(), groupmap)):
-                await self.groupmap_add(g['group'])
+            if not groupmap.get(g['group']):
+                await self.groupmap_add(g['group'], passdb_backend)
 
         if must_remove_cache:
             if os.path.exists(f'{SMBPath.STATEDIR.platform()}/winbindd_cache.tdb'):
