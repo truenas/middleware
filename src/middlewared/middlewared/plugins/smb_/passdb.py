@@ -24,7 +24,7 @@ class SMBService(Service):
         if not os.path.exists(f'{private_dir}/passdb.tdb'):
             return pdbentries
 
-        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
+        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') != 'tdbsam':
             return pdbentries
 
         if not verbose:
@@ -63,13 +63,18 @@ class SMBService(Service):
         return pdbentries
 
     @private
-    async def update_passdb_user(self, username):
+    async def update_passdb_user(self, username, passdb_backend=None):
         """
         Updates a user's passdb entry to reflect the current server configuration.
         Accounts that are 'locked' in the UI will have their corresponding passdb entry
         disabled.
         """
-        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
+        if passdb_backend is None:
+            passdb_backend = await self.middleware.call('smb.getparm',
+                                                        'passdb backend',
+                                                        'global')
+
+        if passdb_backend != 'tdbsam':
             return
 
         bsduser = await self.middleware.call('user.query', [
@@ -135,7 +140,11 @@ class SMBService(Service):
         Synchronize the "disabled" state of users
         Delete any entries in the passdb_tdb file that don't exist in the config file.
         """
-        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
+        passdb_backend = await self.middleware.call('smb.getparm',
+                                                    'passdb backend',
+                                                    'global')
+
+        if passdb_backend != 'tdbsam':
             return
 
         conf_users = await self.middleware.call('user.query', [
@@ -145,7 +154,7 @@ class SMBService(Service):
             ]]
         ])
         for u in conf_users:
-            await self.middleware.call('smb.update_passdb_user', u['username'])
+            await self.middleware.call('smb.update_passdb_user', u['username'], passdb_backend)
 
         pdb_users = await self.passdb_list()
         if len(pdb_users) > len(conf_users):

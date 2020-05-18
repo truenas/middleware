@@ -45,15 +45,17 @@ class SMBService(Service):
             )
 
     @private
-    async def groupmap_add(self, group):
+    async def groupmap_add(self, group, passdb_backend=None):
         """
         Map Unix group to NT group. This is required for group members to be
         able to access the SMB share. Name collisions with well-known and
         builtin groups must be avoided. Mapping groups with the same
         names as users should also be avoided.
         """
-        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
-        if passdb_backend == 'ldapsam':
+        if passdb_backend is None:
+            passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+
+        if passdb_backend != 'tdbsam':
             return
 
         if group in SMBBuiltin.unix_groups():
@@ -111,6 +113,8 @@ class SMBService(Service):
 
         groupmap = (await self.groupmap_list()).values()
         must_remove_cache = False
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+
         if groupmap:
             sids_fixed = await self.middleware.call('smb.fixsid', groupmap)
             if not sids_fixed:
@@ -131,12 +135,12 @@ class SMBService(Service):
                     must_remove_cache = True
                     await self.groupmap_delete(b.name.lower().capitalize())
 
-                await self.groupmap_add(b.value[0])
+                await self.groupmap_add(b.value[0], passdb_backend)
 
         groups = await self.middleware.call('group.query', [('builtin', '=', False), ('smb', '=', True)])
         for g in groups:
             if not groupmap.get(g['group']):
-                await self.groupmap_add(g['group'])
+                await self.groupmap_add(g['group'], passdb_backend)
 
         if must_remove_cache:
             if os.path.exists(f'{SMBPath.STATEDIR.platform()}/winbindd_cache.tdb'):
