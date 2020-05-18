@@ -678,7 +678,7 @@ class UserService(CRUDService):
                     f'The username "{data["username"]}" already exists.',
                     errno.EEXIST
                 )
-            if 'smb' in data:
+            if data.get('smb'):
                 smb_users = await self.middleware.call('datastore.query',
                                                        'account.bsdusers',
                                                        [('smb', '=', True)] + exclude_filter,
@@ -1114,7 +1114,7 @@ class GroupService(CRUDService):
         exclude_filter = [('id', '!=', pk)] if pk else []
 
         if 'name' in data:
-            if 'smb' in data:
+            if data.get('smb'):
                 if data['name'].upper() in [x.name for x in SMBBuiltin]:
                     verrors.add(
                         f'{schema}.name',
