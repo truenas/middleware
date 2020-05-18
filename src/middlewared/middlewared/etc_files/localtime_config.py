@@ -18,7 +18,7 @@ def localtime_configuration(middleware):
         cp = subprocess.Popen(
             ['systemctl', 'daemon-reload'], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
         )
-        _, stderr = cp.communicate()
+        stderr = cp.communicate()[1]
         if cp.returncode:
             middleware.logger.error(
                 'Failed to reload systemctl daemon after timezone configuration: %s', stderr.decode()
