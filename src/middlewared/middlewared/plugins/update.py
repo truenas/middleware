@@ -411,6 +411,7 @@ class UpdateService(Service):
           - REBOOT_REQUIRED: an update has already been applied
           - AVAILABLE: an update is available
           - UNAVAILABLE: no update available
+          - HA_UNAVAILABLE: HA is non-functional
 
         .. examples(websocket)::
 
@@ -431,10 +432,12 @@ class UpdateService(Service):
         if applied is True:
             return {'status': 'REBOOT_REQUIRED'}
 
-        if (
-            not self.middleware.call_sync('system.is_freenas') and
-            self.middleware.call_sync('failover.licensed')
-        ):
+        if self.middleware.call_sync('failover.licensed'):
+
+            # First, let's make sure HA is functional
+            if self.middleware.call_sync('failover.disabled_reasons'):
+                return {'status': 'HA_UNAVAILABLE'}
+
             # If its HA and standby is running old version we assume
             # legacy upgrade and check update on standby.
             try:
