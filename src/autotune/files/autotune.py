@@ -87,7 +87,6 @@ DEF_KNOBS = {
     },
     'sysctl': {
         'kern.ipc.maxsockbuf',
-        'kern.ipc.nmbclusters',
         'net.inet.tcp.delayed_ack',
         'net.inet.tcp.recvbuf_max',
         'net.inet.tcp.sendbuf_max',
@@ -132,11 +131,6 @@ def guess_kern_ipc_maxsockbuf():
         return 4 * MiB
     else:
         return 2 * MiB
-
-
-def guess_kern_ipc_nmbclusters():
-    # You can't make this smaller
-    return max(sysctl_int('kern.ipc.nmbclusters'), 2 * MiB)
 
 
 def guess_net_inet_tcp_delayed_ack():
