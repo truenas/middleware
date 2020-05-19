@@ -307,6 +307,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             List('bricks', items=[
                 Dict(
                     'brick',
@@ -352,6 +353,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             List('bricks', items=[
                 Dict(
                     'brick',
@@ -391,6 +393,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Dict(
                 'src_brick',
                 Str('peer_name', required=True),
