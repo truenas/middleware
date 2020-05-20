@@ -64,7 +64,9 @@ avahi:x:122:
 gluster:x:123:
 sambashare:x:124:
 winbindd_priv:x:125:
+minio:x:473:
 systemd-coredump:x:998:
 builtin_administrators:x:544:
 builtin_users:x:545:
 builtin_guests:x:546:
+webdav:x:666:
