@@ -99,6 +99,14 @@ class FailoverService(ConfigService):
 
         `disabled` when true indicates that HA is disabled.
         `master` sets the state of current node. Standby node will have the opposite value.
+
+        `timeout` is the time to WAIT until a failover occurs when a network
+            event occurs on an interface that is marked critical for failover AND
+            HA is enabled and working appropriately.
+
+            The default time to wait is 2 seconds.
+            **NOTE**
+                This setting does NOT effect the `disabled` or `master` parameters.
         """
         master = data.pop('master', NOT_PROVIDED)
 
@@ -110,9 +118,9 @@ class FailoverService(ConfigService):
         if master is not NOT_PROVIDED:
             if master is None:
                 # The node making the call is the one we want to make it MASTER by default
-                data['master_node'] = await self.middleware.call('failover.node')
+                new['master_node'] = await self.middleware.call('failover.node')
             else:
-                data['master_node'] = await self._master_node(master)
+                new['master_node'] = await self._master_node(master)
 
         verrors = ValidationErrors()
         if new['disabled'] is False:
@@ -1209,8 +1217,8 @@ class FailoverService(ConfigService):
         local_bootenv = self.middleware.call_sync(
             'bootenv.query', [('active', 'rin', 'N')])
 
-        remote_bootenv = self.middleware.call_sync('failover.call_remote',
-            'bootenv.query', [[('active', '=', 'NR')]])
+        remote_bootenv = self.middleware.call_sync(
+            'failover.call_remote', 'bootenv.query', [[('active', '=', 'NR')]])
 
         if not local_bootenv or not remote_bootenv:
             raise CallError('Unable to determine installed version of software')
@@ -1618,6 +1626,7 @@ async def hook_license_update(middleware, *args, **kwargs):
     await middleware.call('service.restart', 'failover')
     await middleware.call('failover.status_refresh')
 
+
 async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
     """
     This hook needs to be run after a NIC rollback operation and before
@@ -1635,6 +1644,7 @@ async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
     await middleware.call('failover.send_database')
 
     middleware.logger.debug('[HA] Successfully sent database to standby controller')
+
 
 async def hook_setup_ha(middleware, *args, **kwargs):
 
