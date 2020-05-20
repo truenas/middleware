@@ -5,6 +5,7 @@ Revises: 43779dce3a07
 Create Date: 2020-05-08 15:18:35.333997+00:00
 
 """
+import os
 from alembic import op
 import sqlalchemy as sa
 from datetime import datetime
@@ -21,7 +22,8 @@ def upgrade():
     with op.batch_alter_table('system_settings', schema=None) as batch_op:
         batch_op.add_column(sa.Column('stg_birthday', sa.DateTime(), nullable=True))
 
-    op.execute("UPDATE system_settings SET stg_birthday = '" + str(datetime(1970, 1, 1, 0, 0, 0)) + "'")
+    if os.environ.get("FREENAS_INSTALL") != "yes":
+        op.execute("UPDATE system_settings SET stg_birthday = '" + str(datetime(1970, 1, 1, 0, 0, 0)) + "'")
 
     # ### end Alembic commands ###
 
