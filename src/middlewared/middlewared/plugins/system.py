@@ -550,7 +550,7 @@ class SystemService(Service):
 
         birthday_date = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
         if birthday_date == datetime(1970, 1, 1):
-            birthday_date = None 
+            birthday_date = None
         timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
