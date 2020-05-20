@@ -20,7 +20,7 @@ save_keys()
             column=`echo ${i} | tr ".-" "_"`
             key=`cat /usr/local/etc/ssh/${i} | /usr/local/bin/base64`
             if echo "$column" | egrep "key$" > /dev/null ; then
-              key=`midclt call pwenc.encrypt "$key"`
+              key=`/usr/local/bin/midclt call pwenc.encrypt "$key"`
             fi
             cmd="UPDATE services_ssh SET '${column}' = '${key}' WHERE id = (SELECT id FROM services_ssh ORDER BY id LIMIT 1);"
             echo ${cmd} | ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG}
