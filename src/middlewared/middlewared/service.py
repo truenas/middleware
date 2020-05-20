@@ -12,6 +12,7 @@ import threading
 import time
 import traceback
 from subprocess import run
+import ipaddress
 
 from middlewared.common.environ import environ_update
 import middlewared.main
@@ -23,7 +24,7 @@ from middlewared.logger import Logger, reconfigure_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 from middlewared.utils.type import copy_function_metadata
-from middlewared.validators import Range
+from middlewared.validators import Range, IpAddress
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 get_or_insert_lock = asyncio.Lock()
@@ -907,10 +908,19 @@ class CoreService(Service):
         Method that will send an ICMP echo request to "hostname"
         and will wait up to "timeout" for a reply.
         """
-        if options['type'] == 'ICMP' or options['type'] == 'ICMPV4':
-            ping_host = self._ping_host(options['hostname'], options['timeout'])
-        elif options['type'] == 'ICMPV6':
-            ping_host = self._ping6_host(options['hostname'], options['timeout'])
+        ip = None
+        try:
+            ip = IpAddress()
+            ip(options['hostname'])
+            ip = options['hostname']
+        except ValueError:
+            ip = socket.gethostbyname(options['hostname'])
+        addr = ipaddress.ip_address(ip)
+
+        if addr.version == 4:
+            ping_host = self._ping_host(ip, options['timeout'])
+        elif addr.version == 6:
+            ping_host = self._ping6_host(ip, options['timeout'])
 
         if ping_host:
             return True
