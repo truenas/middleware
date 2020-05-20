@@ -169,6 +169,7 @@ class EtcService(Service):
         ],
         'smb_configure': [
             {'type': 'py', 'path': 'smb_configure'},
+            {'type': 'mako', 'path': 'local/smb4_share.conf'},
         ],
         'snmpd': [
             {'type': 'mako', 'path': 'local/snmpd.conf'},
