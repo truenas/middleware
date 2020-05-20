@@ -73,7 +73,7 @@ class UpdateService(Service):
                             "-f",
                             "-da", "16",
                             "-fr", "16",
-                            os.path.join(mounted, "rootfs.sqsh"),
+                            os.path.join(mounted, "rootfs.squashfs"),
                         ]
                         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                         stdout = ""
@@ -104,7 +104,7 @@ class UpdateService(Service):
                             "disks": self.middleware.call_sync("boot.get_disks"),
                             "root": root,
                         })
-                        subprocess.run(["python3", "-m", "truenas_update"], cwd=mounted, input=update, **run_kw)
+                        subprocess.run(["python3", "-m", "truenas_install"], cwd=mounted, input=update, **run_kw)
                     finally:
                         subprocess.run(["umount", root])
             except Exception:

@@ -35,6 +35,7 @@ Depends: collectd,
          tftpd-hpa,
          tmux,
          truenas-webui,
+         usrmerge,
          winbind,
 # Wireguard needs to be fixed because it needs extra dependencies to build the module during install
 # We should likely build the modules into the package and not use dkms

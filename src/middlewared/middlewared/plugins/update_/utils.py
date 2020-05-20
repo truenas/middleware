@@ -11,4 +11,10 @@ SEP = re.compile(r"[-.]")
 
 
 def can_update(old_version, new_version):
-    return all(x <= y for x, y in itertools.zip_longest(SEP.split(old_version), SEP.split(new_version), fillvalue=''))
+    for x, y in itertools.zip_longest(SEP.split(old_version), SEP.split(new_version), fillvalue=''):
+        if x < y:
+            return True
+        if x > y:
+            return False
+
+    return False
