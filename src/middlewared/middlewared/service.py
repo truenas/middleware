@@ -909,17 +909,24 @@ class CoreService(Service):
         and will wait up to "timeout" for a reply.
         """
         ip = None
+        ip_found = True
         try:
             ip = IpAddress()
             ip(options['hostname'])
             ip = options['hostname']
         except ValueError:
-            ip = socket.gethostbyname(options['hostname'])
-        addr = ipaddress.ip_address(ip)
+            ip_found = False
+        if not ip_found:
+            try:
+                ip = socket.getaddrinfo(options['hostname'], None)[0][4][0]
+            except socket.gaierror:
+                return False
 
-        if addr.version == 4:
+        addr = ipaddress.ip_address(ip)
+        ping_host = False
+        if addr.version == 4 and (options['type'] == 'ICMPV4' or options['type'] == 'ICMP'):
             ping_host = self._ping_host(ip, options['timeout'])
-        elif addr.version == 6:
+        elif addr.version == 6 and options['type'] == 'ICMPV6':
             ping_host = self._ping6_host(ip, options['timeout'])
 
         if ping_host:
