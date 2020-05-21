@@ -3,7 +3,6 @@ import logging
 import os
 import re
 import subprocess
-import tempfile
 
 from middlewared.service import CallError, private, Service
 
@@ -51,62 +50,37 @@ class UpdateService(Service):
                 if our_checksum != checksum:
                     raise CallError(f"Checksum mismatch for {file!r}: {our_checksum} != {checksum}")
 
-            pool_name = self.middleware.call_sync("boot.pool_name")
-            dataset_name = f"{pool_name}/ROOT/{manifest['version']}"
+            command = {
+                "disks": self.middleware.call_sync("boot.get_disks"),
+                "json": True,
+                "old_root": "/",
+                "pool_name": self.middleware.call_sync("boot.pool_name"),
+                "src": mounted,
+            }
 
-            progress_callback(0, "Creating dataset")
-            self.middleware.call_sync("zfs.dataset.create", {
-                "name": dataset_name,
-                "properties": {
-                    "mountpoint": "legacy",
-                    "truenas:kernel_version": manifest["kernel_version"],
-                },
-            })
-            try:
-                with tempfile.TemporaryDirectory() as root:
-                    subprocess.run(["mount", "-t", "zfs", dataset_name, root])
-                    try:
-                        progress_callback(0, "Extracting...")
-                        cmd = [
-                            "unsquashfs",
-                            "-d", root,
-                            "-f",
-                            "-da", "16",
-                            "-fr", "16",
-                            os.path.join(mounted, "rootfs.squashfs"),
-                        ]
-                        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                        stdout = ""
-                        buffer = b""
-                        for char in iter(lambda: p.stdout.read(1), b""):
-                            buffer += char
-                            if char == b"\n":
-                                stdout += buffer.decode("utf-8", "ignore")
-                                buffer = b""
-
-                            if buffer and buffer[0:1] == b"\r" and buffer[-1:] == b"%":
-                                if m := RE_UNSQUASHFS_PROGRESS.match(buffer[1:].decode("utf-8", "ignore")):
-                                    progress_callback(
-                                        int(m.group("extracted")) / int(m.group("total")) * 0.9,
-                                        "Extracting",
-                                    )
-
-                                    buffer = b""
-
-                        p.wait()
-                        if p.returncode != 0:
-                            raise subprocess.CalledProcessError(p.returncode, cmd, stdout)
-
-                        progress_callback(0.9, "Performing post-install tasks")
-                        update = json.dumps({
-                            "pool_name": pool_name,
-                            "dataset_name": dataset_name,
-                            "disks": self.middleware.call_sync("boot.get_disks"),
-                            "root": root,
-                        })
-                        subprocess.run(["python3", "-m", "truenas_install"], cwd=mounted, input=update, **run_kw)
-                    finally:
-                        subprocess.run(["umount", root])
-            except Exception:
-                self.middleware.call_sync("zfs.dataset.delete", dataset_name)
-                raise
+            p = subprocess.Popen(
+                ["python3", "-m", "truenas_install"], cwd=mounted, stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore",
+            )
+            p.stdin.write(json.dumps(command))
+            p.stdin.close()
+            stderr = ""
+            error = None
+            for line in iter(p.stdout.readline, ""):
+                try:
+                    data = json.loads(line)
+                except ValueError:
+                    stderr += line
+                else:
+                    if "progress" in data and "message" in data:
+                        progress_callback(data["progress"], data["message"])
+                    elif "error" in data:
+                        error = data["error"]
+                    else:
+                        raise ValueError(f"Invalid truenas_install JSON: {data!r}")
+            p.wait()
+            if p.returncode != 0:
+                if error is not None:
+                    raise CallError(error)
+                else:
+                    raise CallError(stderr)

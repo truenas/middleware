@@ -287,7 +287,10 @@ cat << EOF
 export linux_gfx_mode
 EOF
 
-roots_dataset="freenas-boot/ROOT"
+roots_dataset="boot-pool/ROOT"
+if ! zfs list $roots_dataset > /dev/null 2>&1 ; then
+  roots_dataset="freenas-boot/ROOT"
+fi
 OS_BASE="$OS"
 for dataset in `zfs list -H -o name -r $roots_dataset | sort -r` ; do
   if [ "x$dataset" = "x$roots_dataset" ] ; then

@@ -78,7 +78,7 @@ class EtcService(Service):
         'user': [
             {'type': 'mako', 'path': 'local/smbusername.map'},
             {'type': 'mako', 'path': 'group'},
-            {'type': 'mako', 'path': 'master.passwd', 'output_path': 'master.passwd' if osc.IS_FREEBSD else 'passwd'},
+            {'type': 'mako', 'path': 'master.passwd' if osc.IS_FREEBSD else 'passwd', 'local_path': 'master.passwd'},
             {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
             {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': 'shadow', 'mode': 0o0640},
         ],
@@ -297,8 +297,6 @@ class EtcService(Service):
             if osc.IS_LINUX:
                 if entry_path.startswith('local/'):
                     entry_path = entry_path[len('local/'):]
-            if 'output_path' in entry:
-                entry_path = entry['output_path']
             outfile = f'/etc/{entry_path}'
             try:
                 rendered = await renderer.render(path)
