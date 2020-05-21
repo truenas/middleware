@@ -875,7 +875,7 @@ class CoreService(Service):
 
     def _ping_host(self, host, timeout, counter=3):
         if osc.IS_LINUX:
-            process = run(['ping', '-w', f'{timeout}', '-c', f'{counter}', host])
+            process = run(['ping', '-4 -w', f'{timeout}', '-c', f'{counter}', host])
         else:
             process = run(['ping', '-t', f'{timeout}', '-c', f'{counter}', host])
 
@@ -918,7 +918,10 @@ class CoreService(Service):
             ip_found = False
         if not ip_found:
             try:
-                ip = socket.getaddrinfo(options['hostname'], None)[0][4][0]
+                if options['type'] == 'ICMPV6':
+                    ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET6)[0][4][0]
+                else:
+                    ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET)[0][4][0]
             except socket.gaierror:
                 return False
 
