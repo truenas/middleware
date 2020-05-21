@@ -910,6 +910,7 @@ class CoreService(Service):
         """
         ip = None
         ip_found = True
+        verrors = ValidationErrors()
         try:
             ip = IpAddress()
             ip(options['hostname'])
@@ -924,16 +925,31 @@ class CoreService(Service):
                     ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET)[0][4][0]
                 elif options['type'] == 'ICMPV6':
                     ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET6)[0][4][0]
-                else:
-                    return False
             except socket.gaierror:
-                return False
+                verrors.add(
+                    'core.ping_remote',
+                    'The provided hostname cannot be resolved'
+                )
+
+        verrors.check()
 
         addr = ipaddress.ip_address(ip)
+        if not addr.version == 4 and (options['type'] == 'ICMP' or options['type'] == 'ICMPV4'):
+            verrors.add(
+                'core.ping_remote',
+                'Requested to reach via ICMP or ICMPV4, but an IPv4 was not found'
+            )
+        if not addr.version == 6 and options['type'] == 'ICMPV6':
+            verrors.add(
+                'core.ping_remote',
+                'Requested to reach via ICMPV6, but an IPv6 was not found'
+            )
+        verrors.check()
+
         ping_host = False
-        if addr.version == 4 and (options['type'] == 'ICMPV4' or options['type'] == 'ICMP'):
+        if addr.version == 4:
             ping_host = self._ping_host(ip, options['timeout'])
-        elif addr.version == 6 and options['type'] == 'ICMPV6':
+        elif addr.version == 6:
             ping_host = self._ping6_host(ip, options['timeout'])
 
         if ping_host:
