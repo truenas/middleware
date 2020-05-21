@@ -918,10 +918,14 @@ class CoreService(Service):
             ip_found = False
         if not ip_found:
             try:
-                if options['type'] == 'ICMPV6':
+                if options['type'] == 'ICMP':
+                    ip = socket.getaddrinfo(options['hostname'], None)[0][4][0]
+                elif options['type'] == 'ICMPV4':
+                    ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET)[0][4][0]
+                elif options['type'] == 'ICMPV6':
                     ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET6)[0][4][0]
                 else:
-                    ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET)[0][4][0]
+                    return False
             except socket.gaierror:
                 return False
 
