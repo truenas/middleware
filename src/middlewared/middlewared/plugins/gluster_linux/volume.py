@@ -142,6 +142,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Bool('force')
         ),
     )
@@ -162,6 +163,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Bool('force')
         ),
     )
@@ -182,6 +184,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Bool('force')
         ),
     )
@@ -263,6 +266,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Str('opt'),
             Bool('force'),
         )
