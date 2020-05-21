@@ -162,7 +162,7 @@ def get_tests():
         sv = ['network', 'ssh', 'storage']
     elif api == '2.0':
         if ha is True:
-            skip_tests = ['interfaces', 'network', 'delete_interfaces', 'jail', 'plugin']
+            skip_tests = ['interfaces', 'network', 'delete_interfaces', 'jail', 'plugin', 'host_key']
         else:
             skip_tests = []
         apidir = 'api2/'
