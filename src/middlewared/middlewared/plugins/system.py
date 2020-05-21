@@ -593,7 +593,6 @@ class SystemService(Service):
         except Exception:
             # Cannot connect to NTP server
             self.middleware.logger.debug('Error while connecting to NTP server')
-            pass
         return clock
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
