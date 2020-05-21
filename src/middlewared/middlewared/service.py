@@ -875,7 +875,7 @@ class CoreService(Service):
 
     def _ping_host(self, host, timeout, counter=3):
         if osc.IS_LINUX:
-            process = run(['ping', '-4 -w', f'{timeout}', '-c', f'{counter}', host])
+            process = run(['ping', '-4', '-w', f'{timeout}', '-c', f'{counter}', host])
         else:
             process = run(['ping', '-t', f'{timeout}', '-c', f'{counter}', host])
 
