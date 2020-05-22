@@ -164,7 +164,7 @@ def get_tests():
         if ha is True:
             skip_tests = ['interfaces', 'network', 'delete_interfaces', 'jail', 'plugin', 'host_key']
         else:
-            skip_tests = []
+            skip_tests = ['host_key']
         apidir = 'api2/'
         if ha is True:
             sv = ['ssh', 'pool', 'user']
