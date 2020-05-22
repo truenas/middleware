@@ -23,7 +23,8 @@ def test_02_reboot_and_wait_for_ping():
     }
     results = POST("/system/reboot/", payload)
     assert results.status_code == 200, results.text
-    sleep(10)
+    while ping_host(ip, 1) is True:
+        sleep(5)
     while ping_host(ip, 1) is not True:
         sleep(5)
     sleep(10)
