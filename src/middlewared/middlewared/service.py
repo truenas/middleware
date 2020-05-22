@@ -927,7 +927,7 @@ class CoreService(Service):
                     ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET6)[0][4][0]
             except socket.gaierror:
                 verrors.add(
-                    'core.ping_remote',
+                    'options.hostname',
                     'The provided hostname cannot be resolved'
                 )
 
@@ -936,12 +936,12 @@ class CoreService(Service):
         addr = ipaddress.ip_address(ip)
         if not addr.version == 4 and (options['type'] == 'ICMP' or options['type'] == 'ICMPV4'):
             verrors.add(
-                'core.ping_remote',
+                'options.type',
                 'Requested to reach via ICMP or ICMPV4, but an IPv4 was not found'
             )
         if not addr.version == 6 and options['type'] == 'ICMPV6':
             verrors.add(
-                'core.ping_remote',
+                'options.type',
                 'Requested to reach via ICMPV6, but an IPv6 was not found'
             )
         verrors.check()
