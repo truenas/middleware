@@ -42,8 +42,8 @@ class BootEnvService(CRUDService):
                 'name': name,
                 'active': fields[1],
                 'mountpoint': fields[2],
-                'space': fields[3],
-                'created': datetime.strptime(fields[4], '%Y-%m-%d %H:%M'),
+                'space': None if osc.IS_LINUX else fields[3],
+                'created': datetime.strptime(fields[3 if osc.IS_LINUX else 4], '%Y-%m-%d %H:%M'),
                 'keep': None,
                 'rawspace': None
             }
@@ -59,10 +59,10 @@ class BootEnvService(CRUDService):
                     snapshot = self.middleware.call_sync('zfs.snapshot.query', [('id', '=', origin)])
                     if snapshot:
                         snapshot = snapshot[0]
-                if 'beadm:keep' in ds['properties']:
-                    if ds['properties']['beadm:keep']['value'] == 'True':
+                if f'{self.BE_TOOL}:keep' in ds['properties']:
+                    if ds['properties'][f'{self.BE_TOOL}:keep']['value'] == 'True':
                         be['keep'] = True
-                    elif ds['properties']['beadm:keep']['value'] == 'False':
+                    elif ds['properties'][f'{self.BE_TOOL}:keep']['value'] == 'False':
                         be['keep'] = False
 
                 # When a BE is deleted, following actions happen
