@@ -2,7 +2,7 @@
 
 import sys
 import os
-from time import sleep
+from time import sleep, time
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, SSH_TEST, ping_host
@@ -23,9 +23,18 @@ def test_02_reboot_and_wait_for_ping():
     }
     results = POST("/system/reboot/", payload)
     assert results.status_code == 200, results.text
-    sleep(10)
+    end_time = time() + 60 * 5
+    while ping_host(ip, 1) is True:
+        sleep(5)
+        if time >= end_time:
+            assert False, 'Timeout reboot failed'
+            break
+    end_time = time() + 60 * 10
     while ping_host(ip, 1) is not True:
         sleep(5)
+        if time >= end_time:
+            assert False, 'Timeout reboot failed'
+            break
     sleep(10)
 
 
