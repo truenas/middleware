@@ -873,11 +873,11 @@ class CoreService(Service):
         """
         return 'pong'
 
-    def _ping_host(self, host, timeout, counter=3):
+    def _ping_host(self, host, timeout):
         if osc.IS_LINUX:
-            process = run(['ping', '-4', '-w', f'{timeout}', '-c', f'{counter}', host])
+            process = run(['ping', '-4', '-w', f'{timeout}', host])
         else:
-            process = run(['ping', '-t', f'{timeout}', '-c', f'{counter}', host])
+            process = run(['ping', '-t', f'{timeout}', host])
 
         if process.returncode != 0:
             return False
@@ -886,9 +886,9 @@ class CoreService(Service):
 
     def _ping6_host(self, host, timeout, counter=3):
         if osc.IS_LINUX:
-            process = run(['ping6', '-w', f'{timeout}', '-c', f'{counter}', host])
+            process = run(['ping6', '-w', f'{timeout}', host])
         else:
-            process = run(['ping6', '-X', f'{timeout}', '-c', f'{counter}', host])
+            process = run(['ping6', '-X', f'{timeout}', host])
 
         if process.returncode != 0:
             return False
@@ -900,7 +900,7 @@ class CoreService(Service):
             'options',
             Str('type', enum=['ICMP', 'ICMPV4', 'ICMPV6'], default='ICMP'),
             Str('hostname', required=True),
-            Int('timeout', validators=[Range(min=1, max=60)], default=10),
+            Int('timeout', validators=[Range(min=1, max=60)], default=4),
         ),
     )
     def ping_remote(self, options):
@@ -928,7 +928,7 @@ class CoreService(Service):
             except socket.gaierror:
                 verrors.add(
                     'options.hostname',
-                    'The provided hostname cannot be resolved'
+                    f'{options["hostname"]} cannot be resolved to an IP address.'
                 )
 
         verrors.check()
@@ -937,12 +937,12 @@ class CoreService(Service):
         if not addr.version == 4 and (options['type'] == 'ICMP' or options['type'] == 'ICMPV4'):
             verrors.add(
                 'options.type',
-                'Requested to reach via ICMP or ICMPV4, but an IPv4 was not found'
+                f'Requested ICMPv4 protocol, but the address provided "{addr}" is not a valid IPv4 address.'
             )
         if not addr.version == 6 and options['type'] == 'ICMPV6':
             verrors.add(
                 'options.type',
-                'Requested to reach via ICMPV6, but an IPv6 was not found'
+                f'Requested ICMPv6 protocol, but the address provided "{addr}" is not a valid IPv6 address.'
             )
         verrors.check()
 
