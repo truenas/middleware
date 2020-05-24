@@ -79,13 +79,14 @@ class TunableService(CRUDService):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        value_default = self.get_default_value(data['var'])
 
-        if data['type'] == 'sysctl' and value_default is None:
-            # Write default value
-            cfg_file = open(TUNABLES_DEFAULT_FILE, 'a')
-            cfg_file.writelines(f'{data["var"]} = {data["value"]}')
-            cfg_file.close()
+        if data['type'] == 'sysctl':
+            value_default = self.get_default_value(data['var'])
+            if value_default is None:
+                # Write default value
+                cfg_file = open(TUNABLES_DEFAULT_FILE, 'a')
+                cfg_file.writelines(f'{data["var"]} = {data["value"]}')
+                cfg_file.close()
 
         await self.middleware.call('service.reload', data['type'])
 
@@ -131,6 +132,20 @@ class TunableService(CRUDService):
         Delete Tunable of `id`.
         """
         tunable = await self._get_instance(id)
+        await self.lower(tunable)
+        if tunable['type'].lower() == 'sysctl':
+            # Restore the default value, if it is possible.
+            value_default = self.get_default_value(tunable['var'])
+            if value_default is not None:
+                ret = subprocess.run(
+                    ['sysctl', f'{tunable["var"]}="{value_default}"'],
+                    capture_output=True
+                )
+                if ret.returncode:
+                    self.middleware.logger.debug(
+                        'Failed to set sysctl %s -> %s: %s',
+                        tunable['var'], tunable['value'], ret.stderr.decode(),
+                    )
 
         response = await self.middleware.call(
             'datastore.delete',
