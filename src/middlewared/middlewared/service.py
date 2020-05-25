@@ -946,10 +946,7 @@ class CoreService(Service):
         elif addr.version == 6:
             ping_host = self._ping6_host(ip, options['timeout'])
 
-        if ping_host:
-            return True
-        else:
-            return False
+        return ping_host
 
     @accepts(
         Str('method'),
