@@ -4,4 +4,10 @@ dpkg-divert --add --package truenas --rename --divert /etc/grub.d__10_linux /etc
 # It unconfigures interfaces we've just configured even if it is instructed to do not touch anything
 systemctl disable systemd-networkd
 
+# We want middlewared to import pools
+systemctl disable zfs-mount
+systemctl disable zfs-volume-wait
+systemctl disable zfs-import-cache
+systemctl disable zfs-import-scan
+
 #DEBHELPER#

@@ -258,7 +258,7 @@ class SystemDatasetService(ConfigService):
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
                 os.unlink(SYSDATASET_PATH)
-            os.mkdir(SYSDATASET_PATH)
+            os.makedirs(SYSDATASET_PATH)
 
         acltype = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
         if acltype and acltype[0]['properties']['acltype']['value'] == 'off':

@@ -134,7 +134,7 @@ class SMBService(Service):
                 stale_entry = list(filter(lambda x: b.name.lower().capitalize() == x['ntgroup'], groupmap.values()))
                 if stale_entry:
                     must_remove_cache = True
-                    await self.groupmap_delete(b.name.lower().capitalize())
+                    await self.groupmap_delete({"ntgroup": b.name.lower().capitalize()})
 
                 await self.groupmap_add(b.value[0], passdb_backend)
 

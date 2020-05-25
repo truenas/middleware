@@ -3,6 +3,7 @@ import textwrap
 
 from middlewared.client.utils import Struct
 from middlewared.utils import osc
+from middlewared.plugins.afp import AFPLogLevel
 
 
 def get_interface(middleware, ipaddress):
@@ -128,7 +129,7 @@ def render(service, middleware):
             cf_contents.append("\tldap group attr = %s\n" % "sAMAccountName")
 
     cf_contents.append("\tlog file = %s\n" % "/var/log/afp.log")
-    cf_contents.append("\tlog level = %s\n" % "default:warn")
+    cf_contents.append("\tlog level = default:%s\n" % AFPLogLevel[afp.afp_srv_loglevel].value)
     cf_contents.append("\n")
 
     for share in middleware.call_sync('datastore.query', 'sharing.afp_share', [['afp_enabled', '=', True]]):

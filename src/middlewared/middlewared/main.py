@@ -308,6 +308,11 @@ class Application(object):
             return
 
         if message['msg'] == 'method':
+            if 'method' not in message:
+                self.send_error(message, errno.EINVAL,
+                                "Message is malformed: 'method' is absent.")
+                return
+
             try:
                 serviceobj, methodobj = self.middleware._method_lookup(message['method'])
             except CallError as e:
