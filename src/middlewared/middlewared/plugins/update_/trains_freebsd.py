@@ -1,6 +1,8 @@
 # -*- coding=utf-8 -*-
 import re
 
+import requests
+
 from freenasOS import Configuration, Train
 from freenasOS.Update import CheckForUpdates, GetServiceDescription
 
@@ -93,12 +95,13 @@ def parse_changelog(changelog, start='', end=''):
 
 class UpdateService(Service):
     @private
-    def get_trains_redirection_url(self):
-        update_server = Configuration.Configuration().UpdateServerMaster()
-        return f'{update_server}/trains_redir.json'
-
-    @private
     def get_trains_data(self):
+        try:
+            redir_trains = self._get_redir_trains()
+        except Exception:
+            self.logger.warn('Failed to retrieve trains redirection', exc_info=True)
+            redir_trains = {}
+
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
 
@@ -116,7 +119,30 @@ class UpdateService(Service):
         return {
             'trains': trains,
             'current_train': conf.CurrentTrain(),
+            'trains_redirection': redir_trains,
         }
+
+    def _get_redir_trains(self):
+        """
+        The expect trains redirection JSON format is the following:
+
+        {
+            "SOURCE_TRAIN_NAME": {
+                "redirect": "NAME_NEW_TRAIN"
+            }
+        }
+
+        The format uses an dict/object as the value to allow new items to be added in the future
+        and be backward compatible.
+        """
+        r = requests.get(
+            f'{Configuration.Configuration().UpdateServerMaster()}/trains_redir.json',
+            timeout=5,
+        )
+        rv = {}
+        for k, v in r.json().items():
+            rv[k] = v['redirect']
+        return rv
 
     @private
     def check_train(self, train):

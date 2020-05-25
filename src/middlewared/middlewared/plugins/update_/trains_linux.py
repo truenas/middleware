@@ -26,8 +26,8 @@ class UpdateService(Service):
                 trains = await (await session.get(f"{SCALE_UPDATE_SERVER}/trains.json")).json()
 
         return {
-            "trains": trains,
             "current_train": manifest["train"],
+            **trains,
         }
 
     @private

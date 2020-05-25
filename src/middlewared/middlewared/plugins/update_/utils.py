@@ -3,7 +3,7 @@ import itertools
 import re
 
 SCALE_MANIFEST_FILE = "/data/manifest.json"
-SCALE_UPDATE_SERVER = "http://pivnoy.thelogin.ru/scale"
+SCALE_UPDATE_SERVER = "https://update.freenas.org/scale"
 
 UPLOAD_LOCATION = "/var/tmp/firmware"
 

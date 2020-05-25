@@ -109,27 +109,6 @@ class UpdateService(Service):
         await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
         await self.middleware.call('service.restart', 'cron')
 
-    def _get_redir_trains(self):
-        """
-        The expect trains redirection JSON format is the following:
-
-        {
-            "SOURCE_TRAIN_NAME": {
-                "redirect": "NAME_NEW_TRAIN"
-            }
-        }
-
-        The format uses an dict/object as the value to allow new items to be added in the future
-        and be backward compatible.
-        """
-        r = requests.get(
-            self.middleware.call_sync('update.get_trains_redirection_url'),
-            timeout=5,
-        )
-        rv = {}
-        for k, v in r.json().items():
-            rv[k] = v['redirect']
-        return rv
 
     @accepts()
     def get_trains(self):
@@ -138,12 +117,6 @@ class UpdateService(Service):
         train of currently booted environment.
         """
         data = self.middleware.call_sync('datastore.config', 'system.update')
-
-        try:
-            redir_trains = self._get_redir_trains()
-        except Exception:
-            self.logger.warn('Failed to retrieve trains redirection', exc_info=True)
-            redir_trains = {}
 
         trains_data = self.middleware.call_sync('update.get_trains_data')
         current_train = trains_data['current_train']
@@ -164,14 +137,14 @@ class UpdateService(Service):
 
             if not selected and data['upd_train'] == name:
                 selected = data['upd_train']
-            if name in redir_trains:
+            if name in trains_data['trains_redirection']:
                 trains.pop(name)
                 continue
         if not data['upd_train'] or not selected:
             selected = current_train
 
-        if selected in redir_trains:
-            selected = redir_trains[selected]
+        if selected in trains_data['trains_redirection']:
+            selected = trains_data['trains_redirection'][selected]
         return {
             'trains': trains,
             'current': current_train,
