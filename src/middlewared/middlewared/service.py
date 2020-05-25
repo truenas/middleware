@@ -879,10 +879,7 @@ class CoreService(Service):
         else:
             process = run(['ping', '-t', f'{timeout}', host])
 
-        if process.returncode != 0:
-            return False
-        else:
-            return True
+        return process.returncode == 0
 
     def _ping6_host(self, host, timeout):
         if osc.IS_LINUX:
@@ -890,10 +887,7 @@ class CoreService(Service):
         else:
             process = run(['ping6', '-X', f'{timeout}', host])
 
-        if process.returncode != 0:
-            return False
-        else:
-            return True
+        return process.returncode == 0
 
     @accepts(
         Dict(
