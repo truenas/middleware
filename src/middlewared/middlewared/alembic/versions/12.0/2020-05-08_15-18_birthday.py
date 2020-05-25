@@ -1,4 +1,4 @@
-"""empty message
+"""birthday
 
 Revision ID: a3ac49efb063
 Revises: e9e611d7c5a7
