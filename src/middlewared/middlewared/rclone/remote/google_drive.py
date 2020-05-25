@@ -20,4 +20,7 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
     refresh_credentials = ["token"]
 
     async def get_credentials_extra(self, credentials):
+        if credentials["attributes"].get("team_drive"):
+            return dict()
+
         return dict(root_folder_id="root")
