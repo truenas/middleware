@@ -157,12 +157,12 @@ class EtcService(Service):
             },
             {
                 'type': 'mako',
-                'local_path': f'local/apache24/Includes/webdav.conf',
+                'local_path': 'local/apache24/Includes/webdav.conf',
                 'path': f'{APACHE_DIR}/Includes/webdav.conf',
             },
             {
                 'type': 'py',
-                'local_path': f'local/apache24/webdav_config',
+                'local_path': 'local/apache24/webdav_config',
                 'path': f'{APACHE_DIR}/webdav_config',
             },
         ],

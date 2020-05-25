@@ -7,7 +7,6 @@ from datetime import datetime
 import enum
 import errno
 import os
-import requests
 import shutil
 import subprocess
 import textwrap
@@ -108,7 +107,6 @@ class UpdateService(Service):
         config = await self.middleware.call('datastore.config', 'system.update')
         await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
         await self.middleware.call('service.restart', 'cron')
-
 
     @accepts()
     def get_trains(self):
