@@ -69,6 +69,8 @@ sambashare:x:128:
 winbindd_priv:x:129:
 libvirt:x:130:
 libvirt-qemu:x:64055:libvirt-qemu
+minio:x:473:
 builtin_administrators:x:544:
 builtin_users:x:545:
 builtin_guests:x:546:
+webdav:x:666:
