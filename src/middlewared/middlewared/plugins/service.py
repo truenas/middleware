@@ -512,9 +512,9 @@ class ServiceService(CRUDService):
         await self._reload_resolvconf()
         await self._service("routing", "restart", **kwargs)
 
-    async def _start_routing(self, **kwargs):
+    async def _restart_routing(self, **kwargs):
         await self.middleware.call('etc.generate', 'rc')
-        await self._service('routing', 'start', **kwargs)
+        await self._service('routing', 'restart', **kwargs)
 
     async def _reload_timeservices(self, **kwargs):
         await self.middleware.call('etc.generate', 'localtime')
