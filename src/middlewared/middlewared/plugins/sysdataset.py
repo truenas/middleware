@@ -440,6 +440,9 @@ async def pool_post_import(middleware, pool):
     """
     On pool import we may need to reconfigure system dataset.
     """
+    if pool is None:
+        return
+
     await middleware.call('systemdataset.setup')
 
 

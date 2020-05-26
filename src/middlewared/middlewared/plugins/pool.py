@@ -1724,11 +1724,6 @@ class PoolService(CRUDService):
             self.logger.warn('Failed to configure collectd', exc_info=True)
 
         try:
-            self.middleware.call_sync('etc.generate', 'ftp')
-        except Exception:
-            self.logger.warn('Failed to configure ftp', exc_info=True)
-
-        try:
             self.middleware.call_sync('etc.generate', 'syslogd')
         except Exception:
             self.logger.warn('Failed to configure syslogd', exc_info=True)
@@ -1741,6 +1736,7 @@ class PoolService(CRUDService):
             # For now let's make this FreeBSD specific as we may very well be getting zfs events here in linux
             self.middleware.call_sync('disk.swaps_configure')
 
+        self.middleware.call_hook_sync('pool.post_import', None)
         job.set_progress(100, 'Pools import completed')
 
     """

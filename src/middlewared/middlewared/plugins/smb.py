@@ -941,6 +941,10 @@ async def pool_post_import(middleware, pool):
     """
     Makes sure to reload SMB if a pool is imported and there are shares configured for it.
     """
+    if pool is None:
+        asyncio.ensure_future(middleware.call('etc.generate', 'smb_share'))
+        return
+
     path = f'/mnt/{pool["name"]}'
     if await middleware.call('sharing.smb.query', [
         ('OR', [
