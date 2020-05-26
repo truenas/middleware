@@ -1,7 +1,5 @@
 import subprocess
 
-from middlewared.plugins.tunables import TUNABLES_DEFAULT_FILE
-
 
 def sysctl_configuration(middleware):
     tuneables = middleware.call_sync('tunable.query', [
@@ -21,21 +19,15 @@ def sysctl_configuration(middleware):
         ['enabled', '=', False], ['type', '=', 'SYSCTL']
     ])
     if len(tuneables) > 0:
-        # Read from file
-        default_sysctl = {}
-        try:
-            with open(TUNABLES_DEFAULT_FILE, 'r') as f:
-                for line in f.readlines():
-                    line = line.rstrip()
-                    groups = line.split(" = ")
-                    default_sysctl[groups[0]] = groups[1]
-        except Exception:
-            pass
         for tuneable in tuneables:
-            middleware.logger.debug(f'{tuneable["var"]}="{default_sysctl[tuneable["var"]]}"')
-            if tuneable['var'] in default_sysctl.keys():
+            value_default = None
+            try:
+                value_default = middleware.call_sync('tunable.get_default_value', tuneable["var"])
+            except KeyError:
+                pass
+            if value_default is not None:
                 ret = subprocess.run(
-                    ['sysctl', f'{tuneable["var"]}="{default_sysctl[tuneable["var"]]}"'],
+                    ['sysctl', f'{tuneable["var"]}="{value_default}"'],
                     capture_output=True
                 )
                 if ret.returncode:

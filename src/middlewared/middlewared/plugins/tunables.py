@@ -1,14 +1,12 @@
 import re
-import shlex
 import subprocess
+import sysctl
 
 from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.validators import Match
-
-TUNABLES_DEFAULT_FILE = '/data/tunables_default'
 
 
 class TunableModel(sa.Model):
@@ -28,26 +26,9 @@ class TunableService(CRUDService):
         datastore_prefix = 'tun_'
         datastore_extend = 'tunable.upper'
 
-    def sysctl(self, oid):
-        """Quick and dirty means of doing sysctl -n"""
-        cmd = 'sysctl -n %s' % oid
-        p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE)
-        return p.communicate()[0]
-
-    def get_default_value(self, oid):
-        """Get the default value for systctl"""
-        value_default = None
-        try:
-            with open(TUNABLES_DEFAULT_FILE, 'r') as f:
-                for line in f.readlines():
-                    line = line.rstrip()
-                    groups = line.split(" = ")
-                    if groups[0] == oid:
-                        value_default = groups[1]
-                        break
-        except Exception:
-            pass
-        return value_default
+    def __init__(self, *args, **kwargs):
+        super(TunableService, self).__init__(*args, **kwargs)
+        self.__default_sysctl = {}
 
     @accepts(Dict(
         'tunable_create',
@@ -81,13 +62,14 @@ class TunableService(CRUDService):
         )
 
         if data['type'] == 'sysctl':
-            value_default = self.get_default_value(data['var'])
+            value_default = None
+            try:
+                value_default = self.__default_sysctl[data["var"]]
+            except KeyError:
+                pass
             if value_default is None:
                 # Write default value
-                cfg_file = open(TUNABLES_DEFAULT_FILE, 'a')
-                cfg_file.writelines(f'{data["var"]} = {data["value"]}')
-                cfg_file.close()
-
+                self.__default_sysctl[data["var"]] = sysctl.filter(data["var"])[0].value
         await self.middleware.call('service.reload', data['type'])
 
         return await self._get_instance(data['id'])
@@ -135,7 +117,11 @@ class TunableService(CRUDService):
         await self.lower(tunable)
         if tunable['type'].lower() == 'sysctl':
             # Restore the default value, if it is possible.
-            value_default = self.get_default_value(tunable['var'])
+            value_default = None
+            try:
+                value_default = self.__default_sysctl[tunable["var"]]
+            except KeyError:
+                pass
             if value_default is not None:
                 ret = subprocess.run(
                     ['sysctl', f'{tunable["var"]}="{value_default}"'],
