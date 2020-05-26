@@ -400,8 +400,11 @@ class UpdateService(Service):
     async def get_update_location(self):
         syspath = (await self.middleware.call('systemdataset.config'))['path']
         if syspath:
-            return f'{syspath}/update'
-        return UPLOAD_LOCATION
+            path = f'{syspath}/update'
+        else:
+            path = UPLOAD_LOCATION
+        os.makedirs(path, exist_ok=True)
+        return path
 
     @private
     def take_systemdataset_samba4_snapshot(self):
