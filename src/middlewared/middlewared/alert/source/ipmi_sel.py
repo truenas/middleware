@@ -215,7 +215,12 @@ class IPMISELSpaceLeftAlertSource(AlertSource):
 
     def _produce_alert_for_ipmitool_output(self, output):
         sel_information = parse_sel_information(output)
-        if int(sel_information["Percent Used"].rstrip("%")) > 90:
+        try:
+            percent_used = int(sel_information["Percent Used"].rstrip("%"))
+        except ValueError:
+            return
+
+        if percent_used > 90:
             return Alert(
                 IPMISELSpaceLeftAlertClass,
                 {
