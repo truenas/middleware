@@ -64,7 +64,7 @@ def test_05_Removing_non_AD_NTP_servers(ntp_dict):
 
 
 def test_06_Checking_ntpservers_num_configured_using_ssh(ntp_dict):
-    results = SSH_TEST(f'fgrep -E ^server /etc/ntp.conf', user, password, ip)
+    results = SSH_TEST(f'grep -R ^server /etc/ntp.conf', user, password, ip)
     assert results['result'] is True, results
     assert len(results['output'].strip().split('\n')) == \
         len(ntp_dict['servers']), results['output']
