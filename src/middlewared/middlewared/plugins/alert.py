@@ -204,7 +204,8 @@ class AlertService(Service):
 
                 alert = Alert(**alert)
 
-                self.alerts.append(alert)
+                if not any(a.uuid == alert.uuid for a in self.alerts):
+                    self.alerts.append(alert)
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
@@ -700,7 +701,7 @@ class AlertService(Service):
 
         return alerts
 
-    @periodic(3600)
+    @periodic(3600, run_on_start=False)
     @private
     async def flush_alerts(self):
         if (
