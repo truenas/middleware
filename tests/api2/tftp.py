@@ -8,10 +8,11 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job
-from auto_config import pool_name
+from auto_config import pool_name, scale
 
 dataset = f"{pool_name}/tftproot"
 dataset_url = dataset.replace('/', '%2F')
+group = 'nogroup' if scale else 'nobody'
 
 
 def test_01_Creating_dataset_tftproot():
@@ -30,7 +31,7 @@ def test_02_Setting_permissions_for_TFTP_on_mnt_pool_name_tftproot():
     payload = {
         'acl': [],
         'mode': '777',
-        'group': 'nobody',
+        'group': group,
         'user': 'nobody'
     }
     results = POST(f'/pool/dataset/id/{dataset_url}/permission/', payload)
