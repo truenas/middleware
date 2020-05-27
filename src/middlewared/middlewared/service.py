@@ -11,18 +11,20 @@ import socket
 import threading
 import time
 import traceback
+from subprocess import run
+import ipaddress
 
 from middlewared.common.environ import environ_update
 import middlewared.main
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.logger import Logger, reconfigure_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 from middlewared.utils.type import copy_function_metadata
-
+from middlewared.validators import Range, IpAddress
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 get_or_insert_lock = asyncio.Lock()
@@ -871,6 +873,81 @@ class CoreService(Service):
         "ping" protocol message.
         """
         return 'pong'
+
+    def _ping_host(self, host, timeout):
+        if osc.IS_LINUX:
+            process = run(['ping', '-4', '-w', f'{timeout}', host])
+        else:
+            process = run(['ping', '-t', f'{timeout}', host])
+
+        return process.returncode == 0
+
+    def _ping6_host(self, host, timeout):
+        if osc.IS_LINUX:
+            process = run(['ping6', '-w', f'{timeout}', host])
+        else:
+            process = run(['ping6', '-X', f'{timeout}', host])
+
+        return process.returncode == 0
+
+    @accepts(
+        Dict(
+            'options',
+            Str('type', enum=['ICMP', 'ICMPV4', 'ICMPV6'], default='ICMP'),
+            Str('hostname', required=True),
+            Int('timeout', validators=[Range(min=1, max=60)], default=4),
+        ),
+    )
+    def ping_remote(self, options):
+        """
+        Method that will send an ICMP echo request to "hostname"
+        and will wait up to "timeout" for a reply.
+        """
+        ip = None
+        ip_found = True
+        verrors = ValidationErrors()
+        try:
+            ip = IpAddress()
+            ip(options['hostname'])
+            ip = options['hostname']
+        except ValueError:
+            ip_found = False
+        if not ip_found:
+            try:
+                if options['type'] == 'ICMP':
+                    ip = socket.getaddrinfo(options['hostname'], None)[0][4][0]
+                elif options['type'] == 'ICMPV4':
+                    ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET)[0][4][0]
+                elif options['type'] == 'ICMPV6':
+                    ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET6)[0][4][0]
+            except socket.gaierror:
+                verrors.add(
+                    'options.hostname',
+                    f'{options["hostname"]} cannot be resolved to an IP address.'
+                )
+
+        verrors.check()
+
+        addr = ipaddress.ip_address(ip)
+        if not addr.version == 4 and (options['type'] == 'ICMP' or options['type'] == 'ICMPV4'):
+            verrors.add(
+                'options.type',
+                f'Requested ICMPv4 protocol, but the address provided "{addr}" is not a valid IPv4 address.'
+            )
+        if not addr.version == 6 and options['type'] == 'ICMPV6':
+            verrors.add(
+                'options.type',
+                f'Requested ICMPv6 protocol, but the address provided "{addr}" is not a valid IPv6 address.'
+            )
+        verrors.check()
+
+        ping_host = False
+        if addr.version == 4:
+            ping_host = self._ping_host(ip, options['timeout'])
+        elif addr.version == 6:
+            ping_host = self._ping6_host(ip, options['timeout'])
+
+        return ping_host
 
     @accepts(
         Str('method'),
