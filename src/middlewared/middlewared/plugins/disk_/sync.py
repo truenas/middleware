@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
+from middlewared.utils import osc
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -74,7 +75,18 @@ class DiskService(Service, ServiceChangeMixin):
         ):
             return
 
+        if osc.IS_FREEBSD:
+            for i in range(10):
+                if i > 0:
+                    await asyncio.sleep(1)
+
+                if await self.middleware.call('device.devd_connected'):
+                    break
+            else:
+                self.logger.warning('Starting disk.sync_all when devd is not connected yet')
+
         sys_disks = await self.middleware.call('device.get_disks')
+        self.logger.info('Found disks: %r', sys_disks)
 
         seen_disks = {}
         serials = []
@@ -123,7 +135,7 @@ class DiskService(Service, ServiceChangeMixin):
                 disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
             # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
             # when lots of drives are present
-            if disk != original_disk:
+            if self._disk_changed(disk, original_disk):
                 await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 changed = True
 
@@ -157,7 +169,7 @@ class DiskService(Service, ServiceChangeMixin):
                 if not new:
                     # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
                     # when lots of drives are present
-                    if disk != original_disk:
+                    if self._disk_changed(disk, original_disk):
                         await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                         changed = True
                 else:
@@ -169,6 +181,10 @@ class DiskService(Service, ServiceChangeMixin):
         if changed:
             await self.middleware.call('disk.restart_services_after_sync')
         return 'OK'
+
+    def _disk_changed(self, disk, original_disk):
+        # storage_disk.disk_size is a string
+        return dict(disk, disk_size=None if disk.get('disk_size') is None else str(disk['disk_size'])) != original_disk
 
     async def _map_device_disk_to_db(self, db_disk, disk):
         only_update_if_true = ('size',)
