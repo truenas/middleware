@@ -492,11 +492,6 @@ class Alert(Model):
     dismissed = models.BooleanField()
     text = models.TextField()
 
-    class Meta:
-        unique_together = (
-            ('node', 'klass', 'key'),
-        )
-
 
 class AlertClasses(Model):
     classes = DictField(
