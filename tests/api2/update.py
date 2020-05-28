@@ -139,6 +139,8 @@ def test_08_install_update():
 
 
 def test_09_verify_the_update_is_successful():
+    global proper_update_failed
+    proper_update_failed = False
     if update_version is None:
         pytest.skip('No update found')
     elif download_failed is True:
@@ -150,8 +152,13 @@ def test_09_verify_the_update_is_successful():
             if job_status['state'] in ('RUNNING', 'WAITING'):
                 sleep(5)
             else:
-                assert job_status['state'] == 'SUCCESS', get_job.text
-                break
+                if job_status['state'] == 'FAILED':
+                    assert 'Unable to downgrade' in job_status['error'], job_status['error']
+                    proper_update_failed = True
+                    break
+                else:
+                    assert job_status['state'] == 'SUCCESS', get_job.text
+                    break
 
 
 def test_10_verify_system_is_ready_to_reboot():
@@ -159,6 +166,8 @@ def test_10_verify_system_is_ready_to_reboot():
         pytest.skip('No update found')
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
+    elif proper_update_failed is True:
+        pytest.skip('skiped due to downgrade')
     else:
         results = POST('/update/check_available/')
         assert results.status_code == 200, results.text
