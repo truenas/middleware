@@ -2490,11 +2490,6 @@ class PoolService(CRUDService):
             self.logger.warn('Failed to configure collectd', exc_info=True)
 
         try:
-            self.middleware.call_sync('etc.generate', 'ftp')
-        except Exception:
-            self.logger.warn('Failed to configure ftp', exc_info=True)
-
-        try:
             self.middleware.call_sync('etc.generate', 'syslogd')
         except Exception:
             self.logger.warn('Failed to configure syslogd', exc_info=True)
@@ -2504,6 +2499,9 @@ class PoolService(CRUDService):
         # Configure swaps after importing pools. devd events are not yet ready at this
         # stage of the boot process.
         self.middleware.call_sync('disk.swaps_configure')
+
+        # Call post_import hook for sharing services now that pools are imported
+        self.middleware.call_hook_sync('pool.post_import', None)
 
         job.set_progress(100, 'Pools import completed')
 
