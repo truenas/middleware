@@ -1,6 +1,7 @@
 import datetime
 import json
 
+import isodate
 from sqlalchemy import (
     Table, Column as _Column, ForeignKey, Index,
     Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text,
@@ -114,6 +115,9 @@ class Time(UserDefinedType):
         if value is None:
             return None
 
+        if isinstance(value, str):
+            value = isodate.parse_time(value)
+
         return value.isoformat()
 
     def bind_processor(self, dialect):
@@ -121,7 +125,7 @@ class Time(UserDefinedType):
 
     def _result_processor(self, value):
         try:
-            return datetime.time(*map(int, value.split(":")))
+            return isodate.parse_time(value)
         except Exception:
             return datetime.time()
 
