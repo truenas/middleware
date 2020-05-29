@@ -683,12 +683,13 @@ class SystemService(Service):
         for line in iter(cp.stdout.readline, b''):
             line = line.decode(errors='ignore').rstrip()
 
-            if line.startswith('**'):
-                percent, help = line.split(':')
-                job.set_progress(
-                    int(percent.split()[-1].strip('%')),
-                    help.lstrip()
-                )
+            if line.startswith('**') and '%: ' in line:
+                percent, desc = line.split('%: ', 1)
+                try:
+                    percent = int(percent.split()[-1])
+                except ValueError:
+                    continue
+                job.set_progress(percent, desc)
         _, stderr = cp.communicate()
 
         if cp.returncode != 0:
