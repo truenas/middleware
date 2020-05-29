@@ -35,9 +35,6 @@ post-install()
                 /usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
         fi
 
-	/usr/local/bin/sqlite3 /data/freenas-v1.db "REPLACE INTO system_keyvalue (key, value) VALUES ('fake_migration', 'true')"
-	/usr/local/bin/sqlite3 /data/freenas-v1.db "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')"
-
         cp /data/freenas-v1.db /data/factory-v1.db
 }
 
