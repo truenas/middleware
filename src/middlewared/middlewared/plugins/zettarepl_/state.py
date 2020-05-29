@@ -99,6 +99,8 @@ class ZettareplService(Service):
         self._notify_state_change(task_id)
 
     def set_last_snapshot(self, task_id, last_snapshot):
+        self.last_snapshot[task_id] = last_snapshot
+
         if task_id.startswith("replication_task_"):
             self.serializable_state[int(task_id.split("_")[-1])]["last_snapshot"] = last_snapshot
 
