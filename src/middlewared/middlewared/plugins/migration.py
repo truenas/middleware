@@ -31,12 +31,6 @@ class MigrationService(Service):
         private = True
 
     async def run(self):
-        if await self.middleware.call("keyvalue.get", "fake_migration", False):
-            for module in load_migrations(self.middleware):
-                await self.middleware.call("datastore.insert", "system.migration", {"name": module.__name__})
-
-            await self.middleware.call("keyvalue.set", "fake_migration", False)
-
         if await self.middleware.call("keyvalue.get", "run_migration", False):
             executed_migrations = {m["name"] for m in await self.middleware.call("datastore.query", "system.migration")}
 

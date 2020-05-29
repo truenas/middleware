@@ -790,7 +790,7 @@ class SystemGeneralModel(sa.Model):
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
     stg_language = sa.Column(sa.String(120), default="en")
     stg_kbdmap = sa.Column(sa.String(120))
-    stg_birthday = sa.Column(sa.DateTime())
+    stg_birthday = sa.Column(sa.DateTime(), nullable=True)
     stg_timezone = sa.Column(sa.String(120), default="America/Los_Angeles")
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
