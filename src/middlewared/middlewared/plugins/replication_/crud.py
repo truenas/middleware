@@ -38,7 +38,7 @@ class ReplicationService(Service):
 
         for k in ["transport", "ssh_credentials", "netcat_active_side", "netcat_active_side_listen_address",
                   "netcat_active_side_port_min", "netcat_active_side_port_max", "netcat_passive_side_connect_address",
-                  "recursive", "properties", "replicate", "compression", "dedup", "large_block", "embed", "compressed",
+                  "recursive", "properties", "replicate", "compression", "large_block", "embed", "compressed",
                   "retries"]:
             data[k] = replication_task[k]
 
