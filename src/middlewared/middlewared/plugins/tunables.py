@@ -1,6 +1,5 @@
 import re
 import subprocess
-import sysctl
 
 from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
@@ -29,6 +28,14 @@ class TunableService(CRUDService):
     def __init__(self, *args, **kwargs):
         super(TunableService, self).__init__(*args, **kwargs)
         self.__default_sysctl = {}
+
+    @private
+    async def get_default_value(self, oid):
+        return self.__default_sysctl[oid]
+
+    @private
+    async def set_default_value(self, oid, value):
+        self.__default_sysctl[oid] = value
 
     @accepts(Dict(
         'tunable_create',
@@ -61,15 +68,6 @@ class TunableService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        if data['type'] == 'sysctl':
-            value_default = None
-            try:
-                value_default = self.__default_sysctl[data["var"]]
-            except KeyError:
-                pass
-            if value_default is None:
-                # Write default value
-                self.__default_sysctl[data["var"]] = sysctl.filter(data["var"])[0].value
         await self.middleware.call('service.reload', data['type'])
 
         return await self._get_instance(data['id'])
