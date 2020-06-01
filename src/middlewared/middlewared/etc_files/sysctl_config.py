@@ -8,13 +8,13 @@ def sysctl_configuration(middleware):
     tuneables = middleware.call_sync('tunable.query', [['type', '=', 'SYSCTL']])
     for tuneable in tuneables:
         value_default = None
-        if tuneable['type'].lower() == 'sysctl':
-            try:
-                value_default = middleware.call_sync('tunable.get_default_value', tuneable['var'])
-            except KeyError:
-                pass
+
+        try:
+            value_default = middleware.call_sync('tunable.get_default_value', tuneable['var'])
+        except KeyError:
+            pass
         if tuneable['enabled'] is True:
-            if value_default is None and tuneable['type'].lower() == 'sysctl':
+            if value_default is None:
                 try:
                     value_default = sysctl.filter(tuneable['var'])[0].value
                     middleware.call_sync('tunable.set_default_value', tuneable['var'], value_default)
