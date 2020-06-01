@@ -9,4 +9,4 @@ class S3Service(SimpleService):
     freebsd_rc = "minio"
     freebsd_pidfile = "/var/run/minio.pid"
 
-    # FIXME: Linux
+    systemd_unit = "minio"
