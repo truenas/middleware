@@ -98,9 +98,11 @@ class SMBService(Service):
             CallError(f'Failed to retrieve passdb entry for {username}: {p.stderr.decode()}')
         entry = p.stdout.decode()
         if not entry:
-            self.logger.debug("User [%s] does not exist in the passdb.tdb file. Creating entry.", username)
+            next_rid = str(await self.middleware.call('smb.get_next_rid'))
+            self.logger.debug("User [%s] does not exist in the passdb.tdb file. "
+                              "Creating entry with rid [%s].", username, next_rid)
             pdbcreate = await Popen(
-                [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username, '-t'],
+                [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username, '-U', next_rid, '-t'],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
             )
             await pdbcreate.communicate(input=" \n \n".encode())
