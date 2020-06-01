@@ -151,7 +151,7 @@ def generate_ha_syslog(middleware):
         log {{
             source(src);
             filter(f_not_smb);
-            filter(f_not_mdnsresponder);
+            filter(f_not_mdns);
             filter(f_not_nginx);
             destination(other_controller);
         }};
