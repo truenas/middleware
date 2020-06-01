@@ -12,4 +12,8 @@
 % if base:
 ${base}
 % endif
+% if IS_LINUX:
+boot-pool/grub /boot/grub	zfs	relatime,defaults	0	0
+% else:
 fdescfs	/dev/fd	fdescfs rw	0 0
+% endif

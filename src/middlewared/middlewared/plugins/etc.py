@@ -82,6 +82,10 @@ class EtcService(Service):
             {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
             {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': 'shadow', 'mode': 0o0640},
         ],
+        'fstab': [
+            {'type': 'mako', 'path': 'fstab'},
+            {'type': 'py', 'path': 'fstab_configure'}
+        ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
@@ -173,10 +177,6 @@ class EtcService(Service):
         ],
         'failover': [
             {'type': 'py', 'path': 'failover'},
-        ],
-        'fstab': [
-            {'type': 'mako', 'path': 'fstab', 'platform': 'FreeBSD'},
-            {'type': 'py', 'path': 'fstab_configure', 'platform': 'FreeBSD'}
         ],
         'collectd': [
             {'type': 'mako', 'path': 'local/collectd.conf'}
