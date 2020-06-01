@@ -550,6 +550,31 @@ class SMBService(SystemServiceService):
             raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
 
     @private
+    @job(lock="rid_check")
+    async def check_rid_conflict(self, job):
+        pdb_by_sid = {}
+        passdb_jobs = await self.middleware.call(
+            'core.get_jobs',
+            [('method', '=', 'smb.synchronize_passdb'), ('status', 'in', ['WAITING', 'RUNNING'])]
+        )
+        while passdb_jobs:
+            await asyncio.sleep(5)
+            passdb_jobs = await self.middleware.call(
+                'core.get_jobs',
+                [('method', '=', 'smb.synchronize_passdb'), ('status', 'in', ['WAITING', 'RUNNING'])]
+            )
+
+        for u in await self.passdb_list(True):
+            pdb_by_sid.update({u['User SID']: u})
+
+        for group in (await self.groupmap_list()).values():
+            if group['SID'] in pdb_by_sid:
+                os.unlink('/var/db/system/samba4/group_mapping.tdb')
+                for g in await self.middleware.call('group.query', [('builtin', '=', False)]):
+                    self.groupmap_add(g['group'])
+                break
+
+    @private
     async def get_smb_ha_mode(self):
         if await self.middleware.call('cache.has_key', 'SMB_HA_MODE'):
             return await self.middleware.call('cache.get', 'SMB_HA_MODE')
