@@ -35,7 +35,8 @@ class TunableService(CRUDService):
 
     @private
     async def set_default_value(self, oid, value):
-        self.__default_sysctl[oid] = value
+        if oid not in self.__default_sysctl:
+            self.__default_sysctl[oid] = value
 
     @accepts(Dict(
         'tunable_create',
