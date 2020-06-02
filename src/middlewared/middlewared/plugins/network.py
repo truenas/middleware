@@ -5,6 +5,7 @@ from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Ref, Str,
                                 ValidationErrors, accepts)
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
+from middlewared.utils.generate import random_string
 from middlewared.validators import Match, Range
 
 import asyncio
@@ -13,10 +14,8 @@ import contextlib
 import ipaddress
 import itertools
 import platform
-import random
 import re
 import socket
-import string
 import subprocess
 
 from .interface.netif import netif
@@ -1131,19 +1130,31 @@ class InterfaceService(CRUDService):
                     break
 
     async def __convert_interface_datastore(self, data):
+
+        """
+        If there is no password for VRRP/CARP, then we generate
+        a random string to be used as the password.
+
+        If FreeBSD, then generate a CARP password of length 16 chars.
+
+        If Linux, then generate a VRRP password of length 8 chars.
+        VRRP only allows 8 char long passwords for the type of
+        authentication that is used.
+        """
+
+        passwd = ''
+        if not data.get('failover_pass') and data.get('failover_vhid'):
+            if osc.IS_FREEBSD:
+                passwd = random_string(string_size=16)
+            else:
+                passwd = random_string()
+
         return {
             'name': data.get('description') or '',
             'dhcp': data['ipv4_dhcp'],
             'ipv6auto': data['ipv6_auto'],
             'vhid': data.get('failover_vhid'),
-            # CARP password needs to be automatically generated if there isn't one
-            'pass': ''.join([
-                random.SystemRandom().choice(
-                    string.ascii_letters + string.digits
-                ) for n in range(16)
-            ])
-            if not data.get('failover_pass') and data.get('failover_vhid')
-            else data.get('failover_pass', ''),
+            'pass': passwd,
             'critical': data.get('failover_critical') or False,
             'group': data.get('failover_group'),
             'options': data.get('options', ''),
