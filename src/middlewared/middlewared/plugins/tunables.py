@@ -118,7 +118,7 @@ class TunableService(CRUDService):
             # Restore the default value, if it is possible.
             value_default = None
             try:
-                value_default = self.__default_sysctl[tunable["var"]]
+                value_default = await self.get_default_value(tunable["var"])
             except KeyError:
                 pass
             if value_default is not None:
