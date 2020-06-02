@@ -8,7 +8,9 @@ Homepage: http://www.truenas.com
 
 Package: truenas
 Architecture: all
-Depends: collectd,
+Depends: acl,
+         cifs-utils,
+         collectd,
          cpuid,
          docker-ce,
          gdb,
