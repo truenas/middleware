@@ -8,6 +8,7 @@ from middlewared.validators import Match
 from datetime import datetime
 
 import errno
+import os
 import subprocess
 
 
@@ -181,7 +182,11 @@ class BootEnvService(CRUDService):
         args = [self.BE_TOOL, 'create']
         source = data.get('source')
         if source:
-            args += ['-e', source]
+            args += [
+                '-e', os.path.join(
+                    await self.middleware.call('boot.pool_name'), 'ROOT', source
+                ) if osc.IS_LINUX else source
+            ]
         args.append(data['name'])
         try:
             await run(args, encoding='utf8', check=True)
