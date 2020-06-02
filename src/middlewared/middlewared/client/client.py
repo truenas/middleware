@@ -15,6 +15,9 @@ import socket
 import sys
 import time
 import uuid
+import random
+import platform
+
 
 try:
     from libzfs import Error as ZFSError
@@ -63,28 +66,55 @@ class WSClient(WebSocketClient):
         self.protocol = DDPProtocol(self)
         super(WSClient, self).__init__(url, *args, **kwargs)
 
-    def get_reserved_portfd(self):
+    def get_reserved_port(self):
 
-        # defined in net/in.h
-        IP_PORTRANGE = 19
-        IP_PORTRANGE_LOW = 2
+        # platform module is used because middlewared.utils.osc
+        # module causes a cyclical import issue with ErrnoMixin.
+        if platform.system().lower() == 'freebsd':
 
-        n_retries = 5
-        for retry in range(n_retries):
-            self.sock.setsockopt(socket.IPPROTO_IP, IP_PORTRANGE, IP_PORTRANGE_LOW)
+            # defined in net/in.h
+            IP_PORTRANGE = 19
+            IP_PORTRANGE_LOW = 2
 
-            try:
-                self.sock.bind(('', 0))
-                return
-            except OSError:
-                time.sleep(0.1)
-                continue
+            n_retries = 5
+            for retry in range(n_retries):
+                self.sock.setsockopt(socket.IPPROTO_IP, IP_PORTRANGE, IP_PORTRANGE_LOW)
+
+                try:
+                    self.sock.bind(('', 0))
+                    return
+                except OSError:
+                    time.sleep(0.1)
+                    continue
+
+        else:
+
+            # linux doesn't have a mechanism to allow the kernel to dynamically
+            # assign ports in the "privileged" range (i.e. 600 - 1024) so we
+            # loop through and call bind() on a privileged port explicitly since
+            # middlewared runs as root.
+
+            # generate 5 random numbers in the `port_low`, `port_high` range
+            # so that we guarantee we use a different port from the last
+            # iteration in the for loop
+            port_low = 600
+            port_high = 1024
+
+            ports_to_try = random.sample(range(port_low, port_high), 5)
+
+            for port in ports_to_try:
+                try:
+                    self.sock.bind(('', port))
+                    return
+                except OSError:
+                    time.sleep(0.1)
+                    continue
 
         raise ReserveFDException()
 
     def connect(self):
         if self.reserved_ports:
-            self.get_reserved_portfd()
+            self.get_reserved_port()
 
         self.sock.settimeout(10)
 
