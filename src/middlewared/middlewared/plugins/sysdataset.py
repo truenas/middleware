@@ -258,7 +258,7 @@ class SystemDatasetService(ConfigService):
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
                 os.unlink(SYSDATASET_PATH)
-            os.mkdir(SYSDATASET_PATH)
+            os.makedirs(SYSDATASET_PATH)
 
         acltype = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
         if acltype and acltype[0]['properties']['acltype']['value'] == 'off':
@@ -424,7 +424,9 @@ class SystemDatasetService(ConfigService):
                     proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
                     await proc.communicate()
 
-                os.rmdir('/tmp/system.new')
+                    os.rmdir('/tmp/system.new')
+                else:
+                    raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
         finally:
 
             restart.reverse()

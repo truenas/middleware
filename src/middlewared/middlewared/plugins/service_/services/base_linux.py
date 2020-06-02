@@ -64,7 +64,7 @@ class SimpleServiceLinux:
 
     def _unit_action_sync(self, action, wait, timeout):
         unit = self._get_systemd_unit()
-        job = getattr(unit, action)(b"replace")
+        job = getattr(unit.Unit, action)(b"replace")
 
         if wait:
             with DBus() as bus:

@@ -6,7 +6,7 @@ import pytest
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, user, password, ip, hostname
+from auto_config import pool_name, user, password, ip, hostname, scale
 from functions import GET, POST, PUT, DELETE, SSH_TEST, ping_host, wait_on_job
 
 ad_data_type = {
@@ -46,7 +46,7 @@ dataset = f"{pool_name}/ad-bsd"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestShare"
 SMB_PATH = f"/mnt/{dataset}"
-VOL_GROUP = "wheel"
+group = 'root' if scale else 'wheel'
 
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
@@ -149,7 +149,7 @@ def test_09_Changing_permissions_on_dataset():
         'acl': [],
         'mode': '777',
         'user': 'root',
-        'group': 'wheel'
+        'group': group
     })
     assert results.status_code == 200, results.text
     job_id = results.json()

@@ -77,9 +77,10 @@ class EtcService(Service):
     GROUPS = {
         'user': [
             {'type': 'mako', 'path': 'local/smbusername.map'},
-            {'type': 'mako', 'path': 'group', 'platform': 'FreeBSD'},
-            {'type': 'mako', 'path': 'master.passwd', 'platform': 'FreeBSD'},
+            {'type': 'mako', 'path': 'group'},
+            {'type': 'mako', 'path': 'master.passwd' if osc.IS_FREEBSD else 'passwd', 'local_path': 'master.passwd'},
             {'type': 'py', 'path': 'pwd_db', 'platform': 'FreeBSD'},
+            {'type': 'mako', 'path': 'shadow', 'platform': 'Linux', 'group': 'shadow', 'mode': 0o0640},
         ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
@@ -145,6 +146,9 @@ class EtcService(Service):
         'ssl': [
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
+        'scst': [
+            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'local_path': 'scst.conf.mako'}
+        ],
         'webdav': [
             {
                 'type': 'mako',
@@ -153,12 +157,12 @@ class EtcService(Service):
             },
             {
                 'type': 'mako',
-                'local_path': f'local/apache24/Includes/webdav.conf',
+                'local_path': 'local/apache24/Includes/webdav.conf',
                 'path': f'{APACHE_DIR}/Includes/webdav.conf',
             },
             {
                 'type': 'py',
-                'local_path': f'local/apache24/webdav_config',
+                'local_path': 'local/apache24/webdav_config',
                 'path': f'{APACHE_DIR}/webdav_config',
             },
         ],

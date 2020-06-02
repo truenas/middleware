@@ -42,7 +42,6 @@ class ReplicationModel(sa.Model):
     repl_retention_policy = sa.Column(sa.String(120), default="NONE")
     repl_lifetime_unit = sa.Column(sa.String(120), nullable=True, default='WEEK')
     repl_lifetime_value = sa.Column(sa.Integer(), nullable=True, default=2)
-    repl_dedup = sa.Column(sa.Boolean(), default=False)
     repl_large_block = sa.Column(sa.Boolean(), default=True)
     repl_embed = sa.Column(sa.Boolean(), default=False)
     repl_compressed = sa.Column(sa.Boolean(), default=True)
@@ -179,7 +178,6 @@ class ReplicationService(CRUDService):
             Str("lifetime_unit", null=True, default=None, enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]),
             Str("compression", enum=["LZ4", "PIGZ", "PLZIP"], null=True, default=None),
             Int("speed_limit", null=True, default=None, validators=[Range(min=1)]),
-            Bool("dedup", default=False),
             Bool("large_block", default=True),
             Bool("embed", default=False),
             Bool("compressed", default=True),
@@ -236,7 +234,7 @@ class ReplicationService(CRUDService):
           * `NONE` does not delete any snapshots
         * `compression` compresses SSH stream. Available only for SSH transport
         * `speed_limit` limits speed of SSH stream. Available only for SSH transport
-        * `dedup`, `large_block`, `embed` and `compressed` are various ZFS stream flag documented in `man zfs send`
+        * `large_block`, `embed` and `compressed` are various ZFS stream flag documented in `man zfs send`
         * `retries` specifies number of retries before considering replication failed
 
         .. examples(websocket)::

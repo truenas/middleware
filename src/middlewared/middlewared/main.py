@@ -308,6 +308,11 @@ class Application(object):
             return
 
         if message['msg'] == 'method':
+            if 'method' not in message:
+                self.send_error(message, errno.EINVAL,
+                                "Message is malformed: 'method' is absent.")
+                return
+
             try:
                 serviceobj, methodobj = self.middleware._method_lookup(message['method'])
             except CallError as e:
@@ -849,6 +854,9 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
                 'auth',
                 # We need to register all services because pseudo-services can still be used by plugins setup functions
                 'service',
+                # We need to run pwenc first to ensure we have secret setup to work for encrypted fields which
+                # might be used in the setup functions.
+                'pwenc',
                 # We run boot plugin first to ensure we are able to retrieve
                 # BOOT POOL during system plugin initialization
                 'boot',

@@ -52,7 +52,10 @@ class AddressMixin:
                     address = ipaddress.IPv4Interface(f'{addr["addr"]}/{addr["netmask"]}')
                 elif af is AddressFamily.INET6:
                     try:
-                        prefixlen = ipv6_netmask_to_prefixlen(addr["netmask"])
+                        if "/" in addr["netmask"]:
+                            prefixlen = int(addr["netmask"].split("/")[1])
+                        else:
+                            prefixlen = ipv6_netmask_to_prefixlen(addr["netmask"])
                     except ValueError:
                         logger.warning("Invalid IPv6 netmask %r for interface %r", addr["netmask"], self.name)
                         continue

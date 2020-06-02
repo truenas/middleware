@@ -306,14 +306,17 @@ class Job(object):
                 logger.warn('Failed to run on progress callback', exc_info=True)
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=encoded)
 
-    async def wait(self, timeout=None):
+    async def wait(self, timeout=None, raise_error=False):
         if timeout is None:
             await self._finished.wait()
         else:
             await asyncio.wait_for(asyncio.shield(self._finished.wait()), timeout)
+        if raise_error:
+            if self.error:
+                raise CallError(self.error)
         return self.result
 
-    def wait_sync(self):
+    def wait_sync(self, raise_error=False):
         """
         Synchronous method to wait for a job in another thread.
         """
@@ -325,6 +328,9 @@ class Job(object):
 
         fut.add_done_callback(done)
         event.wait()
+        if raise_error:
+            if self.error:
+                raise CallError(self.error)
         return self.result
 
     def abort(self):

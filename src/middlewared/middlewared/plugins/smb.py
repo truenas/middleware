@@ -19,6 +19,7 @@ import uuid
 
 try:
     from samba.samba3 import param
+    from samba.samba3 import passdb
 except ImportError:
     param = None
 
@@ -184,6 +185,7 @@ class SMBModel(sa.Model):
     cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
     cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)
     cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
+    cifs_srv_next_rid = sa.Column(sa.Integer(), nullable=False)
 
 
 class WBCErr(enum.Enum):
@@ -340,6 +342,23 @@ class SMBService(SystemServiceService):
             raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
 
     @private
+    async def get_next_rid(self):
+        next_rid = (await self.config())['next_rid']
+        if next_rid == 0:
+            try:
+                private_dir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
+                next_rid = passdb.PDB(f"tdbsam:{private_dir}/passdb.tdb").new_rid()
+            except Exception:
+                self.logger.warning("Failed to initialize RID counter from passdb. "
+                                    "Using default value for initialization.", exc_info=True)
+                next_rid = 5000
+
+        await self.middleware.call('datastore.update', 'services.cifs', 1,
+                                   {'next_rid': next_rid + 1},
+                                   {'prefix': 'cifs_srv_'})
+        return next_rid
+
+    @private
     async def setup_directories(self):
         for p in SMBPath:
             if p == SMBPath.STATEDIR:
@@ -385,10 +404,11 @@ class SMBService(SystemServiceService):
         await self.middleware.call('smb.set_sid', data['cifs_SID'])
 
         if await self.middleware.call("smb.getparm", "passdb backend", "global") == "tdbsam":
-            job.set_progress(40, 'Synchronizing passdb.')
-            await self.middleware.call("smb.synchronize_passdb")
-            job.set_progress(50, 'Synchronizing group mappings.')
-            await self.middleware.call("smb.synchronize_group_mappings")
+            job.set_progress(40, 'Synchronizing passdb and groupmap.')
+            pdb_job = await self.middleware.call("smb.synchronize_passdb")
+            grp_job = await self.middleware.call("smb.synchronize_group_mappings")
+            await pdb_job.wait()
+            await grp_job.wait()
             await self.middleware.call("admonitor.start")
             job.set_progress(60, 'generating SMB share configuration.')
             await self.middleware.call("etc.generate", "smb_share")
@@ -529,6 +549,7 @@ class SMBService(SystemServiceService):
     async def compress(self, data):
         data['netbiosalias'] = ' '.join(data['netbiosalias'])
         data.pop('netbiosname_local', None)
+        data.pop('next_rid')
         return data
 
 

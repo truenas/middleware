@@ -11,8 +11,10 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
-from auto_config import ip, pool_name, user, password
+from auto_config import ip, pool_name, user, password, scale
 from config import *
+
+group = 'root' if scale else 'wheel'
 
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = "/tmp/nfs" + BRIDGEHOST
@@ -53,12 +55,12 @@ def test_02_creating_dataset_nfs():
     assert results.status_code == 200, results.text
 
 
-def test_03_changing__dataset_permissions_of_nfs_dataset():
+def test_03_changing_dataset_permissions_of_nfs_dataset():
     payload = {
         "acl": [],
         "mode": "777",
         "user": "root",
-        "group": "wheel"
+        "group": group
     }
     results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
     assert results.status_code == 200, results.text
@@ -69,6 +71,7 @@ def test_03_changing__dataset_permissions_of_nfs_dataset():
 def test_04_verify_the_job_id_is_successfull():
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
 
 # creating a NFS share
 def test_05_creating_a_nfs_share_on_nfs_PATH():

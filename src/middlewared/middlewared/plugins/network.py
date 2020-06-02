@@ -2003,7 +2003,7 @@ class StaticRouteService(CRUDService):
         'staticroute_create',
         IPAddr('destination', network=True),
         IPAddr('gateway', allow_zone_index=True),
-        Str('description'),
+        Str('description', default=''),
         register=True
     ))
     async def do_create(self, data):

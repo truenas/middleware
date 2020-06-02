@@ -102,6 +102,7 @@ def test_16_look_for_newgroup_is_in_freenas_group():
     results = SSH_TEST(cmd, 'root', 'testing', ip)
     assert results['result'] is True, results['output']
 
+
 # Delete the group
 def test_17_delete_group_testgroup_newgroup():
     results = DELETE(f"/group/id/{groupid}/", {"delete_users": True})

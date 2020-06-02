@@ -1,4 +1,5 @@
 import asyncio
+import enum
 import uuid
 
 from middlewared.async_validators import check_path_resides_within_volume
@@ -26,6 +27,15 @@ class AFPModel(sa.Model):
     afp_srv_global_aux = sa.Column(sa.Text())
     afp_srv_map_acls = sa.Column(sa.String(120))
     afp_srv_chmod_request = sa.Column(sa.String(120))
+    afp_srv_loglevel = sa.Column(sa.String(120), default="MINIMUM")
+
+
+class AFPLogLevel(enum.Enum):
+    NONE = "severe"
+    MINIMUM = "warn"
+    NORMAL = "note"
+    FULL = "info"
+    DEBUG = "maxdebug"
 
 
 class AFPService(SystemServiceService):
@@ -59,6 +69,7 @@ class AFPService(SystemServiceService):
         Str('global_aux', max_length=None),
         Str('map_acls', enum=['RIGHTS', 'MODE', 'NONE']),
         Str('chmod_request', enum=['PRESERVE', 'SIMPLE', 'IGNORE']),
+        Str('loglevel', enum=[x.name for x in AFPLogLevel]),
         update=True
     ))
     async def do_update(self, data):

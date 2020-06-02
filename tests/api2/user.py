@@ -15,6 +15,9 @@ if scale is True:
 else:
     shell = '/bin/csh'
 
+group = 'root' if scale else 'wheel'
+group_id = GET(f'/group/?group={group}').json()[0]['id']
+
 
 def test_01_get_next_uid():
     results = GET('/user/get_next_uid/')
@@ -24,6 +27,7 @@ def test_01_get_next_uid():
 
 
 def test_02_creating_user_testuser():
+    global user_id
     payload = {
         "username": "testuser",
         "full_name": "Test User",
@@ -34,6 +38,7 @@ def test_02_creating_user_testuser():
     }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
+    user_id = results.json()
 
 
 def test_03_look_user_is_created():
@@ -42,7 +47,7 @@ def test_03_look_user_is_created():
 
 def test_04_get_user_info():
     global userinfo
-    userinfo = GET('/user?username=testuser').json()[0]
+    userinfo = GET(f'/user/id/{user_id}').json()
 
 
 def test_05_look_user_name():
@@ -58,18 +63,17 @@ def test_07_look_user_uid():
 
 
 def test_08_look_user_shell():
-    assert userinfo["shell"] == "/bin/csh"
+    assert userinfo["shell"] == shell
 
 
 def test_09_add_employee_id_and_team_special_attributes():
-    userid = GET('/user?username=testuser').json()[0]['id']
     payload = {
         'key': 'Employee ID',
         'value': 'TU1234',
         'key': 'Team',
         'value': 'QA'
     }
-    results = POST("/user/id/%s/set_attribute" % userid, payload)
+    results = POST(f"/user/id/{user_id}/set_attribute/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -85,21 +89,19 @@ def test_11_next_and_new_next_uid_not_equal():
 
 
 def test_12_setting_user_groups():
-    userid = GET('/user?username=testuser').json()[0]['id']
-    payload = {'groups': [1]}
+    payload = {'groups': [group_id]}
     GET('/user?username=testuser').json()[0]['id']
-    results = PUT("/user/id/%s" % userid, payload)
+    results = PUT(f"/user/id/{user_id}/", payload)
     assert results.status_code == 200, results.text
 
 
 # Update tests
 # Update the testuser
 def test_13_updating_user_testuser_info():
-    userid = GET('/user?username=testuser').json()[0]['id']
     payload = {"full_name": "Test Renamed",
                "password": "testing123",
                "uid": new_next_uid}
-    results = PUT("/user/id/%s" % userid, payload)
+    results = PUT(f"/user/id/{user_id}/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -117,27 +119,24 @@ def test_16_look_user_new_uid():
 
 
 def test_17_look_user_groups():
-    assert userinfo["groups"] == [1]
+    assert userinfo["groups"] == [group_id]
 
 
 def test_18_remove_old_team_special_atribute():
-    userid = GET('/user?username=testuser').json()[0]['id']
     payload = 'Team'
-    results = POST("/user/id/%s/pop_attribute/" % userid, payload)
+    results = POST(f"/user/id/{user_id}/pop_attribute/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_19_add_new_team_to_special_atribute():
-    userid = GET('/user?username=testuser').json()[0]['id']
     payload = {'key': 'Team', 'value': 'QA'}
-    results = POST("/user/id/%s/set_attribute/" % userid, payload)
+    results = POST(f"/user/id/{user_id}/set_attribute/", payload)
     assert results.status_code == 200, results.text
 
 
 # Delete the testuser
 def test_20_deleting_user_testuser():
-    userid = GET('/user?username=testuser').json()[0]['id']
-    results = DELETE("/user/id/%s/" % userid, {"delete_group": True})
+    results = DELETE(f"/user/id/{user_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
 
@@ -161,7 +160,7 @@ def test_24_creating_shareuser_to_test_sharing():
         "username": "shareuser",
         "full_name": "Share User",
         "group_create": True,
-        "groups": [1],
+        "groups": [group_id],
         "password": "testing",
         "uid": next_uid,
         "shell": shell

@@ -46,9 +46,6 @@ AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
 class AlertModel(sa.Model):
     __tablename__ = 'system_alert'
-    __table_args__ = (
-        sa.Index('system_alert_node_f77e0d77_uniq', 'node', 'klass', 'key', unique=True),
-    )
 
     id = sa.Column(sa.Integer(), primary_key=True)
     node = sa.Column(sa.String(100))
@@ -221,7 +218,8 @@ class AlertService(Service):
 
                 alert = Alert(**alert)
 
-                self.alerts.append(alert)
+                if not any(a.uuid == alert.uuid for a in self.alerts):
+                    self.alerts.append(alert)
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
@@ -735,7 +733,7 @@ class AlertService(Service):
 
         return alerts
 
-    @periodic(3600)
+    @periodic(3600, run_on_start=False)
     @private
     async def flush_alerts(self):
         if (

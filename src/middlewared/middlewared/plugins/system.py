@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
 from middlewared.logger import CrashReporting
@@ -9,6 +9,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run, start_daemon_thread, sw_buildtime, sw_version, osc
 from middlewared.validators import Range
 
+import ntplib
 import csv
 import io
 import os
@@ -547,6 +548,11 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        birthday_date = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
+        if birthday_date == datetime(1970, 1, 1):
+            birthday_date = None
+        timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
+
         # https://superuser.com/questions/893560/how-do-i-tell-if-my-memory-is-ecc-or-non-ecc/893569#893569
         # After discussing with nap, we determined that checking -t 17 did not work well with some systems,
         # so we check -t 16 now only to see if it reports ECC memory
@@ -568,10 +574,26 @@ class SystemService(Service):
             'license': await self.middleware.run_in_thread(self._get_license),
             'boottime': datetime.fromtimestamp(psutil.boot_time()),
             'datetime': datetime.utcnow(),
-            'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
+            'birthday': birthday_date,
+            'timezone': timezone_setting,
             'system_manufacturer': manufacturer,
             'ecc_memory': ecc_memory,
         }
+
+    # Sync the clock
+    @private
+    def sync_clock(self):
+        client = ntplib.NTPClient()
+        clock = None
+        # Tries to get default ntpd server
+        try:
+            response = client.request("localhost")
+            if response.version:
+                clock = datetime.fromtimestamp(response.tx_time, timezone.utc)
+        except Exception:
+            # Cannot connect to NTP server
+            self.middleware.logger.debug('Error while connecting to NTP server')
+        return clock
 
     @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM']))
     async def feature_enabled(self, name):
@@ -661,12 +683,13 @@ class SystemService(Service):
         for line in iter(cp.stdout.readline, b''):
             line = line.decode(errors='ignore').rstrip()
 
-            if line.startswith('**'):
-                percent, help = line.split(':')
-                job.set_progress(
-                    int(percent.split()[-1].strip('%')),
-                    help.lstrip()
-                )
+            if line.startswith('**') and '%: ' in line:
+                percent, desc = line.split('%: ', 1)
+                try:
+                    percent = int(percent.split()[-1])
+                except ValueError:
+                    continue
+                job.set_progress(percent, desc)
         _, stderr = cp.communicate()
 
         if cp.returncode != 0:
@@ -768,6 +791,7 @@ class SystemGeneralModel(sa.Model):
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
     stg_language = sa.Column(sa.String(120), default="en")
     stg_kbdmap = sa.Column(sa.String(120))
+    stg_birthday = sa.Column(sa.DateTime(), nullable=True)
     stg_timezone = sa.Column(sa.String(120), default="America/Los_Angeles")
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
@@ -959,7 +983,11 @@ class SystemGeneralService(ConfigService):
             shell=True
         )
         self._timezone_choices = (await pipe.communicate())[0].decode().strip().split('\n')
-        self._timezone_choices = {x[20:]: x[20:] for x in self._timezone_choices}
+        self._timezone_choices = {
+            x[20:]: x[20:] for x in self._timezone_choices if osc.IS_FREEBSD or (
+                not x[20:].startswith(('right/', 'posix/')) and '.' not in x[20:]
+            )
+        }
 
     @accepts()
     async def timezone_choices(self):
@@ -1359,11 +1387,59 @@ class SystemGeneralService(ConfigService):
         CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
+async def _update_birthday_data(middleware, birthday=None):
+    middleware.logger.debug('Synchronization/update birthday data')
+    # Check if it is exists already
+    system_obj = await middleware.call('system.info')
+    birthday_obj = system_obj['birthday']
+    if birthday_obj is not None:
+        # Already setted before.
+        return
+
+    # If it is not defined yet, it will try to define
+    if birthday is None:
+        birthday = await middleware.call('system.sync_clock')
+
+    if birthday is not None:
+        # Update System Settings
+        settings = await middleware.call('datastore.config', 'system.settings')
+        await middleware.call('datastore.update', 'system.settings', settings['id'], {
+            'stg_birthday': birthday,
+        })
+
+
+# Update Birthday Date
+async def _update_birthday(middleware):
+    # Sync clock
+    middleware.logger.debug('Synchronization the clock for system birthday')
+    birthday = None
+    timeout = 3600 * 24
+
+    middleware.register_hook('interface.post_sync', _update_birthday_data)
+
+    while birthday is None:
+        birthday = await middleware.call('system.sync_clock')
+
+        # Wait until be able to sync the clock
+        if birthday is None:
+            await asyncio.sleep(timeout)
+
+    await _update_birthday_data(middleware, birthday)
+
+
 async def _event_system(middleware, event_type, args):
+
     global SYSTEM_READY
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
+        # Check if birthday is already setted
+        system_obj = await middleware.call('system.info')
+        birthday = system_obj['birthday']
+
+        # If it is not defined yet, it will try to define
+        if birthday is None:
+            asyncio.ensure_future(_update_birthday(middleware))
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 

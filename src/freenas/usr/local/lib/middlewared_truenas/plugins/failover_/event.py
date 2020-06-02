@@ -483,6 +483,11 @@ class FailoverService(Service):
                 self.run_call('etc.generate', 'rc')
                 self.run_call('etc.generate', 'system_dataset')
 
+                # set this immediately after pool import because ALUA
+                # doesnt use the VIP so it doesnt need pf to be disabled
+                # 0 for Active node
+                run('/sbin/sysctl kern.cam.ctl.ha_role=0')
+
                 # Write the certs to disk based on what is written in db.
                 self.run_call('etc.generate', 'ssl')
                 # Now we restart the appropriate services to ensure it's using correct certs.
@@ -500,9 +505,6 @@ class FailoverService(Service):
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
                     self.run_call('service.restart', 'nfs', {'ha_propagate': False})
-
-                # 0 for Active node
-                run('/sbin/sysctl kern.cam.ctl.ha_role=0')
 
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
                 ret = c.fetchone()

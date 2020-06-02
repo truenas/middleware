@@ -11,16 +11,16 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user
+from auto_config import ip, pool_name, password, user, scale
 
 MOUNTPOINT = "/tmp/smb-cifs"
 dataset = f"{pool_name}/smb-cifs"
 dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestCifsSMB"
 smb_path = "/mnt/" + dataset
-VOL_GROUP = "wheel"
 BSDReason = 'BSD host configuration is missing in ixautomation.conf'
 OSXReason = 'OSX host configuration is missing in ixautomation.conf'
+group = 'root' if scale else 'wheel'
 
 try:
     from config import BSD_HOST, BSD_USERNAME, BSD_PASSWORD
@@ -61,14 +61,14 @@ smb_acl = [
 
 guest_path_verification = {
     "user": "shareuser",
-    "group": "wheel",
+    "group": group,
     "acl": True
 }
 
 
 root_path_verification = {
     "user": "root",
-    "group": "wheel",
+    "group": group,
     "acl": False
 }
 
@@ -99,7 +99,7 @@ def test_003_changing_dataset_permissions_of_smb_dataset():
     payload = {
         "acl": smb_acl,
         "user": "shareuser",
-        "group": "wheel",
+        "group": group,
     }
     results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
     assert results.status_code == 200, results.text

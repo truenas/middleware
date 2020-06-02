@@ -1466,8 +1466,8 @@ class PoolService(CRUDService):
                 pass
             else:
                 raise
-        if osc.IS_FREEBSD:
-            await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
+
+        await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks', oid)]
@@ -1559,7 +1559,17 @@ class PoolService(CRUDService):
         Returns a list of running processes using this pool.
         """
         pool = await self.get_instance(oid)
-        return await self.middleware.call('pool.dataset.processes', pool['name'])
+        processes = []
+        try:
+            processes = await self.middleware.call('pool.dataset.processes', pool['name'])
+        except ValidationError as e:
+            if e.errno == errno.ENOENT:
+                # Dataset might not exist (e.g. not online), this is not an error
+                pass
+            else:
+                raise
+
+        return processes
 
     def __dtrace_read(self, job, proc):
         while True:

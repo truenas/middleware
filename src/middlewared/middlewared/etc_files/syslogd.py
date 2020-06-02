@@ -8,6 +8,9 @@ import textwrap
 
 logger = logging.getLogger(__name__)
 
+FENCED_LOG = '/root/syslog/fenced.log'
+FAILOVER_LOG = '/root/syslog/failover.log'
+
 
 def generate_syslog_remote_destination(middleware, advanced_config):
     result = ""
@@ -107,9 +110,25 @@ def generate_ha_syslog(middleware):
         syslog_conf = f.read()
 
     syslog_conf += textwrap.dedent(f"""\
+
+
+        #
+        # filter smbd related messages across HA syslog connection
+        #
+        filter f_not_smb {{ not program("smbd"); }};
+
+
+        #
+        # syslog-ng TrueNAS HA configuration
+        #
         source this_controller {{
-            udp(ip({controller_ip}) port({controller_port}));
-            udp(default-facility(syslog) default-priority(emerg));
+            network(
+                localip("{controller_ip}")
+                port({controller_port})
+                transport("udp")
+                default-facility(syslog)
+                default-priority(emerg)
+            );
         }};
 
         log {{
@@ -117,10 +136,25 @@ def generate_ha_syslog(middleware):
             destination(other_controller_file);
         }};
 
-        destination other_controller_file {{ file("{controller_file}"); }};
-        destination other_controller {{ udp("{controller_other_ip}" port({controller_port})); }};
+        destination other_controller_file {{
+            file("{controller_file}");
+        }};
 
-        log {{ source(src); filter(f_not_mdnsresponder); filter(f_not_nginx); destination(other_controller); }};
+        destination other_controller {{
+            network(
+                "{controller_other_ip}"
+                port({controller_port})
+                transport("udp")
+            );
+        }};
+
+        log {{
+            source(src);
+            filter(f_not_smb);
+            filter(f_not_mdns);
+            filter(f_not_nginx);
+            destination(other_controller);
+        }};
     """)
 
     with open("/etc/local/syslog-ng.conf", "w") as f:
@@ -132,8 +166,9 @@ def generate_ha_syslog(middleware):
     with open("/etc/newsyslog.conf") as f:
         newsyslog_conf = f.read()
 
-    newsyslog_conf += f"{controller_file}		640  10	   200	@0101T JC"
-
+    newsyslog_conf += f"{controller_file}               640  10   200 @0101T JC\n"
+    newsyslog_conf += f"{FENCED_LOG}                 640  10   200   *     JC\n"
+    newsyslog_conf += f"{FAILOVER_LOG}               640  10   200   *     JC\n"
     with open("/etc/newsyslog.conf", "w") as f:
         f.write(newsyslog_conf)
 

@@ -1,5 +1,5 @@
-from gfs.cli import volume
-from gfs.cli.utils import GlusterCmdException
+from glustercli.cli import volume
+from glustercli.cli.utils import GlusterCmdException
 
 from middlewared.service import (CRUDService, accepts,
                                  job, private, CallError,
@@ -142,6 +142,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Bool('force')
         ),
     )
@@ -162,6 +163,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Bool('force')
         ),
     )
@@ -182,6 +184,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Bool('force')
         ),
     )
@@ -263,6 +266,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Str('opt'),
             Bool('force'),
         )
@@ -307,6 +311,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             List('bricks', items=[
                 Dict(
                     'brick',
@@ -352,6 +357,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             List('bricks', items=[
                 Dict(
                     'brick',
@@ -391,6 +397,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(
         Str('name', required=True),
         Dict(
+            'data',
             Dict(
                 'src_brick',
                 Str('peer_name', required=True),
