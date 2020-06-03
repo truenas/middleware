@@ -990,7 +990,10 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            await self.middleware.call('disk.swaps_remove_disks', [disk])
+            remove_job = await self.middleware.call('disk.swaps_remove_disks', [disk])
+            await remove_job.wait()
+            if remove_job.error:
+                raise CallError(f'Failed to remove {disk!r} from swap: {remove_job.error}')
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
@@ -1042,7 +1045,10 @@ class PoolService(CRUDService):
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
-        await self.middleware.call('disk.swaps_remove_disks', [disk])
+        remove_job = await self.middleware.call('disk.swaps_remove_disks', [disk])
+        await remove_job.wait()
+        if remove_job.error:
+            raise CallError(f'Failed to remove {disk!r} from swap: {remove_job.error}')
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
@@ -1471,7 +1477,13 @@ class PoolService(CRUDService):
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks', oid)]
-        await self.middleware.call('disk.swaps_remove_disks', disks)
+
+        # We don't want to configure swap immediately after removing those disks because we might get in a race
+        # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
+        remove_job = await self.middleware.call('disk.swaps_remove_disks', disks, {'no_configure_swap': True})
+        await remove_job.wait()
+        if remove_job.error:
+            raise CallError(f'Failed to remove {", ".join(disks)!r} from swap: {remove_job.error}')
 
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
@@ -1537,6 +1549,9 @@ class PoolService(CRUDService):
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
+
+        # Let's reconfigure swap in case dumpdev needs to be configured again
+        await self.middleware.call('disk.swaps_configure')
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
 

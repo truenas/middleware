@@ -2,7 +2,7 @@ import errno
 import os
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import item_method, job, Service, ValidationErrors
+from middlewared.service import CallError, item_method, job, Service, ValidationErrors
 from middlewared.utils import osc
 
 
@@ -86,7 +86,10 @@ class PoolService(Service):
             if from_disk:
                 swap_disks.append(from_disk)
 
-        await self.middleware.call('disk.swaps_remove_disks', swap_disks)
+        remove_job = await self.middleware.call('disk.swaps_remove_disks', swap_disks)
+        await remove_job.wait()
+        if remove_job.error:
+            raise CallError(f'Failed to remove {", ".join(swap_disks)!r} from swap: {remove_job.error}')
 
         vdev = []
         enc_disks = await self.middleware.call(

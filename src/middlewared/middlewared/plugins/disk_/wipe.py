@@ -5,7 +5,7 @@ import signal
 import subprocess
 
 from middlewared.schema import accepts, Bool, Str
-from middlewared.service import job, private, Service
+from middlewared.service import CallError, job, private, Service
 from middlewared.utils import osc, Popen, run
 
 
@@ -57,8 +57,11 @@ class DiskService(Service):
           - FULL: write whole disk with zero's
           - FULL_RANDOM: write whole disk with random bytes
         """
-        await self.middleware.call('disk.swaps_remove_disks', [dev])
-        # FIXME: Please implement appropriate alternative for removal of disk from graid in linux
+        remove_job = await self.middleware.call('disk.swaps_remove_disks', [dev])
+        await remove_job.wait()
+        if remove_job.error:
+            raise CallError(f'Failed to remove {dev!r} from swap: {remove_job.error}')
+
         if osc.IS_FREEBSD:
             await self.middleware.call('disk.remove_disk_from_graid', dev)
 

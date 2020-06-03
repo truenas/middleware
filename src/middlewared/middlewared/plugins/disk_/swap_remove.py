@@ -9,20 +9,21 @@ class DiskService(Service):
 
     @private
     @job(lock='swaps_configure')
-    async def swaps_remove_disks(self, disks):
+    async def swaps_remove_disks(self, job, disks, options=None):
         """
         Remove a given disk (e.g. ["da0", "da1"]) from swap.
         It will offline if from swap, removing encryption and destroying the mirror ( if part of one ).
         """
-        return await self.swaps_remove_disks_internal(disks)
+        return await self.swaps_remove_disks_internal(disks, options)
 
     @private
-    async def swaps_remove_disks_internal(self, disks):
+    async def swaps_remove_disks_internal(self, disks, options=None):
         """
         We have a separate endpoint for this to ensure that no other swap related operations not do swap devices
         removal while swap configuration is in progress - however we still need to allow swap configuration process
         to remove swap devices and it can use this endpoint directly for that purpose.
         """
+        options = options or {}
         providers = {}
         for disk in disks:
             partitions = await self.middleware.call('disk.list_partitions', disk)
@@ -65,5 +66,6 @@ class DiskService(Service):
                 except OSError:
                     pass
 
-        if configure_swap:
+        # Let consumer explicitly deny swap configuration if desired
+        if configure_swap and not options.get('no_configure_swap'):
             await self.middleware.call('disk.swaps_configure')
