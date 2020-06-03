@@ -1,4 +1,5 @@
 import re
+import subprocess
 
 from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
@@ -23,6 +24,19 @@ class TunableService(CRUDService):
         datastore = 'system.tunable'
         datastore_prefix = 'tun_'
         datastore_extend = 'tunable.upper'
+
+    def __init__(self, *args, **kwargs):
+        super(TunableService, self).__init__(*args, **kwargs)
+        self.__default_sysctl = {}
+
+    @private
+    async def get_default_value(self, oid):
+        return self.__default_sysctl[oid]
+
+    @private
+    async def set_default_value(self, oid, value):
+        if oid not in self.__default_sysctl:
+            self.__default_sysctl[oid] = value
 
     @accepts(Dict(
         'tunable_create',
@@ -99,6 +113,24 @@ class TunableService(CRUDService):
         Delete Tunable of `id`.
         """
         tunable = await self._get_instance(id)
+        await self.lower(tunable)
+        if tunable['type'] == 'sysctl':
+            # Restore the default value, if it is possible.
+            value_default = None
+            try:
+                value_default = await self.get_default_value(tunable["var"])
+            except KeyError:
+                pass
+            if value_default is not None:
+                ret = subprocess.run(
+                    ['sysctl', f'{tunable["var"]}="{value_default}"'],
+                    capture_output=True
+                )
+                if ret.returncode:
+                    self.middleware.logger.debug(
+                        'Failed to set sysctl %s -> %s: %s',
+                        tunable['var'], tunable['value'], ret.stderr.decode(),
+                    )
 
         response = await self.middleware.call(
             'datastore.delete',
