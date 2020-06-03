@@ -61,7 +61,10 @@ class JSON(UserDefinedType):
         return "TEXT"
 
     def _bind_processor(self, value):
-        result = json.dumps(value or self.type())
+        if value is None:
+            if self.type is not None:
+                value = self.type()
+        result = json.dumps(value)
         if self.encrypted:
             result = encrypt(result)
         return result
@@ -75,7 +78,10 @@ class JSON(UserDefinedType):
                 value = decrypt(value, _raise=True)
             return json.loads(value)
         except Exception:
-            return self.type()
+            if self.type is not None:
+                return self.type()
+            else:
+                return None
 
     def result_processor(self, dialect, coltype):
         return self._result_processor

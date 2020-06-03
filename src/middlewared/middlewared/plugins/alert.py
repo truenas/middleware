@@ -54,7 +54,7 @@ class AlertModel(sa.Model):
     datetime = sa.Column(sa.DateTime())
     last_occurrence = sa.Column(sa.DateTime())
     text = sa.Column(sa.Text())
-    args = sa.Column(sa.JSON())
+    args = sa.Column(sa.JSON(type=None))
     dismissed = sa.Column(sa.Boolean())
     uuid = sa.Column(sa.Text())
     klass = sa.Column(sa.Text())

@@ -5,16 +5,12 @@ from middlewared.utils import run
 logger = logging.getLogger(__name__)
 
 
-async def get_exports(config, shares, kerberos_keytabs):
+async def get_exports(middleware, config, shares, kerberos_keytabs):
     result = []
 
-    if config["v4"]:
-        if config["v4_krb"]:
-            result.append("V4: / -sec=krb5:krb5i:krb5p")
-        elif kerberos_keytabs:
-            result.append("V4: / -sec=sys:krb5:krb5i:krb5p")
-        else:
-            result.append("V4: / -sec=sys")
+    sec = await middleware.call("nfs.sec", config, kerberos_keytabs)
+    if sec:
+        result.append(f"V4: / -sec={':'.join(sec)}")
 
     for share in shares:
         if share["paths"]:
@@ -80,6 +76,6 @@ async def render(service, middleware):
     kerberos_keytabs = await middleware.call("datastore.query", "directoryservice.kerberoskeytab")
 
     with open("/etc/exports", "w") as f:
-        f.write(await get_exports(config, shares, kerberos_keytabs))
+        f.write(await get_exports(middleware, config, shares, kerberos_keytabs))
 
     await run("service", "mountd", "quietreload", check=False)

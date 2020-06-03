@@ -1,6 +1,4 @@
-import contextlib
 import itertools
-import os
 import re
 import subprocess
 import sysctl
@@ -183,30 +181,13 @@ def nfs_config(middleware, context):
     Make sure the IPs exist before we try to bind the NFS service to them
     Redmine 16044
     """
-    if nfs['bindip']:
-        found = False
-        for iface in middleware.call_sync('interface.query'):
-            for alias in iface['state']['aliases']:
-                if alias['address'] in nfs['bindip']:
-                    found = True
-                    break
-            if found:
-                break
-
-        if found:
-            found = True
-            # FIXME: stop using sentinel file
-            with contextlib.suppress(Exception):
-                os.unlink(NFS_BINDIP_NOTFOUND)
-
-            ips = list(itertools.chain(*[['-h', i] for i in nfs['bindip']]))
-            mountd_flags += ips
-            nfs_server_flags += ips
-            statd_flags += ips
-            yield f'rpcbind_flags="{" ".join(ips)}"'
-        else:
-            with open(NFS_BINDIP_NOTFOUND, 'w'):
-                pass
+    bindip = middleware.call_sync('nfs.bindip', nfs)
+    if bindip:
+        ips = list(itertools.chain(*[['-h', i] for i in bindip]))
+        mountd_flags += ips
+        nfs_server_flags += ips
+        statd_flags += ips
+        yield f'rpcbind_flags="{" ".join(ips)}"'
 
     yield f'nfs_server_flags="{" ".join(nfs_server_flags)}"'
     yield f'rpc_statd_flags="{" ".join(statd_flags)}"'
@@ -227,7 +208,7 @@ def nfs_config(middleware, context):
 
         if nfs['v4_krb_enabled']:
             if enabled:
-                yield f'gssd_enable="YES"'
+                yield 'gssd_enable="YES"'
 
             gc = middleware.call_sync("datastore.config", "network.globalconfiguration")
             if gc["gc_hostname_virtual"] and gc["gc_domain"]:
