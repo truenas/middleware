@@ -58,4 +58,4 @@ def test_disk_wipe(conn):
     if len(disks) == 0:
         pytest.skip('No spare disks to test disk wipe')
 
-    conn.ws.call('disk.wipe', disks.pop(), 'QUICK', job=True)
+    conn.ws.call('disk.wipe', disks.pop(), {'mode': 'QUICK'}, job=True)

@@ -1001,7 +1001,7 @@ class PoolService(CRUDService):
             await self.middleware.call('pool.sync_encrypted', oid)
 
         if disk:
-            wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
+            wipe_job = await self.middleware.call('disk.wipe', disk, {'mode': 'QUICK'})
             await wipe_job.wait()
             if wipe_job.error:
                 raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
@@ -1165,7 +1165,7 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
+            wipe_job = await self.middleware.call('disk.wipe', disk, {'mode': 'QUICK'})
             await wipe_job.wait()
             if wipe_job.error:
                 raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
@@ -1505,7 +1505,9 @@ class PoolService(CRUDService):
             job.set_progress(80, 'Cleaning disks')
 
             async def unlabel(disk):
-                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False)
+                wipe_job = await self.middleware.call(
+                    'disk.wipe', disk, {'mode': 'QUICK', 'synccache': False, 'no_configure_swap': True}
+                )
                 await wipe_job.wait()
                 if wipe_job.error:
                     self.logger.warn(f'Failed to wipe disk {disk}: {wipe_job.error}')

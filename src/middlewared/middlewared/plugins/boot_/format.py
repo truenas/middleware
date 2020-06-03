@@ -18,7 +18,7 @@ class BootService(Service):
         """
         Format a given disk `dev` using the appropriate partition layout
         """
-        job = await self.middleware.call('disk.wipe', dev, 'QUICK')
+        job = await self.middleware.call('disk.wipe', dev, {'mode': 'QUICK'})
         await job.wait()
         if job.error:
             raise CallError(job.error)

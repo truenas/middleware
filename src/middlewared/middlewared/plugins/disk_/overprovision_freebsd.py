@@ -91,7 +91,7 @@ async def temporarily_disassemble_multipath(middleware, devname, pre_check=None)
                         sleep *= 2
 
             # Prevent "gmultipath: cannot store metadata on da2: Operation not permitted."
-            await (await middleware.call("disk.wipe", dev, "QUICK", False)).wait()
+            await (await middleware.call("disk.wipe", dev, {"mode": "QUICK", "synccache": False})).wait()
 
         await middleware.call("disk.multipath_create", multipath_name, [f"/dev/{dev}" for dev in consumers], mode)
     else:
