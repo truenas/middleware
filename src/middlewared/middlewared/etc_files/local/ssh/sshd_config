@@ -25,7 +25,7 @@
 	twofactor_enabled = twofactor_auth['enabled'] and twofactor_auth['services']['ssh']
 
 %>\
-Subsystem	sftp	/usr/libexec/sftp-server -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
+Subsystem	sftp	${"internal-sftp" if IS_LINUX else "/usr/libexec/sftp-server"} -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
 % if 'Protocol' not in ssh_config['options']:
 Protocol 2
 % endif
