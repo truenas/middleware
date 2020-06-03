@@ -44,7 +44,7 @@ class DiskService(Service):
             if mirror_name in existing_swap_devices['mirrors'] and (len(mirror['providers']) == 1 or any(
                 p['disk'] not in disks for p in mirror['providers']
             )):
-                await self.middleware.call('disk.swaps_remove_disks', [p['disk'] for p in mirror['providers']])
+                await self.middleware.call('disk.swaps_remove_disks_internal', [p['disk'] for p in mirror['providers']])
                 existing_swap_devices['mirrors'].remove(mirror_name)
             else:
                 if mirror_name not in existing_swap_devices['mirrors']:
@@ -114,7 +114,7 @@ class DiskService(Service):
                             part = part_data['path']
 
                         if remove:
-                            await self.middleware.call('disk.swaps_remove_disks', [part_data['disk']])
+                            await self.middleware.call('disk.swaps_remove_disks_internal', [part_data['disk']])
                             existing_swap_devices['partitions'].remove(part)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
@@ -205,7 +205,7 @@ class DiskService(Service):
             }
             try:
                 await self.middleware.call(
-                    'disk.swaps_remove_disks', [
+                    'disk.swaps_remove_disks_internal', [
                         all_partitions_by_path[p] for p in existing_swap_devices['partitions']
                         if p in all_partitions_by_path
                     ]
