@@ -842,14 +842,13 @@ class FilesystemService(Service):
                                   check=False, capture_output=True)
         if stripacl.returncode != 0:
             raise CallError(f"Failed to remove POSIX1e ACL from [{path}]: "
-                                f"{stripacl.stderr.decode()}")
+                            f"{stripacl.stderr.decode()}")
 
         if options['stripacl']:
             job.set_progress(100, "Finished removing POSIX1e ACL")
             return
 
         job.set_progress(50, 'Reticulating splines.')
-
 
         for idx, ace in enumerate(dacl):
             if idx == 0:
