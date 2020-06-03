@@ -3,6 +3,7 @@ import dateutil
 import dateutil.parser
 import inspect
 import ipaddress
+import itertools
 import josepy as jose
 import json
 import os
@@ -297,7 +298,7 @@ class CryptoKeyService(Service):
     def validate_cert_with_chain(self, cert, chain):
         check_cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
         store = crypto.X509Store()
-        for chain_cert in chain:
+        for chain_cert in itertools.chain.from_iterable(map(lambda c: RE_CERTIFICATE.findall(c), chain)):
             store.add_cert(
                 crypto.load_certificate(crypto.FILETYPE_PEM, chain_cert)
             )
