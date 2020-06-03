@@ -114,7 +114,7 @@ class TunableService(CRUDService):
         """
         tunable = await self._get_instance(id)
         await self.lower(tunable)
-        if tunable['type'].lower() == 'sysctl':
+        if tunable['type'] == 'sysctl':
             # Restore the default value, if it is possible.
             value_default = None
             try:

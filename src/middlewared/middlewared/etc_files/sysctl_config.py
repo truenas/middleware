@@ -21,7 +21,7 @@ def sysctl_configuration(middleware):
                 except IndexError:
                     # Not able to set the default value
                     middleware.logger.error(
-                        'Failed to get sysctl default value of %s', tuneable['var']
+                        'Failed to get sysctl default value of %s', tuneable['var'], exc_info=True
                     )
 
             ret = subprocess.run(
