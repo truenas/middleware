@@ -1,8 +1,6 @@
 import subprocess
 import sysctl
 
-default_sysctl = {}
-
 
 def sysctl_configuration(middleware):
     tuneables = middleware.call_sync('tunable.query', [['type', '=', 'SYSCTL']])
