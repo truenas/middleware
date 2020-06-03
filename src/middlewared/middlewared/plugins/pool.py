@@ -2606,6 +2606,7 @@ class PoolDatasetService(CRUDService):
                 ('org.truenas:managedby', 'managedby', None),
                 ('dedup', 'deduplication', str.upper),
                 ('aclmode', None, str.upper),
+                ('acltype', None, str.upper),
                 ('xattr', None, str.upper),
                 ('atime', None, str.upper),
                 ('casesensitivity', None, str.upper),
@@ -2692,6 +2693,7 @@ class PoolDatasetService(CRUDService):
         ]),
         Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
         Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED']),
+        Str('acltype', enum=['NOACL', 'NFS4ACL', 'POSIXACL']),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
         Str('xattr', enum=['ON', 'SA']),
         Ref('encryption_options'),
@@ -2749,6 +2751,12 @@ class PoolDatasetService(CRUDService):
         mountpoint = os.path.join('/mnt', data['name'])
         if os.path.exists(mountpoint):
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
+
+        self.logger.debug("acltype is [%s]", data.get('acltype'))
+
+        if osc.IS_LINUX and not data.get('acltype'):
+            data['acltype'] = 'POSIXACL'
+            self.logger.debug("acltype is [%s]", data.get('acltype'))
 
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
@@ -2816,6 +2824,7 @@ class PoolDatasetService(CRUDService):
         props = {}
         for i, real_name, transform in (
             ('aclmode', None, str.lower),
+            ('acltype', None, str.lower),
             ('atime', None, str.lower),
             ('casesensitivity', None, str.lower),
             ('comments', 'org.freenas:description', None),
@@ -3006,6 +3015,9 @@ class PoolDatasetService(CRUDService):
             if data.get("aclmode") and osc.IS_LINUX:
                 verrors.add(f'{schema}.aclmode', 'This field is not valid for TrueNAS Scale')
 
+            if data.get("acltype") and osc.IS_FREEBSD:
+                verrors.add(f'{schema}.acltype', 'This field is not valid for TrueNAS')
+
             for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
@@ -3014,7 +3026,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
 
             for i in (
-                'aclmode', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+                'aclmode', 'acltype', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
             ):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
