@@ -1732,22 +1732,40 @@ class InterfaceService(CRUDService):
             await self.middleware.call('interface.vlan_setup', vlan, disable_capabilities, parent_interfaces)
 
         bridges = await self.middleware.call('datastore.query', 'network.bridge')
+        # Considering a scenario where we have the network configuration
+        # physical iface -> vlan -> bridge
+        # If all these interfaces are set to have 9000 MTU, we won't be able to set that up on boot
+        # unless physical iface has a 9000 MTU when the bridge is being setup.
+        # To address such scenarios, we divide the approach in 4 steps:
+        # 1) Remove orphaned members from bridge
+        # 2) Sync all non-bridge interfaces ( in this order physical ifaces -> laggs -> vlans )
+        # 3) Setup bridge with MTU
+        # 4) Sync bridge interfaces
+
         for bridge in bridges:
-            name = bridge['interface']['int_interface']
+            await self.middleware.call('interface.pre_bridge_setup', bridge, sync_interface_opts)
 
-            cloned_interfaces.append(name)
-            await self.middleware.call('interface.bridge_setup', bridge, sync_interface_opts)
-
-        self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
-        # Configure VLAN before BRIDGE so MTU is configured in correct order
+        # Set VLAN interfaces MTU last as they are restricted by underlying interfaces MTU
         for interface in sorted(
-            interfaces,
-            key=lambda x: 2 if x.startswith('bridge') else (1 if x.startswith('vlan') else 0)
+            filter(lambda i: not i.startswith('bridge'), interfaces), key=lambda x: x.startswith('vlan')
         ):
             try:
                 await self.sync_interface(interface, wait_dhcp, sync_interface_opts[interface])
             except Exception:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
+
+        for bridge in bridges:
+            name = bridge['interface']['int_interface']
+
+            cloned_interfaces.append(name)
+            await self.middleware.call('interface.bridge_setup', bridge)
+            # Finally sync bridge interface
+            try:
+                await self.sync_interface(name, wait_dhcp, sync_interface_opts[name])
+            except Exception:
+                self.logger.error('Failed to configure {}'.format(name), exc_info=True)
+
+        self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair']
         if not await self.middleware.call('system.is_freenas'):
