@@ -1,3 +1,4 @@
+import asyncio
 import errno
 import os
 
@@ -86,10 +87,7 @@ class PoolService(Service):
             if from_disk:
                 swap_disks.append(from_disk)
 
-        remove_job = await self.middleware.call('disk.swaps_remove_disks', swap_disks)
-        await remove_job.wait()
-        if remove_job.error:
-            raise CallError(f'Failed to remove {", ".join(swap_disks)!r} from swap: {remove_job.error}')
+        await self.middleware.call('disk.swaps_remove_disks', swap_disks)
 
         vdev = []
         enc_disks = await self.middleware.call(
@@ -125,7 +123,7 @@ class PoolService(Service):
         finally:
             # Needs to happen even if replace failed to put back disk that had been
             # removed from swap prior to replacement
-            await self.middleware.call('disk.swaps_configure')
+            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         if osc.IS_FREEBSD:
             await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})

@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import CallError, job, Service, ValidationErrors
 from middlewared.utils import osc
@@ -90,4 +92,4 @@ class PoolService(Service):
         if osc.IS_FREEBSD:
             disk = await self.middleware.call('disk.query', [['devname', '=', options['new_disk']]], {'get': True})
             await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})
-        await self.middleware.call('disk.swaps_configure')
+        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))

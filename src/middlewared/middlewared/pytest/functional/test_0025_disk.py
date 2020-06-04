@@ -9,15 +9,15 @@ def test_disk_query(conn):
 
 
 def test_disk_swaps_configure(conn):
-    swaps = conn.ws.call('disk.swaps_configure', job=True)
+    swaps = conn.ws.call('disk.swaps_configure')
     assert isinstance(swaps, list)
 
 
 def test_disk_swaps_remove_disks(conn):
     disks = [d['name'] for d in conn.ws.call('disk.query')]
-    conn.ws.call('disk.swaps_remove_disks', disks, job=True)
+    conn.ws.call('disk.swaps_remove_disks', disks)
 
-    swaps = conn.ws.call('disk.swaps_configure', job=True)
+    swaps = conn.ws.call('disk.swaps_configure')
     assert isinstance(swaps, list)
 
 

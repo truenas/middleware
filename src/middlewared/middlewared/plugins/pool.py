@@ -730,7 +730,7 @@ class PoolService(CRUDService):
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
 
-        await self.middleware.call('disk.swaps_configure')
+        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
         asyncio.ensure_future(restart_services())
 
         pool = await self.get_instance(pool_id)
@@ -990,10 +990,7 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            remove_job = await self.middleware.call('disk.swaps_remove_disks', [disk])
-            await remove_job.wait()
-            if remove_job.error:
-                raise CallError(f'Failed to remove {disk!r} from swap: {remove_job.error}')
+            await self.middleware.call('disk.swaps_remove_disks', [disk])
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
@@ -1045,10 +1042,7 @@ class PoolService(CRUDService):
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
-        remove_job = await self.middleware.call('disk.swaps_remove_disks', [disk])
-        await remove_job.wait()
-        if remove_job.error:
-            raise CallError(f'Failed to remove {disk!r} from swap: {remove_job.error}')
+        await self.middleware.call('disk.swaps_remove_disks', [disk])
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
@@ -1106,7 +1100,7 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            await self.middleware.call('disk.swaps_configure')
+            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         return True
 
@@ -1480,10 +1474,7 @@ class PoolService(CRUDService):
 
         # We don't want to configure swap immediately after removing those disks because we might get in a race
         # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
-        remove_job = await self.middleware.call('disk.swaps_remove_disks', disks, {'no_configure_swap': True})
-        await remove_job.wait()
-        if remove_job.error:
-            raise CallError(f'Failed to remove {", ".join(disks)!r} from swap: {remove_job.error}')
+        await self.middleware.call('disk.swaps_remove_disks', disks, {'no_configure_swap': True})
 
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
@@ -1555,7 +1546,7 @@ class PoolService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
 
         # Let's reconfigure swap in case dumpdev needs to be configured again
-        await self.middleware.call('disk.swaps_configure')
+        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
 

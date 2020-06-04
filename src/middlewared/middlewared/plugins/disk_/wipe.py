@@ -63,10 +63,7 @@ class DiskService(Service):
         """
         mode = options['mode']
         sync = options['synccache']
-        remove_job = await self.middleware.call('disk.swaps_remove_disks', [dev], options['swap_removal_options'])
-        await remove_job.wait()
-        if remove_job.error:
-            raise CallError(f'Failed to remove {dev!r} from swap: {remove_job.error}')
+        await self.middleware.call('disk.swaps_remove_disks', [dev], options['swap_removal_options'])
 
         if osc.IS_FREEBSD:
             await self.middleware.call('disk.remove_disk_from_graid', dev)

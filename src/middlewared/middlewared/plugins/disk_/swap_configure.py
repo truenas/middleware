@@ -3,7 +3,7 @@ import subprocess
 
 from collections import defaultdict
 
-from middlewared.service import CallError, job, private, Service
+from middlewared.service import CallError, lock, private, Service
 from middlewared.utils import osc, run
 
 
@@ -13,8 +13,8 @@ MIRROR_MAX = 5
 class DiskService(Service):
 
     @private
-    @job(lock='swaps_configure')
-    async def swaps_configure(self, job):
+    @lock('swaps_configure')
+    async def swaps_configure(self):
         """
         Configures swap partitions in the system.
         We try to mirror all available swap partitions to avoid a system
@@ -45,7 +45,7 @@ class DiskService(Service):
                 p['disk'] not in disks for p in mirror['providers']
             )):
                 await self.middleware.call(
-                    'disk.swaps_remove_disks_internal',
+                    'disk.swaps_remove_disks_unlocked',
                     [p['disk'] for p in mirror['providers']], {'no_configure_swap': True}
                 )
                 existing_swap_devices['mirrors'].remove(mirror_name)
@@ -118,7 +118,7 @@ class DiskService(Service):
 
                         if remove:
                             await self.middleware.call(
-                                'disk.swaps_remove_disks_internal', [part_data['disk']], {'no_configure_swap': True}
+                                'disk.swaps_remove_disks_unlocked', [part_data['disk']], {'no_configure_swap': True}
                             )
                             existing_swap_devices['partitions'].remove(part)
                 except Exception:
@@ -210,7 +210,7 @@ class DiskService(Service):
             }
             try:
                 await self.middleware.call(
-                    'disk.swaps_remove_disks_internal', [
+                    'disk.swaps_remove_disks_unlocked', [
                         all_partitions_by_path[p] for p in existing_swap_devices['partitions']
                         if p in all_partitions_by_path
                     ]

@@ -1,23 +1,24 @@
+import asyncio
 import os
 
 from middlewared.utils.osc import IS_LINUX
-from middlewared.service import job, private, Service
+from middlewared.service import lock, private, Service
 from middlewared.utils import run
 
 
 class DiskService(Service):
 
     @private
-    @job(lock='swaps_configure')
-    async def swaps_remove_disks(self, job, disks, options=None):
+    @lock('swaps_configure')
+    async def swaps_remove_disks(self, disks, options=None):
         """
         Remove a given disk (e.g. ["da0", "da1"]) from swap.
         It will offline if from swap, removing encryption and destroying the mirror ( if part of one ).
         """
-        return await self.swaps_remove_disks_internal(disks, options)
+        return await self.swaps_remove_disks_unlocked(disks, options)
 
     @private
-    async def swaps_remove_disks_internal(self, disks, options=None):
+    async def swaps_remove_disks_unlocked(self, disks, options=None):
         """
         We have a separate endpoint for this to ensure that no other swap related operations not do swap devices
         removal while swap configuration is in progress - however we still need to allow swap configuration process
@@ -64,4 +65,4 @@ class DiskService(Service):
 
         # Let consumer explicitly deny swap configuration if desired
         if configure_swap and not options.get('no_configure_swap'):
-            await self.middleware.call('disk.swaps_configure')
+            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
