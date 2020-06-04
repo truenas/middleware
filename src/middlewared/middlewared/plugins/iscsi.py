@@ -810,12 +810,12 @@ class iSCSITargetExtentService(CRUDService):
                        )[0]
                 mac = nic['state']['link_address'].replace(':', '')
 
-                ltg = await self.query()
+                ltg = await self.query([], {'order_by': ['id']})
                 if len(ltg) > 0:
-                    lid = ltg[0]['id']
+                    lid = ltg[-1]['id']
                 else:
                     lid = 0
-                return f'{mac.strip()}{lid:02}'
+                return f'{mac.strip()}{lid}'
             except Exception:
                 self.logger.error('Failed to generate serial, using a default', exc_info=True)
                 return '10000001'
