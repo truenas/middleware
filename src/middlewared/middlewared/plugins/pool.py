@@ -2754,7 +2754,7 @@ class PoolDatasetService(CRUDService):
 
         self.logger.debug("acltype is [%s]", data.get('acltype'))
 
-        if osc.IS_LINUX and not data.get('acltype'):
+        if osc.IS_LINUX and not data.get('acltype') and data['type'] == 'FILESYSTEM':
             data['acltype'] = 'POSIXACL'
             self.logger.debug("acltype is [%s]", data.get('acltype'))
 
