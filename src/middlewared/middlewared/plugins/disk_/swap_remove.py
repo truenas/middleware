@@ -64,5 +64,5 @@ class DiskService(Service):
                     pass
 
         # Let consumer explicitly deny swap configuration if desired
-        if configure_swap and not options.get('no_configure_swap'):
+        if configure_swap and options.get('configure_swap', True):
             asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))

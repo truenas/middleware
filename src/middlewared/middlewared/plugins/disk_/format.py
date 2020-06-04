@@ -19,7 +19,7 @@ class DiskService(Service):
             if size - 102400 <= swapgb * 1024 * 1024 * 1024:
                 raise CallError(f'Your disk size must be higher than {swapgb}GB')
 
-        job = self.middleware.call_sync('disk.wipe', disk, {'mode': 'QUICK', 'synccache': sync})
+        job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)
         job.wait_sync()
         if job.error:
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')

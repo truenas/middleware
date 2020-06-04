@@ -33,10 +33,7 @@ LOCKS = {}
 
 def lock(lock_str):
     def lock_fn(fn):
-        f_lock = LOCKS.get(lock_str)
-        if not f_lock:
-            f_lock = asyncio.Lock()
-            LOCKS[lock_str] = f_lock
+        f_lock = LOCKS[lock_str] = LOCKS.get(lock_str) or asyncio.Lock()
 
         async def l_fn(*args, **kwargs):
             async with f_lock:

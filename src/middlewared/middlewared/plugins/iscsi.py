@@ -898,7 +898,7 @@ class iSCSITargetExtentService(CRUDService):
             data['path'] = disk
 
             if disk.startswith('multipath'):
-                wipe_job = await self.middleware.call('disk.wipe', disk, {'mode': 'QUICK'})
+                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
                 await wipe_job.wait()
                 if wipe_job.error:
                     raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')

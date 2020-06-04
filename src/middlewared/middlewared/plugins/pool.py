@@ -998,7 +998,7 @@ class PoolService(CRUDService):
             await self.middleware.call('pool.sync_encrypted', oid)
 
         if disk:
-            wipe_job = await self.middleware.call('disk.wipe', disk, {'mode': 'QUICK'})
+            wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
             await wipe_job.wait()
             if wipe_job.error:
                 raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
@@ -1159,7 +1159,7 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            wipe_job = await self.middleware.call('disk.wipe', disk, {'mode': 'QUICK'})
+            wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
             await wipe_job.wait()
             if wipe_job.error:
                 raise CallError(f'Failed to wipe disk {disk}: {wipe_job.error}')
@@ -1474,7 +1474,7 @@ class PoolService(CRUDService):
 
         # We don't want to configure swap immediately after removing those disks because we might get in a race
         # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
-        await self.middleware.call('disk.swaps_remove_disks', disks, {'no_configure_swap': True})
+        await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
 
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
@@ -1497,9 +1497,7 @@ class PoolService(CRUDService):
 
             async def unlabel(disk):
                 wipe_job = await self.middleware.call(
-                    'disk.wipe', disk, {
-                        'mode': 'QUICK', 'synccache': False, 'swap_removal_options': {'no_configure_swap': True}
-                    }
+                    'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
                 )
                 await wipe_job.wait()
                 if wipe_job.error:
