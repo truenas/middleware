@@ -143,7 +143,7 @@ class KMIPService(Service, KMIPServerMixin):
                         disk['kmip_uid'], conn, self.middleware.logger, disk['identifier']
                     )
                 try:
-                    uid = self._register_secret_data(self.disks_keys[disk['identifier']], conn)
+                    uid = self._register_secret_data(disk['identifier'], self.disks_keys[disk['identifier']], conn)
                 except Exception:
                     failed.append(disk['identifier'])
                     update_data = {'kmip_uid': None} if destroy_successful else {}
@@ -170,7 +170,7 @@ class KMIPService(Service, KMIPServerMixin):
                     )
                 self.global_sed_key = adv_config['sed_passwd']
                 try:
-                    uid = self._register_secret_data(self.global_sed_key, conn)
+                    uid = self._register_secret_data('global_sed_key', self.global_sed_key, conn)
                 except Exception:
                     failed.append('Global SED Key')
                 else:

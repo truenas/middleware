@@ -53,7 +53,7 @@ class KMIPService(Service, KMIPServerMixin):
                     if not destroy_successful:
                         self.middleware.logger.debug(f'Failed to destroy key from KMIP Server for {ds["name"]}')
                 try:
-                    uid = self._register_secret_data(self.zfs_keys[ds['name']], conn)
+                    uid = self._register_secret_data(ds['name'], self.zfs_keys[ds['name']], conn)
                 except Exception:
                     failed.append(ds['name'])
                     update_data = {'kmip_uid': None} if destroy_successful else {}

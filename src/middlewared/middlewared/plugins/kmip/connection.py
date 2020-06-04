@@ -1,5 +1,6 @@
 import contextlib
 import socket
+import uuid
 
 from kmip.core import enums
 from kmip.pie.client import ProxyKmipClient
@@ -71,9 +72,9 @@ class KMIPServerMixin:
                 raise CallError('Retrieved managed object is not secret data')
             return obj.value.decode()
 
-    def _register_secret_data(self, key, conn):
+    def _register_secret_data(self, name, key, conn):
         # Create key on the KMIP Server
-        secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD)
+        secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD, name=f'{name}-{str(uuid.uuid4())[:7]}')
         try:
             uid = conn.register(secret_data)
         except KmipOperationFailure as e:
