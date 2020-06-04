@@ -40,6 +40,8 @@ def setusercontext(user):
     except Exception:
         os.chdir('/')
 
+    os.environ['HOME'] = passwd.pw_dir
+
 
 def _run_command(user, commandline, q, rv):
     setusercontext(user)
