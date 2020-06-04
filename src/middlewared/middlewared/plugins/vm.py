@@ -1737,7 +1737,7 @@ class VMService(CRUDService):
                     item['attributes']['path'] = ''
                     self.logger.warn('For RAW disk you need copy it manually inside your NAS.')
 
-            await self.create(vm)
+            await self.do_create(vm)
         except Exception as e:
             for i in reversed(created_clones):
                 try:
