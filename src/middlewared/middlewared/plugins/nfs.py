@@ -3,18 +3,13 @@ import contextlib
 import ipaddress
 import os
 import socket
-import subprocess
-
-try:
-    import sysctl
-except ImportError:
-    sysctl = None
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import private, CRUDService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 
@@ -50,7 +45,7 @@ class NFSService(SystemServiceService):
     @private
     async def nfs_extend(self, nfs):
         nfs["v4_krb_enabled"] = (
-            nfs["v4_krb"] or await self.middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+            nfs["v4_krb"] or await self.middleware.call("kerberos.keytab.query")
         )
         nfs["userd_manage_gids"] = nfs.pop("16")
         return nfs
@@ -71,6 +66,31 @@ class NFSService(SystemServiceService):
                 'interface.ip_in_use', {'static': True, 'any': True}
             )
         }
+
+    @private
+    async def bindip(self, config):
+        bindip = config['bindip']
+        if osc.IS_LINUX:
+            bindip = bindip[:1]
+
+        if bindip:
+            found = False
+            for iface in await self.middleware.call('interface.query'):
+                for alias in iface['state']['aliases']:
+                    if alias['address'] in bindip:
+                        found = True
+                        break
+                if found:
+                    break
+        else:
+            found = True
+
+        if found:
+            await self.middleware.call('alert.oneshot_delete', 'NFSBindAddress', None)
+            return bindip
+        else:
+            await self.middleware.call('alert.oneshot_create', 'NFSBindAddress', None)
+            return []
 
     @accepts(Dict(
         'nfs_update',
@@ -143,7 +163,7 @@ class NFSService(SystemServiceService):
         verrors = ValidationErrors()
 
         new_v4_krb_enabled = (
-            new["v4_krb"] or await self.middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+            new["v4_krb"] or await self.middleware.call("kerberos.keytab.query")
         )
 
         if new["v4"] and new_v4_krb_enabled and not await self.middleware.call("system.is_freenas"):
@@ -156,6 +176,9 @@ class NFSService(SystemServiceService):
                         "domain"
                     )
 
+        if osc.IS_LINUX:
+            if len(new['bindip']) > 1:
+                verrors.add('nfs_update.bindip', 'Listening on more than one address is not supported')
         bindip_choices = await self.bindip_choices()
         for i, bindip in enumerate(new['bindip']):
             if bindip not in bindip_choices:
@@ -203,38 +226,6 @@ class NFSService(SystemServiceService):
         await self.nfs_extend(new)
 
         return new
-
-    @private
-    def setup_v4(self):
-        config = self.middleware.call_sync("nfs.config")
-
-        if config["v4_krb_enabled"]:
-            subprocess.run(["service", "gssd", "onerestart"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        else:
-            subprocess.run(["service", "gssd", "forcestop"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        if config["v4"]:
-            sysctl.filter("vfs.nfsd.server_max_nfsvers")[0].value = 4
-            if config["v4_v3owner"]:
-                # Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed
-                # You must have both of these sysctl"s set to allow the desired functionality
-                sysctl.filter("vfs.nfsd.enable_stringtouid")[0].value = 1
-                sysctl.filter("vfs.nfs.enable_uidtostring")[0].value = 1
-                subprocess.run(["service", "nfsuserd", "forcestop"], stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL)
-            else:
-                sysctl.filter("vfs.nfsd.enable_stringtouid")[0].value = 0
-                sysctl.filter("vfs.nfs.enable_uidtostring")[0].value = 0
-                subprocess.run(["service", "nfsuserd", "onerestart"], stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL)
-        else:
-            sysctl.filter("vfs.nfsd.server_max_nfsvers")[0].value = 3
-            if config["userd_manage_gids"]:
-                subprocess.run(["service", "nfsuserd", "onerestart"], stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL)
-            else:
-                subprocess.run(["service", "nfsuserd", "forcestop"], stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL)
 
 
 class NFSShareModel(sa.Model):
@@ -412,6 +403,10 @@ class SharingNFSService(CRUDService):
 
     @private
     def validate_paths(self, data, schema_name, verrors):
+        if osc.IS_LINUX:
+            # Ganesha does not have such a restriction, each path is a different share
+            return
+
         dev = None
         for i, path in enumerate(data["paths"]):
             stat = os.stat(path)

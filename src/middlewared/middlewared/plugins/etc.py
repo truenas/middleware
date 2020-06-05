@@ -110,6 +110,8 @@ class EtcService(Service):
         ],
         'nfsd': [
             {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD'},
+            {'type': 'mako', 'path': 'default/nfs-common', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux'},
         ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
