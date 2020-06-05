@@ -949,7 +949,6 @@ class CloudSyncService(CRUDService):
         Dropbox Service
         `directory/name`
 
-
         `credentials` is a valid id of a Cloud Sync Credential which will be used to connect to the provider.
         """
         verrors = ValidationErrors()
@@ -967,11 +966,33 @@ class CloudSyncService(CRUDService):
 
     @private
     async def ls(self, config, path):
+        decrypt_filenames = config.get("encryption") and config.get("filename_encryption")
         async with RcloneConfig(config) as config:
             proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:" + path],
-                             check=False, encoding="utf8")
+                             check=False, encoding="utf8", errors="ignore")
             if proc.returncode == 0:
-                return json.loads(proc.stdout)
+                result = json.loads(proc.stdout)
+
+                if decrypt_filenames:
+                    if result:
+                        decrypted_names = {}
+                        proc = await run((["rclone", "--config", config.config_path, "cryptdecode", "encrypted:"] +
+                                         [item["Name"] for item in result]),
+                                         check=False, encoding="utf8", errors="ignore")
+                        for line in proc.stdout.splitlines():
+                            try:
+                                encrypted, decrypted = line.rstrip("\r\n").split(" \t ", 1)
+                            except ValueError:
+                                continue
+
+                            if decrypted != "Failed to decrypt":
+                                decrypted_names[encrypted] = decrypted
+
+                        for item in result:
+                            if item["Name"] in decrypted_names:
+                                item["Decrypted"] = decrypted_names[item["Name"]]
+
+                return result
             else:
                 raise CallError(proc.stderr, extra={"excerpt": lsjson_error_excerpt(proc.stderr)})
 
