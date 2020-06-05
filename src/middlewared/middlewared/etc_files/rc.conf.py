@@ -210,9 +210,9 @@ def nfs_config(middleware, context):
             if enabled:
                 yield 'gssd_enable="YES"'
 
-            gc = middleware.call_sync("datastore.config", "network.globalconfiguration")
-            if gc["gc_hostname_virtual"] and gc["gc_domain"]:
-                yield f'nfs_server_vhost="{gc["gc_hostname_virtual"]}.{gc["gc_domain"]}"'
+            gc = middleware.call_sync("network.configuration.config")
+            if gc.get("hostname_virtual") and gc["domain"]:
+                yield f'nfs_server_vhost="{gc["hostname_virtual"]}.{gc["domain"]}"'
 
         if nfs['v4_v3owner']:
             # Per RFC7530, sending NFSv3 style UID/GIDs across the wire is now allowed

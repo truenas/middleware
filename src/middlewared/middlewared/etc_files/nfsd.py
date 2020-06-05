@@ -73,7 +73,7 @@ async def render(service, middleware):
 
     shares = await middleware.call("sharing.nfs.query", [["enabled", "=", True]])
 
-    kerberos_keytabs = await middleware.call("datastore.query", "directoryservice.kerberoskeytab")
+    kerberos_keytabs = await middleware.call("kerberos.keytab.query")
 
     with open("/etc/exports", "w") as f:
         f.write(await get_exports(middleware, config, shares, kerberos_keytabs))
