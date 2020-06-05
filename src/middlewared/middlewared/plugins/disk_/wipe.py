@@ -4,7 +4,7 @@ import re
 import signal
 import subprocess
 
-from middlewared.schema import accepts, Bool, Dict, Str
+from middlewared.schema import accepts, Bool, Ref, Str
 from middlewared.service import job, private, Service
 from middlewared.utils import osc, Popen, run
 
@@ -47,7 +47,7 @@ class DiskService(Service):
         Str('dev'),
         Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM'], required=True),
         Bool('synccache', default=True),
-        Dict('swap_removal_options', default=None, additional_attrs=True),
+        Ref('swap_removal_options'),
     )
     @job(lock=lambda args: args[0])
     async def wipe(self, job, dev, mode, sync, options=None):
