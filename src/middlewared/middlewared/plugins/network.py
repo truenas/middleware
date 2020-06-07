@@ -1708,7 +1708,12 @@ class InterfaceService(CRUDService):
                     continue
 
                 if member_iface.mtu != mtu:
-                    member_iface.mtu = mtu
+                    try:
+                        member_iface.mtu = mtu
+                    except Exception:
+                        self.logger.error(
+                            'Unable to set MTU of %r bridge member %r to %d', name, member, mtu, exc_info=True
+                        )
                 sync_interface_opts[member]['skip_mtu'] = True
 
             for member in members_database - members:
@@ -1724,7 +1729,12 @@ class InterfaceService(CRUDService):
                 iface.delete_member(member)
 
             if iface.mtu != mtu:
-                iface.mtu = mtu
+                try:
+                    iface.mtu = mtu
+                except Exception:
+                    self.logger.error(
+                        'Unable to set MTU of %r bridge to %d', name, mtu, exc_info=True
+                    )
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         # Configure VLAN before BRIDGE so MTU is configured in correct order
