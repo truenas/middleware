@@ -16,7 +16,7 @@ def get_app_version():
 
     return {
         'stable': not RE_UNSTABLE.match(manifest['version']),
-        'version': manifest['version'][len('TrueNAS-'):],
-        'fullname': manifest['version'],
+        'version': manifest['version'],
+        'fullname': f"TrueNAS-SCALE-{manifest['version']}",
         'buildtime': None,
     }
