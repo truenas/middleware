@@ -1433,6 +1433,12 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
+        if os.path.exists(FIRST_INSTALL_SENTINEL):
+            cp = await run('update-grub', check=False, encoding='utf-8', errors='ignore')
+            if cp.returncode:
+                middleware.logger.error('Failed to update grub configuration: %s', cp.stderr)
+            os.unlink(FIRST_INSTALL_SENTINEL)
+
         # Check if birthday is already setted
         system_obj = await middleware.call('system.info')
         birthday = system_obj['birthday']
@@ -1538,6 +1544,15 @@ async def firstboot(middleware):
                 middleware.logger.error(
                     'Failed to set keep attribute for Initial-Install boot environment: %s', cp.stderr.decode()
                 )
+            if osc.IS_LINUX:
+                cp = await run(
+                    'zfs', 'set', 'org.zectl:bootloader=grub', os.path.join(boot_pool, 'ROOT'), check=False
+                )
+                if cp.returncode != 0:
+                    middleware.logger.error('Failed to set bootloader as grub for zectl: %s', cp.stderr.decode())
+
+        # We remove this once the system is ready and we have grub dataset mounted
+        open(FIRST_INSTALL_SENTINEL).close()
 
 
 async def update_timeout_value(middleware, *args):
