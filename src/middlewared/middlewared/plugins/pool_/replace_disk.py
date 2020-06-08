@@ -1,8 +1,9 @@
+import asyncio
 import errno
 import os
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import item_method, job, Service, ValidationErrors
+from middlewared.service import CallError, item_method, job, Service, ValidationErrors
 from middlewared.utils import osc
 
 
@@ -122,7 +123,7 @@ class PoolService(Service):
         finally:
             # Needs to happen even if replace failed to put back disk that had been
             # removed from swap prior to replacement
-            await self.middleware.call('disk.swaps_configure')
+            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         if osc.IS_FREEBSD:
             await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})

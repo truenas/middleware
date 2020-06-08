@@ -3,7 +3,7 @@ import subprocess
 
 from collections import defaultdict
 
-from middlewared.service import CallError, job, private, Service
+from middlewared.service import CallError, lock, private, Service
 from middlewared.utils import osc, run
 
 
@@ -13,8 +13,8 @@ MIRROR_MAX = 5
 class DiskService(Service):
 
     @private
-    @job(lock='swaps_configure')
-    async def swaps_configure(self, job):
+    @lock('swaps_configure')
+    async def swaps_configure(self):
         """
         Configures swap partitions in the system.
         We try to mirror all available swap partitions to avoid a system
@@ -44,7 +44,10 @@ class DiskService(Service):
             if mirror_name in existing_swap_devices['mirrors'] and (len(mirror['providers']) == 1 or any(
                 p['disk'] not in disks for p in mirror['providers']
             )):
-                await self.middleware.call('disk.swaps_remove_disks', [p['disk'] for p in mirror['providers']])
+                await self.middleware.call(
+                    'disk.swaps_remove_disks_unlocked',
+                    [p['disk'] for p in mirror['providers']], {'configure_swap': False}
+                )
                 existing_swap_devices['mirrors'].remove(mirror_name)
             else:
                 if mirror_name not in existing_swap_devices['mirrors']:
@@ -114,7 +117,9 @@ class DiskService(Service):
                             part = part_data['path']
 
                         if remove:
-                            await self.middleware.call('disk.swaps_remove_disks', [part_data['disk']])
+                            await self.middleware.call(
+                                'disk.swaps_remove_disks_unlocked', [part_data['disk']], {'configure_swap': False}
+                            )
                             existing_swap_devices['partitions'].remove(part)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
@@ -175,7 +180,7 @@ class DiskService(Service):
                 try:
                     await run('mkswap', swap_path)
                 except subprocess.CalledProcessError as e:
-                    self.logger.warning(f'Failed to make swap for %s: %s', swap_path, e.stderr.decode())
+                    self.logger.warning('Failed to make swap for %s: %s', swap_path, e.stderr.decode())
                     continue
             elif osc.IS_FREEBSD and not data['encrypted_provider']:
                 try:
@@ -205,7 +210,7 @@ class DiskService(Service):
             }
             try:
                 await self.middleware.call(
-                    'disk.swaps_remove_disks', [
+                    'disk.swaps_remove_disks_unlocked', [
                         all_partitions_by_path[p] for p in existing_swap_devices['partitions']
                         if p in all_partitions_by_path
                     ]

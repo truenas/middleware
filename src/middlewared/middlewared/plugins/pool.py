@@ -730,7 +730,7 @@ class PoolService(CRUDService):
             # regenerate crontab because of scrub
             await self.middleware.call('service.restart', 'cron')
 
-        await self.middleware.call('disk.swaps_configure')
+        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
         asyncio.ensure_future(restart_services())
 
         pool = await self.get_instance(pool_id)
@@ -1100,7 +1100,7 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            await self.middleware.call('disk.swaps_configure')
+            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         return True
 
@@ -1471,7 +1471,10 @@ class PoolService(CRUDService):
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks', oid)]
-        await self.middleware.call('disk.swaps_remove_disks', disks)
+
+        # We don't want to configure swap immediately after removing those disks because we might get in a race
+        # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
+        await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
 
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
@@ -1493,7 +1496,9 @@ class PoolService(CRUDService):
             job.set_progress(80, 'Cleaning disks')
 
             async def unlabel(disk):
-                wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK', False)
+                wipe_job = await self.middleware.call(
+                    'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
+                )
                 await wipe_job.wait()
                 if wipe_job.error:
                     self.logger.warn(f'Failed to wipe disk {disk}: {wipe_job.error}')
@@ -1537,6 +1542,9 @@ class PoolService(CRUDService):
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
+
+        # Let's reconfigure swap in case dumpdev needs to be configured again
+        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
 

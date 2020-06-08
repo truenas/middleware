@@ -4,7 +4,7 @@ import re
 import signal
 import subprocess
 
-from middlewared.schema import accepts, Bool, Str
+from middlewared.schema import accepts, Bool, Ref, Str
 from middlewared.service import job, private, Service
 from middlewared.utils import osc, Popen, run
 
@@ -45,11 +45,12 @@ class DiskService(Service):
 
     @accepts(
         Str('dev'),
-        Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM']),
+        Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM'], required=True),
         Bool('synccache', default=True),
+        Ref('swap_removal_options'),
     )
     @job(lock=lambda args: args[0])
-    async def wipe(self, job, dev, mode, sync):
+    async def wipe(self, job, dev, mode, sync, options=None):
         """
         Performs a wipe of a disk `dev`.
         It can be of the following modes:
@@ -57,8 +58,8 @@ class DiskService(Service):
           - FULL: write whole disk with zero's
           - FULL_RANDOM: write whole disk with random bytes
         """
-        await self.middleware.call('disk.swaps_remove_disks', [dev])
-        # FIXME: Please implement appropriate alternative for removal of disk from graid in linux
+        await self.middleware.call('disk.swaps_remove_disks', [dev], options)
+
         if osc.IS_FREEBSD:
             await self.middleware.call('disk.remove_disk_from_graid', dev)
 

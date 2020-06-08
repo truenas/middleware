@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 from middlewared.utils import osc
@@ -24,7 +25,7 @@ async def remove_disk(middleware, disk_name):
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
     # If a disk dies we need to reconfigure swaps so we are not left
     # with a single disk mirror swap, which may be a point of failure.
-    await middleware.call('disk.swaps_configure')
+    asyncio.ensure_future(middleware.call('disk.swaps_configure'))
 
 
 async def devd_devfs_hook(middleware, data):

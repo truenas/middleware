@@ -28,6 +28,19 @@ from middlewared.validators import Range, IpAddress
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 get_or_insert_lock = asyncio.Lock()
+LOCKS = defaultdict(asyncio.Lock)
+
+
+def lock(lock_str):
+    def lock_fn(fn):
+        f_lock = LOCKS[lock_str]
+
+        @wraps(fn)
+        async def l_fn(*args, **kwargs):
+            async with f_lock:
+                return await fn(*args, **kwargs)
+        return l_fn
+    return lock_fn
 
 
 def item_method(fn):
