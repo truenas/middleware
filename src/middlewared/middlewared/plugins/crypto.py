@@ -422,7 +422,8 @@ class CryptoKeyService(Service):
             'extensions': {},
         }
 
-        for ext in (
+        for ext in filter(
+            lambda e: e.get_short_name().decode() != 'UNDEF',
             map(
                 lambda i: obj.get_extension(i),
                 range(obj.get_extension_count())
