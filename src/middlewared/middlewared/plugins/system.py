@@ -1526,14 +1526,17 @@ async def firstboot(middleware):
         activated_be = await middleware.call('bootenv.query', [['activated', '=', True]], {'get': True})
         try:
             await middleware.call('bootenv.create', {'name': initial_install_be, 'source': activated_be['realname']})
-        except CallError:
+        except Exception:
             middleware.logger.error('Failed to create initial boot environment', exc_info=True)
         else:
-            try:
-                await middleware.call('bootenv.set_attribute', initial_install_be, {'keep': True})
-            except CallError:
+            boot_pool = await middleware.call('boot.pool_name')
+            cp = await run(
+                'zfs', 'set', f'{"zectl" if osc.IS_LINUX else "beadm"}:keep=True',
+                os.path.join(boot_pool, 'ROOT/Initial-Install')
+            )
+            if cp.returncode != 0:
                 middleware.logger.error(
-                    'Failed to set keep attribute for Initial-Install boot environment', exc_info=True
+                    'Failed to set keep attribute for Initial-Install boot environment: %s', cp.stderr.decode()
                 )
 
 
@@ -1592,11 +1595,8 @@ async def setup(middleware):
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
     else:
+        await firstboot(middleware)
         autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
-
-        if os.path.exists('/usr/local/sbin/beadm'):
-            await firstboot(middleware)
-
         if autotune_rv == 2:
             await run('shutdown', '-r', 'now', check=False)
 
