@@ -120,7 +120,7 @@ class FailoverAlertSource(ThreadedAlertSource):
         if not self.middleware.call_sync('failover.licensed'):
             return alerts
 
-        if self.middleware.call_sync('failover.internal_interfaces_notfound'):
+        if not self.middleware.call_sync('failover.internal_interfaces'):
             alerts.append(Alert(FailoverInterfaceNotFoundAlertClass))
             return alerts
 

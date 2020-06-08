@@ -43,7 +43,6 @@ from middlewared.utils.contextlib import asyncnullcontext
 
 BUFSIZE = 256
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
-INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
 TRUENAS_VERS = re.compile(r'\d*\.?\d+')
 
@@ -232,33 +231,14 @@ class FailoverService(ConfigService):
 
     @private
     @accepts()
-    def internal_interfaces(self):
+    async def internal_interfaces(self):
         """
-        Interfaces used internally for HA.
-        It is a direct link between the nodes.
+        This is a p2p ethernet connection on HA systems.
         """
-        hardware = self.middleware.call_sync('failover.hardware')
-        if hardware == 'ECHOSTREAM':
-            stdout = subprocess.check_output('/usr/sbin/pciconf -lv | grep "card=0xa01f8086 chip=0x10d38086"',
-                                             shell=True, encoding='utf8')
-            if not stdout:
-                if not os.path.exists(INTERNAL_IFACE_NF):
-                    open(INTERNAL_IFACE_NF, 'w').close()
-                return []
-            return [stdout.split('@')[0]]
-        elif hardware == 'SBB':
-            return ['ix0']
-        elif hardware in ('ECHOWARP', 'PUMA'):
-            return ['ntb0']
-        elif hardware == 'ULTIMATE':
-            return ['igb1']
-        elif hardware == 'BHYVE':
-            return ['vtnet1']
-        return []
 
-    @private
-    def internal_interfaces_notfound(self):
-        return os.path.exists(INTERNAL_IFACE_NF)
+        return await self.middleware.call(
+            'failover.internal_interface.detect'
+        )
 
     @private
     async def get_carp_states(self, interfaces=None):
