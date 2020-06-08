@@ -294,7 +294,7 @@ fi
 OS_BASE="$OS"
 boot_pool=`echo "$roots_dataset" | cut -d '/' -f1`
 activated_be=`zpool get -H -o value bootfs "$boot_pool"`
-datasets="$activated_be\n`zfs list -H -o name -r $roots_dataset | grep -v $activated_be | sort -r`"
+datasets="$activated_be\n`zfs list -H -o name -r $roots_dataset | grep -vx $activated_be | sort -r`"
 for dataset in `echo $datasets`; do
   if [ "x$dataset" = "x$roots_dataset" ] ; then
     continue

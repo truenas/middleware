@@ -1433,7 +1433,7 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
-        if os.path.exists(FIRST_INSTALL_SENTINEL):
+        if osc.IS_LINUX and os.path.exists(FIRST_INSTALL_SENTINEL):
             cp = await run('update-grub', check=False, encoding='utf-8', errors='ignore')
             if cp.returncode:
                 middleware.logger.error('Failed to update grub configuration: %s', cp.stderr)
@@ -1551,8 +1551,9 @@ async def firstboot(middleware):
                 if cp.returncode != 0:
                     middleware.logger.error('Failed to set bootloader as grub for zectl: %s', cp.stderr.decode())
 
-        # We remove this once the system is ready and we have grub dataset mounted
-        open(FIRST_INSTALL_SENTINEL).close()
+        if osc.IS_LINUX:
+            # We remove this once the system is ready and we have grub dataset mounted
+            open(FIRST_INSTALL_SENTINEL, 'w').close()
 
 
 async def update_timeout_value(middleware, *args):
