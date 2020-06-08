@@ -195,22 +195,17 @@ class NetworkConfigurationService(ConfigService):
         boot unless they are able to ping the addresses listed in `netwait_ip` list.
 
         `service_announcement` determines the broadcast protocols that will be used to advertise the server.
+
         `netbios` enables the NetBIOS name server (NBNS), which starts concurrently with the SMB service. SMB clients
         will only perform NBNS lookups if SMB1 is enabled. NBNS may be required for legacy SMB clients.
+
         `mdns` enables multicast DNS service announcements for enabled services. `wsd` enables Web Service
         Discovery support.
         """
         config = await self.config()
         new_config = config.copy()
-
-        if not (
-                not await self.middleware.call('system.is_freenas') and
-                await self.middleware.call('failover.licensed')
-        ):
-            for key in ['hostname_virtual', 'hostname_b']:
-                data.pop(key, None)
-
         new_config.update(data)
+
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
         if verrors:
             raise verrors
