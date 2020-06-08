@@ -65,7 +65,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
             margs['extra_headers'].update({
                 'From': mailcfg['fromemail']
             })
-
+        margs['attachments'] = False
         if em.is_multipart():
             attachments = [part for part in em.walk() if part.get_content_maintype() != 'multipart']
             margs['attachments'] = True if attachments else False
