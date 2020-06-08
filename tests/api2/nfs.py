@@ -37,6 +37,7 @@ bsd_host_cfg = pytest.mark.skipif(all(["BSD_HOST" in locals(),
 
 # Enable NFS server
 def test_01_creating_the_nfs_server():
+    print(ip)
     paylaod = {"servers": 10,
                "bindip": [ip],
                "mountd_port": 618,
@@ -105,6 +106,7 @@ def test_09_checking_to_see_if_nfs_service_is_running():
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
+@pytest.mark.skipif(scale, reason='Skiping for Scale')
 def test_10_checking_if_sysctl_vfs_nfsd_server_max_nfsvers_is_4():
     cmd = 'sysctl -n vfs.nfsd.server_max_nfsvers'
     results = SSH_TEST(cmd, user, password, ip)
