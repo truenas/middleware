@@ -1433,6 +1433,12 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
+        if osc.IS_LINUX and os.path.exists(FIRST_INSTALL_SENTINEL):
+            cp = await run('update-grub', check=False, encoding='utf-8', errors='ignore')
+            if cp.returncode:
+                middleware.logger.error('Failed to update grub configuration: %s', cp.stderr)
+            os.unlink(FIRST_INSTALL_SENTINEL)
+
         # Check if birthday is already setted
         system_obj = await middleware.call('system.info')
         birthday = system_obj['birthday']
@@ -1521,19 +1527,33 @@ async def firstboot(middleware):
         os.unlink(FIRST_INSTALL_SENTINEL)
 
         # Creating pristine boot environment from the "default"
-        middleware.logger.info("Creating 'Initial-Install' boot environment...")
-        cp = await run('beadm', 'create', '-e', 'default', 'Initial-Install', check=False)
-        if cp.returncode != 0:
-            middleware.logger.error(
-                'Failed to create initial boot environment: %s', cp.stderr.decode()
-            )
+        initial_install_be = 'Initial-Install'
+        middleware.logger.info('Creating %r boot environment...', initial_install_be)
+        activated_be = await middleware.call('bootenv.query', [['activated', '=', True]], {'get': True})
+        try:
+            await middleware.call('bootenv.create', {'name': initial_install_be, 'source': activated_be['realname']})
+        except Exception:
+            middleware.logger.error('Failed to create initial boot environment', exc_info=True)
         else:
             boot_pool = await middleware.call('boot.pool_name')
-            cp = await run('zfs', 'set', 'beadm:keep=True', os.path.join(boot_pool, 'ROOT/Initial-Install'))
+            cp = await run(
+                'zfs', 'set', f'{"zectl" if osc.IS_LINUX else "beadm"}:keep=True',
+                os.path.join(boot_pool, 'ROOT/Initial-Install')
+            )
             if cp.returncode != 0:
                 middleware.logger.error(
-                    f'Failed to set "beadm:keep=True" for Initial-Install boot environment: {cp.stderr}'
+                    'Failed to set keep attribute for Initial-Install boot environment: %s', cp.stderr.decode()
                 )
+            if osc.IS_LINUX:
+                cp = await run(
+                    'zfs', 'set', 'org.zectl:bootloader=grub', os.path.join(boot_pool, 'ROOT'), check=False
+                )
+                if cp.returncode != 0:
+                    middleware.logger.error('Failed to set bootloader as grub for zectl: %s', cp.stderr.decode())
+
+        if osc.IS_LINUX:
+            # We remove this once the system is ready and we have grub dataset mounted
+            open(FIRST_INSTALL_SENTINEL, 'w').close()
 
 
 async def update_timeout_value(middleware, *args):
@@ -1591,11 +1611,8 @@ async def setup(middleware):
     if os.path.exists("/tmp/.bootready"):
         SYSTEM_READY = True
     else:
+        await firstboot(middleware)
         autotune_rv = await middleware.call('system.advanced.autotune', 'loader')
-
-        if os.path.exists('/usr/local/sbin/beadm'):
-            await firstboot(middleware)
-
         if autotune_rv == 2:
             await run('shutdown', '-r', 'now', check=False)
 

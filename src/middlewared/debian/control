@@ -165,6 +165,7 @@ Depends: alembic,
          syslog-ng,
          tcpdump,
          truenas-files,
+         zectl,
          ${misc:Depends},
          ${python3:Depends}
 Description: Middleware daemon for TrueNAS

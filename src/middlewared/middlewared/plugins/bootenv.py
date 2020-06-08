@@ -2,12 +2,13 @@ from middlewared.schema import Bool, Dict, Str, accepts
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job
 )
-from middlewared.utils import Popen, filter_list, run
+from middlewared.utils import filter_list, osc, Popen, run
 from middlewared.validators import Match
 
 from datetime import datetime
 
 import errno
+import os
 import subprocess
 
 
@@ -16,6 +17,8 @@ RE_BE_NAME = r'^[^/ *\'"?@!#$%^&()+=~<>;\\]+$'
 
 class BootEnvService(CRUDService):
 
+    BE_TOOL = 'zectl' if osc.IS_LINUX else 'beadm'
+
     @filterable
     def query(self, filters=None, options=None):
         """
@@ -23,7 +26,7 @@ class BootEnvService(CRUDService):
         """
         results = []
 
-        cp = subprocess.run(['beadm', 'list', '-H'], capture_output=True, text=True)
+        cp = subprocess.run([self.BE_TOOL, 'list', '-H'], capture_output=True, text=True)
         datasets_origins = [
             d['properties']['origin']['parsed']
             for d in self.middleware.call_sync('zfs.dataset.query')
@@ -39,9 +42,10 @@ class BootEnvService(CRUDService):
                 'realname': fields[0],
                 'name': name,
                 'active': fields[1],
+                'activated': 'n' in fields[1].lower(),
                 'mountpoint': fields[2],
-                'space': fields[3],
-                'created': datetime.strptime(fields[4], '%Y-%m-%d %H:%M'),
+                'space': None if osc.IS_LINUX else fields[3],
+                'created': datetime.strptime(fields[3 if osc.IS_LINUX else 4], '%Y-%m-%d %H:%M'),
                 'keep': None,
                 'rawspace': None
             }
@@ -57,10 +61,10 @@ class BootEnvService(CRUDService):
                     snapshot = self.middleware.call_sync('zfs.snapshot.query', [('id', '=', origin)])
                     if snapshot:
                         snapshot = snapshot[0]
-                if 'beadm:keep' in ds['properties']:
-                    if ds['properties']['beadm:keep']['value'] == 'True':
+                if f'{self.BE_TOOL}:keep' in ds['properties']:
+                    if ds['properties'][f'{self.BE_TOOL}:keep']['value'] == 'True':
                         be['keep'] = True
-                    elif ds['properties']['beadm:keep']['value'] == 'False':
+                    elif ds['properties'][f'{self.BE_TOOL}:keep']['value'] == 'False':
                         be['keep'] = False
 
                 # When a BE is deleted, following actions happen
@@ -127,7 +131,7 @@ class BootEnvService(CRUDService):
         Activates boot environment `id`.
         """
         try:
-            subprocess.run(['beadm', 'activate', oid], capture_output=True, text=True, check=True)
+            subprocess.run([self.BE_TOOL, 'activate', oid], capture_output=True, text=True, check=True)
         except subprocess.CalledProcessError as cpe:
             raise CallError(f'Failed to activate BE: {cpe.stdout.strip()}')
         else:
@@ -154,7 +158,7 @@ class BootEnvService(CRUDService):
         if not ds:
             raise CallError(f'BE {oid!r} does not exist.', errno.ENOENT)
         await self.middleware.call('zfs.dataset.update', dsname, {
-            'properties': {'beadm:keep': {'value': str(attrs['keep'])}},
+            'properties': {f'{self.BE_TOOL}:keep': {'value': str(attrs['keep'])}},
         })
         return True
 
@@ -176,10 +180,14 @@ class BootEnvService(CRUDService):
         await self._clean_be_name(verrors, 'bootenv_create', data['name'])
         verrors.check()
 
-        args = ['beadm', 'create']
+        args = [self.BE_TOOL, 'create']
         source = data.get('source')
         if source:
-            args += ['-e', source]
+            args += [
+                '-e', os.path.join(
+                    await self.middleware.call('boot.pool_name'), 'ROOT', source
+                ) if osc.IS_LINUX else source
+            ]
         args.append(data['name'])
         try:
             await run(args, encoding='utf8', check=True)
@@ -202,14 +210,14 @@ class BootEnvService(CRUDService):
         verrors.check()
 
         try:
-            await run('beadm', 'rename', oid, data['name'], encoding='utf8', check=True)
+            await run(self.BE_TOOL, 'rename', oid, data['name'], encoding='utf8', check=True)
         except subprocess.CalledProcessError as cpe:
             raise CallError(f'Failed to update boot environment: {cpe.stdout}')
         return data['name']
 
     async def _clean_be_name(self, verrors, schema, name):
         beadm_names = (await (await Popen(
-            "beadm list | awk '{print $7}'",
+            f"{self.BE_TOOL} list -H | awk '{{print ${1 if osc.IS_LINUX else 7}}}'",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -225,7 +233,7 @@ class BootEnvService(CRUDService):
         """
         be = await self._get_instance(oid)
         try:
-            await run('beadm', 'destroy', '-F', be['id'], encoding='utf8', check=True)
+            await run(self.BE_TOOL, 'destroy', '-F', be['id'], encoding='utf8', check=True)
         except subprocess.CalledProcessError as cpe:
             raise CallError(f'Failed to delete boot environment: {cpe.stdout}')
         return True
