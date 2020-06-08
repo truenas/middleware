@@ -272,7 +272,7 @@ class FailoverService(ConfigService):
         errors = []
         interfaces = set(local[0] + local[1] + remote[0] + remote[1])
         if not interfaces:
-            errors.append(f"There are no failover interfaces")
+            errors.append("There are no failover interfaces")
         for name in interfaces:
             if name not in local[0] + local[1]:
                 errors.append(f"Interface {name} is not configured for failover on local system")

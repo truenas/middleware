@@ -8,6 +8,7 @@ class InternalInterfaceDetectionService(Service):
     class Config:
         namespace = 'failover.internal_interface'
 
+    @private
     def detect(self):
 
         hardware = self.middleware.call_sync(
