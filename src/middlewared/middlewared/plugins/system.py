@@ -1521,18 +1521,19 @@ async def firstboot(middleware):
         os.unlink(FIRST_INSTALL_SENTINEL)
 
         # Creating pristine boot environment from the "default"
-        middleware.logger.info("Creating 'Initial-Install' boot environment...")
-        cp = await run('beadm', 'create', '-e', 'default', 'Initial-Install', check=False)
-        if cp.returncode != 0:
-            middleware.logger.error(
-                'Failed to create initial boot environment: %s', cp.stderr.decode()
-            )
+        initial_install_be = 'Initial-Install'
+        middleware.logger.info('Creating %r boot environment...', initial_install_be)
+        activated_be = await middleware.call('bootenv.query', [['activated', '=', True]], {'get': True})
+        try:
+            await middleware.call('bootenv.create', {'name': initial_install_be, 'source': activated_be['realname']})
+        except CallError:
+            middleware.logger.error('Failed to create initial boot environment', exc_info=True)
         else:
-            boot_pool = await middleware.call('boot.pool_name')
-            cp = await run('zfs', 'set', 'beadm:keep=True', os.path.join(boot_pool, 'ROOT/Initial-Install'))
-            if cp.returncode != 0:
+            try:
+                await middleware.call('bootenv.set_attribute', initial_install_be, {'keep': True})
+            except CallError:
                 middleware.logger.error(
-                    f'Failed to set "beadm:keep=True" for Initial-Install boot environment: {cp.stderr}'
+                    'Failed to set keep attribute for Initial-Install boot environment', exc_info=True
                 )
 
 
