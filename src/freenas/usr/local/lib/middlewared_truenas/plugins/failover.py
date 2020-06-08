@@ -200,7 +200,7 @@ class FailoverService(ConfigService):
         return self.HA_MODE
 
     @accepts()
-    def hardware(self):
+    async def hardware(self):
         """
         Returns the hardware type for an HA system.
           ECHOSTREAM
@@ -212,7 +212,9 @@ class FailoverService(ConfigService):
           MANUAL
         """
 
-        return self.middleware.call_sync('failover.ha_mode')[0]
+        hardware = await self.middleware.call('failover.ha_mode')
+
+        return hardware[0]
 
     @accepts()
     def node(self):
@@ -224,7 +226,9 @@ class FailoverService(ConfigService):
           MANUAL - slot position in chassis could not be determined
         """
 
-        return self.middleware.call_sync('failover.ha_mode')[1]
+        node = await self.middleware.call('failover.ha_mode')
+
+        return node[1]
 
     @private
     @accepts()
@@ -233,7 +237,7 @@ class FailoverService(ConfigService):
         Interfaces used internally for HA.
         It is a direct link between the nodes.
         """
-        hardware = self.hardware()
+        hardware = self.middleware.call_sync('failover.hardware')
         if hardware == 'ECHOSTREAM':
             stdout = subprocess.check_output('/usr/sbin/pciconf -lv | grep "card=0xa01f8086 chip=0x10d38086"',
                                              shell=True, encoding='utf8')
