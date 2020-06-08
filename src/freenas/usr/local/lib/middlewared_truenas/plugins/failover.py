@@ -217,7 +217,7 @@ class FailoverService(ConfigService):
         return hardware[0]
 
     @accepts()
-    def node(self):
+    async def node(self):
         """
         Returns the slot position in the chassis that
         the controller is located.
