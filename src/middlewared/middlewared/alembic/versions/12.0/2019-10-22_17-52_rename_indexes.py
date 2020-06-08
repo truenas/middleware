@@ -44,7 +44,13 @@ def upgrade():
 
     with op.batch_alter_table('network_alias', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_network_alias_alias_interface_id'), ['alias_interface_id'], unique=False)
-        batch_op.drop_index('network_alias_5f318ef4')
+
+    for index in ['network_alias_5f318ef4', 'network_alias_9ab5564d']:
+        try:
+            with op.batch_alter_table('network_alias', schema=None) as batch_op:
+                batch_op.drop_index(index)
+        except Exception:
+            pass
 
     with op.batch_alter_table('network_lagginterfacemembers', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_network_lagginterfacemembers_lagg_interfacegroup_id'), ['lagg_interfacegroup_id'], unique=False)
@@ -68,7 +74,13 @@ def upgrade():
 
     with op.batch_alter_table('services_iscsitargetportalip', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_services_iscsitargetportalip_iscsi_target_portalip_portal_id'), ['iscsi_target_portalip_portal_id'], unique=False)
-        batch_op.drop_index('services_iscsitargetportalip_fe35c684')
+
+    for index in ['services_iscsitargetportalip_fe35c684', 'services_iscsitargetportalip_914529ba']:
+        try:
+            with op.batch_alter_table('services_iscsitargetportalip', schema=None) as batch_op:
+                batch_op.drop_index(index)
+        except Exception:
+            pass
 
     with op.batch_alter_table('services_iscsitargettoextent', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_services_iscsitargettoextent_iscsi_extent_id'), ['iscsi_extent_id'], unique=False)
