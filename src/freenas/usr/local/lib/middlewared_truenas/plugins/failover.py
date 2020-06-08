@@ -1,4 +1,4 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -27,6 +27,7 @@ except ImportError:
 import tempfile
 import textwrap
 import time
+import enum
 
 from functools import partial
 
@@ -38,8 +39,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
-from middlewared.plugins.system import SystemService
-from middlewared.utils import osc
 from middlewared.utils.contextlib import asyncnullcontext
 
 BUFSIZE = 256
@@ -49,6 +48,28 @@ FAILOVER_NEEDOP = '/tmp/.failover_needop'
 TRUENAS_VERS = re.compile(r'\d*\.?\d+')
 
 logger = logging.getLogger('failover')
+
+
+class HA_HARDWARE(enum.Enum):
+
+    """
+    The echostream E16 JBOD and the echostream Z-series chassis
+    are the same piece of hardware. One of the only ways to differentiate
+    them is to look at the enclosure elements in detail. The Z-series
+    chassis identifies element 0x26 as `ZSERIES_ENCLOSURE` listed below.
+    The E16 JBOD does not. The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5.
+
+    We use this fact to ensure we are looking at the internal enclosure, and
+    not a shelf. If we used a shelf to determine which node was A or B, you could
+    cause the nodes to switch identities by switching the cables for the shelf.
+    """
+
+    ZSERIES_ENCLOSURE = re.compile(r'SD_9GV12P1J_12R6K4', re.M)
+    ZSERIES_NODE = re.compile(r'3U20D-Encl-([AB])', re.M)
+    XSERIES_ENCLOSURE = re.compile(r'Enclosure Name: CELESTIC (P3215-O|P3217-B)', re.M)
+    XSERIES_NODEA = re.compile(r'ESCE A_(5[0-9A-F]{15})', re.M)
+    XSERIES_NODEB = re.compile(r'ESCE B_(5[0-9A-F]{15})', re.M)
+    MSERIES_ENCLOSURE = re.compile(r'Enclosure Name: (ECStream|iX) 4024S([ps])', re.M)
 
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
@@ -169,167 +190,41 @@ class FailoverService(ConfigService):
         return True
 
     @private
-    def ha_mode(self):
+    async def ha_mode(self):
+
         if self.HA_MODE is None:
-            self.HA_MODE = self._ha_mode()
-        return self.HA_MODE
-
-    @staticmethod
-    def _ha_mode():
-        hardware = None
-        node = None
-
-        proc = subprocess.Popen([
-            'dmidecode',
-            '-s', 'system-product-name',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        manufacturer = proc.communicate()[0].strip()
-
-        # TODO: should we handle HA virtualized with bhyve?
-        if osc.IS_FREEBSD and manufacturer == b'BHYVE':
-            hardware = 'BHYVE'
-            proc = subprocess.Popen(
-                ['/sbin/camcontrol', 'devlist'],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+            self.HA_MODE = await self.middleware.call(
+                'failover.enclosure.detect'
             )
-            devlist = proc.communicate()[0].decode(errors='ignore')
-            if proc.returncode == 0:
-                if 'TrueNAS_A' in devlist:
-                    node = 'A'
-                elif 'TrueNAS_B' in devlist:
-                    node = 'B'
 
-        else:
-            enclosures = ['/dev/' + enc for enc in os.listdir('/dev') if enc.startswith('ses')]
-            for enclosure in enclosures:
-                proc = subprocess.Popen([
-                    '/usr/sbin/getencstat',
-                    '-V', enclosure,
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                encstat = proc.communicate()[0].decode('utf8', 'ignore').strip()
-                # The echostream E16 JBOD and the echostream Z-series chassis are the same piece
-                # of hardware. One of the only ways to differentiate them is to look at the
-                # enclosure elements in detail. The Z-series chassis identifies element 0x26
-                # as SD_9GV12P1J_12R6K4.  The E16 does not.
-                # The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5
-                # We use this fact to ensure we are looking at the internal enclosure, not a shelf.
-                # If we used a shelf to determine which node was A or B you could cause the nodes
-                # to switch identities by switching the cables for the shelf.
-                if re.search(r'SD_9GV12P1J_12R6K4', encstat, re.M):
-                    hardware = 'ECHOSTREAM'
-                    reg = re.search(r'3U20D-Encl-([AB])\'', encstat, re.M)
-                    # In theory this should only be reached if we are dealing with
-                    # an echostream, which renders the "if reg else None" irrelevent
-                    node = reg.group(1) if reg else None
-                    # We should never be able to find more than one of these
-                    # but just in case we ever have a situation where there are
-                    # multiple internal enclosures, we'll just stop at the first one
-                    # we find.
-                    if node:
-                        break
-                # Identify PUMA platform by one of enclosure names.
-                elif re.search(r'Enclosure Name: CELESTIC (P3215-O|P3217-B)', encstat, re.M):
-                    hardware = 'PUMA'
-                    # Identify node by comparing addresses from SES and SMP.
-                    # There is no exact match, but allocation seems sequential.
-                    proc = subprocess.Popen([
-                        '/sbin/camcontrol', 'smpphylist', enclosure, '-q'
-                    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-                    phylist = proc.communicate()[0].strip()
-                    reg = re.search(r'ESCE A_(5[0-9A-F]{15})', encstat, re.M)
-                    if reg:
-                        addr = f'0x{(int(reg.group(1), 16) - 1):016x}'
-                        if addr in phylist:
-                            node = 'A'
-                            break
-                    reg = re.search(r'ESCE B_(5[0-9A-F]{15})', encstat, re.M)
-                    if reg:
-                        addr = f'0x{(int(reg.group(1), 16) - 1):016x}'
-                        if addr in phylist:
-                            node = 'B'
-                            break
-                else:
-                    # Identify ECHOWARP platform by one of enclosure names.
-                    reg = re.search(r'Enclosure Name: (ECStream|iX) 4024S([ps])', encstat, re.M)
-                    if reg:
-                        hardware = 'ECHOWARP'
-                        # Identify node by the last symbol of the model name
-                        if reg.group(2) == 'p':
-                            node = 'A'
-                            break
-                        elif reg.group(2) == 's':
-                            node = 'B'
-                            break
-
-        if node:
-            return hardware, node
-
-        proc = subprocess.Popen([
-            'dmidecode',
-            '-s', 'system-serial-number',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        serial = proc.communicate()[0].split('\n', 1)[0].strip()
-
-        license = SystemService._get_license()
-
-        if license is not None:
-            if license['system_serial'] == serial:
-                node = 'A'
-            elif license['system_serial_ha'] == serial:
-                node = 'B'
-
-        if node is None:
-            return 'MANUAL', None
-
-        if license['system_serial'] and license['system_serial_ha']:
-            mode = None
-            proc = subprocess.Popen([
-                'dmidecode',
-                '-s', 'baseboard-product-name',
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-            board = proc.communicate()[0].split('\n', 1)[0].strip()
-            # If we've gotten this far it's because we were unable to
-            # identify ourselves via enclosure device.
-            if board == 'X8DTS':
-                hardware = 'SBB'
-            elif board.startswith('X8'):
-                hardware = 'ULTIMATE'
-            else:
-                mode = 'MANUAL', None
-
-            if mode is None:
-                mode = hardware, node
-            return mode
-        else:
-            return 'MANUAL', None
+        return self.HA_MODE
 
     @accepts()
     def hardware(self):
         """
-        Gets the hardware type of HA.
-
+        Returns the hardware type for an HA system.
           ECHOSTREAM
           ECHOWARP
           PUMA
           SBB
           ULTIMATE
+          BHYVE
           MANUAL
         """
-        return self.ha_mode()[0]
+
+        return self.middleware.call_sync('failover.ha_mode')[0]
 
     @accepts()
     def node(self):
         """
-        Gets the node identification.
+        Returns the slot position in the chassis that
+        the controller is located.
           A - First node
           B - Seconde Node
-          MANUAL - could not be identified, its in manual mode
+          MANUAL - slot position in chassis could not be determined
         """
-        node = self.ha_mode()[1]
-        if node is None:
-            return 'MANUAL'
-        return node
+
+        return self.middleware.call_sync('failover.ha_mode')[1]
 
     @private
     @accepts()
