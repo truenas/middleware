@@ -42,6 +42,7 @@ class BootEnvService(CRUDService):
                 'realname': fields[0],
                 'name': name,
                 'active': fields[1],
+                'activated': 'n' in fields[1].lower(),
                 'mountpoint': fields[2],
                 'space': None if osc.IS_LINUX else fields[3],
                 'created': datetime.strptime(fields[3 if osc.IS_LINUX else 4], '%Y-%m-%d %H:%M'),
