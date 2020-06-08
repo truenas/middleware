@@ -226,7 +226,7 @@ class FailoverService(ConfigService):
           MANUAL - slot position in chassis could not be determined
         """
 
-        node = await self.middleware.call('failover.ha_mode')
+        node = self.middleware.call_sync('failover.ha_mode')
 
         return node[1]
 
