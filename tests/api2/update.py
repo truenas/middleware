@@ -17,19 +17,10 @@ url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
 def test_00_get_update_conf_for_internals_and_nightly():
     version = GET("/system/info/").json()['version']
-    freenas = GET("/system/is_freenas/").json()
-    if freenas is True:
-        update_conf = 'freenas-update.conf'
-    else:
-        update_conf = 'truenas-update.conf'
+    update_conf = 'truenas-update.conf'
     fetch_cmd = f'fetch {url}{update_conf}'
     mv_cmd = f'mv {update_conf} /data/update.conf'
     if 'INTERNAL' in version:
-        results = SSH_TEST(fetch_cmd, user, password, ip)
-        assert results['result'] is True, results['output']
-        results = SSH_TEST(mv_cmd, user, password, ip)
-        assert results['result'] is True, results['output']
-    elif freenas is False:
         results = SSH_TEST(fetch_cmd, user, password, ip)
         assert results['result'] is True, results['output']
         results = SSH_TEST(mv_cmd, user, password, ip)
