@@ -1442,7 +1442,9 @@ class DiskService(CRUDService):
                 if len(consumers) == 1 or any(filter(
                     lambda c: c.provider.geom.name not in disks, consumers
                 )):
-                    await self.swaps_remove_disks([c.provider.geom.name for c in consumers], {'configure_swap': True})
+                    await self.swaps_remove_disks_unlocked(
+                        [c.provider.geom.name for c in consumers], {'configure_swap': False}
+                    )
                 else:
                     mirror_name = f'mirror/{g.name}'
                     # If mirror is not already being used as a swap device, only then add it to
@@ -1515,7 +1517,7 @@ class DiskService(CRUDService):
                         elif part in existing_swap_devices['partitions']:
                             remove = True
                         if remove:
-                            await self.swaps_remove_disks_unlocked([part.split('p')[0]], {'configure_swap': True})
+                            await self.swaps_remove_disks_unlocked([part.split('p')[0]], {'configure_swap': False})
                             existing_swap_devices['partitions'].remove(part)
                 except Exception:
                     self.logger.warn('Failed to remove disk from swap', exc_info=True)
@@ -1597,13 +1599,6 @@ class DiskService(CRUDService):
         return True
 
     @private
-    @accepts(
-        List('disks', items=[Str('disk')], default=[]),
-        Dict(
-            'options',
-            Bool('configure_swap', default=True),
-        ),
-    )
     @job(lock='swaps_configure')
     async def swaps_remove_disks(self, job, disks, options=None):
         """
@@ -1611,6 +1606,7 @@ class DiskService(CRUDService):
         it will offline if from swap, remove it from the gmirror (if exists)
         and detach the geli.
         """
+        return await self.swaps_remove_disks_unlocked(disks, options)
 
     @private
     async def swaps_remove_disks_unlocked(self, disks, options=None):
@@ -1701,7 +1697,7 @@ class DiskService(CRUDService):
           - FULL: write whole disk with zero's
           - FULL_RANDOM: write whole disk with random bytes
         """
-        await self.swaps_remove_disks([dev])
+        await job.wrap(await self.middleware.call('disk.swaps_remove_disks', [dev]))
 
         # Its possible a disk was previously used by graid so we need to make sure to
         # remove the disk from it (#40560)
@@ -1837,8 +1833,11 @@ class DiskService(CRUDService):
             raise CallError(f'Failed to label {dev}: {cp.stderr.decode()}')
 
     @private
-    def unlabel(self, disk, sync=True):
-        self.middleware.call_sync('disk.swaps_remove_disks', [disk])
+    def unlabel(self, disk, sync=True, swap_options=None):
+        job = self.middleware.call_sync('disk.swaps_remove_disks', [disk], swap_options)
+        job.wait_sync()
+        if job.error:
+            raise CallError(f'Failed to remove disk from swap: {job.error}')
 
         subprocess.run(
             ['gpart', 'destroy', '-F', f'/dev/{disk}'],
