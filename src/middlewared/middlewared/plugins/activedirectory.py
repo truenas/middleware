@@ -1142,9 +1142,22 @@ class ActiveDirectoryService(ConfigService):
             self.logger.warning("Unable to find PDC emulator via DNS.")
             return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
 
-        c = ntplib.NTPClient()
-        response = c.request(pdc[0]['host'])
-        ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
+        try:
+            c = ntplib.NTPClient()
+            response = c.request(pdc[0]['host'])
+            ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
+        except ntplib.NTPException:
+            self.logger.warning("NTP request to PDC Emulator failed. Retrying with regular DC",
+                                exc_info=True)
+
+            dc = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['PDC'], 1)
+            if not dc:
+                self.logger.warning("Unable to find Domain Controller via DNS.")
+                return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
+
+            response = c.request(dc[0]['host'])
+            ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
+
         clockskew = abs(ntp_time - nas_time)
         if clockskew > permitted_clockskew:
             raise CallError(f'Clockskew between {pdc[0]["host"]} and NAS exceeds 3 minutes')
