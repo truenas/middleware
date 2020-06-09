@@ -1,8 +1,11 @@
+import errno
 import json
 import logging
 import os
 import re
 import subprocess
+
+import humanfriendly
 
 from middlewared.service import CallError, private, Service
 
@@ -44,6 +47,9 @@ class UpdateService(Service):
             if not can_update(old_version, new_version):
                 raise CallError(f'Unable to downgrade from {old_version} to {new_version}')
 
+            boot_pool_name = self.middleware.call_sync("boot.pool_name")
+            self.ensure_free_space(boot_pool_name, manifest["size"])
+
             for file, checksum in manifest["checksums"].items():
                 progress_callback(0, f"Verifying {file}")
                 our_checksum = subprocess.run(["sha1sum", os.path.join(mounted, file)], **run_kw).stdout.split()[0]
@@ -54,7 +60,7 @@ class UpdateService(Service):
                 "disks": self.middleware.call_sync("boot.get_disks"),
                 "json": True,
                 "old_root": "/",
-                "pool_name": self.middleware.call_sync("boot.pool_name"),
+                "pool_name": boot_pool_name,
                 "src": mounted,
             }
 
@@ -84,3 +90,37 @@ class UpdateService(Service):
                     raise CallError(error)
                 else:
                     raise CallError(stderr)
+
+    @private
+    def ensure_free_space(self, pool_name, size):
+        space_left = self._space_left(pool_name)
+
+        if space_left > size:
+            return
+
+        for bootenv in reversed(self.middleware.call_sync(
+            "bootenv.query",
+            [
+                ["keep", "=", False],
+                ["mountpoint", "=", "-"],
+                ["activated", "=", False],
+            ],
+            {"order_by": ["created"]},
+        )):
+            logger.info("Pruning %r", bootenv["id"])
+            self.middleware.call_sync("bootenv.delete", bootenv["id"])
+
+            space_left = self._space_left(pool_name)
+
+            if space_left > size:
+                return
+
+        raise CallError(
+            f"Insufficient disk space available on {pool_name} ({humanfriendly.format_size(space_left)}). "
+            f"Need {humanfriendly.format_size(size)}",
+            errno.ENOSPC,
+        )
+
+    def _space_left(self, pool_name):
+        pool = self.middleware.call_sync("zfs.pool.query", [["name", "=", pool_name]], {"get": True})
+        return pool["properties"]["free"]["parsed"]
