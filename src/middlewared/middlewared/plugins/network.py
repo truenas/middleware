@@ -27,6 +27,9 @@ if '/usr/local/www' not in sys.path:
 RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 RE_MTU = re.compile(r'\bmtu\s+(\d+)')
 
+RE_RTSOLD_INTERFACE = re.compile(r'Interface (.+)')
+RE_RTSOLD_NUMBER_OF_VALID_RAS = re.compile(r'number of valid RAs: ([0-9]+)')
+
 
 class NetworkConfigurationService(ConfigService):
     class Config:
@@ -2033,7 +2036,7 @@ class InterfaceService(CRUDService):
         if data['int_ipv6auto']:
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
             await (await Popen(
-                ['/etc/rc.d/rtsold', 'onestart'],
+                ['/etc/rc.d/rtsold', 'onerestart'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 close_fds=True,
@@ -2226,8 +2229,22 @@ class RouteService(Service):
         elif routing_table.default_route_ipv6:
             # If there is no gateway in database but one is configured
             # remove it
-            self.logger.info('Removing IPv6 default route')
-            routing_table.delete(routing_table.default_route_ipv6)
+            interface = routing_table.default_route_ipv6.interface
+            autoconfigured_interface = await self.middleware.call(
+                'datastore.query', 'network.interfaces', [
+                    ['int_interface', '=', interface],
+                    ['int_ipv6auto', '=', True],
+                ]
+            )
+            remove = False
+            if not autoconfigured_interface:
+                self.logger.info('Removing IPv6 default route as there is no IPv6 autoconfiguration')
+                remove = True
+            elif not await self.middleware.call('route.has_valid_router_announcements', interface):
+                self.logger.info('Removing IPv6 default route as IPv6 autoconfiguration has not succeeded')
+                remove = True
+            if remove:
+                routing_table.delete(routing_table.default_route_ipv6)
 
     @accepts(Str('ipv4_gateway'))
     def ipv4gw_reachable(self, ipv4_gateway):
@@ -2245,6 +2262,54 @@ class RouteService(Service):
                         ipv4_nic = ipaddress.IPv4Interface(nic_address)
                         if ipaddress.ip_address(ipv4_gateway) in ipv4_nic.network:
                             return True
+        return False
+
+    @private
+    async def has_valid_router_announcements(self, interface):
+        rtsold_dump_path = '/var/run/rtsold.dump'
+
+        try:
+            with open('/var/run/rtsold.pid') as f:
+                rtsold_pid = int(f.read().strip())
+        except (FileNotFoundError, ValueError):
+            self.logger.warning('rtsold pid file does not exist')
+            return False
+
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(rtsold_dump_path)
+
+        try:
+            os.kill(rtsold_pid, signal.SIGUSR1)
+        except ProcessLookupError:
+            self.logger.warning('rtsold is not running')
+            return False
+
+        for i in range(10):
+            await asyncio.sleep(0.2)
+            try:
+                with open(rtsold_dump_path) as f:
+                    dump = f.readlines()
+                    break
+            except FileNotFoundError:
+                continue
+        else:
+            self.logger.warning('rtsold has not dumped status')
+            return False
+
+        current_interface = None
+        for line in dump:
+            line = line.strip()
+
+            m = RE_RTSOLD_INTERFACE.match(line)
+            if m:
+                current_interface = m.group(1)
+
+            if current_interface == interface:
+                m = RE_RTSOLD_NUMBER_OF_VALID_RAS.match(line)
+                if m:
+                    return int(m.group(1)) > 0
+
+        self.logger.warning('Have not found %s status in rtsold dump', interface)
         return False
 
 
