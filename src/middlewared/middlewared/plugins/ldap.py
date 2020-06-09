@@ -933,6 +933,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('cache.pop', 'LDAP_cache')
         await self.nslcd_cmd('onestop')
+        await self.middleware.call('smb.synchronize_passdb')
         await self.set_state(DSStatus['DISABLED'])
 
     @private

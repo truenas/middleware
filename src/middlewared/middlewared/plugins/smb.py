@@ -347,7 +347,7 @@ class SMBService(SystemServiceService):
         names as users should also be avoided.
         """
         passdb_backend = await self.middleware.run_in_thread(self.getparm, 'passdb backend', 'global')
-        if passdb_backend == 'ldapsam':
+        if passdb_backend != 'tdbsam':
             return
 
         disallowed_list = ['USERS', 'ADMINISTRATORS', 'GUESTS']
@@ -405,7 +405,8 @@ class SMBService(SystemServiceService):
         if not os.path.exists(f'{private_dir}/passdb.tdb'):
             return pdbentries
 
-        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+        if passdb_backend != 'tdbsam':
             return pdbentries
 
         if not verbose:
@@ -450,7 +451,8 @@ class SMBService(SystemServiceService):
         Accounts that are 'locked' in the UI will have their corresponding passdb entry
         disabled.
         """
-        if self.getparm('passdb backend', 'global') == 'ldapsam':
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+        if passdb_backend != 'tdbsam':
             return
 
         bsduser = await self.middleware.call('user.query', [
@@ -517,7 +519,8 @@ class SMBService(SystemServiceService):
         Synchronize the "disabled" state of users
         Delete any entries in the passdb_tdb file that don't exist in the config file.
         """
-        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') == 'ldapsam':
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+        if passdb_backend != 'tdbsam':
             return
 
         conf_users = await self.middleware.call('user.query', [
