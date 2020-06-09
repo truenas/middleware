@@ -79,13 +79,13 @@ class EnclosureDetectionService(Service):
                     # There is no exact match, but allocation of
                     # the SAS addresses seem sequential.
                     phylist = subprocess.run(
-                        ['/sbin/camcontrol', 'smpphylist', enc, '-q'],
+                        ['/sbin/camcontrol', 'smpphylist', enclosure, '-q'],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                     )
 
                     if phylist.stdout:
-                        phylist = phylist.stdout.decode(errors='ignore', encoding='uft8').strip()
+                        phylist = phylist.stdout.decode(errors='ignore', encoding='utf8').strip()
 
                         # Identify X-series A slot in chassis
                         reg = re.search(HA_HARDWARE.XSERIES_NODEA.value, enc)
