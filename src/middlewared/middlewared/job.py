@@ -358,8 +358,7 @@ class Job(object):
         except Exception:
             self.set_state('FAILED')
             self.set_exception(sys.exc_info())
-            if self.options['transient']:
-                logger.error("Transient job failed", exc_info=True)
+            logger.error("Job %r failed", self.method, exc_info=True)
         finally:
             await self.__close_logs()
             await self.__close_pipes()

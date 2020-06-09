@@ -3,10 +3,11 @@ import os
 import socket
 
 from middlewared.schema import accepts, Str
-from middlewared.service import Service
+from middlewared.service import private, Service
 
 from bsd import devinfo, geom
 
+DEVD_CONNECTED = False
 DEVD_SOCKETFILE = '/var/run/devd.pipe'
 
 
@@ -58,11 +59,19 @@ class DeviceService(Service):
             disks[g.name] = disk
         return disks
 
+    @private
+    async def devd_connected(self):
+        return DEVD_CONNECTED
+
 
 async def devd_loop(middleware):
+    global DEVD_CONNECTED
+
     while True:
+        DEVD_CONNECTED = False
         try:
             if not os.path.exists(DEVD_SOCKETFILE):
+                middleware.logger.info('devd is not running yet, waiting...')
                 await asyncio.sleep(1)
                 continue
             await devd_listen(middleware)
@@ -90,9 +99,13 @@ def parse_devd_message(msg):
 
 
 async def devd_listen(middleware):
+    global DEVD_CONNECTED
+
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     s.connect(DEVD_SOCKETFILE)
     reader, writer = await asyncio.open_unix_connection(sock=s)
+    middleware.logger.info('devd connection established')
+    DEVD_CONNECTED = True
 
     while True:
         line = await reader.readline()
