@@ -488,7 +488,7 @@ class iSCSITargetExtentService(CRUDService):
         Str('name', required=True),
         Str('type', enum=['DISK', 'FILE'], default='DISK'),
         Str('disk', default=None, null=True),
-        Str('serial', default=None, null=True, max_length=16),
+        Str('serial', default=None, null=True),
         Str('path', default=None, null=True),
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
@@ -710,6 +710,8 @@ class iSCSITargetExtentService(CRUDService):
 
         if '"' in serial:
             verrors.add(f'{schema_name}.serial', 'Double quotes are not allowed')
+        if osc.IS_FREEBSD and len(serial) > 15:
+            verrors.add(f'{schema_name}.serial', 'Maximum length of 15 characters is allowed for extent serial')
 
         if name != old or old is None:
             name_result = await self.middleware.call(
