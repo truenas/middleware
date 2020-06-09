@@ -289,6 +289,10 @@ class KerberosService(ConfigService):
             return (await self.middleware.call('cache.get', 'KRB_TGT_INFO'))
         ad = await self.middleware.call('activedirectory.config')
         ldap = await self.middleware.call('ldap.config')
+        if ldap['enable'] and ldap['kerberos_realm']:
+            ldap_realm = await self.middleware.call('kerberos.realm.query',
+                                                    [('id', '=', ldap['kerberos_realm'])],
+                                                    {'get': True})
         ad_TGT = []
         ldap_TGT = []
         if not ad['enable'] and not ldap['enable']:
@@ -342,7 +346,7 @@ class KerberosService(ConfigService):
                     })
 
                 elif ldap['enable'] and ldap['kerberos_realm']:
-                    if ldap['kerberos_realm']['krb_realm'] in client:
+                    if ldap_realm['realm'] in client:
                         ldap_TGT.append({
                             'issued': issued,
                             'expires': expires,
