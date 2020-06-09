@@ -726,19 +726,6 @@ class Replication(Model):
             "Limit the replication speed. Unit in "
             "kilobits/second. 0 = unlimited."),
     )
-    repl_dedup = models.BooleanField(
-        default=False,
-        verbose_name=_('Send deduplicated stream'),
-        help_text=_(
-            'Blocks	which would have been '
-            'sent multiple times in	the send stream	will only be sent '
-            'once. The receiving system must also support this feature to '
-            'receive a deduplicated	stream. This flag can be used regard-'
-            'less of the dataset\'s dedup property, but performance will be '
-            'much better if	the filesystem uses a dedup-capable checksum '
-            '(eg. sha256).'
-        ),
-    )
     repl_large_block = models.BooleanField(
         default=True,
         verbose_name=_('Allow blocks larger than 128KB'),

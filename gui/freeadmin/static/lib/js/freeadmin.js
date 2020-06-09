@@ -849,7 +849,7 @@ require([
         };
         var newFeatures = (
             ["exclude", "properties", "periodic_snapshot_tasks", "naming_schema", "auto", "only_matching_schedule",
-             "readonly", "allow_from_scratch", "hold_pending_snapshots", "dedup", "large_block", /* "embed", */
+             "readonly", "allow_from_scratch", "hold_pending_snapshots", "large_block", /* "embed", */
              "compressed", "retries", "logging_level"].
             concat("enable_schedule").concat(schedule).
             concat("enable_restrict_schedule").concat(restrictSchedule).

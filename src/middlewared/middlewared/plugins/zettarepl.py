@@ -573,7 +573,6 @@ class ZettareplService(Service):
                 "readonly": replication_task["readonly"].lower(),
                 "hold-pending-snapshots": replication_task["hold_pending_snapshots"],
                 "retention-policy": replication_task["retention_policy"].lower(),
-                "dedup": replication_task["dedup"],
                 "large-block": replication_task["large_block"],
                 "embed": replication_task["embed"],
                 "compressed": replication_task["compressed"],
