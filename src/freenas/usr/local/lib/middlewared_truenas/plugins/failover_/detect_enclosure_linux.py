@@ -20,9 +20,13 @@ class EnclosureDetectionService(Service):
 
         # Gather the PCI address for all enclosurers
         # detected by the kernel
-        enclosures = [
-            '/dev/bsg/' + enc for enc in os.listdir(ENCLOSURES_DIR)
-        ]
+        try:
+            enclosures = [
+                '/dev/bsg/' + enc for enc in os.listdir(ENCLOSURES_DIR)
+            ]
+        except FileNotFoundError:
+            # No enclosures detected
+            return self.HARDWARE, self.NODE
 
         for enc in enclosures:
             proc = subprocess.run(
