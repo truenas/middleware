@@ -11,6 +11,7 @@ from middlewared.utils import filter_list, run
 from middlewared.utils.path import is_child
 from middlewared.validators import IpAddress, Range
 
+import asyncio
 import bidict
 import errno
 import hashlib
@@ -1538,8 +1539,8 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
 
         await self._service_change('iscsitarget', 'reload')
 
-        for lun_id in lun_ids:
-            await run(['ctladm', 'remove', '-b', 'block', '-l', str(lun_id)], check=False)
+        if lun_ids:
+            await asyncio.sleep(10)  # iscsitarget does not remove luns immediately
 
     async def toggle(self, attachments, enabled):
         lun_ids = []
