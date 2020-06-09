@@ -135,10 +135,10 @@ class FailoverAlertSource(ThreadedAlertSource):
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                 raise UnavailableException()
 
-            local = self.middleware.call_sync('failover.get_carp_states')
-            remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
+            local = self.middleware.call_sync('failover.vip.get_states')
+            remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
 
-            errors = self.middleware.call_sync('failover.check_carp_states', local, remote)
+            errors = self.middleware.call_sync('failover.vip.check_states', local, remote)
             for error in errors:
                 alerts.append(Alert(
                     CARPStatesDoNotAgreeAlertClass,
