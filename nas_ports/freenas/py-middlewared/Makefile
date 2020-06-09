@@ -47,6 +47,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}zettarepl>0:sysutils/py-zettarepl@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}onedrivesdk>0:devel/py-onedrivesdk@${PY_FLAVOR} \
 		${PYTHON_PKGNAMEPREFIX}packaging>0:devel/py-packaging@${PY_FLAVOR} \
+		tc-stats>0:freenas/tc-stats \
 		rclone>0:net/rclone \
 		ifstat>0:net/ifstat \
 		samba410>=4.10.0:net/samba410 \
