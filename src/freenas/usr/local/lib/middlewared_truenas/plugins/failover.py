@@ -240,56 +240,6 @@ class FailoverService(ConfigService):
             'failover.internal_interface.detect'
         )
 
-    @private
-    async def get_carp_states(self, interfaces=None):
-        if interfaces is None:
-            interfaces = await self.middleware.call('interface.query')
-        masters, backups, inits = [], [], []
-        internal_interfaces = await self.middleware.call('failover.internal_interfaces')
-        critical_interfaces = [iface['int_interface']
-                               for iface in await self.middleware.call('datastore.query', 'network.interfaces',
-                                                                       [['int_critical', '=', True]])]
-        for iface in interfaces:
-            if iface['name'] in internal_interfaces:
-                continue
-            if iface['name'] not in critical_interfaces:
-                continue
-            if not iface['state']['carp_config']:
-                continue
-            if iface['state']['carp_config'][0]['state'] == 'MASTER':
-                masters.append(iface['name'])
-            elif iface['state']['carp_config'][0]['state'] == 'BACKUP':
-                backups.append(iface['name'])
-            elif iface['state']['carp_config'][0]['state'] == 'INIT':
-                inits.append(iface['name'])
-            else:
-                self.logger.warning('Unknown CARP state %r for interface %s', iface['state']['carp_config'][0]['state'],
-                                    iface['name'])
-        return masters, backups, inits
-
-    @private
-    async def check_carp_states(self, local, remote):
-        errors = []
-        interfaces = set(local[0] + local[1] + remote[0] + remote[1])
-        if not interfaces:
-            errors.append("There are no failover interfaces")
-        for name in interfaces:
-            if name not in local[0] + local[1]:
-                errors.append(f"Interface {name} is not configured for failover on local system")
-            if name not in remote[0] + remote[1]:
-                errors.append(f"Interface {name} is not configured for failover on remote system")
-            if name in local[0] and name in remote[0]:
-                errors.append(f"Interface {name} is MASTER on both nodes")
-            if name in local[1] and name in remote[1]:
-                errors.append(f"Interface {name} is BACKUP on both nodes")
-        for name in set(local[2] + remote[2]):
-            if name not in local[2]:
-                errors.append(f"Interface {name} is in a non-functioning state on local system")
-            if name not in remote[2]:
-                errors.append(f"Interface {name} is in a non-functioning state on remote system")
-
-        return errors
-
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
@@ -353,7 +303,7 @@ class FailoverService(ConfigService):
         if not await self.middleware.call('failover.licensed'):
             return 'SINGLE'
 
-        masters = (await self.get_carp_states(interfaces))[0]
+        masters = (await self.middleware.call('failover.vip.get_states', interfaces))[0]
         if masters:
             if any(filter(lambda x: x.get('status') != 'OFFLINE', pools)):
                 return 'MASTER'
@@ -533,9 +483,9 @@ class FailoverService(ConfigService):
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.append('NO_LICENSE')
 
-            local = self.middleware.call_sync('failover.get_carp_states')
-            remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
-            if self.middleware.call_sync('failover.check_carp_states', local, remote):
+            local = self.middleware.call_sync('failover.vip.get_states')
+            remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
+            if self.middleware.call_sync('failover.vip.check_states', local, remote):
                 reasons.append('DISAGREE_CARP')
 
             mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
