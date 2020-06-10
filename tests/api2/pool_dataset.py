@@ -8,12 +8,13 @@ import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password
+from auto_config import ip, pool_name, user, password, scale
 
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')
 zvol = f'{pool_name}/zvol1'
 zvol_url = zvol.replace('/', '%2F')
+group = 'nogroup' if scale else 'nobody'
 
 default_acl = [
     {
@@ -68,7 +69,7 @@ def test_05_set_permissions_for_dataset():
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': '777',
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody'
         }
     )
@@ -97,7 +98,7 @@ def test_08_set_acl_for_dataset():
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody'
         }
     )
@@ -139,7 +140,7 @@ def test_13_strip_acl_from_dataset():
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
             'mode': '777',
-            'group': 'nobody',
+            'group': group,
             'user': 'nobody',
             'options': {'stripacl': True}
         }
