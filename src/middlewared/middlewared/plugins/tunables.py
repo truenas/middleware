@@ -5,6 +5,7 @@ from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc
 from middlewared.validators import Match
 
 
@@ -42,7 +43,7 @@ class TunableService(CRUDService):
         'tunable_create',
         Str('var', validators=[Match(r'^[\w\.]+$')], required=True),
         Str('value', required=True),
-        Str('type', enum=['LOADER', 'RC', 'SYSCTL'], required=True),
+        Str('type', enum=['SYSCTL'] + ([] if osc.IS_LINUX else ['LOADER', 'RC']), required=True),
         Str('comment'),
         Bool('enabled', default=True),
         register=True
@@ -53,7 +54,10 @@ class TunableService(CRUDService):
 
         `var` represents name of the sysctl/loader/rc variable.
 
-        `type` should be one of the following:
+        `type` for SCALE should be one of the following:
+        1) SYSCTL     -     Configure `var` for sysctl(8)
+
+        `type` for CORE/ENTERPRISE should be one of the following:
         1) LOADER     -     Configure `var` for loader(8)
         2) RC         -     Configure `var` for rc(8)
         3) SYSCTL     -     Configure `var` for sysctl(8)
