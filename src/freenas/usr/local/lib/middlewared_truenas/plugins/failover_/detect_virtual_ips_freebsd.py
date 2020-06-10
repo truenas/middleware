@@ -1,4 +1,4 @@
-from middlewared import private, Service
+from middlewared.service import private, Service
 
 
 class DetectVirtualIpStates(Service):
