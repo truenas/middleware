@@ -189,8 +189,8 @@ class InterfaceService(Service):
         if osc.IS_FREEBSD:
             if data['int_ipv6auto']:
                 iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
-                subprocess.call(['/etc/rc.d/rtsold', 'onestart'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                close_fds=True)
+                subprocess.call(['/etc/rc.d/rtsold', 'onerestart'], stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL, close_fds=True)
             else:
                 iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
