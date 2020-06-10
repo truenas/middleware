@@ -1726,6 +1726,8 @@ class PoolService(CRUDService):
         except Exception:
             self.logger.warn('Failed to setup system dataset', exc_info=True)
 
+        self.middleware.call_sync('etc.generate', 'docker')
+
         try:
             self.middleware.call_sync('etc.generate', 'collectd')
         except Exception:
