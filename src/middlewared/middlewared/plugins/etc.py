@@ -184,6 +184,9 @@ class EtcService(Service):
         'system_dataset': [
             {'type': 'py', 'path': 'system_setup'}
         ],
+        'docker': [
+            {'type': 'py', 'path': 'docker', 'platform': 'Linux'},
+        ],
         'inetd': [
             {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
         ],
@@ -266,7 +269,7 @@ class EtcService(Service):
 
     SKIP_LIST = [
         'system_dataset', 'mdns', 'syslogd', 'nginx', 'ssh',
-    ] + (['ttys'] if osc.IS_LINUX else [])
+    ] + (['ttys', 'docker'] if osc.IS_LINUX else [])
 
     class Config:
         private = True

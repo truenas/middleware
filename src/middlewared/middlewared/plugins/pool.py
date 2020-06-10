@@ -721,17 +721,8 @@ class PoolService(CRUDService):
 
         # There is really no point in waiting all these services to reload so do them
         # in background.
-        async def restart_services():
-            await self.middleware.call('service.reload', 'disk')
-            if (
-                await self.middleware.call('systemdataset.config')
-            )['pool'] == await self.middleware.call('boot.pool_name'):
-                await self.middleware.call('service.restart', 'system_datasets')
-            # regenerate crontab because of scrub
-            await self.middleware.call('service.restart', 'cron')
-
         asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
-        asyncio.ensure_future(restart_services())
+        asyncio.ensure_future(self.restart_services())
 
         pool = await self.get_instance(pool_id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
@@ -739,6 +730,16 @@ class PoolService(CRUDService):
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
         return pool
+
+    @private
+    async def restart_services(self):
+        await self.middleware.call('service.reload', 'disk')
+        if (
+            await self.middleware.call('systemdataset.config')
+        )['pool'] == await self.middleware.call('boot.pool_name'):
+            await self.middleware.call('service.restart', 'system_datasets')
+        # regenerate crontab because of scrub
+        await self.middleware.call('service.restart', 'cron')
 
     @accepts(Int('id'), Patch(
         'pool_create', 'pool_update',
@@ -1375,6 +1376,7 @@ class PoolService(CRUDService):
             await self.middleware.call('keyvalue.delete', key)
 
         await self.middleware.call('service.reload', 'disk')
+        asyncio.ensure_future(self.restart_services())
         await self.middleware.call_hook(
             'pool.post_import', {
                 'passphrase': data.get('passphrase'),
@@ -1725,6 +1727,8 @@ class PoolService(CRUDService):
             self.middleware.call_sync('etc.generate', 'system_dataset')
         except Exception:
             self.logger.warn('Failed to setup system dataset', exc_info=True)
+
+        self.middleware.call_sync('etc.generate', 'docker')
 
         try:
             self.middleware.call_sync('etc.generate', 'collectd')
