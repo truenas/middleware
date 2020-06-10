@@ -21,8 +21,8 @@ class InternalInterfaceDetectionService(Service):
                 shell=True,
                 encoding='utf8',
             )
-            if proc.stdout:
-                return [proc.stdout.split('@')[0]]
+            if proc:
+                return [proc.split('@')[0]]
 
         if hardware in ('ECHOWARP', 'PUMA'):
             return ['ntb0']
