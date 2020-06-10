@@ -2051,7 +2051,7 @@ class StaticRouteService(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.start', 'routing')
+        await self.middleware.call('service.restart', 'routing')
 
         return await self._get_instance(id)
 
@@ -2078,7 +2078,7 @@ class StaticRouteService(CRUDService):
             'datastore.update', self._config.datastore, id, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.start', 'routing')
+        await self.middleware.call('service.restart', 'routing')
 
         return await self._get_instance(id)
 
