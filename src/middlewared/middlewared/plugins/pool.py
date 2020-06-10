@@ -1081,7 +1081,7 @@ class PoolService(CRUDService):
             if from_disk:
                 swap_disks.append(from_disk)
 
-        await self.middleware.call('disk.swaps_remove_disks', swap_disks)
+        await job.wrap(await self.middleware.call('disk.swaps_remove_disks', swap_disks))
 
         vdev = []
         passphrase_path = None
@@ -1190,7 +1190,10 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            await self.middleware.call('disk.swaps_remove_disks', [disk])
+            job = await self.middleware.call('disk.swaps_remove_disks', [disk])
+            await job.wait()
+            if job.error:
+                raise CallError(f'Failed to remove disk from swap: {job.error}')
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
@@ -1238,7 +1241,10 @@ class PoolService(CRUDService):
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
-        await self.middleware.call('disk.swaps_remove_disks', [disk])
+        job = await self.middleware.call('disk.swaps_remove_disks', [disk])
+        await job.wait()
+        if job.error:
+            raise CallError(f'Failed to remove disk from swap: {job.error}')
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
@@ -1356,7 +1362,7 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            await self.middleware.call('disk.swaps_remove_disks', [disk])
+            # unlabel is going to remove the disk from swap
             await self.middleware.call('disk.unlabel', disk)
 
     @item_method
@@ -2212,7 +2218,7 @@ class PoolService(CRUDService):
 
         job.set_progress(30, 'Removing pool disks from swap')
         disks = [i async for i in await self.middleware.call('pool.get_disks', oid)]
-        await self.middleware.call('disk.swaps_remove_disks', disks)
+        await job.wrap(await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False}))
 
         sysds = await self.middleware.call('systemdataset.config')
         if sysds['pool'] == pool['name']:
@@ -2234,7 +2240,7 @@ class PoolService(CRUDService):
             job.set_progress(80, 'Cleaning disks')
 
             async def unlabel(disk):
-                return await self.middleware.call('disk.unlabel', disk, False)
+                return await self.middleware.call('disk.unlabel', disk, False, {'configure_swap': False})
             await asyncio_map(unlabel, disks, limit=16)
 
             await self.middleware.call('disk.sync_all')
@@ -2268,6 +2274,9 @@ class PoolService(CRUDService):
 
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
+
+        # Run configure swap again to ensure swap is setup as desired and we have dumpdev configured as well
+        await self.middleware.call('disk.swaps_configure')
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
 
