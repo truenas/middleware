@@ -488,7 +488,7 @@ class iSCSITargetExtentService(CRUDService):
         Str('name', required=True),
         Str('type', enum=['DISK', 'FILE'], default='DISK'),
         Str('disk', default=None, null=True),
-        Str('serial', default=None, null=True, max_length=16),
+        Str('serial', default=None, null=True),
         Str('path', default=None, null=True),
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
@@ -710,6 +710,8 @@ class iSCSITargetExtentService(CRUDService):
 
         if '"' in serial:
             verrors.add(f'{schema_name}.serial', 'Double quotes are not allowed')
+        if osc.IS_FREEBSD and len(serial) > 15:
+            verrors.add(f'{schema_name}.serial', 'Maximum length of 15 characters is allowed for extent serial')
 
         if name != old or old is None:
             name_result = await self.middleware.call(
@@ -808,14 +810,17 @@ class iSCSITargetExtentService(CRUDService):
                                                    ['name', 'rnin', 'vnet'],
                                                    ['name', 'rnin', 'bridge']])
                        )[0]
-                mac = nic['state']['link_address'].replace(':', '')
+                mac = nic['state']['link_address'].replace(':', '').strip()
 
-                ltg = await self.query()
+                ltg = await self.query([], {'order_by': ['id']})
                 if len(ltg) > 0:
-                    lid = ltg[0]['id']
+                    lid = ltg[-1]['id']
                 else:
                     lid = 0
-                return f'{mac.strip()}{lid:02}'
+                if osc.IS_LINUX:
+                    return f'{mac}{lid:03}'
+                else:
+                    return f'{mac[:15-max(3, len(str(lid)))]}{lid:03}'[:15]
             except Exception:
                 self.logger.error('Failed to generate serial, using a default', exc_info=True)
                 return '10000001'
