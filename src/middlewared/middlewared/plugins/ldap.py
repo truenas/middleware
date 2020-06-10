@@ -143,7 +143,7 @@ class LDAPQuery(object):
         if issubclass(type(ex), pyldap.LDAPError) and ex.args:
             raise CallError(f"{ex.args[0].get('desc')}: "
                             f"{ex.args[0].get('info', '')}",
-                            errno.EFAULT, type(ex))
+                            errno.EFAULT, type(ex).__name__)
         else:
             raise CallError(str(ex))
 
@@ -534,23 +534,23 @@ class LDAPService(ConfigService):
 
     @private
     async def convert_ldap_err_to_verr(self, data, e, verrors):
-        if e.extra == pyldap.INVALID_CREDENTIALS:
+        if e.extra == "INVALID_CREDENTIALS":
             verrors.add('ldap_update.binddn',
                         'Remote LDAP server returned response that '
                         'credentials are invalid.')
 
-        elif e.extra == pyldap.STRONG_AUTH_NOT_SUPPORTED and data['certificate']:
+        elif e.extra == "STRONG_AUTH_NOT_SUPPORTED" and data['certificate']:
             verrors.add('ldap_update.certificate',
                         'Certificate-based authentication is not '
                         f'supported by remote LDAP server: {e.errmsg}.')
 
-        elif e.extra == pyldap.NO_SUCH_OBJECT:
+        elif e.extra == "NO_SUCH_OBJECT":
             verrors.add('ldap_update.basedn',
                         'Remote LDAP server returned "NO_SUCH_OBJECT". This may '
                         'indicate that the base DN is syntactically correct, but does '
                         'not exist on the server.')
 
-        elif e.extra == pyldap.INVALID_DN_SYNTAX:
+        elif e.extra == "INVALID_DN_SYNTAX":
             verrors.add('ldap_update.basedn',
                         'Remote LDAP server returned that the base DN is '
                         'syntactically invalid.')

@@ -919,6 +919,24 @@ class ActiveDirectoryService(ConfigService):
                               hostname, to_register, netdns.stderr.decode())
 
     @private
+    async def _parse_join_err(self, msg):
+        if len(msg) < 2:
+            raise CallError(msg)
+
+        if "Invalid configuration" in msg[1]:
+            """
+            ./source3/libnet/libnet_join.c will return configuration erros for the
+            following situations:
+            - incorrect workgroup
+            - incorrect realm
+            - incorrect security settings
+            Unless users set auxiliary parameters, only the first should be a possibility.
+            """
+            raise CallError(f'{msg[1].rsplit(")",1)[0]}).', errno.EINVAL)
+        else:
+            raise CallError(msg[1])
+
+    @private
     async def _net_ads_join(self):
         ad = await self.config()
         if ad['createcomputer']:
@@ -933,7 +951,7 @@ class ActiveDirectoryService(ConfigService):
 
         if netads.returncode != 0:
             await self.set_state(DSStatus['FAULTED'])
-            raise CallError(f'Failed to join [{ad["domainname"]}]: [{netads.stdout.decode().strip()}]')
+            await self._parse_join_err(netads.stdout.decode().split(':', 1))
 
     @private
     async def _net_ads_testjoin(self, workgroup):
@@ -954,8 +972,10 @@ class ActiveDirectoryService(ConfigService):
             check=False
         )
         if netads.returncode != 0:
-            errout = netads.stderr.decode().strip()
-            self.logger.debug(f'net ads testjoin failed with error: [{errout}]')
+            errout = netads.stderr.decode()
+            with open(f"/var/log/samba4/domain_testjoin_{int(datetime.datetime.now().timestamp())}.log", "w") as f:
+                f.write(errout)
+
             if '0xfffffff6' in errout or 'The name provided is not a properly formed account name' in errout:
                 return neterr.NOTJOINED
             else:
