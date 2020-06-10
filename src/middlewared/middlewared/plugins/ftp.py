@@ -219,6 +219,14 @@ async def pool_post_import(middleware, pool):
     """
     We don't set up anonymous FTP if pool is not imported yet.
     """
+    if pool is None:
+        try:
+            await middleware.call("etc.generate", "ftp")
+        except Exception:
+            middleware.logger.debug("Failed to generate ftp configuration file.", exc_info=True)
+        finally:
+            return
+
     await middleware.call("service.reload", "ftp")
 
 
