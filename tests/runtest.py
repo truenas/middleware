@@ -154,7 +154,9 @@ def get_tests():
     else:
         skip_tests += ['host_key']
     if scale is True:
-        skip_tests += ['jail', 'plugin']
+        skip_tests += ['jail', 'plugin', 'pool_aclmode']
+    else:
+        skip_tests += ['pool_acltype']
     apidir = 'api2/'
     if ha is True:
         sv = ['ssh', 'pool', 'user']
