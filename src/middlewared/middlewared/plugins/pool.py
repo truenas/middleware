@@ -642,6 +642,9 @@ class PoolService(CRUDService):
         if osc.IS_FREEBSD:
             fsoptions['aclmode'] = 'passthrough'
 
+        if osc.IS_LINUX:
+            fsoptions['acltype'] = 'posixacl'
+
         dedup = data.get('deduplication')
         if dedup:
             fsoptions['dedup'] = dedup.lower()
