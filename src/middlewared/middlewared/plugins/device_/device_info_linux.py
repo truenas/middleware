@@ -124,18 +124,7 @@ class DeviceService(Service, DeviceInfoBase):
             'subsystem': os.path.realpath(os.path.join(disk_sys_path, 'device/subsystem')).split('/')[-1],
         })
 
-        logical_sector_size_path = os.path.join(disk_sys_path, 'queue/logical_block_size')
-        if os.path.join(logical_sector_size_path):
-            with open(logical_sector_size_path, 'r') as f:
-                size = f.read().strip()
-            if not size.isdigit():
-                self.middleware.logger.error('Unable to retrieve %r disk logical block size: malformed value %r found')
-            else:
-                disk['sectorsize'] = size
-        else:
-            self.middleware.logger.error(
-                'Unable to retrieve %r disk logical block size at %r', block_device.sys_name, logical_sector_size_path
-            )
+        disk['sectorsize'] = self.logical_sector_size(block_device.sys_name)
 
         type_path = os.path.join(disk_sys_path, 'queue/rotational')
         if os.path.exists(type_path):
@@ -199,6 +188,20 @@ class DeviceService(Service, DeviceInfoBase):
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
         return disk
+
+    def logical_sector_size(self, name):
+        path = os.path.join('/sys/block', name, 'queue/logical_block_size')
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                size = f.read().strip()
+            if not size.isdigit():
+                self.middleware.logger.error(
+                    'Unable to retrieve %r disk logical block size: malformed value %r found', name, size
+                )
+            else:
+                return int(size)
+        else:
+            self.middleware.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
 
     def get_storage_devices_topology(self):
         disks = self.get_disks()

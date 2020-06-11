@@ -1,6 +1,7 @@
 import blkid
 import glob
 import os
+import pyudev
 
 from middlewared.service import CallError, Service
 
@@ -16,33 +17,39 @@ class DiskService(Service, DiskInfoBase):
             return None
 
     def list_partitions(self, disk):
+        context = pyudev.Context()
         parts = []
         try:
-            block_device = blkid.BlockDevice(os.path.join('/dev', disk))
-        except blkid.BlkidException:
+            block_device = pyudev.Devices.from_name(context, 'block', disk)
+        except pyudev.DeviceNotFoundByNameError:
             return parts
 
-        if not block_device.partitions_exist:
+        if not block_device.children:
             return parts
 
-        for p in block_device.__getstate__()['partitions_data']['partitions']:
+        logical_sector_size = self.middleware.call_sync('device.logical_sector_size', disk)
+
+        for p in block_device.children:
             if disk.startswith('nvme'):
                 # This is a hack for nvme disks, however let's please come up with a better way
                 # to link disks with their partitions
-                part_name = f'{disk}p{p["partition_number"]}'
+                part_name = f'{disk}p{p["ID_PART_ENTRY_NUMBER"]}'
             else:
-                part_name = f'{disk}{p["partition_number"]}'
+                part_name = f'{disk}{p["ID_PART_ENTRY_NUMBER"]}'
             part = {
                 'name': part_name,
-                'size': p['partition_size'],
-                'partition_type': p['type'],
-                'partition_number': p['partition_number'],
-                'partition_uuid': p['part_uuid'],
+                'partition_type': p['ID_PART_ENTRY_TYPE'],
+                'partition_number': p['ID_PART_ENTRY_NUMBER'],
+                'partition_uuid': p['ID_PART_ENTRY_UUID'],
                 'disk': disk,
+                'size': None,
                 'id': part_name,
                 'path': os.path.join('/dev', part_name),
                 'encrypted_provider': None,
             }
+            if logical_sector_size:
+                disk['size'] = logical_sector_size * p['ID_PART_ENTRY_SIZE']
+
             encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
             if encrypted_provider:
                 part['encrypted_provider'] = os.path.join('/dev', encrypted_provider[0].split('/')[3])
