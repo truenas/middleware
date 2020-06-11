@@ -10,17 +10,28 @@ from .disk_info_base import DiskInfoBase
 
 class DiskService(Service, DiskInfoBase):
 
-    async def get_dev_size(self, dev):
+    def get_dev_size(self, dev):
         try:
-            return blkid.BlockDevice(os.path.join('/dev', dev)).size
-        except blkid.BlkidException:
+            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', dev)
+        except pyudev.DeviceNotFoundByNameError:
             return None
 
+        logical_sector_size = self.middleware.call_sync('device.logical_sector_size', dev)
+        if not logical_sector_size:
+            return
+
+        if block_device['DEVTYPE'] == 'disk':
+            path = os.path.join('/sys/block', dev, 'device/block', dev, 'size')
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    return int(f.read().strip()) * logical_sector_size
+        else:
+            return logical_sector_size * block_device['ID_PART_ENTRY_SIZE']
+
     def list_partitions(self, disk):
-        context = pyudev.Context()
         parts = []
         try:
-            block_device = pyudev.Devices.from_name(context, 'block', disk)
+            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
         except pyudev.DeviceNotFoundByNameError:
             return parts
 
