@@ -141,7 +141,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'systemd', 'platform': 'Linux'},
         ],
         'sysctl': [
-            {'type': 'py', 'path': 'sysctl_config', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'sysctl_config'},
         ],
         's3': [
             {'type': 'py', 'path': 'local/minio/certificates'},

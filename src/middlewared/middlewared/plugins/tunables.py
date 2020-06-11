@@ -31,6 +31,10 @@ class TunableService(CRUDService):
         self.__default_sysctl = {}
 
     @private
+    async def default_sysctl_config(self):
+        return self.__default_sysctl
+
+    @private
     async def get_default_value(self, oid):
         return self.__default_sysctl[oid]
 
