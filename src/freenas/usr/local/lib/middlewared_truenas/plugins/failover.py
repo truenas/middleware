@@ -328,20 +328,23 @@ class FailoverService(ConfigService):
         return addresses
 
     @accepts()
-    def force_master(self):
+    async def force_master(self):
         """
         Force this controller to become MASTER.
         """
+
         # Skip if we are already MASTER
-        if self.middleware.call_sync('failover.status') == 'MASTER':
+        if await self.middleware.call('failover.status') == 'MASTER':
             return False
-        cp = subprocess.run(['fenced', '--force'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-        if cp.returncode not in (0, 6):
+
+        if not await self.middleware.call('failover.fenced.force'):
             return False
-        for i in self.middleware.call_sync('interface.query', [('failover_critical', '!=', None)]):
+
+        for i in await self.middleware.call('interface.query', [('failover_critical', '!=', None)]):
             if i['failover_vhid']:
-                self.middleware.call_sync('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
+                await self.middleware.call('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
                 break
+
         return False
 
     @accepts(Dict(
