@@ -31,8 +31,15 @@ async def render(service, middleware):
             services_native.append(service)
     services = services_native + services
 
+    reload_daemon = False
     for service, is_enabled in zip(services, are_enabled):
         enable = services_enabled[service]
         is_enabled = {"enabled": True, "disabled": False}[is_enabled]
         if enable != is_enabled:
             await run(["systemctl", "enable" if enable else "disable", service])
+            reload_daemon = True
+
+    if reload_daemon:
+        # Reload systemd daemon as on first boot, services by default are enabled and we do disable them above
+        # but the change is not reflected in systemd until we reload the daemon
+        await run(["systemctl", "daemon-reload"])
