@@ -9,22 +9,24 @@ async def sysctl_configuration(middleware):
             if not value_default:
                 cp = await run(['sysctl', tunable['var']], check=False, encoding='utf8')
                 if cp.returncode:
-                    middleware.logger.error('Failed to get default value of %r : %s', tunable['var'], cp.stderr)
+                    middleware.logger.error(
+                        'Failed to get default value of %r : %s', tunable['var'], cp.stderr.strip()
+                    )
                 else:
                     value_default = default_sysctl_config[tunable['var']] = cp.stdout
                     await middleware.call('tunable.set_default_value', tunable['var'], value_default)
             cp = await run(['sysctl', f'{tunable["var"]}="{tunable["value"]}"'], check=False, encoding='utf8')
             if cp.returncode:
                 middleware.logger.error(
-                    'Failed to set sysctl %r -> %r : %s', tunable['var'], tunable['value'], cp.stderr
+                    'Failed to set sysctl %r -> %r : %s', tunable['var'], tunable['value'], cp.stderr.strip()
                 )
         elif value_default:
             cp = await run(['sysctl', f'{tunable["var"]}="{value_default}"'], check=False, encoding='utf8')
             if cp.returncode:
                 middleware.logger.error(
-                    'Failed to set sysctl %r -> %r : %s', tunable['var'], tunable['value'], cp.stderr
+                    'Failed to set sysctl %r -> %r : %s', tunable['var'], tunable['value'], cp.stderr.strip()
                 )
 
 
-def render(service, middleware):
-    sysctl_configuration(middleware)
+async def render(service, middleware):
+    await sysctl_configuration(middleware)

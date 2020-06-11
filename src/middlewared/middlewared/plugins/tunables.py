@@ -1,5 +1,4 @@
 import re
-import subprocess
 
 from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
@@ -18,6 +17,9 @@ class TunableModel(sa.Model):
     tun_comment = sa.Column(sa.String(100))
     tun_enabled = sa.Column(sa.Boolean(), default=True)
     tun_var = sa.Column(sa.String(128))
+
+
+TUNABLE_TYPES = ['SYSCTL'] + ([] if osc.IS_LINUX else ['LOADER', 'RC'])
 
 
 class TunableService(CRUDService):
@@ -43,11 +45,18 @@ class TunableService(CRUDService):
         if oid not in self.__default_sysctl:
             self.__default_sysctl[oid] = value
 
+    @accepts()
+    async def tunable_type_choices(self):
+        """
+        Retrieve tunable type choices supported in the system
+        """
+        return {k: k for k in TUNABLE_TYPES}
+
     @accepts(Dict(
         'tunable_create',
         Str('var', validators=[Match(r'^[\w\.]+$')], required=True),
         Str('value', required=True),
-        Str('type', enum=['SYSCTL'] + ([] if osc.IS_LINUX else ['LOADER', 'RC']), required=True),
+        Str('type', enum=TUNABLE_TYPES, required=True),
         Str('comment'),
         Bool('enabled', default=True),
         register=True
