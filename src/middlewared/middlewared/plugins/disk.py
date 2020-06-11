@@ -1496,7 +1496,7 @@ class DiskService(CRUDService):
                         cp = await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
                         if cp.returncode:
                             self.middleware.logger.error(
-                                'Failed to savecore for "%s": ', f'/dev/{p.name}', cp.stderr.decode()
+                                'Failed to savecore for "%s": %s', f'/dev/{p.name}', cp.stderr.decode(),
                             )
                         if g.name in disks:
                             swap_partitions_by_size[p.mediasize].append(p.name)
