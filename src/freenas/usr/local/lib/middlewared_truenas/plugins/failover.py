@@ -246,7 +246,7 @@ class FailoverService(ConfigService):
     @pass_app()
     async def status(self, app):
         """
-        Return the current status of this node in the failover
+        Get the current HA status.
 
         Returns:
             MASTER
@@ -256,17 +256,20 @@ class FailoverService(ConfigService):
             ERROR
             SINGLE
         """
+
         status = await self._status(app)
         if status != self.LAST_STATUS:
             self.LAST_STATUS = status
             self.middleware.send_event('failover.status', 'CHANGED', fields={'status': status})
+
         return status
 
     async def _status(self, app):
+
         try:
             status = await self.middleware.call('cache.get', 'failover_status')
         except KeyError:
-            status = await self._get_local_status(app)
+            status = await self.middleware.call('failover.status.get_local', app)
             if status:
                 await self.middleware.call('cache.put', 'failover_status', status, 300)
 
@@ -274,45 +277,22 @@ class FailoverService(ConfigService):
             return status
 
         try:
-            remote_imported = await self.middleware.call('failover.call_remote', 'pool.query', [
-                [['status', '!=', 'OFFLINE']]
-            ])
+            remote_imported = await self.middleware.call(
+                'failover.call_remote', 'pool.query',
+                [[['status', '!=', 'OFFLINE']]]
+            )
+
             # Other node has the pool
             if remote_imported:
-                # check for carp MASTER (any) in remote?
                 return 'BACKUP'
             # Other node has no pool
             else:
-                # check for carp MASTER (none) in remote?
                 return 'ERROR'
         except Exception as e:
             # Anything other than ClientException is unexpected and should be logged
             if not isinstance(e, CallError):
-                self.logger.warn('Failed checking failover status', exc_info=True)
+                self.logger.warning('Failed checking failover status', exc_info=True)
             return 'UNKNOWN'
-
-    async def _get_local_status(self, app):
-        interfaces = await self.middleware.call('interface.query')
-        if not any(filter(lambda x: x['state']['carp_config'], interfaces)):
-            return 'SINGLE'
-
-        pools = await self.middleware.call('pool.query')
-        if not pools:
-            return 'SINGLE'
-
-        if not await self.middleware.call('failover.licensed'):
-            return 'SINGLE'
-
-        masters = (await self.middleware.call('failover.vip.get_states', interfaces))[0]
-        if masters:
-            if any(filter(lambda x: x.get('status') != 'OFFLINE', pools)):
-                return 'MASTER'
-            if os.path.exists('/tmp/.failover_electing'):
-                return 'ELECTING'
-            elif os.path.exists('/tmp/.failover_importing'):
-                return 'IMPORTING'
-            elif os.path.exists('/tmp/.failover_failed'):
-                return 'ERROR'
 
     @private
     async def status_refresh(self):
@@ -324,10 +304,10 @@ class FailoverService(ConfigService):
     @accepts()
     def in_progress(self):
         """
-        Returns true if current node is still initializing after failover event
+        Returns True if there is an ongoing failover event.
         """
-        FAILOVER_EVENT = '/tmp/.failover_event'
-        return LockFile(FAILOVER_EVENT).is_locked()
+
+        return LockFile('/tmp/.failover_event').is_locked()
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
