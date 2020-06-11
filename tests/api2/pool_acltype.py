@@ -10,19 +10,17 @@ from auto_config import ip, user, password, pool_name
 test1_dataset = f'{pool_name}/test1'
 
 
-# off will need to replace posixacl in the future
 def test_01_verify_default_acltype_from_pool_dataset_with_api():
     results = GET(f'/pool/dataset/id/{pool_name}/')
     assert results.status_code == 200, results.text
-    assert results.json()['acltype']['rawvalue'] == 'off', results.text
+    assert results.json()['acltype']['rawvalue'] == 'posixacl', results.text
 
 
-# off will need to replace posixacl in the future
 def test_02_verify_default_acltype_from_pool_dataset_with_zfs_get():
     cmd = f"zfs get acltype {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert 'off' in results['output'], results['output']
+    assert 'posixacl' in results['output'], results['output']
 
 
 def test_03_create_test1_dataset_to_verify_inherit_parent_acltype():
