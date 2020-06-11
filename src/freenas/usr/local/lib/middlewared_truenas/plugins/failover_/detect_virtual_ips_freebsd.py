@@ -19,7 +19,7 @@ class DetectVirtualIpStates(Service):
         )
 
         critical_interfaces = [iface['int_interface']
-                               for iface in await self.middleware.call('interface.query', 'network.interfaces',
+                               for iface in await self.middleware.call('datastore.query', 'network.interfaces',
                                                                        [['int_critical', '=', True]])]
 
         for iface in interfaces:
