@@ -5,7 +5,7 @@ from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc
+from middlewared.utils import osc, run
 from middlewared.validators import Match
 
 
@@ -124,20 +124,12 @@ class TunableService(CRUDService):
         await self.lower(tunable)
         if tunable['type'] == 'sysctl':
             # Restore the default value, if it is possible.
-            value_default = None
-            try:
-                value_default = await self.get_default_value(tunable["var"])
-            except KeyError:
-                pass
-            if value_default is not None:
-                ret = subprocess.run(
-                    ['sysctl', f'{tunable["var"]}="{value_default}"'],
-                    capture_output=True
-                )
-                if ret.returncode:
-                    self.middleware.logger.debug(
-                        'Failed to set sysctl %s -> %s: %s',
-                        tunable['var'], tunable['value'], ret.stderr.decode(),
+            value_default = self.__default_sysctl.get(tunable['var'])
+            if value_default:
+                cp = await run(['sysctl', f'{tunable["var"]}="{value_default}"'], check=False, encoding='utf8')
+                if cp.returncode:
+                    self.middleware.logger.error(
+                        'Failed to set sysctl %r -> %r : %s', tunable['var'], tunable['value'], cp.stderr
                     )
 
         response = await self.middleware.call(
