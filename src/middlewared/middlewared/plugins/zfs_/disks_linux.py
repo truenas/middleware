@@ -15,11 +15,10 @@ class ZFSPoolService(Service, PoolDiskServiceBase):
 
     def get_disks(self, name):
         disks = self.middleware.call_sync('zfs.pool.get_devices', name)
-        context = pyudev.Context()
         mapping = {}
         for dev in filter(
             lambda d: not d.sys_name.startswith('sr') and d.get('DEVTYPE') in ('disk', 'partition'),
-            context.list_devices(subsystem='block')
+            pyudev.Context().list_devices(subsystem='block')
         ):
             if dev['DEVTYPE'] == 'disk':
                 mapping[dev.sys_name] = dev.sys_name

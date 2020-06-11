@@ -56,9 +56,8 @@ class DeviceService(Service, DeviceInfoBase):
     def get_disks(self):
         disks = {}
         lshw_disks = self.retrieve_lshw_disks_data()
-        context = pyudev.Context()
 
-        for block_device in context.list_devices(subsystem='block', DEVTYPE='disk'):
+        for block_device in pyudev.Context().list_devices(subsystem='block', DEVTYPE='disk'):
             if block_device.sys_name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
                 continue
             device_type = os.path.join('/sys/block', block_device.sys_name, 'device/type')
@@ -69,9 +68,12 @@ class DeviceService(Service, DeviceInfoBase):
             # nvme drives won't have this
 
             try:
-                disks[block_device.name] = self.get_disk_details(block_device, self.disk_default.copy(), lshw_disks)
+                disks[block_device.sys_name] = self.get_disk_details(block_device, self.disk_default.copy(), lshw_disks)
             except Exception as e:
-                self.middleware.logger.debug('Failed to retrieve disk details for %s : %s', block_device.name, str(e))
+                self.middleware.logger.debug(
+                    'Failed to retrieve disk details for %s : %s', block_device.sys_name, str(e)
+                )
+
         return disks
 
     @private
@@ -189,6 +191,7 @@ class DeviceService(Service, DeviceInfoBase):
 
         return disk
 
+    @private
     def logical_sector_size(self, name):
         path = os.path.join('/sys/block', name, 'queue/logical_block_size')
         if os.path.exists(path):

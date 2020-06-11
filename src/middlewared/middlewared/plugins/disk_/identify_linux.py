@@ -1,4 +1,4 @@
-import blkid
+import pyudev
 
 from middlewared.service import Service
 
@@ -19,14 +19,15 @@ class DiskService(Service, DiskIdentifyBase):
         elif block_device['serial']:
             return f'{{serial}}{block_device["serial"]}'
 
-        dev = blkid.BlockDevice(f'/dev/{name}')
-        if dev.partitions_exist:
-            for partition in dev.partition_data()['partitions']:
-                if partition['type'] not in await self.middleware.call(
-                    'disk.get_valid_zfs_partition_type_uuids'
-                ):
-                    continue
-                return f'{{uuid}}{partition["part_uuid"]}'
+        dev = pyudev.Devices.from_name(pyudev.Context(), 'block', name)
+        for partition in filter(
+            lambda p: all(p.get(k) for k in ('ID_PART_ENTRY_TYPE', 'ID_PART_ENTRY_UUID')), dev.children
+        ):
+            if partition['ID_PART_ENTRY_TYPE'] not in await self.middleware.call(
+                'disk.get_valid_zfs_partition_type_uuids'
+            ):
+                continue
+            return f'{{uuid}}{partition["ID_PART_ENTRY_UUID"]}'
 
         return f'{{devicename}}{name}'
 

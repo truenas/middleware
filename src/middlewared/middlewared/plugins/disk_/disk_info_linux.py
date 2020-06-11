@@ -13,9 +13,15 @@ class DiskService(Service, DiskInfoBase):
         try:
             block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', dev)
         except pyudev.DeviceNotFoundByNameError:
-            return None
+            return
 
-        logical_sector_size = self.middleware.call_sync('device.logical_sector_size', dev)
+        if block_device.get('DEVTYPE') not in ('disk', 'partition'):
+            return
+
+        logical_sector_size = self.middleware.call_sync(
+            'device.logical_sector_size',
+            dev if block_device['DEVTYPE'] == 'disk' else block_device.find_parent('block').sys_name
+        )
         if not logical_sector_size:
             return
 
@@ -24,8 +30,8 @@ class DiskService(Service, DiskInfoBase):
             if os.path.exists(path):
                 with open(path, 'r') as f:
                     return int(f.read().strip()) * logical_sector_size
-        else:
-            return logical_sector_size * block_device['ID_PART_ENTRY_SIZE']
+        elif block_device.get('ID_PART_ENTRY_SIZE'):
+            return logical_sector_size * int(block_device['ID_PART_ENTRY_SIZE'])
 
     def list_partitions(self, disk):
         parts = []
@@ -39,7 +45,14 @@ class DiskService(Service, DiskInfoBase):
 
         logical_sector_size = self.middleware.call_sync('device.logical_sector_size', disk)
 
-        for p in block_device.children:
+        for p in filter(
+            lambda p: all(
+                p.get(k) for k in (
+                    'ID_PART_ENTRY_TYPE', 'ID_PART_ENTRY_UUID', 'ID_PART_ENTRY_NUMBER', 'ID_PART_ENTRY_SIZE'
+                )
+            ),
+            block_device.children
+        ):
             if disk.startswith('nvme'):
                 # This is a hack for nvme disks, however let's please come up with a better way
                 # to link disks with their partitions
@@ -49,7 +62,7 @@ class DiskService(Service, DiskInfoBase):
             part = {
                 'name': part_name,
                 'partition_type': p['ID_PART_ENTRY_TYPE'],
-                'partition_number': p['ID_PART_ENTRY_NUMBER'],
+                'partition_number': int(p['ID_PART_ENTRY_NUMBER']),
                 'partition_uuid': p['ID_PART_ENTRY_UUID'],
                 'disk': disk,
                 'size': None,
@@ -58,7 +71,7 @@ class DiskService(Service, DiskInfoBase):
                 'encrypted_provider': None,
             }
             if logical_sector_size:
-                disk['size'] = logical_sector_size * p['ID_PART_ENTRY_SIZE']
+                part['size'] = logical_sector_size * int(p['ID_PART_ENTRY_SIZE'])
 
             encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
             if encrypted_provider:
@@ -76,7 +89,9 @@ class DiskService(Service, DiskInfoBase):
             raise CallError(f'{disk} has no partitions')
 
         part = next(
-            (p['ID_PART_ENTRY_UUID'] for p in block_device.children if p['ID_PART_ENTRY_TYPE'] == part_type), None
+            (p['ID_PART_ENTRY_UUID'] for p in block_device.children if all(
+                p.get(k) for k in ('ID_PART_ENTRY_UUID', 'ID_PART_ENTRY_TYPE')
+            ) and p['ID_PART_ENTRY_TYPE'] == part_type), None
         )
         if not part:
             raise CallError(f'Partition type {part_type} not found on {disk}')
