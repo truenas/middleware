@@ -125,7 +125,6 @@ class DeviceService(Service, DeviceInfoBase):
         })
 
         logical_sector_size_path = os.path.join(disk_sys_path, 'queue/logical_block_size')
-        error_str = None
         if os.path.join(logical_sector_size_path):
             with open(logical_sector_size_path, 'r') as f:
                 size = f.read().strip()
@@ -162,6 +161,9 @@ class DeviceService(Service, DeviceInfoBase):
             with open(os.path.join(disk_sys_path, 'size'), 'r') as f:
                 disk['blocks'] = int(f.read().strip())
             disk['size'] = disk['mediasize'] = disk['blocks'] * disk['sectorsize']
+
+        if not disk['serial'] and (block_device.get('ID_SERIAL_SHORT') or block_device.get('ID_SERIAL')):
+            disk['serial'] = block_device.get('ID_SERIAL_SHORT') or block_device.get('ID_SERIAL')
 
         if not disk['serial']:
             serial_cp = subprocess.Popen(
