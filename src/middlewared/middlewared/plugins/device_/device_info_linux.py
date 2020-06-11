@@ -1,4 +1,3 @@
-import blkid
 import glob
 import os
 import pyudev
@@ -97,9 +96,10 @@ class DeviceService(Service, DeviceInfoBase):
 
     def get_disk(self, name):
         disk = self.disk_default.copy()
+        context = pyudev.Context()
         try:
-            block_device = blkid.BlockDevice(os.path.join('/dev', name))
-        except blkid.BlkidException:
+            block_device = pyudev.Devices.from_name(context, 'block', name)
+        except pyudev.DeviceNotFoundByNameError:
             return None
 
         return self.get_disk_details(block_device, disk, self.retrieve_lshw_disks_data())
