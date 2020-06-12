@@ -1,0 +1,50 @@
+# TrueNAS specific services
+enable middlewared.service
+enable ix-etc.service
+enable ix-netif.service
+enable ix-postinit.service
+enable ix-preinit.service
+enable ix-shutdown.service
+enable ix-ssh-keys.service
+enable ix-syncdisks.service
+enable ix-update.service
+enable ix-zfs.service
+
+# Enabled services
+enable collectd.service
+enable nginx.service
+enable ntp.service
+enable rrdcached.service
+enable smartmontools.service
+enable syslog-ng.service
+
+# Disabled services
+disable smbd.service
+disable inadyn.service
+disable proftpd.service
+disable scst.service
+disable ladvd.service
+disable avahi-daemon.service
+disable nmbd.service
+disable nfs-ganesha.service
+disable openvpn@client.service
+disable openvpn@server.service
+disable rsync.service
+disable minio.service
+disable snmpd.service
+disable snmp-agent.service
+disable ssh.service
+disable tftpd-hpa.service
+disable wg-quick@wg0.service
+disable nut-monitor.service
+disable nut-server.service
+disable nut-driver.service
+disable nut-client.service
+disable apache2.service
+disable wsdd.service
+disable libvirtd.service
+disable winbind.service
+disable netatalk.service
+disable glusterd.service
+disable docker.service
+disable kubelet.service
