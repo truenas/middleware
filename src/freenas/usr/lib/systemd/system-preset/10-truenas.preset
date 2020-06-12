@@ -41,10 +41,10 @@ disable nvidia-*
 disable libvirt*
 
 # We want middlewared to import pools
-disable zfs-mount
-disable zfs-volume-wait
-disable zfs-import-cache
-disable zfs-import-scan
+disable zfs-mount.service
+disable zfs-volume-wait.service
+disable zfs-import-cache.service
+disable zfs-import-scan.service
 
 # It unconfigures interfaces we've just configured even if it is instructed to do not touch anything
-disable systemd-networkd
+disable systemd-networkd.service
