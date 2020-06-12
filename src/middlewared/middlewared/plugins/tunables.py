@@ -135,7 +135,7 @@ class TunableService(CRUDService):
             # Restore the default value, if it is possible.
             value_default = self.__default_sysctl.get(tunable['var'])
             if value_default:
-                cp = await run(['sysctl', f'{tunable["var"]}="{value_default}"'], check=False, encoding='utf8')
+                cp = await run(['sysctl', f'{tunable["var"]}={value_default}'], check=False, encoding='utf8')
                 if cp.returncode:
                     self.middleware.logger.error(
                         'Failed to set sysctl %r -> %r : %s', tunable['var'], tunable['value'], cp.stderr
