@@ -825,14 +825,14 @@ class iSCSITargetExtentService(CRUDService):
                                                    ['name', 'rnin', 'vnet'],
                                                    ['name', 'rnin', 'bridge']])
                        )[0]
-                mac = nic['state']['link_address'].replace(':', '')
+                mac = nic['state']['link_address'].replace(':', '').strip()
 
-                ltg = await self.query()
+                ltg = await self.query([], {'order_by': ['id']})
                 if len(ltg) > 0:
-                    lid = ltg[0]['id']
+                    lid = ltg[-1]['id']
                 else:
                     lid = 0
-                return f'{mac.strip()}{lid:02}'
+                return f'{mac[:15-max(3, len(str(lid)))]}{lid:03}'[:15]
             except Exception:
                 self.logger.error('Failed to generate serial, using a default', exc_info=True)
                 return '10000001'
