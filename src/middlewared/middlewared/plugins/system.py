@@ -632,11 +632,11 @@ class SystemGeneralService(ConfigService):
 
         data['crash_reporting_is_set'] = data['crash_reporting'] is not None
         if data['crash_reporting'] is None:
-            data['crash_reporting'] = await self.middleware.call("system.is_freenas")
+            data['crash_reporting'] = True
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
-            data['usage_collection'] = await self.middleware.call("system.is_freenas")
+            data['usage_collection'] = True
 
         data.pop('pwenc_check')
 
