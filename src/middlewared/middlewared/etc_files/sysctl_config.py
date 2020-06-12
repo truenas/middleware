@@ -13,7 +13,7 @@ async def sysctl_configuration(middleware):
                         'Failed to get default value of %r : %s', tunable['var'], cp.stderr.strip()
                     )
                 else:
-                    value_default = default_sysctl_config[tunable['var']] = cp.stdout
+                    value_default = default_sysctl_config[tunable['var']] = cp.stdout.strip()
                     await middleware.call('tunable.set_default_value', tunable['var'], value_default)
             cp = await run(['sysctl', f'{tunable["var"]}="{tunable["value"]}"'], check=False, encoding='utf8')
             if cp.returncode:
