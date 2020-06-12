@@ -1,4 +1,4 @@
-from middlewared.utils import run
+from middlewared.utils import osc, run
 
 
 async def sysctl_configuration(middleware):
@@ -13,7 +13,9 @@ async def sysctl_configuration(middleware):
                         'Failed to get default value of %r : %s', tunable['var'], cp.stderr.strip()
                     )
                 else:
-                    value_default = default_sysctl_config[tunable['var']] = cp.stdout.split('=')[-1].strip()
+                    value_default = default_sysctl_config[tunable['var']] = cp.stdout.split(
+                        '=' if osc.IS_LINUX else ':'
+                    )[-1].strip()
                     await middleware.call('tunable.set_default_value', tunable['var'], value_default)
             cp = await run(['sysctl', f'{tunable["var"]}={tunable["value"]}'], check=False, encoding='utf8')
             if cp.returncode:
