@@ -830,14 +830,13 @@ class SystemGeneralService(ConfigService):
                 {'get': True}
             )
 
-        core_scale = (await self.middleware.call('system.product_type')) in ('CORE', 'SCALE')
         data['crash_reporting_is_set'] = data['crash_reporting'] is not None
         if data['crash_reporting'] is None:
-            data['crash_reporting'] = core_scale
+            data['crash_reporting'] = True
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
-            data['usage_collection'] = core_scale
+            data['usage_collection'] = True
 
         data.pop('pwenc_check')
 
