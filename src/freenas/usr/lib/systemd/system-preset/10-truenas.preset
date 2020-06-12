@@ -45,3 +45,6 @@ disable zfs-mount
 disable zfs-volume-wait
 disable zfs-import-cache
 disable zfs-import-scan
+
+# It unconfigures interfaces we've just configured even if it is instructed to do not touch anything
+disable systemd-networkd
