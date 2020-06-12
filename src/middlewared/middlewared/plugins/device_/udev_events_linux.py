@@ -1,6 +1,17 @@
 import pyudev
+import subprocess
 
-from middlewared.utils import start_daemon_thread
+from middlewared.service import private, Service
+from middlewared.utils import run, start_daemon_thread
+
+
+class DeviceService(Service):
+
+    @private
+    async def settle_udev_events(self):
+        cp = await run(['udevadm', 'settle'], stdout=subprocess.DEVNULL, check=False)
+        if cp.returncode != 0:
+            self.middleware.logger.error('Failed to settle udev events: %s', cp.stderr.decode())
 
 
 def udev_events(middleware):

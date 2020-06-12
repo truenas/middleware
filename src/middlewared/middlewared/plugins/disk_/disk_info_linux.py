@@ -1,6 +1,6 @@
-import blkid
 import glob
 import os
+import pyudev
 
 from middlewared.service import CallError, Service
 
@@ -9,40 +9,70 @@ from .disk_info_base import DiskInfoBase
 
 class DiskService(Service, DiskInfoBase):
 
-    async def get_dev_size(self, dev):
+    def get_dev_size(self, dev):
         try:
-            return blkid.BlockDevice(os.path.join('/dev', dev)).size
-        except blkid.BlkidException:
-            return None
+            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', dev)
+        except pyudev.DeviceNotFoundByNameError:
+            return
+
+        if block_device.get('DEVTYPE') not in ('disk', 'partition'):
+            return
+
+        logical_sector_size = self.middleware.call_sync(
+            'device.logical_sector_size',
+            dev if block_device['DEVTYPE'] == 'disk' else block_device.find_parent('block').sys_name
+        )
+        if not logical_sector_size:
+            return
+
+        if block_device['DEVTYPE'] == 'disk':
+            path = os.path.join('/sys/block', dev, 'device/block', dev, 'size')
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    return int(f.read().strip()) * logical_sector_size
+        elif block_device.get('ID_PART_ENTRY_SIZE'):
+            return logical_sector_size * int(block_device['ID_PART_ENTRY_SIZE'])
 
     def list_partitions(self, disk):
         parts = []
         try:
-            block_device = blkid.BlockDevice(os.path.join('/dev', disk))
-        except blkid.BlkidException:
+            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
+        except pyudev.DeviceNotFoundByNameError:
             return parts
 
-        if not block_device.partitions_exist:
+        if not block_device.children:
             return parts
 
-        for p in block_device.__getstate__()['partitions_data']['partitions']:
+        logical_sector_size = self.middleware.call_sync('device.logical_sector_size', disk)
+
+        for p in filter(
+            lambda p: all(
+                p.get(k) for k in (
+                    'ID_PART_ENTRY_TYPE', 'ID_PART_ENTRY_UUID', 'ID_PART_ENTRY_NUMBER', 'ID_PART_ENTRY_SIZE'
+                )
+            ),
+            block_device.children
+        ):
             if disk.startswith('nvme'):
                 # This is a hack for nvme disks, however let's please come up with a better way
                 # to link disks with their partitions
-                part_name = f'{disk}p{p["partition_number"]}'
+                part_name = f'{disk}p{p["ID_PART_ENTRY_NUMBER"]}'
             else:
-                part_name = f'{disk}{p["partition_number"]}'
+                part_name = f'{disk}{p["ID_PART_ENTRY_NUMBER"]}'
             part = {
                 'name': part_name,
-                'size': p['partition_size'],
-                'partition_type': p['type'],
-                'partition_number': p['partition_number'],
-                'partition_uuid': p['part_uuid'],
+                'partition_type': p['ID_PART_ENTRY_TYPE'],
+                'partition_number': int(p['ID_PART_ENTRY_NUMBER']),
+                'partition_uuid': p['ID_PART_ENTRY_UUID'],
                 'disk': disk,
+                'size': None,
                 'id': part_name,
                 'path': os.path.join('/dev', part_name),
                 'encrypted_provider': None,
             }
+            if logical_sector_size:
+                part['size'] = logical_sector_size * int(p['ID_PART_ENTRY_SIZE'])
+
             encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
             if encrypted_provider:
                 part['encrypted_provider'] = os.path.join('/dev', encrypted_provider[0].split('/')[3])
@@ -51,14 +81,18 @@ class DiskService(Service, DiskInfoBase):
 
     def gptid_from_part_type(self, disk, part_type):
         try:
-            dev = blkid.BlockDevice(os.path.join('/dev', disk)).__getstate__()
-        except blkid.BlkidException:
+            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
+        except pyudev.DeviceNotFoundByNameError:
             raise CallError(f'{disk} not found')
 
-        if not dev['partitions_exist']:
+        if not block_device.children:
             raise CallError(f'{disk} has no partitions')
 
-        part = next((p['part_uuid'] for p in dev['partitions_data']['partitions'] if p['type'] == part_type), None)
+        part = next(
+            (p['ID_PART_ENTRY_UUID'] for p in block_device.children if all(
+                p.get(k) for k in ('ID_PART_ENTRY_UUID', 'ID_PART_ENTRY_TYPE')
+            ) and p['ID_PART_ENTRY_TYPE'] == part_type), None
+        )
         if not part:
             raise CallError(f'Partition type {part_type} not found on {disk}')
         return f'disk/by-partuuid/{part}'

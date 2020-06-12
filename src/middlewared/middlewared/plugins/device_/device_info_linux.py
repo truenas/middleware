@@ -1,6 +1,6 @@
-import blkid
 import glob
 import os
+import pyudev
 import re
 import subprocess
 
@@ -57,10 +57,10 @@ class DeviceService(Service, DeviceInfoBase):
         disks = {}
         lshw_disks = self.retrieve_lshw_disks_data()
 
-        for block_device in blkid.list_block_devices():
-            if block_device.name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
+        for block_device in pyudev.Context().list_devices(subsystem='block', DEVTYPE='disk'):
+            if block_device.sys_name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
                 continue
-            device_type = os.path.join('/sys/block', block_device.name, 'device/type')
+            device_type = os.path.join('/sys/block', block_device.sys_name, 'device/type')
             if os.path.exists(device_type):
                 with open(device_type, 'r') as f:
                     if f.read().strip() != '0':
@@ -68,9 +68,12 @@ class DeviceService(Service, DeviceInfoBase):
             # nvme drives won't have this
 
             try:
-                disks[block_device.name] = self.get_disk_details(block_device, self.disk_default.copy(), lshw_disks)
+                disks[block_device.sys_name] = self.get_disk_details(block_device, self.disk_default.copy(), lshw_disks)
             except Exception as e:
-                self.middleware.logger.debug('Failed to retrieve disk details for %s : %s', block_device.name, str(e))
+                self.middleware.logger.debug(
+                    'Failed to retrieve disk details for %s : %s', block_device.sys_name, str(e)
+                )
+
         return disks
 
     @private
@@ -95,43 +98,47 @@ class DeviceService(Service, DeviceInfoBase):
 
     def get_disk(self, name):
         disk = self.disk_default.copy()
+        context = pyudev.Context()
         try:
-            block_device = blkid.BlockDevice(os.path.join('/dev', name))
-        except blkid.BlkidException:
+            block_device = pyudev.Devices.from_name(context, 'block', name)
+        except pyudev.DeviceNotFoundByNameError:
             return None
 
         return self.get_disk_details(block_device, disk, self.retrieve_lshw_disks_data())
 
     @private
     def get_disk_details(self, block_device, disk, lshw_disks):
-        dev_data = block_device.__getstate__()
-        disk_sys_path = os.path.join('/sys/block', block_device.name)
+        device_path = os.path.join('/dev', block_device.sys_name)
+        disk_sys_path = os.path.join('/sys/block', block_device.sys_name)
         driver_name = os.path.realpath(os.path.join(disk_sys_path, 'device/driver')).split('/')[-1]
         number = 0
         if driver_name != 'driver':
             number = sum(
                 (ord(letter) - ord('a') + 1) * 26 ** i
-                for i, letter in enumerate(reversed(dev_data['name'][len(driver_name):]))
+                for i, letter in enumerate(reversed(block_device.sys_name[len(driver_name):]))
             )
-        elif dev_data['name'].startswith('nvme'):
-            number = int(dev_data['name'].rsplit('n', 1)[-1])
+        elif block_device.sys_name.startswith('nvme'):
+            number = int(block_device.sys_name.rsplit('n', 1)[-1])
+
         disk.update({
-            'name': dev_data['name'],
-            'sectorsize': dev_data['io_limits']['logical_sector_size'],
+            'name': block_device.sys_name,
             'number': number,
             'subsystem': os.path.realpath(os.path.join(disk_sys_path, 'device/subsystem')).split('/')[-1],
         })
+
+        disk['sectorsize'] = self.logical_sector_size(block_device.sys_name)
+
         type_path = os.path.join(disk_sys_path, 'queue/rotational')
         if os.path.exists(type_path):
             with open(type_path, 'r') as f:
                 disk['type'] = 'SSD' if f.read().strip() == '0' else 'HDD'
         else:
-            self.middleware.logger.debug(
-                'Unable to retrieve "%s" disk rotational details at %s', disk['name'], type_path
+            self.middleware.logger.error(
+                'Unable to retrieve %r disk rotational details at %s', disk['name'], type_path
             )
 
-        if block_device.path in lshw_disks:
-            disk_data = lshw_disks[block_device.path]
+        if device_path in lshw_disks:
+            disk_data = lshw_disks[device_path]
             if disk['type'] == 'HDD':
                 disk['rotationrate'] = disk_data['rotationrate']
 
@@ -146,9 +153,12 @@ class DeviceService(Service, DeviceInfoBase):
                 disk['blocks'] = int(f.read().strip())
             disk['size'] = disk['mediasize'] = disk['blocks'] * disk['sectorsize']
 
+        if not disk['serial'] and (block_device.get('ID_SERIAL_SHORT') or block_device.get('ID_SERIAL')):
+            disk['serial'] = block_device.get('ID_SERIAL_SHORT') or block_device.get('ID_SERIAL')
+
         if not disk['serial']:
             serial_cp = subprocess.Popen(
-                ['sg_vpd', '--quiet', '--page=0x80', block_device.path],
+                ['sg_vpd', '--quiet', '--page=0x80', device_path],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
             cp_stdout, cp_stderr = serial_cp.communicate()
@@ -165,7 +175,7 @@ class DeviceService(Service, DeviceInfoBase):
         # We make a device ID query to get DEVICE ID VPD page of the drive if available and then use that identifier
         # as the lunid - FreeBSD does the same, however it defaults to other schemes if this is unavailable
         lun_id_cp = subprocess.Popen(
-            ['sg_vpd', '--quiet', '-i', block_device.path],
+            ['sg_vpd', '--quiet', '-i', device_path],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         cp_stdout, cp_stderr = lun_id_cp.communicate()
@@ -180,6 +190,21 @@ class DeviceService(Service, DeviceInfoBase):
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
         return disk
+
+    @private
+    def logical_sector_size(self, name):
+        path = os.path.join('/sys/block', name, 'queue/logical_block_size')
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                size = f.read().strip()
+            if not size.isdigit():
+                self.middleware.logger.error(
+                    'Unable to retrieve %r disk logical block size: malformed value %r found', name, size
+                )
+            else:
+                return int(size)
+        else:
+            self.middleware.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
 
     def get_storage_devices_topology(self):
         disks = self.get_disks()

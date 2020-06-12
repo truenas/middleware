@@ -66,6 +66,9 @@ class DiskService(Service):
             if cp.returncode != 0:
                 raise CallError(f'Unable to GPT format the disk "{disk}": {cp.stderr}')
 
+        if osc.IS_LINUX:
+            self.middleware.call_sync('device.settle_udev_events')
+
         if sync:
             # We might need to sync with reality (e.g. devname -> uuid)
             self.middleware.call_sync('disk.sync', disk)

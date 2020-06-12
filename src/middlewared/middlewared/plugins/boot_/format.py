@@ -118,3 +118,6 @@ class BootService(Service):
                 raise CallError(
                     '{} failed:\n{}{}'.format(' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
                 )
+
+        if osc.IS_LINUX:
+            await self.middleware.call('device.settle_udev_events')
