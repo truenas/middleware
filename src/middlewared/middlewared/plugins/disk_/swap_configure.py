@@ -81,7 +81,7 @@ class DiskService(Service):
                 cp = await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{swap_part["name"]}', check=False)
                 if cp.returncode:
                     self.middleware.logger.error(
-                        'Failed to savecore for "%s": ', f'/dev/{swap_part["name"]}', cp.stderr.decode()
+                        'Failed to savecore for "%s": %s', f'/dev/{swap_part["name"]}', cp.stderr.decode(),
                     )
 
             if swap_part['disk'] in disks:
