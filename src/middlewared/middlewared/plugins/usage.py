@@ -170,9 +170,9 @@ class UsageService(Service):
 
     async def gather_system(self):
         system = await self.middleware.call('system.info')
-        platform = 'FreeNAS' if await self.middleware.call(
-            'system.is_freenas'
-        ) else 'TrueNAS'
+        platform = 'TrueNAS-{}'.format(await self.middleware.call(
+            'system.product_type'
+        ))
 
         usage_version = 1
         version = system['version']
