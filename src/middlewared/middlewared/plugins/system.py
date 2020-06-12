@@ -1626,12 +1626,13 @@ async def setup(middleware):
     await middleware.call('system.general.set_language')
     await middleware.call('system.general.set_crash_reporting')
 
-    asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
+    if osc.IS_FREEBSD:
+        asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
 
     if sysctl:
         await update_timeout_value(middleware)
 
-    for srv in ['initshutdownscript', 'tunable', 'vm']:
+    for srv in (['initshutdownscript', 'tunable', 'vm'] if osc.IS_FREEBSD else []):
         for event in ('create', 'update', 'delete'):
             middleware.register_hook(
                 f'{srv}.post_{event}',
