@@ -1,10 +1,10 @@
 import re
-import subprocess
 
 from middlewared.schema import (Bool, Dict, Int, Patch, Str, ValidationErrors,
                                 accepts)
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc, run
 from middlewared.validators import Match
 
 
@@ -19,6 +19,9 @@ class TunableModel(sa.Model):
     tun_var = sa.Column(sa.String(128))
 
 
+TUNABLE_TYPES = ['SYSCTL'] + ([] if osc.IS_LINUX else ['LOADER', 'RC'])
+
+
 class TunableService(CRUDService):
     class Config:
         datastore = 'system.tunable'
@@ -30,6 +33,10 @@ class TunableService(CRUDService):
         self.__default_sysctl = {}
 
     @private
+    async def default_sysctl_config(self):
+        return self.__default_sysctl
+
+    @private
     async def get_default_value(self, oid):
         return self.__default_sysctl[oid]
 
@@ -38,11 +45,18 @@ class TunableService(CRUDService):
         if oid not in self.__default_sysctl:
             self.__default_sysctl[oid] = value
 
+    @accepts()
+    async def tunable_type_choices(self):
+        """
+        Retrieve tunable type choices supported in the system
+        """
+        return {k: k for k in TUNABLE_TYPES}
+
     @accepts(Dict(
         'tunable_create',
         Str('var', validators=[Match(r'^[\w\.]+$')], required=True),
         Str('value', required=True),
-        Str('type', enum=['LOADER', 'RC', 'SYSCTL'], required=True),
+        Str('type', enum=TUNABLE_TYPES, required=True),
         Str('comment'),
         Bool('enabled', default=True),
         register=True
@@ -53,7 +67,10 @@ class TunableService(CRUDService):
 
         `var` represents name of the sysctl/loader/rc variable.
 
-        `type` should be one of the following:
+        `type` for SCALE should be one of the following:
+        1) SYSCTL     -     Configure `var` for sysctl(8)
+
+        `type` for CORE/ENTERPRISE should be one of the following:
         1) LOADER     -     Configure `var` for loader(8)
         2) RC         -     Configure `var` for rc(8)
         3) SYSCTL     -     Configure `var` for sysctl(8)
@@ -116,20 +133,12 @@ class TunableService(CRUDService):
         await self.lower(tunable)
         if tunable['type'] == 'sysctl':
             # Restore the default value, if it is possible.
-            value_default = None
-            try:
-                value_default = await self.get_default_value(tunable["var"])
-            except KeyError:
-                pass
-            if value_default is not None:
-                ret = subprocess.run(
-                    ['sysctl', f'{tunable["var"]}="{value_default}"'],
-                    capture_output=True
-                )
-                if ret.returncode:
-                    self.middleware.logger.debug(
-                        'Failed to set sysctl %s -> %s: %s',
-                        tunable['var'], tunable['value'], ret.stderr.decode(),
+            value_default = self.__default_sysctl.get(tunable['var'])
+            if value_default:
+                cp = await run(['sysctl', f'{tunable["var"]}={value_default}'], check=False, encoding='utf8')
+                if cp.returncode:
+                    self.middleware.logger.error(
+                        'Failed to set sysctl %r -> %r : %s', tunable['var'], tunable['value'], cp.stderr
                     )
 
         response = await self.middleware.call(
