@@ -6,4 +6,16 @@ dpkg-divert --add --package truenas --rename --divert /etc/grub.d__10_linux /etc
 
 systemctl disable ssh.service
 
+# Services whose unit files are created with systemd-sysv-generator do not respect preset file so for now
+# we disable them explicitly
+
+systemctl disable scst
+systemctl disable inadyn
+systemctl disable tftpd-hpa
+systemctl disable proftpd
+
+# kubelet and nvidia-persistenced are not respecting vendor preset file so we disable them explicitly
+systemctl disable kubelet
+systemctl disable nvidia-persistenced
+
 #DEBHELPER#
