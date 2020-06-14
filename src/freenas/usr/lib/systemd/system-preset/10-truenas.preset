@@ -1,6 +1,5 @@
 # TrueNAS specific services
 enable middlewared.service
-disable ix-ssh-keys.service
 enable ix-*
 
 # Enabled services
