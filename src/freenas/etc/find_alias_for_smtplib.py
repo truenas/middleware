@@ -2,6 +2,7 @@ import argparse
 import email
 import email.parser
 import json
+import os
 import re
 import requests
 import socket
@@ -9,6 +10,7 @@ import sys
 import syslog
 
 from middlewared.client import Client
+from middlewared.utils import osc
 
 ALIASES = re.compile(r'^(?P<from>[^#]\S*?):\s*(?P<to>\S+)$')
 
@@ -99,7 +101,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
 
 def get_aliases():
-    with open('/etc/mail/aliases', 'r') as f:
+    with open(os.path.join('/etc', '' if osc.IS_LINUX else 'mail', 'aliases'), 'r') as f:
         aliases = {}
 
         for line in f.readlines():
