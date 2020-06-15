@@ -102,7 +102,7 @@ class TunableService(CRUDService):
         """
         Update Tunable of `id`.
         """
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -122,18 +122,18 @@ class TunableService(CRUDService):
 
         await self.middleware.call('service.reload', new['type'])
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
         """
         Delete Tunable of `id`.
         """
-        tunable = await self._get_instance(id)
+        tunable = await self.get_instance(id)
         await self.lower(tunable)
         if tunable['type'] == 'sysctl':
             # Restore the default value, if it is possible.
-            value_default = self.__default_sysctl.get(tunable['var'])
+            value_default = self.__default_sysctl.pop(tunable['var'], None)
             if value_default:
                 cp = await run(['sysctl', f'{tunable["var"]}={value_default}'], check=False, encoding='utf8')
                 if cp.returncode:
