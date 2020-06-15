@@ -6,7 +6,7 @@ except ImportError:
 from lxml import etree
 
 from middlewared.service import CRUDService, filterable
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, osc
 
 
 class MultipathService(CRUDService):
@@ -53,6 +53,9 @@ class MultipathService(CRUDService):
               }
             ]
         """
+
+        if osc.IS_LINUX:
+            return []
 
         multipaths = self.__get_multipaths()
 

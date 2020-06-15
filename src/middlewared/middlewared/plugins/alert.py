@@ -249,7 +249,7 @@ class AlertService(Service):
         List all types of alerts which the system can issue.
         """
 
-        product_type = await self.middleware.call("system.product_type")
+        product_type = await self.middleware.call("alert.product_type")
 
         classes = [alert_class for alert_class in AlertClass.classes
                    if product_type in alert_class.products and not alert_class.exclude_from_list]
@@ -532,7 +532,7 @@ class AlertService(Service):
     async def __run_alerts(self):
         master_node = "A"
         backup_node = "B"
-        product_type = await self.middleware.call("system.product_type")
+        product_type = await self.middleware.call("alert.product_type")
         run_on_backup_node = False
         run_failover_related = False
         if product_type == "ENTERPRISE":
@@ -809,6 +809,14 @@ class AlertService(Service):
             raise CallError("Alert source {name!r} not found.", errno.ENOENT)
 
         self.alert_source_last_run[alert_source.name] = datetime.min
+
+    @private
+    async def product_type(self):
+        product_type = await self.middleware.call("system.product_type")
+        # FIXME
+        if product_type == "SCALE":
+            product_type = "CORE"
+        return product_type
 
 
 class AlertServiceModel(sa.Model):
