@@ -18,4 +18,10 @@ systemctl disable proftpd
 systemctl disable kubelet
 systemctl disable nvidia-persistenced
 
+# Update alternatives
+update-alternatives --install "/usr/sbin/sendmail" sendmail "/etc/find_alias_for_smtplib.sh" "10"
+
+# Copy to /conf/base
+cp -a /etc/aliases /conf/base/etc/;
+
 #DEBHELPER#
