@@ -1,5 +1,3 @@
-#!/usr/local/bin/python
-
 import argparse
 import email
 import email.parser
