@@ -79,7 +79,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
         margs['to'] = to_addrs_repl
 
-        if not margs['attachments']:
+        if not margs.get('attachments'):
             c.call('mail.send', margs)
         else:
             token = c.call('auth.generate_token')
