@@ -434,7 +434,7 @@ class SharingNFSService(CRUDService):
                     used_networks.add(ipaddress.ip_network("0.0.0.0/0"))
                     used_networks.add(ipaddress.ip_network("::/0"))
 
-        for i, host in enumerate(data["hosts"]):
+        for host in set(data["hosts"]):
             host = dns_cache[host]
             if host is None:
                 continue
@@ -442,19 +442,19 @@ class SharingNFSService(CRUDService):
             network = ipaddress.ip_network(host)
             if network in used_networks:
                 verrors.add(
-                    f"{schema_name}.hosts.{i}",
-                    "Another NFS share already exports this dataset for this host"
+                    f"{schema_name}.hosts",
+                    f"Another NFS share already exports this dataset for {host}"
                 )
 
             used_networks.add(network)
 
-        for i, network in enumerate(data["networks"]):
+        for network in set(data["networks"]):
             network = ipaddress.ip_network(network, strict=False)
 
             if network in used_networks:
                 verrors.add(
-                    f"{schema_name}.networks.{i}",
-                    "Another NFS share already exports this dataset for this network"
+                    f"{schema_name}.networks",
+                    f"Another NFS share already exports this dataset for {network}"
                 )
 
             used_networks.add(network)
