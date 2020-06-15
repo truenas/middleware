@@ -1,13 +1,21 @@
 #!/bin/sh
 dpkg-divert --add --package truenas --rename --divert /etc/grub.d__10_linux /etc/grub.d/10_linux
 
-# It unconfigures interfaces we've just configured even if it is instructed to do not touch anything
-systemctl disable systemd-networkd
+# openssh-server explicitly sets itself to enabled on post install, so preset is not respected
+# we need to manually disable it
 
-# We want middlewared to import pools
-systemctl disable zfs-mount
-systemctl disable zfs-volume-wait
-systemctl disable zfs-import-cache
-systemctl disable zfs-import-scan
+systemctl disable ssh.service
+
+# Services whose unit files are created with systemd-sysv-generator do not respect preset file so for now
+# we disable them explicitly
+
+systemctl disable scst
+systemctl disable inadyn
+systemctl disable tftpd-hpa
+systemctl disable proftpd
+
+# kubelet and nvidia-persistenced are not respecting vendor preset file so we disable them explicitly
+systemctl disable kubelet
+systemctl disable nvidia-persistenced
 
 #DEBHELPER#
