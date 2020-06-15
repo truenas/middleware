@@ -292,7 +292,7 @@ class KMIPService(Service, KMIPServerMixin):
                 'datastore.update', 'storage.disk', disk['identifier'], {'disk_kmip_uid': None}
             )
         adv_config = await self.middleware.call('datastore.config', 'system.advanced', {'prefix': 'adv_'})
-        if adv_config['adv_kmip_uid']:
+        if adv_config['kmip_uid']:
             await self.middleware.call(
                 'datastore.update', 'system.advanced', adv_config['id'], {'adv_kmip_uid': None}
             )
