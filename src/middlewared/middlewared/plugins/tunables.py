@@ -120,6 +120,16 @@ class TunableService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
+        if old['type'] == 'SYSCTL' and old['var'] in self.__default_sysctl and (
+            old['var'] != new['var'] or old['type'] != new['type']
+        ):
+            default_value = self.__default_sysctl.pop(old['var'])
+            cp = await run(['sysctl', f'{old["var"]}={default_value}'], check=False, encoding='utf8')
+            if cp.returncode:
+                self.middleware.logger.error(
+                    'Failed to set sysctl %r -> %r : %s', old['var'], default_value, cp.stderr
+                )
+
         await self.middleware.call('service.reload', new['type'])
 
         return await self.get_instance(id)
@@ -138,7 +148,7 @@ class TunableService(CRUDService):
                 cp = await run(['sysctl', f'{tunable["var"]}={value_default}'], check=False, encoding='utf8')
                 if cp.returncode:
                     self.middleware.logger.error(
-                        'Failed to set sysctl %r -> %r : %s', tunable['var'], tunable['value'], cp.stderr
+                        'Failed to set sysctl %r -> %r : %s', tunable['var'], value_default, cp.stderr
                     )
 
         response = await self.middleware.call(
