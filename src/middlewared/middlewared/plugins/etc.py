@@ -247,7 +247,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/inadyn.conf'}
         ],
         'aliases': [
-            {'type': 'mako', 'path': 'mail/aliases'}
+            {'type': 'mako', 'path': 'mail/aliases' if osc.IS_FREEBSD else 'aliases', 'local_path': 'mail/aliases.mako'}
         ],
         'ttys': [
             {'type': 'mako', 'path': 'ttys', 'platform': 'FreeBSD'},
