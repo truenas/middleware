@@ -1,6 +1,7 @@
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, accepts
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
+from middlewared.utils import osc
 from middlewared.validators import Email
 
 from datetime import datetime, timedelta
@@ -424,7 +425,10 @@ class MailService(ConfigService):
                 raise CallError(str(e))
             syslog.syslog(f'Failed to send email to {", ".join(to)}: {str(e)}')
             if isinstance(e, smtplib.SMTPAuthenticationError):
-                raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
+                raise CallError(
+                    f'Authentication error ({e.smtp_code}): {e.smtp_error}',
+                    errno.EAUTH if osc.IS_FREEBSD else errno.EPERM
+                )
             self.logger.warn('Failed to send email: %s', str(e), exc_info=True)
             if message['queue']:
                 with MailQueue() as mq:
