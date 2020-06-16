@@ -182,7 +182,8 @@ class EtcService(Service):
             {
                 'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
                 'local_path': 'local/collectd.conf'
-            }
+            },
+            {'type': 'mako', 'path': 'default/rrdcached', 'local_path': 'default/rrdcached.mako', 'platform': 'Linux'},
         ],
         'system_dataset': [
             {'type': 'py', 'path': 'system_setup'}
