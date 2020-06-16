@@ -427,7 +427,7 @@ class MailService(ConfigService):
             if isinstance(e, smtplib.SMTPAuthenticationError):
                 raise CallError(
                     f'Authentication error ({e.smtp_code}): {e.smtp_error}',
-                    errno.EAUTH if osc.IS_FREEBSD else errno.EFAULT
+                    errno.EAUTH if osc.IS_FREEBSD else errno.EPERM
                 )
             self.logger.warn('Failed to send email: %s', str(e), exc_info=True)
             if message['queue']:
