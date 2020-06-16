@@ -293,7 +293,8 @@ def powerd_config(middleware, context):
 
 def s3_config(middleware, context):
     s3 = middleware.call_sync('s3.config')
-    yield f'minio_disks="{s3["storage_path"]}"'
+    path = s3['storage_path'].replace(' ', '\\ ')
+    yield f'minio_disks="{path}"'
     yield f'minio_address="{s3["bindip"]}:{s3["bindport"]}"'
     yield 'minio_certs="/usr/local/etc/minio/certs"'
     browser = 'MINIO_BROWSER=off \\\n' if not s3['browser'] else ''
