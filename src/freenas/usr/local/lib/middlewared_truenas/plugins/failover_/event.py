@@ -746,9 +746,10 @@ class FailoverService(Service):
                 # syslogd needs to restart on BACKUP to configure remote logging to ACTIVE
                 self.run_call('service.restart', 'syslogd', {'ha_propagate': False})
 
+                self.run_call('etc.generate', 'cron')
+
                 if volumes:
                     run('/usr/sbin/service watchdogd quietstart')
-                    self.run_call('etc.generate', 'cron')
                     self.run_call('service.stop', 'smartd', {'ha_propagate': False})
                     self.run_call('service.stop', 'collectd', {'ha_propagate': False})
                     self.run_call('jail.stop_on_shutdown')
