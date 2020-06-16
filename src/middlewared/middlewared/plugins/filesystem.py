@@ -859,11 +859,12 @@ class FilesystemService(Service):
             if ace['id'] == -1:
                 ace['id'] = ''
 
-            if ace['default']:
-                aclstring += f"{ace['default'].lower()}:{ace['tag']}:{ace['id']}:"
-            else:
-                aclstring += f"{ace['tag'].lower()}:{ace['id']}:"
+            ace['tag'] = ace['tag'].rstrip('_OBJ').lower()
 
+            if ace['default']:
+                aclstring += "default:"
+
+            aclstring += f"{ace['tag']}:{ace['id']}:"
             aclstring += 'r' if ace['perms']['READ'] else '-'
             aclstring += 'w' if ace['perms']['WRITE'] else '-'
             aclstring += 'x' if ace['perms']['EXECUTE'] else '-'
@@ -995,7 +996,7 @@ class FilesystemService(Service):
                     Dict(
                         'posix1e_ace',
                         Bool('default', default=False),
-                        Str('tag', enum=['USER', 'GROUP', 'OTHER', 'MASK']),
+                        Str('tag', enum=['USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP', 'OTHER', 'MASK']),
                         Int('id', default=-1),
                         Dict(
                             'perms',
