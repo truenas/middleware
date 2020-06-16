@@ -1122,6 +1122,16 @@ class ActiveDirectoryService(ConfigService):
                 )
 
     @private
+    def get_ntp_time(self, host):
+        try:
+            c = ntplib.NTPClient()
+            response = c.request(host)
+            return datetime.datetime.fromtimestamp(response.tx_time)
+        except ntplib.NTPException:
+            self.logger.warning("NTP request to DC [%s] failed.", host, exc_info=True)
+            return None
+
+    @private
     def check_clockskew(self, ad=None):
         """
         Uses DNS srv records to determine server with PDC emulator FSMO role and
@@ -1142,21 +1152,16 @@ class ActiveDirectoryService(ConfigService):
             self.logger.warning("Unable to find PDC emulator via DNS.")
             return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
 
-        try:
-            c = ntplib.NTPClient()
-            response = c.request(pdc[0]['host'])
-            ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
-        except ntplib.NTPException:
-            self.logger.warning("NTP request to PDC Emulator failed. Retrying with regular DC",
-                                exc_info=True)
+        ntp_time = self.get_ntp_time(pdc[0]['host'])
+        if ntp_time is None:
+            dcs = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['DOMAINCONTROLLER'], 3)
+            for dc in dcs:
+                ntp_time = self.get_ntp_time(dc['host'])
+                if ntp_time is not None:
+                    break
 
-            dc = ActiveDirectory_DNS(conf=ad, logger=self.logger).get_n_working_servers(SRV['PDC'], 1)
-            if not dc:
-                self.logger.warning("Unable to find Domain Controller via DNS.")
-                return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
-
-            response = c.request(dc[0]['host'])
-            ntp_time = datetime.datetime.fromtimestamp(response.tx_time)
+        if ntp_time is None:
+            return {'pdc': None, 'timestamp': '0', 'clockskew': 0}
 
         clockskew = abs(ntp_time - nas_time)
         if clockskew > permitted_clockskew:
