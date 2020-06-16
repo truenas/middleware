@@ -853,10 +853,12 @@ class ReportingService(ConfigService):
             return False
 
         # Ensure that collectd working path is a symlink to system dataset
-        pwd = '/var/db/collectd/rrd'
+        base_collectd = '/var/db/collectd'
+        pwd = os.path.join(base_collectd, 'rrd')
         if os.path.exists(pwd) and (not os.path.isdir(pwd) or not os.path.islink(pwd)):
             shutil.move(pwd, f'{pwd}.{time.strftime("%Y%m%d%H%M%S")}')
         if not os.path.exists(pwd):
+            os.makedirs(base_collectd, exist_ok=True)
             os.symlink(rrd_mount, pwd)
 
         # Migrate legacy RAMDisk

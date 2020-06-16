@@ -179,7 +179,10 @@ class EtcService(Service):
             {'type': 'py', 'path': 'failover'},
         ],
         'collectd': [
-            {'type': 'mako', 'path': 'local/collectd.conf'}
+            {
+                'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
+                'local_path': 'local/collectd.conf'
+            }
         ],
         'system_dataset': [
             {'type': 'py', 'path': 'system_setup'}
