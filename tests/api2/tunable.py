@@ -9,14 +9,16 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT
+from auto_config import scale
 
-VARIABLE = 'aa.22'
+variable = 'aa.22'
+type1 = 'SYSCTL' if scale else 'RC'
 
 
 def test_01_creating_test_tunable():
     global TUNABLE_ID, payload, results
     payload = {
-        'var': VARIABLE,
+        'var': variable,
         'value': 'test',
         'type': 'SYSCTL',
         'enabled': True
@@ -60,10 +62,10 @@ def test_06_looking_if_tunable_id_disable():
 def test_07_updating_variable_name_value_comment_type():
     global payload, results
     payload = {
-        'var': VARIABLE + '1',
+        'var': variable + '1',
         'value': 'temp',
         'comment': 'testing variable',
-        'type': 'RC',
+        'type': type1,
         'enabled': True
     }
 
