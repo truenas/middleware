@@ -1533,7 +1533,7 @@ async def hook_pool_export(middleware, pool=None, *args, **kwargs):
 
 
 async def hook_pool_post_import(middleware, pool):
-    if pool['encrypt'] == 2 and pool['passphrase']:
+    if pool and pool['encrypt'] == 2 and pool['passphrase']:
         await middleware.call(
             'failover.update_encryption_keys', {
                 'pools': [{'name': pool['name'], 'passphrase': pool['passphrase']}]
