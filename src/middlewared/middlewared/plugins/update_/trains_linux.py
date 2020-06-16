@@ -6,13 +6,13 @@ import async_timeout
 
 from middlewared.service import private, Service
 
-from .utils import SCALE_MANIFEST_FILE, SCALE_UPDATE_SERVER
+from .utils import SCALE_MANIFEST_FILE, scale_update_server
 
 
 class UpdateService(Service):
     @private
     async def get_trains_redirection_url(self):
-        return f"{SCALE_UPDATE_SERVER}/trains_redir.json"
+        return f"{scale_update_server()}/trains_redir.json"
 
     @private
     async def get_trains_data(self):
@@ -23,7 +23,7 @@ class UpdateService(Service):
             async with aiohttp.ClientSession(
                 raise_for_status=True, trust_env=True,
             ) as session:
-                trains = await (await session.get(f"{SCALE_UPDATE_SERVER}/trains.json")).json()
+                trains = await (await session.get(f"{scale_update_server()}/trains.json")).json()
 
         return {
             "current_train": manifest["train"],
@@ -39,7 +39,7 @@ class UpdateService(Service):
             async with aiohttp.ClientSession(
                 raise_for_status=True, trust_env=True,
             ) as session:
-                new_manifest = await (await session.get(f"{SCALE_UPDATE_SERVER}/{train}/manifest.json")).json()
+                new_manifest = await (await session.get(f"{scale_update_server()}/{train}/manifest.json")).json()
 
         if old_manifest["version"] == new_manifest["version"]:
             return {"status": "UNAVAILABLE"}
