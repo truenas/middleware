@@ -382,7 +382,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         Delete iSCSI Authorized Access of `id`.
         """
         config = await self._get_instance(id)
-        if not await self.query([['tag', '=', config['tag'], ['id', '!=', id]]]):
+        if not await self.query([['tag', '=', config['tag']], ['id', '!=', id]]):
             usages = await self.is_in_use_by_portals_targets(id)
             if usages['in_use']:
                 raise CallError(usages['usages'])
