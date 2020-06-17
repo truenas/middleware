@@ -410,6 +410,13 @@ class ZFSDatasetService(CRUDService):
         private = True
         process_pool = True
 
+    def locked_datasets(self):
+        return self.query(
+            [['encrypted', '=', True], ['key_loaded', '=', False]], {
+                'extra': {'properties': ['encryption', 'keystatus', 'mountpoint']}, 'select': ['id', 'mountpoint']
+            }
+        )
+
     def flatten_datasets(self, datasets):
         return sum([[deepcopy(ds)] + self.flatten_datasets(ds['children']) for ds in datasets], [])
 
