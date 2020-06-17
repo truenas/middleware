@@ -1023,17 +1023,17 @@ class InterfaceService(CRUDService):
                     for i in failover_attrs - configured_attrs:
                         if i == 'failover_group':
                             verrors.add(
-                                f'{schema_name}',
+                                f'{schema_name}.{i}',
                                 'A failover group number is required when configuring HA.',
                             )
                         if i == 'failover_aliases':
                             verrors.add(
-                                f'{schema_name}',
+                                f'{schema_name}.{i}',
                                 'A virtual IP address is required when configuring HA.'
                             )
                         if i == 'failover_vhid':
                             verrors.add(
-                                f'{schema_name}',
+                                f'{schema_name}.{i}',
                                 'A virtual host ID is required when configuring HA.'
                             )
 
