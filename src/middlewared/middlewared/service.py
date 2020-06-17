@@ -411,6 +411,14 @@ class CRUDService(ServiceChangeMixin, Service):
     CRUD stands for Create Retrieve Update Delete.
     """
 
+    @private
+    async def get_options(self, options):
+        options = options or {}
+        options['extend'] = self._config.datastore_extend
+        options['extend_context'] = self._config.datastore_extend_context
+        options['prefix'] = self._config.datastore_prefix
+        return options
+
     @filterable
     async def query(self, filters=None, options=None):
         if not self._config.datastore:
@@ -422,10 +430,7 @@ class CRUDService(ServiceChangeMixin, Service):
         if not filters:
             filters = []
 
-        options = options or {}
-        options['extend'] = self._config.datastore_extend
-        options['extend_context'] = self._config.datastore_extend_context
-        options['prefix'] = self._config.datastore_prefix
+        options = await self.get_options(options)
 
         # In case we are extending which may transform the result in numerous ways
         # we can only filter the final result.
@@ -580,17 +585,20 @@ class SharingTaskService(CRUDService):
         data[self.locked_field] = await self.middleware.call(
             f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
         )
-        args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
-        return await self.middleware.call(self._config.datastore_extend, *args)
 
-    async def query(self, filters=None, options=None):
-        options = options or {}
-        filters = filters or []
-        options.update({
+        args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
+
+        if self._config.datastore_extend:
+            return await self.middleware.call(self._config.datastore_extend, *args)
+        else:
+            return data
+
+    async def get_options(self, options):
+        return {
+            **(await super().get_options(options)),
             'extend': f'{self._config.namespace}.sharing_task_extend',
             'extend_context': f'{self._config.namespace}.sharing_task_extend_context',
-        })
-        return await super().query(filters, options)
+        }
 
 
 class SharingService(SharingTaskService):
