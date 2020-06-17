@@ -998,14 +998,10 @@ class InterfaceService(CRUDService):
                     if mtu and mtu > (parent_iface.get('mtu') or 1500):
                         verrors.add(
                             f'{schema_name}.mtu',
-                            f'VLAN MTU cannot be bigger than parent interface.',
+                            'VLAN MTU cannot be bigger than parent interface.',
                         )
 
-        failover_licensed = False
-        is_freenas = await self.middleware.call('system.is_freenas')
-        if not is_freenas:
-            failover_licensed = await self.middleware.call('failover.licensed')
-        if is_freenas or not failover_licensed:
+        if not await self.middleware.call('failover.licensed'):
             data.pop('failover_critical', None)
             data.pop('failover_group', None)
             data.pop('failover_aliases', None)
@@ -1019,40 +1015,39 @@ class InterfaceService(CRUDService):
                     'Failover needs to be disabled to perform network configuration changes.'
                 )
 
-            found = True
-            for i in (
-                'failover_critical', 'failover_group', 'failover_aliases', 'failover_vhid',
-            ):
-                if i not in data:
-                    verrors.add(
-                        f'{schema_name}.{i}',
-                        'This attribute is required when configuring HA.',
-                    )
-                    found = False
-            if found:
-                if len(data['aliases']) != len(data['failover_aliases']):
-                    verrors.add(
-                        f'{schema_name}.failover_aliases',
-                        'Number of IPs must be the same between controllers.',
-                    )
+            if not update:
+                failover_attrs = set(['failover_group', 'failover_aliases', 'failover_vhid'])
+                configured_attrs = set([i for i in failover_attrs if data.get(i)])
 
-                if not update or update.get('failover_vhid') != data['failover_vhid']:
-                    # FIXME: lazy load because of TrueNAS
-                    from freenasUI.tools.vhid import scan_for_vrrp
-                    used_vhids = await self.middleware.run_in_thread(
-                        scan_for_vrrp, data['name'], count=None, timeout=5
-                    )
-                    if data['failover_vhid'] in used_vhids:
-                        used_vhids = ', '.join([str(i) for i in used_vhids])
-                        verrors.add(
-                            f'{schema_name}.failover_vhid',
-                            f'The following VHIDs are already in use: {used_vhids}.'
-                        )
+                if configured_attrs:
+                    for i in failover_attrs - configured_attrs:
+                        if i == 'failover_group':
+                            verrors.add(
+                                f'{schema_name}.{i}',
+                                'A failover group number is required when configuring HA.',
+                            )
+                        if i == 'failover_aliases':
+                            verrors.add(
+                                f'{schema_name}.{i}',
+                                'A virtual IP address is required when configuring HA.'
+                            )
+                        if i == 'failover_vhid':
+                            verrors.add(
+                                f'{schema_name}.{i}',
+                                'A virtual host ID is required when configuring HA.'
+                            )
 
-                if data['failover_critical'] and not data['failover_group']:
+            elif update.get('failover_vhid') != data['failover_vhid']:
+                # FIXME: lazy load because of TrueNAS
+                from freenasUI.tools.vhid import scan_for_vrrp
+                used_vhids = await self.middleware.run_in_thread(
+                    scan_for_vrrp, data['name'], count=None, timeout=5
+                )
+                if data['failover_vhid'] in used_vhids:
+                    used_vhids = ', '.join([str(i) for i in used_vhids])
                     verrors.add(
-                        f'{schema_name}.failover_group',
-                        'This attribute is required for critical failover interfaces.',
+                        f'{schema_name}.failover_vhid',
+                        f'The following VHIDs are already in use: {used_vhids}.'
                     )
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
