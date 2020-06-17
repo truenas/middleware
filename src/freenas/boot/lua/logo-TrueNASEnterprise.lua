@@ -30,21 +30,21 @@
 local drawer = require("drawer")
 
 local truenas_color = {
-"   :dd:",
-"    :dMMd::",
-"     :MMMddd:",
-"      dMMMdddd::",
-"      ::ddMMdddMd:",
-"       dddMMMMd:dMd:",
-"       dMMMMMMMd::dMd:",
-"      :MMMMMMMMMMd :dMd",
-"      dMMMMMMMMMMMd  dMd:",
-"     :MMMMMMMMMMMMM:  :dMd",
-"    :MMMMMMMMdddddd:    :Md:",
-"   :ddddddddddddddddddddddd:",
+"         ::dd  dd::",
+"    ::ddMMMMd  dMMMMdd::",
+" :ddMMMMMMdd:  :ddMMMMMMdd:",
+":: ::dd::: ::dd::::::dd:: ::",
+"MMMdd::  :ddMMMMdd:  ::ddMMd",
+"dMMMMMMdd:: :::: ::ddMMMMMMd",
+": ::ddMMMMMMd  dMMMMMMdd::::",
+"Mdd:: ::ddMMd  dMMdd:: ::ddd",
+"MMMMMddd:: ::  :: :::ddMMMMd",
+"::ddMMMMMMdd:  :ddMMMMMMdd::",
+"    ::ddMMMMd  dMMMMdd::",
+"         ::dd  dd::",
 }
 
-drawer.addLogo("TrueNAS", {
+drawer.addLogo("TrueNASEnterprise", {
 	requires_color = false,
 	graphic = truenas_color,
 	shift = {x = 0, y = 6},
