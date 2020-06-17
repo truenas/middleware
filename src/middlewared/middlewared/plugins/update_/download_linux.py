@@ -8,7 +8,7 @@ import requests
 
 from middlewared.service import private, Service
 
-from .utils import SCALE_UPDATE_SERVER
+from .utils import scale_update_server
 
 
 class UpdateService(Service):
@@ -33,7 +33,7 @@ class UpdateService(Service):
             with open(dst, "wb") as f:
                 download_start = time.monotonic()
                 with requests.get(
-                    f"{SCALE_UPDATE_SERVER}/{train}/{train_check['filename']}",
+                    f"{scale_update_server()}/{train}/{train_check['filename']}",
                     stream=True,
                     timeout=30,
                 ) as r:

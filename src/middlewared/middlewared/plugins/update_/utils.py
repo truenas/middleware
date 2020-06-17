@@ -1,9 +1,10 @@
 # -*- coding=utf-8 -*-
+import configparser
 import itertools
 import re
 
+DEFAULT_SCALE_UPDATE_SERVER = "https://update.freenas.org/scale"
 SCALE_MANIFEST_FILE = "/data/manifest.json"
-SCALE_UPDATE_SERVER = "https://update.freenas.org/scale"
 
 UPLOAD_LOCATION = "/var/tmp/firmware"
 
@@ -18,3 +19,9 @@ def can_update(old_version, new_version):
             return False
 
     return False
+
+
+def scale_update_server():
+    cfp = configparser.ConfigParser()
+    cfp.read("/data/update.conf")
+    return cfp.get("Defaults", "url", fallback=DEFAULT_SCALE_UPDATE_SERVER)
