@@ -1072,6 +1072,12 @@ class InterfaceService(CRUDService):
                     'Failover needs to be disabled to perform network configuration changes.'
                 )
 
+                if len(data.get('aliases', [])) != len(data.get('failover_aliases', [])):
+                    verrors.add(
+                        f'{schema_name}.failover_aliases',
+                        'Quanity of IPs must match between the controllers.'
+                    )
+
                 if not update:
                     failover_attrs = set(['failover_group', 'failover_aliases', 'failover_vhid'])
                     configured_attrs = set([i for i in failover_attrs if data.get(i)])
