@@ -1,12 +1,10 @@
 import glob
 import os
-import re
 import subprocess
 
 from .rrd_utils import RRDBase
 
-
-RE_SPACES = re.compile(r'\s{2,}')
+from middlewared.utils import osc
 
 
 class CPUPlugin(RRDBase):
@@ -109,13 +107,21 @@ class MemoryPlugin(RRDBase):
 
     title = 'Physical memory utilization'
     vertical_label = 'Bytes'
-    rrd_types = (
-        ('memory-wired', 'value', '%name%,UN,0,%name%,IF'),
-        ('memory-inactive', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
-        ('memory-laundry', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
-        ('memory-active', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
-        ('memory-free', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
-    )
+    if osc.IS_FREEBSD:
+        rrd_types = (
+            ('memory-wired', 'value', '%name%,UN,0,%name%,IF'),
+            ('memory-inactive', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
+            ('memory-laundry', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
+            ('memory-active', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
+            ('memory-free', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
+        )
+    else:
+        rrd_types = (
+            ('memory-used', 'value', '%name%,UN,0,%name%,IF'),
+            ('memory-free', 'value', '%name%,UN,0,%name%,IF'),
+            ('memory-cached', 'value', '%name%,UN,0,%name%,IF'),
+            ('memory-buffered', 'value', '%name%,UN,0,%name%,IF'),
+        )
 
 
 class LoadPlugin(RRDBase):
@@ -133,15 +139,24 @@ class ProcessesPlugin(RRDBase):
 
     title = 'Processes'
     vertical_label = 'Processes'
-    rrd_types = (
-        ('ps_state-wait', 'value', '%name%,UN,0,%name%,IF'),
-        ('ps_state-idle', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
-        ('ps_state-sleeping', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
-        ('ps_state-running', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
-        ('ps_state-stopped', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
-        ('ps_state-zombies', 'value', '%name%,UN,0,%name%,IF,%name_4%,+'),
-        ('ps_state-blocked', 'value', '%name%,UN,0,%name%,IF,%name_5%,+'),
-    )
+    if osc.IS_FREEBSD:
+        rrd_types = (
+            ('ps_state-wait', 'value', '%name%,UN,0,%name%,IF'),
+            ('ps_state-idle', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
+            ('ps_state-sleeping', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
+            ('ps_state-running', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
+            ('ps_state-stopped', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
+            ('ps_state-zombies', 'value', '%name%,UN,0,%name%,IF,%name_4%,+'),
+            ('ps_state-blocked', 'value', '%name%,UN,0,%name%,IF,%name_5%,+'),
+        )
+    else:
+        rrd_types = (
+            ('ps_state-sleeping', 'value', '%name%,UN,0,%name%,IF'),
+            ('ps_state-running', 'value', '%name%,UN,0,%name%,IF,%name_0%,+'),
+            ('ps_state-stopped', 'value', '%name%,UN,0,%name%,IF,%name_1%,+'),
+            ('ps_state-zombies', 'value', '%name%,UN,0,%name%,IF,%name_2%,+'),
+            ('ps_state-blocked', 'value', '%name%,UN,0,%name%,IF,%name_3%,+'),
+        )
 
 
 class SwapPlugin(RRDBase):
@@ -178,7 +193,7 @@ class DFPlugin(RRDBase):
         ids = []
         cp = subprocess.run(['df', '-t', 'zfs'], capture_output=True, text=True)
         for line in cp.stdout.strip().split('\n'):
-            entry = RE_SPACES.split(line)[-1]
+            entry = line.split()[-1].strip()
             if entry != '/' and not entry.startswith('/mnt'):
                 continue
             path = os.path.join(self._base_path, 'df-' + self.encode(entry), 'df_complex-free.rrd')
