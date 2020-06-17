@@ -19,6 +19,7 @@ def generate_loader_config(middleware):
         generate_debugkernel_loader_config,
         generate_ha_loader_config,
         generate_ec2_config,
+        generate_truenas_logo,
     ]
     if middleware.call_sync("system.is_freenas"):
         generators.append(generate_xen_loader_config)
@@ -28,6 +29,10 @@ def generate_loader_config(middleware):
         config.extend(generator(middleware) or [])
 
     return config
+
+
+def generate_truenas_logo(middleware):
+    return [f'loader_logo="TrueNAS{middleware.call_sync("system.product_type").capitalize()}"']
 
 
 def list_efi_consoles():
