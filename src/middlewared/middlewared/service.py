@@ -556,6 +556,46 @@ class CRUDService(ServiceChangeMixin, Service):
                             {'dependencies': list(dependencies.values())})
 
 
+class SharingTaskService(CRUDService):
+
+    path_field = NotImplemented
+    locked_field = NotImplemented
+
+    @private
+    async def sharing_task_extend_context(self, extra):
+        return {
+            'locked_datasets': await self.middleware.call('zfs.dataset.locked_datasets'),
+            'service_extend': (await self.middleware.call(self._config.datastore_extend_context, extra))
+            if self._config.datastore_extend_context else {}
+        }
+
+    @private
+    async def sharing_task_extend(self, data, context):
+        data[self.locked_field] = await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets', data[self.path_field], context['locked_datasets']
+        )
+        args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
+        return await self.middleware.call(self._config.datastore_extend, *args)
+
+    async def query(self, filters=None, options=None):
+        options = options or {}
+        options.update({
+            'extend': f'{self._config.namespace}.sharing_task_extend',
+            'extend_context': f'{self._config.namespace}.sharing_task_extend_context',
+        })
+        return await super().query(filters, options)
+
+
+class SharingService(SharingTaskService):
+
+    locked_field = 'share_locked'
+
+
+class TaskService(SharingTaskService):
+
+    locked_field = 'task_locked'
+
+
 def is_service_class(service, klass):
     return (
         isinstance(service, klass) or
