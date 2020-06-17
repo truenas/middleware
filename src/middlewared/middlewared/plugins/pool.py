@@ -29,6 +29,7 @@ from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.path import is_child
 from middlewared.utils.shell import join_commandline
 from middlewared.validators import Exact, Match, Or, Range, Time
 
@@ -2575,6 +2576,12 @@ class PoolDatasetService(CRUDService):
             raise CallError('Please specify correct format for input file')
 
         return data
+
+    @private
+    def path_in_locked_datasets(self, path, locked_datasets=None):
+        if locked_datasets is None:
+            locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
+        return any(is_child(path, d['mountpoint']) for d in locked_datasets)
 
     @filterable
     def query(self, filters=None, options=None):
