@@ -116,8 +116,6 @@ class FailoverService(Service):
     @private
     def generate_failover_data(self):
 
-        data = {}
-
         failovercfg = self.middleware.call_sync('failover.config')
         pools = self.middleware.call_sync('pool.query')
         interfaces = self.middleware.call_sync('interface.query')
@@ -152,10 +150,6 @@ class FailoverService(Service):
     def _event(self, ifname, vhid, event):
 
         fobj = self.generate_failover_data()
-
-        if not fobj:
-            self.logger.warning('Unable to acquire failover information! Exiting.')
-            return
 
         if event == 'forcetakeover':
             forcetakeover = True
