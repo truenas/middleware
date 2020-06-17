@@ -570,15 +570,22 @@ class SharingTaskService(CRUDService):
         }
 
     @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        return await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets', data[self.path_field], locked_datasets
+        )
+
+    @private
     async def sharing_task_extend(self, data, context):
         data[self.locked_field] = await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets', data[self.path_field], context['locked_datasets']
+            f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
         )
         args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
         return await self.middleware.call(self._config.datastore_extend, *args)
 
     async def query(self, filters=None, options=None):
         options = options or {}
+        filters = filters or []
         options.update({
             'extend': f'{self._config.namespace}.sharing_task_extend',
             'extend_context': f'{self._config.namespace}.sharing_task_extend_context',
