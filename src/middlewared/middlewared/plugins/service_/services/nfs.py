@@ -1,3 +1,5 @@
+import asyncio
+
 from .base import SimpleService
 
 
@@ -27,6 +29,9 @@ class NFSService(SimpleService):
         await self._freebsd_service("nfsuserd", "stop", force=True)
         await self._freebsd_service("gssd", "stop", force=True)
         await self._freebsd_service("rpcbind", "stop", force=True)
+
+    async def after_stop(self):
+        asyncio.ensure_future(await self.middleware.call("sharing.nfs.remove_alerts_for_unlocked_datasets"))
 
     async def _reload_freebsd(self):
         await self.middleware.call("nfs.setup_v4")

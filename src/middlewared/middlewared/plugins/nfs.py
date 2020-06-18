@@ -249,6 +249,7 @@ class NFSShareModel(sa.Model):
 
 class SharingNFSService(SharingService):
 
+    alert_class = 'NFSShareLocked'
     path_field = 'paths'
 
     class Config:
@@ -590,6 +591,8 @@ class NFSFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             await self.middleware.call('datastore.update', 'sharing.nfs_share', attachment['id'],
                                        {'nfs_enabled': enabled})
+            if enabled:
+                await self.middleware.call('sharing.nfs.remove_alert', attachment['id'])
 
         await self._service_change('nfs', 'reload')
 

@@ -26,4 +26,3 @@ class NFSShareLockedAlertClass(AlertClass, OneShotAlertClass):
             lambda alert: alert.key != str(query),
             alerts
         ))
-
