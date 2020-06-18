@@ -7,7 +7,7 @@ import socket
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
-from middlewared.service import private, CRUDService, SystemServiceService, ValidationError, ValidationErrors
+from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
@@ -247,12 +247,23 @@ class NFSShareModel(sa.Model):
     nfs_enabled = sa.Column(sa.Boolean(), default=True)
 
 
-class SharingNFSService(CRUDService):
+class SharingNFSService(SharingService):
+
+    path_field = 'paths'
+
     class Config:
         namespace = "sharing.nfs"
         datastore = "sharing.nfs_share"
         datastore_prefix = "nfs_"
         datastore_extend = "sharing.nfs.extend"
+
+    @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        for path in data[self.path_field]:
+            if await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets):
+                return True
+        else:
+            return False
 
     @accepts(Dict(
         "sharingnfs_create",
