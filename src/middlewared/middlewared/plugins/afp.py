@@ -282,6 +282,7 @@ class SharingAFPService(SharingService):
                 uuid.UUID(data['vuid'], version=4)
             except ValueError:
                 verrors.add(f'{schema_name}.vuid', 'vuid must be a valid UUID.')
+        await self.validate_path_field(data, schema_name)
 
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):

@@ -40,6 +40,7 @@ class WebDAVSharingService(SharingService):
             )
         else:
             await check_path_resides_within_volume(verrors, self.middleware, f'{schema}.path', data['path'])
+            await self.validate_path_field(data, schema, verrors)
 
         name = data.get('name')
         if not name:

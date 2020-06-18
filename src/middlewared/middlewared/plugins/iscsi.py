@@ -755,8 +755,10 @@ class iSCSITargetExtentService(SharingService):
                 zvol = await self.middleware.call('pool.dataset.query', [['id', '=', zvol_name]])
                 if not zvol:
                     verrors.add(f'{schema_name}.disk', f'Zvol {zvol_name} does not exist')
-                elif zvol[0]['locked']:
+                elif zvol[0]['locked'] and data['enabled']:
                     verrors.add(f'{schema_name}.disk', f'Zvol {zvol_name} is locked')
+                    verrors.add(f'{schema_name}.enabled', 'Extent must be disabled to configure the specified zvol.')
+
         elif extent_type == 'File':
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')
