@@ -1792,7 +1792,13 @@ class WBStatusThread(threading.Thread):
         if data == str(DSStatus.LEAVING.value):
             return
 
-        m = json.loads(data)
+        try:
+            m = json.loads(data)
+        except json.decoder.JSONDecodeError:
+            self.logger.debug("Unable to decode winbind status message: "
+                              "%s", data)
+            return
+
         new_state = self.state
 
         if not self.middleware.call_sync('activedirectory.config')['enable']:
