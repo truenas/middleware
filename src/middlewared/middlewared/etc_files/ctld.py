@@ -213,10 +213,15 @@ def main(middleware):
     zpoollist = {i['name']: i for i in middleware.call_sync('zfs.pool.query')}
 
     system_disks = middleware.call_sync('device.get_disks')
+    locked_extents = [d['id'] for d in middleware.call_sync('iscsi.extent.query', [['extent_locked', '=', True]])]
     # Generate the LUN section
     for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
                                        [['iscsi_target_extent_enabled', '=', True]]):
         extent = Struct(extent)
+        if extent.id in locked_extents:
+            logger.warning('Extent %r is locked, skipping', extent.iscs_target_extent_name)
+            continue
+
         path = extent.iscsi_target_extent_path
         if not path:
             logger.warning('Path for extent id %d is null, skipping', extent.id)
@@ -367,8 +372,8 @@ def main(middleware):
                                         [('iscsi_target', '=', target.id)],
                                         {'order_by': ['nulls_last:iscsi_lunid']}):
             t2e = Struct(t2e)
-            if not t2e.iscsi_extent.iscsi_target_extent_enabled:
-                # Skip adding extents to targets which are not enabled
+            if not t2e.iscsi_extent.iscsi_target_extent_enabled or t2e.iscsi_extent.id in locked_extents:
+                # Skip adding extents to targets which are not enabled or are using locked zvols
                 continue
             if t2e.iscsi_lunid is None:
                 while cur_lunid in used_lunids:
