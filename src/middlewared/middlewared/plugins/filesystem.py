@@ -451,9 +451,12 @@ class FilesystemService(Service):
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 
-        if osc.IS_LINUX or not os.pathconf(path, 64):
+        if osc.IS_LINUX:
             posix1e_acl = self.getacl_posix1e(path, True)
             return True if len(posix1e_acl['acl']) == 3 else False
+
+        if not os.pathconf(path, 64):
+            return True
 
         return acl.ACL(file=path).is_trivial
 
@@ -707,7 +710,11 @@ class FilesystemService(Service):
             raise CallError(f"Failed to get POSIX1e ACL on path [{path}]: {gfacl.stderr.decode()}")
 
         # linux output adds extra line to output if it's an absolute path and extra newline at end.
-        for entry in (gfacl.stdout.decode().splitlines())[:-(int(osc.IS_LINUX))]:
+        entries = gfacl.stdout.decode().splitlines()
+        if osc.IS_LINUX:
+            entries = entries[:-1]
+
+        for entry in entries:
             if entry.startswith("#"):
                 continue
             ace = {
@@ -825,8 +832,9 @@ class FilesystemService(Service):
     @private
     def setacl_posix1e(self, job, data):
         job.set_progress(0, 'Preparing to set acl.')
-        if osc.IS_FREEBSD and os.pathconf(data['path'], 64):
-            raise CallError(f"POSIX1e ACLS are not supported on path {data['path']}", errno.EOPNOTSUPP)
+        if osc.IS_FREEBSD:
+            raise CallError("POSIX1e brand ACLs not supported on the FreeBSD-based TrueNAS platform",
+                            errno.EOPNOTSUPP)
 
         options = data['options']
         recursive = options.get('recursive')
