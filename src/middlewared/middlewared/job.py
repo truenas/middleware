@@ -213,9 +213,8 @@ class Job(object):
     Represents a long running call, methods marked with @job decorator
     """
 
-    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes,
-                 on_progress_cb=None):
-        self._finished = asyncio.Event()
+    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb):
+        self._finished = asyncio.Event(loop=middleware.loop)
         self.middleware = middleware
         self.method_name = method_name
         self.serviceobj = serviceobj
@@ -223,6 +222,7 @@ class Job(object):
         self.args = args
         self.options = options
         self.pipes = pipes or Pipes(input=None, output=None)
+        self.on_progress_cb = on_progress_cb
 
         self.id = None
         self.lock = None
@@ -232,7 +232,6 @@ class Job(object):
         self.exc_info = None
         self.aborted = False
         self.state = State.WAITING
-        self.on_progress_cb = on_progress_cb
         self.progress = {
             'percent': None,
             'description': None,
@@ -241,7 +240,7 @@ class Job(object):
         self.internal_data = {}
         self.time_started = datetime.utcnow()
         self.time_finished = None
-        self.loop = asyncio.get_event_loop()
+        self.loop = self.middleware.loop
         self.future = None
 
         self.logs_path = None

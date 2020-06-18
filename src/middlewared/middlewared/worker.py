@@ -9,14 +9,13 @@ import setproctitle
 from . import logger
 from .common.environ import environ_update
 from .utils import LoadPluginsMixin
-from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 import middlewared.utils.osc as osc
-from .utils.run_in_thread import RunInThreadMixin
+from .utils.service.call import ServiceCallMixin
 
 MIDDLEWARE = None
 
 
-class FakeMiddleware(LoadPluginsMixin, RunInThreadMixin):
+class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
     """
     Implements same API from real middleware
     """
@@ -24,13 +23,12 @@ class FakeMiddleware(LoadPluginsMixin, RunInThreadMixin):
     def __init__(self, overlay_dirs):
         super().__init__(overlay_dirs)
         self.client = None
-        self.logger = logger.Logger('worker')
-        self.logger.getLogger()
-        self.logger.configure_logging('console')
+        _logger = logger.Logger('worker')
+        self.logger = _logger.getLogger()
+        _logger.configure_logging('console')
         self.loop = asyncio.get_event_loop()
-        self.run_in_thread_executor = IoThreadPoolExecutor('IoThread', 1)
 
-    async def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False, job=None):
+    def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, io_thread=False, job=None):
         try:
             with Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True) as c:
                 self.client = c
@@ -38,34 +36,29 @@ class FakeMiddleware(LoadPluginsMixin, RunInThreadMixin):
                 if job and job_options:
                     params = list(params) if params else []
                     params.insert(0, FakeJob(job['id'], self.client))
-                if asyncio.iscoroutinefunction(methodobj):
-                    return await methodobj(*params)
-                else:
-                    return methodobj(*params)
+                return methodobj(*params)
         finally:
             self.client = None
 
-    async def _run(self, name, args, job=None):
-        service, method = name.rsplit('.', 1)
-        serviceobj = self.get_service(service)
-        methodobj = getattr(serviceobj, method)
-        return await self._call(name, serviceobj, methodobj, params=args, job=job)
-
-    async def call(self, method, *params, timeout=None, **kwargs):
-        """
-        Calls a method using middleware client
-        """
-        return self.client.call(method, *params, timeout=timeout, **kwargs)
+    def _run(self, name, args, job):
+        serviceobj, methodobj = self._method_lookup(name)
+        return self._call(name, serviceobj, methodobj, args, job=job)
 
     def call_sync(self, method, *params, timeout=None, **kwargs):
         """
         Calls a method using middleware client
         """
-        return self.client.call(method, *params, timeout=timeout, **kwargs)
+        serviceobj, methodobj = self._method_lookup(method)
 
-    async def call_hook(self, name, *args, **kwargs):
-        with Client(py_exceptions=True) as c:
-            return c.call('core.call_hook', name, args, kwargs)
+        if (
+            serviceobj._config.process_pool and
+            not hasattr(method, '_job') and
+            not asyncio.iscoroutinefunction(methodobj)
+        ):
+            self.logger.trace('Calling %r in current process', method)
+            return methodobj(*params)
+
+        return self.client.call(method, *params, timeout=timeout, **kwargs)
 
     def send_event(self, name, event_type, **kwargs):
         with Client(py_exceptions=True) as c:
@@ -94,10 +87,8 @@ class FakeJob(object):
 
 def main_worker(*call_args):
     global MIDDLEWARE
-    loop = asyncio.get_event_loop()
-    coro = MIDDLEWARE._run(*call_args)
     try:
-        res = loop.run_until_complete(coro)
+        res = MIDDLEWARE._run(*call_args)
     except SystemExit:
         raise RuntimeError('Worker call raised SystemExit exception')
     # TODO: python cant pickle generator for obvious reasons, we should implement

@@ -373,8 +373,8 @@ class ZFSPoolService(CRUDService):
                     )
 
     @accepts(Str('pool'))
-    async def find_not_online(self, pool):
-        pool = await self.middleware.call('zfs.pool.query', [['id', '=', pool]], {'get': True})
+    def find_not_online(self, pool):
+        pool = self.middleware.call_sync('zfs.pool.query', [['id', '=', pool]], {'get': True})
 
         unavails = []
         for nodes in pool['groups'].values():
