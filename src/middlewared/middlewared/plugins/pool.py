@@ -2119,7 +2119,9 @@ class PoolDatasetService(CRUDService):
         elif id == (await self.middleware.call('systemdataset.config'))['pool']:
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
-        await job.wrap(await self.middleware.call('pool.dataset.toggle_attachments', ds['mountpoint']))
+        await job.wrap(await self.middleware.call(
+            'pool.dataset.toggle_attachments', self.__attachments_path(ds), True
+        ))
 
         await self.middleware.call(
             'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
@@ -2247,7 +2249,7 @@ class PoolDatasetService(CRUDService):
                 unlocked.append(name)
 
         if options['toggle_attachments'] and not failed:
-            j = self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset))
+            j = self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset), False)
             j.wait_sync()
 
         if unlocked:
@@ -2269,12 +2271,9 @@ class PoolDatasetService(CRUDService):
 
     @private
     @job(lock=lambda args: f'toggle_attachments_{args[0]}')
-    async def toggle_attachments(self, job, path):
+    async def toggle_attachments(self, job, path, enabled):
         for delegate in self.attachment_delegates:
-            if delegate.name in ('jail', 'vm'):
-                await delegate.toggle((await delegate.query(path, False)), True)
-            else:
-                await delegate.toggle([], True)
+            await delegate.toggle((await delegate.query(path, enabled)), not enabled)
 
     @accepts(
         Str('id'),
