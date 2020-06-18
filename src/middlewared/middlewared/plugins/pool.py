@@ -2101,7 +2101,8 @@ class PoolDatasetService(CRUDService):
             Bool('force_umount', default=False),
         )
     )
-    async def lock(self, id, options):
+    @job(lock=lambda args: f'dataset_{args[0]}')
+    async def lock(self, job, id, options):
         """
         Locks `id` dataset. It will unmount the dataset and its children before locking.
         """
@@ -2117,6 +2118,8 @@ class PoolDatasetService(CRUDService):
             raise CallError(f'Please lock {ds["encryption_root"]}. Only encryption roots can be locked.')
         elif id == (await self.middleware.call('systemdataset.config'))['pool']:
             raise CallError(f'Please move system dataset to another pool before locking {id}')
+
+        await job.wrap(await self.middleware.call('pool.dataset.toggle_attachments', ds['mountpoint']))
 
         await self.middleware.call(
             'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
