@@ -5,7 +5,7 @@ from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
-from .service import CRUDService
+import middlewared.service
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
 from .utils import osc, start_daemon_thread, sw_version, LoadPluginsMixin
 from .utils.debug import get_frame_details, get_threads_stacks
@@ -1182,7 +1182,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
         if serviceobj._config.process_pool:
             self.logger.trace('Calling %r in process pool', name)
-            if isinstance(serviceobj, CRUDService):
+            if isinstance(serviceobj, middlewared.service.CRUDService):
                 service_name, method_name = name.rsplit('.', 1)
                 if method_name in ['create', 'update', 'delete']:
                     name = f'{service_name}.do_{method_name}'
