@@ -563,7 +563,7 @@ class CRUDService(ServiceChangeMixin, Service):
 
 class SharingTaskService(CRUDService):
 
-    path_field = NotImplemented
+    path_field = 'path'
     locked_field = NotImplemented
 
     @private
@@ -582,16 +582,16 @@ class SharingTaskService(CRUDService):
 
     @private
     async def sharing_task_extend(self, data, context):
+        args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
+
+        if self._config.datastore_extend:
+            data = await self.middleware.call(self._config.datastore_extend, *args)
+
         data[self.locked_field] = await self.middleware.call(
             f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
         )
 
-        args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
-
-        if self._config.datastore_extend:
-            return await self.middleware.call(self._config.datastore_extend, *args)
-        else:
-            return data
+        return data
 
     async def get_options(self, options):
         return {

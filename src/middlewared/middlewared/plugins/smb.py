@@ -1,7 +1,6 @@
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
-from middlewared.service import (SystemServiceService, ValidationErrors,
-                                 accepts, job, private, CRUDService)
+from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
@@ -592,7 +591,7 @@ class SharingSMBModel(sa.Model):
     cifs_share_acl = sa.Column(sa.Text())
 
 
-class SharingSMBService(CRUDService):
+class SharingSMBService(SharingService):
     class Config:
         namespace = 'sharing.smb'
         datastore = 'sharing.cifs_share'

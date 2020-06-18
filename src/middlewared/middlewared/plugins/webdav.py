@@ -4,7 +4,7 @@ import os
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
-from middlewared.service import CRUDService, SystemServiceService, private
+from middlewared.service import SharingService, SystemServiceService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
 
@@ -21,7 +21,7 @@ class WebDAVSharingModel(sa.Model):
     webdav_enabled = sa.Column(sa.Boolean(), default=True)
 
 
-class WebDAVSharingService(CRUDService):
+class WebDAVSharingService(SharingService):
 
     class Config:
         datastore = 'sharing.webdav_share'

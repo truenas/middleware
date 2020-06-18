@@ -7,8 +7,7 @@ from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
                                 Patch, UnixPerm)
 from middlewared.validators import IpAddress, Range
-from middlewared.service import (SystemServiceService, ValidationErrors,
-                                 CRUDService, private)
+from middlewared.service import SystemServiceService, ValidationErrors, SharingService, private
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
@@ -145,7 +144,7 @@ class SharingAFPModel(sa.Model):
     afp_vuid = sa.Column(sa.String(36))
 
 
-class SharingAFPService(CRUDService):
+class SharingAFPService(SharingService):
     class Config:
         namespace = 'sharing.afp'
         datastore = 'sharing.afp_share'

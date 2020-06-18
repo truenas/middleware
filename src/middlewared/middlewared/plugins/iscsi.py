@@ -2,9 +2,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, private
-)
+from middlewared.service import CallError, CRUDService, private, SharingService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
 from middlewared.utils.path import is_child
@@ -474,7 +472,9 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_vendor = sa.Column(sa.Text(), nullable=True)
 
 
-class iSCSITargetExtentService(CRUDService):
+class iSCSITargetExtentService(SharingService):
+
+    locked_field = 'extent_locked'
 
     class Config:
         namespace = 'iscsi.extent'
@@ -482,6 +482,16 @@ class iSCSITargetExtentService(CRUDService):
         datastore_prefix = 'iscsi_target_extent_'
         datastore_extend = 'iscsi.extent.extend'
         datastore_extend_context = 'iscsi.extent.extent_extend_context'
+
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        if data['type'] == 'DISK':
+            if data['disk'].startswith('zvol/'):
+                return any(data['disk'][5:] == d['id'] for d in locked_datasets)
+            else:
+                # It is a disk
+                return False
+        else:
+            return await super().sharing_task_determine_locked(data, locked_datasets)
 
     @accepts(Dict(
         'iscsi_extent_create',
