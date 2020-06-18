@@ -132,12 +132,13 @@ def render(service, middleware):
     cf_contents.append("\tlog level = default:%s\n" % AFPLogLevel[afp.afp_srv_loglevel].value)
     cf_contents.append("\n")
 
-    locked_shares = middleware.call_sync('sharing.afp.query', [['share_locked', '=', True]])
+    locked_shares = {d['id']: d for d in middleware.call_sync('sharing.afp.query', [['share_locked', '=', True]])}
 
     for share in middleware.call_sync('datastore.query', 'sharing.afp_share', [['afp_enabled', '=', True]]):
         share = Struct(share)
-        if any(share.id == l['id'] for l in locked_shares):
+        if share.id in locked_shares:
             middleware.logger.debug('Skipping generation of %r afp share because it\'s locked', share.afp_name)
+            middleware.call_sync('alert.oneshot_create', 'AFPShareLocked', locked_shares[share.id])
             continue
 
         if share.afp_home:
