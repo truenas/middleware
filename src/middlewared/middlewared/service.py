@@ -564,7 +564,9 @@ class CRUDService(ServiceChangeMixin, Service):
 class SharingTaskService(CRUDService):
 
     path_field = 'path'
+    enabled_field = 'enabled'
     locked_field = NotImplemented
+    service_type = NotImplemented
 
     @private
     async def sharing_task_extend_context(self, extra):
@@ -573,6 +575,22 @@ class SharingTaskService(CRUDService):
             'service_extend': (await self.middleware.call(self._config.datastore_extend_context, extra))
             if self._config.datastore_extend_context else {}
         }
+
+    @private
+    async def validate_path_field(self, data, schema, verrors=None):
+        verrors = verrors or ValidationErrors()
+        if data[self.enabled_field] and await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets', data[self.path_field]
+        ):
+            verrors.add(
+                f'{schema}.{self.path_field}',
+                'Underlying resource is locked.'
+            )
+            verrors.add(
+                f'{schema}.{self.enabled_field}',
+                f'{self.service_type.capitalized()} must be disabled to configure the specified resource(s).'
+            )
+        return verrors
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
@@ -604,11 +622,13 @@ class SharingTaskService(CRUDService):
 class SharingService(SharingTaskService):
 
     locked_field = 'share_locked'
+    service_type = 'share'
 
 
 class TaskService(SharingTaskService):
 
     locked_field = 'task_locked'
+    service_type = 'task'
 
 
 def is_service_class(service, klass):
