@@ -12,6 +12,7 @@ from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.io_thread_pool_executor import IoThreadPoolExecutor
 from .utils.profile import profile_wrap
 from .utils.run_in_thread import RunInThreadMixin
+from .utils.service.call import ServiceCallMixin
 from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
@@ -763,7 +764,14 @@ class ShellApplication(object):
         await self.middleware.run_in_thread(t_worker.join)
 
 
-class Middleware(LoadPluginsMixin, RunInThreadMixin):
+class PreparedCall:
+    def __init__(self, args=None, executor=None, job=None):
+        self.args = args
+        self.executor = executor
+        self.job = job
+
+
+class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
@@ -916,7 +924,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
     async def __periodic_task_wrapper(self, method, service_name, service_obj, method_name, interval):
         self.logger.trace("Calling periodic task %s", method_name)
         try:
-            await self._call(method_name, service_obj, method)
+            await self._call(method_name, service_obj, method, [])
         except Exception:
             self.logger.warning("Exception while calling periodic task", exc_info=True)
 
@@ -1125,9 +1133,8 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
     def pipe(self):
         return Pipe(self)
 
-    async def _call(
-        self, name, serviceobj, methodobj, params=None, app=None, pipes=None,
-        job_on_progress_cb=None, io_thread=True,
+    def _call_prepare(
+        self, name, serviceobj, methodobj, params, app=None, io_thread=True, job_on_progress_cb=None, pipes=None,
     ):
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -1140,58 +1147,47 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
         # entry to keep track of its state.
         job_options = getattr(methodobj, '_job', None)
         if job_options:
-            # Currently its only a boolean
-            if serviceobj._config.process_pool is True:
+            if serviceobj._config.process_pool:
                 job_options['process'] = True
             # Create a job instance with required args
-            job = Job(
-                self, name, serviceobj, methodobj, args, job_options, pipes,
-                on_progress_cb=job_on_progress_cb,
-            )
+            job = Job(self, name, serviceobj, methodobj, args, job_options, pipes, job_on_progress_cb)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             job = self.jobs.add(job)
+            return PreparedCall(job=job)
+
+        if hasattr(methodobj, '_thread_pool'):
+            executor = methodobj._thread_pool
+        elif serviceobj._config.thread_pool:
+            executor = serviceobj._config.thread_pool
+        elif io_thread:
+            executor = self.run_in_thread_executor
         else:
-            job = None
+            executor = self.__ws_threadpool
 
-        if job:
-            return job
-        else:
+        return PreparedCall(args=args, executor=executor)
 
-            # Currently its only a boolean
-            if serviceobj._config.process_pool is True:
-                return await self._call_worker(name, *args)
+    async def _call(
+        self, name, serviceobj, methodobj, params, **kwargs,
+    ):
+        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, **kwargs)
 
-            if asyncio.iscoroutinefunction(methodobj):
-                return await methodobj(*args)
+        if prepared_call.job:
+            return prepared_call.job
 
-            tpool = None
-            if serviceobj._config.thread_pool:
-                tpool = serviceobj._config.thread_pool
-            if hasattr(methodobj, '_thread_pool'):
-                tpool = methodobj._thread_pool
-            if tpool:
-                return await self.run_in_executor(tpool, methodobj, *args)
+        if asyncio.iscoroutinefunction(methodobj):
+            self.logger.trace('Calling %r in current IO loop', name)
+            return await methodobj(*prepared_call.args)
 
-            if io_thread:
-                run_method = self.run_in_thread
-            else:
-                run_method = self._run_in_conn_threadpool
-            return await run_method(methodobj, *args)
+        if serviceobj._config.process_pool:
+            self.logger.trace('Calling %r in process pool', name)
+            return await self._call_worker(name, *prepared_call.args)
+
+        self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
+        return await self.run_in_executor(prepared_call.executor, methodobj, *prepared_call.args)
 
     async def _call_worker(self, name, *args, job=None):
         return await self.run_in_proc(main_worker, name, args, job)
-
-    def _method_lookup(self, name):
-        if '.' not in name:
-            raise CallError('Invalid method name', errno.EBADMSG)
-        try:
-            service, method_name = name.rsplit('.', 1)
-            serviceobj = self.get_service(service)
-            methodobj = getattr(serviceobj, method_name)
-        except (AttributeError, KeyError):
-            raise CallError(f'Method "{method_name}" not found in "{service}"', CallError.ENOMETHOD)
-        return serviceobj, methodobj
 
     def dump_args(self, args, method=None, method_name=None):
         if method is None:
@@ -1218,28 +1214,42 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin):
 
         if profile:
             methodobj = profile_wrap(methodobj)
+
         return await self._call(
             name, serviceobj, methodobj, params,
-            app=app, pipes=pipes, job_on_progress_cb=job_on_progress_cb, io_thread=True,
+            app=app, io_thread=True, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
     def call_sync(self, name, *params, job_on_progress_cb=None, wait=True):
-        """
-        Synchronous method call to be used from another thread.
-        """
-
         serviceobj, methodobj = self._method_lookup(name)
-        # This method is already being called from a thread so we cant use the same
-        # thread pool or we may get in a deadlock situation if all threads in the default
-        # pool are waiting.
-        # Instead we launch a new thread just for that call (io_thread).
-        return self.run_coroutine(
-            self._call(
-                name, serviceobj, methodobj, params,
-                io_thread=True, job_on_progress_cb=job_on_progress_cb,
-            ),
-            wait=wait,
-        )
+
+        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb)
+
+        if prepared_call.job:
+            return prepared_call.job
+
+        if asyncio.iscoroutinefunction(methodobj):
+            self.logger.trace('Calling %r in main IO loop', name)
+            return self.run_coroutine(methodobj(*prepared_call.args))
+
+        if serviceobj._config.process_pool:
+            self.logger.trace('Calling %r in process pool', name)
+            return self.run_coroutine(self._call_worker(name, *prepared_call.args))
+
+        if not self._in_executor(prepared_call.executor):
+            self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
+            return self.run_coroutine(self.run_in_executor(prepared_call.executor, methodobj, *prepared_call.args))
+
+        self.logger.trace('Calling %r in current thread', name)
+        return methodobj(*prepared_call.args)
+
+    def _in_executor(self, executor):
+        if isinstance(executor, concurrent.futures.thread.ThreadPoolExecutor):
+            return threading.current_thread() in executor._threads
+        elif isinstance(executor, IoThreadPoolExecutor):
+            return any(worker.thread == threading.current_thread() for worker in executor.workers)
+        else:
+            raise RuntimeError(f"Unknown executor: {executor!r}")
 
     def run_coroutine(self, coro, wait=True):
         if threading.get_ident() == self.__thread_id:
