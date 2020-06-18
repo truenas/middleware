@@ -1844,7 +1844,8 @@ class WBStatusThread(threading.Thread):
         while not self.finished.is_set():
             with open('/var/run/samba4/.wb_fifo') as f:
                 data = f.read()
-                self.parse_msg(data)
+                for msg in data.splitlines():
+                    self.parse_msg(msg)
 
         self.logger.debug('exiting winbind messaging thread')
 
