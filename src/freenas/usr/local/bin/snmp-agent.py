@@ -64,6 +64,7 @@ zpool_table = agent.Table(
         agent.Integer32()
     ],
     columns=[
+        (1, agent.Integer32()),
         (2, agent.DisplayString()),
         (3, agent.Integer32()),
         (4, agent.Integer32()),
@@ -87,6 +88,7 @@ dataset_table = agent.Table(
         agent.Integer32()
     ],
     columns=[
+        (1, agent.Integer32()),
         (2, agent.DisplayString()),
         (3, agent.Integer32()),
         (4, agent.Integer32()),
@@ -101,6 +103,7 @@ zvol_table = agent.Table(
         agent.Integer32()
     ],
     columns=[
+        (1, agent.Integer32()),
         (2, agent.DisplayString()),
         (3, agent.Integer32()),
         (4, agent.Integer32()),
@@ -115,6 +118,7 @@ temp_sensors_table = agent.Table(
         agent.Integer32(),
     ],
     columns=[
+        (1, agent.Integer32()),
         (2, agent.DisplayString()),
         (3, agent.Unsigned32()),
     ]
@@ -294,6 +298,7 @@ if __name__ == "__main__":
             zpool_table.clear()
             for i, zpool in enumerate(zfs.pools):
                 row = zpool_table.addRow([agent.Integer32(i + 1)])
+                row.setRowCell(1, agent.Integer32(i + 1))
                 row.setRowCell(2, agent.DisplayString(zpool.properties["name"].value))
                 allocation_units, \
                     (
@@ -329,6 +334,7 @@ if __name__ == "__main__":
             dataset_table.clear()
             for i, dataset in enumerate(datasets):
                 row = dataset_table.addRow([agent.Integer32(i + 1)])
+                row.setRowCell(1, agent.Integer32(i + 1))
                 row.setRowCell(2, agent.DisplayString(dataset.properties["name"].value))
                 allocation_units, (
                     size,
@@ -347,6 +353,7 @@ if __name__ == "__main__":
             zvol_table.clear()
             for i, zvol in enumerate(zvols):
                 row = zvol_table.addRow([agent.Integer32(i + 1)])
+                row.setRowCell(1, agent.Integer32(i + 1))
                 row.setRowCell(2, agent.DisplayString(zvol.properties["name"].value))
                 allocation_units, (
                     volsize,
@@ -365,6 +372,7 @@ if __name__ == "__main__":
             temp_sensors_table.clear()
             for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
                 row = temp_sensors_table.addRow([agent.Integer32(i + 1)])
+                row.setRowCell(1, agent.Integer32(i + 1))
                 row.setRowCell(2, agent.DisplayString(f"CPU{i}"))
                 row.setRowCell(3, agent.Unsigned32(temp))
 
