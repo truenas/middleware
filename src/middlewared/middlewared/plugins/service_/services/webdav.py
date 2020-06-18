@@ -1,3 +1,5 @@
+import asyncio
+
 from .base import SimpleService
 
 
@@ -11,3 +13,6 @@ class WebDAVService(SimpleService):
     freebsd_procname = "httpd"
 
     systemd_unit = "apache2"
+
+    async def after_stop(self):
+        asyncio.ensure_future("sharing.webdav.remove_alerts_for_unlocked_datasets")

@@ -50,4 +50,3 @@ class ISCSIExtentLockedAlertClass(AlertClass, OneShotAlertClass):
             lambda alert: alert.key != str(query),
             alerts
         ))
-

@@ -145,6 +145,9 @@ class SharingAFPModel(sa.Model):
 
 
 class SharingAFPService(SharingService):
+
+    alert_class = 'AFPShareLocked'
+
     class Config:
         namespace = 'sharing.afp'
         datastore = 'sharing.afp_share'
@@ -408,8 +411,11 @@ class AFPFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
-            await self.middleware.call('datastore.update', 'sharing.afp_share', attachment['id'],
-                                       {'afp_enabled': enabled})
+            await self.middleware.call(
+                'datastore.update', 'sharing.afp_share', attachment['id'], {'afp_enabled': enabled}
+            )
+            if enabled:
+                await self.middleware.call('sharing.afp.remove_alert', attachment['id'])
 
         if enabled:
             await self._service_change('afp', 'reload')

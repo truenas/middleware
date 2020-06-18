@@ -567,6 +567,7 @@ class SharingTaskService(CRUDService):
     enabled_field = 'enabled'
     locked_field = NotImplemented
     service_type = NotImplemented
+    alert_class = NotImplemented
 
     @private
     async def sharing_task_extend_context(self, extra):
@@ -617,6 +618,17 @@ class SharingTaskService(CRUDService):
             'extend': f'{self._config.namespace}.sharing_task_extend',
             'extend_context': f'{self._config.namespace}.sharing_task_extend_context',
         }
+
+    @private
+    async def remove_alert(self, share_task_id):
+        await self.middleware.call('alert.oneshot_delete', self.alert_class, share_task_id)
+
+    @private
+    async def remove_alerts_for_unlocked_datasets(self):
+        for unlocked_shares in await self.middleware.call(
+            f'{self._config.namespace}.query', [[self.locked_field, '=', False]]
+        ):
+            await self.remove_alert(unlocked_shares['id'])
 
 
 class SharingService(SharingTaskService):

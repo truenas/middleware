@@ -475,6 +475,7 @@ class iSCSITargetExtentModel(sa.Model):
 class iSCSITargetExtentService(SharingService):
 
     locked_field = 'extent_locked'
+    alert_class = 'ISCSIExtentLocked'
 
     class Config:
         namespace = 'iscsi.extent'
@@ -1603,13 +1604,13 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
             await asyncio.sleep(5)
 
     async def toggle(self, attachments, enabled):
-        lun_ids = []
         for attachment in attachments:
-            for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
-                lun_ids.append(te['lunid'])
-
-            await self.middleware.call('datastore.update', 'services.iscsitargetextent', attachment['id'],
-                                       {'iscsi_target_extent_enabled': enabled})
+            await self.middleware.call(
+                'datastore.update', 'services.iscsitargetextent',
+                attachment['id'], {'iscsi_target_extent_enabled': enabled}
+            )
+            if enabled:
+                await self.middleware.call('iscsi.extent.remove_alert', attachment['id'])
 
         await self._service_change('iscsitarget', 'reload')
 
