@@ -5,33 +5,32 @@
 
 from subprocess import call
 from sys import argv
-from os import path, getcwd, makedirs, listdir
+import os
 import getopt
 import sys
-import re
 import random
 import string
+from platform import system
 
 major_v = sys.version_info.major
 minor_v = sys.version_info.minor
-version = f"{major_v}.{minor_v}"
-apifolder = getcwd()
-sys.path.append(apifolder)
-workdir = getcwd()
+version = f"{major_v}" if system() == "Linux" else f"{major_v}.{minor_v}"
+workdir = os.getcwd()
+sys.path.append(workdir)
+workdir = os.getcwd()
 results_xml = f'{workdir}/results/'
-localHome = path.expanduser('~')
+localHome = os.path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
 
-ixautomationdotconfurl = "https://raw.githubusercontent.com/iXsystems/"
-ixautomationdotconfurl += "ixautomation/master/src/etc/ixautomation.conf.dist"
+ixautomation_dot_conf_url = "https://raw.githubusercontent.com/iXsystems/" \
+    "ixautomation/master/src/etc/ixautomation.conf.dist"
 config_file_msg = "Please add config.py to freenas/tests which can be empty " \
-    f"or contain settings from {ixautomationdotconfurl}"
+    f"or contain settings from {ixautomation_dot_conf_url}"
 
-try:
-    import config
-except ImportError:
-    raise ImportError(config_file_msg)
+if not os.path.exists('config.py'):
+    print(config_file_msg)
+    exit(1)
 
 error_msg = """Usage for %s:
 Mandatory option
@@ -70,7 +69,7 @@ except getopt.GetoptError as e:
     exit()
 
 vm_name = None
-testName = None
+testName = ''
 testexpr = None
 ha = False
 scale = False
@@ -127,11 +126,11 @@ cfg_file.close()
 
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
 from functions import SSH_TEST
-# Setup ssh agent befor starting test.
+# Setup ssh agent before starting test.
 setup_ssh_agent()
-if path.isdir(dotsshPath) is False:
-    makedirs(dotsshPath)
-if path.exists(keyPath) is False:
+if os.path.isdir(dotsshPath) is False:
+    os.makedirs(dotsshPath)
+if os.path.exists(keyPath) is False:
     create_key(keyPath)
 add_ssh_key(keyPath)
 
@@ -139,47 +138,19 @@ f = open(keyPath + '.pub', 'r')
 Key = f.readlines()[0].rstrip()
 
 cfg_file = open("auto_config.py", 'a')
-cfg_file.writelines('sshKey = "%s"\n' % Key)
+cfg_file.writelines(f'sshKey = "{Key}"\n')
 cfg_file.close()
 
 
-def get_tests():
-    rv = []
-    sv = []
-    ev = []
-    skip_tests = []
-
-    if ha is True:
-        skip_tests += ['interfaces', 'network', 'delete_interfaces', 'jail', 'plugin', 'update', 'host_key']
-    else:
-        skip_tests += ['host_key']
-    if scale is True:
-        skip_tests += ['jail', 'plugin', 'pool_aclmode']
-    else:
-        skip_tests += ['pool_acltype']
-    apidir = 'api2/'
-    if ha is True:
-        sv = ['ssh', 'pool', 'user']
-        ev = ['delete_user']
-    else:
-        sv = ['ssh', 'interfaces', 'network', 'pool_dataset_encryption', 'pool', 'user']
-        ev = ['update', 'delete_interfaces', 'delete_user']
-    for filename in listdir(apidir):
-        if filename.endswith('.py') and not filename.startswith('__init__'):
-            filename = re.sub('.py$', '', filename)
-            if filename not in skip_tests and filename not in sv and filename not in ev:
-                rv.append(filename)
-    rv.sort()
-    return sv + rv + ev
-
-
-for i in get_tests():
-    if testName is not None and testName != i:
-        continue
-    call([f"py.test-{version}", "-v", "--junitxml",
-          f"{results_xml}{i}_tests_result.xml"] + (
-              ["-k", testexpr] if testexpr else []
-    ) + [f"api2/{i}.py"])
+call(
+    [
+        f"py.test-{version}",
+        "-v",
+        "--junitxml",
+        'api_v2_tests_result.xml',
+        f"api2/{testName}"
+    ]
+)
 
 # get useful logs
 artifacts = f"{workdir}/artifacts/"
@@ -189,19 +160,19 @@ logs_list = [
     "/var/log/debug.log",
     "/var/log/console.log"
 ]
-if not path.exists(artifacts):
-    makedirs(artifacts)
+if not os.path.exists(artifacts):
+    os.makedirs(artifacts)
 
 for log in logs_list:
     get_file(log, artifacts, 'root', 'testing', ip)
 
-# get dmesg and put it in artifacs
+# get dmesg and put it in artifacts
 results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/dmesg', 'w')
 dmsg.writelines(results['output'])
 dmsg.close()
 
-# get core.get_jobs and put it in artifacs
+# get core.get_jobs and put it in artifacts
 results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/core_get_job', 'w')
 dmsg.writelines(results['output'])
