@@ -249,7 +249,7 @@ class NFSShareModel(sa.Model):
 
 class SharingNFSService(SharingService):
 
-    alert_class = 'NFSShareLocked'
+    locked_alert_class = 'NFSShareLocked'
     path_field = 'paths'
 
     class Config:

@@ -23,7 +23,7 @@ class WebDAVSharingModel(sa.Model):
 
 class WebDAVSharingService(SharingService):
 
-    alert_class = 'WebDAVShareLocked'
+    locked_alert_class = 'WebDAVShareLocked'
 
     class Config:
         datastore = 'sharing.webdav_share'
@@ -41,7 +41,6 @@ class WebDAVSharingService(SharingService):
                 'This field is required'
             )
         else:
-            await check_path_resides_within_volume(verrors, self.middleware, f'{schema}.path', data['path'])
             await self.validate_path_field(data, schema, verrors)
 
         name = data.get('name')

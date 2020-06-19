@@ -24,6 +24,7 @@ from middlewared.logger import Logger, reconfigure_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 from middlewared.utils.type import copy_function_metadata
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Range, IpAddress
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
@@ -567,7 +568,7 @@ class SharingTaskService(CRUDService):
     enabled_field = 'enabled'
     locked_field = NotImplemented
     service_type = NotImplemented
-    alert_class = NotImplemented
+    locked_alert_class = NotImplemented
 
     @private
     async def sharing_task_extend_context(self, extra):
@@ -580,6 +581,9 @@ class SharingTaskService(CRUDService):
     @private
     async def validate_path_field(self, data, schema, verrors=None):
         verrors = verrors or ValidationErrors()
+        await check_path_resides_within_volume(
+            verrors, self.middleware, f'{schema}.{self.path_field}', data.get(self.path_field)
+        )
         if data[self.enabled_field] and await self.middleware.call(
             'pool.dataset.path_in_locked_datasets', data[self.path_field]
         ):
@@ -621,7 +625,7 @@ class SharingTaskService(CRUDService):
 
     @private
     async def remove_alert(self, share_task_id):
-        await self.middleware.call('alert.oneshot_delete', self.alert_class, share_task_id)
+        await self.middleware.call('alert.oneshot_delete', self.locked_alert_class, share_task_id)
 
     @private
     async def remove_alerts_for_unlocked_datasets(self):
