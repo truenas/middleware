@@ -133,6 +133,7 @@ class RsyncModModel(sa.Model):
     rsyncmod_hostsallow = sa.Column(sa.Text())
     rsyncmod_hostsdeny = sa.Column(sa.Text())
     rsyncmod_auxiliary = sa.Column(sa.Text())
+    rsyncmod_enabled = sa.Column(sa.Boolean())
 
 
 class RsyncModService(CRUDService):
@@ -175,6 +176,7 @@ class RsyncModService(CRUDService):
 
     @accepts(Dict(
         'rsyncmod_create',
+        Bool('enabled', default=True),
         Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
         Str('path', required=True, max_length=RSYNC_PATH_LIMIT),
