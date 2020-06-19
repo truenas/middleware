@@ -367,18 +367,23 @@ class SystemService(Service):
         SCALE - TrueNAS SCALE
         """
         if self.__product_type is None:
+
             if osc.IS_LINUX:
                 self.__product_type = 'SCALE'
                 return self.__product_type
+
+            license = await self.middleware.run_in_thread(self._get_license)
             hardware = await self.middleware.call('failover.hardware')
-            if hardware != 'MANUAL':
+            if hardware == 'BHYVE' and not license:
+                self.__product_type = 'CORE'
+            elif hardware != 'MANUAL':
                 self.__product_type = 'ENTERPRISE'
             else:
-                license = await self.middleware.run_in_thread(self._get_license)
                 self.__product_type = 'CORE' if (
                     not license or
                     license['model'].lower().startswith('freenas')
                 ) else 'ENTERPRISE'
+
         return self.__product_type
 
     @no_auth_required
