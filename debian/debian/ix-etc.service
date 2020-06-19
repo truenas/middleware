@@ -11,7 +11,7 @@ Before=local-fs.target
 Type=oneshot
 TimeoutStartSec=300
 ExecStart=midclt call -job certificate.dhparam_setup
-ExecStart=midclt call etc.generate_all
+ExecStart=midclt call etc.generate_checkpoint default
 StandardOutput=null
 
 [Install]
