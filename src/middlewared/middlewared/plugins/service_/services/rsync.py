@@ -1,5 +1,3 @@
-import asyncio
-
 from .base import SimpleService
 
 
@@ -13,6 +11,3 @@ class RsyncService(SimpleService):
     freebsd_procname = "rsync"
 
     systemd_unit = "rsync"
-
-    async def after_stop(self):
-        asyncio.ensure_future(self.middleware.call("rsyncmod.remove_alerts_for_unlocked_datasets"))

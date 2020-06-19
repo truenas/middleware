@@ -416,7 +416,7 @@ class AFPFSAttachmentDelegate(FSAttachmentDelegate):
                 'datastore.update', 'sharing.afp_share', attachment['id'], {'afp_enabled': enabled}
             )
             if enabled:
-                await self.middleware.call('sharing.afp.remove_alert', attachment['id'])
+                await self.middleware.call('sharing.afp.remove_locked_alert', attachment['id'])
 
         if enabled:
             await self._service_change('afp', 'reload')

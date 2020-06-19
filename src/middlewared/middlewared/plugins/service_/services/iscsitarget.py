@@ -1,5 +1,3 @@
-import asyncio
-
 from middlewared.utils import osc, run
 
 from .base import SimpleService
