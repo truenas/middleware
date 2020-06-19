@@ -1136,6 +1136,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
 
     def _call_prepare(
         self, name, serviceobj, methodobj, params, app=None, io_thread=True, job_on_progress_cb=None, pipes=None,
+        threadsafe=False,
     ):
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -1154,7 +1155,12 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             job = Job(self, name, serviceobj, methodobj, args, job_options, pipes, job_on_progress_cb)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
-            job = self.jobs.add(job)
+            if not threadsafe:
+                self.jobs.add(job)
+            else:
+                event = threading.Event()
+                self.loop.call_soon_threadsafe(lambda: (self.jobs.add(job), event.set()))
+                event.wait()
             return PreparedCall(job=job)
 
         if hasattr(methodobj, '_thread_pool'):
@@ -1225,10 +1231,11 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             app=app, io_thread=True, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None, wait=True):
+    def call_sync(self, name, *params, job_on_progress_cb=None):
         serviceobj, methodobj = self._method_lookup(name)
 
-        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb)
+        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb,
+                                           threadsafe=True)
 
         if prepared_call.job:
             return prepared_call.job
