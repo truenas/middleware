@@ -727,7 +727,7 @@ class RsyncFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'tasks.rsync', attachment['id'])
 
-        await self._service_change('cron', 'restart')
+        await self.middleware.call('service.restart', 'cron')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
@@ -737,7 +737,7 @@ class RsyncFSAttachmentDelegate(FSAttachmentDelegate):
             if enabled:
                 await self.middleware.call('rsynctask.remove_alert', attachment['id'])
 
-        await self._service_change('cron', 'restart')
+        await self.middleware.call('service.restart', 'cron')
 
 
 async def setup(middleware):
