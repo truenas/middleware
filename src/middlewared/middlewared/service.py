@@ -624,21 +624,14 @@ class SharingTaskService(CRUDService):
         }
 
     @private
-    async def remove_alert(self, share_task_id):
+    async def remove_locked_alert(self, share_task_id):
         await self.middleware.call('alert.oneshot_delete', self.locked_alert_class, share_task_id)
-
-    @private
-    async def remove_alerts_for_unlocked_datasets(self):
-        for unlocked_shares in await self.middleware.call(
-            f'{self._config.namespace}.query', [[self.locked_field, '=', False]]
-        ):
-            await self.remove_alert(unlocked_shares['id'])
 
     @pass_app(rest=True)
     async def update(self, app, id, data):
         rv = await super().update(app, id, data)
         if not (await self.get_instance(id))[self.enabled_field]:
-            await self.remove_alert(id)
+            await self.remove_locked_alert(id)
         return rv
 
 

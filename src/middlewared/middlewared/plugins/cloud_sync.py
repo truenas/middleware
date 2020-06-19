@@ -1246,7 +1246,7 @@ class CloudSyncFSAttachmentDelegate(FSAttachmentDelegate):
                 'datastore.update', 'tasks.cloudsync', attachment['id'], {'enabled': enabled}
             )
             if enabled:
-                await self.middleware.call('cloudsync.remove_alert', attachment['id'])
+                await self.middleware.call('cloudsync.remove_locked_alert', attachment['id'])
 
         await self.middleware.call('service.restart', 'cron')
 

@@ -1,5 +1,3 @@
-import asyncio
-
 from middlewared.utils import run
 
 from .base import SimpleService
@@ -26,7 +24,6 @@ class AFPService(SimpleService):
         await run("pkill", "-9", "cnid_metad", check=False)
 
         await self.middleware.call("service.reload", "mdns")
-        asyncio.ensure_future(self.middleware.call("sharing.afp.remove_alerts_for_unlocked_datasets"))
 
     async def reload(self):
         await run("killall", "-1", "netatalk", check=False)

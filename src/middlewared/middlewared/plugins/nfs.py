@@ -592,7 +592,7 @@ class NFSFSAttachmentDelegate(FSAttachmentDelegate):
             await self.middleware.call('datastore.update', 'sharing.nfs_share', attachment['id'],
                                        {'nfs_enabled': enabled})
             if enabled:
-                await self.middleware.call('sharing.nfs.remove_alert', attachment['id'])
+                await self.middleware.call('sharing.nfs.remove_locked_alert', attachment['id'])
 
         await self._service_change('nfs', 'reload')
 

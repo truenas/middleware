@@ -1610,7 +1610,7 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
                 attachment['id'], {'iscsi_target_extent_enabled': enabled}
             )
             if enabled:
-                await self.middleware.call('iscsi.extent.remove_alert', attachment['id'])
+                await self.middleware.call('iscsi.extent.remove_locked_alert', attachment['id'])
 
         await self._service_change('iscsitarget', 'reload')
 

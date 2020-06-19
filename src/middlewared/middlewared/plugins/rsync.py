@@ -744,7 +744,7 @@ class RsyncModuleFSAttachmentDelegate(FSAttachmentDelegate):
                 'datastore.update', 'services.rsyncmod', attachment['id'], {'rsyncmod_enabled': enabled}
             )
             if enabled:
-                await self.middleware.call('rsyncmod.remove_alert', attachment['id'])
+                await self.middleware.call('rsyncmod.remove_locked_alert', attachment['id'])
 
         await self._service_change('rsync', 'reload')
 
@@ -776,7 +776,7 @@ class RsyncFSAttachmentDelegate(FSAttachmentDelegate):
                 'datastore.update', 'tasks.rsync', attachment['id'], {'rsync_enabled': enabled}
             )
             if enabled:
-                await self.middleware.call('rsynctask.remove_alert', attachment['id'])
+                await self.middleware.call('rsynctask.remove_locked_alert', attachment['id'])
 
         await self.middleware.call('service.restart', 'cron')
 

@@ -308,7 +308,7 @@ class WebDAVFSAttachmentDelegate(FSAttachmentDelegate):
             await self.middleware.call('datastore.update', 'sharing.webdav_share', attachment['id'],
                                        {'webdav_enabled': enabled})
             if enabled:
-                await self.middleware.call('sharing.webdav.remove_alert', attachment['id'])
+                await self.middleware.call('sharing.webdav.remove_locked_alert', attachment['id'])
 
         await self._service_change('webdav', 'reload')
 
