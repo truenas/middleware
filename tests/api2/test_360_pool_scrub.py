@@ -8,10 +8,10 @@ sys.path.append(apifolder)
 from functions import GET, PUT, POST, DELETE
 from auto_config import pool_name
 
-pool_id = GET(f"/pool/?name={pool_name}").json()[0]["id"]
-
 
 def test_01_create_scrub_for_same_pool():
+    global pool_id
+    pool_id = GET(f"/pool/?name={pool_name}").json()[0]["id"]
     result = POST("/pool/scrub/", {
         "pool": pool_id,
         "threshold": 1,

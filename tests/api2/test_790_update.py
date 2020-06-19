@@ -9,9 +9,9 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST, vm_state, vm_start, ping_host
-from auto_config import vm_name, interface, ip, user, password
+from auto_config import vm_name, ip, user, password, ha
 from time import sleep, time
-
+pytestmark = pytest.mark.skipif(ha, reason='Skiping test for HA')
 url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
 

@@ -9,14 +9,14 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import hostname, domain
+from auto_config import hostname, domain, ha
 from functions import GET, PUT
 from config import *
+pytestmark = pytest.mark.skipif(ha, reason='Skiping test for HA')
 
 BRIDGEGWReason = "BRIDGEGW not in ixautomation.conf"
 BRIDGENETMASKReason = "BRIDGENETMASK not in ixautomation.conf"
 Reason = "AD_DOMAIN BRIDGEDNS are missing in ixautomation.conf"
-
 dns_cfg = pytest.mark.skipif("BRIDGEDNS" not in locals(), reason=Reason)
 
 

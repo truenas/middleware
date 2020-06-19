@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
+import pytest
 import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT, SSH_TEST
-from auto_config import ip, user, password, pool_name
+from auto_config import ip, user, password, pool_name, scale
 
+pytestmark = pytest.mark.skipif(scale, reason='Skiping test for Scale')
 test1_dataset = f'{pool_name}/test1'
 test2_dataset = f'{pool_name}/test2'
 
