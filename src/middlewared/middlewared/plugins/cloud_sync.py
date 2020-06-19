@@ -1,4 +1,5 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
@@ -6,6 +7,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import load_modules, load_classes, Popen, run
+from middlewared.utils.path import is_child
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_attributes
 
@@ -1214,7 +1216,41 @@ for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file_
             setattr(CloudSyncService, f"{cls.name.lower()}_{method_name}", getattr(cls, method_name))
 
 
+class CloudSyncFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'cloudsync'
+    title = 'CloudSync Task'
+
+    async def query(self, path, enabled):
+        results = []
+        for task in await self.middleware.call('cloudsync.query', [['enabled', '=', enabled]]):
+            if is_child(task['path'], path):
+                results.append(task)
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['path']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', 'tasks.cloudsync', attachment['id'])
+
+        await self._service_change('cron', 'restart')
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call(
+                'datastore.update', 'tasks.cloudsync', attachment['id'], {'enabled': enabled}
+            )
+            if enabled:
+                await self.middleware.call('cloudsync.remove_alert', attachment['id'])
+
+        await self._service_change('cron', 'restart')
+
+
 async def setup(middleware):
     for cls in remote_classes:
         remote = cls(middleware)
         REMOTES[remote.name] = remote
+
+    await middleware.call('pool.dataset.register_attachment_delegate', CloudSyncFSAttachmentDelegate(middleware))

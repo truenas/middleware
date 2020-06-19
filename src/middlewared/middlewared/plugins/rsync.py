@@ -33,6 +33,7 @@ import os
 import shlex
 
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
@@ -41,6 +42,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.osc import run_command_with_user_context
+from middlewared.utils.path import is_child
 
 
 RSYNC_PATH_LIMIT = 1023
@@ -704,3 +706,39 @@ class RsyncTaskService(TaskPathService):
                 'direction': rsync['direction'],
                 'path': rsync['path'],
             })
+
+
+class RsyncFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'rsync'
+    title = 'Rsync Task'
+
+    async def query(self, path, enabled):
+        results = []
+        for rsync in await self.middleware.call('rsynctask.query', [['enabled', '=', enabled]]):
+            if is_child(rsync['path'], path):
+                results.append(rsync)
+
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['path']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', 'tasks.rsync', attachment['id'])
+
+        await self._service_change('cron', 'restart')
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call(
+                'datastore.update', 'tasks.rsync', attachment['id'], {'rsync_enabled': enabled}
+            )
+            if enabled:
+                await self.middleware.call('rsynctask.remove_alert', attachment['id'])
+
+        await self._service_change('cron', 'restart')
+
+
+async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', RsyncFSAttachmentDelegate(middleware))
