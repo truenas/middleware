@@ -1235,7 +1235,7 @@ class CloudSyncFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'tasks.cloudsync', attachment['id'])
 
-        await self._service_change('cron', 'restart')
+        await self.middleware.call('service.restart', 'cron')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
@@ -1245,8 +1245,7 @@ class CloudSyncFSAttachmentDelegate(FSAttachmentDelegate):
             if enabled:
                 await self.middleware.call('cloudsync.remove_alert', attachment['id'])
 
-        await self._service_change('cron', 'restart')
-
+        await self.middleware.call('service.restart', 'cron')
 
 async def setup(middleware):
     for cls in remote_classes:

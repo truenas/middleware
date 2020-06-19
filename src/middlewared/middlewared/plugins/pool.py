@@ -13,6 +13,7 @@ import secrets
 import shutil
 import subprocess
 import tempfile
+import uuid
 
 from collections import defaultdict
 
@@ -2241,11 +2242,26 @@ class PoolDatasetService(CRUDService):
 
             try:
                 self.middleware.call_sync(
-                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': True, 'recursive': True}
+                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': False}
                 )
             except CallError as e:
                 failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
             else:
+                # Before we mount the dataset in question, we should ensure that the path where it will be mounted
+                # is not already being used by some other service/share. In this case, we should simply rename the
+                # directory where it will be mounted
+
+                mount_path = os.path.join('/mnt', name)
+                if os.path.exists(mount_path):
+                    if not os.path.isdir(mount_path) or os.listdir(mount_path):
+                        # rename please
+                        shutil.move(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
+
+                try:
+                    self.middleware.call_sync('zfs.dataset.mount', name, {'recursive': True})
+                except CallError as e:
+                    failed[name]['error'] = f'Failed to mount dataset: {e}'
+
                 unlocked.append(name)
 
         if options['toggle_attachments'] and not failed:
