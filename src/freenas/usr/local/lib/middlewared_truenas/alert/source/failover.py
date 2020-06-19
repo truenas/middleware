@@ -1,4 +1,4 @@
-# Copyright (c) 2020 iXsystems, Inc.
+# Copyright (c) 2015 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -6,6 +6,7 @@
 
 import errno
 import os
+import json
 try:
     import sysctl
 except ImportError:
@@ -14,6 +15,8 @@ import subprocess
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException
 from middlewared.service_exception import CallError
+
+FAILOVER_JSON = '/tmp/failover.json'
 
 
 class FailoverInterfaceNotFoundAlertClass(AlertClass):
@@ -182,7 +185,12 @@ class FailoverAlertSource(ThreadedAlertSource):
                 pass
 
         if status == 'BACKUP':
-            fobj = self.middleware.call_sync('failover.generate_failover_data')
+            fobj = None
+            try:
+                with open(FAILOVER_JSON, 'r') as f:
+                    fobj = json.loads(f.read())
+            except Exception:
+                pass
             try:
                 if len(fobj['phrasedvolumes']) > 0:
                     keys = self.middleware.call_sync('failover.encryption_keys')['geli']
