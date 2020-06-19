@@ -729,6 +729,7 @@ class SharingSMBService(SharingService):
             await self.apply_presets(new)
 
         await self.compress(new)
+        new.pop(self.locked_field)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
@@ -752,14 +753,12 @@ class SharingSMBService(SharingService):
             await self.middleware.call('sharing.smb.apply_conf_diff',
                                        'REGISTRY', share_name, diff)
 
-        await self.extend(new)  # same here ?
-
         if enable_aapl:
             await self._service_change('cifs', 'restart')
         else:
             await self._service_change('cifs', 'reload')
 
-        return new
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):

@@ -593,7 +593,7 @@ class SharingTaskService(CRUDService):
             )
             verrors.add(
                 f'{schema}.{self.enabled_field}',
-                f'{self.service_type.capitalized()} must be disabled to configure the specified resource(s).'
+                f'{self.service_type.capitalize()} must be disabled to configure the specified resource(s).'
             )
         return verrors
 
@@ -634,9 +634,10 @@ class SharingTaskService(CRUDService):
         ):
             await self.remove_alert(unlocked_shares['id'])
 
+    @pass_app(rest=True)
     async def update(self, app, id, data):
         rv = await super().update(app, id, data)
-        if not rv[self.enabled_field]:
+        if not (await self.get_instance(id))[self.enabled_field]:
             await self.remove_alert(id)
         return rv
 

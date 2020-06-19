@@ -320,7 +320,7 @@ class SharingNFSService(SharingService):
 
         await self._service_change("nfs", "reload")
 
-        return data
+        return await self.get_instance(data["id"])
 
     @accepts(
         Int("id"),
@@ -335,7 +335,7 @@ class SharingNFSService(SharingService):
         Update NFS Share of `id`.
         """
         verrors = ValidationErrors()
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -346,17 +346,17 @@ class SharingNFSService(SharingService):
             raise verrors
 
         await self.compress(new)
+        new.pop(self.locked_field)
         await self.middleware.call(
             "datastore.update", self._config.datastore, id, new,
             {
                 "prefix": self._config.datastore_prefix
             }
         )
-        await self.extend(new)
 
         await self._service_change("nfs", "reload")
 
-        return new
+        return await self.get_instance(id)
 
     @accepts(Int("id"))
     async def do_delete(self, id):
