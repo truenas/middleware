@@ -1731,24 +1731,7 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
-        # Now that pools have been imported we are ready to configure system dataset,
-        # collectd and syslogd which may depend on them.
-        try:
-            self.middleware.call_sync('etc.generate', 'system_dataset')
-        except Exception:
-            self.logger.warn('Failed to setup system dataset', exc_info=True)
-
-        self.middleware.call_sync('etc.generate', 'docker')
-
-        try:
-            self.middleware.call_sync('etc.generate', 'collectd')
-        except Exception:
-            self.logger.warn('Failed to configure collectd', exc_info=True)
-
-        try:
-            self.middleware.call_sync('etc.generate', 'syslogd')
-        except Exception:
-            self.logger.warn('Failed to configure syslogd', exc_info=True)
+        await self.middleware.call_sync('etc.generate_checkpoint', 'pool_import')
 
         self.middleware.call_sync('zettarepl.update_tasks')
 
