@@ -86,19 +86,22 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure'}
         ],
+        'system_dataset': [
+            {'type': 'py', 'path': 'system_setup', 'checkpoint': 'pool_import'}
+        ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
         ],
         'afpd': [
-            {'type': 'py', 'path': 'afpd'},
+            {'type': 'py', 'path': 'afpd', 'checkpoint': 'pool_import'},
         ],
         'cron': [
             {'type': 'mako', 'path': 'cron.d/middlewared'},
             {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
         ],
         'ctld': [
-            {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
         ],
         'grub': [
             {'type': 'py', 'path': 'grub', 'platform': 'Linux'},
@@ -113,9 +116,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'dhclient.conf', 'platform': 'FreeBSD'},
         ],
         'nfsd': [
-            {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'default/nfs-common', 'platform': 'Linux'},
-            {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'},
         ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
@@ -153,7 +156,10 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'local_path': 'scst.conf.mako'}
+            {
+                'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux',
+                'local_path': 'scst.conf.mako', 'checkpoint': 'pool_import',
+            }
         ],
         'webdav': [
             {
@@ -165,6 +171,7 @@ class EtcService(Service):
                 'type': 'mako',
                 'local_path': 'local/apache24/Includes/webdav.conf',
                 'path': f'{APACHE_DIR}/Includes/webdav.conf',
+                'checkpoint': 'pool_import'
             },
             {
                 'type': 'py',
@@ -181,15 +188,12 @@ class EtcService(Service):
         'collectd': [
             {
                 'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
-                'local_path': 'local/collectd.conf'
+                'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
             },
             {'type': 'mako', 'path': 'default/rrdcached', 'local_path': 'default/rrdcached.mako', 'platform': 'Linux'},
         ],
-        'system_dataset': [
-            {'type': 'py', 'path': 'system_setup'}
-        ],
         'docker': [
-            {'type': 'py', 'path': 'docker', 'platform': 'Linux'},
+            {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': 'pool_import'},
         ],
         'inetd': [
             {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
@@ -211,7 +215,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
         'rsync': [
-            {'type': 'mako', 'path': 'local/rsyncd.conf'}
+            {'type': 'mako', 'path': 'local/rsyncd.conf', 'checkpoint': 'pool_import'}
         ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
@@ -229,7 +233,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/sudoers'}
         ],
         'syslogd': [
-            {'type': 'py', 'path': 'syslogd'},
+            {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
         ],
         'hostname': [
             {'type': 'mako', 'path': 'hosts'},
