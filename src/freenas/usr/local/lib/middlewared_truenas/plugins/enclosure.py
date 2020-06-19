@@ -17,9 +17,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from middlewared.utils.osc import IS_FREEBSD
 
-if IS_FREEBSD:
-    from bsd import geom
-
 logger = logging.getLogger(__name__)
 
 ENCLOSURE_ACTIONS = {
@@ -232,7 +229,6 @@ class EnclosureService(CRUDService):
         else:
             pools = [pool]
 
-        geom.scan()
         seen_devs = []
         label2disk = {}
         for pool in pools:
@@ -331,43 +327,10 @@ class EnclosureService(CRUDService):
                     element.device_slot_set("clear")
 
     def __get_enclosures(self):
-        return Enclosures(self.__get_enclosures_stat(), {
+        return Enclosures(self.middleware.call_sync("enclosure.get_ses_enclosures"), {
             label["encid"]: label["label"]
             for label in self.middleware.call_sync("datastore.query", "truenas.enclosurelabel")
         }, self.middleware.call_sync("system.info"))
-
-    def __get_enclosures_stat(self):
-        """
-        Call getencstat for all enclosures devices avaiable
-
-        Returns:
-            dict: all enclosures available with index as key
-        """
-
-        output = {}
-        encnumb = 0
-        while os.path.exists(f'/dev/ses{encnumb}'):
-            out = self.__get_enclosure_stat(encnumb)
-            if out:
-                # In short, getencstat reserves the exit codes for
-                # failing to change states and doesn't actually
-                # error out if it can't read or poke at the enclosure
-                # device.
-                output[encnumb] = out
-            encnumb += 1
-
-        return output
-
-    def __get_enclosure_stat(self, encnumb):
-        """
-        Call getencstat for single enclosures device
-        """
-
-        cmd = f"/usr/sbin/getencstat -V /dev/ses{encnumb}"
-        p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=True)
-        # getencstat may return not valid utf8 bytes (especially on Legacy TrueNAS)
-        out = p1.communicate()[0].decode('utf8', 'ignore')
-        return out
 
 
 class Enclosures(object):
@@ -418,7 +381,10 @@ class Enclosure(object):
 
     def __init__(self, num, data, labels):
         self.num = num
-        self.devname = f"ses{num}"
+        if IS_FREEBSD:
+            self.devname = f"ses{num}"
+        else:
+            self.devname, data = data
         self.encname = ""
         self.encid = ""
         self.model = ""
@@ -431,6 +397,12 @@ class Enclosure(object):
         self.enclabel = labels.get(self.encid)
 
     def _parse(self, data):
+        if IS_FREEBSD:
+            self._parse_freebsd(data)
+        else:
+            self._parse_linux(data)
+
+    def _parse_freebsd(self, data):
         status = re.search(
             r'Enclosure Name: (.+)',
             data)
@@ -445,6 +417,97 @@ class Enclosure(object):
         if status:
             self.encid = status.group(1)
 
+        self._set_model(data)
+
+        status = re.search(
+            r'Enclosure Status <(.+)>',
+            data)
+        if status:
+            self.status = status.group(1)
+
+        lname = ""
+        elements = re.findall(
+            r'Element\s+(?P<element>.+?): (?P<name>.+?)'
+            r', status: (?P<status>.+?) \((?P<value>[^)]+)\)'
+            '(?:, descriptor: \'(?P<desc>[^\']+)\')?'
+            '(?:, dev: \'(?P<dev>.+?)\')?',
+            data)
+        for element in elements:
+            slot, name, status, value, desc, dev = element
+            if name != lname:
+                lname = name
+                self.descriptors[name] = desc
+                continue
+            newvalue = self._parse_raw_value(value)
+            slot = int(slot, 16)
+            if not desc:
+                desc = f"{name} {slot}"
+            ele = self._enclosure_element(
+                slot,
+                name,
+                newvalue,
+                status,
+                desc,
+                dev)
+            if ele is not None:
+                self.append(ele)
+
+    def _parse_linux(self, data):
+        cf, es = data
+
+        self.encname = re.sub(r"\s+", " ", cf.splitlines()[0].strip())
+
+        if m := re.search(r"\s+enclosure logical identifier \(hex\): ([0-9a-f]+)", cf):
+            self.encid = m.group(1)
+
+        self._set_model(cf)
+
+        self.status = "OK"
+
+        element_type = None
+        element_number = None
+        for line in es.splitlines():
+            if m := re.match(r"\s+Element type: (.+), subenclosure", line):
+                element_type = m.group(1)
+
+                if element_type != "Audible alarm":
+                    element_type = " ".join([
+                        word[0].upper() + word[1:]
+                        for word in element_type.split()
+                    ])
+                if element_type == "Temperature Sensor":
+                    element_type = "Temperature Sensors"
+
+                element_number = None
+            elif m := re.match(r"\s+Element ([0-9]+) descriptor:", line):
+                element_number = int(m.group(1))
+            elif m := re.match(r"\s+([0-9a-f ]{11})", line):
+                if element_type is not None and element_number is not None:
+                    dev = ""
+                    if element_type == "Array Device Slot":
+                        try:
+                            dev = os.listdir(
+                                f"/sys/class/enclosure/{self.devname}/Disk #{element_number:02X}/device/block"
+                            )[0]
+                        except (FileNotFoundError, IndexError):
+                            pass
+
+                    element = self._enclosure_element(
+                        element_number,
+                        element_type,
+                        self._parse_raw_value(m.group(1)),
+                        None,
+                        "",
+                        dev,
+                    )
+                    if element is not None:
+                        self.append(element)
+
+                element_number = None
+            else:
+                element_number = None
+
+    def _set_model(self, data):
         if M_SERIES_REGEX.match(self.encname):
             self.model = "M Series"
             self.controller = True
@@ -468,41 +531,12 @@ class Enclosure(object):
         elif self.encname.startswith("CELESTIC X2012"):
             self.model = "ES12"
 
-        status = re.search(
-            r'Enclosure Status <(.+)>',
-            data)
-        if status:
-            self.status = status.group(1)
-
-        lname = ""
-        elements = re.findall(
-            r'Element\s+(?P<element>.+?): (?P<name>.+?)'
-            r', status: (?P<status>.+?) \((?P<value>[^)]+)\)'
-            '(?:, descriptor: \'(?P<desc>[^\']+)\')?'
-            '(?:, dev: \'(?P<dev>.+?)\')?',
-            data)
-        for element in elements:
-            slot, name, status, value, desc, dev = element
-            if name != lname:
-                lname = name
-                self.descriptors[name] = desc
-                continue
-            newvalue = 0
-            for i, v in enumerate(value.split(' ')):
-                v = int(v.replace("0x", ""), 16)
-                newvalue |= v << (2 * (3 - i)) * 4
-            slot = int(slot, 16)
-            if not desc:
-                desc = f"{name} {slot}"
-            ele = self._enclosure_element(
-                slot,
-                name,
-                newvalue,
-                status,
-                desc,
-                dev)
-            if ele is not None:
-                self.append(ele)
+    def _parse_raw_value(self, value):
+        newvalue = 0
+        for i, v in enumerate(value.split(' ')):
+            v = int(v.replace("0x", ""), 16)
+            newvalue |= v << (2 * (3 - i)) * 4
+        return newvalue
 
     def iter_by_name(self):
         return OrderedDict(sorted(self.__elementsbyname.items()))
@@ -993,6 +1027,12 @@ class ArrayDevSlot(Element):
             True if the command succeeded, False otherwise
         """
 
+        if IS_FREEBSD:
+            return self._device_slot_set_freebsd(status)
+        else:
+            return self._device_slot_set_linux(status)
+
+    def _device_slot_set_freebsd(self, status):
         proc = subprocess.Popen(
             ["/usr/bin/pgrep", "setobjstat"],
             stdout=subprocess.PIPE,
@@ -1013,6 +1053,25 @@ class ArrayDevSlot(Element):
         )
         proc.communicate()
         return not bool(proc.returncode)
+
+    def _device_slot_set_linux(self, status):
+        if status == "clear":
+            commands = ["--clear=fault", "--clear=ident"]
+        else:
+            if status == "identify":
+                commands = ["--set=ident"]
+            else:
+                commands = [f"--set={status}"]
+
+        ok = True
+        for cmd in commands:
+            cmd = ["sg_ses", "--index", str(self.slot), cmd, f"/dev/{self.enclosure.devname}"]
+            p = subprocess.run(cmd, encoding="utf-8", errors="ignore", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if p.returncode != 0:
+                logger.warning("%r failed: %s", cmd, p.stderr)
+                ok = False
+
+        return ok
 
     @property
     def identify(self):
@@ -1167,10 +1226,35 @@ async def devd_zfs_hook(middleware, data):
         await middleware.call('enclosure.sync_zpool')
 
 
+async def zfs_events_hook(middleware, data):
+    event_id = data['class']
+
+    if event_id in [
+        'sysevent.fs.zfs.config_sync',
+        'sysevent.fs.zfs.vdev_remove',
+    ]:
+        await middleware.call('enclosure.sync_zpool')
+
+
+async def udev_block_devices_hook(middleware, data):
+    if data.get('SUBSYSTEM') != 'block' or data.get('DEVTYPE') != 'disk' or data['SYS_NAME'].startswith((
+        'sr', 'md', 'dm-', 'loop'
+    )):
+        return
+
+    if data['ACTION'] in ['add', 'remove']:
+        await middleware.call('enclosure.sync_zpool')
+
+
 async def pool_post_delete(middleware, id):
     await middleware.call('enclosure.sync_zpool')
 
 
 def setup(middleware):
-    middleware.register_hook('devd.zfs', devd_zfs_hook)
+    if IS_FREEBSD:
+        middleware.register_hook('devd.zfs', devd_zfs_hook)
+    else:
+        middleware.register_hook('zfs.pool.events', zfs_events_hook)
+        middleware.register_hook('udev.block', udev_block_devices_hook)
+
     middleware.register_hook('pool.post_delete', pool_post_delete)

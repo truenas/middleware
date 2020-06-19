@@ -1,5 +1,4 @@
 import subprocess
-import os
 import re
 
 from middlewared.service import private, Service
@@ -20,11 +19,9 @@ class EnclosureDetectionService(Service):
 
         # Gather the PCI address for all enclosurers
         # detected by the kernel
-        try:
-            enclosures = [
-                '/dev/bsg/' + enc for enc in os.listdir(ENCLOSURES_DIR)
-            ]
-        except FileNotFoundError:
+
+        enclosures = self.middleware.call_sync("enclosure.list_ses_enclosures")
+        if not enclosures:
             # No enclosures detected
             return self.HARDWARE, self.NODE
 
