@@ -37,8 +37,7 @@ from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
-    CallError, CRUDService, SystemServiceService, ValidationErrors,
-    job, item_method, private, TaskPathService,
+    CallError, SystemServiceService, ValidationErrors, job, item_method, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.osc import run_command_with_user_context
@@ -136,7 +135,11 @@ class RsyncModModel(sa.Model):
     rsyncmod_enabled = sa.Column(sa.Boolean())
 
 
-class RsyncModService(CRUDService):
+class RsyncModService(TaskPathService):
+
+    locked_alert_class = 'RsyncModuleLocked'
+    locked_field = 'module_locked'
+    service_type = 'Rsync module'
 
     class Config:
         datastore = 'services.rsyncmod'
@@ -154,7 +157,7 @@ class RsyncModService(CRUDService):
     async def common_validation(self, data, schema_name):
         verrors = ValidationErrors()
 
-        await check_path_resides_within_volume(verrors, self.middleware, f'{schema_name}.path', data.get('path'))
+        await self.validate_path_field(data, schema_name, verrors)
 
         for entity in ('user', 'group'):
             value = data.get(entity)
@@ -286,7 +289,7 @@ class RsyncTaskModel(sa.Model):
 
 class RsyncTaskService(TaskPathService):
 
-    alert_class = 'RsyncTaskLocked'
+    locked_alert_class = 'RsyncTaskLocked'
 
     class Config:
         datastore = 'tasks.rsync'
@@ -341,6 +344,8 @@ class RsyncTaskService(TaskPathService):
         if not user:
             verrors.add(f'{schema}.user', f'Provided user "{username}" does not exist')
             raise verrors
+
+        await self.validate_path_field(data, schema, verrors)
 
         remote_host = data.get('remotehost')
         if not remote_host:

@@ -667,7 +667,7 @@ class CloudSyncModel(sa.Model):
 
 class CloudSyncService(TaskPathService):
 
-    alert_class = 'CloudSyncTaskLocked'
+    locked_alert_class = 'CloudSyncTaskLocked'
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
 

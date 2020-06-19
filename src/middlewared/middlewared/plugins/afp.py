@@ -146,7 +146,7 @@ class SharingAFPModel(sa.Model):
 
 class SharingAFPService(SharingService):
 
-    alert_class = 'AFPShareLocked'
+    locked_alert_class = 'AFPShareLocked'
 
     class Config:
         namespace = 'sharing.afp'
