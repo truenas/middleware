@@ -715,6 +715,38 @@ class RsyncTaskService(TaskPathService):
             })
 
 
+class RsyncModuleFSAttachmentDelegate(FSAttachmentDelegate):
+    name = 'rsync_module'
+    title = 'Rsync Module'
+    service = 'rsync'
+
+    async def query(self, path, enabled):
+        results = []
+        for mod in await self.middleware.call('rsyncmod.query'):
+            if is_child(mod['path'], path):
+                results.append(mod)
+        return results
+
+    async def get_attachment_name(self, attachment):
+        return attachment['name']
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', 'services.rsyncmod', attachment['id'])
+
+        await self._service_change('rsync', 'reload')
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call(
+                'datastore.update', 'services.rsyncmod', attachment['id'], {'rsyncmod_enabled': enabled}
+            )
+            if enabled:
+                await self.middleware.call('rsyncmod.remove_alert', attachment['id'])
+
+        await self._service_change('rsync', 'reload')
+
+
 class RsyncFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'rsync'
     title = 'Rsync Task'
@@ -748,4 +780,5 @@ class RsyncFSAttachmentDelegate(FSAttachmentDelegate):
 
 
 async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', RsyncModuleFSAttachmentDelegate(middleware))
     await middleware.call('pool.dataset.register_attachment_delegate', RsyncFSAttachmentDelegate(middleware))
