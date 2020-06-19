@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import subprocess
+import time
 
 import humanfriendly
 
@@ -107,13 +108,28 @@ class UpdateService(Service):
             ],
             {"order_by": ["created"]},
         )):
+            space_left_before_prune = space_left
+
             logger.info("Pruning %r", bootenv["id"])
             self.middleware.call_sync("bootenv.delete", bootenv["id"])
 
-            space_left = self._space_left(pool_name)
+            be_size = bootenv["rawspace"]
+            if be_size is None:
+                be_size = 0
 
-            if space_left > size:
-                return
+            for i in range(10):
+                space_left = self._space_left(pool_name)
+
+                if space_left > size:
+                    return
+
+                freed_space = space_left - space_left_before_prune
+                if freed_space >= be_size * 0.5:
+                    return
+
+                logger.debug("Only freed %d bytes of %d, waiting for deferred operation to complete...", freed_space,
+                             be_size)
+                time.sleep(1)
 
         raise CallError(
             f"Insufficient disk space available on {pool_name} ({humanfriendly.format_size(space_left)}). "
