@@ -226,11 +226,8 @@ netif_start()
 		_interface_config > /etc/rc.conf.network
 		killall -ALRM sh
 	fi
-	echo "Generating configuration for web interface"
-	/usr/local/bin/midclt call etc.generate 'nginx' > /dev/null
-
-	echo "Generating configuration for SSH"
-	/usr/local/bin/midclt call etc.generate 'ssh' > /dev/null
+	echo "Generating configuration for interface_sync checkpoint"
+	/usr/local/bin/midclt call etc.generate_checkpoint 'interface_sync' > /dev/null
 }
 
 name="ix-netif"

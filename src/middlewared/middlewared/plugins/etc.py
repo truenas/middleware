@@ -180,7 +180,7 @@ class EtcService(Service):
             },
         ],
         'nginx': [
-            {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
+            {'type': 'mako', 'path': 'local/nginx/nginx.conf', 'checkpoint': 'interface_sync'}
         ],
         'failover': [
             {'type': 'py', 'path': 'failover'},
@@ -202,8 +202,8 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'motd'}
         ],
         'mdns': [
-            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf'},
-            {'type': 'py', 'path': 'local/avahi/avahi_services'}
+            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': 'interface_sync'},
+            {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': 'interface_sync'}
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
@@ -240,10 +240,10 @@ class EtcService(Service):
             {'type': 'py', 'path': 'hostname', 'platform': 'Linux'},
         ],
         'ssh': [
-            {'type': 'mako', 'path': 'local/ssh/sshd_config'},
-            {'type': 'mako', 'path': 'pam.d/sshd'},
-            {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
-            {'type': 'py', 'path': 'local/ssh/config'}
+            {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
+            {'type': 'mako', 'path': 'pam.d/sshd', 'checkpoint': 'interface_sync'},
+            {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600, 'checkpoint': 'interface_sync'},
+            {'type': 'py', 'path': 'local/ssh/config', 'checkpoint': 'interface_sync'},
         ],
         'ntpd': [
             {'type': 'mako', 'path': 'ntp.conf'}
