@@ -175,8 +175,8 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
         ],
-        'pf': [
-            {'type': 'py', 'path': 'pf', 'platform': 'FreeBSD'},
+        'failover': [
+            {'type': 'py', 'path': 'failover'},
         ],
         'collectd': [
             {
