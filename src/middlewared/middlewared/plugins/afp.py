@@ -213,7 +213,7 @@ class SharingAFPService(SharingService):
 
         await self._service_change('afp', 'reload')
 
-        return data
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -255,6 +255,7 @@ class SharingAFPService(SharingService):
                 raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(new)
+        new.pop(self.locked_field)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
@@ -262,7 +263,7 @@ class SharingAFPService(SharingService):
 
         await self._service_change('afp', 'reload')
 
-        return new
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):

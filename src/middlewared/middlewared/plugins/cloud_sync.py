@@ -719,6 +719,7 @@ class CloudSyncService(TaskPathService):
         Cron.convert_schedule_to_db_format(cloud_sync)
 
         cloud_sync.pop('job', None)
+        cloud_sync.pop(self.locked_field, None)
 
         return cloud_sync
 
@@ -908,7 +909,7 @@ class CloudSyncService(TaskPathService):
         """
         Updates the cloud_sync entry `id` with `data`.
         """
-        cloud_sync = await self._get_instance(id)
+        cloud_sync = await self.get_instance(id)
 
         # credentials is a foreign key for now
         if cloud_sync["credentials"]:
@@ -934,7 +935,7 @@ class CloudSyncService(TaskPathService):
         await self.middleware.call("service.restart", "cron")
 
         cloud_sync = await self.extend(cloud_sync)
-        return cloud_sync
+        return await self.get_instance(id)
 
     @accepts(Int("id"))
     async def do_delete(self, id):

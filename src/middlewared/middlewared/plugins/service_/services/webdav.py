@@ -15,4 +15,4 @@ class WebDAVService(SimpleService):
     systemd_unit = "apache2"
 
     async def after_stop(self):
-        asyncio.ensure_future("sharing.webdav.remove_alerts_for_unlocked_datasets")
+        asyncio.ensure_future(self.middleware.call("sharing.webdav.remove_alerts_for_unlocked_datasets"))

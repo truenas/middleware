@@ -102,7 +102,7 @@ class WebDAVSharingService(SharingService):
 
         await self._service_change('webdav', 'reload')
 
-        return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id', required=True),
@@ -121,7 +121,7 @@ class WebDAVSharingService(SharingService):
         await self.validate_data(new, 'webdav_share_update')
 
         if len(set(old.items()) ^ set(new.items())) > 0:
-
+            new.pop(self.locked_field)
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
@@ -140,7 +140,7 @@ class WebDAVSharingService(SharingService):
                 'options': {'recursive': True}
             })
 
-        return await self.query(filters=[('id', '=', id)], options={'get': True})
+        return await self.get_instance(id)
 
     @accepts(
         Int('id')

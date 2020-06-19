@@ -231,10 +231,11 @@ class RsyncModService(TaskPathService):
         """
         Update Rsyncmod module of `id`.
         """
-        module = await self._get_instance(id)
+        module = await self.get_instance(id)
         module.update(data)
 
         module = await self.common_validation(module, 'rsyncmod_update')
+        module.pop(self.locked_field)
 
         await self.middleware.call(
             'datastore.update',
@@ -246,7 +247,7 @@ class RsyncModService(TaskPathService):
 
         await self._service_change('rsync', 'reload')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -578,7 +579,7 @@ class RsyncTaskService(TaskPathService):
         )
         await self.middleware.call('service.restart', 'cron')
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id', validators=[Range(min=1)]),
@@ -599,6 +600,7 @@ class RsyncTaskService(TaskPathService):
             raise verrors
 
         Cron.convert_schedule_to_db_format(new)
+        data.pop(self.locked_field)
 
         await self.middleware.call(
             'datastore.update',
@@ -609,7 +611,7 @@ class RsyncTaskService(TaskPathService):
         )
         await self.middleware.call('service.restart', 'cron')
 
-        return await self.query(filters=[('id', '=', id)], options={'get': True})
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):

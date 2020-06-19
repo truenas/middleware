@@ -15,4 +15,4 @@ class RsyncService(SimpleService):
     systemd_unit = "rsync"
 
     async def after_stop(self):
-        asyncio.ensure_future(await self.middleware.call("rsyncmod.remove_alerts_for_unlocked_datasets"))
+        asyncio.ensure_future(self.middleware.call("rsyncmod.remove_alerts_for_unlocked_datasets"))
