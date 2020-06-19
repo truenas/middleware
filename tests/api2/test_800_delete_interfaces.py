@@ -3,12 +3,14 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import pytest
 import sys
 import os
-
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE
+from auto_config import ha
+pytestmark = pytest.mark.skipif(ha, reason='Skiping test for HA')
 
 
 def test_01_delete_interface_vlan1():

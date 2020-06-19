@@ -10,8 +10,10 @@ import random
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface, ip
+from auto_config import interface, ip, ha
 from functions import GET, PUT, POST
+
+pytestmark = pytest.mark.skipif(ha, reason='Skiping interface test for HA')
 
 aliases = {'address': ip}
 
