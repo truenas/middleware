@@ -637,7 +637,7 @@ class SharingService(SharingTaskService):
     service_type = 'share'
 
 
-class TaskService(SharingTaskService):
+class TaskPathService(SharingTaskService):
 
     locked_field = 'task_locked'
     service_type = 'task'
