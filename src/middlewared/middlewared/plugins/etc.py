@@ -288,7 +288,7 @@ class EtcService(Service):
             'py': PyRenderer(self),
         }
 
-    async def generate(self, name):
+    async def generate(self, name, checkpoint='default'):
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
@@ -361,6 +361,13 @@ class EtcService(Service):
 
             if not changes:
                 self.logger.debug(f'No new changes for {outfile}')
+
+    async def generate_checkpoint(self, checkpoint):
+        for name in self.GROUPS.keys():
+            try:
+                await self.generate(name, checkpoint)
+            except Exception:
+                self.logger.error(f'Failed to generate {name} group', exc_info=True)
 
     async def generate_all(self, skip_list=True):
         """
