@@ -17,7 +17,7 @@ async def get_exports(middleware, config, shares, kerberos_keytabs):
             middleware.logger.debug(
                 'Skipping generation of %r NFS share as the underlying resource is locked', share['id']
             )
-            middleware.call_sync(
+            await middleware.call(
                 'alert.oneshot_create', 'NFSShareLocked', {**share, 'paths': ', '.join(share['paths'])}
             )
             continue
