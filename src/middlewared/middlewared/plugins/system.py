@@ -75,6 +75,10 @@ class SystemAdvancedService(ConfigService):
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
 
+        if not await self.middleware.call('system.is_freenas'):
+            # For TrueNAS we don't want to create a swap partition
+            data['swapondrive'] = 0
+
         return data
 
     async def __validate_fields(self, schema, data):
