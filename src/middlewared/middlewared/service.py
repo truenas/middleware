@@ -630,6 +630,12 @@ class SharingTaskService(CRUDService):
         ):
             await self.remove_alert(unlocked_shares['id'])
 
+    async def update(self, app, id, data):
+        rv = await super().update(app, id, data)
+        if not rv[self.enabled_field]:
+            await self.remove_alert(id)
+        return rv
+
 
 class SharingService(SharingTaskService):
 
