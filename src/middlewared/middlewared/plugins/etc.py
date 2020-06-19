@@ -292,7 +292,7 @@ class EtcService(Service):
             'py': PyRenderer(self),
         }
 
-    async def generate(self, name, checkpoint='default'):
+    async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
