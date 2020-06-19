@@ -37,7 +37,7 @@ from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
     CallError, CRUDService, SystemServiceService, ValidationErrors,
-    job, item_method, private,
+    job, item_method, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.osc import run_command_with_user_context
@@ -280,7 +280,9 @@ class RsyncTaskModel(sa.Model):
     rsync_delayupdates = sa.Column(sa.Boolean(), default=True)
 
 
-class RsyncTaskService(CRUDService):
+class RsyncTaskService(TaskPathService):
+
+    alert_class = 'RsyncTaskLocked'
 
     class Config:
         datastore = 'tasks.rsync'
@@ -671,7 +673,11 @@ class RsyncTaskService(CRUDService):
 
         Output is saved to job log excerpt (not syslog).
         """
-        rsync = self.middleware.call_sync('rsynctask._get_instance', id)
+        rsync = self.middleware.call_sync('rsynctask.get_instance', id)
+        if rsync['task_locked']:
+            self.middleware.call_sync('alert.oneshot_create', 'RsyncTaskLocked', rsync)
+            return
+
         commandline = self.middleware.call_sync('rsynctask.commandline', id)
 
         cp = run_command_with_user_context(

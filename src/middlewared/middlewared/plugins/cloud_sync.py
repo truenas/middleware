@@ -2,7 +2,7 @@ from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel,
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
+    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import load_modules, load_classes, Popen, run
@@ -663,8 +663,9 @@ class CloudSyncModel(sa.Model):
     follow_symlinks = sa.Column(sa.Boolean())
 
 
-class CloudSyncService(CRUDService):
+class CloudSyncService(TaskPathService):
 
+    alert_class = 'CloudSyncTaskLocked'
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
 
@@ -1041,7 +1042,10 @@ class CloudSyncService(CRUDService):
         Run the cloud_sync job `id`, syncing the local data to remote.
         """
 
-        cloud_sync = await self._get_instance(id)
+        cloud_sync = await self.get_instance(id)
+        if cloud_sync['task_locked']:
+            self.middleware.call_sync('alert.oneshot_create', 'CloudSyncTaskLocked', cloud_sync)
+            return
 
         await self._sync(cloud_sync, options, job)
 
