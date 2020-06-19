@@ -372,18 +372,3 @@ class EtcService(Service):
                 await self.generate(name, checkpoint)
             except Exception:
                 self.logger.error(f'Failed to generate {name} group', exc_info=True)
-
-    async def generate_all(self, skip_list=True):
-        """
-        Generate all configuration file groups
-        `skip_list` tells whether to skip groups in SKIP_LIST. This defaults to true.
-        """
-        for name in self.GROUPS.keys():
-            if skip_list and name in self.SKIP_LIST:
-                self.logger.info(f'Skipping {name} group generation')
-                continue
-
-            try:
-                await self.generate(name)
-            except Exception:
-                self.logger.error(f'Failed to generate {name} group', exc_info=True)

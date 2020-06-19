@@ -1731,7 +1731,7 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
-        await self.middleware.call_sync('etc.generate_checkpoint', 'pool_import')
+        self.middleware.call_sync('etc.generate_checkpoint', 'pool_import')
 
         self.middleware.call_sync('zettarepl.update_tasks')
 

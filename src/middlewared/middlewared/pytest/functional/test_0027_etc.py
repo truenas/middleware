@@ -6,5 +6,5 @@ def test_etc_generate(conn, group):
     conn.ws.call('etc.generate', group)
 
 
-def test_etc_generate_all(conn):
-    conn.ws.call('etc.generate_all')
+def test_etc_generate_checkpoint(conn):
+    conn.ws.call('etc.generate_checkpoint', 'default')
