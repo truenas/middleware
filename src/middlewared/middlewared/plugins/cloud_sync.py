@@ -776,6 +776,8 @@ class CloudSyncService(TaskPathService):
             if limit1["time"] >= limit2["time"]:
                 verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
 
+        await self.validate_path_field(data, name, verrors)
+
         if data["snapshot"]:
             if data["direction"] != "PUSH":
                 verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
@@ -1246,6 +1248,7 @@ class CloudSyncFSAttachmentDelegate(FSAttachmentDelegate):
                 await self.middleware.call('cloudsync.remove_alert', attachment['id'])
 
         await self.middleware.call('service.restart', 'cron')
+
 
 async def setup(middleware):
     for cls in remote_classes:
