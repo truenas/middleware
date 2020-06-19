@@ -260,7 +260,7 @@ class EtcService(Service):
         ],
         'ttys': [
             {'type': 'mako', 'path': 'ttys', 'platform': 'FreeBSD'},
-            {'type': 'py', 'path': 'ttys_config'}
+            {'type': 'py', 'path': 'ttys_config', 'checkpoint_linux': None}
         ],
         'openvpn_server': [
             {'type': 'mako', 'path': 'local/openvpn/server/openvpn_server.conf'}
