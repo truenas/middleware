@@ -355,37 +355,22 @@ class PluginService(CRUDService):
             Str('branch'),
         )
     )
-    @job(
-        lock=lambda args: 'available_plugins_{}_{}'.format(
-            (args or [{}])[0].get('branch'), (args or [{}])[0].get('plugin_repository')
-        )
-    )
+    @job()
     def available(self, job, options):
         """
         List available plugins which can be fetched for `plugin_repository`.
         """
         default_branch = self.get_version()
         default_repo = self.default_repo()
-        branch = options.get('branch') or default_branch
-        plugin_repository = options['plugin_repository'] = options.get('plugin_repository') or default_repo
-        # If user passes no parameters we assume defaults for branch and repo which are evaluated dynamically,
-        # however if the same defaults are passed to the function, job locking can't have the latter call wait
-        # because it is unable to retrieve defaults from schema layer or access our dynamic defaults
-        # In this case we decide to wait for a job which might already be running with the specified branch/repo
-        if options['cache'] and branch == default_branch and options['plugin_repository'] == default_repo:
-            plugin_avail_job = self.middleware.call_sync(
-                'core.get_jobs', [
-                    ['method', '=', 'plugin.available'],
-                    ['state', 'in', ['RUNNING', 'WAITING']],
-                    ['arguments', '=', []],
-                    ['id', '!=', job.id]
-                ]
-            )
-            if plugin_avail_job:
-                wait_job = self.middleware.call_sync(
-                    'core.job_wait', plugin_avail_job[0]['id']
-                )
-                wait_job.wait_sync()
+        options['branch'] = options.get('branch') or default_branch
+        options['plugin_repository'] = options.get('plugin_repository') or default_repo
+        return self.middleware.call_sync('plugin.available_impl', options).wait_sync(raise_error=True)
+
+    @job(lock=lambda args: f'available_plugins_{args[0]["plugin_repository"]}_{args[0]["branch"]}')
+    @private
+    def available_impl(self, job, options):
+        branch = options['branch']
+        plugin_repository = options['plugin_repository']
 
         if options['cache']:
             with contextlib.suppress(KeyError):
