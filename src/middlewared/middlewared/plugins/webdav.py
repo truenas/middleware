@@ -1,7 +1,6 @@
 import asyncio
 import os
 
-from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import SharingService, SystemServiceService, private
