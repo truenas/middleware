@@ -32,12 +32,11 @@ import glob
 import os
 import shlex
 
-from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
-    CallError, SystemServiceService, ValidationErrors, job, item_method, private, TaskPathService,
+    CallError, SystemServiceService, ValidationErrors, job, item_method, private, SharingService, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.osc import run_command_with_user_context
@@ -135,7 +134,7 @@ class RsyncModModel(sa.Model):
     rsyncmod_enabled = sa.Column(sa.Boolean())
 
 
-class RsyncModService(TaskPathService):
+class RsyncModService(SharingService):
 
     locked_alert_class = 'RsyncModuleLocked'
     locked_field = 'module_locked'

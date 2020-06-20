@@ -1,7 +1,6 @@
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors
-from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
@@ -592,6 +591,9 @@ class SharingSMBModel(sa.Model):
 
 
 class SharingSMBService(SharingService):
+
+    locked_alert_class = 'SMBShareLocked'
+
     class Config:
         namespace = 'sharing.smb'
         datastore = 'sharing.cifs_share'
@@ -825,9 +827,7 @@ class SharingSMBService(SharingService):
             verrors.add(f'{schema_name}.path', 'This field is required.')
 
         if data['path']:
-            await check_path_resides_within_volume(
-                verrors, self.middleware, f"{schema_name}.path", data['path']
-            )
+            await self.validate_path_field(data, schema_name, verrors)
 
         if not data['acl'] and not await self.middleware.call('filesystem.acl_is_trivial', data['path']):
             verrors.add(
@@ -1008,6 +1008,8 @@ class SMBFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             await self.middleware.call('datastore.update', 'sharing.cifs_share', attachment['id'],
                                        {'cifs_enabled': enabled})
+            if not enabled:
+                await self.middleware.call('sharing.smb.remove_locked_alert', attachment['id'])
 
         await self._service_change('cifs', 'reload')
 
