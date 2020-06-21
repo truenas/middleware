@@ -773,7 +773,7 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'replication'
     title = 'Replication'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         results = []
         for replication in await self.middleware.call('replication.query', [['enabled', '=', enabled]]):
             if replication['direction'] == 'PUSH':

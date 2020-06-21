@@ -1,11 +1,10 @@
 import asyncio
 import os
 
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import SharingService, SystemServiceService, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils.path import is_child
 
 
 class WebDAVSharingModel(sa.Model):
@@ -280,18 +279,14 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'webdav'))
 
 
-class WebDAVFSAttachmentDelegate(FSAttachmentDelegate):
+class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'webdav'
     title = 'WebDAV Share'
     service = 'webdav'
-
-    async def query(self, path, enabled):
-        results = []
-        for share in await self.middleware.call('sharing.webdav.query', [['enabled', '=', enabled]]):
-            if is_child(share['path'], path):
-                results.append(share)
-
-        return results
+    namespace = 'sharing.webdav'
+    enabled_field = WebDAVSharingService.enabled_field
+    locked_field = WebDAVSharingService.locked_field
+    path_field = WebDAVSharingService.path_field
 
     async def get_attachment_name(self, attachment):
         return attachment['name']

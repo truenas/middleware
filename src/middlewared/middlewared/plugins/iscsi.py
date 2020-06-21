@@ -1,5 +1,5 @@
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
 from middlewared.service import CallError, CRUDService, private, SharingService, ValidationErrors
@@ -1572,19 +1572,20 @@ class iSCSITargetToExtentService(CRUDService):
             )
 
 
-class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
+class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'iscsi'
     title = 'iSCSI Extent'
     service = 'iscsitarget'
+    namespace = 'iscsi.extent.query'
+    enabled_field = iSCSITargetExtentService.enabled_field
+    locked_field = iSCSITargetExtentService.locked_field
+    path_field = iSCSITargetExtentService.path_field
 
-    async def query(self, path, enabled):
-        results = []
-        for extent in await self.middleware.call('iscsi.extent.query', [['type', '=', 'DISK'],
-                                                                        ['enabled', '=', enabled]]):
-            if is_child(extent['path'], os.path.join('zvol', os.path.relpath(path, '/mnt'))):
-                results.append(extent)
+    async def get_query_filters(self, enabled, options=None):
+        return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))
 
-        return results
+    async def is_child_of_path(self, resource, path):
+        return is_child(resource[self.path_field], os.path.join('zvol', os.path.relpath(path, '/mnt')))
 
     async def get_attachment_name(self, attachment):
         return attachment['name']
