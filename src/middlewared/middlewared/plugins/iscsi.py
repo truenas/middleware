@@ -1587,9 +1587,6 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def is_child_of_path(self, resource, path):
         return is_child(resource[self.path_field], os.path.join('zvol', os.path.relpath(path, '/mnt')))
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         lun_ids = []
         for attachment in attachments:

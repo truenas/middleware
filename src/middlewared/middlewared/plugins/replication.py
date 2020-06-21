@@ -787,9 +787,6 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
 
         return results
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'storage.replication', attachment['id'])

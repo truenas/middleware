@@ -724,9 +724,6 @@ class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
     locked_field = RsyncModService.locked_field
     path_field = RsyncModService.path_field
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'services.rsyncmod', attachment['id'])
@@ -751,9 +748,7 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     enabled_field = RsyncTaskService.enabled_field
     locked_field = RsyncTaskService.locked_field
     path_field = RsyncTaskService.path_field
-
-    async def get_attachment_name(self, attachment):
-        return attachment['path']
+    resource_name = 'path'
 
     async def delete(self, attachments):
         for attachment in attachments:

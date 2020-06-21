@@ -288,9 +288,6 @@ class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):
     locked_field = WebDAVSharingService.locked_field
     path_field = WebDAVSharingService.path_field
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'sharing.webdav_share', attachment['id'])
