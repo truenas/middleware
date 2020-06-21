@@ -1,4 +1,5 @@
 from middlewared.service import ServiceChangeMixin
+from middlewared.utils.path import is_child
 
 
 class FSAttachmentDelegate(ServiceChangeMixin):
@@ -17,11 +18,12 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     def __init__(self, middleware):
         self.middleware = middleware
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         """
         Lists enabled/disabled items that depend on a dataset
         :param path: mountpoint of the dataset (e.g. "/mnt/tank/work")
         :param enabled: whether to list enabled or disabled items
+        :param options: an optional attribute which can control the filters/logic applied to retrieve attachments
         :return: list of items of arbitrary type (will be passed to other methods of this class)
         """
         raise NotImplementedError
@@ -51,3 +53,37 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         :return:
         """
         raise NotImplementedError
+
+
+class LockableFSAttachmentDelegate(FSAttachmentDelegate):
+    """
+    Represents a share/task/resource which is affected if the dataset underlying is locked
+    """
+
+    # service namespace
+    namespace = NotImplementedError
+    # enabled field
+    enabled_field = NotImplementedError
+    # locked field
+    locked_field = NotImplementedError
+    # path_field
+    path_field = NotImplementedError
+
+    async def get_query_filters(self, enabled, options=None):
+        options = options or {}
+        filters = [[self.enabled_field, '=', enabled]]
+        if self.locked_field in options:
+            filters += [[self.locked_field, '=', self.locked_field]]
+        return filters
+
+    async def is_child_of_path(self, resource, path):
+        return is_child(resource[self.path_field], path)
+
+    async def query(self, path, enabled, options=None):
+        results = []
+        for resource in await self.middleware.call(
+            f'{self.namespace}.query', await self.get_query_filters(enabled, options)
+        ):
+            if await self.is_child_of_path(resource, path):
+                results.append(resource)
+        return results

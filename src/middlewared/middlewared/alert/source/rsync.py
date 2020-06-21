@@ -58,7 +58,7 @@ class RsyncTaskLockedAlertClass(AlertClass, OneShotAlertClass):
 class RsyncModuleLockedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
 
-    category = AlertCategory.TASKS
+    category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = 'Rsync Module Locked'
     text = 'Rsync module "%(name)s"  operating on "%(path)s" path is using a locked ' \

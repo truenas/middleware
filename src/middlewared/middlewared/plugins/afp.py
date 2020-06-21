@@ -209,7 +209,6 @@ class SharingAFPService(SharingService):
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(data)
 
         await self._service_change('afp', 'reload')
 
@@ -255,11 +254,9 @@ class SharingAFPService(SharingService):
                 raise CallError(f'Failed to create {path}: {e}')
 
         await self.compress(new)
-        new.pop(self.locked_field)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
-        await self.extend(new)
 
         await self._service_change('afp', 'reload')
 
@@ -366,6 +363,7 @@ class SharingAFPService(SharingService):
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
         if not data['vuid'] and data['timemachine']:
             data['vuid'] = str(uuid.uuid4())
+        data.pop(self.locked_field, None)
         return data
 
 

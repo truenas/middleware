@@ -178,6 +178,7 @@ class EtcService(Service):
                 'type': 'py',
                 'local_path': 'local/apache24/webdav_config',
                 'path': f'{APACHE_DIR}/webdav_config',
+                'checkpoint': 'pool_import',
             },
         ],
         'nginx': [
@@ -219,12 +220,12 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/rsyncd.conf', 'checkpoint': 'pool_import'}
         ],
         'smb': [
-            {'type': 'mako', 'path': 'local/smb4.conf'},
-            {'type': 'mako', 'path': 'security/pam_winbind.conf'},
+            {'type': 'mako', 'path': 'local/smb4.conf', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'security/pam_winbind.conf', 'checkpoint': 'pool_import'},
         ],
         'smb_share': [
-            {'type': 'mako', 'path': 'local/smb4_share.conf'},
-            {'type': 'py', 'path': 'local/smb4_share_load'}
+            {'type': 'mako', 'path': 'local/smb4_share.conf', 'checkpoint': 'pool_import'},
+            {'type': 'py', 'path': 'local/smb4_share_load', 'checkpoint': 'pool_import'}
         ],
         'snmpd': [
             {'type': 'mako', 'path': 'local/snmpd.conf' if osc.IS_FREEBSD else 'snmp/snmpd.conf',
@@ -242,9 +243,9 @@ class EtcService(Service):
         ],
         'ssh': [
             {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
-            {'type': 'mako', 'path': 'pam.d/sshd', 'checkpoint': 'interface_sync'},
-            {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600, 'checkpoint': 'interface_sync'},
-            {'type': 'py', 'path': 'local/ssh/config', 'checkpoint': 'interface_sync'},
+            {'type': 'mako', 'path': 'pam.d/sshd'},
+            {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
+            {'type': 'py', 'path': 'local/ssh/config'},
         ],
         'ntpd': [
             {'type': 'mako', 'path': 'ntp.conf'}
@@ -276,10 +277,6 @@ class EtcService(Service):
         ]
     }
     LOCKS = defaultdict(asyncio.Lock)
-
-    SKIP_LIST = [
-        'system_dataset', 'mdns', 'syslogd', 'nginx', 'ssh',
-    ] + (['ttys', 'docker'] if osc.IS_LINUX else [])
 
     class Config:
         private = True
