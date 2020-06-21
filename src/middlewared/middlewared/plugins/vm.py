@@ -2395,9 +2395,6 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
         return vms_attached
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         for attachment in attachments:
             try:

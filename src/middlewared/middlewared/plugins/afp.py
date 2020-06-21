@@ -393,9 +393,6 @@ class AFPFSAttachmentDelegate(LockableFSAttachmentDelegate):
     locked_field = SharingAFPService.locked_field
     path_field = SharingAFPService.path_field
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'sharing.afp_share', attachment['id'])

@@ -1225,9 +1225,7 @@ class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     enabled_field = CloudSyncService.enabled_field
     locked_field = CloudSyncService.locked_field
     path_field = CloudSyncService.path_field
-
-    async def get_attachment_name(self, attachment):
-        return attachment['path']
+    resource_name = 'path'
 
     async def delete(self, attachments):
         for attachment in attachments:

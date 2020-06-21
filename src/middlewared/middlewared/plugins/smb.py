@@ -990,9 +990,6 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     locked_field = SharingSMBService.locked_field
     path_field = SharingSMBService.path_field
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'sharing.cifs_share', attachment['id'])

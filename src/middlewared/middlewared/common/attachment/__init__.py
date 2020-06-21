@@ -14,6 +14,8 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     title = NotImplementedError
     # If is not None, corresponding service will be restarted after performing tasks on item
     service = None
+    # attribute which is used to identify human readable description of an attachment
+    resource_name = 'name'
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -35,7 +37,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         :param attachment: one of the items returned by `query`
         :return: string described above
         """
-        raise NotImplementedError
+        return attachment[self.resource_name]
 
     async def delete(self, attachments):
         """
