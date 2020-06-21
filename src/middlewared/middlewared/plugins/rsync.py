@@ -723,11 +723,9 @@ class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
     enabled_field = RsyncModService.enabled_field
     locked_field = RsyncModService.locked_field
     path_field = RsyncModService.path_field
+    datastore_model = 'services.rsyncmod'
 
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'services.rsyncmod', attachment['id'])
-
+    async def post_delete(self):
         await self._service_change('rsync', 'reload')
 
     async def toggle(self, attachments, enabled):
@@ -749,11 +747,9 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     locked_field = RsyncTaskService.locked_field
     path_field = RsyncTaskService.path_field
     resource_name = 'path'
+    datastore_model = 'tasks.rsync'
 
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'tasks.rsync', attachment['id'])
-
+    async def post_delete(self):
         await self.middleware.call('service.restart', 'cron')
 
     async def toggle(self, attachments, enabled):
