@@ -1669,7 +1669,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'jail'
     title = 'Jail'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         results = []
 
         if not await self.middleware.call('jail.iocage_set_up'):

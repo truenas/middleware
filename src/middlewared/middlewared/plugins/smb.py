@@ -1,10 +1,9 @@
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
 from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
-from middlewared.utils.path import is_child
 
 import asyncio
 import codecs
@@ -982,18 +981,14 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'cifs'))
 
 
-class SMBFSAttachmentDelegate(FSAttachmentDelegate):
+class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'smb'
     title = 'SMB Share'
     service = 'cifs'
-
-    async def query(self, path, enabled):
-        results = []
-        for smb in await self.middleware.call('sharing.smb.query', [['enabled', '=', enabled]]):
-            if is_child(smb['path'], path):
-                results.append(smb)
-
-        return results
+    namespace = 'sharing.smb'
+    enabled_field = SharingSMBService.enabled_field
+    locked_field = SharingSMBService.locked_field
+    path_field = SharingSMBService.path_field
 
     async def get_attachment_name(self, attachment):
         return attachment['name']

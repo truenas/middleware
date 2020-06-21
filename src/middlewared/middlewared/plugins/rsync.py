@@ -32,7 +32,7 @@ import glob
 import os
 import shlex
 
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
@@ -40,7 +40,6 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.osc import run_command_with_user_context
-from middlewared.utils.path import is_child
 
 
 RSYNC_PATH_LIMIT = 1023
@@ -716,17 +715,14 @@ class RsyncTaskService(TaskPathService):
             })
 
 
-class RsyncModuleFSAttachmentDelegate(FSAttachmentDelegate):
+class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'rsync_module'
     title = 'Rsync Module'
     service = 'rsync'
-
-    async def query(self, path, enabled):
-        results = []
-        for mod in await self.middleware.call('rsyncmod.query'):
-            if is_child(mod['path'], path):
-                results.append(mod)
-        return results
+    namespace = 'rsyncmod'
+    enabled_field = RsyncModService.enabled_field
+    locked_field = RsyncModService.locked_field
+    path_field = RsyncModService.path_field
 
     async def get_attachment_name(self, attachment):
         return attachment['name']
@@ -748,17 +744,13 @@ class RsyncModuleFSAttachmentDelegate(FSAttachmentDelegate):
         await self._service_change('rsync', 'reload')
 
 
-class RsyncFSAttachmentDelegate(FSAttachmentDelegate):
+class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'rsync'
     title = 'Rsync Task'
-
-    async def query(self, path, enabled):
-        results = []
-        for rsync in await self.middleware.call('rsynctask.query', [['enabled', '=', enabled]]):
-            if is_child(rsync['path'], path):
-                results.append(rsync)
-
-        return results
+    namespace = 'rsynctask'
+    enabled_field = RsyncTaskService.enabled_field
+    locked_field = RsyncTaskService.locked_field
+    path_field = RsyncTaskService.path_field
 
     async def get_attachment_name(self, attachment):
         return attachment['path']

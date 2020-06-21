@@ -3,14 +3,13 @@ import enum
 import uuid
 
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, Dir, Int, List, Str,
                                 Patch, UnixPerm)
 from middlewared.validators import IpAddress, Range
 from middlewared.service import SystemServiceService, ValidationErrors, SharingService, private
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils.path import is_child
 import os
 
 
@@ -385,18 +384,14 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'afp'))
 
 
-class AFPFSAttachmentDelegate(FSAttachmentDelegate):
+class AFPFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'afp'
     title = 'AFP Share'
     service = 'afp'
-
-    async def query(self, path, enabled):
-        results = []
-        for afp in await self.middleware.call('sharing.afp.query', [['enabled', '=', enabled]]):
-            if is_child(afp['path'], path):
-                results.append(afp)
-
-        return results
+    namespace = 'sharing.afp'
+    enabled_field = SharingAFPService.enabled_field
+    locked_field = SharingAFPService.locked_field
+    path_field = SharingAFPService.path_field
 
     async def get_attachment_name(self, attachment):
         return attachment['name']

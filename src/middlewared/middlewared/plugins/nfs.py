@@ -4,7 +4,7 @@ import ipaddress
 import os
 import socket
 
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
@@ -563,18 +563,17 @@ async def pool_post_import(middleware, pool):
             break
 
 
-class NFSFSAttachmentDelegate(FSAttachmentDelegate):
+class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'nfs'
     title = 'NFS Share'
     service = 'nfs'
+    namespace = 'sharing.nfs'
+    enabled_field = SharingNFSService.enabled_field
+    locked_field = SharingNFSService.locked_field
+    path_field = SharingNFSService.path_field
 
-    async def query(self, path, enabled):
-        results = []
-        for nfs in await self.middleware.call('sharing.nfs.query', [['enabled', '=', enabled]]):
-            if any(is_child(nfs_path, path) for nfs_path in nfs['paths']):
-                results.append(nfs)
-
-        return results
+    async def is_child_of_path(self, resource, path):
+        return any(is_child(nfs_path, path) for nfs_path in resource[self.path_field])
 
     async def get_attachment_name(self, attachment):
         return ', '.join(attachment['paths'])

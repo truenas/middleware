@@ -1,5 +1,5 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
@@ -7,7 +7,6 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import load_modules, load_classes, Popen, run
-from middlewared.utils.path import is_child
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_attributes
 
@@ -1219,17 +1218,13 @@ for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file_
             setattr(CloudSyncService, f"{cls.name.lower()}_{method_name}", getattr(cls, method_name))
 
 
-class CloudSyncFSAttachmentDelegate(FSAttachmentDelegate):
+class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'cloudsync'
     title = 'CloudSync Task'
-
-    async def query(self, path, enabled):
-        results = []
-        for task in await self.middleware.call('cloudsync.query', [['enabled', '=', enabled]]):
-            if is_child(task['path'], path):
-                results.append(task)
-
-        return results
+    namespace = 'cloudsync'
+    enabled_field = CloudSyncService.enabled_field
+    locked_field = CloudSyncService.locked_field
+    path_field = CloudSyncService.path_field
 
     async def get_attachment_name(self, attachment):
         return attachment['path']
