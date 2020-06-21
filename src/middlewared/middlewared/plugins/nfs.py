@@ -571,6 +571,7 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     enabled_field = SharingNFSService.enabled_field
     locked_field = SharingNFSService.locked_field
     path_field = SharingNFSService.path_field
+    datastore_model = 'sharing.nfs_share'
 
     async def is_child_of_path(self, resource, path):
         return any(is_child(nfs_path, path) for nfs_path in resource[self.path_field])
@@ -578,12 +579,7 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def get_attachment_name(self, attachment):
         return ', '.join(attachment['paths'])
 
-    # NFS share can only contain paths from single dataset, that's why we can delete/disable entire share
-    # if even one path matches
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'sharing.nfs_share', attachment['id'])
-
+    async def post_delete(self):
         await self._service_change('nfs', 'reload')
 
     async def toggle(self, attachments, enabled):

@@ -1226,11 +1226,9 @@ class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     locked_field = CloudSyncService.locked_field
     path_field = CloudSyncService.path_field
     resource_name = 'path'
+    datastore_model = 'tasks.cloudsync'
 
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'tasks.cloudsync', attachment['id'])
-
+    async def post_delete(self):
         await self.middleware.call('service.restart', 'cron')
 
     async def toggle(self, attachments, enabled):

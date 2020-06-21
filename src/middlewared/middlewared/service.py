@@ -634,6 +634,12 @@ class SharingTaskService(CRUDService):
             await self.remove_locked_alert(id)
         return rv
 
+    @pass_app(rest=True)
+    async def delete(self, app, id, *args):
+        rv = await super().delete(app, id, *args)
+        await self.remove_locked_alert(id)
+        return rv
+
 
 class SharingService(SharingTaskService):
 

@@ -1595,6 +1595,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
                 lun_ids.append(te['lunid'])
 
             await self.middleware.call('datastore.delete', 'services.iscsitargetextent', attachment['id'])
+            await self.post_delete_attachment(attachment)
 
         await self._service_change('iscsitarget', 'reload')
 

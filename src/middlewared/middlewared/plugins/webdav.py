@@ -287,11 +287,9 @@ class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):
     enabled_field = WebDAVSharingService.enabled_field
     locked_field = WebDAVSharingService.locked_field
     path_field = WebDAVSharingService.path_field
+    datastore_model = 'sharing.webdav_share'
 
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'sharing.webdav_share', attachment['id'])
-
+    async def post_delete(self):
         await self._service_change('webdav', 'reload')
 
     async def toggle(self, attachments, enabled):

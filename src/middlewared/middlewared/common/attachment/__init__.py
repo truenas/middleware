@@ -70,6 +70,8 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     locked_field = NotImplementedError
     # path_field
     path_field = NotImplementedError
+    # datastore model
+    datastore_model = NotImplementedError
 
     async def get_query_filters(self, enabled, options=None):
         options = options or {}
@@ -80,6 +82,20 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def is_child_of_path(self, resource, path):
         return is_child(resource[self.path_field], path)
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
+            await self.post_delete_attachment(attachment)
+        await self.post_delete()
+
+    async def post_delete_attachment(self, attachment):
+        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
+
+    async def post_delete(self):
+        """
+        Child classes can override this to perform tasks after deletion of certain shares i.e restart services
+        """
 
     async def query(self, path, enabled, options=None):
         results = []
