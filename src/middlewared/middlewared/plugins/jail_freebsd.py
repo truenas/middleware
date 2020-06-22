@@ -765,7 +765,7 @@ class JailService(CRUDService):
         datasets = self.middleware.call_sync(
             'zfs.dataset.query',
             [['properties.org\\.freebsd\\.ioc:active.value', '=', 'yes']],
-            {'extra': {'properties': [], 'flat': False}}
+            {'extra': {'properties': ['encryption', 'keystatus', 'mountpoint'], 'flat': False}}
         )
         return not (not datasets or not any(
             d['name'].endswith('/iocage') and (not d['encrypted'] or (d['encrypted'] and d['key_loaded']))
