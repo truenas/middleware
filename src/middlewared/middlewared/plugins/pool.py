@@ -2244,11 +2244,15 @@ class PoolDatasetService(CRUDService):
                     self.middleware.call_sync('zfs.dataset.mount', name, {'recursive': True})
                 except CallError as e:
                     failed[name]['error'] = f'Failed to mount dataset: {e}'
+                else:
+                    unlocked.append(name)
 
-                unlocked.append(name)
-
-        if options['toggle_attachments'] and not failed:
-            j = self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset), False)
+        if options['toggle_attachments']:
+            j = self.middleware.call_sync(
+                'pool.dataset.toggle_attachments', self.__attachments_path(dataset), False, {
+                    'locked': False, 'lock_enabled_relation': 'OR'
+                }
+            )
             j.wait_sync()
 
         if unlocked:
