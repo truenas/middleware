@@ -2376,7 +2376,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             )
         }
         for device in await self.middleware.call('datastore.query', 'vm.device'):
-            if (device['dtype'] not in ('DISK', 'RAW')) or device['vm']['id'] in ignored_vms:
+            if (device['dtype'] not in ('DISK', 'RAW', 'CDROM')) or device['vm']['id'] in ignored_vms:
                 continue
 
             disk = device['attributes'].get('path')
