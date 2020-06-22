@@ -1,4 +1,4 @@
-# Copyright (c) 2019 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -49,6 +49,7 @@ class Fence(object):
         return hostid
 
     def load_disks(self):
+
         logger.debug('Loading disks')
         self._disks.clear()
         unsupported = []
@@ -56,19 +57,19 @@ class Fence(object):
 
         # TODO: blacklist disks used by dumpdev
         for i in sysctl.filter('kern.disks')[0].value.split():
-            if not i.startswith('da'):
+            if not i.startswith(('da', 'nvd')):
                 continue
             try:
                 disk = Disk(self, i)
                 remote_keys.update(disk.get_keys()[1])
             except (OSError, RuntimeError):
-                logger.debug('Disk %s does not support reservations.', disk)
                 unsupported.append(i)
                 continue
+
             self._disks.add(disk)
 
         if unsupported:
-            logger.info('Disks without support for SCSI-3 PR: %s.', ' '.join(unsupported))
+            logger.debug('Disks without support for SCSI-3 PR: %s.', ' '.join(unsupported))
 
         return remote_keys
 
@@ -110,7 +111,7 @@ class Fence(object):
         return newkey
 
     def loop(self, key):
-        firstkey = key
+
         while True:
 
             if self._reload:
@@ -118,7 +119,6 @@ class Fence(object):
                 key = self.init(True)
                 self._reload = False
 
-            oldkey = key
             if key > 0xffffffff:
                 key = 2
             else:
