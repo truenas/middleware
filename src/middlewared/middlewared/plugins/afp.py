@@ -394,14 +394,7 @@ class AFPFSAttachmentDelegate(LockableFSAttachmentDelegate):
         # AFP does not allow us to close specific share forcefully so we have to abort all connections
         await self._service_change('afp', 'restart')
 
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call(
-                'datastore.update', 'sharing.afp_share', attachment['id'], {'afp_enabled': enabled}
-            )
-            if enabled:
-                await self.middleware.call('sharing.afp.remove_locked_alert', attachment['id'])
-
+    async def post_toggle(self, attachments, enabled):
         if enabled:
             await self._service_change('afp', 'reload')
         else:

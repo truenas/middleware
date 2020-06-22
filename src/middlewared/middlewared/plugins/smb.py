@@ -994,6 +994,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
             if not enabled:
                 await self.middleware.call('sharing.smb.remove_locked_alert', attachment['id'])
 
+    async def post_toggle(self, attachments, enabled):
         await self._service_change('cifs', 'reload')
 
         if not enabled:

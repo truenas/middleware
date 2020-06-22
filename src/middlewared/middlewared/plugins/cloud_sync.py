@@ -1226,14 +1226,7 @@ class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def post_delete(self):
         await self.middleware.call('service.restart', 'cron')
 
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call(
-                'datastore.update', 'tasks.cloudsync', attachment['id'], {'enabled': enabled}
-            )
-            if enabled:
-                await self.middleware.call('cloudsync.remove_locked_alert', attachment['id'])
-
+    async def post_toggle(self, attachments, enabled):
         await self.middleware.call('service.restart', 'cron')
 
 
