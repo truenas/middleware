@@ -132,7 +132,7 @@ def render(service, middleware):
     cf_contents.append("\tlog level = default:%s\n" % AFPLogLevel[afp.afp_srv_loglevel].value)
     cf_contents.append("\n")
 
-    locked_shares = {d['id']: d for d in middleware.call_sync('sharing.afp.query', [['share_locked', '=', True]])}
+    locked_shares = {d['id']: d for d in middleware.call_sync('sharing.afp.query', [['locked', '=', True]])}
 
     for share in middleware.call_sync('datastore.query', 'sharing.afp_share', [['afp_enabled', '=', True]]):
         share = Struct(share)

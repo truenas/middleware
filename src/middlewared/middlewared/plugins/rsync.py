@@ -136,7 +136,6 @@ class RsyncModModel(sa.Model):
 class RsyncModService(SharingService):
 
     locked_alert_class = 'RsyncModuleLocked'
-    locked_field = 'module_locked'
     service_type = 'Rsync module'
 
     class Config:
@@ -683,7 +682,7 @@ class RsyncTaskService(TaskPathService):
         Output is saved to job log excerpt (not syslog).
         """
         rsync = self.middleware.call_sync('rsynctask.get_instance', id)
-        if rsync['task_locked']:
+        if rsync['locked']:
             self.middleware.call_sync('alert.oneshot_create', 'RsyncTaskLocked', rsync)
             return
 

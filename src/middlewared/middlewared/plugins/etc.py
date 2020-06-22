@@ -1,6 +1,6 @@
 from mako import exceptions
 from mako.lookup import TemplateLookup
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 from middlewared.utils import osc
 from middlewared.utils.io import write_if_changed
 
@@ -278,6 +278,8 @@ class EtcService(Service):
     }
     LOCKS = defaultdict(asyncio.Lock)
 
+    checkpoints = ['initial', 'pool_import', 'interface_sync']
+
     class Config:
         private = True
 
@@ -375,8 +377,14 @@ class EtcService(Service):
                     self.logger.debug(f'No new changes for {outfile}')
 
     async def generate_checkpoint(self, checkpoint):
+        if checkpoint not in await self.get_checkpoints():
+            raise CallError(f'"{checkpoint}" not recognised')
+
         for name in self.GROUPS.keys():
             try:
                 await self.generate(name, checkpoint)
             except Exception:
                 self.logger.error(f'Failed to generate {name} group', exc_info=True)
+
+    async def get_checkpoints(self):
+        return self.checkpoints

@@ -566,7 +566,7 @@ class SharingTaskService(CRUDService):
 
     path_field = 'path'
     enabled_field = 'enabled'
-    locked_field = NotImplemented
+    locked_field = 'locked'
     service_type = NotImplemented
     locked_alert_class = NotImplemented
 
@@ -630,8 +630,8 @@ class SharingTaskService(CRUDService):
     @pass_app(rest=True)
     async def update(self, app, id, data):
         rv = await super().update(app, id, data)
-        if not (await self.get_instance(id))[self.enabled_field]:
-            await self.remove_locked_alert(id)
+        if not rv[self.enabled_field]:
+            await self.remove_locked_alert(rv['id'])
         return rv
 
     @pass_app(rest=True)
@@ -642,14 +642,10 @@ class SharingTaskService(CRUDService):
 
 
 class SharingService(SharingTaskService):
-
-    locked_field = 'share_locked'
     service_type = 'share'
 
 
 class TaskPathService(SharingTaskService):
-
-    locked_field = 'task_locked'
     service_type = 'task'
 
 

@@ -21,10 +21,20 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
     % endfor
 
     % for job in middleware.call_sync("rsynctask.query", [["enabled", "=", True]]):
+<%
+    if job["locked"]:
+        self.middleware.call_sync('alert.oneshot_create', 'RsyncTaskLocked', job)
+        continue
+%>\
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call rsynctask.run {job['id']}"))}
     % endfor
 
     % for job in middleware.call_sync("cloudsync.query", [["enabled", "=", True]]):
+<%
+    if job["locked"]:
+        self.middleware.call_sync('alert.oneshot_create', 'CloudSyncTaskLocked', job)
+        continue
+%>\
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call cloudsync.sync {job['id']}"))}
     % endfor
 
