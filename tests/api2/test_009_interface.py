@@ -10,13 +10,19 @@ import random
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import interface, ip, ha
+from auto_config import ip, ha
 from functions import GET, PUT, POST
 
-pytestmark = pytest.mark.skipif(ha, reason='Skiping interface test for HA')
+if ha and "virtual_ip" in os.environ:
+    interface = os.environ['iface']
+    controller1_ip = os.environ["controller1_ip"]
+    controller2_ip = os.environ["controller2_ip"]
+    virtual_ip = os.environ["virtual_ip"]
+    vhid = os.environ["vhid"]
+else:
+    from auto_config import interface
 
 aliases = {'address': ip}
-
 # Create a random IP
 vlan1_ip = f"192.168.0.{random.randint(10, 250)}"
 
@@ -25,8 +31,6 @@ def test_01_get_interface_name():
     results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
-    print(interface)
-    print(results.json())
     assert results.json()[0]["name"] == interface, results.text
 
 
@@ -95,6 +99,7 @@ def test_07_look_at_interface_ipv4_in_use_output_(dkey):
         assert False, results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_08_set_main_interface_ipv4_to_false():
     payload = {
         'ipv4_dhcp': False,
@@ -111,6 +116,7 @@ def test_08_set_main_interface_ipv4_to_false():
     assert results.json()['ipv4_dhcp'] is False, results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_09_looking_main_interface_ipv4_dhcp_if_is_false():
     results = GET(f'/interface/id/{interface}')
     assert results.status_code == 200, results.text
@@ -118,6 +124,7 @@ def test_09_looking_main_interface_ipv4_dhcp_if_is_false():
     assert results.json()['ipv4_dhcp'] is False, results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 @pytest.mark.parametrize('dkey', ['type', 'address', 'netmask'])
 def test_10_look_at_interface_aliases_output_(dkey):
     results = GET(f'/interface/id/{interface}')
@@ -126,6 +133,7 @@ def test_10_look_at_interface_aliases_output_(dkey):
     assert results.json()['aliases'][0][dkey] == aliases[dkey], results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_11_creating_vlan1_interface():
     global payload
     payload = {
@@ -150,12 +158,14 @@ def test_11_creating_vlan1_interface():
     interfaces_id = results.json()['id']
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 @pytest.mark.parametrize('dkey', ["ipv4_dhcp", "name", "vlan_parent_interface",
                                   "type", "vlan_tag", "vlan_pcp"])
 def test_12_compare_payload_with_created_vlan1_interface_result_output_(dkey):
     assert results.json()[dkey] == payload[dkey], results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_13_get_the_vlan1_interface_results():
     global results
     results = GET(f'/interface/id/{interfaces_id}/')
@@ -163,10 +173,45 @@ def test_13_get_the_vlan1_interface_results():
     assert isinstance(results.json(), dict) is True, results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 @pytest.mark.parametrize('dkey', ["ipv4_dhcp", "name", "vlan_parent_interface",
                                   "type", "vlan_tag", "vlan_pcp"])
 def test_14_compare_payload_with_get_vlan1_interface_result_output_(dkey):
     assert results.json()[dkey] == payload[dkey], results.text
+
+
+@pytest.mark.skipif(not ha and "virtual_ip" in os.environ, reason='Skiping test for Core')
+def test_08_set_interface_for_ha():
+    payload = {
+        'ipv4_dhcp': False,
+        "aliases": [
+            {
+                'type': 'INET',
+                'address': controller1_ip,
+                'netmask': 24
+            }
+        ],
+        'failover_critical': True,
+        'failover_vhid': vhid,
+        'failover_group': 1,
+        'failover_aliases': [
+            {
+                'type': 'INET',
+                'address': controller2_ip,
+                'netmask': 24
+            }
+        ],
+        'failover_virtual_aliases': [
+            {
+                'type': 'INET',
+                'address': virtual_ip,
+                'netmask': 32}],
+    }
+
+    results = PUT(f'/interface/id/{interface}/', payload)
+    assert results.status_code == 200, results.text
+    global interfaces_id
+    interfaces_id = results.json()['id']
 
 
 def test_15_get_interface_has_pending_changes():
