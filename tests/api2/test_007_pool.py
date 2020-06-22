@@ -20,11 +20,11 @@ loops = {
     'msdosfs-nonascii': '/dev/loop9',
     'ntfs': '/dev/loop10'
 }
-Reason = 'Skip for HA'
-skip_for_ha = pytest.mark.skipif(ha, reason=Reason)
 nas_disk = GET('/boot/get_disks/').json()
 disk_list = list(POST('/device/get_info/', 'DISK').json().keys())
 disk_pool = sorted(list(set(disk_list) - set(nas_disk)))
+ha_disk_pool = disk_pool[0] if ha else None
+tank_disk_pool = disk_pool[1:] if ha else disk_pool
 
 
 @pytest.fixture(scope='module')
@@ -51,8 +51,38 @@ def test_01_get_pool():
     assert isinstance(results.json(), list), results.text
 
 
-@skip_for_ha
-def test_02_creating_a_pool():
+@pytest.mark.skipif(not ha, reason="Skip for Core")
+def test_02_wipe_all_pool_disk():
+    for disk in disk_pool:
+        payload = {
+            "dev": f"{disk}",  # change f"{disk}" for f"/dev{disk}" if did not work
+            "mode": "QUICK",
+            "synccache": True
+        }
+        results = POST('/disk/wipe/', payload)
+        job_id = results.json()
+        expect_state(job_id, "SUCCESS")
+
+
+@pytest.mark.skipif(not ha, reason="Skip for Core")
+def test_03_creating_ha_pool():
+    global payload
+    payload = {
+        "name": "ha",
+        "encryption": False,
+        "topology": {
+            "data": [
+                {"type": "STRIPE", "disks": disk_pool}
+            ],
+        }
+    }
+    results = POST("/pool/", payload)
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    expect_state(job_id, "SUCCESS")
+
+
+def test_04_creating_a_pool():
     global payload
     payload = {
         "name": pool_name,
@@ -69,14 +99,14 @@ def test_02_creating_a_pool():
     expect_state(job_id, "SUCCESS")
 
 
-def test_03_get_pool_id(pool_data):
+def test_05_get_pool_id(pool_data):
     results = GET(f"/pool?name={pool_name}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
     pool_data['id'] = results.json()[0]['id']
 
 
-def test_04_get_pool_id_info(pool_data):
+def test_06_get_pool_id_info(pool_data):
     results = GET(f"/pool/id/{pool_data['id']}/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
@@ -84,9 +114,8 @@ def test_04_get_pool_id_info(pool_data):
     pool_info = results
 
 
-@skip_for_ha
 @pytest.mark.parametrize('pool_keys', ["name", "topology:data:disks"])
-def test_05_looking_pool_info_of_(pool_keys):
+def test_07_looking_pool_info_of_(pool_keys):
     results = pool_info
     if ':' in pool_keys:
         keys_list = pool_keys.split(':')
@@ -106,13 +135,13 @@ def test_05_looking_pool_info_of_(pool_keys):
         assert payload[pool_keys] == results.json()[pool_keys], results.text
 
 
-def test_06_create_dataset():
+def test_08_create_dataset():
     result = POST("/pool/dataset/", {"name": dataset})
     assert result.status_code == 200, result.text
 
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
-def test_07_setup_function(image):
+def test_09_setup_function(image):
     zf = os.path.join(os.path.dirname(__file__), "fixtures", f"{image}.gz")
     destination = f"/tmp/{image}.gz"
     send_results = send_file(zf, destination, user, None, ip)
@@ -133,7 +162,7 @@ def test_07_setup_function(image):
         IMAGES[image] = f"/dev/{mdconfig_results['output'].strip()}s1"
 
 
-def test_08_import_msdosfs():
+def test_10_import_msdosfs():
     payload = {
         "device": IMAGES['msdosfs'],
         "fs_type": "msdosfs",
@@ -146,13 +175,13 @@ def test_08_import_msdosfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_09_look_if_Directory_slash_File():
+def test_11_look_if_Directory_slash_File():
     cmd = f'test -f {dataset_path}/Directory/File'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_10_import_nonascii_msdosfs_fails():
+def test_12_import_nonascii_msdosfs_fails():
     payload = {
         "device": IMAGES['msdosfs-nonascii'],
         "fs_type": "msdosfs",
@@ -169,13 +198,13 @@ def test_10_import_nonascii_msdosfs_fails():
     assert job["error"] == "rsync failed with exit code 23", job
 
 
-def test_11_look_if_Directory_slash_File():
+def test_13_look_if_Directory_slash_File():
     cmd = f'test -f {dataset_path}/Directory/File'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_12_import_nonascii_msdosfs():
+def test_14_import_nonascii_msdosfs():
     if scale is True:
         locale = 'utf8'
     else:
@@ -192,13 +221,13 @@ def test_12_import_nonascii_msdosfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_13_look_if_Каталог_slash_Файл():
+def test_15_look_if_Каталог_slash_Файл():
     cmd = f'test -f {dataset_path}/Каталог/Файл'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_14_import_ntfs():
+def test_16_import_ntfs():
     payload = {
         "device": IMAGES['ntfs'],
         "fs_type": "ntfs",
@@ -213,14 +242,14 @@ def test_14_import_ntfs():
     expect_state(job_id, "SUCCESS")
 
 
-def test_15_look_if_Каталог_slash_Файл():
+def test_17_look_if_Каталог_slash_Файл():
     cmd = f'test -f {dataset_path}/Каталог/Файл'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 @pytest.mark.parametrize('image', ["msdosfs", "msdosfs-nonascii", "ntfs"])
-def test_16_stop_image_with_mdconfig(image):
+def test_18_stop_image_with_mdconfig(image):
     if scale is True:
         cmd = f"losetup -d {loops[image]}"
     else:
@@ -237,6 +266,6 @@ def test_16_stop_image_with_mdconfig(image):
     assert rm_results['result'] is True, rm_results['output']
 
 
-def test_17_delete_dataset():
+def test_19_delete_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
