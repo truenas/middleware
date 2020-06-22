@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, OneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, OneShotAlertClass
 
 
 class SharingTaskLockedAlertClass(AlertClass, OneShotAlertClass):

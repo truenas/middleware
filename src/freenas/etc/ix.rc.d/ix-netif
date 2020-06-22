@@ -222,12 +222,18 @@ netif_start()
 	echo "Starting interfaces..."
 	# If middlewared failed to start for some reason or the call failed
 	# we need to fallback to configuring interfaces using rc.d/netif for debugging.
+	do_kill=false
 	if ! /usr/local/bin/midclt -t 120 call interfaces.sync true > /dev/null 2>&1; then
 		_interface_config > /etc/rc.conf.network
-		killall -ALRM sh
+		do_kill=true
 	fi
 	echo "Generating configuration for interface_sync checkpoint"
 	/usr/local/bin/midclt call etc.generate_checkpoint 'interface_sync' > /dev/null
+
+	if [ "$do_kill" = true ]; then
+		echo "Failed to sync interfaces"
+		killall -ALRM sh
+	fi
 }
 
 name="ix-netif"

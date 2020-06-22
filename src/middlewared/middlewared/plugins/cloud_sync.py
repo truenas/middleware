@@ -1048,7 +1048,7 @@ class CloudSyncService(TaskPathService):
 
         cloud_sync = await self.get_instance(id)
         if cloud_sync['locked']:
-            self.middleware.call_sync('alert.oneshot_create', 'CloudSyncTaskLocked', cloud_sync)
+            await self.middleware.call('alert.oneshot_create', 'CloudSyncTaskLocked', cloud_sync)
             return
 
         await self._sync(cloud_sync, options, job)
