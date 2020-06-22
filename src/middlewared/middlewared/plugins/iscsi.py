@@ -1576,10 +1576,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'iscsi'
     title = 'iSCSI Extent'
     service = 'iscsitarget'
-    namespace = 'iscsi.extent.query'
-    enabled_field = iSCSITargetExtentService.enabled_field
-    locked_field = iSCSITargetExtentService.locked_field
-    path_field = iSCSITargetExtentService.path_field
+    service_class = iSCSITargetExtentService
 
     async def get_query_filters(self, enabled, options=None):
         return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))

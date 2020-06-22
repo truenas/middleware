@@ -1221,12 +1221,7 @@ for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file_
 class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'cloudsync'
     title = 'CloudSync Task'
-    namespace = 'cloudsync'
-    enabled_field = CloudSyncService.enabled_field
-    locked_field = CloudSyncService.locked_field
-    path_field = CloudSyncService.path_field
-    resource_name = 'path'
-    datastore_model = 'tasks.cloudsync'
+    service_class = CloudSyncService
 
     async def post_delete(self):
         await self.middleware.call('service.restart', 'cron')
