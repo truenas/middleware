@@ -62,16 +62,17 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     Represents a share/task/resource which is affected if the dataset underlying is locked
     """
 
-    # service namespace
-    namespace = NotImplementedError
-    # enabled field
-    enabled_field = NotImplementedError
-    # locked field
-    locked_field = NotImplementedError
-    # path_field
-    path_field = NotImplementedError
-    # datastore model
-    datastore_model = NotImplementedError
+    # service object
+    service_class = NotImplementedError
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.enabled_field = self.service_class.enabled_field
+        self.locked_field = self.service_class.locked_field
+        self.path_field = self.service_class.path_field
+        self.datastore_model = self.service_class._config.datastore
+        self.datastore_prefix = self.service_class._config.datastore_prefix
+        self.namespace = self.service_class._config.namespace
 
     async def get_query_filters(self, enabled, options=None):
         options = options or {}
@@ -105,3 +106,17 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
             if await self.is_child_of_path(resource, path):
                 results.append(resource)
         return results
+
+    async def toggle(self, attachments, enabled):
+        for attachment in attachments:
+            await self.middleware.call(
+                'datastore.update', self.datastore_model, attachment['id'], {'afp_enabled': enabled}
+            )
+            if enabled:
+                await self.middleware.call('sharing.afp.remove_locked_alert', attachment['id'])
+
+        if enabled:
+            await self._service_change('afp', 'reload')
+        else:
+            # AFP does not allow us to close specific share forcefully so we have to abort all connections
+            await self._service_change('afp', 'restart')

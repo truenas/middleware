@@ -982,11 +982,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'smb'
     title = 'SMB Share'
     service = 'cifs'
-    namespace = 'sharing.smb'
-    enabled_field = SharingSMBService.enabled_field
-    locked_field = SharingSMBService.locked_field
-    path_field = SharingSMBService.path_field
-    datastore_model = 'sharing.cifs_share'
+    service_class = SharingSMBService
 
     async def post_delete(self):
         await self._service_change('cifs', 'reload')

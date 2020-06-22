@@ -567,11 +567,7 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'nfs'
     title = 'NFS Share'
     service = 'nfs'
-    namespace = 'sharing.nfs'
-    enabled_field = SharingNFSService.enabled_field
-    locked_field = SharingNFSService.locked_field
-    path_field = SharingNFSService.path_field
-    datastore_model = 'sharing.nfs_share'
+    service_class = SharingNFSService
 
     async def is_child_of_path(self, resource, path):
         return any(is_child(nfs_path, path) for nfs_path in resource[self.path_field])

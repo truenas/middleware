@@ -719,11 +719,7 @@ class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'rsync_module'
     title = 'Rsync Module'
     service = 'rsync'
-    namespace = 'rsyncmod'
-    enabled_field = RsyncModService.enabled_field
-    locked_field = RsyncModService.locked_field
-    path_field = RsyncModService.path_field
-    datastore_model = 'services.rsyncmod'
+    service_class = RsyncModService
 
     async def post_delete(self):
         await self._service_change('rsync', 'reload')
@@ -742,12 +738,7 @@ class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
 class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'rsync'
     title = 'Rsync Task'
-    namespace = 'rsynctask'
-    enabled_field = RsyncTaskService.enabled_field
-    locked_field = RsyncTaskService.locked_field
-    path_field = RsyncTaskService.path_field
-    resource_name = 'path'
-    datastore_model = 'tasks.rsync'
+    service_class = RsyncTaskService
 
     async def post_delete(self):
         await self.middleware.call('service.restart', 'cron')

@@ -283,11 +283,7 @@ class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'webdav'
     title = 'WebDAV Share'
     service = 'webdav'
-    namespace = 'sharing.webdav'
-    enabled_field = WebDAVSharingService.enabled_field
-    locked_field = WebDAVSharingService.locked_field
-    path_field = WebDAVSharingService.path_field
-    datastore_model = 'sharing.webdav_share'
+    service_class = WebDAVSharingService
 
     async def post_delete(self):
         await self._service_change('webdav', 'reload')

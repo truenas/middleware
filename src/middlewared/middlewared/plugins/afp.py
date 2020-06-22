@@ -388,11 +388,7 @@ class AFPFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'afp'
     title = 'AFP Share'
     service = 'afp'
-    namespace = 'sharing.afp'
-    enabled_field = SharingAFPService.enabled_field
-    locked_field = SharingAFPService.locked_field
-    path_field = SharingAFPService.path_field
-    datastore_model = 'sharing.afp_share'
+    service_class = SharingAFPService
 
     async def post_delete(self):
         # AFP does not allow us to close specific share forcefully so we have to abort all connections
