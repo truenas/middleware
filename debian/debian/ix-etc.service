@@ -10,7 +10,7 @@ Before=local-fs.target
 [Service]
 Type=oneshot
 ExecStart=midclt call -job certificate.dhparam_setup
-ExecStart=midclt call etc.generate_checkpoint default
+ExecStart=midclt call etc.generate_checkpoint initial
 StandardOutput=null
 
 [Install]

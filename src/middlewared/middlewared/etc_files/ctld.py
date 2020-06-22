@@ -213,7 +213,7 @@ def main(middleware):
     zpoollist = {i['name']: i for i in middleware.call_sync('zfs.pool.query')}
 
     system_disks = middleware.call_sync('device.get_disks')
-    locked_extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['extent_locked', '=', True]])}
+    locked_extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['locked', '=', True]])}
     # Generate the LUN section
     for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
                                        [['iscsi_target_extent_enabled', '=', True]]):

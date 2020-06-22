@@ -73,6 +73,8 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         self.datastore_model = self.service_class._config.datastore
         self.datastore_prefix = self.service_class._config.datastore_prefix
         self.namespace = self.service_class._config.namespace
+        if not self.service:
+            self.service = self.service_class._config.service
 
     async def get_query_filters(self, enabled, options=None):
         options = options or {}
