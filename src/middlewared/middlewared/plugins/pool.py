@@ -1374,7 +1374,7 @@ class PoolService(CRUDService):
             for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
                 for delegate in PoolDatasetService.attachment_delegates:
                     if delegate.name == name:
-                        attachments = await delegate.query(pool['path'], False)
+                        attachments = await delegate.query(pool['path'], False, {'locked': False})
                         attachments = [attachment for attachment in attachments if attachment['id'] in ids]
                         if attachments:
                             await delegate.toggle(attachments, True)
@@ -2270,9 +2270,9 @@ class PoolDatasetService(CRUDService):
 
     @private
     @job(lock=lambda args: f'toggle_attachments_{args[0]}')
-    async def toggle_attachments(self, job, path, enabled):
+    async def toggle_attachments(self, job, path, enabled, options=None):
         for delegate in self.attachment_delegates:
-            await delegate.toggle((await delegate.query(path, enabled)), not enabled)
+            await delegate.toggle((await delegate.query(path, enabled, options)), not enabled)
 
     @accepts(
         Str('id'),
@@ -3602,7 +3602,7 @@ class PoolDatasetService(CRUDService):
         if path:
             for delegate in self.attachment_delegates:
                 attachments = {"type": delegate.title, "service": delegate.service, "attachments": []}
-                for attachment in await delegate.query(path, True):
+                for attachment in await delegate.query(path, True, {'locked': False}):
                     attachments["attachments"].append(await delegate.get_attachment_name(attachment))
                 if attachments["attachments"]:
                     result.append(attachments)

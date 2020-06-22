@@ -77,8 +77,8 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def get_query_filters(self, enabled, options=None):
         options = options or {}
         filters = [[self.enabled_field, '=', enabled]]
-        if self.locked_field in options:
-            filters += [[self.locked_field, '=', self.locked_field]]
+        if 'locked' in options:
+            filters += [[self.locked_field, '=', options['locked']]]
         return filters
 
     async def is_child_of_path(self, resource, path):

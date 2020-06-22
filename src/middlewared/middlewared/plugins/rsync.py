@@ -598,7 +598,7 @@ class RsyncTaskService(TaskPathService):
             raise verrors
 
         Cron.convert_schedule_to_db_format(new)
-        data.pop(self.locked_field)
+        new.pop(self.locked_field)
 
         await self.middleware.call(
             'datastore.update',

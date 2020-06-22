@@ -346,7 +346,6 @@ class SharingNFSService(SharingService):
             raise verrors
 
         await self.compress(new)
-        new.pop(self.locked_field)
         await self.middleware.call(
             "datastore.update", self._config.datastore, id, new,
             {
@@ -545,6 +544,7 @@ class SharingNFSService(SharingService):
         data["network"] = " ".join(data.pop("networks"))
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
+        data.pop(self.locked_field, None)
         return data
 
 
