@@ -474,7 +474,7 @@ class iSCSITargetExtentModel(sa.Model):
 
 class iSCSITargetExtentService(SharingService):
 
-    locked_alert_class = 'ISCSIExtentLocked'
+    locked_alert_class = 'ISCSIExtentShareLocked'
 
     class Config:
         namespace = 'iscsi.extent'

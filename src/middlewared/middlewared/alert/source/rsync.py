@@ -1,4 +1,5 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass, Alert
+from middlewared.alert.common.sharing_tasks import ShareLockedAlertClass, TaskLockedAlertClass
 
 
 class RsyncSuccessAlertClass(AlertClass, OneShotAlertClass):
@@ -37,38 +38,13 @@ class RsyncFailedAlertClass(AlertClass, OneShotAlertClass):
         ))
 
 
-class RsyncTaskLockedAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+class RsyncTaskLockedAlertClass(TaskLockedAlertClass):
 
-    category = AlertCategory.TASKS
-    level = AlertLevel.WARNING
-    title = 'Rsync Task Locked'
-    text = 'Rsync task operating on "%(path)s" path is using a locked resource. Please disable the task.'
-
-    async def create(self, args):
-        return Alert(RsyncTaskLockedAlertClass, args, key=args['id'])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.key != str(query),
-            alerts
-        ))
+    async def get_create_args(self, args):
+        return {**args, 'type': 'Rsync Task'}
 
 
-class RsyncModuleLockedAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+class RsyncModuleLockedAlertClass(ShareLockedAlertClass):
 
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = 'Rsync Module Locked'
-    text = 'Rsync module "%(name)s"  operating on "%(path)s" path is using a locked ' \
-           'resource. Please disable the module.'
-
-    async def create(self, args):
-        return Alert(RsyncModuleLockedAlertClass, args, key=args['id'])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.key != str(query),
-            alerts
-        ))
+    async def get_create_args(self, args):
+        return {**args, 'type': 'Rsync Module'}
