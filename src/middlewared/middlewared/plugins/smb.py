@@ -733,7 +733,6 @@ class SharingSMBService(SharingService):
             await self.apply_presets(new)
 
         await self.compress(new)
-        new.pop(self.locked_field)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
@@ -919,6 +918,7 @@ class SharingSMBService(SharingService):
     async def compress(self, data):
         data['hostsallow'] = ' '.join(data['hostsallow'])
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
+        data.pop(self.locked_field, None)
 
         return data
 
