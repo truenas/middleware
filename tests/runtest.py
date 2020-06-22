@@ -147,7 +147,7 @@ call(
         f"py.test-{version}",
         "-v",
         "--junitxml",
-        'api_v2_tests_result.xml',
+        'results/api_v2_tests_result.xml',
         f"api2/{testName}"
     ]
 )

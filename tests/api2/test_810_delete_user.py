@@ -6,12 +6,14 @@
 
 import sys
 import os
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, DELETE
 
 
-def test_01_deleting_user_shareuser():
+def test_01_deleting_user_shareuser(request):
+    depends(request, ["user_24"])
     userid = GET('/user?username=shareuser').json()[0]['id']
     results = DELETE("/user/id/%s/" % userid, {"delete_group": True})
     assert results.status_code == 200, results.text
