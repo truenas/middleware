@@ -578,13 +578,7 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def post_delete(self):
         await self._service_change('nfs', 'reload')
 
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call('datastore.update', 'sharing.nfs_share', attachment['id'],
-                                       {'nfs_enabled': enabled})
-            if enabled:
-                await self.middleware.call('sharing.nfs.remove_locked_alert', attachment['id'])
-
+    async def post_toggle(self, attachments, enabled):
         await self._service_change('nfs', 'reload')
 
 

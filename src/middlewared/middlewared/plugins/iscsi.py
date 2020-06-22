@@ -1600,15 +1600,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
         if osc.IS_FREEBSD:
             await asyncio.sleep(5)
 
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call(
-                'datastore.update', 'services.iscsitargetextent',
-                attachment['id'], {'iscsi_target_extent_enabled': enabled}
-            )
-            if enabled:
-                await self.middleware.call('iscsi.extent.remove_locked_alert', attachment['id'])
-
+    async def post_toggle(self, attachments, enabled):
         await self._service_change('iscsitarget', 'reload')
 
         if osc.IS_FREEBSD and not enabled:

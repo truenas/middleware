@@ -724,14 +724,7 @@ class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def post_delete(self):
         await self._service_change('rsync', 'reload')
 
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call(
-                'datastore.update', 'services.rsyncmod', attachment['id'], {'rsyncmod_enabled': enabled}
-            )
-            if enabled:
-                await self.middleware.call('rsyncmod.remove_locked_alert', attachment['id'])
-
+    async def post_toggle(self, attachments, enabled):
         await self._service_change('rsync', 'reload')
 
 
@@ -743,14 +736,7 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def post_delete(self):
         await self.middleware.call('service.restart', 'cron')
 
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call(
-                'datastore.update', 'tasks.rsync', attachment['id'], {'rsync_enabled': enabled}
-            )
-            if enabled:
-                await self.middleware.call('rsynctask.remove_locked_alert', attachment['id'])
-
+    async def post_toggle(self, attachments, enabled):
         await self.middleware.call('service.restart', 'cron')
 
 

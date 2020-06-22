@@ -107,16 +107,22 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
                 results.append(resource)
         return results
 
+    async def post_toggle_attachment(self, attachment, enabled):
+        if enabled:
+            await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
+
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
             await self.middleware.call(
-                'datastore.update', self.datastore_model, attachment['id'], {'afp_enabled': enabled}
+                'datastore.update', self.datastore_model, attachment['id'], {
+                    f'{self.datastore_prefix}{self.enabled_field}': enabled
+                }
             )
-            if enabled:
-                await self.middleware.call('sharing.afp.remove_locked_alert', attachment['id'])
+            await self.post_toggle_attachment(attachment, enabled)
 
-        if enabled:
-            await self._service_change('afp', 'reload')
-        else:
-            # AFP does not allow us to close specific share forcefully so we have to abort all connections
-            await self._service_change('afp', 'restart')
+        await self.post_toggle(attachments, enabled)
+
+    async def post_toggle(self, attachments, enabled):
+        """
+        Child classes can override this to perform tasks after toggling of certain shares/resources
+        """
