@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, OneShotAlertClass
+from middlewared.alert.common.sharing_tasks import ShareLockedAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 
 
@@ -34,19 +35,7 @@ class ISCSIPortalIPAlertSource(AlertSource):
             return Alert(ISCSIPortalIPAlertClass, ', '.join(ips))
 
 
-class ISCSIExtentLockedAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+class ISCSIExtentShareLockedAlertClass(ShareLockedAlertClass):
 
-    category = AlertCategory.SHARING
-    level = AlertLevel.WARNING
-    title = 'iSCSI Extent Locked'
-    text = 'iSCSI "%(name)s" extent is using a locked resource. Please disable the extent.'
-
-    async def create(self, args):
-        return Alert(ISCSIExtentLockedAlertClass, args, key=args['id'])
-
-    async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.key != str(query),
-            alerts
-        ))
+    async def get_create_args(self, args):
+        return {**args, 'type': 'iSCSI Extent'}
