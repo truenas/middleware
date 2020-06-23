@@ -1,3 +1,4 @@
+import json
 import re
 
 from middlewared.service import CallError
@@ -35,7 +36,6 @@ async def render(service, middleware):
         if enable != is_enabled:
             await run(["systemctl", "enable" if enable else "disable", service])
 
-    # Write out a user preset file which shows which services user has enabled/disabled
-    with open('/etc/systemd/user-preset/10-truenas_user.preset', 'w') as f:
-        for unit, enabled in services_enabled.items():
-            f.write(f'{"enable" if enabled else "disable"} {unit}\n')
+    # Write out a user enabled services to json file which shows which services user has enabled/disabled
+    with open('/data/user-services.json', 'w') as f:
+        f.write(json.dumps(services_enabled))
