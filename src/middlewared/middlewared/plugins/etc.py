@@ -85,7 +85,7 @@ class EtcService(Service):
         ],
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
-            {'type': 'py', 'path': 'fstab_configure'}
+            {'type': 'py', 'path': 'fstab_configure', 'checkpoint_linux': 'post_init'}
         ],
         'system_dataset': [
             {'type': 'py', 'path': 'system_setup', 'checkpoint': 'pool_import'}
@@ -105,7 +105,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
         ],
         'grub': [
-            {'type': 'py', 'path': 'grub', 'platform': 'Linux'},
+            {'type': 'py', 'path': 'grub', 'platform': 'Linux', 'checkpoint': 'post_init'},
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
@@ -388,3 +388,13 @@ class EtcService(Service):
 
     async def get_checkpoints(self):
         return self.checkpoints
+
+
+async def __event_system_ready(middleware, event_type, args):
+
+    if args['id'] == 'ready':
+        asyncio.ensure_future(await middleware.call('etc.generate_checkpoint', 'post_init'))
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system', __event_system_ready)
