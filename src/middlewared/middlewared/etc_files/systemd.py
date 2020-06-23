@@ -10,11 +10,9 @@ async def render(service, middleware):
     services = []
     services_enabled = {}
     for service in await middleware.call("datastore.query", "services.services", [], {"prefix": "srv_"}):
-        object = await middleware.call("service.object", service["service"])
-        if object.systemd_unit != NotImplemented:
-            for unit in [object.systemd_unit] + object.systemd_extra_units:
-                services.append(unit)
-                services_enabled[unit] = service["enable"]
+        for unit in await middleware.call("service.systemd_units", service["service"]):
+            services.append(unit)
+            services_enabled[unit] = service["enable"]
 
     p = await run(["systemctl", "is-enabled"] + services, check=False, encoding="utf-8", errors="ignore")
     are_enabled = p.stdout.strip().split()
@@ -36,3 +34,8 @@ async def render(service, middleware):
         is_enabled = {"enabled": True, "disabled": False}[is_enabled]
         if enable != is_enabled:
             await run(["systemctl", "enable" if enable else "disable", service])
+
+    # Write out a user preset file which shows which services user has enabled/disabled
+    with open('/etc/systemd/user-preset/10-truenas_user.preset', 'w') as f:
+        for unit, enabled in services_enabled.items():
+            f.write(f'{"enable" if enabled else "disable"} {unit}\n')
