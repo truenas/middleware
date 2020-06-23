@@ -4,12 +4,12 @@ import random
 import string
 import sys
 import textwrap
-
 import pytest
+from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, PUT, POST, DELETE
+from functions import GET, POST, DELETE
 
 BASE_REPLICATION = {
     "direction": "PUSH",
@@ -32,7 +32,8 @@ def periodic_snapshot_tasks():
     return {}
 
 
-def test_00_bootstrap(credentials, periodic_snapshot_tasks):
+def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
+    depends(request, ["pool_04"])
     for plugin in ["replication", "pool/snapshottask"]:
         for i in GET(f"/{plugin}/").json():
             assert DELETE(f"/{plugin}/id/{i['id']}").status_code == 200
@@ -191,7 +192,8 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
     (dict(periodic_snapshot_tasks=["data-recursive"],
           retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK"), None),
 ])
-def test_create_replication(credentials, periodic_snapshot_tasks, req, error):
+def test_create_replication(request, credentials, periodic_snapshot_tasks, req, error):
+    depends(request, ["pool_04"])
     if "ssh_credentials" in req:
         req["ssh_credentials"] = credentials["id"]
 

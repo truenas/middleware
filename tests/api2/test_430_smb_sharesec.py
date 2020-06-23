@@ -2,6 +2,7 @@
 import pytest
 import sys
 import os
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
@@ -35,7 +36,8 @@ def test_01_get_smb_sharesec():
     assert isinstance(results.json(), list), results.text
 
 
-def test_02_creating_smb_sharesec_dataset():
+def test_02_creating_smb_sharesec_dataset(request):
+    depends(request, ["pool_04"])
     payload = {
         "name": dataset,
         "share_type": "SMB"
@@ -44,7 +46,8 @@ def test_02_creating_smb_sharesec_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_03_creating_a_smb_share_path():
+def test_03_creating_a_smb_share_path(request):
+    depends(request, ["pool_04"])
     global payload, results, smb_id
     payload = {
         "comment": "My Test SMB Share",
@@ -56,13 +59,15 @@ def test_03_creating_a_smb_share_path():
     smb_id = results.json()['id']
 
 
-def test_04_starting_cifs_service():
+def test_04_starting_cifs_service(request):
+    depends(request, ["pool_04"])
     payload = {"service": "cifs"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_05_get_sharesec_id_with_share_name():
+def test_05_get_sharesec_id_with_share_name(request):
+    depends(request, ["pool_04"])
     global sharesec_id
     results = GET(f'/smb/sharesec/?share_name={share_name}')
     assert results.status_code == 200, results.text
@@ -71,7 +76,8 @@ def test_05_get_sharesec_id_with_share_name():
     sharesec_id = results.json()[0]['id']
 
 
-def test_06_set_smb_sharesec_to_users():
+def test_06_set_smb_sharesec_to_users(request):
+    depends(request, ["pool_04"])
     global payload
     payload = {
         'share_name': share_name,
@@ -87,7 +93,8 @@ def test_06_set_smb_sharesec_to_users():
     assert results.status_code == 200, results.text
 
 
-def test_07_get_smb_sharesec_by_id():
+def test_07_get_smb_sharesec_by_id(request):
+    depends(request, ["pool_04"])
     global results
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
@@ -95,18 +102,21 @@ def test_07_get_smb_sharesec_by_id():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_08_verify_share_acl_output_from_smb_sharesec_(ae):
+def test_08_verify_share_acl_output_from_smb_sharesec_(request, ae):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
 @pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
-def test_09_verify_ae_who_name_output_from_put_smb_sharesec_(who):
+def test_09_verify_ae_who_name_output_from_put_smb_sharesec_(request, who):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Users[who], results.text
 
 
-def test_10_change_smb_sharesec_to_admin():
+def test_10_change_smb_sharesec_to_admin(request):
+    depends(request, ["pool_04"])
     global payload, results
     payload = {
         'share_acl': [
@@ -123,18 +133,21 @@ def test_10_change_smb_sharesec_to_admin():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_11_verify_share_acl_output_from_put_smb_sharesec_(ae):
+def test_11_verify_share_acl_output_from_put_smb_sharesec_(request, ae):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
 @pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
-def test_12_verify_admin_ae_who_name_output_from_put_smb_sharesec_(who):
+def test_12_verify_admin_ae_who_name_output_from_put_smb_sharesec_(request, who):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Admins[who], results.text
 
 
-def test_13_get_smb_sharesec_by_id():
+def test_13_get_smb_sharesec_by_id(request):
+    depends(request, ["pool_04"])
     global results
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
@@ -142,18 +155,21 @@ def test_13_get_smb_sharesec_by_id():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_14_verify_share_acl_output_from_get_smb_sharesec_(ae):
+def test_14_verify_share_acl_output_from_get_smb_sharesec_(request, ae):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
 @pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
-def test_15_verify_admin_ae_who_name_output_from_get_smb_sharesec_(who):
+def test_15_verify_admin_ae_who_name_output_from_get_smb_sharesec_(request, who):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Admins[who], results.text
 
 
-def test_16_change_smb_sharesec_to_guests():
+def test_16_change_smb_sharesec_to_guests(request):
+    depends(request, ["pool_04"])
     global payload, results
     payload = {
         'share_acl': [
@@ -170,18 +186,21 @@ def test_16_change_smb_sharesec_to_guests():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_17_verify_share_acl_output_from_put_smb_sharesec_(ae):
+def test_17_verify_share_acl_output_from_put_smb_sharesec_(request, ae):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
 @pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
-def test_18_verify_guest_ae_who_name_output_from_put_smb_sharesec_(who):
+def test_18_verify_guest_ae_who_name_output_from_put_smb_sharesec_(request, who):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Guests[who], results.text
 
 
-def test_19_get_smb_sharesec_by_id():
+def test_19_get_smb_sharesec_by_id(request):
+    depends(request, ["pool_04"])
     global results
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
@@ -189,18 +208,21 @@ def test_19_get_smb_sharesec_by_id():
 
 
 @pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_20_verify_share_acl_output_from_get_smb_sharesec_(ae):
+def test_20_verify_share_acl_output_from_get_smb_sharesec_(request, ae):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0][ae]
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
 @pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
-def test_21_verify_guest_ae_who_name_output_from_get_smb_sharesec_(who):
+def test_21_verify_guest_ae_who_name_output_from_get_smb_sharesec_(request, who):
+    depends(request, ["pool_04"])
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Guests[who], results.text
 
 
-def test_22_get_smb_sharesec_getacl():
+def test_22_get_smb_sharesec_getacl(request):
+    depends(request, ["pool_04"])
     payload = {
         "share_name": share_name,
         "options": {
@@ -212,24 +234,28 @@ def test_22_get_smb_sharesec_getacl():
     assert isinstance(results.json(), dict), results.text
 
 
-def test_23_get_smb_sharesec_by_id():
+def test_23_get_smb_sharesec_by_id(request):
+    depends(request, ["pool_04"])
     results = GET("/smb/sharesec/synchronize_acls/")
     assert results.status_code == 200, results.text
 
 
-def test_24_delete_share_info_tdb():
+def test_24_delete_share_info_tdb(request):
+    depends(request, ["pool_04"])
     cmd = 'rm /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_25_verify_share_info_tdb_is_deleted():
+def test_25_verify_share_info_tdb_is_deleted(request):
+    depends(request, ["pool_04"])
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
 
 
-def test_26_verify_smb_sharesec_is_reseted():
+def test_26_verify_smb_sharesec_is_reseted(request):
+    depends(request, ["pool_04"])
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
@@ -237,13 +263,15 @@ def test_26_verify_smb_sharesec_is_reseted():
     assert ae_result != 'S-1-5-32-546', results.text
 
 
-def test_27_restort_sharesec_with_flush_share_info():
+def test_27_restort_sharesec_with_flush_share_info(request):
+    depends(request, ["pool_04"])
     cmd = 'midclt call smb.sharesec._flush_share_info'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_28_verify_smb_sharesec_is_restored():
+def test_28_verify_smb_sharesec_is_restored(request):
+    depends(request, ["pool_04"])
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
@@ -251,28 +279,33 @@ def test_28_verify_smb_sharesec_is_restored():
     assert ae_result == 'S-1-5-32-546', results.text
 
 
-def test_29_verify_share_info_tdb_is_created():
+def test_29_verify_share_info_tdb_is_created(request):
+    depends(request, ["pool_04"])
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_30_delete_share_acl():
+def test_30_delete_share_acl(request):
+    depends(request, ["pool_04"])
     results = DELETE(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
 
 
-def test_31_starting_cifs_service():
+def test_31_starting_cifs_service(request):
+    depends(request, ["pool_04"])
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_32_delete_cifs_share():
+def test_32_delete_cifs_share(request):
+    depends(request, ["pool_04"])
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_33_destroying_smb_sharesec_dataset():
+def test_33_destroying_smb_sharesec_dataset(request):
+    depends(request, ["pool_04"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text

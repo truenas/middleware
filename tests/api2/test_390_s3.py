@@ -4,6 +4,7 @@
 
 import sys
 import os
+from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -20,12 +21,14 @@ dataset_url = dataset.replace('/', '%2F')
 dataset_path = "/mnt/" + dataset
 
 
-def test_01_creating_dataset_for_s3():
+def test_01_creating_dataset_for_s3(request):
+    depends(request, ["pool_04"])
     results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
 
-def test_02_update_s3_service():
+def test_02_update_s3_service(request):
+    depends(request, ["pool_04"])
     payload = {
         'bindip': '0.0.0.0',
         'bindport': 9000,
@@ -38,7 +41,8 @@ def test_02_update_s3_service():
     assert result.status_code == 200, result.text
 
 
-def test_03_enable_s3_service():
+def test_03_enable_s3_service(request):
+    depends(request, ["pool_04"])
     payload = {
         "enable": True
     }
@@ -46,7 +50,8 @@ def test_03_enable_s3_service():
     assert results.status_code == 200, results.text
 
 
-def test_04_start_s3_service():
+def test_04_start_s3_service(request):
+    depends(request, ["pool_04"])
     result = POST(
         '/service/start/', {
             'service': 's3',
@@ -57,12 +62,14 @@ def test_04_start_s3_service():
     sleep(1)
 
 
-def test_05_verify_s3_is_running():
+def test_05_verify_s3_is_running(request):
+    depends(request, ["pool_04"])
     results = GET("/service/?service=s3")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_06_stop_iSCSI_service():
+def test_06_stop_iSCSI_service(request):
+    depends(request, ["pool_04"])
     result = POST(
         '/service/stop/', {
             'service': 's3',
@@ -73,11 +80,13 @@ def test_06_stop_iSCSI_service():
     sleep(1)
 
 
-def test_07_verify_s3_is_not_running():
+def test_07_verify_s3_is_not_running(request):
+    depends(request, ["pool_04"])
     results = GET("/service/?service=s3")
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
-def test_08_delete_s3_dataset():
+def test_08_delete_s3_dataset(request):
+    depends(request, ["pool_04"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
