@@ -72,7 +72,7 @@ def test_03_creating_ha_pool():
         "encryption": False,
         "topology": {
             "data": [
-                {"type": "STRIPE", "disks": disk_pool}
+                {"type": "STRIPE", "disks": ha_disk_pool}
             ],
         }
     }
@@ -89,7 +89,7 @@ def test_04_creating_a_pool():
         "encryption": False,
         "topology": {
             "data": [
-                {"type": "STRIPE", "disks": disk_pool}
+                {"type": "STRIPE", "disks": tank_disk_pool}
             ],
         }
     }
