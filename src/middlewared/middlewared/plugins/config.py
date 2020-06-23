@@ -15,6 +15,7 @@ from middlewared.schema import Bool, Dict, accepts
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.pool import GELI_KEYPATH
+from middlewared.utils import osc
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
@@ -24,6 +25,7 @@ CONFIG_FILES = {
 FREENAS_DATABASE = '/data/freenas-v1.db'
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
+UPLOADED_DB_PATH = '/data/uploaded.db'
 
 
 class ConfigService(Service):
@@ -163,7 +165,7 @@ class ConfigService(Service):
             os.unlink(config_file_name)
             raise CallError(f'The uploaded file is not valid: {e}')
 
-        shutil.move(config_file_name, '/data/uploaded.db')
+        shutil.move(config_file_name, UPLOADED_DB_PATH)
         if bundle:
             for filename, destination in CONFIG_FILES.items():
                 file_path = os.path.join(tmpdir, filename)
@@ -182,6 +184,40 @@ class ConfigService(Service):
 
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
+
+        if osc.IS_LINUX:
+            # For SCALE, we have to enable/disable services based on the uploaded database
+            enable_disable_units = {'enable': [], 'disable': []}
+            conn = sqlite3.connect(UPLOADED_DB_PATH)
+            try:
+                cursor = conn.cursor()
+                for service, enabled in cursor.execute(
+                    "SELECT srv_service, srv_enable FROM services_services"
+                ).fetchall():
+                    try:
+                        units = self.middleware.call_sync('service.systemd_units', service)
+                    except KeyError:
+                        # An old service which we don't have currently
+                        continue
+
+                    if enabled:
+                        enable_disable_units['enable'].extend(units)
+                    else:
+                        enable_disable_units['disable'].extend(units)
+            finally:
+                conn.close()
+
+            for action in filter(lambda k: enable_disable_units[k], enable_disable_units):
+                cp = subprocess.Popen(
+                    ['systemctl', action] + enable_disable_units[action],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                err = cp.communicate()[1]
+                if cp.returncode:
+                    self.middleware.logger.error(
+                        'Failed to %s %r systemctl units: %s', action,
+                        ', '.join(enable_disable_units[action]), err.decode()
+                    )
 
     @accepts(Dict('options', Bool('reboot', default=True)))
     @job(lock='config_reset', logs=True)
