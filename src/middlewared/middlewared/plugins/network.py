@@ -1001,7 +1001,7 @@ class InterfaceService(CRUDService):
                             'VLAN MTU cannot be bigger than parent interface.',
                         )
 
-        if not await self.middleware.call('failover.licensed'):
+        if await self.middleware.call('system.is_freenas') or not await self.middleware.call('failover.licensed'):
             data.pop('failover_critical', None)
             data.pop('failover_group', None)
             data.pop('failover_aliases', None)
@@ -1017,7 +1017,7 @@ class InterfaceService(CRUDService):
 
             if len(data.get('aliases', [])) != len(data.get('failover_aliases', [])):
                 verrors.add(
-                    f'{schema_name}.{i}',
+                    f'{schema_name}.failover_aliases',
                     'Quantity of IPs must match between the controllers.'
                 )
 
