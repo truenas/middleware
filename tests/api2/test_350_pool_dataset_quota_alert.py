@@ -6,9 +6,10 @@ import sys
 import os
 import re
 import pytest
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
+from functions import DELETE, GET, POST, SSH_TEST
 from auto_config import ip, pool_name, user, password
 
 G = 1024 * 1024 * 1024
@@ -40,7 +41,8 @@ G = 1024 * 1024 * 1024
         ]
     ),
 ])
-def test_dataset_quota_alert(datasets, expected_alerts):
+def test_dataset_quota_alert(request, datasets, expected_alerts):
+    depends(request, ["pool_04"])
     assert "" in datasets
 
     try:
