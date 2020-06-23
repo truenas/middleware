@@ -127,6 +127,9 @@ class SystemAdvancedService(ConfigService):
         if data['syslog_tls_certificate']:
             data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
 
+        if data['swapondrive'] and (await self.middleware.call('system.product_type')) == 'ENTERPRISE':
+            data['swapondrive'] = 0
+
         data.pop('sed_passwd')
         data.pop('kmip_uid')
 
