@@ -30,7 +30,7 @@ Users = {
 
 
 def test_01_get_smb_sharesec():
-    results = GET(f'/smb/sharesec/')
+    results = GET('/smb/sharesec/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
 
@@ -83,7 +83,7 @@ def test_06_set_smb_sharesec_to_users():
             }
         ]
     }
-    results = POST(f"/smb/sharesec/", payload)
+    results = POST("/smb/sharesec/", payload)
     assert results.status_code == 200, results.text
 
 
@@ -100,7 +100,7 @@ def test_08_verify_share_acl_output_from_smb_sharesec_(ae):
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+@pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
 def test_09_verify_ae_who_name_output_from_put_smb_sharesec_(who):
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Users[who], results.text
@@ -128,7 +128,7 @@ def test_11_verify_share_acl_output_from_put_smb_sharesec_(ae):
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+@pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
 def test_12_verify_admin_ae_who_name_output_from_put_smb_sharesec_(who):
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Admins[who], results.text
@@ -147,7 +147,7 @@ def test_14_verify_share_acl_output_from_get_smb_sharesec_(ae):
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+@pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
 def test_15_verify_admin_ae_who_name_output_from_get_smb_sharesec_(who):
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Admins[who], results.text
@@ -175,7 +175,7 @@ def test_17_verify_share_acl_output_from_put_smb_sharesec_(ae):
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+@pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
 def test_18_verify_guest_ae_who_name_output_from_put_smb_sharesec_(who):
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Guests[who], results.text
@@ -194,7 +194,7 @@ def test_20_verify_share_acl_output_from_get_smb_sharesec_(ae):
     assert ae_result == payload['share_acl'][0][ae], results.text
 
 
-@pytest.mark.parametrize('who', ['domain', 'name',  'sidtype'])
+@pytest.mark.parametrize('who', ['domain', 'name', 'sidtype'])
 def test_21_verify_guest_ae_who_name_output_from_get_smb_sharesec_(who):
     ae_result = results.json()['share_acl'][0]['ae_who_name'][who]
     assert ae_result == Guests[who], results.text
@@ -207,13 +207,13 @@ def test_22_get_smb_sharesec_getacl():
             "resolve_sids": True
         }
     }
-    results = POST(f"/smb/sharesec/getacl/", payload)
+    results = POST("/smb/sharesec/getacl/", payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
 def test_23_get_smb_sharesec_by_id():
-    results = GET(f"/smb/sharesec/synchronize_acls/")
+    results = GET("/smb/sharesec/synchronize_acls/")
     assert results.status_code == 200, results.text
 
 
