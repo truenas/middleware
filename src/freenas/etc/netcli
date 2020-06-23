@@ -85,10 +85,15 @@ class NICChoices(object):
         self.include_lagg_parent = include_lagg_parent
 
     def __iter__(self):
-        pipe = os.popen("/sbin/ifconfig -l")
-        self._NIClist = pipe.read().strip().split(' ')
-        self._NIClist = [y for y in self._NIClist if y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0')]
-        if self.noloopback is False:
+        if IS_LINUX:
+            self._NIClist = [
+                iface for iface in os.listdir("/sys/class/net") if not iface.startswith("lo") or not self.noloopback
+            ]
+        else:
+            pipe = os.popen("/sbin/ifconfig -l")
+            self._NIClist = pipe.read().strip().split(' ')
+            self._NIClist = [y for y in self._NIClist if y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0')]
+        if not IS_LINUX and self.noloopback is False:
             self._NIClist.append('lo0')
 
         # Remove internal interfaces for failover
