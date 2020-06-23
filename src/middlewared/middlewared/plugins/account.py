@@ -314,7 +314,7 @@ class UserService(CRUDService):
         if data['smb']:
             await self.__set_smbpasswd(data['username'])
 
-        if os.path.exists(data['home']):
+        if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
                 if f.startswith('dot'):
                     dest_file = os.path.join(data['home'], f[3:])
