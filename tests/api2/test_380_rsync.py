@@ -4,6 +4,7 @@
 import sys
 import os
 import pytest
+from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -32,7 +33,8 @@ def test_03_create_root_ssh_key():
     assert results['result'] is True, results['output']
 
 
-def test_04_Creating_rsync_task(rsynctask_dict):
+def test_04_Creating_rsync_task(request, rsynctask_dict):
+    depends(request, ["pool_04"])
     payload = {
         'user': 'root',
         'mode': 'SSH',
@@ -48,21 +50,25 @@ def test_04_Creating_rsync_task(rsynctask_dict):
     assert isinstance(rsynctask_dict['id'], int) is True
 
 
-def test_05_Enable_rsyncd_service():
+def test_05_Enable_rsyncd_service(request):
+    depends(request, ["pool_04"])
     results = PUT('/service/id/rsync/', {'enable': True})
     assert results.status_code == 200, results.text
 
 
-def test_06_Checking_to_see_if_rsyncd_service_is_enabled():
-    results = GET(f'/service?service=rsync')
+def test_06_Checking_to_see_if_rsyncd_service_is_enabled(request):
+    depends(request, ["pool_04"])
+    results = GET('/service?service=rsync')
     assert results.json()[0]['enable'] is True, results
 
 
-def test_07_Testing_rsync_access():
+def test_07_Testing_rsync_access(request):
+    depends(request, ["pool_04"])
     RC_TEST(f'rsync -avn {ip}::testmod') is True
 
 
-def test_08_Starting_rsyncd_service():
+def test_08_Starting_rsyncd_service(request):
+    depends(request, ["pool_04"])
     results = POST("/service/start/",
                    {'service': 'rsync'}
                    )
@@ -70,36 +76,42 @@ def test_08_Starting_rsyncd_service():
     sleep(1)
 
 
-def test_09_Checking_to_see_if_rsyncd_service_is_running():
+def test_09_Checking_to_see_if_rsyncd_service_is_running(request):
+    depends(request, ["pool_04"])
     results = GET("/service?service=rsync")
     assert results.json()[0]['state'] == 'RUNNING', results.text
 
 
-def test_10_Disable_rsync_task(rsynctask_dict):
+def test_10_Disable_rsync_task(request, rsynctask_dict):
+    depends(request, ["pool_04"])
     id = rsynctask_dict['id']
     results = PUT(f'/rsynctask/id/{id}/', {'enabled': False})
     assert results.status_code == 200, results.text
 
 
-def test_11_Check_that_API_reports_the_rsync_task_as_disabled(rsynctask_dict):
+def test_11_Check_that_API_reports_the_rsync_task_as_disabled(request, rsynctask_dict):
+    depends(request, ["pool_04"])
     id = rsynctask_dict['id']
     results = GET(f'/rsynctask?id={id}')
     assert results.json()[0]['enabled'] is False
 
 
-def test_12_Delete_rsync_task(rsynctask_dict):
+def test_12_Delete_rsync_task(request, rsynctask_dict):
+    depends(request, ["pool_04"])
     id = rsynctask_dict['id']
     results = DELETE(f'/rsynctask/id/{id}/')
     assert results.status_code == 200, results.text
 
 
-def test_13_Check_that_the_API_reports_rsync_task_as_deleted(rsynctask_dict):
+def test_13_Check_that_the_API_reports_rsync_task_as_deleted(request, rsynctask_dict):
+    depends(request, ["pool_04"])
     id = rsynctask_dict['id']
     results = GET(f'/rsynctask?id={id}')
     assert results.json() == [], results.text
 
 
-def test_14_remove_root_ssh_key():
+def test_14_remove_root_ssh_key(request):
+    depends(request, ["pool_04"])
     cmd = 'rm /root/.ssh/id_rsa*'
     results = SSH_TEST(cmd, user, None, ip)
     assert results['result'] is True, results['output']
