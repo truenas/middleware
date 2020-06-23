@@ -73,7 +73,7 @@ class SensorService(Service):
         return filter_list(sensors, filters, options)
 
     async def _sensor_list(self):
-        proc = await run(["/usr/local/bin/ipmitool", "sensor", "list"], check=False)
+        proc = await run(["ipmitool", "sensor", "list"], check=False)
 
         sensors = []
         for line in proc.stdout.decode(errors="ignore").strip("\n").split("\n"):
