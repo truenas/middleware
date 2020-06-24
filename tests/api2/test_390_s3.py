@@ -22,13 +22,13 @@ dataset_path = "/mnt/" + dataset
 
 
 def test_01_creating_dataset_for_s3(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
 
 def test_02_update_s3_service(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     payload = {
         'bindip': '0.0.0.0',
         'bindport': 9000,
@@ -42,7 +42,7 @@ def test_02_update_s3_service(request):
 
 
 def test_03_enable_s3_service(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     payload = {
         "enable": True
     }
@@ -51,7 +51,7 @@ def test_03_enable_s3_service(request):
 
 
 def test_04_start_s3_service(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST(
         '/service/start/', {
             'service': 's3',
@@ -63,13 +63,13 @@ def test_04_start_s3_service(request):
 
 
 def test_05_verify_s3_is_running(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET("/service/?service=s3")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
 def test_06_stop_iSCSI_service(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST(
         '/service/stop/', {
             'service': 's3',
@@ -81,12 +81,12 @@ def test_06_stop_iSCSI_service(request):
 
 
 def test_07_verify_s3_is_not_running(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET("/service/?service=s3")
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
 def test_08_delete_s3_dataset(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text

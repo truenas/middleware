@@ -43,28 +43,28 @@ plugin_objects = [
 
 
 def test_01_activate_jail_pool(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = POST('/jail/activate/', pool_name)
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text
 
 
 def test_02_verify_jail_pool(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/jail/get_activated_pool/')
     assert results.status_code == 200, results.text
     assert results.json() == pool_name, results.text
 
 
 def test_03_get_list_of_installed_plugin(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/plugin/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
 
 
 def test_04_verify_plugin_repos_is_in_official_repositories(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/plugin/official_repositories/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
@@ -74,7 +74,7 @@ def test_04_verify_plugin_repos_is_in_official_repositories(request):
 
 
 def test_05_get_list_of_available_plugins_job_id(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
         "plugin_repository": repos_url
@@ -86,7 +86,7 @@ def test_05_get_list_of_available_plugins_job_id(request):
 
 
 def test_06_verify_list_of_available_plugins_job_id_is_successfull(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global job_results
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -95,14 +95,14 @@ def test_06_verify_list_of_available_plugins_job_id_is_successfull(request):
 
 @pytest.mark.parametrize('plugin', plugin_list)
 def test_07_verify_available_plugin_(request, plugin):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert isinstance(job_results['result'], list), str(job_results)
     assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_08_verify_available_plugins_transmission_is_not_na_with(request, prop):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     for plugin_info in job_results['result']:
         if 'transmission' in plugin_info['plugin']:
             break
@@ -110,7 +110,7 @@ def test_08_verify_available_plugins_transmission_is_not_na_with(request, prop):
 
 
 def test_09_add_transmission_plugins(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
         "plugin_name": "transmission",
@@ -126,20 +126,20 @@ def test_09_add_transmission_plugins(request):
 
 
 def test_10_verify_transmission_plugin_job_is_successfull(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_11_search_plugin_transmission_id(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/plugin/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
 def test_12_get_transmission_plugin_info(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global transmission_plugin
     results = GET('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
@@ -149,13 +149,13 @@ def test_12_get_transmission_plugin_info(request):
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_13_verify_transmission_plugin_value_is_not_na_for_(request, prop):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert transmission_plugin[prop] != 'N/A', str(transmission_plugin)
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_14_verify_transmission_plugins_installed_and_available_value_(request, prop):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     for plugin_info in job_results['result']:
         if 'transmission' in plugin_info['plugin']:
             break
@@ -163,7 +163,7 @@ def test_14_verify_transmission_plugins_installed_and_available_value_(request, 
 
 
 def test_15_get_transmission_jail_info(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global transmission_jail, results
     results = GET("/jail/id/transmission")
     assert results.status_code == 200, results.text
@@ -173,12 +173,12 @@ def test_15_get_transmission_jail_info(request):
 
 @pytest.mark.parametrize('prop', plugin_objects)
 def test_16_verify_transmission_plugin_value_with_jail_value_of_(request, prop):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert transmission_jail[prop] == transmission_plugin[prop], results.text
 
 
 def test_17_get_list_of_available_plugins_without_cache(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
         "plugin_repository": repos_url,
@@ -191,7 +191,7 @@ def test_17_get_list_of_available_plugins_without_cache(request):
 
 
 def test_18_verify_list_of_available_plugins_job_id_is_successfull(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global job_results
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -200,13 +200,13 @@ def test_18_verify_list_of_available_plugins_job_id_is_successfull(request):
 
 @pytest.mark.parametrize('plugin', plugin_list)
 def test_19_verify_available_plugin_without_cache_(request, plugin):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert isinstance(job_results['result'], list), str(job_results)
     assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
 def test_20_stop_transmission_jail(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
         "jail": "transmission",
@@ -218,7 +218,7 @@ def test_20_stop_transmission_jail(request):
 
 
 def test_21_wait_for_transmission_plugin_to_be_down(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     results = GET('/plugin/id/transmission/')
@@ -226,7 +226,7 @@ def test_21_wait_for_transmission_plugin_to_be_down(request):
 
 
 def test_22_start_transmission_jail(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = "transmission"
     results = POST('/jail/start/', payload)
@@ -235,7 +235,7 @@ def test_22_start_transmission_jail(request):
 
 
 def test_23_wait_for_transmission_plugin_to_be_up(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     results = GET('/plugin/id/transmission/')
@@ -243,7 +243,7 @@ def test_23_wait_for_transmission_plugin_to_be_up(request):
 
 
 def test_24_stop_transmission_jail_before_deleteing(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
         "jail": "transmission",
@@ -255,7 +255,7 @@ def test_24_stop_transmission_jail_before_deleteing(request):
 
 
 def test_25_wait_for_transmission_plugin_to_be_down(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 15)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     results = GET('/plugin/id/transmission/')
@@ -263,25 +263,25 @@ def test_25_wait_for_transmission_plugin_to_be_down(request):
 
 
 def test_26_delete_transmission_plugin(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = DELETE('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
 
 
 def test_27_looking_transmission_jail_id_is_delete(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/jail/id/transmission/')
     assert results.status_code == 404, results.text
 
 
 def test_28_looking_transmission_plugin_id_is_delete(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/plugin/id/transmission/')
     assert results.status_code == 404, results.text
 
 
 def test_29_get_list_of_available_plugins_job_id_on_custom_repos(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
         "plugin_repository": repos_url,
@@ -294,7 +294,7 @@ def test_29_get_list_of_available_plugins_job_id_on_custom_repos(request):
 
 
 def test_30_verify_list_of_available_plugins_job_id_is_successfull(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global job_results
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -303,14 +303,14 @@ def test_30_verify_list_of_available_plugins_job_id_is_successfull(request):
 
 @pytest.mark.parametrize('plugin', plugin_list2)
 def test_31_verify_available_plugin_(request, plugin):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert isinstance(job_results['result'], list), str(job_results)
     assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
 
 @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
 def test_32_verify_available_plugins_transmission_is_not_na_(request, prop):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     for plugin_info in job_results['result']:
         if 'transmission' in plugin_info['plugin']:
             break
@@ -318,7 +318,7 @@ def test_32_verify_available_plugins_transmission_is_not_na_(request, prop):
 
 
 def test_33_add_transmission_plugins(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
         "plugin_name": "transmission",
@@ -335,33 +335,33 @@ def test_33_add_transmission_plugins(request):
 
 
 def test_34_verify_transmission_plugin_job_is_successfull(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 600)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_35_search_plugin_transmission_id(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/plugin/?id=transmission')
     assert results.status_code == 200, results.text
     assert len(results.json()) > 0, results.text
 
 
 def test_36_verify_transmission_plugin_id_exist(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/plugin/id/transmission/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
 
 def test_37_verify_the_transmission_jail_id_exist(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/jail/id/transmission/')
     assert results.status_code == 200, results.text
 
 
 def test_38_delete_transmission_jail(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     payload = {
         'force': True
     }
@@ -370,13 +370,13 @@ def test_38_delete_transmission_jail(request):
 
 
 def test_39_verify_the_transmission_jail_id_is_delete(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET('/jail/id/transmission/')
     assert results.status_code == 404, results.text
 
 
 def test_40_verify_clean_call(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = POST('/jail/clean/', 'ALL')
     assert results.status_code == 200, results.text
     assert results.json() is True, results.text

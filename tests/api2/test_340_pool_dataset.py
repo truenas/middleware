@@ -36,12 +36,12 @@ default_acl = [
 
 
 def test_01_check_dataset_endpoint(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert isinstance(GET('/pool/dataset/').json(), list)
 
 
 def test_02_create_dataset(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': dataset
@@ -51,14 +51,14 @@ def test_02_create_dataset(request):
 
 
 def test_03_query_dataset_by_name(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     dataset = GET(f'/pool/dataset/?id={dataset_url}')
 
     assert isinstance(dataset.json()[0], dict)
 
 
 def test_04_update_dataset_description(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = PUT(
         f'/pool/dataset/id/{dataset_url}/', {
             'comments': 'testing dataset'
@@ -69,7 +69,7 @@ def test_04_update_dataset_description(request):
 
 
 def test_05_set_permissions_for_dataset(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
@@ -85,13 +85,13 @@ def test_05_set_permissions_for_dataset(request):
 
 
 def test_06_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_07_promoting_dataset(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     # TODO: ONCE WE HAVE MANUAL SNAPSHOT FUNCTIONAITY IN MIDDLEWARED,
     # THIS TEST CAN BE COMPLETED THEN
     pass
@@ -102,7 +102,7 @@ def test_07_promoting_dataset(request):
 
 
 def test_08_set_acl_for_dataset(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
@@ -117,13 +117,13 @@ def test_08_set_acl_for_dataset(request):
 
 
 def test_09_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_10_get_filesystem_getacl(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global results
     payload = {
         'path': f'/mnt/{dataset}',
@@ -135,20 +135,20 @@ def test_10_get_filesystem_getacl(request):
 
 @pytest.mark.parametrize('key', ['tag', 'type', 'perms', 'flags'])
 def test_11_verify_filesystem_getacl(request, key):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert results.json()['acl'][0][key] == default_acl[0][key], results.text
     assert results.json()['acl'][1][key] == default_acl[1][key], results.text
 
 
 def test_12_filesystem_acl_is_present(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = POST('/filesystem/stat/', f'/mnt/{dataset}')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is True, results.text
 
 
 def test_13_strip_acl_from_dataset(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global JOB_ID
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
@@ -165,7 +165,7 @@ def test_13_strip_acl_from_dataset(request):
 
 
 def test_14_setting_dataset_quota(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global results
     payload = [
         {'quota_type': 'USER', 'id': 'root', 'quota_value': 0},
@@ -177,7 +177,7 @@ def test_14_setting_dataset_quota(request):
 
 
 def test_15_getting_dataset_quota(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global results
     payload = {
         'quota_type': 'USER',
@@ -188,13 +188,13 @@ def test_15_getting_dataset_quota(request):
 
 
 def test_16_verify_job_id_is_successfull(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_17_filesystem_acl_is_removed(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = POST('/filesystem/stat/', f'/mnt/{dataset}')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is False, results.text
@@ -202,7 +202,7 @@ def test_17_filesystem_acl_is_removed(request):
 
 
 def test_18_delete_dataset(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )
@@ -210,13 +210,13 @@ def test_18_delete_dataset(request):
 
 
 def test_19_verify_the_id_dataset_does_not_exist(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = GET(f'/pool/dataset/id/{dataset_url}/')
     assert result.status_code == 404, result.text
 
 
 def test_20_creating_zvol(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global results, payload
     payload = {
         'name': zvol,
@@ -230,7 +230,7 @@ def test_20_creating_zvol(request):
 
 @pytest.mark.parametrize('key', ['name', 'type', 'volsize', 'volblocksize'])
 def test_21_verify_output(request, key):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     if key == 'volsize':
         assert results.json()[key]['parsed'] == payload[key], results.text
     elif key == 'volblocksize':
@@ -240,7 +240,7 @@ def test_21_verify_output(request, key):
 
 
 def test_22_query_zvol_by_id(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global results
     results = GET(f'/pool/dataset/id/{zvol_url}')
     assert isinstance(results.json(), dict)
@@ -248,7 +248,7 @@ def test_22_query_zvol_by_id(request):
 
 @pytest.mark.parametrize('key', ['name', 'type', 'volsize', 'volblocksize'])
 def test_23_verify_the_query_zvol_output(request, key):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     if key == 'volsize':
         assert results.json()[key]['parsed'] == payload[key], results.text
     elif key == 'volblocksize':
@@ -258,7 +258,7 @@ def test_23_verify_the_query_zvol_output(request, key):
 
 
 def test_24_update_zvol(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global payload, results
     payload = {
         'volsize': 163840,
@@ -270,12 +270,12 @@ def test_24_update_zvol(request):
 
 @pytest.mark.parametrize('key', ['volsize'])
 def test_25_verify_update_zvol_output(request, key):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert results.json()[key]['parsed'] == payload[key], results.text
 
 
 def test_26_query_zvol_changes_by_id(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global results
     results = GET(f'/pool/dataset/id/{zvol_url}')
     assert isinstance(results.json(), dict), results
@@ -283,25 +283,25 @@ def test_26_query_zvol_changes_by_id(request):
 
 @pytest.mark.parametrize('key', ['comments', 'volsize'])
 def test_27_verify_the_query_change_zvol_output(request, key):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     assert results.json()[key]['parsed'] == payload[key], results.text
 
 
 def test_28_delete_zvol(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = DELETE(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 200, result.text
 
 
 def test_29_verify_the_id_zvol_does_not_exist(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = GET(f'/pool/dataset/id/{zvol_url}/')
     assert result.status_code == 404, result.text
 
 
 @pytest.mark.parametrize("create_dst", [True, False])
 def test_28_delete_dataset_with_receive_resume_token(request, create_dst):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST('/pool/dataset/', {'name': f'{pool_name}/src'})
     assert result.status_code == 200, result.text
 
