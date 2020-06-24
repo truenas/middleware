@@ -12,8 +12,13 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, scale
+from auto_config import pool_name, scale, ha
 from config import *
+
+if ha and "virtual_ip" in os.environ:
+    ip = os.environ["virtual_ip"]
+else:
+    from auto_config import ip
 
 if "BRIDGEHOST" in locals():
     MOUNTPOINT = f"/tmp/afp{BRIDGEHOST}"
