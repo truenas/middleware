@@ -36,7 +36,7 @@ class WebDAVSharingService(SharingService):
         if not data['name'].isalnum():
             verrors.add(
                 f'{schema}.name',
-                'Only AlphaNumeric characters are allowed'
+                'Only alphanumeric characters are allowed'
             )
 
         verrors.check()
