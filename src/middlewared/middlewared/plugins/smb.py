@@ -511,6 +511,9 @@ class SMBService(SystemServiceService):
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
             verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
 
+        if new['guest'] == 'root':
+            verrors.add('smb_update.guest', '"root" is not a permitted guest account')
+
         if data.get('bindip'):
             bindip_choices = list((await self.bindip_choices()).keys())
             for idx, item in enumerate(data['bindip']):
