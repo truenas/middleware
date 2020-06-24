@@ -1704,7 +1704,7 @@ class PoolService(CRUDService):
                     )
 
                 unlock_job = self.middleware.call_sync(
-                    'pool.dataset.unlock', pool['name'], {'toggle_attachments': False, 'recursive': True}
+                    'pool.dataset.unlock', pool['name'], {'restart_attachments': False, 'recursive': True}
                 )
                 unlock_job.wait_sync()
                 if unlock_job.error or unlock_job.result['failed']:
@@ -2103,9 +2103,10 @@ class PoolDatasetService(CRUDService):
         elif id == (await self.middleware.call('systemdataset.config'))['pool']:
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
-        await job.wrap(await self.middleware.call(
-            'pool.dataset.toggle_attachments', self.__attachments_path(ds), True
-        ))
+        async def detach(delegate):
+            await delegate.detach((await delegate.query(self.__attachments_path(ds), True)))
+
+        await asyncio.gather(detach(dg) for dg in self.attachment_delegates)
 
         await self.middleware.call(
             'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
@@ -2120,7 +2121,7 @@ class PoolDatasetService(CRUDService):
         Dict(
             'unlock_options',
             Bool('key_file', default=False),
-            Bool('toggle_attachments', default=True),
+            Bool('restart_attachments', default=True),
             Bool('recursive', default=False),
             List(
                 'datasets', items=[
@@ -2247,13 +2248,10 @@ class PoolDatasetService(CRUDService):
                 else:
                     unlocked.append(name)
 
-        if options['toggle_attachments']:
-            j = self.middleware.call_sync(
-                'pool.dataset.toggle_attachments', self.__attachments_path(dataset), False, {
-                    'locked': False, 'lock_enabled_relation': 'OR'
-                }
+        if options['restart_attachments']:
+            self.middleware.call_sync(
+                'pool.dataset.restart_attachment_services', self.__attachments_path(dataset), True
             )
-            j.wait_sync()
 
         if unlocked:
             def dataset_data(unlocked_dataset):
@@ -2273,10 +2271,10 @@ class PoolDatasetService(CRUDService):
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
-    @job(lock=lambda args: f'toggle_attachments_{args[0]}')
-    async def toggle_attachments(self, job, path, enabled, options=None):
-        for delegate in self.attachment_delegates:
-            await delegate.toggle((await delegate.query(path, enabled, options)), not enabled)
+    async def restart_attachment_services(self, path, enabled):
+        async def restart(delegate):
+            await delegate.restart_reload_services((await delegate.query(path, enabled)), enabled)
+        await asyncio.gather(restart(dg) for dg in self.attachment_delegates)
 
     @accepts(
         Str('id'),
