@@ -719,10 +719,7 @@ class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service = 'rsync'
     service_class = RsyncModService
 
-    async def post_delete(self):
-        await self._service_change('rsync', 'reload')
-
-    async def post_toggle(self, attachments, enabled):
+    async def restart_reload_services(self, attachments, enabled):
         await self._service_change('rsync', 'reload')
 
 
@@ -731,10 +728,7 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     title = 'Rsync Task'
     service_class = RsyncTaskService
 
-    async def post_delete(self):
-        await self.middleware.call('service.restart', 'cron')
-
-    async def post_toggle(self, attachments, enabled):
+    async def restart_reload_services(self, attachments, enabled):
         await self.middleware.call('service.restart', 'cron')
 
 

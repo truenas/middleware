@@ -1226,10 +1226,7 @@ class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     title = 'CloudSync Task'
     service_class = CloudSyncService
 
-    async def post_delete(self):
-        await self.middleware.call('service.restart', 'cron')
-
-    async def post_toggle(self, attachments, enabled):
+    async def restart_reload_services(self, attachments, enabled):
         await self.middleware.call('service.restart', 'cron')
 
 

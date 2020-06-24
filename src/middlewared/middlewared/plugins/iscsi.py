@@ -1597,7 +1597,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
         if osc.IS_FREEBSD:
             await asyncio.sleep(5)
 
-    async def post_toggle(self, attachments, enabled):
+    async def restart_reload_services(self, attachments, enabled):
         await self._service_change('iscsitarget', 'reload')
 
         if osc.IS_FREEBSD and not enabled:
