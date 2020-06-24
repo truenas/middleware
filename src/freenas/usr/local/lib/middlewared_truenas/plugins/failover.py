@@ -1482,8 +1482,15 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     if ha_configured:
         # If HA is already configured just sync network
         if await middleware.call('failover.status') == 'MASTER':
+
+            # We have to restart the failover service so that we regnerate
+            # the /tmp/failover.json file on active/standby controller
+            middleware.logger.debug('[HA] Regenerating /tmp/failover.json')
+            await middleware.call('service.restart', 'failover')
+
             middleware.logger.debug('[HA] Configuring network on standby node')
             await middleware.call('failover.call_remote', 'interface.sync')
+
         return
 
     middleware.logger.info('[HA] Setting up')
