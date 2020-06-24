@@ -80,10 +80,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         options = options or {}
         filters = [self.enabled_field, '=', enabled]
         if 'locked' in options:
-            if options.get('lock_enabled_relation', 'AND') == 'AND':
-                filters = [filters] + [[self.locked_field, '=', options['locked']]]
-            else:
-                filters = [['OR', [filters, [self.locked_field, '=', options['locked']]]]]
+            filters = [filters] + [[self.locked_field, '=', options['locked']]]
         else:
             filters = [filters]
         return filters
