@@ -17,7 +17,7 @@ from middlewared.service import job, private, ConfigService, Service, Validation
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, Popen
-from middlewared.plugins.directoryservices import DSStatus, SSL
+from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
 import middlewared.utils.osc as osc
 
@@ -132,11 +132,6 @@ class ActiveDirectory_DNS(object):
             host = f"{srv_prefix.value}{self.ad['domainname']}"
             servers = self._get_SRV_records(host, self.ad['dns_timeout'])
 
-        if SSL(self.ad['ssl']) == SSL.USESSL:
-            for server in servers:
-                if server.port == 389:
-                    server.port = 636
-
         return servers
 
     def get_n_working_servers(self, srv=SRV['DOMAINCONTROLLER'], number=1):
@@ -241,8 +236,6 @@ class ActiveDirectoryModel(sa.Model):
     ad_domainname = sa.Column(sa.String(120))
     ad_bindname = sa.Column(sa.String(120))
     ad_bindpw = sa.Column(sa.EncryptedText())
-    ad_ssl = sa.Column(sa.String(120))
-    ad_validate_certificates = sa.Column(sa.Boolean())
     ad_verbose_logging = sa.Column(sa.Boolean())
     ad_allow_trusted_doms = sa.Column(sa.Boolean())
     ad_use_default_domain = sa.Column(sa.Boolean())
@@ -253,9 +246,7 @@ class ActiveDirectoryModel(sa.Model):
     ad_timeout = sa.Column(sa.Integer())
     ad_dns_timeout = sa.Column(sa.Integer())
     ad_nss_info = sa.Column(sa.String(120), nullable=True)
-    ad_ldap_sasl_wrapping = sa.Column(sa.String(120))
     ad_enable = sa.Column(sa.Boolean())
-    ad_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     ad_kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id', ondelete='SET NULL'),
                                      index=True, nullable=True)
     ad_kerberos_principal = sa.Column(sa.String(255))
@@ -292,13 +283,11 @@ class ActiveDirectoryService(ConfigService):
                 'netbiosalias': smb['netbiosalias']
             })
 
-        for key in ['ssl', 'nss_info', 'ldap_sasl_wrapping']:
-            if key in ad and ad[key] is not None:
-                ad[key] = ad[key].upper()
+        if ad.get('nss_info'):
+            ad['nss_info'] = ad['nss_info'].upper()
 
-        for key in ['kerberos_realm', 'certificate']:
-            if ad[key] is not None:
-                ad[key] = ad[key]['id']
+        if ad.get('kerberos_realm'):
+            ad['kerberos_realm'] = ad['kerberos_realm']['id']
 
         return ad
 
@@ -313,9 +302,8 @@ class ActiveDirectoryService(ConfigService):
             if key in ad:
                 ad.pop(key)
 
-        for key in ['ssl', 'nss_info', 'ldap_sasl_wrapping']:
-            if ad[key] is not None:
-                ad[key] = ad[key].lower()
+        if ad.get('nss_info'):
+            ad['nss_info'] = ad['nss_info'].upper()
 
         return ad
 
@@ -325,20 +313,6 @@ class ActiveDirectoryService(ConfigService):
         Returns list of available LDAP schema choices.
         """
         return await self.middleware.call('directoryservices.nss_info_choices', 'ACTIVEDIRECTORY')
-
-    @accepts()
-    async def ssl_choices(self):
-        """
-        Returns list of SSL choices.
-        """
-        return await self.middleware.call('directoryservices.ssl_choices', 'ACTIVEDIRECTORY')
-
-    @accepts()
-    async def sasl_wrapping_choices(self):
-        """
-        Returns list of sasl wrapping choices.
-        """
-        return await self.middleware.call('directoryservices.sasl_wrapping_choices', 'ACTIVEDIRECTORY')
 
     @private
     async def update_netbios_data(self, old, new):
@@ -377,12 +351,6 @@ class ActiveDirectoryService(ConfigService):
         if not new["enable"]:
             return
 
-        if new["certificate"]:
-            verrors.extend(await self.middleware.call(
-                "certificate.cert_services_validation",
-                new["certificate"], "activedirectory_update.certificate", False
-            ))
-
         if not new["bindpw"] and not new["kerberos_principal"]:
             verrors.add(
                 "activedirectory_update.bindname",
@@ -404,9 +372,6 @@ class ActiveDirectoryService(ConfigService):
         Str('domainname', required=True),
         Str('bindname'),
         Str('bindpw', private=True),
-        Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
-        Int('certificate', null=True),
-        Bool('validate_certificates', default=True),
         Bool('verbose_logging'),
         Bool('use_default_domain'),
         Bool('allow_trusted_doms'),
@@ -419,7 +384,6 @@ class ActiveDirectoryService(ConfigService):
         Int('timeout', default=60),
         Int('dns_timeout', default=10),
         Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
-        Str('ldap_sasl_wrapping', default='SIGN', enum=['PLAIN', 'SIGN', 'SEAL']),
         Str('createcomputer'),
         Str('netbiosname'),
         Str('netbiosname_b'),
@@ -437,20 +401,6 @@ class ActiveDirectoryService(ConfigService):
         `bindpw` password used to perform the initial domain join. User-
         provided credentials are used to obtain a kerberos ticket, which
         is used to perform the actual domain join.
-
-        `ssl` establish SSL/TLS-protected connections to the DCs in the
-        Active Directory domain.
-
-        `certificate` LDAPs client certificate to be used for certificate-
-        based authentication in the AD domain. If certificate-based
-        authentication is not configured, SASL GSSAPI binds will be performed.
-
-        `validate_certificates` specifies whether to perform checks on server
-        certificates in a TLS session. If enabled, TLS_REQCERT demand is set.
-        The server certificate is requested. If no certificate is provided or
-        if a bad certificate is provided, the session is immediately terminated.
-        If disabled, TLS_REQCERT allow is set. The server certificate is
-        requested, but all errors are ignored.
 
         `verbose_logging` increase logging during the domain join process.
 
@@ -504,11 +454,6 @@ class ActiveDirectoryService(ConfigService):
         `dns_timeout` timeout value for DNS queries during the initial domain
         join. This value is also set as the NETWORK_TIMEOUT in the ldap config
         file.
-
-        `ldap_sasl_wrapping` defines whether ldap traffic will be signed or
-        signed and encrypted (sealed). LDAP traffic that does not originate
-        from Samba defaults to using GSSAPI signing unless it is tunnelled
-        over LDAPs.
 
         `createcomputer` Active Directory Organizational Unit in which new
         computer accounts are created.
