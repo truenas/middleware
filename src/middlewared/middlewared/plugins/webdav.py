@@ -21,8 +21,6 @@ class WebDAVSharingModel(sa.Model):
 
 class WebDAVSharingService(SharingService):
 
-    locked_alert_class = 'WebDAVShareLocked'
-
     class Config:
         datastore = 'sharing.webdav_share'
         datastore_prefix = 'webdav_'

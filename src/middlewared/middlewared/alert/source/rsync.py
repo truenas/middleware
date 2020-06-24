@@ -1,5 +1,4 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, OneShotAlertClass, Alert
-from middlewared.alert.common.sharing_tasks import ShareLockedAlertClass, TaskLockedAlertClass
 
 
 class RsyncSuccessAlertClass(AlertClass, OneShotAlertClass):
@@ -36,15 +35,3 @@ class RsyncFailedAlertClass(AlertClass, OneShotAlertClass):
             lambda alert: alert.key != str(query),
             alerts
         ))
-
-
-class RsyncTaskLockedAlertClass(TaskLockedAlertClass):
-
-    async def get_create_args(self, args):
-        return {**args, 'type': 'Rsync Task'}
-
-
-class RsyncModuleLockedAlertClass(ShareLockedAlertClass):
-
-    async def get_create_args(self, args):
-        return {**args, 'type': 'Rsync Module'}
