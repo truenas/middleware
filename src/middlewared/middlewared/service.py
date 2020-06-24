@@ -585,17 +585,6 @@ class SharingTaskService(CRUDService):
         await check_path_resides_within_volume(
             verrors, self.middleware, f'{schema}.{self.path_field}', data.get(self.path_field)
         )
-        if data[self.enabled_field] and await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets', data[self.path_field]
-        ):
-            verrors.add(
-                f'{schema}.{self.path_field}',
-                'Underlying resource is locked.'
-            )
-            verrors.add(
-                f'{schema}.{self.enabled_field}',
-                f'{self.service_type.capitalize()} must be disabled to configure the specified resource(s).'
-            )
         return verrors
 
     @private

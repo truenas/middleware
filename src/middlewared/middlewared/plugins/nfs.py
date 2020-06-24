@@ -417,35 +417,21 @@ class SharingNFSService(SharingService):
 
     @private
     def validate_paths(self, data, schema_name, verrors):
-        locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
+        if osc.IS_LINUX:
+            # Ganesha does not have such a restriction, each path is a different share
+            return
+
         dev = None
-        locked_paths = False
         for i, path in enumerate(data["paths"]):
-            if data['enabled'] and self.middleware.call_sync(
-                'pool.dataset.path_in_locked_datasets', path, locked_datasets
-            ):
-                locked_paths = True
-                verrors.add(
-                    f'{schema_name}.paths.{i}',
-                    'Underlying resource is locked.'
-                )
-
-            if osc.IS_LINUX:
-                # Ganesha does not have such a restriction, each path is a different share
-                continue
+            stat = os.stat(path)
+            if dev is None:
+                dev = stat.st_dev
             else:
-                stat = os.stat(path)
-                if dev is None:
-                    dev = stat.st_dev
-                else:
-                    if dev != stat.st_dev:
-                        verrors.add(
-                            f'{schema_name}.paths.{i}',
-                            'Paths for a NFS share must reside within the same filesystem'
-                        )
-
-        if locked_paths:
-            verrors.add(f'{schema_name}.enabled', 'Share must be disabled to configure the specified paths.')
+                if dev != stat.st_dev:
+                    verrors.add(
+                        f'{schema_name}.paths.{i}',
+                        'Paths for a NFS share must reside within the same filesystem'
+                    )
 
     @private
     async def resolve_hostnames(self, hostnames):

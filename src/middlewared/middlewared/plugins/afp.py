@@ -192,10 +192,6 @@ class SharingAFPService(SharingService):
 
         await self.clean(data, 'sharingafp_create', verrors)
         await self.validate(data, 'sharingafp_create', verrors)
-
-        await check_path_resides_within_volume(
-            verrors, self.middleware, 'sharingafp_create.path', path)
-
         verrors.check()
 
         if path and not os.path.exists(path):
@@ -239,12 +235,7 @@ class SharingAFPService(SharingService):
         await self.clean(new, 'sharingafp_update', verrors, id=id)
         await self.validate(new, 'sharingafp_update', verrors, old=old)
 
-        if path:
-            await check_path_resides_within_volume(
-                verrors, self.middleware, 'sharingafp_create.path', path)
-
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if path and not os.path.exists(path):
             try:
@@ -282,7 +273,7 @@ class SharingAFPService(SharingService):
                 uuid.UUID(data['vuid'], version=4)
             except ValueError:
                 verrors.add(f'{schema_name}.vuid', 'vuid must be a valid UUID.')
-        await self.validate_path_field(data, schema_name)
+        await self.validate_path_field(data, schema_name, verrors)
 
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):

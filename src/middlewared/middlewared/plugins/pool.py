@@ -18,6 +18,7 @@ import uuid
 from collections import defaultdict
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
@@ -2104,9 +2105,14 @@ class PoolDatasetService(CRUDService):
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
         async def detach(delegate):
-            await delegate.detach((await delegate.query(self.__attachments_path(ds), True)))
+            attachments = await delegate.query(self.__attachments_path(ds), True, {'locked': False})
+            if isinstance(delegate, LockableFSAttachmentDelegate):
+                await delegate.detach(attachments)
+            else:
+                await delegate.toggle(attachments, False)
 
-        await asyncio.gather(detach(dg) for dg in self.attachment_delegates)
+        coroutines = [detach(dg) for dg in self.attachment_delegates]
+        await asyncio.gather(*coroutines)
 
         await self.middleware.call(
             'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
@@ -2250,7 +2256,7 @@ class PoolDatasetService(CRUDService):
 
         if options['restart_attachments']:
             self.middleware.call_sync(
-                'pool.dataset.restart_attachment_services', self.__attachments_path(dataset), True
+                'pool.dataset.restart_attachment_services', self.__attachments_path(dataset), True, {'locked': False}
             )
 
         if unlocked:
@@ -2271,10 +2277,14 @@ class PoolDatasetService(CRUDService):
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
-    async def restart_attachment_services(self, path, enabled):
+    async def restart_attachment_services(self, path, enabled, options=None):
         async def restart(delegate):
-            await delegate.restart_reload_services((await delegate.query(path, enabled)), enabled)
-        await asyncio.gather(restart(dg) for dg in self.attachment_delegates)
+            if isinstance(delegate, LockableFSAttachmentDelegate):
+                await delegate.restart_reload_services((await delegate.query(path, enabled, options)), enabled)
+            else:
+                await delegate.toggle((await delegate.query(path, not enabled, options)), enabled)
+        coroutines = [restart(dg) for dg in self.attachment_delegates]
+        await asyncio.gather(*coroutines)
 
     @accepts(
         Str('id'),
