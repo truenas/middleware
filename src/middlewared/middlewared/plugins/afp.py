@@ -388,11 +388,7 @@ class AFPFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service = 'afp'
     service_class = SharingAFPService
 
-    async def post_delete(self):
-        # AFP does not allow us to close specific share forcefully so we have to abort all connections
-        await self._service_change('afp', 'restart')
-
-    async def post_toggle(self, attachments, enabled):
+    async def restart_reload_services(self, attachments, enabled):
         if enabled:
             await self._service_change('afp', 'reload')
         else:

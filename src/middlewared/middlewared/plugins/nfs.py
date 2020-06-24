@@ -574,10 +574,7 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def get_attachment_name(self, attachment):
         return ', '.join(attachment['paths'])
 
-    async def post_delete(self):
-        await self._service_change('nfs', 'reload')
-
-    async def post_toggle(self, attachments, enabled):
+    async def restart_reload_services(self, attachments, enabled):
         await self._service_change('nfs', 'reload')
 
 

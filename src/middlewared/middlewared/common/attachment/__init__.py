@@ -88,23 +88,6 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
             filters = [filters]
         return filters
 
-    async def is_child_of_path(self, resource, path):
-        return is_child(resource[self.path_field], path)
-
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
-            await self.post_delete_attachment(attachment)
-        await self.post_delete()
-
-    async def post_delete_attachment(self, attachment):
-        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
-
-    async def post_delete(self):
-        """
-        Child classes can override this to perform tasks after deletion of certain shares i.e restart services
-        """
-
     async def query(self, path, enabled, options=None):
         results = []
         for resource in await self.middleware.call(
@@ -114,22 +97,64 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
                 results.append(resource)
         return results
 
-    async def post_toggle_attachment(self, attachment, enabled):
-        if enabled:
-            await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
-
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
-            await self.middleware.call(
-                'datastore.update', self.datastore_model, attachment['id'], {
-                    f'{self.datastore_prefix}{self.enabled_field}': enabled
-                }
-            )
+            await self.toggle_enabled_for_attachment(attachment, enabled)
             await self.post_toggle_attachment(attachment, enabled)
 
         await self.post_toggle(attachments, enabled)
+
+    async def toggle_enabled_for_attachment(self, attachment, enabled):
+        await self.middleware.call(
+            'datastore.update', self.datastore_model, attachment['id'], {
+                f'{self.datastore_prefix}{self.enabled_field}': enabled
+            }
+        )
+
+    async def post_toggle_attachment(self, attachment, enabled):
+        if enabled:
+            await self.remove_alert(attachment)
 
     async def post_toggle(self, attachments, enabled):
         """
         Child classes can override this to perform tasks after toggling of certain shares/resources
         """
+        await self.restart_reload_services(attachments, enabled)
+
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
+            await self.post_delete_attachment(attachment)
+        await self.post_delete(attachments)
+
+    async def post_delete_attachment(self, attachment):
+        await self.remove_alert(attachment)
+
+    async def post_delete(self, attachments=None):
+        """
+        Child classes can override this to perform tasks after deletion of certain shares i.e restart services
+        """
+        await self.restart_reload_services(attachments, False)
+
+    async def detach(self, attachments):
+        """
+        Removes the attachment from it's configured service while keeping attachment enabled
+        """
+        try:
+            for attachment in attachments:
+                await self.toggle_enabled_for_attachment(attachment, False)
+            await self.restart_reload_services(attachments, False)
+        finally:
+            for attachment in attachments:
+                await self.toggle_enabled_for_attachment(attachment, True)
+
+    async def restart_reload_services(self, attachments, enabled):
+        """
+        Common method for post delete/toggle which child classes can use to restart/reload services
+        """
+
+    async def remove_alert(self, attachment):
+        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
+
+    async def is_child_of_path(self, resource, path):
+        return is_child(resource[self.path_field], path)
