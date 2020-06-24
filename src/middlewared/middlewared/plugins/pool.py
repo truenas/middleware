@@ -1375,7 +1375,7 @@ class PoolService(CRUDService):
             for name, ids in (await self.middleware.call('keyvalue.get', key)).items():
                 for delegate in PoolDatasetService.attachment_delegates:
                     if delegate.name == name:
-                        attachments = await delegate.query(pool['path'], False, {'locked': False})
+                        attachments = await delegate.query(pool['path'], False)
                         attachments = [attachment for attachment in attachments if attachment['id'] in ids]
                         if attachments:
                             await delegate.toggle(attachments, True)
@@ -2127,7 +2127,6 @@ class PoolDatasetService(CRUDService):
         Dict(
             'unlock_options',
             Bool('key_file', default=False),
-            Bool('restart_attachments', default=True),
             Bool('recursive', default=False),
             List(
                 'datasets', items=[
@@ -2254,10 +2253,9 @@ class PoolDatasetService(CRUDService):
                 else:
                     unlocked.append(name)
 
-        if options['restart_attachments']:
-            self.middleware.call_sync(
-                'pool.dataset.restart_attachment_services', self.__attachments_path(dataset), True, {'locked': False}
-            )
+        self.middleware.call_sync(
+            'pool.dataset.restart_attachment_services', self.__attachments_path(dataset), True, {'locked': False}
+        )
 
         if unlocked:
             def dataset_data(unlocked_dataset):
@@ -3614,7 +3612,7 @@ class PoolDatasetService(CRUDService):
         if path:
             for delegate in self.attachment_delegates:
                 attachments = {"type": delegate.title, "service": delegate.service, "attachments": []}
-                for attachment in await delegate.query(path, True, {'locked': False}):
+                for attachment in await delegate.query(path, True):
                     attachments["attachments"].append(await delegate.get_attachment_name(attachment))
                 if attachments["attachments"]:
                     result.append(attachments)

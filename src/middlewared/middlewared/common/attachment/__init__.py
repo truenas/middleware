@@ -151,6 +151,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         """
         Common method for post delete/toggle which child classes can use to restart/reload services
         """
+        raise NotImplementedError
 
     async def remove_alert(self, attachment):
         await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])

@@ -9,7 +9,7 @@ class ShareLockedAlertClass(AlertClass, OneShotAlertClass):
     text = '%(type)s share "%(identifier)s" is unavailable because it uses a locked dataset.'
 
     async def create(self, args):
-        return Alert(ShareLockedAlertClass, args, key=args['id'])
+        return Alert(ShareLockedAlertClass, args, key=f'{args["type"]}_{args["id"]}')
 
     async def delete(self, alerts, query):
         return list(filter(lambda alert: alert.key != str(query), alerts))
@@ -23,7 +23,7 @@ class TaskLockedAlertClass(AlertClass, OneShotAlertClass):
     text = '%(type)s task "%(identifier)s" will not be executed because it uses a locked dataset.'
 
     async def create(self, args):
-        return Alert(TaskLockedAlertClass, args, key=args['id'])
+        return Alert(TaskLockedAlertClass, args, key=f'{args["type"]}_{args["id"]}')
 
     async def delete(self, alerts, query):
         return list(filter(lambda alert: alert.key != str(query), alerts))
