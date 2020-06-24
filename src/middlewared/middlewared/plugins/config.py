@@ -11,6 +11,7 @@ import tempfile
 
 from datetime import datetime
 
+import middlewared
 from middlewared.schema import Bool, Dict, accepts
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
@@ -128,42 +129,53 @@ class ConfigService(Service):
             # This is not bullet proof as we can eventually have more migrations in a stable
             # release compared to a older nightly and still be considered a downgrade, however
             # this is simple enough and works in most cases.
+            alembic_version = None
             conn = sqlite3.connect(config_file_name)
             try:
                 cur = conn.cursor()
-                cur.execute(
-                    "SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'"
-                )
-                new_numsouth = cur.fetchone()[0]
-                cur.execute(
-                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin' and app != 'vcp'"
-                )
-                new_num = cur.fetchone()[0]
-                cur.close()
+                try:
+                    cur.execute(
+                        "SELECT version_num FROM alembic_version"
+                    )
+                    alembic_version = cur.fetchone()[0]
+                except sqlite3.OperationalError as e:
+                    if e.args[0] == "no such table: alembic_version":
+                        # FN/TN < 12
+                        # Let's just ensure it's not a random SQLite file
+                        cur.execute("SELECT 1 FROM django_migrations")
+                    else:
+                        raise
+                finally:
+                    cur.close()
             finally:
                 conn.close()
-            conn = sqlite3.connect(FREENAS_DATABASE)
-            try:
-                cur = conn.cursor()
-                cur.execute(
-                    "SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'"
-                )
-                numsouth = cur.fetchone()[0]
-                cur.execute(
-                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin' and app != 'vcp'"
-                )
-                num = cur.fetchone()[0]
-                cur.close()
-            finally:
-                conn.close()
-                if new_numsouth > numsouth or new_num > num:
+            if alembic_version is not None:
+                for root, dirs, files in os.walk(
+                        os.path.join(os.path.dirname(middlewared.__file__), "alembic", "versions")
+                ):
+                    found = False
+                    for name in files:
+                        if name.endswith(".py"):
+                            with open(os.path.join(root, name)) as f:
+                                if any(
+                                    line.strip() == f"Revision ID: {alembic_version}"
+                                    for line in f.read().splitlines()
+                                ):
+                                    found = True
+                                    break
+                    if found:
+                        break
+                else:
                     raise CallError(
                         'Failed to upload config, version newer than the '
                         'current installed.'
                     )
         except Exception as e:
             os.unlink(config_file_name)
-            raise CallError(f'The uploaded file is not valid: {e}')
+            if isinstance(e, CallError):
+                raise
+            else:
+                raise CallError(f'The uploaded file is not valid: {e}')
 
         shutil.move(config_file_name, UPLOADED_DB_PATH)
         if bundle:
