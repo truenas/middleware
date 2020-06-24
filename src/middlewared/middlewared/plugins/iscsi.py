@@ -474,6 +474,8 @@ class iSCSITargetExtentModel(sa.Model):
 
 class iSCSITargetExtentService(SharingService):
 
+    share_task_type = 'iSCSI Extent'
+
     class Config:
         namespace = 'iscsi.extent'
         datastore = 'services.iscsitargetextent'

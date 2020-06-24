@@ -569,6 +569,7 @@ class SharingTaskService(CRUDService):
     locked_field = 'locked'
     service_type = NotImplemented
     locked_alert_class = NotImplemented
+    share_task_type = NotImplemented
 
     @private
     async def sharing_task_extend_context(self, extra):
@@ -624,6 +625,18 @@ class SharingTaskService(CRUDService):
         }
 
     @private
+    async def human_identifier(self, share_task):
+        raise NotImplementedError
+
+    @private
+    async def generate_locked_alert(self, share_task_id):
+        share_task = await self.get_instance(share_task_id)
+        await self.middleware.call(
+            'alert.oneshot_create', self.locked_alert_class,
+            {**share_task, 'identifier': await self.human_identifier(share_task), 'type': self.share_task_type}
+        )
+
+    @private
     async def remove_locked_alert(self, share_task_id):
         await self.middleware.call('alert.oneshot_delete', self.locked_alert_class, share_task_id)
 
@@ -646,10 +659,16 @@ class SharingService(SharingTaskService):
     service_type = 'share'
     locked_alert_class = 'ShareLocked'
 
+    async def human_identifier(self, share_task):
+        return share_task['name']
+
 
 class TaskPathService(SharingTaskService):
     service_type = 'task'
     locked_alert_class = 'TaskLocked'
+
+    async def human_identifier(self, share_task):
+        return share_task[self.path_field]
 
 
 def is_service_class(service, klass):

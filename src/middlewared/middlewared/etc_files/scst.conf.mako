@@ -26,9 +26,7 @@
             middleware.logger.debug(
                 'Skipping generation of %r extent as the underlying resource is locked', extent['name']
             )
-            middleware.call_sync(
-                'alert.oneshot_create', 'ShareLocked', {**extent, 'identifier': extent['name'], 'type': 'iSCSI Extent'}
-            )
+            middleware.call_sync('iscsi.extent.generate_locked_alert', extent['id'])
             continue
 
         if extent['type'] == 'DISK':

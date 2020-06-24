@@ -668,6 +668,7 @@ class CloudSyncService(TaskPathService):
 
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
+    share_task_type = 'CloudSync'
 
     class Config:
         datastore = "tasks.cloudsync"
