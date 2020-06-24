@@ -80,11 +80,9 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def get_query_filters(self, enabled, options=None):
         options = options or {}
-        filters = [self.enabled_field, '=', enabled]
+        filters = [[self.enabled_field, '=', enabled]]
         if 'locked' in options:
-            filters = [filters] + [[self.locked_field, '=', options['locked']]]
-        else:
-            filters = [filters]
+            filters += [[self.locked_field, '=', options['locked']]]
         return filters
 
     async def query(self, path, enabled, options=None):
