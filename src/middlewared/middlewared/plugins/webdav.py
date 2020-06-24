@@ -31,34 +31,18 @@ class WebDAVSharingService(SharingService):
     @private
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
+        await self.validate_path_field(data, schema, verrors)
 
-        path = data.get('path')
-        if not path:
-            verrors.add(
-                f'{schema}.path',
-                'This field is required'
-            )
-        else:
-            await self.validate_path_field(data, schema, verrors)
-
-        name = data.get('name')
-        if not name:
+        if not data['name'].isalnum():
             verrors.add(
                 f'{schema}.name',
-                'This field is required'
+                'Only AlphaNumeric characters are allowed'
             )
-        else:
-            if not name.isalnum():
-                verrors.add(
-                    f'{schema}.name',
-                    'Only AlphaNumeric characters are allowed'
-                )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
-        if not os.path.exists(path):
-            os.makedirs(path)
+        if not os.path.exists(data[self.path_field]):
+            os.makedirs(data[self.path_field])
 
     @accepts(
         Dict(
@@ -66,8 +50,8 @@ class WebDAVSharingService(SharingService):
             Bool('perm', default=True),
             Bool('ro', default=False),
             Str('comment'),
-            Str('name', required=True),
-            Str('path', required=True),
+            Str('name', required=True, empty=False),
+            Str('path', required=True, empty=False),
             Bool('enabled', default=True),
             register=True
         )
