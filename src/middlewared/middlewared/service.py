@@ -629,8 +629,9 @@ class SharingTaskService(CRUDService):
 
     @pass_app(rest=True)
     async def update(self, app, id, data):
+        before_update = await self.get_instance(id)
         rv = await super().update(app, id, data)
-        if not rv[self.enabled_field]:
+        if not rv[self.enabled_field] or (before_update[self.locked_field] and not rv[self.locked_field]):
             await self.remove_locked_alert(rv['id'])
         return rv
 
