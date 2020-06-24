@@ -47,16 +47,14 @@ def expect_state(job_id, state):
     assert False, str(job)
 
 
-def test_01_get_pool(request):
-    depends(request, ["pool_04"])
+def test_01_get_pool():
     results = GET("/pool/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
 
 
 @pytest.mark.skipif(not ha, reason="Skip for Core")
-def test_02_wipe_all_pool_disk(request):
-    depends(request, ["pool_04"])
+def test_02_wipe_all_pool_disk():
     for disk in disk_pool:
         payload = {
             "dev": f"{disk}",  # change f"{disk}" for f"/dev{disk}" if did not work
@@ -69,8 +67,7 @@ def test_02_wipe_all_pool_disk(request):
 
 
 @pytest.mark.skipif(not ha, reason="Skip for Core")
-def test_03_creating_ha_pool(request):
-    depends(request, ["pool_04"])
+def test_03_creating_ha_pool():
     global payload
     payload = {
         "name": "ha",
@@ -88,8 +85,7 @@ def test_03_creating_ha_pool(request):
 
 
 @pytest.mark.dependency(name="pool_04")
-def test_04_creating_a_pool(request):
-    depends(request, ["pool_04"])
+def test_04_creating_a_pool():
     global payload
     payload = {
         "name": pool_name,
