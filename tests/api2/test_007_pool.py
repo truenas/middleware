@@ -29,8 +29,7 @@ tank_disk_pool = disk_pool[1:] if ha else disk_pool
 
 
 @pytest.fixture(scope='module')
-def pool_data(request):
-    depends(request, ["pool_04"])
+def pool_data():
     return {}
 
 
@@ -57,7 +56,7 @@ def test_01_get_pool():
 def test_02_wipe_all_pool_disk():
     for disk in disk_pool:
         payload = {
-            "dev": f"{disk}",  # change f"{disk}" for f"/dev{disk}" if did not work
+            "dev": f"{disk}",
             "mode": "QUICK",
             "synccache": True
         }

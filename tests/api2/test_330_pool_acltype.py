@@ -14,14 +14,14 @@ test1_dataset = f'{pool_name}/test1'
 
 
 def test_01_verify_default_acltype_from_pool_dataset_with_api(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET(f'/pool/dataset/id/{pool_name}/')
     assert results.status_code == 200, results.text
     assert results.json()['acltype']['rawvalue'] == 'posixacl', results.text
 
 
 def test_02_verify_default_acltype_from_pool_dataset_with_zfs_get(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     cmd = f"zfs get acltype {pool_name}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -29,7 +29,7 @@ def test_02_verify_default_acltype_from_pool_dataset_with_zfs_get(request):
 
 
 def test_03_create_test1_dataset_to_verify_inherit_parent_acltype(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': test1_dataset
@@ -39,14 +39,14 @@ def test_03_create_test1_dataset_to_verify_inherit_parent_acltype(request):
 
 
 def test_04_verify_test1_dataset_inherited_parent_acltype_with_api(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET(f'/pool/dataset/id/{test1_dataset.replace("/", "%2F")}/')
     assert results.status_code == 200, results.text
     assert results.json()['acltype']['rawvalue'] == 'posixacl', results.text
 
 
 def test_05_verify_test1_dataset_inherited_parent_acltype_with_zfs_get(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     cmd = f"zfs get acltype {test1_dataset}"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -54,6 +54,6 @@ def test_05_verify_test1_dataset_inherited_parent_acltype_with_zfs_get(request):
 
 
 def test_06_delete_test1_dataset(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = DELETE(f'/pool/dataset/id/{test1_dataset.replace("/", "%2F")}/')
     assert results.status_code == 200, results.text
