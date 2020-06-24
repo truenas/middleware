@@ -666,7 +666,6 @@ class CloudSyncModel(sa.Model):
 
 class CloudSyncService(TaskPathService):
 
-    locked_alert_class = 'CloudSyncTaskLocked'
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
 
@@ -1048,7 +1047,11 @@ class CloudSyncService(TaskPathService):
 
         cloud_sync = await self.get_instance(id)
         if cloud_sync['locked']:
-            await self.middleware.call('alert.oneshot_create', 'CloudSyncTaskLocked', cloud_sync)
+            await self.middleware.call(
+                'alert.oneshot_create', 'TaskLocked', {
+                    **cloud_sync, 'identifier': cloud_sync['name'], 'type': 'CloudSync'
+                }
+            )
             return
 
         await self._sync(cloud_sync, options, job)

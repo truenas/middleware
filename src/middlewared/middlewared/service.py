@@ -643,10 +643,12 @@ class SharingTaskService(CRUDService):
 
 class SharingService(SharingTaskService):
     service_type = 'share'
+    locked_alert_class = 'ShareLocked'
 
 
 class TaskPathService(SharingTaskService):
     service_type = 'task'
+    locked_alert_class = 'TaskLocked'
 
 
 def is_service_class(service, klass):

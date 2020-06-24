@@ -588,8 +588,6 @@ class SharingSMBModel(sa.Model):
 
 class SharingSMBService(SharingService):
 
-    locked_alert_class = 'SMBShareLocked'
-
     class Config:
         namespace = 'sharing.smb'
         datastore = 'sharing.cifs_share'

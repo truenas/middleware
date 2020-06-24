@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
-from middlewared.alert.common.sharing_tasks import ShareLockedAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 
 
@@ -33,9 +32,3 @@ class ISCSIPortalIPAlertSource(AlertSource):
 
         if ips:
             return Alert(ISCSIPortalIPAlertClass, ', '.join(ips))
-
-
-class ISCSIExtentShareLockedAlertClass(ShareLockedAlertClass):
-
-    async def get_create_args(self, args):
-        return {**args, 'type': 'iSCSI Extent'}

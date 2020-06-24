@@ -29,6 +29,8 @@ class AlertClassMeta(type):
         if cls.__name__ != "AlertClass":
             if not cls.__name__.endswith("AlertClass"):
                 raise NameError(f"Invalid alert class name {cls.__name__}")
+            elif cls.__name__.endswith("AbstractAlertClass"):
+                return
 
             cls.name = cls.__name__.replace("AlertClass", "")
 

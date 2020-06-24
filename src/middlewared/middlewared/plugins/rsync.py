@@ -135,7 +135,6 @@ class RsyncModModel(sa.Model):
 
 class RsyncModService(SharingService):
 
-    locked_alert_class = 'RsyncModuleLocked'
     service_type = 'Rsync module'
 
     class Config:
@@ -286,8 +285,6 @@ class RsyncTaskModel(sa.Model):
 
 
 class RsyncTaskService(TaskPathService):
-
-    locked_alert_class = 'RsyncTaskLocked'
 
     class Config:
         datastore = 'tasks.rsync'
@@ -683,7 +680,9 @@ class RsyncTaskService(TaskPathService):
         """
         rsync = self.middleware.call_sync('rsynctask.get_instance', id)
         if rsync['locked']:
-            self.middleware.call_sync('alert.oneshot_create', 'RsyncTaskLocked', rsync)
+            self.middleware.call_sync(
+                'alert.oneshot_create', 'TaskLocked', {**rsync, 'identifier': rsync['path'], 'type': 'Rsync'}
+            )
             return
 
         commandline = self.middleware.call_sync('rsynctask.commandline', id)
