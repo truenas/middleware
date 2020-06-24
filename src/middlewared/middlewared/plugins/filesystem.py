@@ -728,7 +728,7 @@ class FilesystemService(Service):
                 }
             }
 
-            tag, id, perms = entry.rsplit(":", 3)
+            tag, id, perms = entry.rsplit(":", 2)
             ace['perms'].update({
                 "READ": perms[0].casefold() == "r",
                 "WRITE": perms[1].casefold() == "w",
@@ -877,7 +877,6 @@ class FilesystemService(Service):
             aclstring += 'w' if ace['perms']['WRITE'] else '-'
             aclstring += 'x' if ace['perms']['EXECUTE'] else '-'
 
-        self.logger.debug("acl string: %s", aclstring)
         setacl = subprocess.run(['setfacl', '-mR' if recursive else '-m', aclstring, path],
                                 check=False, capture_output=True)
         if setacl.returncode != 0:
