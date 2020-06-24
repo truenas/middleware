@@ -184,7 +184,7 @@ class InterfaceService(Service):
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
-            self.middleware.call_sync('interface.dhclient_start', data['int_interface'], wait_dhcp, wait=wait_dhcp)
+            self.middleware.call_sync('interface.dhclient_start', data['int_interface'], wait_dhcp)
 
         if osc.IS_FREEBSD:
             if data['int_ipv6auto']:
