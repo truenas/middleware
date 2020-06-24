@@ -292,9 +292,14 @@ def render(service, middleware):
     set_SID(middleware, conf)
     """
     If LDAP is enabled with samba schema, then remote LDAP server provides SAM and group mapping.
-    Trying to initialize the passdb backend here will fail.
+    Trying to initialize the passdb backend here using normal methods will fail. However, our ability
+    to serve SMB shares with an ldap backend requires that the ldap secret be stored in secrets.tdb.
+    Due to potential production impact of having this get out of sync or lost, we will automatically
+    overwrite the password in secrets.tdb on system dataset import (which calls this script).
     """
     if conf['passdb_backend'] == "tdbsam":
         middleware.call_sync('smb.synchronize_passdb')
         validate_group_mappings(middleware, conf)
         middleware.call_sync('admonitor.start')
+    else:
+        middleware.call_sync('smb.store_ldap_admin_password')
