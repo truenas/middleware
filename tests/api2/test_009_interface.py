@@ -27,6 +27,7 @@ aliases = {'address': ip}
 vlan1_ip = f"192.168.0.{random.randint(10, 250)}"
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_01_get_interface_name():
     results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
@@ -34,6 +35,7 @@ def test_01_get_interface_name():
     assert results.json()[0]["name"] == interface, results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_02_get_interface_aliases_ip():
     results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
@@ -46,6 +48,7 @@ def test_02_get_interface_aliases_ip():
     assert interface_ip == ip, results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_03_get_interface_aliases_broadcast_ip():
     results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
@@ -58,6 +61,7 @@ def test_03_get_interface_aliases_broadcast_ip():
     aliases['broadcast'] = broadcast_ip
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_04_get_interface_aliases_type():
     results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
@@ -71,6 +75,7 @@ def test_04_get_interface_aliases_type():
     aliases['type'] = types
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_05_get_interface_aliases_netmask():
     results = GET(f'/interface?name={interface}')
     assert results.status_code == 200, results.text
@@ -83,12 +88,14 @@ def test_05_get_interface_aliases_netmask():
     aliases['netmask'] = netmask
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 def test_06_get_interface_ipv4_in_use():
     global results
     results = POST("/interface/ip_in_use/", {"ipv4": True})
     assert results.status_code == 200, results.text
 
 
+@pytest.mark.skipif(ha, reason='Skiping test for HA')
 @pytest.mark.parametrize('dkey', ['type', 'address', 'netmask', 'broadcast'])
 def test_07_look_at_interface_ipv4_in_use_output_(dkey):
     for dictionary in results.json():
@@ -180,7 +187,7 @@ def test_14_compare_payload_with_get_vlan1_interface_result_output_(dkey):
     assert results.json()[dkey] == payload[dkey], results.text
 
 
-@pytest.mark.skipif(not ha and "virtual_ip" in os.environ, reason='Skiping test for Core')
+@pytest.mark.skipif(not ha and "virtual_ip" not in os.environ, reason='Skiping test for Core')
 def test_08_set_interface_for_ha():
     payload = {
         'ipv4_dhcp': False,

@@ -15,7 +15,7 @@ dataset = f"{pool_name}/cloudsync"
 dataset_path = os.path.join("/mnt", dataset)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def env():
     if (
         "CLOUDSYNC_AWS_ACCESS_KEY_ID" not in os.environ or
@@ -27,24 +27,24 @@ def env():
     return os.environ
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def credentials():
     return {}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def task():
     return {}
 
 
 def test_01_create_dataset(request):
-    depends(request, "pool_04")
+    depends(request, ["pool_04"], scope="session")
     result = POST("/pool/dataset/", {"name": dataset})
     assert result.status_code == 200, result.text
 
 
 def test_02_create_cloud_credentials(request, env, credentials):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST("/cloudsync/credentials/", {
         "name": "Test",
         "provider": "S3",
@@ -60,7 +60,7 @@ def test_02_create_cloud_credentials(request, env, credentials):
 
 
 def test_03_update_cloud_credentials(request, env, credentials):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = PUT(f"/cloudsync/credentials/id/{credentials['id']}/", {
         "name": "Test",
         "provider": "S3",
@@ -73,7 +73,8 @@ def test_03_update_cloud_credentials(request, env, credentials):
     assert result.status_code == 200, result.text
 
 
-def test_04_create_cloud_sync(env, credentials, task):
+def test_04_create_cloud_sync(request, env, credentials, task):
+    depends(request, ["pool_04"], scope="session")
     result = POST("/cloudsync/", {
         "description": "Test",
         "direction": "PULL",
@@ -99,7 +100,8 @@ def test_04_create_cloud_sync(env, credentials, task):
     task.update(result.json())
 
 
-def test_05_update_cloud_sync(env, credentials, task):
+def test_05_update_cloud_sync(request, env, credentials, task):
+    depends(request, ["pool_04"], scope="session")
     result = PUT(f"/cloudsync/id/{task['id']}/", {
         "description": "Test",
         "direction": "PULL",
@@ -124,7 +126,7 @@ def test_05_update_cloud_sync(env, credentials, task):
 
 
 def test_06_run_cloud_sync(request, env, task):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST(f"/cloudsync/id/{task['id']}/sync/")
 
     assert result.status_code == 200, result.text
@@ -155,7 +157,7 @@ def test_06_run_cloud_sync(request, env, task):
 
 
 def test_07_restore_cloud_sync(request, env, task):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST(f"/cloudsync/id/{task['id']}/restore/", {
         "transfer_mode": "COPY",
         "path": dataset_path,
@@ -165,21 +167,21 @@ def test_07_restore_cloud_sync(request, env, task):
 
 
 def test_97_delete_cloud_sync(request, env, task):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = DELETE(f"/cloudsync/id/{task['id']}/")
 
     assert result.status_code == 200, result.text
 
 
 def test_98_delete_cloud_credentials(request, env, credentials):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
 
     assert result.status_code == 200, result.text
 
 
 def test_99_destroy_dataset(request):
-    depends(request, "pool_04")
+    depends(request, ["pool_04"], scope="session")
     result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
 
     assert result.status_code == 200, result.text

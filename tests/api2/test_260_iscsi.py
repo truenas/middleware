@@ -74,7 +74,7 @@ def test_03_Add_ISCSI_target():
 
 # Add iSCSI extent
 def test_04_Add_ISCSI_extent(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global extent_id
     payload = {
         'type': 'FILE',
@@ -90,7 +90,7 @@ def test_04_Add_ISCSI_extent(request):
 
 # Associate iSCSI target
 def test_05_Associate_ISCSI_target(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     global associate_id
     payload = {
         'target': target_id,
@@ -105,14 +105,14 @@ def test_05_Associate_ISCSI_target(request):
 
 # Enable the iSCSI service
 def test_06_Enable_iSCSI_service(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     payload = {"enable": True}
     results = PUT("/service/id/iscsitarget/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_07_start_iSCSI_service(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     result = POST(
         '/service/start', {
             'service': 'iscsitarget',
@@ -123,7 +123,7 @@ def test_07_start_iSCSI_service(request):
 
 
 def test_08_Verify_the_iSCSI_service_is_enabled(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET("/service/?service=iscsitarget")
     assert results.status_code == 200, results.text
     assert results.json()[0]["state"] == "RUNNING", results.text
@@ -133,7 +133,7 @@ def test_08_Verify_the_iSCSI_service_is_enabled(request):
 # Now connect to iSCSI target
 @bsd_host_cfg
 def test_09_Connecting_to_iSCSI_target(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     cmd = 'iscsictl -A -p %s:3620 -t %s' % (ip, TARGET_NAME)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -141,7 +141,7 @@ def test_09_Connecting_to_iSCSI_target(request):
 
 @bsd_host_cfg
 def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     while True:
         SSH_TEST('iscsictl -L', BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
         state = 'cat /tmp/.sshCmdTestStdOut | '
@@ -160,7 +160,7 @@ def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
 
 @bsd_host_cfg
 def test_11_Format_the_target_volume(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = SSH_TEST('newfs "/dev/%s"' % DEVICE_NAME,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -168,7 +168,7 @@ def test_11_Format_the_target_volume(request):
 
 @bsd_host_cfg
 def test_12_Creating_iSCSI_mountpoint(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = SSH_TEST('mkdir -p "%s"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -176,7 +176,7 @@ def test_12_Creating_iSCSI_mountpoint(request):
 
 @bsd_host_cfg
 def test_13_Mount_the_target_volume(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     cmd = 'mount "/dev/%s" "%s"' % (DEVICE_NAME, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -184,7 +184,7 @@ def test_13_Mount_the_target_volume(request):
 
 @bsd_host_cfg
 def test_14_Creating_file(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     cmd = 'touch "%s/testfile"' % MOUNTPOINT
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -192,7 +192,7 @@ def test_14_Creating_file(request):
 
 @bsd_host_cfg
 def test_15_Moving_file(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     cmd = 'mv "%s/testfile" "%s/testfile2"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -200,7 +200,7 @@ def test_15_Moving_file(request):
 
 @bsd_host_cfg
 def test_16_Copying_file(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     cmd = 'cp "%s/testfile2" "%s/testfile"' % (MOUNTPOINT, MOUNTPOINT)
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -208,7 +208,7 @@ def test_16_Copying_file(request):
 
 @bsd_host_cfg
 def test_17_Deleting_file(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = SSH_TEST('rm "%s/testfile2"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -216,7 +216,7 @@ def test_17_Deleting_file(request):
 
 @bsd_host_cfg
 def test_18_verifiying_iscsi_session_on_freenas(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     try:
         PUT("/ssh", {
             'rootlogin': True
@@ -238,7 +238,7 @@ def test_18_verifiying_iscsi_session_on_freenas(request):
 
 @bsd_host_cfg
 def test_19_Unmounting_iSCSI_volume(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = SSH_TEST('umount "%s"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -246,7 +246,7 @@ def test_19_Unmounting_iSCSI_volume(request):
 
 @bsd_host_cfg
 def test_20_Removing_iSCSI_volume_mountpoint(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = SSH_TEST('rm -rf "%s"' % MOUNTPOINT,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -254,7 +254,7 @@ def test_20_Removing_iSCSI_volume_mountpoint(request):
 
 @bsd_host_cfg
 def test_21_Disconnect_iSCSI_target(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = SSH_TEST('iscsictl -R -t %s' % TARGET_NAME,
                        BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, results['output']
@@ -262,14 +262,14 @@ def test_21_Disconnect_iSCSI_target(request):
 
 # Disable the iSCSI service
 def test_22_Disable_iSCSI_service(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     payload = {'enable': False}
     results = PUT("/service/id/iscsitarget/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_23_stop_iSCSI_service(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = POST(
         '/service/stop/', {
             'service': 'iscsitarget',
@@ -280,7 +280,7 @@ def test_23_stop_iSCSI_service(request):
 
 
 def test_24_Verify_the_iSCSI_service_is_disabled(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = GET("/service/?service=iscsitarget")
     assert results.status_code == 200, results.text
     assert results.json()[0]["state"] == "STOPPED", results.text
@@ -288,7 +288,7 @@ def test_24_Verify_the_iSCSI_service_is_disabled(request):
 
 # Delete iSCSI target and group
 def test_25_Delete_associate_ISCSI_target(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/iscsi/targetextent/id/{associate_id}/")
     assert results.status_code == 200, results.text
     assert results.json(), results.text
@@ -296,7 +296,7 @@ def test_25_Delete_associate_ISCSI_target(request):
 
 # Delete iSCSI target and group
 def test_26_Delete_ISCSI_target(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/iscsi/target/id/{target_id}/")
     assert results.status_code == 200, results.text
     assert results.json(), results.text
@@ -304,7 +304,7 @@ def test_26_Delete_ISCSI_target(request):
 
 # Remove iSCSI extent
 def test_27_Delete_iSCSI_extent(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/iscsi/extent/id/{extent_id}/")
     assert results.status_code == 200, results.text
     assert results.json(), results.text
@@ -312,7 +312,7 @@ def test_27_Delete_iSCSI_extent(request):
 
 # Remove iSCSI portal
 def test_28_Delete_portal(request):
-    depends(request, ["pool_04"])
+    depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/iscsi/portal/id/{portal_id}/")
     assert results.status_code == 200, results.text
     assert results.json(), results.text

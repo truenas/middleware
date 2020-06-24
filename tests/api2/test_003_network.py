@@ -27,7 +27,7 @@ Reason = "BRIDGEDNS is missing in ixautomation.conf"
 dns_cfg = pytest.mark.skipif("BRIDGEDNS" not in locals(), reason=Reason)
 
 
-@pytest.mark.skipif(not ha and "domain" in os.environ, "Skiping test for Core")
+@pytest.mark.skipif(not ha and "domain" not in os.environ, reason="Skiping test for Core")
 def test_01_set_network_for_ha():
     payload = {
         "domain": domain,
@@ -41,7 +41,7 @@ def test_01_set_network_for_ha():
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.skipif(not ha and "domain" in os.environ, "Skiping test for Core")
+@pytest.mark.skipif(not ha and "domain" not in os.environ, reason="Skiping test for Core")
 def test_02_force_fenced():
     cmd = 'fenced --force'
     results = SSH_TEST(cmd, user, password, ip)
