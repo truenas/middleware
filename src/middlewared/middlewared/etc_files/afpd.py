@@ -138,11 +138,7 @@ def render(service, middleware):
         share = Struct(share)
         if share.id in locked_shares:
             middleware.logger.debug('Skipping generation of %r afp share because it\'s locked', share.afp_name)
-            middleware.call_sync(
-                'alert.oneshot_create', 'ShareLocked', {
-                    **locked_shares[share.id], 'identifier': locked_shares[share.id]['name'], 'type': 'AFP'
-                }
-            )
+            middleware.call_sync('sharing.afp.generate_locked_alert', share.id)
             continue
 
         if share.afp_home:

@@ -145,6 +145,8 @@ class SharingAFPModel(sa.Model):
 
 class SharingAFPService(SharingService):
 
+    share_task_type = 'AFP'
+
     class Config:
         namespace = 'sharing.afp'
         datastore = 'sharing.afp_share'

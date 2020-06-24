@@ -591,6 +591,8 @@ class SharingSMBModel(sa.Model):
 
 class SharingSMBService(SharingService):
 
+    share_task_type = 'SMB'
+
     class Config:
         namespace = 'sharing.smb'
         datastore = 'sharing.cifs_share'

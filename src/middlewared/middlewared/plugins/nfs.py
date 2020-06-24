@@ -250,12 +250,16 @@ class NFSShareModel(sa.Model):
 class SharingNFSService(SharingService):
 
     path_field = 'paths'
+    share_task_type = 'NFS'
 
     class Config:
         namespace = "sharing.nfs"
         datastore = "sharing.nfs_share"
         datastore_prefix = "nfs_"
         datastore_extend = "sharing.nfs.extend"
+
+    async def human_identifier(self, share_task):
+        return ', '.join(share_task[self.path_field])
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):

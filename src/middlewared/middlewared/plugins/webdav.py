@@ -21,6 +21,8 @@ class WebDAVSharingModel(sa.Model):
 
 class WebDAVSharingService(SharingService):
 
+    share_task_type = 'WebDAV'
+
     class Config:
         datastore = 'sharing.webdav_share'
         datastore_prefix = 'webdav_'

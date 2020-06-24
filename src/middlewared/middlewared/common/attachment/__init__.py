@@ -144,6 +144,8 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
             for attachment in attachments:
                 await self.toggle_enabled_for_attachment(attachment, False)
             await self.restart_reload_services(attachments, False)
+            for attachment in attachments:
+                await self.middleware.call(f'{self.namespace}.generate_locked_alert', attachment['id'])
         finally:
             for attachment in attachments:
                 await self.toggle_enabled_for_attachment(attachment, True)
