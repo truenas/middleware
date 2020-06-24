@@ -16,6 +16,8 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     service = None
     # attribute which is used to identify human readable description of an attachment
     resource_name = 'name'
+    # Shows if the attachment is not affected by underlying dataset lock/unlock state
+    lock_no_op = False
 
     def __init__(self, middleware):
         self.middleware = middleware

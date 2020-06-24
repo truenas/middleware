@@ -322,6 +322,7 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'snapshottask'
     title = 'Snapshot Task'
     resource_name = 'dataset'
+    lock_no_op = True
 
     async def query(self, path, enabled, options=None):
         results = []
