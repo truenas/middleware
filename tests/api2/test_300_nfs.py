@@ -12,8 +12,13 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
-from auto_config import ip, pool_name, user, password, scale
+from auto_config import pool_name, user, password, scale, ha
 from config import *
+
+if ha and "virtual_ip" in os.environ:
+    ip = os.environ["virtual_ip"]
+else:
+    from auto_config import ip
 
 group = 'root' if scale else 'wheel'
 
