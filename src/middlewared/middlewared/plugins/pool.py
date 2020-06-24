@@ -2108,7 +2108,7 @@ class PoolDatasetService(CRUDService):
             attachments = await delegate.query(self.__attachments_path(ds), True, {'locked': False})
             if isinstance(delegate, LockableFSAttachmentDelegate):
                 await delegate.detach(attachments)
-            else:
+            elif not delegate.lock_no_op:
                 await delegate.toggle(attachments, False)
 
         coroutines = [detach(dg) for dg in self.attachment_delegates]
@@ -2254,7 +2254,8 @@ class PoolDatasetService(CRUDService):
                     unlocked.append(name)
 
         self.middleware.call_sync(
-            'pool.dataset.restart_attachment_services', self.__attachments_path(dataset), True, {'locked': False}
+            'pool.dataset.restart_attachment_services_on_unlock',
+            self.__attachments_path(dataset), True, {'locked': False}
         )
 
         if unlocked:
@@ -2275,11 +2276,11 @@ class PoolDatasetService(CRUDService):
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
-    async def restart_attachment_services(self, path, enabled, options=None):
+    async def restart_attachment_services_on_unlock(self, path, enabled, options=None):
         async def restart(delegate):
             if isinstance(delegate, LockableFSAttachmentDelegate):
                 await delegate.restart_reload_services((await delegate.query(path, enabled, options)), enabled)
-            else:
+            elif not delegate.lock_no_op:
                 await delegate.toggle((await delegate.query(path, not enabled, options)), enabled)
         coroutines = [restart(dg) for dg in self.attachment_delegates]
         await asyncio.gather(*coroutines)
