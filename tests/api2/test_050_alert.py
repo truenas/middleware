@@ -3,6 +3,7 @@
 import pytest
 import os
 import sys
+from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -30,7 +31,8 @@ def test_03_get_alert_list_policies():
     assert results.json(), results.json()
 
 
-def test_04_degrading_a_pool_to_create_an_alert():
+def test_04_degrading_a_pool_to_create_an_alert(request):
+    depends(request, ["pool_04"])
     global gptid
     get_pool = GET(f"/pool/?name={pool_name}").json()[0]
     gptid = get_pool['topology']['data'][0]['path'].replace('/dev/', '')
@@ -39,7 +41,8 @@ def test_04_degrading_a_pool_to_create_an_alert():
     assert results['result'] is True, results['output']
 
 
-def test_05_verify_the_pool_is_degraded():
+def test_05_verify_the_pool_is_degraded(request):
+    depends(request, ["pool_04"])
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -47,7 +50,8 @@ def test_05_verify_the_pool_is_degraded():
 
 
 @pytest.mark.timeout(80)
-def test_06_wait_for_the_alert():
+def test_06_wait_for_the_alert(request):
+    depends(request, ["pool_04"])
     stop = False
     while stop is False:
         for line in GET("/alert/list/").json():
@@ -58,7 +62,8 @@ def test_06_wait_for_the_alert():
         sleep(1)
 
 
-def test_07_verify_degraded_pool_alert_list_exist_and_get_id():
+def test_07_verify_degraded_pool_alert_list_exist_and_get_id(request):
+    depends(request, ["pool_04"])
     global alert_id
     results = GET("/alert/list/")
     assert results.status_code == 200, results.text
@@ -72,14 +77,16 @@ def test_07_verify_degraded_pool_alert_list_exist_and_get_id():
             break
 
 
-def test_08_dimiss_the_alert():
+def test_08_dimiss_the_alert(request):
+    depends(request, ["pool_04"])
     results = POST("/alert/dismiss/", alert_id)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), type(None)), results.text
 
 
-def test_09_verify_the_alert_is_dismissed():
-    results = GET(f"/alert/list/")
+def test_09_verify_the_alert_is_dismissed(request):
+    depends(request, ["pool_04"])
+    results = GET("/alert/list/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
     for line in results.json():
@@ -88,13 +95,15 @@ def test_09_verify_the_alert_is_dismissed():
             break
 
 
-def test_10_restore_the_alert():
+def test_10_restore_the_alert(request):
+    depends(request, ["pool_04"])
     results = POST("/alert/restore/", alert_id)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), type(None)), results.text
 
 
-def test_11_verify_the_alert_is_restored():
+def test_11_verify_the_alert_is_restored(request):
+    depends(request, ["pool_04"])
     results = GET(f"/alert/list/?id={alert_id}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
@@ -104,13 +113,15 @@ def test_11_verify_the_alert_is_restored():
             break
 
 
-def test_12_clear_the_pool_degradation():
+def test_12_clear_the_pool_degradation(request):
+    depends(request, ["pool_04"])
     cmd = f'zpool clear {pool_name}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
-def test_13_verify_the_pool_is_not_degraded():
+def test_13_verify_the_pool_is_not_degraded(request):
+    depends(request, ["pool_04"])
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -118,7 +129,8 @@ def test_13_verify_the_pool_is_not_degraded():
 
 
 @pytest.mark.timeout(80)
-def test_14_wait_for_the_alert_to_dissapear():
+def test_14_wait_for_the_alert_to_dissapear(request):
+    depends(request, ["pool_04"])
     stop = False
     while stop is False:
         for line in GET("/alert/list/").json():
