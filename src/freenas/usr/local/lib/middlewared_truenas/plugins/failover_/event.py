@@ -476,6 +476,7 @@ class FailoverService(Service):
 
                 self.logger.warn('Volume imports complete.')
                 self.logger.warn('Restarting services.')
+                self.run_call('failover.status_refresh')
                 FREENAS_DB = '/data/freenas-v1.db'
                 conn = sqlite3.connect(FREENAS_DB)
                 c = conn.cursor()
