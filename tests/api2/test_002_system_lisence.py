@@ -14,7 +14,7 @@ else:
     license_file = '/root/license.txt'
 
 
-@pytest.mark.skipif(not ha, reason="Skiping test for Core and Scale")
+@pytest.mark.skipif(not ha, reason="Skipping test for Core and Scale")
 def test_01_send_license():
     with open(license_file, 'r') as f:
         results = POST('/system/license_update', str(f.read()))

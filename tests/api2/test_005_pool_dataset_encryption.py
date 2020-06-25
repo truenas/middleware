@@ -11,7 +11,7 @@ sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job
 from auto_config import pool_name, ha
 
-pytestmark = pytest.mark.skipif(ha, reason='Skiping test for HA')
+pytestmark = pytest.mark.skipif(ha, reason='Skipping test for HA')
 
 nas_disk = GET('/boot/get_disks/').json()
 disk_list = list(POST('/device/get_info/', 'DISK').json().keys())

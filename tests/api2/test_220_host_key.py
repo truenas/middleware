@@ -8,7 +8,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, SSH_TEST, ping_host
 from auto_config import user, ip
-pytestmark = pytest.mark.skip('Skiping until test works')
+pytestmark = pytest.mark.skip('Skipping until test works')
 
 
 def test_01_get_ssh_keyscan_before_reboot():
