@@ -14,14 +14,6 @@ class ISCSITargetService(SimpleService):
 
     systemd_unit = "scst"
 
-    async def before_stop(self):
-        if osc.IS_FREEBSD:
-            cp = await run(["sysctl", "kern.cam.ctl.ha_peer=''"], check=False)
-            if cp.returncode and "unknown oid" not in cp.stderr.decode().lower():
-                self.middleware.logger.error(
-                    "Failed to set sysctl kern.cam.ctl.ha_peer : %s", cp.stderr.decode()
-                )
-
     async def reload(self):
         if osc.IS_LINUX:
             return (await run(

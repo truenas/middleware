@@ -522,7 +522,6 @@ class FailoverService(Service):
                         pass
                     self.run_call('service.restart', 'cifs', {'ha_propagate': False})
 
-                # iscsi should be running on standby but we make sure its started anyway
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "iscsitarget"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
