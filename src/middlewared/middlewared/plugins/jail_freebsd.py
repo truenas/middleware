@@ -1707,6 +1707,12 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.warning('Unable to %s %r', action, attachment['id'], exc_info=True)
 
+    async def detach(self, attachments):
+        await self.toggle(attachments, False)
+
+    async def start(self, attachments):
+        await self.toggle(attachments, True)
+
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', JailFSAttachmentDelegate(middleware))
