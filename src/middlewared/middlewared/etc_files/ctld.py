@@ -220,11 +220,7 @@ def main(middleware):
         extent = Struct(extent)
         if extent.id in locked_extents:
             logger.warning('Extent %r is locked, skipping', extent.iscsi_target_extent_name)
-            middleware.call_sync(
-                'alert.oneshot_create', 'ShareLocked', {
-                    **locked_extents[extent.id], 'identifier': locked_extents[extent.id]['name'], 'type': 'iSCSI Extent'
-                }
-            )
+            middleware.call_sync('iscsi.extent.generate_locked_alert', extent.id)
             continue
 
         path = extent.iscsi_target_extent_path

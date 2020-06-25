@@ -276,7 +276,7 @@ class EtcService(Service):
         ]
     }
 
-    checkpoints = ['initial', 'pool_import', 'interface_sync']
+    checkpoints = ['initial', 'interface_sync', 'post_init', 'pool_import']
 
     class Config:
         private = True
