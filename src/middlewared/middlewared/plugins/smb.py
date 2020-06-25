@@ -987,9 +987,6 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service = 'cifs'
     service_class = SharingSMBService
 
-    async def post_delete(self, attachments=None):
-        await self._service_change('cifs', 'reload')
-
     async def restart_reload_services(self, attachments):
         await self._service_change('cifs', 'reload')
 
