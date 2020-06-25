@@ -2410,6 +2410,12 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
 
+    async def detach(self, attachments):
+        await self.toggle(attachments, False)
+
+    async def start(self, attachments):
+        await self.toggle(attachments, True)
+
 
 async def setup(middleware):
     middleware.event_register('vm.query', 'Sent on VM state changes.')

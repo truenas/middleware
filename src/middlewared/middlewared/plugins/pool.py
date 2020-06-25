@@ -18,7 +18,6 @@ import uuid
 from collections import defaultdict
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
-from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
@@ -2105,11 +2104,7 @@ class PoolDatasetService(CRUDService):
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
         async def detach(delegate):
-            attachments = await delegate.query(self.__attachments_path(ds), True, {'locked': False})
-            if isinstance(delegate, LockableFSAttachmentDelegate):
-                await delegate.detach(attachments)
-            elif not delegate.lock_no_op:
-                await delegate.toggle(attachments, False)
+            await delegate.detach((await delegate.query(self.__attachments_path(ds), True, {'locked': False})))
 
         coroutines = [detach(dg) for dg in self.attachment_delegates]
         await asyncio.gather(*coroutines)
@@ -2128,7 +2123,7 @@ class PoolDatasetService(CRUDService):
             'unlock_options',
             Bool('key_file', default=False),
             Bool('recursive', default=False),
-            Bool('toggle_attachments', default=False),
+            Bool('toggle_attachments', default=True),
             List(
                 'datasets', items=[
                     Dict(
@@ -2280,10 +2275,7 @@ class PoolDatasetService(CRUDService):
     @private
     async def restart_attachment_services_on_unlock(self, path, enabled, options=None):
         async def restart(delegate):
-            if isinstance(delegate, LockableFSAttachmentDelegate):
-                await delegate.restart_reload_services((await delegate.query(path, enabled, options)))
-            elif not delegate.lock_no_op:
-                await delegate.toggle((await delegate.query(path, not enabled, options)), enabled)
+            await delegate.start((await delegate.query(path, enabled, options)))
         coroutines = [restart(dg) for dg in self.attachment_delegates]
         await asyncio.gather(*coroutines)
 

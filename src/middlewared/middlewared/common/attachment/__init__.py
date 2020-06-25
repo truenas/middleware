@@ -16,8 +16,6 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     service = None
     # attribute which is used to identify human readable description of an attachment
     resource_name = 'name'
-    # Shows if the attachment is not affected by underlying dataset lock/unlock state
-    lock_no_op = False
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -58,7 +56,10 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         """
         raise NotImplementedError
 
-    async def stop(self, attachments):
+    async def detach(self, attachments):
+        pass
+
+    async def start(self, attachments):
         pass
 
 
@@ -120,7 +121,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         Child classes can override this to perform tasks after toggling of certain shares/resources
         """
         if enabled:
-            await self.restart_reload_services(attachments)
+            await self.start(attachments)
         else:
             await self.stop(attachments)
 
@@ -164,6 +165,11 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def is_child_of_path(self, resource, path):
         return is_child(resource[self.path_field], path)
+
+    async def start(self, attachments):
+        for attachment in attachments:
+            await self.remove_alert(attachment)
+        await self.restart_reload_services(attachments)
 
     async def stop(self, attachments):
         await self.restart_reload_services(attachments)

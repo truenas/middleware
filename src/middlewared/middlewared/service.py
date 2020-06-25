@@ -580,8 +580,7 @@ class SharingTaskService(CRUDService):
         }
 
     @private
-    async def validate_path_field(self, data, schema, verrors=None):
-        verrors = verrors or ValidationErrors()
+    async def validate_path_field(self, data, schema, verrors):
         await check_path_resides_within_volume(
             verrors, self.middleware, f'{schema}.{self.path_field}', data.get(self.path_field)
         )
@@ -627,7 +626,9 @@ class SharingTaskService(CRUDService):
 
     @private
     async def remove_locked_alert(self, share_task_id):
-        await self.middleware.call('alert.oneshot_delete', self.locked_alert_class, share_task_id)
+        await self.middleware.call(
+            'alert.oneshot_delete', self.locked_alert_class, f'"{self.share_task_type}_{share_task_id}"'
+        )
 
     @pass_app(rest=True)
     async def update(self, app, id, data):

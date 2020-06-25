@@ -772,7 +772,6 @@ class ReplicationService(CRUDService):
 class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'replication'
     title = 'Replication'
-    lock_no_op = True
 
     async def query(self, path, enabled, options=None):
         results = []
