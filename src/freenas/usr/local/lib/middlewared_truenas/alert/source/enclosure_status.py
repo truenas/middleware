@@ -67,7 +67,7 @@ class EnclosureStatusAlertSource(AlertSource):
                     args=[
                         num,
                         enc['name'],
-                        f"{ele['name']} {hex(ele['slot'])} (ele['descriptor'])",
+                        f"{ele['name']} {hex(ele['slot'])} {ele['descriptor']}",
                         ele['status'],
                         ele['value_raw']
                     ],
