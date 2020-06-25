@@ -564,7 +564,7 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def get_attachment_name(self, attachment):
         return ', '.join(attachment['paths'])
 
-    async def restart_reload_services(self, attachments, enabled):
+    async def restart_reload_services(self, attachments):
         await self._service_change('nfs', 'reload')
 
 

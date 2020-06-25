@@ -269,7 +269,7 @@ class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service = 'webdav'
     service_class = WebDAVSharingService
 
-    async def restart_reload_services(self, attachments, enabled):
+    async def restart_reload_services(self, attachments):
         await self._service_change('webdav', 'reload')
 
 
