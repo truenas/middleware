@@ -27,7 +27,7 @@ Reason = "BRIDGEDNS is missing in ixautomation.conf"
 dns_cfg = pytest.mark.skipif("BRIDGEDNS" not in locals(), reason=Reason)
 
 
-@pytest.mark.skipif(not ha and "domain" not in os.environ, reason="Skiping test for Core")
+@pytest.mark.skipif(not ha and "domain" not in os.environ, reason="Skipping test for Core")
 def test_01_set_network_for_ha():
     payload = {
         "domain": domain,
@@ -41,7 +41,7 @@ def test_01_set_network_for_ha():
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.skipif(not ha and "domain" not in os.environ, reason="Skiping test for Core")
+@pytest.mark.skipif(not ha and "domain" not in os.environ, reason="Skipping test for Core")
 def test_02_force_fenced():
     cmd = 'fenced --force'
     results = SSH_TEST(cmd, user, password, ip)
@@ -49,7 +49,7 @@ def test_02_force_fenced():
         assert results['result'] is True, results['output']
 
 
-@pytest.mark.skipif(ha, reason='Skiping test for HA')
+@pytest.mark.skipif(ha, reason='Skipping test for HA')
 def test_03_get_default_network_general_summary():
     results = GET("/network/general/summary/")
     assert results.status_code == 200
@@ -58,7 +58,7 @@ def test_03_get_default_network_general_summary():
 
 
 @dns_cfg
-@pytest.mark.skipif(ha, reason='Skiping test for HA')
+@pytest.mark.skipif(ha, reason='Skipping test for HA')
 def test_04_configure_setting_domain_hostname_and_dns():
     global payload
     payload = {"domain": domain,
@@ -72,7 +72,7 @@ def test_04_configure_setting_domain_hostname_and_dns():
 
 
 @dns_cfg
-@pytest.mark.skipif(ha, reason='Skiping test for HA')
+@pytest.mark.skipif(ha, reason='Skipping test for HA')
 @pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway",
                                    "nameserver1"])
 def test_05_looking_put_network_configuration_output_(dkeys):
@@ -80,7 +80,7 @@ def test_05_looking_put_network_configuration_output_(dkeys):
 
 
 @dns_cfg
-@pytest.mark.skipif(ha, reason='Skiping test for HA')
+@pytest.mark.skipif(ha, reason='Skipping test for HA')
 def test_06_get_network_configuration_info_():
     global results
     results = GET("/network/configuration/")
@@ -89,7 +89,7 @@ def test_06_get_network_configuration_info_():
 
 
 @dns_cfg
-@pytest.mark.skipif(ha, reason='Skiping test for HA')
+@pytest.mark.skipif(ha, reason='Skipping test for HA')
 @pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway",
                                    "nameserver1"])
 def test_07_looking_get_network_configuration_output_(dkeys):

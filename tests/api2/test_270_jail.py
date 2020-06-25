@@ -12,7 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import user, ip, password, pool_name, ha, scale
 from functions import GET, POST, PUT, DELETE, SSH_TEST, wait_on_job
-reason = 'Skiping test for HA' if ha else 'Skiping test for Scale'
+reason = 'Skipping test for HA' if ha else 'Skipping test for Scale'
 pytestmark = pytest.mark.skipif(ha or scale, reason=reason)
 
 JOB_ID = None

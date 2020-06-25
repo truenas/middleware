@@ -8,7 +8,7 @@ sys.path.append(apifolder)
 from auto_config import pool_name, ha, scale
 from functions import GET, POST, DELETE, wait_on_job
 
-reason = 'Skiping test for HA' if ha else 'Skiping test for Scale'
+reason = 'Skipping test for HA' if ha else 'Skipping test for Scale'
 pytestmark = pytest.mark.skipif(ha or scale, reason=reason)
 
 JOB_ID = None

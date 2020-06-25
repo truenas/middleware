@@ -120,7 +120,7 @@ def test_09_checking_to_see_if_nfs_service_is_running(request):
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-@pytest.mark.skipif(scale, reason='Skiping for Scale')
+@pytest.mark.skipif(scale, reason='Skipping for Scale')
 def test_10_checking_if_sysctl_vfs_nfsd_server_max_nfsvers_is_4(request):
     depends(request, ["pool_04"], scope="session")
     cmd = 'sysctl -n vfs.nfsd.server_max_nfsvers'
