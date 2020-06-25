@@ -2,7 +2,7 @@ from .base import SimpleService
 
 
 class WSDService(SimpleService):
-    name = "wsd"
+    name = "wsdd"
 
     freebsd_rc = "wsdd"
 
