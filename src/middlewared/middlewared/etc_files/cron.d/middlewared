@@ -23,9 +23,7 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
     % for job in middleware.call_sync("rsynctask.query", [["enabled", "=", True]]):
 <%
     if job["locked"]:
-        middleware.call_sync(
-            'alert.oneshot_create', 'TaskLocked', {**job, 'identifier': job['path'], 'type': 'Rsync'}
-        )
+        middleware.call_sync('rsynctask.generate_locked_alert', job['id'])
         continue
 %>\
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call rsynctask.run {job['id']}"))}
@@ -34,9 +32,7 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
     % for job in middleware.call_sync("cloudsync.query", [["enabled", "=", True]]):
 <%
     if job["locked"]:
-        middleware.call_sync(
-            'alert.oneshot_create', 'TaskLocked', {**job, 'identifier': job['name'], 'type': 'CloudSync'}
-        )
+        middleware.call_sync('cloudsync.generate_locked_alert', job['id'])
         continue
 %>\
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call cloudsync.sync {job['id']}"))}
