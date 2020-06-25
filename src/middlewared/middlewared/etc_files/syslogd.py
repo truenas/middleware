@@ -6,7 +6,20 @@ import shutil
 import subprocess
 import textwrap
 
+from middlewared.utils import osc
+
 logger = logging.getLogger(__name__)
+
+if osc.IS_FREEBSD:
+    SYSLOG_NG_CONF_ORIG = "/conf/base/etc/local/syslog-ng.conf.freenas"
+    SYSLOG_NG_CONF = "/etc/local/syslog-ng.conf"
+    LOG_FILTER_PREFIX = ""
+    LOG_SOURCE = "src"
+else:
+    SYSLOG_NG_CONF_ORIG = "/conf/base/etc/syslog-ng/syslog-ng.conf"
+    SYSLOG_NG_CONF = "/etc/syslog-ng/syslog-ng.conf"
+    LOG_FILTER_PREFIX = "f_freebsd_"
+    LOG_SOURCE = "s_src"
 
 FENCED_LOG = '/root/syslog/fenced.log'
 FAILOVER_LOG = '/root/syslog/failover.log'
@@ -53,33 +66,27 @@ def generate_syslog_remote_destination(middleware, advanced_config):
             result += f'{transport}("{host}" port({port}) localport(514));'
 
         result += ' };\n'
-        result += f'log {{ source(src); filter({advanced_config["sysloglevel"].lower()});'
+        result += f'log {{ source({LOG_SOURCE}); filter({LOG_FILTER_PREFIX}{advanced_config["sysloglevel"].lower()});'
         result += f'destination(loghost); }};\n'
 
     return result
 
 
 def generate_syslog_conf(middleware):
-    # In 12.0 we can have /conf/base/usr__local__etc as the base point for /usr/local/etc/tmpfs
-    # (see commit 704f1eb60f438171690d79bfdf17e95044cc6bb2)
-    if os.path.isdir("/conf/base/usr__local__etc"):
-        shutil.copy("/conf/base/usr__local__etc/syslog-ng.conf.freenas",
-                    "/etc/local/syslog-ng.conf")
-    else:
-        shutil.copy("/conf/base/etc/local/syslog-ng.conf.freenas",
-                    "/etc/local/syslog-ng.conf")
+    shutil.copy(SYSLOG_NG_CONF_ORIG, SYSLOG_NG_CONF)
 
-    with open("/etc/local/syslog-ng.conf") as f:
+    with open(SYSLOG_NG_CONF) as f:
         syslog_conf = f.read()
 
     advanced_config = middleware.call_sync("system.advanced.config")
 
     if advanced_config["fqdn_syslog"]:
         syslog_conf = syslog_conf.replace("use-fqdn(no)", "use-fqdn(yes)")
+        syslog_conf = syslog_conf.replace("use_fqdn(no)", "use_fqdn(yes)")
 
     syslog_conf += generate_syslog_remote_destination(middleware, advanced_config)
 
-    with open("/etc/local/syslog-ng.conf", "w") as f:
+    with open(SYSLOG_NG_CONF, "w") as f:
         f.write(syslog_conf)
 
 
@@ -149,7 +156,7 @@ def generate_ha_syslog(middleware):
         }};
 
         log {{
-            source(src);
+            source({LOG_SOURCE});
             filter(f_not_smb);
             filter(f_not_mdns);
             filter(f_not_nginx);
@@ -157,20 +164,33 @@ def generate_ha_syslog(middleware):
         }};
     """)
 
-    with open("/etc/local/syslog-ng.conf", "w") as f:
+    with open(SYSLOG_NG_CONF, "w") as f:
         f.write(syslog_conf)
 
-    # Be sure and copy fresh file since we're appending
-    shutil.copy("/conf/base/etc/newsyslog.conf.template", "/etc/newsyslog.conf")
+    if osc.IS_FREEBSD:
+        # Be sure and copy fresh file since we're appending
+        shutil.copy("/conf/base/etc/newsyslog.conf.template", "/etc/newsyslog.conf")
 
-    with open("/etc/newsyslog.conf") as f:
-        newsyslog_conf = f.read()
+        with open("/etc/newsyslog.conf") as f:
+            newsyslog_conf = f.read()
 
-    newsyslog_conf += f"{controller_file}               640  10   200 @0101T JC\n"
-    newsyslog_conf += f"{FENCED_LOG}                 640  10   200   *     JC\n"
-    newsyslog_conf += f"{FAILOVER_LOG}               640  10   200   *     JC\n"
-    with open("/etc/newsyslog.conf", "w") as f:
-        f.write(newsyslog_conf)
+        newsyslog_conf += f"{controller_file}               640  10   200 @0101T JC\n"
+        newsyslog_conf += f"{FENCED_LOG}                 640  10   200   *     JC\n"
+        newsyslog_conf += f"{FAILOVER_LOG}               640  10   200   *     JC\n"
+        with open("/etc/newsyslog.conf", "w") as f:
+            f.write(newsyslog_conf)
+    else:
+        with open("/etc/logrotate.d/truenas-ha", "w") as f:
+            for file in [controller_file, FENCED_LOG, FAILOVER_LOG]:
+                f.write(textwrap.dedent(f"""\
+                    {file} {{
+                        daily
+                        missingok
+                        rotate 10
+                        notifempty
+                        create 640 root adm
+                    }}
+                """))
 
 
 def use_syslog_dataset(middleware):
@@ -197,7 +217,7 @@ def configure_syslog(middleware):
 
             shutil.copytree("/conf/base/var/log", "/var/log")
 
-        middleware.call_sync("core.reconfigure_logging")
+        reconfigure_logging(middleware)
 
         return
 
@@ -232,7 +252,7 @@ def configure_syslog(middleware):
         shutil.copytree("/conf/base/var/log", os.path.join(log_path, "log"))
         os.chmod(os.path.join(log_path, "log"), 0o755)
         os.chown(os.path.join(log_path, "log"), 0, 0)
-        subprocess.run(f"/usr/local/bin/rsync -avz /var/log/* {shlex.quote(log_path + '/log/')}", shell=True,
+        subprocess.run(f"rsync -avz /var/log/* {shlex.quote(log_path + '/log/')}", shell=True,
                        stdout=subprocess.DEVNULL)
 
     if not os.path.islink("/var/log") or not os.path.realpath("/var/log"):
@@ -242,6 +262,16 @@ def configure_syslog(middleware):
     # Let's make sure that the permissions for directories/files in /var/log
     # reflect that of /conf/base/var/log
     subprocess.run("mtree -c -p /conf/base/var/log | mtree -eu", cwd="/var/log", shell=True, stdout=subprocess.DEVNULL)
+
+    reconfigure_logging(middleware)
+
+
+def reconfigure_logging(middleware):
+    if osc.IS_LINUX:
+        p = subprocess.run(["systemctl", "restart", "systemd-journald"], stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
+        if p.returncode != 0:
+            logger.warning("Unable to restart systemd-journald: %s", p.stdout)
 
     middleware.call_sync("core.reconfigure_logging")
 

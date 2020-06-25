@@ -22,6 +22,9 @@ systemctl disable nvidia-persistenced
 update-alternatives --install "/usr/sbin/sendmail" sendmail "/etc/find_alias_for_smtplib.sh" "10"
 
 # Copy to /conf/base
-cp -a /etc/aliases /conf/base/etc/;
+for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf /var/log; do
+    mkdir -p "$(dirname "/conf/base/$bit")"
+    cp -aR "$bit" "/conf/base/$bit"
+done
 
 #DEBHELPER#
