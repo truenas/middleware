@@ -101,9 +101,13 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
             await self.toggle_enabled_for_attachment(attachment, enabled)
-            await self.post_toggle_attachment(attachment, enabled)
+            if enabled:
+                await self.remove_alert(attachment)
 
-        await self.post_toggle(attachments, enabled)
+        if enabled:
+            await self.start(attachments)
+        else:
+            await self.stop(attachments)
 
     async def toggle_enabled_for_attachment(self, attachment, enabled):
         await self.middleware.call(
@@ -112,33 +116,11 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
             }
         )
 
-    async def post_toggle_attachment(self, attachment, enabled):
-        if enabled:
-            await self.remove_alert(attachment)
-
-    async def post_toggle(self, attachments, enabled):
-        """
-        Child classes can override this to perform tasks after toggling of certain shares/resources
-        """
-        if enabled:
-            await self.start(attachments)
-        else:
-            await self.stop(attachments)
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
-            await self.post_delete_attachment(attachment)
-        await self.post_delete(attachments)
-
-    async def post_delete_attachment(self, attachment):
-        await self.remove_alert(attachment)
-
-    async def post_delete(self, attachments=None):
-        """
-        Child classes can override this to perform tasks after deletion of certain shares i.e restart services
-        """
-        await self.stop(attachments)
+            await self.remove_alert(attachment)
+        await self.restart_reload_services(attachments)
 
     async def detach(self, attachments):
         """
