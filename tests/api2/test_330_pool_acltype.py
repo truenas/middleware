@@ -9,7 +9,7 @@ sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST
 from auto_config import ip, user, password, pool_name, scale
 
-pytestmark = pytest.mark.skipif(scale is False, reason='Skiping test for Core and Enterprise')
+pytestmark = pytest.mark.skipif(scale is False, reason='Skipping test for Core and Enterprise')
 test1_dataset = f'{pool_name}/test1'
 
 
