@@ -15,6 +15,8 @@ def can_update(old_version, new_version):
     for x, y in itertools.zip_longest(SEP.split(old_version), SEP.split(new_version), fillvalue=''):
         if x < y:
             return True
+        if 'MASTER' in x and 'INTERNAL' in y:
+            return True
         if x > y:
             return False
 
