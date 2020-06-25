@@ -1365,7 +1365,9 @@ class SystemGeneralService(ConfigService):
             shell=True, capture_output=True, text=True,
         )
         for line in cp.stdout.strip('\n').split('\n'):
-            _type, addr = line.split(',')
+            if not line:
+                continue
+            _type, addr = line.split(',', 1)
 
             if _type == 'tcp4':
                 addrsv4.append(addr)
