@@ -494,14 +494,6 @@ class FailoverService(Service):
                 # Now we restart the appropriate services to ensure it's using correct certs.
                 self.run_call('service.restart', 'http')
 
-                # TODO: This needs investigation.  Why is part of the LDAP
-                # stack restarted?  Maybe homedir handling that
-                # requires the volume to be imported?
-                c.execute('SELECT ldap_enable FROM directoryservice_ldap')
-                ret = c.fetchone()
-                if ret and ret[0] == 1:
-                    run('/usr/sbin/service ix-ldap quietstart')
-
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "nfs"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
@@ -510,16 +502,6 @@ class FailoverService(Service):
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
-                    # XXX: Tha would enforce re-importing all Samba users
-                    try:
-                        os.unlink(SAMBA_USER_IMPORT_FILE)
-                    except Exception:
-                        pass
-                        # Redmine 72415
-                    try:
-                        os.unlink(AD_ALERT_FILE)
-                    except Exception:
-                        pass
                     self.run_call('service.restart', 'cifs', {'ha_propagate': False})
 
                 # iscsi should be running on standby but we make sure its started anyway
@@ -744,7 +726,7 @@ class FailoverService(Service):
                 except EnvironmentError:
                     pass
 
-                # syslogd needs to restart on BACKUP to configure remote logging to ACTIVE
+                self.run_call('failover.status_refresh')
                 self.run_call('service.restart', 'syslogd', {'ha_propagate': False})
 
                 self.run_call('etc.generate', 'cron')
