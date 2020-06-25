@@ -6,11 +6,12 @@
 import pytest
 import sys
 import os
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST, vm_state, vm_start, ping_host
 from auto_config import vm_name, ip, user, password, ha
-from time import sleep, time
+from time import sleep
 pytestmark = pytest.mark.skipif(ha, reason='Skiping test for HA')
 url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
@@ -44,135 +45,96 @@ def test_02_get_update_trains():
     selected_trains = results.json()['selected']
 
 
+@pytest.mark.dependency(name="update_03")
 def test_03_check_available_update():
     global update_version
     results = POST('/update/check_available/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict) is True, results.text
-    if results.json()['status'] == 'AVAILABLE':
-        update_version = results.json()['version']
-    else:
-        update_version = None
+    assert results.json()['status'] == 'AVAILABLE', results.text
+    update_version = results.json()['version']
 
 
-def test_04_update_get_pending():
+def test_04_update_get_pending(request):
+    depends(request, ["update_03"])
     results = POST('/update/get_pending/')
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list) is True, results.text
     assert results.json() == [], results.text
 
 
-def test_05_get_download_update():
-    if update_version is None:
-        pytest.skip('No update found')
-    else:
-        results = GET('/update/download/')
-        global JOB_ID
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), int) is True, results.text
-        JOB_ID = results.json()
+def test_05_get_download_update(request):
+    depends(request, ["update_03"])
+    results = GET('/update/download/')
+    global JOB_ID
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int) is True, results.text
+    JOB_ID = results.json()
 
 
-def test_06_verify_the_update_download_is_successful():
-    if update_version is None:
-        pytest.skip('No update found')
-    else:
-        global download_failed
-        stop_time = time() + 600
-        download_failed = False
-        while True:
-            get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
-            job_status = get_job.json()[0]
-            if job_status['state'] in ('RUNNING', 'WAITING'):
-                if stop_time <= time():
-                    download_failed = True
-                    assert job_status['state'] == 'SUCCESS', get_job.text
-                    break
-                sleep(5)
-            elif job_status['state'] != 'SUCCESS':
-                download_failed = True
-                assert job_status['state'] == 'SUCCESS', get_job.text
-                break
-            else:
-                assert job_status['state'] == 'SUCCESS', get_job.text
-                break
+@pytest.mark.dependency(name="update_06")
+@pytest.mark.timeout(600)
+def test_06_verify_the_update_download_is_successful(request):
+    depends(request, ["update_03"])
+    while True:
+        get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_status = get_job.json()[0]
+        if job_status['state'] in ('FAILED', 'SUCCESS'):
+            break
+    assert job_status['state'] == 'SUCCESS', get_job.text
 
 
-def test_07_get_pending_update():
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    else:
-        results = POST('/update/get_pending/')
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), list) is True, results.text
-        assert results.json() != [], results.text
+def test_07_get_pending_update(request):
+    depends(request, ["update_03", "update_06"])
+    results = POST('/update/get_pending/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list) is True, results.text
+    assert results.json() != [], results.text
 
 
-def test_08_install_update():
+def test_08_install_update(request):
+    depends(request, ["update_03", "update_06"])
     global reboot
     reboot = False
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    else:
-        payload = {
-            "train": selected_trains,
-            "reboot": reboot
-        }
-        results = POST('/update/update/', payload)
-        global JOB_ID
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), int) is True, results.text
-        JOB_ID = results.json()
+    payload = {
+        "train": selected_trains,
+        "reboot": reboot
+    }
+    results = POST('/update/update/', payload)
+    global JOB_ID
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), int) is True, results.text
+    JOB_ID = results.json()
 
 
-def test_09_verify_the_update_is_successful():
-    global proper_update_failed
-    proper_update_failed = False
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    else:
-        while True:
-            get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
-            job_status = get_job.json()[0]
-            if job_status['state'] in ('RUNNING', 'WAITING'):
-                sleep(5)
-            else:
-                if job_status['state'] == 'FAILED':
-                    assert 'Unable to downgrade' in job_status['error'], job_status['error']
-                    proper_update_failed = True
-                    break
-                else:
-                    assert job_status['state'] == 'SUCCESS', get_job.text
-                    break
+@pytest.mark.dependency(name="update_09")
+@pytest.mark.timeout(600)
+def test_09_verify_the_update_is_successful(request):
+    depends(request, ["update_03", "update_06"])
+    while True:
+        get_job = GET(f'/core/get_jobs/?id={JOB_ID}')
+        job_status = get_job.json()[0]
+        if job_status['state'] in ('FAILED', 'SUCCESS'):
+            if 'Unable to downgrade' in job_status['error']:
+                pytest.skip('skiped due to downgrade')
+            break
+        sleep(5)
+    assert job_status['state'] == 'SUCCESS', get_job.text
 
 
-def test_10_verify_system_is_ready_to_reboot():
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    elif proper_update_failed is True:
-        pytest.skip('skiped due to downgrade')
-    else:
-        results = POST('/update/check_available/')
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), dict) is True, results.text
-        assert results.json()['status'] == 'REBOOT_REQUIRED', results.text
+@pytest.mark.dependency(name="update_10")
+def test_10_verify_system_is_ready_to_reboot(request):
+    depends(request, ["update_03", "update_06", "update_09"])
+    results = POST('/update/check_available/')
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict) is True, results.text
+    assert results.json()['status'] == 'REBOOT_REQUIRED', results.text
 
 
-def test_11_wait_for_first_reboot_with_bhyve():
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+def test_11_wait_for_first_reboot_with_bhyve(request):
+    depends(request, ["update_03", "update_06", "update_09", "update_10"])
+    if reboot is False:
+        pytest.skip('Reboot is False skip')
     else:
         if vm_name is None:
             pytest.skip('skip no vm_name')
@@ -183,13 +145,10 @@ def test_11_wait_for_first_reboot_with_bhyve():
     sleep(1)
 
 
-def test_12_wait_for_second_reboot_with_bhyve():
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+def test_12_wait_for_second_reboot_with_bhyve(request):
+    depends(request, ["update_03", "update_06", "update_09", "update_10"])
+    if reboot is False:
+        pytest.skip('Reboot is False skip')
     else:
         if vm_name is None:
             pytest.skip('skip no vm_name')
@@ -200,13 +159,10 @@ def test_12_wait_for_second_reboot_with_bhyve():
     sleep(1)
 
 
-def test_13_wait_for_FreeNAS_to_be_online():
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+def test_13_wait_for_FreeNAS_to_be_online(request):
+    depends(request, ["update_03", "update_06", "update_09", "update_10"])
+    if reboot is False:
+        pytest.skip('Reboot is False skip')
     else:
         while ping_host(ip, 1) is not True:
             sleep(5)
@@ -214,13 +170,10 @@ def test_13_wait_for_FreeNAS_to_be_online():
     sleep(10)
 
 
-def test_14_verify_initial_version_is_not_current_FreeNAS_version():
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+def test_14_verify_initial_version_is_not_current_FreeNAS_version(request):
+    depends(request, ["update_03", "update_06", "update_09", "update_10"])
+    if reboot is False:
+        pytest.skip('Reboot is False skip')
     else:
         global results, current_version
         results = GET("/system/info/")
@@ -230,12 +183,9 @@ def test_14_verify_initial_version_is_not_current_FreeNAS_version():
         assert initial_version != current_version, results.text
 
 
-def test_15_verify_update_version_is_current_version():
-    if update_version is None:
-        pytest.skip('No update found')
-    elif download_failed is True:
-        pytest.skip(f'Downloading {selected_trains} failed')
-    elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+def test_15_verify_update_version_is_current_version(request):
+    depends(request, ["update_03", "update_06", "update_09", "update_10"])
+    if reboot is False:
+        pytest.skip('Reboot is False skip')
     else:
         assert update_version == current_version, results.text
