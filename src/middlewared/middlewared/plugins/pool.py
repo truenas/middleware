@@ -2281,7 +2281,7 @@ class PoolDatasetService(CRUDService):
     async def restart_attachment_services_on_unlock(self, path, enabled, options=None):
         async def restart(delegate):
             if isinstance(delegate, LockableFSAttachmentDelegate):
-                await delegate.restart_reload_services((await delegate.query(path, enabled, options)), enabled)
+                await delegate.restart_reload_services((await delegate.query(path, enabled, options)))
             elif not delegate.lock_no_op:
                 await delegate.toggle((await delegate.query(path, not enabled, options)), enabled)
         coroutines = [restart(dg) for dg in self.attachment_delegates]

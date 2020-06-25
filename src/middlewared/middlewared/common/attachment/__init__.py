@@ -58,6 +58,9 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         """
         raise NotImplementedError
 
+    async def stop(self, attachments):
+        pass
+
 
 class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     """
@@ -116,7 +119,10 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         """
         Child classes can override this to perform tasks after toggling of certain shares/resources
         """
-        await self.restart_reload_services(attachments, enabled)
+        if enabled:
+            await self.restart_reload_services(attachments)
+        else:
+            await self.stop(attachments)
 
     async def delete(self, attachments):
         for attachment in attachments:
@@ -131,7 +137,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         """
         Child classes can override this to perform tasks after deletion of certain shares i.e restart services
         """
-        await self.restart_reload_services(attachments, False)
+        await self.stop(attachments)
 
     async def detach(self, attachments):
         """
@@ -140,14 +146,14 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         try:
             for attachment in attachments:
                 await self.toggle_enabled_for_attachment(attachment, False)
-            await self.restart_reload_services(attachments, False)
+            await self.stop(attachments)
             for attachment in attachments:
                 await self.middleware.call(f'{self.namespace}.generate_locked_alert', attachment['id'])
         finally:
             for attachment in attachments:
                 await self.toggle_enabled_for_attachment(attachment, True)
 
-    async def restart_reload_services(self, attachments, enabled):
+    async def restart_reload_services(self, attachments):
         """
         Common method for post delete/toggle which child classes can use to restart/reload services
         """
@@ -158,3 +164,6 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def is_child_of_path(self, resource, path):
         return is_child(resource[self.path_field], path)
+
+    async def stop(self, attachments):
+        await self.restart_reload_services(attachments)

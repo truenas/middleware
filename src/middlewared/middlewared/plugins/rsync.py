@@ -721,7 +721,7 @@ class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service = 'rsync'
     service_class = RsyncModService
 
-    async def restart_reload_services(self, attachments, enabled):
+    async def restart_reload_services(self, attachments):
         await self._service_change('rsync', 'reload')
 
 
@@ -730,7 +730,7 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     title = 'Rsync Task'
     service_class = RsyncTaskService
 
-    async def restart_reload_services(self, attachments, enabled):
+    async def restart_reload_services(self, attachments):
         await self.middleware.call('service.restart', 'cron')
 
 
