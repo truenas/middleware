@@ -1707,7 +1707,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.warning('Unable to %s %r', action, attachment['id'], exc_info=True)
 
-    async def detach(self, attachments):
+    async def stop(self, attachments):
         await self.toggle(attachments, False)
 
     async def start(self, attachments):

@@ -56,10 +56,10 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         """
         raise NotImplementedError
 
-    async def detach(self, attachments):
+    async def start(self, attachments):
         pass
 
-    async def start(self, attachments):
+    async def stop(self, attachments):
         pass
 
 
@@ -100,7 +100,11 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
-            await self.toggle_enabled_for_attachment(attachment, enabled)
+            await self.middleware.call(
+                'datastore.update', self.datastore_model, attachment['id'], {
+                    f'{self.datastore_prefix}{self.enabled_field}': enabled
+                }
+            )
             if enabled:
                 await self.remove_alert(attachment)
 
@@ -109,32 +113,12 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         else:
             await self.stop(attachments)
 
-    async def toggle_enabled_for_attachment(self, attachment, enabled):
-        await self.middleware.call(
-            'datastore.update', self.datastore_model, attachment['id'], {
-                f'{self.datastore_prefix}{self.enabled_field}': enabled
-            }
-        )
-
     async def delete(self, attachments):
         for attachment in attachments:
             await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
             await self.remove_alert(attachment)
-        await self.restart_reload_services(attachments)
-
-    async def detach(self, attachments):
-        """
-        Removes the attachment from it's configured service while keeping attachment enabled
-        """
-        try:
-            for attachment in attachments:
-                await self.toggle_enabled_for_attachment(attachment, False)
-            await self.stop(attachments)
-            for attachment in attachments:
-                await self.middleware.call(f'{self.namespace}.generate_locked_alert', attachment['id'])
-        finally:
-            for attachment in attachments:
-                await self.toggle_enabled_for_attachment(attachment, True)
+        if attachments:
+            await self.restart_reload_services(attachments)
 
     async def restart_reload_services(self, attachments):
         """
@@ -151,7 +135,9 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def start(self, attachments):
         for attachment in attachments:
             await self.remove_alert(attachment)
-        await self.restart_reload_services(attachments)
+        if attachments:
+            await self.restart_reload_services(attachments)
 
     async def stop(self, attachments):
-        await self.restart_reload_services(attachments)
+        if attachments:
+            await self.restart_reload_services(attachments)
