@@ -616,7 +616,7 @@ class RsyncTaskService(CRUDService):
         """
         Job to run rsync task of `id`.
 
-        Output is saved to job log excerpt as well as syslog.
+        Output is saved to job log excerpt (not syslog).
         """
         rsync = self.middleware.call_sync('rsynctask._get_instance', id)
         commandline = self.middleware.call_sync('rsynctask.commandline', id)
