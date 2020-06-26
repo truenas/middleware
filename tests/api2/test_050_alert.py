@@ -91,7 +91,7 @@ def test_09_verify_the_alert_is_dismissed(request):
     assert isinstance(results.json(), list), results.text
     for line in results.json():
         if line['id'] == alert_id:
-            assert results.json()[0]['dismissed'] is True, results.text
+            assert line['dismissed'] is True, results.text
             break
 
 
@@ -109,7 +109,7 @@ def test_11_verify_the_alert_is_restored(request):
     assert isinstance(results.json(), list), results.text
     for line in results.json():
         if line['id'] == alert_id:
-            assert results.json()[0]['dismissed'] is False, results.text
+            assert line['dismissed'] is False, results.text
             break
 
 
