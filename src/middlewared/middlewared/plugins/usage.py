@@ -5,6 +5,7 @@ import aiohttp
 import hashlib
 import os
 
+from copy import deepcopy
 from datetime import datetime
 
 from middlewared.service import Service
@@ -64,22 +65,62 @@ class UsageService(Service):
             }, sort_keys=True
         )
 
+    def gather_backup_data(self, context):
+        backed = {
+            'cloudsync': 0,
+            'rsynctask': 0,
+            'zfs_replication': 0,
+            'total_size': 0,
+        }
+        datasets_data = context['datasets']
+        datasets = deepcopy(datasets_data)
+        for namespace in ('cloudsync', 'rsynctask'):
+            task_datasets = deepcopy(datasets_data)
+            for task in self.middleware.call_sync(
+                f'{namespace}.query', [['enabled', '=', True], ['direction', '=', 'PUSH'], ['locked', '=', False]]
+            ):
+                task_ds = self.middleware.call_sync('zfs.dataset.get_dataset_by_path', task['path'], task_datasets)
+                if task_ds:
+                    backed[namespace] += task_datasets.pop(task_ds)['properties']['used']['parsed']
+                    ds = datasets.pop(task_ds, None)
+                    if ds:
+                        backed['total_size'] += ds['properties']['used']['parsed']
+
+        repl_datasets = deepcopy(datasets_data)
+        for task in self.middleware.call_sync(
+            'replication.query', [['enabled', '=', True], ['transport', '!=', 'LOCAL'], ['direction', '=', 'PUSH']]
+        ):
+            for source in filter(lambda s: s in repl_datasets, task['source_datasets']):
+                backed['zfs_replication'] += repl_datasets.pop(source)['properties']['used']['parsed']
+                ds = datasets.pop(source, None)
+                if ds:
+                    backed['total_size'] += ds['properties']['used']['parsed']
+
+        return {
+            'data_backup_stats': backed,
+            'data_without_backup_size': sum([ds['properties']['used']['parsed'] for ds in datasets.values()], start=0)
+        }
+
     def gather_filesystem_usage(self, context):
         return {
             'datasets': {
-                'size': sum(d['properties']['used']['parsed'] for d in context['root_datasets'].values())
+                'total_size': sum(
+                    [d['properties']['used']['parsed'] for d in context['root_datasets'].values()], start=0
+                )
             },
             'zvols': {
-                'size': sum(d['properties']['used']['parsed'] for d in context['zvols']),
+                'total_size': sum(
+                    [d['properties']['used']['parsed'] for d in context['zvols']], start=0
+                ),
             },
         }
 
     async def gather_cloud_services(self, context):
         return {
-            'cloud_services': [
+            'cloud_services': list({
                 t['credentials']['provider']
                 for t in await self.middleware.call('cloudsync.query', [['enabled', '=', True]])
-            ]
+            })
         }
 
     async def gather_hardware(self, context):
@@ -234,17 +275,12 @@ class UsageService(Service):
             vdevs = 0
             type = 'UNKNOWN'
 
-            try:
-                pd = (await self.middleware.call(
-                    'zfs.dataset.query', [('id', '=', p['name'])],
-                    {'get': True}
-                ))['properties']
-            except IndexError:
-                self.logger.error(
-                    f'{p["name"]} is missing, skipping collection',
-                    exc_info=True
-                )
+            pd = context['root_datasets'].get(p['name'])
+            if not pd:
+                self.logger.error('%r is missing, skipping collection', p['name'])
                 continue
+            else:
+                pd = pd['properties']
 
             for d in p['topology']['data']:
                 if not d.get('path'):
@@ -265,8 +301,7 @@ class UsageService(Service):
                     'usedbydataset': pd['usedbydataset']['parsed'],
                     'usedbysnapshots': pd['usedbysnapshots']['parsed'],
                     'usedbychildren': pd['usedbychildren']['parsed'],
-                    'usedbyrefreservation':
-                        pd['usedbyrefreservation']['parsed'],
+                    'usedbyrefreservation': pd['usedbyrefreservation']['parsed'],
                     'vdevs': vdevs if vdevs else disks,
                     'zil': bool(p['topology']['log'])
                 }
