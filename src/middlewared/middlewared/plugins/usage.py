@@ -73,6 +73,16 @@ class UsageService(Service):
             }, sort_keys=True
         )
 
+    async def gather_cloud_services(self):
+        return {
+            'cloud_services': [
+                t['credentials']['provider']
+                for t in await self.middleware.call('cloudsync.query', [['enabled', '=', True]])
+            ]
+        }
+
+
+
     async def gather_hardware(self, network):
         info = await self.middleware.call('system.info')
 
