@@ -1,12 +1,14 @@
-from middlewared.service import Service
-from datetime import datetime
-
 import json
 import asyncio
 import random
 import aiohttp
 import hashlib
 import os
+
+from datetime import datetime
+
+from middlewared.service import Service
+from middlewared.utils import filter_list
 
 
 class UsageService(Service):
@@ -18,7 +20,7 @@ class UsageService(Service):
             await self.middleware.call('system.general.config')
         )['usage_collection']:
             try:
-                gather = await self.gather()
+                gather = await self.middleware.call('usage.gather')
                 async with aiohttp.ClientSession(
                     raise_for_status=True
                 ) as session:
@@ -46,17 +48,31 @@ class UsageService(Service):
 
         return True
 
-    async def gather(self):
+    def gather(self):
+        datasets = self.middleware.call_sync('zfs.dataset.query')
         context = {
-            'network': await self.middleware.call('interfaces.query')
+            'network': self.middleware.call_sync('interfaces.query'),
+            'root_datasets': {d['id']: d for d in datasets if '/' not in d['id']},
+            'zvols': filter_list(datasets, [['type', '=', 'VOLUME']]),
+            'datasets': {d['id']: d for d in datasets},
         }
 
         return json.dumps(
             {
                 k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f))
-                for k, v in (await getattr(self, f)(context)).items()
+                for k, v in (self.middleware.call_sync(f'usage.{f}', context)).items()
             }, sort_keys=True
         )
+
+    def gather_filesystem_usage(self, context):
+        return {
+            'datasets': {
+                'size': sum(d['properties']['used']['parsed'] for d in context['root_datasets'].values())
+            },
+            'zvols': {
+                'size': sum(d['properties']['used']['parsed'] for d in context['zvols']),
+            },
+        }
 
     async def gather_cloud_services(self, context):
         return {
