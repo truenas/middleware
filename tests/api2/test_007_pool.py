@@ -31,7 +31,7 @@ def pool_data():
 
 def expect_state(job_id, state):
     for _ in range(60):
-        job = GET(f"/core/get_jobs/?id={job_id}").json()[0]
+        job = GET(f"/core/get_jobs/?id={job_id}", controller_a=ha).json()[0]
         if job["state"] in ["WAITING", "RUNNING"]:
             time.sleep(1)
             continue
