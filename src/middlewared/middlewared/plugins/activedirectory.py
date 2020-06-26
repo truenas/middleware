@@ -1035,7 +1035,8 @@ class ActiveDirectoryService(ConfigService):
         netads = await run([SMBCmd.NET.value, '-k', 'ads', '-w', workgroup, 'changetrustpw'], check=False)
         if netads.returncode != 0:
             raise CallError(
-                f"Failed to update trust password: [{netads.stderr.decode().strip()}]"
+                f"Failed to update trust password: [{netads.stderr.decode().strip()}] "
+                f"stdout: [{netads.stdout.decode().strip()}] "
             )
 
     @accepts()

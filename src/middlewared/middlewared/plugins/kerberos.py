@@ -1108,6 +1108,15 @@ class KerberosKeytabService(CRUDService):
         if old_mtime == new_mtime:
             return
 
+        ts = await self.middleware.call('directoryservices.get_last_password_change')
+        if ts['dbconfig'] == ts['secrets']:
+            return
+
+        self.logger.debug("Machine account password has changed. Stored copies of "
+                          "kerberos keytab and directory services secrets will now "
+                          "be updated.")
+
+        await self.middleware.call('directorysevices.backup_secrets')
         await self.store_samba_keytab()
         self.logger.trace('Updating stored AD machine account kerberos keytab')
         await self.middleware.call(
