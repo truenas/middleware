@@ -411,10 +411,11 @@ class ZFSDatasetService(CRUDService):
         process_pool = True
 
     def locked_datasets(self):
-        return self.query(
-            [['encrypted', '=', True], ['key_loaded', '=', False]], {
-                'extra': {'properties': ['encryption', 'keystatus', 'mountpoint']}, 'select': ['id', 'mountpoint']
-            }
+        return self.query([
+            ['encrypted', '=', True], ['OR', [
+                ['properties.truenas:about_to_lock.value', '=', 'yes'], ['key_loaded', '=', False]
+            ]]
+        ], {'extra': {'properties': ['encryption', 'keystatus', 'mountpoint']}, 'select': ['id', 'mountpoint']}
         )
 
     def flatten_datasets(self, datasets):
