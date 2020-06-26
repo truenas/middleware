@@ -240,6 +240,26 @@ class FailoverService(ConfigService):
             'failover.internal_interface.detect'
         )
 
+    @private
+    async def get_carp_states(self, interfaces=None):
+        """
+        This method has to be left in for backwards compatibility
+        when upgrading from 11.3 to 12+
+        """
+        return await self.middleware.call(
+            'failover.vip.get_states', interfaces
+        )
+
+    @private
+    async def check_carp_states(self, local, remote):
+        """
+        This method has to be left in for backwards compatibility
+        when upgrading from 11.3 to 12+
+        """
+        return await self.middleware.call(
+            'failover.vip.check_states', local, remote
+        )
+
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
@@ -467,7 +487,15 @@ class FailoverService(ConfigService):
                 reasons.append('NO_LICENSE')
 
             local = self.middleware.call_sync('failover.vip.get_states')
-            remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
+            try:
+                remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
+            except Exception as e:
+                if e.errno == CallError.ENOMETHOD:
+                    # We're talking to an 11.3 system, so use the old API
+                    remote = self.middleware.call_sync('failover.call_remote', 'failover.get_carp_states')
+                else:
+                    raise
+
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
                 reasons.append('DISAGREE_CARP')
 
