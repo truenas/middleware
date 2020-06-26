@@ -20,7 +20,7 @@ loops = {
 nas_disk = GET('/boot/get_disks/', controller_a=ha).json()
 disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 disk_pool = sorted(list(set(disk_list) - set(nas_disk)))
-ha_disk_pool = disk_pool[0] if ha else None
+ha_disk_pool = disk_pool[:1] if ha else None
 tank_disk_pool = disk_pool[1:] if ha else disk_pool
 
 
