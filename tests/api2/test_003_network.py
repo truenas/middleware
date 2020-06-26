@@ -9,7 +9,7 @@ import os
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ha, user, password, ip
+from auto_config import ha, user, password
 from functions import GET, PUT, SSH_TEST
 from config import *
 
@@ -20,8 +20,9 @@ if ha and "domain" in os.environ:
     hostname_b = os.environ["hostname_b"]
     primary_dns = os.environ["primary_dns"]
     secondary_dns = os.environ["secondary_dns"]
+    ip = os.environ["controller1_ip"]
 else:
-    from auto_config import hostname, domain
+    from auto_config import hostname, domain, ip
 
 Reason = "BRIDGEDNS is missing in ixautomation.conf"
 dns_cfg = pytest.mark.skipif("BRIDGEDNS" not in locals(), reason=Reason)
@@ -37,7 +38,7 @@ def test_01_set_network_for_ha():
         "nameserver1": primary_dns,
         "nameserver2": secondary_dns
     }
-    results = PUT("/network/configuration/", payload)
+    results = PUT("/network/configuration/", payload, controller_a=ha)
     assert results.status_code == 200, results.text
 
 

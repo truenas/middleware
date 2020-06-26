@@ -188,7 +188,7 @@ def test_14_compare_payload_with_get_vlan1_interface_result_output_(dkey):
 
 
 @pytest.mark.skipif(not ha and "virtual_ip" not in os.environ, reason='Skipping test for Core')
-def test_08_set_interface_for_ha():
+def test_15_set_interface_for_ha():
     payload = {
         'ipv4_dhcp': False,
         "aliases": [
@@ -215,47 +215,47 @@ def test_08_set_interface_for_ha():
                 'netmask': 32}],
     }
 
-    results = PUT(f'/interface/id/{interface}/', payload)
+    results = PUT(f'/interface/id/{interface}/', payload, controller_a=ha)
     assert results.status_code == 200, results.text
     global interfaces_id
     interfaces_id = results.json()['id']
 
 
-def test_15_get_interface_has_pending_changes():
-    results = GET('/interface/has_pending_changes')
+def test_16_get_interface_has_pending_changes():
+    results = GET('/interface/has_pending_changes', controller_a=ha)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is True, results.text
 
 
-def test_16_commite_interface():
+def test_17_commite_interface():
     payload = {
         "rollback": True,
         "checkin_timeout": 10
     }
-    results = POST('/interface/commit/', payload)
+    results = POST('/interface/commit/', payload, controller_a=ha)
     assert results.status_code == 200, results.text
 
 
-def test_17_get_interface_checkin_waiting():
-    results = GET('/interface/checkin_waiting/')
+def test_18_get_interface_checkin_waiting():
+    results = GET('/interface/checkin_waiting/', controller_a=ha)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), float), results.text
 
 
-def test_18_get_interface_checkin():
-    results = GET('/interface/checkin/')
+def test_19_get_interface_checkin():
+    results = GET('/interface/checkin/', controller_a=ha)
     assert results.status_code == 200, results.text
     assert results.json() is None, results.text
 
 
-def test_19_get_interface_has_pending_changes():
-    results = GET('/interface/has_pending_changes')
+def test_20_get_interface_has_pending_changes():
+    results = GET('/interface/has_pending_changes', controller_a=ha)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), bool) is True, results.text
     assert results.json() is False, results.text
 
 
-def test_20_get_the_vlan1_interface_from_id():
-    results = GET(f'/interface/id/{interfaces_id}/')
+def test_21_get_the_vlan1_interface_from_id():
+    results = GET(f'/interface/id/{interfaces_id}/', controller_a=ha)
     assert results.status_code == 200, results.text
