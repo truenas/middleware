@@ -64,7 +64,7 @@ class UsageService(Service):
                 **hardware,
                 **jails,
                 **network,
-                **{k: v for l in system['gather_system'] for k, v in l.items()},
+                **system,
                 **plugins,
                 **pools,
                 **services,
@@ -92,9 +92,7 @@ class UsageService(Service):
                 'memory': info['physmem'],
                 'nics': len(network),
                 'disks': [
-                    {k: disk[k]} for disk in await self.middleware.call('disk.query') for k in [
-                        'model',
-                    ]
+                    {k: disk[k]} for disk in await self.middleware.call('disk.query') for k in ['model']
                 ]
             }
         }
@@ -202,18 +200,11 @@ class UsageService(Service):
         )
 
         return {
-            'gather_system': [
-                {'system_hash': system_hash},
-                {'platform': platform},
-                {'usage_version': usage_version},
-                {'version': version},
-                {'system': [
-                    {
-                        'users': users, 'snapshots': snapshots, 'zvols': zvols,
-                        'datasets': datasets
-                    }
-                ]}
-            ]
+            'system_hash': system_hash,
+            'platform': platform,
+            'usage_version': usage_version,
+            'version': version,
+            'system': [{'users': users, 'snapshots': snapshots, 'zvols': zvols, 'datasets': datasets}]
         }
 
     async def gather_plugins(self):
