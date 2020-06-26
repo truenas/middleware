@@ -73,7 +73,7 @@ def test_03_creating_ha_pool():
             ],
         }
     }
-    results = POST("/pool/", payload)
+    results = POST("/pool/", payload, controller_a=ha)
     assert results.status_code == 200, results.text
     job_id = results.json()
     expect_state(job_id, "SUCCESS")
