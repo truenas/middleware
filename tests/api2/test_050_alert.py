@@ -70,10 +70,10 @@ def test_07_verify_degraded_pool_alert_list_exist_and_get_id(request):
     assert isinstance(results.json(), list), results.text
     for line in results.json():
         if line['source'] == 'VolumeStatus':
-            alert_id = results.json()[0]['id']
-            assert results.json()[0]['args']['volume'] == pool_name, results.text
-            assert results.json()[0]['args']['state'] == 'DEGRADED', results.text
-            assert results.json()[0]['level'] == 'CRITICAL', results.text
+            alert_id = line['id']
+            assert line['args']['volume'] == pool_name, results.text
+            assert line['args']['state'] == 'DEGRADED', results.text
+            assert line['level'] == 'CRITICAL', results.text
             break
 
 
