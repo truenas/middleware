@@ -402,7 +402,8 @@ class UsageService(Service):
                             'xen': extent['xen'],
                             'rpm': extent['rpm'],
                             'readonly': extent['ro'],
-                            'legacy': extent['legacy']
+                            'legacy': extent['vendor'] == 'FreeBSD',
+                            'vendor': extent['vendor'],
                         }
                     )
 
