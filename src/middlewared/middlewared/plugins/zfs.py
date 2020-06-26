@@ -514,6 +514,7 @@ class ZFSDatasetService(CRUDService):
         if not (path or '').startswith('/mnt'):
             return
 
+        path = path[5:]
         while path:
             if path in datasets:
                 return path
