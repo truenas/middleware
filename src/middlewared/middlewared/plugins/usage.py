@@ -47,33 +47,18 @@ class UsageService(Service):
         return True
 
     async def gather(self):
-        network = await self.middleware.call('interfaces.query')
-
-        hardware = await self.gather_hardware(network)
-        jails = await self.gather_jails()
-        network = await self.gather_network(network)
-        system = await self.gather_system()
-        plugins = await self.gather_plugins()
-        pools = await self.gather_pools()
-        services = await self.gather_services()
-        sharing = await self.gather_sharing()
-        vms = await self.gather_vms()
+        context = {
+            'network': await self.middleware.call('interfaces.query')
+        }
 
         return json.dumps(
             {
-                **hardware,
-                **jails,
-                **network,
-                **system,
-                **plugins,
-                **pools,
-                **services,
-                **sharing,
-                **vms
+                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f))
+                for k, v in (await getattr(self, f)(context)).items()
             }, sort_keys=True
         )
 
-    async def gather_cloud_services(self):
+    async def gather_cloud_services(self, context):
         return {
             'cloud_services': [
                 t['credentials']['provider']
@@ -81,9 +66,8 @@ class UsageService(Service):
             ]
         }
 
-
-
-    async def gather_hardware(self, network):
+    async def gather_hardware(self, context):
+        network = context['network']
         info = await self.middleware.call('system.info')
 
         return {
@@ -97,7 +81,7 @@ class UsageService(Service):
             }
         }
 
-    async def gather_jails(self):
+    async def gather_jails(self, context):
         try:
             jails = await self.middleware.call('jail.query')
         except Exception:
@@ -115,7 +99,9 @@ class UsageService(Service):
 
         return {'jails': jail_list}
 
-    async def gather_network(self, network):
+    async def gather_network(self, context):
+        network = context['network']
+
         async def gather_bridges():
             bridge_list = []
             for b in network:
@@ -176,7 +162,7 @@ class UsageService(Service):
 
         return {'network': {**bridges, **lags, **phys, **vlans}}
 
-    async def gather_system(self):
+    async def gather_system(self, context):
         system = await self.middleware.call('system.info')
         platform = 'TrueNAS-{}'.format(await self.middleware.call(
             'system.product_type'
@@ -207,7 +193,7 @@ class UsageService(Service):
             'system': [{'users': users, 'snapshots': snapshots, 'zvols': zvols, 'datasets': datasets}]
         }
 
-    async def gather_plugins(self):
+    async def gather_plugins(self, context):
         try:
             plugins = await self.middleware.call('plugin.query')
         except Exception:
@@ -220,7 +206,7 @@ class UsageService(Service):
             ]
         }
 
-    async def gather_pools(self):
+    async def gather_pools(self, context):
         pools = await self.middleware.call('pool.query')
         pool_list = []
 
@@ -272,7 +258,7 @@ class UsageService(Service):
 
         return {'pools': pool_list}
 
-    async def gather_services(self):
+    async def gather_services(self, context):
         services = await self.middleware.call('service.query')
         service_list = []
 
@@ -286,7 +272,7 @@ class UsageService(Service):
 
         return {'services': service_list}
 
-    async def gather_sharing(self):
+    async def gather_sharing(self, context):
         services = ['afp', 'iscsi', 'nfs', 'smb', 'webdav']
         sharing_list = []
 
@@ -375,7 +361,7 @@ class UsageService(Service):
 
         return {'shares': sharing_list}
 
-    async def gather_vms(self):
+    async def gather_vms(self, context):
         vms = await self.middleware.call('vm.query')
         vm_list = []
 
