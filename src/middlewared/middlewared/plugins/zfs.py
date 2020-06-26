@@ -501,29 +501,6 @@ class ZFSDatasetService(CRUDService):
         if not ds.encrypted:
             raise CallError(f'{id} is not encrypted')
 
-    def get_dataset_by_path(self, path, datasets=None):
-        if not (path or '').startswith('/mnt'):
-            return
-
-        if not datasets:
-            datasets = [
-                d['id'] for d in
-                self.middleware.call_sync(
-                    'zfs.dataset.query', [], {
-                        'select': ['id'], 'extra': {'properties': [], 'user_properties': False}
-                    }
-                )
-            ]
-
-        path = path[5:]
-        while path:
-            if path in datasets:
-                return path
-            elif '/' not in path:
-                return
-            else:
-                path = path.rsplit('/', 1)[0]
-
     def path_to_dataset(self, path):
         with libzfs.ZFS() as zfs:
             try:
