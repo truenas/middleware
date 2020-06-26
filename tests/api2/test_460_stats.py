@@ -9,9 +9,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST
+from auto_config import ha
 source_list = []
 source_dict = {}
-sources = GET('/stats/get_sources/').json()
+sources = GET('/stats/get_sources/', controller_a=ha).json()
 for source, types in sources.items():
     if 'interface-vnet0' not in source:
         source_list.append(source)

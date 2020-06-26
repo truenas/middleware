@@ -13,8 +13,8 @@ from auto_config import pool_name, ha
 
 pytestmark = pytest.mark.skipif(ha, reason='Skipping test for HA')
 
-nas_disk = GET('/boot/get_disks/').json()
-disk_list = list(POST('/device/get_info/', 'DISK').json().keys())
+nas_disk = GET('/boot/get_disks/', controller_a=ha).json()
+disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 disk_pool = sorted(list(set(disk_list) - set(nas_disk)))
 # genrated token_hex 32bit for
 pool_token_hex = secrets.token_hex(32)
