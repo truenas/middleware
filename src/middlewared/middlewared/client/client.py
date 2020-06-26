@@ -546,7 +546,7 @@ def main():
                                         job['progress']['percent'], job['progress']['description']
                                     )
                                 except Exception as e:
-                                    print(f'Failed to update progress bar {e!s}', file=sys.stderr)
+                                    print(f'Failed to update progress bar: {e!s}', file=sys.stderr)
 
                             with ProgressBar() as progress_bar:
                                 kwargs.update({
