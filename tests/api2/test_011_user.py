@@ -11,14 +11,14 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT
-from auto_config import scale
+from auto_config import scale, ha
 if scale is True:
     shell = '/bin/bash'
 else:
     shell = '/bin/csh'
 
 group = 'root' if scale else 'wheel'
-group_id = GET(f'/group/?group={group}').json()[0]['id']
+group_id = GET(f'/group/?group={group}', controller_a=ha).json()[0]['id']
 
 
 @pytest.mark.dependency(name="user_01")

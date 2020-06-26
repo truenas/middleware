@@ -9,9 +9,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST
+from auto_config import ha
 global all_results
 all_results = {}
-disk_list = list(POST('/device/get_info/', 'DISK').json().keys())
+disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 
 
 @pytest.mark.parametrize('dtype', ['SERIAL', 'DISK'])

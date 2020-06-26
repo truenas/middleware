@@ -13,7 +13,7 @@ pytestmark = pytest.mark.skipif(ha or scale, reason=reason)
 
 JOB_ID = None
 job_results = None
-is_freenas = GET("/system/is_freenas/").json()
+is_freenas = GET("/system/is_freenas/", controller_a=ha).json()
 
 # default URL
 if is_freenas is True:

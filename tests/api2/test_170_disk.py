@@ -9,12 +9,12 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT
-from auto_config import scale
+from auto_config import scale, ha
 RunTest = True
 TestName = "get disk information"
 DISK_ID = None
 
-disk_list = list(POST('/device/get_info/', 'DISK').json().keys())
+disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 
 
 def test_01_verifying_that_the_installer_created_all_disk():
