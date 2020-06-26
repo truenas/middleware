@@ -186,6 +186,7 @@ class SMBModel(sa.Model):
     cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)
     cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
     cifs_srv_next_rid = sa.Column(sa.Integer(), nullable=False)
+    cifs_srv_secrets = sa.Column(sa.EncryptedText())
 
 
 class WBCErr(enum.Enum):
@@ -222,6 +223,8 @@ class SMBService(SystemServiceService):
         smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
 
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
+
+        smb.pop('secrets')
 
         return smb
 
@@ -412,6 +415,9 @@ class SMBService(SystemServiceService):
             await self.middleware.call("admonitor.start")
             job.set_progress(60, 'generating SMB share configuration.')
             await self.middleware.call("etc.generate", "smb_share")
+
+        job.set_progress(65, 'Initializing directory services')
+        await self.middleware.call("directoryservices.initialize")
 
         job.set_progress(70, 'Checking SMB server status.')
         if await self.middleware.call("service.started", "cifs"):
