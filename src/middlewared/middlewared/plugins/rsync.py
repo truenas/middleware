@@ -27,6 +27,7 @@
 import asyncio
 import asyncssh
 import contextlib
+import enum
 import glob
 import os
 import shlex
@@ -43,6 +44,40 @@ from middlewared.utils.osc import run_command_with_user_context
 
 
 RSYNC_PATH_LIMIT = 1023
+
+
+class RsyncReturnCode(enum.Enum):
+    # from rsync's "errcode.h"
+    OK = 0
+    SYNTAX = 1         # syntax or usage error
+    PROTOCOL = 2       # protocol incompatibility
+    FILESELECT = 3     # errors selecting input/output files, dirs
+    UNSUPPORTED = 4    # requested action not supported
+    STARTCLIENT = 5    # error starting client-server protocol
+    SOCKETIO = 10      # error in socket IO
+    FILEIO = 11        # error in file IO
+    STREAMIO = 12      # error in rsync protocol data stream
+    MESSAGEIO = 13     # errors with program diagnostics
+    IPC = 14           # error in IPC code
+    CRASHED = 15       # sibling crashed
+    TERMINATED = 16    # sibling terminated abnormally
+    SIGNAL1 = 19       # status returned when sent SIGUSR1
+    SIGNAL = 20        # status returned when sent SIGINT, SIGTERM, SIGHUP
+    WAITCHILD = 21     # some error returned by waitpid()
+    MALLOC = 22        # error allocating core memory buffers
+    PARTIAL = 23       # partial transfer
+    VANISHED = 24      # file(s) vanished on sender side
+    DEL_LIMIT = 25     # skipped some deletes due to --max-delete
+    TIMEOUT = 30       # timeout in data send/receive
+    CONTIMEOUT = 35    # timeout waiting for daemon connection
+
+    @classmethod
+    def nonfatals(cls):
+        return tuple([rc.value for rc in [
+            cls.OK,
+            cls.VANISHED,
+            cls.DEL_LIMIT
+        ]])
 
 
 class RsyncdModel(sa.Model):
@@ -646,7 +681,7 @@ class RsyncTaskService(CRUDService):
         for klass in ('RsyncSuccess', 'RsyncFailed') if not rsync['quiet'] else ():
             self.middleware.call_sync('alert.oneshot_delete', klass, rsync['id'])
 
-        if cp.returncode != 0:
+        if cp.returncode not in RsyncReturnCode.nonfatals():
             if not rsync['quiet']:
                 self.middleware.call_sync('alert.oneshot_create', 'RsyncFailed', {
                     'id': rsync['id'],
