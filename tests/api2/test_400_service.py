@@ -10,10 +10,11 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT
+from auto_config import ha
 
 
 services = ['afp', 'cifs', 'nfs', 'snmp', 'tftp', 'webdav', 'lldp']
-all_service = GET('/service/').json()
+all_service = GET('/service/', controller_a=ha).json()
 
 
 def test_01_service_query():
