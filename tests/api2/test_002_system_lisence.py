@@ -17,5 +17,5 @@ else:
 @pytest.mark.skipif(not ha, reason="Skipping test for Core and Scale")
 def test_01_send_license():
     with open(license_file, 'r') as f:
-        results = POST('/system/license_update', str(f.read()))
+        results = POST('/system/license_update', str(f.read()), controller_a=ha)
         assert results.status_code == 200, results.text
