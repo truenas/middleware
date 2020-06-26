@@ -9,7 +9,6 @@ from copy import deepcopy
 from datetime import datetime
 
 from middlewared.service import Service
-from middlewared.utils import filter_list
 
 
 class UsageService(Service):
@@ -53,15 +52,21 @@ class UsageService(Service):
         datasets = self.middleware.call_sync('zfs.dataset.query')
         context = {
             'network': self.middleware.call_sync('interfaces.query'),
-            'root_datasets': {d['id']: d for d in datasets if '/' not in d['id']},
-            'zvols': filter_list(datasets, [['type', '=', 'VOLUME']]),
-            'datasets': {d['id']: d for d in datasets},
+            'root_datasets': {},
+            'zvols': [],
+            'datasets': {},
         }
+        for ds in datasets:
+            if '/' not in ds['id']:
+                context['root_datasets'][ds['id']] = ds
+            elif ds['type'] == 'VOLUME':
+                context['zvols'].append(ds)
+            context['datasets'][ds['id']] = ds
 
         return json.dumps(
             {
                 k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f))
-                for k, v in (self.middleware.call_sync(f'usage.{f}', context)).items()
+                for k, v in self.middleware.call_sync(f'usage.{f}', context).items()
             }, sort_keys=True
         )
 
