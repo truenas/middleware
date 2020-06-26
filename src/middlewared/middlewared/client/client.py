@@ -539,12 +539,19 @@ def main():
                     if args.job:
                         if args.job_print == 'progressbar':
                             # display the job progress and status message while we wait
+
+                            def callback(progress_bar, job):
+                                try:
+                                    progress_bar.update(
+                                        job['progress']['percent'], job['progress']['description']
+                                    )
+                                except Exception as e:
+                                    print(f'Failed to update progress bar {e!s}', file=sys.stderr)
+
                             with ProgressBar() as progress_bar:
                                 kwargs.update({
                                     'job': True,
-                                    'callback': lambda job: progress_bar.update(
-                                        job['progress']['percent'], job['progress']['description']
-                                    )
+                                    'callback': lambda job: callback(progress_bar, job)
                                 })
                                 rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
                                 progress_bar.finish()
