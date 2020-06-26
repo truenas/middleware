@@ -216,8 +216,11 @@ def test_18_make_sure_we_are_not_able_to_lock_key_encrypted_dataset():
         }
     }
     results = POST('/pool/dataset/lock', payload)
-    assert results.status_code == 422, results.text
-    assert 'Only datasets which are encrypted with passphrase can be locked' in results.text, results.text
+    assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'FAILED', str(job_status['results'])
+    assert 'Only datasets which are encrypted with passphrase can be locked' in job_status['error'], job_status['error']
 
 
 def test_19_change_a_key_encrypted_dataset_to_passphrase():
@@ -249,6 +252,9 @@ def test_21_lock_passphrase_encrypted_datasets_and_ensure_they_get_locked():
     }
     results = POST('/pool/dataset/lock', payload)
     assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 def test_22_verify_passphrase_encrypted_root_is_locked():
@@ -598,6 +604,9 @@ def test_47_lock_passphrase_encrypted_dataset():
     }
     results = POST('/pool/dataset/lock', payload)
     assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @skip_for_ha
@@ -765,6 +774,9 @@ def test_61_lock_passphrase_encrypted_root_with_is_child():
     }
     results = POST('/pool/dataset/lock', payload)
     assert results.status_code == 200, results.text
+    job_id = results.json()
+    job_status = wait_on_job(job_id, 120)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
 @skip_for_ha

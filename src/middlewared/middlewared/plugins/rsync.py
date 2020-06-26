@@ -682,9 +682,7 @@ class RsyncTaskService(TaskPathService):
         """
         rsync = self.middleware.call_sync('rsynctask.get_instance', id)
         if rsync['locked']:
-            self.middleware.call_sync(
-                'alert.oneshot_create', 'TaskLocked', {**rsync, 'identifier': rsync['path'], 'type': 'Rsync'}
-            )
+            self.middleware.call_sync('rsynctask.generate_locked_alert', id)
             return
 
         commandline = self.middleware.call_sync('rsynctask.commandline', id)
