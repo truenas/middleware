@@ -1470,7 +1470,8 @@ class CertificateService(CRUDService):
         cert_info.update({
             'ca_privatekey': signing_cert['privatekey'],
             'ca_certificate': signing_cert['certificate'],
-            'serial': cert_serial
+            'serial': cert_serial,
+            'server_auth_eku': True,  # For 11.3, we assume each certificate is a server certificate
         })
 
         cert, key = await self.middleware.call(
