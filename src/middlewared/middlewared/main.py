@@ -551,14 +551,26 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, ws, input_queue, loop, jail=None):
+    def __init__(self, ws, input_queue, loop, options):
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
-        self.jail = jail
+        self.command = self.get_command(options)
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
+
+    def get_command(self, options):
+        allowed_options = ('jail', 'vm_id')
+        if all(options[k] for k in allowed_options):
+            raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
+
+        if options.get('jail'):
+            return ['/usr/local/bin/iocage', 'console', '-f', options['jail']]
+        elif options.get('vm_id'):
+            return ['/usr/bin/cu', '-l', f'{options["vm_id"]}B']
+        else:
+            return ['/usr/bin/login', '-p', '-f', 'root']
 
     def resize(self, cols, rows):
         self.input_queue.put(ShellResize(cols, rows))
@@ -570,18 +582,7 @@ class ShellWorkerThread(threading.Thread):
             osc.close_fds(3)
 
             os.chdir('/root')
-            cmd = [
-                '/usr/bin/login', '-p', '-f', 'root',
-            ]
-
-            if self.jail is not None:
-                cmd = [
-                    '/usr/local/bin/iocage',
-                    'console',
-                    '-f',
-                    self.jail
-                ]
-            os.execve(cmd[0], cmd, {
+            os.execve(self.command[0], self.command, {
                 'TERM': 'xterm',
                 'HOME': '/root',
                 'LANG': 'en_US.UTF-8',
@@ -720,8 +721,9 @@ class ShellApplication(object):
                     'id': conndata.id,
                 })
 
-                jail = data.get('jail')
-                conndata.t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), jail=jail)
+                conndata.t_worker = ShellWorkerThread(
+                    ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), options=data.get('options', {})
+                )
                 conndata.t_worker.start()
 
                 self.shells[conndata.id] = conndata.t_worker
