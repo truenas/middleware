@@ -1823,6 +1823,8 @@ class VMService(CRUDService):
     def initialize_vms(self, timeout=10):
         if self.middleware.call_sync('vm.query'):
             self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
+        else:
+            return
 
         # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
