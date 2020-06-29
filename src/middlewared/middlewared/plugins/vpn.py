@@ -405,14 +405,7 @@ class OpenVPNServerService(SystemServiceService):
                 '</tls-crypt>'
             ])
 
-        return (
-            '\n'.join(
-                filter(
-                    bool,
-                    client_config
-                )
-            ) + f'\n{config["additional_parameters"]}'
-        ).strip()
+        return '\n'.join(filter(bool, client_config)).strip()
 
     @accepts(
         Dict(

@@ -2097,7 +2097,9 @@ class CertificateAuthorityService(CRUDService):
                 'ExtendedKeyUsage': {
                     'enabled': True,
                     'extension_critical': False,
-                    'usages': ['SERVER_AUTH']
+                    'usages': [
+                        'SERVER_AUTH', 'CLIENT_AUTH',
+                    ]
                 }
             },
             'key_length': 2048,
