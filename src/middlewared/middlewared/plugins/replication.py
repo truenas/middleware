@@ -605,7 +605,7 @@ class ReplicationService(CRUDService):
                 if is_child(source_dataset, snapshot_task["dataset"]):
                     if data["recursive"]:
                         for exclude in snapshot_task["exclude"]:
-                            if exclude not in data["exclude"]:
+                            if is_child(exclude, source_dataset) and exclude not in data["exclude"]:
                                 verrors.add("exclude", f"You should exclude {exclude!r} as bound periodic snapshot "
                                                        f"task dataset {snapshot_task['dataset']!r} does")
                     else:
