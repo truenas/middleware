@@ -85,7 +85,10 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
 
     @property
     def link_address(self):
-        return list(filter(lambda x: x.af == AddressFamily.LINK, self.addresses)).pop()
+        try:
+            return list(filter(lambda x: x.af == AddressFamily.LINK, self.addresses)).pop()
+        except IndexError:
+            return None
 
     def __getstate__(self, address_stats=False):
         state = {
@@ -104,7 +107,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
             'active_media_subtype': '',
             'supported_media': [],
             'media_options': None,
-            'link_address': self.link_address.address.address,
+            'link_address': self.link_address.address.address if self.link_address is not None else '',
             'aliases': [i.__getstate__(stats=address_stats) for i in self.addresses],
             'carp_config': None,
         }
