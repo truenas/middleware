@@ -187,6 +187,10 @@ def test_00_bootstrap(credentials, periodic_snapshot_tasks):
           exclude=["tank/data"]),
      "exclude.0"),
 
+    # Does not require unrelated exclude
+    (dict(source_datasets=["tank/exclude/work/important"], periodic_snapshot_tasks=["exclude"], recursive=True),
+     None),
+
     # Custom retention policy
     (dict(periodic_snapshot_tasks=["data-recursive"],
           retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK"), None),
