@@ -1,12 +1,14 @@
-from middlewared.service import Service
-from datetime import datetime
-
 import json
 import asyncio
 import random
 import aiohttp
 import hashlib
 import os
+
+from copy import deepcopy
+from datetime import datetime
+
+from middlewared.service import Service
 
 
 class UsageService(Service):
@@ -18,7 +20,7 @@ class UsageService(Service):
             await self.middleware.call('system.general.config')
         )['usage_collection']:
             try:
-                gather = await self.gather()
+                gather = await self.middleware.call('usage.gather')
                 async with aiohttp.ClientSession(
                     raise_for_status=True
                 ) as session:
@@ -46,34 +48,97 @@ class UsageService(Service):
 
         return True
 
-    async def gather(self):
-        network = await self.middleware.call('interfaces.query')
-
-        hardware = await self.gather_hardware(network)
-        jails = await self.gather_jails()
-        network = await self.gather_network(network)
-        system = await self.gather_system()
-        plugins = await self.gather_plugins()
-        pools = await self.gather_pools()
-        services = await self.gather_services()
-        sharing = await self.gather_sharing()
-        vms = await self.gather_vms()
+    def gather(self):
+        datasets = self.middleware.call_sync('zfs.dataset.query')
+        context = {
+            'network': self.middleware.call_sync('interfaces.query'),
+            'root_datasets': {},
+            'zvols': [],
+            'datasets': {},
+        }
+        for ds in datasets:
+            if '/' not in ds['id']:
+                context['root_datasets'][ds['id']] = ds
+            elif ds['type'] == 'VOLUME':
+                context['zvols'].append(ds)
+            context['datasets'][ds['id']] = ds
 
         return json.dumps(
             {
-                **hardware,
-                **jails,
-                **network,
-                **{k: v for l in system['gather_system'] for k, v in l.items()},
-                **plugins,
-                **pools,
-                **services,
-                **sharing,
-                **vms
+                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f))
+                for k, v in self.middleware.call_sync(f'usage.{f}', context).items()
             }, sort_keys=True
         )
 
-    async def gather_hardware(self, network):
+    def gather_backup_data(self, context):
+        backed = {
+            'cloudsync': 0,
+            'rsynctask': 0,
+            'zfs_replication': 0,
+            'total_size': 0,
+        }
+        datasets_data = context['datasets']
+        datasets = deepcopy(datasets_data)
+        for namespace in ('cloudsync', 'rsynctask'):
+            task_datasets = deepcopy(datasets_data)
+            for task in self.middleware.call_sync(
+                f'{namespace}.query', [['enabled', '=', True], ['direction', '=', 'PUSH'], ['locked', '=', False]]
+            ):
+                try:
+                    task_ds = self.middleware.call_sync('zfs.dataset.path_to_dataset', task['path'])
+                except Exception:
+                    self.logger.error('Unable to retrieve dataset of path %r', task['path'], exc_info=True)
+                    task_ds = None
+
+                if task_ds:
+                    task_ds_data = task_datasets.pop(task_ds, None)
+                    if task_ds_data:
+                        backed[namespace] += task_ds_data['properties']['used']['parsed']
+                    ds = datasets.pop(task_ds, None)
+                    if ds:
+                        backed['total_size'] += ds['properties']['used']['parsed']
+
+        repl_datasets = deepcopy(datasets_data)
+        for task in self.middleware.call_sync(
+            'replication.query', [['enabled', '=', True], ['transport', '!=', 'LOCAL'], ['direction', '=', 'PUSH']]
+        ):
+            for source in filter(lambda s: s in repl_datasets, task['source_datasets']):
+                r_ds = repl_datasets.pop(source, None)
+                if r_ds:
+                    backed['zfs_replication'] += r_ds['properties']['used']['parsed']
+                ds = datasets.pop(source, None)
+                if ds:
+                    backed['total_size'] += ds['properties']['used']['parsed']
+
+        return {
+            'data_backup_stats': backed,
+            'data_without_backup_size': sum([ds['properties']['used']['parsed'] for ds in datasets.values()], start=0)
+        }
+
+    def gather_filesystem_usage(self, context):
+        return {
+            'datasets': {
+                'total_size': sum(
+                    [d['properties']['used']['parsed'] for d in context['root_datasets'].values()], start=0
+                )
+            },
+            'zvols': {
+                'total_size': sum(
+                    [d['properties']['used']['parsed'] for d in context['zvols']], start=0
+                ),
+            },
+        }
+
+    async def gather_cloud_services(self, context):
+        return {
+            'cloud_services': list({
+                t['credentials']['provider']
+                for t in await self.middleware.call('cloudsync.query', [['enabled', '=', True]])
+            })
+        }
+
+    async def gather_hardware(self, context):
+        network = context['network']
         info = await self.middleware.call('system.info')
 
         return {
@@ -82,14 +147,12 @@ class UsageService(Service):
                 'memory': info['physmem'],
                 'nics': len(network),
                 'disks': [
-                    {k: disk[k]} for disk in await self.middleware.call('disk.query') for k in [
-                        'model',
-                    ]
+                    {k: disk[k]} for disk in await self.middleware.call('disk.query') for k in ['model']
                 ]
             }
         }
 
-    async def gather_jails(self):
+    async def gather_jails(self, context):
         try:
             jails = await self.middleware.call('jail.query')
         except Exception:
@@ -107,7 +170,9 @@ class UsageService(Service):
 
         return {'jails': jail_list}
 
-    async def gather_network(self, network):
+    async def gather_network(self, context):
+        network = context['network']
+
         async def gather_bridges():
             bridge_list = []
             for b in network:
@@ -168,7 +233,7 @@ class UsageService(Service):
 
         return {'network': {**bridges, **lags, **phys, **vlans}}
 
-    async def gather_system(self):
+    async def gather_system(self, context):
         system = await self.middleware.call('system.info')
         platform = 'TrueNAS-{}'.format(await self.middleware.call(
             'system.product_type'
@@ -192,21 +257,14 @@ class UsageService(Service):
         )
 
         return {
-            'gather_system': [
-                {'system_hash': system_hash},
-                {'platform': platform},
-                {'usage_version': usage_version},
-                {'version': version},
-                {'system': [
-                    {
-                        'users': users, 'snapshots': snapshots, 'zvols': zvols,
-                        'datasets': datasets
-                    }
-                ]}
-            ]
+            'system_hash': system_hash,
+            'platform': platform,
+            'usage_version': usage_version,
+            'version': version,
+            'system': [{'users': users, 'snapshots': snapshots, 'zvols': zvols, 'datasets': datasets}]
         }
 
-    async def gather_plugins(self):
+    async def gather_plugins(self, context):
         try:
             plugins = await self.middleware.call('plugin.query')
         except Exception:
@@ -219,7 +277,7 @@ class UsageService(Service):
             ]
         }
 
-    async def gather_pools(self):
+    async def gather_pools(self, context):
         pools = await self.middleware.call('pool.query')
         pool_list = []
 
@@ -231,17 +289,12 @@ class UsageService(Service):
             vdevs = 0
             type = 'UNKNOWN'
 
-            try:
-                pd = (await self.middleware.call(
-                    'zfs.dataset.query', [('id', '=', p['name'])],
-                    {'get': True}
-                ))['properties']
-            except IndexError:
-                self.logger.error(
-                    f'{p["name"]} is missing, skipping collection',
-                    exc_info=True
-                )
+            pd = context['root_datasets'].get(p['name'])
+            if not pd:
+                self.logger.error('%r is missing, skipping collection', p['name'])
                 continue
+            else:
+                pd = pd['properties']
 
             for d in p['topology']['data']:
                 if not d.get('path'):
@@ -262,8 +315,7 @@ class UsageService(Service):
                     'usedbydataset': pd['usedbydataset']['parsed'],
                     'usedbysnapshots': pd['usedbysnapshots']['parsed'],
                     'usedbychildren': pd['usedbychildren']['parsed'],
-                    'usedbyrefreservation':
-                        pd['usedbyrefreservation']['parsed'],
+                    'usedbyrefreservation': pd['usedbyrefreservation']['parsed'],
                     'vdevs': vdevs if vdevs else disks,
                     'zil': bool(p['topology']['log'])
                 }
@@ -271,7 +323,7 @@ class UsageService(Service):
 
         return {'pools': pool_list}
 
-    async def gather_services(self):
+    async def gather_services(self, context):
         services = await self.middleware.call('service.query')
         service_list = []
 
@@ -285,7 +337,7 @@ class UsageService(Service):
 
         return {'services': service_list}
 
-    async def gather_sharing(self):
+    async def gather_sharing(self, context):
         services = ['afp', 'iscsi', 'nfs', 'smb', 'webdav']
         sharing_list = []
 
@@ -364,7 +416,8 @@ class UsageService(Service):
                             'xen': extent['xen'],
                             'rpm': extent['rpm'],
                             'readonly': extent['ro'],
-                            'legacy': extent['legacy']
+                            'legacy': extent['vendor'] == 'FreeBSD',
+                            'vendor': extent['vendor'],
                         }
                     )
 
@@ -373,7 +426,7 @@ class UsageService(Service):
 
         return {'shares': sharing_list}
 
-    async def gather_vms(self):
+    async def gather_vms(self, context):
         vms = await self.middleware.call('vm.query')
         vm_list = []
 
