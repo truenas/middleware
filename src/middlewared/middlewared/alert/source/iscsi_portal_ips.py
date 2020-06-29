@@ -23,7 +23,12 @@ class ISCSIPortalIPAlertSource(AlertSource):
         ips = []
         for target in await self.middleware.call('iscsi.target.query'):
             for group in target['groups']:
-                ips.extend(filter(lambda a: a['ip'] not in in_use_ips, portals[group['portal']]['listen']))
+                ips.extend(
+                    map(
+                        lambda ip: ip['ip'],
+                        filter(lambda a: a['ip'] not in in_use_ips, portals[group['portal']]['listen'])
+                    )
+                )
 
         if ips:
             return Alert(ISCSIPortalIPAlertClass, ', '.join(ips))
