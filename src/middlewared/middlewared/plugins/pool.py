@@ -2085,7 +2085,7 @@ class PoolDatasetService(CRUDService):
             Bool('force_umount', default=False),
         )
     )
-    @job(lock=lambda args: f'dataset_{args[0]}')
+    @job(lock=lambda args: 'dataset_lock')
     async def lock(self, job, id, options):
         """
         Locks `id` dataset. It will unmount the dataset and its children before locking.
@@ -2103,26 +2103,22 @@ class PoolDatasetService(CRUDService):
         elif id == (await self.middleware.call('systemdataset.config'))['pool']:
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
-        await self.middleware.call(
-            'pool.dataset.userprop.create', {
-                'id': id, 'property': {'name': 'truenas:about_to_lock', 'value': 'yes'}
-            }
-        )
-
         async def detach(delegate):
             await delegate.stop((await delegate.query(self.__attachments_path(ds), True)))
 
-        coroutines = [detach(dg) for dg in self.attachment_delegates]
-        await asyncio.gather(*coroutines)
-
         try:
+            await self.middleware.call('cache.put', 'about_to_lock_dataset', id)
+
+            coroutines = [detach(dg) for dg in self.attachment_delegates]
+            await asyncio.gather(*coroutines)
+
             await self.middleware.call(
                 'zfs.dataset.unload_key', id, {
                     'umount': True, 'force_umount': options['force_umount'], 'recursive': True
                 }
             )
         finally:
-            await self.middleware.call('pool.dataset.userprop.delete', id, {'name': 'truenas:about_to_lock'})
+            await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
         await self.middleware.call_hook('dataset.post_lock', id)
 
