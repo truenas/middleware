@@ -220,7 +220,8 @@ def test_18_make_sure_we_are_not_able_to_lock_key_encrypted_dataset():
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'FAILED', str(job_status['results'])
-    assert 'Only datasets which are encrypted with passphrase can be locked' in job_status['error'], job_status['error']
+    assert 'Only datasets which are encrypted with passphrase can be locked' in job_status['results']['error'], \
+        job_status['results']['error']
 
 
 def test_19_change_a_key_encrypted_dataset_to_passphrase():

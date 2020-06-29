@@ -97,7 +97,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'afpd', 'checkpoint': 'pool_import'},
         ],
         'cron': [
-            {'type': 'mako', 'path': 'cron.d/middlewared'},
+            {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
         ],
         'ctld': [
@@ -304,6 +304,15 @@ class EtcService(Service):
 
             if 'platform' in entry and entry['platform'].upper() != osc.SYSTEM:
                 continue
+
+            if checkpoint:
+                checkpoint_system = f'checkpoint_{osc.SYSTEM.lower()}'
+                if checkpoint_system in entry:
+                    entry_checkpoint = entry[checkpoint_system]
+                else:
+                    entry_checkpoint = entry.get('checkpoint', 'initial')
+                if entry_checkpoint != checkpoint:
+                    continue
 
             path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])
             entry_path = entry['path']

@@ -483,6 +483,7 @@ class iSCSITargetExtentService(SharingService):
         datastore_extend = 'iscsi.extent.extend'
         datastore_extend_context = 'iscsi.extent.extent_extend_context'
 
+    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
         if data['type'] == 'DISK':
             if data['disk'].startswith('zvol/'):

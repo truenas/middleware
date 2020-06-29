@@ -1222,6 +1222,7 @@ class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'cloudsync'
     title = 'CloudSync Task'
     service_class = CloudSyncService
+    resource_name = 'path'
 
     async def restart_reload_services(self, attachments):
         await self.middleware.call('service.restart', 'cron')

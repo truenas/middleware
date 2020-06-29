@@ -605,6 +605,7 @@ class SharingTaskService(CRUDService):
 
         return data
 
+    @private
     async def get_options(self, options):
         return {
             **(await super().get_options(options)),
@@ -648,6 +649,7 @@ class SharingService(SharingTaskService):
     service_type = 'share'
     locked_alert_class = 'ShareLocked'
 
+    @private
     async def human_identifier(self, share_task):
         return share_task['name']
 
@@ -656,6 +658,7 @@ class TaskPathService(SharingTaskService):
     service_type = 'task'
     locked_alert_class = 'TaskLocked'
 
+    @private
     async def human_identifier(self, share_task):
         return share_task[self.path_field]
 

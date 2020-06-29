@@ -105,8 +105,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
                     f'{self.datastore_prefix}{self.enabled_field}': enabled
                 }
             )
-            if enabled:
-                await self.remove_alert(attachment)
+            await self.remove_alert(attachment)
 
         if enabled:
             await self.start(attachments)
