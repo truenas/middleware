@@ -2,7 +2,7 @@
 Add Rsyncmod enabled field
 
 Revision ID: 71a8d1e504a7
-Revises: 8ac8158773c4
+Revises: c01e9d77922e
 Create Date: 2020-06-19 16:10:59.501147+00:00
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 revision = '71a8d1e504a7'
-down_revision = '8ac8158773c4'
+down_revision = 'c01e9d77922e'
 branch_labels = None
 depends_on = None
 

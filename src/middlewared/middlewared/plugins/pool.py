@@ -2594,7 +2594,7 @@ class PoolDatasetService(CRUDService):
     def path_in_locked_datasets(self, path, locked_datasets=None):
         if locked_datasets is None:
             locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
-        return any(is_child(path, d['mountpoint']) for d in locked_datasets)
+        return any(is_child(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
 
     @filterable
     def query(self, filters=None, options=None):
