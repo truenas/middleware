@@ -374,7 +374,7 @@ async def rclone_check_progress(job, proc):
     dropbox__restricted_content = False
     try:
         while True:
-            read = (await proc.stdout.readline()).decode()
+            read = (await proc.stdout.readline()).decode("utf-8", "ignore")
             if read == "":
                 break
 
