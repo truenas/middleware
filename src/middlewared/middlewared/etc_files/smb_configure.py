@@ -300,6 +300,7 @@ def render(service, middleware):
     if conf['passdb_backend'] == "tdbsam":
         middleware.call_sync('smb.synchronize_passdb')
         validate_group_mappings(middleware, conf)
+        middleware.call_sync('smb.check_rid_conflict')
         middleware.call_sync('admonitor.start')
     else:
         middleware.call_sync('smb.store_ldap_admin_password')
