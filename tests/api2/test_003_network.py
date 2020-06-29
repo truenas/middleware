@@ -18,6 +18,7 @@ if ha and "domain" in os.environ:
     gateway = os.environ["gateway"]
     hostname = os.environ["hostname"]
     hostname_b = os.environ["hostname_b"]
+    hostname_virtual = os.environ["hostname_virtual"]
     primary_dns = os.environ["primary_dns"]
     secondary_dns = os.environ["secondary_dns"]
     ip = os.environ["controller1_ip"]
@@ -35,6 +36,7 @@ def test_01_set_network_for_ha():
         "ipv4gateway": gateway,
         "hostname": hostname,
         "hostname_b": hostname_b,
+        "hostname_virtual": hostname_virtual,
         "nameserver1": primary_dns,
         "nameserver2": secondary_dns
     }
