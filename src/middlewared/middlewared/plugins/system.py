@@ -487,9 +487,8 @@ class SystemService(Service):
         # for fibre channel, which means they were issued having
         # dedup+jails instead.
         if (
-            licenseobj.contract_start < date(2017, 4, 14) and
-            Features.dedup in licenseobj.features and
-            Features.jails in licenseobj.features
+            Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14) and
+            Features.dedup in licenseobj.features and Features.jails in licenseobj.features
         ):
             license["features"].append(Features.fibrechannel.name.upper())
         return license
