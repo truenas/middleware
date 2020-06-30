@@ -40,8 +40,6 @@ SYSTEM_READY = False
 # Flag telling whether the system is shutting down
 SYSTEM_SHUTTING_DOWN = False
 
-GENERATE_GRUB_WHEN_READY = False
-
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
@@ -1438,8 +1436,6 @@ async def _event_system(middleware, event_type, args):
     global SYSTEM_SHUTTING_DOWN
     if args['id'] == 'ready':
         SYSTEM_READY = True
-        if GENERATE_GRUB_WHEN_READY:
-            await middleware.call('etc.generate', 'grub')
 
         # Check if birthday is already setted
         system_obj = await middleware.call('system.info')
@@ -1523,8 +1519,6 @@ class SystemHealthEventSource(EventSource):
 
 
 async def firstboot(middleware):
-    global GENERATE_GRUB_WHEN_READY
-
     if os.path.exists(FIRST_INSTALL_SENTINEL):
         # Delete sentinel file before making clone as we
         # we do not want the clone to have the file in it.
@@ -1554,8 +1548,6 @@ async def firstboot(middleware):
                 )
                 if cp.returncode != 0:
                     middleware.logger.error('Failed to set bootloader as grub for zectl: %s', cp.stderr.decode())
-
-                GENERATE_GRUB_WHEN_READY = True
 
 
 async def update_timeout_value(middleware, *args):
