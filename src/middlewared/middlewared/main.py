@@ -562,7 +562,7 @@ class ShellWorkerThread(threading.Thread):
 
     def get_command(self, options):
         allowed_options = ('jail', 'vm_id')
-        if all(options[k] for k in allowed_options):
+        if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
 
         if options.get('jail'):
@@ -721,8 +721,10 @@ class ShellApplication(object):
                     'id': conndata.id,
                 })
 
+                options = data.get('options', {})
+                options['jail'] = data.get('jail') or options.get('jail')
                 conndata.t_worker = ShellWorkerThread(
-                    ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), options=data.get('options', {})
+                    ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), options=options
                 )
                 conndata.t_worker.start()
 
