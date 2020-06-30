@@ -390,7 +390,7 @@ class FilesystemService(Service):
             '-p', target], check=False, capture_output=True
         )
         if winacl.returncode != 0:
-            CallError(f"Winacl {action} on path {path} failed with error: [{winacl.stderr.decode().strip()}]")
+            raise CallError(f"Winacl {action} on path {path} failed with error: [{winacl.stderr.decode().strip()}]")
 
     def _common_perm_path_validate(self, path):
         if not os.path.exists(path):
