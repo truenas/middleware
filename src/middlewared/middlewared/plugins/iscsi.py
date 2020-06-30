@@ -1,10 +1,8 @@
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, private
-)
+from middlewared.service import CallError, CRUDService, private, SharingService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
 from middlewared.utils.path import is_child
@@ -474,7 +472,9 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_vendor = sa.Column(sa.Text(), nullable=True)
 
 
-class iSCSITargetExtentService(CRUDService):
+class iSCSITargetExtentService(SharingService):
+
+    share_task_type = 'iSCSI Extent'
 
     class Config:
         namespace = 'iscsi.extent'
@@ -482,6 +482,17 @@ class iSCSITargetExtentService(CRUDService):
         datastore_prefix = 'iscsi_target_extent_'
         datastore_extend = 'iscsi.extent.extend'
         datastore_extend_context = 'iscsi.extent.extent_extend_context'
+
+    @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        if data['type'] == 'DISK':
+            if data['disk'].startswith('zvol/'):
+                return any(data['disk'][5:] == d['id'] for d in locked_datasets)
+            else:
+                # It is a disk
+                return False
+        else:
+            return await super().sharing_task_determine_locked(data, locked_datasets)
 
     @accepts(Dict(
         'iscsi_extent_create',
@@ -552,7 +563,7 @@ class iSCSITargetExtentService(CRUDService):
         Update iSCSI Extent of `id`.
         """
         verrors = ValidationErrors()
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -567,6 +578,7 @@ class iSCSITargetExtentService(CRUDService):
             raise verrors
 
         await self.save(new, 'iscsi_extent_update', verrors)
+        new.pop(self.locked_field)
 
         await self.middleware.call(
             'datastore.update',
@@ -578,7 +590,7 @@ class iSCSITargetExtentService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(
         Int('id'),
@@ -745,8 +757,6 @@ class iSCSITargetExtentService(CRUDService):
                 zvol = await self.middleware.call('pool.dataset.query', [['id', '=', zvol_name]])
                 if not zvol:
                     verrors.add(f'{schema_name}.disk', f'Zvol {zvol_name} does not exist')
-                elif zvol[0]['locked']:
-                    verrors.add(f'{schema_name}.disk', f'Zvol {zvol_name} is locked')
         elif extent_type == 'File':
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')
@@ -1558,22 +1568,17 @@ class iSCSITargetToExtentService(CRUDService):
             )
 
 
-class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
+class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'iscsi'
     title = 'iSCSI Extent'
     service = 'iscsitarget'
+    service_class = iSCSITargetExtentService
 
-    async def query(self, path, enabled):
-        results = []
-        for extent in await self.middleware.call('iscsi.extent.query', [['type', '=', 'DISK'],
-                                                                        ['enabled', '=', enabled]]):
-            if is_child(extent['path'], os.path.join('zvol', os.path.relpath(path, '/mnt'))):
-                results.append(extent)
+    async def get_query_filters(self, enabled, options=None):
+        return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))
 
-        return results
-
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
+    async def is_child_of_path(self, resource, path):
+        return is_child(resource[self.path_field], os.path.join('zvol', os.path.relpath(path, '/mnt')))
 
     async def delete(self, attachments):
         lun_ids = []
@@ -1583,6 +1588,7 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
                 lun_ids.append(te['lunid'])
 
             await self.middleware.call('datastore.delete', 'services.iscsitargetextent', attachment['id'])
+            await self.remove_alert(attachment)
 
         await self._service_change('iscsitarget', 'reload')
 
@@ -1590,18 +1596,12 @@ class ISCSIFSAttachmentDelegate(FSAttachmentDelegate):
         if osc.IS_FREEBSD:
             await asyncio.sleep(5)
 
-    async def toggle(self, attachments, enabled):
-        lun_ids = []
-        for attachment in attachments:
-            for te in await self.middleware.call('iscsi.targetextent.query', [['extent', '=', attachment['id']]]):
-                lun_ids.append(te['lunid'])
-
-            await self.middleware.call('datastore.update', 'services.iscsitargetextent', attachment['id'],
-                                       {'iscsi_target_extent_enabled': enabled})
-
+    async def restart_reload_services(self, attachments):
         await self._service_change('iscsitarget', 'reload')
 
-        if osc.IS_FREEBSD and not enabled:
+    async def stop(self, attachments):
+        await self.restart_reload_services(attachments)
+        if osc.IS_FREEBSD:
             await asyncio.sleep(5)
 
 

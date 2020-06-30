@@ -2368,7 +2368,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'vm'
     title = 'VM'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         vms_attached = []
         ignored_vms = {
             vm['id']: vm for vm in await self.middleware.call(
@@ -2376,7 +2376,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             )
         }
         for device in await self.middleware.call('datastore.query', 'vm.device'):
-            if (device['dtype'] not in ('DISK', 'RAW')) or device['vm']['id'] in ignored_vms:
+            if (device['dtype'] not in ('DISK', 'RAW', 'CDROM')) or device['vm']['id'] in ignored_vms:
                 continue
 
             disk = device['attributes'].get('path')
@@ -2395,9 +2395,6 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
         return vms_attached
 
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
     async def delete(self, attachments):
         for attachment in attachments:
             try:
@@ -2412,6 +2409,12 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
                 await self.middleware.call(action, attachment['id'])
             except Exception:
                 self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
+
+    async def stop(self, attachments):
+        await self.toggle(attachments, False)
+
+    async def start(self, attachments):
+        await self.toggle(attachments, True)
 
 
 async def setup(middleware):

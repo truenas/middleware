@@ -765,7 +765,7 @@ class JailService(CRUDService):
         datasets = self.middleware.call_sync(
             'zfs.dataset.query',
             [['properties.org\\.freebsd\\.ioc:active.value', '=', 'yes']],
-            {'extra': {'properties': [], 'flat': False}}
+            {'extra': {'properties': ['encryption', 'keystatus', 'mountpoint'], 'flat': False}}
         )
         return not (not datasets or not any(
             d['name'].endswith('/iocage') and (not d['encrypted'] or (d['encrypted'] and d['key_loaded']))
@@ -1669,7 +1669,7 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'jail'
     title = 'Jail'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         results = []
 
         if not await self.middleware.call('jail.iocage_set_up'):
@@ -1706,6 +1706,12 @@ class JailFSAttachmentDelegate(FSAttachmentDelegate):
                 await self.middleware.call(action, attachment['id'])
             except Exception:
                 self.middleware.logger.warning('Unable to %s %r', action, attachment['id'], exc_info=True)
+
+    async def stop(self, attachments):
+        await self.toggle(attachments, False)
+
+    async def start(self, attachments):
+        await self.toggle(attachments, True)
 
 
 async def setup(middleware):

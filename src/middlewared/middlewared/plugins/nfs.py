@@ -4,10 +4,10 @@ import ipaddress
 import os
 import socket
 
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.validators import Range
-from middlewared.service import private, CRUDService, SystemServiceService, ValidationError, ValidationErrors
+from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
@@ -247,12 +247,27 @@ class NFSShareModel(sa.Model):
     nfs_enabled = sa.Column(sa.Boolean(), default=True)
 
 
-class SharingNFSService(CRUDService):
+class SharingNFSService(SharingService):
+
+    path_field = 'paths'
+    share_task_type = 'NFS'
+
     class Config:
         namespace = "sharing.nfs"
         datastore = "sharing.nfs_share"
         datastore_prefix = "nfs_"
         datastore_extend = "sharing.nfs.extend"
+
+    async def human_identifier(self, share_task):
+        return ', '.join(share_task[self.path_field])
+
+    @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        for path in data[self.path_field]:
+            if await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets):
+                return True
+        else:
+            return False
 
     @accepts(Dict(
         "sharingnfs_create",
@@ -308,7 +323,7 @@ class SharingNFSService(CRUDService):
 
         await self._service_change("nfs", "reload")
 
-        return data
+        return await self.get_instance(data["id"])
 
     @accepts(
         Int("id"),
@@ -323,7 +338,7 @@ class SharingNFSService(CRUDService):
         Update NFS Share of `id`.
         """
         verrors = ValidationErrors()
-        old = await self._get_instance(id)
+        old = await self.get_instance(id)
 
         new = old.copy()
         new.update(data)
@@ -340,11 +355,10 @@ class SharingNFSService(CRUDService):
                 "prefix": self._config.datastore_prefix
             }
         )
-        await self.extend(new)
 
         await self._service_change("nfs", "reload")
 
-        return new
+        return await self.get_instance(id)
 
     @accepts(Int("id"))
     async def do_delete(self, id):
@@ -414,8 +428,10 @@ class SharingNFSService(CRUDService):
                 dev = stat.st_dev
             else:
                 if dev != stat.st_dev:
-                    verrors.add(f"{schema_name}.paths.{i}",
-                                "Paths for a NFS share must reside within the same filesystem")
+                    verrors.add(
+                        f'{schema_name}.paths.{i}',
+                        'Paths for a NFS share must reside within the same filesystem'
+                    )
 
     @private
     async def resolve_hostnames(self, hostnames):
@@ -517,6 +533,7 @@ class SharingNFSService(CRUDService):
         data["network"] = " ".join(data.pop("networks"))
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
+        data.pop(self.locked_field, None)
         return data
 
 
@@ -535,35 +552,19 @@ async def pool_post_import(middleware, pool):
             break
 
 
-class NFSFSAttachmentDelegate(FSAttachmentDelegate):
+class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'nfs'
     title = 'NFS Share'
     service = 'nfs'
+    service_class = SharingNFSService
 
-    async def query(self, path, enabled):
-        results = []
-        for nfs in await self.middleware.call('sharing.nfs.query', [['enabled', '=', enabled]]):
-            if any(is_child(nfs_path, path) for nfs_path in nfs['paths']):
-                results.append(nfs)
-
-        return results
+    async def is_child_of_path(self, resource, path):
+        return any(is_child(nfs_path, path) for nfs_path in resource[self.path_field])
 
     async def get_attachment_name(self, attachment):
         return ', '.join(attachment['paths'])
 
-    # NFS share can only contain paths from single dataset, that's why we can delete/disable entire share
-    # if even one path matches
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'sharing.nfs_share', attachment['id'])
-
-        await self._service_change('nfs', 'reload')
-
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call('datastore.update', 'sharing.nfs_share', attachment['id'],
-                                       {'nfs_enabled': enabled})
-
+    async def restart_reload_services(self, attachments):
         await self._service_change('nfs', 'reload')
 
 

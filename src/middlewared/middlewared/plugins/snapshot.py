@@ -321,17 +321,15 @@ class PeriodicSnapshotTaskService(CRUDService):
 class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'snapshottask'
     title = 'Snapshot Task'
+    resource_name = 'dataset'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         results = []
         for task in await self.middleware.call('pool.snapshottask.query', [['enabled', '=', enabled]]):
             if is_child(os.path.join('/mnt', task['dataset']), path):
                 results.append(task)
 
         return results
-
-    async def get_attachment_name(self, attachment):
-        return attachment['dataset']
 
     async def delete(self, attachments):
         for attachment in attachments:

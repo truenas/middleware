@@ -1,8 +1,9 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
+    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import load_modules, load_classes, Popen, run
@@ -663,10 +664,11 @@ class CloudSyncModel(sa.Model):
     follow_symlinks = sa.Column(sa.Boolean())
 
 
-class CloudSyncService(CRUDService):
+class CloudSyncService(TaskPathService):
 
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
+    share_task_type = 'CloudSync'
 
     class Config:
         datastore = "tasks.cloudsync"
@@ -716,6 +718,7 @@ class CloudSyncService(CRUDService):
         Cron.convert_schedule_to_db_format(cloud_sync)
 
         cloud_sync.pop('job', None)
+        cloud_sync.pop(self.locked_field, None)
 
         return cloud_sync
 
@@ -772,6 +775,8 @@ class CloudSyncService(CRUDService):
         for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
             if limit1["time"] >= limit2["time"]:
                 verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
+
+        await self.validate_path_field(data, name, verrors)
 
         if data["snapshot"]:
             if data["direction"] != "PUSH":
@@ -903,7 +908,7 @@ class CloudSyncService(CRUDService):
         """
         Updates the cloud_sync entry `id` with `data`.
         """
-        cloud_sync = await self._get_instance(id)
+        cloud_sync = await self.get_instance(id)
 
         # credentials is a foreign key for now
         if cloud_sync["credentials"]:
@@ -929,7 +934,7 @@ class CloudSyncService(CRUDService):
         await self.middleware.call("service.restart", "cron")
 
         cloud_sync = await self.extend(cloud_sync)
-        return cloud_sync
+        return await self.get_instance(id)
 
     @accepts(Int("id"))
     async def do_delete(self, id):
@@ -1041,7 +1046,10 @@ class CloudSyncService(CRUDService):
         Run the cloud_sync job `id`, syncing the local data to remote.
         """
 
-        cloud_sync = await self._get_instance(id)
+        cloud_sync = await self.get_instance(id)
+        if cloud_sync['locked']:
+            await self.middleware.call('cloudsync.generate_locked_alert', id)
+            return
 
         await self._sync(cloud_sync, options, job)
 
@@ -1210,7 +1218,19 @@ for module in load_modules(os.path.join(os.path.dirname(os.path.realpath(__file_
             setattr(CloudSyncService, f"{cls.name.lower()}_{method_name}", getattr(cls, method_name))
 
 
+class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
+    name = 'cloudsync'
+    title = 'CloudSync Task'
+    service_class = CloudSyncService
+    resource_name = 'path'
+
+    async def restart_reload_services(self, attachments):
+        await self.middleware.call('service.restart', 'cron')
+
+
 async def setup(middleware):
     for cls in remote_classes:
         remote = cls(middleware)
         REMOTES[remote.name] = remote
+
+    await middleware.call('pool.dataset.register_attachment_delegate', CloudSyncFSAttachmentDelegate(middleware))

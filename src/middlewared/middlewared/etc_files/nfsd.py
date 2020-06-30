@@ -13,6 +13,13 @@ async def get_exports(middleware, config, shares, kerberos_keytabs):
         result.append(f"V4: / -sec={':'.join(sec)}")
 
     for share in shares:
+        if share['locked']:
+            middleware.logger.debug(
+                'Skipping generation of %r NFS share as the underlying resource is locked', share['id']
+            )
+            await middleware.call('sharing.nfs.generate_locked_alert', share['id'])
+            continue
+
         if share["paths"]:
             result.extend(build_share(config, share))
 

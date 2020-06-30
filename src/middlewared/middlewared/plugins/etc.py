@@ -1,6 +1,6 @@
 from mako import exceptions
 from mako.lookup import TemplateLookup
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 from middlewared.utils import osc
 from middlewared.utils.io import write_if_changed
 
@@ -85,24 +85,27 @@ class EtcService(Service):
         ],
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
-            {'type': 'py', 'path': 'fstab_configure'}
+            {'type': 'py', 'path': 'fstab_configure', 'checkpoint_linux': 'post_init'}
+        ],
+        'system_dataset': [
+            {'type': 'py', 'path': 'system_setup', 'checkpoint': 'pool_import'}
         ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
             {'type': 'py', 'path': 'krb5.keytab'},
         ],
         'afpd': [
-            {'type': 'py', 'path': 'afpd'},
+            {'type': 'py', 'path': 'afpd', 'checkpoint': 'pool_import'},
         ],
         'cron': [
-            {'type': 'mako', 'path': 'cron.d/middlewared'},
+            {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'crontab', 'platform': 'FreeBSD'},
         ],
         'ctld': [
-            {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'ctld', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
         ],
         'grub': [
-            {'type': 'py', 'path': 'grub', 'platform': 'Linux'},
+            {'type': 'py', 'path': 'grub', 'platform': 'Linux', 'checkpoint': 'post_init'},
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
@@ -114,9 +117,9 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'dhclient.conf', 'platform': 'FreeBSD'},
         ],
         'nfsd': [
-            {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD'},
+            {'type': 'py', 'path': 'nfsd', 'platform': 'FreeBSD', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'default/nfs-common', 'platform': 'Linux'},
-            {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'ganesha/ganesha.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'},
         ],
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
@@ -154,7 +157,10 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'local_path': 'scst.conf.mako'}
+            {
+                'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux',
+                'local_path': 'scst.conf.mako', 'checkpoint': 'pool_import',
+            }
         ],
         'webdav': [
             {
@@ -166,15 +172,17 @@ class EtcService(Service):
                 'type': 'mako',
                 'local_path': 'local/apache24/Includes/webdav.conf',
                 'path': f'{APACHE_DIR}/Includes/webdav.conf',
+                'checkpoint': 'pool_import'
             },
             {
                 'type': 'py',
                 'local_path': 'local/apache24/webdav_config',
                 'path': f'{APACHE_DIR}/webdav_config',
+                'checkpoint': 'pool_import',
             },
         ],
         'nginx': [
-            {'type': 'mako', 'path': 'local/nginx/nginx.conf'}
+            {'type': 'mako', 'path': 'local/nginx/nginx.conf', 'checkpoint': 'interface_sync'}
         ],
         'failover': [
             {'type': 'py', 'path': 'failover'},
@@ -182,15 +190,12 @@ class EtcService(Service):
         'collectd': [
             {
                 'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
-                'local_path': 'local/collectd.conf'
+                'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
             },
             {'type': 'mako', 'path': 'default/rrdcached', 'local_path': 'default/rrdcached.mako', 'platform': 'Linux'},
         ],
-        'system_dataset': [
-            {'type': 'py', 'path': 'system_setup'}
-        ],
         'docker': [
-            {'type': 'py', 'path': 'docker', 'platform': 'Linux'},
+            {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': 'pool_import'},
         ],
         'inetd': [
             {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
@@ -199,8 +204,8 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'motd'}
         ],
         'mdns': [
-            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf'},
-            {'type': 'py', 'path': 'local/avahi/avahi_services'}
+            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': 'interface_sync'},
+            {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': 'interface_sync'}
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
@@ -212,15 +217,15 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
         'rsync': [
-            {'type': 'mako', 'path': 'local/rsyncd.conf'}
+            {'type': 'mako', 'path': 'local/rsyncd.conf', 'checkpoint': 'pool_import'}
         ],
         'smb': [
-            {'type': 'mako', 'path': 'local/smb4.conf'},
-            {'type': 'mako', 'path': 'security/pam_winbind.conf'},
+            {'type': 'mako', 'path': 'local/smb4.conf', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'security/pam_winbind.conf', 'checkpoint': 'pool_import'},
         ],
         'smb_share': [
-            {'type': 'mako', 'path': 'local/smb4_share.conf'},
-            {'type': 'py', 'path': 'local/smb4_share_load'}
+            {'type': 'mako', 'path': 'local/smb4_share.conf', 'checkpoint': 'pool_import'},
+            {'type': 'py', 'path': 'local/smb4_share_load', 'checkpoint': 'pool_import'}
         ],
         'snmpd': [
             {'type': 'mako', 'path': 'local/snmpd.conf' if osc.IS_FREEBSD else 'snmp/snmpd.conf',
@@ -230,17 +235,17 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/sudoers'}
         ],
         'syslogd': [
-            {'type': 'py', 'path': 'syslogd'},
+            {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
         ],
         'hostname': [
             {'type': 'mako', 'path': 'hosts'},
             {'type': 'py', 'path': 'hostname', 'platform': 'Linux'},
         ],
         'ssh': [
-            {'type': 'mako', 'path': 'local/ssh/sshd_config'},
+            {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
             {'type': 'mako', 'path': 'pam.d/sshd'},
             {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600},
-            {'type': 'py', 'path': 'local/ssh/config'}
+            {'type': 'py', 'path': 'local/ssh/config'},
         ],
         'ntpd': [
             {'type': 'mako', 'path': 'ntp.conf'}
@@ -256,7 +261,7 @@ class EtcService(Service):
         ],
         'ttys': [
             {'type': 'mako', 'path': 'ttys', 'platform': 'FreeBSD'},
-            {'type': 'py', 'path': 'ttys_config'}
+            {'type': 'py', 'path': 'ttys_config', 'checkpoint_linux': None}
         ],
         'openvpn_server': [
             {'type': 'mako', 'path': 'local/openvpn/server/openvpn_server.conf'}
@@ -273,9 +278,7 @@ class EtcService(Service):
     }
     LOCKS = defaultdict(asyncio.Lock)
 
-    SKIP_LIST = [
-        'system_dataset', 'mdns', 'syslogd', 'nginx', 'ssh',
-    ] + (['ttys', 'docker'] if osc.IS_LINUX else [])
+    checkpoints = ['initial', 'interface_sync', 'post_init', 'pool_import']
 
     class Config:
         private = True
@@ -290,7 +293,7 @@ class EtcService(Service):
             'py': PyRenderer(self),
         }
 
-    async def generate(self, name):
+    async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
@@ -303,6 +306,15 @@ class EtcService(Service):
 
                 if 'platform' in entry and entry['platform'].upper() != osc.SYSTEM:
                     continue
+
+                if checkpoint:
+                    checkpoint_system = f'checkpoint_{osc.SYSTEM.lower()}'
+                    if checkpoint_system in entry:
+                        entry_checkpoint = entry[checkpoint_system]
+                    else:
+                        entry_checkpoint = entry.get('checkpoint', 'initial')
+                    if entry_checkpoint != checkpoint:
+                        continue
 
                 path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])
                 entry_path = entry['path']
@@ -364,17 +376,25 @@ class EtcService(Service):
                 if not changes:
                     self.logger.debug(f'No new changes for {outfile}')
 
-    async def generate_all(self, skip_list=True):
-        """
-        Generate all configuration file groups
-        `skip_list` tells whether to skip groups in SKIP_LIST. This defaults to true.
-        """
-        for name in self.GROUPS.keys():
-            if skip_list and name in self.SKIP_LIST:
-                self.logger.info(f'Skipping {name} group generation')
-                continue
+    async def generate_checkpoint(self, checkpoint):
+        if checkpoint not in await self.get_checkpoints():
+            raise CallError(f'"{checkpoint}" not recognised')
 
+        for name in self.GROUPS.keys():
             try:
-                await self.generate(name)
+                await self.generate(name, checkpoint)
             except Exception:
                 self.logger.error(f'Failed to generate {name} group', exc_info=True)
+
+    async def get_checkpoints(self):
+        return self.checkpoints
+
+
+async def __event_system_ready(middleware, event_type, args):
+
+    if args['id'] == 'ready':
+        asyncio.ensure_future(await middleware.call('etc.generate_checkpoint', 'post_init'))
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system', __event_system_ready)

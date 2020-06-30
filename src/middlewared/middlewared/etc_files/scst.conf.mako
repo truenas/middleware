@@ -13,12 +13,22 @@
         authenticators[auth['tag']].append(auth)
 
     associated_targets = defaultdict(list)
-    for a_tgt in filter(lambda a: a['extent'] in extents, middleware.call_sync('iscsi.targetextent.query')):
+    for a_tgt in filter(
+        lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+        middleware.call_sync('iscsi.targetextent.query')
+    ):
         associated_targets[a_tgt['target']].append(a_tgt)
 
     # Let's map extents to respective ios
     extents_io = {'vdisk_fileio': [], 'vdisk_blockio': [], 'dev_disk': []}
     for extent in extents.values():
+        if extent['locked']:
+            middleware.logger.debug(
+                'Skipping generation of %r extent as the underlying resource is locked', extent['name']
+            )
+            middleware.call_sync('iscsi.extent.generate_locked_alert', extent['id'])
+            continue
+
         if extent['type'] == 'DISK':
             extent['extent_path'] = os.path.join('/dev', extent['disk'])
             extents_io['vdisk_blockio'].append(extent)

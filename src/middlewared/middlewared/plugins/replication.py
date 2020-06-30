@@ -773,7 +773,7 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'replication'
     title = 'Replication'
 
-    async def query(self, path, enabled):
+    async def query(self, path, enabled, options=None):
         results = []
         for replication in await self.middleware.call('replication.query', [['enabled', '=', enabled]]):
             if replication['direction'] == 'PUSH':
@@ -786,9 +786,6 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
                     results.append(replication)
 
         return results
-
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
 
     async def delete(self, attachments):
         for attachment in attachments:

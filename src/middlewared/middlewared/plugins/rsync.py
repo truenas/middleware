@@ -32,12 +32,11 @@ import glob
 import os
 import shlex
 
-from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch
 from middlewared.validators import Range, Match
 from middlewared.service import (
-    CallError, CRUDService, SystemServiceService, ValidationErrors,
-    job, item_method, private,
+    CallError, SystemServiceService, ValidationErrors, job, item_method, private, SharingService, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.osc import run_command_with_user_context
@@ -131,9 +130,12 @@ class RsyncModModel(sa.Model):
     rsyncmod_hostsallow = sa.Column(sa.Text())
     rsyncmod_hostsdeny = sa.Column(sa.Text())
     rsyncmod_auxiliary = sa.Column(sa.Text())
+    rsyncmod_enabled = sa.Column(sa.Boolean())
 
 
-class RsyncModService(CRUDService):
+class RsyncModService(SharingService):
+
+    share_task_type = 'Rsync Module'
 
     class Config:
         datastore = 'services.rsyncmod'
@@ -151,7 +153,7 @@ class RsyncModService(CRUDService):
     async def common_validation(self, data, schema_name):
         verrors = ValidationErrors()
 
-        await check_path_resides_within_volume(verrors, self.middleware, f'{schema_name}.path', data.get('path'))
+        await self.validate_path_field(data, schema_name, verrors)
 
         for entity in ('user', 'group'):
             value = data.get(entity)
@@ -173,6 +175,7 @@ class RsyncModService(CRUDService):
 
     @accepts(Dict(
         'rsyncmod_create',
+        Bool('enabled', default=True),
         Str('name', validators=[Match(r'[^/\]]')]),
         Str('comment'),
         Str('path', required=True, max_length=RSYNC_PATH_LIMIT),
@@ -224,10 +227,11 @@ class RsyncModService(CRUDService):
         """
         Update Rsyncmod module of `id`.
         """
-        module = await self._get_instance(id)
+        module = await self.get_instance(id)
         module.update(data)
 
         module = await self.common_validation(module, 'rsyncmod_update')
+        module.pop(self.locked_field)
 
         await self.middleware.call(
             'datastore.update',
@@ -239,7 +243,7 @@ class RsyncModService(CRUDService):
 
         await self._service_change('rsync', 'reload')
 
-        return await self._get_instance(id)
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -280,7 +284,9 @@ class RsyncTaskModel(sa.Model):
     rsync_delayupdates = sa.Column(sa.Boolean(), default=True)
 
 
-class RsyncTaskService(CRUDService):
+class RsyncTaskService(TaskPathService):
+
+    share_task_type = 'Rsync'
 
     class Config:
         datastore = 'tasks.rsync'
@@ -335,6 +341,8 @@ class RsyncTaskService(CRUDService):
         if not user:
             verrors.add(f'{schema}.user', f'Provided user "{username}" does not exist')
             raise verrors
+
+        await self.validate_path_field(data, schema, verrors)
 
         remote_host = data.get('remotehost')
         if not remote_host:
@@ -567,7 +575,7 @@ class RsyncTaskService(CRUDService):
         )
         await self.middleware.call('service.restart', 'cron')
 
-        return await self._get_instance(data['id'])
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id', validators=[Range(min=1)]),
@@ -588,6 +596,7 @@ class RsyncTaskService(CRUDService):
             raise verrors
 
         Cron.convert_schedule_to_db_format(new)
+        new.pop(self.locked_field)
 
         await self.middleware.call(
             'datastore.update',
@@ -598,7 +607,7 @@ class RsyncTaskService(CRUDService):
         )
         await self.middleware.call('service.restart', 'cron')
 
-        return await self.query(filters=[('id', '=', id)], options={'get': True})
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -671,7 +680,11 @@ class RsyncTaskService(CRUDService):
 
         Output is saved to job log excerpt (not syslog).
         """
-        rsync = self.middleware.call_sync('rsynctask._get_instance', id)
+        rsync = self.middleware.call_sync('rsynctask.get_instance', id)
+        if rsync['locked']:
+            self.middleware.call_sync('rsynctask.generate_locked_alert', id)
+            return
+
         commandline = self.middleware.call_sync('rsynctask.commandline', id)
 
         cp = run_command_with_user_context(
@@ -698,3 +711,28 @@ class RsyncTaskService(CRUDService):
                 'direction': rsync['direction'],
                 'path': rsync['path'],
             })
+
+
+class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
+    name = 'rsync_module'
+    title = 'Rsync Module'
+    service = 'rsync'
+    service_class = RsyncModService
+
+    async def restart_reload_services(self, attachments):
+        await self._service_change('rsync', 'reload')
+
+
+class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
+    name = 'rsync'
+    title = 'Rsync Task'
+    service_class = RsyncTaskService
+    resource_name = 'path'
+
+    async def restart_reload_services(self, attachments):
+        await self.middleware.call('service.restart', 'cron')
+
+
+async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', RsyncModuleFSAttachmentDelegate(middleware))
+    await middleware.call('pool.dataset.register_attachment_delegate', RsyncFSAttachmentDelegate(middleware))

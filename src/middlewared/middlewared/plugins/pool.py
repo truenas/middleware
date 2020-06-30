@@ -13,6 +13,7 @@ import secrets
 import shutil
 import subprocess
 import tempfile
+import uuid
 
 from collections import defaultdict
 
@@ -29,6 +30,7 @@ from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.path import is_child
 from middlewared.utils.shell import join_commandline
 from middlewared.validators import Exact, Match, Or, Range, Time
 
@@ -1729,24 +1731,7 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
-        # Now that pools have been imported we are ready to configure system dataset,
-        # collectd and syslogd which may depend on them.
-        try:
-            self.middleware.call_sync('etc.generate', 'system_dataset')
-        except Exception:
-            self.logger.warn('Failed to setup system dataset', exc_info=True)
-
-        self.middleware.call_sync('etc.generate', 'docker')
-
-        try:
-            self.middleware.call_sync('etc.generate', 'collectd')
-        except Exception:
-            self.logger.warn('Failed to configure collectd', exc_info=True)
-
-        try:
-            self.middleware.call_sync('etc.generate', 'syslogd')
-        except Exception:
-            self.logger.warn('Failed to configure syslogd', exc_info=True)
+        self.middleware.call_sync('etc.generate_checkpoint', 'pool_import')
 
         self.middleware.call_sync('zettarepl.update_tasks')
 
@@ -2100,7 +2085,8 @@ class PoolDatasetService(CRUDService):
             Bool('force_umount', default=False),
         )
     )
-    async def lock(self, id, options):
+    @job(lock=lambda args: 'dataset_lock')
+    async def lock(self, job, id, options):
         """
         Locks `id` dataset. It will unmount the dataset and its children before locking.
         """
@@ -2117,9 +2103,22 @@ class PoolDatasetService(CRUDService):
         elif id == (await self.middleware.call('systemdataset.config'))['pool']:
             raise CallError(f'Please move system dataset to another pool before locking {id}')
 
-        await self.middleware.call(
-            'zfs.dataset.unload_key', id, {'umount': True, 'force_umount': options['force_umount'], 'recursive': True}
-        )
+        async def detach(delegate):
+            await delegate.stop((await delegate.query(self.__attachments_path(ds), True)))
+
+        try:
+            await self.middleware.call('cache.put', 'about_to_lock_dataset', id)
+
+            coroutines = [detach(dg) for dg in self.attachment_delegates]
+            await asyncio.gather(*coroutines)
+
+            await self.middleware.call(
+                'zfs.dataset.unload_key', id, {
+                    'umount': True, 'force_umount': options['force_umount'], 'recursive': True
+                }
+            )
+        finally:
+            await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
         await self.middleware.call_hook('dataset.post_lock', id)
 
@@ -2130,8 +2129,8 @@ class PoolDatasetService(CRUDService):
         Dict(
             'unlock_options',
             Bool('key_file', default=False),
-            Bool('toggle_attachments', default=True),
             Bool('recursive', default=False),
+            Bool('toggle_attachments', default=True),
             List(
                 'datasets', items=[
                     Dict(
@@ -2235,16 +2234,33 @@ class PoolDatasetService(CRUDService):
 
             try:
                 self.middleware.call_sync(
-                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': True, 'recursive': True}
+                    'zfs.dataset.load_key', name, {'key': datasets[name]['key'], 'mount': False}
                 )
             except CallError as e:
                 failed[name]['error'] = 'Invalid Key' if 'incorrect key provided' in str(e).lower() else str(e)
             else:
-                unlocked.append(name)
+                # Before we mount the dataset in question, we should ensure that the path where it will be mounted
+                # is not already being used by some other service/share. In this case, we should simply rename the
+                # directory where it will be mounted
 
-        if options['toggle_attachments'] and not failed:
-            j = self.middleware.call_sync('pool.dataset.toggle_attachments', self.__attachments_path(dataset))
-            j.wait_sync()
+                mount_path = os.path.join('/mnt', name)
+                if os.path.exists(mount_path):
+                    if not os.path.isdir(mount_path) or os.listdir(mount_path):
+                        # rename please
+                        shutil.move(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
+
+                try:
+                    self.middleware.call_sync('zfs.dataset.mount', name, {'recursive': True})
+                except CallError as e:
+                    failed[name]['error'] = f'Failed to mount dataset: {e}'
+                else:
+                    unlocked.append(name)
+
+        if options['toggle_attachments']:
+            self.middleware.call_sync(
+                'pool.dataset.restart_attachment_services_on_unlock',
+                self.__attachments_path(dataset), True, {'locked': False}
+            )
 
         if unlocked:
             def dataset_data(unlocked_dataset):
@@ -2264,13 +2280,11 @@ class PoolDatasetService(CRUDService):
         return {'unlocked': unlocked, 'failed': failed}
 
     @private
-    @job(lock=lambda args: f'toggle_attachments_{args[0]}')
-    async def toggle_attachments(self, job, path):
-        for delegate in self.attachment_delegates:
-            if delegate.name in ('jail', 'vm'):
-                await delegate.toggle((await delegate.query(path, False)), True)
-            else:
-                await delegate.toggle([], True)
+    async def restart_attachment_services_on_unlock(self, path, enabled, options=None):
+        async def restart(delegate):
+            await delegate.start((await delegate.query(path, enabled, options)))
+        coroutines = [restart(dg) for dg in self.attachment_delegates]
+        await asyncio.gather(*coroutines)
 
     @accepts(
         Str('id'),
@@ -2575,6 +2589,12 @@ class PoolDatasetService(CRUDService):
             raise CallError('Please specify correct format for input file')
 
         return data
+
+    @private
+    def path_in_locked_datasets(self, path, locked_datasets=None):
+        if locked_datasets is None:
+            locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
+        return any(is_child(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
 
     @filterable
     def query(self, filters=None, options=None):
