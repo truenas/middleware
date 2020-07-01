@@ -219,7 +219,6 @@ class EtcService(Service):
         ],
         'smb_share': [
             {'type': 'mako', 'path': 'local/smb4_share.conf'},
-            {'type': 'py', 'path': 'local/smb4_share_load'}
         ],
         'snmpd': [
             {'type': 'mako', 'path': 'local/snmpd.conf' if osc.IS_FREEBSD else 'snmp/snmpd.conf',

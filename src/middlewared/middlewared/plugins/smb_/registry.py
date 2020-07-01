@@ -169,7 +169,11 @@ class SharingSMBService(Service):
             data = await self.middleware.call('sharing.smb.query', [('name', '=', share)], {'get': True})
 
         share_conf = await self.share_to_smbconf(data)
-        reg_conf = await self.reg_showshare(share if not data['home'] else 'homes')
+        try:
+            reg_conf = await self.reg_showshare(share if not data['home'] else 'homes')
+        except Exception:
+            return None
+
         s_keys = set(share_conf.keys())
         r_keys = set(reg_conf.keys())
         intersect = s_keys.intersection(r_keys)
