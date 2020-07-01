@@ -11,80 +11,66 @@ from subprocess import run, Popen, PIPE
 from time import sleep
 import re
 
+if "controller1_ip" in os.environ:
+    controller1_ip = os.environ["controller1_ip"]
+    controller1_api_url = f'http://{controller1_ip}/api/v2.0'
+else:
+    controller1_api_url = api_url
+
 global header
 header = {'Content-Type': 'application/json', 'Vary': 'accept'}
-global authentification
-authentification = (user, password)
+global authentication
+authentication = (user, password)
 
 
-def GET(testpath, **optional):
+def GET(testpath, controller_a=False, **optional):
+    url = controller1_api_url if controller_a else api_url
     if testpath.startswith('http'):
         getit = requests.get(testpath)
     else:
         if optional.pop("anonymous", False):
             auth = None
         else:
-            auth = authentification
+            auth = authentication
         payload = optional.get('payload') or {}
-        getit = requests.get(api_url + testpath, headers=header,
+        getit = requests.get(f'{url}{testpath}', headers=header,
                              auth=auth, data=json.dumps(payload))
     return getit
 
 
-def POST(testpath, payload=None, **optional):
+def POST(testpath, payload=None, controller_a=False, **optional):
+    url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
     else:
-        auth = authentification
+        auth = authentication
     if payload is None:
-        postit = requests.post(api_url + testpath, headers=header,
+        postit = requests.post(f'{url}{testpath}', headers=header,
                                auth=auth)
     else:
-        postit = requests.post(api_url + testpath, headers=header,
+        postit = requests.post(f'{url}{testpath}', headers=header,
                                auth=auth, data=json.dumps(payload))
     return postit
 
 
-def POST_TIMEOUT(testpath, payload, timeOut):
-    if payload is None:
-        postit = requests.post(api_url + testpath, headers=header,
-                               auth=authentification, timeout=timeOut)
-    else:
-        postit = requests.post(api_url + testpath, headers=header,
-                               auth=authentification, data=json.dumps(payload),
-                               timeout=timeOut)
-    return postit
-
-
-def POSTNOJSON(testpath, payload, **optional):
-    postit = requests.post(api_url + testpath, headers=header,
-                           auth=authentification, data=payload)
-    return postit
-
-
-def PUT(testpath, payload, **optional):
+def PUT(testpath, payload, controller_a=False, **optional):
+    url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
     else:
-        auth = authentification
-    putit = requests.put(api_url + testpath, headers=header,
+        auth = authentication
+    putit = requests.put(f'{url}{testpath}', headers=header,
                          auth=auth, data=json.dumps(payload))
     return putit
 
 
-def PUT_TIMEOUT(testpath, payload, timeOut, **optional):
-    putit = requests.put(api_url + testpath, headers=header,
-                         auth=authentification, data=json.dumps(payload),
-                         timeout=timeOut)
-    return putit
-
-
-def DELETE(testpath, payload=None, **optional):
+def DELETE(testpath, payload=None, controller_a=False, **optional):
+    url = controller1_api_url if controller_a else api_url
     if optional.pop("anonymous", False):
         auth = None
     else:
-        auth = authentification
-    deleteit = requests.delete(api_url + testpath, headers=header,
+        auth = authentication
+    deleteit = requests.delete(f'{url}{testpath}', headers=header,
                                auth=auth,
                                data=json.dumps(payload) if payload else None)
     return deleteit
