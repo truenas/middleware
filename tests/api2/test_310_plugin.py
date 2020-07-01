@@ -281,8 +281,8 @@ def test_29_get_list_of_available_plugins_job_id_on_custom_repos(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
-        "plugin_repository": repos_url,
-        "branch": "11.3-RELEASE"
+        "plugin_repository": repos_url2,
+        "branch": "12.1-RELEASE"
     }
     results = POST('/plugin/available/', payload)
     assert results.status_code == 200, results.text
@@ -324,7 +324,7 @@ def test_33_add_transmission_plugins(request):
             'nat=1'
         ],
         "plugin_repository": repos_url2,
-        "branch": "11.3-RELEASE"
+        "branch": "12.1-RELEASE"
     }
     results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
