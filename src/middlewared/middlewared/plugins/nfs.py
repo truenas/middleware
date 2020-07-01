@@ -169,7 +169,7 @@ class NFSService(SystemServiceService):
         if new["v4"] and new_v4_krb_enabled and not await self.middleware.call("system.is_freenas"):
             if await self.middleware.call("failover.licensed"):
                 gc = await self.middleware.call("datastore.config", "network.globalconfiguration")
-                if not gc["gc_hostname_virtual"] or gc["gc_domain"]:
+                if not gc["gc_hostname_virtual"] or not gc["gc_domain"]:
                     verrors.add(
                         "nfs_update.v4",
                         "Enabling kerberos authentication on TrueNAS HA requires setting the virtual hostname and "
