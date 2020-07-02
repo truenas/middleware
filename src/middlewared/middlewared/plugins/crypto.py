@@ -330,6 +330,8 @@ class CryptoKeyService(Service):
 
         cert = cert.public_key(
             key.public_key()
+        ).add_extension(
+            x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), False
         ).sign(
             key, hashes.SHA256(), default_backend()
         )
