@@ -2139,11 +2139,11 @@ class StaticRouteService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        self._validate('staticroute_update', data)
+        self._validate('staticroute_update', new)
 
-        await self.lower(data)
+        await self.lower(new)
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, data,
+            'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.restart', 'routing')
@@ -2158,17 +2158,41 @@ class StaticRouteService(CRUDService):
         staticroute = self.middleware.call_sync('staticroute._get_instance', id)
         rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
         try:
-            ip_interface = ipaddress.ip_interface(staticroute['destination'])
             rt = netif.RoutingTable()
-            rt.delete(netif.Route(
-                str(ip_interface.ip), str(ip_interface.netmask), gateway=staticroute['gateway']
-            ))
+            rt.delete(self._netif_route(staticroute))
         except Exception as e:
             self.logger.warn(
                 'Failed to delete static route %s: %s', staticroute['destination'], e,
             )
 
         return rv
+
+    @private
+    def sync(self):
+        rt = netif.RoutingTable()
+
+        new_routes = [self._netif_route(route) for route in self.middleware.call_sync('staticroute.query')]
+
+        default_route_ipv4 = rt.default_route_ipv4
+        default_route_ipv6 = rt.default_route_ipv6
+        for route in rt.routes:
+            if route in new_routes:
+                new_routes.remove(route)
+                continue
+
+            if route not in [default_route_ipv4, default_route_ipv6] and route.gateway is not None:
+                self.logger.debug('Removing route %r', route.__getstate__())
+                try:
+                    rt.delete(route)
+                except Exception as e:
+                    self.logger.warning('Failed to remove route: %r', e)
+
+        for route in new_routes:
+            self.logger.debug('Adding route %r', route.__getstate__())
+            try:
+                rt.add(route)
+            except Exception as e:
+                self.logger.warning('Failed to add route: %r', e)
 
     @private
     async def lower(self, data):
@@ -2188,6 +2212,12 @@ class StaticRouteService(CRUDService):
 
         if verrors:
             raise verrors
+
+    def _netif_route(self, staticroute):
+        ip_interface = ipaddress.ip_interface(staticroute['destination'])
+        return netif.Route(
+            str(ip_interface.ip), str(ip_interface.netmask), gateway=staticroute['gateway']
+        )
 
 
 class DNSService(Service):
