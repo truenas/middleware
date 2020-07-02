@@ -2139,11 +2139,11 @@ class StaticRouteService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        self._validate('staticroute_update', data)
+        self._validate('staticroute_update', new)
 
-        await self.lower(data)
+        await self.lower(new)
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, data,
+            'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.restart', 'routing')

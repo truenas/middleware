@@ -135,10 +135,7 @@ class NetworkGeneralService(PseudoServiceBase):
 
     async def reload(self):
         await self.middleware.call("service.reload", "resolvconf")
-        if osc.IS_FREEBSD:
-            await freebsd_service("routing", "restart")
-
-        # FIXME: Linux
+        await self.middleware.call("service.restart", "routing")
 
 
 class NtpdService(SimpleService):
@@ -187,9 +184,12 @@ class RoutingService(SimpleService):
 
     etc = ["rc"]
 
+    restartable = True
+
     freebsd_rc = "routing"
 
-    # FIXME: Linux
+    async def get_state(self):
+        return ServiceState(True, [])
 
 
 class SslService(PseudoServiceBase):
