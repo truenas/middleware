@@ -3484,11 +3484,14 @@ class PoolDatasetService(CRUDService):
                 if q['quota_value'] is None:
                     q['quota_value'] = 'none'
 
+                xid = None
+
                 if not q["id"].isdigit():
                     id_type = 'user' if quota_type.startswith('user') else 'group'
                     try:
-                        await self.middleware.call(f'{id_type}.get_{id_type}_obj',
-                                                   {f'{id_type}name': q["id"]})
+                        xid_obj = await self.middleware.call(f'{id_type}.get_{id_type}_obj',
+                                                             {f'{id_type}name': q["id"]})
+                        xid = xid_obj['pw_uid'] if id_type[1] == 'uid' else xid_obj['gr_gid']
                     except Exception:
                         verrors.add(
                             f'quotas.{i}.id',
@@ -3497,13 +3500,20 @@ class PoolDatasetService(CRUDService):
                 else:
                     id_type = ('user', 'uid') if 'user' in quota_type else ('group', 'gid')
                     try:
-                        await self.middleware.call(f'{id_type[0]}.get_{id_type[0]}_obj',
-                                                   {id_type[1]: q["id"]})
+                        xid_obj = await self.middleware.call(f'{id_type[0]}.get_{id_type[0]}_obj',
+                                                             {id_type[1]: q["id"]})
+                        xid = xid_obj['pw_uid'] if id_type[1] == 'uid' else xid_obj['gr_gid']
                     except Exception:
                         verrors.add(
                             f'quotas.{i}.id',
                             f'{quota_type} {q["id"]} is not valid.'
                         )
+                if xid == 0:
+                    verrors.add(
+                        f'quotas.{i}.id',
+                        f'{quota_type}: Setting {id_type[0]} quota on {id_type[1]} [{xid}] '
+                        'is not permitted.'
+                    )
             else:
                 if not q["id"].isdigit():
                     verrors.add(
