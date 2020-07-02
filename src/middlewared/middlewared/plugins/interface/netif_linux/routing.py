@@ -21,24 +21,21 @@ class Route:
     def __init__(self, network, netmask, gateway=None, interface=None, flags=None):
         self.network = ipaddress.ip_address(network)
         self.netmask = ipaddress.ip_address(netmask)
-        self.gateway = gateway
-        self.interface = interface
+        self.gateway = ipaddress.ip_address(gateway) if gateway else None
+        self.interface = interface or None
         self.flags = flags or set()
 
     def __getstate__(self):
         return {
             'network': str(self.network),
-            'netmask': str(self.netmask) if self.netmask else None,
+            'netmask': str(self.netmask),
             'gateway': str(self.gateway) if self.gateway else None,
-            'interface': self.interface or None,
+            'interface': self.interface,
             'flags': [x.name for x in self.flags]
         }
 
     @property
     def af(self):
-        if not self.network:
-            return None
-
         if self.network.version == 4:
             return AddressFamily.INET
 
@@ -48,11 +45,17 @@ class Route:
         return None
 
     def __eq__(self, other):
+        if not isinstance(other, Route):
+            return False
+
         return (
             self.network == other.network and
             self.netmask == other.netmask and
             self.gateway == other.gateway
         )
+
+    def __hash__(self):
+        return hash((self.network, self.netmask, self.gateway))
 
 
 class RouteFlags(enum.IntEnum):
@@ -80,6 +83,9 @@ class RouteFlags(enum.IntEnum):
     # STICKY = defs.RTF_STICKY
 
 
+RTM_F_CLONED = 0x200
+
+
 class RoutingTable:
     @property
     def routes(self):
@@ -87,6 +93,9 @@ class RoutingTable:
 
         result = []
         for r in ip.get_routes():
+            if r["flags"] & RTM_F_CLONED:
+                continue
+
             attrs = dict(r["attrs"])
 
             if "RTA_DST" in attrs:
