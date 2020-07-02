@@ -121,10 +121,16 @@ class ConfigService(Service):
                     "SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'"
                 )
                 new_numsouth = cur.fetchone()[0]
-                cur.execute(
-                    "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin' and app != 'vcp'"
-                )
-                new_num = cur.fetchone()[0]
+                try:
+                    cur.execute(
+                        "SELECT COUNT(*) FROM django_migrations WHERE app != 'freeadmin' and app != 'vcp'"
+                    )
+                    new_num = cur.fetchone()[0]
+                except sqlite3.OperationalError as e:
+                    if e.args[0] == "no such table: django_migrations":
+                        new_num = 0
+                    else:
+                        raise
                 cur.close()
             finally:
                 conn.close()
@@ -142,11 +148,11 @@ class ConfigService(Service):
                 cur.close()
             finally:
                 conn.close()
-                if new_numsouth > numsouth or new_num > num:
-                    raise CallError(
-                        'Failed to upload config, version newer than the '
-                        'current installed.'
-                    )
+            if new_numsouth > numsouth or new_num > num:
+                raise CallError(
+                    'Failed to upload config, version newer than the '
+                    'current installed.'
+                )
         except Exception as e:
             os.unlink(config_file_name)
             raise CallError(f'The uploaded file is not valid: {e}')
