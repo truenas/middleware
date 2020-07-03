@@ -51,12 +51,10 @@ LIBVIRT_URI = 'bhyve+unix:///system'
 LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
 LIBVIRT_BHYVE_NAMESPACE = 'http://libvirt.org/schemas/domain/bhyve/1.0'
 LIBVIRT_BHYVE_NSMAP = {'bhyve': LIBVIRT_BHYVE_NAMESPACE}
-SHUTDOWN_LOCK = asyncio.Lock()
 LIBVIRT_LOCK = asyncio.Lock()
 PPT_BASE_NAME = 'ppt'
 RE_PCICONF_PPTDEVS = re.compile(
     r'^(' + re.escape(PPT_BASE_NAME) + '[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$', flags=re.I)
-ZFS_ARC_MAX_INITIAL = None
 
 ZVOL_CLONE_SUFFIX = '_clone'
 ZVOL_CLONE_RE = re.compile(rf'^(.*){ZVOL_CLONE_SUFFIX}\d+$')
@@ -1117,18 +1115,6 @@ class VMService(CRUDService):
 
         return max(0, free + arc_shrink - vms_memory_used - swap_used)
 
-    @private
-    async def get_initial_arc_max(self):
-        tunable = await self.middleware.call('tunable.query', [
-            ('type', '=', 'SYSCTL'), ('var', '=', 'vfs.zfs.arc.max')
-        ])
-        if tunable:
-            try:
-                return int(tunable[0]['value'])
-            except ValueError:
-                pass
-        return ZFS_ARC_MAX_INITIAL
-
     async def __set_guest_vmemory(self, memory, overcommit):
         memory_available = await self.middleware.call('vm.get_available_memory', overcommit)
         memory_bytes = memory * 1024 * 1024
@@ -1787,39 +1773,6 @@ class VMService(CRUDService):
         return vnc_web
 
     @private
-    def close_libvirt_connection(self):
-        if self.libvirt_connection:
-            with contextlib.suppress(libvirt.libvirtError):
-                self.libvirt_connection.close()
-            self.libvirt_connection = None
-
-    @private
-    async def terminate(self):
-        async with SHUTDOWN_LOCK:
-            await self.middleware.call('vm.close_libvirt_connection')
-
-    @private
-    async def terminate_timeout(self):
-        return max(map(lambda v: v['shutdown_timeout'], await self.middleware.call('vm.query')), default=10)
-
-    @private
-    async def wait_for_libvirtd(self, timeout):
-        async def libvirtd_started(middleware):
-            await middleware.call('service.start', 'libvirtd')
-            while not await middleware.call('service.started', 'libvirtd'):
-                await asyncio.sleep(2)
-
-        try:
-            if not await self.middleware.call('service.started', 'libvirtd'):
-                await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
-            # We want to do this before initializing libvirt connection
-            libvirt.virEventRegisterDefaultImpl()
-            self.libvirt_connection = libvirt.open(LIBVIRT_URI)
-            await self.middleware.call('vm.setup_libvirt_events', self.libvirt_connection)
-        except (asyncio.TimeoutError, libvirt.libvirtError):
-            self.middleware.logger.error('Failed to connect to libvirtd')
-
-    @private
     def initialize_vms(self, timeout=10):
         if self.middleware.call_sync('vm.query'):
             self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
@@ -2329,41 +2282,6 @@ async def kmod_load():
         await Popen(['/sbin/kldload', 'nmdm'])
 
 
-async def __event_system_ready(middleware, event_type, args):
-    """
-    Method called when system is ready, supposed to start VMs
-    flagged that way.
-    """
-    async def stop_vm(mw, vm):
-        stop_job = await mw.call('vm.stop', vm['id'], {'force_after_timeout': True})
-        await stop_job.wait()
-        if stop_job.error:
-            mw.logger.error(f'Stopping VM {vm["name"]} failed: {stop_job.error}')
-
-    if args['id'] == 'ready':
-        global ZFS_ARC_MAX_INITIAL
-        ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
-
-        await middleware.call('vm.initialize_vms')
-
-        if not await middleware.call('system.is_freenas') and await middleware.call('failover.licensed'):
-            return
-
-        asyncio.ensure_future(middleware.call('vm.start_on_boot'))
-    elif args['id'] == 'shutdown':
-        async with SHUTDOWN_LOCK:
-            await asyncio_map(
-                functools.partial(stop_vm, middleware),
-                (await middleware.call('vm.query', [('status.state', '=', 'RUNNING')])), 16
-            )
-            middleware.logger.debug('VM(s) stopped successfully')
-            # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
-            # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
-            # and we have cleanly exited
-            await middleware.call('vm.close_libvirt_connection')
-            await middleware.call('service.stop', 'libvirtd')
-
-
 class VMFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'vm'
     title = 'VM'
@@ -2418,15 +2336,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
 
 async def setup(middleware):
-    middleware.event_register('vm.query', 'Sent on VM state changes.')
-    global ZFS_ARC_MAX_INITIAL
-    if sysctl:
-        ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
     if osc.IS_FREEBSD:
         asyncio.ensure_future(kmod_load())
     asyncio.ensure_future(middleware.call('pool.dataset.register_attachment_delegate',
                                           VMFSAttachmentDelegate(middleware)))
-
-    if await middleware.call('system.ready'):
-        asyncio.ensure_future(middleware.call('vm.initialize_vms', 2))  # We use a short timeout here deliberately
-    middleware.event_subscribe('system', __event_system_ready)
