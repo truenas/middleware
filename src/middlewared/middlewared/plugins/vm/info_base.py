@@ -1,3 +1,4 @@
+from middlewared.schema import Int
 from middlewared.service import accepts, private, ServicePartBase
 
 
@@ -19,4 +20,13 @@ class VMInfoBase(ServicePartBase):
     def flags(self):
         """
         Returns a dictionary with CPU flags for the hypervisor.
+        """
+
+    @accepts(Int('id'))
+    async def get_console(self, id):
+        """
+        Get the console device from a given guest.
+
+        Returns:
+            str: with the device path or False.
         """

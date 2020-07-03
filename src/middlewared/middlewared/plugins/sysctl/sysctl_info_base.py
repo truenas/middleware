@@ -11,3 +11,12 @@ class SysctlInfoBase(ServicePartBase):
 
     def get_arc_min(self):
         raise NotImplementedError
+
+    def get_pagesize(self):
+        raise NotImplementedError
+
+    def get_arcstats_size(self):
+        raise NotImplementedError
+
+    def get_arcstats(self):
+        raise NotImplementedError

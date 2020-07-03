@@ -2,6 +2,7 @@ import errno
 import sysctl
 
 from middlewared.service import CallError, Service
+from middlewared.utils import run
 
 from .sysctl_info_base import SysctlInfoBase
 
@@ -23,3 +24,21 @@ class SysctlService(Service, SysctlInfoBase):
 
     def get_arc_min(self):
         return self.get_value('vfs.zfs.arc.min')
+
+    def get_pagesize(self):
+        return self.get_value('hw.pagesize')
+
+    async def get_arcstats(self):
+        cp = await run(['sysctl', 'kstat.zfs.misc.arcstats'], check=False)
+        if cp.returncode:
+            raise CallError(f'Failed to retrieve arcstats: {cp.stderr.decode()}')
+
+        stats = {}
+        for line in filter(lambda l: l and ':' in l, map(str.strip, cp.stdout.decode().split('\n'))):
+            key, value = line.split(':')
+            stats[key.strip().split('.')[-1]] = int(value.strip()) if value.strip().isdigit() else value
+
+        return stats
+
+    def get_arcstats_size(self):
+        return self.get_value('kstat.zfs.misc.arcstats.size')

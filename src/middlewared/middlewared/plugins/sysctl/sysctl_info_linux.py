@@ -2,6 +2,7 @@ import errno
 import os
 
 from middlewared.service import CallError, Service
+from middlewared.utils import run
 
 from .sysctl_info_base import SysctlInfoBase
 
@@ -29,3 +30,27 @@ class SysctlService(Service, SysctlInfoBase):
                 return f.read().strip()
         else:
             self.not_found_error(name)
+
+    async def get_pagesize(self):
+        cp = await run(['getconf', 'PAGESIZE'], check=False)
+        if cp.returncode:
+            raise CallError(f'Unable to retrieve pagesize value: {cp.stderr.decode()}')
+        return int(cp.stdout.decode().strip())
+
+    def get_arcstats(self):
+        path = '/proc/spl/kstat/zfs/arcstats'
+        if not os.path.exists(path):
+            raise CallError(f'Unable to locate {path}')
+
+        with open(path, 'r') as f:
+            data = f.read()
+
+        stats = {}
+        for line in filter(lambda l: l and len(l.split()) == 3, map(str.strip, data.split('\n'))):
+            key, _type, data = line.split()
+            stats[key.strip()] = int(data.strip()) if data.strip().isdigit() else data
+
+        return stats
+
+    def get_arcstats_size(self):
+        return self.get_arcstats()['size']

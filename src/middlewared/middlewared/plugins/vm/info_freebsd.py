@@ -1,3 +1,5 @@
+import os
+import stat
 import sysctl
 
 from middlewared.service import Service
@@ -33,3 +35,16 @@ class VMService(Service, VMInfoBase):
         data['amd_asids'] = True if asids and asids[0].value != 0 else False
 
         return data
+
+    async def get_console(self, id):
+        try:
+            guest_status = await self.middleware.call('vm.status', id)
+        except Exception:
+            guest_status = None
+
+        if guest_status and guest_status['state'] == 'RUNNING':
+            device = '/dev/nmdm{0}B'.format(id)
+            if stat.S_ISCHR(os.stat(device).st_mode) is True:
+                return device
+
+        return False
