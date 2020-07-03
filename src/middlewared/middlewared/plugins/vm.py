@@ -1462,9 +1462,8 @@ class VMService(CRUDService):
                 await self.middleware.call('vm.device.delete', device['id'])
             result = await self.middleware.call('datastore.delete', 'vm.vm', id)
             if not await self.middleware.call('vm.query'):
-                await self.middleware.call('vm.close_libvirt_connection')
+                await self.middleware.call('vm.deinitialize_vms')
                 self.vms = {}
-                await self.middleware.call('service.stop', 'libvirtd')
             return result
 
     @private
@@ -2272,16 +2271,3 @@ class VMDeviceService(CRUDService):
             raise verrors
 
         return device
-
-
-async def kmod_load():
-    kldstat = (await (await Popen(['/sbin/kldstat'], stdout=subprocess.PIPE)).communicate())[0].decode()
-    if 'vmm.ko' not in kldstat:
-        await Popen(['/sbin/kldload', 'vmm'])
-    if 'nmdm.ko' not in kldstat:
-        await Popen(['/sbin/kldload', 'nmdm'])
-
-
-async def setup(middleware):
-    if osc.IS_FREEBSD:
-        asyncio.ensure_future(kmod_load())

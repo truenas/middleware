@@ -30,6 +30,9 @@ class LibvirtConnectionMixin:
         else:
             self.LIBVIRT_CONNECTION = None
 
+    def _is_connection_alive(self):
+        return self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive()
+
     def _check_connection_alive(self):
-        if not self.LIBVIRT_CONNECTION or not self.LIBVIRT_CONNECTION.isAlive():
+        if not self._is_connection_alive():
             raise CallError('Failed to connect to libvirt')

@@ -2,8 +2,9 @@ import asyncio
 import contextlib
 import functools
 
+from middlewared.schema import accepts, Bool, Dict
 from middlewared.service import CallError, private, Service
-from middlewared.utils import osc
+from middlewared.utils import osc, run
 from middlewared.utils.asyncio_ import asyncio_map
 
 from .connection import LibvirtConnectionMixin
@@ -45,16 +46,44 @@ class VMService(Service, LibvirtConnectionMixin):
     @private
     def initialize_vms(self, timeout=10):
         if self.middleware.call_sync('vm.query'):
+            self.middleware.call_sync(f'vm.initialize_{osc.SYSTEM.lower()}')
             self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
         else:
             return
 
         # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
-        if self.LIBVIRT_CONNECTION:
+        if self._is_connection_alive():
             pass
         else:
             self.middleware.logger.error('Failed to establish libvirt connection')
+
+    @private
+    async def initialize_freebsd(self):
+        cp = await run(['/sbin/kldstat'], check=False)
+        if cp.returncode:
+            self.middleware.logger.error('Failed to retrieve kernel modules: %s', cp.stderr.decode())
+            return
+        else:
+            kldstat = cp.stdout.decode()
+
+        for kmod in ('vmm.ko', 'nmdm.ko'):
+            if kmod not in kldstat:
+                cp = await run(['/sbin/kldload', kmod[:-3]], check=False)
+                if cp.returncode:
+                    self.middleware.logger.error('Failed to load %r : %s', kmod, cp.stderr.decode())
+
+    @private
+    @accepts(
+        Dict(
+            'deinitialize_vms_options',
+            Bool('stop_libvirt', default=True),
+        )
+    )
+    async def deinitialize_vms(self, options):
+        await self.middleware.call('vm.close_libvirt_connection')
+        if options['stop_libvirt']:
+            await self.middleware.call('service.stop', 'libvirtd')
 
     @private
     def close_libvirt_connection(self):
@@ -65,7 +94,7 @@ class VMService(Service, LibvirtConnectionMixin):
     @private
     async def terminate(self):
         async with SHUTDOWN_LOCK:
-            await self.middleware.call('vm.close_libvirt_connection')
+            await self.middleware.call('vm.deinitialize_vms', {'stop_libvirt': False})
 
     @private
     async def terminate_timeout(self):
@@ -106,8 +135,7 @@ async def __event_system_ready(middleware, event_type, args):
             # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
             # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
             # and we have cleanly exited
-            await middleware.call('vm.close_libvirt_connection')
-            await middleware.call('service.stop', 'libvirtd')
+            await middleware.call('vm.deinitialize_vms')
 
 
 async def setup(middleware):
