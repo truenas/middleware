@@ -940,33 +940,3 @@ class VMService(CRUDService):
                 )
 
         return vnc_web
-
-    @private
-    def initialize_vms(self, timeout=10):
-        if self.middleware.call_sync('vm.query'):
-            self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
-        else:
-            return
-
-        # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
-        # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
-        if self.libvirt_connection:
-            for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm'):
-                vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
-                try:
-                    self.vms[vm_data['name']] = VMSupervisor(vm_data, self.libvirt_connection, self.middleware)
-                except Exception as e:
-                    # Whatever happens, we don't want middlewared not booting
-                    self.middleware.logger.error('Unable to setup %r VM object: %s', vm_data['name'], str(e))
-        else:
-            self.middleware.logger.error('Failed to establish libvirt connection')
-
-    @private
-    async def start_on_boot(self):
-        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
-            try:
-                await self.middleware.call('vm.start', vm['id'])
-            except Exception as e:
-                self.middleware.logger.debug(f'Failed to start VM {vm["name"]}: {e}')
-
-

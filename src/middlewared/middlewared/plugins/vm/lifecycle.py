@@ -7,13 +7,13 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils import osc, run
 from middlewared.utils.asyncio_ import asyncio_map
 
-from .connection import LibvirtConnectionMixin
+from .vm_supervisor import VMSupervisorMixin
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
 
 
-class VMService(Service, LibvirtConnectionMixin):
+class VMService(Service, VMSupervisorMixin):
 
     ZFS_ARC_MAX_INITIAL = None
 
@@ -54,7 +54,13 @@ class VMService(Service, LibvirtConnectionMixin):
         # We use datastore.query specifically here to avoid a recursive case where vm.datastore_extend calls
         # status method which in turn needs a vm object to retrieve the libvirt status for the specified VM
         if self._is_connection_alive():
-            pass
+            for vm_data in self.middleware.call_sync('datastore.query', 'vm.vm'):
+                vm_data['devices'] = self.middleware.call_sync('vm.device.query', [['vm', '=', vm_data['id']]])
+                try:
+                    self._add_with_vm_data(vm_data)
+                except Exception as e:
+                    # Whatever happens, we don't want middlewared not booting
+                    self.middleware.logger.error('Unable to setup %r VM object: %s', vm_data['name'], str(e))
         else:
             self.middleware.logger.error('Failed to establish libvirt connection')
 
@@ -72,6 +78,14 @@ class VMService(Service, LibvirtConnectionMixin):
                 cp = await run(['/sbin/kldload', kmod[:-3]], check=False)
                 if cp.returncode:
                     self.middleware.logger.error('Failed to load %r : %s', kmod, cp.stderr.decode())
+
+    @private
+    async def start_on_boot(self):
+        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
+            try:
+                await self.middleware.call('vm.start', vm['id'])
+            except Exception as e:
+                self.middleware.logger.debug(f'Failed to start VM {vm["name"]}: {e}')
 
     @private
     @accepts(
