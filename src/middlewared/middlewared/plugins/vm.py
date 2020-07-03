@@ -71,30 +71,6 @@ class VMService(CRUDService):
         self.libvirt_connection = None
 
     @accepts()
-    def flags(self):
-        """Returns a dictionary with CPU flags for bhyve."""
-        data = {}
-        intel = True if 'Intel' in sysctl.filter('hw.model')[0].value else \
-            False
-
-        vmx = sysctl.filter('hw.vmm.vmx.initialized')
-        data['intel_vmx'] = True if vmx and vmx[0].value else False
-
-        ug = sysctl.filter('hw.vmm.vmx.cap.unrestricted_guest')
-        data['unrestricted_guest'] = True if ug and ug[0].value else False
-
-        # If virtualisation is not supported on AMD, the sysctl value will be -1 but as an unsigned integer
-        # we should make sure we check that accordingly.
-        rvi = sysctl.filter('hw.vmm.svm.features')
-        data['amd_rvi'] = True if rvi and rvi[0].value != 0xffffffff and not intel \
-            else False
-
-        asids = sysctl.filter('hw.vmm.svm.num_asids')
-        data['amd_asids'] = True if asids and asids[0].value != 0 else False
-
-        return data
-
-    @accepts()
     def identify_hypervisor(self):
         """
         Identify Hypervisors that might work nested with bhyve.
@@ -299,111 +275,6 @@ class VMService(CRUDService):
         """
         return NIC.random_mac()
 
-
-
-    @private
-    def undefine_vm(self, vm):
-        if vm['name'] in self.vms:
-            self.vms.pop(vm['name']).undefine_domain()
-        else:
-            VMSupervisor(vm, self.libvirt_connection, self.middleware).undefine_domain()
-
-    @private
-    def ensure_libvirt_connection(self):
-        if not self.libvirt_connection or not self.libvirt_connection.isAlive():
-            raise CallError('Failed to connect to libvirt')
-
-    @item_method
-    @accepts(Int('id'), Dict('options', Bool('overcommit', default=False)))
-    def start(self, id, options):
-        """
-        Start a VM.
-
-        options.overcommit defaults to false, meaning VMs are not allowed to
-        start if there is not enough available memory to hold all configured VMs.
-        If true, VM starts even if there is not enough memory for all configured VMs.
-
-        Error codes:
-
-            ENOMEM(12): not enough free memory to run the VM without overcommit
-        """
-        vm = self.middleware.call_sync('vm.get_instance', id)
-        self.ensure_libvirt_connection()
-        if vm['status']['state'] == 'RUNNING':
-            raise CallError(f'{vm["name"]} is already running')
-
-        if self.validate_slots(vm):
-            raise CallError(
-                'Please adjust the devices attached to this VM. '
-                f'A maximum of {LIBVIRT_AVAILABLE_SLOTS} PCI slots are allowed.'
-            )
-
-        flags = self.flags()
-
-        if not flags['intel_vmx'] and not flags['amd_rvi']:
-            raise CallError(
-                'This system does not support virtualization.'
-            )
-
-        # Perhaps we should have a default config option for VMs?
-        self.middleware.call_sync('vm.init_guest_vmemory', vm, options['overcommit'])
-
-        # Passing vm_data will ensure that the domain/vm is started with latest changes registered
-        # to the vm object
-        self.vms[vm['name']].start(vm_data=vm)
-
-    @item_method
-    @accepts(
-        Int('id'),
-        Dict(
-            'options',
-            Bool('force', default=False),
-            Bool('force_after_timeout', default=False),
-        ),
-    )
-    @job(lock=lambda args: f'stop_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
-    def stop(self, job, id, options):
-        """
-        Stops a VM.
-
-        For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become
-        unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only going to send a
-        shutdown signal to the guest and wait the desired `shutdown_timeout` value before tearing down guest vmemory.
-
-        `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
-        not already stopped within the specified `shutdown_timeout`.
-        """
-        vm_data = self.middleware.call_sync('vm.get_instance', id)
-        self.ensure_libvirt_connection()
-        vm = self.vms[vm_data['name']]
-
-        if options['force']:
-            vm.poweroff()
-        else:
-            vm.stop(vm_data['shutdown_timeout'])
-
-        if options['force_after_timeout'] and self.status(id)['state'] == 'RUNNING':
-            vm.poweroff()
-
-        self.middleware.call_sync('vm.teardown_guest_vmemory', id)
-
-    @item_method
-    @accepts(Int('id'))
-    def poweroff(self, id):
-        vm_data = self.middleware.call_sync('vm.get_instance', id)
-        self.ensure_libvirt_connection()
-        self.vms[vm_data['name']].poweroff()
-        self.middleware.call_sync('vm.teardown_guest_vmemory', id)
-
-    @item_method
-    @accepts(Int('id'))
-    @job(lock=lambda args: f'restart_vm_{args[0]}')
-    def restart(self, job, id):
-        """Restart a VM."""
-        vm = self.middleware.call_sync('vm.get_instance', id)
-        self.ensure_libvirt_connection()
-        self.vms[vm['name']].restart(vm_data=vm, shutdown_timeout=vm['shutdown_timeout'])
-
     @private
     async def teardown_guest_vmemory(self, id):
         guest_status = await self.middleware.call('vm.status', id)
@@ -426,29 +297,6 @@ class VMService(CRUDService):
                 self.logger.warn(
                     f'===> Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
                 )
-
-    @item_method
-    @accepts(Int('id'))
-    def status(self, id):
-        """Get the status of a VM.
-
-        Returns a dict:
-            - state, RUNNING or STOPPED
-            - pid, process id if RUNNING
-        """
-        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
-        if self.libvirt_connection and vm['name'] in self.vms:
-            try:
-                # Whatever happens, query shouldn't fail
-                return self.vms[vm['name']].status()
-            except Exception:
-                self.middleware.logger.debug(f'Failed to retrieve VM status for {vm["name"]}', exc_info=True)
-
-        return {
-            'state': 'ERROR',
-            'pid': None,
-            'domain_state': 'ERROR',
-        }
 
     async def __next_clone_name(self, name):
         vm_names = [

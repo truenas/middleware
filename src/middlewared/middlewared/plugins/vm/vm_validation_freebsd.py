@@ -5,9 +5,6 @@ from middlewared.service import Service
 from .vm_validation_base import VMValidationBase
 
 
-LIBVIRT_AVAILABLE_SLOTS = 29  # 3 slots are being used by libvirt / bhyve
-
-
 class VMService(Service, VMValidationBase):
 
     def validate_slots(self, vm_data):
@@ -24,7 +21,9 @@ class VMService(Service, VMValidationBase):
         used_slots += math.ceil(virtio_disk_devices / 8)  # Per slot we can have 8 virtio disks, so we divide it by 8
         # Per slot we can have 256 disks.
         used_slots += math.ceil(raw_ahci_disk_devices / 256)
-        return used_slots > LIBVIRT_AVAILABLE_SLOTS  # 3 slots are already in use i.e by libvirt/bhyve
+
+        # 3 slots are already in use i.e by libvirt/bhyve
+        return used_slots > self.middleware.call_sync('vm.available_slots')
 
     def validate_vcpus(self, vcpus, schema_name, verrors):
         flags = await self.middleware.call('vm.flags')

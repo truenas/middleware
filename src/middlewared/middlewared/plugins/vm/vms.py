@@ -5,7 +5,7 @@ import re
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str, ValidationErrors
-from middlewared.service import CallError, CRUDService, private
+from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range
 
 from .vm_supervisor import VMSupervisorMixin
@@ -307,3 +307,27 @@ class VMService(CRUDService, VMSupervisorMixin):
                 await self.middleware.call('vm.deinitialize_vms')
                 self._clear()
             return result
+
+    @item_method
+    @accepts(Int('id'))
+    def status(self, id):
+        """
+        Get the status of `id` VM.
+
+        Returns a dict:
+            - state, RUNNING or STOPPED
+            - pid, process id if RUNNING
+        """
+        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
+        if self._has_domain(vm['name']):
+            try:
+                # Whatever happens, query shouldn't fail
+                return self._status(vm['name'])
+            except Exception:
+                self.middleware.logger.debug('Failed to retrieve VM status for %r', vm['name'],exc_info=True)
+
+        return {
+            'state': 'ERROR',
+            'pid': None,
+            'domain_state': 'ERROR',
+        }
