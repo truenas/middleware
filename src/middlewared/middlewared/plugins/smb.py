@@ -106,7 +106,7 @@ class SMBSharePreset(enum.Enum):
         'aapl_name_mangling': False,
         'acl': True,
         'durablehandle': True,
-        'shadowcopy': True,
+        'shadowcopy': osc.IS_FREEBSD,  # shadowcopy only available for FreeBSD (for now)
         'streams': True,
         'fsrvp': False,
         'auxsmbconf': '',
@@ -652,7 +652,8 @@ class SharingSMBService(SharingService):
         Bool('aapl_name_mangling', default=False),
         Bool('acl', default=True),
         Bool('durablehandle', default=True),
-        Bool('shadowcopy', default=True),
+        # shadowcopy only available for FreeBSD (for now)
+        Bool('shadowcopy', default=osc.IS_FREEBSD),
         Bool('streams', default=True),
         Bool('fsrvp', default=False),
         Str('auxsmbconf', max_length=None, default=''),
