@@ -7,6 +7,9 @@ from .failover_check_base import FailoverChecksBase
 
 class VMDeviceService(Service, FailoverChecksBase):
 
+    class Config:
+        namespace = 'vm.device'
+
     async def nic_capability_checks(self, vm_devices=None, check_system_iface=True):
         vm_nics = []
         system_ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}

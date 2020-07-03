@@ -153,6 +153,7 @@ async def __event_system_ready(middleware, event_type, args):
 
 
 async def setup(middleware):
+    await middleware.call('vm.update_zfs_arc_max_initial')
     if await middleware.call('system.ready'):
         asyncio.ensure_future(middleware.call('vm.initialize_vms', 2))  # We use a short timeout here deliberately
     middleware.event_subscribe('system', __event_system_ready)

@@ -42,3 +42,13 @@ class SysctlService(Service, SysctlInfoBase):
 
     def get_arcstats_size(self):
         return self.get_value('kstat.zfs.misc.arcstats.size')
+
+    def set_value(self, key, value):
+        var = sysctl.filter(key)
+        if var:
+            var[0].value = value
+        else:
+            raise CallError(f'"{key}" sysctl could not be found', errno.ENOENT)
+
+    def set_arc_max(self, value):
+        return self.set_value('vfs.zfs.arc.max', value)

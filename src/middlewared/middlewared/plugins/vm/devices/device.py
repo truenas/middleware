@@ -12,7 +12,7 @@ class Device(ABC):
         self.middleware = middleware
 
     def xml(self, *args, **kwargs):
-        getattr(self, f'xml_{osc.SYSTEM.lower()}')(*args, **kwargs)
+        return getattr(self, f'xml_{osc.SYSTEM.lower()}')(*args, **kwargs)
 
     def xml_freebsd(self, *args, **kwargs):
         raise NotImplementedError
@@ -21,7 +21,7 @@ class Device(ABC):
         raise NotImplementedError
 
     def pre_start_vm(self, *args, **kwargs):
-        getattr(self, f'pre_start_vm_{osc.SYSTEM.lower()}')(*args, **kwargs)
+        return getattr(self, f'pre_start_vm_{osc.SYSTEM.lower()}')(*args, **kwargs)
 
     def pre_start_vm_linux(self, *args, **kwargs):
         pass
@@ -30,7 +30,7 @@ class Device(ABC):
         pass
 
     def pre_start_vm_rollback(self, *args, **kwargs):
-        getattr(self, f'pre_start_vm_rollback_{osc.SYSTEM.lower()}')(*args, **kwargs)
+        return getattr(self, f'pre_start_vm_rollback_{osc.SYSTEM.lower()}')(*args, **kwargs)
 
     def pre_start_vm_rollback_linux(self, *args, **kwargs):
         pass
@@ -39,7 +39,7 @@ class Device(ABC):
         pass
 
     def post_start_vm(self, *args, **kwargs):
-        getattr(self, f'post_start_vm_{osc.SYSTEM.lower()}')(*args, **kwargs)
+        return getattr(self, f'post_start_vm_{osc.SYSTEM.lower()}')(*args, **kwargs)
 
     def post_start_vm_linux(self, *args, **kwargs):
         pass
@@ -48,7 +48,7 @@ class Device(ABC):
         pass
 
     def post_stop_vm(self, *args, **kwargs):
-        getattr(self, f'post_stop_vm_{osc.SYSTEM.lower()}')(*args, **kwargs)
+        return getattr(self, f'post_stop_vm_{osc.SYSTEM.lower()}')(*args, **kwargs)
 
     def post_stop_vm_linux(self, *args, **kwargs):
         pass

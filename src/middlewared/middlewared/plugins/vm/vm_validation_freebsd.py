@@ -25,7 +25,7 @@ class VMService(Service, VMValidationBase):
         # 3 slots are already in use i.e by libvirt/bhyve
         return used_slots > self.middleware.call_sync('vm.available_slots')
 
-    def validate_vcpus(self, vcpus, schema_name, verrors):
+    async def validate_vcpus(self, vcpus, schema_name, verrors):
         flags = await self.middleware.call('vm.flags')
         if vcpus > 16:
             verrors.add(

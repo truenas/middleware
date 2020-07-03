@@ -54,3 +54,13 @@ class SysctlService(Service, SysctlInfoBase):
 
     def get_arcstats_size(self):
         return self.get_arcstats()['size']
+
+    def set_value(self, key, value):
+        raise NotImplementedError
+
+    def write_to_file(self, path, value):
+        with open(path, 'w') as f:
+            f.write(str(value))
+
+    def set_arc_max(self, value):
+        return self.write_to_file(os.path.join(ZFS_MODULE_PARAMS_PATH, 'zfs_arc_max'), value)

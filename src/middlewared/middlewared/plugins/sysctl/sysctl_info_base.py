@@ -20,3 +20,9 @@ class SysctlInfoBase(ServicePartBase):
 
     def get_arcstats(self):
         raise NotImplementedError
+
+    def set_value(self, key, value):
+        raise NotImplementedError
+
+    def set_arc_max(self, value):
+        raise NotImplementedError

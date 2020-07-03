@@ -11,7 +11,7 @@ class VMService(Service, VMInfoBase):
 
     def supports_virtualization(self):
         flags = self.flags()
-        return not flags['intel_vmx'] and not flags['amd_rvi']
+        return flags['intel_vmx'] or flags['amd_rvi']
 
     def available_slots(self):
         return 29  # 3 slots are being used by libvirt / bhyve

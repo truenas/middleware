@@ -11,6 +11,9 @@ RE_PCICONF_PPTDEVS = re.compile(r'^(' + re.escape('ppt') + '[0-9]+@pci.*:)(([0-9
 
 class VMDeviceService(Service, PCIInfoBase):
 
+    class Config:
+        namespace = 'vm.device'
+
     iommu_type = None
     pptdevs = {}
 
