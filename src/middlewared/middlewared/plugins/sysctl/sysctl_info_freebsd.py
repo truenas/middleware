@@ -17,3 +17,9 @@ class SysctlService(Service, SysctlInfoBase):
             return var[0].value
         else:
             raise CallError(f'"{sysctl_name}" sysctl could not be found', errno.ENOENT)
+
+    def get_arc_max(self):
+        return self.get_value('vfs.zfs.arc.max')
+
+    def get_arc_min(self):
+        return self.get_value('vfs.zfs.arc.min')
