@@ -925,6 +925,19 @@ class SharingSMBService(SharingService):
                 f'{schema_name}.name',
                 f'{data["name"]} is a reserved section name, please select another one'
             )
+
+        if osc.IS_LINUX:
+            if data['shadowcopy']:
+                verrors.add(
+                    f'{schema_name}.shadowcopy',
+                    'ZFS shadow copy support is not yet implemented in TrueNAS scale'
+                )
+            if data['fsrvp']:
+                verrors.add(
+                    f'{schema_name}.fsrvp',
+                    'ZFS fsrvp support is not yet implemented in TrueNAS scale'
+                )
+
         if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
             verrors.add(f'{schema_name}.name',
                         'Path suffix may not contain more than two components.')

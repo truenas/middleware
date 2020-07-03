@@ -274,7 +274,8 @@ class SharingSMBService(Service):
             data['vfsobjects'].extend(['recycle', 'crossrename'])
 
         if data['shadowcopy'] or data['fsrvp']:
-            data['vfsobjects'].append('shadow_copy_zfs')
+            if osc.IS_FREEBSD:
+                data['vfsobjects'].append('shadow_copy_zfs')
 
         if data['durablehandle']:
             conf.update({
@@ -283,7 +284,7 @@ class SharingSMBService(Service):
                 "posix locking": "no",
             })
 
-        if data['fsrvp']:
+        if data['fsrvp'] and osc.IS_FREEBSD:
             data['vfsobjects'].append('zfs_fsrvp')
             conf.update({
                 "shadow:ignore_empty_snaps": "false",
