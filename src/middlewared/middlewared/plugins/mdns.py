@@ -1,5 +1,6 @@
 async def interface_post_sync(middleware):
-    await middleware.call('etc.generate', 'mdns')
+    if await middleware.call('system.ready'):
+        await middleware.call('etc.generate', 'mdns')
 
 
 def setup(middleware):

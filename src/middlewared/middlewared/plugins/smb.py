@@ -1,12 +1,9 @@
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
-from middlewared.service import (SystemServiceService, ValidationErrors,
-                                 accepts, job, private, CRUDService)
-from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.service import accepts, job, private, SharingService, SystemServiceService, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
-from middlewared.utils.path import is_child
 
 import asyncio
 import codecs
@@ -589,7 +586,10 @@ class SharingSMBModel(sa.Model):
     cifs_share_acl = sa.Column(sa.Text())
 
 
-class SharingSMBService(CRUDService):
+class SharingSMBService(SharingService):
+
+    share_task_type = 'SMB'
+
     class Config:
         namespace = 'sharing.smb'
         datastore = 'sharing.cifs_share'
@@ -753,14 +753,12 @@ class SharingSMBService(CRUDService):
             await self.middleware.call('sharing.smb.apply_conf_diff',
                                        'REGISTRY', share_name, diff)
 
-        await self.extend(new)  # same here ?
-
         if enable_aapl:
             await self._service_change('cifs', 'restart')
         else:
             await self._service_change('cifs', 'reload')
 
-        return new
+        return await self.get_instance(id)
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -824,9 +822,7 @@ class SharingSMBService(CRUDService):
             verrors.add(f'{schema_name}.path', 'This field is required.')
 
         if data['path']:
-            await check_path_resides_within_volume(
-                verrors, self.middleware, f"{schema_name}.path", data['path']
-            )
+            await self.validate_path_field(data, schema_name, verrors)
 
         if not data['acl'] and not await self.middleware.call('filesystem.acl_is_trivial', data['path']):
             verrors.add(
@@ -919,6 +915,7 @@ class SharingSMBService(CRUDService):
     async def compress(self, data):
         data['hostsallow'] = ' '.join(data['hostsallow'])
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
+        data.pop(self.locked_field, None)
 
         return data
 
@@ -981,38 +978,19 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'cifs'))
 
 
-class SMBFSAttachmentDelegate(FSAttachmentDelegate):
+class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'smb'
     title = 'SMB Share'
     service = 'cifs'
+    service_class = SharingSMBService
 
-    async def query(self, path, enabled):
-        results = []
-        for smb in await self.middleware.call('sharing.smb.query', [['enabled', '=', enabled]]):
-            if is_child(smb['path'], path):
-                results.append(smb)
-
-        return results
-
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'sharing.cifs_share', attachment['id'])
-
+    async def restart_reload_services(self, attachments):
         await self._service_change('cifs', 'reload')
 
-    async def toggle(self, attachments, enabled):
+    async def stop(self, attachments):
+        await self.restart_reload_services(attachments)
         for attachment in attachments:
-            await self.middleware.call('datastore.update', 'sharing.cifs_share', attachment['id'],
-                                       {'cifs_enabled': enabled})
-
-        await self._service_change('cifs', 'reload')
-
-        if not enabled:
-            for attachment in attachments:
-                await run([SMBCmd.SMBCONTROL.value, 'smbd', 'close-share', attachment['name']], check=False)
+            await run([SMBCmd.SMBCONTROL.value, 'smbd', 'close-share', attachment['name']], check=False)
 
 
 async def setup(middleware):

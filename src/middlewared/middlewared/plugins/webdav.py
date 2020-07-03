@@ -1,12 +1,10 @@
 import asyncio
 import os
 
-from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
-from middlewared.service import CRUDService, SystemServiceService, private
+from middlewared.service import SharingService, SystemServiceService, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils.path import is_child
 
 
 class WebDAVSharingModel(sa.Model):
@@ -21,7 +19,9 @@ class WebDAVSharingModel(sa.Model):
     webdav_enabled = sa.Column(sa.Boolean(), default=True)
 
 
-class WebDAVSharingService(CRUDService):
+class WebDAVSharingService(SharingService):
+
+    share_task_type = 'WebDAV'
 
     class Config:
         datastore = 'sharing.webdav_share'
@@ -31,34 +31,18 @@ class WebDAVSharingService(CRUDService):
     @private
     async def validate_data(self, data, schema):
         verrors = ValidationErrors()
+        await self.validate_path_field(data, schema, verrors)
 
-        path = data.get('path')
-        if not path:
-            verrors.add(
-                f'{schema}.path',
-                'This field is required'
-            )
-        else:
-            await check_path_resides_within_volume(verrors, self.middleware, f'{schema}.path', data['path'])
-
-        name = data.get('name')
-        if not name:
+        if not data['name'].isalnum():
             verrors.add(
                 f'{schema}.name',
-                'This field is required'
+                'Only alphanumeric characters are allowed'
             )
-        else:
-            if not name.isalnum():
-                verrors.add(
-                    f'{schema}.name',
-                    'Only AlphaNumeric characters are allowed'
-                )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
-        if not os.path.exists(path):
-            os.makedirs(path)
+        if not os.path.exists(data[self.path_field]):
+            os.makedirs(data[self.path_field])
 
     @accepts(
         Dict(
@@ -66,8 +50,8 @@ class WebDAVSharingService(CRUDService):
             Bool('perm', default=True),
             Bool('ro', default=False),
             Str('comment'),
-            Str('name', required=True),
-            Str('path', required=True),
+            Str('name', required=True, empty=False),
+            Str('path', required=True, empty=False),
             Bool('enabled', default=True),
             register=True
         )
@@ -100,7 +84,7 @@ class WebDAVSharingService(CRUDService):
 
         await self._service_change('webdav', 'reload')
 
-        return await self.query(filters=[('id', '=', data['id'])], options={'get': True})
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id', required=True),
@@ -119,7 +103,7 @@ class WebDAVSharingService(CRUDService):
         await self.validate_data(new, 'webdav_share_update')
 
         if len(set(old.items()) ^ set(new.items())) > 0:
-
+            new.pop(self.locked_field)
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
@@ -138,7 +122,7 @@ class WebDAVSharingService(CRUDService):
                 'options': {'recursive': True}
             })
 
-        return await self.query(filters=[('id', '=', id)], options={'get': True})
+        return await self.get_instance(id)
 
     @accepts(
         Int('id')
@@ -279,33 +263,13 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('service.reload', 'webdav'))
 
 
-class WebDAVFSAttachmentDelegate(FSAttachmentDelegate):
+class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'webdav'
     title = 'WebDAV Share'
     service = 'webdav'
+    service_class = WebDAVSharingService
 
-    async def query(self, path, enabled):
-        results = []
-        for share in await self.middleware.call('sharing.webdav.query', [['enabled', '=', enabled]]):
-            if is_child(share['path'], path):
-                results.append(share)
-
-        return results
-
-    async def get_attachment_name(self, attachment):
-        return attachment['name']
-
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', 'sharing.webdav_share', attachment['id'])
-
-        await self._service_change('webdav', 'reload')
-
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call('datastore.update', 'sharing.webdav_share', attachment['id'],
-                                       {'webdav_enabled': enabled})
-
+    async def restart_reload_services(self, attachments):
         await self._service_change('webdav', 'reload')
 
 

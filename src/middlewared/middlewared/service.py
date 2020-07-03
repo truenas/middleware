@@ -24,6 +24,7 @@ from middlewared.logger import Logger, reconfigure_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 from middlewared.utils.type import copy_function_metadata
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Range, IpAddress
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
@@ -411,6 +412,14 @@ class CRUDService(ServiceChangeMixin, Service):
     CRUD stands for Create Retrieve Update Delete.
     """
 
+    @private
+    async def get_options(self, options):
+        options = options or {}
+        options['extend'] = self._config.datastore_extend
+        options['extend_context'] = self._config.datastore_extend_context
+        options['prefix'] = self._config.datastore_prefix
+        return options
+
     @filterable
     async def query(self, filters=None, options=None):
         if not self._config.datastore:
@@ -422,10 +431,7 @@ class CRUDService(ServiceChangeMixin, Service):
         if not filters:
             filters = []
 
-        options = options or {}
-        options['extend'] = self._config.datastore_extend
-        options['extend_context'] = self._config.datastore_extend_context
-        options['prefix'] = self._config.datastore_prefix
+        options = await self.get_options(options)
 
         # In case we are extending which may transform the result in numerous ways
         # we can only filter the final result.
@@ -554,6 +560,107 @@ class CRUDService(ServiceChangeMixin, Service):
         if dependencies:
             raise CallError('This object is being used by other objects', errno.EBUSY,
                             {'dependencies': list(dependencies.values())})
+
+
+class SharingTaskService(CRUDService):
+
+    path_field = 'path'
+    enabled_field = 'enabled'
+    locked_field = 'locked'
+    service_type = NotImplemented
+    locked_alert_class = NotImplemented
+    share_task_type = NotImplemented
+
+    @private
+    async def sharing_task_extend_context(self, extra):
+        return {
+            'locked_datasets': await self.middleware.call('zfs.dataset.locked_datasets'),
+            'service_extend': (await self.middleware.call(self._config.datastore_extend_context, extra))
+            if self._config.datastore_extend_context else {}
+        }
+
+    @private
+    async def validate_path_field(self, data, schema, verrors):
+        await check_path_resides_within_volume(
+            verrors, self.middleware, f'{schema}.{self.path_field}', data.get(self.path_field)
+        )
+        return verrors
+
+    @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        return await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets', data[self.path_field], locked_datasets
+        )
+
+    @private
+    async def sharing_task_extend(self, data, context):
+        args = [data] + ([context['service_extend']] if self._config.datastore_extend_context else [])
+
+        if self._config.datastore_extend:
+            data = await self.middleware.call(self._config.datastore_extend, *args)
+
+        data[self.locked_field] = await self.middleware.call(
+            f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
+        )
+
+        return data
+
+    @private
+    async def get_options(self, options):
+        return {
+            **(await super().get_options(options)),
+            'extend': f'{self._config.namespace}.sharing_task_extend',
+            'extend_context': f'{self._config.namespace}.sharing_task_extend_context',
+        }
+
+    @private
+    async def human_identifier(self, share_task):
+        raise NotImplementedError
+
+    @private
+    async def generate_locked_alert(self, share_task_id):
+        share_task = await self.get_instance(share_task_id)
+        await self.middleware.call(
+            'alert.oneshot_create', self.locked_alert_class,
+            {**share_task, 'identifier': await self.human_identifier(share_task), 'type': self.share_task_type}
+        )
+
+    @private
+    async def remove_locked_alert(self, share_task_id):
+        await self.middleware.call(
+            'alert.oneshot_delete', self.locked_alert_class, f'"{self.share_task_type}_{share_task_id}"'
+        )
+
+    @pass_app(rest=True)
+    async def update(self, app, id, data):
+        rv = await super().update(app, id, data)
+        if not rv[self.enabled_field] or not rv[self.locked_field]:
+            await self.remove_locked_alert(rv['id'])
+        return rv
+
+    @pass_app(rest=True)
+    async def delete(self, app, id, *args):
+        rv = await super().delete(app, id, *args)
+        await self.remove_locked_alert(id)
+        return rv
+
+
+class SharingService(SharingTaskService):
+    service_type = 'share'
+    locked_alert_class = 'ShareLocked'
+
+    @private
+    async def human_identifier(self, share_task):
+        return share_task['name']
+
+
+class TaskPathService(SharingTaskService):
+    service_type = 'task'
+    locked_alert_class = 'TaskLocked'
+
+    @private
+    async def human_identifier(self, share_task):
+        return share_task[self.path_field]
 
 
 def is_service_class(service, klass):

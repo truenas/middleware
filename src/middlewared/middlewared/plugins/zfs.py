@@ -410,6 +410,22 @@ class ZFSDatasetService(CRUDService):
         private = True
         process_pool = True
 
+    def locked_datasets(self):
+        try:
+            about_to_lock_dataset = self.middleware.call_sync('cache.get', 'about_to_lock_dataset')
+        except KeyError:
+            about_to_lock_dataset = None
+
+        or_filters = [
+            'OR', [['key_loaded', '=', False]] + (
+                [['id', '=', about_to_lock_dataset], ['id', '^', f'{about_to_lock_dataset}/']]
+                if about_to_lock_dataset else []
+            )
+        ]
+        return self.query([['encrypted', '=', True], or_filters], {
+            'extra': {'properties': ['encryption', 'keystatus', 'mountpoint']}, 'select': ['id', 'mountpoint']
+        })
+
     def flatten_datasets(self, datasets):
         return sum([[deepcopy(ds)] + self.flatten_datasets(ds['children']) for ds in datasets], [])
 
