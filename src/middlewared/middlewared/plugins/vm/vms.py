@@ -174,10 +174,10 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
         if await self.middleware.call('vm.validate_slots', data):
-            # FIXME: Please fix the hardcoded 30 value here
             verrors.add(
                 f'{schema_name}.devices',
-                'Please adjust the number of devices attached to this VM. A maximum of 30 PCI slots are allowed.'
+                'Please adjust the number of devices attached to this VM. '
+                f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
             )
 
     async def __do_update_devices(self, id, devices):
