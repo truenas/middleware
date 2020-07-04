@@ -1,3 +1,4 @@
+import os
 import psutil
 import signal
 import subprocess
@@ -36,7 +37,7 @@ class VNC(Device):
             }
         ), create_element('input', type='tablet', bus='usb')
 
-    def bhyve_args(self, *args, **kwargs):
+    def hypervisor_args_freebsd(self, *args, **kwargs):
         attrs = self.data['attributes']
         width, height = (attrs['vnc_resolution'] or '1024x768').split('x')
         return '-s ' + ','.join(filter(

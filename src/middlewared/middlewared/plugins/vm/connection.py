@@ -5,7 +5,7 @@ from middlewared.utils import osc
 
 
 if osc.IS_LINUX:
-    LIBVIRT_URI = ''
+    LIBVIRT_URI = 'qemu+unix:///system'
 else:
     LIBVIRT_URI = 'bhyve+unix:///system'
 

@@ -111,14 +111,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
 
         self.update_vm_data(vm_data)
 
-        # Let's ensure that we are able to boot a GRUB based VM
-        if self.vm_data['bootloader'] == 'GRUB' and not any(
-            isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
-        ):
-            raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name} domain')
-
-        if len([d for d in self.devices if isinstance(d, VNC)]) > 1:
-            raise CallError('Only one VNC device per VM is supported')
+        self.before_start_checks()
 
         successful = []
         errors = []
@@ -274,6 +267,13 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             )
 
         return domain_children
+
+    def before_start_checks(self):
+        # Let's ensure that we are able to boot a GRUB based VM
+        if self.vm_data['bootloader'] == 'GRUB' and not any(
+            isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
+        ):
+            raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name} domain')
 
     def construct_xml(self):
         raise NotImplementedError

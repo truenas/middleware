@@ -56,5 +56,11 @@ class Device(ABC):
     def post_stop_vm_freebsd(self, *args, **kwargs):
         pass
 
-    def bhyve_args(self, *args, **kwargs):
+    def hypervisor_args(self, *args, **kwargs):
+        return getattr(self, f'hypervisor_args_{osc.SYSTEM.lower()}')(*args, **kwargs)
+
+    def hypervisor_args_linux(self, *args, **kwargs):
+        pass
+
+    def hypervisor_args_freebsd(self, *args, **kwargs):
         pass

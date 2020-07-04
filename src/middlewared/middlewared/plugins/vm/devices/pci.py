@@ -58,7 +58,7 @@ class PCI(Device):
             }
         ) if guest_bsf is not None else None
 
-    def bhyve_args(self, *args, **kwargs):
+    def hypervisor_args_freebsd(self, *args, **kwargs):
         # Unless libvirt supports hostdev for bhyve, we need to pass pci devices
         # through to guest by means of additional command-line arguments to the
         # bhyve process using the <bhyve:commandline> element under domain.
