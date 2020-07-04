@@ -16,20 +16,17 @@ job_results = None
 is_freenas = GET("/system/is_freenas/", controller_a=ha).json()
 
 # default URL
-if is_freenas is True:
-    test_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
-else:
-    test_repos_url = 'https://github.com/truenas/iocage-ix-plugins.git'
+test_repos_url = 'https://github.com/truenas/iocage-ix-plugins.git'
 
 
-repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
-index_url = 'https://raw.githubusercontent.com/freenas/iocage-ix-plugins/master/INDEX'
+repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
+index_url = 'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/12.1-RELEASE/INDEX'
 plugin_index = GET(index_url).json()
 plugin_list = list(plugin_index.keys())
 
 # custom URL
-repos_url2 = 'https://github.com/ericbsd/iocage-ix-plugins.git'
-index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-ix-plugins/master/INDEX'
+repos_url2 = 'https://github.com/ericbsd/iocage-plugin-index.git'
+index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/12.1-RELEASE/INDEX'
 plugin_index2 = GET(index_url2).json()
 plugin_list2 = list(plugin_index.keys())
 
@@ -284,8 +281,8 @@ def test_29_get_list_of_available_plugins_job_id_on_custom_repos(request):
     depends(request, ["pool_04"], scope="session")
     global JOB_ID
     payload = {
-        "plugin_repository": repos_url,
-        "branch": "11.3-RELEASE"
+        "plugin_repository": repos_url2,
+        "branch": "12.1-RELEASE"
     }
     results = POST('/plugin/available/', payload)
     assert results.status_code == 200, results.text
@@ -327,7 +324,7 @@ def test_33_add_transmission_plugins(request):
             'nat=1'
         ],
         "plugin_repository": repos_url2,
-        "branch": "11.3-RELEASE"
+        "branch": "12.1-RELEASE"
     }
     results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
