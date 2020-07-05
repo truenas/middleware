@@ -1,3 +1,6 @@
+from middlewared.plugins.vm.devices import CDROM, DISK, RAW
+from middlewared.utils import Nid
+
 from .supervisor_base import VMSupervisorBase
 from .utils import create_element
 
@@ -26,9 +29,18 @@ class VMSupervisor(VMSupervisorBase):
         return [create_element('os', attribute_dict={'children': children})]
 
     def devices_xml(self):
+        scsi_device_no = Nid(1)
+        virtual_device_no = Nid(1)
         devices = []
         for device in self.devices:
-            device_xml = device.xml()
+            if isinstance(device, (DISK, CDROM, RAW)):
+                if device.data['attributes'].get('type') == 'VIRTIO':
+                    disk_no = virtual_device_no()
+                else:
+                    disk_no = scsi_device_no()
+                device_xml = device.xml(disk_number=disk_no)
+            else:
+                device_xml = device.xml()
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
 
         devices.extend([create_element('serial', type='pty'), create_element('video')])
