@@ -281,9 +281,6 @@ class VMSupervisorBase(LibvirtConnectionMixin):
     def commandline_xml(self):
         raise NotImplementedError
 
-    def commandline_args(self):
-        raise NotImplementedError
-
     def os_xml(self):
         raise NotImplementedError
 

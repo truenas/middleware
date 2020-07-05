@@ -65,6 +65,10 @@ class VMService(Service, VMSupervisorMixin):
             self.middleware.logger.error('Failed to establish libvirt connection')
 
     @private
+    async def initialize_linux(self):
+        pass
+
+    @private
     async def initialize_freebsd(self):
         cp = await run(['/sbin/kldstat'], check=False)
         if cp.returncode:

@@ -11,6 +11,17 @@ class CDROM(Device):
         Str('path', required=True),
     )
 
+    def xml_linux(self, *args, **kwargs):
+        return create_element(
+            'disk', type='file', device='cdrom', attribute_dict={
+                'children': [
+                    create_element('driver', name='file', type='raw'),
+                    create_element('source', file=self.data['attributes']['path']),
+                    create_element('target', dev='sda', bus='sata'),
+                ]
+            }
+        )
+
     def xml_freebsd(self, *args, **kwargs):
         child_element = kwargs.pop('child_element')
         return create_element(

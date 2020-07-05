@@ -1,11 +1,14 @@
 import random
-import netif
 
 from middlewared.schema import Dict, Str
 from middlewared.service import CallError
+from middlewared.utils import osc
 
 from .device import Device
 from .utils import create_element
+
+if osc.IS_FREEBSD:
+    import netif
 
 
 class NIC(Device):

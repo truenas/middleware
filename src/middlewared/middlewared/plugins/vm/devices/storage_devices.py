@@ -6,6 +6,9 @@ from .utils import create_element
 
 class StorageDevice(Device):
 
+    def xml_linux(self, *args, **kwargs):
+        raise NotImplementedError
+
     def xml_freebsd(self, *args, **kwargs):
         child_element = kwargs.pop('child_element')
         virtio = self.data['attributes']['type'] == 'VIRTIO'
