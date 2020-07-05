@@ -13,6 +13,7 @@ from lxml import etree
 from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
 from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, VNC # noqa
+from middlewared.utils import osc
 
 from .utils import create_element
 
@@ -86,6 +87,9 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             shutil.rmtree(
                 os.path.join('/tmp/grub', self.libvirt_domain_name), ignore_errors=True
             )
+        elif osc.IS_LINUX:
+            with contextlib.suppress(OSError):
+                os.unlink(f'/var/lib/libvirt/qemu/nvram/{self.libvirt_domain_name}_VARS.fd')
 
         self.domain.undefine()
         self.domain = None
