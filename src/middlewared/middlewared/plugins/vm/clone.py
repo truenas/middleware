@@ -43,7 +43,7 @@ class VMService(Service):
                 continue
             break
 
-        await self.middleware.call('zfs.snapshot.create', {'dataset': zvol, 'name': snapshot_name,})
+        await self.middleware.call('zfs.snapshot.create', {'dataset': zvol, 'name': snapshot_name})
         created_snaps.append(zvol_snapshot)
 
         clone_suffix = name

@@ -1,5 +1,5 @@
 from middlewared.schema import Int
-from middlewared.service import accepts, private, ServicePartBase
+from middlewared.service import accepts, ServicePartBase
 
 
 class VMInfoBase(ServicePartBase):

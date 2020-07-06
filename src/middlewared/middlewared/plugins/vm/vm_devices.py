@@ -420,4 +420,3 @@ class VMDeviceService(CRUDService):
                     f'Capabilities must be disabled for {",".join(nics)} interface '
                     'in Network->Interfaces section before using this device with VM.'
                 )
-

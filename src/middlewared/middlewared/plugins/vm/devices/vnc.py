@@ -30,6 +30,17 @@ class VNC(Device):
         super().__init__(*args, **kwargs)
         self.web_process = None
 
+    def xml_linux(self, *args, **kwargs):
+        # TODO: Unable to set resolution for VNC devices
+        attrs = self.data['attributes']
+        return create_element(
+            'graphics', type='vnc', port=str(self.data['attributes']['vnc_port']), attribute_dict={
+                'children': [
+                    create_element('listen', type='address', address=self.data['attributes']['vnc_bind']),
+                ]
+            }, **({} if not attrs['vnc_password'] else {'passwd': attrs['vnc_password']})
+        )
+
     def xml_freebsd(self, *args, **kwargs):
         return create_element(
             'controller', type='usb', model='nec-xhci', attribute_dict={
@@ -58,20 +69,34 @@ class VNC(Device):
         split_port = int(str(vnc_port)[:2]) - 1
         return int(str(split_port) + str(vnc_port)[2:])
 
-    def post_start_vm_freebsd(self, *args, **kwargs):
+    def get_start_attrs(self):
         vnc_port = self.data['attributes']['vnc_port']
         vnc_bind = self.data['attributes']['vnc_bind']
         vnc_web_port = self.get_vnc_web_port(vnc_port)
+        return {
+            'web_bind': f':{vnc_web_port}' if vnc_bind == '0.0.0.0' else f'{vnc_bind}:{vnc_web_port}',
+            'server_addr': f'{vnc_bind}:{vnc_port}'
+        }
 
-        web_bind = f':{vnc_web_port}' if vnc_bind == '0.0.0.0' else f'{vnc_bind}:{vnc_web_port}'
+    def post_start_vm_linux(self, *args, **kwargs):
+        start_args = self.get_start_attrs()
         self.web_process = subprocess.Popen(
             [
-                '/usr/local/libexec/novnc/utils/websockify/run', '--web',
-                '/usr/local/libexec/novnc/', '--wrap-mode=ignore', web_bind, f'{vnc_bind}:{vnc_port}'
+                'websockify', '--web', '/usr/share/novnc/', '--wrap-mode=ignore',
+                start_args['web_bind'], start_args['server_addr']
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
 
-    def post_stop_vm_freebsd(self, *args, **kwargs):
+    def post_start_vm_freebsd(self, *args, **kwargs):
+        start_args = self.get_start_attrs()
+        self.web_process = subprocess.Popen(
+            [
+                '/usr/local/libexec/novnc/utils/websockify/run', '--web', '/usr/local/libexec/novnc/',
+                '--wrap-mode=ignore', start_args['web_bind'], start_args['server_addr']
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+
+    def post_stop_vm(self, *args, **kwargs):
         if self.web_process and psutil.pid_exists(self.web_process.pid):
             if self.middleware:
                 self.middleware.call_sync('service.terminate_process', self.web_process.pid)

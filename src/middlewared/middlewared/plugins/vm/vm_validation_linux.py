@@ -1,5 +1,3 @@
-import math
-
 from middlewared.service import Service
 
 from .vm_validation_base import VMValidationBase
