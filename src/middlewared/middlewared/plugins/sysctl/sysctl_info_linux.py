@@ -19,10 +19,10 @@ class SysctlService(Service, SysctlInfoBase):
         raise CallError(f'"{name}" sysctl could not be found', errno.ENOENT)
 
     def get_arc_max(self):
-        return int(self.read_value_from_file(os.path.join(ZFS_MODULE_PARAMS_PATH, 'zfs_arc_max'), 'zfs_arc_max'))
+        return self.get_arcstats()['c_max']
 
     def get_arc_min(self):
-        return int(self.read_value_from_file(os.path.join(ZFS_MODULE_PARAMS_PATH, 'zfs_arc_min'), 'zfs_arc_min'))
+        return self.get_arcstats()['c_min']
 
     def read_value_from_file(self, path, name):
         if os.path.exists(path):
