@@ -12,16 +12,16 @@ job_results = None
 is_freenas = GET("/system/is_freenas/").json()
 
 # default URL
-test_repos_url = 'https://github.com/truenas/iocage-ix-plugins.git'
+test_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 
 repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
-index_url = 'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/12.1-RELEASE/INDEX'
+index_url = 'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/12.0-RELEASE/INDEX'
 plugin_index = GET(index_url).json()
 plugin_list = list(plugin_index.keys())
 
 # custom URL
 repos_url2 = 'https://github.com/ericbsd/iocage-plugin-index.git'
-index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/12.1-RELEASE/INDEX'
+index_url2 = 'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/12.0-RELEASE/INDEX'
 plugin_index2 = GET(index_url2).json()
 plugin_list2 = list(plugin_index.keys())
 
@@ -285,8 +285,7 @@ def test_33_add_transmission_plugins():
         'props': [
             'nat=1'
         ],
-        "plugin_repository": repos_url2,
-        "branch": "12.0-RELEASE"
+        "plugin_repository": repos_url2
     }
     results = POST('/plugin/', payload)
     assert results.status_code == 200, results.text
