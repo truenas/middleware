@@ -16,7 +16,7 @@ job_results = None
 is_freenas = GET("/system/is_freenas/", controller_a=ha).json()
 
 # default URL
-test_repos_url = 'https://github.com/truenas/iocage-ix-plugins.git'
+default_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 
 
 repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
@@ -67,7 +67,7 @@ def test_04_verify_plugin_repos_is_in_official_repositories(request):
     assert isinstance(results.json(), dict), results.text
     assert 'IXSYSTEMS' in results.json(), results.text
     assert results.json()['IXSYSTEMS']['name'] == 'iXsystems', results.text
-    assert results.json()['IXSYSTEMS']['git_repository'] == test_repos_url, results.text
+    assert results.json()['IXSYSTEMS']['git_repository'] == default_repos_url, results.text
 
 
 def test_05_get_list_of_available_plugins_job_id(request):
