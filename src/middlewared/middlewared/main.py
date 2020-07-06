@@ -568,7 +568,7 @@ class ShellWorkerThread(threading.Thread):
         if options.get('jail'):
             return ['/usr/local/bin/iocage', 'console', '-f', options['jail']]
         elif options.get('vm_id'):
-            return ['/usr/bin/cu', '-l', f'{options["vm_id"]}B']
+            return ['/usr/bin/cu', '-l', f'nmdm{options["vm_id"]}B']
         else:
             return ['/usr/bin/login', '-p', '-f', 'root']
 
