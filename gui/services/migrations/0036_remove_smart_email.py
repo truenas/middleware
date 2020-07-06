@@ -11,7 +11,7 @@ def create_smart_alert_service(apps, schema_editor):
     smart = apps.get_model("services.smart").objects.all()[0]
     alertservice = apps.get_model('system.alertservice')
     root_email = apps.get_model('account.bsdusers').objects.filter(bsdusr_username="root")[0].bsdusr_email
-    existing_emails = [s.attributes["email"] or root_email
+    existing_emails = [s.attributes.get("email") or root_email
                        for s in alertservice.objects.filter(type="Mail")]
     emails = [x.strip() for x in smart.smart_email.split(",") if x.strip()]
     for new_email in set(emails) - set(existing_emails):
