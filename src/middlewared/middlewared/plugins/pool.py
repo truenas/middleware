@@ -3511,8 +3511,9 @@ class PoolDatasetService(CRUDService):
                     try:
                         xid_obj = await self.middleware.call(f'{id_type}.get_{id_type}_obj',
                                                              {f'{id_type}name': q["id"]})
-                        xid = xid_obj['pw_uid'] if id_type[1] == 'uid' else xid_obj['gr_gid']
+                        xid = xid_obj['pw_uid'] if id_type == 'user' else xid_obj['gr_gid']
                     except Exception:
+                        self.logger.debug("Failed to convert %s [%s] to id.", id_type, q["id"], exc_info=True)
                         verrors.add(
                             f'quotas.{i}.id',
                             f'{quota_type} {q["id"]} is not valid.'
@@ -3524,6 +3525,7 @@ class PoolDatasetService(CRUDService):
                                                              {id_type[1]: q["id"]})
                         xid = xid_obj['pw_uid'] if id_type[1] == 'uid' else xid_obj['gr_gid']
                     except Exception:
+                        self.logger.debug("Failed to convert %s [%s] to id.", id_type[1], q["id"], exc_info=True)
                         verrors.add(
                             f'quotas.{i}.id',
                             f'{quota_type} {q["id"]} is not valid.'
