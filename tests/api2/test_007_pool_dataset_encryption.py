@@ -78,7 +78,7 @@ def test_04_change_a_passphrase_encrypted_root_key_encryption():
             'key': dataset_token_hex,
         }
     }
-    results = POST(f'/pool/dataset/change_key/', payload)
+    results = POST('/pool/dataset/change_key/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
@@ -430,7 +430,7 @@ def test_32_try_to_change_a_passphrase_encrypted_root_to_key_on_passphrase_encry
             'key': dataset_token_hex,
         }
     }
-    results = POST(f'/pool/dataset/change_key/', payload)
+    results = POST('/pool/dataset/change_key/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
@@ -563,7 +563,7 @@ def test_45_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool():
             'passphrase': 'my_passphrase',
         }
     }
-    results = POST(f'/pool/dataset/change_key/', payload)
+    results = POST('/pool/dataset/change_key/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)

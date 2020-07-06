@@ -44,16 +44,8 @@ def test_01_set_network_for_ha():
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.skipif(not ha and "domain" not in os.environ, reason="Skipping test for Core")
-def test_02_force_fenced():
-    cmd = 'fenced --force'
-    results = SSH_TEST(cmd, user, password, ip)
-    if results['result'] is True and 'fenced already running' not in results['output']:
-        assert results['result'] is True, results['output']
-
-
 @pytest.mark.skipif(ha, reason='Skipping test for HA')
-def test_03_get_default_network_general_summary():
+def test_02_get_default_network_general_summary():
     results = GET("/network/general/summary/")
     assert results.status_code == 200
     assert isinstance(results.json(), dict), results.text
@@ -62,7 +54,7 @@ def test_03_get_default_network_general_summary():
 
 @dns_cfg
 @pytest.mark.skipif(ha, reason='Skipping test for HA')
-def test_04_configure_setting_domain_hostname_and_dns():
+def test_03_configure_setting_domain_hostname_and_dns():
     global payload
     payload = {"domain": domain,
                "hostname": hostname,
@@ -78,13 +70,13 @@ def test_04_configure_setting_domain_hostname_and_dns():
 @pytest.mark.skipif(ha, reason='Skipping test for HA')
 @pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway",
                                    "nameserver1"])
-def test_05_looking_put_network_configuration_output_(dkeys):
+def test_04_looking_put_network_configuration_output_(dkeys):
     assert results.json()[dkeys] == payload[dkeys], results.text
 
 
 @dns_cfg
 @pytest.mark.skipif(ha, reason='Skipping test for HA')
-def test_06_get_network_configuration_info_():
+def test_05_get_network_configuration_info_():
     global results
     results = GET("/network/configuration/")
     assert results.status_code == 200, results.text
@@ -95,5 +87,5 @@ def test_06_get_network_configuration_info_():
 @pytest.mark.skipif(ha, reason='Skipping test for HA')
 @pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway",
                                    "nameserver1"])
-def test_07_looking_get_network_configuration_output_(dkeys):
+def test_06_looking_get_network_configuration_output_(dkeys):
     assert results.json()[dkeys] == payload[dkeys], results.text
