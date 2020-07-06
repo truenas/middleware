@@ -22,7 +22,7 @@ class ZFSPoolService(Service, PoolDiskServiceBase):
         ):
             if dev['DEVTYPE'] == 'disk':
                 mapping[dev.sys_name] = dev.sys_name
-            else:
+            elif dev.get('ID_PART_ENTRY_UUID'):
                 parent = dev.find_parent('block')
                 mapping[dev.sys_name] = parent.sys_name
                 mapping[os.path.join('disk/by-partuuid', dev['ID_PART_ENTRY_UUID'])] = parent.sys_name
