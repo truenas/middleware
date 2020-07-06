@@ -914,7 +914,12 @@ main(int argc, char **argv)
 				free_windows_acl_info(w);
 				return (1);
 			}
-			w->source += strlen(w->chroot);
+			if (strlen(w->chroot) == strlen(w->source)) {
+				w->source = strdup(".");
+			}
+			else {
+				w->source += strlen(w->chroot);
+			}
 		}
 		if (w->path != NULL ) {
 			if (strncmp(w->chroot, w->path, strlen(w->chroot)) != 0) {
@@ -922,7 +927,12 @@ main(int argc, char **argv)
 				free_windows_acl_info(w);
 				return (1);
 			}
-			w->path += strlen(w->chroot);
+			if (strlen(w->chroot) == strlen(w->path)) {
+				w->path = strdup(".");
+			}
+			else {
+				w->path += strlen(w->chroot);
+			}
 		}
 		ret = chdir(w->chroot);
 		if (ret == -1) {
@@ -936,8 +946,9 @@ main(int argc, char **argv)
 			free_windows_acl_info(w);
 			return (1);
 		}
+		printf("path: [%s]\n", w->path);
 		if (access(w->path, F_OK) < 0) {
-			warn("%s: access() failed after chroot.", w->source);
+			warn("%s: access() failed after chroot.", w->path);
 			free_windows_acl_info(w);
 			return (1);
 		}
