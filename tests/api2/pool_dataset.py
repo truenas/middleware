@@ -153,8 +153,8 @@ def test_13_strip_acl_from_dataset():
 def test_14_setting_dataset_quota():
     global results
     payload = [
-        {'quota_type': 'USER', 'id': 'root', 'quota_value': 0},
-        {'quota_type': 'GROUP', 'id': '0', 'quota_value': 2000000000},
+        {'quota_type': 'USER', 'id': 'shareuser', 'quota_value': 0},
+        {'quota_type': 'GROUP', 'id': '1000', 'quota_value': 2000000000},
         {'quota_type': 'DATASET', 'id': 'QUOTA', 'quota_value': 1073741824}
     ]
     results = POST(f'/pool/dataset/id/{dataset_url}/set_quota', payload)
