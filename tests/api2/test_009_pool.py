@@ -31,7 +31,7 @@ def pool_data():
 
 def expect_state(job_id, state):
     for _ in range(60):
-        job = GET(f"/core/get_jobs/?id={job_id}", controller_a=ha).json()[0]
+        job = GET(f"/core/get_jobs/?id={job_id}").json()[0]
         if job["state"] in ["WAITING", "RUNNING"]:
             time.sleep(1)
             continue
@@ -43,7 +43,7 @@ def expect_state(job_id, state):
 
 
 def test_01_get_pool():
-    results = GET("/pool/", controller_a=ha)
+    results = GET("/pool/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
 
@@ -56,7 +56,7 @@ def test_02_wipe_all_pool_disk():
             "mode": "QUICK",
             "synccache": True
         }
-        results = POST('/disk/wipe/', payload, controller_a=ha)
+        results = POST('/disk/wipe/', payload)
         job_id = results.json()
         expect_state(job_id, "SUCCESS")
 
@@ -73,7 +73,7 @@ def test_03_creating_ha_pool():
             ],
         }
     }
-    results = POST("/pool/", payload, controller_a=ha)
+    results = POST("/pool/", payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     expect_state(job_id, "SUCCESS")
@@ -91,7 +91,7 @@ def test_04_creating_a_pool():
             ],
         }
     }
-    results = POST("/pool/", payload, controller_a=ha)
+    results = POST("/pool/", payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
     expect_state(job_id, "SUCCESS")
@@ -99,7 +99,7 @@ def test_04_creating_a_pool():
 
 def test_05_get_pool_id(request, pool_data):
     depends(request, ["pool_04"])
-    results = GET(f"/pool?name={pool_name}", controller_a=ha)
+    results = GET(f"/pool?name={pool_name}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
     pool_data['id'] = results.json()[0]['id']
@@ -107,7 +107,7 @@ def test_05_get_pool_id(request, pool_data):
 
 def test_06_get_pool_id_info(request, pool_data):
     depends(request, ["pool_04"])
-    results = GET(f"/pool/id/{pool_data['id']}/", controller_a=ha)
+    results = GET(f"/pool/id/{pool_data['id']}/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     global pool_info
