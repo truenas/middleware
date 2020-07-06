@@ -626,9 +626,7 @@ class RsyncTaskService(TaskPathService):
         rsync = await self._get_instance(id)
         path = shlex.quote(rsync['path'])
 
-        line = [
-            '/usr/local/bin/rsync'
-        ]
+        line = ['rsync']
         for name, flag in (
             ('archive', '-a'),
             ('compress', '-z'),
