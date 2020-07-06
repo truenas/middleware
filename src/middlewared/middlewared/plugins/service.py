@@ -5,7 +5,6 @@ import inspect
 import os
 import psutil
 import signal
-import sysctl
 import threading
 import time
 import subprocess
@@ -260,7 +259,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_action', service, 'reload', options)
         try:
             await self._simplecmd("reload", service, options)
-        except Exception as e:
+        except Exception:
             await self.restart(service, options)
         return await self.started(service)
 
@@ -424,9 +423,6 @@ class ServiceService(CRUDService):
         await self._service("ctld", "start", **kwargs)
 
     async def _stop_iscsitarget(self, **kwargs):
-        with contextlib.suppress(IndexError):
-            sysctl.filter("kern.cam.ctl.ha_peer")[0].value = ""
-
         await self._service("ctld", "stop", force=True, **kwargs)
 
     async def _reload_iscsitarget(self, **kwargs):
