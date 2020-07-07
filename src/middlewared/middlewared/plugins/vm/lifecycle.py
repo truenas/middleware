@@ -139,7 +139,7 @@ async def __event_system_ready(middleware, event_type, args):
 
         await middleware.call('vm.initialize_vms')
 
-        if not await middleware.call('system.is_freenas') and await middleware.call('failover.licensed'):
+        if await middleware.call('failover.licensed'):
             return
 
         asyncio.ensure_future(middleware.call('vm.start_on_boot'))

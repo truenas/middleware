@@ -34,9 +34,7 @@ class VMService(Service, VMSupervisorMixin):
             )
 
         if not await self.middleware.call('vm.supports_virtualization'):
-            raise CallError(
-                'This system does not support virtualization.'
-            )
+            raise CallError('This system does not support virtualization.')
 
         # Perhaps we should have a default config option for VMs?
         await self.middleware.call('vm.init_guest_vmemory', vm, options['overcommit'])

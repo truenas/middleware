@@ -5,7 +5,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
-from middlewared.utils import run
+from middlewared.utils import osc, run
 from middlewared.async_validators import check_path_resides_within_volume
 
 from .devices import CDROM, DISK, NIC, PCI, RAW, VNC
@@ -51,7 +51,7 @@ class VMDeviceService(CRUDService):
     async def extend_device(self, device):
         if device['vm']:
             device['vm'] = device['vm']['id']
-        if device['order'] is None:
+        if not device['order']:
             if device['dtype'] == 'CDROM':
                 device['order'] = 1000
             elif device['dtype'] in ('DISK', 'RAW'):
@@ -202,14 +202,10 @@ class VMDeviceService(CRUDService):
         if order is None:
             return
         filters = [('vm', '=', vm_id), ('id', '!=', id)]
-        if await self.middleware.call('vm.device.query', filters + [
-            ('order', '=', order)
-        ]):
+        if await self.middleware.call('vm.device.query', filters + [('order', '=', order)]):
             used_order = [order]
-            for device in await self.middleware.call(
-                'vm.device.query', filters, {'order_by': ['order']}
-            ):
-                if device['order'] is None:
+            for device in await self.middleware.call('vm.device.query', filters, {'order_by': ['order']}):
+                if not device['order']:
                     continue
 
                 if device['order'] not in used_order:
@@ -220,9 +216,7 @@ class VMDeviceService(CRUDService):
                 while device['order'] in used_order:
                     device['order'] += 1
                 used_order.append(device['order'])
-                await self.middleware.call(
-                    'datastore.update', self._config.datastore, device['id'], device
-                )
+                await self.middleware.call('datastore.update', self._config.datastore, device['id'], device)
 
     @private
     async def disk_uniqueness_integrity_check(self, device, vm):
@@ -286,31 +280,22 @@ class VMDeviceService(CRUDService):
             if create_zvol:
                 for attr in ('zvol_name', 'zvol_volsize'):
                     if not device['attributes'].get(attr):
-                        verrors.add(
-                            f'attributes.{attr}',
-                            'This field is required.'
-                        )
+                        verrors.add(f'attributes.{attr}', 'This field is required.')
                 parentzvol = (device['attributes'].get('zvol_name') or '').rsplit('/', 1)[0]
-                if parentzvol and not await self.middleware.call(
-                    'pool.dataset.query', [('id', '=', parentzvol)]
-                ):
+                if parentzvol and not await self.middleware.call('pool.dataset.query', [('id', '=', parentzvol)]):
                     verrors.add(
                         'attributes.zvol_name',
-                        f'Parent dataset {parentzvol} does not exist.',
-                        errno.ENOENT
+                        f'Parent dataset {parentzvol} does not exist.', errno.ENOENT
                     )
                 zvol = await self.middleware.call(
                     'pool.dataset.query', [['id', '=', device['attributes'].get('zvol_name')]]
                 )
                 if not verrors and create_zvol and zvol:
                     verrors.add(
-                        'attributes.zvol_name',
-                        f'{device["attributes"]["zvol_name"]} already exists.'
+                        'attributes.zvol_name', f'{device["attributes"]["zvol_name"]} already exists.'
                     )
                 elif zvol and zvol[0]['locked']:
-                    verrors.add(
-                        'attributes.zvol_name', f'{zvol[0]["id"]} is locked.'
-                    )
+                    verrors.add('attributes.zvol_name', f'{zvol[0]["id"]} is locked.')
             elif not path:
                 verrors.add('attributes.path', 'Disk path is required.')
             elif path and not os.path.exists(path):
@@ -320,9 +305,7 @@ class VMDeviceService(CRUDService):
                 # SPECNAMELEN is not long enough (63) in 12, 13 will be 255
                 verrors.add(
                     'attributes.path',
-                    f'Disk path {path} is too long, reduce to less than 63'
-                    ' characters',
-                    errno.ENAMETOOLONG
+                    f'Disk path {path} is too long, reduce to less than 63 characters', errno.ENAMETOOLONG
                 )
             if not await self.disk_uniqueness_integrity_check(device, vm_instance):
                 verrors.add(
@@ -371,14 +354,13 @@ class VMDeviceService(CRUDService):
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
             await self.failover_nic_check(device, verrors, 'attributes')
         elif device.get('dtype') == 'PCI':
-            if device['attributes'].get('pptdev') not in (
-                    await self.middleware.call('vm.device.pptdev_choices')):
+            if device['attributes'].get('pptdev') not in await self.middleware.call('vm.device.pptdev_choices'):
                 verrors.add('attribute.pptdev', 'Not a valid choice. The PCI device is not available for passthru.')
             if (await self.middleware.call('vm.device.get_iommu_type')) is None:
                 verrors.add('attribute.pptdev', 'IOMMU support is required.')
         elif device.get('dtype') == 'VNC':
             if vm_instance:
-                if vm_instance['bootloader'] != 'UEFI':
+                if osc.IS_FREEBSD and vm_instance['bootloader'] != 'UEFI':
                     verrors.add('dtype', 'VNC only works with UEFI bootloader.')
                 if all(not d.get('id') for d in vm_instance['devices']):
                     # VM is being created so devices don't have an id yet. We can just count no of VNC devices
