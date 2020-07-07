@@ -10,9 +10,10 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST, vm_state, vm_start, ping_host
-from auto_config import vm_name, ip, user, password, ha
+from auto_config import vm_name, ip, user, password, update
 from time import sleep
-pytestmark = pytest.mark.skipif(ha, reason='Skipping test for HA')
+
+pytestmark = pytest.mark.skipif(not update, reason='Skipping update test')
 url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
 
