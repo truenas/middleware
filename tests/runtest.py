@@ -57,7 +57,8 @@ option_list = [
     'test=',
     "vm-name=",
     "ha",
-    "scale"
+    "scale",
+    "update"
 ]
 
 # look if all the argument are there.
@@ -73,6 +74,7 @@ testName = ''
 testexpr = None
 ha = False
 scale = False
+update = False
 
 for output, arg in myopts:
     if output in ('-i', '--ip'):
@@ -91,6 +93,8 @@ for output, arg in myopts:
         ha = True
     elif output == '--scale':
         scale = True
+    elif output == '--update':
+        update = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -118,6 +122,7 @@ keyPath = "{keyPath}"
 pool_name = "tank"
 ha = {ha}
 scale = {scale}
+update = {update}
 """
 
 cfg_file = open("auto_config.py", 'w')
