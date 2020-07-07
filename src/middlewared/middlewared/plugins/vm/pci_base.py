@@ -1,4 +1,4 @@
-from middlewared.service import accepts, private, ServicePartBase
+from middlewared.service import accepts, ServicePartBase
 
 
 class PCIInfoBase(ServicePartBase):
@@ -9,6 +9,8 @@ class PCIInfoBase(ServicePartBase):
         Available choices for PCI passthru device.
         """
 
-    @private
-    async def get_iommu_type(self):
-        raise NotImplementedError
+    @accepts()
+    async def iommu_enabled(self):
+        """
+        Returns "true" if iommu is enabled, "false" otherwise
+        """

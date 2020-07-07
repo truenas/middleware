@@ -17,11 +17,11 @@ class PCI(Device):
         self.init_ppt_map()
 
     def init_ppt_map(self):
-        iommu_type = self.middleware.call_sync('vm.device.get_iommu_type')
+        iommu_enabled = self.middleware.call_sync('vm.device.iommu_enabled')
         pptdevs = self.middleware.call_sync('vm.device.pptdev_choices')
         pptdev = self.data['attributes'].get('pptdev')
         self.ppt_map = {
-            'host_bsf': list(map(int, pptdev.split('/'))) if pptdev in pptdevs and iommu_type else None,
+            'host_bsf': list(map(int, pptdev.split('/'))) if pptdev in pptdevs and iommu_enabled else None,
             'guest_bsf': None
         }
 

@@ -356,7 +356,7 @@ class VMDeviceService(CRUDService):
         elif device.get('dtype') == 'PCI':
             if device['attributes'].get('pptdev') not in await self.middleware.call('vm.device.pptdev_choices'):
                 verrors.add('attribute.pptdev', 'Not a valid choice. The PCI device is not available for passthru.')
-            if (await self.middleware.call('vm.device.get_iommu_type')) is None:
+            if not await self.middleware.call('vm.device.iommu_enabled'):
                 verrors.add('attribute.pptdev', 'IOMMU support is required.')
         elif device.get('dtype') == 'VNC':
             if vm_instance:

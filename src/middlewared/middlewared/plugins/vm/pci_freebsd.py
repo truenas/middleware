@@ -6,7 +6,9 @@ from middlewared.utils import run
 from .pci_base import PCIInfoBase
 
 
+RE_AMDVI = re.compile(br'vmm\.amdvi\.enable: 1')
 RE_PCICONF_PPTDEVS = re.compile(r'^(' + re.escape('ppt') + '[0-9]+@pci.*:)(([0-9]+:){2}[0-9]+).*$', flags=re.I)
+RE_VT_D = re.compile(br'DMAR')
 
 
 class VMDeviceService(Service, PCIInfoBase):
@@ -14,7 +16,7 @@ class VMDeviceService(Service, PCIInfoBase):
     class Config:
         namespace = 'vm.device'
 
-    iommu_type = None
+    iommu_enable = None
     pptdevs = {}
 
     async def pptdev_choices(self):
@@ -34,20 +36,22 @@ class VMDeviceService(Service, PCIInfoBase):
 
         return self.pptdevs
 
-    async def get_iommu_type(self):
-        if self.iommu_type:
-            return self.iommu_type
+    async def iommu_enabled(self):
+        if self.iommu_enable is not None:
+            return self.iommu_enable
 
         for key, value in {
-            'VT-d': {'cmd_args': ['/usr/sbin/acpidump', '-t'], 'pattern': br'DMAR'},
-            'amdvi': {'cmd_args': ['/sbin/sysctl', '-i', 'hw.vmm.amdvi.enable'], 'pattern': br'vmm\.amdvi\.enable: 1'}
+            'VT-d': {'cmd_args': ['/usr/sbin/acpidump', '-t'], 'pattern': RE_VT_D},
+            'amdvi': {'cmd_args': ['/sbin/sysctl', '-i', 'hw.vmm.amdvi.enable'], 'pattern': RE_AMDVI}
         }.items():
             sp = await run(*value['cmd_args'], check=False)
             if sp.returncode:
                 raise CallError(f'Failed to check support for iommu ({key}): {sp.stderr.decode()}')
             else:
-                if re.search(value['pattern'], sp.stdout):
-                    self.iommu_type = key
+                if value['pattern'].search(sp.stdout):
+                    self.iommu_enable = True
                     break
+        else:
+            self.iommu_enable = False
 
-        return self.iommu_type
+        return self.iommu_enable
