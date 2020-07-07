@@ -4,7 +4,8 @@
 #
 
 # PROVIDE: ix-sed
-# BEFORE: ix-fstab
+# REQUIRE: ix-syncdisks
+# BEFORE: ix-zfs
 
 . /etc/rc.subr
 
