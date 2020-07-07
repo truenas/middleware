@@ -21,7 +21,7 @@ class StorageDevice(Device):
                         'target', bus='sata' if not virtio else 'virtio',
                         dev=f'{"vd" if virtio else "sd"}{disk_from_number(disk_number)}'
                     ),
-                    create_element('boot', order=str(disk_number)),
+                    create_element('boot', order=str(kwargs.pop('boot_number'))),
                     *([] if not logical_sectorsize else [create_element(
                         'blockio', logical_block_size=str(logical_sectorsize), **({} if not physical_sectorsize else {
                             'physical_block_size': physical_sectorsize

@@ -19,7 +19,7 @@ class CDROM(Device):
                     create_element('driver', name='qemu', type='raw'),
                     create_element('source', file=self.data['attributes']['path']),
                     create_element('target', dev=f'sd{disk_from_number(disk_number)}', bus='sata'),
-                    create_element('boot', order=str(disk_number)),
+                    create_element('boot', order=str(kwargs.pop('boot_number'))),
                 ]
             }
         )

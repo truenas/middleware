@@ -29,6 +29,7 @@ class VMSupervisor(VMSupervisorBase):
         return [create_element('os', attribute_dict={'children': children})]
 
     def devices_xml(self):
+        boot_no = Nid(1)
         scsi_device_no = Nid(1)
         virtual_device_no = Nid(1)
         devices = []
@@ -38,7 +39,7 @@ class VMSupervisor(VMSupervisorBase):
                     disk_no = virtual_device_no()
                 else:
                     disk_no = scsi_device_no()
-                device_xml = device.xml(disk_number=disk_no)
+                device_xml = device.xml(disk_number=disk_no, boot_number=boot_no())
             else:
                 device_xml = device.xml()
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
