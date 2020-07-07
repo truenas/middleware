@@ -18,9 +18,9 @@ class VMInfoBase(ServicePartBase):
         """
 
     @accepts()
-    async def available_slots(self):
+    async def maximum_supported_vcpus(self):
         """
-        Returns available number of slots which can be used for attaching devices to a VM
+        Returns maximum supported VCPU's
         """
 
     @accepts()

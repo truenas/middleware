@@ -7,6 +7,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range
+from middlewared.utils import osc
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -138,7 +139,25 @@ class VMService(CRUDService, VMSupervisorMixin):
     async def __common_validation(self, verrors, schema_name, data, old=None):
         vcpus = data['vcpus'] * data['cores'] * data['threads']
         if vcpus:
-            await self.middleware.call('vm.validate_vcpus', vcpus, schema_name, verrors)
+            flags = await self.middleware.call('vm.flags')
+            max_vcpus = await self.middleware.call('vm.maximum_supported_vcpus')
+            if vcpus > max_vcpus:
+                verrors.add(
+                    f'{schema_name}.vcpus',
+                    f'Maximum {max_vcpus} vcpus are supported.'
+                    f'Please ensure the product of "{schema_name}.vcpus", "{schema_name}.cores" and '
+                    f'"{schema_name}.threads" is less then {max_vcpus}.'
+                )
+            elif flags['intel_vmx']:
+                if vcpus > 1 and flags['unrestricted_guest'] is False:
+                    verrors.add(f'{schema_name}.vcpus', 'Only one Virtual CPU is allowed in this system.')
+            elif flags['amd_rvi']:
+                if vcpus > 1 and flags['amd_asids'] is False:
+                    verrors.add(
+                        f'{schema_name}.vcpus', 'Only one virtual CPU is allowed in this system.'
+                    )
+            elif not await self.middleware.call('vm.supports_virtualization'):
+                verrors.add(schema_name, 'This system does not support virtualization.')
 
         if 'name' in data:
             filters = [('name', '=', data['name'])]
@@ -172,8 +191,10 @@ class VMService(CRUDService, VMSupervisorMixin):
                 for attribute, errmsg, enumber in verrs:
                     verrors.add(f'{schema_name}.devices.{i}.{attribute}', errmsg, enumber)
 
+        # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
+        # with reports of users having thousands of disks
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
-        if await self.middleware.call('vm.validate_slots', data):
+        if osc.IS_FREEBSD and not await self.middleware.call('vm.validate_slots', data):
             verrors.add(
                 f'{schema_name}.devices',
                 'Please adjust the number of devices attached to this VM. '

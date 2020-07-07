@@ -1,5 +1,6 @@
 from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, item_method, job, Service
+from middlewared.utils import osc
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -26,7 +27,7 @@ class VMService(Service, VMSupervisorMixin):
         if vm['status']['state'] == 'RUNNING':
             raise CallError(f'{vm["name"]} is already running')
 
-        if await self.middleware.call('vm.validate_slots', vm):
+        if osc.IS_FREEBSD and not await self.middleware.call('vm.validate_slots', vm):
             raise CallError(
                 'Please adjust the devices attached to this VM. '
                 f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'

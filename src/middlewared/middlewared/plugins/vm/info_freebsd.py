@@ -9,12 +9,12 @@ from .info_base import VMInfoBase
 
 class VMService(Service, VMInfoBase):
 
-    def supports_virtualization(self):
-        flags = self.flags()
+    async def supports_virtualization(self):
+        flags = await self.middleware.call('vm.flags')
         return flags['intel_vmx'] or flags['amd_rvi']
 
-    def available_slots(self):
-        return 29  # 3 slots are being used by libvirt / bhyve
+    async def maximum_supported_vcpus(self):
+        return 16
 
     def flags(self):
         data = self.flags_base.copy()

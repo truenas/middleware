@@ -18,8 +18,8 @@ class VMService(Service, VMInfoBase):
         cp = await run(['kvm-ok'], check=False)
         return cp.returncode == 0
 
-    def available_slots(self):
-        raise NotImplementedError
+    async def maximum_supported_vcpus(self):
+        return 255
 
     async def flags(self):
         flags = self.flags_base.copy()
@@ -48,4 +48,5 @@ class VMService(Service, VMInfoBase):
         return flags
 
     async def get_console(self, id):
-        raise NotImplementedError
+        vm = await self.middleware.call('vm.get_instance', id)
+        return f'{vm["id"]}_{vm["name"]}'
