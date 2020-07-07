@@ -79,10 +79,10 @@ def lifetime_iso8601(value, unit):
     return timedelta_iso8601(lifetime_timedelta(value, unit))
 
 
-def replication_task_exclude(source_datasets, recursive, exclude):
-    if recursive:
-        exclude = list(exclude)
-        for ds in source_datasets:
+def replication_task_exclude(replication_task):
+    exclude = list(replication_task["exclude"])
+    if replication_task["recursive"] and not replication_task["replicate"]:
+        for ds in replication_task["source_datasets"]:
             # Exclude all possible FreeNAS system datasets
             if "/" not in ds:
                 exclude.append(f"{ds}/.system")
@@ -520,9 +520,7 @@ class ZettareplService(Service):
                 "source-dataset": replication_task["source_datasets"],
                 "target-dataset": replication_task["target_dataset"],
                 "recursive": replication_task["recursive"],
-                "exclude": replication_task_exclude(replication_task["source_datasets"],
-                                                    replication_task["recursive"],
-                                                    replication_task["exclude"]),
+                "exclude": replication_task_exclude(replication_task),
                 "properties": replication_task["properties"],
                 "replicate": replication_task["replicate"],
                 "periodic-snapshot-tasks": my_periodic_snapshot_tasks,
