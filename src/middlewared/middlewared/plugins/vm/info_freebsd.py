@@ -17,7 +17,7 @@ class VMService(Service, VMInfoBase):
         return 29  # 3 slots are being used by libvirt / bhyve
 
     def flags(self):
-        data = {}
+        data = self.flags_base.copy()
         intel = True if 'Intel' in sysctl.filter('hw.model')[0].value else False
 
         vmx = sysctl.filter('hw.vmm.vmx.initialized')

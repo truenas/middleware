@@ -4,6 +4,13 @@ from middlewared.service import accepts, ServicePartBase
 
 class VMInfoBase(ServicePartBase):
 
+    flags_base = {
+        'intel_vmx': False,
+        'unrestricted_guest': False,
+        'amd_rvi': False,
+        'amd_asids': False,
+    }
+
     @accepts()
     async def supports_virtualization(self):
         """
