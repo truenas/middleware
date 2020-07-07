@@ -78,6 +78,7 @@ class SMBPath(enum.Enum):
     RUNDIR = ('/var/run/samba4', '/var/run/samba', 0o755, True)
     LOCKDIR = ('/var/lock', '/var/lock', 0o755, True)
     LOGDIR = ('/var/log/samba4', '/var/log/samba', 0o755, True)
+    IPCSHARE = ('/var/tmp', '/tmp', 0o1777, True)
 
     def platform(self):
         return self.value[1] if osc.IS_LINUX else self.value[0]
