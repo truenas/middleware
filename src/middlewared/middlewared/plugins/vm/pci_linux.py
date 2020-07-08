@@ -59,9 +59,9 @@ class VMDeviceService(Service, PCIInfoBase):
                 continue
             xml = etree.fromstring(cp.stdout.decode().strip())
             driver = next((e for e in xml.getchildren() if e.tag == 'driver'), None)
-            drivers = [e.text for e in driver.getchildren()] if driver else []
+            drivers = [e.text for e in driver.getchildren()] if driver is not None else []
 
-            if drivers and not all(d == 'vfio-pci' for d in drivers):
+            if not driver or (drivers and not all(d == 'vfio-pci' for d in drivers)):
                 self.middleware.logger.debug(
                     'Only "vfio-pci" driver is expected to be configured for %r PCI device. Driver(s) found were: %s',
                     pci, ', '.join(drivers)

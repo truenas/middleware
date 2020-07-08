@@ -42,7 +42,14 @@ class VMSupervisor(VMSupervisorBase):
                 if pptdev_choices is None:
                     pptdev_choices = self.middleware.call_sync('vm.device.passthrough_device_choices')
                 if device.passthru_device() not in pptdev_choices:
+                    self.middleware.call_sync(
+                        'alert.oneshot_create', 'PCIDeviceUnavailable', {
+                            'pci': device.passthru_device(), 'vm_name': self.vm_data['name']
+                        }
+                    )
                     continue
+                else:
+                    self.middleware.call_sync('alert.oneshot_delete', 'PCIDeviceUnavailable', device.passthru_device())
                 device_xml = device.xml(passthrough_choices=pptdev_choices)
             else:
                 device_xml = device.xml()

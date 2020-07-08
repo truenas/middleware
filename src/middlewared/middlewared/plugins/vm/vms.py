@@ -46,7 +46,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         """
         Supported motherboard firmware options.
         """
-        return BOOT_LOADER_OPTIONS
+        return {v: v for v in BOOT_LOADER_OPTIONS}
 
     @private
     async def extend_vm(self, vm):

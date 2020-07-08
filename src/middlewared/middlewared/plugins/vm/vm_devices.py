@@ -165,6 +165,10 @@ class VMDeviceService(CRUDService):
 
         await self.middleware.call('datastore.update', self._config.datastore, id, new)
         await self.__reorder_devices(id, device['vm'], new['order'])
+        if device['dtype'] == 'PCI' and (
+            new['dtype'] != 'PCI' or new['attributes']['pptdev'] != device['attributes']['pptdev']
+        ):
+            await self.middleware.call('alert.oneshot_delete', 'PCIDeviceUnavailable', device['attributes']['pptdev'])
 
         return await self.get_instance(id)
 
@@ -199,7 +203,10 @@ class VMDeviceService(CRUDService):
         """
         Delete a VM device of `id`.
         """
-        await self.delete_resource(options, await self.get_instance(id))
+        device = await self.get_instance(id)
+        await self.delete_resource(options, device)
+        if device['dtype'] == 'PCI':
+            await self.middleware.call('alert.oneshot_delete', 'PCIDeviceUnavailable', device['attributes']['pptdev'])
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
