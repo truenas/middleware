@@ -24,7 +24,7 @@ class StorageDevice(Device):
                     create_element('boot', order=str(kwargs.pop('boot_number'))),
                     *([] if not logical_sectorsize else [create_element(
                         'blockio', logical_block_size=str(logical_sectorsize), **({} if not physical_sectorsize else {
-                            'physical_block_size': physical_sectorsize
+                            'physical_block_size': str(physical_sectorsize)
                         })
                     )]),
                 ]
@@ -48,7 +48,7 @@ class StorageDevice(Device):
                     child_element,
                     *([] if not logical_sectorsize else [create_element(
                         'blockio', logical_block_size=str(logical_sectorsize), **({} if not physical_sectorsize else {
-                            'physical_block_size': physical_sectorsize
+                            'physical_block_size': str(physical_sectorsize)
                         })
                     )]),
                 ]

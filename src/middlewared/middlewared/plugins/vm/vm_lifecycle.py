@@ -42,7 +42,12 @@ class VMService(Service, VMSupervisorMixin):
         # Perhaps we should have a default config option for VMs?
         await self.middleware.call('vm.init_guest_vmemory', vm, options['overcommit'])
 
-        await self.middleware.run_in_thread(self._start, vm['name'])
+        try:
+            await self.middleware.run_in_thread(self._start, vm['name'])
+        except Exception:
+            if (await self.middleware.call('vm.get_instance', id))['status']['state'] != 'RUNNING':
+                await self.middleware.call('vm.teardown_guest_vmemory', id)
+            raise
 
     @item_method
     @accepts(
@@ -65,8 +70,8 @@ class VMService(Service, VMSupervisorMixin):
         `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
         not already stopped within the specified `shutdown_timeout`.
         """
-        vm_data = self.middleware.call_sync('vm.get_instance', id)
         self._check_connection_alive()
+        vm_data = self.middleware.call_sync('vm.get_instance', id)
 
         if options['force']:
             self._poweroff(vm_data['name'])
@@ -84,8 +89,9 @@ class VMService(Service, VMSupervisorMixin):
         """
         Poweroff a VM.
         """
-        vm_data = self.middleware.call_sync('vm.get_instance', id)
         self._check_connection_alive()
+
+        vm_data = self.middleware.call_sync('vm.get_instance', id)
         self._poweroff(vm_data['name'])
         self.middleware.call_sync('vm.teardown_guest_vmemory', id)
 
@@ -96,6 +102,7 @@ class VMService(Service, VMSupervisorMixin):
         """
         Restart a VM.
         """
+        self._check_connection_alive()
         vm = self.middleware.call_sync('vm.get_instance', id)
         self._check_connection_alive()
         self._restart(vm['name'])
