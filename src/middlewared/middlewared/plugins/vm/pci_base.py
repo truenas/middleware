@@ -10,6 +10,12 @@ class PCIInfoBase(ServicePartBase):
         """
 
     @accepts()
+    async def passthrough_device_choices(self):
+        """
+        Available choices for PCI passthru devices.
+        """
+
+    @accepts()
     async def iommu_enabled(self):
         """
         Returns "true" if iommu is enabled, "false" otherwise
