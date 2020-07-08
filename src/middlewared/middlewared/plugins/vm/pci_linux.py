@@ -19,7 +19,7 @@ class VMDeviceService(Service, PCIInfoBase):
     async def iommu_enabled(self):
         cp = await run(['virt-host-validate'], check=False)
         if cp.returncode:
-            raise CallError(f'Unable to determine if iommu is enabled: %s', cp.stderr.decode())
+            raise CallError('Unable to determine if iommu is enabled: %s', cp.stderr.decode())
         return bool(RE_IOMMU_ENABLED.findall(cp.stdout.decode()))
 
     @private
@@ -47,7 +47,7 @@ class VMDeviceService(Service, PCIInfoBase):
         return info
 
     async def passthrough_device_choices(self):
-        cp = await run(['virsh',  'nodedev-list', 'pci'], check=False)
+        cp = await run(['virsh', 'nodedev-list', 'pci'], check=False)
         if cp.returncode:
             raise CallError(f'Unable to retrieve PCI devices: {cp.stderr.decode()}')
         pci_devices = [k.strip() for k in cp.stdout.decode().split('\n') if k.strip()]

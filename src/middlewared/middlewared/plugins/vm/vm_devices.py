@@ -1,5 +1,6 @@
 import errno
 import os
+import re
 
 import middlewared.sqlalchemy as sa
 
@@ -9,6 +10,9 @@ from middlewared.utils import osc, run
 from middlewared.async_validators import check_path_resides_within_volume
 
 from .devices import CDROM, DISK, NIC, PCI, RAW, VNC
+
+
+RE_PPTDEV_NAME = re.compile(r'([0-9]+/){2}[0-9]+')
 
 
 class VMDeviceModel(sa.Model):
@@ -354,7 +358,10 @@ class VMDeviceService(CRUDService):
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
             await self.failover_nic_check(device, verrors, 'attributes')
         elif device.get('dtype') == 'PCI':
-            if device['attributes'].get('pptdev') not in await self.middleware.call('vm.device.pptdev_choices'):
+            pptdev = device['attributes'].get('pptdev')
+            if osc.IS_FREEBSD and not RE_PPTDEV_NAME.findall(pptdev):
+                verrors.add('attribute.pptdev', 'Please specify correct PCI device for passthru.')
+            if pptdev not in await self.middleware.call('vm.device.pptdev_choices'):
                 verrors.add('attribute.pptdev', 'Not a valid choice. The PCI device is not available for passthru.')
             if not await self.middleware.call('vm.device.iommu_enabled'):
                 verrors.add('attribute.pptdev', 'IOMMU support is required.')

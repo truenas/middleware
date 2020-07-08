@@ -1,5 +1,5 @@
 from middlewared.schema import Dict, Str
-from middlewared.validators import Match
+from middlewared.utils import osc
 
 from .device import Device
 from .utils import create_element
@@ -9,12 +9,31 @@ class PCI(Device):
 
     schema = Dict(
         'attributes',
-        Str('pptdev', required=True, validators=[Match(r'([0-9]+/){2}[0-9]+')]),
+        Str('pptdev', required=True, empty=False),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.init_ppt_map()
+        if osc.IS_FREEBSD:
+            self.init_ppt_map()
+
+    def passthru_device(self):
+        return self.data['attributes']['pptdev']
+
+    def xml_linux(self, *args, **kwargs):
+        passthrough_choices = kwargs.pop('passthrough_choices')
+        addresses = passthrough_choices[self.passthru_device()]['iommu_group']['addresses']
+        return create_element(
+            'hostdev', mode='subsystem', type='pci', managed='yes', attribute_dict={
+                'children': [
+                    create_element('source', attribute_dict={
+                        'children': [
+                            create_element('address', **a) for a in addresses if all(a[k] for k in a)
+                        ]
+                    })
+                ]
+            }
+        )
 
     def init_ppt_map(self):
         iommu_enabled = self.middleware.call_sync('vm.device.iommu_enabled')
