@@ -400,6 +400,7 @@ class SMBService(SystemServiceService):
     @private
     @job(lock="smb_configure")
     async def configure(self, job):
+        await self.reset_smb_ha_mode()
         job.set_progress(0, 'Preparing to configure SMB.')
         data = await self.config()
         job.set_progress(10, 'Generating SMB config.')
