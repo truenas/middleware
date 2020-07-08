@@ -1516,8 +1516,15 @@ async def hook_setup_ha(middleware, *args, **kwargs):
             middleware.logger.debug('[HA] Regenerating /tmp/failover.json')
             await middleware.call('service.restart', 'failover')
 
+            # In the event HA is configured and the end-user deletes
+            # an interface, we need to sync the database over to the
+            # standby node before we call `interface.sync`
+            middleware.logger.debug('[HA] Sending database to standby node')
+            await middleware.call('failover.send_database')
+
             middleware.logger.debug('[HA] Configuring network on standby node')
             await middleware.call('failover.call_remote', 'interface.sync')
+
         return
 
     middleware.logger.info('[HA] Setting up')
