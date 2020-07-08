@@ -30,6 +30,7 @@ class VMService(Service, VMInfoBase):
         cp = await run(['lscpu'], check=False)
         if cp.returncode:
             self.middleware.logger.error('Failed to retrieve CPU details: %s', cp.stderr.decode())
+            return flags
 
         if RE_VENDOR_INTEL.findall(cp.stdout.decode()):
             flags['intel_vmx'] = True
