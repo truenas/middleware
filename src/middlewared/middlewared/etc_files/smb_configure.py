@@ -277,6 +277,7 @@ def validate_group_mappings(middleware, conf):
 
 
 def render(service, middleware):
+    middleware.call_sync('smb.reset_smb_ha_mode')
     conf = {}
     conf = get_config(middleware)
     if conf['systemdataset']['path'] is None:
