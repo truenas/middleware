@@ -12,6 +12,7 @@ from middlewared.utils import osc
 from .vm_supervisor import VMSupervisorMixin
 
 
+BOOT_LOADER_OPTIONS = ['UEFI', 'UEFI_CSM'] + (['GRUB'] if osc.IS_FREEBSD else [])
 LIBVIRT_LOCK = asyncio.Lock()
 RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
 
@@ -40,6 +41,13 @@ class VMService(CRUDService, VMSupervisorMixin):
         datastore = 'vm.vm'
         datastore_extend = 'vm.extend_vm'
 
+    @accepts()
+    async def bootloader_options(self):
+        """
+        Supported motherboard firmware options.
+        """
+        return BOOT_LOADER_OPTIONS
+
     @private
     async def extend_vm(self, vm):
         vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
@@ -54,7 +62,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('cores', default=1),
         Int('threads', default=1),
         Int('memory', required=True),
-        Str('bootloader', enum=['UEFI', 'UEFI_CSM', 'GRUB'], default='UEFI'),
+        Str('bootloader', enum=BOOT_LOADER_OPTIONS, default='UEFI'),
         Str('grubconfig', null=True),
         List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
@@ -158,6 +166,9 @@ class VMService(CRUDService, VMSupervisorMixin):
                     )
             elif not await self.middleware.call('vm.supports_virtualization'):
                 verrors.add(schema_name, 'This system does not support virtualization.')
+
+        if osc.IS_LINUX and data.get('grubconfig'):
+            verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
 
         if 'name' in data:
             filters = [('name', '=', data['name'])]

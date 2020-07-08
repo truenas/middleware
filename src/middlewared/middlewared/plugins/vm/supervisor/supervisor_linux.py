@@ -16,9 +16,6 @@ class VMSupervisor(VMSupervisorBase):
         return []
 
     def os_xml(self):
-        # TODO: UEFI_CSM works if we don't specify the ovmf loader attribute, however please confirm
-        # that this is still the intended behaviour and not the consequence of something else
-        # https://access.redhat.com/sites/default/files/attachments/ovmf-whtepaper-031815.pdf
         children = [create_element('type', attribute_dict={'text': 'hvm'})]
         if self.vm_data['bootloader'] == 'UEFI':
             children.append(

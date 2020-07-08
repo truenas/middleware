@@ -36,6 +36,9 @@ class VMService(Service, VMSupervisorMixin):
         if not await self.middleware.call('vm.supports_virtualization'):
             raise CallError('This system does not support virtualization.')
 
+        if osc.IS_LINUX and vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
+            raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
+
         # Perhaps we should have a default config option for VMs?
         await self.middleware.call('vm.init_guest_vmemory', vm, options['overcommit'])
 
