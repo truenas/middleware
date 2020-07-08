@@ -140,11 +140,17 @@ class InterfaceService(Service):
         # carp must be configured after removing addresses
         # in case removing the address removes the carp
         if carp_vhid:
-            if not self.middleware.call_sync('system.is_freenas') and not advskew:
-                if self.middleware.call_sync('failover.node') == 'A':
+            if self.middleware.call_sync('failover.licensed') and not advskew:
+                if 'NO_FAILOVER' in self.middleware.call_sync('failover.disabled_reasons'):
+                    if self.middleware.call_sync('failover.vip.get_states')[0]:
+                        advskew = 20
+                    else:
+                        advskew = 80
+                elif self.middleware.call_sync('failover.node') == 'A':
                     advskew = 20
                 else:
                     advskew = 80
+
             # FIXME: change py-netif to accept str() key
             iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
 
