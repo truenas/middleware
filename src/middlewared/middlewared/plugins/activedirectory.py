@@ -925,7 +925,7 @@ class ActiveDirectoryService(ConfigService):
         """
         ad = await self.config()
         smb = await self.middleware.call('smb.config')
-        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
         if smb_ha_mode == 'UNIFIED':
             if await self.middleware.call('failover.status') != 'MASTER':
                 return
