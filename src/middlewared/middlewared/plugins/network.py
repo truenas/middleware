@@ -399,7 +399,7 @@ class InterfaceService(CRUDService):
             if not is_freenas and name in internal_ifaces:
                 continue
             try:
-                data[name] = self.iface_extend(iface.__getstate__(), configs, is_freenas)
+                data[name] = self.iface_extend(iface.__getstate__(media=True), configs, is_freenas)
             except OSError:
                 self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
         for name, config in filter(lambda x: x[0] not in data, configs.items()):

@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import logging
+import subprocess
 
 from .address import AddressFamily, AddressMixin
 from .bridge import BridgeMixin
@@ -90,7 +91,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
         except IndexError:
             return None
 
-    def __getstate__(self, address_stats=False):
+    def __getstate__(self, address_stats=False, media=False):
         state = {
             'name': self.name,
             'orig_name': self.orig_name,
@@ -111,6 +112,27 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin):
             'aliases': [i.__getstate__(stats=address_stats) for i in self.addresses],
             'carp_config': None,
         }
+
+        if media:
+            p = subprocess.run(["ethtool", self.name], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                               encoding="utf-8", errors="ignore")
+            if p.returncode == 0:
+                ethtool = {
+                    k.strip(): v.strip()
+                    for k, v in map(lambda s: s.split(":", 1), [line for line in p.stdout.splitlines() if ":" in line])
+                }
+                if "Speed" in ethtool:
+                    bits = [ethtool["Speed"]]
+                    if "Port" in ethtool:
+                        bits.append(ethtool["Port"])
+                    media_subtype = " ".join(bits)
+
+                    state.update({
+                        "media_type": "Ethernet",
+                        "media_subtype": "autoselect" if ethtool.get("Auto-negotiation") == "on" else media_subtype,
+                        "active_media_type": "Ethernet",
+                        "active_media_subtype": media_subtype,
+                    })
 
         if self.name.startswith('bond'):
             state.update({
