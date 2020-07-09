@@ -12,11 +12,11 @@ ZFS_MODULE_PARAMS_PATH = '/sys/module/zfs/parameters'
 
 class SysctlService(Service, SysctlInfoBase):
 
-    def get_value(self, sysctl_name):
-        raise NotImplementedError
-
-    def not_found_error(self, name):
-        raise CallError(f'"{name}" sysctl could not be found', errno.ENOENT)
+    async def get_value(self, sysctl_name):
+        cp = await run(['sysctl', sysctl_name], check=False)
+        if cp.returncode:
+            raise CallError(f'Unable to retrieve value of "{sysctl_name}" sysctl : {cp.stderr.decode()}')
+        return cp.stdout.decode().split('=')[-1].strip()
 
     def get_arc_max(self):
         return self.get_arcstats()['c_max']
@@ -29,7 +29,7 @@ class SysctlService(Service, SysctlInfoBase):
             with open(path, 'r') as f:
                 return f.read().strip()
         else:
-            self.not_found_error(name)
+            raise CallError(f'"{name}" sysctl could not be found', errno.ENOENT)
 
     async def get_pagesize(self):
         cp = await run(['getconf', 'PAGESIZE'], check=False)
