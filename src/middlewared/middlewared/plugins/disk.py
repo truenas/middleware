@@ -1044,7 +1044,11 @@ class DiskService(CRUDService):
             original_disk = disk.copy()
 
             name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'])
-            if not name or name in seen_disks:
+            if (
+                    not name or
+                    name in seen_disks or
+                    await self.middleware.call('disk.device_to_identifier', name) != disk['disk_identifier']
+            ):
                 # If we cant translate the identifier to a device, give up
                 # If name has already been seen once then we are probably
                 # dealing with with multipath here
