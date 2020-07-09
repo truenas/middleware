@@ -60,6 +60,6 @@ class VMSupervisor(VMSupervisorBase):
 
     def cpu_xml(self):
         cpu_elem = super().cpu_xml()
-        if self.vm_data['cpu_host_passthrough']:
+        if self.vm_data['cpu_mode']:
             cpu_elem.set('mode', 'host-passthrough')
         return cpu_elem
