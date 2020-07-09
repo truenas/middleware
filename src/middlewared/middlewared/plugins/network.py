@@ -1154,6 +1154,8 @@ class InterfaceService(CRUDService):
                 passwd = random_string(string_size=16)
             else:
                 passwd = random_string()
+        else:
+            passwd = data['failover_pass']
 
         return {
             'name': data.get('description') or '',
