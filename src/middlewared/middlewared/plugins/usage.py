@@ -9,6 +9,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from middlewared.service import Service
+from middlewared.utils import osc
 
 
 class UsageService(Service):
@@ -65,7 +66,9 @@ class UsageService(Service):
 
         return json.dumps(
             {
-                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f))
+                k: v for f in dir(self) if f.startswith('gather_') and callable(getattr(self, f)) and (
+                    not f.endswith(('_freebsd', '_linux')) or f.rsplit('_', 1)[-1].upper() == osc.SYSTEM
+                )
                 for k, v in self.middleware.call_sync(f'usage.{f}', context).items()
             }, sort_keys=True
         )
@@ -152,7 +155,7 @@ class UsageService(Service):
             }
         }
 
-    async def gather_jails(self, context):
+    async def gather_jails_freebsd(self, context):
         try:
             jails = await self.middleware.call('jail.query')
         except Exception:
@@ -264,7 +267,7 @@ class UsageService(Service):
             'system': [{'users': users, 'snapshots': snapshots, 'zvols': zvols, 'datasets': datasets}]
         }
 
-    async def gather_plugins(self, context):
+    async def gather_plugins_freebsd(self, context):
         try:
             plugins = await self.middleware.call('plugin.query')
         except Exception:
