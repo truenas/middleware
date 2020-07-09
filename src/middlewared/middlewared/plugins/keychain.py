@@ -138,7 +138,7 @@ class SSHKeyPair(KeychainCredentialType):
                     return
 
             if attributes["public_key"]:
-                if " ".join(attributes["public_key"].split()[:2]).strip() != public_key.strip():
+                if self._normalize_public_key(attributes["public_key"]) != self._normalize_public_key(public_key):
                     verrors.add(f"{schema_name}.public_key", "Private key and public key do not match")
             else:
                 attributes["public_key"] = public_key
@@ -157,6 +157,9 @@ class SSHKeyPair(KeychainCredentialType):
             if proc.returncode != 0:
                 verrors.add(f"{schema_name}.public_key", "Invalid public key")
                 return
+
+    def _normalize_public_key(self, public_key):
+        return " ".join(public_key.split()[:2]).strip()
 
 
 class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
