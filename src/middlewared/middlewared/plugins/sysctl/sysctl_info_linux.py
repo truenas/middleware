@@ -1,4 +1,3 @@
-import errno
 import os
 
 from middlewared.service import CallError, Service
@@ -12,6 +11,9 @@ ZFS_MODULE_PARAMS_PATH = '/sys/module/zfs/parameters'
 
 class SysctlService(Service, SysctlInfoBase):
 
+    class Config:
+        private = True
+
     async def get_value(self, sysctl_name):
         cp = await run(['sysctl', sysctl_name], check=False)
         if cp.returncode:
@@ -23,13 +25,6 @@ class SysctlService(Service, SysctlInfoBase):
 
     def get_arc_min(self):
         return self.get_arcstats()['c_min']
-
-    def read_value_from_file(self, path, name):
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                return f.read().strip()
-        else:
-            raise CallError(f'"{name}" sysctl could not be found', errno.ENOENT)
 
     async def get_pagesize(self):
         cp = await run(['getconf', 'PAGESIZE'], check=False)
