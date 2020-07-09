@@ -223,16 +223,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             create_element('vcpu', attribute_dict={
                 'text': str(self.vm_data['vcpus'] * self.vm_data['cores'] * self.vm_data['threads'])
             }),
-            create_element(
-                'cpu', attribute_dict={
-                    'children': [
-                        create_element(
-                            'topology', sockets=str(self.vm_data['vcpus']), cores=str(self.vm_data['cores']),
-                            threads=str(self.vm_data['threads'])
-                        )
-                    ]
-                }
-            ),
+            self.cpu_xml(),
             # Memory related xml
             create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
             # Add features
@@ -278,6 +269,18 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             isinstance(d, RAW) and d.data['attributes'].get('boot') for d in self.devices
         ):
             raise CallError(f'Unable to find boot devices for {self.libvirt_domain_name} domain')
+
+    def cpu_xml(self):
+        return create_element(
+            'cpu', attribute_dict={
+                'children': [
+                    create_element(
+                        'topology', sockets=str(self.vm_data['vcpus']), cores=str(self.vm_data['cores']),
+                        threads=str(self.vm_data['threads'])
+                    )
+                ]
+            }
+        )
 
     def construct_xml(self):
         raise NotImplementedError

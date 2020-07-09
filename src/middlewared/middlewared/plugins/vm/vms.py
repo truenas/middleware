@@ -32,6 +32,7 @@ class VMModel(sa.Model):
     cores = sa.Column(sa.Integer(), default=1)
     threads = sa.Column(sa.Integer(), default=1)
     shutdown_timeout = sa.Column(sa.Integer(), default=90)
+    cpu_host_passthrough = sa.Column(sa.Boolean())
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -52,10 +53,13 @@ class VMService(CRUDService, VMSupervisorMixin):
     async def extend_vm(self, vm):
         vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
         vm['status'] = await self.middleware.call('vm.status', vm['id'])
+        if osc.IS_FREEBSD:
+            vm.pop('cpu_host_passthrough', None)
         return vm
 
     @accepts(Dict(
         'vm_create',
+        Bool('cpu_host_passthrough', default=False),
         Str('name', required=True),
         Str('description'),
         Int('vcpus', default=1),
@@ -205,12 +209,17 @@ class VMService(CRUDService, VMSupervisorMixin):
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
-        if osc.IS_FREEBSD and not await self.middleware.call('vm.validate_slots', data):
-            verrors.add(
-                f'{schema_name}.devices',
-                'Please adjust the number of devices attached to this VM. '
-                f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
-            )
+        if osc.IS_FREEBSD:
+            if not await self.middleware.call('vm.validate_slots', data):
+                verrors.add(
+                    f'{schema_name}.devices',
+                    'Please adjust the number of devices attached to this VM. '
+                    f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
+                )
+            if data.get('cpu_host_passthrough'):
+                verrors.add(
+                    f'{schema_name}.cpu_host_passthrough', 'This attribute is not supported on this platform'
+                )
 
     async def __do_update_devices(self, id, devices):
         # There are 3 cases:

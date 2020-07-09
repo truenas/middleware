@@ -57,3 +57,9 @@ class VMSupervisor(VMSupervisorBase):
 
         devices.extend([create_element('serial', type='pty'), create_element('video')])
         return create_element('devices', attribute_dict={'children': devices})
+
+    def cpu_xml(self):
+        cpu_elem = super().cpu_xml()
+        if self.vm_data['cpu_host_passthrough']:
+            cpu_elem.set('mode', 'host-passthrough')
+        return cpu_elem
