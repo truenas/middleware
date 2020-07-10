@@ -32,6 +32,8 @@ class VMModel(sa.Model):
     cores = sa.Column(sa.Integer(), default=1)
     threads = sa.Column(sa.Integer(), default=1)
     shutdown_timeout = sa.Column(sa.Integer(), default=90)
+    cpu_mode = sa.Column(sa.Text())
+    cpu_model = sa.Column(sa.Text(), nullable=True)
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -52,10 +54,15 @@ class VMService(CRUDService, VMSupervisorMixin):
     async def extend_vm(self, vm):
         vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
         vm['status'] = await self.middleware.call('vm.status', vm['id'])
+        if osc.IS_FREEBSD:
+            vm.pop('cpu_mode', None)
+            vm.pop('cpu_model', None)
         return vm
 
     @accepts(Dict(
         'vm_create',
+        Str('cpu_mode', default='CUSTOM', enum=['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH']),
+        Str('cpu_model', default=None, null=True),
         Str('name', required=True),
         Str('description'),
         Int('vcpus', default=1),
@@ -167,8 +174,16 @@ class VMService(CRUDService, VMSupervisorMixin):
             elif not await self.middleware.call('vm.supports_virtualization'):
                 verrors.add(schema_name, 'This system does not support virtualization.')
 
-        if osc.IS_LINUX and data.get('grubconfig'):
-            verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
+        if osc.IS_LINUX:
+            if data.get('grubconfig'):
+                verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
+            if data.get('cpu_mode') != 'CUSTOM' and data.get('cpu_model'):
+                verrors.add(
+                    f'{schema_name}.cpu_model',
+                    'This attribute should not be specified when "cpu_mode" is not "CUSTOM".'
+                )
+            elif data.get('cpu_model') and data['cpu_model'] not in await self.middleware.call('vm.cpu_model_choices'):
+                verrors.add(f'{schema_name}.cpu_model', 'Please select a valid CPU model.')
 
         if 'name' in data:
             filters = [('name', '=', data['name'])]
@@ -205,12 +220,20 @@ class VMService(CRUDService, VMSupervisorMixin):
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
-        if osc.IS_FREEBSD and not await self.middleware.call('vm.validate_slots', data):
-            verrors.add(
-                f'{schema_name}.devices',
-                'Please adjust the number of devices attached to this VM. '
-                f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
-            )
+        if osc.IS_FREEBSD:
+            if not await self.middleware.call('vm.validate_slots', data):
+                verrors.add(
+                    f'{schema_name}.devices',
+                    'Please adjust the number of devices attached to this VM. '
+                    f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
+                )
+            if data.get('cpu_mode', 'CUSTOM') != 'CUSTOM':
+                verrors.add(f'{schema_name}.cpu_mode', 'This attribute is not supported on this platform.')
+            if data.get('cpu_model'):
+                verrors.add(f'{schema_name}.cpu_model', 'This attribute is not supported on this platform')
+
+            data.pop('cpu_mode', None)
+            data.pop('cpu_model', None)
 
     async def __do_update_devices(self, id, devices):
         # There are 3 cases:
