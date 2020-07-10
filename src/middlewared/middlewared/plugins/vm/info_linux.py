@@ -1,7 +1,10 @@
 import os
 import re
+import subprocess
 
-from middlewared.service import Service
+from lxml import etree
+
+from middlewared.service import accepts, Service
 from middlewared.utils import run
 
 from .info_base import VMInfoBase
@@ -13,6 +16,8 @@ RE_VENDOR_INTEL = re.compile(r'GenuineIntel')
 
 
 class VMService(Service, VMInfoBase):
+
+    CPU_MODEL_CHOICES = {}
 
     async def supports_virtualization(self):
         cp = await run(['kvm-ok'], check=False)
@@ -51,3 +56,48 @@ class VMService(Service, VMInfoBase):
     async def get_console(self, id):
         vm = await self.middleware.call('vm.get_instance', id)
         return f'{vm["id"]}_{vm["name"]}'
+
+    @accepts()
+    def cpu_mode_choices(self):
+        base_path = '/usr/share/libvirt/cpu_map'
+        if self.CPU_MODEL_CHOICES or not os.path.exists(base_path):
+            return self.CPU_MODEL_CHOICES
+
+        mapping = {}
+        with open(os.path.join(base_path, 'index.xml'), 'r') as f:
+            index_xml = etree.fromstring(f.read().strip())
+
+        for arch in filter(lambda a: a.tag == 'arch' and a.get('name'), index_xml.getchildren()):
+            cp = subprocess.Popen(
+                ['virsh', 'cpu-models', arch.get('name') if arch.get('name') != 'x86' else 'x86_64'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            stdout = cp.communicate()[0]
+            if cp.returncode:
+                continue
+            for model in filter(bool, stdout.decode().strip().split('\n')):
+                model_path = os.path.join(base_path, f'{arch.get("name")}_{model}.xml')
+                if not os.path.exists(model_path):
+                    continue
+
+                with open(model_path, 'r') as f:
+                    model_xml = next((
+                        e for e in etree.fromstring(f.read().strip()).getchildren()
+                        if e.tag == 'model' and e.get('name')
+                    ), None)
+                if not model_xml:
+                    continue
+
+                mapping[model_xml.get('name')] = {
+                    'features': list(filter(
+                        bool, [
+                            {k: f.get(k) for k in f.keys() if f.get(k)}
+                            for f in model_xml.getchildren() if f.tag == 'feature'
+                        ]
+                    )),
+                    'arch': arch.get('name'),
+                    'vendor': next((v.get('name') for v in model_xml.getchildren() if v.tag == 'vendor'), None),
+                }
+
+        self.CPU_MODEL_CHOICES.update(mapping)
+        return self.CPU_MODEL_CHOICES
