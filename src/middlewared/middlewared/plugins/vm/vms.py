@@ -174,8 +174,16 @@ class VMService(CRUDService, VMSupervisorMixin):
             elif not await self.middleware.call('vm.supports_virtualization'):
                 verrors.add(schema_name, 'This system does not support virtualization.')
 
-        if osc.IS_LINUX and data.get('grubconfig'):
-            verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
+        if osc.IS_LINUX:
+            if data.get('grubconfig'):
+                verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
+            if data.get('cpu_mode') and data.get('cpu_model'):
+                verrors.add(
+                    f'{schema_name}.cpu_model',
+                    'This attribute should not be specified when "cpu_mode" has been explicitly set.'
+                )
+            elif data.get('cpu_model') and data['cpu_model'] not in await self.middleware.call('vm.cpu_model_choices'):
+                verrors.add(f'{schema_name}.cpu_model', 'Please select a valid CPU model.')
 
         if 'name' in data:
             filters = [('name', '=', data['name'])]

@@ -1,5 +1,5 @@
 """
-CPU Host-Passthrough field
+VM CPU mode/model fields
 
 Revision ID: 3ecb7147c137
 Revises: 71a8d1e504a7

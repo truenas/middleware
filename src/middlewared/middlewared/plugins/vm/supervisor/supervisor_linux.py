@@ -61,5 +61,25 @@ class VMSupervisor(VMSupervisorBase):
     def cpu_xml(self):
         cpu_elem = super().cpu_xml()
         if self.vm_data['cpu_mode']:
-            cpu_elem.set('mode', 'host-passthrough')
+            cpu_elem.set('mode', self.vm_data['cpu_mode'].lower())
+        elif self.vm_data['cpu_model']:
+            cpu_model = self.middleware.call_sync('vm.cpu_model_choices').get(self.vm_data['cpu_model'])
+            if cpu_model:
+                model_children = []
+                if cpu_model['vendor']:
+                    model_children.append(create_element('vendor', text=cpu_model['vendor']))
+                for feature in cpu_model['features']:
+                    model_children.append(create_element('feature', **feature))
+
+                # Right now this is best effort for the domain to start with specified CPU Model and not fallback
+                # However if some features are missing in the host, qemu will right now still start the domain
+                # and mark them as missing. We should perhaps make this configurable in the future to control
+                # if domain should/should not be started
+                cpu_elem.append(
+                    create_element(
+                        'model', fallback='forbid', attribute_dict={
+                            'text': self.vm_data['cpu_model'], 'children': model_children
+                        }
+                    )
+                )
         return cpu_elem
