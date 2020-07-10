@@ -59,6 +59,9 @@ class VMService(Service, VMInfoBase):
 
     @accepts()
     def cpu_model_choices(self):
+        """
+        Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.
+        """
         base_path = '/usr/share/libvirt/cpu_map'
         if self.CPU_MODEL_CHOICES or not os.path.exists(base_path):
             return self.CPU_MODEL_CHOICES
