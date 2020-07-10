@@ -78,29 +78,7 @@ class VMService(Service, VMInfoBase):
             stdout = cp.communicate()[0]
             if cp.returncode:
                 continue
-            for model in filter(bool, stdout.decode().strip().split('\n')):
-                model_path = os.path.join(base_path, f'{arch.get("name")}_{model}.xml')
-                if not os.path.exists(model_path):
-                    continue
-
-                with open(model_path, 'r') as f:
-                    model_xml = next((
-                        e for e in etree.fromstring(f.read().strip()).getchildren()
-                        if e.tag == 'model' and e.get('name')
-                    ), None)
-                if not model_xml:
-                    continue
-
-                mapping[model_xml.get('name')] = {
-                    'features': list(filter(
-                        bool, [
-                            {k: f.get(k) for k in f.keys() if f.get(k)}
-                            for f in model_xml.getchildren() if f.tag == 'feature'
-                        ]
-                    )),
-                    'arch': arch.get('name'),
-                    'vendor': next((v.get('name') for v in model_xml.getchildren() if v.tag == 'vendor'), None),
-                }
+            mapping.update({m: m for m in filter(bool, stdout.decode().strip().split('\n'))})
 
         self.CPU_MODEL_CHOICES.update(mapping)
         return self.CPU_MODEL_CHOICES

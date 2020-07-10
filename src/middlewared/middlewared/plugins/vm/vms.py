@@ -32,7 +32,7 @@ class VMModel(sa.Model):
     cores = sa.Column(sa.Integer(), default=1)
     threads = sa.Column(sa.Integer(), default=1)
     shutdown_timeout = sa.Column(sa.Integer(), default=90)
-    cpu_mode = sa.Column(sa.Text(), nullable=True)
+    cpu_mode = sa.Column(sa.Text())
     cpu_model = sa.Column(sa.Text(), nullable=True)
 
 
@@ -61,7 +61,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @accepts(Dict(
         'vm_create',
-        Str('cpu_mode', default=None, null=True, enum=[None, 'HOST-MODEL', 'HOST-PASSTHROUGH']),
+        Str('cpu_mode', default='CUSTOM', enum=['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH']),
         Str('cpu_model', default=None, null=True),
         Str('name', required=True),
         Str('description'),
@@ -177,10 +177,10 @@ class VMService(CRUDService, VMSupervisorMixin):
         if osc.IS_LINUX:
             if data.get('grubconfig'):
                 verrors.add(f'{schema_name}.grubconfig', 'This attribute is not supported on this platform.')
-            if data.get('cpu_mode') and data.get('cpu_model'):
+            if data.get('cpu_mode') != 'CUSTOM' and data.get('cpu_model'):
                 verrors.add(
                     f'{schema_name}.cpu_model',
-                    'This attribute should not be specified when "cpu_mode" has been explicitly set.'
+                    'This attribute should not be specified when "cpu_mode" is not "CUSTOM".'
                 )
             elif data.get('cpu_model') and data['cpu_model'] not in await self.middleware.call('vm.cpu_model_choices'):
                 verrors.add(f'{schema_name}.cpu_model', 'Please select a valid CPU model.')
