@@ -770,8 +770,7 @@ class SharingSMBService(SharingService):
 
         old_is_locked = (await self.get_instance(id))['locked']
         if old['path'] != new['path']:
-            new_is_locked = await self.middleware.call('filesystem.path_is_encrypted',
-                                                       new['path'])
+            new_is_locked = await self.middleware.call('pool.dataset.path_in_locked_datasets', new['path'])
         else:
             new_is_locked = old_is_locked
 
