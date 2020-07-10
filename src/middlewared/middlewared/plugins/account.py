@@ -728,7 +728,7 @@ class UserService(CRUDService):
                         f'The path for the home directory "({data["home"]})" '
                         'must include a volume or dataset.'
                     )
-                elif await self.middleware.call('filesystem.path_is_encrypted', data['home']):
+                elif await self.middleware.call('pool.dataset.path_in_locked_datasets', data['home']):
                     verrors.add(
                         f'{schema}.home',
                         'Path component for "Home Directory" is currently encrypted and locked'
