@@ -19,3 +19,4 @@ depends_on = None
 def upgrade():
     with op.batch_alter_table('vm_vm', schema=None) as batch_op:
         batch_op.add_column(sa.Column('cpu_mode', sa.TEXT(), nullable=True))
+        batch_op.add_column(sa.Column('cpu_model', sa.TEXT(), nullable=True))

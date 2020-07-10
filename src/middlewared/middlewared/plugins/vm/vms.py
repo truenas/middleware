@@ -33,6 +33,7 @@ class VMModel(sa.Model):
     threads = sa.Column(sa.Integer(), default=1)
     shutdown_timeout = sa.Column(sa.Integer(), default=90)
     cpu_mode = sa.Column(sa.Text(), nullable=True)
+    cpu_model = sa.Column(sa.Text(), nullable=True)
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -55,11 +56,13 @@ class VMService(CRUDService, VMSupervisorMixin):
         vm['status'] = await self.middleware.call('vm.status', vm['id'])
         if osc.IS_FREEBSD:
             vm.pop('cpu_mode', None)
+            vm.pop('cpu_model', None)
         return vm
 
     @accepts(Dict(
         'vm_create',
-        Str('cpu_mode', default=None, null=True),
+        Str('cpu_mode', default=None, null=True, enum=[None, 'HOST-MODEL', 'HOST-PASSTHROUGH']),
+        Str('cpu_model', default=None, null=True),
         Str('name', required=True),
         Str('description'),
         Int('vcpus', default=1),
@@ -216,10 +219,9 @@ class VMService(CRUDService, VMSupervisorMixin):
                     'Please adjust the number of devices attached to this VM. '
                     f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
                 )
-            if data.get('cpu_mode'):
-                verrors.add(
-                    f'{schema_name}.cpu_mode', 'This attribute is not supported on this platform'
-                )
+            for k in ('cpu_mode', 'cpu_model'):
+                if data.get(k):
+                    verrors.add(f'{schema_name}.{k}', 'This attribute is not supported on this platform')
 
     async def __do_update_devices(self, id, devices):
         # There are 3 cases:
