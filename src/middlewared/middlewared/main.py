@@ -568,7 +568,10 @@ class ShellWorkerThread(threading.Thread):
         if options.get('jail'):
             return ['/usr/local/bin/iocage', 'console', '-f', options['jail']]
         elif options.get('vm_id'):
-            return ['/usr/bin/cu', '-l', f'nmdm{options["vm_id"]}B']
+            if osc.IS_FREEBSD:
+                return ['/usr/bin/cu', '-l', f'nmdm{options["vm_id"]}B']
+            else:
+                return ['/usr/bin/virsh', 'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}']
         else:
             return ['/usr/bin/login', '-p', '-f', 'root']
 
@@ -723,6 +726,8 @@ class ShellApplication(object):
 
                 options = data.get('options', {})
                 options['jail'] = data.get('jail') or options.get('jail')
+                if options.get('vm_id'):
+                    options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
                 conndata.t_worker = ShellWorkerThread(
                     ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(), options=options
                 )
