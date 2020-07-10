@@ -227,9 +227,13 @@ class VMService(CRUDService, VMSupervisorMixin):
                     'Please adjust the number of devices attached to this VM. '
                     f'A maximum of {await self.middleware.call("vm.available_slots")} PCI slots are allowed.'
                 )
-            for k in ('cpu_mode', 'cpu_model'):
-                if data.get(k):
-                    verrors.add(f'{schema_name}.{k}', 'This attribute is not supported on this platform')
+            if data.get('cpu_mode', 'CUSTOM') != 'CUSTOM':
+                verrors.add(f'{schema_name}.cpu_mode', 'This attribute is not supported on this platform.')
+            if data.get('cpu_model'):
+                verrors.add(f'{schema_name}.cpu_model', 'This attribute is not supported on this platform')
+
+            data.pop('cpu_mode', None)
+            data.pop('cpu_model', None)
 
     async def __do_update_devices(self, id, devices):
         # There are 3 cases:
