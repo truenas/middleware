@@ -228,7 +228,7 @@ def test_16_get_interface_has_pending_changes():
     assert results.json() is True, results.text
 
 
-def test_17_commite_interface():
+def test_17_commit_interface():
     payload = {
         "rollback": True,
         "checkin_timeout": 10

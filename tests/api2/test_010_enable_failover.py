@@ -13,7 +13,8 @@ pytestmark = pytest.mark.skipif(not ha, reason="Skipping test for Core and Scale
 
 def test_01_enable_failover():
     payload = {
-        "disabled": False
+        "disabled": False,
+        "master": True,
     }
     results = PUT('/failover/', payload)
     assert results.status_code == 200, results.text
