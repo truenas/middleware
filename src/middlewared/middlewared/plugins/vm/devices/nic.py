@@ -29,19 +29,7 @@ class NIC(Device):
         ]
         return ':'.join(['%02x' % x for x in mac_address])
 
-    def create_bridge_linux(self):
-        bridges = [i for i in netif.list_interfaces() if i.startswith('br')]
-        bridges.sort()
-        if bridges:
-            name = f'bridge{int(bridges[-1][-1]) + 1}' if bridges[-1][-1].isdigit() else 'bridge0'
-        else:
-            name = 'bridge0'
-        return netif.create_interface(name)
-
-    def create_bridge_freebsd(self):
-        return netif.create_interface('bridge')
-
-    def pre_start_vm(self, *args, **kwargs):
+    def pre_start_vm_freebsd(self, *args, **kwargs):
         nic_attach = self.data['attributes']['nic_attach']
         interfaces = netif.list_interfaces()
         bridge = None
@@ -68,7 +56,7 @@ class NIC(Device):
                     bridge = interfaces[iface]
                     break
             else:
-                bridge = netif.get_interface(getattr(self, f'create_bridge_{osc.SYSTEM.lower()}')())
+                bridge = netif.get_interface(netif.create_interface('bridge'))
                 bridge.add_member(nic_attach)
                 self.bridge_created = True
 
@@ -77,12 +65,12 @@ class NIC(Device):
 
         self.bridge = bridge.name
 
-    def pre_start_vm_rollback(self, *args, **kwargs):
+    def pre_start_vm_rollback_freebsd(self, *args, **kwargs):
         if self.bridge_created and self.bridge in netif.list_interfaces():
             netif.destroy_interface(self.bridge)
             self.bridge = self.bridge_created = None
 
-    def xml(self, *args, **kwargs):
+    def xml_freebsd(self, *args, **kwargs):
         return create_element(
             'interface', type='bridge', attribute_dict={
                 'children': [
