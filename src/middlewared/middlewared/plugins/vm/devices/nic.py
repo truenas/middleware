@@ -20,7 +20,7 @@ class NIC(Device):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.bridge = self.bridge_created = None
+        self.bridge = self.bridge_created = self.nic_attach = None
 
     @staticmethod
     def random_mac():
@@ -29,14 +29,11 @@ class NIC(Device):
         ]
         return ':'.join(['%02x' % x for x in mac_address])
 
-    def pre_start_vm_freebsd(self, *args, **kwargs):
+    def setup_nic_attach(self):
         nic_attach = self.data['attributes']['nic_attach']
         interfaces = netif.list_interfaces()
-        bridge = None
         if nic_attach and nic_attach not in interfaces:
             raise CallError(f'{nic_attach} not found.')
-        elif nic_attach and nic_attach.startswith('bridge'):
-            bridge = interfaces[nic_attach]
         else:
             if not nic_attach:
                 try:
@@ -50,14 +47,23 @@ class NIC(Device):
             if netif.InterfaceFlags.UP not in nic.flags:
                 nic.up()
 
+        self.nic_attach = nic.name
+
+    def pre_start_vm_freebsd(self, *args, **kwargs):
+        self.setup_nic_attach()
+        interfaces = netif.list_interfaces()
+        bridge = None
+        if self.nic_attach.startswith('bridge'):
+            bridge = interfaces[self.nic_attach]
+
         if not bridge:
             for iface in filter(lambda v: v.startswith('bridge'), interfaces):
-                if nic_attach in interfaces[iface].members:
+                if self.nic_attach in interfaces[iface].members:
                     bridge = interfaces[iface]
                     break
             else:
                 bridge = netif.get_interface(netif.create_interface('bridge'))
-                bridge.add_member(nic_attach)
+                bridge.add_member(self.nic_attach)
                 self.bridge_created = True
 
         if netif.InterfaceFlags.UP not in bridge.flags:
@@ -80,7 +86,7 @@ class NIC(Device):
                         'mac', address=self.data['attributes']['mac'] if
                         self.data['attributes'].get('mac') else self.random_mac()
                     ),
-                    *([create_element('address', type='pci', slot=str(kwargs['slot']))] if osc.IS_FREEBSD else []),
+                    create_element('address', type='pci', slot=str(kwargs['slot'])),
                 ]
             }
         )
