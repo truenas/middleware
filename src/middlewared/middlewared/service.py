@@ -14,6 +14,8 @@ import traceback
 from subprocess import run
 import ipaddress
 
+import psutil
+
 from middlewared.common.environ import environ_update
 import middlewared.main
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
@@ -1093,6 +1095,13 @@ class CoreService(Service):
         of the new location
         """
         reconfigure_logging()
+
+        # We need to kill this because multiprocessing has passed it stderr fd which is /var/log/middlewared.log
+        if osc.IS_LINUX:
+            for process in psutil.process_iter(attrs=["cmdline"]):
+                if "from multiprocessing.resource_tracker import main" in " ".join(process.info["cmdline"]):
+                    process.kill()
+
         self.middleware.send_event('core.reconfigure_logging', 'CHANGED')
 
     @private

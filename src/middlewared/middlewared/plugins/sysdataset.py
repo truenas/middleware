@@ -7,6 +7,7 @@ import asyncio
 import errno
 import os
 import shutil
+import subprocess
 import uuid
 
 SYSDATASET_PATH = '/var/db/system'
@@ -331,7 +332,10 @@ class SystemDatasetService(ConfigService):
 
     async def __umount(self, pool, uuid):
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
-            await run('umount', '-f', dataset, check=False)
+            try:
+                await run('umount', '-f', dataset)
+            except subprocess.CalledProcessError:
+                self.logger.warning('Unable to umount %r', dataset)
 
     def __get_datasets(self, pool, uuid):
         return [(f'{pool}/.system', '')] + [
@@ -412,6 +416,10 @@ class SystemDatasetService(ConfigService):
             restart.insert(0, 'cifs')
 
         try:
+            if osc.IS_LINUX:
+                await self.middleware.call('cache.put', 'use_syslog_dataset', False)
+                await self.middleware.call('service.restart', 'syslogd')
+
             for i in restart:
                 await self.middleware.call('service.stop', i)
 
@@ -428,6 +436,8 @@ class SystemDatasetService(ConfigService):
                 else:
                     raise CallError(f'Failed to rsync from {SYSDATASET_PATH}: {cp.stderr.decode()}')
         finally:
+            if osc.IS_LINUX:
+                await self.middleware.call('cache.pop', 'use_syslog_dataset')
 
             restart.reverse()
             for i in restart:

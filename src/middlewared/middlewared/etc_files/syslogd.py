@@ -197,6 +197,11 @@ def use_syslog_dataset(middleware):
     systemdataset = middleware.call_sync("systemdataset.config")
 
     if systemdataset["syslog"]:
+        try:
+            return middleware.call_sync("cache.get", "use_syslog_dataset")
+        except KeyError:
+            pass
+
         if middleware.call_sync("system.is_freenas"):
             return True
         else:
