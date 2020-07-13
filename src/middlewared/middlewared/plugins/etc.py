@@ -137,7 +137,8 @@ class EtcService(Service):
             )
         ],
         'ftp': [
-            {'type': 'mako', 'path': 'local/proftpd.conf'},
+            {'type': 'mako', 'path': 'local/proftpd.conf' if osc.IS_FREEBSD else 'proftpd/proftpd.conf',
+             'local_path': 'local/proftpd.conf'},
             {'type': 'py', 'path': 'local/proftpd'},
         ],
         'rc': [
