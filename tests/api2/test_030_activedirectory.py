@@ -36,8 +36,6 @@ ad_data_type = {
     'domainname': str,
     'bindname': str,
     'bindpw': str,
-    'ssl': str,
-    'certificate': type(None),
     'verbose_logging': bool,
     'allow_trusted_doms': bool,
     'use_default_domain': bool,
@@ -50,7 +48,6 @@ ad_data_type = {
     'timeout': int,
     'dns_timeout': int,
     'nss_info': type(None),
-    'ldap_sasl_wrapping': str,
     'enable': bool,
     'netbiosname': str,
     'netbiosalias': list
