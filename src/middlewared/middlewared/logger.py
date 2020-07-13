@@ -312,9 +312,11 @@ def setup_logging(name, debug_level, log_handler):
         _logger.configure_logging('file')
 
 
-def reconfigure_logging(handler_name='file'):
-    handler = logging._handlers.get(handler_name)
-    if handler:
+def reconfigure_logging():
+    for name, handler in logging._handlers.items():
+        if not isinstance(handler, ErrorProneRotatingFileHandler):
+            continue
+
         stream = handler.stream
         handler.stream = handler._open()
         if sys.stdout is stream:
