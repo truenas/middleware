@@ -9,8 +9,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST, vm_state, vm_start, ping_host
-from auto_config import vm_name, interface, ip, user, password
+from auto_config import vm_name, ip, user, password, update
 from time import sleep, time
+
+pytestmark = pytest.mark.skipif(not update, reason='Skipping update API test')
 
 url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
@@ -172,7 +174,7 @@ def test_11_wait_for_first_reboot_with_bhyve():
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
     elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+        pytest.skip('Reboot is False skip')
     else:
         if vm_name is None:
             pytest.skip('skip no vm_name')
@@ -189,7 +191,7 @@ def test_12_wait_for_second_reboot_with_bhyve():
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
     elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+        pytest.skip('Reboot is False skip')
     else:
         if vm_name is None:
             pytest.skip('skip no vm_name')
@@ -206,7 +208,7 @@ def test_13_wait_for_FreeNAS_to_be_online():
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
     elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+        pytest.skip('Reboot is False skip')
     else:
         while ping_host(ip, 1) is not True:
             sleep(5)
@@ -220,7 +222,7 @@ def test_14_verify_initial_version_is_not_current_FreeNAS_version():
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
     elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+        pytest.skip('Reboot is False skip')
     else:
         global results, current_version
         results = GET("/system/info/")
@@ -236,6 +238,6 @@ def test_15_verify_update_version_is_current_version():
     elif download_failed is True:
         pytest.skip(f'Downloading {selected_trains} failed')
     elif reboot is False:
-        pytest.skip(f'Reboot is False skip')
+        pytest.skip('Reboot is False skip')
     else:
         assert update_version == current_version, results.text
