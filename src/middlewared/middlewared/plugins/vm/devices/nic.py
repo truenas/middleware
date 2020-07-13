@@ -3,7 +3,6 @@ import random
 from middlewared.plugins.interface.netif import netif
 from middlewared.schema import Dict, Str
 from middlewared.service import CallError
-from middlewared.utils import osc
 
 from .device import Device
 from .utils import create_element
@@ -76,17 +75,40 @@ class NIC(Device):
             netif.destroy_interface(self.bridge)
             self.bridge = self.bridge_created = None
 
+    def xml_children(self):
+        return [
+            create_element('model', type='virtio' if self.data['attributes']['type'] == 'VIRTIO' else 'e1000'),
+            create_element(
+                'mac', address=self.data['attributes']['mac'] if
+                self.data['attributes'].get('mac') else self.random_mac()
+            ),
+        ]
+
+    def xml_linux(self, *args, **kwargs):
+        self.setup_nic_attach()
+        if self.nic_attach.startswith('br'):
+            return create_element(
+                'interface', type='bridge', attribute_dict={
+                    'children': [
+                        create_element('source', bridge=self.nic_attach)
+                    ] + self.xml_children()
+                }
+            )
+        else:
+            return create_element(
+                'interface', type='direct', attribute_dict={
+                    'children': [
+                        create_element('source', dev=self.nic_attach, mode='bridge')
+                    ] + self.xml_children()
+                }
+            )
+
     def xml_freebsd(self, *args, **kwargs):
         return create_element(
             'interface', type='bridge', attribute_dict={
                 'children': [
                     create_element('source', bridge=self.bridge or ''),
-                    create_element('model', type='virtio' if self.data['attributes']['type'] == 'VIRTIO' else 'e1000'),
-                    create_element(
-                        'mac', address=self.data['attributes']['mac'] if
-                        self.data['attributes'].get('mac') else self.random_mac()
-                    ),
                     create_element('address', type='pci', slot=str(kwargs['slot'])),
-                ]
+                ] + self.xml_children()
             }
         )
