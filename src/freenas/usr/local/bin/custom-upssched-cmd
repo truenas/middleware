@@ -10,4 +10,4 @@
 # The first argument passed to your CMDSCRIPT is the name of the timer
 # from your AT lines.
 
-/usr/local/bin/midclt call ups.upssched_event ${1}
+midclt call ups.upssched_event ${1}
