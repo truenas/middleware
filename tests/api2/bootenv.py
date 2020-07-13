@@ -9,7 +9,7 @@ from time import sleep
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, DELETE, GET, PUT
+from functions import POST, DELETE, GET, PUT, wait_on_job
 
 
 def test_01_get_the_activated_bootenv():
@@ -69,22 +69,36 @@ def test_09_activate_bootenv03():
 
 # Delete tests
 def test_10_removing_a_boot_environment_02():
+    global job_id
     results = DELETE("/bootenv/id/bootenv02/")
     assert results.status_code == 200, results.text
+    job_id = results.json()
 
 
-def test_11_set_keep_attribute_true():
+def test_11_verify_the_removing_be_job_is_successfull(request):
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+def test_12_set_keep_attribute_true():
     payload = {"keep": False}
     results = POST("/bootenv/id/bootenv03/set_attribute/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_12_activate_default():
+def test_13_activate_default():
     payload = None
     results = POST(f"/bootenv/id/{active_be_id}/activate/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_13_removing_a_boot_environment_03():
+def test_14_removing_a_boot_environment_03():
+    global job_id
     results = DELETE("/bootenv/id/bootenv03/")
     assert results.status_code == 200, results.text
+    job_id = results.json()
+
+
+def test_15_verify_the_removing_be_job_is_successfull(request):
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
