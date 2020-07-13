@@ -33,7 +33,7 @@ class UPSService(SimpleService):
 
     async def _start_linux(self):
         if (await self.middleware.call("ups.config"))["mode"] == "MASTER":
-            await self._systemd_unit("nut-server", "Start")
+            await self._systemd_unit("nut-server", "start")
         await self._unit_action("Start")
 
     async def after_start(self):
@@ -45,7 +45,7 @@ class UPSService(SimpleService):
 
     async def _stop_linux(self):
         await self._unit_action("Stop")
-        await self._systemd_unit("nut-server", "Stop")
+        await self._systemd_unit("nut-server", "stop")
 
     async def _stop_freebsd(self):
         await self._freebsd_service("nut_upslog", "stop", force=True)

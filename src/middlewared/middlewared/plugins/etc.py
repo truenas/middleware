@@ -217,6 +217,10 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
             {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
             {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
+            {
+                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root', 'group': UPS_GROUP,
+                'mode': 0o440, 'platform': 'Linux', 'local_path': 'local/nut/nut.conf.mako'
+            },
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
         'rsync': [
