@@ -44,6 +44,7 @@ Optional option
     --vm-name <VM_NAME>        - Name the the Bhyve VM
     --ha                       - Run test for HA
     --scale                    - Run test for Scale
+    --update                   - Run update with the tests suite
     """ % argv[0]
 
 # if have no argument stop
@@ -58,7 +59,8 @@ option_list = [
     'test=',
     "vm-name=",
     "ha",
-    "scale"
+    "scale",
+    "update"
 ]
 
 # look if all the argument are there.
@@ -74,6 +76,7 @@ testName = None
 testexpr = None
 ha = False
 scale = False
+update = False
 
 for output, arg in myopts:
     if output in ('-i', '--ip'):
@@ -92,6 +95,8 @@ for output, arg in myopts:
         ha = True
     elif output == '--scale':
         scale = True
+    elif output == '--update':
+        update = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -119,6 +124,7 @@ keyPath = "{keyPath}"
 pool_name = "tank"
 ha = {ha}
 scale = {scale}
+update = {update}
 """
 
 cfg_file = open("auto_config.py", 'w')
@@ -127,7 +133,7 @@ cfg_file.close()
 
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
 from functions import SSH_TEST
-# Setup ssh agent befor starting test.
+# Setup ssh agent before starting test.
 setup_ssh_agent()
 if path.isdir(dotsshPath) is False:
     makedirs(dotsshPath)
@@ -195,13 +201,13 @@ if not path.exists(artifacts):
 for log in logs_list:
     get_file(log, artifacts, 'root', 'testing', ip)
 
-# get dmesg and put it in artifacs
+# get dmesg and put it in artifacts
 results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/dmesg', 'w')
 dmsg.writelines(results['output'])
 dmsg.close()
 
-# get core.get_jobs and put it in artifacs
+# get core.get_jobs and put it in artifacts
 results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
 dmsg = open(f'{artifacts}/core_get_job', 'w')
 dmsg.writelines(results['output'])
