@@ -13,6 +13,7 @@ from .vm_supervisor import VMSupervisorMixin
 
 
 BOOT_LOADER_OPTIONS = ['UEFI', 'UEFI_CSM'] + (['GRUB'] if osc.IS_FREEBSD else [])
+CPU_MODE_CHOICES = ['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH']
 LIBVIRT_LOCK = asyncio.Lock()
 RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
 
@@ -50,6 +51,13 @@ class VMService(CRUDService, VMSupervisorMixin):
         """
         return {v: v for v in BOOT_LOADER_OPTIONS}
 
+    @accepts()
+    async def cpu_mode_choices(self):
+        """
+        Returns valid CPU Mode choices for KVM guests.
+        """
+        return {v: v for v in CPU_MODE_CHOICES}
+
     @private
     async def extend_vm(self, vm):
         vm['devices'] = await self.middleware.call('vm.device.query', [('vm', '=', vm['id'])])
@@ -61,7 +69,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @accepts(Dict(
         'vm_create',
-        Str('cpu_mode', default='CUSTOM', enum=['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH']),
+        Str('cpu_mode', default='CUSTOM', enum=CPU_MODE_CHOICES),
         Str('cpu_model', default=None, null=True),
         Str('name', required=True),
         Str('description'),
