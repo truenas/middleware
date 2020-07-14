@@ -558,10 +558,10 @@ class CryptoKeyService(Service):
             Str('city', required=True),
             Str('organization', required=True),
             Str('organizational_unit'),
-            Str('common', required=True),
+            Str('common', empty=False),
             Str('email', validators=[Email()], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
-            List('san', items=[Str('san')], null=True),
+            List('san', items=[Str('san')], required=True, empty=False),
             Dict(
                 'cert_extensions',
                 Dict(
