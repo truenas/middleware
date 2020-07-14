@@ -468,9 +468,12 @@ class CryptoKeyService(Service):
                 'country_name': 'US',
                 'organization_name': 'iXsystems',
                 'common_name': 'localhost',
-                'email_address': 'info@ixsystems.com'
+                'email_address': 'info@ixsystems.com',
+                'state_or_province_name': 'Tennessee',
+                'locality_name': 'Maryville',
             },
-            'lifetime': NOT_VALID_AFTER_DEFAULT
+            'lifetime': NOT_VALID_AFTER_DEFAULT,
+            'san': self.normalize_san(['localhost'])
         })
         key = self.generate_private_key({
             'serialize': False,
@@ -558,10 +561,10 @@ class CryptoKeyService(Service):
             Str('city', required=True),
             Str('organization', required=True),
             Str('organizational_unit'),
-            Str('common', required=True),
+            Str('common', null=True),
             Str('email', validators=[Email()], required=True),
             Str('digest_algorithm', enum=['SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']),
-            List('san', items=[Str('san')], null=True),
+            List('san', items=[Str('san')], required=True, empty=False),
             Dict(
                 'cert_extensions',
                 Dict(
@@ -1270,7 +1273,7 @@ class CertificateService(CRUDService):
     @private
     async def get_domain_names(self, cert_id):
         data = await self._get_instance(int(cert_id))
-        names = [data['common']]
+        names = [data['common']] if data['common'] else []
         names.extend(data['san'])
         return names
 
@@ -1534,7 +1537,7 @@ class CertificateService(CRUDService):
             Str('acme_directory_uri'),
             Str('certificate', max_length=None),
             Str('city'),
-            Str('common', max_length=None),
+            Str('common', max_length=None, null=True),
             Str('country'),
             Str('CSR', max_length=None),
             Str('ec_curve', enum=CryptoKeyService.ec_curves, default=CryptoKeyService.ec_curve_default),
@@ -1856,7 +1859,7 @@ class CertificateService(CRUDService):
             ('edit', _set_required('city')),
             ('edit', _set_required('organization')),
             ('edit', _set_required('email')),
-            ('edit', _set_required('common')),
+            ('edit', _set_required('san')),
             ('edit', _set_required('signedby')),
             ('rm', {'name': 'create_type'}),
             register=True
@@ -2607,7 +2610,7 @@ class CertificateAuthorityService(CRUDService):
             ('edit', _set_required('city')),
             ('edit', _set_required('organization')),
             ('edit', _set_required('email')),
-            ('edit', _set_required('common')),
+            ('edit', _set_required('san')),
             ('rm', {'name': 'create_type'}),
             register=True
         )
