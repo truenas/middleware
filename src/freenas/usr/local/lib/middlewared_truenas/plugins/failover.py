@@ -1463,6 +1463,7 @@ async def hook_license_update(middleware, *args, **kwargs):
                 await middleware.call('failover.call_remote', 'etc.generate', [etc])
         except Exception:
             middleware.logger.warning('Failed to sync license file to standby.')
+
     await middleware.call('service.restart', 'failover')
     await middleware.call('failover.status_refresh')
 
@@ -1530,11 +1531,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         cur_status = await middleware.call('failover.status')
         if cur_status == 'MASTER' or (await middleware.call('failover.config'))['master']:
 
-            # We have to restart the failover service so that we regenerate
-            # the /tmp/failover.json file on active/standby controller
-            middleware.logger.debug('[HA] Regenerating /tmp/failover.json')
-            await middleware.call('service.restart', 'failover')
-
             # In the event HA is configured and the end-user deletes
             # an interface, we need to sync the database over to the
             # standby node before we call `interface.sync`
@@ -1554,10 +1550,13 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     middleware.logger.debug('[HA] Configuring network on standby node')
     await middleware.call('failover.call_remote', 'interface.sync')
 
-    middleware.logger.debug('[HA] Restarting devd to enable failover')
-    await middleware.call('failover.call_remote', 'service.restart', ['failover'])
+    middleware.logger.debug('[HA] Restarting failover service on this node')
     await middleware.call('service.restart', 'failover')
 
+    middleware.logger.debug('[HA] Restarting failover service on remote node')
+    await middleware.call('failover.call_remote', 'service.restart', ['failover'])
+
+    middleware.logger.debug('[HA] Resfreshing failover status')
     await middleware.call('failover.status_refresh')
 
     middleware.logger.info('[HA] Setup complete')
