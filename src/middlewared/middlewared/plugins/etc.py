@@ -12,6 +12,9 @@ import os
 import pwd
 
 
+UPS_GROUP = 'nut' if osc.IS_LINUX else 'uucp'
+
+
 class FileShouldNotExist(Exception):
     pass
 
@@ -210,11 +213,15 @@ class EtcService(Service):
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
-            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': 'uucp', 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
+            {
+                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root', 'group': UPS_GROUP,
+                'mode': 0o440, 'platform': 'Linux', 'local_path': 'local/nut/nut.conf.mako'
+            },
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
         'rsync': [
