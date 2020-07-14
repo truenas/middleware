@@ -1508,8 +1508,27 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         ha_configured = False
 
     if ha_configured:
-        # If HA is already configured just sync network
-        if await middleware.call('failover.status') == 'MASTER':
+        # If HA is already configured and failover has been disabled,
+        # and we have gotten to this point, then this means a few things could be happening.
+        #    1. a new interface is being added
+        #    2. an alias is being added to an already configured interface
+        #    3. an interface is being modified (changing vhid/ip etc)
+        #    4. an interface is being deleted
+
+        # In the event #2 happens listed above, there is a race condition that
+        # must be accounted for. When an alias is added to an already configured interface,
+        # a CARP event will be triggered and the interface will go from MASTER to INIT->BACKUP->MASTER which
+        # generates a devd event that is processed by the failover.event plugin.
+        # It takes a few seconds for the kernel to transition the CARP interface from BACKUP->MASTER.
+        # However, we refresh the failover.status while this interface is transitioning.
+        # This means that failover.status returns 'ERROR'.
+        # To work around this we check 2 things:
+        #    1. if failover.status == 'MASTER' then we continue
+        #    or
+        #    2. the node in the chassis is marked as the master_node in the webUI
+        #      (because failover has been disabled in the webUI)
+        cur_status = await middleware.call('failover.status')
+        if cur_status == 'MASTER' or (await middleware.call('failover.config'))['master']:
 
             # We have to restart the failover service so that we regenerate
             # the /tmp/failover.json file on active/standby controller
