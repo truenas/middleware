@@ -144,7 +144,7 @@ class RoutingTable:
         if route.netmask.version == 4:
             prefixlen = ipaddress.ip_network(f"{route.network}/{route.netmask}").prefixlen
         elif route.netmask.version == 6:
-            prefixlen = ipv6_netmask_to_prefixlen(route.netmask)
+            prefixlen = ipv6_netmask_to_prefixlen(str(route.netmask))
         else:
             raise RuntimeError()
 
