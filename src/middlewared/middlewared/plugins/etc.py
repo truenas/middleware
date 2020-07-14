@@ -344,7 +344,9 @@ class EtcService(Service):
                 if not os.path.exists(outfile_dirname):
                     os.makedirs(outfile_dirname)
 
-                changes = write_if_changed(outfile, rendered)
+                changes = await self.middleware.run_in_thread(
+                    write_if_changed, outfile, rendered,
+                )
 
                 # If ownership or permissions are specified, see if
                 # they need to be changed.
