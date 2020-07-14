@@ -673,7 +673,7 @@ class RsyncTaskService(TaskPathService):
 
     @item_method
     @accepts(Int('id'))
-    @job(lock=lambda args: args[-1], logs=True)
+    @job(lock=lambda args: args[-1], lock_queue_size=1, logs=True)
     def run(self, job, id):
         """
         Job to run rsync task of `id`.

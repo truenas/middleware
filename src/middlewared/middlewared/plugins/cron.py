@@ -1,4 +1,5 @@
 import contextlib
+import errno
 
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
@@ -204,10 +205,11 @@ class CronJobService(CRUDService):
         return response
 
     @accepts(
-        Int('id')
+        Int('id'),
+        Bool('skip_disabled', default=False),
     )
     @job(lock=lambda args: args[-1], logs=True)
-    def run(self, job, id):
+    def run(self, job, id, skip_disabled):
         """
         Job to run cronjob task of `id`.
         """
@@ -216,6 +218,9 @@ class CronJobService(CRUDService):
             syslog.syslog(syslog.LOG_INFO, line.decode())
 
         cron_task = self.middleware.call_sync('cronjob._get_instance', id)
+        if skip_disabled and not cron_task['enabled']:
+            raise CallError('Cron job is disabled', errno.EINVAL)
+
         cron_cmd = ' '.join(
             self.middleware.call_sync(
                 'cronjob.construct_cron_command', cron_task['schedule'], cron_task['user'],
