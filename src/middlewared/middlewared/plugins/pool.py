@@ -1550,11 +1550,6 @@ class PoolService(CRUDService):
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
 
-        # If this is an HA system, then we need to restart the failover service
-        # so that /tmp/failover.json is regenerated
-        if await self.middleware.call('failover.licensed'):
-            await self.middleware.call('service.restart', 'failover')
-
         # Let's reconfigure swap in case dumpdev needs to be configured again
         asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 

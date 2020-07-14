@@ -1,13 +1,13 @@
-# Copyright (c) 2015 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
+from middlewared.utils import filter_list
 from middlewared.service import Service, private
 
 from lockfile import LockFile, AlreadyLocked
-
-import json
+from collections import defaultdict
 import multiprocessing
 import os
 import sqlite3
@@ -29,9 +29,6 @@ FAILOVER_ASSUMED_MASTER = '/tmp/.failover_master'
 
 # GUI alert file
 AD_ALERT_FILE = '/tmp/.adalert'
-
-# Config file, externally generated
-FAILOVER_JSON = '/tmp/failover.json'
 
 # MUTEX files
 # Advanced TODO Merge to one mutex
@@ -117,16 +114,52 @@ class FailoverService(Service):
             self.middleware.call_sync('failover.status_refresh')
 
     @private
+    def generate_failover_data(self):
+
+        failovercfg = self.middleware.call_sync('failover.config')
+        pools = self.middleware.call_sync('pool.query')
+        interfaces = self.middleware.call_sync('interface.query')
+        internal_ints = self.middleware.call_sync('failover.internal_interfaces')
+
+        data = {
+            'disabled': failovercfg['disabled'],
+            'master': failovercfg['master'],
+            'timeout': failovercfg['timeout'],
+            'groups': defaultdict(list),
+            'volumes': [
+                i['name'] for i in filter_list(pools, [('encrypt', '<', 2)])
+            ],
+            'phrasedvolumes': [
+                i['name'] for i in filter_list(pools, [('encrypt', '=', 2)])
+            ],
+            'non_crit_interfaces': [
+                i['id'] for i in filter_list(interfaces, [
+                    ('failover_critical', '!=', True),
+                ])
+            ],
+            'internal_interfaces': internal_ints,
+        }
+
+        for i in filter_list(interfaces, [('failover_critical', '=', True)]):
+            data['groups'][i['failover_group']].append(i['id'])
+
+        return data
+
+    @private
     def _event(self, ifname, vhid, event):
+
+        fobj = self.generate_failover_data()
+
+        # We ignore events on the p2p heartbeat connection
+        if ifname in fobj['internal_interfaces']:
+            self.logger.warning(
+                f'Ignoring event:{event} on internal interface {ifname}')
+            return
 
         if event == 'forcetakeover':
             forcetakeover = True
         else:
             forcetakeover = False
-
-        if not os.path.exists(FAILOVER_JSON):
-            self.logger.warn('No %s found, exiting.', FAILOVER_JSON)
-            return
 
         # TODO write the PID into the state file so a stale
         # lockfile won't disable HA forever
@@ -140,15 +173,6 @@ class FailoverService(Service):
                 else:
                     self.logger.warn('Failover event already being processed, ignoring.')
                     return
-
-            with open(FAILOVER_JSON, 'r') as f:
-                fobj = json.loads(f.read())
-
-            # The failover script doesn't handle events on the
-            # internal interlink
-            if ifname in fobj['internal_interfaces']:
-                self.logger.debug('Ignoring CARP event on internal interface %r', ifname)
-                return
 
             # TODO python any
             if not forcetakeover:
