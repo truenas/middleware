@@ -8,7 +8,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
-from auto_config import ip, password, user, pool_name
+from auto_config import ip, password, user, pool_name, scale
 
 
 def test_01_get_alert_list():
@@ -35,7 +35,8 @@ def test_04_degrading_a_pool_to_create_an_alert(request):
     depends(request, ["pool_04"], scope="session")
     global gptid
     get_pool = GET(f"/pool/?name={pool_name}").json()[0]
-    gptid = get_pool['topology']['data'][0]['path'].replace('/dev/', '')
+    id_path = '/dev/disk/by-partuuid/' if scale else '/dev/'
+    gptid = get_pool['topology']['data'][0]['path'].replace(id_path, '')
     cmd = f'zinject -d {gptid} -A fault {pool_name}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
