@@ -1426,6 +1426,10 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             if e.args[0] != "Event loop is closed":
                 raise
 
+        # As we don't do clean shutdown (which will terminate multiprocessing children gracefully),
+        # let's just kill our entire process group
+        os.killpg(os.getpgid(os.getpid()), signal.SIGKILL)
+
         # We use "_exit" specifically as otherwise process pool executor won't let middlewared process die because
         # it is still active. We don't initiate a shutdown for it because it may hang forever for any reason
         os._exit(0)
