@@ -17,10 +17,7 @@ from middlewared.utils import osc, run
 from middlewared.utils.asyncio_ import asyncio_map
 
 
-RE_CAMCONTROL_AAM = re.compile(r'^automatic acoustic management\s+yes', re.M)
-RE_CAMCONTROL_APM = re.compile(r'^advanced power management\s+yes', re.M)
 RE_CAMCONTROL_DRIVE_LOCKED = re.compile(r'^drive locked\s+yes$', re.M)
-RE_CAMCONTROL_POWER = re.compile(r'^power management\s+yes', re.M)
 RE_DA = re.compile('^da[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
@@ -603,11 +600,11 @@ class DiskService(CRUDService):
         This runs on boot to properly configure all power management options
         (Advanced Power Management, Automatic Acoustic Management and IDLE) for all disks.
         """
-        # Only run power management for FreeNAS
-        if not await self.middleware.call('system.is_freenas'):
+        # Do not run power management on ENTERPRISE
+        if await self.middleware.call('system.product_type') == 'ENTERPRISE':
             return
         for disk in await self.middleware.call('disk.query'):
-            await self.power_management(disk['name'], disk=disk)
+            await self.middleware.call('disk.power_management', disk['name'], disk)
 
     @private
     async def power_management(self, dev, disk=None):
@@ -615,51 +612,14 @@ class DiskService(CRUDService):
         Actually sets power management for `dev`.
         `disk` is the disk.query entry and optional so this can be called only with disk name.
         """
+
         if not disk:
             disk = await self.middleware.call('disk.query', [('name', '=', dev)])
             if not disk:
                 return
             disk = disk[0]
 
-        try:
-            identify = (await run('camcontrol', 'identify', dev)).stdout.decode()
-        except subprocess.CalledProcessError:
-            return
-
-        # Try to set APM
-        if RE_CAMCONTROL_APM.search(identify):
-            args = ['camcontrol', 'apm', dev]
-            if disk['advpowermgmt'] != 'DISABLED':
-                args += ['-l', disk['advpowermgmt']]
-            asyncio.ensure_future(run(*args, check=False))
-
-        # Try to set AAM
-        if RE_CAMCONTROL_AAM.search(identify):
-            acousticlevel_map = {
-                'MINIMUM': '1',
-                'MEDIUM': '64',
-                'MAXIMUM': '127',
-            }
-            asyncio.ensure_future(run(
-                'camcontrol', 'aam', dev, '-l', acousticlevel_map.get(disk['acousticlevel'], '0'),
-                check=False,
-            ))
-
-        # Try to set idle
-        if RE_CAMCONTROL_POWER.search(identify):
-            if disk['hddstandby'] != 'ALWAYS ON':
-                # database is in minutes, camcontrol uses seconds
-                idle = int(disk['hddstandby']) * 60
-            else:
-                idle = 0
-
-            # We wait a minute before applying idle because its likely happening during system boot
-            # or some activity is happening very soon.
-            async def camcontrol_idle():
-                await asyncio.sleep(60)
-                asyncio.ensure_future(run('camcontrol', 'idle', dev, '-t', str(idle), check=False))
-
-            asyncio.ensure_future(camcontrol_idle())
+        return await self.middleware.call('disk.power_management_impl', dev, disk)
 
 
 async def _event_system_ready(middleware, event_type, args):
