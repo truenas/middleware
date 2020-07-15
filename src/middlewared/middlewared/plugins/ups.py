@@ -140,12 +140,11 @@ class UPSService(SystemServiceService):
                     'Use alphanumeric characters, ".", "-" and "_"'
                 )
 
-        for field in [field for field in ['monpwd', 'monuser'] if data.get(field)]:
-            if re.search(r'[ #]', data[field], re.I):
-                verrors.add(
-                    f'{schema}.{field}',
-                    'Spaces or number signs are not allowed'
-                )
+        for field in ['monpwd', 'monuser']:
+            if not data.get(field):
+                verrors.add(f'{schema}.{field}', 'This field is required.')
+            elif re.search(r'[ #]', data[field], re.I):
+                verrors.add(f'{schema}.{field}', 'Spaces or number signs are not allowed')
 
         mode = data.get('mode')
         if mode == 'MASTER':
