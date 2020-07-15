@@ -39,7 +39,6 @@ import os
 import pickle
 import re
 import queue
-import select
 import setproctitle
 import signal
 import struct
@@ -603,7 +602,10 @@ class ShellWorkerThread(threading.Thread):
             and forwarding it to the websocket.
             """
             while True:
-                read = os.read(master_fd, 1024)
+                try:
+                    read = os.read(master_fd, 1024)
+                except OSError:
+                    break
                 if read == b'':
                     break
                 asyncio.run_coroutine_threadsafe(
@@ -749,22 +751,18 @@ class ShellApplication(object):
         if t_worker.shell_pid:
 
             try:
-                kqueue = select.kqueue()
-                kevent = select.kevent(t_worker.shell_pid, select.KQ_FILTER_PROC, select.KQ_EV_ADD | select.KQ_EV_ENABLE, select.KQ_NOTE_EXIT)
-                kqueue.control([kevent], 0)
+                pid_waiter = osc.PidWaiter(self.middleware, t_worker.shell_pid)
 
                 os.kill(t_worker.shell_pid, signal.SIGTERM)
 
                 # If process has not died in 2 seconds, try the big gun
-                events = await self.middleware.run_in_thread(kqueue.control, None, 1, 2)
-                if not events:
+                if not await pid_waiter.wait(2):
                     os.kill(t_worker.shell_pid, signal.SIGKILL)
 
                     # If process has not died even with the big gun
                     # There is nothing else we can do, leave it be and
                     # release the worker thread
-                    events = await self.middleware.run_in_thread(kqueue.control, None, 1, 2)
-                    if not events:
+                    if not await pid_waiter.wait(2):
                         t_worker.die()
             except ProcessLookupError:
                 pass
@@ -850,7 +848,7 @@ class Middleware(LoadPluginsMixin, RunInThreadMixin, ServiceCallMixin):
             setup_funcs.append((setup_plugin, mod.setup))
 
         def on_modules_loaded():
-            self._console_write(f'resolving plugins schemas')
+            self._console_write('resolving plugins schemas')
 
         self._load_plugins(
             on_module_begin=on_module_begin,
