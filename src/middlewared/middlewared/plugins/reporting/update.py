@@ -5,7 +5,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import CallError, ConfigService, filterable, private, ValidationErrors
-from middlewared.utils import filter_list, run
+from middlewared.utils import filter_list, osc, run
 from middlewared.validators import Range
 
 from .rrd_utils import RRD_PLUGINS
@@ -124,7 +124,10 @@ class ReportingService(ConfigService):
         if destroy_database:
             await self.middleware.call('service.stop', 'collectd')
             await self.middleware.call('service.stop', 'rrdcached')
-            await run('sh', '-c', 'rm -rfx /var/db/collectd/rrd/*', check=False)
+            await run(
+                'sh', '-c', f'rm {"--one-file-system -rf" if osc.IS_LINUX else "-rfx"} /var/db/collectd/rrd/*',
+                check=False
+            )
             await self.middleware.call('reporting.setup')
             await self.middleware.call('service.start', 'rrdcached')
 

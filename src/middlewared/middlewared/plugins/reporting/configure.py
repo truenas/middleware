@@ -5,6 +5,7 @@ import tarfile
 import time
 
 from middlewared.service import private, Service
+from middlewared.utils import osc
 
 
 def get_members(tar, prefix):
@@ -74,7 +75,7 @@ class ReportingService(Service):
             if not d.startswith('localhost') and os.path.isdir(os.path.join(pwd, d))
         ]
         for r_dir in to_remove_dirs:
-            subprocess.run(['rm', '-rfx', r_dir])
+            subprocess.run(['rm'] + (['--one-file-system', '-rf'] if osc.IS_LINUX else ['-rfx']) + [r_dir])
 
         # Remove all symlinks (that are stale if hostname was changed).
         to_remove_symlinks = [
