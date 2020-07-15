@@ -1318,6 +1318,7 @@ class PoolService(CRUDService):
                 'vol_name': pool_name,
                 'vol_encrypt': encrypt,
                 'vol_guid': data['guid'],
+                'vol_encryptkey': str(uuid.uuid4()) if encrypt else '',
             })
             pool = await self.middleware.call('pool.query', [('id', '=', pool_id)], {'get': True})
             if encrypt > 0:
