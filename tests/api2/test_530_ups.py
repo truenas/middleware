@@ -16,7 +16,8 @@ first_ups_list = [
     'port',
     'remotehost',
     'identifier',
-    'driver'
+    'driver',
+    'monpwd'
 ]
 
 second_ups_list = [
@@ -25,7 +26,8 @@ second_ups_list = [
     'mode',
     'shutdown',
     'port',
-    'identifier'
+    'identifier',
+    'monpwd'
 ]
 
 
@@ -59,7 +61,8 @@ def test_04_Set_UPS_options():
         'port': '655',
         'remotehost': '127.0.0.1',
         'identifier': 'ups',
-        'driver': 'usbhid-ups$PROTECT NAS'
+        'driver': 'usbhid-ups$PROTECT NAS',
+        'monpwd': 'mypassword'
     }
     results = PUT('/ups/', payload)
     assert results.status_code == 200, results.text
@@ -149,7 +152,8 @@ def test_17_Change_UPS_options():
         'mode': 'SLAVE',
         'shutdown': 'LOWBATT',
         'port': '65535',
-        'identifier': 'foo'
+        'identifier': 'foo',
+        'monpwd': 'secondpassword'
     }
     results = PUT('/ups/', payload)
     assert results.status_code == 200, results.text
