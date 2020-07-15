@@ -432,9 +432,16 @@ class CryptoKeyService(Service):
             if 'subjectAltName' == ext.get_short_name().decode():
                 cert_info['san'] = [s.strip() for s in ext.__str__().split(',') if s]
 
-            cert_info['extensions'][
-                re.sub(r"^(\S)", lambda m: m.group(1).upper(), ext.get_short_name().decode())
-            ] = ext.__str__()
+            try:
+                ext_name = re.sub(r"^(\S)", lambda m: m.group(1).upper(), ext.get_short_name().decode())
+                cert_info['extensions'][ext_name] = 'Unable to parse extension'
+                cert_info['extensions'][ext_name] = ext.__str__()
+            except crypto.Error as e:
+                # some certificates can have extensions with binary data which we can't parse without
+                # explicit mapping for each extension. The current case covers the most of extensions nicely
+                # and if it's required to map certain extensions which can't be handled by above we can do
+                # so as users request.
+                self.middleware.logger.error('Unable to parse extension: %s', e)
 
         dn = []
         for k, v in obj.get_subject().get_components():
