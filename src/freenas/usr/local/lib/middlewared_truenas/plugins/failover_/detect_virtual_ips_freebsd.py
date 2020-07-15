@@ -33,7 +33,7 @@ class DetectVirtualIpStates(Service):
                 masters.append(iface['name'])
             elif iface['state']['carp_config'][0]['state'] == 'BACKUP':
                 backups.append(iface['name'])
-            elif iface['state']['carp_config'][0]['state'] == 'INIT':
+            elif iface['state']['carp_config'][0]['state'] in (None, 'INIT'):
                 inits.append(iface['name'])
             else:
                 self.logger.warning(
