@@ -26,7 +26,7 @@ def upgrade():
     """
     standard_vfs_objects = ['ixnas', 'streams_xattr', 'fruit', 'catia']
     fruit_enabled = False
-    has_acl = False
+    has_acl = True
     has_streams =False
     has_catia = False
     set_durable = True
@@ -61,8 +61,8 @@ def upgrade():
                 fruit_enabled = True
             if v == 'streams_xattr':
                 has_streams = True
-            if v == 'ixnas':
-                has_acl = True
+            if v == 'noacl':
+                has_acl = False
             if v == 'catia':
                 has_catia = True
 
