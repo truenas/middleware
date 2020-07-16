@@ -429,6 +429,7 @@ class SMBService(SystemServiceService):
         """
         if await self.middleware.call("smb.getparm", "passdb backend", "global") == "tdbsam":
             job.set_progress(40, 'Synchronizing passdb and groupmap.')
+            await self.middleware.call('etc.generate', 'user')
             pdb_job = await self.middleware.call("smb.synchronize_passdb")
             grp_job = await self.middleware.call("smb.synchronize_group_mappings")
             await pdb_job.wait()
