@@ -1,3 +1,5 @@
+import math
+
 from middlewared.service import accepts, Service
 
 
@@ -17,4 +19,4 @@ class SystemService(Service):
         # We should test this on systems with higher memory as there are contradicting
         # docs - https://www.suse.com/support/kb/doc/?id=000016171
         current_mem = (await self.middleware.call('system.info'))['physmem'] / 1024
-        return 256 + round(current_mem / 16 / 1024 / 1024)
+        return 256 + math.ceil(current_mem / 16 / 1024 / 1024)

@@ -314,8 +314,9 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('kmip.sync_sed_keys')
 
             if osc.IS_LINUX and config_data['kdump_enabled'] != original_data['kdump_enabled']:
-                # TODO: Restart necessary services
-                pass
+                # kdump changes require a reboot to take effect. So just generating the kdump config
+                # should be enough
+                await self.middleware.call('etc.generate', 'kdump')
 
         return await self.config()
 

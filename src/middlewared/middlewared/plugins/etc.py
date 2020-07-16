@@ -144,6 +144,10 @@ class EtcService(Service):
              'local_path': 'local/proftpd.conf'},
             {'type': 'py', 'path': 'local/proftpd'},
         ],
+        'kdump': [
+            {'type': 'mako', 'path': 'default/kdump-tools',
+             'local_path': 'default/kdump-tools.mako', 'platform': 'Linux'},
+        ],
         'rc': [
             {'type': 'py', 'path': 'rc.conf', 'platform': 'FreeBSD'},
             {'type': 'py', 'path': 'systemd', 'platform': 'Linux'},
