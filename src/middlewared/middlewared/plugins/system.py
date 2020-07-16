@@ -77,6 +77,7 @@ class SystemAdvancedModel(sa.Model):
     adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
     adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
+    adv_kdump_enabled = sa.Column(sa.Boolean(), default=True)
 
 
 class SystemAdvancedService(ConfigService):
@@ -130,6 +131,8 @@ class SystemAdvancedService(ConfigService):
         if data['swapondrive'] and (await self.middleware.call('system.product_type')) == 'ENTERPRISE':
             data['swapondrive'] = 0
 
+        if osc.IS_FREEBSD:
+            data.pop('kdump_enabled')
         data.pop('sed_passwd')
         data.pop('kmip_uid')
 
@@ -186,6 +189,7 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
+            Bool('kdump_enabled'),
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
@@ -308,6 +312,10 @@ class SystemAdvancedService(ConfigService):
 
             if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
                 await self.middleware.call('kmip.sync_sed_keys')
+
+            if osc.IS_LINUX and config_data['kdump_enabled'] != original_data['kdump_enabled']:
+                # TODO: Restart necessary services
+                pass
 
         return await self.config()
 
