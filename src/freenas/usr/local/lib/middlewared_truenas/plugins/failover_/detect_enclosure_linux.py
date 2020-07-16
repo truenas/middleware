@@ -45,7 +45,7 @@ class EnclosureDetectionService(Service):
 
                 # Identify the X-series Hardware (PUMA)
                 # TODO: Verify this works on X-series Hardware
-                elif re.search(HA_HARDWARE.XSERIES_ENCLOSURE.value, info):
+                elif re.search(HA_HARDWARE.XSERIES_ENCLOSURE_LINUX.value, info):
                     self.HARDWARE = 'PUMA'
 
                     # We need to get the SAS address of the SAS expander first
@@ -72,9 +72,8 @@ class EnclosureDetectionService(Service):
                             break
 
                 # Identify the M-series hardware (Echowarp)
-                # TODO: Verify this works on M-series
                 else:
-                    reg = re.search(HA_HARDWARE.MSERIES_ENCLOSURE.value, info)
+                    reg = re.search(HA_HARDWARE.MSERIES_ENCLOSURE_LINUX.value, info)
                     if reg:
                         self.HARDWARE = 'ECHOWARP'
 

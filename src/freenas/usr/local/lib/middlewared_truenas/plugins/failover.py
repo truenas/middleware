@@ -70,6 +70,10 @@ class HA_HARDWARE(enum.Enum):
     XSERIES_NODEB = re.compile(r'ESCE B_(5[0-9A-F]{15})', re.M)
     MSERIES_ENCLOSURE = re.compile(r'Enclosure Name: (ECStream|iX) 4024S([ps])', re.M)
 
+    # sg_ses on linux returns slightly different text than getencstat on freeBSD
+    XSERIES_ENCLOSURE_LINUX = re.compile(r'\s*CELESTIC\s*(P3215-O|P3217-B)', re.M)
+    MSERIES_ENCLOSURE_LINUX = re.compile(r'\s*(ECStream|iX)\s*4024S([ps])', re.M)
+
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
     pass
