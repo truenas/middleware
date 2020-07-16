@@ -678,6 +678,8 @@ class RsyncTaskService(TaskPathService):
 
         Output is saved to job log excerpt (not syslog).
         """
+        self.middleware.call_sync('network.general.will_perform_activity', 'rsync')
+
         rsync = self.middleware.call_sync('rsynctask.get_instance', id)
         if rsync['locked']:
             self.middleware.call_sync('rsynctask.generate_locked_alert', id)
@@ -734,3 +736,4 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', RsyncModuleFSAttachmentDelegate(middleware))
     await middleware.call('pool.dataset.register_attachment_delegate', RsyncFSAttachmentDelegate(middleware))
+    await middleware.call('network.general.register_activity', 'rsync', 'Rsync')

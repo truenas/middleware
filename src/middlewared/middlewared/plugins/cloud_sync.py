@@ -134,6 +134,8 @@ def check_local_path(path):
 
 
 async def rclone(middleware, job, cloud_sync, dry_run=False):
+    await middleware.call("network.general.will_perform_activity", "cloud_sync")
+
     await middleware.run_in_thread(check_local_path, cloud_sync["path"])
 
     # Use a temporary file to store rclone file
@@ -544,6 +546,8 @@ class CredentialsService(CRUDService):
         """
         Verify if `attributes` provided for `provider` are authorized by the `provider`.
         """
+        await self.middleware.call("network.general.will_perform_activity", "cloud_sync")
+
         data = dict(data, name="")
         await self._validate("cloud_sync_credentials_create", data)
 
@@ -1006,6 +1010,8 @@ class CloudSyncService(TaskPathService):
 
     @private
     async def ls(self, config, path):
+        await self.middleware.call("network.general.will_perform_activity", "cloud_sync")
+
         decrypt_filenames = config.get("encryption") and config.get("filename_encryption")
         async with RcloneConfig(config) as config:
             proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:" + path],
@@ -1238,3 +1244,4 @@ async def setup(middleware):
         REMOTES[remote.name] = remote
 
     await middleware.call('pool.dataset.register_attachment_delegate', CloudSyncFSAttachmentDelegate(middleware))
+    await middleware.call('network.general.register_activity', 'cloud_sync', 'Cloud sync')

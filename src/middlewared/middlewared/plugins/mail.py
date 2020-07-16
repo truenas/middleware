@@ -437,6 +437,8 @@ class MailService(ConfigService):
         return True
 
     def _get_smtp_server(self, config, timeout=300, local_hostname=None):
+        self.middleware.call_sync('network.general.will_perform_activity', 'mail')
+
         if local_hostname is None:
             local_hostname = socket.gethostname()
 
@@ -494,3 +496,7 @@ class MailService(ConfigService):
                         mq.queue.remove(queue)
                 else:
                     mq.queue.remove(queue)
+
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'mail', 'Mail')

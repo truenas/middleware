@@ -501,6 +501,13 @@ class ZettareplService(Service):
                     hold_tasks[f"replication_task_{replication_task['id']}"] = hold_task_reason
                     continue
 
+            if replication_task["transport"] != "LOCAL":
+                if not await self.middleware.call("network.general.can_perform_activity", "replication"):
+                    hold_tasks[f"replication_task_{replication_task['id']}"] = (
+                        "Replication network activity is disabled"
+                    )
+                    continue
+
             try:
                 transport = await self._define_transport(
                     replication_task["transport"],
@@ -594,6 +601,9 @@ class ZettareplService(Service):
 
     @asynccontextmanager
     async def _get_zettarepl_shell(self, transport, ssh_credentials):
+        if transport != "LOCAL":
+            await self.middleware.call("network.general.will_perform_activity", "replication")
+
         transport_definition = await self._define_transport(transport, ssh_credentials)
         transport = create_transport(transport_definition)
         shell = transport.shell(transport)

@@ -276,6 +276,8 @@ class VMWareService(CRUDService):
         }
 
     def __get_datastores(self, data):
+        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
+
         try:
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             ssl_context.verify_mode = ssl.CERT_NONE
@@ -347,6 +349,7 @@ class VMWareService(CRUDService):
         """
         Returns Virtual Machines on the VMWare host identified by `pk`.
         """
+        await self.middleware.call('network.general.will_perform_activity', 'vmware')
 
         item = await self.query([('id', '=', pk)], {'get': True})
 
@@ -394,6 +397,8 @@ class VMWareService(CRUDService):
 
     @private
     def snapshot_begin(self, dataset, recursive):
+        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
+
         # If there's a VMWare Plugin object for this filesystem
         # snapshot the VMs before taking the ZFS snapshot.
         # Once we've taken the ZFS snapshot we're going to log back in
@@ -502,6 +507,8 @@ class VMWareService(CRUDService):
 
     @private
     def snapshot_end(self, context):
+        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
+
         vmsnapname = context["vmsnapname"]
 
         for elem in context["vmsnapobjs"]:
@@ -634,3 +641,7 @@ class VMWareService(CRUDService):
 
     def _delete_vmware_login_failed_alert(self, vmsnapobj):
         self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
+
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'vmware', 'VMware Snapshots')

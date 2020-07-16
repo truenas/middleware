@@ -90,6 +90,7 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
 
             [{"drive_type": "PERSONAL", "drive_id": "6bb903a25ad65e46"}]
         """
+        self.middleware.call_sync("network.general.will_perform_activity", "cloud_sync")
 
         if not credentials["client_id"]:
             credentials["client_id"] = "b15665d9-eda6-4092-8539-0eec376afd59"
