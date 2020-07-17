@@ -918,7 +918,7 @@ class ActiveDirectoryService(ConfigService):
         )
         if netads.returncode != 0:
             errout = netads.stderr.decode()
-            with open(f"/var/log/samba4/domain_testjoin_{int(datetime.datetime.now().timestamp())}.log", "w") as f:
+            with open(f"{SMBPath.LOGDIR.platform()}/domain_testjoin_{int(datetime.datetime.now().timestamp())}.log", "w") as f:
                 f.write(errout)
 
             if '0xfffffff6' in errout or 'The name provided is not a properly formed account name' in errout:
