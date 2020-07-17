@@ -505,6 +505,7 @@ class iSCSITargetExtentService(SharingService):
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
         Bool('pblocksize'),
+        Bool('serseq', default=True),
         Int('avail_threshold', validators=[Range(min=1, max=99)], null=True),
         Str('comment'),
         Bool('insecure_tpc', default=True),
@@ -702,6 +703,8 @@ class iSCSITargetExtentService(SharingService):
 
         data['rpm'] = extent_rpm
         data['type'] = extent_type
+        if osc.IS_LINUX:
+            data.pop('serseq')
 
         return data
 
