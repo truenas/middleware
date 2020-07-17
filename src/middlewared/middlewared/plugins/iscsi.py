@@ -470,6 +470,7 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_ro = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_enabled = sa.Column(sa.Boolean(), default=True)
     iscsi_target_extent_vendor = sa.Column(sa.Text(), nullable=True)
+    iscsi_target_extent_serseq = sa.Column(sa.Boolean(), default=True)
 
 
 class iSCSITargetExtentService(SharingService):
