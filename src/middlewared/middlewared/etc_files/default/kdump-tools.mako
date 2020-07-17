@@ -8,12 +8,10 @@
     if enabled:
         initrd_boot_path = glob.glob('/boot/initrd.img*')
         if not initrd_boot_path:
-            # TODO: Raise alert please
-            raise Exception('Initrd image not found under /boot')
+            middleware.logger.error('Initrd image not found under /boot.')
+            enabled = False
         else:
             initrd_boot_path = initrd_boot_path[0]
-
-        required_memory = middleware.call_sync('system.required_crash_kernel_memory')
 %>\
 % if enabled:
 USE_KDUMP=1
