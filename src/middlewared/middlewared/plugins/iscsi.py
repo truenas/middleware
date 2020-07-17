@@ -1374,7 +1374,7 @@ class iSCSITargetToExtentService(CRUDService):
     @accepts(Dict(
         'iscsi_targetextent_create',
         Int('target', required=True),
-        Int('lunid'),
+        Int('lunid', null=True),
         Int('extent', required=True),
         register=True
     ))
@@ -1400,11 +1400,17 @@ class iSCSITargetToExtentService(CRUDService):
 
         return await self._get_instance(data['id'])
 
+    def _set_null_false(name):
+        def set_null_false(attr):
+            attr.null = False
+        return {'name': name, 'method': set_null_false}
+
     @accepts(
         Int('id'),
         Patch(
             'iscsi_targetextent_create',
             'iscsi_targetextent_update',
+            ('edit', _set_null_false('lunid')),
             ('attr', {'update': True})
         )
     )
@@ -1470,7 +1476,7 @@ class iSCSITargetToExtentService(CRUDService):
         target = data['target']
         old_target = old.get('target')
         extent = data['extent']
-        if 'lunid' not in data:
+        if data.get('lunid') is None:
             lunids = [
                 o['lunid'] for o in await self.query(
                     [('target', '=', target)], {'order_by': ['lunid']}
