@@ -41,9 +41,11 @@ SYSTEM_READY = False
 SYSTEM_SHUTTING_DOWN = False
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
+FIRST_BOOT = False
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
+RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=re.M)
 RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
 RE_ECC_MEMORY = re.compile(r'Error Correction Type:\s*(.*ECC.*)')
 
@@ -1453,6 +1455,16 @@ async def _event_system(middleware, event_type, args):
         # If it is not defined yet, it will try to define
         if birthday is None:
             asyncio.ensure_future(_update_birthday(middleware))
+
+        if osc.IS_LINUX and not FIRST_BOOT and (await middleware.call('system.advanced.config'))['kdump_enabled']:
+            cp = await run(['kdump-config', 'status'], check=False)
+            if cp.returncode:
+                middleware.logger.error('Failed to retrieve kdump-config status: %s', cp.stderr.decode())
+            else:
+                if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
+                    await middleware.call('alert.oneshot_create', 'KdumpNotReady', None)
+                else:
+                    await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
@@ -1528,10 +1540,12 @@ class SystemHealthEventSource(EventSource):
 
 
 async def firstboot(middleware):
+    global FIRST_BOOT
     if os.path.exists(FIRST_INSTALL_SENTINEL):
         # Delete sentinel file before making clone as we
         # we do not want the clone to have the file in it.
         os.unlink(FIRST_INSTALL_SENTINEL)
+        FIRST_BOOT = True
 
         # Creating pristine boot environment from the "default"
         initial_install_be = 'Initial-Install'

@@ -20,11 +20,11 @@ sys_pool=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
     FROM
         system_systemdataset
     ORDER BY
-		    -id
+        -id
     LIMIT 1
   ")
 
-if [ -z "$sys_pool"]; then
+if [ -z "$sys_pool" ]; then
   echo "No system dataset pool found. Aborting dump."
   reboot -f
 fi
@@ -45,7 +45,7 @@ mount -t zfs "$cores_dataset" /var/crash
 
 echo "Starting dump"
 $KDUMP_SCRIPT savecore
-if [ $? -ne 0 -a -n "$KDUMP_FAIL_CMD" ] ; then
+if [ $? -ne 0 -a -n "$KDUMP_FAIL_CMD" ]; then
   $KDUMP_FAIL_CMD;
 else
   date -R;
