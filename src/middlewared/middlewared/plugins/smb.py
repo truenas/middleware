@@ -71,7 +71,7 @@ class SMBPath(enum.Enum):
     GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb4.conf', 0o755, False)
     SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb4_share.conf', 0o755, False)
     STATEDIR = ('/var/db/system/samba4', '/var/db/system/samba4', 0o755, True)
-    PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4', 0o700, True)
+    PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4/private', 0o700, True)
     LEGACYSTATE = ('/root/samba', '/root/samba', 0o755, True)
     LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private', 0o700, True)
     MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/msg.sock', 0o700, False)
