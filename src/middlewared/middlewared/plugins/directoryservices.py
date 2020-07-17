@@ -3,13 +3,20 @@ import json
 import os
 import struct
 import tdb
+import pickle
+import pwd
+import grp
 
 from base64 import b64encode, b64decode
 from middlewared.schema import accepts
 from middlewared.service import Service, private
 from middlewared.plugins.smb import SMBCmd, SMBPath
-from middlewared.utils import run
+from middlewared.utils import filter_list, osc, run
 from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
+
+OS_TYPE_FREEBSD = 0x01
+OS_TYPE_LINUX = 0x02
+OS_FLAG = int(osc.IS_FREEBSD) + (int(osc.IS_LINUX) << 1)
 
 
 class DSStatus(enum.Enum):
@@ -21,9 +28,16 @@ class DSStatus(enum.Enum):
 
 
 class DSType(enum.Enum):
-    AD = 'activedirectory'
-    LDAP = 'ldap'
-    NIS = 'nis'
+    AD = ('activedirectory', OS_TYPE_FREEBSD | OS_TYPE_LINUX)
+    LDAP = ('ldap', OS_TYPE_FREEBSD | OS_TYPE_LINUX)
+    NIS = ('nis', OS_TYPE_FREEBSD)
+
+    def byname(ds_name):
+        for ds in DSType:
+            if ds.value[1] & OS_FLAG and ds.value[0] == ds_name:
+                return ds
+
+        return None
 
 
 class SSL(enum.Enum):
@@ -137,22 +151,25 @@ class DirectoryServices(Service):
         except KeyError:
             ds_state = {}
             for srv in DSType:
+                if not srv.value[1] & OS_FLAG:
+                    continue
+
                 try:
-                    res = await self.middleware.call(f'{srv.value}.started')
-                    ds_state[srv.value] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name
+                    res = await self.middleware.call(f'{srv.value[0]}.started')
+                    ds_state[srv.value[0]] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name
                 except Exception:
-                    ds_state[srv.value] = DSStatus.FAULTED.name
+                    ds_state[srv.value[0]] = DSStatus.FAULTED.name
 
             await self.middleware.call('cache.put', 'DS_STATE', ds_state)
             return ds_state
 
     @private
     async def set_state(self, new):
-        ds_state = {
-            'activedirectory': DSStatus.DISABLED.name,
-            'ldap': DSStatus.DISABLED.name,
-            'nis': DSStatus.DISABLED.name
-        }
+        ds_state = {}
+        for ds in DSType:
+            if ds.value[1] & OS_FLAG:
+                ds_state.update({ds.value[0]: DSStatus.DISABLED.name})
+
         ds_state.update(await self.get_state())
         ds_state.update(new)
         self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state)
@@ -164,7 +181,12 @@ class DirectoryServices(Service):
 
     @private
     async def dstype_choices(self):
-        return [x.value.upper() for x in list(DSType)]
+        choices = []
+        for ds in DSType:
+            if ds.value[1] & OS_FLAG:
+                choices.append(ds.value[0])
+
+        return choices
 
     @private
     async def ssl_choices(self, dstype):
@@ -382,5 +404,146 @@ class DirectoryServices(Service):
                                 "directory services: [%s]", gencache_flush.stderr.decode())
 
 
-def setup(middleware):
+class DSCache(Service):
+
+    class Config:
+        private = True
+
+    def get_uncached_user(self, username=None, uid=None):
+        """
+        Returns dictionary containing pwd_struct data for
+        the specified user or uid. Will raise an exception
+        if the user does not exist. This method is appropriate
+        for user validation.
+        """
+        if username:
+            u = pwd.getpwnam(username)
+        elif uid is not None:
+            u = pwd.getpwuid(uid)
+        else:
+            return {}
+        return {
+            'pw_name': u.pw_name,
+            'pw_uid': u.pw_uid,
+            'pw_gid': u.pw_gid,
+            'pw_gecos': u.pw_gecos,
+            'pw_dir': u.pw_dir,
+            'pw_shell': u.pw_shell
+        }
+
+    def get_uncached_group(self, groupname=None, gid=None):
+        """
+        Returns dictionary containing grp_struct data for
+        the specified group or gid. Will raise an exception
+        if the group does not exist. This method is appropriate
+        for group validation.
+        """
+        if groupname:
+            g = grp.getgrnam(groupname)
+        elif gid is not None:
+            g = grp.getgrgid(gid)
+        else:
+            return {}
+        return {
+            'gr_name': g.gr_name,
+            'gr_gid': g.gr_gid,
+            'gr_mem': g.gr_mem
+        }
+
+    def initialize(self):
+        ds_status = self.middleware.call_sync('directoryservices.get_state')
+        for ds, status in ds_status.items():
+            ds_type = DSType.byname(ds)
+            if status != 'DISABLED':
+                try:
+                    with open(f'/var/db/system/.{ds_type.name}_cache_backup', 'rb') as f:
+                        pickled_cache = pickle.load(f)
+
+                    self.middleware.call_sync('cache.put',
+                                              f'{ds_type.name}_cache',
+                                              pickled_cache)
+                except FileNotFoundError:
+                    self.logger.debug('User cache file for [%s] is not present.', ds)
+
+    def backup(self):
+        ds_status = self.middleware.call_sync('directoryservices.get_state')
+        for ds, status in ds_status.items():
+            ds_type = DSType.byname(ds)
+            if status != 'DISABLED':
+                try:
+                    ds_cache = self.middleware.call_sync('cache.get', f'{ds_type.name}_cache')
+                    with open(f'/var/db/system/.{ds_type.name}_cache_backup', 'wb') as f:
+                        pickle.dump(ds_cache, f)
+                except KeyError:
+                    self.logger.debug('No cache exists for directory service [%s].', ds)
+
+    async def query(self, objtype='USERS', filters=None, options=None):
+        """
+        Query User / Group cache with `query-filters` and `query-options`.
+
+        `objtype`: 'USERS' or 'GROUPS'
+
+        Each directory service, when enabled, will generate a user and group cache using its
+        respective 'fill_cache' method (ex: ldap.fill_cache). The cache entry is formatted
+        as follows:
+
+        The cache can be refreshed by calliing 'dscache.refresh'. The actual cache fill
+        will run in the background (potentially for a long time). The exact duration of the
+        fill process depends factors such as number of users and groups, and network
+        performance. In environments with a large number of users (over a few thousand),
+        administrators may consider disabling caching. In the case of active directory,
+        the dscache will continue to be filled using entries from samba's gencache (the end
+        result in this case will be that only users and groups actively accessing the share
+        will be populated in UI dropdowns). In the case of other directory services, the
+        users and groups will simply not appear in query results (UI features).
+
+        """
+        res = []
+        ds_state = await self.middleware.call('directoryservices.get_state')
+
+        is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'groupname'])
+
+        res.extend((await self.middleware.call(f'{objtype.lower()[:-1]}.query', filters, options)))
+
+        for dstype, state in ds_state.items():
+            if state != 'DISABLED':
+                """
+                Avoid iteration here if possible.  Use keys if single filter "=" and x in x=y is a
+                username or groupname.
+                """
+                if is_name_check and filters[0][1] == '=':
+                    cache = (await self.middleware.call(f'{dstype}.get_cache'))[objtype.lower()]
+                    name = filters[0][2]
+                    return [cache.get(name)] if cache.get(name) else []
+
+                else:
+                    res.extend(filter_list(
+                        list((await self.middleware.call(f'{dstype}.get_cache'))[objtype.lower()].values()),
+                        filters,
+                        options
+                    ))
+
+        return res
+
+    async def refresh(self):
+        """
+        This is called from a cronjob every 24 hours and when a user clicks on the
+        UI button to 'rebuild directory service cache'.
+        """
+        ds_status = self.middleware.call_sync('directoryservices.get_state')
+        for ds, status in ds_status.items():
+            if status == 'HEALTHY':
+                await self.middleware.call(f'{ds}.fill_cache', True)
+            elif status != 'DISABLED':
+                self.logger.debug('Unable to refresh [%s] cache, state is: %s' % (ds, status))
+
+        await self.middleware.call('dscache.backup')
+
+
+async def setup(middleware):
     middleware.event_register('directoryservices.status', 'Sent on directory service state changes.')
+    """
+    During initial boot, we need to wait for the system dataset to be imported.
+    """
+    if await middleware.call('system.ready'):
+        await middleware.call('dscache.initialize')

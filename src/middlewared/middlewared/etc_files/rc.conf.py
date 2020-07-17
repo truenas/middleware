@@ -4,6 +4,7 @@ import subprocess
 import sysctl
 
 from middlewared.utils.io import write_if_changed
+from middlewared.utils import osc
 
 NFS_BINDIP_NOTFOUND = '/tmp/.nfsbindip_notfound'
 RE_FIRMWARE_VERSION = re.compile(r'Firmware Revision\s*:\s*(\S+)', re.M)
@@ -237,6 +238,9 @@ def nfs_config(middleware, context):
 
 
 def nis_config(middleware, context):
+    if osc.IS_LINUX:
+        return []
+
     nis = middleware.call_sync('datastore.config', 'directoryservice.nis', {'prefix': 'nis_'})
     if not nis['enable'] or not nis['domain']:
         return []

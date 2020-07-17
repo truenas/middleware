@@ -19,6 +19,6 @@
 % for group in middleware.call_sync('group.query', [], {'order_by': ['-builtin', 'gid']}):
 ${group['group']}:${no_password}:${group['gid']}:${get_usernames(group)}
 % endfor
-% if middleware.call_sync('nis.config')['enable']:
+% if IS_FREEBSD and middleware.call_sync('nis.config')['enable']:
 +:${no_password}::\
 % endif

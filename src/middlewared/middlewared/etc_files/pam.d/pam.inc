@@ -149,7 +149,7 @@
                     obj = ActiveDirectoryPam(**kwargs)
                 elif LDAPPam(**kwargs).enabled():
                     obj = LDAPPam(**kwargs)
-                elif NISPam(**kwargs).enabled():
+                elif IS_FREEBSD and NISPam(**kwargs).enabled():
                     obj = NISPam(**kwargs)
             except Exception as e:
                 obj = None

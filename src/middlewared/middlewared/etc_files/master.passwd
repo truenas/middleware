@@ -17,7 +17,7 @@ else:
 %>\
 ${user['username']}:${passwd}:${user['uid']}:${user['group']['bsdgrp_gid']}:${freebsd_fields}${user['full_name']}:${user['home']}:${user['shell']}
 % endfor
-% if middleware.call_sync('nis.config')['enable']:
+% if IS_FREEBSD and middleware.call_sync('nis.config')['enable']:
 
 +:::::::::\
 % endif
