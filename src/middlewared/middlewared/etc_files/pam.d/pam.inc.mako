@@ -172,7 +172,7 @@
             return 'NIS'
 
         def enabled(self):
-            return self.safe_call('nis.config')['enable']
+            return IS_FREEBSD and self.safe_call('nis.config')['enable']
 
 
     class DirectoryServicePam(DirectoryServicePamBase):
