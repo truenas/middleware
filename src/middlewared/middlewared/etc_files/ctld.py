@@ -293,6 +293,7 @@ def main(middleware):
         addline('\toption "product" "iSCSI Disk"\n')
         addline('\toption "revision" "0123"\n')
         addline('\toption "naa" "%s"\n' % extent.iscsi_target_extent_naa)
+        addline(f'\toption "serseq" "{"on" if extent.iscsi_target_extent_serseq else "off"}"\n')
         if extent.iscsi_target_extent_insecure_tpc:
             addline('\toption "insecure_tpc" "on"\n')
             if lunthreshold:
