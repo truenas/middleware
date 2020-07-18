@@ -470,7 +470,7 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_ro = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_enabled = sa.Column(sa.Boolean(), default=True)
     iscsi_target_extent_vendor = sa.Column(sa.Text(), nullable=True)
-    iscsi_target_extent_serseq = sa.Column(sa.Boolean(), default=True)
+    iscsi_target_extent_automatic_serseq_tuning = sa.Column(sa.Boolean(), default=True)
 
 
 class iSCSITargetExtentService(SharingService):
@@ -505,7 +505,7 @@ class iSCSITargetExtentService(SharingService):
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
         Bool('pblocksize'),
-        Bool('serseq', default=True),
+        Bool('automatic_serseq_tuning', default=True),
         Int('avail_threshold', validators=[Range(min=1, max=99)], null=True),
         Str('comment'),
         Bool('insecure_tpc', default=True),
@@ -664,12 +664,32 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     async def extent_extend_context(self, extra):
-        return {'disks': {d['identifier']: d for d in await self.middleware.call('disk.query')}}
+        context = {
+            'disks': {},
+            'pools': {
+                p['name']: {'disks': await self.middleware.call('zfs.pool.get_disks', p['name']), 'all_flash': False}
+                for p in await self.middleware.call('pool.query')
+            }
+        }
+        disks_names = {}
+        for disk in await self.middleware.call('disk.query'):
+            disks_names[disk['devname']] = disk
+            context['disks'][disk['identifier']] = disk
+
+        for pool in filter(lambda p: context['pools'][p]['disks'], context['pools']):
+            data = context['pools'][pool]
+            if all(disks_names.get(d, {}).get('type') == 'SSD' for d in data['disks']):
+                data['all_flash'] = True
 
     @private
     async def extend(self, data, context):
         extent_type = data['type'].upper()
         extent_rpm = data['rpm'].upper()
+
+        if osc.IS_LINUX:
+            data.pop('automatic_serseq_tuning')
+        else:
+            data['serseq'] = True
 
         data['disk'] = None
         if extent_type != 'FILE':
@@ -681,6 +701,10 @@ class iSCSITargetExtentService(SharingService):
                 data['disk'] = context['disks'][data['path']]['name']
             else:
                 data['disk'] = data['path']
+                if osc.IS_FREEBSD and data['path'].startswith('/dev/zvol') and data['automatic_serseq_tuning']:
+                    pool = data['path'][10:].split('/')[0]
+                    if context['pools'].get(pool, {}).get('all_flash'):
+                        data['serseq'] = False
         else:
             extent_size = data['filesize']
 
@@ -703,8 +727,6 @@ class iSCSITargetExtentService(SharingService):
 
         data['rpm'] = extent_rpm
         data['type'] = extent_type
-        if osc.IS_LINUX:
-            data.pop('serseq')
 
         return data
 

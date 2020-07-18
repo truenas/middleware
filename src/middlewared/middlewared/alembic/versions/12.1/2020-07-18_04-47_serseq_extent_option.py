@@ -17,4 +17,4 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('services_iscsitargetextent', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('iscsi_target_extent_serseq', sa.Boolean(), default=True))
+        batch_op.add_column(sa.Column('iscsi_target_extent_automatic_serseq_tuning', sa.Boolean(), default=True))

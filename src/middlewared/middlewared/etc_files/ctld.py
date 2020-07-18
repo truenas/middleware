@@ -213,7 +213,12 @@ def main(middleware):
     zpoollist = {i['name']: i for i in middleware.call_sync('zfs.pool.query')}
 
     system_disks = middleware.call_sync('device.get_disks')
-    locked_extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['locked', '=', True]])}
+    extents = {}
+    locked_extents = {}
+    for extent in middleware.call_sync('iscsi.extent.query'):
+        extents[extent['id']] = extent
+        if extent['locked']:
+            locked_extents[extent['id']] = extent
     # Generate the LUN section
     for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
                                        [['iscsi_target_extent_enabled', '=', True]]):
@@ -293,7 +298,8 @@ def main(middleware):
         addline('\toption "product" "iSCSI Disk"\n')
         addline('\toption "revision" "0123"\n')
         addline('\toption "naa" "%s"\n' % extent.iscsi_target_extent_naa)
-        addline(f'\toption "serseq" "{"on" if extent.iscsi_target_extent_serseq else "off"}"\n')
+        if extent.iscsi_target_extent_automatic_serseq_tuning:
+            addline(f'\toption "serseq" "{"on" if extents[extent.id]["serseq"] else "off"}"\n')
         if extent.iscsi_target_extent_insecure_tpc:
             addline('\toption "insecure_tpc" "on"\n')
             if lunthreshold:
