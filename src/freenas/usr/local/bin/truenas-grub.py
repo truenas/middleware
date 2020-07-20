@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import math
+import psutil
 import sqlite3
 
 from middlewared.plugins.config import FREENAS_DATABASE
@@ -30,6 +32,10 @@ if __name__ == "__main__":
         terminal.append("serial")
 
         cmdline.append(f"console={advanced['serialport']},{advanced['serialspeed']} console=tty1")
+
+    if advanced["kdump_enabled"]:
+        current_mem = psutil.virtual_memory().total / 1024
+        cmdline.append(f"crashkernel={256 + math.ceil(current_mem / 16 / 1024 / 1024)}M")
 
     config.append(f'GRUB_TERMINAL="{" ".join(terminal)}"')
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
