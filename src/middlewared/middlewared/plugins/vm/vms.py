@@ -12,7 +12,12 @@ from middlewared.utils import osc
 from .vm_supervisor import VMSupervisorMixin
 
 
-BOOT_LOADER_OPTIONS = ['UEFI', 'UEFI_CSM'] + (['GRUB'] if osc.IS_FREEBSD else [])
+BOOT_LOADER_OPTIONS = {
+    'UEFI': 'UEFI',
+    'UEFI_CSM': 'Legacy BIOS',
+}
+if osc.IS_FREEBSD:
+    BOOT_LOADER_OPTIONS['GRUB'] = 'Grub bhyve (specify grub.cfg)'
 LIBVIRT_LOCK = asyncio.Lock()
 RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
 
@@ -48,7 +53,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         """
         Supported motherboard firmware options.
         """
-        return {v: v for v in BOOT_LOADER_OPTIONS}
+        return BOOT_LOADER_OPTIONS
 
     @private
     async def extend_vm(self, vm):
@@ -69,7 +74,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('cores', default=1),
         Int('threads', default=1),
         Int('memory', required=True),
-        Str('bootloader', enum=BOOT_LOADER_OPTIONS, default='UEFI'),
+        Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
         Str('grubconfig', null=True),
         List('devices', default=[], items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
