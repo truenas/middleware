@@ -298,8 +298,7 @@ def main(middleware):
         addline('\toption "product" "iSCSI Disk"\n')
         addline('\toption "revision" "0123"\n')
         addline('\toption "naa" "%s"\n' % extent.iscsi_target_extent_naa)
-        if extent.iscsi_target_extent_automatic_serseq_tuning:
-            addline(f'\toption "serseq" "{"on" if extents[extent.id]["serseq"] else "off"}"\n')
+        addline(f'\toption "serseq" "{"on" if extents[extent.id]["serseq"] else "off"}"\n')
         if extent.iscsi_target_extent_insecure_tpc:
             addline('\toption "insecure_tpc" "on"\n')
             if lunthreshold:
