@@ -44,6 +44,7 @@ CACHE_POOLS_STATUSES = 'system.system_health_pools'
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
 LICENSE_FILE = '/data/license'
 
+RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=re.M)
 RE_LINUX_DMESG_TTY = re.compile(r'ttyS\d+ at I/O (\S+)', flags=re.M)
 RE_ECC_MEMORY = re.compile(r'Error Correction Type:\s*(.*ECC.*)')
 
@@ -77,6 +78,7 @@ class SystemAdvancedModel(sa.Model):
     adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
     adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
+    adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
 
 
 class SystemAdvancedService(ConfigService):
@@ -130,6 +132,8 @@ class SystemAdvancedService(ConfigService):
         if data['swapondrive'] and (await self.middleware.call('system.product_type')) == 'ENTERPRISE':
             data['swapondrive'] = 0
 
+        if osc.IS_FREEBSD:
+            data.pop('kdump_enabled')
         data.pop('sed_passwd')
         data.pop('kmip_uid')
 
@@ -186,6 +190,7 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_update',
             Bool('advancedmode'),
             Bool('autotune'),
+            Bool('kdump_enabled'),
             Int('boot_scrub', validators=[Range(min=1)]),
             Bool('consolemenu'),
             Bool('consolemsg'),
@@ -308,6 +313,12 @@ class SystemAdvancedService(ConfigService):
 
             if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
                 await self.middleware.call('kmip.sync_sed_keys')
+
+            if osc.IS_LINUX and config_data['kdump_enabled'] != original_data['kdump_enabled']:
+                # kdump changes require a reboot to take effect. So just generating the kdump config
+                # should be enough
+                await self.middleware.call('etc.generate', 'kdump')
+                await self.middleware.call('etc.generate', 'grub')
 
         return await self.config()
 
@@ -1444,6 +1455,19 @@ async def _event_system(middleware, event_type, args):
         # If it is not defined yet, it will try to define
         if birthday is None:
             asyncio.ensure_future(_update_birthday(middleware))
+
+        if osc.IS_LINUX:
+            if (await middleware.call('system.advanced.config'))['kdump_enabled']:
+                cp = await run(['kdump-config', 'status'], check=False)
+                if cp.returncode:
+                    middleware.logger.error('Failed to retrieve kdump-config status: %s', cp.stderr.decode())
+                else:
+                    if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
+                        await middleware.call('alert.oneshot_create', 'KdumpNotReady', None)
+                    else:
+                        await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+            else:
+                await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
 
