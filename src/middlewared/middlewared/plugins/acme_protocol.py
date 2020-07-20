@@ -419,6 +419,12 @@ class DNSAuthenticatorService(CRUDService):
     '''
 
     @private
+    def update_txt_record_cloudflare(self, domain, challenge, key, cloudflare_email, api_key):
+        self.middleware.call_sync(
+            'acme.dns.authenticator.cloudflare_txt_record_update', domain, challenge, key, cloudflare_email, api_key
+        )
+
+    @private
     def update_txt_record_route53(self, domain, challenge, key, access_key_id, secret_access_key):
         session = boto3.Session(
             aws_access_key_id=access_key_id,
