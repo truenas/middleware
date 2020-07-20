@@ -145,8 +145,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/proftpd'},
         ],
         'kdump': [
-            {'type': 'mako', 'path': 'default/kdump-tools',
-             'local_path': 'default/kdump-tools.mako', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/kdump-tools', 'platform': 'Linux'},
         ],
         'rc': [
             {'type': 'py', 'path': 'rc.conf', 'platform': 'FreeBSD'},
@@ -165,10 +164,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {
-                'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux',
-                'local_path': 'scst.conf.mako', 'checkpoint': 'pool_import',
-            }
+            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'}
         ],
         'webdav': [
             {
@@ -200,7 +196,7 @@ class EtcService(Service):
                 'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
                 'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
             },
-            {'type': 'mako', 'path': 'default/rrdcached', 'local_path': 'default/rrdcached.mako', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux'},
         ],
         'docker': [
             {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': 'pool_import'},
@@ -223,8 +219,8 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
             {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
             {
-                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root', 'group': UPS_GROUP,
-                'mode': 0o440, 'platform': 'Linux', 'local_path': 'local/nut/nut.conf.mako'
+                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root',
+                'group': UPS_GROUP, 'mode': 0o440, 'platform': 'Linux',
             },
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
@@ -332,6 +328,8 @@ class EtcService(Service):
                 if osc.IS_LINUX:
                     if entry_path.startswith('local/'):
                         entry_path = entry_path[len('local/'):]
+                if entry['type'] == 'mako' and entry_path.endswith('.mako'):
+                    entry_path = entry_path[:-len('.mako')]
                 outfile = f'/etc/{entry_path}'
                 try:
                     rendered = await renderer.render(path)
