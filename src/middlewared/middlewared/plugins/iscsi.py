@@ -662,12 +662,31 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     async def extent_extend_context(self, extra):
-        return {'disks': {d['identifier']: d for d in await self.middleware.call('disk.query')}}
+        context = {
+            'disks': {},
+            'pools': {
+                p['name']: {'disks': await self.middleware.call('zfs.pool.get_disks', p['name']), 'all_flash': False}
+                for p in await self.middleware.call('pool.query')
+            }
+        }
+        disks_names = {}
+        for disk in await self.middleware.call('disk.query'):
+            disks_names[disk['devname']] = disk
+            context['disks'][disk['identifier']] = disk
+
+        for pool in filter(lambda p: context['pools'][p]['disks'], context['pools']):
+            data = context['pools'][pool]
+            if all(disks_names.get(d, {}).get('type') == 'SSD' for d in data['disks']):
+                data['all_flash'] = True
+        return context
 
     @private
     async def extend(self, data, context):
         extent_type = data['type'].upper()
         extent_rpm = data['rpm'].upper()
+
+        if osc.IS_FREEBSD:
+            data['serseq'] = True
 
         data['disk'] = None
         if extent_type != 'FILE':
@@ -679,6 +698,10 @@ class iSCSITargetExtentService(SharingService):
                 data['disk'] = context['disks'][data['path']]['name']
             else:
                 data['disk'] = data['path']
+                if osc.IS_FREEBSD and data['path'].startswith('zvol/'):
+                    pool = data['path'][len('zvol/'):].split('/')[0]
+                    if context['pools'].get(pool, {}).get('all_flash'):
+                        data['serseq'] = False
         else:
             extent_size = data['filesize']
 
