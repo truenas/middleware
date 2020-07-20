@@ -18,4 +18,4 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('adv_kdump_enabled', sa.Boolean(), default=True))
+        batch_op.add_column(sa.Column('adv_kdump_enabled', sa.Boolean(), default=False))

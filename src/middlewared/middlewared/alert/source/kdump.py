@@ -6,4 +6,4 @@ class KdumpNotReadyAlertClass(AlertClass, SimpleOneShotAlertClass):
     level = AlertLevel.WARNING
     category = AlertCategory.SYSTEM
     title = 'System Not Ready For Kdump'
-    text = 'System is not ready for Kdump, please refer to logs.'
+    text = 'System is not ready for Kdump, please refer to kdump-config status.'

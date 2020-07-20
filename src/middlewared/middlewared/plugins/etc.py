@@ -145,7 +145,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'local/proftpd'},
         ],
         'kdump': [
-            {'type': 'mako', 'path': 'default/kdump-tools', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/kdump-tools.mako', 'platform': 'Linux'},
         ],
         'rc': [
             {'type': 'py', 'path': 'rc.conf', 'platform': 'FreeBSD'},
@@ -164,7 +164,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {'type': 'mako', 'path': 'scst.conf', 'platform': 'Linux', 'checkpoint': 'pool_import'}
+            {'type': 'mako', 'path': 'scst.conf.mako', 'platform': 'Linux', 'checkpoint': 'pool_import'}
         ],
         'webdav': [
             {
@@ -196,7 +196,7 @@ class EtcService(Service):
                 'type': 'mako', 'path': 'local/collectd.conf' if osc.IS_FREEBSD else 'collectd/collectd.conf',
                 'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
             },
-            {'type': 'mako', 'path': 'default/rrdcached', 'platform': 'Linux'},
+            {'type': 'mako', 'path': 'default/rrdcached.mako', 'platform': 'Linux'},
         ],
         'docker': [
             {'type': 'py', 'path': 'docker', 'platform': 'Linux', 'checkpoint': 'pool_import'},
@@ -219,7 +219,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
             {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': UPS_GROUP, 'mode': 0o440},
             {
-                'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root',
+                'type': 'mako', 'path': 'local/nut/nut.conf.mako', 'owner': 'root',
                 'group': UPS_GROUP, 'mode': 0o440, 'platform': 'Linux',
             },
             {'type': 'py', 'path': 'local/nut/ups_perms'}

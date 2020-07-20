@@ -78,7 +78,7 @@ class SystemAdvancedModel(sa.Model):
     adv_syslog_transport = sa.Column(sa.String(12), default="UDP")
     adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
-    adv_kdump_enabled = sa.Column(sa.Boolean(), default=True)
+    adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
 
 
 class SystemAdvancedService(ConfigService):
