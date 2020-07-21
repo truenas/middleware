@@ -184,7 +184,7 @@ class SMBModel(sa.Model):
     cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)
     cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
     cifs_srv_next_rid = sa.Column(sa.Integer(), nullable=False)
-    cifs_srv_secrets = sa.Column(sa.EncryptedText())
+    cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
 
 
 class WBCErr(enum.Enum):
