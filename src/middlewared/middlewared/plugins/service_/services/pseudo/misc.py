@@ -52,7 +52,6 @@ class FailoverService(PseudoServiceBase):
             await freebsd_service("devd", "restart")
 
         if osc.IS_LINUX:
-            await self.middleware.call('etc.generate', 'keepalived')
             await self.middleware.call('service.reload', 'keepalived')
 
 
