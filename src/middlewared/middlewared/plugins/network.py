@@ -1688,6 +1688,14 @@ class InterfaceService(CRUDService):
             parent_interfaces.append(iface.parent)
             parent_iface.up()
 
+            # On HA systems, there seems to be an issue (race in kernel maybe?)
+            # that when adding a CARP alias to the interface BEFORE the physical
+            # IP address gets added that CARP will stay in INIT state. The only
+            # way to get it out of that state is to ifconfig down/up the interface
+            # and then it will transition into MASTER/BACKUP accordingly.
+            # To workaround this, we up ourselves here explicitly.
+            iface.up()
+
         bridges = await self.middleware.call('datastore.query', 'network.bridge')
         for bridge in bridges:
             name = bridge['interface']['int_interface']
