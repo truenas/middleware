@@ -73,7 +73,7 @@ class DirectorySecrets(object):
         if not bytes_passwd_chng:
             self.logger.warning("Failed to retrieve last password change time for domain "
                                 "[%s] from domain secrets. Directory service functionality "
-                                "may be impacted.")
+                                "may be impacted.", domain)
             return None
 
         passwd_chg_ts = struct.unpack("<L", bytes_passwd_chng)[0]
@@ -84,7 +84,6 @@ class DirectorySecrets(object):
         self.tdb.read_lock_all()
         for entry in self.tdb:
             ret.update({entry.decode(): (b64encode(self.tdb.get(entry))).decode()})
-            self.logger.debug("entry: %s", ret[entry.decode()])
 
         self.tdb.read_unlock_all()
         return ret
@@ -310,7 +309,7 @@ class DirectoryServices(Service):
             passwd_ts = s.last_password_change(domain)
 
         db_secrets = self.get_db_secrets()
-        server_secrets = db_secrets.get(f"{smb_config['netbiosname_local']}$")
+        server_secrets = db_secrets.get(f"{smb_config['netbiosname_local'].upper()}$")
         if server_secrets is None:
             return {"dbconfig": None, "secrets": passwd_ts}
 
