@@ -215,8 +215,6 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         if verrors:
             raise verrors
-        if verrors:
-            raise verrors
 
         Cron.convert_schedule_to_db_format(new, begin_end=True)
 
