@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         cmdline.append(f"console={advanced['serialport']},{advanced['serialspeed']} console=tty1")
 
-    if advanced["kdump_enabled"]:
+    if advanced.get("kdump_enabled"):
         # (memory in kb) / 16 / 1024 / 1024
         # For every 4KB of physical memory, we should allocate 2 bits to the crash kernel
         # In other words, for every 16KB of memory we allocate 1 byte.
