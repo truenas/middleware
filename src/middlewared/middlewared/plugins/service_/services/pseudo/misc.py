@@ -51,7 +51,9 @@ class FailoverService(PseudoServiceBase):
             await self.middleware.call('etc.generate', 'pf')
             await freebsd_service("devd", "restart")
 
-        # FIXME: Linux
+        if osc.IS_LINUX:
+            await self.middleware.call('etc.generate', 'keepalived')
+            await self.middleware.call('service.reload', 'keepalived')
 
 
 class KmipService(PseudoServiceBase):
