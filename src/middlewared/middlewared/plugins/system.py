@@ -377,22 +377,26 @@ class SystemService(Service):
         Returns the type of the product.
 
         CORE - TrueNAS Core, community version
+        SCALE - TrueNAS SCALE, community version
         ENTERPRISE - TrueNAS Enterprise, appliance version
-        SCALE - TrueNAS SCALE
+        SCALE_ENTERPRISE - TrueNAS SCALE Enterprise, appliance version
         """
+        linux = osc.IS_LINUX
+
         if self.__product_type is None:
-            if osc.IS_LINUX:
-                self.__product_type = 'SCALE'
-                return self.__product_type
+
             hardware = await self.middleware.call('failover.hardware')
             if hardware != 'MANUAL':
-                self.__product_type = 'ENTERPRISE'
+                if linux:
+                    self.__product_type = 'SCALE_ENTERPRISE'
+                else:
+                    self.__product_type = 'ENTERPRISE'
             else:
-                license = await self.middleware.run_in_thread(self._get_license)
-                self.__product_type = 'CORE' if (
-                    not license or
-                    license['model'].lower().startswith('freenas')
-                ) else 'ENTERPRISE'
+                if linux:
+                    self.__product_type = 'SCALE'
+                else:
+                    self.__product_type = 'CORE'
+
         return self.__product_type
 
     @no_auth_required
@@ -747,7 +751,7 @@ class SystemService(Service):
                 with requests.get(url, stream=True) as r:
                     for i in r.iter_content(chunk_size=1048576):
                         if standby_debug.tell() > 20971520:
-                            raise CallError(f'Standby debug file is bigger than 20MiB.')
+                            raise CallError('Standby debug file is bigger than 20MiB.')
                         standby_debug.write(i)
 
         debug_job.wait_sync()
@@ -761,7 +765,7 @@ class SystemService(Service):
             # so they can be downloaded at once.
             try:
                 if os.stat(debug_job.result).st_size > 20971520:
-                    raise CallError(f'Debug file is bigger than 20MiB.')
+                    raise CallError('Debug file is bigger than 20MiB.')
             except FileNotFoundError:
                 raise CallError('Debug file was not found, try again.')
 
