@@ -6,7 +6,7 @@ import socket
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
-from middlewared.validators import Range
+from middlewared.validators import Match, Range
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
@@ -233,6 +233,7 @@ class NFSShareModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     nfs_paths = sa.Column(sa.JSON(type=list))
+    nfs_aliases = sa.Column(sa.JSON(type=list))
     nfs_comment = sa.Column(sa.String(120))
     nfs_network = sa.Column(sa.Text())
     nfs_hosts = sa.Column(sa.Text())
@@ -271,7 +272,8 @@ class SharingNFSService(SharingService):
 
     @accepts(Dict(
         "sharingnfs_create",
-        List("paths", items=[Dir("path")], empty=False),
+        List("paths", items=[Dir("path")], required=True, empty=False),
+        List("aliases", items=[Str("path", validators=[Match(r"^/.*")])], default=[]),
         Str("comment", default=""),
         List("networks", items=[IPAddr("network", network=True)], default=[]),
         List("hosts", items=[Str("host")], default=[]),
@@ -289,12 +291,15 @@ class SharingNFSService(SharingService):
         ),
         Bool("enabled", default=True),
         register=True,
+        strict=True,
     ))
     async def do_create(self, data):
         """
         Create a NFS Share.
 
         `paths` is a list of valid paths which are configured to be shared on this share.
+
+        `aliases` is a list of aliases for each path (or an empty list if aliases are not used).
 
         `networks` is a list of authorized networks that are allowed to access the share having format
         "network/mask" CIDR notation. If empty, all networks are allowed.
@@ -370,6 +375,19 @@ class SharingNFSService(SharingService):
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
+        if len(data["aliases"]):
+            if not osc.IS_LINUX:
+                verrors.add(
+                    f"{schema_name}.aliases",
+                    "This field is only supported on SCALE",
+                )
+
+            if len(data["aliases"]) != len(data["paths"]):
+                verrors.add(
+                    f"{schema_name}.aliases",
+                    "This field should be either empty of have the same number of elements as paths",
+                )
+
         if data["alldirs"] and len(data["paths"]) > 1:
             verrors.add(f"{schema_name}.alldirs", "This option can only be used for shares that contain single path")
 
