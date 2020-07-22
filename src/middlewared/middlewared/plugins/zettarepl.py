@@ -1,6 +1,7 @@
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
+import errno
 import logging
 import multiprocessing
 import os
@@ -9,11 +10,13 @@ import queue
 import re
 import setproctitle
 import signal
+import socket
 import threading
 import time
 import types
 
 import humanfriendly
+import paramiko.ssh_exception
 
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
@@ -50,6 +53,8 @@ INVALID_DATASETS = (
     re.compile(r"freenas-boot($|/)"),
     re.compile(r"[^/]+/\.system($|/)")
 )
+SSH_EXCEPTIONS = (socket.timeout, paramiko.ssh_exception.NoValidConnectionsError, paramiko.ssh_exception.SSHException,
+                  IOError, OSError)
 
 
 def lifetime_timedelta(value, unit):
@@ -401,8 +406,8 @@ class ZettareplService(Service):
         try:
             async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
                 datasets = await self.middleware.run_in_thread(list_datasets, shell)
-        except Exception as e:
-            raise CallError(repr(e))
+        except SSH_EXCEPTIONS as e:
+            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
         return [
             ds
@@ -414,8 +419,8 @@ class ZettareplService(Service):
         try:
             async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
                 return await self.middleware.run_in_thread(create_dataset, shell, dataset)
-        except Exception as e:
-            raise CallError(repr(e))
+        except SSH_EXCEPTIONS as e:
+            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
     async def count_eligible_manual_snapshots(self, datasets, naming_schemas, transport, ssh_credentials=None):
         try:
@@ -423,8 +428,8 @@ class ZettareplService(Service):
                 snapshots = await self.middleware.run_in_thread(
                     multilist_snapshots, shell, [(dataset, False) for dataset in datasets]
                 )
-        except Exception as e:
-            raise CallError(repr(e))
+        except SSH_EXCEPTIONS as e:
+            raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
 
         parsed = parse_snapshots_names_with_multiple_schemas([s.name for s in snapshots], naming_schemas)
 
