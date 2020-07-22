@@ -1,4 +1,4 @@
-# Copyright (c) 2018 iXsystems, Inc.
+# Copyright (c) 2020 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
 # and may not be copied and/or distributed
@@ -9,6 +9,7 @@ import subprocess
 from lxml import etree
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.utils import osc
 
 
 class FCHBANotPresentAlertClass(AlertClass):
@@ -24,6 +25,10 @@ class FCHBANotPresentAlertSource(ThreadedAlertSource):
     products = ("ENTERPRISE",)
 
     def check_sync(self):
+
+        if osc.IS_LINUX:
+            return []
+
         ports = set()
         for e in (
             etree.fromstring(subprocess.check_output(["ctladm", "portlist", "-x"], encoding="utf-8")).
