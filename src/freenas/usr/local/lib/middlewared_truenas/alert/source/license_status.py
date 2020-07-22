@@ -50,7 +50,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             return Alert(LicenseAlertClass, "Your TrueNAS has no license, contact support.")
 
         proc = subprocess.Popen([
-            '/usr/local/sbin/dmidecode',
+            'dmidecode',
             '-s', 'system-serial-number',
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         serial = proc.communicate()[0].split('\n', 1)[0].strip()
