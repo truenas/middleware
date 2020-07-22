@@ -4,5 +4,10 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
+
 class PanicExit(SystemExit):
+    pass
+
+
+class ExcludeDisksError(Exception):
     pass
