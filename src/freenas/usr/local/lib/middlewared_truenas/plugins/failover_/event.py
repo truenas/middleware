@@ -780,22 +780,25 @@ class FailoverService(Service):
                 if detach_all_job.error:
                     self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
-                master_system_version = self.middleware.call_sync(
-                    'failover.call_remote', 'system.info'
-                )['version'].split('-')
-                if len(master_system_version) > 1 and master_system_version[1].startswith('11'):
-                    passphrase = self.middleware.call_sync('failover.call_remote', 'failover.encryption_getkey')
-                    self.middleware.call_sync(
-                        'failover.update_encryption_keys', {
-                            'pools': [
-                                {'name': p['name'], 'passphrase': passphrase or ''}
-                                for p in self.middleware.call_sync('pool.query', [('encrypt', '=', 2)])
-                            ],
-                            'sync_keys': False,
-                        }
-                    )
-                else:
-                    self.middleware.call_sync('failover.call_remote', 'failover.sync_keys_to_remote_node')
+                encrypted_pools = self.middleware.call_sync('pool.query', [('encrypt', '>=', 1)])
+                if encrypted_pools:
+                    master_system_version = self.middleware.call_sync(
+                        'failover.call_remote', 'system.info'
+                    )['version'].split('-')
+
+                    if len(master_system_version) > 1 and master_system_version[1].startswith('11'):
+                        passphrase = self.middleware.call_sync('failover.call_remote', 'failover.encryption_getkey')
+                        self.middleware.call_sync(
+                            'failover.update_encryption_keys', {
+                                'pools': [
+                                    {'name': p['name'], 'passphrase': passphrase or ''}
+                                    for p in encrypted_pools
+                                ],
+                                'sync_keys': False,
+                            }
+                        )
+                    else:
+                        self.middleware.call_sync('failover.call_remote', 'failover.sync_keys_to_remote_node')
         except AlreadyLocked:
             self.logger.warn('Failover event handler failed to acquire backup lockfile')
 
