@@ -36,7 +36,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
         self.middleware = middleware
         self.devices = []
 
-        self._check_connection_alive()
+        self._check_setup_connection()
 
         self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
         self.domain = self.stop_devices_thread = None

@@ -21,7 +21,7 @@ class VMService(Service, VMSupervisorMixin):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
-        self._check_connection_alive()
+        await self.middleware.run_in_thread(self._check_setup_connection)
 
         vm = await self.middleware.call('vm.get_instance', id)
         if vm['status']['state'] == 'RUNNING':
@@ -70,7 +70,7 @@ class VMService(Service, VMSupervisorMixin):
         `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
         not already stopped within the specified `shutdown_timeout`.
         """
-        self._check_connection_alive()
+        self._check_setup_connection()
         vm_data = self.middleware.call_sync('vm.get_instance', id)
 
         if options['force']:
@@ -89,7 +89,7 @@ class VMService(Service, VMSupervisorMixin):
         """
         Poweroff a VM.
         """
-        self._check_connection_alive()
+        self._check_setup_connection()
 
         vm_data = self.middleware.call_sync('vm.get_instance', id)
         self._poweroff(vm_data['name'])
@@ -102,7 +102,6 @@ class VMService(Service, VMSupervisorMixin):
         """
         Restart a VM.
         """
-        self._check_connection_alive()
+        self._check_setup_connection()
         vm = self.middleware.call_sync('vm.get_instance', id)
-        self._check_connection_alive()
         self._restart(vm['name'])
