@@ -2,6 +2,9 @@
 enable middlewared.service
 enable ix-*
 
+# Enabled mounts
+enable tmp.mount
+
 # Enabled services
 enable collectd.service
 enable nginx.service
