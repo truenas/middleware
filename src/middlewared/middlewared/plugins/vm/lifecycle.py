@@ -114,6 +114,14 @@ class VMService(Service, VMSupervisorMixin):
                 self._close()
 
     @private
+    def setup_details(self):
+        return {
+            'connected': self._is_connection_alive(),
+            'connection_initialised': bool(self.LIBVIRT_CONNECTION),
+            'domains': list(self.vms.keys()),
+        }
+
+    @private
     async def terminate(self):
         async with SHUTDOWN_LOCK:
             await self.middleware.call('vm.deinitialize_vms', {'stop_libvirt': False})

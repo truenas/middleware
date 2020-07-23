@@ -21,7 +21,7 @@ class VMService(Service, VMSupervisorMixin):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
-        self._check_setup_connection()
+        await self.middleware.run_in_thread(self._check_setup_connection)
 
         vm = await self.middleware.call('vm.get_instance', id)
         if vm['status']['state'] == 'RUNNING':
