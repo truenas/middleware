@@ -102,9 +102,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
         """
         async with LIBVIRT_LOCK:
-            if not self._is_connection_alive():
-                await self.middleware.call('vm.wait_for_libvirtd', 10)
-        self._check_connection_alive()
+            self._check_setup_connection()
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
@@ -295,7 +293,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         new.update(data)
 
         if new['name'] != old['name']:
-            self._check_connection_alive()
+            self._check_setup_connection()
             if old['status']['state'] == 'RUNNING':
                 raise CallError('VM name can only be changed when VM is inactive')
 
@@ -335,7 +333,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         """
         async with LIBVIRT_LOCK:
             vm = await self.get_instance(id)
-            self._check_connection_alive()
+            self._check_setup_connection()
             status = await self.middleware.call('vm.status', id)
             if status.get('state') == 'RUNNING':
                 await self.middleware.call('vm.poweroff', id)

@@ -44,10 +44,14 @@ class VMService(Service, VMSupervisorMixin):
             self.middleware.logger.error('Failed to connect to libvirtd')
 
     @private
+    def setup_libvirt_connection(self, timeout=30):
+        self.middleware.call_sync(f'vm.initialize_{osc.SYSTEM.lower()}')
+        self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
+
+    @private
     def initialize_vms(self, timeout=30):
         if self.middleware.call_sync('vm.query'):
-            self.middleware.call_sync(f'vm.initialize_{osc.SYSTEM.lower()}')
-            self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
+            self.setup_libvirt_connection(timeout)
         else:
             return
 
