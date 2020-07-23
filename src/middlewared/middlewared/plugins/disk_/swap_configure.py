@@ -139,8 +139,8 @@ class DiskService(Service):
                             'extra': {'level': 1} if osc.IS_LINUX else {},
                         }
                     )
-                except CallError:
-                    self.logger.warning('Failed to create swap mirror %s', swap_path)
+                except CallError as e:
+                    self.logger.warning('Failed to create swap mirror %s: %s', swap_path, e)
                     continue
 
                 swap_device = os.path.realpath(os.path.join(f'/dev/{"md" if osc.IS_LINUX else "mirror"}', swap_path))
