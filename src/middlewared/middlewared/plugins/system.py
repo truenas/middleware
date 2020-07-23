@@ -507,6 +507,8 @@ class SystemService(Service):
         except Exception:
             raise CallError('This is not a valid license.')
 
+        prev_product_type = self.middleware.call_sync('system.product_type')
+
         with open(LICENSE_FILE, 'w+') as f:
             f.write(license)
 
@@ -516,7 +518,7 @@ class SystemService(Service):
         if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
             Path('/data/truenas-eula-pending').touch(exist_ok=True)
         self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update'), wait=False,
+            self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )
 
     @accepts()
@@ -1527,6 +1529,10 @@ async def firstboot(middleware):
         # we do not want the clone to have the file in it.
         os.unlink(FIRST_INSTALL_SENTINEL)
 
+        if await middleware.call('system.product_type') == 'ENTERPRISE':
+            config = await middleware.call('datastore.config', 'system.advanced')
+            await middleware.call('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
+
         # Creating pristine boot environment from the "default"
         initial_install_be = 'Initial-Install'
         middleware.logger.info('Creating %r boot environment...', initial_install_be)
@@ -1595,6 +1601,11 @@ async def update_timeout_value(middleware, *args):
                 sysctl.filter('kern.init_shutdown_timeout')[0], 'value', timeout_value
             )
         )
+
+
+async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
+    if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
+        await middleware.call('system.advanced.update', {'autotune': True})
 
 
 async def setup(middleware):
@@ -1666,3 +1677,5 @@ async def setup(middleware):
     CRASH_DIR = '/data/crash'
     os.makedirs(CRASH_DIR, exist_ok=True)
     os.chmod(CRASH_DIR, 0o775)
+
+    middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
