@@ -44,7 +44,7 @@ class VMService(Service, VMSupervisorMixin):
             self.middleware.logger.error('Failed to connect to libvirtd')
 
     @private
-    def initialize_vms(self, timeout=10):
+    def initialize_vms(self, timeout=30):
         if self.middleware.call_sync('vm.query'):
             self.middleware.call_sync(f'vm.initialize_{osc.SYSTEM.lower()}')
             self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
@@ -159,5 +159,5 @@ async def __event_system_ready(middleware, event_type, args):
 async def setup(middleware):
     await middleware.call('vm.update_zfs_arc_max_initial')
     if await middleware.call('system.ready'):
-        asyncio.ensure_future(middleware.call('vm.initialize_vms', 2))  # We use a short timeout here deliberately
+        asyncio.ensure_future(middleware.call('vm.initialize_vms', 5))  # We use a short timeout here deliberately
     middleware.event_subscribe('system', __event_system_ready)
