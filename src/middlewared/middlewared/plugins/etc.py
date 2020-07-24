@@ -170,7 +170,7 @@ class EtcService(Service):
             {
                 'type': 'mako',
                 'local_path': 'local/apache24/httpd.conf',
-                'path': f'{APACHE_DIR}/httpd.conf',
+                'path': f'{APACHE_DIR}/{"httpd" if osc.IS_FREEBSD else "apache2"}.conf',
             },
             {
                 'type': 'mako',
