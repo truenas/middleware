@@ -1519,17 +1519,17 @@ class SystemHealthEventSource(EventSource):
         if delay < 5:
             return
 
-        cp_time = sysctl.filter('kern.cp_time')[0].value
+        cp_time = psutil.cpu_times()
         cp_old = cp_time
 
         while not self._cancel.is_set():
             time.sleep(delay)
 
-            cp_time = sysctl.filter('kern.cp_time')[0].value
-            cp_diff = list(map(lambda x: x[0] - x[1], zip(cp_time, cp_old)))
+            cp_time = psutil.cpu_times()
+            cp_diff = type(cp_time)(*map(lambda x: x[0] - x[1], zip(cp_time, cp_old)))
             cp_old = cp_time
 
-            cpu_percent = round((sum(cp_diff[:3]) / sum(cp_diff)) * 100, 2)
+            cpu_percent = round(((sum(cp_diff) - cp_diff.idle) / sum(cp_diff)) * 100, 2)
 
             pools = self.middleware.call_sync(
                 'cache.get_or_put',
