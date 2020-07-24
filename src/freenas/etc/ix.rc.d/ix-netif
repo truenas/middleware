@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-netif
+# REQUIRE: sysctl
 # BEFORE: netif
 
 . /etc/rc.freenas
