@@ -379,18 +379,16 @@ class FilesystemService(Service):
         return flagset
 
     def _winacl(self, path, action, uid, gid, options):
-        chroot_dir = os.path.dirname(path)
-        target = os.path.basename(path)
         winacl = subprocess.run([
             '/usr/local/bin/winacl',
             '-a', action,
             '-O', str(uid), '-G', str(gid),
             '-rx' if options['traverse'] else '-r',
-            '-c', chroot_dir,
-            '-p', target], check=False, capture_output=True
+            '-c', path,
+            '-p', path], check=False, capture_output=True
         )
         if winacl.returncode != 0:
-            CallError(f"Winacl {action} on path {path} failed with error: [{winacl.stderr.decode().strip()}]")
+            raise CallError(f"Winacl {action} on path {path} failed with error: [{winacl.stderr.decode().strip()}]")
 
     def _common_perm_path_validate(self, path):
         if not os.path.exists(path):

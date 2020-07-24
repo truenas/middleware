@@ -467,7 +467,6 @@ restore_acl(struct windows_acl_info *w, char *relpath, FTSENT *fts_entry, size_t
 static int
 set_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 {
-	char *path = NULL;
 	acl_t acl_new;
 	int acl_depth = 0;
 
@@ -491,17 +490,16 @@ set_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 
 	/* write out the acl to the file */
 	if (acl_set_file(fts_entry->fts_accpath, ACL_TYPE_NFS4, acl_new) < 0) {
-		warn("%s: acl_set_file() failed", path);
+		warn("%s: acl_set_file() failed", fts_entry->fts_accpath);
 		return (-1);
 	}
 
 	if (w->uid != -1 || w->gid != -1) {
-		if (chown(path, w->uid, w->gid) < 0) {
-			warn("%s: chown() failed", path);
+		if (chown(fts_entry->fts_accpath, w->uid, w->gid) < 0) {
+			warn("%s: chown() failed", fts_entry->fts_accpath);
 			return (-1);
 		}
 	}
-
  
 	return (0);
 }
@@ -916,7 +914,12 @@ main(int argc, char **argv)
 				free_windows_acl_info(w);
 				return (1);
 			}
-			w->source += strlen(w->chroot);
+			if (strlen(w->chroot) == strlen(w->source)) {
+				w->source = strdup(".");
+			}
+			else {
+				w->source += strlen(w->chroot);
+			}
 		}
 		if (w->path != NULL ) {
 			if (strncmp(w->chroot, w->path, strlen(w->chroot)) != 0) {
@@ -924,7 +927,12 @@ main(int argc, char **argv)
 				free_windows_acl_info(w);
 				return (1);
 			}
-			w->path += strlen(w->chroot);
+			if (strlen(w->chroot) == strlen(w->path)) {
+				w->path = strdup(".");
+			}
+			else {
+				w->path += strlen(w->chroot);
+			}
 		}
 		ret = chdir(w->chroot);
 		if (ret == -1) {
@@ -938,8 +946,9 @@ main(int argc, char **argv)
 			free_windows_acl_info(w);
 			return (1);
 		}
+		printf("path: [%s]\n", w->path);
 		if (access(w->path, F_OK) < 0) {
-			warn("%s: access() failed after chroot.", w->source);
+			warn("%s: access() failed after chroot.", w->path);
 			free_windows_acl_info(w);
 			return (1);
 		}
