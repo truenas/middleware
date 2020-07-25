@@ -345,7 +345,7 @@ class SharingSMBService(Service):
             data['auxsmbconf'] = (SMBSharePreset[data["purpose"]].value)["params"]["auxsmbconf"]
 
         for param in data['auxsmbconf'].splitlines():
-            if not param.strip():
+            if not param.strip() or param.strip()[0] in '#;':
                 continue
             try:
                 kv = param.split('=', 1)
