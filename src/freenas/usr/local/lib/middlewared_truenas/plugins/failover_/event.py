@@ -782,30 +782,15 @@ class FailoverService(Service):
                     if ret and ret[0]['srv_enable']:
                         self.run_call(f'service.{verb}', i, {'ha_propagate': False})
 
-                detach_all_job = self.middleware.call_sync('failover.encryption_detachall')
-                detach_all_job.wait_sync()
-                if detach_all_job.error:
-                    self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
+                if len(fobj['phrasedvolumes']):
+                    detach_all_job = self.middleware.call_sync('failover.encryption_detachall')
+                    detach_all_job.wait_sync()
+                    if detach_all_job.error:
+                        self.logger.error('Failed to detach geli providers: %s', detach_all_job.error)
 
-                encrypted_pools = self.middleware.call_sync('pool.query', [('encrypt', '>=', 1)])
-                if encrypted_pools:
-                    master_system_version = self.middleware.call_sync(
-                        'failover.call_remote', 'system.info'
-                    )['version'].split('-')
+                # Sync GELI and/or ZFS encryption keys from MASTER node
+                self.middleware.call_sync('failover.sync_keys_from_remote_node')
 
-                    if len(master_system_version) > 1 and master_system_version[1].startswith('11'):
-                        passphrase = self.middleware.call_sync('failover.call_remote', 'failover.encryption_getkey')
-                        self.middleware.call_sync(
-                            'failover.update_encryption_keys', {
-                                'pools': [
-                                    {'name': p['name'], 'passphrase': passphrase or ''}
-                                    for p in encrypted_pools
-                                ],
-                                'sync_keys': False,
-                            }
-                        )
-                    else:
-                        self.middleware.call_sync('failover.call_remote', 'failover.sync_keys_to_remote_node')
         except AlreadyLocked:
             self.logger.warn('Failover event handler failed to acquire backup lockfile')
 
