@@ -127,6 +127,9 @@ class SharingSMBService(Service):
             gl['nfs_exports'] = await self.middleware.call('sharing.nfs.query', [['enabled', '=', True]])
         if gl['smb_shares'] is None:
             gl['smb_shares'] = await self.middleware.call('sharing.smb.query', [['enabled', '=', True]])
+            for share in gl['smb_shares']:
+                await self.middleware.call('sharing.smb.strip_comments', share)
+
         if gl['ad_enabled'] is None:
             gl['ad_enabled'] = False if (await self.middleware.call('activedirectory.get_state')) == "DISABLED" else True
 
@@ -168,6 +171,7 @@ class SharingSMBService(Service):
         if data is None:
             data = await self.middleware.call('sharing.smb.query', [('name', '=', share)], {'get': True})
 
+        await self.middleware.call('sharing.smb.strip_comments', data)
         share_conf = await self.share_to_smbconf(data)
         try:
             reg_conf = await self.reg_showshare(share if not data['home'] else 'homes')
@@ -211,6 +215,7 @@ class SharingSMBService(Service):
     async def share_to_smbconf(self, conf_in, globalconf=None):
         data = conf_in.copy()
         gl = await self.get_global_params(globalconf)
+        await self.middleware.call('sharing.smb.strip_comments', data)
         conf = {}
 
         if data['home'] and gl['ad_enabled']:
