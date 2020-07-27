@@ -1141,6 +1141,11 @@ class SharingSMBService(SharingService):
         file. This method simply reconciles lists of shares, removing from and adding to
         the registry as-needed.
         """
+        if not os.path.exists(SMBPath.GLOBALCONF.platform()):
+            self.logger.warning("smb.conf does not exist. Skipping registry synchronization."
+                                "This may indicate that SMB service has not completed initialization.")
+            return
+
         active_shares = await self.query([('locked', '=', False), ('enabled', '=', True)])
         registry_shares = await self.middleware.call('sharing.smb.reg_listshares')
         cf_active = set([x['name'].casefold() for x in active_shares])
