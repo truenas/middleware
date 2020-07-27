@@ -2189,7 +2189,7 @@ class PoolDatasetService(CRUDService):
         datasets = self.query_encrypted_datasets(id.split('/', 1)[0], {'key_loaded': False})
         for name, ds in datasets.items():
             ds_key = keys_supplied.get(name) or ds['encryption_key']
-            if ds['locked'] and id != name and id.startswith(name):
+            if ds['locked'] and id.startswith(f'{name}/'):
                 # This ensures that `id` has locked parents and they should be unlocked first
                 locked_datasets.append(name)
             elif ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
