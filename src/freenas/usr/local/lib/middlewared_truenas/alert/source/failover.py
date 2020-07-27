@@ -193,9 +193,7 @@ class FailoverAlertSource(ThreadedAlertSource):
                             alerts.append(Alert(NoFailoverPassphraseKeysAlertClass, {'pool': pool}))
                     if not_found:
                         # Kick a syncfrompeer if we don't.
-                        self.middleware.call_sync(
-                            'failover.call_remote', 'failover.sync_keys_to_remote_node'
-                        )
+                        self.middleware.call_sync('failover.sync_keys_from_remote_node')
             except Exception:
                 pass
 
