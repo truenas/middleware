@@ -1103,48 +1103,100 @@ class FailoverService(ConfigService):
         return True
 
     @private
+    async def sync_keys_from_remote_node(self):
+        """
+        Sync GELI and/or ZFS encryption keys from the active node.
+
+        TODO:
+            Once TruenAS >= 11.3 < 12 has been EOL'd, we should remove this method
+            (should call `failover.call_remote` `failover.sync_keys_to_remote_node`)
+        """
+
+        if not await self.middleware.call('failover.licensed'):
+            return
+
+        # only sync keys if we're the BACKUP node
+        if (await self.middleware.call('failover.status')) != 'BACKUP':
+            return
+
+        # make sure we can contact the MASTER node
+        try:
+            assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
+        except Exception:
+            self.middleware.logger.error(
+                'Failed to contact active controller when syncing encryption keys', exc_info=True
+            )
+            return
+
+        try:
+            await self.middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
+        except Exception as e:
+            if e.errno == CallError.ENOMETHOD:
+                # we're talking to an older system (this happens on upgrades from 11 to 12+)
+                enc_pools = await self.middleware.call('pool.query', [('encrypt', '>', 0)])
+                if enc_pools:
+                    passphrase = await self.middleware.call('failover.call_remote', 'failover.encryption_getkey')
+                    await self.middleware.call(
+                        'failover.update_encryption_keys', {
+                            'pools': [
+                                {'name': p['name'], 'passphrase': passphrase or ''}
+                                for p in enc_pools
+                            ],
+                            'sync_keys': False,
+                        }
+                    )
+            else:
+                self.middleware.logger.error(
+                    'Failed to sync keys from active controller when syncing encryption keys', exc_info=True
+                )
+
+    @private
     async def sync_keys_to_remote_node(self, lock=True):
         """
         Sync GELI and/or ZFS encryption keys to the standby node.
         """
 
-        if await self.middleware.call('failover.licensed'):
+        if not await self.middleware.call('failover.licensed'):
+            return
 
-            # Only sync keys if we're the MASTER controller
-            if (await self.middleware.call('failover.status')) == 'MASTER':
+        # only sync keys if we're the MASTER node
+        if (await self.middleware.call('failover.status')) != 'MASTER':
+            return
 
-                # make sure we can contact the other controller
-                try:
-                    assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
-                except Exception:
-                    self.middleware.logger.error('Failed to contact standby node.', exc_info=True)
-                    return
+        # make sure we can contact the BACKUP node
+        try:
+            assert (await self.middleware.call('failover.call_remote', 'core.ping')) == 'pong'
+        except Exception:
+            self.middleware.logger.error(
+                'Failed to contact standby controller when syncing encryption keys', exc_info=True
+            )
+            return
 
-                async with ENCRYPTION_CACHE_LOCK if lock else asyncnullcontext():
-                    try:
-                        keys = await self.encryption_keys()
-                        await self.middleware.call(
-                            'failover.call_remote', 'cache.put', ['failover_encryption_keys', keys]
-                        )
-                    except Exception as e:
-                        await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
-                        self.middleware.logger.error('Failed to sync keys with standby node: %s', str(e), exc_info=True)
-                    else:
-                        await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
-                    try:
-                        kmip_keys = await self.middleware.call('kmip.kmip_memory_keys')
-                        await self.middleware.call(
-                            'failover.call_remote', 'kmip.update_memory_keys', [kmip_keys]
-                        )
-                    except Exception as e:
-                        await self.middleware.call(
-                            'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
-                        )
-                        self.middleware.logger.error(
-                            'Failed to sync KMIP keys with remote node: %s', str(e), exc_info=True
-                        )
-                    else:
-                        await self.middleware.call('alert.oneshot_delete', 'FailoverKMIPKeysSyncFailed', None)
+        async with ENCRYPTION_CACHE_LOCK if lock else asyncnullcontext():
+            try:
+                keys = await self.encryption_keys()
+                await self.middleware.call(
+                    'failover.call_remote', 'cache.put', ['failover_encryption_keys', keys]
+                )
+            except Exception as e:
+                await self.middleware.call('alert.oneshot_create', 'FailoverKeysSyncFailed', None)
+                self.middleware.logger.error('Failed to sync keys with standby controller: %s', str(e), exc_info=True)
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'FailoverKeysSyncFailed', None)
+            try:
+                kmip_keys = await self.middleware.call('kmip.kmip_memory_keys')
+                await self.middleware.call(
+                    'failover.call_remote', 'kmip.update_memory_keys', [kmip_keys]
+                )
+            except Exception as e:
+                await self.middleware.call(
+                    'alert.oneshot_create', 'FailoverKMIPKeysSyncFailed', {'error': str(e)}
+                )
+                self.middleware.logger.error(
+                    'Failed to sync KMIP keys with standby controller: %s', str(e), exc_info=True
+                )
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'FailoverKMIPKeysSyncFailed', None)
 
 
 async def ha_permission(middleware, app):
@@ -1718,31 +1770,7 @@ async def service_remote(middleware, service, verb, options):
 
 async def ready_system_sync_keys(middleware):
 
-    if await middleware.call('failover.licensed'):
-
-        # when middlewared is setup, we only run this if we're the standby controller
-        if not await middleware.call('failover.is_backup_node'):
-            return
-
-        try:
-            await middleware.call('failover.call_remote', 'failover.sync_keys_to_remote_node')
-        except Exception as e:
-            if e.errno == CallError.ENOMETHOD:
-                # We're talking to an <= 11.3 system, so use the old API
-                enc_pools = await middleware.call('pool.query', [('encrypt', '>=', 1)])
-                if enc_pools:
-                    passphrase = await middleware.call('failover.call_remote', 'failover.encryption_getkey')
-                    await middleware.call(
-                        'failover.update_encryption_keys', {
-                            'pools': [
-                                {'name': p['name'], 'passphrase': passphrase or ''}
-                                for p in enc_pools
-                            ],
-                            'sync_keys': False,
-                        }
-                    )
-            else:
-                middleware.logger.error('Failed syncing encyption keys from active controller', exc_info=True)
+    await middleware.call('failover.sync_keys_from_remote_node')
 
 
 async def _event_system_ready(middleware, event_type, args):
