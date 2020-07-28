@@ -26,9 +26,6 @@ global_defs {
 }
     % for i in info:
 vrrp_instance ${i['int_interface']} {
-    # track_interface {
-        # FIXME
-    # }
     state BACKUP
     advert_int % advert_int
     nopreempt
