@@ -176,15 +176,19 @@ class SharingSMBService(Service):
         try:
             reg_conf = await self.reg_showshare(share if not data['home'] else 'homes')
         except Exception:
-            return None
-
+            return {
+                'added': {},
+                'removed': {},
+                'modified': {}
+            }
+                  
         s_keys = set(share_conf.keys())
         r_keys = set(reg_conf.keys())
         intersect = s_keys.intersection(r_keys)
         return {
             'added': {x: share_conf[x] for x in s_keys - r_keys},
             'removed': {x: reg_conf[x] for x in r_keys - s_keys},
-            'modified': {x: (share_conf[x], reg_conf[x]) for x in intersect if share_conf[x] != reg_conf[x]},
+            'modified': {x: (share_conf[x], reg_conf[x]) for x in intersect if share_conf[x] != reg_conf[x]}
         }
 
     @private
