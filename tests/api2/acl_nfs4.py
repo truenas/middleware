@@ -9,6 +9,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
+from pytest_dependency import depends
 
 ACLTEST_DATASET = f'{pool_name}/acltest'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
@@ -98,8 +99,20 @@ def test_02_create_dataset():
     )
     assert result.status_code == 200, result.text
 
+@pytest.mark.dependency(name="HAS_NFS4_ACLS")
+def test_03_get_acltype():
+    global results
+    payload = {
+        'path': f'/mnt/{ACLTEST_DATASET}',
+        'simplified': True
+    }
+    result = POST('/filesystem/getacl/', payload)
+    assert result.status_code == 200, results.text
+    if result.json()['acltype'] != "NFS4":
+        pytest.skip("Incorrect ACL type")
 
-def test_03_basic_set_acl_for_dataset():
+def test_04_basic_set_acl_for_dataset(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': default_acl,
@@ -113,8 +126,8 @@ def test_03_basic_set_acl_for_dataset():
     job_status = wait_on_job(JOB_ID, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-
-def test_04_get_filesystem_getacl():
+def test_05_get_filesystem_getacl(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     global results
     payload = {
         'path': f'/mnt/{ACLTEST_DATASET}',
@@ -125,12 +138,14 @@ def test_04_get_filesystem_getacl():
 
 
 @pytest.mark.parametrize('key', ['tag', 'type', 'perms', 'flags'])
-def test_05_verify_filesystem_getacl(key):
+def test_06_verify_filesystem_getacl(request, key):
+    depends(request, ["HAS_NFS4_ACLS"])
     assert results.json()['acl'][0][key] == default_acl[0][key], results.text
     assert results.json()['acl'][1][key] == default_acl[1][key], results.text
 
 
-def test_06_verify_setacl_chown():
+def test_07_verify_setacl_chown(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     assert results.json()['uid'] == 65534, results.text
 
 
@@ -144,7 +159,8 @@ variation (BASIC/ADVANCED permissions, BASIC/ADVANCED flags).
 
 
 @pytest.mark.parametrize('permset', BASIC_PERMS)
-def test_07_set_basic_permsets(permset):
+def test_08_set_basic_permsets(request, permset):
+    depends(request, ["HAS_NFS4_ACLS"])
     payload = {
         'path': f'/mnt/{ACLTEST_DATASET}',
         'simplified': True
@@ -169,7 +185,8 @@ def test_07_set_basic_permsets(permset):
 
 
 @pytest.mark.parametrize('flagset', BASIC_FLAGS)
-def test_08_set_basic_flagsets(flagset):
+def test_09_set_basic_flagsets(request, flagset):
+    depends(request, ["HAS_NFS4_ACLS"])
     payload = {
         'path': f'/mnt/{ACLTEST_DATASET}',
         'simplified': True
@@ -194,7 +211,8 @@ def test_08_set_basic_flagsets(flagset):
 
 
 @pytest.mark.parametrize('perm', base_permset.keys())
-def test_09_set_advanced_permset(perm):
+def test_10_set_advanced_permset(request, perm):
+    depends(request, ["HAS_NFS4_ACLS"])
     payload = {
         'path': f'/mnt/{ACLTEST_DATASET}',
         'simplified': False
@@ -225,7 +243,8 @@ def test_09_set_advanced_permset(perm):
 
 
 @pytest.mark.parametrize('flag', TEST_FLAGS)
-def test_10_set_advanced_flagset(flag):
+def test_11_set_advanced_flagset(request, flag):
+    depends(request, ["HAS_NFS4_ACLS"])
     payload = {
         'path': f'/mnt/{ACLTEST_DATASET}',
         'simplified': False
@@ -260,7 +279,8 @@ We first create a child dataset to verify that ACLs do not change unless
 """
 
 
-def test_11_prepare_recursive_tests():
+def test_12_prepare_recursive_tests(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_SUBDATASET
@@ -281,7 +301,8 @@ def test_11_prepare_recursive_tests():
     assert results['result'] is True, results['output']
 
 
-def test_12_recursive_no_traverse():
+def test_13_recursive_no_traverse(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     default_acl[1]['perms'].pop('BASIC')
     default_acl[1]['flags'].pop('BASIC')
     default_acl[0]['flags'] = INHERIT_FLAGS_BASIC.copy()
@@ -347,7 +368,8 @@ def test_12_recursive_no_traverse():
     assert results.json()['uid'] == 65534, results.text
 
 
-def test_13_recursive_with_traverse():
+def test_14_recursive_with_traverse(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     expected_flags_0 = INHERIT_FLAGS_BASIC.copy()
     expected_flags_0['INHERITED'] = True
     expected_flags_1 = base_flagset.copy()
@@ -379,7 +401,8 @@ def test_13_recursive_with_traverse():
     assert results.json()['uid'] == 65534, results.text
 
 
-def test_14_strip_acl_from_dataset():
+def test_15_strip_acl_from_dataset(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     result = POST(
         f'/pool/dataset/id/{dataset_url}/permission/', {
             'acl': [],
@@ -403,27 +426,31 @@ different cases for where we can fail to strip an ACL.
 """
 
 
-def test_15_filesystem_acl_is_not_removed_child_dataset():
+def test_16_filesystem_acl_is_not_removed_child_dataset(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_SUBDATASET}')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is True, results.text
 
 
-def test_16_filesystem_acl_is_removed_mountpoint():
+def test_17_filesystem_acl_is_removed_mountpoint(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_DATASET}')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is False, results.text
     assert oct(results.json()['mode']) == '0o40777', results.text
 
 
-def test_17_filesystem_acl_is_removed_subdir():
+def test_18_filesystem_acl_is_removed_subdir(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_DATASET}/dir1')
     assert results.status_code == 200, results.text
     assert results.json()['acl'] is False, results.text
     assert oct(results.json()['mode']) == '0o40777', results.text
 
 
-def test_18_filesystem_acl_is_removed_file():
+def test_19_filesystem_acl_is_removed_file(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     results = POST('/filesystem/stat/',
                    f'/mnt/{ACLTEST_DATASET}/dir1/testfile')
     assert results.status_code == 200, results.text
@@ -431,14 +458,15 @@ def test_18_filesystem_acl_is_removed_file():
     assert oct(results.json()['mode']) == '0o100777', results.text
 
 
-def test_19_delete_child_dataset():
+def test_20_delete_child_dataset(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     result = DELETE(
         f'/pool/dataset/id/{subdataset_url}/'
     )
     assert result.status_code == 200, result.text
 
 
-def test_20_delete_dataset():
+def test_21_delete_dataset():
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )
