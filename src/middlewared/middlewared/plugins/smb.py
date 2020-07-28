@@ -441,8 +441,11 @@ class SMBService(SystemServiceService):
         into the registry.
         """
         job.set_progress(60, 'generating SMB share configuration.')
+        await self.middleware.call('cache.put', 'SMB_REG_INITIALIZED', False)
         await self.middleware.call("etc.generate", "smb_share")
         await self.middleware.call("smb.import_conf_to_registry")
+        await self.middleware.call('cache.put', 'SMB_REG_INITIALIZED', True)
+        os.unlink(SMBPath.SHARECONF.platform())
 
         """
         It is possible that system dataset was migrated or an upgrade
@@ -479,6 +482,67 @@ class SMBService(SystemServiceService):
     async def reset_smb_ha_mode(self):
         await self.middleware.call('cache.pop', 'SMB_HA_MODE')
         return await self.get_smb_ha_mode()
+
+    @private
+    async def validate_smb(self, new, verrors):
+        try:
+            await self.middleware.call('sharing.smb.validate_aux_params',
+                                       new['smb_options'],
+                                       'smb_update.smb_options')
+        except ValidationErrors as errs:
+            verrors.add_child('smb_update.smb_options', errs)
+
+        if new.get('unixcharset') and new['unixcharset'] not in await self.unixcharset_choices():
+            verrors.add(
+                'smb_update.unixcharset',
+                'Please provide a valid value for unixcharset'
+            )
+
+        for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
+            """
+            There are two cases where NetBIOS names must be rejected:
+            1. They contain invalid characters for NetBIOS protocol
+            2. The name is identical to the NetBIOS workgroup.
+            """
+            if not i:
+                continue
+
+            if i == 'netbiosalias':
+                for idx, item in enumerate(new[i]):
+                    if not await self.__validate_netbios_name(item):
+                        verrors.add(f'smb_update.{i}.{idx}', f'Invalid NetBIOS name: {item}')
+                    if item.casefold() == new['workgroup'].casefold():
+                        verrors.add(
+                            f'smb_update.{i}.{idx}',
+                            f'NetBIOS alias [{item}] conflicts with workgroup name.'
+                        )
+            else:
+                if not await self.__validate_netbios_name(new[i]):
+                    verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {new[i]}')
+
+                if i != 'workgroup' and new[i].casefold() == new['workgroup'].casefold():
+                    verrors.add(
+                        f'smb_update.{i}',
+                        f'NetBIOS name [{new[i]}] conflicts with workgroup name.'
+                    )
+
+        if new['guest'] == 'root':
+            verrors.add('smb_update.guest', '"root" is not a permitted guest account')
+
+        if new.get('bindip'):
+            bindip_choices = list((await self.bindip_choices()).keys())
+            for idx, item in enumerate(new['bindip']):
+                if item not in bindip_choices:
+                    verrors.add(f'smb_update.bindip.{idx}', f'IP address [{item}] is not a configured address for this server')
+
+        for i in ('filemask', 'dirmask'):
+            if not new[i]:
+                continue
+            try:
+                if int(new[i], 8) & ~0o11777:
+                    raise ValueError('Not an octet')
+            except (ValueError, TypeError):
+                verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
     @accepts(Dict(
         'smb_update',
@@ -529,47 +593,11 @@ class SMBService(SystemServiceService):
         new.update(data)
 
         verrors = ValidationErrors()
-
-        if data.get('unixcharset') and data['unixcharset'] not in await self.unixcharset_choices():
-            verrors.add(
-                'smb_update.unixcharset',
-                'Please provide a valid value for unixcharset'
-            )
-
-        for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
-            if i not in data or not data[i]:
-                continue
-            if i == 'netbiosalias':
-                for idx, item in enumerate(data[i]):
-                    if not await self.__validate_netbios_name(item):
-                        verrors.add(f'smb_update.{i}.{idx}', f'Invalid NetBIOS name: {item}')
-            else:
-                if not await self.__validate_netbios_name(data[i]):
-                    verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {data[i]}')
-
-        if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
-            verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
-
-        if data.get('bindip'):
-            bindip_choices = list((await self.bindip_choices()).keys())
-            for idx, item in enumerate(data['bindip']):
-                if item not in bindip_choices:
-                    verrors.add(f'smb_update.bindip.{idx}', f'IP address [{item}] is not a configured address for this server')
-
-        for i in ('filemask', 'dirmask'):
-            if i not in data or not data[i]:
-                continue
-            try:
-                if int(data[i], 8) & ~0o11777:
-                    raise ValueError('Not an octet')
-            except (ValueError, TypeError):
-                verrors.add(f'smb_update.{i}', 'Not a valid mask')
+        await self.validate_smb(new, verrors)
+        verrors.check()
 
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
             await self.middleware.call('smb.add_admin_group', new['admin_group'])
-
-        if verrors:
-            raise verrors
 
         # TODO: consider using bidict
         for k, v in LOGLEVEL_MAP.items():
@@ -632,6 +660,16 @@ class SharingSMBService(SharingService):
         datastore_prefix = 'cifs_'
         datastore_extend = 'sharing.smb.extend'
 
+    @private
+    async def strip_comments(self, data):
+        parsed_config = ""
+        for entry in data['auxsmbconf'].splitlines():
+            if entry == "" or entry.startswith(('#', ';')):
+                continue
+            parsed_config += entry if len(parsed_config) == 0 else f'\n{entry}'
+
+        data['auxsmbconf'] = parsed_config
+
     @accepts(Dict(
         'sharingsmb_create',
         Str('purpose', enum=[x.name for x in SMBSharePreset], default=SMBSharePreset.DEFAULT_SHARE.name),
@@ -693,8 +731,7 @@ class SharingSMBService(SharingService):
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if path and not os.path.exists(path):
             try:
@@ -710,9 +747,8 @@ class SharingSMBService(SharingService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
+        await self.strip_comments(data)
         await self.middleware.call('sharing.smb.reg_addshare', data)
-        await self.extend(data)  # We should do this in the insert call ?
-
         enable_aapl = await self.check_aapl(data)
 
         if enable_aapl:
@@ -720,7 +756,7 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
-        return data
+        return await self.get_instance(data['id'])
 
     @accepts(
         Int('id'),
@@ -776,6 +812,7 @@ class SharingSMBService(SharingService):
             'datastore.update', self._config.datastore, id, new,
             {'prefix': self._config.datastore_prefix})
 
+        await self.strip_comments(new)
         if not new_is_locked:
             """
             Enabling AAPL SMB2 extensions globally affects SMB shares. If this
@@ -898,6 +935,26 @@ class SharingSMBService(SharingService):
         data['name'] = await self.name_exists(data, schema_name, verrors, id)
 
     @private
+    async def validate_aux_params(self, data, schema_name):
+        """
+        libsmbconf expects to be provided with key-value pairs.
+        """
+        verrors = ValidationErrors()
+        for entry in data.splitlines():
+            if entry == '' or entry.startswith(('#', ';')):
+                continue
+
+            kv = entry.split('=', 1)
+            if len(kv) != 2:
+                verrors.add(
+                    f'{schema_name}.auxsmbconf',
+                    f'Auxiliary parameters must be in the format of "key = value": {entry}'
+                )
+                continue
+
+        verrors.check()
+
+    @private
     async def validate(self, data, schema_name, verrors, old=None):
         home_result = await self.home_exists(
             data['home'], schema_name, verrors, old)
@@ -910,6 +967,13 @@ class SharingSMBService(SharingService):
 
         if data['path']:
             await self.validate_path_field(data, schema_name, verrors)
+
+        if data['auxsmbconf']:
+            try:
+                await self.validate_aux_params(data['auxsmbconf'],
+                                               f'{schema_name}.auxsmbconf')
+            except ValidationErrors as errs:
+                verrors.add_child(f'{schema_name}.auxsmbconf', errs)
 
         if not data['acl'] and not await self.middleware.call('filesystem.acl_is_trivial', data['path']):
             verrors.add(
@@ -951,16 +1015,21 @@ class SharingSMBService(SharingService):
         if direction == 'TO':
             ret = {}
             for entry in aux.splitlines():
-                try:
-                    kv = param.split('=', 1)
-                    ret[kv[0].strip()] = kv[1].strip()
-                except Exception:
-                    self.logger.debug("Share contains invalid auxiliary parameter: [%s]",
-                                      param)
+                if entry == '':
+                    continue
+
+                if entry.startswith(('#', ';')):
+                    # Special handling for comments
+                    ret[entry] = None
+                    continue
+
+                kv = entry.split('=', 1)
+                ret[kv[0].strip()] = kv[1].strip()
+
             return ret
 
         if direction == 'FROM':
-            return '\n'.join([f'{k}={v}' for k, v in aux.items()])
+            return '\n'.join([f'{k}={v}' if v is not None else k for k, v in aux.items()])
 
     @private
     async def name_exists(self, data, schema_name, verrors, id=None):
