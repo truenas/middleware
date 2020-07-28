@@ -138,7 +138,7 @@ async def rclone(middleware, job, cloud_sync, dry_run=False):
     # Use a temporary file to store rclone file
     async with RcloneConfig(cloud_sync) as config:
         args = [
-            "/usr/local/bin/rclone",
+            "rclone",
             "--config", config.config_path,
             "-v",
             "--stats", "1s",
