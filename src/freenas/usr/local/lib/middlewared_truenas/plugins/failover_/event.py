@@ -531,7 +531,9 @@ class FailoverService(Service):
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "iscsitarget"')
                 ret = c.fetchone()
                 if ret and ret[0] == 1:
-                    self.run_call('service.start', 'iscsitarget')
+                    # Do not restart iscsitarget as it is not necessary (but breaks FC connections)
+                    if not self.middleware.call_sync('service.started', 'iscsitarget'):
+                        self.run_call('service.start', 'iscsitarget')
 
                 c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
                 ret = c.fetchone()
