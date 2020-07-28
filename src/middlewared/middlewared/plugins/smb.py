@@ -733,8 +733,7 @@ class SharingSMBService(SharingService):
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if path and not os.path.exists(path):
             try:
@@ -1039,12 +1038,9 @@ class SharingSMBService(SharingService):
                     ret[entry] = None
                     continue
 
-                try:
-                    kv = param.split('=', 1)
-                    ret[kv[0].strip()] = kv[1].strip()
-                except Exception:
-                    self.logger.debug("Share contains invalid auxiliary parameter: [%s]",
-                                      param)
+                kv = entry.split('=', 1)
+                ret[kv[0].strip()] = kv[1].strip()
+
             return ret
 
         if direction == 'FROM':
