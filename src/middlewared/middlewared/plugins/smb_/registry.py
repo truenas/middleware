@@ -179,7 +179,7 @@ class SharingSMBService(Service):
             return {
                 'added': {},
                 'removed': {},
-                'modified': {}
+                'modified': {},
             }
 
         s_keys = set(share_conf.keys())
@@ -188,7 +188,7 @@ class SharingSMBService(Service):
         return {
             'added': {x: share_conf[x] for x in s_keys - r_keys},
             'removed': {x: reg_conf[x] for x in r_keys - s_keys},
-            'modified': {x: (share_conf[x], reg_conf[x]) for x in intersect if share_conf[x] != reg_conf[x]}
+            'modified': {x: (share_conf[x], reg_conf[x]) for x in intersect if share_conf[x] != reg_conf[x]},
         }
 
     @private
