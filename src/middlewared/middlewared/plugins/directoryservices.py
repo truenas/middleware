@@ -8,6 +8,7 @@ from base64 import b64encode, b64decode
 from middlewared.schema import accepts
 from middlewared.service import Service, private
 from middlewared.plugins.smb import SMBCmd, SMBPath
+from middlewared.service_exception import CallError
 from middlewared.utils import run
 from samba.dcerpc.messaging import MSG_WINBIND_OFFLINE, MSG_WINBIND_ONLINE
 
@@ -216,7 +217,7 @@ class DirectoryServices(Service):
                 self.logger.debug("Skipping secrets backup on standby controller.")
                 return
 
-            ngc = self.middleware.call_sync("network.configuratoin.config")
+            ngc = self.middleware.call_sync("network.configuration.config")
             netbios_name = ngc["hostname_virtual"]
         else:
             netbios_name = self.middleware.call_sync('smb.config')['netbiosname_local']
@@ -346,6 +347,7 @@ class DirectoryServices(Service):
         ldap_enabled = ldap_conf['enable']
         ad_enabled = (await self.middleware.call("activedirectory.config"))['enable']
         workgroup = (await self.middleware.call("smb.config"))["workgroup"]
+        is_kerberized = ad_enabled
 
         if not ldap_enabled and not ad_enabled:
             return
@@ -375,10 +377,22 @@ class DirectoryServices(Service):
                                 "attempting to restore secrets from configuration file.")
             self.middleware.call("smb.store_ldap_admin_password")
 
+        if ldap_enabled and ldap_conf['kerberos_realm']:
+            is_kerberized = True
+
         gencache_flush = await run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
         if gencache_flush.returncode != 0:
             self.logger.warning("Failed to clear the SMB gencache after re-initializing "
                                 "directory services: [%s]", gencache_flush.stderr.decode())
+
+        await self.middleware.call('etc.generate', 'nss')
+        if is_kerberized:
+            try:
+                await self.middleware.call('kerberos.start')
+            except CallError:
+                self.logger.warning("Failed to start kerberos after directory service "
+                                    "initialization. Services dependent on kerberos may"
+                                    "not work correctly.", exc_info=True)
 
 
 def setup(middleware):

@@ -948,10 +948,10 @@ class KerberosKeytabService(CRUDService):
         """
         Generate list of Kerberos principals that are not the AD machine account.
         """
-        smb = await self.middleware.call('smb.config')
+        ad = await self.middleware.call('activedirectory.config')
         pruned_list = []
         for i in keytab_list:
-            if smb['netbiosname'].upper() not in i['principal'].upper():
+            if ad['netbiosname'].upper() not in i['principal'].upper():
                 pruned_list.append(i)
 
         return pruned_list
