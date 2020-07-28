@@ -132,7 +132,7 @@ class SMBSharePreset(enum.Enum):
             'streams_xattr:prefix = user.',
             'streams_xattr:store_stream_type = no',
             'oplocks = no',
-            'level 2 oplocks = no',
+            'level2 oplocks = no',
             'strict locking = auto',
         ])
     }}
@@ -142,7 +142,7 @@ class SMBSharePreset(enum.Enum):
         'durablehandle': False,
         'auxsmbconf': '\n'.join([
             'oplocks = no',
-            'level 2 oplocks = no',
+            'level2 oplocks = no',
             'strict locking = yes',
         ])
     }}
