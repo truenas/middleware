@@ -181,7 +181,7 @@ class SharingSMBService(Service):
                 'removed': {},
                 'modified': {}
             }
-                  
+
         s_keys = set(share_conf.keys())
         r_keys = set(reg_conf.keys())
         intersect = s_keys.intersection(r_keys)
