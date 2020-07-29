@@ -327,7 +327,7 @@ def reconfigure_logging():
         # We want to reassign stdout/stderr if its not the default one or closed
         # which will happen on log file rotation.
         try:
-            if sys.stdout.fileno() != 1:
+            if sys.stdout.fileno() != 1 or sys.stderr.fileno():
                 raise ValueError()
         except ValueError:
             # ValueError can be raise if file handler is closed
