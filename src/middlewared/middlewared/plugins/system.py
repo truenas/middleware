@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 from datetime import datetime, date, timezone
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
@@ -1061,15 +1062,29 @@ class SystemGeneralService(ConfigService):
 
     @private
     async def _initialize_kbdmap_choices(self):
-        """Populate choices from /usr/share/vt/keymaps/INDEX.keymaps"""
-        index = "/usr/share/vt/keymaps/INDEX.keymaps"
+        if osc.IS_FREEBSD:
+            with open("/usr/share/vt/keymaps/INDEX.keymaps", 'rb') as f:
+                d = f.read().decode('utf8', 'ignore')
+            _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
+            self._kbdmap_choices = {name: desc for name, desc in _all}
 
-        if not os.path.exists(index):
-            return []
-        with open(index, 'rb') as f:
-            d = f.read().decode('utf8', 'ignore')
-        _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
-        self._kbdmap_choices = {name: desc for name, desc in _all}
+        if osc.IS_LINUX:
+            with open("/usr/share/X11/xkb/rules/xorg.lst", "r") as f:
+                key = None
+                items = defaultdict(list)
+                for line in f.readlines():
+                    line = line.rstrip()
+                    if line.startswith("! "):
+                        key = line[2:]
+                    if line.startswith("  "):
+                        items[key].append(re.split(r"\s+", line.lstrip(), 1))
+
+            choices = dict(items["layout"])
+            for variant, desc in items["variant"]:
+                lang, title = desc.split(": ", 1)
+                choices[f"{lang}.{variant}"] = title
+
+            self._kbdmap_choices = dict(sorted(choices.items(), key=lambda t: t[1]))
 
     @accepts()
     async def kbdmap_choices(self):
