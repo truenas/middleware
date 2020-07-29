@@ -110,6 +110,9 @@ class EtcService(Service):
         'grub': [
             {'type': 'py', 'path': 'grub', 'platform': 'Linux', 'checkpoint': 'post_init'},
         ],
+        'keyboard': [
+            {'type': 'mako', 'path': 'default/keyboard', 'platform': 'Linux'},
+        ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
