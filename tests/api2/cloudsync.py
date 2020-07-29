@@ -144,6 +144,9 @@ def test_07_restore_cloud_sync(env, task):
     global restore_id
     restore_id = result.json()['id']
 
+    result = DELETE(f"/cloudsync/id/{result.json()['id']}/")
+    assert result.status_code == 200, result.text
+
 
 def test_08_delete_restore_cloudsync():
     result = DELETE(f"/cloudsync/id/{restore_id}/")
