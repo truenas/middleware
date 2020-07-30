@@ -1,6 +1,13 @@
 import functools
+import sys
 
-from middlewared.utils import LoadPluginsMixin
+from middlewared.utils import LoadPluginsMixin, osc
+
+
+# freenasOS
+if osc.IS_FREEBSD:
+    if '/usr/local/lib' not in sys.path:
+        sys.path.append('/usr/local/lib')
 
 
 def load_compound_service(name):
