@@ -49,7 +49,10 @@ class DiskService(Service):
         Bool('synccache', default=True),
         Ref('swap_removal_options'),
     )
-    @job(lock=lambda args: args[0])
+    @job(
+        lock=lambda args: args[0],
+        description=lambda dev, mode, *args: f'{mode.replace("_", " ").title()} wipe of disk {dev}',
+    )
     async def wipe(self, job, dev, mode, sync, options=None):
         """
         Performs a wipe of a disk `dev`.
