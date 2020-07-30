@@ -80,6 +80,18 @@ class DirectorySecrets(object):
         passwd_chg_ts = struct.unpack("<L", bytes_passwd_chng)[0]
         return passwd_chg_ts
 
+    def set_ldap_secret(self, domain, secret):
+        self.tdb.transaction_start()
+        tdb_key = f'SECRETS/GENERIC/IDMAP_LDAP_{domain.upper()}/{secret}'.encode()
+        tdb_data = secret.encode() + b"\x00"
+        try:
+            self.tdb.store(tdb_key, tdb_data)
+        except Exception as e:
+            self.tdb.transaction_cancel()
+            raise CallError(f"Failed to ldap secrets: {e}")
+
+        self.tdb.transaction_commit()
+
     def dump(self):
         ret = {}
         self.tdb.read_lock_all()
@@ -291,6 +303,14 @@ class DirectoryServices(Service):
         ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
         with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
             rv = s.has_domain(domain)
+
+        return rv
+
+    @private
+    def set_ldap_secret(self, domain, secret):
+        ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
+        with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
+            rv = s.set_ldap_secret(domain, secret)
 
         return rv
 
