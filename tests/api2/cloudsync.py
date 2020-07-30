@@ -5,8 +5,8 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE
-from auto_config import pool_name
+from functions import PUT, POST, GET, DELETE, SSH_TEST
+from auto_config import pool_name, ip, user, password
 import time
 import urllib.parse
 
@@ -50,9 +50,7 @@ def test_02_create_cloud_credentials(env, credentials):
             "secret_access_key": "garbage",
         },
     })
-
     assert result.status_code == 200, result.text
-
     credentials.update(result.json())
 
 
@@ -65,7 +63,6 @@ def test_03_update_cloud_credentials(env, credentials):
             "secret_access_key": env["CLOUDSYNC_AWS_SECRET_ACCESS_KEY"],
         },
     })
-
     assert result.status_code == 200, result.text
 
 
@@ -89,9 +86,7 @@ def test_04_create_cloud_sync(env, credentials, task):
         },
         "args": "",
     })
-
     assert result.status_code == 200, result.text
-
     task.update(result.json())
 
 
@@ -115,37 +110,28 @@ def test_05_update_cloud_sync(env, credentials, task):
         },
         "args": "",
     })
-
     assert result.status_code == 200, result.text
 
 
 def test_06_run_cloud_sync(env, task):
     result = POST(f"/cloudsync/id/{task['id']}/sync/")
-
     assert result.status_code == 200, result.text
-
     for i in range(120):
         result = GET(f"/cloudsync/id/{task['id']}/")
-
         assert result.status_code == 200, result.text
-
         state = result.json()
-
         if state["job"] is None:
             time.sleep(1)
             continue
-
         if state["job"]["state"] in ["PENDING", "RUNNING"]:
             time.sleep(1)
             continue
-
         assert state["job"]["state"] == "SUCCESS", state
-
-        with open(os.path.join(dataset_path, "freenas-test.txt")) as f:
-            assert f.read() == "freenas-test\n"
-
+        cmd = f'cat {dataset_path}/freenas-test.txt'
+        ssh_result = SSH_TEST(cmd, user, password, ip)
+        assert ssh_result['result'] is True, ssh_result['output']
+        assert ssh_result['output'] == 'freenas-test\n', ssh_result['output']
         return
-
     assert False, state
 
 
@@ -154,23 +140,19 @@ def test_07_restore_cloud_sync(env, task):
         "transfer_mode": "COPY",
         "path": dataset_path,
     })
-
     assert result.status_code == 200, result.text
 
 
 def test_97_delete_cloud_sync(env, task):
     result = DELETE(f"/cloudsync/id/{task['id']}/")
-
     assert result.status_code == 200, result.text
 
 
 def test_98_delete_cloud_credentials(env, credentials):
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
-
     assert result.status_code == 200, result.text
 
 
 def test_99_destroy_dataset():
     result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
-
     assert result.status_code == 200, result.text
