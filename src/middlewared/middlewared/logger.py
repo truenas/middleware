@@ -15,6 +15,8 @@ logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 logging.getLogger('asyncio').setLevel(logging.WARN)
 # We dont need internal aiohttp debug logging
 logging.getLogger('aiohttp.internal').setLevel(logging.WARN)
+# We dont need internal botocore debug logging
+logging.getLogger('botocore').setLevel(logging.WARN)
 # we dont need ws4py close debug messages
 logging.getLogger('ws4py').setLevel(logging.WARN)
 # we dont need GitPython debug messages (used in iocage)
