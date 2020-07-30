@@ -9,6 +9,9 @@ from middlewared.plugins.config import FREENAS_DATABASE
 
 
 def regexp(expr, item):
+    if item is None:
+        return False
+
     reg = re.compile(expr, re.I)
     return reg.search(item) is not None
 
