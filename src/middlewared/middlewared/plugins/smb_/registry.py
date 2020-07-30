@@ -340,7 +340,7 @@ class SharingSMBService(Service):
             conf.update({
                 "recycle:repository": ".recycle/%D/%U" if gl['ad_enabled'] else ".recycle/%U",
                 "recycle:keeptree": "yes",
-                "recycle:keepversions": "yes",
+                "recycle:versions": "yes",
                 "recycle:touch": "yes",
                 "recycle:directory_mode": "0777",
                 "recycle:subdir_mode": "0700"
