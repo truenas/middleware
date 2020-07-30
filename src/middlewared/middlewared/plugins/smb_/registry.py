@@ -42,7 +42,9 @@ class SharingSMBService(Service):
 
         netconf = await run(cmd, check=False)
         if netconf.returncode != 0:
-            self.logger.debug('netconf failure stdout: %s', netconf.stdout.decode())
+            if action != 'getparm':
+                self.logger.debug('netconf failure for command [%s] stdout: %s',
+                                  cmd, netconf.stdout.decode())
             raise CallError(
                 f'net conf {action} [{share}] failed with error: {netconf.stderr.decode()}'
             )
